@@ -36,10 +36,6 @@ load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
 go_extras_dependencies()
 
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
-
-protobuf_deps()
-
 load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
 
 go_rules_dependencies()
