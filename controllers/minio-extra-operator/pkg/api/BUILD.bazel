@@ -1,0 +1,12 @@
+load("@dev_f110_rules_extras//go:gen.bzl", "k8s_code_generator")
+
+k8s_code_generator(
+    name = "gen",
+    srcs = [
+        "//controllers/minio-extra-operator/pkg/api/minio/v1alpha1:go_default_library",
+    ],
+    clientpackage = "github.com/f110/tools/controllers/minio-extra-operator/pkg/client",
+    header = "//controllers:boilerplate.go.txt",
+    informerpackage = "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers",
+    listerpackage = "github.com/f110/tools/controllers/minio-extra-operator/pkg/listers",
+)

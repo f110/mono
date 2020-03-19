@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "io_bazel_rules_go",
@@ -18,6 +19,27 @@ http_archive(
     sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
 )
 
+git_repository(
+    name = "com_google_protobuf",
+    commit = "09745575a923640154bcf307fba8aedff47f240a",
+    remote = "https://github.com/protocolbuffers/protobuf",
+    shallow_since = "1558721209 -0700",
+)
+
+git_repository(
+    name = "dev_f110_rules_extras",
+    commit = "2560fa675dd67312327340fe5415b3fe0880390e",
+    remote = "https://github.com/f110/rules_extras",
+)
+
+load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
+
+go_extras_dependencies()
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
 load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
 
 go_rules_dependencies()
@@ -27,8 +49,3 @@ go_register_toolchains()
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
-
-load("//:repositories.bzl", "go_repositories")
-
-# gazelle:repository_macro repositories.bzl%go_repositories
-go_repositories()
