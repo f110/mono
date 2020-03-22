@@ -29,6 +29,7 @@ import (
 	"fmt"
 
 	v1alpha1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
+	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -59,9 +60,15 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=minio.f110.dev, Version=v1alpha1
+	// Group=min.io.io, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().MinIOInstances().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().Mirrors().Informer()}, nil
+
+		// Group=minio.f110.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("miniobuckets"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Minio().V1alpha1().MinioBuckets().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Minio().V1alpha1().MinIOBuckets().Informer()}, nil
 
 	}
 

@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["minio_bucket.go"],
+    importpath = "github.com/f110/tools/controllers/minio-extra-operator/pkg/controller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//controllers/minio-extra-operator/pkg/api/minio/v1alpha1:go_default_library",
+        "//controllers/minio-extra-operator/pkg/client/versioned:go_default_library",
+        "//controllers/minio-extra-operator/pkg/informers/externalversions:go_default_library",
+        "//controllers/minio-extra-operator/pkg/listers/minio/v1alpha1:go_default_library",
+        "//vendor/github.com/minio/minio-go/v6:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/wait:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/tools/cache:go_default_library",
+        "//vendor/k8s.io/client-go/tools/portforward:go_default_library",
+        "//vendor/k8s.io/client-go/transport/spdy:go_default_library",
+        "//vendor/k8s.io/client-go/util/workqueue:go_default_library",
+        "//vendor/k8s.io/klog:go_default_library",
+    ],
+)

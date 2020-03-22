@@ -9,8 +9,10 @@ go_library(
     importpath = "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned",
     visibility = ["//visibility:public"],
     deps = [
-        "@io_k8s_client_go//discovery:go_default_library",
-        "@io_k8s_client_go//rest:go_default_library",
-        "@io_k8s_client_go//util/flowcontrol:go_default_library",
+        "//controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1:go_default_library",
+        "//controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1:go_default_library",
+        "//vendor/k8s.io/client-go/discovery:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/util/flowcontrol:go_default_library",
     ],
 )

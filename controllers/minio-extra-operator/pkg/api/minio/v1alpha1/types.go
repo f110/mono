@@ -7,26 +7,28 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type MinioBucket struct {
+type MinIOBucket struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MinioBucketSpec   `json:"spec,omitempty"`
-	Status MinioBucketStatus `json:"status,omitempty"`
+	Spec   MinIOBucketSpec   `json:"spec,omitempty"`
+	Status MinIOBucketStatus `json:"status,omitempty"`
 }
 
-type MinioBucketSpec struct {
+type MinIOBucketSpec struct {
+	// Selector is a selector of MinioInstance
+	Selector metav1.LabelSelector `json:"selector"`
 }
 
-type MinioBucketStatus struct {
+type MinIOBucketStatus struct {
 	Ready bool `json:"ready,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type MinioBucketList struct {
+type MinIOBucketList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []MinioBucket `json:"items"`
+	Items []MinIOBucket `json:"items"`
 }

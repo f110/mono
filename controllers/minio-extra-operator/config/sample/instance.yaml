@@ -1,0 +1,58 @@
+apiVersion: miniocontroller.min.io/v1beta1
+kind: MinIOInstance
+metadata:
+  name: object-storage
+  labels:
+    app: minio
+spec:
+  metadata:
+    labels:
+      app: minio
+    annotations:
+      prometheus.io/path: /minio/prometheus/metrics
+      prometheus.io/port: "9000"
+      prometheus.io/scrape: "true"
+  image: minio/minio:RELEASE.2020-03-19T21-49-00Z
+  credsSecret:
+    name: object-storage-token
+  replicas: 1
+  podManagementPolicy: Parallel
+  env:
+    - name: MINIO_BROWSER
+      value: "on"
+    - name: MINIO_PROMETHEUS_AUTH_TYPE
+      value: public
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 100m
+  liveness:
+    httpGet:
+      path: /minio/health/live
+      port: 9000
+    initialDelaySeconds: 30
+    periodSeconds: 20
+  readiness:
+    httpGet:
+      path: /minio/health/ready
+      port: 9000
+    initialDelaySeconds: 30
+    periodSeconds: 20
+  volumeClaimTemplate:
+    metadata:
+      name: data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: object-storage-token
+type: Opaque
+stringData:
+  accesskey: 22OekI3HF7n4
+  secretkey: BnL1z28/+2HPmJWMCp29wDWfR+hgRvH0

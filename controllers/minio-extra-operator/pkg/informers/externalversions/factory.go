@@ -33,6 +33,7 @@ import (
 	versioned "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned"
 	internalinterfaces "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
 	minio "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/minio"
+	miniocontroller "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -180,8 +181,13 @@ type SharedInformerFactory interface {
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
 	Minio() minio.Interface
+	Min() miniocontroller.Interface
 }
 
 func (f *sharedInformerFactory) Minio() minio.Interface {
 	return minio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Min() miniocontroller.Interface {
+	return miniocontroller.New(f, f.namespace, f.tweakListOptions)
 }

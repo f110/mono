@@ -38,59 +38,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// MinioBucketInformer provides access to a shared informer and lister for
-// MinioBuckets.
-type MinioBucketInformer interface {
+// MinIOBucketInformer provides access to a shared informer and lister for
+// MinIOBuckets.
+type MinIOBucketInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MinioBucketLister
+	Lister() v1alpha1.MinIOBucketLister
 }
 
-type minioBucketInformer struct {
+type minIOBucketInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewMinioBucketInformer constructs a new informer for MinioBucket type.
+// NewMinIOBucketInformer constructs a new informer for MinIOBucket type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewMinioBucketInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredMinioBucketInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewMinIOBucketInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredMinIOBucketInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredMinioBucketInformer constructs a new informer for MinioBucket type.
+// NewFilteredMinIOBucketInformer constructs a new informer for MinIOBucket type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredMinioBucketInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredMinIOBucketInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinioV1alpha1().MinioBuckets(namespace).List(options)
+				return client.MinioV1alpha1().MinIOBuckets(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinioV1alpha1().MinioBuckets(namespace).Watch(options)
+				return client.MinioV1alpha1().MinIOBuckets(namespace).Watch(options)
 			},
 		},
-		&miniov1alpha1.MinioBucket{},
+		&miniov1alpha1.MinIOBucket{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *minioBucketInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredMinioBucketInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *minIOBucketInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredMinIOBucketInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *minioBucketInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&miniov1alpha1.MinioBucket{}, f.defaultInformer)
+func (f *minIOBucketInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&miniov1alpha1.MinIOBucket{}, f.defaultInformer)
 }
 
-func (f *minioBucketInformer) Lister() v1alpha1.MinioBucketLister {
-	return v1alpha1.NewMinioBucketLister(f.Informer().GetIndexer())
+func (f *minIOBucketInformer) Lister() v1alpha1.MinIOBucketLister {
+	return v1alpha1.NewMinIOBucketLister(f.Informer().GetIndexer())
 }

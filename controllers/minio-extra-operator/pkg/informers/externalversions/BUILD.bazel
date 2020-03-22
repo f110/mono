@@ -13,9 +13,11 @@ go_library(
         "//controllers/minio-extra-operator/pkg/client/versioned:go_default_library",
         "//controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces:go_default_library",
         "//controllers/minio-extra-operator/pkg/informers/externalversions/minio:go_default_library",
+        "//controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller:go_default_library",
+        "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
-        "@io_k8s_client_go//tools/cache:go_default_library",
+        "//vendor/k8s.io/client-go/tools/cache:go_default_library",
     ],
 )

@@ -1,0 +1,8 @@
+apiVersion: minio.f110.dev/v1alpha1
+kind: MinIOBucket
+metadata:
+  name: test
+spec:
+  selector:
+    matchLabels:
+      app: minio

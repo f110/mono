@@ -25,10 +25,10 @@ SOFTWARE.
 
 package v1alpha1
 
-// MinioBucketListerExpansion allows custom methods to be added to
-// MinioBucketLister.
-type MinioBucketListerExpansion interface{}
+// MinIOBucketListerExpansion allows custom methods to be added to
+// MinIOBucketLister.
+type MinIOBucketListerExpansion interface{}
 
-// MinioBucketNamespaceListerExpansion allows custom methods to be added to
-// MinioBucketNamespaceLister.
-type MinioBucketNamespaceListerExpansion interface{}
+// MinIOBucketNamespaceListerExpansion allows custom methods to be added to
+// MinIOBucketNamespaceLister.
+type MinIOBucketNamespaceListerExpansion interface{}

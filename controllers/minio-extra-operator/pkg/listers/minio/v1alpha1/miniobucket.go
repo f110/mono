@@ -32,64 +32,64 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// MinioBucketLister helps list MinioBuckets.
-type MinioBucketLister interface {
-	// List lists all MinioBuckets in the indexer.
-	List(selector labels.Selector) (ret []*v1alpha1.MinioBucket, err error)
-	// MinioBuckets returns an object that can list and get MinioBuckets.
-	MinioBuckets(namespace string) MinioBucketNamespaceLister
-	MinioBucketListerExpansion
+// MinIOBucketLister helps list MinIOBuckets.
+type MinIOBucketLister interface {
+	// List lists all MinIOBuckets in the indexer.
+	List(selector labels.Selector) (ret []*v1alpha1.MinIOBucket, err error)
+	// MinIOBuckets returns an object that can list and get MinIOBuckets.
+	MinIOBuckets(namespace string) MinIOBucketNamespaceLister
+	MinIOBucketListerExpansion
 }
 
-// minioBucketLister implements the MinioBucketLister interface.
-type minioBucketLister struct {
+// minIOBucketLister implements the MinIOBucketLister interface.
+type minIOBucketLister struct {
 	indexer cache.Indexer
 }
 
-// NewMinioBucketLister returns a new MinioBucketLister.
-func NewMinioBucketLister(indexer cache.Indexer) MinioBucketLister {
-	return &minioBucketLister{indexer: indexer}
+// NewMinIOBucketLister returns a new MinIOBucketLister.
+func NewMinIOBucketLister(indexer cache.Indexer) MinIOBucketLister {
+	return &minIOBucketLister{indexer: indexer}
 }
 
-// List lists all MinioBuckets in the indexer.
-func (s *minioBucketLister) List(selector labels.Selector) (ret []*v1alpha1.MinioBucket, err error) {
+// List lists all MinIOBuckets in the indexer.
+func (s *minIOBucketLister) List(selector labels.Selector) (ret []*v1alpha1.MinIOBucket, err error) {
 	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.MinioBucket))
+		ret = append(ret, m.(*v1alpha1.MinIOBucket))
 	})
 	return ret, err
 }
 
-// MinioBuckets returns an object that can list and get MinioBuckets.
-func (s *minioBucketLister) MinioBuckets(namespace string) MinioBucketNamespaceLister {
-	return minioBucketNamespaceLister{indexer: s.indexer, namespace: namespace}
+// MinIOBuckets returns an object that can list and get MinIOBuckets.
+func (s *minIOBucketLister) MinIOBuckets(namespace string) MinIOBucketNamespaceLister {
+	return minIOBucketNamespaceLister{indexer: s.indexer, namespace: namespace}
 }
 
-// MinioBucketNamespaceLister helps list and get MinioBuckets.
-type MinioBucketNamespaceLister interface {
-	// List lists all MinioBuckets in the indexer for a given namespace.
-	List(selector labels.Selector) (ret []*v1alpha1.MinioBucket, err error)
-	// Get retrieves the MinioBucket from the indexer for a given namespace and name.
-	Get(name string) (*v1alpha1.MinioBucket, error)
-	MinioBucketNamespaceListerExpansion
+// MinIOBucketNamespaceLister helps list and get MinIOBuckets.
+type MinIOBucketNamespaceLister interface {
+	// List lists all MinIOBuckets in the indexer for a given namespace.
+	List(selector labels.Selector) (ret []*v1alpha1.MinIOBucket, err error)
+	// Get retrieves the MinIOBucket from the indexer for a given namespace and name.
+	Get(name string) (*v1alpha1.MinIOBucket, error)
+	MinIOBucketNamespaceListerExpansion
 }
 
-// minioBucketNamespaceLister implements the MinioBucketNamespaceLister
+// minIOBucketNamespaceLister implements the MinIOBucketNamespaceLister
 // interface.
-type minioBucketNamespaceLister struct {
+type minIOBucketNamespaceLister struct {
 	indexer   cache.Indexer
 	namespace string
 }
 
-// List lists all MinioBuckets in the indexer for a given namespace.
-func (s minioBucketNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.MinioBucket, err error) {
+// List lists all MinIOBuckets in the indexer for a given namespace.
+func (s minIOBucketNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.MinIOBucket, err error) {
 	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.MinioBucket))
+		ret = append(ret, m.(*v1alpha1.MinIOBucket))
 	})
 	return ret, err
 }
 
-// Get retrieves the MinioBucket from the indexer for a given namespace and name.
-func (s minioBucketNamespaceLister) Get(name string) (*v1alpha1.MinioBucket, error) {
+// Get retrieves the MinIOBucket from the indexer for a given namespace and name.
+func (s minIOBucketNamespaceLister) Get(name string) (*v1alpha1.MinIOBucket, error) {
 	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
 	if err != nil {
 		return nil, err
@@ -97,5 +97,5 @@ func (s minioBucketNamespaceLister) Get(name string) (*v1alpha1.MinioBucket, err
 	if !exists {
 		return nil, errors.NewNotFound(v1alpha1.Resource("miniobucket"), name)
 	}
-	return obj.(*v1alpha1.MinioBucket), nil
+	return obj.(*v1alpha1.MinIOBucket), nil
 }

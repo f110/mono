@@ -31,8 +31,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// MinioBuckets returns a MinioBucketInformer.
-	MinioBuckets() MinioBucketInformer
+	// MinIOBuckets returns a MinIOBucketInformer.
+	MinIOBuckets() MinIOBucketInformer
 }
 
 type version struct {
@@ -46,7 +46,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// MinioBuckets returns a MinioBucketInformer.
-func (v *version) MinioBuckets() MinioBucketInformer {
-	return &minioBucketInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// MinIOBuckets returns a MinIOBucketInformer.
+func (v *version) MinIOBuckets() MinIOBucketInformer {
+	return &minIOBucketInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

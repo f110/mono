@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "expansion_generated.go",
+        "minioinstance.go",
+        "mirror.go",
+    ],
+    importpath = "github.com/f110/tools/controllers/minio-extra-operator/pkg/listers/miniocontroller/v1beta1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
+        "//vendor/k8s.io/client-go/tools/cache:go_default_library",
+    ],
+)
