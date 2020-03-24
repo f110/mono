@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-extra-operator
+  labels:
+    controllers: minio-extra-operator
+spec:
+  selector:
+    matchLabels:
+      controllers: minio-extra-operator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        controllers: minio-extra-operator
+    spec:
+      serviceAccountName: minio-extra-operator
+      containers:
+        - name: operator
+          image: quay.io/f110/minio-extra-operator@sha256:859eb1b9a1ba4db87990328571bd06561d2ab3c57a9a0e1d7ee244bb9cfddcfa
+          args:
+            - "-lease-lock-name=minio-extra-operator"
+            - "-lease-lock-namespace=$(MY_NAMESPACE)"
+            - "-v=4"
+          env:
+            - name: MY_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            limits:
+              cpu: 100m
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+      terminationGracePeriodSeconds: 10

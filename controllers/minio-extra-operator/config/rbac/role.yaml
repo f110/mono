@@ -1,0 +1,51 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: minio-extra-operator
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - pods
+  - secrets
+  - services
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - pods/portforward
+  verbs:
+  - create
+  - get
+  - list
+- apiGroups:
+  - minio.f110.dev
+  resources:
+  - miniobuckets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - minio.f110.dev
+  resources:
+  - miniobuckets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - miniocontroller.min.io
+  resources:
+  - minioinstances
+  verbs:
+  - get
+  - list

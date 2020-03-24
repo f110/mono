@@ -28,6 +28,12 @@ import (
 	mbLister "github.com/f110/tools/controllers/minio-extra-operator/pkg/listers/minio/v1alpha1"
 )
 
+// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=miniocontroller.min.io,resources=minioinstances,verbs=get;list
+// +kubebuilder:rbac:groups=*,resources=pods;secrets;services,verbs=get
+// +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
+
 type MinIOBucketController struct {
 	config            *rest.Config
 	coreClient        *kubernetes.Clientset
