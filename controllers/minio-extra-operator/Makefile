@@ -3,6 +3,7 @@ gen:
 	bazel run //controllers/minio-extra-operator/pkg/api:gen.client
 	bazel run //controllers/minio-extra-operator/pkg/api:gen.lister
 	bazel run //controllers/minio-extra-operator/pkg/api:gen.informer
+	bazel run //controllers/minio-extra-operator/pkg/api:gen.crd
 	bazel run //controllers/minio-extra-operator/pkg/controller:rbac
 	bazel run //:vendor
 

@@ -27,7 +27,7 @@ type MinIOBucketSpec struct {
 	Selector metav1.LabelSelector `json:"selector"`
 	// FinalizePolicy is a policy when deleted CR Object.
 	// If FinalizePolicy is an empty string, then it is the same as "keep"
-	FinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy"`
+	FinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy,omitempty"`
 }
 
 type MinIOBucketStatus struct {

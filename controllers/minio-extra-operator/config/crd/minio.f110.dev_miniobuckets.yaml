@@ -34,6 +34,10 @@ spec:
             type: object
           spec:
             properties:
+              bucketFinalizePolicy:
+                description: FinalizePolicy is a policy when deleted CR Object. If
+                  FinalizePolicy is an empty string, then it is the same as "keep"
+                type: string
               selector:
                 description: Selector is a selector of MinioInstance
                 properties:
