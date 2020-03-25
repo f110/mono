@@ -6,3 +6,12 @@ spec:
   selector:
     matchLabels:
       app: minio
+---
+apiVersion: minio.f110.dev/v1alpha1
+kind: MinIOBucket
+metadata:
+  name: test2
+spec:
+  selector:
+    matchLabels:
+      app: minio

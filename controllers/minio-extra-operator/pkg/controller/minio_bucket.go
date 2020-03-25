@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v6"
+	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,10 @@ import (
 // +kubebuilder:rbac:groups=miniocontroller.min.io,resources=minioinstances,verbs=get;list
 // +kubebuilder:rbac:groups=*,resources=pods;secrets;services,verbs=get
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
+
+const (
+	minIOBucketControllerFinalizerName = "minio-bucket-controller.minio.f110.dev/finalizer"
+)
 
 type MinIOBucketController struct {
 	config            *rest.Config
@@ -102,14 +107,24 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		return err
 	}
 
-	minioBucket, err := c.mbLister.MinIOBuckets(namespace).Get(name)
+	currentBucket, err := c.mClient.MinioV1alpha1().MinIOBuckets(namespace).Get(name, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		klog.V(4).Infof("%s/%s is not found", namespace, name)
 		return nil
 	} else if err != nil {
 		return err
 	}
-	currentBucket := minioBucket.DeepCopy()
+	minioBucket := currentBucket.DeepCopy()
+
+	if minioBucket.DeletionTimestamp.IsZero() {
+		if !containsString(minioBucket.Finalizers, minIOBucketControllerFinalizerName) {
+			minioBucket.ObjectMeta.Finalizers = append(minioBucket.ObjectMeta.Finalizers, minIOBucketControllerFinalizerName)
+			_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(minioBucket)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	instances, err := c.mClient.MinV1beta1().MinIOInstances(namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
 	if err != nil {
@@ -129,32 +144,20 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		return err
 	}
 
-	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
+	// Object has been deleted
+	if !minioBucket.DeletionTimestamp.IsZero() {
+		return c.finalizeMinIOBucket(minioBucket, instance, creds)
+	}
+
+	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
 	if err != nil {
 		return err
 	}
-
-	instanceEndpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", instance.Name, instance.Namespace, svc.Spec.Ports[0].Port)
-	if c.runOutsideCluster {
-		forwarder, err := c.portForward(svc, int(svc.Spec.Ports[0].Port))
-		if err != nil {
-			return err
-		}
+	if forwarder != nil {
 		defer forwarder.Close()
-
-		ports, err := forwarder.GetPorts()
-		if err != nil {
-			return err
-		}
-		instanceEndpoint = fmt.Sprintf("0:%d", ports[0].Local)
 	}
 
-	mc, err := minio.New(
-		instanceEndpoint,
-		string(creds.Data["accesskey"]),
-		string(creds.Data["secretkey"]),
-		false,
-	)
+	mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
 	if err != nil {
 		return err
 	}
@@ -164,6 +167,7 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		klog.V(4).Infof("%s already exists", minioBucket.Name)
 		return nil
 	}
+	klog.V(4).Infof("%s is created", minioBucket.Name)
 
 	if err := mc.MakeBucket(minioBucket.Name, ""); err != nil {
 		return err
@@ -171,7 +175,7 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 
 	minioBucket.Status.Ready = true
 
-	if !reflect.DeepEqual(minioBucket, currentBucket) {
+	if !reflect.DeepEqual(minioBucket.Status, currentBucket.Status) {
 		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(minioBucket)
 		if err != nil {
 			return err
@@ -179,6 +183,64 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	}
 
 	return nil
+}
+
+func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instance miniocontrollerv1beta1.MinIOInstance, creds *corev1.Secret) error {
+	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
+	if err != nil {
+		return err
+	}
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+
+	mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
+	if err != nil {
+		return err
+	}
+
+	doneCh := make(chan struct{})
+	defer close(doneCh)
+	for v := range mc.ListObjectsV2(b.Name, "", true, doneCh) {
+		if err := mc.RemoveObject(b.Name, v.Key); err != nil {
+			return err
+		}
+		klog.Infof("%s/%s is removed", b.Name, v.Key)
+	}
+
+	if err := mc.RemoveBucket(b.Name); err != nil {
+		return err
+	}
+	klog.V(4).Infof("Remove bucket %s", b.Name)
+
+	b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
+
+	_, err = c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
+	return err
+}
+
+func (c *MinIOBucketController) getMinIOInstanceEndpoint(instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
+	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
+	if err != nil {
+		return "", nil, err
+	}
+
+	var forwarder *portforward.PortForwarder
+	instanceEndpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", instance.Name, instance.Namespace, svc.Spec.Ports[0].Port)
+	if c.runOutsideCluster {
+		forwarder, err = c.portForward(svc, int(svc.Spec.Ports[0].Port))
+		if err != nil {
+			return "", nil, err
+		}
+
+		ports, err := forwarder.GetPorts()
+		if err != nil {
+			return "", nil, err
+		}
+		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", ports[0].Local)
+	}
+
+	return instanceEndpoint, forwarder, nil
 }
 
 func (c *MinIOBucketController) portForward(svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
@@ -328,4 +390,27 @@ func (c *MinIOBucketController) deleteMinioBucket(obj interface{}) {
 	}
 
 	c.enqueue(b)
+}
+
+func containsString(v []string, s string) bool {
+	for _, item := range v {
+		if item == s {
+			return true
+		}
+	}
+
+	return false
+}
+
+func removeString(v []string, s string) []string {
+	result := make([]string, 0, len(v))
+	for _, item := range v {
+		if item == s {
+			continue
+		}
+
+		result = append(result, item)
+	}
+
+	return result
 }
