@@ -295,7 +295,7 @@ func (c *MinIOBucketController) portForward(svc *corev1.Service, port int) (*por
 func (c *MinIOBucketController) Run(ctx context.Context, workers int) {
 	defer c.queue.ShutDown()
 
-	klog.Info("Wait for informer caches to sync")
+	klog.V(2).Info("Wait for informer caches to sync")
 	if !cache.WaitForCacheSync(ctx.Done(), c.mbListerHasSynced) {
 		klog.Error("Failed to sync informer caches")
 		return
@@ -305,9 +305,9 @@ func (c *MinIOBucketController) Run(ctx context.Context, workers int) {
 		go wait.Until(c.worker, time.Second, ctx.Done())
 	}
 
-	klog.V(2).Info("Start workers of MinIOBucketController")
+	klog.Info("Start workers of MinIOBucketController")
 	<-ctx.Done()
-	klog.V(2).Info("Shutdown workers")
+	klog.Info("Shutdown workers")
 }
 
 func (c *MinIOBucketController) worker() {
