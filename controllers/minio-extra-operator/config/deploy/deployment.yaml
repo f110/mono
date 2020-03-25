@@ -17,7 +17,7 @@ spec:
       serviceAccountName: minio-extra-operator
       containers:
         - name: operator
-          image: quay.io/f110/minio-extra-operator@sha256:859eb1b9a1ba4db87990328571bd06561d2ab3c57a9a0e1d7ee244bb9cfddcfa
+          image: quay.io/f110/minio-extra-operator@sha256:3664832ebcc4a8e81c128f8afd74684b9c09c6ed62dc43b8722bccb665e0a159
           args:
             - "-lease-lock-name=minio-extra-operator"
             - "-lease-lock-namespace=$(MY_NAMESPACE)"
