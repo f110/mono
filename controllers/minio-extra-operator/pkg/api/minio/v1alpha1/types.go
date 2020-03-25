@@ -4,6 +4,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type BucketFinalizePolicy string
+
+const (
+	BucketDelete BucketFinalizePolicy = "delete"
+	BucketKeep   BucketFinalizePolicy = "keep"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
@@ -18,6 +25,9 @@ type MinIOBucket struct {
 type MinIOBucketSpec struct {
 	// Selector is a selector of MinioInstance
 	Selector metav1.LabelSelector `json:"selector"`
+	// FinalizePolicy is a policy when deleted CR Object.
+	// If FinalizePolicy is an empty string, then it is the same as "keep"
+	FinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy"`
 }
 
 type MinIOBucketStatus struct {

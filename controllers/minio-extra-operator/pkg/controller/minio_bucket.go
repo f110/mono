@@ -186,6 +186,14 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 }
 
 func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instance miniocontrollerv1beta1.MinIOInstance, creds *corev1.Secret) error {
+	if b.Spec.FinalizePolicy == "" || b.Spec.FinalizePolicy == miniov1alpha1.BucketKeep {
+		// If Spec.FinalizePolicy is Keep, then we shouldn't delete the bucket.
+		// We are going to delete the finalizer only.
+		b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
+		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
+		return err
+	}
+
 	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
 	if err != nil {
 		return err
