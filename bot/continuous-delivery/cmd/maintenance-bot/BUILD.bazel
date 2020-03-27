@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/f110/tools/bot/continuous-delivery/cmd/maintenance-bot",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//bot/continuous-delivery/pkg/config:go_default_library",
+        "//bot/continuous-delivery/pkg/consumer:go_default_library",
+        "//bot/continuous-delivery/pkg/webhook:go_default_library",
+        "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "maintenance-bot",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

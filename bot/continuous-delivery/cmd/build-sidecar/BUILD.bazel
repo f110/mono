@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/f110/tools/bot/continuous-delivery/cmd/build-sidecar",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/aws/credentials:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3:go_default_library",
+        "//vendor/github.com/aws/aws-sdk-go/service/s3/s3manager:go_default_library",
+        "//vendor/github.com/bradleyfalzon/ghinstallation:go_default_library",
+        "//vendor/github.com/google/go-github/v29/github:go_default_library",
+        "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "build-sidecar",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

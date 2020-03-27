@@ -1,0 +1,52 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "bin",
+    srcs = [
+        "//bot/continuous-delivery/cmd/maintenance-bot",
+    ],
+    mode = "0755",
+    package_dir = "/usr/local/bin",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/maintenance-bot"],
+    tars = [":bin"],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "k8s-cluster-maintenance-bot/bot",
+    tag = "{BUILD_TIMESTAMP}",
+)
+
+pkg_tar(
+    name = "build-sidecar-bin",
+    srcs = [
+        "//bot/continuous-delivery/cmd/build-sidecar",
+    ],
+    mode = "0755",
+    package_dir = "/usr/local/bin",
+)
+
+container_image(
+    name = "build_sidecar_image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/build-sidecar"],
+    tars = [":build-sidecar-bin"],
+)
+
+container_push(
+    name = "push_sidecar",
+    format = "Docker",
+    image = ":build_sidecar_image",
+    registry = "registry.f110.dev",
+    repository = "k8s-cluster-maintenance-bot/sidecar",
+    tag = "latest",
+)

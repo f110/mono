@@ -1,0 +1,18 @@
+webhook_listener: :5000
+build_namespace: bot
+commit_author: cluster-loadmaster
+commit_email: fmhrit+loadmaster@gmail.com
+github_token_file: /home/dexter/dev/src/github.com/f110/k8s-cluster-maintenance-bot/github-token
+app_id: 51841
+installation_id: 6365451
+app_private_key_file: /home/dexter/dev/src/github.com/f110/k8s-cluster-maintenance-bot/privatekey.pem
+private_key_secret_name: github-private-key
+storage_host: bot-data-hl-svc.bot.svc.cluster.local:9000
+storage_token_secret_name: object-storage-token
+artifact_bucket: build-artifact
+host_aliases:
+  - hostnames: ["registry.f110.dev", "registry.storage.x.f110.dev"]
+    ip: 192.168.100.132
+allow_repositories:
+  - f110/bot-staging
+safe_mode: true # not apply changes actually
