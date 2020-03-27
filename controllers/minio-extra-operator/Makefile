@@ -10,6 +10,11 @@ gen:
 run:
 	bazel run //controllers/minio-extra-operator/cmd/minio-extra-operator -- -lease-lock-name minio-eo -lease-lock-namespace default -dev -v=4
 
+push:
+	bazel run //controllers/minio-extra-operator:push
+	@cat ../../bazel-bin/controllers/minio-extra-operator/push.digest
+	@echo
+
 build-manifest:
 	kustomize build config > config/all-in-one.yaml
 
