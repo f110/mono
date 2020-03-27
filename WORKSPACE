@@ -47,7 +47,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_rules_extras",
-    commit = "34f9f113955fb588d19f8c05f53dae7eb7f0820f",
+    commit = "7707fd5a50b277e60ef86d4bc258415d76274d4b",
     remote = "https://github.com/f110/rules_extras",
 )
 
