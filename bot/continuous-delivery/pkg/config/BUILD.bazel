@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["config.go"],
+    importpath = "github.com/f110/tools/bot/continuous-delivery/pkg/config",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/sigs.k8s.io/yaml:go_default_library",
+    ],
+)
