@@ -137,40 +137,41 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	if len(instances.Items) > 1 {
 		return errors.New("found some instances")
 	}
-	instance := instances.Items[0]
-
-	creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
 
 	// Object has been deleted
 	if !minioBucket.DeletionTimestamp.IsZero() {
-		return c.finalizeMinIOBucket(minioBucket, instance, creds)
+		return c.finalizeMinIOBucket(minioBucket, instances.Items)
 	}
 
-	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
-	if err != nil {
-		return err
-	}
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
+	for _, instance := range instances.Items {
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
 
-	mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
-	if err != nil {
-		return err
-	}
-	if exists, err := mc.BucketExists(minioBucket.Name); err != nil {
-		return err
-	} else if exists {
-		klog.V(4).Infof("%s already exists", minioBucket.Name)
-		return nil
-	}
-	klog.V(4).Infof("%s is created", minioBucket.Name)
+		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
+		if err != nil {
+			return err
+		}
+		if forwarder != nil {
+			defer forwarder.Close()
+		}
 
-	if err := mc.MakeBucket(minioBucket.Name, ""); err != nil {
-		return err
+		mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
+		if err != nil {
+			return err
+		}
+		if exists, err := mc.BucketExists(minioBucket.Name); err != nil {
+			return err
+		} else if exists {
+			klog.V(4).Infof("%s already exists", minioBucket.Name)
+			continue
+		}
+		klog.V(4).Infof("%s is created", minioBucket.Name)
+
+		if err := mc.MakeBucket(minioBucket.Name, ""); err != nil {
+			return err
+		}
 	}
 
 	minioBucket.Status.Ready = true
@@ -185,7 +186,7 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	return nil
 }
 
-func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instance miniocontrollerv1beta1.MinIOInstance, creds *corev1.Secret) error {
+func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
 	if b.Spec.FinalizePolicy == "" || b.Spec.FinalizePolicy == miniov1alpha1.BucketKeep {
 		// If Spec.FinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
@@ -194,36 +195,43 @@ func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket
 		return err
 	}
 
-	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
-	if err != nil {
-		return err
-	}
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
-
-	mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
-	if err != nil {
-		return err
-	}
-
-	doneCh := make(chan struct{})
-	defer close(doneCh)
-	for v := range mc.ListObjectsV2(b.Name, "", true, doneCh) {
-		if err := mc.RemoveObject(b.Name, v.Key); err != nil {
+	for _, instance := range instances {
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		if err != nil {
 			return err
 		}
-		klog.Infof("%s/%s is removed", b.Name, v.Key)
-	}
 
-	if err := mc.RemoveBucket(b.Name); err != nil {
-		return err
+		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
+		if err != nil {
+			return err
+		}
+		if forwarder != nil {
+			defer forwarder.Close()
+		}
+
+		mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
+		if err != nil {
+			return err
+		}
+
+		doneCh := make(chan struct{})
+		defer close(doneCh)
+		for v := range mc.ListObjectsV2(b.Name, "", true, doneCh) {
+			if err := mc.RemoveObject(b.Name, v.Key); err != nil {
+				return err
+			}
+			klog.Infof("%s/%s is removed", b.Name, v.Key)
+		}
+
+		if err := mc.RemoveBucket(b.Name); err != nil {
+			return err
+		}
+		klog.V(4).Infof("Remove bucket %s", b.Name)
 	}
-	klog.V(4).Infof("Remove bucket %s", b.Name)
 
 	b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
 
-	_, err = c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
+	_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
 	return err
 }
 
