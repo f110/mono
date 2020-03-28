@@ -24,7 +24,8 @@ type HarborProjectSpec struct {
 }
 
 type HarborProjectStatus struct {
-	Ready bool `json:"ready,omitempty"`
+	Ready     bool `json:"ready,omitempty"`
+	ProjectId int  `json:"project_id,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -52,6 +52,8 @@ spec:
             type: object
           status:
             properties:
+              project_id:
+                type: integer
               ready:
                 type: boolean
             type: object

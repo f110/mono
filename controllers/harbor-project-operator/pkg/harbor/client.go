@@ -122,6 +122,30 @@ func (h *Harbor) NewProject(p *NewProjectRequest) error {
 	return nil
 }
 
+func (h *Harbor) DeleteProject(projectId int) error {
+	req, err := h.newRequest(http.MethodDelete, fmt.Sprintf("projects/%d", projectId), nil)
+	if err != nil {
+		return err
+	}
+
+	res, err := h.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusBadRequest:
+		return fmt.Errorf("invalid project id: %d", projectId)
+	case http.StatusNotFound:
+		return errors.New("project not found")
+	default:
+		return fmt.Errorf("delete project: unknown status code: %d", res.StatusCode)
+	}
+}
+
 func (h *Harbor) newRequest(method string, endpoint string, body io.Reader) (*http.Request, error) {
 	r, err := http.NewRequest(method, fmt.Sprintf("%s/api/%s", h.host, endpoint), body)
 	if err != nil {
@@ -135,25 +159,21 @@ func (h *Harbor) newRequest(method string, endpoint string, body io.Reader) (*ht
 }
 
 type Project struct {
-	Id       int         `json:"project_id,omitempty"`
-	OwnerId  int         `json:"owner_id,omitempty"`
-	Name     string      `json:"name"`
-	Metadata ProjectMeta `json:"metadata"`
-}
-
-type ProjectMeta struct {
-	Public bool `json:"public"`
+	Id       int             `json:"project_id,omitempty"`
+	OwnerId  int             `json:"owner_id,omitempty"`
+	Name     string          `json:"name"`
+	Metadata ProjectMetadata `json:"metadata"`
 }
 
 type NewProjectRequest struct {
-	ProjectName  string             `json:"project_name"`
-	CVEWhitelist CVEWhitelist       `json:"cve_whitelist,omitempty"`
-	CountLimit   int                `json:"count_limit,omitempty"`
-	StorageLimit int                `json:"storage_limit,omitempty"`
-	Metadata     NewProjectMetadata `json:"metadata,omitempty"`
+	ProjectName  string          `json:"project_name"`
+	CVEWhitelist CVEWhitelist    `json:"cve_whitelist,omitempty"`
+	CountLimit   int             `json:"count_limit,omitempty"`
+	StorageLimit int             `json:"storage_limit,omitempty"`
+	Metadata     ProjectMetadata `json:"metadata,omitempty"`
 }
 
-type NewProjectMetadata struct {
+type ProjectMetadata struct {
 	Public               string `json:"public,omitempty"`
 	EnableContentTrust   string `json:"enable_content_trust,omitempty"`
 	AutoScan             string `json:"auto_scan,omitempty"`

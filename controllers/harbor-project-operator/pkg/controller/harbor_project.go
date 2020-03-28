@@ -28,6 +28,10 @@ import (
 	hpLister "github.com/f110/tools/controllers/harbor-project-operator/pkg/listers/harbor/v1alpha1"
 )
 
+const (
+	harborProjectControllerFinalizerName = "harbor-project-controller.harbor.f110.dev/finalizer"
+)
+
 type HarborProjectController struct {
 	config            *rest.Config
 	coreClient        *kubernetes.Clientset
@@ -103,6 +107,16 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 	}
 	harborProject := currentHP.DeepCopy()
 
+	if harborProject.DeletionTimestamp.IsZero() {
+		if !containsString(harborProject.Finalizers, harborProjectControllerFinalizerName) {
+			harborProject.ObjectMeta.Finalizers = append(harborProject.ObjectMeta.Finalizers, harborProjectControllerFinalizerName)
+			_, err = c.hpClient.HarborV1alpha1().HarborProjects(harborProject.Namespace).Update(harborProject)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
 	if c.runOutsideCluster {
 		pf, err := c.portForward(c.harborService, 8080)
@@ -117,19 +131,30 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 		}
 		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
 	}
-
 	harborClient := harbor.New(harborHost, "admin", c.adminPassword)
-	if ok, err := harborClient.ExistProject(currentHP.Name); err == nil && ok {
-		return nil
+
+	// Object has been deleted
+	if !harborProject.DeletionTimestamp.IsZero() {
+		return c.finalizeHarborProject(harborClient, harborProject)
+	}
+
+	if ok, err := harborClient.ExistProject(currentHP.Name); err == nil && !ok {
+		if err := c.createProject(currentHP, harborClient); err != nil {
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
-	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
-	if currentHP.Spec.Public {
-		newProject.Metadata.Public = "true"
-	}
-	if err := harborClient.NewProject(newProject); err != nil {
+
+	projects, err := harborClient.ListProjects()
+	if err != nil {
 		return err
+	}
+	for _, v := range projects {
+		if v.Name == currentHP.Name {
+			harborProject.Status.ProjectId = v.Id
+			break
+		}
 	}
 
 	harborProject.Status.Ready = true
@@ -142,6 +167,34 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 	}
 
 	return nil
+}
+
+func (c *HarborProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
+	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
+	if currentHP.Spec.Public {
+		newProject.Metadata.Public = "true"
+	}
+	if err := client.NewProject(newProject); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *HarborProjectController) finalizeHarborProject(client *harbor.Harbor, hp *harborv1alpha1.HarborProject) error {
+	if hp.Status.Ready == false {
+		klog.V(4).Infof("Skip finalize project because the project still not shipped: %s", hp.Name)
+		hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
+		return nil
+	}
+
+	err := client.DeleteProject(hp.Status.ProjectId)
+	if err != nil {
+		return err
+	}
+	hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
+	_, err = c.hpClient.HarborV1alpha1().HarborProjects(hp.Namespace).Update(hp)
+	return err
 }
 
 func (c *HarborProjectController) portForward(svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
@@ -286,4 +339,27 @@ func (c *HarborProjectController) deleteHarborProject(obj interface{}) {
 	}
 
 	c.enqueue(hp)
+}
+
+func containsString(v []string, s string) bool {
+	for _, item := range v {
+		if item == s {
+			return true
+		}
+	}
+
+	return false
+}
+
+func removeString(v []string, s string) []string {
+	result := make([]string, 0, len(v))
+	for _, item := range v {
+		if item == s {
+			continue
+		}
+
+		result = append(result, item)
+	}
+
+	return result
 }
