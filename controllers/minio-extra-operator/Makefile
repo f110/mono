@@ -18,4 +18,4 @@ push:
 build-manifest:
 	kustomize build config > config/all-in-one.yaml
 
-.PHONY: run gen build-manifest
+.PHONY: run gen push build-manifest

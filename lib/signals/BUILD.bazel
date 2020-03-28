@@ -6,6 +6,6 @@ go_library(
         "signals.go",
         "signals_posix.go",
     ],
-    importpath = "github.com/f110/tools/controllers/minio-extra-operator/pkg/signals",
+    importpath = "github.com/f110/tools/lib/signals",
     visibility = ["//visibility:public"],
 )

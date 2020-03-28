@@ -3,10 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/f110/tools/controllers/minio-extra-operator/cmd/minio-extra-operator",
+    importpath = "github.com/f110/tools/controllers/harbor-project-operator/cmd/harbor-project-operator",
     visibility = ["//visibility:private"],
     deps = [
-        "//controllers/minio-extra-operator/pkg/controller:go_default_library",
+        "//controllers/harbor-project-operator/pkg/controller:go_default_library",
         "//lib/signals:go_default_library",
         "//vendor/github.com/google/uuid:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
@@ -19,7 +19,7 @@ go_library(
 )
 
 go_binary(
-    name = "minio-extra-operator",
+    name = "harbor-project-operator",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )

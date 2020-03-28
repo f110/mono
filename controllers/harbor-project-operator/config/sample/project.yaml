@@ -1,0 +1,6 @@
+apiVersion: harbor.f110.dev/v1alpha1
+kind: HarborProject
+metadata:
+  name: test
+spec:
+  public: true

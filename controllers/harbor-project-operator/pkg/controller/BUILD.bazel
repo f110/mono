@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["harbor_project.go"],
+    importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/controller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//controllers/harbor-project-operator/pkg/api/harbor/v1alpha1:go_default_library",
+        "//controllers/harbor-project-operator/pkg/client/versioned:go_default_library",
+        "//controllers/harbor-project-operator/pkg/harbor:go_default_library",
+        "//controllers/harbor-project-operator/pkg/informers/externalversions:go_default_library",
+        "//controllers/harbor-project-operator/pkg/listers/harbor/v1alpha1:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/util/wait:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/tools/cache:go_default_library",
+        "//vendor/k8s.io/client-go/tools/portforward:go_default_library",
+        "//vendor/k8s.io/client-go/transport/spdy:go_default_library",
+        "//vendor/k8s.io/client-go/util/workqueue:go_default_library",
+        "//vendor/k8s.io/klog:go_default_library",
+    ],
+)
+
+load("@dev_f110_rules_extras//go:gen.bzl", "rbac_gen")
+
+rbac_gen(
+    name = "rbac",
+    rolename = "harbor-project-operator",
+    srcs = [":go_default_library"],
+    dir = "controllers/harbor-project-operator/config/rbac",
+)
