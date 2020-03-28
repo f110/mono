@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "fake_harbor_client.go",
+        "fake_harborproject.go",
+    ],
+    importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1/fake",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//controllers/harbor-project-operator/pkg/api/harbor/v1alpha1:go_default_library",
+        "//controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/types:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/testing:go_default_library",
+    ],
+)
