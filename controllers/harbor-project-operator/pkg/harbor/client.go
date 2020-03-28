@@ -46,7 +46,7 @@ func New(host, username, password string) *Harbor {
 }
 
 func (h *Harbor) ListProjects() ([]Project, error) {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/projects", h.host), nil)
+	req, err := h.newRequest(http.MethodGet, "projects", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -90,11 +90,11 @@ func (h *Harbor) ExistProject(name string) (bool, error) {
 	case http.StatusNotFound:
 		return false, nil
 	default:
-		return false, fmt.Errorf("unknown status code: %d", res.StatusCode)
+		return false, fmt.Errorf("exists project: unknown status code: %d", res.StatusCode)
 	}
 }
 
-func (h *Harbor) NewProject(p *Project) error {
+func (h *Harbor) NewProject(p *NewProjectRequest) error {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(p); err != nil {
 		return err
@@ -114,9 +114,9 @@ func (h *Harbor) NewProject(p *Project) error {
 	case http.StatusCreated:
 	// Succeeded
 	case http.StatusConflict:
-		return fmt.Errorf("%s already exists", p.Name)
+		return fmt.Errorf("%s already exists", p.ProjectName)
 	default:
-		return fmt.Errorf("unknown status code: %d", res.StatusCode)
+		return fmt.Errorf("new project: unknown status code: %d", res.StatusCode)
 	}
 
 	return nil
@@ -128,17 +128,44 @@ func (h *Harbor) newRequest(method string, endpoint string, body io.Reader) (*ht
 		return nil, err
 	}
 	r.SetBasicAuth(h.username, h.password)
+	r.Header.Set("Accept", "application/json")
+	r.Header.Set("Content-Type", "appliaction/json")
 
 	return r, nil
 }
 
 type Project struct {
-	Id       int         `json:"project_id"`
-	OwnerId  int         `json:"owner_id"`
+	Id       int         `json:"project_id,omitempty"`
+	OwnerId  int         `json:"owner_id,omitempty"`
 	Name     string      `json:"name"`
 	Metadata ProjectMeta `json:"metadata"`
 }
 
 type ProjectMeta struct {
 	Public bool `json:"public"`
+}
+
+type NewProjectRequest struct {
+	ProjectName  string             `json:"project_name"`
+	CVEWhitelist CVEWhitelist       `json:"cve_whitelist,omitempty"`
+	CountLimit   int                `json:"count_limit,omitempty"`
+	StorageLimit int                `json:"storage_limit,omitempty"`
+	Metadata     NewProjectMetadata `json:"metadata,omitempty"`
+}
+
+type NewProjectMetadata struct {
+	Public               string `json:"public,omitempty"`
+	EnableContentTrust   string `json:"enable_content_trust,omitempty"`
+	AutoScan             string `json:"auto_scan,omitempty"`
+	Severity             string `json:"severity,omitempty"`
+	ReuseSysCVEWhitelist string `json:"reuse_sys_cve_whitelist,omitempty"`
+	PreventVUL           string `json:"prevent_vul,omitempty"`
+}
+
+type CVEWhitelist struct {
+	Items []CVEItem `json:"items,omitempty"`
+}
+
+type CVEItem struct {
+	CVEId string `json:"cve_id"`
 }

@@ -105,7 +105,7 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 
 	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
 	if c.runOutsideCluster {
-		pf, err := c.portForward(c.harborService, 80)
+		pf, err := c.portForward(c.harborService, 8080)
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,11 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 	} else if err != nil {
 		return err
 	}
-	if err := harborClient.NewProject(&harbor.Project{Name: currentHP.Name}); err != nil {
+	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
+	if currentHP.Spec.Public {
+		newProject.Metadata.Public = "true"
+	}
+	if err := harborClient.NewProject(newProject); err != nil {
 		return err
 	}
 
@@ -172,11 +176,11 @@ func (c *HarborProjectController) portForward(svc *corev1.Service, port int) (*p
 	go func() {
 		err := pf.ForwardPorts()
 		if err != nil {
+			klog.Error(err)
 			switch v := err.(type) {
 			case *apierrors.StatusError:
 				klog.Info(v)
 			}
-			klog.Error(err)
 		}
 	}()
 
