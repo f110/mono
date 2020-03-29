@@ -44,8 +44,8 @@ spec:
           spec:
             properties:
               public:
-                description: Public is a access level of project. If Public sets true,
-                  then anyone can read.
+                description: Public is an access level of project. If Public sets
+                  true, then anyone can read.
                 type: boolean
             type: object
           status:
@@ -54,6 +54,8 @@ spec:
                 type: integer
               ready:
                 type: boolean
+              registry:
+                type: string
             type: object
         type: object
     served: true
@@ -120,8 +122,16 @@ rules:
 - apiGroups:
   - '*'
   resources:
+  - configmaps
   - pods
   - secrets
+  - services
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - pods
   - services
   verbs:
   - get
@@ -133,6 +143,15 @@ rules:
   - create
   - get
   - list
+- apiGroups:
+  - '*'
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - update
 - apiGroups:
   - harbor.f110.dev
   resources:
@@ -149,6 +168,26 @@ rules:
   - harbor.f110.dev
   resources:
   - harborprojects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - harbor.f110.dev
+  resources:
+  - harborrobotaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - harbor.f110.dev
+  resources:
+  - harborrobotaccounts/status
   verbs:
   - get
   - patch
