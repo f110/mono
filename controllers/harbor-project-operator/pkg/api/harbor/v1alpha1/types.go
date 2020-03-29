@@ -40,6 +40,8 @@ type HarborProjectList struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:printcolumn:name="ready",type="boolean",JSONPath=".status.ready",description="Ready",format="byte",priority=0
+// +kubebuilder:printcolumn:name="age",type="date",JSONPath=".metadata.creationTimestamp",description="age",format="date",priority=0
 
 type HarborRobotAccount struct {
 	// If you want to create a robot account for this project, you set RobotAccount.

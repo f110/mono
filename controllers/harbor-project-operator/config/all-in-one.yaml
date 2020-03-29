@@ -84,7 +84,18 @@ spec:
     singular: harborrobotaccount
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: Ready
+      format: byte
+      jsonPath: .status.ready
+      name: ready
+      type: boolean
+    - description: age
+      format: date
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         properties:
@@ -123,6 +134,7 @@ spec:
         type: object
     served: true
     storage: true
+    subresources: {}
 status:
   acceptedNames:
     kind: ""
