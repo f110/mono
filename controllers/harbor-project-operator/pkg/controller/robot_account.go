@@ -157,47 +157,18 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	if err != nil {
 		return err
 	}
+	created := false
 	for _, v := range accounts {
-		if v.Name == harborRobotAccount.Name {
-			klog.Infof("%s is already exist", v.Name)
-			return nil
+		if strings.HasSuffix(v.Name, "$"+harborRobotAccount.Name) {
+			klog.V(4).Infof("%s is already exist", v.Name)
+			created = true
 		}
 	}
 
-	newAccount, err := harborClient.CreateRobotAccount(
-		project.Status.ProjectId,
-		&harbor.NewRobotAccountRequest{
-			Name: harborRobotAccount.Name,
-			Access: []harbor.Access{
-				{Resource: fmt.Sprintf("/project/%d/repository", project.Status.ProjectId), Action: "push"},
-				{Resource: fmt.Sprintf("/project/%d/repository", project.Status.ProjectId), Action: "pull"},
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	dockerConfig := NewDockerConfig(project.Status.Registry, newAccount.Name, newAccount.Token)
-	configBuf := new(bytes.Buffer)
-	if err := json.NewEncoder(configBuf).Encode(dockerConfig); err != nil {
-		return err
-	}
-
-	newSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            harborRobotAccount.Spec.SecretName,
-			Namespace:       harborRobotAccount.Namespace,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(harborRobotAccount, harborv1alpha1.SchemeGroupVersion.WithKind("HarborRobotAccount"))},
-		},
-		Type: corev1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{
-			".dockerconfigjson": configBuf.Bytes(),
-		},
-	}
-	_, err = c.coreClient.CoreV1().Secrets(newSecret.Namespace).Create(newSecret)
-	if err != nil {
-		return err
+	if !created {
+		if err := c.createRobotAccount(harborClient, project, harborRobotAccount); err != nil {
+			return err
+		}
 	}
 
 	accounts, err = harborClient.GetRobotAccounts(project.Status.ProjectId)
@@ -217,6 +188,46 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *HarborRobotAccountController) createRobotAccount(client *harbor.Harbor, project *harborv1alpha1.HarborProject, robotAccount *harborv1alpha1.HarborRobotAccount) error {
+	newAccount, err := client.CreateRobotAccount(
+		project.Status.ProjectId,
+		&harbor.NewRobotAccountRequest{
+			Name: robotAccount.Name,
+			Access: []harbor.Access{
+				{Resource: fmt.Sprintf("/project/%d/repository", project.Status.ProjectId), Action: "push"},
+				{Resource: fmt.Sprintf("/project/%d/repository", project.Status.ProjectId), Action: "pull"},
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	dockerConfig := NewDockerConfig(project.Status.Registry, newAccount.Name, newAccount.Token)
+	configBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(configBuf).Encode(dockerConfig); err != nil {
+		return err
+	}
+
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            robotAccount.Spec.SecretName,
+			Namespace:       robotAccount.Namespace,
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(robotAccount, harborv1alpha1.SchemeGroupVersion.WithKind("HarborRobotAccount"))},
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			".dockerconfigjson": configBuf.Bytes(),
+		},
+	}
+	_, err = c.coreClient.CoreV1().Secrets(newSecret.Namespace).Create(newSecret)
+	if err != nil {
+		return err
 	}
 
 	return nil
