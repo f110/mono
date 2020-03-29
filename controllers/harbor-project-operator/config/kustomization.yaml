@@ -5,4 +5,5 @@ resources:
   - rbac/role.yaml
   - rbac/role_binding.yaml
   - crd/harbor.f110.dev_harborprojects.yaml
+  - crd/harbor.f110.dev_harborrobotaccounts.yaml
   - deploy/deployment.yaml
