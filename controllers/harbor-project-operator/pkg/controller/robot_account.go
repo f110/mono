@@ -55,7 +55,7 @@ type HarborRobotAccountController struct {
 // +kubebuilder:rbac:groups=*,resources=secrets,verbs=get;create;update;delete
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborRobotAccountController, error) {
+func NewHarborRobotAccountController(coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborRobotAccountController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -70,7 +70,6 @@ func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes
 		return nil, err
 	}
 
-	sharedInformerFactory := informers.NewSharedInformerFactory(hClient, 30*time.Second)
 	hraInformer := sharedInformerFactory.Harbor().V1alpha1().HarborRobotAccounts()
 
 	c := &HarborRobotAccountController{
@@ -90,8 +89,6 @@ func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes
 		UpdateFunc: c.updateHarborRobotAccount,
 		DeleteFunc: c.deleteHarborRobotAccount,
 	})
-
-	sharedInformerFactory.Start(ctx.Done())
 
 	return c, nil
 }

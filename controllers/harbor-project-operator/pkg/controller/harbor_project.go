@@ -53,7 +53,7 @@ type HarborProjectController struct {
 // +kubebuilder:rbac:groups=*,resources=pods;secrets;services;configmaps,verbs=get
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, harborNamespace, harborName, adminSecretName, coreConfigMapName string, runOutsideCluster bool) (*HarborProjectController, error) {
+func NewHarborProjectController(coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName, coreConfigMapName string, runOutsideCluster bool) (*HarborProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -76,7 +76,6 @@ func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clie
 		return nil, err
 	}
 
-	sharedInformerFactory := informers.NewSharedInformerFactory(hpClient, 30*time.Second)
 	hpInformer := sharedInformerFactory.Harbor().V1alpha1().HarborProjects()
 
 	c := &HarborProjectController{
@@ -97,8 +96,6 @@ func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clie
 		UpdateFunc: c.updateHarborProject,
 		DeleteFunc: c.deleteHarborProject,
 	})
-
-	sharedInformerFactory.Start(ctx.Done())
 
 	return c, nil
 }

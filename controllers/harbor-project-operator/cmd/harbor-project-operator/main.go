@@ -16,7 +16,9 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
 
+	clientset "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned"
 	"github.com/f110/tools/controllers/harbor-project-operator/pkg/controller"
+	informers "github.com/f110/tools/controllers/harbor-project-operator/pkg/informers/externalversions"
 	"github.com/f110/tools/lib/signals"
 )
 
@@ -67,8 +69,17 @@ func main() {
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
+		klog.Error(err)
 		os.Exit(1)
 	}
+
+	hClient, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		klog.Error(err)
+		os.Exit(1)
+	}
+	sharedInformerFactory := informers.NewSharedInformerFactory(hClient, 30*time.Second)
+	sharedInformerFactory.Start(ctx.Done())
 
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
@@ -88,12 +99,12 @@ func main() {
 		RetryPeriod:     5 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				projectController, err := controller.NewHarborProjectController(ctx, kubeClient, cfg, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
+				projectController, err := controller.NewHarborProjectController(kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
 				if err != nil {
 					klog.Error(err)
 					return
 				}
-				robotAccountController, err := controller.NewHarborRobotAccountController(ctx, kubeClient, cfg, harborNamespace, harborServiceName, adminSecretName, dev)
+				robotAccountController, err := controller.NewHarborRobotAccountController(kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, dev)
 				if err != nil {
 					klog.Error(err)
 					return

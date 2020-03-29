@@ -6,7 +6,9 @@ go_library(
     importpath = "github.com/f110/tools/controllers/harbor-project-operator/cmd/harbor-project-operator",
     visibility = ["//visibility:private"],
     deps = [
+        "//controllers/harbor-project-operator/pkg/client/versioned:go_default_library",
         "//controllers/harbor-project-operator/pkg/controller:go_default_library",
+        "//controllers/harbor-project-operator/pkg/informers/externalversions:go_default_library",
         "//lib/signals:go_default_library",
         "//vendor/github.com/google/uuid:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
