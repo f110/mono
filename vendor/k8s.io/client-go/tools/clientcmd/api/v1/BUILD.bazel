@@ -10,7 +10,7 @@ go_library(
         "zz_generated.conversion.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/f110/tools/vendor/k8s.io/client-go/tools/clientcmd/api/v1",
+    importmap = "github.com/f110/wing/vendor/k8s.io/client-go/tools/clientcmd/api/v1",
     importpath = "k8s.io/client-go/tools/clientcmd/api/v1",
     visibility = ["//visibility:public"],
     deps = [

@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/f110/tools/controllers/minio-extra-operator/cmd/minio-extra-operator",
+    importpath = "github.com/f110/wing/controllers/minio-extra-operator/cmd/minio-extra-operator",
     visibility = ["//visibility:private"],
     deps = [
         "//controllers/minio-extra-operator/pkg/controller:go_default_library",

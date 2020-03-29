@@ -6,7 +6,7 @@ go_library(
         "noder.go",
         "path.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
     importpath = "gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
     visibility = ["//visibility:public"],
 )

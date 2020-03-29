@@ -9,7 +9,7 @@ go_library(
         "leaselock.go",
         "multilock.go",
     ],
-    importmap = "github.com/f110/tools/vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
+    importmap = "github.com/f110/wing/vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
     importpath = "k8s.io/client-go/tools/leaderelection/resourcelock",
     visibility = ["//visibility:public"],
     deps = [

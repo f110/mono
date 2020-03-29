@@ -28,7 +28,7 @@ package versioned
 import (
 	"fmt"
 
-	harborv1alpha1 "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1"
+	harborv1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

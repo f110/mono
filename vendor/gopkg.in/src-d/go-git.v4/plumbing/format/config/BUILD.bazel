@@ -10,7 +10,7 @@ go_library(
         "option.go",
         "section.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/config",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/src-d/gcfg:go_default_library"],

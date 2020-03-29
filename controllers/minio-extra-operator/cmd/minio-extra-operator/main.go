@@ -15,8 +15,8 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
 
-	"github.com/f110/tools/controllers/minio-extra-operator/pkg/controller"
-	"github.com/f110/tools/lib/signals"
+	"github.com/f110/wing/controllers/minio-extra-operator/pkg/controller"
+	"github.com/f110/wing/lib/signals"
 )
 
 func main() {

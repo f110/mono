@@ -9,7 +9,7 @@ go_library(
         "zz_generated.conversion.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/f110/tools/vendor/k8s.io/apimachinery/pkg/apis/meta/internalversion",
+    importmap = "github.com/f110/wing/vendor/k8s.io/apimachinery/pkg/apis/meta/internalversion",
     importpath = "k8s.io/apimachinery/pkg/apis/meta/internalversion",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,6 +6,6 @@ go_library(
         "signals.go",
         "signals_posix.go",
     ],
-    importpath = "github.com/f110/tools/lib/signals",
+    importpath = "github.com/f110/wing/lib/signals",
     visibility = ["//visibility:public"],
 )

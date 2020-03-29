@@ -6,7 +6,7 @@ go_library(
         "errors.go",
         "scanner.go",
     ],
-    importmap = "github.com/f110/tools/vendor/github.com/src-d/gcfg/scanner",
+    importmap = "github.com/f110/wing/vendor/github.com/src-d/gcfg/scanner",
     importpath = "github.com/src-d/gcfg/scanner",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/src-d/gcfg/token:go_default_library"],

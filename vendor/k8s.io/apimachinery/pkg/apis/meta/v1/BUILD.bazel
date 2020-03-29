@@ -25,7 +25,7 @@ go_library(
         "zz_generated.deepcopy.go",
         "zz_generated.defaults.go",
     ],
-    importmap = "github.com/f110/tools/vendor/k8s.io/apimachinery/pkg/apis/meta/v1",
+    importmap = "github.com/f110/wing/vendor/k8s.io/apimachinery/pkg/apis/meta/v1",
     importpath = "k8s.io/apimachinery/pkg/apis/meta/v1",
     visibility = ["//visibility:public"],
     deps = [

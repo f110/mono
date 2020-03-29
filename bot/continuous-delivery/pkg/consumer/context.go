@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-github/v29/github"
 	"golang.org/x/xerrors"
 
-	"github.com/f110/tools/bot/continuous-delivery/pkg/config"
+	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
 )
 
 type eventContext struct {

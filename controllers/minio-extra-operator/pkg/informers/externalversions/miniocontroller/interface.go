@@ -26,8 +26,8 @@ SOFTWARE.
 package miniocontroller
 
 import (
-	internalinterfaces "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller/v1beta1"
+	internalinterfaces "github.com/f110/wing/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
+	v1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller/v1beta1"
 )
 
 // Interface provides access to each of this group's versions.

@@ -26,11 +26,11 @@ SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned"
-	miniov1alpha1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1"
-	fakeminiov1alpha1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1/fake"
-	minv1beta1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
-	fakeminv1beta1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1/fake"
+	clientset "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned"
+	miniov1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1"
+	fakeminiov1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1/fake"
+	minv1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
+	fakeminv1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

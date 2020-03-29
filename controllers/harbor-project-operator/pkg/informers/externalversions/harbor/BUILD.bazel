@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["interface.go"],
-    importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/informers/externalversions/harbor",
+    importpath = "github.com/f110/wing/controllers/harbor-project-operator/pkg/informers/externalversions/harbor",
     visibility = ["//visibility:public"],
     deps = [
         "//controllers/harbor-project-operator/pkg/informers/externalversions/harbor/v1alpha1:go_default_library",

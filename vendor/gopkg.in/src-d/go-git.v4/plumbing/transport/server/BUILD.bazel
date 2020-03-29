@@ -6,7 +6,7 @@ go_library(
         "loader.go",
         "server.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/server",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/server",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/server",
     visibility = ["//visibility:public"],
     deps = [

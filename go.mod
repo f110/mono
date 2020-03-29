@@ -1,4 +1,4 @@
-module github.com/f110/tools
+module github.com/f110/wing
 
 go 1.13
 

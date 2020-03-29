@@ -26,8 +26,8 @@ SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/f110/tools/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
-	"github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/scheme"
+	v1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
+	"github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

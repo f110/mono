@@ -26,8 +26,8 @@ SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
-	"github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned/scheme"
+	v1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
+	"github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

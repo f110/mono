@@ -20,7 +20,7 @@ go_library(
         "uppackreq.go",
         "uppackresp.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/protocol/packp",
     visibility = ["//visibility:public"],
     deps = [

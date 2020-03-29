@@ -22,11 +22,11 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
-	harborv1alpha1 "github.com/f110/tools/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
-	clientset "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned"
-	"github.com/f110/tools/controllers/harbor-project-operator/pkg/harbor"
-	informers "github.com/f110/tools/controllers/harbor-project-operator/pkg/informers/externalversions"
-	hpLister "github.com/f110/tools/controllers/harbor-project-operator/pkg/listers/harbor/v1alpha1"
+	harborv1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
+	clientset "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned"
+	"github.com/f110/wing/controllers/harbor-project-operator/pkg/harbor"
+	informers "github.com/f110/wing/controllers/harbor-project-operator/pkg/informers/externalversions"
+	hpLister "github.com/f110/wing/controllers/harbor-project-operator/pkg/listers/harbor/v1alpha1"
 )
 
 const (

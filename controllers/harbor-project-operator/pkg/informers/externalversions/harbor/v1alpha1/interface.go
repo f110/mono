@@ -26,7 +26,7 @@ SOFTWARE.
 package v1alpha1
 
 import (
-	internalinterfaces "github.com/f110/tools/controllers/harbor-project-operator/pkg/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/f110/wing/controllers/harbor-project-operator/pkg/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

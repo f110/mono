@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/f110/tools/controllers/harbor-project-operator/pkg/api/harbor"
+	"github.com/f110/wing/controllers/harbor-project-operator/pkg/api/harbor"
 )
 
 var SchemeGroupVersion = schema.GroupVersion{Group: harbor.GroupName, Version: "v1alpha1"}

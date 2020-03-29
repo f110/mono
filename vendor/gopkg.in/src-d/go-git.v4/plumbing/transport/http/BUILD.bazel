@@ -7,7 +7,7 @@ go_library(
         "receive_pack.go",
         "upload_pack.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/http",
     visibility = ["//visibility:public"],
     deps = [

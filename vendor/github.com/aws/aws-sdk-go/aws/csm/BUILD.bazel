@@ -10,7 +10,7 @@ go_library(
         "metric_exception.go",
         "reporter.go",
     ],
-    importmap = "github.com/f110/tools/vendor/github.com/aws/aws-sdk-go/aws/csm",
+    importmap = "github.com/f110/wing/vendor/github.com/aws/aws-sdk-go/aws/csm",
     importpath = "github.com/aws/aws-sdk-go/aws/csm",
     visibility = ["//visibility:public"],
     deps = [

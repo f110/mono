@@ -23,10 +23,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
-	miniov1alpha1 "github.com/f110/tools/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
-	clientset "github.com/f110/tools/controllers/minio-extra-operator/pkg/client/versioned"
-	informers "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions"
-	mbLister "github.com/f110/tools/controllers/minio-extra-operator/pkg/listers/minio/v1alpha1"
+	miniov1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
+	clientset "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned"
+	informers "github.com/f110/wing/controllers/minio-extra-operator/pkg/informers/externalversions"
+	mbLister "github.com/f110/wing/controllers/minio-extra-operator/pkg/listers/minio/v1alpha1"
 )
 
 // +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete

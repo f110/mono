@@ -26,7 +26,7 @@ SOFTWARE.
 package fake
 
 import (
-	harborv1alpha1 "github.com/f110/tools/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
+	harborv1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

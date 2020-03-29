@@ -49,7 +49,7 @@ go_library(
         "transport.go",
         "utils.go",
     ],
-    importmap = "github.com/f110/tools/vendor/github.com/minio/minio-go/v6",
+    importmap = "github.com/f110/wing/vendor/github.com/minio/minio-go/v6",
     importpath = "github.com/minio/minio-go/v6",
     visibility = ["//visibility:public"],
     deps = [

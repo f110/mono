@@ -34,7 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/f110/tools/bot/continuous-delivery/pkg/config"
+	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
 )
 
 const (

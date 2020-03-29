@@ -1,4 +1,4 @@
-# gazelle:prefix github.com/f110/tools
+# gazelle:prefix github.com/f110/wing
 # gazelle:proto disable_global
 
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")

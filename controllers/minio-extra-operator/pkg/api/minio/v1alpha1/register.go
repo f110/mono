@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/f110/tools/controllers/minio-extra-operator/pkg/api/minio"
+	"github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio"
 )
 
 var SchemeGroupVersion = schema.GroupVersion{Group: minio.GroupName, Version: "v1alpha1"}

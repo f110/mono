@@ -12,7 +12,7 @@ go_library(
         "shallow.go",
         "storage.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/storage/filesystem",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/storage/filesystem",
     importpath = "gopkg.in/src-d/go-git.v4/storage/filesystem",
     visibility = ["//visibility:public"],
     deps = [

@@ -10,7 +10,7 @@ go_library(
         "token.go",
         "validators.go",
     ],
-    importmap = "github.com/f110/tools/vendor/github.com/kevinburke/ssh_config",
+    importmap = "github.com/f110/wing/vendor/github.com/kevinburke/ssh_config",
     importpath = "github.com/kevinburke/ssh_config",
     visibility = ["//visibility:public"],
 )

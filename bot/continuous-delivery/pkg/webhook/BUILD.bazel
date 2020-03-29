@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["github.go"],
-    importpath = "github.com/f110/tools/bot/continuous-delivery/pkg/webhook",
+    importpath = "github.com/f110/wing/bot/continuous-delivery/pkg/webhook",
     visibility = ["//visibility:public"],
     deps = [
         "//bot/continuous-delivery/pkg/config:go_default_library",

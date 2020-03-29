@@ -26,7 +26,7 @@ SOFTWARE.
 package v1beta1
 
 import (
-	internalinterfaces "github.com/f110/tools/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/f110/wing/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

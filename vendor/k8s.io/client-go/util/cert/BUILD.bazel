@@ -9,7 +9,7 @@ go_library(
         "pem.go",
         "server_inspection.go",
     ],
-    importmap = "github.com/f110/tools/vendor/k8s.io/client-go/util/cert",
+    importmap = "github.com/f110/wing/vendor/k8s.io/client-go/util/cert",
     importpath = "k8s.io/client-go/util/cert",
     visibility = ["//visibility:public"],
     deps = ["//vendor/k8s.io/client-go/util/keyutil:go_default_library"],

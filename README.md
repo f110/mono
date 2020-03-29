@@ -1,4 +1,4 @@
-tools
+wing
 ---
 
 This repository is my monorepo for operating k8s cluster
@@ -7,7 +7,7 @@ This repository is my monorepo for operating k8s cluster
 
 ### 1. Install Bazel
 
-All tools are built by [Bazel]()
+All tools are built by [Bazel](https://bazel.build)
 
 Please check [the Official document](https://docs.bazel.build/versions/master/getting-started.html) to installation steps.
 

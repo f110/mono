@@ -6,7 +6,7 @@ go_library(
         "encoder.go",
         "scanner.go",
     ],
-    importmap = "github.com/f110/tools/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline",
+    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/pktline",
     visibility = ["//visibility:public"],
 )

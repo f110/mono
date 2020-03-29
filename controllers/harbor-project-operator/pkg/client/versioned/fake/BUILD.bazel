@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "register.go",
     ],
-    importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/fake",
+    importpath = "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned/fake",
     visibility = ["//visibility:public"],
     deps = [
         "//controllers/harbor-project-operator/pkg/api/harbor/v1alpha1:go_default_library",
