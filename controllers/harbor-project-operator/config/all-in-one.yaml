@@ -241,6 +241,7 @@ spec:
         - -harbor-namespace=harbor
         - -harbor-service-name=harbor-harbor-core
         - -admin-secret-name=harbor-harbor-core
+        - -core-configmap-name=harbor-harbor-core
         - -v=4
         env:
         - name: MY_NAMESPACE
