@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "harborproject.go",
+        "harborrobotaccount.go",
         "interface.go",
     ],
     importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/informers/externalversions/harbor/v1alpha1",

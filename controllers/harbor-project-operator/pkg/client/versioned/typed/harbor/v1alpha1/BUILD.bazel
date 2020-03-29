@@ -7,6 +7,7 @@ go_library(
         "generated_expansion.go",
         "harbor_client.go",
         "harborproject.go",
+        "harborrobotaccount.go",
     ],
     importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1",
     visibility = ["//visibility:public"],

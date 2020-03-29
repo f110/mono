@@ -33,6 +33,8 @@ import (
 type Interface interface {
 	// HarborProjects returns a HarborProjectInformer.
 	HarborProjects() HarborProjectInformer
+	// HarborRobotAccounts returns a HarborRobotAccountInformer.
+	HarborRobotAccounts() HarborRobotAccountInformer
 }
 
 type version struct {
@@ -49,4 +51,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // HarborProjects returns a HarborProjectInformer.
 func (v *version) HarborProjects() HarborProjectInformer {
 	return &harborProjectInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// HarborRobotAccounts returns a HarborRobotAccountInformer.
+func (v *version) HarborRobotAccounts() HarborRobotAccountInformer {
+	return &harborRobotAccountInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

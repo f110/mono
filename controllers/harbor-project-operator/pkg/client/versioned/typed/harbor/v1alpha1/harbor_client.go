@@ -34,6 +34,7 @@ import (
 type HarborV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	HarborProjectsGetter
+	HarborRobotAccountsGetter
 }
 
 // HarborV1alpha1Client is used to interact with features provided by the harbor.f110.dev group.
@@ -43,6 +44,10 @@ type HarborV1alpha1Client struct {
 
 func (c *HarborV1alpha1Client) HarborProjects(namespace string) HarborProjectInterface {
 	return newHarborProjects(c, namespace)
+}
+
+func (c *HarborV1alpha1Client) HarborRobotAccounts(namespace string) HarborRobotAccountInterface {
+	return newHarborRobotAccounts(c, namespace)
 }
 
 // NewForConfig creates a new HarborV1alpha1Client for the given config.

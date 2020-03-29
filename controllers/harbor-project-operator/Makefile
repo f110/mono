@@ -1,5 +1,5 @@
 PROJECT_NAME = harbor-project-operator
-ARGS = -harbor-namespace harbor -harbor-service-name harbor-harbor-core -admin-secret-name harbor-harbor-core
+ARGS = -harbor-namespace harbor -harbor-service-name harbor-harbor-core -admin-secret-name harbor-harbor-core -core-configmap-name harbor-harbor-core
 
 gen:
 	bazel run //controllers/$(PROJECT_NAME)/pkg/api:gen.deepcopy

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,7 @@ func main() {
 	harborNamespace := ""
 	harborServiceName := ""
 	adminSecretName := ""
+	coreConfigMapName := ""
 	dev := false
 	fs := flag.NewFlagSet("harbor-project-operator", flag.ExitOnError)
 	fs.StringVar(&id, "id", uuid.New().String(), "the holder identity name")
@@ -37,6 +39,7 @@ func main() {
 	fs.StringVar(&harborNamespace, "harbor-namespace", "", "the namespace name to which harbor service belongs")
 	fs.StringVar(&harborServiceName, "harbor-service-name", "", "the service name of harbor")
 	fs.StringVar(&adminSecretName, "admin-secret-name", "", "the secret name that including admin password")
+	fs.StringVar(&coreConfigMapName, "core-configmap-name", "", "the configmap name that used harbor core")
 	fs.BoolVar(&dev, "dev", dev, "development mode")
 	klog.InitFlags(fs)
 	if err := fs.Parse(os.Args[1:]); err != nil {
@@ -85,13 +88,33 @@ func main() {
 		RetryPeriod:     5 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				c, err := controller.NewHarborProjectController(ctx, kubeClient, cfg, harborNamespace, harborServiceName, adminSecretName, dev)
+				projectController, err := controller.NewHarborProjectController(ctx, kubeClient, cfg, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
 				if err != nil {
 					klog.Error(err)
-					os.Exit(1)
+					return
+				}
+				robotAccountController, err := controller.NewHarborRobotAccountController(ctx, kubeClient, cfg, harborNamespace, harborServiceName, adminSecretName, dev)
+				if err != nil {
+					klog.Error(err)
+					return
 				}
 
-				c.Run(ctx, 1)
+				var wg sync.WaitGroup
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					projectController.Run(ctx, 1)
+					cancelFunc()
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					robotAccountController.Run(ctx, 1)
+					cancelFunc()
+				}()
+
+				wg.Wait()
 				klog.Info("Shutdown")
 			},
 			OnStoppedLeading: func() {

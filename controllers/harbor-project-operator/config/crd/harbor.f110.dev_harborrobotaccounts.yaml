@@ -6,28 +6,17 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: (unknown)
   creationTimestamp: null
-  name: harborprojects.harbor.f110.dev
+  name: harborrobotaccounts.harbor.f110.dev
 spec:
   group: harbor.f110.dev
   names:
-    kind: HarborProject
-    listKind: HarborProjectList
-    plural: harborprojects
-    singular: harborproject
+    kind: HarborRobotAccount
+    listKind: HarborRobotAccountList
+    plural: harborrobotaccounts
+    singular: harborrobotaccount
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - description: Ready
-      format: byte
-      jsonPath: .status.ready
-      name: ready
-      type: boolean
-    - description: age
-      format: date
-      jsonPath: .metadata.creationTimestamp
-      name: age
-      type: date
-    name: v1alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         properties:
@@ -45,24 +34,27 @@ spec:
             type: object
           spec:
             properties:
-              public:
-                description: Public is an access level of project. If Public sets
-                  true, then anyone can read.
-                type: boolean
+              project_name:
+                type: string
+              project_namespace:
+                type: string
+              secret_name:
+                description: SecretName is a name of docker config secret.
+                type: string
+            required:
+            - project_name
+            - project_namespace
             type: object
           status:
             properties:
-              project_id:
-                type: integer
               ready:
                 type: boolean
-              registry:
-                type: string
+              robot_id:
+                type: integer
             type: object
         type: object
     served: true
     storage: true
-    subresources: {}
 status:
   acceptedNames:
     kind: ""

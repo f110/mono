@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"time"
 
@@ -43,20 +44,29 @@ type HarborProjectController struct {
 
 	harborService     *corev1.Service
 	adminPassword     string
+	registryName      string
 	runOutsideCluster bool
 }
 
 // +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=*,resources=pods;secrets;services,verbs=get
+// +kubebuilder:rbac:groups=*,resources=pods;secrets;services;configmaps,verbs=get
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborProjectController, error) {
+func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, harborNamespace, harborName, adminSecretName, coreConfigMapName string, runOutsideCluster bool) (*HarborProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(harborName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	cm, err := coreClient.CoreV1().ConfigMaps(harborNamespace).Get(coreConfigMapName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	registryUrl, err := url.Parse(cm.Data["EXT_ENDPOINT"])
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +88,7 @@ func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clie
 		queue:             workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "HarborProject"),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
+		registryName:      registryUrl.Hostname(),
 		runOutsideCluster: runOutsideCluster,
 	}
 
@@ -138,8 +149,8 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 		return c.finalizeHarborProject(harborClient, harborProject)
 	}
 
-	if ok, err := harborClient.ExistProject(currentHP.Name); err == nil && !ok {
-		if err := c.createProject(currentHP, harborClient); err != nil {
+	if ok, err := harborClient.ExistProject(harborProject.Name); err == nil && !ok {
+		if err := c.createProject(harborProject, harborClient); err != nil {
 			return err
 		}
 	} else if err != nil {
@@ -151,13 +162,14 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 		return err
 	}
 	for _, v := range projects {
-		if v.Name == currentHP.Name {
+		if v.Name == harborProject.Name {
 			harborProject.Status.ProjectId = v.Id
 			break
 		}
 	}
 
 	harborProject.Status.Ready = true
+	harborProject.Status.Registry = c.registryName
 
 	if !reflect.DeepEqual(harborProject.Status, currentHP.Status) {
 		_, err = c.hpClient.HarborV1alpha1().HarborProjects(currentHP.Namespace).Update(harborProject)

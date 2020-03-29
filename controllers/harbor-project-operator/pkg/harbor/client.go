@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -146,6 +147,100 @@ func (h *Harbor) DeleteProject(projectId int) error {
 	}
 }
 
+func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccountRequest) (*RobotAccount, error) {
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(robotRequest); err != nil {
+		return nil, err
+	}
+
+	req, err := h.newRequest(http.MethodPost, fmt.Sprintf("projects/%d/robots", projectId), bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return nil, err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusCreated:
+	// Succeeded
+	case http.StatusUnauthorized:
+		return nil, errors.New("create robot account: not logged in")
+	default:
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("create robot acount: unknown status code: %d %s", res.StatusCode, string(b))
+	}
+
+	result := &RobotAccount{}
+	if err := json.NewDecoder(res.Body).Decode(result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
+	req, err := h.newRequest(http.MethodDelete, fmt.Sprintf("projects/%d/robots/%d", projectId, robotId), nil)
+	if err != nil {
+		return err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+	// Succeeded
+	case http.StatusNotFound:
+		return errors.New("robot account is not found")
+	default:
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("delete robot account: unknown status code: %d %s", res.StatusCode, string(b))
+	}
+
+	return nil
+}
+
+func (h *Harbor) GetRobotAccounts(projectId int) ([]*RobotAccount, error) {
+	req, err := h.newRequest(http.MethodGet, fmt.Sprintf("projects/%d/robots", projectId), nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := h.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+		// Succeeded
+	case http.StatusBadRequest, http.StatusNotFound:
+		return nil, errors.New("get robot accounts: project id is not found or invalid")
+	case http.StatusUnauthorized:
+		return nil, errors.New("get robot accounts: not logged in")
+	default:
+		return nil, fmt.Errorf("get robot accounts: unknown status code: %d", res.StatusCode)
+	}
+
+	result := make([]*RobotAccount, 0)
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (h *Harbor) newRequest(method string, endpoint string, body io.Reader) (*http.Request, error) {
 	r, err := http.NewRequest(method, fmt.Sprintf("%s/api/%s", h.host, endpoint), body)
 	if err != nil {
@@ -188,4 +283,27 @@ type CVEWhitelist struct {
 
 type CVEItem struct {
 	CVEId string `json:"cve_id"`
+}
+
+type RobotAccount struct {
+	Id           int    `json:"id,omitempty"`
+	ProjectId    int    `json:"project_id,omitempty"`
+	Name         string `json:"name"`
+	Description  string `json:"description,omitempty"`
+	Token        string `json:"token,omitempty"`
+	Disabled     bool   `json:"disabled,omitempty"`
+	ExpiresAt    int    `json:"expires_at,omitempty"`
+	CreationTime string `json:"creation_time,omitempty"`
+	UpdateTime   string `json:"update_time,omitempty"`
+}
+
+type NewRobotAccountRequest struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Access      []Access `json:"access,omitempty"`
+}
+
+type Access struct {
+	Action   string `json:"action"`
+	Resource string `json:"resource"`
 }

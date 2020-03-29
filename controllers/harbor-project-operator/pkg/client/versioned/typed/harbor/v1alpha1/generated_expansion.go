@@ -26,3 +26,5 @@ SOFTWARE.
 package v1alpha1
 
 type HarborProjectExpansion interface{}
+
+type HarborRobotAccountExpansion interface{}

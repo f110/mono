@@ -62,6 +62,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=harbor.f110.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("harborprojects"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborProjects().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("harborrobotaccounts"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborRobotAccounts().Informer()}, nil
 
 	}
 

@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "fake_harbor_client.go",
         "fake_harborproject.go",
+        "fake_harborrobotaccount.go",
     ],
     importpath = "github.com/f110/tools/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1/fake",
     visibility = ["//visibility:public"],

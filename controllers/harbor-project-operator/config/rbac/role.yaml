@@ -9,8 +9,16 @@ rules:
 - apiGroups:
   - '*'
   resources:
+  - configmaps
   - pods
   - secrets
+  - services
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - pods
   - services
   verbs:
   - get
@@ -22,6 +30,15 @@ rules:
   - create
   - get
   - list
+- apiGroups:
+  - '*'
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - update
 - apiGroups:
   - harbor.f110.dev
   resources:
@@ -38,6 +55,26 @@ rules:
   - harbor.f110.dev
   resources:
   - harborprojects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - harbor.f110.dev
+  resources:
+  - harborrobotaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - harbor.f110.dev
+  resources:
+  - harborrobotaccounts/status
   verbs:
   - get
   - patch

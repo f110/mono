@@ -39,6 +39,10 @@ func (c *FakeHarborV1alpha1) HarborProjects(namespace string) v1alpha1.HarborPro
 	return &FakeHarborProjects{c, namespace}
 }
 
+func (c *FakeHarborV1alpha1) HarborRobotAccounts(namespace string) v1alpha1.HarborRobotAccountInterface {
+	return &FakeHarborRobotAccounts{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeHarborV1alpha1) RESTClient() rest.Interface {

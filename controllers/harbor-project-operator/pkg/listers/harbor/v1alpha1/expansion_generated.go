@@ -32,3 +32,11 @@ type HarborProjectListerExpansion interface{}
 // HarborProjectNamespaceListerExpansion allows custom methods to be added to
 // HarborProjectNamespaceLister.
 type HarborProjectNamespaceListerExpansion interface{}
+
+// HarborRobotAccountListerExpansion allows custom methods to be added to
+// HarborRobotAccountLister.
+type HarborRobotAccountListerExpansion interface{}
+
+// HarborRobotAccountNamespaceListerExpansion allows custom methods to be added to
+// HarborRobotAccountNamespaceLister.
+type HarborRobotAccountNamespaceListerExpansion interface{}

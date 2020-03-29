@@ -1,0 +1,8 @@
+apiVersion: harbor.f110.dev/v1alpha1
+kind: HarborRobotAccount
+metadata:
+  name: test
+spec:
+  project_namespace: default
+  project_name: test
+  secret_name: docker-config-test
