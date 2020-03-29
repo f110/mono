@@ -16,6 +16,6 @@ push:
 	@echo
 
 build-manifest:
-	kustomize build config > config/all-in-one.yaml
+	kustomize build config | bazel run //tools/manifest-cleaner > config/all-in-one.yaml
 
 .PHONY: run gen push build-manifest
