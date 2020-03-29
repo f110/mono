@@ -79,7 +79,6 @@ func main() {
 		os.Exit(1)
 	}
 	sharedInformerFactory := informers.NewSharedInformerFactory(hClient, 30*time.Second)
-	sharedInformerFactory.Start(ctx.Done())
 
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
@@ -109,6 +108,8 @@ func main() {
 					klog.Error(err)
 					return
 				}
+
+				sharedInformerFactory.Start(ctx.Done())
 
 				var wg sync.WaitGroup
 				wg.Add(1)
