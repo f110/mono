@@ -162,7 +162,7 @@ func (c *DNSControlConsumer) dispatchPushEvent(event *github.PushEvent, client *
 
 func (c *DNSControlConsumer) dispatchPullRequestEvent(event *github.PullRequestEvent, client *kubernetes.Clientset) {
 	switch event.GetAction() {
-	case "opened", "synchronized":
+	case "opened", "synchronize":
 	default:
 		return
 	}
