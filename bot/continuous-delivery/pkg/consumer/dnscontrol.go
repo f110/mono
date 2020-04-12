@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -14,12 +13,14 @@ import (
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v29/github"
 	"github.com/sourcegraph/go-diff/diff"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
+	"github.com/f110/wing/lib/logger"
 )
 
 const (
@@ -62,7 +63,7 @@ func NewDNSControlConsumer(namespace string, conf *config.Config, safeMode, debu
 func (c *DNSControlConsumer) Dispatch(e interface{}) {
 	client, err := NewKubernetesClient()
 	if err != nil {
-		errorLog(err)
+		logger.Log.Warn("Failed to create k8s client", zap.Error(err))
 		return
 	}
 
@@ -72,7 +73,7 @@ func (c *DNSControlConsumer) Dispatch(e interface{}) {
 	case *github.PullRequestEvent:
 		c.dispatchPullRequestEvent(v, client)
 	default:
-		log.Print("Unknown event")
+		logger.Log.Info("Unknown event", zap.Any("event", v))
 	}
 
 }
@@ -80,7 +81,7 @@ func (c *DNSControlConsumer) Dispatch(e interface{}) {
 func (c *DNSControlConsumer) dispatchPushEvent(event *github.PushEvent, client *kubernetes.Clientset) {
 	ctx := &dnsControlContext{eventContext: NewEventContextFromPushEvent(event)}
 	if err := c.fetchRuleFile(ctx); err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to fetch rule file", zap.Error(err))
 		return
 	}
 
@@ -93,42 +94,41 @@ func (c *DNSControlConsumer) dispatchPushEvent(event *github.PushEvent, client *
 	}
 
 	if event.GetHeadCommit() == nil {
-		log.Print("HeadCommit is empty")
+		logger.Log.Info("HeadCommit is empty")
 		return
 	}
 
 	prNumber := extractPRNumberFromMergedMessage(event.GetHeadCommit().GetMessage())
 	if prNumber == 0 {
-		log.Printf("Failed parse commit message. could not extract pr number: %s", event.GetHeadCommit().GetMessage())
+		logger.Log.Info("Failed parse commit message. could not extract pr number", zap.String("commit_message", event.GetHeadCommit().GetMessage()))
 		return
 	}
 
 	ghClient := github.NewClient(c.client)
 	compare, _, err := ghClient.Repositories.CompareCommits(context.Background(), ctx.Owner, ctx.Repo, event.GetBefore(), event.GetAfter())
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed compare commit", zap.Error(err))
 		return
 	}
 	ok := false
 	for _, v := range compare.Files {
-		log.Print(v.GetFilename())
 		if strings.HasPrefix("/"+v.GetFilename(), ctx.Rule.Dir) {
 			ok = true
 			break
 		}
 	}
 	if !ok {
-		errorLog(xerrors.New("nothing change"))
+		logger.Log.Debug("Nothing change")
 		return
 	}
 
 	if c.safeMode {
-		log.Print("Finish dispatchPushEvent. because safe mode is on.")
+		logger.Log.Debug("Finish dispatchPushEvent. because safe mode is on.")
 		return
 	}
 
 	if err := c.setStatus(ghClient, ctx, "execute", "pending", "Applying"); err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to set status", zap.Error(err))
 		return
 	}
 	success := false
@@ -139,21 +139,21 @@ func (c *DNSControlConsumer) dispatchPushEvent(event *github.PushEvent, client *
 		}
 
 		if err := c.setStatus(ghClient, ctx, "execute", status, "Applying"); err != nil {
-			errorLog(err)
+			logger.Log.Info("Failed to set status", zap.Error(err))
 			return
 		}
 	}()
 
 	result, err := c.runExecute(ctx, client)
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to execute", zap.Error(err))
 		return
 	}
 
 	comment := "Applied:\n```\n" + result + "\n```\n"
 	_, _, err = ghClient.Issues.CreateComment(context.Background(), ctx.Owner, ctx.Repo, prNumber, &github.IssueComment{Body: github.String(comment)})
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to post comment", zap.Error(err))
 		return
 	}
 
@@ -169,20 +169,20 @@ func (c *DNSControlConsumer) dispatchPullRequestEvent(event *github.PullRequestE
 
 	ctx := &dnsControlContext{eventContext: NewEventContextFromPullRequest(event)}
 	if err := c.fetchRuleFile(ctx); err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to fetch rule file", zap.Error(err))
 		return
 	}
 
 	ghClient := github.NewClient(c.client)
 	res, _, err := ghClient.PullRequests.GetRaw(context.Background(), ctx.Owner, ctx.Repo, ctx.PullRequestNumber, github.RawOptions{Type: github.Diff})
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to fetch diff", zap.Int("pr number", ctx.PullRequestNumber), zap.Error(err))
 		return
 	}
 
 	changed, err := changedFilesFromDiff(res)
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to parse diff", zap.Error(err))
 		return
 	}
 	ctx.Changed = changed
@@ -195,12 +195,12 @@ func (c *DNSControlConsumer) dispatchPullRequestEvent(event *github.PullRequestE
 		}
 	}
 	if !ok {
-		errorLog(xerrors.New("nothing change"))
+		logger.Log.Info("Nothing change")
 		return
 	}
 
 	if err := c.setStatus(ghClient, ctx, "preview", "pending", "Run dry-run"); err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to set status", zap.Error(err))
 		return
 	}
 	success := false
@@ -211,21 +211,21 @@ func (c *DNSControlConsumer) dispatchPullRequestEvent(event *github.PullRequestE
 		}
 
 		if err := c.setStatus(ghClient, ctx, "preview", status, "Run dry-run"); err != nil {
-			errorLog(err)
+			logger.Log.Info("Failed to set status", zap.Error(err))
 			return
 		}
 	}()
 
 	result, err := c.runPreview(ctx, client)
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to execute with preview mode", zap.Error(err))
 		return
 	}
 
 	comment := "Preview:\n```\n" + result + "\n```\n"
 	_, _, err = ghClient.Issues.CreateComment(context.Background(), ctx.Owner, ctx.Repo, ctx.PullRequestNumber, &github.IssueComment{Body: github.String(comment)})
 	if err != nil {
-		errorLog(err)
+		logger.Log.Info("Failed to post comment", zap.Error(err))
 		return
 	}
 	success = true
@@ -235,7 +235,7 @@ func (c *DNSControlConsumer) runExecute(ctx *dnsControlContext, client *kubernet
 	buildId := newBuildId()
 	defer func() {
 		if err := c.cleanup(client, buildId); err != nil {
-			errorLog(err)
+			logger.Log.Info("Failed to cleanup", zap.Error(err))
 			return
 		}
 	}()
@@ -262,7 +262,7 @@ func (c *DNSControlConsumer) runPreview(ctx *dnsControlContext, client *kubernet
 	buildId := newBuildId()
 	defer func() {
 		if err := c.cleanup(client, buildId); err != nil {
-			errorLog(err)
+			logger.Log.Info("Failed to cleanup", zap.Error(err))
 			return
 		}
 	}()
@@ -312,7 +312,7 @@ func (c *DNSControlConsumer) fetchRuleFile(ctx *dnsControlContext) error {
 		if err != nil {
 			return xerrors.Errorf(": %v", err)
 		}
-		log.Printf("Rule: %v", rule)
+		logger.Log.Debug("Rule", zap.Any("rule", rule))
 		ctx.Rule = rule
 	}
 
@@ -324,7 +324,6 @@ func (c *DNSControlConsumer) getCommitsDiff(ctx *dnsControlContext, ghClient *gi
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
-	log.Printf("Get diff from %s", compare.GetDiffURL())
 	req, err := ghClient.NewRequest(http.MethodGet, compare.GetDiffURL(), nil)
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
@@ -333,7 +332,6 @@ func (c *DNSControlConsumer) getCommitsDiff(ctx *dnsControlContext, ghClient *gi
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
-	log.Printf("Status: %d", res.StatusCode)
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)

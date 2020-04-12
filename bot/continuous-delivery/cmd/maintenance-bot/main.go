@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
 	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
 	"github.com/f110/wing/bot/continuous-delivery/pkg/consumer"
 	"github.com/f110/wing/bot/continuous-delivery/pkg/webhook"
+	"github.com/f110/wing/lib/logger"
 )
 
 func producer(args []string) error {
@@ -30,6 +32,10 @@ func producer(args []string) error {
 		return xerrors.Errorf(": %v", err)
 	}
 
+	if err := logger.Init(); err != nil {
+		return xerrors.Errorf(": %v", err)
+	}
+
 	webhookListener := webhook.NewListener(conf)
 
 	builder, err := consumer.NewBuildConsumer(conf.BuildNamespace, conf, debug)
@@ -45,6 +51,7 @@ func producer(args []string) error {
 	webhookListener.SubscribePushEvent(dnsControlBuilder.Dispatch)
 	webhookListener.SubscribePullRequest(dnsControlBuilder.Dispatch)
 
+	logger.Log.Info("Start server", zap.String("addr", conf.WebhookListener))
 	if err := webhookListener.ListenAndServe(); err != nil {
 		if err == http.ErrServerClosed {
 			return nil

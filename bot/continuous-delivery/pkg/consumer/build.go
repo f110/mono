@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -24,6 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v29/github"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	"gopkg.in/src-d/go-git.v4"
 	gitConfig "gopkg.in/src-d/go-git.v4/config"
@@ -35,6 +35,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
+	"github.com/f110/wing/lib/logger"
 )
 
 const (
@@ -70,10 +71,6 @@ type BazelBuild struct {
 	debug      bool
 }
 
-func errorLog(err error) {
-	fmt.Fprintf(os.Stderr, "%+v\n", err)
-}
-
 func NewBuildConsumer(namespace string, conf *config.Config, debug bool) (*BazelBuild, error) {
 	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, conf.GitHubAppId, conf.GitHubInstallationId, conf.GitHubAppPrivateKeyFile)
 	if err != nil {
@@ -98,18 +95,18 @@ func NewBuildConsumer(namespace string, conf *config.Config, debug bool) (*Bazel
 func (b *BazelBuild) Build(e interface{}) {
 	event, ok := e.(*github.PushEvent)
 	if !ok {
-		log.Print("Not push event")
+		logger.Log.Debug("Not push event")
 		return
 	}
 	buildCtx := NewEventContextFromPushEvent(event)
 
 	if contents, err := buildCtx.FetchRuleFile(&http.Client{Transport: b.transport}, repositoryBuildConfigFilePath); err != nil {
-		errorLog(err)
+		logger.Log.Warn("Failed to fetch rule file", zap.Error(err))
 		return
 	} else {
 		rule, err := config.ParseBuildRule(contents)
 		if err != nil {
-			errorLog(err)
+			logger.Log.Warn("Failed to parse rule file", zap.Error(err))
 			return
 		}
 		buildCtx.Rule = rule
@@ -118,33 +115,33 @@ func (b *BazelBuild) Build(e interface{}) {
 	s := strings.SplitN(event.GetRef(), "/", 3)
 	branch := s[2]
 	if buildCtx.Rule.Branch != "" && buildCtx.Rule.Branch != branch {
-		log.Printf("Skip build because %s is not target branch", branch)
+		logger.Log.Info("Skip build because not target branch", zap.String("branch", branch))
 		return
 	}
 
 	client, err := NewKubernetesClient()
 	if err != nil {
-		errorLog(err)
+		logger.Log.Warn("Failed to create k8s client", zap.Error(err))
 		return
 	}
 
 	buildId := newBuildId()
 	defer func() {
 		if err := b.cleanup(client, buildId); err != nil {
-			errorLog(err)
+			logger.Log.Warn("Failed cleanup pod", zap.Error(err))
 			return
 		}
 	}()
 
 	err = b.buildRepository(buildCtx, client, buildId)
 	if err != nil && err != errBuildFailure {
-		errorLog(err)
+		logger.Log.Warn("Failed to build", zap.Error(err))
 		return
 	}
 
 	if buildCtx.Rule.PostProcess != nil {
 		if err := b.postProcess(buildCtx, buildId); err != nil {
-			errorLog(err)
+			logger.Log.Warn("Failure post process", zap.Error(err))
 			return
 		}
 	}
@@ -432,7 +429,6 @@ func newGitRepo(transport *ghinstallation.Transport, owner, repo, image, authorN
 		return nil, xerrors.Errorf(": %v", err)
 	}
 	u := fmt.Sprintf("https://github.com/%s/%s.git", owner, repo)
-	log.Printf("git clone %s", u)
 	r, err := git.PlainClone(dir, false, &git.CloneOptions{
 		URL:   u,
 		Depth: 1,
@@ -442,7 +438,6 @@ func newGitRepo(transport *ghinstallation.Transport, owner, repo, image, authorN
 		return nil, xerrors.Errorf(": %v", err)
 	}
 
-	log.Printf("New git repo: %s/%s in %s with image name: %s", owner, repo, dir, image)
 	return &gitRepo{
 		dir:         dir,
 		owner:       owner,
@@ -510,7 +505,6 @@ func (g *gitRepo) push(branchName string) error {
 		return xerrors.Errorf(": %v", err)
 	}
 	refSpec := fmt.Sprintf("refs/heads/%s:refs/heads/%s", branchName, branchName)
-	log.Printf("git push origin %s with %s", refSpec, token)
 	return g.repo.Push(&git.PushOptions{
 		Auth:       &gogitHttp.BasicAuth{Username: "octocat", Password: token},
 		RemoteName: "origin",
@@ -539,7 +533,6 @@ func (g *gitRepo) modifyKustomization(paths []string, newImageHash string) ([]st
 	editFiles := make([]string, 0)
 	for _, in := range paths {
 		absPath := filepath.Join(g.dir, in)
-		log.Printf("Read: %s", absPath)
 		b, err := ioutil.ReadFile(absPath)
 		if err != nil {
 			return nil, xerrors.Errorf(": %v", err)
@@ -603,7 +596,7 @@ func (g *gitRepo) UpdateKustomization(buildCtx *eventContext, artifactPath strin
 	}
 
 	if len(editedFiles) == 0 {
-		log.Print("Skip creating a pull request because not have any change")
+		logger.Log.Debug("Skip creating a pull request because not have any change")
 		return nil
 	}
 
@@ -615,7 +608,7 @@ func (g *gitRepo) UpdateKustomization(buildCtx *eventContext, artifactPath strin
 		return err
 	}
 
-	log.Print("Success create a pull request")
+	logger.Log.Debug("Succeeded create a pull request")
 	return nil
 }
 

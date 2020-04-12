@@ -6,8 +6,10 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v29/github"
+	"go.uber.org/zap"
 
 	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
+	"github.com/f110/wing/lib/logger"
 )
 
 const (
@@ -125,7 +127,7 @@ func NewListener(conf *config.Config) *Listener {
 			return
 		}
 
-		log.Printf("Get event: %s %v", wType, messageBody)
+		logger.Log.Info("Got event", zap.String("event_type", wType), zap.Any("body", messageBody))
 		l.Handle(messageBody)
 	})
 

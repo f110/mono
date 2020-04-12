@@ -12,6 +12,7 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sourcegraph/go-diff v0.5.1
 	github.com/spf13/pflag v1.0.5
+	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect

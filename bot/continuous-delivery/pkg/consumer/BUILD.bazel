@@ -12,6 +12,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//bot/continuous-delivery/pkg/config:go_default_library",
+        "//lib/logger:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials:go_default_library",
         "//vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
@@ -20,6 +21,7 @@ go_library(
         "//vendor/github.com/bradleyfalzon/ghinstallation:go_default_library",
         "//vendor/github.com/google/go-github/v29/github:go_default_library",
         "//vendor/github.com/sourcegraph/go-diff/diff:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
         "//vendor/golang.org/x/xerrors:go_default_library",
         "//vendor/gopkg.in/src-d/go-git.v4:go_default_library",
         "//vendor/gopkg.in/src-d/go-git.v4/config:go_default_library",
