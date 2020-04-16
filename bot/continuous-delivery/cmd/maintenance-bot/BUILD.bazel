@@ -9,7 +9,9 @@ go_library(
         "//bot/continuous-delivery/pkg/config:go_default_library",
         "//bot/continuous-delivery/pkg/consumer:go_default_library",
         "//bot/continuous-delivery/pkg/webhook:go_default_library",
+        "//lib/logger:go_default_library",
         "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
         "//vendor/golang.org/x/xerrors:go_default_library",
     ],
 )
