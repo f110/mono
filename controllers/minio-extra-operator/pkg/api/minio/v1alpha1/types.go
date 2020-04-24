@@ -35,9 +35,9 @@ type MinIOBucket struct {
 type MinIOBucketSpec struct {
 	// Selector is a selector of MinioInstance
 	Selector metav1.LabelSelector `json:"selector"`
-	// FinalizePolicy is a policy when deleted CR Object.
-	// If FinalizePolicy is an empty string, then it is the same as "keep"
-	FinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy,omitempty"`
+	// BucketFinalizePolicy is a policy when deleted CR Object.
+	// If BucketFinalizePolicy is an empty string, then it is the same as "keep"
+	BucketFinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy,omitempty"`
 	// Policy is the policy of bucket. One of public, readOnly, private.
 	// If you don't want to give public access, set private or an empty value.
 	// If it is an empty value, The bucket will not have any policy.

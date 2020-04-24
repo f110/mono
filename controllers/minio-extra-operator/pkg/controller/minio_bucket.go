@@ -260,8 +260,8 @@ func (c *MinIOBucketController) ensureIndexFile(mc *minio.Client, spec *miniov1a
 }
 
 func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
-	if b.Spec.FinalizePolicy == "" || b.Spec.FinalizePolicy == miniov1alpha1.BucketKeep {
-		// If Spec.FinalizePolicy is Keep, then we shouldn't delete the bucket.
+	if b.Spec.BucketFinalizePolicy == "" || b.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
+		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
 		b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
 		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
