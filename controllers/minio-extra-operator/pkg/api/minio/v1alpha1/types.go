@@ -43,6 +43,8 @@ type MinIOBucketSpec struct {
 	// If it is an empty value, The bucket will not have any policy.
 	// Currently, MinIOBucket can't use prefix based policy.
 	Policy BucketPolicy `json:"policy,omitempty"`
+	// CreateIndexFile is a flag that creates index.html on top of bucket.
+	CreateIndexFile bool `json:"createIndexFile,omitempty"`
 }
 
 type MinIOBucketStatus struct {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v6"
@@ -170,6 +171,10 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		if err := c.ensureBucketPolicy(mc, minioBucket); err != nil {
 			return err
 		}
+
+		if err := c.ensureIndexFile(mc, minioBucket); err != nil {
+			return err
+		}
 	}
 
 	minioBucket.Status.Ready = true
@@ -220,11 +225,38 @@ func (c *MinIOBucketController) ensureBucketPolicy(mc *minio.Client, spec *minio
 	if err != nil {
 		return err
 	}
+	klog.V(4).Infof("SetBucketPolicy: %s", string(b))
 	if err := mc.SetBucketPolicyWithContext(context.TODO(), spec.Name, string(b)); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *MinIOBucketController) ensureIndexFile(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
+	if !spec.Spec.CreateIndexFile {
+		return nil
+	}
+
+	stat, err := mc.StatObjectWithContext(context.TODO(), spec.Name, "index.html", minio.StatObjectOptions{})
+	if err != nil {
+		mErr, ok := err.(minio.ErrorResponse)
+		if !ok {
+			return err
+		}
+
+		if mErr.Code != "NoSuchKey" {
+			return err
+		}
+	}
+	if stat.Key != "" {
+		klog.V(4).Info("Skip create index file because file already exists")
+		return nil
+	}
+
+	klog.V(4).Info("Create index.html")
+	_, err = mc.PutObjectWithContext(context.TODO(), spec.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{})
+	return err
 }
 
 func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
