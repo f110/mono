@@ -6,6 +6,7 @@ spec:
   selector:
     matchLabels:
       app: minio
+  policy: readOnly
 ---
 apiVersion: minio.f110.dev/v1alpha1
 kind: MinIOBucket

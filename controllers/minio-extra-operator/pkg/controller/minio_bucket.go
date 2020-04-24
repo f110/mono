@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -161,15 +163,11 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		if err != nil {
 			return err
 		}
-		if exists, err := mc.BucketExists(minioBucket.Name); err != nil {
+		if err := c.ensureBucket(mc, minioBucket.Name); err != nil {
 			return err
-		} else if exists {
-			klog.V(4).Infof("%s already exists", minioBucket.Name)
-			continue
 		}
-		klog.V(4).Infof("%s is created", minioBucket.Name)
 
-		if err := mc.MakeBucket(minioBucket.Name, ""); err != nil {
+		if err := c.ensureBucketPolicy(mc, minioBucket); err != nil {
 			return err
 		}
 	}
@@ -181,6 +179,49 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *MinIOBucketController) ensureBucket(mc *minio.Client, name string) error {
+	if exists, err := mc.BucketExists(name); err != nil {
+		return err
+	} else if exists {
+		klog.V(4).Infof("%s already exists", name)
+		return nil
+	}
+	klog.V(4).Infof("%s is created", name)
+
+	if err := mc.MakeBucket(name, ""); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *MinIOBucketController) ensureBucketPolicy(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
+	var statements []policy.Statement
+	switch spec.Spec.Policy {
+	case "", miniov1alpha1.PolicyPrivate:
+		// If .Spec.Policy is an empty value, We must not change anything.
+		return mc.SetBucketPolicyWithContext(context.TODO(), spec.Name, "")
+	case miniov1alpha1.PolicyPublic:
+		statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, spec.Name, "*")
+	case miniov1alpha1.PolicyReadOnly:
+		statements = policy.SetPolicy(nil, policy.BucketPolicyReadOnly, spec.Name, "*")
+	}
+
+	p := map[string]interface{}{
+		"Version":   "2012-10-17",
+		"Statement": statements,
+	}
+	b, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	if err := mc.SetBucketPolicyWithContext(context.TODO(), spec.Name, string(b)); err != nil {
+		return err
 	}
 
 	return nil

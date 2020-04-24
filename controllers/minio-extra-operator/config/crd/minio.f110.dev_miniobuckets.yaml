@@ -49,6 +49,12 @@ spec:
                 description: FinalizePolicy is a policy when deleted CR Object. If
                   FinalizePolicy is an empty string, then it is the same as "keep"
                 type: string
+              policy:
+                description: Policy is the policy of bucket. One of public, readOnly,
+                  private. If you don't want to give public access, set private or
+                  an empty value. If it is an empty value, The bucket will not have
+                  any policy. Currently, MinIOBucket can't use prefix based policy.
+                type: string
               selector:
                 description: Selector is a selector of MinioInstance
                 properties:
