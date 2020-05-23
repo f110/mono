@@ -1,0 +1,47 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/f110/wing/tools/unifi-proxy",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/dgrijalva/jwt-go:go_default_library",
+        "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "unifi-proxy",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "bin",
+    srcs = [
+        "//tools/unifi-proxy",
+    ],
+    mode = "0755",
+    package_dir = "/usr/local/bin",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/unifi-proxy"],
+    tars = [":bin"],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "tools/unifi-proxy",
+    tag = "{BUILD_TIMESTAMP}",
+)
