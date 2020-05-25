@@ -1,0 +1,24 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar", "pkg_deb")
+
+pkg_tar(
+    name = "bin",
+    package_dir = "/usr/local/bin",
+    srcs = [
+        "//tools/unissh/cmd/unissh-list-machines",
+        ":unissh"
+        ],
+    mode = "0755",
+)
+
+pkg_deb(
+    name = "pkg",
+    architecture = "amd64",
+    data = ":bin",
+    depends = [
+        "peco",
+    ],
+    package = "unissh",
+    version = "0.1.0",
+    maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
+    description = "Easy ssh tool",
+)

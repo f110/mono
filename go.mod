@@ -27,6 +27,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/utils v0.0.0-20200318093247-d1ab8797c558 // indirect
 	sigs.k8s.io/yaml v1.1.0
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
 )
 
 replace github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.1.0

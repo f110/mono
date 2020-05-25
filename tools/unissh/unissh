@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+selected=$(unissh-list-machines --host unifi-proxy.tools.x.f110.dev --site default | peco)
+if [ -z "$selected" ]; then
+  exit 0
+fi
+
+ip_address=$(echo "$selected" | awk '{print $2}')
+
+exec ssh "$ip_address"
