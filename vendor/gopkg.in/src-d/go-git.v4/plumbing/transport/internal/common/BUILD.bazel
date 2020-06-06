@@ -6,7 +6,7 @@ go_library(
         "common.go",
         "server.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
     visibility = ["//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:__subpackages__"],
     deps = [

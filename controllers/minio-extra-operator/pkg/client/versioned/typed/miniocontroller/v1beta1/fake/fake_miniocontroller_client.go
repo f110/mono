@@ -26,7 +26,7 @@ SOFTWARE.
 package fake
 
 import (
-	v1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
+	v1beta1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

@@ -6,7 +6,7 @@ go_library(
         "read.go",
         "write.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/utils/binary",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/utils/binary",
     importpath = "gopkg.in/src-d/go-git.v4/utils/binary",
     visibility = ["//visibility:public"],
     deps = ["//vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library"],

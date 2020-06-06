@@ -10,7 +10,7 @@ go_library(
         "read.go",
         "set.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/src-d/gcfg",
+    importmap = "go.f110.dev/mono/vendor/github.com/src-d/gcfg",
     importpath = "github.com/src-d/gcfg",
     visibility = ["//visibility:public"],
     deps = [

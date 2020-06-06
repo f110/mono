@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
-	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
-	"github.com/f110/wing/bot/continuous-delivery/pkg/consumer"
-	"github.com/f110/wing/bot/continuous-delivery/pkg/webhook"
-	"github.com/f110/wing/lib/logger"
+	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
+	"go.f110.dev/mono/bot/continuous-delivery/pkg/consumer"
+	"go.f110.dev/mono/bot/continuous-delivery/pkg/webhook"
+	"go.f110.dev/mono/lib/logger"
 )
 
 func producer(args []string) error {

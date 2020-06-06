@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["chroot.go"],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-billy.v4/helper/chroot",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-billy.v4/helper/chroot",
     importpath = "gopkg.in/src-d/go-billy.v4/helper/chroot",
     visibility = ["//visibility:public"],
     deps = [

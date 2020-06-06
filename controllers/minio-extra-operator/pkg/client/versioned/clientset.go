@@ -28,8 +28,8 @@ package versioned
 import (
 	"fmt"
 
-	miniov1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1"
-	minv1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
+	miniov1alpha1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned/typed/minio/v1alpha1"
+	minv1beta1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned/typed/miniocontroller/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

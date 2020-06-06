@@ -10,7 +10,7 @@ go_library(
         "reference.go",
         "revision.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing",
     visibility = ["//visibility:public"],
 )

@@ -28,10 +28,10 @@ package v1beta1
 import (
 	time "time"
 
-	versioned "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned"
-	internalinterfaces "github.com/f110/wing/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/listers/miniocontroller/v1beta1"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	versioned "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned"
+	internalinterfaces "go.f110.dev/mono/controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces"
+	v1beta1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/listers/miniocontroller/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

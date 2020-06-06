@@ -11,7 +11,7 @@ go_library(
         "patch.go",
         "stringutil.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/sergi/go-diff/diffmatchpatch",
+    importmap = "go.f110.dev/mono/vendor/github.com/sergi/go-diff/diffmatchpatch",
     importpath = "github.com/sergi/go-diff/diffmatchpatch",
     visibility = ["//visibility:public"],
 )

@@ -9,7 +9,7 @@ go_library(
         "uri_path.go",
         "v4.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/aws/aws-sdk-go/aws/signer/v4",
+    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go/aws/signer/v4",
     importpath = "github.com/aws/aws-sdk-go/aws/signer/v4",
     visibility = ["//visibility:public"],
     deps = [

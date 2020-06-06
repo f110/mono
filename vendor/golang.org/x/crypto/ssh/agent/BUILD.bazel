@@ -8,7 +8,7 @@ go_library(
         "keyring.go",
         "server.go",
     ],
-    importmap = "github.com/f110/wing/vendor/golang.org/x/crypto/ssh/agent",
+    importmap = "go.f110.dev/mono/vendor/golang.org/x/crypto/ssh/agent",
     importpath = "golang.org/x/crypto/ssh/agent",
     visibility = ["//visibility:public"],
     deps = [

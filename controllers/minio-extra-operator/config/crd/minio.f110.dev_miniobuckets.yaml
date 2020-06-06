@@ -46,8 +46,9 @@ spec:
           spec:
             properties:
               bucketFinalizePolicy:
-                description: FinalizePolicy is a policy when deleted CR Object. If
-                  FinalizePolicy is an empty string, then it is the same as "keep"
+                description: BucketFinalizePolicy is a policy when deleted CR Object.
+                  If BucketFinalizePolicy is an empty string, then it is the same
+                  as "keep"
                 type: string
               createIndexFile:
                 description: CreateIndexFile is a flag that creates index.html on

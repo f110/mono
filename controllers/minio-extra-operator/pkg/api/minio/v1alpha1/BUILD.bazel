@@ -8,7 +8,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
-    importpath = "github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio/v1alpha1",
+    importpath = "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
         "//controllers/minio-extra-operator/pkg/api/minio:go_default_library",

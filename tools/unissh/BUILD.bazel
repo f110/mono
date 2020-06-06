@@ -5,8 +5,8 @@ pkg_tar(
     package_dir = "/usr/local/bin",
     srcs = [
         "//tools/unissh/cmd/unissh-list-machines",
-        ":unissh"
-        ],
+        ":unissh",
+    ],
     mode = "0755",
 )
 

@@ -8,7 +8,7 @@ go_library(
         "logger.go",
         "no_op_retryer.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/aws/aws-sdk-go/aws/client",
+    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go/aws/client",
     importpath = "github.com/aws/aws-sdk-go/aws/client",
     visibility = ["//visibility:public"],
     deps = [

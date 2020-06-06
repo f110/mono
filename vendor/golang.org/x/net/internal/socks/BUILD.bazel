@@ -6,7 +6,7 @@ go_library(
         "client.go",
         "socks.go",
     ],
-    importmap = "github.com/f110/wing/vendor/golang.org/x/net/internal/socks",
+    importmap = "go.f110.dev/mono/vendor/golang.org/x/net/internal/socks",
     importpath = "golang.org/x/net/internal/socks",
     visibility = ["//vendor/golang.org/x/net:__subpackages__"],
 )

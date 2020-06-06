@@ -7,7 +7,7 @@ go_library(
         "sshagent.go",
         "sshagent_windows.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/xanzy/ssh-agent",
+    importmap = "go.f110.dev/mono/vendor/github.com/xanzy/ssh-agent",
     importpath = "github.com/xanzy/ssh-agent",
     visibility = ["//visibility:public"],
     deps = select({

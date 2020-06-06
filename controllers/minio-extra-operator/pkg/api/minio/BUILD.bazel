@@ -3,6 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["register.go"],
-    importpath = "github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio",
+    importpath = "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio",
     visibility = ["//visibility:public"],
 )

@@ -8,8 +8,8 @@ import (
 	"github.com/google/go-github/v29/github"
 	"go.uber.org/zap"
 
-	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
-	"github.com/f110/wing/lib/logger"
+	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
+	"go.f110.dev/mono/lib/logger"
 )
 
 const (

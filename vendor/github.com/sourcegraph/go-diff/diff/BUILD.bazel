@@ -10,7 +10,7 @@ go_library(
         "print.go",
         "reader_util.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/sourcegraph/go-diff/diff",
+    importmap = "go.f110.dev/mono/vendor/github.com/sourcegraph/go-diff/diff",
     importpath = "github.com/sourcegraph/go-diff/diff",
     visibility = ["//visibility:public"],
     deps = [

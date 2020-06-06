@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/f110/wing/tools/unifi-proxy",
+    importpath = "go.f110.dev/mono/tools/unifi-proxy",
     visibility = ["//visibility:private"],
     deps = [
         "//vendor/github.com/dgrijalva/jwt-go:go_default_library",

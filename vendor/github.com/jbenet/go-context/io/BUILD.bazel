@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["ctxio.go"],
-    importmap = "github.com/f110/wing/vendor/github.com/jbenet/go-context/io",
+    importmap = "go.f110.dev/mono/vendor/github.com/jbenet/go-context/io",
     importpath = "github.com/jbenet/go-context/io",
     visibility = ["//visibility:public"],
     deps = ["//vendor/golang.org/x/net/context:go_default_library"],

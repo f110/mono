@@ -9,7 +9,7 @@ go_library(
         "int.go",
         "scan.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/src-d/gcfg/types",
+    importmap = "go.f110.dev/mono/vendor/github.com/src-d/gcfg/types",
     importpath = "github.com/src-d/gcfg/types",
     visibility = ["//visibility:public"],
 )

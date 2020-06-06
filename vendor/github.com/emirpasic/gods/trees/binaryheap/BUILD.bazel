@@ -7,7 +7,7 @@ go_library(
         "iterator.go",
         "serialization.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/emirpasic/gods/trees/binaryheap",
+    importmap = "go.f110.dev/mono/vendor/github.com/emirpasic/gods/trees/binaryheap",
     importpath = "github.com/emirpasic/gods/trees/binaryheap",
     visibility = ["//visibility:public"],
     deps = [

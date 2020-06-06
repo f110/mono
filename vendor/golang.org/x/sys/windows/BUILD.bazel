@@ -24,7 +24,7 @@ go_library(
         "zknownfolderids_windows.go",
         "zsyscall_windows.go",
     ],
-    importmap = "github.com/f110/wing/vendor/golang.org/x/sys/windows",
+    importmap = "go.f110.dev/mono/vendor/golang.org/x/sys/windows",
     importpath = "golang.org/x/sys/windows",
     visibility = ["//visibility:public"],
 )

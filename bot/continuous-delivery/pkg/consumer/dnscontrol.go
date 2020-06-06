@@ -19,8 +19,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/f110/wing/bot/continuous-delivery/pkg/config"
-	"github.com/f110/wing/lib/logger"
+	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
+	"go.f110.dev/mono/lib/logger"
 )
 
 const (

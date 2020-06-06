@@ -7,7 +7,7 @@ go_library(
         "scanner.go",
         "token.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/internal/revision",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/internal/revision",
     importpath = "gopkg.in/src-d/go-git.v4/internal/revision",
     visibility = ["//vendor/gopkg.in/src-d/go-git.v4:__subpackages__"],
 )

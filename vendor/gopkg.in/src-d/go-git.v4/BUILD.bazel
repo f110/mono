@@ -22,7 +22,7 @@ go_library(
         "worktree_unix_other.go",
         "worktree_windows.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4",
     importpath = "gopkg.in/src-d/go-git.v4",
     visibility = ["//visibility:public"],
     deps = [

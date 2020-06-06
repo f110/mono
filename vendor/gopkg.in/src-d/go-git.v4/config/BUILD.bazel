@@ -8,7 +8,7 @@ go_library(
         "modules.go",
         "refspec.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/config",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/config",
     importpath = "gopkg.in/src-d/go-git.v4/config",
     visibility = ["//visibility:public"],
     deps = [

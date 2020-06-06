@@ -6,7 +6,7 @@ go_library(
         "errors.go",
         "stack.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/pkg/errors",
+    importmap = "go.f110.dev/mono/vendor/github.com/pkg/errors",
     importpath = "github.com/pkg/errors",
     visibility = ["//visibility:public"],
 )

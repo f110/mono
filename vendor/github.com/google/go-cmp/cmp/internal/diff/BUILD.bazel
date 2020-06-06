@@ -6,7 +6,7 @@ go_library(
         "debug_disable.go",
         "diff.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/google/go-cmp/cmp/internal/diff",
+    importmap = "go.f110.dev/mono/vendor/github.com/google/go-cmp/cmp/internal/diff",
     importpath = "github.com/google/go-cmp/cmp/internal/diff",
     visibility = ["//vendor/github.com/google/go-cmp/cmp:__subpackages__"],
 )

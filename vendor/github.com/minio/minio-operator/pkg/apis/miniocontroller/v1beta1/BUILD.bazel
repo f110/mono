@@ -9,7 +9,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
-    importmap = "github.com/f110/wing/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
+    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
     importpath = "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

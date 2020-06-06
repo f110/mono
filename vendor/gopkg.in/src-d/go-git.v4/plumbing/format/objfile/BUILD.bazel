@@ -7,7 +7,7 @@ go_library(
         "reader.go",
         "writer.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/objfile",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/objfile",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/objfile",
     visibility = ["//visibility:public"],
     deps = [

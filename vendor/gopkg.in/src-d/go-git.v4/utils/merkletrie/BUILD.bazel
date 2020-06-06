@@ -9,7 +9,7 @@ go_library(
         "doubleiter.go",
         "iter.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie",
     importpath = "gopkg.in/src-d/go-git.v4/utils/merkletrie",
     visibility = ["//visibility:public"],
     deps = [

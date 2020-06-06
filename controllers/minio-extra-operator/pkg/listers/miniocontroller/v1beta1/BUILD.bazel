@@ -7,7 +7,7 @@ go_library(
         "minioinstance.go",
         "mirror.go",
     ],
-    importpath = "github.com/f110/wing/controllers/minio-extra-operator/pkg/listers/miniocontroller/v1beta1",
+    importpath = "go.f110.dev/mono/controllers/minio-extra-operator/pkg/listers/miniocontroller/v1beta1",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1:go_default_library",

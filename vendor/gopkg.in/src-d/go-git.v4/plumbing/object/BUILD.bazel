@@ -22,7 +22,7 @@ go_library(
         "tree.go",
         "treenoder.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/object",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing/object",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/object",
     visibility = ["//visibility:public"],
     deps = [

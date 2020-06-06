@@ -17,7 +17,7 @@ go_library(
         "patch_delta.go",
         "scanner.go",
     ],
-    importmap = "github.com/f110/wing/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/packfile",
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/packfile",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/packfile",
     visibility = ["//visibility:public"],
     deps = [

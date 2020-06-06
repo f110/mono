@@ -16,10 +16,10 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
 
-	clientset "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned"
-	"github.com/f110/wing/controllers/harbor-project-operator/pkg/controller"
-	informers "github.com/f110/wing/controllers/harbor-project-operator/pkg/informers/externalversions"
-	"github.com/f110/wing/lib/signals"
+	clientset "go.f110.dev/mono/controllers/harbor-project-operator/pkg/client/versioned"
+	"go.f110.dev/mono/controllers/harbor-project-operator/pkg/controller"
+	informers "go.f110.dev/mono/controllers/harbor-project-operator/pkg/informers/externalversions"
+	"go.f110.dev/mono/lib/signals"
 )
 
 func main() {

@@ -21,7 +21,7 @@ go_library(
         "tee.go",
         "write_syncer.go",
     ],
-    importmap = "github.com/f110/wing/vendor/go.uber.org/zap/zapcore",
+    importmap = "go.f110.dev/mono/vendor/go.uber.org/zap/zapcore",
     importpath = "go.uber.org/zap/zapcore",
     visibility = ["//visibility:public"],
     deps = [

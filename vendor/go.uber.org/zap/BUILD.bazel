@@ -23,7 +23,7 @@ go_library(
         "time.go",
         "writer.go",
     ],
-    importmap = "github.com/f110/wing/vendor/go.uber.org/zap",
+    importmap = "go.f110.dev/mono/vendor/go.uber.org/zap",
     importpath = "go.uber.org/zap",
     visibility = ["//visibility:public"],
     deps = [

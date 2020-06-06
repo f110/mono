@@ -5,10 +5,10 @@ k8s_code_generator(
     srcs = [
         "//controllers/harbor-project-operator/pkg/api/harbor/v1alpha1:go_default_library",
     ],
-    clientpackage = "github.com/f110/wing/controllers/harbor-project-operator/pkg/client",
+    clientpackage = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/client",
     crd = "controllers/harbor-project-operator/config/crd",
     header = "//controllers:boilerplate.go.txt",
-    informerpackage = "github.com/f110/wing/controllers/harbor-project-operator/pkg/informers",
-    listerpackage = "github.com/f110/wing/controllers/harbor-project-operator/pkg/listers",
+    informerpackage = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/informers",
+    listerpackage = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/listers",
     no_gazelle = True,
 )

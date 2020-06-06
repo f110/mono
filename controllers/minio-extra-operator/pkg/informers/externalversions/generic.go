@@ -28,8 +28,8 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/f110/wing/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
 	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	v1alpha1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

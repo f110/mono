@@ -26,9 +26,9 @@ SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned"
-	harborv1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1"
-	fakeharborv1alpha1 "github.com/f110/wing/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1/fake"
+	clientset "go.f110.dev/mono/controllers/harbor-project-operator/pkg/client/versioned"
+	harborv1alpha1 "go.f110.dev/mono/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1"
+	fakeharborv1alpha1 "go.f110.dev/mono/controllers/harbor-project-operator/pkg/client/versioned/typed/harbor/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

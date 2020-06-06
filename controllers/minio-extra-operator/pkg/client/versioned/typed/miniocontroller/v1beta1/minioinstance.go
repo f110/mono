@@ -28,8 +28,8 @@ package v1beta1
 import (
 	"time"
 
-	scheme "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/scheme"
 	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	scheme "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"

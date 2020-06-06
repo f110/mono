@@ -1,4 +1,4 @@
-module github.com/f110/wing
+module go.f110.dev/mono
 
 go 1.13
 

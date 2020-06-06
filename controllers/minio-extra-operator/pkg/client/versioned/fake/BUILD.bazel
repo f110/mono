@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "register.go",
     ],
-    importpath = "github.com/f110/wing/controllers/minio-extra-operator/pkg/client/versioned/fake",
+    importpath = "go.f110.dev/mono/controllers/minio-extra-operator/pkg/client/versioned/fake",
     visibility = ["//visibility:public"],
     deps = [
         "//controllers/minio-extra-operator/pkg/api/minio/v1alpha1:go_default_library",
