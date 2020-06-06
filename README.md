@@ -9,7 +9,7 @@ This repository is my monorepo for operating k8s cluster
 
 All tools are built by [Bazel](https://bazel.build)
 
-Please check [the Official document](https://docs.bazel.build/versions/master/getting-started.html) to installation steps.
+Please check [the Official document](https://docs.bazel.build/versions/master/getting-started.html) for installing Bazel.
 
 # Author
 

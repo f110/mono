@@ -180,7 +180,7 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	minioBucket.Status.Ready = true
 
 	if !reflect.DeepEqual(minioBucket.Status, currentBucket.Status) {
-		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(minioBucket)
+		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).UpdateStatus(minioBucket)
 		if err != nil {
 			return err
 		}
