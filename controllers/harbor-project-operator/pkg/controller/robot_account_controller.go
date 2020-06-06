@@ -184,7 +184,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	harborRobotAccount.Status.Ready = true
 
 	if !reflect.DeepEqual(harborRobotAccount.Status, currentHRA.Status) {
-		_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(currentHRA.Namespace).Update(harborRobotAccount)
+		_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(currentHRA.Namespace).UpdateStatus(harborRobotAccount)
 		if err != nil {
 			return err
 		}

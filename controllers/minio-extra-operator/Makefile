@@ -1,5 +1,5 @@
 gen:
-	bazel query 'attr(generator_function, k8s_code_generator, //...)' | xargs -n1 bazel run
+	bazel query 'attr(generator_function, k8s_code_generator, //controllers/minio-extra-operator/...)' | xargs -n1 bazel run
 	bazel run //:vendor
 
 run:

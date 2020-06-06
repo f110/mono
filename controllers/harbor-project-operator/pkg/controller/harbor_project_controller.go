@@ -169,7 +169,7 @@ func (c *HarborProjectController) syncHarborProject(key string) error {
 	harborProject.Status.Registry = c.registryName
 
 	if !reflect.DeepEqual(harborProject.Status, currentHP.Status) {
-		_, err = c.hpClient.HarborV1alpha1().HarborProjects(currentHP.Namespace).Update(harborProject)
+		_, err = c.hpClient.HarborV1alpha1().HarborProjects(currentHP.Namespace).UpdateStatus(harborProject)
 		if err != nil {
 			return err
 		}

@@ -4,8 +4,8 @@ go_library(
     name = "go_default_library",
     srcs = [
         "docker.go",
-        "harbor_project.go",
-        "robot_account.go",
+        "harbor_project_controller.go",
+        "robot_account_controller.go",
     ],
     importpath = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/controller",
     visibility = ["//visibility:public"],
