@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/bazel-bin" />
+      <excludeFolder url="file://$MODULE_DIR$/bazel-mono" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-out" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-testlogs" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-wing" />
