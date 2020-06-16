@@ -11,6 +11,7 @@ pkg_tar(
         "//third_party/pkgsite/content/static/html/worker:files",
         "//third_party/pkgsite/content/static/img:files",
         "//third_party/pkgsite/content/static/js:files",
+        "//third_party/pkgsite/migrations:files",
     ],
 )
 
@@ -20,6 +21,7 @@ pkg_tar(
         "//third_party/pkgsite/cmd/frontend",
         "//third_party/pkgsite/cmd/prober",
         "//third_party/pkgsite/cmd/worker",
+        "@com_github_migrate_migrate//:bin",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",
