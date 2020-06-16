@@ -3,10 +3,10 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "db2b2d35293f405430f553bc7a865a8749a8ef60c30287e90d2b278c32771afe",
+    sha256 = "a8d6b1b354d371a646d2f7927319974e0f9e52f73a2452d2b3877118169eb6bb",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.22.3/rules_go-v0.22.3.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.22.3/rules_go-v0.22.3.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.23.3/rules_go-v0.23.3.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.23.3/rules_go-v0.23.3.tar.gz",
     ],
 )
 
@@ -38,11 +38,11 @@ http_archive(
     sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
 )
 
-git_repository(
+http_archive(
     name = "com_google_protobuf",
-    commit = "09745575a923640154bcf307fba8aedff47f240a",
-    remote = "https://github.com/protocolbuffers/protobuf",
-    shallow_since = "1558721209 -0700",
+    sha256 = "9748c0d90e54ea09e5e75fb7fac16edce15d2028d4356f32211cfa3c0e956564",
+    strip_prefix = "protobuf-3.11.4",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.zip"],
 )
 
 git_repository(
@@ -60,6 +60,10 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_to
 go_rules_dependencies()
 
 go_register_toolchains()
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
