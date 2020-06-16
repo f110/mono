@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "equate.go",
+        "ignore.go",
+        "sort.go",
+        "struct_filter.go",
+        "xform.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/go-cmp/cmp/cmpopts",
+    importpath = "github.com/google/go-cmp/cmp/cmpopts",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/google/go-cmp/cmp:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/google/go-cmp/cmp/internal/function:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)

@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "noder.go",
+        "path.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
+    importpath = "gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
+    visibility = ["//visibility:public"],
+)

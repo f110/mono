@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "datasource.go",
+        "discovery.go",
+        "experiment.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/licenses:go_default_library",
+        "//third_party/pkgsite/internal/source:go_default_library",
+        "//third_party/pkgsite/internal/stdlib:go_default_library",
+        "//third_party/pkgsite/internal/version:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module:go_default_library",
+    ],
+)

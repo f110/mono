@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "lint.go",
+        "runner.go",
+        "stats.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/lint",
+    importpath = "honnef.co/go/tools/lint",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/analysis:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/types/objectpath:go_default_library",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/config:go_default_library",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/facts:go_default_library",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/internal/cache:go_default_library",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/loader:go_default_library",
+    ],
+)

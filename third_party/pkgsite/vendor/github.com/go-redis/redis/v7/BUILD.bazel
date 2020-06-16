@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cluster.go",
+        "cluster_commands.go",
+        "command.go",
+        "commands.go",
+        "doc.go",
+        "error.go",
+        "iterator.go",
+        "options.go",
+        "pipeline.go",
+        "pubsub.go",
+        "redis.go",
+        "result.go",
+        "ring.go",
+        "script.go",
+        "sentinel.go",
+        "tx.go",
+        "universal.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/go-redis/redis/v7",
+    importpath = "github.com/go-redis/redis/v7",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/consistenthash:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/hashtag:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/pool:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/util:go_default_library",
+    ],
+)

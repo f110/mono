@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["config.go"],
+    importpath = "golang.org/x/pkgsite/internal/config",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/derrors:go_default_library",
+        "//third_party/pkgsite/internal/secrets:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/storage:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/ghodss/yaml:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres:go_default_library",
+    ],
+)

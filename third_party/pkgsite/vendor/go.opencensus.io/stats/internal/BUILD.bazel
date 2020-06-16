@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["record.go"],
+    importmap = "golang.org/x/pkgsite/vendor/go.opencensus.io/stats/internal",
+    importpath = "go.opencensus.io/stats/internal",
+    visibility = ["//third_party/pkgsite/vendor/go.opencensus.io/stats:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/go.opencensus.io/tag:go_default_library"],
+)

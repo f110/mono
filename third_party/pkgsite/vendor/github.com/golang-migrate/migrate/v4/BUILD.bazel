@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "log.go",
+        "migrate.go",
+        "migration.go",
+        "util.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/golang-migrate/migrate/v4",
+    importpath = "github.com/golang-migrate/migrate/v4",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/database:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/internal/url:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/hashicorp/go-multierror:go_default_library",
+    ],
+)

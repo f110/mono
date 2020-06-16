@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "external.go",
+        "golist.go",
+        "golist_overlay.go",
+        "loadmode_string.go",
+        "packages.go",
+        "visit.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/tools/go/packages",
+    importpath = "golang.org/x/tools/go/packages",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/gcexportdata:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/internal/packagesdriver:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/internal/gocommand:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/internal/packagesinternal:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)

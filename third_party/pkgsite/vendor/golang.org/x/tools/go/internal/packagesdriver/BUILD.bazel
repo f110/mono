@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["sizes.go"],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/tools/go/internal/packagesdriver",
+    importpath = "golang.org/x/tools/go/internal/packagesdriver",
+    visibility = ["//third_party/pkgsite/vendor/golang.org/x/tools/go:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/tools/internal/gocommand:go_default_library"],
+)

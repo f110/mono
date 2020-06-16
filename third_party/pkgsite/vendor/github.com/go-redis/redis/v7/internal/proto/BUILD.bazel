@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "reader.go",
+        "scan.go",
+        "writer.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto",
+    importpath = "github.com/go-redis/redis/v7/internal/proto",
+    visibility = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v7:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/util:go_default_library"],
+)

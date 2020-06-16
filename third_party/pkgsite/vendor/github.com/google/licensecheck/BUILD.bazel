@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "data.gen.go",
+        "license.go",
+        "normalize.go",
+        "type_string.go",
+        "urls.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/licensecheck",
+    importpath = "github.com/google/licensecheck",
+    visibility = ["//visibility:public"],
+)

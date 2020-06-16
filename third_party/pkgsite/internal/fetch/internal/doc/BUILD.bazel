@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "comment.go",
+        "doc.go",
+        "example.go",
+        "exports.go",
+        "filter.go",
+        "reader.go",
+        "synopsis.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/fetch/internal/doc",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+)

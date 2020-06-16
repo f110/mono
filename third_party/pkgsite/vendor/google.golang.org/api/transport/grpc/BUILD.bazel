@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dial.go",
+        "dial_socketopt.go",
+        "pool.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/api/transport/grpc",
+    importpath = "google.golang.org/api/transport/grpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ocgrpc:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/internal:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer/grpclb:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials/google:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials/oauth:go_default_library",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "//third_party/pkgsite/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//third_party/pkgsite/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)

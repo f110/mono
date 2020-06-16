@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["chroot.go"],
+    importmap = "golang.org/x/pkgsite/vendor/gopkg.in/src-d/go-billy.v4/helper/chroot",
+    importpath = "gopkg.in/src-d/go-billy.v4/helper/chroot",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-billy.v4:go_default_library",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-billy.v4/helper/polyfill:go_default_library",
+    ],
+)

@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "directory.go",
+        "fetch.go",
+        "limit.go",
+        "test_helper.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/fetch",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal:go_default_library",
+        "//third_party/pkgsite/internal/derrors:go_default_library",
+        "//third_party/pkgsite/internal/experiment:go_default_library",
+        "//third_party/pkgsite/internal/fetch/dochtml:go_default_library",
+        "//third_party/pkgsite/internal/fetch/internal/doc:go_default_library",
+        "//third_party/pkgsite/internal/licenses:go_default_library",
+        "//third_party/pkgsite/internal/log:go_default_library",
+        "//third_party/pkgsite/internal/proxy:go_default_library",
+        "//third_party/pkgsite/internal/source:go_default_library",
+        "//third_party/pkgsite/internal/stdlib:go_default_library",
+        "//third_party/pkgsite/internal/version:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/google/go-cmp/cmp:go_default_library",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/modfile:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module:go_default_library",
+    ],
+)

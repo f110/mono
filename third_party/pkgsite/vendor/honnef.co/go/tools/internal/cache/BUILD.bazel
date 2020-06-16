@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cache.go",
+        "default.go",
+        "hash.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/internal/cache",
+    importpath = "honnef.co/go/tools/internal/cache",
+    visibility = ["//third_party/pkgsite/vendor/honnef.co/go/tools:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/honnef.co/go/tools/internal/renameio:go_default_library"],
+)

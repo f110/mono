@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["pagecheck.go"],
+    importpath = "golang.org/x/pkgsite/internal/testing/pagecheck",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/stdlib:go_default_library",
+        "//third_party/pkgsite/internal/testing/htmlcheck:go_default_library",
+    ],
+)

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["teeproxy.go"],
+    importpath = "golang.org/x/pkgsite/internal/teeproxy",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal:go_default_library",
+        "//third_party/pkgsite/internal/derrors:go_default_library",
+        "//third_party/pkgsite/internal/experiment:go_default_library",
+        "//third_party/pkgsite/internal/log:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp:go_default_library",
+    ],
+)

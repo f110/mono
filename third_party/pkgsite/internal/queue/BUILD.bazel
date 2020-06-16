@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["queue.go"],
+    importpath = "golang.org/x/pkgsite/internal/queue",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/config:go_default_library",
+        "//third_party/pkgsite/internal/derrors:go_default_library",
+        "//third_party/pkgsite/internal/experiment:go_default_library",
+        "//third_party/pkgsite/internal/log:go_default_library",
+        "//third_party/pkgsite/internal/postgres:go_default_library",
+        "//third_party/pkgsite/internal/proxy:go_default_library",
+        "//third_party/pkgsite/internal/source:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/cloudtasks/apiv2:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/cloud/tasks/v2:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status:go_default_library",
+    ],
+)

@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "error_group_client.go",
+        "error_stats_client.go",
+        "path_funcs.go",
+        "report_errors_client.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/errorreporting/apiv1beta1",
+    importpath = "cloud.google.com/go/errorreporting/apiv1beta1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/iterator:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/transport/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata:go_default_library",
+    ],
+)

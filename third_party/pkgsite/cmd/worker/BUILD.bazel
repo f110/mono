@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "golang.org/x/pkgsite/cmd/worker",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/pkgsite/internal/config:go_default_library",
+        "//third_party/pkgsite/internal/database:go_default_library",
+        "//third_party/pkgsite/internal/dcensus:go_default_library",
+        "//third_party/pkgsite/internal/experiment:go_default_library",
+        "//third_party/pkgsite/internal/index:go_default_library",
+        "//third_party/pkgsite/internal/log:go_default_library",
+        "//third_party/pkgsite/internal/middleware:go_default_library",
+        "//third_party/pkgsite/internal/postgres:go_default_library",
+        "//third_party/pkgsite/internal/proxy:go_default_library",
+        "//third_party/pkgsite/internal/queue:go_default_library",
+        "//third_party/pkgsite/internal/source:go_default_library",
+        "//third_party/pkgsite/internal/worker:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/cloudtasks/apiv2:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/errorreporting:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/profiler:go_default_library",
+        "//third_party/pkgsite/vendor/contrib.go.opencensus.io/integrations/ocsql:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "worker",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

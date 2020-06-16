@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "index.go",
+        "test_helper.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/index",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal:go_default_library",
+        "//third_party/pkgsite/internal/derrors:go_default_library",
+        "//third_party/pkgsite/internal/testing/testhelper:go_default_library",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp:go_default_library",
+    ],
+)

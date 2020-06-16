@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "alert_policy_client.go",
+        "doc.go",
+        "group_client.go",
+        "metric_client.go",
+        "notification_channel_client.go",
+        "path_funcs.go",
+        "service_monitoring_client.go",
+        "uptime_check_client.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/monitoring/apiv3",
+    importpath = "cloud.google.com/go/monitoring/apiv3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/iterator:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/api/transport/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/metric:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/monitoring/v3:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata:go_default_library",
+    ],
+)
