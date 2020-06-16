@@ -2,6 +2,19 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
 
 pkg_tar(
+    name = "content",
+    deps = [
+        "//third_party/pkgsite/content/static/css:files",
+        "//third_party/pkgsite/content/static/html:files",
+        "//third_party/pkgsite/content/static/html/helpers:files",
+        "//third_party/pkgsite/content/static/html/pages:files",
+        "//third_party/pkgsite/content/static/html/worker:files",
+        "//third_party/pkgsite/content/static/img:files",
+        "//third_party/pkgsite/content/static/js:files",
+    ],
+)
+
+pkg_tar(
     name = "bin",
     srcs = [
         "//third_party/pkgsite/cmd/frontend",
@@ -15,7 +28,10 @@ pkg_tar(
 container_image(
     name = "image",
     base = "@com_google_distroless_base//image",
-    tars = [":bin"],
+    tars = [
+        ":bin",
+        ":content",
+    ],
 )
 
 container_push(
