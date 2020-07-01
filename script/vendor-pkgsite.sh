@@ -23,6 +23,9 @@ curl -L -o /tmp/vendor.tar.gz https://github.com/${OWNER}/${REPO}/archive/${COMM
 tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${TARGET_DIR}
 find "${TARGET_DIR}" -name "*_test.go" -delete
 find "${TARGET_DIR}" -name "testdata" -type d | xargs rm -rf
+if [ -f "${TARGET_DIR}/.gitignore" ]; then
+  rm -f "${TARGET_DIR}/.gitignore"
+fi
 
 cd "${TARGET_DIR}"
 echo $COMMIT > COMMIT
