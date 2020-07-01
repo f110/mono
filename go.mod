@@ -5,7 +5,9 @@ go 1.14
 require (
 	github.com/aws/aws-sdk-go v1.28.8
 	github.com/bradleyfalzon/ghinstallation v1.1.1
+	github.com/deckarep/golang-set v1.7.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/google/go-github/v28 v28.1.1
 	github.com/google/go-github/v29 v29.0.3
 	github.com/google/uuid v1.1.1
 	github.com/minio/minio-go/v6 v6.0.50
@@ -13,6 +15,8 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sourcegraph/go-diff v0.5.1
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.4.0
+	github.com/syndtr/goleveldb v1.0.0
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect

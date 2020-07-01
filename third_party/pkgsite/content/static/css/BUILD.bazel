@@ -12,6 +12,7 @@ go_binary(
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
 )
+
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
