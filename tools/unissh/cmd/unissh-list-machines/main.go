@@ -201,12 +201,13 @@ func getClient(client *http.Client, host, site string) ([]*SiteClient, error) {
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return nil, xerrors.Errorf("returns status not ok: %s", res.Status)
+	}
 
 	resBody := &ListClientResponse{}
 	if err := json.NewDecoder(res.Body).Decode(resBody); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	if err := res.Body.Close(); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
