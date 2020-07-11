@@ -2,12 +2,20 @@ package web
 
 import (
 	"html/template"
+	"time"
 )
 
 var Template *template.Template
 
 func init() {
-	Template = template.Must(template.New("").Parse(indexTemplate))
+	Template = template.Must(template.New("").Funcs(map[string]interface{}{
+		"Duration": func(start time.Time, end *time.Time) string {
+			if end == nil {
+				return ""
+			}
+			return end.Sub(start).String()
+		},
+	}).Parse(indexTemplate))
 }
 
 const indexTemplate = `<html>
@@ -118,7 +126,7 @@ const indexTemplate = `<html>
           <th>Rev</th>
           <th>Trigger</th>
           <th>Start at</th>
-          <th>Finished at</th>
+          <th>Duration</th>
         </tr>
       </thead>
       <tbody>
@@ -130,7 +138,7 @@ const indexTemplate = `<html>
           <td><a href="">{{ .Revision }}</a></td>
           <td>{{ .Via }}</td>
           <td>{{ .CreatedAt.Format "2006/01/02 15:04:06" }}</td>
-          <td>{{ if .FinishedAt }}{{ .FinishedAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
+          <td>{{ Duration .CreatedAt .FinishedAt }}</td>
         </tr>
         {{- end }}
       </tbody>
