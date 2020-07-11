@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "entity.go",
+        "generator.go",
+        "mysql.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/go.f110.dev/protoc-ddl/internal/generator",
+    importpath = "go.f110.dev/protoc-ddl/internal/generator",
+    visibility = ["//vendor/go.f110.dev/protoc-ddl:__subpackages__"],
+    deps = [
+        "//vendor/github.com/golang/protobuf/protoc-gen-go/descriptor:go_default_library",
+        "//vendor/go.f110.dev/protoc-ddl/internal/schema:go_default_library",
+    ],
+)

@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["server.go"],
+    importpath = "go.f110.dev/mono/tools/build/pkg/api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database/dao:go_default_library",
+        "//tools/build/pkg/discovery:go_default_library",
+        "//vendor/github.com/bradleyfalzon/ghinstallation:go_default_library",
+        "//vendor/github.com/google/go-github/v32/github:go_default_library",
+        "//vendor/go.f110.dev/protoc-ddl/probe:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["server_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":go_default_library"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database/dao:go_default_library",
+        "//vendor/github.com/DATA-DOG/go-sqlmock:go_default_library",
+        "//vendor/github.com/google/go-github/v32/github:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
+    ],
+)

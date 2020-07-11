@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/tools/build/cmd/sidecar",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/bradleyfalzon/ghinstallation:go_default_library",
+        "//vendor/github.com/google/go-github/v29/github:go_default_library",
+        "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "sidecar",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

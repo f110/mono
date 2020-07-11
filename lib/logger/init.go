@@ -1,14 +1,24 @@
 package logger
 
 import (
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
-	Log       *zap.Logger
-	LogConfig *zap.Config
+	Log *zap.Logger
+
+	logLevel string
 )
+
+func Flags(fs *pflag.FlagSet) {
+	fs.StringVar(&logLevel, "log-level", "info", "Log level")
+}
+
+func SetLogLevel(level string) {
+	logLevel = level
+}
 
 func Init() error {
 	if err := initLogger(); err != nil {
@@ -34,6 +44,14 @@ func initLogger() error {
 	}
 
 	level := zap.InfoLevel
+	switch logLevel {
+	case "debug":
+		level = zap.DebugLevel
+	case "warn":
+		level = zap.WarnLevel
+	case "error":
+		level = zap.ErrorLevel
+	}
 	encoding := "console"
 
 	zapConf := &zap.Config{
@@ -52,6 +70,5 @@ func initLogger() error {
 	}
 
 	Log = l
-	LogConfig = zapConf
 	return nil
 }

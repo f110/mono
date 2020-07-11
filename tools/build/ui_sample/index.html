@@ -1,0 +1,205 @@
+<html>
+<head>
+  <title>Build dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+  <style>
+    i.amber.icon {color: #FFA000;}
+  </style>
+</head>
+<body>
+
+<div class="ui menu inverted huge">
+  <div class="header item">
+    Dashboard
+  </div>
+  <div class="ui item dropdown simple">
+    Repositories<i class="dropdown icon"></i>
+    <div class="menu">
+      <a class="item">mono</a>
+      <a class="item">ops</a>
+      <div class="ui divider"></div>
+      <a class="item" onclick="$('.ui.newRepo.modal').modal({centered:false}).modal('show');">New...</a>
+      <div class="ui item dropdown simple">
+        <i class="tiny trash icon"></i>Delete
+        <div class="menu">
+          <a class="item" onclick="deleteRepository(1, 'mono');">mono</a>
+          <a class="item" onclick="deleteRepository(2, 'ops');">ops</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ui item dropdown simple">
+    Job<i class="dropdown icon"></i>
+    <div class="menu">
+      <a class="item">mono.git/tools/unissh:pkg</a>
+      <a class="item">ops.git/dns:dnscontrol</a>
+    </div>
+  </div>
+</div>
+
+<div class="ui newRepo modal">
+  <i class="close icon"></i>
+  <div class="header">
+    New Repository
+  </div>
+  <div class="content">
+    <form class="ui form newRepo" name="newRepo">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" placeholder="The name of the repository">
+      </div>
+      <div class="field">
+        <label>URL</label>
+        <input type="text" name="url" placeholder="URL of the repository">
+      </div>
+      <div class="field">
+        <label>Clone URL</label>
+        <input type="text" name="clone_url" placeholder="URL for cloning of the repository">
+      </div>
+      <button class="ui button" type="submit" onclick="createRepository()">Add</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui basic modal">
+  <div class="ui icon header">
+    <i class="archive icon"></i>
+    Delete "<span class="repoName">test</span>" repository
+  </div>
+  <div class="actions">
+    <div class="ui red basic cancel inverted button">
+      <i class="remove icon"></i>
+      No
+    </div>
+    <div class="ui green ok inverted button">
+      <i class="checkmark icon"></i>
+      Yes
+    </div>
+  </div>
+</div>
+
+<div class="ui container">
+  <h3 class="ui block header">
+    <div class="ui grid">
+      <div class="two column row">
+        <div class="left floated column"><i class="green check icon"></i>mono.git/tools/unissh:pkg</div>
+        <div class="right aligned floated column"><a href=""><i class="green play icon"></i></a></div>
+      </div>
+    </div>
+  </h3>
+
+  <div class="ui container">
+    <table class="ui selectable striped table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>OK</th>
+          <th>Log</th>
+          <th>Rev</th>
+          <th>Trigger</th>
+          <th>Start at</th>
+          <th>Finished at</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>3</td>
+          <td><i class="green check icon"></i></td>
+          <td><a href="./log.txt">text</a></td>
+          <td><a href="">604e577</a></td>
+          <td>API</td>
+          <td>2020/06/01 07:00:00</td>
+          <td>2020/06/01 07:01:00</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><i class="red attention icon"></i></td>
+          <td><a href="./log.txt">text</a></td>
+          <td><a href="">dc48cd9</a></td>
+          <td>API</td>
+          <td>2020/05/15 08:00:00</td>
+          <td>2020/05/15 08:01:00</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><i class="green check icon"></i></td>
+          <td><a href="./log.txt">text</a></td>
+          <td><a href="">00c4e93</a></td>
+          <td>API</td>
+          <td>2020/05/14 08:00:00</td>
+          <td>2020/05/14 08:01:00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 class="ui block header">
+      <div class="ui grid">
+        <div class="two column row">
+          <div class="left floated column"><i class="red attention icon"></i>ops.git/dns:dnscontrol</div>
+          <div class="right aligned floated column"><a href=""><i class="green play icon"></i></a></div>
+        </div>
+      </div>
+    </h3>
+
+    <div class="ui container">
+      <table class="ui selectable striped table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>OK</th>
+            <th>Log</th>
+            <th>Rev</th>
+            <th>Trigger</th>
+            <th>Start at</th>
+            <th>Finished at</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>4</td>
+          <td><i class="sync amber icon"></i></td>
+          <td></td>
+          <td><a href="">00c4e93</a></td>
+          <td>push</td>
+          <td>2020/05/14 08:00:00</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><i class="red attention icon"></i></td>
+          <td><a href="./log.txt">text</a></td>
+          <td><a href="">00c4e93</a></td>
+          <td>push</td>
+          <td>2020/05/14 08:00:00</td>
+          <td>2020/05/14 08:01:00</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function createRepository() {
+	var f = document.querySelector('.ui.form.newRepo');
+	var params = new URLSearchParams();
+	params.append("name", f.name.value);
+	params.append("url", f.name.value);
+	fetch('/new_repo', {
+		method: 'POST',
+		body: params,
+	}).then(data => console.log(data));
+}
+
+function deleteRepository(id, name) {
+  var e = document.querySelector('span.repoName');
+  e.textContent = name;
+  $('.ui.basic.modal').modal({
+    onApprove: function() {alert("approve")}
+  }).modal('show');
+}
+</script>
+</body>
+</html>

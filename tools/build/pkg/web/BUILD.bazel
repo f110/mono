@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dashboard.go",
+        "template.go",
+    ],
+    importpath = "go.f110.dev/mono/tools/build/pkg/web",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database/dao:go_default_library",
+        "//tools/build/pkg/storage:go_default_library",
+        "//vendor/go.f110.dev/protoc-ddl/probe:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)

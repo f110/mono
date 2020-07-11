@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "build.go",
+        "rbac.go",
+    ],
+    importpath = "go.f110.dev/mono/tools/build/pkg/coordinator",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database/dao:go_default_library",
+        "//tools/build/pkg/storage:go_default_library",
+        "//tools/build/pkg/watcher:go_default_library",
+        "//vendor/github.com/bradleyfalzon/ghinstallation:go_default_library",
+        "//vendor/github.com/google/go-github/v32/github:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/k8s.io/api/batch/v1:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/client-go/informers/batch/v1:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/listers/batch/v1:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)
+
+load("@dev_f110_rules_extras//go:gen.bzl", "rbac_gen")
+
+rbac_gen(
+    name = "rbac",
+    rolename = "build-coordinator",
+    srcs = [":go_default_library"],
+    dir = "tools/build/config/rbac",
+)

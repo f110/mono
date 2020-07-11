@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "job.go",
+        "options.go",
+        "permit_pull_request.go",
+        "source_repository.go",
+        "task.go",
+        "trusted_user.go",
+    ],
+    importpath = "go.f110.dev/mono/tools/build/pkg/database/dao",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tools/build/pkg/database:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+    ],
+)

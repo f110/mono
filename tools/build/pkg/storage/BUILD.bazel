@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["minio.go"],
+    importpath = "go.f110.dev/mono/tools/build/pkg/storage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//vendor/github.com/minio/minio-go/v6:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/k8s.io/client-go/tools/portforward:go_default_library",
+        "//vendor/k8s.io/client-go/transport/spdy:go_default_library",
+    ],
+)

@@ -51,6 +51,12 @@ git_repository(
     remote = "https://github.com/f110/rules_extras",
 )
 
+git_repository(
+    name = "dev_f110_protoc_ddl",
+    commit = "d8d8b5e92f7b809f5c36618cb060a592f41a9be0",
+    remote = "https://github.com/f110/protoc-ddl",
+)
+
 load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
 go_extras_dependencies()

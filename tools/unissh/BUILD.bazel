@@ -5,7 +5,6 @@ pkg_tar(
     package_dir = "/usr/local/bin",
     srcs = [
         "//tools/unissh/cmd/unissh-list-machines",
-        ":unissh",
     ],
     mode = "0755",
 )
@@ -21,4 +20,13 @@ pkg_deb(
     version = "0.1.0",
     maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
     description = "Easy ssh tool",
+)
+
+load("//build:job.bzl", builder_job = "job")
+
+builder_job(
+    name = "unissh",
+    target = ":pkg",
+    command = "build",
+    all_revision = True,
 )

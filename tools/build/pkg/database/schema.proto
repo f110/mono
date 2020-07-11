@@ -1,0 +1,69 @@
+syntax = "proto3";
+package build.schema;
+option go_package = "go.f110.dev/mono/tools/build/pkg/database;database";
+
+import "ddl.proto";
+import "google/protobuf/timestamp.proto";
+
+message SourceRepository {
+    int32  id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    string url       = 2;
+    string clone_url = 3;
+    string name      = 4 [(dev.f110.ddl.column) = {size: 100}];
+
+    option (dev.f110.ddl.table) = {
+        primary_key: "id"
+        with_timestamp: true
+    };
+}
+
+message Job {
+    int32            id            = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    SourceRepository repository    = 2;
+    string           command       = 3 [(dev.f110.ddl.column) = {size: 20}];
+    string           target        = 4 [(dev.f110.ddl.column) = {size: 255}];
+    bool             active        = 5;
+    bool             all_revision  = 6;
+    bool             github_status = 7;
+
+    option (dev.f110.ddl.table) = {
+        primary_key: "id"
+        with_timestamp: true
+    };
+}
+
+message Task {
+    int32  id       = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    Job    job      = 2;
+    string revision = 3;
+    bool   success  = 4;
+    string log_file = 5;
+    string via      = 6;
+    .google.protobuf.Timestamp finished_at = 7 [(dev.f110.ddl.column) = {null: true}];
+
+    option (dev.f110.ddl.table) = {
+        primary_key: "id"
+        with_timestamp: true
+    };
+}
+
+message TrustedUser {
+    int32 id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    int64 github_id = 2;
+
+    option (dev.f110.ddl.table) = {
+        primary_key: "id"
+        with_timestamp: true
+    };
+}
+
+message PermitPullRequest {
+    int32  id         = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    string repository = 2;
+    int32  number     = 3;
+
+    option (dev.f110.ddl.table) = {
+        primary_key: "id"
+        with_timestamp: true
+    };
+}
