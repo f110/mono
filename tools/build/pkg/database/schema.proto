@@ -48,8 +48,9 @@ message Task {
 }
 
 message TrustedUser {
-    int32 id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    int64 github_id = 2;
+    int32  id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    int64  github_id = 2;
+    string username  = 3;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

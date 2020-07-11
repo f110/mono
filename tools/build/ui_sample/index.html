@@ -30,11 +30,21 @@
       </div>
     </div>
   </div>
+
   <div class="ui item dropdown simple">
     Job<i class="dropdown icon"></i>
     <div class="menu">
       <a class="item">mono.git/tools/unissh:pkg</a>
       <a class="item">ops.git/dns:dnscontrol</a>
+    </div>
+  </div>
+
+  <div class="ui item dropdown simple">
+    Trusted User<i class="dropdown icon"></i>
+    <div class="menu">
+      <a class="item">f110</a>
+      <div class="ui divider"></div>
+      <a class="item" onclick="$('.ui.addTrustedUser.modal').modal({centered:false}).modal('show');">Add...</a>
     </div>
   </div>
 </div>
@@ -77,6 +87,22 @@
       <i class="checkmark icon"></i>
       Yes
     </div>
+  </div>
+</div>
+
+<div class="ui addTrustedUser modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Add Trusted User
+  </div>
+  <div class="content">
+    <form class="ui form addTrustedUser" name="addTrustedUser">
+      <div class="field">
+        <label>GitHub Username</label>
+        <input type="text" name="username" placeholder="octocat">
+      </div>
+      <button class="ui button" type="submit" onclick="createRepository()">Add</button>
+    </form>
   </div>
 </div>
 

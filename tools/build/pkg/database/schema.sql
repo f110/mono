@@ -46,6 +46,7 @@ DROP TABLE IF EXISTS `trusted_user`;
 CREATE TABLE `trusted_user` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,
 	`github_id` BIGINT NOT NULL,
+	`username` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)

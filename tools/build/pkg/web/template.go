@@ -52,12 +52,24 @@ const indexTemplate = `<html>
       </div>
     </div>
   </div>
+
   <div class="ui item dropdown simple">
     Job<i class="dropdown icon"></i>
     <div class="menu">
       {{- range .Jobs }}
       <a class="item">{{ .Command }} {{ .Repository.Name }}{{ .Target }}</a>
       {{- end }}
+    </div>
+  </div>
+
+  <div class="ui item dropdown simple">
+    Trusted User<i class="dropdown icon"></i>
+    <div class="menu">
+      {{- range .TrustedUsers }}
+      <a class="item">{{ .Username }}</a>
+      {{- end }}
+      <div class="ui divider"></div>
+      <a class="item" onclick="$('.ui.addUser.modal').modal({centered:false}).modal('show');">Add...</a>
     </div>
   </div>
 </div>
@@ -101,6 +113,22 @@ const indexTemplate = `<html>
       <i class="checkmark icon"></i>
       Yes
     </div>
+  </div>
+</div>
+
+<div class="ui addUser modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Add Trusted User
+  </div>
+  <div class="content">
+    <form class="ui form addUser" name="addUser">
+      <div class="field">
+        <label>GitHub Username</label>
+        <input type="text" name="username" placeholder="octocat">
+      </div>
+      <button class="ui button" type="button" onclick="addTrustedUser()">Add</button>
+    </form>
   </div>
 </div>
 <!-- end of modal -->
@@ -163,6 +191,20 @@ function createRepository() {
 	fetch('/new_repo', {
 		method: 'POST',
 		body: params,
+	});
+}
+
+function addTrustedUser() {
+	var f = document.querySelector('.ui.form.addUser');
+	var params = new URLSearchParams();
+	params.append("username", f.username.value);
+	fetch('/add_trusted_user', {
+		method: 'POST',
+		body: params,
+	}).then(response => {
+		if (response.ok) {
+			window.location.reload(false);
+		}
 	});
 }
 

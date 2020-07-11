@@ -19,18 +19,37 @@ func NewTrustedUser(conn *sql.DB) *TrustedUser {
 }
 
 func (t *TrustedUser) SelectByGithubId(ctx context.Context, githubId int64) (*database.TrustedUser, error) {
-	row := t.conn.QueryRowContext(ctx, "SELECT `id`, `created_at`, `updated_at` FROM `trusted_user` WHERE `github_id` = ?", githubId)
+	row := t.conn.QueryRowContext(ctx, "SELECT `id`, `username`,`created_at`, `updated_at` FROM `trusted_user` WHERE `github_id` = ?", githubId)
 
 	trustedUser := &database.TrustedUser{GithubId: githubId}
-	if err := row.Scan(&trustedUser.Id, &trustedUser.CreatedAt, &trustedUser.UpdatedAt); err != nil {
+	if err := row.Scan(&trustedUser.Id, &trustedUser.Username, &trustedUser.CreatedAt, &trustedUser.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	return trustedUser, nil
 }
 
+func (t *TrustedUser) List(ctx context.Context) ([]*database.TrustedUser, error) {
+	rows, err := t.conn.QueryContext(ctx, "SELECT `id`, `github_id`, `username`, `created_at`, `updated_at` FROM `trusted_user`")
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	result := make([]*database.TrustedUser, 0)
+	for rows.Next() {
+		u := &database.TrustedUser{}
+		if err := rows.Scan(&u.Id, &u.GithubId, &u.Username, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		u.ResetMark()
+		result = append(result, u)
+	}
+
+	return result, nil
+}
+
 func (t *TrustedUser) Create(ctx context.Context, user *database.TrustedUser) (*database.TrustedUser, error) {
-	res, err := t.conn.ExecContext(ctx, "INSERT INTO `trusted_user` (`github_id`, `created_at`) VALUES (?, ?)", user.GithubId, time.Now())
+	res, err := t.conn.ExecContext(ctx, "INSERT INTO `trusted_user` (`github_id`, `username`, `created_at`) VALUES (?, ?, ?)", user.GithubId, user.Username, time.Now())
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

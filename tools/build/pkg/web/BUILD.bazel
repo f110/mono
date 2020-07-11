@@ -13,6 +13,7 @@ go_library(
         "//tools/build/pkg/database:go_default_library",
         "//tools/build/pkg/database/dao:go_default_library",
         "//tools/build/pkg/storage:go_default_library",
+        "//vendor/github.com/google/go-github/v32/github:go_default_library",
         "//vendor/go.f110.dev/protoc-ddl/probe:go_default_library",
         "//vendor/go.uber.org/zap:go_default_library",
         "//vendor/k8s.io/client-go/kubernetes:go_default_library",

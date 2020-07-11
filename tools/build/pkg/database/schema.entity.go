@@ -290,6 +290,7 @@ func (e *Task) Copy() *Task {
 type TrustedUser struct {
 	Id        int32
 	GithubId  int64
+	Username  string
 	CreatedAt time.Time
 	UpdatedAt *time.Time
 
@@ -309,6 +310,7 @@ func (e *TrustedUser) IsChanged() bool {
 	defer e.mu.Unlock()
 
 	return e.GithubId != e.mark.GithubId ||
+		e.Username != e.mark.Username ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -320,6 +322,9 @@ func (e *TrustedUser) ChangedColumn() []ddl.Column {
 	res := make([]ddl.Column, 0)
 	if e.GithubId != e.mark.GithubId {
 		res = append(res, ddl.Column{Name: "github_id", Value: e.GithubId})
+	}
+	if e.Username != e.mark.Username {
+		res = append(res, ddl.Column{Name: "username", Value: e.Username})
 	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
@@ -339,6 +344,7 @@ func (e *TrustedUser) Copy() *TrustedUser {
 	n := &TrustedUser{
 		Id:        e.Id,
 		GithubId:  e.GithubId,
+		Username:  e.Username,
 		CreatedAt: e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

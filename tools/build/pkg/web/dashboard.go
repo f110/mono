@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/go-github/v32/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +41,7 @@ func NewDashboard(addr string, daoOpt dao.Options, apiHost string, client kubern
 	mux.HandleFunc("/logs/", d.handleLogs)
 	mux.HandleFunc("/new_repo", d.handleNewRepository)
 	mux.HandleFunc("/delete_repo", d.handleDeleteRepository)
+	mux.HandleFunc("/add_trusted_user", d.handleAddTrustedUser)
 	mux.HandleFunc("/", d.handleIndex)
 	s := &http.Server{
 		Addr:    addr,
@@ -90,13 +92,21 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	trustedUsers, err := d.dao.TrustedUser.List(req.Context())
+	if err != nil {
+		logger.Log.Warn("Failed get trusted user", zap.Error(err))
+		return
+	}
+
 	err = Template.Execute(w, struct {
 		Repositories []*database.SourceRepository
 		Jobs         []*Job
+		TrustedUsers []*database.TrustedUser
 		APIHost      template.JSStr
 	}{
 		Repositories: repoList,
 		Jobs:         jobList,
+		TrustedUsers: trustedUsers,
 		APIHost:      template.JSStr(d.apiHost),
 	})
 	if err != nil {
@@ -179,6 +189,45 @@ func (d *Dashboard) handleDeleteRepository(w http.ResponseWriter, req *http.Requ
 
 	if err := d.dao.Repository.Delete(req.Context(), int32(id)); err != nil {
 		logger.Log.Warn("Failed delete repository", zap.Error(err), zap.Int("id", id))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func (d *Dashboard) handleAddTrustedUser(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := req.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if req.FormValue("username") == "" {
+		logger.Log.Info("username is empty")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	username := req.FormValue("username")
+	c := github.NewClient(nil)
+	u, res, err := c.Users.Get(req.Context(), username)
+	if err != nil {
+		logger.Log.Warn("Failed api request", zap.Error(err), zap.String("username", username))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if res.StatusCode != http.StatusOK {
+		logger.Log.Info("User not found", zap.String("username", username))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err = d.dao.TrustedUser.Create(req.Context(), &database.TrustedUser{GithubId: u.GetID(), Username: u.GetLogin()})
+	if err != nil {
+		logger.Log.Warn("Failed create trusted user", zap.Error(err), zap.String("username", username))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
