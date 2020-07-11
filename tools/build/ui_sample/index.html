@@ -85,7 +85,7 @@
     <div class="ui grid">
       <div class="two column row">
         <div class="left floated column"><i class="green check icon"></i>mono.git/tools/unissh:pkg</div>
-        <div class="right aligned floated column"><a href=""><i class="green play icon"></i></a></div>
+        <div class="right aligned floated column"><a onclick="runTask(5)"><i class="green play icon"></i></a></div>
       </div>
     </div>
   </h3>
@@ -199,6 +199,15 @@ function deleteRepository(id, name) {
   $('.ui.basic.modal').modal({
     onApprove: function() {alert("approve")}
   }).modal('show');
+}
+
+function runTask(id) {
+  var params = new URLSearchParams();
+  params.append("job_id", id);
+  fetch('/run', {
+    method: 'POST',
+    body: params,
+    }).then(data => console.log(data));
 }
 </script>
 </body>

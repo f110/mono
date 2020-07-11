@@ -1,6 +1,7 @@
 package web
 
 import (
+	"html/template"
 	"net/http"
 	"sort"
 	"strconv"
@@ -92,11 +93,11 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 	err = Template.Execute(w, struct {
 		Repositories []*database.SourceRepository
 		Jobs         []*Job
-		APIHost      string
+		APIHost      template.JSStr
 	}{
 		Repositories: repoList,
 		Jobs:         jobList,
-		APIHost:      d.apiHost,
+		APIHost:      template.JSStr(d.apiHost),
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))

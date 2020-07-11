@@ -103,7 +103,7 @@ const indexTemplate = `<html>
     <div class="ui grid">
       <div class="two column row">
         <div class="left floated column">{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ .Command }} {{ .Repository.Name }}{{ .Target }}</div>
-        <div class="right aligned floated column"><a href="{{ $.APIHost }}/run?job_id={{ .Id }}"><i class="green play icon"></i></a></div>
+        <div class="right aligned floated column"><a href="#" onclick="runTask({{ .Id }})"><i class="green play icon"></i></a></div>
       </div>
     </div>
   </h3>
@@ -140,6 +140,8 @@ const indexTemplate = `<html>
 </div>
 
 <script>
+const apiHost = {{ .APIHost }};
+
 function newRepository() {
 	$('.ui.newRepo.modal').modal({centered:false}).modal('show');
 }
@@ -169,6 +171,20 @@ function deleteRepository(id, name) {
 		});
 	},
   }).modal('show');
+}
+
+function runTask(id) {
+  var params = new URLSearchParams();
+  params.append("job_id", id);
+  fetch(apiHost+"/run", {
+    mode: 'cors',
+    method: 'POST',
+    body: params,
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload(false);
+    }
+  });
 }
 </script>
 </body>

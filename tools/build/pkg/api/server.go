@@ -57,12 +57,12 @@ func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao
 		githubClient: github.NewClient(&http.Client{Transport: transport}),
 	}
 	mux := http.NewServeMux()
+	mux.Handle("/favicon.ico", http.NotFoundHandler())
 	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/liveness", api.handleLiveness)
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.HandleFunc("/discovery", api.handleDiscovery)
 	mux.HandleFunc("/webhook", api.handleWebHook)
-	mux.Handle("/favicon.ico", http.NotFoundHandler())
 	s := &http.Server{
 		Addr:    addr,
 		Handler: mux,
@@ -123,8 +123,8 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			logger.Log.Info("Failed check the build permission", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 			return
 		} else if !ok {
-			body := "We could not build this pull request. because this pull request is not allowed due to security reason.\n\n" +
-				"For author, Thank you for your contribution. We appreciate your work. Please wait for permitting to build this pull request.\n" +
+			body := "Sorry, We could not build this pull request. Because building this pull request is not allowed due to security reason.\n\n" +
+				"For author, Thank you for your contribution. We appreciate your work. Please wait for permitting to build this pull request by administrator.\n" +
 				"For administrator, If you are going to allow this pull request, please comment `" + AllowCommand + "`."
 			_, _, err := a.githubClient.Issues.CreateComment(
 				req.Context(),
@@ -266,8 +266,21 @@ func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
-	q := req.URL.Query()
-	jobId, err := strconv.Atoi(q.Get("job_id"))
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if req.Header.Get("Origin") != "" {
+		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+	}
+
+	if err := req.ParseForm(); err != nil {
+		logger.Log.Info("Failed parse form", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	jobId, err := strconv.Atoi(req.FormValue("job_id"))
 	if err != nil {
 		logger.Log.Info("Failed parse job id", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -281,7 +294,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := a.builder.Build(req.Context(), job, q.Get("revision"), "api")
+	task, err := a.builder.Build(req.Context(), job, req.FormValue("revision"), "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
