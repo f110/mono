@@ -124,7 +124,6 @@ func builder(args []string) error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	job := dao.NewJob(conn)
 	daoOpt := dao.NewOptions(conn)
 
 	lock := &resourcelock.LeaseLock{
@@ -165,7 +164,7 @@ func builder(args []string) error {
 					return
 				}
 
-				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, job)
+				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c)
 
 				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
 				if err != nil {

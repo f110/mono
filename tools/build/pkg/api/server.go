@@ -97,15 +97,23 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				logger.Log.Warn("Could not find repository", zap.Error(err))
 				return
 			}
-			if err := a.discovery.FindOut(repo); err != nil {
+
+			// If push event is on main branch, Set a revision to discovery job.
+			// This is intended to rebuild all jobs after discovering.
+			rev := ""
+			if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
+				rev = event.GetAfter()
+			}
+			if err := a.discovery.FindOut(repo, rev); err != nil {
 				logger.Log.Warn("Could not start discovery job", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			return
 		}
 
 		if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
-			if err := a.buildPush(req.Context(), event); err != nil {
+			if err := a.buildByPushEvent(req.Context(), event); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -131,7 +139,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			}
 			return
 		}
-		if err := a.buildPullRequest(req.Context(), event); err != nil {
+		if err := a.buildByPullRequest(req.Context(), event); err != nil {
 			logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -165,7 +173,7 @@ func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEve
 	return false, nil
 }
 
-func (a *Api) buildPush(ctx context.Context, event *github.PushEvent) error {
+func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) error {
 	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), "push"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -173,7 +181,7 @@ func (a *Api) buildPush(ctx context.Context, event *github.PushEvent) error {
 	return nil
 }
 
-func (a *Api) buildPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
+func (a *Api) buildByPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
 	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), "pull_request"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -190,7 +198,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
 	jobs, err := a.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
 	if err != nil {
 		logger.Log.Warn("Could not get jobs", zap.Error(err))
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
@@ -203,7 +211,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
 
 		if _, err := a.builder.Build(ctx, v, revision, via); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 	}
 
@@ -251,7 +259,7 @@ func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := a.discovery.FindOut(repo); err != nil {
+	if err := a.discovery.FindOut(repo, ""); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

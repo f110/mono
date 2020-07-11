@@ -27,6 +27,7 @@ import (
 const (
 	labelKeyRepoName     = "build.f110.dev/repo-name"
 	labelKeyRepositoryId = "build.f110.dev/repository-id"
+	labelKeyRevision     = "build.f110.dev/revision"
 	discoveryBazelQuery  = "kind(job, //...)"
 	jobType              = "bazelDiscovery"
 )
@@ -99,23 +100,26 @@ type Discover struct {
 	client      kubernetes.Interface
 	jobInformer batchv1informers.JobInformer
 
-	job *dao.Job
+	builder *coordinator.BazelBuilder
+	dao     dao.Options
 }
 
-func NewDiscover(jobInformer batchv1informers.JobInformer, client kubernetes.Interface, namespace string, job *dao.Job) *Discover {
+func NewDiscover(jobInformer batchv1informers.JobInformer, client kubernetes.Interface, namespace string, daoOpt dao.Options, builder *coordinator.BazelBuilder) *Discover {
 	d := &Discover{
 		Namespace:   namespace,
 		jobInformer: jobInformer,
 		client:      client,
-		job:         job,
+		dao:         daoOpt,
+		builder:     builder,
 	}
 	watcher.Router.Add(jobType, d.syncJob)
 
 	return d
 }
 
-func (d *Discover) FindOut(repository *database.SourceRepository) error {
-	if err := d.buildJob(repository); err != nil {
+// FindOut will create the Job for discover. If revision is not empty, trigger tasks after discovery job finished.
+func (d *Discover) FindOut(repository *database.SourceRepository, revision string) error {
+	if err := d.buildJob(repository, revision); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -141,8 +145,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	success := false
 	for _, v := range job.Status.Conditions {
-		switch v.Type {
-		case batchv1.JobComplete:
+		if v.Type == batchv1.JobComplete {
 			success = true
 		}
 	}
@@ -167,7 +170,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 			return xerrors.Errorf(": %w", err)
 		}
 
-		currentJobs, err := d.job.ListBySourceRepositoryId(context.Background(), repoId)
+		currentJobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -194,17 +197,61 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		}
 
 		for _, v := range currentJobs {
-			if err := d.job.Update(context.Background(), v); err != nil {
+			if err := d.dao.Job.Update(context.Background(), v); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}
 		for _, v := range newJobs {
-			if _, err := d.job.Create(context.Background(), v); err != nil {
+			if _, err := d.dao.Job.Create(context.Background(), v); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}
 
 		if err := d.teardownJob(job); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+
+		if rev, ok := job.ObjectMeta.Labels[labelKeyRevision]; ok && rev != "" {
+			// Trigger after task.
+			if err := d.triggerTask(job, rev); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
+	repoId, ok := job.ObjectMeta.Labels[labelKeyRepositoryId]
+	if !ok {
+		return nil
+	}
+	id, err := strconv.Atoi(repoId)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	repo, err := d.dao.Repository.SelectById(context.Background(), int32(id))
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	jobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repo.Id)
+	if err != nil {
+		logger.Log.Warn("Could not get jobs", zap.Error(err))
+		return xerrors.Errorf(": %w", err)
+	}
+	for _, v := range jobs {
+		// Trigger the job when Command is build or test only.
+		// In other words, If command is run, we are not trigger the job via PushEvent.
+		switch v.Command {
+		case "build", "test":
+		default:
+			continue
+		}
+
+		if _, err := d.builder.Build(context.Background(), v, revision, "push"); err != nil {
+			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -231,8 +278,8 @@ func (d *Discover) teardownJob(job *batchv1.Job) error {
 	return nil
 }
 
-func (d *Discover) buildJob(repository *database.SourceRepository) error {
-	j := d.jobTemplate(repository)
+func (d *Discover) buildJob(repository *database.SourceRepository, revision string) error {
+	j := d.jobTemplate(repository, revision)
 	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(j)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -241,7 +288,7 @@ func (d *Discover) buildJob(repository *database.SourceRepository) error {
 	return nil
 }
 
-func (d Discover) jobTemplate(repository *database.SourceRepository) *batchv1.Job {
+func (d Discover) jobTemplate(repository *database.SourceRepository, revision string) *batchv1.Job {
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -250,6 +297,7 @@ func (d Discover) jobTemplate(repository *database.SourceRepository) *batchv1.Jo
 			Labels: map[string]string{
 				labelKeyRepoName:     repository.Name,
 				labelKeyRepositoryId: strconv.Itoa(int(repository.Id)),
+				labelKeyRevision:     revision,
 				watcher.TypeLabel:    jobType,
 			},
 		},
