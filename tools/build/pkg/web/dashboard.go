@@ -62,15 +62,29 @@ type Job struct {
 	Success bool
 }
 
+type RepositoryAndJobs struct {
+	Repo *database.SourceRepository
+	Jobs []*Job
+}
+
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
+	repoList, err := d.dao.Repository.List(req.Context())
+	if err != nil {
+		logger.Log.Warn("Failed get repository", zap.Error(err))
+		return
+	}
+
 	jobs, err := d.dao.Job.List(req.Context())
 	if err != nil {
 		logger.Log.Warn("Failed get job", zap.Error(err))
 		return
 	}
-
-	jobList := make([]*Job, 0, len(jobs))
+	repoAndJobs := make(map[int32]*RepositoryAndJobs)
 	for _, v := range jobs {
+		if _, ok := repoAndJobs[v.RepositoryId]; !ok {
+			repoAndJobs[v.RepositoryId] = &RepositoryAndJobs{Repo: v.Repository, Jobs: make([]*Job, 0)}
+		}
+
 		tasks, err := d.dao.Task.ListByJob(req.Context(), v.Id)
 		if err != nil {
 			logger.Log.Warn("Failed get task", zap.Error(err), zap.Int32("job", v.Id))
@@ -83,13 +97,13 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		if len(tasks) > 0 {
 			success = tasks[0].Success
 		}
-		jobList = append(jobList, &Job{Job: v, Tasks: tasks, Success: success})
+		repoAndJobs[v.RepositoryId].Jobs = append(repoAndJobs[v.RepositoryId].Jobs, &Job{Job: v, Tasks: tasks, Success: success})
 	}
-
-	repoList, err := d.dao.Repository.List(req.Context())
-	if err != nil {
-		logger.Log.Warn("Failed get repositories", zap.Error(err))
-		return
+	jobList := make([]*RepositoryAndJobs, 0)
+	for _, v := range repoList {
+		if r, ok := repoAndJobs[v.Id]; ok {
+			jobList = append(jobList, r)
+		}
 	}
 
 	trustedUsers, err := d.dao.TrustedUser.List(req.Context())
@@ -100,12 +114,12 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 
 	err = Template.Execute(w, struct {
 		Repositories []*database.SourceRepository
-		Jobs         []*Job
+		RepoAndJobs  []*RepositoryAndJobs
 		TrustedUsers []*database.TrustedUser
 		APIHost      template.JSStr
 	}{
 		Repositories: repoList,
-		Jobs:         jobList,
+		RepoAndJobs:  jobList,
 		TrustedUsers: trustedUsers,
 		APIHost:      template.JSStr(d.apiHost),
 	})

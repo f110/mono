@@ -56,8 +56,10 @@ const indexTemplate = `<html>
   <div class="ui item dropdown simple">
     Job<i class="dropdown icon"></i>
     <div class="menu">
+      {{- range .RepoAndJobs }}
       {{- range .Jobs }}
       <a class="item">{{ .Command }} {{ .Repository.Name }}{{ .Target }}</a>
+      {{- end }}
       {{- end }}
     </div>
   </div>
@@ -134,8 +136,10 @@ const indexTemplate = `<html>
 <!-- end of modal -->
 
 <div class="ui container">
+  {{- range .RepoAndJobs }}
+  <h2 class="ui block header">{{ .Repo.Name }}</h2>
   {{- range .Jobs }}
-  <h3 class="ui block header">
+  <h3 class="ui header">
     <div class="ui grid">
       <div class="two column row">
         <div class="left floated column">{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ .Command }} {{ .Repository.Name }}{{ .Target }}</div>
@@ -171,6 +175,7 @@ const indexTemplate = `<html>
         {{- end }}
       </tbody>
     </table>
+    {{- end }}
     {{- end }}
   </div>
 </div>
