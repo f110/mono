@@ -272,6 +272,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 	}
 	if req.Header.Get("Origin") != "" {
 		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 
 	if err := req.ParseForm(); err != nil {
