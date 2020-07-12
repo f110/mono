@@ -262,6 +262,10 @@ func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, succes
 }
 
 func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job, task *database.Task, state string) error {
+	if task.Revision == "" {
+		return nil
+	}
+
 	u, err := url.Parse(job.Repository.Url)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
