@@ -119,30 +119,55 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	case *github.PullRequestEvent:
-		if ok, err := a.allowPullRequest(req.Context(), event); err != nil {
-			logger.Log.Info("Failed check the build permission", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
-			return
-		} else if !ok {
-			body := "Sorry, We could not build this pull request. Because building this pull request is not allowed due to security reason.\n\n" +
-				"For author, Thank you for your contribution. We appreciate your work. Please wait for permitting to build this pull request by administrator.\n" +
-				"For administrator, If you are going to allow this pull request, please comment `" + AllowCommand + "`."
-			_, _, err := a.githubClient.Issues.CreateComment(
-				req.Context(),
-				event.Repo.GetOwner().GetLogin(),
-				event.Repo.GetName(),
-				event.PullRequest.GetNumber(),
-				&github.IssueComment{Body: github.String(body)},
-			)
-			if err != nil {
-				logger.Log.Warn("Failed create the comment", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
-				w.WriteHeader(http.StatusInternalServerError)
+		switch event.GetAction() {
+		case "opened":
+			if ok, err := a.allowPullRequest(req.Context(), event); err != nil {
+				logger.Log.Info("Failed check the build permission", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+				return
+			} else if !ok {
+				body := "Sorry, We could not build this pull request. Because building this pull request is not allowed due to security reason.\n\n" +
+					"For author, Thank you for your contribution. We appreciate your work. Please wait for permitting to build this pull request by administrator.\n" +
+					"For administrator, If you are going to allow this pull request, please comment `" + AllowCommand + "`."
+				_, _, err := a.githubClient.Issues.CreateComment(
+					req.Context(),
+					event.Repo.GetOwner().GetLogin(),
+					event.Repo.GetName(),
+					event.PullRequest.GetNumber(),
+					&github.IssueComment{Body: github.String(body)},
+				)
+				if err != nil {
+					logger.Log.Warn("Failed create the comment", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+				return
+			} else {
+				if err := a.buildByPullRequest(req.Context(), event); err != nil {
+					logger.Log.Warn("Failed build the pull request", zap.Error(err))
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
 			}
-			return
-		}
-		if err := a.buildByPullRequest(req.Context(), event); err != nil {
-			logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		case "synchronize":
+			if ok, _ := a.allowPullRequest(req.Context(), event); ok {
+				if err := a.buildByPullRequest(req.Context(), event); err != nil {
+					logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+		case "closed":
+			permit, err := a.dao.PermitPullRequest.SelectByRepositoryAndNumber(req.Context(), event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
+			if err != nil {
+				return
+			}
+			if permit == nil {
+				return
+			}
+			if err := a.dao.PermitPullRequest.Delete(req.Context(), permit.Id); err != nil {
+				logger.Log.Warn("Failed delete PermitPullRequest", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		}
 	case *github.IssueCommentEvent:
 		if err := a.issueComment(req.Context(), event); err != nil {
@@ -182,10 +207,27 @@ func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) err
 }
 
 func (a *Api) buildByPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
-	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), "pull_request"); err != nil {
+	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.PullRequest.Head.GetSHA(), "pull_request"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	return nil
+}
+
+func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string, number int) error {
+	s := strings.Split(ownerAndRepo, "/")
+	owner, repo := s[0], s[1]
+	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repo, number)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return xerrors.New("could not get pr")
+	}
+
+	if err := a.build(ctx, repoUrl, pr.GetHead().GetSHA(), "pr"); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	return nil
 }
 
@@ -236,6 +278,23 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				Number:     int32(event.Issue.GetNumber()),
 			})
 			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			body := "Understood. This pull request added to allow list.\n" +
+				"We are going to build the job."
+			_, _, err = a.githubClient.Issues.CreateComment(
+				ctx,
+				event.Repo.GetOwner().GetLogin(),
+				event.Repo.GetName(),
+				event.Issue.GetNumber(),
+				&github.IssueComment{Body: github.String(body)},
+			)
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			if err := a.buildPullRequest(ctx, event.Repo.GetHTMLURL(), event.Repo.GetFullName(), event.Issue.GetNumber()); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}

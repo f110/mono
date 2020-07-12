@@ -228,6 +228,44 @@ func TestGithubWebHook(t *testing.T) {
 		assert.True(t, builder.called)
 	})
 
+	t.Run("ClosedPullRequest", func(t *testing.T) {
+		t.Parallel()
+
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer db.Close()
+
+		// PermitPullRequest
+		mock.ExpectQuery("SELECT .+ FROM `permit_pull_request`").WithArgs("f110/sandbox", 2).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil),
+			)
+		// Delete PermitPullRequest
+		mock.ExpectExec("DELETE FROM `permit_pull_request`").WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
+
+		builder := &MockBuilder{}
+
+		s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, err := ioutil.ReadFile("testdata/pull_request_closed.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
+		req.Header.Set("X-Github-Event", "pull_request")
+		s.handleWebHook(w, req)
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
 	t.Run("CommentIssue", func(t *testing.T) {
 		t.Parallel()
 
@@ -242,7 +280,9 @@ func TestGithubWebHook(t *testing.T) {
 		// Insert to PermitPullRequest
 		mock.ExpectExec("INSERT INTO `permit_pull_request`").WillReturnResult(sqlmock.NewResult(1, 1))
 
-		s, err := NewApi("", nil, nil, dao.NewOptions(db), 0, 0, "")
+		builder := &MockBuilder{}
+
+		s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -260,5 +300,6 @@ func TestGithubWebHook(t *testing.T) {
 		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Fatal(err)
 		}
+		assert.True(t, builder.called)
 	})
 }
