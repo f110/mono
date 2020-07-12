@@ -120,14 +120,22 @@ func TestGithubWebHook(t *testing.T) {
 			db, mock, s, builder, w, req := setup(t)
 			defer db.Close()
 
-			mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil))
+			// TrustedUser
+			mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
+			// SourceRepository
 			mock.ExpectQuery("SELECT").WithArgs("https://github.com/f110/ops").
 				WillReturnRows(
 					sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 				)
+			// Job
+			mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+				WillReturnRows(
+					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+				)
+			// SourceRepository
 			mock.ExpectQuery("SELECT").WithArgs(1).
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision"}).AddRow(1, "test", "//...", 1, 1),
+					sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 				)
 
 			s.handleWebHook(w, req)
@@ -155,9 +163,13 @@ func TestGithubWebHook(t *testing.T) {
 					sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 				)
 			// Job will return a row
+			mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+				WillReturnRows(
+					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+				)
 			mock.ExpectQuery("SELECT").WithArgs(1).
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision"}).AddRow(1, "test", "//...", 1, 1),
+					sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 				)
 
 			s.handleWebHook(w, req)
@@ -179,14 +191,19 @@ func TestGithubWebHook(t *testing.T) {
 		}
 		defer db.Close()
 
-		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil))
+		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
 		mock.ExpectQuery("SELECT").WithArgs("https://github.com/f110/ops").
 			WillReturnRows(
 				sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 			)
+		// Job
+		mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+			)
 		mock.ExpectQuery("SELECT").WithArgs(1).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision"}).AddRow(1, "test", "//...", 1, 1),
+				sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
 			)
 
 		builder := &MockBuilder{}
@@ -221,7 +238,7 @@ func TestGithubWebHook(t *testing.T) {
 		defer db.Close()
 
 		// TrustedUser will return a row.
-		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil))
+		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
 		// Insert to PermitPullRequest
 		mock.ExpectExec("INSERT INTO `permit_pull_request`").WillReturnResult(sqlmock.NewResult(1, 1))
 
