@@ -229,6 +229,7 @@ function runTask(id) {
   fetch(apiHost+"/run", {
     mode: 'cors',
     method: 'POST',
+    credentials: 'include',
     body: params,
   }).then(response => {
     if (response.ok) {
