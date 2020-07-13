@@ -134,10 +134,10 @@
         }, {
           "name": "github_status",
           "type": "BOOLEAN",
-          "intValue": 0,
-          "stringValue": "false",
-          "explicitlySpecified": false,
-          "booleanValue": false
+          "intValue": 1,
+          "stringValue": "true",
+          "explicitlySpecified": true,
+          "booleanValue": true
         }, {
           "name": "generator_location",
           "type": "STRING",

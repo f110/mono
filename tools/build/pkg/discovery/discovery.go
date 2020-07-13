@@ -186,12 +186,16 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		for _, j := range jobs {
 			if v, ok := jobMap[j.Command+"/"+j.Target]; ok {
 				v.Active = true
+				v.AllRevision = j.AllRevision
+				v.GithubStatus = j.GithubStatus
 			} else {
 				newJobs = append(newJobs, &database.Job{
 					Command:      j.Command,
 					Target:       j.Target,
 					RepositoryId: repoId,
 					Active:       true,
+					AllRevision:  j.AllRevision,
+					GithubStatus: j.GithubStatus,
 				})
 			}
 		}
