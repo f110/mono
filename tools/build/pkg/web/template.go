@@ -137,7 +137,14 @@ const indexTemplate = `<html>
 
 <div class="ui container">
   {{- range .RepoAndJobs }}
-  <h2 class="ui block header">{{ .Repo.Name }}</h2>
+  <h2 class="ui block header">
+    <div class="ui grid">
+      <div class="two column row">
+        <div class="left floated column">{{ .Repo.Name }}</div>
+        <div class="right aligned floated column"><a href="#" onclick="syncDiscover({{ .Repo.Id }})"><i class="amber refresh icon"></i></a></div>
+      </div>
+    </div>
+  </h2>
   {{- range .Jobs }}
   <h3 class="ui header">
     <div class="ui grid">
@@ -232,6 +239,21 @@ function runTask(id) {
   var params = new URLSearchParams();
   params.append("job_id", id);
   fetch(apiHost+"/run", {
+    mode: 'cors',
+    method: 'POST',
+    credentials: 'include',
+    body: params,
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload(false);
+    }
+  });
+}
+
+function syncDiscover(id) {
+  var params = new URLSearchParams();
+  params.append("repository_id", id);
+  fetch(apiHost+"/discovery", {
     mode: 'cors',
     method: 'POST',
     credentials: 'include',

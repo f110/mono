@@ -303,8 +303,18 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 }
 
 func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
-	q := req.URL.Query()
-	repoId, err := strconv.Atoi(q.Get("repository_id"))
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := req.ParseForm(); err != nil {
+		logger.Log.Info("Failed parse form", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	repoId, err := strconv.Atoi(req.FormValue("repository_id"))
 	if err != nil {
 		logger.Log.Info("Failed parse repository_id", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
