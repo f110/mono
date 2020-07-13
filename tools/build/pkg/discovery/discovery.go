@@ -56,7 +56,12 @@ type BazelProto struct {
 }
 
 type BazelResult struct {
-	Target BazelTarget `json:"target"`
+	Target        BazelTarget        `json:"target"`
+	Configuration BazelConfiguration `json:"configuration"`
+}
+
+type BazelConfiguration struct {
+	Checksum string `json:"checksum"`
 }
 
 type BazelTarget struct {
@@ -357,8 +362,13 @@ func Discovery(b []byte) ([]*job.Job, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
+	seen := make(map[string]struct{})
 	jobs := make([]*job.Job, 0)
 	for _, v := range res.Results {
+		if _, ok := seen[v.Configuration.Checksum]; ok {
+			continue
+		}
+
 		j := &job.Job{}
 		keyAndValue := v.Target.Rule.Attrs()
 
@@ -391,6 +401,9 @@ func Discovery(b []byte) ([]*job.Job, error) {
 			j.Target = j.Targets
 		}
 		jobs = append(jobs, j)
+
+		// Mark
+		seen[v.Configuration.Checksum] = struct{}{}
 	}
 
 	return jobs, nil

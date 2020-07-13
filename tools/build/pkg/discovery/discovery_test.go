@@ -24,3 +24,16 @@ func TestDiscovery(t *testing.T) {
 	assert.Equal(t, "build", job[0].Command)
 	assert.True(t, job[0].GithubStatus)
 }
+
+func TestDuplicateJob(t *testing.T) {
+	buf, err := ioutil.ReadFile("testdata/duplicate.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	job, err := Discovery(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Len(t, job, 1)
+}
