@@ -13,10 +13,11 @@ proto_library(
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "schema.entity.go",
-        "schema.hash.go",
-    ],
+    srcs = [],  # keep
+    embed = [
+        ":schema",
+        ":entity",
+    ],  # keep
     importpath = "go.f110.dev/mono/tools/build/pkg/database",
     visibility = ["//visibility:public"],
     deps = ["//vendor/go.f110.dev/protoc-ddl:go_default_library"],
@@ -26,25 +27,25 @@ load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_entity", "sql_schema", "vend
 
 sql_schema(
     name = "schema",
-    proto = ":database_proto",
-    with_hash = True,
     importpath = "go.f110.dev/mono/tools/build/pkg/database",
     lang = "go",
+    proto = ":database_proto",
     visibility = ["//visibility:public"],
+    with_hash = True,
 )
 
 sql_schema(
     name = "schema_txt",
-    proto = ":database_proto",
-    with_hash = True,
     lang = "txt",
+    proto = ":database_proto",
     visibility = ["//visibility:public"],
+    with_hash = True,
 )
 
 schema_entity(
     name = "entity",
-    proto = ":database_proto",
     lang = "go",
+    proto = ":database_proto",
 )
 
 vendor_ddl(
