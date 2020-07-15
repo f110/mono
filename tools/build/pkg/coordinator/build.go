@@ -1,6 +1,7 @@
 package coordinator
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -249,14 +250,23 @@ func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, succes
 	if len(pods.Items) != 1 {
 		return xerrors.New("Target pods not found or found more than 1")
 	}
-	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
-	res := logReq.Do()
-	rawLog, err := res.Raw()
+
+	buf := new(bytes.Buffer)
+	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
+	rawLog, err := logReq.DoRaw()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	buf.WriteString("----- pre-process -----\n")
+	buf.Write(rawLog)
 
-	if err := b.minio.Put(context.Background(), job.Name, rawLog); err != nil {
+	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
+	rawLog, err = logReq.DoRaw()
+	buf.WriteString("\n")
+	buf.WriteString("----- main -----\n")
+	buf.Write(rawLog)
+
+	if err := b.minio.Put(context.Background(), job.Name, buf); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	task.LogFile = job.Name

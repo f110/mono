@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -69,7 +70,11 @@ func NewMinIOStorage(client kubernetes.Interface, config *rest.Config, opt MinIO
 	}
 }
 
-func (m *MinIO) Put(ctx context.Context, name string, data []byte) error {
+func (m *MinIO) Put(ctx context.Context, name string, data *bytes.Buffer) error {
+	return m.PutReader(ctx, name, data, int64(data.Len()))
+}
+
+func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size int64) error {
 	mc, forwarder, err := m.newMinIOClient()
 	if forwarder != nil {
 		defer forwarder.Close()
@@ -77,7 +82,7 @@ func (m *MinIO) Put(ctx context.Context, name string, data []byte) error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	_, err = mc.PutObjectWithContext(ctx, m.bucket, name, bytes.NewReader(data), int64(len(data)), minio.PutObjectOptions{})
+	_, err = mc.PutObjectWithContext(ctx, m.bucket, name, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

@@ -64,6 +64,7 @@ func cloneByGit(dir, repo, commit string, depth int, auth transport.AuthMethod) 
 		depth = 0
 	}
 
+	log.Printf("Git clone from %s", repo)
 	r, err := git.PlainClone(dir, false, &git.CloneOptions{
 		URL:   repo,
 		Depth: depth,
@@ -74,6 +75,7 @@ func cloneByGit(dir, repo, commit string, depth int, auth transport.AuthMethod) 
 	}
 
 	if commit != "" {
+		log.Printf("Checkout %s", commit)
 		tree, err := r.Worktree()
 		if err != nil {
 			return xerrors.Errorf(": %v", err)
