@@ -50,6 +50,7 @@ type Option struct {
 
 	Addr         string
 	DashboardUrl string // URL of dashboard that can access people via browser
+	RemoteCache  string // If not empty, This value will passed to Bazel through --remote_cache argument.
 
 	Dev bool
 }
@@ -76,6 +77,7 @@ func builder(args []string) error {
 	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
 	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
+	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -148,17 +150,8 @@ func builder(args []string) error {
 
 				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
 				githubOpt := coordinator.NewGithubAppOptions(opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
-				c, err := coordinator.NewBazelBuilder(
-					opt.DashboardUrl,
-					coreSharedInformerFactory.Batch().V1().Jobs(),
-					kubeClient,
-					cfg,
-					daoOpt,
-					opt.Namespace,
-					githubOpt,
-					minioOpt,
-					opt.Dev,
-				)
+				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg)
+				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, githubOpt, minioOpt, opt.RemoteCache, opt.Dev)
 				if err != nil {
 					logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
 					return

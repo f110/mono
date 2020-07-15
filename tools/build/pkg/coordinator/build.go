@@ -50,6 +50,16 @@ func NewGithubAppOptions(appId, installationId int64, privateKeyFile string) Git
 	return GithubAppOptions{AppId: appId, InstallationId: installationId, PrivateKeyFile: privateKeyFile}
 }
 
+type KubernetesOptions struct {
+	JobInformer batchv1informers.JobInformer
+	Client      kubernetes.Interface
+	RESTConfig  *rest.Config
+}
+
+func NewKubernetesOptions(jInformer batchv1informers.JobInformer, c kubernetes.Interface, cfg *rest.Config) KubernetesOptions {
+	return KubernetesOptions{JobInformer: jInformer, Client: c, RESTConfig: cfg}
+}
+
 type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
@@ -61,19 +71,18 @@ type BazelBuilder struct {
 	dao          dao.Options
 	githubClient *github.Client
 	minio        *storage.MinIO
-	workingDir   string
+	remoteCache  string
 	dev          bool
 }
 
 func NewBazelBuilder(
 	dashboardUrl string,
-	jobInformer batchv1informers.JobInformer,
-	client kubernetes.Interface,
-	config *rest.Config,
+	kOpt KubernetesOptions,
 	daoOpt dao.Options,
 	namespace string,
 	appOpt GithubAppOptions,
 	minIOOpt storage.MinIOOptions,
+	remoteCache string,
 	dev bool,
 ) (*BazelBuilder, error) {
 	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appOpt.AppId, appOpt.InstallationId, appOpt.PrivateKeyFile)
@@ -84,12 +93,13 @@ func NewBazelBuilder(
 	b := &BazelBuilder{
 		Namespace:    namespace,
 		dashboardUrl: dashboardUrl,
-		config:       config,
-		client:       client,
-		jobLister:    jobInformer.Lister(),
+		config:       kOpt.RESTConfig,
+		client:       kOpt.Client,
+		jobLister:    kOpt.JobInformer.Lister(),
 		dao:          daoOpt,
 		githubClient: github.NewClient(&http.Client{Transport: t}),
-		minio:        storage.NewMinIOStorage(client, config, minIOOpt, dev),
+		minio:        storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
+		remoteCache:  remoteCache,
 		dev:          dev,
 	}
 	watcher.Router.Add(jobType, b.syncJob)
@@ -322,6 +332,11 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
 
+	args := []string{job.Command}
+	if b.remoteCache != "" {
+		args = append(args, fmt.Sprintf("--remote_cache=%s", b.remoteCache))
+	}
+	args = append(args, job.Target)
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -359,7 +374,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 							Name:            "main",
 							Image:           mainImage,
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args:            []string{job.Command, job.Target},
+							Args:            args,
 							WorkingDir:      "/work",
 							VolumeMounts:    volumeMounts,
 						},
