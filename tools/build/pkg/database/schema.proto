@@ -38,8 +38,10 @@ message Task {
     string revision = 3;
     bool   success  = 4;
     string log_file = 5;
-    string via      = 6;
-    .google.protobuf.Timestamp finished_at = 7 [(dev.f110.ddl.column) = {null: true}];
+    string command  = 6;
+    string target   = 7;
+    string via      = 8;
+    .google.protobuf.Timestamp finished_at = 9 [(dev.f110.ddl.column) = {null: true}];
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

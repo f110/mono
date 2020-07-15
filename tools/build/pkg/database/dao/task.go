@@ -14,14 +14,15 @@ import (
 
 type Task struct {
 	conn *sql.DB
+	job  *Job
 }
 
 func NewTask(conn *sql.DB) *Task {
-	return &Task{conn: conn}
+	return &Task{conn: conn, job: NewJob(conn)}
 }
 
 func (t *Task) ListByJob(ctx context.Context, jobId int32) ([]*database.Task, error) {
-	rows, err := t.conn.QueryContext(ctx, "SELECT `id`, `revision`, `success`, `log_file`, `via`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?", jobId)
+	rows, err := t.conn.QueryContext(ctx, "SELECT `id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?", jobId)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -29,7 +30,7 @@ func (t *Task) ListByJob(ctx context.Context, jobId int32) ([]*database.Task, er
 	result := make([]*database.Task, 0)
 	for rows.Next() {
 		task := &database.Task{JobId: jobId, Job: &database.Job{Id: jobId}}
-		if err := rows.Scan(&task.Id, &task.Revision, &task.Success, &task.LogFile, &task.Via, &task.FinishedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
+		if err := rows.Scan(&task.Id, &task.Revision, &task.Success, &task.LogFile, &task.Via, &task.Command, &task.Target, &task.FinishedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		task.ResetMark()
@@ -40,11 +41,19 @@ func (t *Task) ListByJob(ctx context.Context, jobId int32) ([]*database.Task, er
 }
 
 func (t *Task) SelectById(ctx context.Context, id int32) (*database.Task, error) {
-	row := t.conn.QueryRowContext(ctx, "SELECT `job_id`, `revision`, `success`, `log_file`, `via`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `id` = ?", id)
+	row := t.conn.QueryRowContext(ctx, "SELECT `job_id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `id` = ?", id)
 
 	task := &database.Task{Id: id}
-	if err := row.Scan(&task.JobId, &task.Revision, &task.Success, &task.LogFile, &task.Via, &task.FinishedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
+	if err := row.Scan(&task.JobId, &task.Revision, &task.Success, &task.LogFile, &task.Via, &task.Command, &task.Target, &task.FinishedAt, &task.CreatedAt, &task.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	if task.JobId > 0 {
+		job, err := t.job.SelectById(ctx, task.JobId)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		task.Job = job
 	}
 
 	task.ResetMark()
@@ -89,8 +98,8 @@ func (t *Task) Update(ctx context.Context, task *database.Task) error {
 func (t *Task) Create(ctx context.Context, task *database.Task) (*database.Task, error) {
 	res, err := t.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `via`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		task.JobId, task.Revision, task.Success, task.LogFile, task.Via, task.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		task.JobId, task.Revision, task.Success, task.LogFile, task.Via, task.Command, task.Target, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

@@ -166,6 +166,7 @@ const indexTemplate = `<html>
           <th>Trigger</th>
           <th>Start at</th>
           <th>Duration</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -178,6 +179,7 @@ const indexTemplate = `<html>
           <td>{{ .Via }}</td>
           <td>{{ .CreatedAt.Format "2006/01/02 15:04:06" }}</td>
           <td>{{ Duration .CreatedAt .FinishedAt }}</td>
+          <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
         {{- end }}
       </tbody>
@@ -239,6 +241,21 @@ function runTask(id) {
   var params = new URLSearchParams();
   params.append("job_id", id);
   fetch(apiHost+"/run", {
+    mode: 'cors',
+    method: 'POST',
+    credentials: 'include',
+    body: params,
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload(false);
+    }
+  });
+}
+
+function redoTask(id) {
+  var params = new URLSearchParams();
+  params.append("task_id", id);
+  fetch(apiHost+"/redo",{
     mode: 'cors',
     method: 'POST',
     credentials: 'include',

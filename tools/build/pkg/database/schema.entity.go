@@ -193,6 +193,8 @@ type Task struct {
 	Success    bool
 	LogFile    string
 	Via        string
+	Command    string
+	Target     string
 	FinishedAt *time.Time
 	CreatedAt  time.Time
 	UpdatedAt  *time.Time
@@ -219,6 +221,8 @@ func (e *Task) IsChanged() bool {
 		e.Success != e.mark.Success ||
 		e.LogFile != e.mark.LogFile ||
 		e.Via != e.mark.Via ||
+		e.Command != e.mark.Command ||
+		e.Target != e.mark.Target ||
 		((e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil)) ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
@@ -243,6 +247,12 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.Via != e.mark.Via {
 		res = append(res, ddl.Column{Name: "via", Value: e.Via})
+	}
+	if e.Command != e.mark.Command {
+		res = append(res, ddl.Column{Name: "command", Value: e.Command})
+	}
+	if e.Target != e.mark.Target {
+		res = append(res, ddl.Column{Name: "target", Value: e.Target})
 	}
 	if (e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil) {
 		if e.FinishedAt != nil {
@@ -273,6 +283,8 @@ func (e *Task) Copy() *Task {
 		Success:   e.Success,
 		LogFile:   e.LogFile,
 		Via:       e.Via,
+		Command:   e.Command,
+		Target:    e.Target,
 		CreatedAt: e.CreatedAt,
 	}
 	if e.FinishedAt != nil {

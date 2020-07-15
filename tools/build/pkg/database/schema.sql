@@ -36,6 +36,8 @@ CREATE TABLE `task` (
 	`success` TINYINT(1) NOT NULL,
 	`log_file` VARCHAR(255) NOT NULL,
 	`via` VARCHAR(255) NOT NULL,
+	`command` VARCHAR(255) NOT NULL,
+	`target` VARCHAR(255) NOT NULL,
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,

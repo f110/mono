@@ -259,7 +259,7 @@ func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
 			continue
 		}
 
-		if _, err := d.builder.Build(context.Background(), v, revision, "push"); err != nil {
+		if _, err := d.builder.Build(context.Background(), v, revision, v.Command, v.Target, "push"); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}

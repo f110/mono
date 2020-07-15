@@ -28,7 +28,7 @@ const (
 )
 
 type Builder interface {
-	Build(ctx context.Context, job *database.Job, revision, via string) (*database.Task, error)
+	Build(ctx context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error)
 }
 
 type Api struct {
@@ -62,6 +62,7 @@ func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao
 	mux.HandleFunc("/liveness", api.handleLiveness)
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.HandleFunc("/discovery", api.handleDiscovery)
+	mux.HandleFunc("/redo", api.handleRedo)
 	mux.HandleFunc("/webhook", api.handleWebHook)
 	s := &http.Server{
 		Addr:    addr,
@@ -251,7 +252,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
 			continue
 		}
 
-		if _, err := a.builder.Build(ctx, v, revision, via); err != nil {
+		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Target, via); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
@@ -364,7 +365,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := a.builder.Build(req.Context(), job, req.FormValue("revision"), "api")
+	task, err := a.builder.Build(req.Context(), job, req.FormValue("revision"), job.Command, job.Target, "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -379,6 +380,49 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 
 type RunResponse struct {
 	TaskId int32 `json:"task_id"`
+}
+
+func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if req.Header.Get("Origin") != "" {
+		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if err := req.ParseForm(); err != nil {
+		logger.Log.Info("Failed parse form", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	taskId, err := strconv.Atoi(req.FormValue("task_id"))
+	if err != nil {
+		logger.Log.Info("Failed parse task id", zap.Error(err), zap.String("task_id", req.FormValue("task_id")))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	task, err := a.dao.Task.SelectById(req.Context(), int32(taskId))
+	if err != nil {
+		logger.Log.Info("Task is not found", zap.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Target, task.Via)
+	if err != nil {
+		logger.Log.Warn("Failed build job", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	logger.Log.Info("Success enqueue redo-job", zap.Int32("task_id", task.Id), zap.Int32("new_task_id", newTask.Id))
+	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTask.Id}); err != nil {
+		logger.Log.Warn("Failed encode response", zap.Error(err))
+	}
 }
 
 func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {

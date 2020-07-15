@@ -110,8 +110,8 @@ func NewBazelBuilder(
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, via string) (*database.Task, error) {
-	task, err := b.dao.Task.Create(ctx, &database.Task{JobId: job.Id, Revision: revision, Via: via})
+func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error) {
+	task, err := b.dao.Task.Create(ctx, &database.Task{JobId: job.Id, Revision: revision, Command: command, Target: target, Via: via})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -335,14 +335,14 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
 
-	args := []string{job.Command}
+	args := []string{task.Command}
 	if b.remoteCache != "" {
 		args = append(args, fmt.Sprintf("--remote_cache=%s", b.remoteCache))
 		if b.remoteAssetApi {
 			args = append(args, fmt.Sprintf("--experimental_remote_downloader=%s", b.remoteCache))
 		}
 	}
-	args = append(args, job.Target)
+	args = append(args, task.Target)
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
