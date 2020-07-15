@@ -412,7 +412,7 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Target, task.Via)
+	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Target, "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
