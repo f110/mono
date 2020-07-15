@@ -68,11 +68,12 @@ type BazelBuilder struct {
 	jobLister batchv1listers.JobLister
 	config    *rest.Config
 
-	dao          dao.Options
-	githubClient *github.Client
-	minio        *storage.MinIO
-	remoteCache  string
-	dev          bool
+	dao            dao.Options
+	githubClient   *github.Client
+	minio          *storage.MinIO
+	remoteCache    string
+	remoteAssetApi bool
+	dev            bool
 }
 
 func NewBazelBuilder(
@@ -83,6 +84,7 @@ func NewBazelBuilder(
 	appOpt GithubAppOptions,
 	minIOOpt storage.MinIOOptions,
 	remoteCache string,
+	remoteAssetApi bool,
 	dev bool,
 ) (*BazelBuilder, error) {
 	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appOpt.AppId, appOpt.InstallationId, appOpt.PrivateKeyFile)
@@ -91,16 +93,17 @@ func NewBazelBuilder(
 	}
 
 	b := &BazelBuilder{
-		Namespace:    namespace,
-		dashboardUrl: dashboardUrl,
-		config:       kOpt.RESTConfig,
-		client:       kOpt.Client,
-		jobLister:    kOpt.JobInformer.Lister(),
-		dao:          daoOpt,
-		githubClient: github.NewClient(&http.Client{Transport: t}),
-		minio:        storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
-		remoteCache:  remoteCache,
-		dev:          dev,
+		Namespace:      namespace,
+		dashboardUrl:   dashboardUrl,
+		config:         kOpt.RESTConfig,
+		client:         kOpt.Client,
+		jobLister:      kOpt.JobInformer.Lister(),
+		dao:            daoOpt,
+		githubClient:   github.NewClient(&http.Client{Transport: t}),
+		minio:          storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
+		remoteCache:    remoteCache,
+		remoteAssetApi: remoteAssetApi,
+		dev:            dev,
 	}
 	watcher.Router.Add(jobType, b.syncJob)
 
@@ -335,6 +338,9 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 	args := []string{job.Command}
 	if b.remoteCache != "" {
 		args = append(args, fmt.Sprintf("--remote_cache=%s", b.remoteCache))
+		if b.remoteAssetApi {
+			args = append(args, fmt.Sprintf("--experimental_remote_downloader=%s", b.remoteCache))
+		}
 	}
 	args = append(args, job.Target)
 	var backoffLimit int32 = 0
