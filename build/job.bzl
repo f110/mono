@@ -12,5 +12,7 @@ job = rule(
         "all_revision": attr.bool(doc = "If true, build at each revision."),
         "args": attr.string_list(),
         "github_status": attr.bool(),
+        "cpu_limit": attr.string(doc = "Limit of cpu"),
+        "memory_limit": attr.string(doc = "Limit of memory"),
     },
 )

@@ -23,6 +23,8 @@ CREATE TABLE `job` (
 	`active` TINYINT(1) NOT NULL,
 	`all_revision` TINYINT(1) NOT NULL,
 	`github_status` TINYINT(1) NOT NULL,
+	`cpu_limit` VARCHAR(255) NOT NULL,
+	`memory_limit` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)

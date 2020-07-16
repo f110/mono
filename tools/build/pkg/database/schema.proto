@@ -25,6 +25,8 @@ message Job {
     bool             active        = 5;
     bool             all_revision  = 6;
     bool             github_status = 7;
+    string           cpu_limit     = 8;
+    string           memory_limit  = 9;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

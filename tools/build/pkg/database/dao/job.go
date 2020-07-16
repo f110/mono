@@ -23,7 +23,10 @@ func NewJob(conn *sql.DB) *Job {
 }
 
 func (j *Job) List(ctx context.Context) ([]*database.Job, error) {
-	rows, err := j.conn.QueryContext(ctx, "SELECT `id`, `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `created_at`, `updated_at` FROM `job`")
+	rows, err := j.conn.QueryContext(
+		ctx,
+		"SELECT `id`, `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `created_at`, `updated_at` FROM `job`",
+	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -32,7 +35,7 @@ func (j *Job) List(ctx context.Context) ([]*database.Job, error) {
 	result := make([]*database.Job, 0)
 	for rows.Next() {
 		j := &database.Job{}
-		if err := rows.Scan(&j.Id, &j.RepositoryId, &j.Command, &j.Target, &j.Active, &j.AllRevision, &j.GithubStatus, &j.CreatedAt, &j.UpdatedAt); err != nil {
+		if err := rows.Scan(&j.Id, &j.RepositoryId, &j.Command, &j.Target, &j.Active, &j.AllRevision, &j.GithubStatus, &j.CpuLimit, &j.MemoryLimit, &j.CreatedAt, &j.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		j.ResetMark()
@@ -71,7 +74,11 @@ func (j *Job) List(ctx context.Context) ([]*database.Job, error) {
 }
 
 func (j *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32) ([]*database.Job, error) {
-	rows, err := j.conn.QueryContext(ctx, "SELECT `id`, `command`, `target`, `active`, `all_revision`, `github_status` FROM `job` WHERE `repository_id` = ?", repositoryId)
+	rows, err := j.conn.QueryContext(
+		ctx,
+		"SELECT `id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `created_at`, `updated_at` FROM `job` WHERE `repository_id` = ?",
+		repositoryId,
+	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -79,7 +86,7 @@ func (j *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32) 
 	result := make([]*database.Job, 0)
 	for rows.Next() {
 		newJob := &database.Job{RepositoryId: repositoryId}
-		if err := rows.Scan(&newJob.Id, &newJob.Command, &newJob.Target, &newJob.Active, &newJob.AllRevision, &newJob.GithubStatus); err != nil {
+		if err := rows.Scan(&newJob.Id, &newJob.Command, &newJob.Target, &newJob.Active, &newJob.AllRevision, &newJob.GithubStatus, &newJob.CpuLimit, &newJob.MemoryLimit, &newJob.CreatedAt, &newJob.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		newJob.ResetMark()
@@ -99,10 +106,14 @@ func (j *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32) 
 }
 
 func (j *Job) SelectById(ctx context.Context, id int32) (*database.Job, error) {
-	row := j.conn.QueryRowContext(ctx, "SELECT `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `created_at`, `updated_at` FROM `job` WHERE `id` = ?", id)
+	row := j.conn.QueryRowContext(
+		ctx,
+		"SELECT `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `created_at`, `updated_at` FROM `job` WHERE `id` = ?",
+		id,
+	)
 
 	job := &database.Job{Id: id}
-	if err := row.Scan(&job.RepositoryId, &job.Command, &job.Target, &job.Active, &job.AllRevision, &job.GithubStatus, &job.CreatedAt, &job.UpdatedAt); err != nil {
+	if err := row.Scan(&job.RepositoryId, &job.Command, &job.Target, &job.Active, &job.AllRevision, &job.GithubStatus, &job.CpuLimit, &job.MemoryLimit, &job.CreatedAt, &job.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -150,8 +161,8 @@ func (j *Job) Update(ctx context.Context, job *database.Job) error {
 func (j *Job) Create(ctx context.Context, job *database.Job) (*database.Job, error) {
 	res, err := j.conn.ExecContext(
 		ctx,
-		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		job.RepositoryId, job.Command, job.Target, job.Active, job.AllRevision, job.GithubStatus, time.Now(),
+		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_liimt`, `memory_limit`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		job.RepositoryId, job.Command, job.Target, job.Active, job.AllRevision, job.GithubStatus, job.CpuLimit, job.MemoryLimit, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

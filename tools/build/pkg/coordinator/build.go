@@ -16,6 +16,7 @@ import (
 	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
@@ -345,6 +346,22 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
 
+	var cpuLimit, memoryLimit resource.Quantity
+	if job.CpuLimit != "" {
+		q, err := resource.ParseQuantity(job.CpuLimit)
+		if err != nil {
+			return nil
+		}
+		cpuLimit = q
+	}
+	if job.MemoryLimit != "" {
+		q, err := resource.ParseQuantity(job.MemoryLimit)
+		if err != nil {
+			return nil
+		}
+		memoryLimit = q
+	}
+
 	args := []string{task.Command}
 	if b.remoteCache != "" {
 		args = append(args, fmt.Sprintf("--remote_cache=%s", b.remoteCache))
@@ -393,6 +410,12 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 							Args:            args,
 							WorkingDir:      "/work",
 							VolumeMounts:    volumeMounts,
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    cpuLimit,
+									corev1.ResourceMemory: memoryLimit,
+								},
+							},
 						},
 					},
 					Volumes: volumes,

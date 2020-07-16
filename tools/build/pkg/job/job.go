@@ -7,4 +7,6 @@ type Job struct {
 	Command      string `attr:"command"`
 	AllRevision  bool   `attr:"all_revision"`
 	GithubStatus bool   `attr:"github_status"`
+	CPULimit     string `attr:"cpu_limit"`
+	MemoryLimit  string `attr:"memory_limit"`
 }
