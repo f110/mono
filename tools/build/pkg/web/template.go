@@ -175,7 +175,7 @@ const indexTemplate = `<html>
           <td>{{ .Id }}</td>
           <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
           <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
-          <td><a href="">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
+          <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
           <td>{{ .Via }}</td>
           <td>{{ .CreatedAt.Format "2006/01/02 15:04:06" }}</td>
           <td>{{ Duration .CreatedAt .FinishedAt }}</td>

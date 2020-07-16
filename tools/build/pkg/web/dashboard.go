@@ -58,8 +58,13 @@ func (d *Dashboard) Start() error {
 
 type Job struct {
 	*database.Job
-	Tasks   []*database.Task
+	Tasks   []*Task
 	Success bool
+}
+
+type Task struct {
+	*database.Task
+	RevisionUrl string
 }
 
 type RepositoryAndJobs struct {
@@ -97,7 +102,23 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		if len(tasks) > 0 {
 			success = tasks[0].Success
 		}
-		repoAndJobs[v.RepositoryId].Jobs = append(repoAndJobs[v.RepositoryId].Jobs, &Job{Job: v, Tasks: tasks, Success: success})
+
+		var isGitHub bool
+		if strings.Contains(v.Repository.Url, "https://github.com") {
+			isGitHub = true
+		}
+		t := make([]*Task, len(tasks))
+		for i := range tasks {
+			revUrl := ""
+			if isGitHub {
+				revUrl = v.Repository.Url + "/commit/" + tasks[i].Revision
+			}
+			t[i] = &Task{
+				Task:        tasks[i],
+				RevisionUrl: revUrl,
+			}
+		}
+		repoAndJobs[v.RepositoryId].Jobs = append(repoAndJobs[v.RepositoryId].Jobs, &Job{Job: v, Tasks: t, Success: success})
 	}
 	jobList := make([]*RepositoryAndJobs, 0)
 	for _, v := range repoList {
