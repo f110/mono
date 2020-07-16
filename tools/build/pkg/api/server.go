@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -365,7 +366,26 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := a.builder.Build(req.Context(), job, req.FormValue("revision"), job.Command, job.Target, "api")
+	rev := req.FormValue("revision")
+	if rev == "" {
+		u, err := url.Parse(job.Repository.Url)
+		if err != nil {
+			logger.Log.Info("Could not parse repository url", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		s := strings.Split(u.Path, "/")
+		owner, repo := s[1], s[2]
+		r, _, err := a.githubClient.Repositories.GetCommitSHA1(req.Context(), owner, repo, "master", "")
+		if err != nil {
+			logger.Log.Info("Could not get revision of master", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		rev = r
+	}
+
+	task, err := a.builder.Build(req.Context(), job, rev, job.Command, job.Target, "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
