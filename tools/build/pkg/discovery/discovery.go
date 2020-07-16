@@ -150,8 +150,14 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	success := false
 	for _, v := range job.Status.Conditions {
-		if v.Type == batchv1.JobComplete {
+		switch v.Type {
+		case batchv1.JobComplete:
 			success = true
+		case batchv1.JobFailed:
+			if err := d.teardownJob(job); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			return nil
 		}
 	}
 
