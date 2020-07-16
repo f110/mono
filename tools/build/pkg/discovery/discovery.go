@@ -105,17 +105,26 @@ type Discover struct {
 	client      kubernetes.Interface
 	jobInformer batchv1informers.JobInformer
 
-	builder *coordinator.BazelBuilder
-	dao     dao.Options
+	builder      *coordinator.BazelBuilder
+	sidecarImage string
+	dao          dao.Options
 }
 
-func NewDiscover(jobInformer batchv1informers.JobInformer, client kubernetes.Interface, namespace string, daoOpt dao.Options, builder *coordinator.BazelBuilder) *Discover {
+func NewDiscover(
+	jobInformer batchv1informers.JobInformer,
+	client kubernetes.Interface,
+	namespace string,
+	daoOpt dao.Options,
+	builder *coordinator.BazelBuilder,
+	sidecarImage string,
+) *Discover {
 	d := &Discover{
-		Namespace:   namespace,
-		jobInformer: jobInformer,
-		client:      client,
-		dao:         daoOpt,
-		builder:     builder,
+		Namespace:    namespace,
+		jobInformer:  jobInformer,
+		client:       client,
+		dao:          daoOpt,
+		builder:      builder,
+		sidecarImage: sidecarImage,
 	}
 	watcher.Router.Add(jobType, d.syncJob)
 
@@ -333,7 +342,7 @@ func (d Discover) jobTemplate(repository *database.SourceRepository, revision st
 					InitContainers: []corev1.Container{
 						{
 							Name:  "pre-process",
-							Image: coordinator.SidecarImage,
+							Image: d.sidecarImage,
 							Args:  []string{"--action=clone", "--work-dir=/work", fmt.Sprintf("--url=%s", repository.CloneUrl)},
 							VolumeMounts: []corev1.VolumeMount{
 								{Name: "workdir", MountPath: "/work"},

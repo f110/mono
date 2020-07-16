@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	SidecarImage        = "registry.f110.dev/build/sidecar"
+	sidecarImage        = "registry.f110.dev/build/sidecar"
 	bazelImage          = "l.gcr.io/google/bazel"
 	defaultBazelVersion = "3.1.0"
 
@@ -62,6 +62,24 @@ func NewKubernetesOptions(jInformer batchv1informers.JobInformer, c kubernetes.I
 	return KubernetesOptions{JobInformer: jInformer, Client: c, RESTConfig: cfg}
 }
 
+type BazelOptions struct {
+	RemoteCache          string
+	EnableRemoteAssetApi bool
+	SidecarImage         string
+	BazelImage           string
+	DefaultVersion       string
+}
+
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage, defaultVersion string) BazelOptions {
+	return BazelOptions{
+		RemoteCache:          remoteCache,
+		EnableRemoteAssetApi: enableRemoteAssetApi,
+		SidecarImage:         sidecarImage,
+		BazelImage:           bazelImage,
+		DefaultVersion:       defaultVersion,
+	}
+}
+
 type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
@@ -70,12 +88,15 @@ type BazelBuilder struct {
 	jobLister batchv1listers.JobLister
 	config    *rest.Config
 
-	dao            dao.Options
-	githubClient   *github.Client
-	minio          *storage.MinIO
-	remoteCache    string
-	remoteAssetApi bool
-	dev            bool
+	dao                 dao.Options
+	githubClient        *github.Client
+	minio               *storage.MinIO
+	remoteCache         string
+	remoteAssetApi      bool
+	sidecarImage        string
+	bazelImage          string
+	defaultBazelVersion string
+	dev                 bool
 }
 
 func NewBazelBuilder(
@@ -85,8 +106,7 @@ func NewBazelBuilder(
 	namespace string,
 	appOpt GithubAppOptions,
 	minIOOpt storage.MinIOOptions,
-	remoteCache string,
-	remoteAssetApi bool,
+	bazelOpt BazelOptions,
 	dev bool,
 ) (*BazelBuilder, error) {
 	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appOpt.AppId, appOpt.InstallationId, appOpt.PrivateKeyFile)
@@ -95,17 +115,29 @@ func NewBazelBuilder(
 	}
 
 	b := &BazelBuilder{
-		Namespace:      namespace,
-		dashboardUrl:   dashboardUrl,
-		config:         kOpt.RESTConfig,
-		client:         kOpt.Client,
-		jobLister:      kOpt.JobInformer.Lister(),
-		dao:            daoOpt,
-		githubClient:   github.NewClient(&http.Client{Transport: t}),
-		minio:          storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
-		remoteCache:    remoteCache,
-		remoteAssetApi: remoteAssetApi,
-		dev:            dev,
+		Namespace:           namespace,
+		dashboardUrl:        dashboardUrl,
+		config:              kOpt.RESTConfig,
+		client:              kOpt.Client,
+		jobLister:           kOpt.JobInformer.Lister(),
+		dao:                 daoOpt,
+		githubClient:        github.NewClient(&http.Client{Transport: t}),
+		minio:               storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
+		remoteCache:         bazelOpt.RemoteCache,
+		remoteAssetApi:      bazelOpt.EnableRemoteAssetApi,
+		sidecarImage:        bazelOpt.SidecarImage,
+		bazelImage:          bazelOpt.BazelImage,
+		defaultBazelVersion: bazelOpt.DefaultVersion,
+		dev:                 dev,
+	}
+	if b.sidecarImage == "" {
+		b.sidecarImage = sidecarImage
+	}
+	if b.defaultBazelVersion == "" {
+		b.defaultBazelVersion = defaultBazelVersion
+	}
+	if b.bazelImage == "" {
+		b.bazelImage = bazelImage
 	}
 	watcher.Router.Add(jobType, b.syncJob)
 
@@ -326,7 +358,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 }
 
 func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) *batchv1.Job {
-	mainImage := fmt.Sprintf("%s:%s", bazelImage, defaultBazelVersion)
+	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, b.defaultBazelVersion)
 	taskIdString := strconv.Itoa(int(task.Id))
 
 	volumes := []corev1.Volume{
@@ -395,7 +427,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 					InitContainers: []corev1.Container{
 						{
 							Name:  "pre-process",
-							Image: SidecarImage,
+							Image: b.sidecarImage,
 							Args:  preProcessArgs,
 							VolumeMounts: []corev1.VolumeMount{
 								{Name: "workdir", MountPath: "/work"},

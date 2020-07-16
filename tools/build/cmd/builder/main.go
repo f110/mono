@@ -48,10 +48,13 @@ type Option struct {
 	MinIOAccessKey       string
 	MinIOSecretAccessKey string
 
-	Addr           string
-	DashboardUrl   string // URL of dashboard that can access people via browser
-	RemoteCache    string // If not empty, This value will passed to Bazel through --remote_cache argument.
-	RemoteAssetApi bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
+	Addr                string
+	DashboardUrl        string // URL of dashboard that can access people via browser
+	RemoteCache         string // If not empty, This value will passed to Bazel through --remote_cache argument.
+	RemoteAssetApi      bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
+	BazelImage          string
+	DefaultBazelVersion string
+	SidecarImage        string
 
 	Dev bool
 }
@@ -80,6 +83,9 @@ func builder(args []string) error {
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
 	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
 	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
+	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
+	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
+	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -153,13 +159,14 @@ func builder(args []string) error {
 				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
 				githubOpt := coordinator.NewGithubAppOptions(opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
 				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg)
-				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, githubOpt, minioOpt, opt.RemoteCache, opt.RemoteAssetApi, opt.Dev)
+				bazelOpt := coordinator.NewBazelOptions(opt.RemoteCache, opt.RemoteAssetApi, opt.SidecarImage, opt.BazelImage, opt.DefaultBazelVersion)
+				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, githubOpt, minioOpt, bazelOpt, opt.Dev)
 				if err != nil {
 					logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
 					return
 				}
 
-				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c)
+				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c, opt.SidecarImage)
 
 				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
 				if err != nil {
