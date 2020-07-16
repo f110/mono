@@ -33,7 +33,7 @@ import (
 const (
 	SidecarImage        = "registry.f110.dev/build/sidecar"
 	bazelImage          = "l.gcr.io/google/bazel"
-	defaultBazelVersion = "3.2.0"
+	defaultBazelVersion = "3.1.0"
 
 	labelKeyTaskId = "build.f110.dev/task-id"
 	labelKeyCtrlBy = "build.f110.dev/control-by"
