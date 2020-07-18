@@ -35,6 +35,9 @@ const (
 	bazelImage          = "l.gcr.io/google/bazel"
 	defaultBazelVersion = "3.1.0"
 
+	defaultCPULimit    = "1000m"
+	defaultMemoryLimit = "4096Mi"
+
 	labelKeyTaskId = "build.f110.dev/task-id"
 	labelKeyCtrlBy = "build.f110.dev/control-by"
 
@@ -53,13 +56,15 @@ func NewGithubAppOptions(appId, installationId int64, privateKeyFile string) Git
 }
 
 type KubernetesOptions struct {
-	JobInformer batchv1informers.JobInformer
-	Client      kubernetes.Interface
-	RESTConfig  *rest.Config
+	JobInformer        batchv1informers.JobInformer
+	Client             kubernetes.Interface
+	RESTConfig         *rest.Config
+	DefaultCPULimit    string
+	DefaultMemoryLimit string
 }
 
-func NewKubernetesOptions(jInformer batchv1informers.JobInformer, c kubernetes.Interface, cfg *rest.Config) KubernetesOptions {
-	return KubernetesOptions{JobInformer: jInformer, Client: c, RESTConfig: cfg}
+func NewKubernetesOptions(jInformer batchv1informers.JobInformer, c kubernetes.Interface, cfg *rest.Config, cpuLimit, memoryLimit string) KubernetesOptions {
+	return KubernetesOptions{JobInformer: jInformer, Client: c, RESTConfig: cfg, DefaultCPULimit: cpuLimit, DefaultMemoryLimit: memoryLimit}
 }
 
 type BazelOptions struct {
@@ -88,15 +93,17 @@ type BazelBuilder struct {
 	jobLister batchv1listers.JobLister
 	config    *rest.Config
 
-	dao                 dao.Options
-	githubClient        *github.Client
-	minio               *storage.MinIO
-	remoteCache         string
-	remoteAssetApi      bool
-	sidecarImage        string
-	bazelImage          string
-	defaultBazelVersion string
-	dev                 bool
+	dao                    dao.Options
+	githubClient           *github.Client
+	minio                  *storage.MinIO
+	remoteCache            string
+	remoteAssetApi         bool
+	sidecarImage           string
+	bazelImage             string
+	defaultBazelVersion    string
+	defaultTaskCPULimit    resource.Quantity
+	defaultTaskMemoryLimit resource.Quantity
+	dev                    bool
 }
 
 func NewBazelBuilder(
@@ -138,6 +145,24 @@ func NewBazelBuilder(
 	}
 	if b.bazelImage == "" {
 		b.bazelImage = bazelImage
+	}
+	if kOpt.DefaultCPULimit != "" {
+		q, err := resource.ParseQuantity(kOpt.DefaultCPULimit)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		b.defaultTaskCPULimit = q
+	} else {
+		b.defaultTaskCPULimit = resource.MustParse(defaultCPULimit)
+	}
+	if kOpt.DefaultMemoryLimit != "" {
+		q, err := resource.ParseQuantity(kOpt.DefaultMemoryLimit)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		b.defaultTaskMemoryLimit = q
+	} else {
+		b.defaultTaskMemoryLimit = resource.MustParse(defaultMemoryLimit)
 	}
 	watcher.Router.Add(jobType, b.syncJob)
 
@@ -378,7 +403,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
 
-	var cpuLimit, memoryLimit resource.Quantity
+	cpuLimit := b.defaultTaskCPULimit
 	if job.CpuLimit != "" {
 		q, err := resource.ParseQuantity(job.CpuLimit)
 		if err != nil {
@@ -386,6 +411,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		}
 		cpuLimit = q
 	}
+	memoryLimit := b.defaultTaskMemoryLimit
 	if job.MemoryLimit != "" {
 		q, err := resource.ParseQuantity(job.MemoryLimit)
 		if err != nil {

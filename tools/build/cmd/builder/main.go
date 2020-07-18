@@ -55,6 +55,8 @@ type Option struct {
 	BazelImage          string
 	DefaultBazelVersion string
 	SidecarImage        string
+	TaskCPULimit        string
+	TaskMemoryLimit     string
 
 	Dev bool
 }
@@ -86,6 +88,8 @@ func builder(args []string) error {
 	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
 	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
+	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
+	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -158,7 +162,7 @@ func builder(args []string) error {
 
 				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
 				githubOpt := coordinator.NewGithubAppOptions(opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
-				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg)
+				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg, opt.TaskCPULimit, opt.TaskMemoryLimit)
 				bazelOpt := coordinator.NewBazelOptions(opt.RemoteCache, opt.RemoteAssetApi, opt.SidecarImage, opt.BazelImage, opt.DefaultBazelVersion)
 				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, githubOpt, minioOpt, bazelOpt, opt.Dev)
 				if err != nil {
