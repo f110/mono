@@ -4,79 +4,12 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
 
 pkg_tar(
-    name = "builder_bin",
-    srcs = ["//tools/build/cmd/builder"],
-    mode = "0755",
-    package_dir = "/usr/local/bin",
-)
-
-container_image(
-    name = "builder_image",
-    base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/builder"],
-    tars = [":builder_bin"],
-)
-
-container_push(
-    name = "push_builder",
-    format = "Docker",
-    image = ":builder_image",
-    registry = "registry.f110.dev",
-    repository = "build/builder",
-    tag = "latest",
-)
-
-pkg_tar(
-    name = "dashboard_bin",
-    srcs = ["//tools/build/cmd/dashboard"],
-    mode = "0755",
-    package_dir = "/usr/local/bin",
-)
-
-container_image(
-    name = "dashboard_image",
-    base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/dashboard"],
-    tars = [":dashboard_bin"],
-)
-
-container_push(
-    name = "push_dashboard",
-    format = "Docker",
-    image = ":dashboard_image",
-    registry = "registry.f110.dev",
-    repository = "build/dashboard",
-    tag = "latest",
-)
-
-pkg_tar(
-    name = "sidecar_bin",
+    name = "build_bin",
     srcs = [
-        "//tools/build/cmd/sidecar",
+        "//tools/build/cmd/builder",
+        "//tools/build/cmd/dashboard",
+        "@dev_f110_protoc_ddl//cmd/migrate",
     ],
-    mode = "0755",
-    package_dir = "/usr/local/bin",
-)
-
-container_image(
-    name = "sidecar_image",
-    base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/sidecar"],
-    tars = [":sidecar_bin"],
-)
-
-container_push(
-    name = "push_sidecar",
-    format = "Docker",
-    image = ":sidecar_image",
-    registry = "registry.f110.dev",
-    repository = "build/sidecar",
-    tag = "latest",
-)
-
-pkg_tar(
-    name = "migrate_bin",
-    srcs = ["@dev_f110_protoc_ddl//cmd/migrate"],
     mode = "0755",
     package_dir = "/usr/local/bin",
 )
@@ -89,20 +22,19 @@ pkg_tar(
 )
 
 container_image(
-    name = "migrate_image",
+    name = "build_image",
     base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/migrate"],
     tars = [
-        ":migrate_bin",
+        ":build_bin",
         ":schema_files",
-    ],
+        ],
 )
 
 container_push(
-    name = "push_migrate",
+    name = "push_build",
     format = "Docker",
-    image = ":migrate_image",
+    image = ":build_image",
     registry = "registry.f110.dev",
-    repository = "build/migrate",
+    repository = "build/build",
     tag = "latest",
 )
