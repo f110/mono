@@ -1,10 +1,10 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/tools/build/cmd/builder",
-    visibility = ["//visibility:private"],
+    importpath = "go.f110.dev/mono/tools/build/pkg/cmd/builder",
+    visibility = ["//visibility:public"],
     deps = [
         "//lib/logger:go_default_library",
         "//lib/signals:go_default_library",
@@ -16,7 +16,7 @@ go_library(
         "//tools/build/pkg/watcher:go_default_library",
         "//vendor/github.com/go-sql-driver/mysql:go_default_library",
         "//vendor/github.com/google/uuid:go_default_library",
-        "//vendor/github.com/spf13/pflag:go_default_library",
+        "//vendor/github.com/spf13/cobra:go_default_library",
         "//vendor/go.uber.org/zap:go_default_library",
         "//vendor/golang.org/x/xerrors:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
@@ -26,10 +26,4 @@ go_library(
         "//vendor/k8s.io/client-go/tools/leaderelection:go_default_library",
         "//vendor/k8s.io/client-go/tools/leaderelection/resourcelock:go_default_library",
     ],
-)
-
-go_binary(
-    name = "builder",
-    embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
 )

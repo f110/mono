@@ -26,11 +26,11 @@ push:
 
 .PHONY: run-dashboard
 run-dashboard:
-	bazel run //tools/build/cmd/dashboard -- $(DASHBOARDFLAGS)
+	bazel run //tools/build/cmd/build -- dashboard $(DASHBOARDFLAGS)
 
 .PHONY: run-api
 run-api:
-	bazel run //tools/build/cmd/builder -- $(APIFLAGS)
+	bazel run //tools/build/cmd/build -- builder $(APIFLAGS)
 
 .PHONY: vendor
 vendor:

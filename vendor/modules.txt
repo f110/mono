@@ -115,6 +115,8 @@ github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/imdario/mergo v0.3.6
 github.com/imdario/mergo
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
 # github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
 github.com/jbenet/go-context/io
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
@@ -163,6 +165,9 @@ github.com/sergi/go-diff/diffmatchpatch
 # github.com/sourcegraph/go-diff v0.5.1
 ## explicit
 github.com/sourcegraph/go-diff/diff
+# github.com/spf13/cobra v1.0.0
+## explicit
+github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit
 github.com/spf13/pflag

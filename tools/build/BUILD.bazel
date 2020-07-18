@@ -6,8 +6,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "build_bin",
     srcs = [
-        "//tools/build/cmd/builder",
-        "//tools/build/cmd/dashboard",
+        "//tools/build/cmd/build",
         "@dev_f110_protoc_ddl//cmd/migrate",
     ],
     mode = "0755",
@@ -27,7 +26,7 @@ container_image(
     tars = [
         ":build_bin",
         ":schema_files",
-        ],
+    ],
 )
 
 container_push(

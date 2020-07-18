@@ -1,9 +1,8 @@
-package main
+package builder
 
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +30,7 @@ import (
 	"go.f110.dev/mono/tools/build/pkg/watcher"
 )
 
-type Option struct {
+type Options struct {
 	Id                   string // Identity name. This name used to leader election.
 	DSN                  string // DataSourceName.
 	Namespace            string
@@ -61,43 +60,7 @@ type Option struct {
 	Dev bool
 }
 
-func builder(args []string) error {
-	opt := &Option{}
-	fs := pflag.NewFlagSet("builder", pflag.ContinueOnError)
-	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
-	fs.StringVar(&opt.Id, "id", uuid.New().String(), "the holder identity name")
-	fs.BoolVar(&opt.EnableLeaderElection, "enable-leader-election", opt.EnableLeaderElection,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
-	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
-	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
-	fs.Int64Var(&opt.GithubAppId, "github-app-id", 0, "GitHub App id")
-	fs.Int64Var(&opt.GithubInstallationId, "github-installation-id", 0, "GitHub Installation id")
-	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
-	fs.StringVar(&opt.Addr, "addr", "127.0.0.1:8081", "Listen addr which will be served API")
-	fs.StringVar(&opt.DashboardUrl, "dashboard", "http://localhost", "URL of dashboard")
-	fs.BoolVar(&opt.Dev, "dev", opt.Dev, "development mode")
-	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
-	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
-	fs.IntVar(&opt.MinIOPort, "minio-port", 8080, "Port number of MinIO")
-	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
-	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
-	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
-	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
-	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
-	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
-	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
-	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
-	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
-	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
+func builder(opt Options) error {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	signals.SetupSignalHandler(cancelFunc)
 
@@ -224,9 +187,43 @@ func builder(args []string) error {
 	return nil
 }
 
-func main() {
-	if err := builder(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "%+v", err)
-		os.Exit(1)
+func AddCommand(rootCmd *cobra.Command) {
+	opt := Options{}
+
+	cmd := &cobra.Command{
+		Use: "builder",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return builder(opt)
+		},
 	}
+
+	fs := cmd.Flags()
+	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
+	fs.StringVar(&opt.Id, "id", uuid.New().String(), "the holder identity name")
+	fs.BoolVar(&opt.EnableLeaderElection, "enable-leader-election", opt.EnableLeaderElection,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
+	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
+	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
+	fs.Int64Var(&opt.GithubAppId, "github-app-id", 0, "GitHub App id")
+	fs.Int64Var(&opt.GithubInstallationId, "github-installation-id", 0, "GitHub Installation id")
+	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
+	fs.StringVar(&opt.Addr, "addr", "127.0.0.1:8081", "Listen addr which will be served API")
+	fs.StringVar(&opt.DashboardUrl, "dashboard", "http://localhost", "URL of dashboard")
+	fs.BoolVar(&opt.Dev, "dev", opt.Dev, "development mode")
+	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
+	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
+	fs.IntVar(&opt.MinIOPort, "minio-port", 8080, "Port number of MinIO")
+	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
+	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
+	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
+	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
+	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
+	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
+	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
+	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
+	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
+	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
+
+	rootCmd.AddCommand(cmd)
 }
