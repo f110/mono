@@ -140,9 +140,15 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 		s := strings.Split(d, "/")
 		filename := filepath.Join(dir, strings.Join(s[1:], "/"), f)
 
-		if h.Typeflag == tar.TypeDir {
+		switch h.Typeflag {
+		case tar.TypeDir:
 			if err := os.MkdirAll(filename, os.FileMode(h.Mode)); err != nil {
 				return xerrors.Errorf(": %v", err)
+			}
+			continue
+		case tar.TypeSymlink:
+			if err := os.Symlink(h.Linkname, filename); err != nil {
+				return xerrors.Errorf(": %w", err)
 			}
 			continue
 		}
