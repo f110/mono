@@ -37,3 +37,28 @@ container_push(
     repository = "build/build",
     tag = "latest",
 )
+
+pkg_tar(
+    name = "sidecar_bin",
+    srcs = [
+        "//tools/build/cmd/sidecar",
+    ],
+    mode = "0755",
+    package_dir = "/usr/local/bin",
+)
+
+container_image(
+    name = "sidecar_image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/sidecar"],
+    tars = [":sidecar_bin"],
+)
+
+container_push(
+    name = "push_sidecar",
+    format = "Docker",
+    image = ":sidecar_image",
+    registry = "registry.f110.dev",
+    repository = "build/sidecar",
+    tag = "latest",
+)
