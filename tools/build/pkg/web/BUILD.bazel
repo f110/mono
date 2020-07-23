@@ -12,6 +12,7 @@ go_library(
         "//lib/logger:go_default_library",
         "//tools/build/pkg/database:go_default_library",
         "//tools/build/pkg/database/dao:go_default_library",
+        "//tools/build/pkg/discovery:go_default_library",
         "//tools/build/pkg/storage:go_default_library",
         "//vendor/github.com/google/go-github/v32/github:go_default_library",
         "//vendor/go.f110.dev/protoc-ddl/probe:go_default_library",

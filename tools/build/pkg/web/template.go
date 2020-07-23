@@ -140,7 +140,7 @@ const indexTemplate = `<html>
   <h2 class="ui block header">
     <div class="ui grid">
       <div class="two column row">
-        <div class="left floated column">{{ .Repo.Name }}</div>
+        <div class="left floated column">{{ if .IsDiscovering }}<i class="spinner loading icon">{{ end }}</i>{{ .Repo.Name }}</div>
         <div class="right aligned floated column"><a href="#" onclick="syncDiscover({{ .Repo.Id }})"><i class="amber refresh icon"></i></a></div>
       </div>
     </div>

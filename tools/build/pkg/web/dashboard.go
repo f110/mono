@@ -16,22 +16,25 @@ import (
 	"go.f110.dev/mono/lib/logger"
 	"go.f110.dev/mono/tools/build/pkg/database"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"
+	"go.f110.dev/mono/tools/build/pkg/discovery"
 	"go.f110.dev/mono/tools/build/pkg/storage"
 )
 
 type Dashboard struct {
 	*http.Server
 
-	dao     dao.Options
-	apiHost string
-	minio   *storage.MinIO
+	dao       dao.Options
+	apiHost   string
+	minio     *storage.MinIO
+	discovery *discovery.Viewer
 }
 
 func NewDashboard(addr string, daoOpt dao.Options, apiHost string, client kubernetes.Interface, config *rest.Config, minioOpt storage.MinIOOptions, dev bool) *Dashboard {
 	d := &Dashboard{
-		dao:     daoOpt,
-		apiHost: apiHost,
-		minio:   storage.NewMinIOStorage(client, config, minioOpt, dev),
+		dao:       daoOpt,
+		apiHost:   apiHost,
+		minio:     storage.NewMinIOStorage(client, config, minioOpt, dev),
+		discovery: discovery.NewViewer(),
 	}
 
 	mux := http.NewServeMux()
@@ -68,8 +71,9 @@ type Task struct {
 }
 
 type RepositoryAndJobs struct {
-	Repo *database.SourceRepository
-	Jobs []*Job
+	Repo          *database.SourceRepository
+	IsDiscovering bool
+	Jobs          []*Job
 }
 
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
@@ -87,7 +91,11 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 	repoAndJobs := make(map[int32]*RepositoryAndJobs)
 	for _, v := range jobs {
 		if _, ok := repoAndJobs[v.RepositoryId]; !ok {
-			repoAndJobs[v.RepositoryId] = &RepositoryAndJobs{Repo: v.Repository, Jobs: make([]*Job, 0)}
+			repoAndJobs[v.RepositoryId] = &RepositoryAndJobs{
+				Repo:          v.Repository,
+				IsDiscovering: d.discovery.IsDiscovering(v.RepositoryId),
+				Jobs:          make([]*Job, 0),
+			}
 		}
 
 		tasks, err := d.dao.Task.ListByJob(req.Context(), v.Id)
