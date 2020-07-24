@@ -21,8 +21,13 @@ func NewTask(conn *sql.DB) *Task {
 	return &Task{conn: conn, job: NewJob(conn)}
 }
 
-func (t *Task) ListByJob(ctx context.Context, jobId int32) ([]*database.Task, error) {
-	rows, err := t.conn.QueryContext(ctx, "SELECT `id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?", jobId)
+func (t *Task) ListByJob(ctx context.Context, jobId int32, limit int32) ([]*database.Task, error) {
+	rows, err := t.conn.QueryContext(
+		ctx,
+		"SELECT `id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ? ORDER BY `id` DESC LIMIT ?",
+		jobId,
+		limit,
+	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
