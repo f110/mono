@@ -12,6 +12,7 @@ go_library(
         "//tools/build/pkg/coordinator:go_default_library",
         "//tools/build/pkg/database/dao:go_default_library",
         "//tools/build/pkg/discovery:go_default_library",
+        "//tools/build/pkg/gc:go_default_library",
         "//tools/build/pkg/storage:go_default_library",
         "//tools/build/pkg/watcher:go_default_library",
         "//vendor/github.com/go-sql-driver/mysql:go_default_library",

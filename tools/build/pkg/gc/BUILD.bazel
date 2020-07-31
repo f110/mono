@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["gc.go"],
+    importpath = "go.f110.dev/mono/tools/build/pkg/gc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/logger:go_default_library",
+        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database/dao:go_default_library",
+        "//tools/build/pkg/storage:go_default_library",
+        "//tools/build/pkg/web:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
+        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["gc_test.go"],
+    embed = [":go_default_library"],
+)

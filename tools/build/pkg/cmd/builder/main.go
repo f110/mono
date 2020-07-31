@@ -26,6 +26,7 @@ import (
 	"go.f110.dev/mono/tools/build/pkg/coordinator"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"
 	"go.f110.dev/mono/tools/build/pkg/discovery"
+	"go.f110.dev/mono/tools/build/pkg/gc"
 	"go.f110.dev/mono/tools/build/pkg/storage"
 	"go.f110.dev/mono/tools/build/pkg/watcher"
 )
@@ -140,6 +141,8 @@ func builder(opt Options) error {
 					return
 				}
 
+				g := gc.NewGC(1*time.Hour, daoOpt, kubeClient, cfg, minioOpt, opt.Dev)
+
 				coreSharedInformerFactory.Start(ctx.Done())
 
 				var wg sync.WaitGroup
@@ -167,6 +170,13 @@ func builder(opt Options) error {
 
 					<-ctx.Done()
 					apiServer.Shutdown(context.Background())
+				}()
+
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+
+					g.Start()
 				}()
 
 				wg.Wait()

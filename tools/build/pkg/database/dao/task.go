@@ -22,11 +22,17 @@ func NewTask(conn *sql.DB) *Task {
 }
 
 func (t *Task) ListByJob(ctx context.Context, jobId int32, limit int32) ([]*database.Task, error) {
+	args := []interface{}{jobId}
+	limitQuery := ""
+	if limit != -1 {
+		limitQuery = " LIMIT ?"
+		args = append(args, limit)
+	}
+
 	rows, err := t.conn.QueryContext(
 		ctx,
-		"SELECT `id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ? ORDER BY `id` DESC LIMIT ?",
-		jobId,
-		limit,
+		"SELECT `id`, `revision`, `success`, `log_file`, `via`, `command`, `target`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ? ORDER BY `id` DESC"+limitQuery,
+		args...,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -124,4 +130,18 @@ func (t *Task) Create(ctx context.Context, task *database.Task) (*database.Task,
 
 	task.ResetMark()
 	return task, nil
+}
+
+func (t *Task) Delete(ctx context.Context, id int32) error {
+	res, err := t.conn.ExecContext(ctx, "DELETE FROM `task` WHERE `id` = ?", id)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }

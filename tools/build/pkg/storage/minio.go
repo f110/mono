@@ -111,6 +111,31 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 	return buf, nil
 }
 
+func (m *MinIO) Delete(ctx context.Context, name string) error {
+	mc, forwarder, err := m.newMinIOClient()
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	names := make(chan string)
+	go func() {
+		defer close(names)
+		names <- name
+	}()
+
+	errCh := mc.RemoveObjectsWithContext(ctx, m.bucket, names)
+	select {
+	case err, ok := <-errCh:
+		if !ok {
+			return nil
+		}
+		return xerrors.Errorf(": %w", err.Err)
+	}
+}
+
 func (m *MinIO) newMinIOClient() (*minio.Client, *portforward.PortForwarder, error) {
 	endpoint, forwarder, err := m.getMinIOEndpoint(m.name, m.namespace, m.port)
 	if err != nil {
