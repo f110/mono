@@ -278,7 +278,7 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	task, err := b.dao.Task.SelectById(context.Background(), int32(id))
+	task, err := b.dao.Task.Select(context.Background(), int32(id))
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -296,7 +296,7 @@ func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
 }
 
 func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, success bool) error {
-	j, err := b.dao.Job.SelectById(context.Background(), task.JobId)
+	j, err := b.dao.Job.Select(context.Background(), task.JobId)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

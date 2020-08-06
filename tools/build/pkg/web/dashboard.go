@@ -81,13 +81,13 @@ type RepositoryAndJobs struct {
 }
 
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
-	repoList, err := d.dao.Repository.List(req.Context())
+	repoList, err := d.dao.Repository.ListAll(req.Context())
 	if err != nil {
 		logger.Log.Warn("Failed get repository", zap.Error(err))
 		return
 	}
 
-	jobs, err := d.dao.Job.List(req.Context())
+	jobs, err := d.dao.Job.ListAll(req.Context())
 	if err != nil {
 		logger.Log.Warn("Failed get job", zap.Error(err))
 		return
@@ -102,7 +102,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		tasks, err := d.dao.Task.ListByJob(req.Context(), v.Id, NumberOfTaskPerJob)
+		tasks, err := d.dao.Task.ListByJobId(req.Context(), v.Id)
 		if err != nil {
 			logger.Log.Warn("Failed get task", zap.Error(err), zap.Int32("job", v.Id))
 			continue
@@ -139,7 +139,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	trustedUsers, err := d.dao.TrustedUser.List(req.Context())
+	trustedUsers, err := d.dao.TrustedUser.ListAll(req.Context())
 	if err != nil {
 		logger.Log.Warn("Failed get trusted user", zap.Error(err))
 		return

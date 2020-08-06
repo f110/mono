@@ -15,6 +15,17 @@ message SourceRepository {
         primary_key: "id"
         with_timestamp: true
     };
+
+    option (dev.f110.ddl.dao) = {
+        queries: {
+            name: "All"
+            query: "SELECT * FROM `source_repository`"
+        };
+        queries: {
+            name: "ByUrl"
+            query: "SELECT * FROM `source_repository` WHERE `url` = ?"
+        };
+    };
 }
 
 message Job {
@@ -31,6 +42,17 @@ message Job {
     option (dev.f110.ddl.table) = {
         primary_key: "id"
         with_timestamp: true
+    };
+
+    option (dev.f110.ddl.dao) = {
+        queries: {
+            name: "All"
+            query: "SELECT * FROM `job`"
+        };
+        queries: {
+            name: "BySourceRepositoryId"
+            query: "SELECT * FROM `job` WHERE `repository_id` = ?"
+        };
     };
 }
 
@@ -49,6 +71,13 @@ message Task {
         primary_key: "id"
         with_timestamp: true
     };
+
+    option (dev.f110.ddl.dao) = {
+        queries: {
+            name: "ByJobId"
+            query: "SELECT * FROM `task` WHERE `job_id` = ?"
+        };
+    };
 }
 
 message TrustedUser {
@@ -60,6 +89,17 @@ message TrustedUser {
         primary_key: "id"
         with_timestamp: true
     };
+
+    option (dev.f110.ddl.dao) = {
+        queries: {
+            name: "All"
+            query: "SELECT * FROM `trusted_user`"
+        };
+        queries: {
+            name: "ByGithubId"
+            query: "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+        };
+    };
 }
 
 message PermitPullRequest {
@@ -70,5 +110,12 @@ message PermitPullRequest {
     option (dev.f110.ddl.table) = {
         primary_key: "id"
         with_timestamp: true
+    };
+
+    option (dev.f110.ddl.dao) = {
+        queries: {
+            name: "ByRepositoryAndNumber"
+            query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
+        };
     };
 }

@@ -47,14 +47,14 @@ func (g *GC) Start() {
 }
 
 func (g *GC) sweep(ctx context.Context) {
-	jobs, err := g.dao.Job.List(ctx)
+	jobs, err := g.dao.Job.ListAll(ctx)
 	if err != nil {
 		logger.Log.Warn("Failed get job's list", zap.Error(err))
 		return
 	}
 
 	for _, v := range jobs {
-		tasks, err := g.dao.Task.ListByJob(ctx, v.Id, -1)
+		tasks, err := g.dao.Task.ListByJobId(ctx, v.Id)
 		if err != nil {
 			logger.Log.Info("Failed get task's list", zap.Error(err), zap.Int32("job_id", v.Id))
 			continue

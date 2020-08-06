@@ -260,7 +260,7 @@ func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	repo, err := d.dao.Repository.SelectById(context.Background(), int32(id))
+	repo, err := d.dao.Repository.Select(context.Background(), int32(id))
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

@@ -12,17 +12,17 @@ http_archive(
 
 http_archive(
     name = "bazel_gazelle",
+    sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
     urls = [
         "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
         "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.20.0/bazel-gazelle-v0.20.0.tar.gz",
     ],
-    sha256 = "d8c45ee70ec39a57e7a05e5027c32b1576cc7f16d9dd37135b0eddde45cf1b10",
 )
 
 http_archive(
     name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
     sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
 )
 
 http_archive(
@@ -34,8 +34,8 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
-    url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
     sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
+    url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
 )
 
 http_archive(
@@ -47,13 +47,13 @@ http_archive(
 
 git_repository(
     name = "dev_f110_rules_extras",
-    commit = "7707fd5a50b277e60ef86d4bc258415d76274d4b",
+    commit = "9f2df3337bfd8eca58235285cf048fcadb8eddef",
     remote = "https://github.com/f110/rules_extras",
 )
 
 git_repository(
     name = "dev_f110_protoc_ddl",
-    commit = "d8d8b5e92f7b809f5c36618cb060a592f41a9be0",
+    commit = "8a90316a82537f810d6c0338f8a174f3800262f9",
     remote = "https://github.com/f110/protoc-ddl",
 )
 
@@ -61,7 +61,7 @@ load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
 go_extras_dependencies()
 
-load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 go_rules_dependencies()
 
@@ -98,5 +98,5 @@ http_archive(
     name = "com_github_migrate_migrate",
     build_file_content = "filegroup(name = \"bin\", srcs = [\"migrate.linux-amd64\"], visibility = [\"//visibility:public\"])",
     sha256 = "9b39a0fe0e4dd1d6d3f0705f938a89c9d98c31152e0f097bb2e1556f9030387c",
-    urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz"]
+    urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz"],
 )

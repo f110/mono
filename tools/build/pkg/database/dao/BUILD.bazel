@@ -3,12 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
-        "job.go",
         "options.go",
-        "permit_pull_request.go",
-        "source_repository.go",
-        "task.go",
-        "trusted_user.go",
+        "schema.dao.go",
     ],
     importpath = "go.f110.dev/mono/tools/build/pkg/database/dao",
     visibility = ["//visibility:public"],
@@ -16,4 +12,17 @@ go_library(
         "//tools/build/pkg/database:go_default_library",
         "//vendor/golang.org/x/xerrors:go_default_library",
     ],
+)
+
+load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
+
+schema_dao(
+    name = "dao",
+    lang = "go",
+    proto = "//tools/build/pkg/database:database_proto",
+)
+
+vendor_ddl(
+    name = "vendor_dao",
+    src = ":dao",
 )

@@ -94,11 +94,16 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	switch event := event.(type) {
 	case *github.PushEvent:
 		if modifiedRuleFile(event) {
-			repo, err := a.dao.Repository.SelectByUrl(req.Context(), event.Repo.GetHTMLURL())
+			repos, err := a.dao.Repository.ListByUrl(req.Context(), event.Repo.GetHTMLURL())
 			if err != nil {
 				logger.Log.Warn("Could not find repository", zap.Error(err))
 				return
 			}
+			if len(repos) != 1 {
+				logger.Log.Warn("Can not decide the repository by url", zap.String("url", event.Repo.GetHTMLURL()))
+				return
+			}
+			repo := repos[0]
 
 			// If push event is on main branch, Set a revision to discovery job.
 			// This is intended to rebuild all jobs after discovering.
@@ -158,13 +163,14 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				}
 			}
 		case "closed":
-			permit, err := a.dao.PermitPullRequest.SelectByRepositoryAndNumber(req.Context(), event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
+			permits, err := a.dao.PermitPullRequest.ListByRepositoryAndNumber(req.Context(), event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
 			if err != nil {
 				return
 			}
-			if permit == nil {
+			if len(permits) == 0 {
 				return
 			}
+			permit := permits[0]
 			if err := a.dao.PermitPullRequest.Delete(req.Context(), permit.Id); err != nil {
 				logger.Log.Warn("Failed delete PermitPullRequest", zap.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
@@ -179,16 +185,19 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEvent) (bool, error) {
-	user, err := a.dao.TrustedUser.SelectByGithubId(ctx, event.Sender.GetID())
+	users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		logger.Log.Warn("Could not get trusted user", zap.Error(err), zap.Int64("sender.id", event.Sender.GetID()))
 		return false, err
 	}
-	if user != nil {
+	if users == nil {
+		return false, nil
+	}
+	if len(users) == 1 {
 		return true, nil
 	}
 
-	permitPullRequest, err := a.dao.PermitPullRequest.SelectByRepositoryAndNumber(ctx, event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
+	permitPullRequest, err := a.dao.PermitPullRequest.ListByRepositoryAndNumber(ctx, event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		logger.Log.Warn("Could not get permit pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 		return false, err
@@ -234,11 +243,16 @@ func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string
 }
 
 func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
-	repo, err := a.dao.Repository.SelectByUrl(ctx, repoUrl)
+	repos, err := a.dao.Repository.ListByUrl(ctx, repoUrl)
 	if err != nil {
 		logger.Log.Info("Repository not found or could not get", zap.Error(err))
 		return nil
 	}
+	if len(repos) != 1 {
+		return nil
+	}
+	repo := repos[0]
+
 	jobs, err := a.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
 	if err != nil {
 		logger.Log.Warn("Could not get jobs", zap.Error(err))
@@ -266,10 +280,14 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 	switch event.GetAction() {
 	case "created":
 		if strings.Contains(event.Comment.GetBody(), AllowCommand) {
-			user, err := a.dao.TrustedUser.SelectByGithubId(ctx, event.Sender.GetID())
+			users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
+			if len(users) != 1 {
+				return nil
+			}
+			user := users[0]
 			if user == nil {
 				logger.Log.Info("Skip handling comment due to user is not trusted user", zap.String("user", event.Sender.GetLogin()))
 				return nil
@@ -327,7 +345,7 @@ func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	repo, err := a.dao.Repository.SelectById(req.Context(), int32(repoId))
+	repo, err := a.dao.Repository.Select(req.Context(), int32(repoId))
 	if err != nil {
 		logger.Log.Info("repository not found", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -363,7 +381,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	job, err := a.dao.Job.SelectById(req.Context(), int32(jobId))
+	job, err := a.dao.Job.Select(req.Context(), int32(jobId))
 	if err != nil {
 		logger.Log.Info("job not found", zap.Int("job_id", jobId), zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -429,7 +447,7 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := a.dao.Task.SelectById(req.Context(), int32(taskId))
+	task, err := a.dao.Task.Select(req.Context(), int32(taskId))
 	if err != nil {
 		logger.Log.Info("Task is not found", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
