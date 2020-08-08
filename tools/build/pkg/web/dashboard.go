@@ -102,7 +102,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 
-		tasks, err := d.dao.Task.ListByJobId(req.Context(), v.Id)
+		tasks, err := d.dao.Task.ListByJobId(req.Context(), v.Id, dao.Limit(NumberOfTaskPerJob), dao.Desc)
 		if err != nil {
 			logger.Log.Warn("Failed get task", zap.Error(err), zap.Int32("job", v.Id))
 			continue

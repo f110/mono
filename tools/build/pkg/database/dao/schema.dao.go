@@ -14,6 +14,31 @@ import (
 	"go.f110.dev/mono/tools/build/pkg/database"
 )
 
+type ListOption func(opt *listOpt)
+
+func Limit(limit int) func(opt *listOpt) {
+	return func(opt *listOpt) {
+		opt.limit = limit
+	}
+}
+
+func Desc(opt *listOpt) {
+	opt.desc = true
+}
+
+type listOpt struct {
+	limit int
+	desc  bool
+}
+
+func newListOpt(opts ...ListOption) *listOpt {
+	opt := &listOpt{}
+	for _, v := range opts {
+		v(opt)
+	}
+	return opt
+}
+
 type SourceRepository struct {
 	conn *sql.DB
 }
@@ -36,10 +61,19 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 	return v, nil
 }
 
-func (d *SourceRepository) ListAll(ctx context.Context) ([]*database.SourceRepository, error) {
+func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `source_repository`"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `source_repository`",
+		query,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -58,10 +92,19 @@ func (d *SourceRepository) ListAll(ctx context.Context) ([]*database.SourceRepos
 	return res, nil
 }
 
-func (d *SourceRepository) ListByUrl(ctx context.Context, url string) ([]*database.SourceRepository, error) {
+func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `source_repository` WHERE `url` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `source_repository` WHERE `url` = ?",
+		query,
 		url,
 	)
 	if err != nil {
@@ -189,10 +232,19 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 	return v, nil
 }
 
-func (d *Job) ListAll(ctx context.Context) ([]*database.Job, error) {
+func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `job`"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `job`",
+		query,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -222,10 +274,19 @@ func (d *Job) ListAll(ctx context.Context) ([]*database.Job, error) {
 	return res, nil
 }
 
-func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32) ([]*database.Job, error) {
+func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `job` WHERE `repository_id` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `job` WHERE `repository_id` = ?",
+		query,
 		repositoryId,
 	)
 	if err != nil {
@@ -364,10 +425,19 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	return v, nil
 }
 
-func (d *Task) ListByJobId(ctx context.Context, jobId int32) ([]*database.Task, error) {
+func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `task` WHERE `job_id` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `task` WHERE `job_id` = ?",
+		query,
 		jobId,
 	)
 	if err != nil {
@@ -495,10 +565,19 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 	return v, nil
 }
 
-func (d *TrustedUser) ListAll(ctx context.Context) ([]*database.TrustedUser, error) {
+func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `trusted_user`"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `trusted_user`",
+		query,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -517,10 +596,19 @@ func (d *TrustedUser) ListAll(ctx context.Context) ([]*database.TrustedUser, err
 	return res, nil
 }
 
-func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64) ([]*database.TrustedUser, error) {
+func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `trusted_user` WHERE `github_id` = ?",
+		query,
 		githubId,
 	)
 	if err != nil {
@@ -637,10 +725,19 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 	return v, nil
 }
 
-func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32) ([]*database.PermitPullRequest, error) {
+func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
 	rows, err := d.conn.QueryContext(
 		ctx,
-		"SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?",
+		query,
 		repository,
 		number,
 	)
