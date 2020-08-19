@@ -3,6 +3,7 @@ module go.f110.dev/mono
 go 1.14
 
 require (
+	cloud.google.com/go v0.38.0
 	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/aws/aws-sdk-go v1.28.8
 	github.com/bradleyfalzon/ghinstallation v1.1.1
@@ -22,13 +23,14 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200425165423-262c93980547
 	go.f110.dev/protoc-ddl v0.0.0-20200709144224-1b69c3e6be43
 	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/sys v0.0.0-20200121082415-34d275377bf9 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+	google.golang.org/api v0.4.0
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.2.8
