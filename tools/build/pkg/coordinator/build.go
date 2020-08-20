@@ -372,7 +372,7 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 }
 
 func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
-	if job.Synchronized {
+	if job.Exclusive {
 		if b.isRunningJob(job) {
 			return xerrors.Errorf(": %w", ErrOtherTaskIsRunning)
 		}
