@@ -9,11 +9,11 @@ var Template *template.Template
 
 func init() {
 	Template = template.Must(template.New("").Funcs(map[string]interface{}{
-		"Duration": func(start time.Time, end *time.Time) string {
-			if end == nil {
+		"Duration": func(start *time.Time, end *time.Time) string {
+			if end == nil || start == nil {
 				return ""
 			}
-			return end.Sub(start).String()
+			return end.Sub(*start).String()
 		},
 	}).Parse(indexTemplate))
 }
@@ -178,7 +178,7 @@ const indexTemplate = `<html>
           <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
           <td>{{ .Via }}</td>
           <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
-          <td>{{ Duration .CreatedAt .FinishedAt }}</td>
+          <td>{{ Duration .StartAt .FinishedAt }}</td>
           <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
         {{- end }}
