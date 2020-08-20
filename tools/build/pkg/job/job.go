@@ -9,4 +9,5 @@ type Job struct {
 	GithubStatus bool   `attr:"github_status"`
 	CPULimit     string `attr:"cpu_limit"`
 	MemoryLimit  string `attr:"memory_limit"`
+	Synchronized bool   `attr:"synchronized"`
 }

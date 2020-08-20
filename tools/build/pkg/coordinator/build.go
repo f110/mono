@@ -3,11 +3,13 @@ package coordinator
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -18,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
@@ -38,11 +41,16 @@ const (
 	defaultCPULimit    = "1000m"
 	defaultMemoryLimit = "4096Mi"
 
+	labelKeyJobId  = "build.f110.dev/job-id"
 	labelKeyTaskId = "build.f110.dev/task-id"
 	labelKeyCtrlBy = "build.f110.dev/control-by"
 
 	jobTimeout = 1 * time.Hour
 	jobType    = "bazelBuilder"
+)
+
+var (
+	ErrOtherTaskIsRunning = xerrors.New("coordinator: Other task is running")
 )
 
 type GithubAppOptions struct {
@@ -85,6 +93,43 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 	}
 }
 
+type taskQueue struct {
+	mu     sync.Mutex
+	queues map[int32][]*database.Task
+}
+
+func newTaskQueue() *taskQueue {
+	return &taskQueue{queues: make(map[int32][]*database.Task)}
+}
+
+func (tq *taskQueue) Enqueue(job *database.Job, task *database.Task) {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	tq.queues[job.Id] = append(tq.queues[job.Id], task)
+}
+
+func (tq *taskQueue) Dequeue(job *database.Job) *database.Task {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	q, ok := tq.queues[job.Id]
+	if !ok {
+		return nil
+	}
+
+	switch len(q) {
+	case 0:
+		return nil
+	case 1:
+		tq.queues[job.Id] = nil
+		return q[0]
+	default:
+		tq.queues[job.Id] = q[1:]
+		return q[0]
+	}
+}
+
 type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
@@ -104,6 +149,8 @@ type BazelBuilder struct {
 	defaultTaskCPULimit    resource.Quantity
 	defaultTaskMemoryLimit resource.Quantity
 	dev                    bool
+
+	taskQueue *taskQueue
 }
 
 func NewBazelBuilder(
@@ -136,6 +183,7 @@ func NewBazelBuilder(
 		bazelImage:          bazelOpt.BazelImage,
 		defaultBazelVersion: bazelOpt.DefaultVersion,
 		dev:                 dev,
+		taskQueue:           newTaskQueue(),
 	}
 	if b.sidecarImage == "" {
 		b.sidecarImage = sidecarImage
@@ -166,6 +214,14 @@ func NewBazelBuilder(
 	}
 	watcher.Router.Add(jobType, b.syncJob)
 
+	pendingTasks, err := b.dao.Task.ListPending(context.Background())
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	for _, v := range pendingTasks {
+		b.taskQueue.Enqueue(v.Job, v)
+	}
+
 	return b, nil
 }
 
@@ -174,7 +230,20 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
+	defer func() {
+		if task.IsChanged() {
+			if err := b.dao.Task.Update(ctx, task); err != nil {
+				logger.Log.Warn("Failed update task", zap.Error(err))
+			}
+		}
+	}()
+
 	if err := b.buildJob(job, task); err != nil {
+		if errors.Is(err, ErrOtherTaskIsRunning) {
+			b.taskQueue.Enqueue(job, task)
+			return task, nil
+		}
+
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -252,6 +321,13 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
+		if err := b.buildJob(task.Job, task); err != nil {
+			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job_id", task.JobId), zap.Int32("task_id", task.Id))
+			return nil
+		}
+	}
+
 	return nil
 }
 
@@ -286,13 +362,50 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 }
 
 func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
+	if job.Synchronized {
+		if b.isRunningJob(job) {
+			// TODO:
+			return xerrors.Errorf(": %w", ErrOtherTaskIsRunning)
+		}
+	}
+
 	buildTemplate := b.buildJobTemplate(job, task)
 	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(buildTemplate)
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
 	}
+	now := time.Now()
+	task.StartAt = &now
 
 	return nil
+}
+
+func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
+	jobs, err := b.jobLister.List(labels.Everything())
+	if err != nil {
+		logger.Log.Warn("Could not get a job's list from kube-apiserver.", zap.Error(err))
+		// Can not detect a status of job.
+		// In this situation, we assume that the job is running.
+		return true
+	}
+
+	for _, v := range jobs {
+		jobIdString, ok := v.Labels[labelKeyJobId]
+		if !ok {
+			continue
+		}
+		jobId, err := strconv.Atoi(jobIdString)
+		if err != nil {
+			continue
+		}
+		if job.Id == int32(jobId) {
+			if v.Status.CompletionTime.IsZero() && !v.Status.StartTime.IsZero() {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, success bool) error {
@@ -385,6 +498,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) *batchv1.Job {
 	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, b.defaultBazelVersion)
 	taskIdString := strconv.Itoa(int(task.Id))
+	jobIdString := strconv.Itoa(int(job.Id))
 
 	volumes := []corev1.Volume{
 		{
@@ -434,6 +548,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 			Name:      fmt.Sprintf("%s-%d", job.Repository.Name, task.Id),
 			Namespace: b.Namespace,
 			Labels: map[string]string{
+				labelKeyJobId:     jobIdString,
 				labelKeyTaskId:    taskIdString,
 				labelKeyCtrlBy:    "bazel-build",
 				watcher.TypeLabel: jobType,

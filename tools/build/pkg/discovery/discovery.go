@@ -210,6 +210,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				v.GithubStatus = j.GithubStatus
 				v.CpuLimit = j.CPULimit
 				v.MemoryLimit = j.MemoryLimit
+				v.Synchronized = j.Synchronized
 			} else {
 				newJobs = append(newJobs, &database.Job{
 					Command:      j.Command,
@@ -220,6 +221,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 					GithubStatus: j.GithubStatus,
 					CpuLimit:     j.CPULimit,
 					MemoryLimit:  j.MemoryLimit,
+					Synchronized: j.Synchronized,
 				})
 			}
 		}

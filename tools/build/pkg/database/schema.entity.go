@@ -102,6 +102,7 @@ type Job struct {
 	GithubStatus bool
 	CpuLimit     string
 	MemoryLimit  string
+	Synchronized bool
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 
@@ -130,6 +131,7 @@ func (e *Job) IsChanged() bool {
 		e.GithubStatus != e.mark.GithubStatus ||
 		e.CpuLimit != e.mark.CpuLimit ||
 		e.MemoryLimit != e.mark.MemoryLimit ||
+		e.Synchronized != e.mark.Synchronized ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -163,6 +165,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	if e.MemoryLimit != e.mark.MemoryLimit {
 		res = append(res, ddl.Column{Name: "memory_limit", Value: e.MemoryLimit})
 	}
+	if e.Synchronized != e.mark.Synchronized {
+		res = append(res, ddl.Column{Name: "synchronized", Value: e.Synchronized})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -188,6 +193,7 @@ func (e *Job) Copy() *Job {
 		GithubStatus: e.GithubStatus,
 		CpuLimit:     e.CpuLimit,
 		MemoryLimit:  e.MemoryLimit,
+		Synchronized: e.Synchronized,
 		CreatedAt:    e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {
@@ -207,6 +213,7 @@ type Task struct {
 	Command    string
 	Target     string
 	Via        string
+	StartAt    *time.Time
 	FinishedAt *time.Time
 	CreatedAt  time.Time
 	UpdatedAt  *time.Time
@@ -235,6 +242,7 @@ func (e *Task) IsChanged() bool {
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
 		e.Via != e.mark.Via ||
+		((e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil)) ||
 		((e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil)) ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
@@ -265,6 +273,13 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.Via != e.mark.Via {
 		res = append(res, ddl.Column{Name: "via", Value: e.Via})
+	}
+	if (e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil) {
+		if e.StartAt != nil {
+			res = append(res, ddl.Column{Name: "start_at", Value: *e.StartAt})
+		} else {
+			res = append(res, ddl.Column{Name: "start_at", Value: nil})
+		}
 	}
 	if (e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil) {
 		if e.FinishedAt != nil {
@@ -298,6 +313,10 @@ func (e *Task) Copy() *Task {
 		Target:    e.Target,
 		Via:       e.Via,
 		CreatedAt: e.CreatedAt,
+	}
+	if e.StartAt != nil {
+		v := *e.StartAt
+		n.StartAt = &v
 	}
 	if e.FinishedAt != nil {
 		v := *e.FinishedAt

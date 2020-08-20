@@ -25,6 +25,7 @@ CREATE TABLE `job` (
 	`github_status` TINYINT(1) NOT NULL,
 	`cpu_limit` VARCHAR(255) NOT NULL,
 	`memory_limit` VARCHAR(255) NOT NULL,
+	`synchronized` TINYINT(1) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
@@ -40,6 +41,7 @@ CREATE TABLE `task` (
 	`command` VARCHAR(255) NOT NULL,
 	`target` VARCHAR(255) NOT NULL,
 	`via` VARCHAR(255) NOT NULL,
+	`start_at` DATETIME NULL,
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,

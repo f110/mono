@@ -38,6 +38,7 @@ message Job {
     bool             github_status = 7;
     string           cpu_limit     = 8;
     string           memory_limit  = 9;
+    bool             synchronized  = 10;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"
@@ -65,7 +66,8 @@ message Task {
     string command  = 6;
     string target   = 7;
     string via      = 8;
-    .google.protobuf.Timestamp finished_at = 9 [(dev.f110.ddl.column) = {null: true}];
+    .google.protobuf.Timestamp start_at    = 9 [(dev.f110.ddl.column) = {null: true}];
+    .google.protobuf.Timestamp finished_at = 10 [(dev.f110.ddl.column) = {null: true}];
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"
@@ -76,6 +78,10 @@ message Task {
         queries: {
             name: "ByJobId"
             query: "SELECT * FROM `task` WHERE `job_id` = ?"
+        };
+        queries: {
+            name: "Pending"
+            query: "SELECT * FROM `task` WHERE `start_at` IS NULL"
         };
     };
 }

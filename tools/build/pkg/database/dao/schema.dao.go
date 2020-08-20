@@ -216,7 +216,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `id` = ?", id)
 
 	v := &database.Job{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Synchronized, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -253,7 +253,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Synchronized, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -296,7 +296,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Synchronized, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -320,7 +320,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 func (d *Job) Create(ctx context.Context, v *database.Job) (*database.Job, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, time.Now(),
+		"INSERT INTO `task` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `synchronized`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, v.Synchronized, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -409,7 +409,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `task` WHERE `id` = ?", id)
 
 	v := &database.Task{}
-	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Via, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Via, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -447,7 +447,49 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		for _, v := range res {
+			{
+				rel, err := d.job.Select(ctx, v.JobId)
+				if err != nil {
+					return nil, xerrors.Errorf(": %w", err)
+				}
+				v.Job = rel
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT * FROM `task` WHERE `start_at` IS NULL"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	res := make([]*database.Task, 0)
+	for rows.Next() {
+		r := &database.Task{}
+		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -471,7 +513,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 func (d *Task) Create(ctx context.Context, v *database.Task) (*database.Task, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", v.JobId, v.Revision, v.Success, v.LogFile, v.Command, v.Target, v.Via, v.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.JobId, v.Revision, v.Success, v.LogFile, v.Command, v.Target, v.Via, v.StartAt, v.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
