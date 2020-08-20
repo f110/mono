@@ -63,7 +63,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `source_repository`"
+	query := "select id, url, clone_url, name, created_at, updated_at from source_repository"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -94,7 +94,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `source_repository` WHERE `url` = ?"
+	query := "select id, url, clone_url, name, created_at, updated_at from source_repository where url = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -127,7 +127,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 func (d *SourceRepository) Create(ctx context.Context, v *database.SourceRepository) (*database.SourceRepository, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`url`, `clone_url`, `name`, `created_at`) VALUES (?, ?, ?, ?)", v.Url, v.CloneUrl, v.Name, time.Now(),
+		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `created_at`) VALUES (?, ?, ?, ?)", v.Url, v.CloneUrl, v.Name, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -234,7 +234,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `job`"
+	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, synchronized, created_at, updated_at from job"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -276,7 +276,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 
 func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `job` WHERE `repository_id` = ?"
+	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, synchronized, created_at, updated_at from job where repository_id = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -320,7 +320,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 func (d *Job) Create(ctx context.Context, v *database.Job) (*database.Job, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `synchronized`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, v.Synchronized, time.Now(),
+		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `synchronized`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, v.Synchronized, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -427,7 +427,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `task` WHERE `job_id` = ?"
+	query := "select id, job_id, revision, success, log_file, command, target, via, start_at, finished_at, created_at, updated_at from task where job_id = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -470,7 +470,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `task` WHERE `start_at` IS NULL"
+	query := "select id, job_id, revision, success, log_file, command, target, via, start_at, finished_at, created_at, updated_at from task where start_at is null"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -609,7 +609,7 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 
 func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `trusted_user`"
+	query := "select id, github_id, username, created_at, updated_at from trusted_user"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -640,7 +640,7 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 
 func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+	query := "select id, github_id, username, created_at, updated_at from trusted_user where github_id = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -673,7 +673,7 @@ func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ..
 func (d *TrustedUser) Create(ctx context.Context, v *database.TrustedUser) (*database.TrustedUser, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`github_id`, `username`, `created_at`) VALUES (?, ?, ?)", v.GithubId, v.Username, time.Now(),
+		"INSERT INTO `trusted_user` (`github_id`, `username`, `created_at`) VALUES (?, ?, ?)", v.GithubId, v.Username, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -769,7 +769,7 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 
 func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
+	query := "select id, repository, number, created_at, updated_at from permit_pull_request where repository = ? and number = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -803,7 +803,7 @@ func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repos
 func (d *PermitPullRequest) Create(ctx context.Context, v *database.PermitPullRequest) (*database.PermitPullRequest, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`repository`, `number`, `created_at`) VALUES (?, ?, ?)", v.Repository, v.Number, time.Now(),
+		"INSERT INTO `permit_pull_request` (`repository`, `number`, `created_at`) VALUES (?, ?, ?)", v.Repository, v.Number, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

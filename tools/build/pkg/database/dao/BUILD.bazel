@@ -9,7 +9,9 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/database/dao",
     visibility = ["//visibility:public"],
     deps = [
+        "//lib/logger:go_default_library",
         "//tools/build/pkg/database:go_default_library",
+        "//vendor/go.uber.org/zap:go_default_library",
         "//vendor/golang.org/x/xerrors:go_default_library",
     ],
 )

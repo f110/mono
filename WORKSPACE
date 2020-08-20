@@ -53,7 +53,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_protoc_ddl",
-    commit = "8e0bca9a2c6f0a97248ed6fd47a0ab43bd32ffca",
+    commit = "d606f577d82631af5b073e03ddddde32f054aa66",
     remote = "https://github.com/f110/protoc-ddl",
 )
 
