@@ -149,7 +149,7 @@ const indexTemplate = `<html>
   <h3 class="ui header">
     <div class="ui grid">
       <div class="two column row">
-        <div class="left floated column">{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ .Command }} {{ .Repository.Name }}{{ .Target }}</div>
+        <div class="left floated column">{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ .Command }} {{ .Repository.Name }}{{ .Target }}{{ if not .Synchronized }}<i class="random icon"></i>{{ end }}</div>
         <div class="right aligned floated column"><a href="#" onclick="runTask({{ .Id }})"><i class="green play icon"></i></a></div>
       </div>
     </div>
