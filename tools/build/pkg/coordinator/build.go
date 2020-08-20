@@ -3,6 +3,7 @@ package coordinator
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -240,6 +241,7 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 
 	if err := b.buildJob(job, task); err != nil {
 		if errors.Is(err, ErrOtherTaskIsRunning) {
+			logger.Log.Info("Enqueue the task", zap.Int32("task.id", task.Id))
 			b.taskQueue.Enqueue(job, task)
 			return task, nil
 		}
@@ -265,6 +267,10 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	taskId := job.Labels[labelKeyTaskId]
 	task, err := b.getTask(taskId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.Log.Info("Not found task", zap.String("task.id", taskId))
+			return nil
+		}
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -322,9 +328,13 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
+		logger.Log.Info("Dequeue the task", zap.Int32("task.id", followTask.Id))
 		if err := b.buildJob(task.Job, followTask); err != nil {
-			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job_id", task.JobId), zap.Int32("task_id", task.Id))
+			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job.id", task.JobId), zap.Int32("task.id", task.Id))
 			return nil
+		}
+		if err := b.dao.Task.Update(context.Background(), followTask); err != nil {
+			logger.Log.Warn("Failed update the task", zap.Error(err), zap.Int32("task.id", followTask.Id))
 		}
 	}
 
@@ -364,7 +374,6 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
 	if job.Synchronized {
 		if b.isRunningJob(job) {
-			// TODO:
 			return xerrors.Errorf(": %w", ErrOtherTaskIsRunning)
 		}
 	}
