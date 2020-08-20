@@ -102,7 +102,7 @@ type Job struct {
 	GithubStatus bool
 	CpuLimit     string
 	MemoryLimit  string
-	Synchronized bool
+	Exclusive    bool
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 
@@ -131,7 +131,7 @@ func (e *Job) IsChanged() bool {
 		e.GithubStatus != e.mark.GithubStatus ||
 		e.CpuLimit != e.mark.CpuLimit ||
 		e.MemoryLimit != e.mark.MemoryLimit ||
-		e.Synchronized != e.mark.Synchronized ||
+		e.Exclusive != e.mark.Exclusive ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -165,8 +165,8 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	if e.MemoryLimit != e.mark.MemoryLimit {
 		res = append(res, ddl.Column{Name: "memory_limit", Value: e.MemoryLimit})
 	}
-	if e.Synchronized != e.mark.Synchronized {
-		res = append(res, ddl.Column{Name: "synchronized", Value: e.Synchronized})
+	if e.Exclusive != e.mark.Exclusive {
+		res = append(res, ddl.Column{Name: "exclusive", Value: e.Exclusive})
 	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
@@ -193,7 +193,7 @@ func (e *Job) Copy() *Job {
 		GithubStatus: e.GithubStatus,
 		CpuLimit:     e.CpuLimit,
 		MemoryLimit:  e.MemoryLimit,
-		Synchronized: e.Synchronized,
+		Exclusive:    e.Exclusive,
 		CreatedAt:    e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

@@ -23,7 +23,7 @@ func TestDiscovery(t *testing.T) {
 	assert.True(t, job[0].AllRevision)
 	assert.Equal(t, "build", job[0].Command)
 	assert.True(t, job[0].GithubStatus)
-	assert.True(t, job[0].Synchronized)
+	assert.True(t, job[0].Exclusive)
 }
 
 func TestDuplicateJob(t *testing.T) {
