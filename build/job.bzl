@@ -14,6 +14,6 @@ job = rule(
         "github_status": attr.bool(),
         "cpu_limit": attr.string(doc = "Limit of cpu"),
         "memory_limit": attr.string(doc = "Limit of memory"),
-        "synchronized": attr.bool("Do not allow parallelized build in this job"),
+        "synchronized": attr.bool(doc = "Do not allow parallelized build in this job"),
     },
 )
