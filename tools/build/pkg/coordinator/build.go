@@ -322,7 +322,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
-		if err := b.buildJob(task.Job, task); err != nil {
+		if err := b.buildJob(task.Job, followTask); err != nil {
 			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job_id", task.JobId), zap.Int32("task_id", task.Id))
 			return nil
 		}
