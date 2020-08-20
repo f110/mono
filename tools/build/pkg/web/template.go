@@ -177,7 +177,7 @@ const indexTemplate = `<html>
           <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
           <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
           <td>{{ .Via }}</td>
-          <td>{{ .StartAt.Format "2006/01/02 15:04:06" }}</td>
+          <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
           <td>{{ Duration .CreatedAt .FinishedAt }}</td>
           <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
