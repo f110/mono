@@ -275,7 +275,12 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if task.FinishedAt != nil {
-		logger.Log.Debug("task is always finished", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+		logger.Log.Debug("task is already finished", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+		if job.DeletionTimestamp.IsZero() {
+			if err := b.teardownJob(job); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+		}
 		return nil
 	}
 
