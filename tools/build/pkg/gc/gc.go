@@ -2,6 +2,7 @@ package gc
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
@@ -62,6 +63,9 @@ func (g *GC) sweep(ctx context.Context) {
 		if len(tasks) < web.NumberOfTaskPerJob {
 			continue
 		}
+		sort.Slice(tasks, func(i, j int) bool {
+			return tasks[i].Id > tasks[j].Id
+		})
 
 		garbageTasks := tasks[web.NumberOfTaskPerJob:]
 		for _, t := range garbageTasks {
