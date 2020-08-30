@@ -166,6 +166,16 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 			if err := d.teardownJob(job); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
+			jobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			for _, v := range jobs {
+				v.Sync = false
+				if err := d.dao.Job.Update(context.Background(), v); err != nil {
+					logger.Log.Warn("Failed update job", zap.Error(err))
+				}
+			}
 			return nil
 		}
 	}
@@ -211,6 +221,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				v.CpuLimit = j.CPULimit
 				v.MemoryLimit = j.MemoryLimit
 				v.Exclusive = j.Exclusive
+				v.Sync = true
 			} else {
 				newJobs = append(newJobs, &database.Job{
 					Command:      j.Command,
@@ -222,6 +233,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 					CpuLimit:     j.CPULimit,
 					MemoryLimit:  j.MemoryLimit,
 					Exclusive:    j.Exclusive,
+					Sync:         true,
 				})
 			}
 		}

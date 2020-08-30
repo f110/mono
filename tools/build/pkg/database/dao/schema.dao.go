@@ -216,7 +216,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `id` = ?", id)
 
 	v := &database.Job{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.Sync, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -234,7 +234,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, created_at, updated_at from job"
+	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, created_at, updated_at from job"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -253,7 +253,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -276,7 +276,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 
 func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, created_at, updated_at from job where repository_id = ?"
+	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, created_at, updated_at from job where repository_id = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -296,7 +296,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -320,7 +320,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 func (d *Job) Create(ctx context.Context, v *database.Job) (*database.Job, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, v.Exclusive, time.Now(),
+		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", v.RepositoryId, v.Command, v.Target, v.Active, v.AllRevision, v.GithubStatus, v.CpuLimit, v.MemoryLimit, v.Exclusive, v.Sync, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

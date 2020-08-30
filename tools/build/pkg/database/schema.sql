@@ -26,6 +26,7 @@ CREATE TABLE `job` (
 	`cpu_limit` VARCHAR(255) NOT NULL,
 	`memory_limit` VARCHAR(255) NOT NULL,
 	`exclusive` TINYINT(1) NOT NULL,
+	`sync` TINYINT(1) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)

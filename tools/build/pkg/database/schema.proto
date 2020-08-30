@@ -38,7 +38,8 @@ message Job {
     bool             github_status = 7;
     string           cpu_limit     = 8;
     string           memory_limit  = 9;
-    bool             exclusive  = 10;
+    bool             exclusive     = 10;
+    bool             sync          = 11;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"
