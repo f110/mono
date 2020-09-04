@@ -21,8 +21,9 @@ http_archive(
 
 http_archive(
     name = "rules_python",
-    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.2/rules_python-0.0.2.tar.gz",
+    strip_prefix = "rules_python-0.0.2",
+    sha256 = "b5668cde8bb6e3515057ef465a35ad712214962f0b3a314e551204266c7be90c",
 )
 
 http_archive(
@@ -34,8 +35,11 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
-    sha256 = "352c090cc3d3f9a6b4e676cf42a6047c16824959b438895a76c2989c6d7c246a",
-    url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.5/rules_pkg-0.2.5.tar.gz",
+    urls = [
+        "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.6-1/rules_pkg-0.2.6.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.2.6/rules_pkg-0.2.6.tar.gz",
+    ],
+    sha256 = "aeca78988341a2ee1ba097641056d168320ecc51372ef7ff8e64b139516a4937",
 )
 
 http_archive(
@@ -75,6 +79,10 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
 
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+
 load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
 load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
@@ -83,16 +91,16 @@ container_repositories()
 
 container_deps()
 
+load("@io_bazel_rules_docker//repositories:pip_repositories.bzl", "pip_deps")
+
+pip_deps()
+
 container_pull(
     name = "com_google_distroless_base",
     digest = "sha256:7fa7445dfbebae4f4b7ab0e6ef99276e96075ae42584af6286ba080750d6dfe5",
     registry = "gcr.io",
     repository = "distroless/base",
 )
-
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-
-rules_pkg_dependencies()
 
 http_archive(
     name = "com_github_migrate_migrate",

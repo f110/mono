@@ -26,6 +26,7 @@ import (
 
 const (
 	AllowCommand = "/allow-build"
+	SkipCI       = "[skip ci]"
 )
 
 type Builder interface {
@@ -120,6 +121,10 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
+			if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
+				logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.String("commit", event.GetHead()))
+				return
+			}
 			if err := a.buildByPushEvent(req.Context(), event); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -148,6 +153,10 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				}
 				return
 			} else {
+				if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
+					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					return
+				}
 				if err := a.buildByPullRequest(req.Context(), event); err != nil {
 					logger.Log.Warn("Failed build the pull request", zap.Error(err))
 					w.WriteHeader(http.StatusInternalServerError)
@@ -156,6 +165,10 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			}
 		case "synchronize":
 			if ok, _ := a.allowPullRequest(req.Context(), event); ok {
+				if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
+					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					return
+				}
 				if err := a.buildByPullRequest(req.Context(), event); err != nil {
 					logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
@@ -204,6 +217,21 @@ func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEve
 	}
 	if permitPullRequest != nil {
 		return true, nil
+	}
+
+	return false, nil
+}
+
+func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
+	switch event := e.(type) {
+	case *github.PushEvent:
+		if strings.HasPrefix(event.HeadCommit.GetMessage(), SkipCI) {
+			return true, nil
+		}
+	case *github.PullRequestEvent:
+		if strings.HasPrefix(event.PullRequest.GetTitle(), SkipCI) {
+			return true, nil
+		}
 	}
 
 	return false, nil
