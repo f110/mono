@@ -227,7 +227,14 @@ func NewBazelBuilder(
 }
 
 func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error) {
-	task, err := b.dao.Task.Create(ctx, &database.Task{JobId: job.Id, Revision: revision, Command: command, Target: target, Via: via})
+	task, err := b.dao.Task.Create(ctx, &database.Task{
+		JobId:      job.Id,
+		Revision:   revision,
+		Command:    command,
+		Target:     target,
+		Via:        via,
+		ConfigName: job.ConfigName,
+	})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -554,6 +561,9 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 		if b.remoteAssetApi {
 			args = append(args, fmt.Sprintf("--experimental_remote_downloader=%s", b.remoteCache))
 		}
+	}
+	if task.ConfigName != "" {
+		args = append(args, fmt.Sprintf("--config=%s", task.ConfigName))
 	}
 	args = append(args, task.Target)
 	var backoffLimit int32 = 0

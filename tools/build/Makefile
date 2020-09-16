@@ -35,3 +35,9 @@ run-api:
 .PHONY: vendor
 vendor:
 	bazel query 'attr(generator_function, vendor_ddl, //...)' --output label | xargs -n1 bazel run
+
+.PHONY: gen
+gen:
+	bazel run //tools/build/pkg/database:vendor_entity
+	bazel run //tools/build/pkg/database:vendor_schema
+	bazel run //tools/build/pkg/database/dao:vendor_dao

@@ -27,6 +27,7 @@ CREATE TABLE `job` (
 	`memory_limit` VARCHAR(255) NOT NULL,
 	`exclusive` TINYINT(1) NOT NULL,
 	`sync` TINYINT(1) NOT NULL,
+	`config_name` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
@@ -42,6 +43,7 @@ CREATE TABLE `task` (
 	`command` VARCHAR(255) NOT NULL,
 	`target` VARCHAR(255) NOT NULL,
 	`via` VARCHAR(255) NOT NULL,
+	`config_name` VARCHAR(255) NOT NULL,
 	`start_at` DATETIME NULL,
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,

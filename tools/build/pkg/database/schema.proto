@@ -40,6 +40,7 @@ message Job {
     string           memory_limit  = 9;
     bool             exclusive     = 10;
     bool             sync          = 11;
+    string           config_name   = 12;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"
@@ -59,16 +60,17 @@ message Job {
 }
 
 message Task {
-    int32  id       = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    Job    job      = 2;
-    string revision = 3;
-    bool   success  = 4;
-    string log_file = 5;
-    string command  = 6;
-    string target   = 7;
-    string via      = 8;
-    .google.protobuf.Timestamp start_at    = 9 [(dev.f110.ddl.column) = {null: true}];
-    .google.protobuf.Timestamp finished_at = 10 [(dev.f110.ddl.column) = {null: true}];
+    int32  id          = 1 [(dev.f110.ddl.column) = {sequence: true}];
+    Job    job         = 2;
+    string revision    = 3;
+    bool   success     = 4;
+    string log_file    = 5;
+    string command     = 6;
+    string target      = 7;
+    string via         = 8;
+    string config_name = 9;
+    .google.protobuf.Timestamp start_at    = 10 [(dev.f110.ddl.column) = {null: true}];
+    .google.protobuf.Timestamp finished_at = 11 [(dev.f110.ddl.column) = {null: true}];
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

@@ -221,6 +221,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				v.CpuLimit = j.CPULimit
 				v.MemoryLimit = j.MemoryLimit
 				v.Exclusive = j.Exclusive
+				v.ConfigName = j.ConfigName
 				v.Sync = true
 			} else {
 				newJobs = append(newJobs, &database.Job{
@@ -233,6 +234,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 					CpuLimit:     j.CPULimit,
 					MemoryLimit:  j.MemoryLimit,
 					Exclusive:    j.Exclusive,
+					ConfigName:   j.ConfigName,
 					Sync:         true,
 				})
 			}

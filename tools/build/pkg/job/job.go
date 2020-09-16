@@ -10,4 +10,5 @@ type Job struct {
 	CPULimit     string `attr:"cpu_limit"`
 	MemoryLimit  string `attr:"memory_limit"`
 	Exclusive    bool   `attr:"exclusive"`
+	ConfigName   string `attr:"config_name"`
 }
