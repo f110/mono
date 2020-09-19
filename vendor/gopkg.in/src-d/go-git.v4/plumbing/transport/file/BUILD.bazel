@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "file",
     srcs = [
         "client.go",
         "server.go",
@@ -10,9 +10,9 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/file",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/server:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/server",
+        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],
 )

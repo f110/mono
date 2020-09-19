@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "go-billy.v4",
     srcs = ["fs.go"],
     importmap = "golang.org/x/pkgsite/vendor/gopkg.in/src-d/go-billy.v4",
     importpath = "gopkg.in/src-d/go-billy.v4",

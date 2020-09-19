@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "code",
     srcs = ["code.pb.go"],
     importmap = "golang.org/x/pkgsite/vendor/google.golang.org/genproto/googleapis/rpc/code",
     importpath = "google.golang.org/genproto/googleapis/rpc/code",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/github.com/golang/protobuf/proto"],
 )

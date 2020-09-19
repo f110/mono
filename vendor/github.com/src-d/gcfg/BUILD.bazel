@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "gcfg",
     srcs = [
         "doc.go",
         "errors.go",
@@ -14,9 +14,9 @@ go_library(
     importpath = "github.com/src-d/gcfg",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/src-d/gcfg/scanner:go_default_library",
-        "//vendor/github.com/src-d/gcfg/token:go_default_library",
-        "//vendor/github.com/src-d/gcfg/types:go_default_library",
-        "//vendor/gopkg.in/warnings.v0:go_default_library",
+        "//vendor/github.com/src-d/gcfg/scanner",
+        "//vendor/github.com/src-d/gcfg/token",
+        "//vendor/github.com/src-d/gcfg/types",
+        "//vendor/gopkg.in/warnings.v0",
     ],
 )

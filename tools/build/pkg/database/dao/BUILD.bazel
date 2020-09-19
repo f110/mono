@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "dao",
     srcs = [
         "options.go",
         "schema.dao.go",
@@ -9,22 +9,20 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/database/dao",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/logger:go_default_library",
         "//tools/build/pkg/database:go_default_library",
-        "//vendor/go.uber.org/zap:go_default_library",
-        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//vendor/golang.org/x/xerrors",
     ],
 )
 
 load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
 
 schema_dao(
-    name = "dao",
+    name = "dao_schema",
     lang = "go",
     proto = "//tools/build/pkg/database:database_proto",
 )
 
 vendor_ddl(
     name = "vendor_dao",
-    src = ":dao",
+    src = ":dao_schema",
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "policy",
     srcs = [
         "bucket-policy.go",
         "bucket-policy-condition.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/minio/minio-go/v6/pkg/policy",
     importpath = "github.com/minio/minio-go/v6/pkg/policy",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/minio/minio-go/v6/pkg/set:go_default_library"],
+    deps = ["//vendor/github.com/minio/minio-go/v6/pkg/set"],
 )

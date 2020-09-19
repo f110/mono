@@ -1,27 +1,27 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "prober_lib",
     srcs = ["main.go"],
     importpath = "golang.org/x/pkgsite/cmd/prober",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/pkgsite/internal/auth:go_default_library",
-        "//third_party/pkgsite/internal/config:go_default_library",
-        "//third_party/pkgsite/internal/dcensus:go_default_library",
-        "//third_party/pkgsite/internal/log:go_default_library",
-        "//third_party/pkgsite/internal/secrets:go_default_library",
-        "//third_party/pkgsite/vendor/contrib.go.opencensus.io/exporter/stackdriver:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricexport:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/tag:go_default_library",
+        "//third_party/pkgsite/internal/auth",
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/dcensus",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/secrets",
+        "//third_party/pkgsite/vendor/contrib.go.opencensus.io/exporter/stackdriver",
+        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricexport",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/tag",
     ],
 )
 
 go_binary(
     name = "prober",
-    embed = [":go_default_library"],
+    embed = [":prober_lib"],
     visibility = ["//visibility:public"],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "bluemonday",
     srcs = [
         "doc.go",
         "helpers.go",
@@ -12,5 +12,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/github.com/microcosm-cc/bluemonday",
     importpath = "github.com/microcosm-cc/bluemonday",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/golang.org/x/net/html:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/net/html"],
 )

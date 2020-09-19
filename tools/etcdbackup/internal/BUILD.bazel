@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "internal",
     srcs = [
         "backup.go",
         "cert.go",
@@ -10,11 +10,11 @@ go_library(
     importpath = "go.f110.dev/mono/tools/etcdbackup/internal",
     visibility = ["//tools/etcdbackup:__subpackages__"],
     deps = [
-        "//lib/logger:go_default_library",
-        "//vendor/cloud.google.com/go/storage:go_default_library",
-        "//vendor/go.etcd.io/etcd/clientv3:go_default_library",
-        "//vendor/go.uber.org/zap:go_default_library",
-        "//vendor/golang.org/x/xerrors:go_default_library",
-        "//vendor/google.golang.org/api/option:go_default_library",
+        "//lib/logger",
+        "//vendor/cloud.google.com/go/storage",
+        "//vendor/go.etcd.io/etcd/clientv3",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/google.golang.org/api/option",
     ],
 )

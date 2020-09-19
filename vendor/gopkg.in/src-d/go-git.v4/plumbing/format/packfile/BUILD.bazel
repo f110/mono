@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "packfile",
     srcs = [
         "common.go",
         "delta_index.go",
@@ -21,12 +21,12 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/packfile",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-billy.v4:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/cache:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/format/idxfile:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/storer:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/utils/binary:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
+        "//vendor/gopkg.in/src-d/go-billy.v4",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/cache",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/format/idxfile",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/storer",
+        "//vendor/gopkg.in/src-d/go-git.v4/utils/binary",
+        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],
 )

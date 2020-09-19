@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "object",
     srcs = [
         "blob.go",
         "change.go",
@@ -26,18 +26,18 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/object",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/emirpasic/gods/trees/binaryheap:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/sergi/go-diff/diffmatchpatch:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/crypto/openpgp:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/filemode:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/diff:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/storer:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/storage:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/binary:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/diff:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/emirpasic/gods/trees/binaryheap",
+        "//third_party/pkgsite/vendor/github.com/sergi/go-diff/diffmatchpatch",
+        "//third_party/pkgsite/vendor/golang.org/x/crypto/openpgp",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/filemode",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/diff",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/storer",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/storage",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/binary",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/diff",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
     ],
 )

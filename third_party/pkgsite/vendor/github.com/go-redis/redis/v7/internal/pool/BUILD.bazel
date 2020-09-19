@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "pool",
     srcs = [
         "conn.go",
         "pool.go",
@@ -12,7 +12,7 @@ go_library(
     importpath = "github.com/go-redis/redis/v7/internal/pool",
     visibility = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v7:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto",
     ],
 )

@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "roundrobin",
     srcs = ["roundrobin.go"],
     importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/balancer/roundrobin",
     importpath = "google.golang.org/grpc/balancer/roundrobin",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer/base:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/internal/grpcrand:go_default_library",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer/base",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/internal/grpcrand",
     ],
 )

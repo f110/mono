@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "filemode",
     srcs = ["filemode.go"],
     importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-git.v4/plumbing/filemode",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/filemode",

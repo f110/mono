@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "lint",
     srcs = [
         "lint.go",
         "runner.go",
@@ -11,12 +11,12 @@ go_library(
     importpath = "honnef.co/go/tools/lint",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/analysis:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/types/objectpath:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/config:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/facts:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/internal/cache:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/loader:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/analysis",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/types/objectpath",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/config",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/facts",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/internal/cache",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/loader",
     ],
 )

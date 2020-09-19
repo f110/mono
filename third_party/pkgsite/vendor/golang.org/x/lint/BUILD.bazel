@@ -1,13 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "lint",
     srcs = ["lint.go"],
     importmap = "golang.org/x/pkgsite/vendor/golang.org/x/lint",
     importpath = "golang.org/x/lint",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/ast/astutil:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/gcexportdata:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/ast/astutil",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/gcexportdata",
     ],
 )

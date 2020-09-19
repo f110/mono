@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "database",
     srcs = [
         "driver.go",
         "error.go",
@@ -10,5 +10,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/github.com/golang-migrate/migrate/v4/database",
     importpath = "github.com/golang-migrate/migrate/v4/database",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/internal/url:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/internal/url"],
 )

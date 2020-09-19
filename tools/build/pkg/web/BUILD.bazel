@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "web",
     srcs = [
         "dashboard.go",
         "template.go",
@@ -9,15 +9,15 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/web",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/logger:go_default_library",
+        "//lib/logger",
         "//tools/build/pkg/database:go_default_library",
-        "//tools/build/pkg/database/dao:go_default_library",
-        "//tools/build/pkg/discovery:go_default_library",
-        "//tools/build/pkg/storage:go_default_library",
-        "//vendor/github.com/google/go-github/v32/github:go_default_library",
-        "//vendor/go.f110.dev/protoc-ddl/probe:go_default_library",
-        "//vendor/go.uber.org/zap:go_default_library",
-        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
-        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//tools/build/pkg/database/dao",
+        "//tools/build/pkg/discovery",
+        "//tools/build/pkg/storage",
+        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/go.f110.dev/protoc-ddl/probe",
+        "//vendor/go.uber.org/zap",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
     ],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "gitignore",
     srcs = [
         "dir.go",
         "doc.go",
@@ -12,8 +12,8 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/gitignore",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-billy.v4:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-billy.v4",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],
 )

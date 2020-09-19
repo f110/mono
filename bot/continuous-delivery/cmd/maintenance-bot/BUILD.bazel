@@ -1,23 +1,23 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "maintenance-bot_lib",
     srcs = ["main.go"],
     importpath = "go.f110.dev/mono/bot/continuous-delivery/cmd/maintenance-bot",
     visibility = ["//visibility:private"],
     deps = [
-        "//bot/continuous-delivery/pkg/config:go_default_library",
-        "//bot/continuous-delivery/pkg/consumer:go_default_library",
-        "//bot/continuous-delivery/pkg/webhook:go_default_library",
-        "//lib/logger:go_default_library",
-        "//vendor/github.com/spf13/pflag:go_default_library",
-        "//vendor/go.uber.org/zap:go_default_library",
-        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//bot/continuous-delivery/pkg/config",
+        "//bot/continuous-delivery/pkg/consumer",
+        "//bot/continuous-delivery/pkg/webhook",
+        "//lib/logger",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
     ],
 )
 
 go_binary(
     name = "maintenance-bot",
-    embed = [":go_default_library"],
+    embed = [":maintenance-bot_lib"],
     visibility = ["//visibility:public"],
 )

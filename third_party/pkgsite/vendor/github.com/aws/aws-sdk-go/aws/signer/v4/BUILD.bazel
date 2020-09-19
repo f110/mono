@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "signer",
     srcs = [
         "header_rules.go",
         "options.go",
@@ -12,10 +12,10 @@ go_library(
     importpath = "github.com/aws/aws-sdk-go/aws/signer/v4",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/internal/sdkio:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/rest:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/internal/sdkio",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/rest",
     ],
 )

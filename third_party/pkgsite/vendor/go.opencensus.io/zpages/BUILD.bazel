@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "zpages",
     srcs = [
         "rpcz.go",
         "templates.go",
@@ -12,10 +12,10 @@ go_library(
     importpath = "go.opencensus.io/zpages",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/go.opencensus.io/internal:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ocgrpc:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/trace:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/zpages/internal:go_default_library",
+        "//third_party/pkgsite/vendor/go.opencensus.io/internal",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ocgrpc",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
+        "//third_party/pkgsite/vendor/go.opencensus.io/zpages/internal",
     ],
 )

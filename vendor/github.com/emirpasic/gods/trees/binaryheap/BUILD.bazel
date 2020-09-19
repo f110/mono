@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "binaryheap",
     srcs = [
         "binaryheap.go",
         "iterator.go",
@@ -11,9 +11,9 @@ go_library(
     importpath = "github.com/emirpasic/gods/trees/binaryheap",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/emirpasic/gods/containers:go_default_library",
-        "//vendor/github.com/emirpasic/gods/lists/arraylist:go_default_library",
-        "//vendor/github.com/emirpasic/gods/trees:go_default_library",
-        "//vendor/github.com/emirpasic/gods/utils:go_default_library",
+        "//vendor/github.com/emirpasic/gods/containers",
+        "//vendor/github.com/emirpasic/gods/lists/arraylist",
+        "//vendor/github.com/emirpasic/gods/trees",
+        "//vendor/github.com/emirpasic/gods/utils",
     ],
 )

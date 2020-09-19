@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "internal",
     srcs = [
         "conn_pool.go",
         "creds.go",
@@ -11,8 +11,8 @@ go_library(
     importpath = "google.golang.org/api/internal",
     visibility = ["//third_party/pkgsite/vendor/google.golang.org/api:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/oauth2:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/oauth2/google:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2/google",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
     ],
 )

@@ -1,19 +1,19 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "unissh-list-machines_lib",
     srcs = ["main.go"],
     importpath = "go.f110.dev/mono/tools/unissh/cmd/unissh-list-machines",
     visibility = ["//visibility:private"],
     deps = [
-        "//vendor/github.com/spf13/pflag:go_default_library",
-        "//vendor/golang.org/x/xerrors:go_default_library",
-        "//vendor/software.sslmate.com/src/go-pkcs12:go_default_library",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/software.sslmate.com/src/go-pkcs12",
     ],
 )
 
 go_binary(
     name = "unissh-list-machines",
-    embed = [":go_default_library"],
+    embed = [":unissh-list-machines_lib"],
     visibility = ["//visibility:public"],
 )

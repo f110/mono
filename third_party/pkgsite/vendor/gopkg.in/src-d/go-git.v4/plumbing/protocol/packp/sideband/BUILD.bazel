@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "sideband",
     srcs = [
         "common.go",
         "demux.go",
@@ -11,5 +11,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband",
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline"],
 )

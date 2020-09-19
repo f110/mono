@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "naming",
     srcs = [
         "dns_resolver.go",
         "naming.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/naming",
     importpath = "google.golang.org/grpc/naming",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog"],
 )

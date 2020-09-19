@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "prometheus",
     srcs = [
         "collector.go",
         "counter.go",
@@ -29,12 +29,12 @@ go_library(
     importpath = "github.com/prometheus/client_golang/prometheus",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/beorn7/perks/quantile:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus/internal:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/client_model/go:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/common/expfmt:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/common/model:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/procfs:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/beorn7/perks/quantile",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus/internal",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_model/go",
+        "//third_party/pkgsite/vendor/github.com/prometheus/common/expfmt",
+        "//third_party/pkgsite/vendor/github.com/prometheus/common/model",
+        "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
     ],
 )

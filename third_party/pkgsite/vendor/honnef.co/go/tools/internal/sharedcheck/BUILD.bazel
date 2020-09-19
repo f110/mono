@@ -1,16 +1,16 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "sharedcheck",
     srcs = ["lint.go"],
     importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/internal/sharedcheck",
     importpath = "honnef.co/go/tools/internal/sharedcheck",
     visibility = ["//third_party/pkgsite/vendor/honnef.co/go/tools:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/analysis:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/code:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/internal/passes/buildir:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/ir:go_default_library",
-        "//third_party/pkgsite/vendor/honnef.co/go/tools/lint/lintdsl:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/analysis",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/code",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/internal/passes/buildir",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/ir",
+        "//third_party/pkgsite/vendor/honnef.co/go/tools/lint/lintdsl",
     ],
 )

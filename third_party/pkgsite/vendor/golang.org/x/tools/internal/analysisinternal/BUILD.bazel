@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "analysisinternal",
     srcs = ["analysis.go"],
     importmap = "golang.org/x/pkgsite/vendor/golang.org/x/tools/internal/analysisinternal",
     importpath = "golang.org/x/tools/internal/analysisinternal",
     visibility = ["//third_party/pkgsite/vendor/golang.org/x/tools:__subpackages__"],
-    deps = ["//third_party/pkgsite/vendor/golang.org/x/tools/go/ast/astutil:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/tools/go/ast/astutil"],
 )

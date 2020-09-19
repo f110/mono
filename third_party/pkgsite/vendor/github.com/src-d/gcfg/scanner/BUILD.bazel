@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "scanner",
     srcs = [
         "errors.go",
         "scanner.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/github.com/src-d/gcfg/scanner",
     importpath = "github.com/src-d/gcfg/scanner",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/github.com/src-d/gcfg/token:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/github.com/src-d/gcfg/token"],
 )

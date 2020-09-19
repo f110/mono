@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "source",
     srcs = [
         "meta-tags.go",
         "source.go",
@@ -9,12 +9,12 @@ go_library(
     importpath = "golang.org/x/pkgsite/internal/source",
     visibility = ["//third_party/pkgsite:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/internal/derrors:go_default_library",
-        "//third_party/pkgsite/internal/log:go_default_library",
-        "//third_party/pkgsite/internal/stdlib:go_default_library",
-        "//third_party/pkgsite/internal/version:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/trace:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp:go_default_library",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/internal/version",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp",
     ],
 )

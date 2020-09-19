@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "agent",
     srcs = [
         "client.go",
         "forward.go",
@@ -12,7 +12,7 @@ go_library(
     importpath = "golang.org/x/crypto/ssh/agent",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/golang.org/x/crypto/ed25519:go_default_library",
-        "//vendor/golang.org/x/crypto/ssh:go_default_library",
+        "//vendor/golang.org/x/crypto/ed25519",
+        "//vendor/golang.org/x/crypto/ssh",
     ],
 )

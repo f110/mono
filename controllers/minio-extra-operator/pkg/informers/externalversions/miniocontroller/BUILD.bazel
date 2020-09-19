@@ -1,12 +1,12 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "miniocontroller",
     srcs = ["interface.go"],
     importpath = "go.f110.dev/mono/controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller",
     visibility = ["//visibility:public"],
     deps = [
-        "//controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces:go_default_library",
-        "//controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller/v1beta1:go_default_library",
+        "//controllers/minio-extra-operator/pkg/informers/externalversions/internalinterfaces",
+        "//controllers/minio-extra-operator/pkg/informers/externalversions/miniocontroller/v1beta1",
     ],
 )

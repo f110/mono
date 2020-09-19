@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "yaml",
     srcs = [
         "fields.go",
         "yaml.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/github.com/ghodss/yaml",
     importpath = "github.com/ghodss/yaml",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/gopkg.in/yaml.v2:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/gopkg.in/yaml.v2"],
 )

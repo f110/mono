@@ -1,20 +1,20 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "etcdbackup_lib",
     srcs = ["main.go"],
     importpath = "go.f110.dev/mono/tools/etcdbackup/cmd/etcdbackup",
     visibility = ["//visibility:private"],
     deps = [
-        "//lib/logger:go_default_library",
-        "//tools/etcdbackup/internal:go_default_library",
-        "//vendor/github.com/spf13/pflag:go_default_library",
-        "//vendor/golang.org/x/xerrors:go_default_library",
+        "//lib/logger",
+        "//tools/etcdbackup/internal",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/xerrors",
     ],
 )
 
 go_binary(
     name = "etcdbackup",
-    embed = [":go_default_library"],
+    embed = [":etcdbackup_lib"],
     visibility = ["//visibility:public"],
 )

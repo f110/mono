@@ -1,13 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "proto",
     srcs = ["proto.go"],
     importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/encoding/proto",
     importpath = "google.golang.org/grpc/encoding/proto",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/encoding:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/encoding",
     ],
 )

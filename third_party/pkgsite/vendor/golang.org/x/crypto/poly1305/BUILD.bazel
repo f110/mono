@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "poly1305",
     srcs = [
         "mac_noasm.go",
         "poly1305.go",
@@ -22,7 +22,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:s390x": [
-            "//third_party/pkgsite/vendor/golang.org/x/sys/cpu:go_default_library",
+            "//third_party/pkgsite/vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],
     }),

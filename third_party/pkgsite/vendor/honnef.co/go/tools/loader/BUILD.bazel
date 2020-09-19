@@ -1,13 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "loader",
     srcs = ["loader.go"],
     importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/loader",
     importpath = "honnef.co/go/tools/loader",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/gcexportdata:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/gcexportdata",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages",
     ],
 )

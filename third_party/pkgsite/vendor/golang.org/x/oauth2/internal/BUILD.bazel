@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "internal",
     srcs = [
         "doc.go",
         "oauth2.go",
@@ -11,5 +11,5 @@ go_library(
     importmap = "golang.org/x/pkgsite/vendor/golang.org/x/oauth2/internal",
     importpath = "golang.org/x/oauth2/internal",
     visibility = ["//third_party/pkgsite/vendor/golang.org/x/oauth2:__subpackages__"],
-    deps = ["//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp"],
 )

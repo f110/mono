@@ -1,19 +1,19 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "teeproxy_lib",
     srcs = ["main.go"],
     importpath = "golang.org/x/pkgsite/cmd/teeproxy",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/pkgsite/internal/config:go_default_library",
-        "//third_party/pkgsite/internal/log:go_default_library",
-        "//third_party/pkgsite/internal/teeproxy:go_default_library",
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/teeproxy",
     ],
 )
 
 go_binary(
     name = "teeproxy",
-    embed = [":go_default_library"],
+    embed = [":teeproxy_lib"],
     visibility = ["//visibility:public"],
 )

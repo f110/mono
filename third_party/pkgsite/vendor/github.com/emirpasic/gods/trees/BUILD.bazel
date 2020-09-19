@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "trees",
     srcs = ["trees.go"],
     importmap = "golang.org/x/pkgsite/vendor/github.com/emirpasic/gods/trees",
     importpath = "github.com/emirpasic/gods/trees",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/github.com/emirpasic/gods/containers:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/github.com/emirpasic/gods/containers"],
 )

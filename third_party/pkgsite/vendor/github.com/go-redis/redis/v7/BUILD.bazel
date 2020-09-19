@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "redis",
     srcs = [
         "cluster.go",
         "cluster_commands.go",
@@ -25,11 +25,11 @@ go_library(
     importpath = "github.com/go-redis/redis/v7",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/consistenthash:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/hashtag:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/pool:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/util:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/consistenthash",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/hashtag",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/pool",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/proto",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v7/internal/util",
     ],
 )

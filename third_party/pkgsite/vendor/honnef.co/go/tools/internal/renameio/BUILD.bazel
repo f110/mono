@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "renameio",
     srcs = ["renameio.go"],
     importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/internal/renameio",
     importpath = "honnef.co/go/tools/internal/renameio",
     visibility = ["//third_party/pkgsite/vendor/honnef.co/go/tools:__subpackages__"],
-    deps = ["//third_party/pkgsite/vendor/honnef.co/go/tools/internal/robustio:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/honnef.co/go/tools/internal/robustio"],
 )

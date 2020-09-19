@@ -1,12 +1,12 @@
-load("@rules_pkg//:pkg.bzl", "pkg_tar", "pkg_deb")
+load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 
 pkg_tar(
     name = "bin",
-    package_dir = "/usr/local/bin",
     srcs = [
         "//tools/unissh/cmd/unissh-list-machines",
     ],
     mode = "0755",
+    package_dir = "/usr/local/bin",
 )
 
 pkg_deb(
@@ -16,17 +16,17 @@ pkg_deb(
     depends = [
         "peco",
     ],
+    description = "Easy ssh tool",
+    maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
     package = "unissh",
     version = "0.1.0",
-    maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
-    description = "Easy ssh tool",
 )
 
 load("//build:job.bzl", builder_job = "job")
 
 builder_job(
     name = "unissh",
-    target = ":pkg",
-    command = "build",
     all_revision = True,
+    command = "build",
+    target = ":pkg",
 )

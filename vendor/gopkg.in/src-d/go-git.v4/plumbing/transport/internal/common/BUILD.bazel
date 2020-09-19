@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "common",
     srcs = [
         "common.go",
         "server.go",
@@ -10,11 +10,11 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
     visibility = ["//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:__subpackages__"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
+        "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],
 )

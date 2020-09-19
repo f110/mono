@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "logging",
     srcs = [
         "doc.go",
         "logging.go",
@@ -10,18 +10,18 @@ go_library(
     importpath = "cloud.google.com/go/logging",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/cloud.google.com/go/compute/metadata:go_default_library",
-        "//third_party/pkgsite/vendor/cloud.google.com/go/internal/version:go_default_library",
-        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/apiv2:go_default_library",
-        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/internal:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes/struct:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes/timestamp:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/api/option:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/api/support/bundler:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/logging/type:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/logging/v2:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/compute/metadata",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/internal/version",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/apiv2",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/internal",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes/struct",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes/timestamp",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option",
+        "//third_party/pkgsite/vendor/google.golang.org/api/support/bundler",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/logging/type",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/logging/v2:logging",
     ],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "internal",
     srcs = [
         "api.go",
         "api_common.go",
@@ -19,11 +19,11 @@ go_library(
     importpath = "google.golang.org/appengine/internal",
     visibility = ["//third_party/pkgsite/vendor/google.golang.org/appengine:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/net/context:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/base:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/datastore:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/log:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/remote_api:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context",
+        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/base",
+        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/datastore",
+        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/log",
+        "//third_party/pkgsite/vendor/google.golang.org/appengine/internal/remote_api",
     ],
 )

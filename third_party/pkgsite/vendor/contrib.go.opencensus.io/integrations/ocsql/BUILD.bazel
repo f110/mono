@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ocsql",
     srcs = [
         "dbstats_go1.11.go",
         "driver.go",
@@ -15,9 +15,9 @@ go_library(
     importpath = "contrib.go.opencensus.io/integrations/ocsql",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/tag:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/trace:go_default_library",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/tag",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
     ],
 )

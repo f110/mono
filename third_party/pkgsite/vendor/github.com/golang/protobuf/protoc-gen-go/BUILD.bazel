@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "protoc-gen-go_lib",
     srcs = [
         "link_grpc.go",
         "main.go",
@@ -10,14 +10,14 @@ go_library(
     importpath = "github.com/golang/protobuf/protoc-gen-go",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/protoc-gen-go/generator:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/protoc-gen-go/grpc:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/protoc-gen-go/generator",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/protoc-gen-go/grpc",
     ],
 )
 
 go_binary(
     name = "protoc-gen-go",
-    embed = [":go_default_library"],
+    embed = [":protoc-gen-go_lib"],
     visibility = ["//visibility:public"],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "sts",
     srcs = [
         "api.go",
         "doc.go",
@@ -12,13 +12,13 @@ go_library(
     importpath = "github.com/aws/aws-sdk-go/service/sts",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/awsutil:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/client:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/client/metadata:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/signer/v4:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/query:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/awsutil",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/client",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/client/metadata",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/signer/v4:signer",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/query",
     ],
 )

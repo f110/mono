@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "merkletrie",
     srcs = [
         "change.go",
         "difftree.go",
@@ -13,7 +13,7 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/utils/merkletrie",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/internal/frame:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder:go_default_library",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/internal/frame",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/noder",
     ],
 )

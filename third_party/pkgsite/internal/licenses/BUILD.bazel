@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "licenses",
     srcs = [
         "exceptions.gen.go",
         "exceptions.go",
@@ -10,7 +10,7 @@ go_library(
     importpath = "golang.org/x/pkgsite/internal/licenses",
     visibility = ["//third_party/pkgsite:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/google/licensecheck:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/mod/module:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/google/licensecheck",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module",
     ],
 )

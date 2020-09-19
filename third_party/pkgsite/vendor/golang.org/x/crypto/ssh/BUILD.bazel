@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ssh",
     srcs = [
         "buffer.go",
         "certs.go",
@@ -29,9 +29,9 @@ go_library(
     importpath = "golang.org/x/crypto/ssh",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/golang.org/x/crypto/curve25519:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/crypto/ed25519:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/crypto/internal/chacha20:go_default_library",
-        "//third_party/pkgsite/vendor/golang.org/x/crypto/poly1305:go_default_library",
+        "//third_party/pkgsite/vendor/golang.org/x/crypto/curve25519",
+        "//third_party/pkgsite/vendor/golang.org/x/crypto/ed25519",
+        "//third_party/pkgsite/vendor/golang.org/x/crypto/internal/chacha20",
+        "//third_party/pkgsite/vendor/golang.org/x/crypto/poly1305",
     ],
 )

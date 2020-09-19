@@ -1,14 +1,14 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "log",
     srcs = ["log.go"],
     importpath = "golang.org/x/pkgsite/internal/log",
     visibility = ["//third_party/pkgsite:__subpackages__"],
     deps = [
-        "//third_party/pkgsite/internal/config:go_default_library",
-        "//third_party/pkgsite/internal/derrors:go_default_library",
-        "//third_party/pkgsite/internal/experiment:go_default_library",
-        "//third_party/pkgsite/vendor/cloud.google.com/go/logging:go_default_library",
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/experiment",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/logging",
     ],
 )

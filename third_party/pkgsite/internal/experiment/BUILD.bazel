@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "experiment",
     srcs = ["experiment.go"],
     importpath = "golang.org/x/pkgsite/internal/experiment",
     visibility = ["//third_party/pkgsite:__subpackages__"],

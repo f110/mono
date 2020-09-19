@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "errorreporting",
     srcs = ["errors.go"],
     importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/errorreporting",
     importpath = "cloud.google.com/go/errorreporting",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/cloud.google.com/go/errorreporting/apiv1beta1:go_default_library",
-        "//third_party/pkgsite/vendor/cloud.google.com/go/internal/version:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/api/option:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/api/support/bundler:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1:go_default_library",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/errorreporting/apiv1beta1",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/internal/version",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes",
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:gax-go",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option",
+        "//third_party/pkgsite/vendor/google.golang.org/api/support/bundler",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1",
     ],
 )

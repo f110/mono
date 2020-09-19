@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ssh",
     srcs = [
         "auth_method.go",
         "common.go",
@@ -10,13 +10,13 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/kevinburke/ssh_config:go_default_library",
-        "//vendor/github.com/mitchellh/go-homedir:go_default_library",
-        "//vendor/github.com/xanzy/ssh-agent:go_default_library",
-        "//vendor/golang.org/x/crypto/ssh:go_default_library",
-        "//vendor/golang.org/x/crypto/ssh/knownhosts:go_default_library",
-        "//vendor/golang.org/x/net/proxy:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport:go_default_library",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common:go_default_library",
+        "//vendor/github.com/kevinburke/ssh_config",
+        "//vendor/github.com/mitchellh/go-homedir",
+        "//vendor/github.com/xanzy/ssh-agent",
+        "//vendor/golang.org/x/crypto/ssh",
+        "//vendor/golang.org/x/crypto/ssh/knownhosts",
+        "//vendor/golang.org/x/net/proxy",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/internal/common",
     ],
 )

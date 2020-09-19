@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "packp",
     srcs = [
         "advrefs.go",
         "advrefs_decode.go",
@@ -24,12 +24,12 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/protocol/packp",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/storer:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/storage/memory:go_default_library",
-        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil:go_default_library",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/format/pktline",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/capability",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/plumbing/storer",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/storage/memory",
+        "//third_party/pkgsite/vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],
 )

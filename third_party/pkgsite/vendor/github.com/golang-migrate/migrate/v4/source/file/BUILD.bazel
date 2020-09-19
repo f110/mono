@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "file",
     srcs = ["file.go"],
     importmap = "golang.org/x/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source/file",
     importpath = "github.com/golang-migrate/migrate/v4/source/file",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source"],
 )

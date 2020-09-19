@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "prometheus",
     srcs = [
         "prometheus.go",
         "sanitize.go",
@@ -10,10 +10,10 @@ go_library(
     importpath = "contrib.go.opencensus.io/exporter/prometheus",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus:go_default_library",
-        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus/promhttp:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricdata:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricexport:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view:go_default_library",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricdata",
+        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricexport",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
     ],
 )

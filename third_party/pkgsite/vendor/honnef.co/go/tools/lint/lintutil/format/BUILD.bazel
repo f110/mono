@@ -1,10 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "format",
     srcs = ["format.go"],
     importmap = "golang.org/x/pkgsite/vendor/honnef.co/go/tools/lint/lintutil/format",
     importpath = "honnef.co/go/tools/lint/lintutil/format",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/pkgsite/vendor/honnef.co/go/tools/lint:go_default_library"],
+    deps = ["//third_party/pkgsite/vendor/honnef.co/go/tools/lint"],
 )

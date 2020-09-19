@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ocgrpc",
     srcs = [
         "client.go",
         "client_metrics.go",
@@ -17,16 +17,16 @@ go_library(
     importpath = "go.opencensus.io/plugin/ocgrpc",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricdata:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/tag:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/trace:go_default_library",
-        "//third_party/pkgsite/vendor/go.opencensus.io/trace/propagation:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/stats:go_default_library",
-        "//third_party/pkgsite/vendor/google.golang.org/grpc/status:go_default_library",
+        "//third_party/pkgsite/vendor/go.opencensus.io/metric/metricdata",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/tag",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace/propagation",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/stats",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status",
     ],
 )
