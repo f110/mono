@@ -11,7 +11,7 @@ go_library(
     deps = [
         "//lib/logger",
         "//tools/build/pkg/coordinator",
-        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/job",
         "//tools/build/pkg/watcher",

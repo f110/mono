@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/logger",
-        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/discovery",
         "//tools/build/pkg/storage",

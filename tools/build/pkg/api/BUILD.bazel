@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//lib/logger",
-        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/discovery",
         "//vendor/github.com/bradleyfalzon/ghinstallation",
@@ -25,7 +25,7 @@ go_test(
     embed = [":api"],
     deps = [
         "//lib/logger",
-        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//vendor/github.com/DATA-DOG/go-sqlmock",
         "//vendor/github.com/google/go-github/v32/github",

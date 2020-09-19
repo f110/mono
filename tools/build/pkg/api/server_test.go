@@ -26,7 +26,7 @@ type MockBuilder struct {
 	called bool
 }
 
-func (m *MockBuilder) Build(_ context.Context, job *database.Job, revision, via string) (*database.Task, error) {
+func (m *MockBuilder) Build(_ context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error) {
 	m.jobs = append(m.jobs, job)
 	m.called = true
 	return &database.Task{}, nil

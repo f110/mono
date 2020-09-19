@@ -34,7 +34,7 @@ load("@dev_f110_rules_extras//go:gen.bzl", "rbac_gen")
 
 rbac_gen(
     name = "rbac",
-    srcs = [":go_default_library"],
+    srcs = [":controller"],
     dir = "controllers/harbor-project-operator/config/rbac",
     rolename = "harbor-project-operator",
 )

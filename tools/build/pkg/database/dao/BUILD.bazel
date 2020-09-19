@@ -9,7 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/database/dao",
     visibility = ["//visibility:public"],
     deps = [
-        "//tools/build/pkg/database:go_default_library",
+        "//tools/build/pkg/database",
         "//vendor/golang.org/x/xerrors",
     ],
 )
