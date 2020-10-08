@@ -2,12 +2,15 @@ package discovery
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -28,8 +31,10 @@ const (
 	labelKeyRepoName     = "build.f110.dev/repo-name"
 	labelKeyRepositoryId = "build.f110.dev/repository-id"
 	labelKeyRevision     = "build.f110.dev/revision"
+	labelKeyBazelVersion = "build.f110.dev/bazel-version"
 	discoveryBazelQuery  = "kind(job, //...)"
 	jobType              = "bazelDiscovery"
+	defaultBazelVersion  = "3.5.0"
 )
 
 type BuildFile struct {
@@ -102,8 +107,9 @@ type BazelAttr struct {
 type Discover struct {
 	Namespace string
 
-	client      kubernetes.Interface
-	jobInformer batchv1informers.JobInformer
+	githubClient *github.Client
+	client       kubernetes.Interface
+	jobInformer  batchv1informers.JobInformer
 
 	builder      *coordinator.BazelBuilder
 	sidecarImage string
@@ -117,6 +123,7 @@ func NewDiscover(
 	daoOpt dao.Options,
 	builder *coordinator.BazelBuilder,
 	sidecarImage string,
+	ghClient *github.Client,
 ) *Discover {
 	d := &Discover{
 		Namespace:    namespace,
@@ -125,6 +132,7 @@ func NewDiscover(
 		dao:          daoOpt,
 		builder:      builder,
 		sidecarImage: sidecarImage,
+		githubClient: ghClient,
 	}
 	watcher.Router.Add(jobType, d.syncJob)
 
@@ -133,9 +141,49 @@ func NewDiscover(
 
 // FindOut will create the Job for discover. If revision is not empty, trigger tasks after discovery job finished.
 func (d *Discover) FindOut(repository *database.SourceRepository, revision string) error {
-	if err := d.buildJob(repository, revision); err != nil {
+	u, err := url.Parse(repository.Url)
+	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	s := strings.Split(u.Path, "/")
+	owner, repo := s[1], s[2]
+	treeSHA := revision
+	if revision == "" {
+		repoInfo, _, err := d.githubClient.Repositories.Get(context.TODO(), owner, repo)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		ref, _, err := d.githubClient.Git.GetRef(context.TODO(), owner, repo, fmt.Sprintf("heads/%s", repoInfo.GetDefaultBranch()))
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		treeSHA = ref.Object.GetSHA()
+	}
+	tree, _, err := d.githubClient.Git.GetTree(context.TODO(), owner, repo, treeSHA, false)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	bazelVersion := defaultBazelVersion
+	for _, v := range tree.Entries {
+		if v.GetPath() == ".bazelversion" {
+			blob, _, err := d.githubClient.Git.GetBlob(context.TODO(), owner, repo, v.GetSHA())
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			buf, err := base64.StdEncoding.DecodeString(blob.GetContent())
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			bazelVersion = strings.TrimRight(string(buf), "\n")
+			break
+		}
+	}
+
+	if err := d.buildJob(repository, revision, bazelVersion); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	logger.Log.Info("Start discovery job", zap.String("repo", repository.Name), zap.String("revision", revision), zap.String("bazel_version", bazelVersion))
 
 	return nil
 }
@@ -179,87 +227,95 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 			return nil
 		}
 	}
+	if !success {
+		return nil
+	}
 
-	if success {
-		pods, err := d.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
-		if err != nil {
+	pods, err := d.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if len(pods.Items) != 1 {
+		return xerrors.New("Target pod not found or found more than 1")
+	}
+	logReq := d.client.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
+	res := logReq.Do()
+	rawLog, err := res.Raw()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	jobs, err := Discovery(rawLog)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	currentJobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	jobMap := make(map[string]*database.Job)
+	for _, v := range currentJobs {
+		// Temporary, all jobs will be deactivated.
+		v.Active = false
+
+		jobMap[v.Command+"/"+v.Target] = v
+	}
+
+	bazelVersion := ""
+	if v, ok := job.Labels[labelKeyBazelVersion]; ok {
+		bazelVersion = v
+	}
+
+	newJobs := make([]*database.Job, 0)
+	for _, j := range jobs {
+		if v, ok := jobMap[j.Command+"/"+j.Target]; ok {
+			v.Active = true
+			v.AllRevision = j.AllRevision
+			v.GithubStatus = j.GithubStatus
+			v.CpuLimit = j.CPULimit
+			v.MemoryLimit = j.MemoryLimit
+			v.Exclusive = j.Exclusive
+			v.ConfigName = j.ConfigName
+			v.BazelVersion = bazelVersion
+			v.Sync = true
+		} else {
+			newJobs = append(newJobs, &database.Job{
+				Command:      j.Command,
+				Target:       j.Target,
+				RepositoryId: repoId,
+				Active:       true,
+				AllRevision:  j.AllRevision,
+				GithubStatus: j.GithubStatus,
+				CpuLimit:     j.CPULimit,
+				MemoryLimit:  j.MemoryLimit,
+				Exclusive:    j.Exclusive,
+				ConfigName:   j.ConfigName,
+				BazelVersion: bazelVersion,
+				Sync:         true,
+			})
+		}
+	}
+
+	for _, v := range currentJobs {
+		if err := d.dao.Job.Update(context.Background(), v); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if len(pods.Items) != 1 {
-			return xerrors.New("Target pod not found or found more than 1")
-		}
-		logReq := d.client.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
-		res := logReq.Do()
-		rawLog, err := res.Raw()
-		if err != nil {
+	}
+	for _, v := range newJobs {
+		if _, err := d.dao.Job.Create(context.Background(), v); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
+	}
 
-		jobs, err := Discovery(rawLog)
-		if err != nil {
+	if err := d.teardownJob(job); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	if rev, ok := job.ObjectMeta.Labels[labelKeyRevision]; ok && rev != "" {
+		// Trigger after task.
+		if err := d.triggerTask(job, rev); err != nil {
 			return xerrors.Errorf(": %w", err)
-		}
-
-		currentJobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		jobMap := make(map[string]*database.Job)
-		for _, v := range currentJobs {
-			// Temporary, all jobs will be deactivated.
-			v.Active = false
-
-			jobMap[v.Command+"/"+v.Target] = v
-		}
-
-		newJobs := make([]*database.Job, 0)
-		for _, j := range jobs {
-			if v, ok := jobMap[j.Command+"/"+j.Target]; ok {
-				v.Active = true
-				v.AllRevision = j.AllRevision
-				v.GithubStatus = j.GithubStatus
-				v.CpuLimit = j.CPULimit
-				v.MemoryLimit = j.MemoryLimit
-				v.Exclusive = j.Exclusive
-				v.ConfigName = j.ConfigName
-				v.Sync = true
-			} else {
-				newJobs = append(newJobs, &database.Job{
-					Command:      j.Command,
-					Target:       j.Target,
-					RepositoryId: repoId,
-					Active:       true,
-					AllRevision:  j.AllRevision,
-					GithubStatus: j.GithubStatus,
-					CpuLimit:     j.CPULimit,
-					MemoryLimit:  j.MemoryLimit,
-					Exclusive:    j.Exclusive,
-					ConfigName:   j.ConfigName,
-					Sync:         true,
-				})
-			}
-		}
-
-		for _, v := range currentJobs {
-			if err := d.dao.Job.Update(context.Background(), v); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-		}
-		for _, v := range newJobs {
-			if _, err := d.dao.Job.Create(context.Background(), v); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-		}
-
-		if err := d.teardownJob(job); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-
-		if rev, ok := job.ObjectMeta.Labels[labelKeyRevision]; ok && rev != "" {
-			// Trigger after task.
-			if err := d.triggerTask(job, rev); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
 		}
 	}
 
@@ -322,8 +378,8 @@ func (d *Discover) teardownJob(job *batchv1.Job) error {
 	return nil
 }
 
-func (d *Discover) buildJob(repository *database.SourceRepository, revision string) error {
-	j := d.jobTemplate(repository, revision)
+func (d *Discover) buildJob(repository *database.SourceRepository, revision, bazelVersion string) error {
+	j := d.jobTemplate(repository, revision, bazelVersion)
 	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(j)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -332,7 +388,7 @@ func (d *Discover) buildJob(repository *database.SourceRepository, revision stri
 	return nil
 }
 
-func (d Discover) jobTemplate(repository *database.SourceRepository, revision string) *batchv1.Job {
+func (d Discover) jobTemplate(repository *database.SourceRepository, revision, bazelVersion string) *batchv1.Job {
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -342,6 +398,7 @@ func (d Discover) jobTemplate(repository *database.SourceRepository, revision st
 				labelKeyRepoName:     repository.Name,
 				labelKeyRepositoryId: strconv.Itoa(int(repository.Id)),
 				labelKeyRevision:     revision,
+				labelKeyBazelVersion: bazelVersion,
 				watcher.TypeLabel:    jobType,
 			},
 		},
@@ -368,7 +425,7 @@ func (d Discover) jobTemplate(repository *database.SourceRepository, revision st
 					Containers: []corev1.Container{
 						{
 							Name:            "main",
-							Image:           "l.gcr.io/google/bazel:3.2.0",
+							Image:           "l.gcr.io/google/bazel:" + bazelVersion,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Command:         []string{"sh", "-c", fmt.Sprintf("bazel cquery '%s' --output jsonproto 2> /dev/null", discoveryBazelQuery)},
 							WorkingDir:      "/work",

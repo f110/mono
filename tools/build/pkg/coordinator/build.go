@@ -6,14 +6,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -53,16 +51,6 @@ const (
 var (
 	ErrOtherTaskIsRunning = xerrors.New("coordinator: Other task is running")
 )
-
-type GithubAppOptions struct {
-	AppId          int64
-	InstallationId int64
-	PrivateKeyFile string
-}
-
-func NewGithubAppOptions(appId, installationId int64, privateKeyFile string) GithubAppOptions {
-	return GithubAppOptions{AppId: appId, InstallationId: installationId, PrivateKeyFile: privateKeyFile}
-}
 
 type KubernetesOptions struct {
 	JobInformer        batchv1informers.JobInformer
@@ -159,16 +147,11 @@ func NewBazelBuilder(
 	kOpt KubernetesOptions,
 	daoOpt dao.Options,
 	namespace string,
-	appOpt GithubAppOptions,
+	ghClient *github.Client,
 	minIOOpt storage.MinIOOptions,
 	bazelOpt BazelOptions,
 	dev bool,
 ) (*BazelBuilder, error) {
-	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appOpt.AppId, appOpt.InstallationId, appOpt.PrivateKeyFile)
-	if err != nil {
-		return nil, xerrors.Errorf(": %v", err)
-	}
-
 	b := &BazelBuilder{
 		Namespace:           namespace,
 		dashboardUrl:        dashboardUrl,
@@ -176,7 +159,7 @@ func NewBazelBuilder(
 		client:              kOpt.Client,
 		jobLister:           kOpt.JobInformer.Lister(),
 		dao:                 daoOpt,
-		githubClient:        github.NewClient(&http.Client{Transport: t}),
+		githubClient:        ghClient,
 		minio:               storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
 		remoteCache:         bazelOpt.RemoteCache,
 		remoteAssetApi:      bazelOpt.EnableRemoteAssetApi,
@@ -517,7 +500,11 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 }
 
 func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) *batchv1.Job {
-	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, b.defaultBazelVersion)
+	bazelVersion := b.defaultBazelVersion
+	if job.BazelVersion != "" {
+		bazelVersion = job.BazelVersion
+	}
+	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, bazelVersion)
 	taskIdString := strconv.Itoa(int(task.Id))
 	jobIdString := strconv.Itoa(int(job.Id))
 

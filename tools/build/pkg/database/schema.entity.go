@@ -105,6 +105,7 @@ type Job struct {
 	Exclusive    bool
 	Sync         bool
 	ConfigName   string
+	BazelVersion string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 
@@ -136,6 +137,7 @@ func (e *Job) IsChanged() bool {
 		e.Exclusive != e.mark.Exclusive ||
 		e.Sync != e.mark.Sync ||
 		e.ConfigName != e.mark.ConfigName ||
+		e.BazelVersion != e.mark.BazelVersion ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -178,6 +180,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	if e.ConfigName != e.mark.ConfigName {
 		res = append(res, ddl.Column{Name: "config_name", Value: e.ConfigName})
 	}
+	if e.BazelVersion != e.mark.BazelVersion {
+		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -206,6 +211,7 @@ func (e *Job) Copy() *Job {
 		Exclusive:    e.Exclusive,
 		Sync:         e.Sync,
 		ConfigName:   e.ConfigName,
+		BazelVersion: e.BazelVersion,
 		CreatedAt:    e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

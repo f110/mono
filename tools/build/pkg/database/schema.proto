@@ -41,6 +41,7 @@ message Job {
     bool             exclusive     = 10;
     bool             sync          = 11;
     string           config_name   = 12;
+    string           bazel_version = 13;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

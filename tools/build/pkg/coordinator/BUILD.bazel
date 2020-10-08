@@ -14,7 +14,6 @@ go_library(
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/storage",
         "//tools/build/pkg/watcher",
-        "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",

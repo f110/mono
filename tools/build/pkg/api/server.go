@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
@@ -42,21 +41,12 @@ type Api struct {
 	githubClient *github.Client
 }
 
-func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao.Options, appId, installationId int64, privateKeyFile string) (*Api, error) {
-	var transport *ghinstallation.Transport
-	if privateKeyFile != "" {
-		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
-		if err != nil {
-			return nil, xerrors.Errorf(": %v", err)
-		}
-		transport = t
-	}
-
+func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao.Options, ghClient *github.Client) (*Api, error) {
 	api := &Api{
 		builder:      builder,
 		discovery:    discovery,
 		dao:          dao,
-		githubClient: github.NewClient(&http.Client{Transport: transport}),
+		githubClient: ghClient,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/favicon.ico", http.NotFoundHandler())
@@ -381,6 +371,7 @@ func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := a.discovery.FindOut(repo, ""); err != nil {
+		logger.Log.Warn("Failed start discovery", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -523,6 +514,8 @@ func modifiedRuleFile(e *github.PushEvent) bool {
 			b := filepath.Base(f)
 			switch b {
 			case "BUILD", "BUILD.bazel":
+				return true
+			case ".bazelversion":
 				return true
 			}
 		}

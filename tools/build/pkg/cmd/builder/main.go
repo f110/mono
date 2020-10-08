@@ -3,12 +3,15 @@ package builder
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/go-github/v32/github"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -74,6 +77,12 @@ func builder(opt Options) error {
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
 
+	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	ghClient := github.NewClient(&http.Client{Transport: t})
+
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -125,18 +134,17 @@ func builder(opt Options) error {
 				jobWatcher := watcher.NewJobWatcher(coreSharedInformerFactory.Batch().V1().Jobs())
 
 				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
-				githubOpt := coordinator.NewGithubAppOptions(opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
 				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg, opt.TaskCPULimit, opt.TaskMemoryLimit)
 				bazelOpt := coordinator.NewBazelOptions(opt.RemoteCache, opt.RemoteAssetApi, opt.SidecarImage, opt.BazelImage, opt.DefaultBazelVersion)
-				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, githubOpt, minioOpt, bazelOpt, opt.Dev)
+				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, ghClient, minioOpt, bazelOpt, opt.Dev)
 				if err != nil {
 					logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
 					return
 				}
 
-				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c, opt.SidecarImage)
+				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c, opt.SidecarImage, ghClient)
 
-				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
+				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, ghClient)
 				if err != nil {
 					return
 				}

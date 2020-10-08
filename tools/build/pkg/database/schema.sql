@@ -28,6 +28,7 @@ CREATE TABLE `job` (
 	`exclusive` TINYINT(1) NOT NULL,
 	`sync` TINYINT(1) NOT NULL,
 	`config_name` VARCHAR(255) NOT NULL,
+	`bazel_version` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
