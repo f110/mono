@@ -204,10 +204,15 @@ func (d *Dashboard) handleNewRepository(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+	private := false
+	if req.FormValue("private") != "" {
+		private = true
+	}
 	if _, err := d.dao.Repository.Create(req.Context(), &database.SourceRepository{
 		Name:     req.FormValue("name"),
 		Url:      req.FormValue("url"),
 		CloneUrl: req.FormValue("clone_url"),
+		Private:  private,
 	}); err != nil {
 		logger.Log.Warn("Failed create repository", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

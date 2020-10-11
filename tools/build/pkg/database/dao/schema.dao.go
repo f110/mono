@@ -53,7 +53,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `source_repository` WHERE `id` = ?", id)
 
 	v := &database.SourceRepository{}
-	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -63,7 +63,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, url, clone_url, name, created_at, updated_at from source_repository"
+	query := "select id, url, clone_url, name, private, created_at, updated_at from source_repository"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -82,7 +82,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -94,7 +94,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, url, clone_url, name, created_at, updated_at from source_repository where url = ?"
+	query := "select id, url, clone_url, name, private, created_at, updated_at from source_repository where url = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -114,7 +114,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -127,7 +127,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 func (d *SourceRepository) Create(ctx context.Context, v *database.SourceRepository) (*database.SourceRepository, error) {
 	res, err := d.conn.ExecContext(
 		ctx,
-		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `created_at`) VALUES (?, ?, ?, ?)", v.Url, v.CloneUrl, v.Name, time.Now(),
+		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `created_at`) VALUES (?, ?, ?, ?, ?)", v.Url, v.CloneUrl, v.Name, v.Private, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

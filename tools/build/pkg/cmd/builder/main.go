@@ -44,6 +44,7 @@ type Options struct {
 	GithubAppId          int64
 	GithubInstallationId int64
 	GithubPrivateKeyFile string
+	GithubAppSecretName  string
 	MinIOName            string
 	MinIONamespace       string
 	MinIOPort            int
@@ -61,7 +62,8 @@ type Options struct {
 	TaskCPULimit        string
 	TaskMemoryLimit     string
 
-	Dev bool
+	Dev   bool
+	Debug bool
 }
 
 func builder(opt Options) error {
@@ -135,14 +137,35 @@ func builder(opt Options) error {
 
 				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
 				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg, opt.TaskCPULimit, opt.TaskMemoryLimit)
-				bazelOpt := coordinator.NewBazelOptions(opt.RemoteCache, opt.RemoteAssetApi, opt.SidecarImage, opt.BazelImage, opt.DefaultBazelVersion)
+				bazelOpt := coordinator.NewBazelOptions(
+					opt.RemoteCache,
+					opt.RemoteAssetApi,
+					opt.SidecarImage,
+					opt.BazelImage,
+					opt.DefaultBazelVersion,
+					opt.GithubAppId,
+					opt.GithubInstallationId,
+					opt.GithubAppSecretName,
+				)
 				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, ghClient, minioOpt, bazelOpt, opt.Dev)
 				if err != nil {
 					logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
 					return
 				}
 
-				d := discovery.NewDiscover(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, opt.Namespace, daoOpt, c, opt.SidecarImage, ghClient)
+				d := discovery.NewDiscover(
+					coreSharedInformerFactory.Batch().V1().Jobs(),
+					kubeClient,
+					opt.Namespace,
+					daoOpt,
+					c,
+					opt.SidecarImage,
+					ghClient,
+					opt.GithubAppId,
+					opt.GithubInstallationId,
+					opt.GithubAppSecretName,
+					opt.Debug,
+				)
 
 				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, ghClient)
 				if err != nil {
@@ -223,6 +246,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
 	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
 	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
+	fs.StringVar(&opt.GithubAppSecretName, "github-app-secret-name", "", "The name of Secret which contains github app id, installation id and private key.")
 	fs.Int64Var(&opt.GithubAppId, "github-app-id", 0, "GitHub App id")
 	fs.Int64Var(&opt.GithubInstallationId, "github-installation-id", 0, "GitHub Installation id")
 	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
@@ -242,6 +266,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
 	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
+	fs.BoolVar(&opt.Debug, "debug", false, "Enable debugging mode")
 
 	rootCmd.AddCommand(cmd)
 }

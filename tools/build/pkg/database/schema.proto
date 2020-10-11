@@ -10,6 +10,7 @@ message SourceRepository {
     string url       = 2;
     string clone_url = 3;
     string name      = 4 [(dev.f110.ddl.column) = {size: 100}];
+    bool   private   = 5;
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

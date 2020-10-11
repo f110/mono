@@ -2,6 +2,7 @@ DATABASE_HOST = localhost
 DATABASE_USER = build
 DATABASE_NAME = build
 
+# This credentials is for local cluster
 MINIO_NAME              = object-storage
 MINIO_NAMESPACE         = default
 MINIO_PORT              = 9000

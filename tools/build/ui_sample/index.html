@@ -68,6 +68,12 @@
         <label>Clone URL</label>
         <input type="text" name="clone_url" placeholder="URL for cloning of the repository">
       </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <label>Private Repository</label>
+          <input type="checkbox" name="private">
+        </div>
+      </div>
       <button class="ui button" type="submit" onclick="createRepository()">Add</button>
     </form>
   </div>
@@ -223,6 +229,10 @@
 </div>
 
 <script>
+$('.ui.checkbox')
+  .checkbox()
+;
+
 function createRepository() {
 	var f = document.querySelector('.ui.form.newRepo');
 	var params = new URLSearchParams();

@@ -23,6 +23,7 @@ type SourceRepository struct {
 	Url       string
 	CloneUrl  string
 	Name      string
+	Private   bool
 	CreatedAt time.Time
 	UpdatedAt *time.Time
 
@@ -44,6 +45,7 @@ func (e *SourceRepository) IsChanged() bool {
 	return e.Url != e.mark.Url ||
 		e.CloneUrl != e.mark.CloneUrl ||
 		e.Name != e.mark.Name ||
+		e.Private != e.mark.Private ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -61,6 +63,9 @@ func (e *SourceRepository) ChangedColumn() []ddl.Column {
 	}
 	if e.Name != e.mark.Name {
 		res = append(res, ddl.Column{Name: "name", Value: e.Name})
+	}
+	if e.Private != e.mark.Private {
+		res = append(res, ddl.Column{Name: "private", Value: e.Private})
 	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
@@ -82,6 +87,7 @@ func (e *SourceRepository) Copy() *SourceRepository {
 		Url:       e.Url,
 		CloneUrl:  e.CloneUrl,
 		Name:      e.Name,
+		Private:   e.Private,
 		CreatedAt: e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

@@ -96,6 +96,12 @@ const indexTemplate = `<html>
         <label>Clone URL</label>
         <input type="text" name="clone_url" placeholder="URL for cloning of the repository (e.g https://github.com/f110/sandbox.git)">
       </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" tabindex="0" class="hidden" name="private">
+          <label>Private Repository</label>
+        </div>
+      </div>
       <button class="ui button" onclick="createRepository()">Add</button>
     </form>
   </div>
@@ -192,6 +198,10 @@ const indexTemplate = `<html>
 <script>
 const apiHost = {{ .APIHost }};
 
+$('.ui.checkbox')
+  .checkbox()
+;
+
 function newRepository() {
 	$('.ui.newRepo.modal').modal({centered:false}).modal('show');
 }
@@ -202,6 +212,7 @@ function createRepository() {
 	params.append("name", f.name.value);
 	params.append("url", f.url.value);
 	params.append("clone_url", f.clone_url.value);
+    params.append("private", f.private.value);
 	fetch('/new_repo', {
 		method: 'POST',
 		body: params,

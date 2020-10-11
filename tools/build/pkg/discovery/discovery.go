@@ -111,9 +111,14 @@ type Discover struct {
 	client       kubernetes.Interface
 	jobInformer  batchv1informers.JobInformer
 
-	builder      *coordinator.BazelBuilder
-	sidecarImage string
-	dao          dao.Options
+	builder              *coordinator.BazelBuilder
+	sidecarImage         string
+	dao                  dao.Options
+	githubAppId          int64
+	githubInstallationId int64
+	githubAppSecretName  string
+
+	debug bool
 }
 
 func NewDiscover(
@@ -124,15 +129,23 @@ func NewDiscover(
 	builder *coordinator.BazelBuilder,
 	sidecarImage string,
 	ghClient *github.Client,
+	appId int64,
+	installationId int64,
+	appSecretName string,
+	debug bool,
 ) *Discover {
 	d := &Discover{
-		Namespace:    namespace,
-		jobInformer:  jobInformer,
-		client:       client,
-		dao:          daoOpt,
-		builder:      builder,
-		sidecarImage: sidecarImage,
-		githubClient: ghClient,
+		Namespace:            namespace,
+		jobInformer:          jobInformer,
+		client:               client,
+		dao:                  daoOpt,
+		builder:              builder,
+		sidecarImage:         sidecarImage,
+		githubClient:         ghClient,
+		githubAppId:          appId,
+		githubInstallationId: installationId,
+		githubAppSecretName:  appSecretName,
+		debug:                debug,
 	}
 	watcher.Router.Add(jobType, d.syncJob)
 
@@ -211,6 +224,11 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		case batchv1.JobComplete:
 			success = true
 		case batchv1.JobFailed:
+			if d.debug {
+				logger.Log.Info("Skip delete job due to enabled debugging mode", zap.String("job.name", job.Name))
+				return nil
+			}
+
 			if err := d.teardownJob(job); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -388,7 +406,40 @@ func (d *Discover) buildJob(repository *database.SourceRepository, revision, baz
 	return nil
 }
 
-func (d Discover) jobTemplate(repository *database.SourceRepository, revision, bazelVersion string) *batchv1.Job {
+func (d *Discover) jobTemplate(repository *database.SourceRepository, revision, bazelVersion string) *batchv1.Job {
+	volumes := []corev1.Volume{
+		{
+			Name: "workdir",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+	}
+	sidecarVolumeMounts := []corev1.VolumeMount{
+		{Name: "workdir", MountPath: "/work"},
+	}
+	if repository.Private {
+		volumes = append(volumes, corev1.Volume{
+			Name: "github-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: d.githubAppSecretName,
+				},
+			},
+		})
+		sidecarVolumeMounts = append(sidecarVolumeMounts, corev1.VolumeMount{
+			Name: "github-secret", MountPath: "/etc/github", ReadOnly: true,
+		})
+	}
+	preProcessArgs := []string{"--action=clone", "--work-dir=/work", fmt.Sprintf("--url=%s", repository.CloneUrl)}
+	if repository.Private {
+		preProcessArgs = append(preProcessArgs,
+			fmt.Sprintf("--github-app-id=%d", d.githubAppId),
+			fmt.Sprintf("--github-installation-id=%d", d.githubInstallationId),
+			"--private-key-file=/etc/github/privatekey.pem",
+		)
+	}
+
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -414,12 +465,10 @@ func (d Discover) jobTemplate(repository *database.SourceRepository, revision, b
 					RestartPolicy: corev1.RestartPolicyNever,
 					InitContainers: []corev1.Container{
 						{
-							Name:  "pre-process",
-							Image: d.sidecarImage,
-							Args:  []string{"--action=clone", "--work-dir=/work", fmt.Sprintf("--url=%s", repository.CloneUrl)},
-							VolumeMounts: []corev1.VolumeMount{
-								{Name: "workdir", MountPath: "/work"},
-							},
+							Name:         "pre-process",
+							Image:        d.sidecarImage,
+							Args:         preProcessArgs,
+							VolumeMounts: sidecarVolumeMounts,
 						},
 					},
 					Containers: []corev1.Container{
@@ -434,14 +483,7 @@ func (d Discover) jobTemplate(repository *database.SourceRepository, revision, b
 							},
 						},
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "workdir",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
+					Volumes: volumes,
 				},
 			},
 		},

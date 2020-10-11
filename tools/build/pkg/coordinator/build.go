@@ -70,15 +70,21 @@ type BazelOptions struct {
 	SidecarImage         string
 	BazelImage           string
 	DefaultVersion       string
+	GithubAppId          int64
+	GithubInstallationId int64
+	GithubAppSecretName  string
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage, defaultVersion string) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage, defaultVersion string, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
 	return BazelOptions{
 		RemoteCache:          remoteCache,
 		EnableRemoteAssetApi: enableRemoteAssetApi,
 		SidecarImage:         sidecarImage,
 		BazelImage:           bazelImage,
 		DefaultVersion:       defaultVersion,
+		GithubAppId:          githubAppId,
+		GithubInstallationId: githubInstallationId,
+		GithubAppSecretName:  githubAppSecretName,
 	}
 }
 
@@ -137,6 +143,9 @@ type BazelBuilder struct {
 	defaultBazelVersion    string
 	defaultTaskCPULimit    resource.Quantity
 	defaultTaskMemoryLimit resource.Quantity
+	githubAppId            int64
+	githubInstallationId   int64
+	githubAppSecretName    string
 	dev                    bool
 
 	taskQueue *taskQueue
@@ -153,21 +162,24 @@ func NewBazelBuilder(
 	dev bool,
 ) (*BazelBuilder, error) {
 	b := &BazelBuilder{
-		Namespace:           namespace,
-		dashboardUrl:        dashboardUrl,
-		config:              kOpt.RESTConfig,
-		client:              kOpt.Client,
-		jobLister:           kOpt.JobInformer.Lister(),
-		dao:                 daoOpt,
-		githubClient:        ghClient,
-		minio:               storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
-		remoteCache:         bazelOpt.RemoteCache,
-		remoteAssetApi:      bazelOpt.EnableRemoteAssetApi,
-		sidecarImage:        bazelOpt.SidecarImage,
-		bazelImage:          bazelOpt.BazelImage,
-		defaultBazelVersion: bazelOpt.DefaultVersion,
-		dev:                 dev,
-		taskQueue:           newTaskQueue(),
+		Namespace:            namespace,
+		dashboardUrl:         dashboardUrl,
+		config:               kOpt.RESTConfig,
+		client:               kOpt.Client,
+		jobLister:            kOpt.JobInformer.Lister(),
+		dao:                  daoOpt,
+		githubClient:         ghClient,
+		minio:                storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
+		remoteCache:          bazelOpt.RemoteCache,
+		remoteAssetApi:       bazelOpt.EnableRemoteAssetApi,
+		sidecarImage:         bazelOpt.SidecarImage,
+		bazelImage:           bazelOpt.BazelImage,
+		defaultBazelVersion:  bazelOpt.DefaultVersion,
+		githubAppId:          bazelOpt.GithubAppId,
+		githubInstallationId: bazelOpt.GithubInstallationId,
+		githubAppSecretName:  bazelOpt.GithubAppSecretName,
+		dev:                  dev,
+		taskQueue:            newTaskQueue(),
 	}
 	if b.sidecarImage == "" {
 		b.sidecarImage = sidecarImage
@@ -301,7 +313,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			}
 			task.Success = true
 			task.FinishedAt = &now
-			logger.Log.Info("Job is finished successfully", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+			logger.Log.Info("Job was finished successfully", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		case batchv1.JobFailed:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(job, task, false); err != nil {
@@ -309,7 +321,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 				}
 			}
 			task.FinishedAt = &now
-			logger.Log.Info("Job is failed", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+			logger.Log.Info("Job was failed", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		}
 	}
 	if task.FinishedAt != nil {
@@ -519,10 +531,35 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 	volumeMounts := []corev1.VolumeMount{
 		{Name: "workdir", MountPath: "/work"},
 	}
+	sidecarVolumeMounts := []corev1.VolumeMount{
+		{Name: "workdir", MountPath: "/work"},
+	}
+	if job.Repository.Private {
+		volumes = append(volumes, corev1.Volume{
+			Name: "github-secret",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: b.githubAppSecretName,
+				},
+			},
+		})
+		sidecarVolumeMounts = append(sidecarVolumeMounts, corev1.VolumeMount{
+			Name:      "github-secret",
+			MountPath: "/etc/github",
+			ReadOnly:  true,
+		})
+	}
 
 	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", job.Repository.CloneUrl)}
 	if task.Revision != "" {
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
+	}
+	if job.Repository.Private {
+		preProcessArgs = append(preProcessArgs,
+			fmt.Sprintf("--github-app-id=%d", b.githubAppId),
+			fmt.Sprintf("--github-installation-id=%d", b.githubInstallationId),
+			"--private-key-file=/etc/github/privatekey.pem",
+		)
 	}
 
 	cpuLimit := b.defaultTaskCPULimit
@@ -578,12 +615,10 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 					RestartPolicy: corev1.RestartPolicyNever,
 					InitContainers: []corev1.Container{
 						{
-							Name:  "pre-process",
-							Image: b.sidecarImage,
-							Args:  preProcessArgs,
-							VolumeMounts: []corev1.VolumeMount{
-								{Name: "workdir", MountPath: "/work"},
-							},
+							Name:         "pre-process",
+							Image:        b.sidecarImage,
+							Args:         preProcessArgs,
+							VolumeMounts: sidecarVolumeMounts,
 						},
 					},
 					Containers: []corev1.Container{

@@ -9,6 +9,7 @@ CREATE TABLE `source_repository` (
 	`url` VARCHAR(255) NOT NULL,
 	`clone_url` VARCHAR(255) NOT NULL,
 	`name` VARCHAR(100) NOT NULL,
+	`private` TINYINT(1) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
