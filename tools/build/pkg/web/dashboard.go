@@ -93,13 +93,16 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	repoAndJobs := make(map[int32]*RepositoryAndJobs)
+	for _, v := range repoList {
+		repoAndJobs[v.Id] = &RepositoryAndJobs{
+			Repo:          v,
+			IsDiscovering: d.discovery.IsDiscovering(v.Id),
+			Jobs:          make([]*Job, 0),
+		}
+	}
 	for _, v := range jobs {
 		if _, ok := repoAndJobs[v.RepositoryId]; !ok {
-			repoAndJobs[v.RepositoryId] = &RepositoryAndJobs{
-				Repo:          v.Repository,
-				IsDiscovering: d.discovery.IsDiscovering(v.RepositoryId),
-				Jobs:          make([]*Job, 0),
-			}
+			continue
 		}
 
 		tasks, err := d.dao.Task.ListByJobId(req.Context(), v.Id, dao.Limit(NumberOfTaskPerJob), dao.Desc)
@@ -132,6 +135,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		}
 		repoAndJobs[v.RepositoryId].Jobs = append(repoAndJobs[v.RepositoryId].Jobs, &Job{Job: v, Tasks: t, Success: success})
 	}
+
 	jobList := make([]*RepositoryAndJobs, 0)
 	for _, v := range repoList {
 		if r, ok := repoAndJobs[v.Id]; ok {
