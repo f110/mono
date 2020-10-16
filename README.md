@@ -1,4 +1,4 @@
-wing
+mono
 ---
 
 This repository is my monorepo for operating k8s cluster
