@@ -21,7 +21,7 @@ container_push(
     name = "push",
     format = "Docker",
     image = ":image",
-    registry = "registry.f110.dev",
-    repository = "tools/etcdbackup",
+    registry = "quay.io",
+    repository = "f110/etcdbackup",
     tag = "latest",
 )
