@@ -1,6 +1,7 @@
-DATABASE_HOST = localhost
-DATABASE_USER = build
-DATABASE_NAME = build
+DATABASE_HOST     = localhost
+DATABASE_USER     = build
+DATABASE_NAME     = build
+DATABASE_PASSWORD = build
 
 # This credentials is for local cluster
 MINIO_NAME              = object-storage
@@ -10,7 +11,7 @@ MINIO_BUCKET            = logs
 MINIO_ACCESS_KEY        = MsdgKFqgT7Bw
 MINIO_SECRET_ACCESS_KEY = P2ThRFth7w1p6gDROcE3ya3gXoIEevuA
 
-DSN = $(DATABASE_USER)@tcp($(DATABASE_HOST))/$(DATABASE_NAME)
+DSN = $(DATABASE_USER):$(DATABASE_PASSWORD)@tcp($(DATABASE_HOST))/$(DATABASE_NAME)
 GITHUB = --github-app-id $(APP_ID) --github-installation-id $(INSTALLATION_ID) --github-private-key-file $(PRIVATEKEY_FILE)
 MINIO = --minio-name $(MINIO_NAME) --minio-namespace $(MINIO_NAMESPACE) --minio-port $(MINIO_PORT) --minio-bucket $(MINIO_BUCKET) --minio-access-key $(MINIO_ACCESS_KEY) --minio-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 
