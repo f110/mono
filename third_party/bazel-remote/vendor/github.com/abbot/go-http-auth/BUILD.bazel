@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-http-auth",
+    srcs = [
+        "auth.go",
+        "basic.go",
+        "digest.go",
+        "md5crypt.go",
+        "misc.go",
+        "users.go",
+    ],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/abbot/go-http-auth",
+    importpath = "github.com/abbot/go-http-auth",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/golang.org/x/crypto/bcrypt",
+        "//third_party/bazel-remote/vendor/golang.org/x/net/context",
+    ],
+)

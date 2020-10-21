@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metrics",
+    srcs = ["metrics.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/slok/go-http-metrics/metrics",
+    importpath = "github.com/slok/go-http-metrics/metrics",
+    visibility = ["//visibility:public"],
+)

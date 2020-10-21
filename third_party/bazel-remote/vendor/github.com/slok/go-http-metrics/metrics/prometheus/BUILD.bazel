@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "prometheus",
+    srcs = ["prometheus.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/slok/go-http-metrics/metrics/prometheus",
+    importpath = "github.com/slok/go-http-metrics/metrics/prometheus",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus",
+        "//third_party/bazel-remote/vendor/github.com/slok/go-http-metrics/metrics",
+    ],
+)

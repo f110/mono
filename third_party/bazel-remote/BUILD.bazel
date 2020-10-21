@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
+
+# gazelle:prefix github.com/buchgr/bazel-remote
+
+go_vendor(name = "vendor")
+
+go_library(
+    name = "bazel-remote_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/buchgr/bazel-remote",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/bazel-remote/cache",
+        "//third_party/bazel-remote/cache/disk",
+        "//third_party/bazel-remote/cache/gcsproxy",
+        "//third_party/bazel-remote/cache/httpproxy",
+        "//third_party/bazel-remote/cache/s3proxy",
+        "//third_party/bazel-remote/config",
+        "//third_party/bazel-remote/server",
+        "//third_party/bazel-remote/utils/idle",
+        "//third_party/bazel-remote/utils/rlimit",
+        "//third_party/bazel-remote/vendor/github.com/abbot/go-http-auth",
+        "//third_party/bazel-remote/vendor/github.com/grpc-ecosystem/go-grpc-prometheus",
+        "//third_party/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//third_party/bazel-remote/vendor/github.com/slok/go-http-metrics/metrics/prometheus",
+        "//third_party/bazel-remote/vendor/github.com/slok/go-http-metrics/middleware",
+        "//third_party/bazel-remote/vendor/github.com/slok/go-http-metrics/middleware/std",
+        "//third_party/bazel-remote/vendor/github.com/urfave/cli/v2:cli",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/credentials",
+    ],
+)
+
+go_binary(
+    name = "bazel-remote",
+    embed = [":bazel-remote_lib"],
+    visibility = ["//visibility:public"],
+)

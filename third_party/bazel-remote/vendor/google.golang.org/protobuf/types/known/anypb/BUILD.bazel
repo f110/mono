@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "anypb",
+    srcs = ["any.pb.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/protobuf/types/known/anypb",
+    importpath = "google.golang.org/protobuf/types/known/anypb",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/proto",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoregistry",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)

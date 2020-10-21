@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gcsproxy",
+    srcs = ["gcsproxy.go"],
+    importpath = "github.com/buchgr/bazel-remote/cache/gcsproxy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/cache",
+        "//third_party/bazel-remote/cache/httpproxy",
+        "//third_party/bazel-remote/vendor/golang.org/x/oauth2",
+        "//third_party/bazel-remote/vendor/golang.org/x/oauth2/google",
+    ],
+)

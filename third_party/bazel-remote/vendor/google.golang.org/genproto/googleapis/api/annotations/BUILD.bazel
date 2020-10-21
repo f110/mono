@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "annotations",
+    srcs = [
+        "annotations.pb.go",
+        "client.pb.go",
+        "field_behavior.pb.go",
+        "http.pb.go",
+        "resource.pb.go",
+    ],
+    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/genproto/googleapis/api/annotations",
+    importpath = "google.golang.org/genproto/googleapis/api/annotations",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/protoc-gen-go/descriptor",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)

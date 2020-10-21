@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "channelz",
+    srcs = [
+        "funcs.go",
+        "logging.go",
+        "types.go",
+        "types_linux.go",
+        "types_nonlinux.go",
+        "util_linux.go",
+        "util_nonlinux.go",
+    ],
+    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/internal/channelz",
+    importpath = "google.golang.org/grpc/internal/channelz",
+    visibility = ["//third_party/bazel-remote/vendor/google.golang.org/grpc:__subpackages__"],
+    deps = [
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/connectivity",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/credentials",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/grpclog",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "//third_party/bazel-remote/vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//third_party/bazel-remote/vendor/golang.org/x/sys/unix",
+        ],
+        "//conditions:default": [],
+    }),
+)

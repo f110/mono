@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "execution",
+    srcs = ["remote_execution.pb.go"],
+    importpath = "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/genproto/build/bazel/semver",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/duration",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/timestamp",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/wrappers",
+        "//third_party/bazel-remote/vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//third_party/bazel-remote/vendor/google.golang.org/genproto/googleapis/longrunning",
+        "//third_party/bazel-remote/vendor/google.golang.org/genproto/googleapis/rpc/status",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/codes",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/status",
+    ],
+)

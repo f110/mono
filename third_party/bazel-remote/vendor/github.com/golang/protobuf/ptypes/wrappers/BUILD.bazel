@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "wrappers",
+    srcs = ["wrappers.pb.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/golang/protobuf/ptypes/wrappers",
+    importpath = "github.com/golang/protobuf/ptypes/wrappers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/types/known/wrapperspb",
+    ],
+)

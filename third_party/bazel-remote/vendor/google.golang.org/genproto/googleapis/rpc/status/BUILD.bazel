@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "status",
+    srcs = ["status.pb.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/genproto/googleapis/rpc/status",
+    importpath = "google.golang.org/genproto/googleapis/rpc/status",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto",
+        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/any",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)
