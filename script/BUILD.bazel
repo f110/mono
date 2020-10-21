@@ -1,0 +1,4 @@
+sh_binary(
+    name = "vendor-bazel-remote",
+    srcs = ["vendor-bazel-remote.sh"],
+)
