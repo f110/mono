@@ -1,0 +1,5 @@
+sh_library(
+    name = "lib",
+    srcs = ["vendor.sh"],
+    visibility = ["//visibility:public"],
+)

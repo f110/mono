@@ -1,4 +1,11 @@
 sh_binary(
     name = "vendor-bazel-remote",
     srcs = ["vendor-bazel-remote.sh"],
+    deps = ["//script/lib"],
+)
+
+sh_binary(
+    name = "vendor_pkgsite",
+    srcs = ["vendor-pkgsite.sh"],
+    deps = ["//script/lib"],
 )

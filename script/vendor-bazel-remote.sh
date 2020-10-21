@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+source "script/lib/vendor.sh"
+
 OWNER="buchgr"
 REPO="bazel-remote"
 IMPORTPATH="github.com/buchgr/bazel-remote"
@@ -21,30 +23,13 @@ if [ -d "${TARGET_DIR}" ]; then
 fi
 mkdir -p "${TARGET_DIR}"
 
-if [ -f "/tmp/vendor.tar.gz" ]; then
-  rm -f /tmp/vendor.tar.gz
-fi
+download_repository_from_github "${TARGET_DIR}" "${OWNER}" "${REPO}" "${COMMIT}"
 
-curl -s -L -o /tmp/vendor.tar.gz https://github.com/${OWNER}/${REPO}/archive/${COMMIT}.tar.gz
-tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${TARGET_DIR}
-find "${TARGET_DIR}" -name BUILD -or -name BUILD.bazel | xargs rm -f
-find "${TARGET_DIR}" -name WORKSPACE -or -name WORKSPACE.bazel | xargs rm -f
-find "${TARGET_DIR}" -name "*_test.go" -delete
-find "${TARGET_DIR}" -name "testdata" -type d | xargs rm -rf
-if [ -f "${TARGET_DIR}/.gitignore" ]; then
-  rm -f "${TARGET_DIR}/.gitignore"
-fi
+clean_git_files "${TARGET_DIR}"
+clean_bazel_files "${TARGET_DIR}"
+remove_unnecessary_go_files "${TARGET_DIR}"
 
 cd "${TARGET_DIR}"
 echo $COMMIT > COMMIT
 
-cat <<EOS > BUILD.bazel
-load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
-
-# gazelle:prefix ${IMPORTPATH}
-
-go_vendor(name = "vendor")
-EOS
-
-cd ../../
-bazel run //third_party/${REPO}:vendor
+generate_build_file "${TARGET_DIR}" "${IMPORTPATH}"
