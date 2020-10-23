@@ -7,29 +7,22 @@ import (
 	"os"
 
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/logs"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 )
 
-var amd64Platform = &v1.Platform{
-	Architecture: "amd64",
-	OS:           "linux",
-}
-var arm64Platform = &v1.Platform{
-	Architecture: "arm64",
-	OS:           "linux",
-}
+var defaultArch = []string{"amd64"}
 
 type config struct {
 	Src      string
 	Dst      string
-	Platform string
+	Platform []string
 	Tags     []string
 }
 
@@ -55,43 +48,110 @@ func gantryCrane(args []string) error {
 	}
 
 	for _, v := range conf {
-		var pf *v1.Platform
-		switch v.Platform {
-		case "arm64":
-			pf = arm64Platform
-		default:
-			pf = amd64Platform
-		}
-		repo, err := name.NewRepository(v.Dst)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		t, err := remote.List(repo, remote.WithPlatform(*pf), remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithPlatform(*pf))
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		dstTags := make(map[string]struct{})
-		for _, v := range t {
-			dstTags[v] = struct{}{}
+		platform := defaultArch
+		if len(v.Platform) > 0 {
+			platform = v.Platform
 		}
 
 		for _, tag := range v.Tags {
-			if _, ok := dstTags[tag]; ok {
-				log.Printf("%s:%s is already exist", v.Dst, tag)
-				continue
+			oldDigest, dstIM, err := getIndexManifest(fmt.Sprintf("%s:%s", v.Dst, tag))
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
 			}
-			if !execute {
-				log.Printf("[Dry run] Copy %s:%s to %s:%s", v.Src, tag, v.Dst, tag)
-				continue
+			exists := 0
+			for _, a := range platform {
+				if existImage(dstIM, a) {
+					exists++
+					continue
+				}
 			}
 
-			if err := crane.Copy(fmt.Sprintf("%s:%s", v.Src, tag), fmt.Sprintf("%s:%s", v.Dst, tag), crane.WithPlatform(pf)); err != nil {
+			if !execute {
+				log.Printf("%s:%s will be synchronized %d images", v.Src, tag, len(platform)-exists)
+				continue
+			}
+			if exists == len(v.Platform) {
+				log.Printf("%s:%s: all images have been synced", v.Dst, tag)
+			}
+
+			srcRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Src, tag))
+			if err != nil {
 				return xerrors.Errorf(": %w", err)
+			}
+			desc, err := remote.Get(srcRef)
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			index, err := desc.ImageIndex()
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			partialIndex := NewPartialImageIndex(index, platform)
+
+			dstRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Dst, tag))
+			if err := remote.WriteIndex(dstRef, partialIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			if oldDigest != emptyHash {
+				oldD, err := name.NewDigest(fmt.Sprintf("%s@%s", v.Dst, oldDigest.String()))
+				if err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				if err := remote.Delete(oldD, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
 			}
 		}
 	}
 
 	return nil
+}
+
+func existImage(indexM *v1.IndexManifest, arch string) bool {
+	if indexM == nil {
+		return false
+	}
+
+	for _, v := range indexM.Manifests {
+		if v.Platform.Architecture == arch {
+			return true
+		}
+	}
+
+	return false
+}
+
+var emptyHash = v1.Hash{}
+
+func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
+	r, err := name.ParseReference(ref)
+	if err != nil {
+		return emptyHash, nil, xerrors.Errorf(": %w", err)
+	}
+	desc, err := remote.Get(r, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	if err != nil {
+		if tErr, ok := err.(*transport.Error); ok {
+			for _, dErr := range tErr.Errors {
+				// Manifest not found
+				if dErr.Code == transport.ManifestUnknownErrorCode {
+					return emptyHash, nil, nil
+				}
+			}
+		}
+		return emptyHash, nil, xerrors.Errorf(": %w", err)
+	}
+	index, err := desc.ImageIndex()
+	if err != nil {
+		return emptyHash, nil, xerrors.Errorf(": %w", err)
+	}
+
+	indexManifest, err := index.IndexManifest()
+	if err != nil {
+		return emptyHash, nil, err
+	}
+
+	return desc.Digest, indexManifest, nil
 }
 
 func main() {

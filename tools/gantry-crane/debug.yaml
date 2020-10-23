@@ -1,4 +1,4 @@
-- src: registry.hub.docker.com/library/busybox
-  dst: asia.gcr.io/fighting-falcon/busybox
-  tags:
-    - latest
+- src: docker.io/library/haproxy
+  dst: asia.gcr.io/fighting-falcon/haproxy
+  platform: ["amd64"]
+  tags: ["2.2.2"]
