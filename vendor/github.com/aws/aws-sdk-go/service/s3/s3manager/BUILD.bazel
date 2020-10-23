@@ -12,6 +12,7 @@ go_library(
         "default_writer_read_from_windows.go",
         "doc.go",
         "download.go",
+        "pool.go",
         "read_seeker_write_to.go",
         "upload.go",
         "upload_input.go",

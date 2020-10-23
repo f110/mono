@@ -1,0 +1,4 @@
+- src: registry.hub.docker.com/library/busybox
+  dst: asia.gcr.io/fighting-falcon/busybox
+  tags:
+    - latest

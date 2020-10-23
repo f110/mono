@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tarball",
+    srcs = [
+        "doc.go",
+        "image.go",
+        "layer.go",
+        "write.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/go-containerregistry/pkg/v1/tarball",
+    importpath = "github.com/google/go-containerregistry/pkg/v1/tarball",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/go-containerregistry/pkg/name",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1:pkg",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/partial",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/types",
+        "//vendor/github.com/google/go-containerregistry/pkg/v1/v1util",
+    ],
+)

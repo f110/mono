@@ -13,8 +13,8 @@ pkg_tar(
 container_image(
     name = "image",
     base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/bazel-remote"],
     cmd = ["--max_size=5"],
+    entrypoint = ["/usr/local/bin/bazel-remote"],
     tars = [
         ":bin",
     ],

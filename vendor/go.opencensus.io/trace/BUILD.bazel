@@ -21,7 +21,7 @@ go_library(
     importpath = "go.opencensus.io/trace",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/hashicorp/golang-lru/simplelru",
+        "//vendor/github.com/golang/groupcache/lru",
         "//vendor/go.opencensus.io/internal",
         "//vendor/go.opencensus.io/trace/internal",
         "//vendor/go.opencensus.io/trace/tracestate",
