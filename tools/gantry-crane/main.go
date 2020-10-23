@@ -66,7 +66,7 @@ func gantryCrane(args []string) error {
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		t, err := remote.List(repo, remote.WithPlatform(*pf), remote.WithAuthFromKeychain(authn.DefaultKeychain))
+		t, err := remote.List(repo, remote.WithPlatform(*pf), remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithPlatform(*pf))
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
