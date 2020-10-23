@@ -70,7 +70,7 @@ func gantryCrane(args []string) error {
 				log.Printf("%s:%s will be synchronized %d images", v.Src, tag, len(platform)-exists)
 				continue
 			}
-			if exists == len(v.Platform) {
+			if exists == len(platform) {
 				log.Printf("%s:%s: all images have been synced", v.Dst, tag)
 			}
 
