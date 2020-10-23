@@ -54,6 +54,7 @@ func gantryCrane(args []string) error {
 		}
 
 		for _, tag := range v.Tags {
+			log.Printf("Synchronize %s:%s", v.Dst, tag)
 			oldDigest, dstIM, err := getIndexManifest(fmt.Sprintf("%s:%s", v.Dst, tag))
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
@@ -72,6 +73,7 @@ func gantryCrane(args []string) error {
 			}
 			if exists == len(platform) {
 				log.Printf("%s:%s: all images have been synced", v.Dst, tag)
+				continue
 			}
 
 			srcRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Src, tag))
