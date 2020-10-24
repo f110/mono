@@ -12,6 +12,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
@@ -84,14 +85,25 @@ func gantryCrane(args []string) error {
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
-			index, err := desc.ImageIndex()
-			if err != nil {
-				return xerrors.Errorf(": %w", err)
+
+			var newIndex v1.ImageIndex
+			switch desc.MediaType {
+			case types.DockerManifestSchema2, types.OCIManifestSchema1:
+				img, err := desc.Image()
+				if err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				newIndex = NewImageIndex(img)
+			default:
+				index, err := desc.ImageIndex()
+				if err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				newIndex = NewPartialImageIndex(index, platform)
 			}
-			partialIndex := NewPartialImageIndex(index, platform)
 
 			dstRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Dst, tag))
-			if err := remote.WriteIndex(dstRef, partialIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
+			if err := remote.WriteIndex(dstRef, newIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 
