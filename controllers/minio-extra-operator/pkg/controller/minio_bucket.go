@@ -103,14 +103,14 @@ func NewMinioBucketController(ctx context.Context, client *kubernetes.Clientset,
 	return c, nil
 }
 
-func (c *MinIOBucketController) syncMinioBucket(key string) error {
+func (c *MinIOBucketController) syncMinioBucket(ctx context.Context, key string) error {
 	klog.V(4).Info("syncMinioBucket")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}
 
-	currentBucket, err := c.mClient.MinioV1alpha1().MinIOBuckets(namespace).Get(name, metav1.GetOptions{})
+	currentBucket, err := c.mClient.MinioV1alpha1().MinIOBuckets(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		klog.V(4).Infof("%s/%s is not found", namespace, name)
 		return nil
@@ -122,14 +122,14 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	if minioBucket.DeletionTimestamp.IsZero() {
 		if !containsString(minioBucket.Finalizers, minIOBucketControllerFinalizerName) {
 			minioBucket.ObjectMeta.Finalizers = append(minioBucket.ObjectMeta.Finalizers, minIOBucketControllerFinalizerName)
-			_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(minioBucket)
+			_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(ctx, minioBucket, metav1.UpdateOptions{})
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	instances, err := c.mClient.MinV1beta1().MinIOInstances(namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
+	instances, err := c.mClient.MinV1beta1().MinIOInstances(namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
 	if err != nil {
 		return err
 	}
@@ -143,16 +143,16 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 
 	// Object has been deleted
 	if !minioBucket.DeletionTimestamp.IsZero() {
-		return c.finalizeMinIOBucket(minioBucket, instances.Items)
+		return c.finalizeMinIOBucket(ctx, minioBucket, instances.Items)
 	}
 
 	for _, instance := range instances.Items {
-		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(ctx, instance.Spec.CredsSecret.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
+		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
 		if err != nil {
 			return err
 		}
@@ -180,7 +180,7 @@ func (c *MinIOBucketController) syncMinioBucket(key string) error {
 	minioBucket.Status.Ready = true
 
 	if !reflect.DeepEqual(minioBucket.Status, currentBucket.Status) {
-		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).UpdateStatus(minioBucket)
+		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).UpdateStatus(ctx, minioBucket, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -259,22 +259,22 @@ func (c *MinIOBucketController) ensureIndexFile(mc *minio.Client, spec *miniov1a
 	return err
 }
 
-func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
+func (c *MinIOBucketController) finalizeMinIOBucket(ctx context.Context, b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
 	if b.Spec.BucketFinalizePolicy == "" || b.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
 		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
 		b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
-		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
+		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(ctx, b, metav1.UpdateOptions{})
 		return err
 	}
 
 	for _, instance := range instances {
-		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(ctx, instance.Spec.CredsSecret.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(instance)
+		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
 		if err != nil {
 			return err
 		}
@@ -304,12 +304,12 @@ func (c *MinIOBucketController) finalizeMinIOBucket(b *miniov1alpha1.MinIOBucket
 
 	b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
 
-	_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(b)
+	_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(ctx, b, metav1.UpdateOptions{})
 	return err
 }
 
-func (c *MinIOBucketController) getMinIOInstanceEndpoint(instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
-	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
+func (c *MinIOBucketController) getMinIOInstanceEndpoint(ctx context.Context, instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
+	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
 	if err != nil {
 		return "", nil, err
 	}
@@ -317,7 +317,7 @@ func (c *MinIOBucketController) getMinIOInstanceEndpoint(instance miniocontrolle
 	var forwarder *portforward.PortForwarder
 	instanceEndpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", instance.Name, instance.Namespace, svc.Spec.Ports[0].Port)
 	if c.runOutsideCluster {
-		forwarder, err = c.portForward(svc, int(svc.Spec.Ports[0].Port))
+		forwarder, err = c.portForward(ctx, svc, int(svc.Spec.Ports[0].Port))
 		if err != nil {
 			return "", nil, err
 		}
@@ -332,9 +332,9 @@ func (c *MinIOBucketController) getMinIOInstanceEndpoint(instance miniocontrolle
 	return instanceEndpoint, forwarder, nil
 }
 
-func (c *MinIOBucketController) portForward(svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *MinIOBucketController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, err
 	}
@@ -415,10 +415,12 @@ func (c *MinIOBucketController) processNextItem() bool {
 	}
 	klog.V(4).Infof("Get next queue: %s", obj)
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	err := func(obj interface{}) error {
 		defer c.queue.Done(obj)
+		defer cancelFunc()
 
-		err := c.syncMinioBucket(obj.(string))
+		err := c.syncMinioBucket(ctx, obj.(string))
 		if err != nil {
 			c.queue.AddRateLimited(obj)
 			return err

@@ -26,6 +26,7 @@ SOFTWARE.
 package v1beta1
 
 import (
+	"context"
 	time "time"
 
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
@@ -68,13 +69,13 @@ func NewFilteredMinIOInstanceInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinV1beta1().MinIOInstances(namespace).List(options)
+				return client.MinV1beta1().MinIOInstances(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinV1beta1().MinIOInstances(namespace).Watch(options)
+				return client.MinV1beta1().MinIOInstances(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&miniocontrollerv1beta1.MinIOInstance{},

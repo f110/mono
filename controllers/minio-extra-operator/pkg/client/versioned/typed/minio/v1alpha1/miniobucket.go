@@ -26,6 +26,7 @@ SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	v1alpha1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
@@ -44,15 +45,15 @@ type MinIOBucketsGetter interface {
 
 // MinIOBucketInterface has methods to work with MinIOBucket resources.
 type MinIOBucketInterface interface {
-	Create(*v1alpha1.MinIOBucket) (*v1alpha1.MinIOBucket, error)
-	Update(*v1alpha1.MinIOBucket) (*v1alpha1.MinIOBucket, error)
-	UpdateStatus(*v1alpha1.MinIOBucket) (*v1alpha1.MinIOBucket, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.MinIOBucket, error)
-	List(opts v1.ListOptions) (*v1alpha1.MinIOBucketList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.MinIOBucket, err error)
+	Create(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.CreateOptions) (*v1alpha1.MinIOBucket, error)
+	Update(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (*v1alpha1.MinIOBucket, error)
+	UpdateStatus(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (*v1alpha1.MinIOBucket, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.MinIOBucket, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.MinIOBucketList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MinIOBucket, err error)
 	MinIOBucketExpansion
 }
 
@@ -71,20 +72,20 @@ func newMinIOBuckets(c *MinioV1alpha1Client, namespace string) *minIOBuckets {
 }
 
 // Get takes name of the minIOBucket, and returns the corresponding minIOBucket object, and an error if there is any.
-func (c *minIOBuckets) Get(name string, options v1.GetOptions) (result *v1alpha1.MinIOBucket, err error) {
+func (c *minIOBuckets) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MinIOBucket, err error) {
 	result = &v1alpha1.MinIOBucket{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("miniobuckets").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of MinIOBuckets that match those selectors.
-func (c *minIOBuckets) List(opts v1.ListOptions) (result *v1alpha1.MinIOBucketList, err error) {
+func (c *minIOBuckets) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MinIOBucketList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -95,13 +96,13 @@ func (c *minIOBuckets) List(opts v1.ListOptions) (result *v1alpha1.MinIOBucketLi
 		Resource("miniobuckets").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested minIOBuckets.
-func (c *minIOBuckets) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *minIOBuckets) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -112,87 +113,90 @@ func (c *minIOBuckets) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Resource("miniobuckets").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a minIOBucket and creates it.  Returns the server's representation of the minIOBucket, and an error, if there is any.
-func (c *minIOBuckets) Create(minIOBucket *v1alpha1.MinIOBucket) (result *v1alpha1.MinIOBucket, err error) {
+func (c *minIOBuckets) Create(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.CreateOptions) (result *v1alpha1.MinIOBucket, err error) {
 	result = &v1alpha1.MinIOBucket{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("miniobuckets").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(minIOBucket).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a minIOBucket and updates it. Returns the server's representation of the minIOBucket, and an error, if there is any.
-func (c *minIOBuckets) Update(minIOBucket *v1alpha1.MinIOBucket) (result *v1alpha1.MinIOBucket, err error) {
+func (c *minIOBuckets) Update(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (result *v1alpha1.MinIOBucket, err error) {
 	result = &v1alpha1.MinIOBucket{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("miniobuckets").
 		Name(minIOBucket.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(minIOBucket).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-
-func (c *minIOBuckets) UpdateStatus(minIOBucket *v1alpha1.MinIOBucket) (result *v1alpha1.MinIOBucket, err error) {
+func (c *minIOBuckets) UpdateStatus(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (result *v1alpha1.MinIOBucket, err error) {
 	result = &v1alpha1.MinIOBucket{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("miniobuckets").
 		Name(minIOBucket.Name).
 		SubResource("status").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(minIOBucket).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the minIOBucket and deletes it. Returns an error if one occurs.
-func (c *minIOBuckets) Delete(name string, options *v1.DeleteOptions) error {
+func (c *minIOBuckets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("miniobuckets").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *minIOBuckets) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *minIOBuckets) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("miniobuckets").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched minIOBucket.
-func (c *minIOBuckets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.MinIOBucket, err error) {
+func (c *minIOBuckets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MinIOBucket, err error) {
 	result = &v1alpha1.MinIOBucket{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("miniobuckets").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

@@ -26,6 +26,7 @@ SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	miniov1alpha1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
@@ -68,13 +69,13 @@ func NewFilteredMinIOBucketInformer(client versioned.Interface, namespace string
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinioV1alpha1().MinIOBuckets(namespace).List(options)
+				return client.MinioV1alpha1().MinIOBuckets(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.MinioV1alpha1().MinIOBuckets(namespace).Watch(options)
+				return client.MinioV1alpha1().MinIOBuckets(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&miniov1alpha1.MinIOBucket{},

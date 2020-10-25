@@ -26,6 +26,8 @@ SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "go.f110.dev/mono/controllers/minio-extra-operator/pkg/api/minio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -46,7 +48,7 @@ var miniobucketsResource = schema.GroupVersionResource{Group: "minio.f110.dev", 
 var miniobucketsKind = schema.GroupVersionKind{Group: "minio.f110.dev", Version: "v1alpha1", Kind: "MinIOBucket"}
 
 // Get takes name of the minIOBucket, and returns the corresponding minIOBucket object, and an error if there is any.
-func (c *FakeMinIOBuckets) Get(name string, options v1.GetOptions) (result *v1alpha1.MinIOBucket, err error) {
+func (c *FakeMinIOBuckets) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MinIOBucket, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(miniobucketsResource, c.ns, name), &v1alpha1.MinIOBucket{})
 
@@ -57,7 +59,7 @@ func (c *FakeMinIOBuckets) Get(name string, options v1.GetOptions) (result *v1al
 }
 
 // List takes label and field selectors, and returns the list of MinIOBuckets that match those selectors.
-func (c *FakeMinIOBuckets) List(opts v1.ListOptions) (result *v1alpha1.MinIOBucketList, err error) {
+func (c *FakeMinIOBuckets) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.MinIOBucketList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(miniobucketsResource, miniobucketsKind, c.ns, opts), &v1alpha1.MinIOBucketList{})
 
@@ -79,14 +81,14 @@ func (c *FakeMinIOBuckets) List(opts v1.ListOptions) (result *v1alpha1.MinIOBuck
 }
 
 // Watch returns a watch.Interface that watches the requested minIOBuckets.
-func (c *FakeMinIOBuckets) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeMinIOBuckets) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(miniobucketsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a minIOBucket and creates it.  Returns the server's representation of the minIOBucket, and an error, if there is any.
-func (c *FakeMinIOBuckets) Create(minIOBucket *v1alpha1.MinIOBucket) (result *v1alpha1.MinIOBucket, err error) {
+func (c *FakeMinIOBuckets) Create(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.CreateOptions) (result *v1alpha1.MinIOBucket, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(miniobucketsResource, c.ns, minIOBucket), &v1alpha1.MinIOBucket{})
 
@@ -97,7 +99,7 @@ func (c *FakeMinIOBuckets) Create(minIOBucket *v1alpha1.MinIOBucket) (result *v1
 }
 
 // Update takes the representation of a minIOBucket and updates it. Returns the server's representation of the minIOBucket, and an error, if there is any.
-func (c *FakeMinIOBuckets) Update(minIOBucket *v1alpha1.MinIOBucket) (result *v1alpha1.MinIOBucket, err error) {
+func (c *FakeMinIOBuckets) Update(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (result *v1alpha1.MinIOBucket, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(miniobucketsResource, c.ns, minIOBucket), &v1alpha1.MinIOBucket{})
 
@@ -109,7 +111,7 @@ func (c *FakeMinIOBuckets) Update(minIOBucket *v1alpha1.MinIOBucket) (result *v1
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeMinIOBuckets) UpdateStatus(minIOBucket *v1alpha1.MinIOBucket) (*v1alpha1.MinIOBucket, error) {
+func (c *FakeMinIOBuckets) UpdateStatus(ctx context.Context, minIOBucket *v1alpha1.MinIOBucket, opts v1.UpdateOptions) (*v1alpha1.MinIOBucket, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(miniobucketsResource, "status", c.ns, minIOBucket), &v1alpha1.MinIOBucket{})
 
@@ -120,7 +122,7 @@ func (c *FakeMinIOBuckets) UpdateStatus(minIOBucket *v1alpha1.MinIOBucket) (*v1a
 }
 
 // Delete takes name of the minIOBucket and deletes it. Returns an error if one occurs.
-func (c *FakeMinIOBuckets) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeMinIOBuckets) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(miniobucketsResource, c.ns, name), &v1alpha1.MinIOBucket{})
 
@@ -128,15 +130,15 @@ func (c *FakeMinIOBuckets) Delete(name string, options *v1.DeleteOptions) error 
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeMinIOBuckets) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(miniobucketsResource, c.ns, listOptions)
+func (c *FakeMinIOBuckets) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(miniobucketsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.MinIOBucketList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched minIOBucket.
-func (c *FakeMinIOBuckets) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.MinIOBucket, err error) {
+func (c *FakeMinIOBuckets) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.MinIOBucket, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(miniobucketsResource, c.ns, name, pt, data, subresources...), &v1alpha1.MinIOBucket{})
 
