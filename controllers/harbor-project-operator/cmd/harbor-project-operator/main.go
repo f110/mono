@@ -98,7 +98,7 @@ func main() {
 		RetryPeriod:     5 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				projectController, err := controller.NewHarborProjectController(kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
+				projectController, err := controller.NewHarborProjectController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
 				if err != nil {
 					klog.Error(err)
 					return

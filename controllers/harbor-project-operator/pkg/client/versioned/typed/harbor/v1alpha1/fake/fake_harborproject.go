@@ -26,6 +26,8 @@ SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "go.f110.dev/mono/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -46,7 +48,7 @@ var harborprojectsResource = schema.GroupVersionResource{Group: "harbor.f110.dev
 var harborprojectsKind = schema.GroupVersionKind{Group: "harbor.f110.dev", Version: "v1alpha1", Kind: "HarborProject"}
 
 // Get takes name of the harborProject, and returns the corresponding harborProject object, and an error if there is any.
-func (c *FakeHarborProjects) Get(name string, options v1.GetOptions) (result *v1alpha1.HarborProject, err error) {
+func (c *FakeHarborProjects) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.HarborProject, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(harborprojectsResource, c.ns, name), &v1alpha1.HarborProject{})
 
@@ -57,7 +59,7 @@ func (c *FakeHarborProjects) Get(name string, options v1.GetOptions) (result *v1
 }
 
 // List takes label and field selectors, and returns the list of HarborProjects that match those selectors.
-func (c *FakeHarborProjects) List(opts v1.ListOptions) (result *v1alpha1.HarborProjectList, err error) {
+func (c *FakeHarborProjects) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.HarborProjectList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(harborprojectsResource, harborprojectsKind, c.ns, opts), &v1alpha1.HarborProjectList{})
 
@@ -79,14 +81,14 @@ func (c *FakeHarborProjects) List(opts v1.ListOptions) (result *v1alpha1.HarborP
 }
 
 // Watch returns a watch.Interface that watches the requested harborProjects.
-func (c *FakeHarborProjects) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeHarborProjects) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(harborprojectsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a harborProject and creates it.  Returns the server's representation of the harborProject, and an error, if there is any.
-func (c *FakeHarborProjects) Create(harborProject *v1alpha1.HarborProject) (result *v1alpha1.HarborProject, err error) {
+func (c *FakeHarborProjects) Create(ctx context.Context, harborProject *v1alpha1.HarborProject, opts v1.CreateOptions) (result *v1alpha1.HarborProject, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(harborprojectsResource, c.ns, harborProject), &v1alpha1.HarborProject{})
 
@@ -97,7 +99,7 @@ func (c *FakeHarborProjects) Create(harborProject *v1alpha1.HarborProject) (resu
 }
 
 // Update takes the representation of a harborProject and updates it. Returns the server's representation of the harborProject, and an error, if there is any.
-func (c *FakeHarborProjects) Update(harborProject *v1alpha1.HarborProject) (result *v1alpha1.HarborProject, err error) {
+func (c *FakeHarborProjects) Update(ctx context.Context, harborProject *v1alpha1.HarborProject, opts v1.UpdateOptions) (result *v1alpha1.HarborProject, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(harborprojectsResource, c.ns, harborProject), &v1alpha1.HarborProject{})
 
@@ -109,7 +111,7 @@ func (c *FakeHarborProjects) Update(harborProject *v1alpha1.HarborProject) (resu
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeHarborProjects) UpdateStatus(harborProject *v1alpha1.HarborProject) (*v1alpha1.HarborProject, error) {
+func (c *FakeHarborProjects) UpdateStatus(ctx context.Context, harborProject *v1alpha1.HarborProject, opts v1.UpdateOptions) (*v1alpha1.HarborProject, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(harborprojectsResource, "status", c.ns, harborProject), &v1alpha1.HarborProject{})
 
@@ -120,7 +122,7 @@ func (c *FakeHarborProjects) UpdateStatus(harborProject *v1alpha1.HarborProject)
 }
 
 // Delete takes name of the harborProject and deletes it. Returns an error if one occurs.
-func (c *FakeHarborProjects) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeHarborProjects) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(harborprojectsResource, c.ns, name), &v1alpha1.HarborProject{})
 
@@ -128,15 +130,15 @@ func (c *FakeHarborProjects) Delete(name string, options *v1.DeleteOptions) erro
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeHarborProjects) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(harborprojectsResource, c.ns, listOptions)
+func (c *FakeHarborProjects) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(harborprojectsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.HarborProjectList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched harborProject.
-func (c *FakeHarborProjects) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.HarborProject, err error) {
+func (c *FakeHarborProjects) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.HarborProject, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(harborprojectsResource, c.ns, name, pt, data, subresources...), &v1alpha1.HarborProject{})
 

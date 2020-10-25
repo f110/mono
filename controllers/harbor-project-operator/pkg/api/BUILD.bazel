@@ -1,4 +1,4 @@
-load("@dev_f110_rules_extras//go:gen.bzl", "k8s_code_generator")
+load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "k8s_code_generator")
 
 k8s_code_generator(
     name = "gen",
@@ -11,4 +11,5 @@ k8s_code_generator(
     informerpackage = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/informers",
     listerpackage = "go.f110.dev/mono/controllers/harbor-project-operator/pkg/listers",
     no_gazelle = True,
+    version = "v0.18",
 )

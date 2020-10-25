@@ -26,6 +26,7 @@ SOFTWARE.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	harborv1alpha1 "go.f110.dev/mono/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
@@ -68,13 +69,13 @@ func NewFilteredHarborProjectInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.HarborV1alpha1().HarborProjects(namespace).List(options)
+				return client.HarborV1alpha1().HarborProjects(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.HarborV1alpha1().HarborProjects(namespace).Watch(options)
+				return client.HarborV1alpha1().HarborProjects(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&harborv1alpha1.HarborProject{},

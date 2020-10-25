@@ -26,6 +26,8 @@ SOFTWARE.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "go.f110.dev/mono/controllers/harbor-project-operator/pkg/api/harbor/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -46,7 +48,7 @@ var harborrobotaccountsResource = schema.GroupVersionResource{Group: "harbor.f11
 var harborrobotaccountsKind = schema.GroupVersionKind{Group: "harbor.f110.dev", Version: "v1alpha1", Kind: "HarborRobotAccount"}
 
 // Get takes name of the harborRobotAccount, and returns the corresponding harborRobotAccount object, and an error if there is any.
-func (c *FakeHarborRobotAccounts) Get(name string, options v1.GetOptions) (result *v1alpha1.HarborRobotAccount, err error) {
+func (c *FakeHarborRobotAccounts) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.HarborRobotAccount, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(harborrobotaccountsResource, c.ns, name), &v1alpha1.HarborRobotAccount{})
 
@@ -57,7 +59,7 @@ func (c *FakeHarborRobotAccounts) Get(name string, options v1.GetOptions) (resul
 }
 
 // List takes label and field selectors, and returns the list of HarborRobotAccounts that match those selectors.
-func (c *FakeHarborRobotAccounts) List(opts v1.ListOptions) (result *v1alpha1.HarborRobotAccountList, err error) {
+func (c *FakeHarborRobotAccounts) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.HarborRobotAccountList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(harborrobotaccountsResource, harborrobotaccountsKind, c.ns, opts), &v1alpha1.HarborRobotAccountList{})
 
@@ -79,14 +81,14 @@ func (c *FakeHarborRobotAccounts) List(opts v1.ListOptions) (result *v1alpha1.Ha
 }
 
 // Watch returns a watch.Interface that watches the requested harborRobotAccounts.
-func (c *FakeHarborRobotAccounts) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeHarborRobotAccounts) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(harborrobotaccountsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a harborRobotAccount and creates it.  Returns the server's representation of the harborRobotAccount, and an error, if there is any.
-func (c *FakeHarborRobotAccounts) Create(harborRobotAccount *v1alpha1.HarborRobotAccount) (result *v1alpha1.HarborRobotAccount, err error) {
+func (c *FakeHarborRobotAccounts) Create(ctx context.Context, harborRobotAccount *v1alpha1.HarborRobotAccount, opts v1.CreateOptions) (result *v1alpha1.HarborRobotAccount, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(harborrobotaccountsResource, c.ns, harborRobotAccount), &v1alpha1.HarborRobotAccount{})
 
@@ -97,7 +99,7 @@ func (c *FakeHarborRobotAccounts) Create(harborRobotAccount *v1alpha1.HarborRobo
 }
 
 // Update takes the representation of a harborRobotAccount and updates it. Returns the server's representation of the harborRobotAccount, and an error, if there is any.
-func (c *FakeHarborRobotAccounts) Update(harborRobotAccount *v1alpha1.HarborRobotAccount) (result *v1alpha1.HarborRobotAccount, err error) {
+func (c *FakeHarborRobotAccounts) Update(ctx context.Context, harborRobotAccount *v1alpha1.HarborRobotAccount, opts v1.UpdateOptions) (result *v1alpha1.HarborRobotAccount, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(harborrobotaccountsResource, c.ns, harborRobotAccount), &v1alpha1.HarborRobotAccount{})
 
@@ -109,7 +111,7 @@ func (c *FakeHarborRobotAccounts) Update(harborRobotAccount *v1alpha1.HarborRobo
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeHarborRobotAccounts) UpdateStatus(harborRobotAccount *v1alpha1.HarborRobotAccount) (*v1alpha1.HarborRobotAccount, error) {
+func (c *FakeHarborRobotAccounts) UpdateStatus(ctx context.Context, harborRobotAccount *v1alpha1.HarborRobotAccount, opts v1.UpdateOptions) (*v1alpha1.HarborRobotAccount, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(harborrobotaccountsResource, "status", c.ns, harborRobotAccount), &v1alpha1.HarborRobotAccount{})
 
@@ -120,7 +122,7 @@ func (c *FakeHarborRobotAccounts) UpdateStatus(harborRobotAccount *v1alpha1.Harb
 }
 
 // Delete takes name of the harborRobotAccount and deletes it. Returns an error if one occurs.
-func (c *FakeHarborRobotAccounts) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeHarborRobotAccounts) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(harborrobotaccountsResource, c.ns, name), &v1alpha1.HarborRobotAccount{})
 
@@ -128,15 +130,15 @@ func (c *FakeHarborRobotAccounts) Delete(name string, options *v1.DeleteOptions)
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeHarborRobotAccounts) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(harborrobotaccountsResource, c.ns, listOptions)
+func (c *FakeHarborRobotAccounts) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(harborrobotaccountsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.HarborRobotAccountList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched harborRobotAccount.
-func (c *FakeHarborRobotAccounts) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.HarborRobotAccount, err error) {
+func (c *FakeHarborRobotAccounts) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.HarborRobotAccount, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(harborrobotaccountsResource, c.ns, name, pt, data, subresources...), &v1alpha1.HarborRobotAccount{})
 
