@@ -103,7 +103,7 @@ func main() {
 					klog.Error(err)
 					return
 				}
-				robotAccountController, err := controller.NewHarborRobotAccountController(kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, dev)
+				robotAccountController, err := controller.NewHarborRobotAccountController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, dev)
 				if err != nil {
 					klog.Error(err)
 					return

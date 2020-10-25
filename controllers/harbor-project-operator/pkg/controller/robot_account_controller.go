@@ -55,12 +55,12 @@ type HarborRobotAccountController struct {
 // +kubebuilder:rbac:groups=*,resources=secrets,verbs=get;create;update;delete
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborRobotAccountController(coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborRobotAccountController, error) {
-	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(adminSecretName, metav1.GetOptions{})
+func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborRobotAccountController, error) {
+	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(harborName, metav1.GetOptions{})
+	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(ctx, harborName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -93,13 +93,13 @@ func NewHarborRobotAccountController(coreClient *kubernetes.Clientset, cfg *rest
 	return c, nil
 }
 
-func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error {
+func (c *HarborRobotAccountController) syncHarborRobotAccount(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}
 
-	currentHRA, err := c.hClient.HarborV1alpha1().HarborRobotAccounts(namespace).Get(name, metav1.GetOptions{})
+	currentHRA, err := c.hClient.HarborV1alpha1().HarborRobotAccounts(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		klog.V(4).Infof("%s/%s is not found", namespace, name)
 		return nil
@@ -111,14 +111,14 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	if harborRobotAccount.DeletionTimestamp.IsZero() {
 		if !containsString(harborRobotAccount.Finalizers, harborRobotAccountControllerFinalizerName) {
 			harborRobotAccount.ObjectMeta.Finalizers = append(harborRobotAccount.ObjectMeta.Finalizers, harborRobotAccountControllerFinalizerName)
-			_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(harborRobotAccount.Namespace).Update(harborRobotAccount)
+			_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(harborRobotAccount.Namespace).Update(ctx, harborRobotAccount, metav1.UpdateOptions{})
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	project, err := c.hClient.HarborV1alpha1().HarborProjects(harborRobotAccount.Spec.ProjectNamespace).Get(harborRobotAccount.Spec.ProjectName, metav1.GetOptions{})
+	project, err := c.hClient.HarborV1alpha1().HarborProjects(harborRobotAccount.Spec.ProjectNamespace).Get(ctx, harborRobotAccount.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		klog.Infof("%s/%s is not found", harborRobotAccount.Spec.ProjectNamespace, harborRobotAccount.Spec.ProjectName)
 		return nil
@@ -130,7 +130,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 
 	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
 	if c.runOutsideCluster {
-		pf, err := c.portForward(c.harborService, 8080)
+		pf, err := c.portForward(ctx, c.harborService, 8080)
 		if err != nil {
 			return err
 		}
@@ -146,7 +146,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 
 	// Object has been deleted
 	if !harborRobotAccount.DeletionTimestamp.IsZero() {
-		return c.finalizeHarborRobotAccount(harborClient, project.Status.ProjectId, harborRobotAccount)
+		return c.finalizeHarborRobotAccount(ctx, harborClient, project.Status.ProjectId, harborRobotAccount)
 	}
 
 	if harborRobotAccount.Status.Ready {
@@ -166,7 +166,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	}
 
 	if !created {
-		if err := c.createRobotAccount(harborClient, project, harborRobotAccount); err != nil {
+		if err := c.createRobotAccount(ctx, harborClient, project, harborRobotAccount); err != nil {
 			return err
 		}
 	}
@@ -184,7 +184,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	harborRobotAccount.Status.Ready = true
 
 	if !reflect.DeepEqual(harborRobotAccount.Status, currentHRA.Status) {
-		_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(currentHRA.Namespace).UpdateStatus(harborRobotAccount)
+		_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(currentHRA.Namespace).UpdateStatus(ctx, harborRobotAccount, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
@@ -193,7 +193,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(key string) error 
 	return nil
 }
 
-func (c *HarborRobotAccountController) createRobotAccount(client *harbor.Harbor, project *harborv1alpha1.HarborProject, robotAccount *harborv1alpha1.HarborRobotAccount) error {
+func (c *HarborRobotAccountController) createRobotAccount(ctx context.Context, client *harbor.Harbor, project *harborv1alpha1.HarborProject, robotAccount *harborv1alpha1.HarborRobotAccount) error {
 	newAccount, err := client.CreateRobotAccount(
 		project.Status.ProjectId,
 		&harbor.NewRobotAccountRequest{
@@ -225,7 +225,7 @@ func (c *HarborRobotAccountController) createRobotAccount(client *harbor.Harbor,
 			".dockerconfigjson": configBuf.Bytes(),
 		},
 	}
-	_, err = c.coreClient.CoreV1().Secrets(newSecret.Namespace).Create(newSecret)
+	_, err = c.coreClient.CoreV1().Secrets(newSecret.Namespace).Create(ctx, newSecret, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (c *HarborRobotAccountController) createRobotAccount(client *harbor.Harbor,
 	return nil
 }
 
-func (c *HarborRobotAccountController) finalizeHarborRobotAccount(client *harbor.Harbor, projectId int, ra *harborv1alpha1.HarborRobotAccount) error {
+func (c *HarborRobotAccountController) finalizeHarborRobotAccount(ctx context.Context, client *harbor.Harbor, projectId int, ra *harborv1alpha1.HarborRobotAccount) error {
 	if ra.Status.Ready == false {
 		klog.V(4).Infof("Skip finalize project because the project still not shipped: %s", ra.Name)
 		ra.Finalizers = removeString(ra.Finalizers, harborRobotAccountControllerFinalizerName)
@@ -245,13 +245,13 @@ func (c *HarborRobotAccountController) finalizeHarborRobotAccount(client *harbor
 	}
 
 	ra.Finalizers = removeString(ra.Finalizers, harborRobotAccountControllerFinalizerName)
-	_, err := c.hClient.HarborV1alpha1().HarborRobotAccounts(ra.Namespace).Update(ra)
+	_, err := c.hClient.HarborV1alpha1().HarborRobotAccounts(ra.Namespace).Update(ctx, ra, metav1.UpdateOptions{})
 	return err
 }
 
-func (c *HarborRobotAccountController) portForward(svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *HarborRobotAccountController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, err
 	}
@@ -328,10 +328,12 @@ func (c *HarborRobotAccountController) processNextItem() bool {
 		return false
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	err := func() error {
 		defer c.queue.Done(obj)
+		defer cancelFunc()
 
-		err := c.syncHarborRobotAccount(obj.(string))
+		err := c.syncHarborRobotAccount(ctx, obj.(string))
 		if err != nil {
 			c.queue.AddRateLimited(obj)
 			return err
