@@ -151,6 +151,10 @@ func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
 				if dErr.Code == transport.ManifestUnknownErrorCode {
 					return emptyHash, nil, nil
 				}
+				// Harbor will return "NOT_FOUND"
+				if dErr.Code == "NOT_FOUND" {
+					return emptyHash, nil, nil
+				}
 			}
 		}
 		return emptyHash, nil, xerrors.Errorf(": %w", err)

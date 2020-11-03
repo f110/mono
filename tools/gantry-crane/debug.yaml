@@ -1,4 +1,3 @@
-- src: docker.io/library/haproxy
-  dst: asia.gcr.io/fighting-falcon/haproxy
-  platform: ["amd64"]
-  tags: ["2.2.2"]
+- src: docker.io/mvance/unbound
+  dst: registry.f110.dev/mirror/unbound
+  tags: ["1.9.5"]
