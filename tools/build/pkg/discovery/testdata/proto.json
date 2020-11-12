@@ -146,6 +146,13 @@
           "explicitlySpecified": true,
           "booleanValue": true
         }, {
+          "name": "exclusive",
+          "type": "BOOLEAN",
+          "intValue": 1,
+          "stringValue": "true",
+          "explicitlySpecified": true,
+          "booleanValue": true
+        }, {
           "name": "generator_location",
           "type": "STRING",
           "stringValue": "",

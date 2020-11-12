@@ -75,7 +75,7 @@ func (m *MinIO) Put(ctx context.Context, name string, data *bytes.Buffer) error 
 }
 
 func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size int64) error {
-	mc, forwarder, err := m.newMinIOClient()
+	mc, forwarder, err := m.newMinIOClient(ctx)
 	if forwarder != nil {
 		defer forwarder.Close()
 	}
@@ -91,7 +91,7 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size in
 }
 
 func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
-	mc, forwarder, err := m.newMinIOClient()
+	mc, forwarder, err := m.newMinIOClient(ctx)
 	if forwarder != nil {
 		defer forwarder.Close()
 	}
@@ -112,7 +112,7 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 }
 
 func (m *MinIO) Delete(ctx context.Context, name string) error {
-	mc, forwarder, err := m.newMinIOClient()
+	mc, forwarder, err := m.newMinIOClient(ctx)
 	if forwarder != nil {
 		defer forwarder.Close()
 	}
@@ -136,8 +136,8 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 	}
 }
 
-func (m *MinIO) newMinIOClient() (*minio.Client, *portforward.PortForwarder, error) {
-	endpoint, forwarder, err := m.getMinIOEndpoint(m.name, m.namespace, m.port)
+func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *portforward.PortForwarder, error) {
+	endpoint, forwarder, err := m.getMinIOEndpoint(ctx, m.name, m.namespace, m.port)
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
@@ -149,15 +149,15 @@ func (m *MinIO) newMinIOClient() (*minio.Client, *portforward.PortForwarder, err
 	return mc, forwarder, nil
 }
 
-func (m *MinIO) getMinIOEndpoint(name, namespace string, port int) (string, *portforward.PortForwarder, error) {
+func (m *MinIO) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *portforward.PortForwarder, error) {
 	var forwarder *portforward.PortForwarder
 	endpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
 	if m.dev {
-		svc, err := m.client.CoreV1().Services(namespace).Get(fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
+		svc, err := m.client.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
 		if err != nil {
 			return "", nil, xerrors.Errorf(": %w", err)
 		}
-		forwarder, err = m.portForward(svc, int(svc.Spec.Ports[0].Port))
+		forwarder, err = m.portForward(ctx, svc, int(svc.Spec.Ports[0].Port))
 		if err != nil {
 			return "", nil, err
 		}
@@ -172,9 +172,9 @@ func (m *MinIO) getMinIOEndpoint(name, namespace string, port int) (string, *por
 	return endpoint, forwarder, nil
 }
 
-func (m *MinIO) portForward(svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (m *MinIO) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := m.client.CoreV1().Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := m.client.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, err
 	}

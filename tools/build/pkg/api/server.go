@@ -193,10 +193,7 @@ func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEve
 		logger.Log.Warn("Could not get trusted user", zap.Error(err), zap.Int64("sender.id", event.Sender.GetID()))
 		return false, err
 	}
-	if users == nil {
-		return false, nil
-	}
-	if len(users) == 1 {
+	if users != nil && len(users) == 1 {
 		return true, nil
 	}
 

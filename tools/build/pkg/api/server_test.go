@@ -65,7 +65,7 @@ func TestGithubWebHook(t *testing.T) {
 
 			builder := &MockBuilder{}
 
-			s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
+			s, err := NewApi("", builder, nil, dao.NewOptions(db), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -93,8 +93,8 @@ func TestGithubWebHook(t *testing.T) {
 			}}
 			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
 
-			mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnError(sql.ErrNoRows)
-			mock.ExpectQuery("SELECT").WithArgs("f110/ops", 28).WillReturnError(sql.ErrNoRows)
+			mock.ExpectQuery("select").WithArgs(2178441).WillReturnError(sql.ErrNoRows)
+			mock.ExpectQuery(`select .+ from permit_pull_request`).WithArgs("f110/ops", 28).WillReturnError(sql.ErrNoRows)
 
 			s.handleWebHook(w, req)
 
@@ -121,21 +121,28 @@ func TestGithubWebHook(t *testing.T) {
 			defer db.Close()
 
 			// TrustedUser
-			mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
+			mock.ExpectQuery("select").WithArgs(2178441).WillReturnRows(
+				sqlmock.NewRows([]string{"id", "github_id", "username", "created_at", "updated_at"}).AddRow(1, 1, "octocat", time.Now(), nil),
+			)
 			// SourceRepository
-			mock.ExpectQuery("SELECT").WithArgs("https://github.com/f110/ops").
+			mock.ExpectQuery("select").WithArgs("https://github.com/f110/ops").
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
+					sqlmock.NewRows(
+						[]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"},
+					).AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), nil),
 				)
 			// Job
-			mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+			mock.ExpectQuery("select .+ from job").WithArgs(1).
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+					sqlmock.NewRows(
+						[]string{"id", "repository_id", "command", "target", "active", "all_revision", "github_status",
+							"cpu_limit", "memory_limit", "exclusive", "sync", "config_name", "bazel_version", "created_at", "updated_at"},
+					).AddRow(1, 1, "test", "//...", 1, 1, 0, 1, 1, 1, 1, "test", "3.5.0", time.Now(), time.Now()),
 				)
 			// SourceRepository
 			mock.ExpectQuery("SELECT").WithArgs(1).
 				WillReturnRows(
-					sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
+					sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), nil),
 				)
 
 			s.handleWebHook(w, req)
@@ -153,24 +160,33 @@ func TestGithubWebHook(t *testing.T) {
 			db, mock, s, builder, w, req := setup(t)
 			defer db.Close()
 
+			mockTransport := &MockTransport{res: &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       ioutil.NopCloser(strings.NewReader("{}")),
+			}}
+			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
+
 			// TrustedUser will not return any row.
-			mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnError(sql.ErrNoRows)
-			// PermitPullRequest will return a row.
-			mock.ExpectQuery("SELECT").WithArgs("f110/ops", 28).WillReturnRows(sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil))
+			mock.ExpectQuery("select").WithArgs(2178441).WillReturnError(sql.ErrNoRows)
+			mock.ExpectQuery(`select .+ from permit_pull_request`).WithArgs("f110/ops", 28).WillReturnRows(
+				sqlmock.NewRows([]string{"id", "repository", "number", "created_at", "updated_at"}).
+					AddRow(1, "f110/ops", 28, time.Now(), time.Now()),
+			)
 			// SourceRepository will return a row
-			mock.ExpectQuery("SELECT").WithArgs("https://github.com/f110/ops").
+			mock.ExpectQuery("select").WithArgs("https://github.com/f110/ops").
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
+					sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 1, time.Now(), nil),
 				)
 			// Job will return a row
-			mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+			mock.ExpectQuery(`select .+ from job`).WithArgs(1).
 				WillReturnRows(
-					sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+					sqlmock.NewRows([]string{"id", "repository_id", "command", "target", "active", "all_revision", "github_status", "cpu_limit", "memory_limit", "exclusive", "sync", "config_name", "bazel_version", "created_at", "updated_at"}).
+						AddRow(1, 1, "test", "//...", 1, 1, 0, "100m", "1024Mi", 1, 1, "test", "3.5.0", time.Now(), time.Now()),
 				)
-			mock.ExpectQuery("SELECT").WithArgs(1).
-				WillReturnRows(
-					sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
-				)
+			mock.ExpectQuery(`SELECT .+ FROM .source_repository`).WithArgs(1).WillReturnRows(
+				sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).
+					AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), time.Now()),
+			)
 
 			s.handleWebHook(w, req)
 
@@ -191,24 +207,27 @@ func TestGithubWebHook(t *testing.T) {
 		}
 		defer db.Close()
 
-		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
-		mock.ExpectQuery("SELECT").WithArgs("https://github.com/f110/ops").
+		mock.ExpectQuery("select").WithArgs(2178441).WillReturnRows(
+			sqlmock.NewRows([]string{"id", "github_id", "username", "created_at", "updated_at"}).AddRow(1, 2178441, "octocat", time.Now(), nil))
+		// List Repository by url
+		mock.ExpectQuery("select").WithArgs("https://github.com/f110/ops").
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "clone_url", "name", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops.git", "ops", time.Now(), nil),
+				sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), nil),
 			)
 		// Job
-		mock.ExpectQuery("SELECT .+ FROM `job`").WithArgs(1).
+		mock.ExpectQuery("select .+ from job").WithArgs(1).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "command", "target", "active", "all_revision", "github_status"}).AddRow(1, "test", "//...", 1, 1, 0),
+				sqlmock.NewRows([]string{"id", "repository_id", "command", "target", "active", "all_revision", "github_status", "cpu_limit", "memory_limit", "exclusive", "sync", "config_name", "bazel_version", "created_at", "updated_at"}).
+					AddRow(1, 1, "test", "//...", 1, 1, 0, "100m", "1024Mi", 1, 1, "test", "3.5.0", time.Now(), time.Now()),
 			)
 		mock.ExpectQuery("SELECT").WithArgs(1).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"url", "clone_url", "name", "created_at", "updated_at"}).AddRow("https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", time.Now(), nil),
+				sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 1, time.Now(), nil),
 			)
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
+		s, err := NewApi("", builder, nil, dao.NewOptions(db), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -238,16 +257,16 @@ func TestGithubWebHook(t *testing.T) {
 		defer db.Close()
 
 		// PermitPullRequest
-		mock.ExpectQuery("SELECT .+ FROM `permit_pull_request`").WithArgs("f110/sandbox", 2).
+		mock.ExpectQuery("select .+ from permit_pull_request").WithArgs("f110/sandbox", 2).
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).AddRow(1, time.Now(), nil),
+				sqlmock.NewRows([]string{"id", "repository", "number", "created_at", "updated_at"}).AddRow(1, "f110/sandbox", 2, time.Now(), nil),
 			)
 		// Delete PermitPullRequest
 		mock.ExpectExec("DELETE FROM `permit_pull_request`").WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
+		s, err := NewApi("", builder, nil, dao.NewOptions(db), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -276,17 +295,35 @@ func TestGithubWebHook(t *testing.T) {
 		defer db.Close()
 
 		// TrustedUser will return a row.
-		mock.ExpectQuery("SELECT").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "created_at", "updated_at"}).AddRow(1, "octocat", time.Now(), nil))
+		mock.ExpectQuery("select").WithArgs(2178441).WillReturnRows(sqlmock.NewRows([]string{"id", "github_id", "username", "created_at", "updated_at"}).AddRow(1, 1, "octocat", time.Now(), nil))
 		// Insert to PermitPullRequest
 		mock.ExpectExec("INSERT INTO `permit_pull_request`").WillReturnResult(sqlmock.NewResult(1, 1))
+		// List SourceRepository by url
+		mock.ExpectQuery(`select .+ from source_repository`).WithArgs("https://github.com/f110/ops").WillReturnRows(
+			sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).
+				AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), time.Now()),
+		)
+		// List job by repository_id
+		mock.ExpectQuery(`select .+ from job`).WithArgs(1).WillReturnRows(
+			sqlmock.NewRows([]string{"id", "repository_id", "command", "target", "active", "all_revision", "github_status", "cpu_limit", "memory_limit", "exclusive", "sync", "config_name", "bazel_version", "created_at", "updated_at"}).
+				AddRow(1, 1, "test", "//...", 1, 1, 1, "1000m", "1024Mi", 1, 1, "test", "3.5.0", time.Now(), time.Now()),
+		)
+		mock.ExpectQuery(`SELECT .+ FROM .source_repository`).WithArgs(1).WillReturnRows(
+			sqlmock.NewRows([]string{"id", "url", "clone_url", "name", "private", "created_at", "updated_at"}).
+				AddRow(1, "https://github.com/f110/ops", "https://github.com/f110/ops.git", "ops", 0, time.Now(), time.Now()),
+		)
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, nil, dao.NewOptions(db), 0, 0, "")
+		mockTransport := &MockTransport{res: &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       ioutil.NopCloser(strings.NewReader("{}")),
+		}}
+
+		s, err := NewApi("", builder, nil, dao.NewOptions(db), github.NewClient(&http.Client{Transport: mockTransport}))
 		if err != nil {
 			t.Fatal(err)
 		}
-		s.githubClient = &github.Client{}
 		body, err := ioutil.ReadFile("testdata/issue_comment.json")
 		if err != nil {
 			t.Fatal(err)
