@@ -10,6 +10,7 @@ go_library(
         "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/discovery",
+        "//tools/build/pkg/job",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",
         "//vendor/go.uber.org/zap",

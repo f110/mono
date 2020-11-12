@@ -112,6 +112,7 @@ type Job struct {
 	Sync         bool
 	ConfigName   string
 	BazelVersion string
+	JobType      string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 
@@ -144,6 +145,7 @@ func (e *Job) IsChanged() bool {
 		e.Sync != e.mark.Sync ||
 		e.ConfigName != e.mark.ConfigName ||
 		e.BazelVersion != e.mark.BazelVersion ||
+		e.JobType != e.mark.JobType ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -189,6 +191,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	if e.BazelVersion != e.mark.BazelVersion {
 		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
 	}
+	if e.JobType != e.mark.JobType {
+		res = append(res, ddl.Column{Name: "job_type", Value: e.JobType})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -218,6 +223,7 @@ func (e *Job) Copy() *Job {
 		Sync:         e.Sync,
 		ConfigName:   e.ConfigName,
 		BazelVersion: e.BazelVersion,
+		JobType:      e.JobType,
 		CreatedAt:    e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

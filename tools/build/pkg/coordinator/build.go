@@ -241,7 +241,7 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 		}
 	}()
 
-	if err := b.buildJob(job, task); err != nil {
+	if err := b.buildJob(ctx, job, task); err != nil {
 		if errors.Is(err, ErrOtherTaskIsRunning) {
 			logger.Log.Info("Enqueue the task", zap.Int32("task.id", task.Id))
 			b.taskQueue.Enqueue(job, task)
@@ -266,6 +266,9 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return nil
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
 	taskId := job.Labels[labelKeyTaskId]
 	task, err := b.getTask(taskId)
 	if err != nil {
@@ -279,7 +282,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	if task.FinishedAt != nil {
 		logger.Log.Debug("task is already finished", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		if job.DeletionTimestamp.IsZero() {
-			if err := b.teardownJob(job); err != nil {
+			if err := b.teardownJob(ctx, job); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}
@@ -307,7 +310,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		switch v.Type {
 		case batchv1.JobComplete:
 			if task.FinishedAt == nil {
-				if err := b.postProcess(job, task, true); err != nil {
+				if err := b.postProcess(ctx, job, task, true); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}
@@ -316,7 +319,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			logger.Log.Info("Job was finished successfully", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		case batchv1.JobFailed:
 			if task.FinishedAt == nil {
-				if err := b.postProcess(job, task, false); err != nil {
+				if err := b.postProcess(ctx, job, task, false); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}
@@ -325,7 +328,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		}
 	}
 	if task.FinishedAt != nil {
-		if err := b.teardownJob(job); err != nil {
+		if err := b.teardownJob(ctx, job); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -336,7 +339,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 
 	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
 		logger.Log.Info("Dequeue the task", zap.Int32("task.id", followTask.Id))
-		if err := b.buildJob(task.Job, followTask); err != nil {
+		if err := b.buildJob(ctx, task.Job, followTask); err != nil {
 			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job.id", task.JobId), zap.Int32("task.id", task.Id))
 			return nil
 		}
@@ -348,16 +351,16 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	return nil
 }
 
-func (b *BazelBuilder) teardownJob(job *batchv1.Job) error {
-	if err := b.client.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{}); err != nil {
+func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error {
+	if err := b.client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	pods, err := b.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	pods, err := b.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	for _, v := range pods.Items {
-		if err := b.client.CoreV1().Pods(v.Namespace).Delete(v.Name, &metav1.DeleteOptions{}); err != nil {
+		if err := b.client.CoreV1().Pods(v.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{}); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -378,7 +381,7 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 	return task, nil
 }
 
-func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
+func (b *BazelBuilder) buildJob(ctx context.Context, job *database.Job, task *database.Task) error {
 	if job.Exclusive {
 		if b.isRunningJob(job) {
 			return xerrors.Errorf(": %w", ErrOtherTaskIsRunning)
@@ -386,7 +389,7 @@ func (b *BazelBuilder) buildJob(job *database.Job, task *database.Task) error {
 	}
 
 	buildTemplate := b.buildJobTemplate(job, task)
-	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(buildTemplate)
+	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
 	}
@@ -424,13 +427,13 @@ func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
 	return false
 }
 
-func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, success bool) error {
+func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *database.Task, success bool) error {
 	j, err := b.dao.Job.Select(context.Background(), task.JobId)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	pods, err := b.client.CoreV1().Pods(b.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	pods, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -440,7 +443,7 @@ func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, succes
 
 	buf := new(bytes.Buffer)
 	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
-	rawLog, err := logReq.DoRaw()
+	rawLog, err := logReq.DoRaw(ctx)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -448,7 +451,7 @@ func (b *BazelBuilder) postProcess(job *batchv1.Job, task *database.Task, succes
 	buf.Write(rawLog)
 
 	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
-	rawLog, err = logReq.DoRaw()
+	rawLog, err = logReq.DoRaw(ctx)
 	buf.WriteString("\n")
 	buf.WriteString("----- main -----\n")
 	buf.Write(rawLog)

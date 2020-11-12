@@ -30,6 +30,7 @@ CREATE TABLE `job` (
 	`sync` TINYINT(1) NOT NULL,
 	`config_name` VARCHAR(255) NOT NULL,
 	`bazel_version` VARCHAR(255) NOT NULL,
+	`job_type` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)

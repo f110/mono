@@ -193,7 +193,7 @@ func (d *Discover) FindOut(repository *database.SourceRepository, revision strin
 		}
 	}
 
-	if err := d.buildJob(repository, revision, bazelVersion); err != nil {
+	if err := d.buildJob(context.TODO(), repository, revision, bazelVersion); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	logger.Log.Info("Start discovery job", zap.String("repo", repository.Name), zap.String("revision", revision), zap.String("bazel_version", bazelVersion))
@@ -206,6 +206,9 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		logger.Log.Debug("Job has been deleted", zap.String("job.name", job.Name))
 		return nil
 	}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
 
 	var repoId int32
 	if v, ok := job.Labels[labelKeyRepositoryId]; !ok {
@@ -229,7 +232,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				return nil
 			}
 
-			if err := d.teardownJob(job); err != nil {
+			if err := d.teardownJob(ctx, job); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 			jobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
@@ -249,7 +252,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		return nil
 	}
 
-	pods, err := d.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	pods, err := d.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -257,7 +260,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		return xerrors.New("Target pod not found or found more than 1")
 	}
 	logReq := d.client.CoreV1().Pods(pods.Items[0].Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
-	res := logReq.Do()
+	res := logReq.Do(ctx)
 	rawLog, err := res.Raw()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -297,6 +300,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 			v.ConfigName = j.ConfigName
 			v.BazelVersion = bazelVersion
 			v.Sync = true
+			v.JobType = j.Type
 		} else {
 			newJobs = append(newJobs, &database.Job{
 				Command:      j.Command,
@@ -311,6 +315,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				ConfigName:   j.ConfigName,
 				BazelVersion: bazelVersion,
 				Sync:         true,
+				JobType:      j.Type,
 			})
 		}
 	}
@@ -326,13 +331,13 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		}
 	}
 
-	if err := d.teardownJob(job); err != nil {
+	if err := d.teardownJob(ctx, job); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	if rev, ok := job.ObjectMeta.Labels[labelKeyRevision]; ok && rev != "" {
 		// Trigger after task.
-		if err := d.triggerTask(job, rev); err != nil {
+		if err := d.triggerTask(ctx, job, rev); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -340,7 +345,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 	return nil
 }
 
-func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
+func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision string) error {
 	repoId, ok := job.ObjectMeta.Labels[labelKeyRepositoryId]
 	if !ok {
 		return nil
@@ -350,11 +355,11 @@ func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	repo, err := d.dao.Repository.Select(context.Background(), int32(id))
+	repo, err := d.dao.Repository.Select(ctx, int32(id))
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	jobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repo.Id)
+	jobs, err := d.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
 	if err != nil {
 		logger.Log.Warn("Could not get jobs", zap.Error(err))
 		return xerrors.Errorf(": %w", err)
@@ -368,7 +373,7 @@ func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
 			continue
 		}
 
-		if _, err := d.builder.Build(context.Background(), v, revision, v.Command, v.Target, "push"); err != nil {
+		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Target, "push"); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
@@ -377,18 +382,18 @@ func (d *Discover) triggerTask(job *batchv1.Job, revision string) error {
 	return nil
 }
 
-func (d *Discover) teardownJob(job *batchv1.Job) error {
-	err := d.client.BatchV1().Jobs(job.Namespace).Delete(job.Name, &metav1.DeleteOptions{})
+func (d *Discover) teardownJob(ctx context.Context, job *batchv1.Job) error {
+	err := d.client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	pods, err := d.client.CoreV1().Pods(job.Namespace).List(metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	pods, err := d.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	for _, v := range pods.Items {
-		if err := d.client.CoreV1().Pods(v.Namespace).Delete(v.Name, &metav1.DeleteOptions{}); err != nil {
+		if err := d.client.CoreV1().Pods(v.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{}); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -396,9 +401,9 @@ func (d *Discover) teardownJob(job *batchv1.Job) error {
 	return nil
 }
 
-func (d *Discover) buildJob(repository *database.SourceRepository, revision, bazelVersion string) error {
+func (d *Discover) buildJob(ctx context.Context, repository *database.SourceRepository, revision, bazelVersion string) error {
 	j := d.jobTemplate(repository, revision, bazelVersion)
-	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(j)
+	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(ctx, j, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

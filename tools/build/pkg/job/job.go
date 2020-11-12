@@ -1,5 +1,10 @@
 package job
 
+const (
+	TypeCommit  = "commit"
+	TypeRelease = "release"
+)
+
 type Job struct {
 	Package      string `attr:"package"`
 	Target       string `attr:"target"`
@@ -11,4 +16,5 @@ type Job struct {
 	MemoryLimit  string `attr:"memory_limit"`
 	Exclusive    bool   `attr:"exclusive"`
 	ConfigName   string `attr:"config_name"`
+	Type         string `attr:"type"`
 }

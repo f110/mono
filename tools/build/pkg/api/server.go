@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,6 +22,7 @@ import (
 	"go.f110.dev/mono/tools/build/pkg/database"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"
 	"go.f110.dev/mono/tools/build/pkg/discovery"
+	"go.f110.dev/mono/tools/build/pkg/job"
 )
 
 const (
@@ -184,6 +186,10 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 		if err := a.issueComment(req.Context(), event); err != nil {
 			return
 		}
+	case *github.ReleaseEvent:
+		if err := a.githubRelease(req.Context(), event); err != nil {
+			return
+		}
 	}
 }
 
@@ -225,7 +231,7 @@ func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
 }
 
 func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) error {
-	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), "push"); err != nil {
+	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), job.TypeCommit, "push"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -233,7 +239,7 @@ func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) err
 }
 
 func (a *Api) buildByPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
-	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.PullRequest.Head.GetSHA(), "pull_request"); err != nil {
+	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.PullRequest.Head.GetSHA(), job.TypeCommit, "pull_request"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -251,13 +257,13 @@ func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string
 		return xerrors.New("could not get pr")
 	}
 
-	if err := a.build(ctx, repoUrl, pr.GetHead().GetSHA(), "pr"); err != nil {
+	if err := a.build(ctx, repoUrl, pr.GetHead().GetSHA(), job.TypeCommit, "pr"); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
+func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string) error {
 	repos, err := a.dao.Repository.ListByUrl(ctx, repoUrl)
 	if err != nil {
 		logger.Log.Info("Repository not found or could not get", zap.Error(err))
@@ -279,6 +285,10 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, via string) error {
 		switch v.Command {
 		case "build", "test":
 		default:
+			continue
+		}
+
+		if v.JobType != "" && v.JobType != jobType {
 			continue
 		}
 
@@ -334,6 +344,21 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 			}
 		}
 	}
+	return nil
+}
+
+func (a *Api) githubRelease(ctx context.Context, event *github.ReleaseEvent) error {
+	switch event.GetAction() {
+	case "published":
+		ref, _, err := a.githubClient.Git.GetRef(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), fmt.Sprintf("tags/%s", event.Release.GetTagName()))
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := a.build(ctx, event.Repo.GetHTMLURL(), ref.Object.GetSHA(), job.TypeRelease, "release"); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
 	return nil
 }
 
