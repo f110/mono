@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "unifibackup_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/tools/unifibackup/cmd/unifibackup",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//lib/logger",
+        "//vendor/cloud.google.com/go/storage",
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/google.golang.org/api/option",
+    ],
+)
+
+go_binary(
+    name = "unifibackup",
+    embed = [":unifibackup_lib"],
+    visibility = ["//visibility:public"],
+)

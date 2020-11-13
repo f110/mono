@@ -9,6 +9,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-containerregistry v0.1.4
 	github.com/google/go-github/v29 v29.0.3
