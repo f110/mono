@@ -117,6 +117,13 @@ container_pull(
     repository = "distroless/base",
 )
 
+container_pull(
+    name = "com_google_distroless_base_arm64",
+    digest = "sha256:c60be29941a0be6f748c8cf2e42832f95e9b73276042d3c44212af7cf4a152c9",
+    registry = "gcr.io",
+    repository = "distroless/base",
+)
+
 http_archive(
     name = "com_github_migrate_migrate",
     build_file_content = "filegroup(name = \"bin\", srcs = [\"migrate.linux-amd64\"], visibility = [\"//visibility:public\"])",
