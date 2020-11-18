@@ -11,9 +11,6 @@ cloud.google.com/go/internal/version
 cloud.google.com/go/storage
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/DATA-DOG/go-sqlmock v1.4.1
-## explicit
-github.com/DATA-DOG/go-sqlmock
 # github.com/aws/aws-sdk-go v1.31.6
 ## explicit
 github.com/aws/aws-sdk-go/aws
@@ -109,6 +106,8 @@ github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
+# github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+github.com/golang/glog
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.4.2
@@ -170,7 +169,7 @@ github.com/inconshreveable/mousetrap
 github.com/jbenet/go-context/io
 # github.com/jmespath/go-jmespath v0.3.0
 github.com/jmespath/go-jmespath
-# github.com/json-iterator/go v1.1.8
+# github.com/json-iterator/go v1.1.9
 github.com/json-iterator/go
 # github.com/jstemmer/go-junit-report v0.9.1
 github.com/jstemmer/go-junit-report
@@ -239,6 +238,7 @@ github.com/src-d/gcfg/types
 # github.com/stretchr/testify v1.5.1
 ## explicit
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # go.etcd.io/etcd v0.5.0-alpha.5.0.20200425165423-262c93980547
@@ -263,12 +263,13 @@ go.etcd.io/etcd/raft/quorum
 go.etcd.io/etcd/raft/raftpb
 go.etcd.io/etcd/raft/tracker
 go.etcd.io/etcd/version
-# go.f110.dev/protoc-ddl v0.0.0-20200709144224-1b69c3e6be43
+# go.f110.dev/protoc-ddl v0.0.0-20201117171104-09648481f0cc
 ## explicit
 go.f110.dev/protoc-ddl
 go.f110.dev/protoc-ddl/internal/generator
 go.f110.dev/protoc-ddl/internal/migrate
 go.f110.dev/protoc-ddl/internal/schema
+go.f110.dev/protoc-ddl/mock
 go.f110.dev/protoc-ddl/probe
 # go.opencensus.io v0.22.3
 go.opencensus.io
@@ -348,12 +349,12 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20200523222454-059865788121
+# golang.org/x/sys v0.0.0-20200821140526-fda516888d29
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.3
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
@@ -502,7 +503,7 @@ google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/pluginpb
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/ini.v1 v1.42.0
+# gopkg.in/ini.v1 v1.51.0
 gopkg.in/ini.v1
 # gopkg.in/src-d/go-billy.v4 v4.3.2
 gopkg.in/src-d/go-billy.v4
@@ -864,4 +865,16 @@ software.sslmate.com/src/go-pkcs12
 software.sslmate.com/src/go-pkcs12/internal/rc2
 # sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4
 sourcegraph.com/sqs/pbtypes
+# vitess.io/vitess v0.0.0-20200822151057-19437510f65b
+vitess.io/vitess/go/bytes2
+vitess.io/vitess/go/hack
+vitess.io/vitess/go/sqltypes
+vitess.io/vitess/go/vt/log
+vitess.io/vitess/go/vt/proto/query
+vitess.io/vitess/go/vt/proto/topodata
+vitess.io/vitess/go/vt/proto/vtrpc
+vitess.io/vitess/go/vt/proto/vttime
+vitess.io/vitess/go/vt/sqlparser
+vitess.io/vitess/go/vt/vterrors
+vitess.io/vitess/go/vt/vtgate/evalengine
 # github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.1.0

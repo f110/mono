@@ -5,11 +5,11 @@ import (
 )
 
 type Options struct {
-	Repository        *SourceRepository
-	Job               *Job
-	Task              *Task
-	TrustedUser       *TrustedUser
-	PermitPullRequest *PermitPullRequest
+	Repository        SourceRepositoryInterface
+	Job               JobInterface
+	Task              TaskInterface
+	TrustedUser       TrustedUserInterface
+	PermitPullRequest PermitPullRequestInterface
 
 	RawConnection *sql.DB
 }

@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	cloud.google.com/go/storage v1.6.0
-	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/aws/aws-sdk-go v1.31.6
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
@@ -25,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200425165423-262c93980547
-	go.f110.dev/protoc-ddl v0.0.0-20200709144224-1b69c3e6be43
+	go.f110.dev/protoc-ddl v0.0.0-20201117171104-09648481f0cc
 	go.uber.org/zap v1.14.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1

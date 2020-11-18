@@ -27,8 +27,9 @@ go_test(
         "//lib/logger",
         "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
-        "//vendor/github.com/DATA-DOG/go-sqlmock",
+        "//tools/build/pkg/database/dao/daotest",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
     ],
 )

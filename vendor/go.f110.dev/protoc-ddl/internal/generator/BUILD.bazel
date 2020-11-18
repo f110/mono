@@ -3,8 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "generator",
     srcs = [
+        "buffer.go",
+        "dao.go",
         "entity.go",
-        "generator.go",
+        "mock.go",
         "mysql.go",
     ],
     importmap = "go.f110.dev/mono/vendor/go.f110.dev/protoc-ddl/internal/generator",
@@ -13,5 +15,6 @@ go_library(
     deps = [
         "//vendor/github.com/golang/protobuf/protoc-gen-go/descriptor",
         "//vendor/go.f110.dev/protoc-ddl/internal/schema",
+        "//vendor/vitess.io/vitess/go/vt/sqlparser",
     ],
 )

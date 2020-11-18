@@ -29,15 +29,14 @@ var SchemaVersionTable *schema.Message
 
 func init() {
 	primaryKey := &schema.Field{Name: "sha256", Type: "TYPE_STRING", Size: 64}
-	SchemaVersionTable = &schema.Message{
-		TableName: "schema_version",
-		Fields: schema.NewFields([]*schema.Field{
-			primaryKey,
-			{Name: "start_at", Type: schema.TimestampType},
-			{Name: "finished_at", Type: schema.TimestampType, Null: true},
-		}),
-		PrimaryKeys: []*schema.Field{primaryKey},
-	}
+	SchemaVersionTable = schema.NewMessage(nil, nil)
+	SchemaVersionTable.TableName = "schema_version"
+	SchemaVersionTable.Fields = schema.NewFields([]*schema.Field{
+		primaryKey,
+		{Name: "start_at", Type: schema.TimestampType},
+		{Name: "finished_at", Type: schema.TimestampType, Null: true},
+	})
+	SchemaVersionTable.PrimaryKeys = []*schema.Field{primaryKey}
 }
 
 type Migration struct {

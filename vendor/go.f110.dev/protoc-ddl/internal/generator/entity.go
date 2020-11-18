@@ -1,11 +1,14 @@
 package generator
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"go/format"
 	"log"
+	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -224,6 +227,22 @@ func (GoEntityGenerator) Generate(buf *bytes.Buffer, fileOpt *descriptor.FileOpt
 			src.WriteString("}\n")
 		})
 		src.WriteRune('\n')
+		rel := make([]*schema.Field, 0)
+		for f := range m.Relations {
+			if f.Virtual {
+				continue
+			}
+			rel = append(rel, f)
+		}
+		sort.Slice(rel, func(i, j int) bool {
+			return rel[i].Name < rel[j].Name
+		})
+		for _, f := range rel {
+			src.WriteString(fmt.Sprintf("if e.%s != nil {\n", schema.ToCamel(f.Name)))
+			src.WriteString(fmt.Sprintf("n.%s = e.%s.Copy()\n", schema.ToCamel(f.Name), schema.ToCamel(f.Name)))
+			src.WriteString("}\n")
+		}
+		src.WriteRune('\n')
 		src.WriteString("return n\n")
 		src.WriteString("}\n")
 	})
@@ -232,7 +251,12 @@ func (GoEntityGenerator) Generate(buf *bytes.Buffer, fileOpt *descriptor.FileOpt
 	buf.WriteString(fmt.Sprintf("// protoc-gen-entity: %s\n", GoEntityGeneratorVersion))
 	b, err := format.Source(src.Bytes())
 	if err != nil {
-		log.Print(src.String())
+		r := bufio.NewScanner(strings.NewReader(src.String()))
+		line := 1
+		for r.Scan() {
+			fmt.Fprintf(os.Stderr, "%d: %s\n", line, r.Text())
+			line++
+		}
 		log.Print(err)
 		return
 	}

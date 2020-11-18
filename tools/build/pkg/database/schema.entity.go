@@ -231,6 +231,10 @@ func (e *Job) Copy() *Job {
 		n.UpdatedAt = &v
 	}
 
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
+	}
+
 	return n
 }
 
@@ -361,6 +365,10 @@ func (e *Task) Copy() *Task {
 	if e.UpdatedAt != nil {
 		v := *e.UpdatedAt
 		n.UpdatedAt = &v
+	}
+
+	if e.Job != nil {
+		n.Job = e.Job.Copy()
 	}
 
 	return n

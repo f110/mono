@@ -58,12 +58,6 @@ http_archive(
     ],
 )
 
-#git_repository(
-#    name = "dev_f110_rules_k8s_controller",
-#    commit = "5cf780c9f910b725478c7312267a3ce4fe58e00e",
-#    remote = "https://github.com/f110/rules_k8s_controller",
-#)
-
 git_repository(
     name = "dev_f110_rules_extras",
     commit = "1868f41788b5c945ddfed34879ff96b02da17c2c",
@@ -72,7 +66,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_protoc_ddl",
-    commit = "d606f577d82631af5b073e03ddddde32f054aa66",
+    commit = "4054f421982d90fc7702fffde02071dcbeefad06",
     remote = "https://github.com/f110/protoc-ddl",
 )
 
