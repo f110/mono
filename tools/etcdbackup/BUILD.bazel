@@ -12,11 +12,10 @@ pkg_tar(
 
 container_image(
     name = "image",
-#    base = "@com_google_distroless_base//image",
     base = select({
         "@io_bazel_rules_go//go/platform:linux_amd64": "@com_google_distroless_base//image",
         "@io_bazel_rules_go//go/platform:linux_arm64": "@com_google_distroless_base_arm64//image",
-        "//conditions:default":"@com_google_distroless_base//image",
+        "//conditions:default": "@com_google_distroless_base//image",
     }),
     entrypoint = ["/usr/local/bin/etcdbackup"],
     tars = [":bin"],
