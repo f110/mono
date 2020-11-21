@@ -68,6 +68,7 @@ type SourceRepository struct {
 }
 
 type SourceRepositoryInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.SourceRepository, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error)
 	ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error)
@@ -99,6 +100,7 @@ func (d *SourceRepository) Tx(ctx context.Context, fn func(tx *sql.Tx) error) er
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+
 }
 
 func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.SourceRepository, error) {
@@ -111,6 +113,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 	v.ResetMark()
 	return v, nil
+
 }
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
@@ -142,6 +145,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	}
 
 	return res, nil
+
 }
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
@@ -174,6 +178,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	}
 
 	return res, nil
+
 }
 
 func (d *SourceRepository) Create(ctx context.Context, sourceRepository *database.SourceRepository, opt ...ExecOption) (*database.SourceRepository, error) {
@@ -209,6 +214,7 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 
 	sourceRepository.ResetMark()
 	return sourceRepository, nil
+
 }
 
 func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
@@ -232,6 +238,7 @@ func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...ExecOpti
 	}
 
 	return nil
+
 }
 
 func (d *SourceRepository) Update(ctx context.Context, sourceRepository *database.SourceRepository, opt ...ExecOption) error {
@@ -274,6 +281,7 @@ func (d *SourceRepository) Update(ctx context.Context, sourceRepository *databas
 
 	sourceRepository.ResetMark()
 	return nil
+
 }
 
 type Job struct {
@@ -283,6 +291,7 @@ type Job struct {
 }
 
 type JobInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.Job, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error)
 	ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error)
@@ -315,6 +324,7 @@ func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+
 }
 
 func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
@@ -335,6 +345,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 	v.ResetMark()
 	return v, nil
+
 }
 
 func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
@@ -378,6 +389,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 	}
 
 	return res, nil
+
 }
 
 func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
@@ -422,6 +434,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 	}
 
 	return res, nil
+
 }
 
 func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error) {
@@ -457,6 +470,7 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 
 	job.ResetMark()
 	return job, nil
+
 }
 
 func (d *Job) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
@@ -480,6 +494,7 @@ func (d *Job) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	}
 
 	return nil
+
 }
 
 func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) error {
@@ -522,6 +537,7 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) 
 
 	job.ResetMark()
 	return nil
+
 }
 
 type Task struct {
@@ -531,6 +547,7 @@ type Task struct {
 }
 
 type TaskInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.Task, error)
 	ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error)
 	ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
@@ -563,6 +580,7 @@ func (d *Task) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+
 }
 
 func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
@@ -583,6 +601,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 	v.ResetMark()
 	return v, nil
+
 }
 
 func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
@@ -627,6 +646,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	}
 
 	return res, nil
+
 }
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
@@ -670,6 +690,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	}
 
 	return res, nil
+
 }
 
 func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOption) (*database.Task, error) {
@@ -705,6 +726,7 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	task.ResetMark()
 	return task, nil
+
 }
 
 func (d *Task) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
@@ -728,6 +750,7 @@ func (d *Task) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 	}
 
 	return nil
+
 }
 
 func (d *Task) Update(ctx context.Context, task *database.Task, opt ...ExecOption) error {
@@ -770,6 +793,7 @@ func (d *Task) Update(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	task.ResetMark()
 	return nil
+
 }
 
 type TrustedUser struct {
@@ -777,6 +801,7 @@ type TrustedUser struct {
 }
 
 type TrustedUserInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.TrustedUser, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error)
 	ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error)
@@ -808,6 +833,7 @@ func (d *TrustedUser) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+
 }
 
 func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUser, error) {
@@ -820,6 +846,7 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 
 	v.ResetMark()
 	return v, nil
+
 }
 
 func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error) {
@@ -851,6 +878,7 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 	}
 
 	return res, nil
+
 }
 
 func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error) {
@@ -883,6 +911,7 @@ func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ..
 	}
 
 	return res, nil
+
 }
 
 func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedUser, opt ...ExecOption) (*database.TrustedUser, error) {
@@ -918,6 +947,7 @@ func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedU
 
 	trustedUser.ResetMark()
 	return trustedUser, nil
+
 }
 
 func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
@@ -941,6 +971,7 @@ func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...ExecOption) e
 	}
 
 	return nil
+
 }
 
 func (d *TrustedUser) Update(ctx context.Context, trustedUser *database.TrustedUser, opt ...ExecOption) error {
@@ -983,6 +1014,7 @@ func (d *TrustedUser) Update(ctx context.Context, trustedUser *database.TrustedU
 
 	trustedUser.ResetMark()
 	return nil
+
 }
 
 type PermitPullRequest struct {
@@ -990,6 +1022,7 @@ type PermitPullRequest struct {
 }
 
 type PermitPullRequestInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.PermitPullRequest, error)
 	ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error)
 	Create(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...ExecOption) (*database.PermitPullRequest, error)
@@ -1020,6 +1053,7 @@ func (d *PermitPullRequest) Tx(ctx context.Context, fn func(tx *sql.Tx) error) e
 		return xerrors.Errorf(": %w", err)
 	}
 	return nil
+
 }
 
 func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.PermitPullRequest, error) {
@@ -1032,6 +1066,7 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 
 	v.ResetMark()
 	return v, nil
+
 }
 
 func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error) {
@@ -1065,6 +1100,7 @@ func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repos
 	}
 
 	return res, nil
+
 }
 
 func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...ExecOption) (*database.PermitPullRequest, error) {
@@ -1100,6 +1136,7 @@ func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *datab
 
 	permitPullRequest.ResetMark()
 	return permitPullRequest, nil
+
 }
 
 func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
@@ -1123,6 +1160,7 @@ func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...ExecOpt
 	}
 
 	return nil
+
 }
 
 func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...ExecOption) error {
@@ -1165,4 +1203,5 @@ func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *datab
 
 	permitPullRequest.ResetMark()
 	return nil
+
 }
