@@ -18,6 +18,7 @@ CREATE TABLE `source_repository` (
 DROP TABLE IF EXISTS `job`;
 CREATE TABLE `job` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(255) NOT NULL,
 	`repository_id` INTEGER NOT NULL,
 	`command` VARCHAR(20) NOT NULL,
 	`target` VARCHAR(255) NOT NULL,
@@ -31,6 +32,7 @@ CREATE TABLE `job` (
 	`config_name` VARCHAR(255) NOT NULL,
 	`bazel_version` VARCHAR(255) NOT NULL,
 	`job_type` VARCHAR(255) NOT NULL,
+	`schedule` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)

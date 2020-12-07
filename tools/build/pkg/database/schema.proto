@@ -31,19 +31,22 @@ message SourceRepository {
 
 message Job {
     int32            id            = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    SourceRepository repository    = 2;
-    string           command       = 3 [(dev.f110.ddl.column) = {size: 20}];
-    string           target        = 4 [(dev.f110.ddl.column) = {size: 255}];
-    bool             active        = 5;
-    bool             all_revision  = 6;
-    bool             github_status = 7;
-    string           cpu_limit     = 8;
-    string           memory_limit  = 9;
-    bool             exclusive     = 10;
-    bool             sync          = 11;
-    string           config_name   = 12;
-    string           bazel_version = 13;
-    string           job_type      = 14;
+    string           name          = 2;
+    SourceRepository repository    = 3;
+    string           command       = 4 [(dev.f110.ddl.column) = {size: 20}];
+    string           target        = 5 [(dev.f110.ddl.column) = {size: 255}];
+    bool             active        = 6;
+    bool             all_revision  = 7;
+    bool             github_status = 8;
+    string           cpu_limit     = 9;
+    string           memory_limit  = 10;
+    bool             exclusive     = 11;
+    bool             sync          = 12;
+    string           config_name   = 13;
+    string           bazel_version = 14;
+    string           job_type      = 15;
+    string           schedule      = 16;
+
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

@@ -60,3 +60,28 @@ container_push(
     repository = "build/sidecar",
     tag = "latest",
 )
+
+pkg_tar(
+    name = "ctl_bin",
+    srcs = [
+        "//tools/build/cmd/buildctl",
+    ],
+    mode = "0755",
+    package_dir = "/usr/local/bin",
+)
+
+container_image(
+    name = "ctl_image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/buildctl"],
+    tars = [":ctl_bin"],
+)
+
+container_push(
+    name = "push_ctl",
+    format = "Docker",
+    image = ":ctl_image",
+    registry = "registry.f110.dev",
+    repository = "build/buildctl",
+    tag = "latest",
+)

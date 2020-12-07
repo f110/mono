@@ -100,6 +100,7 @@ func (e *SourceRepository) Copy() *SourceRepository {
 
 type Job struct {
 	Id           int32
+	Name         string
 	RepositoryId int32
 	Command      string
 	Target       string
@@ -113,6 +114,7 @@ type Job struct {
 	ConfigName   string
 	BazelVersion string
 	JobType      string
+	Schedule     string
 	CreatedAt    time.Time
 	UpdatedAt    *time.Time
 
@@ -133,7 +135,8 @@ func (e *Job) IsChanged() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.RepositoryId != e.mark.RepositoryId ||
+	return e.Name != e.mark.Name ||
+		e.RepositoryId != e.mark.RepositoryId ||
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
 		e.Active != e.mark.Active ||
@@ -146,6 +149,7 @@ func (e *Job) IsChanged() bool {
 		e.ConfigName != e.mark.ConfigName ||
 		e.BazelVersion != e.mark.BazelVersion ||
 		e.JobType != e.mark.JobType ||
+		e.Schedule != e.mark.Schedule ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -155,6 +159,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	defer e.mu.Unlock()
 
 	res := make([]ddl.Column, 0)
+	if e.Name != e.mark.Name {
+		res = append(res, ddl.Column{Name: "name", Value: e.Name})
+	}
 	if e.RepositoryId != e.mark.RepositoryId {
 		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
 	}
@@ -194,6 +201,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	if e.JobType != e.mark.JobType {
 		res = append(res, ddl.Column{Name: "job_type", Value: e.JobType})
 	}
+	if e.Schedule != e.mark.Schedule {
+		res = append(res, ddl.Column{Name: "schedule", Value: e.Schedule})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -211,6 +221,7 @@ func (e *Job) ChangedColumn() []ddl.Column {
 func (e *Job) Copy() *Job {
 	n := &Job{
 		Id:           e.Id,
+		Name:         e.Name,
 		RepositoryId: e.RepositoryId,
 		Command:      e.Command,
 		Target:       e.Target,
@@ -224,6 +235,7 @@ func (e *Job) Copy() *Job {
 		ConfigName:   e.ConfigName,
 		BazelVersion: e.BazelVersion,
 		JobType:      e.JobType,
+		Schedule:     e.Schedule,
 		CreatedAt:    e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {

@@ -54,11 +54,13 @@ type Options struct {
 
 	Addr                string
 	DashboardUrl        string // URL of dashboard that can access people via browser
+	BuilderApiUrl       string // URL of the api of builder.
 	RemoteCache         string // If not empty, This value will passed to Bazel through --remote_cache argument.
 	RemoteAssetApi      bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
 	BazelImage          string
 	DefaultBazelVersion string
 	SidecarImage        string
+	CLIImage            string
 	TaskCPULimit        string
 	TaskMemoryLimit     string
 
@@ -160,6 +162,8 @@ func builder(opt Options) error {
 					daoOpt,
 					c,
 					opt.SidecarImage,
+					opt.CLIImage,
+					opt.BuilderApiUrl,
 					ghClient,
 					opt.GithubAppId,
 					opt.GithubInstallationId,
@@ -252,6 +256,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
 	fs.StringVar(&opt.Addr, "addr", "127.0.0.1:8081", "Listen addr which will be served API")
 	fs.StringVar(&opt.DashboardUrl, "dashboard", "http://localhost", "URL of dashboard")
+	fs.StringVar(&opt.BuilderApiUrl, "builder-api", "http://localhost", "URL of the api of builder")
 	fs.BoolVar(&opt.Dev, "dev", opt.Dev, "development mode")
 	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
 	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
@@ -264,6 +269,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
 	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
+	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
 	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
 	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
 	fs.BoolVar(&opt.Debug, "debug", false, "Enable debugging mode")

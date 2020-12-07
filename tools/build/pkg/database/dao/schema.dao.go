@@ -331,7 +331,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `id` = ?", id)
 
 	v := &database.Job{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.Sync, &v.ConfigName, &v.BazelVersion, &v.JobType, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Name, &v.RepositoryId, &v.Command, &v.Target, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.Sync, &v.ConfigName, &v.BazelVersion, &v.JobType, &v.Schedule, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -350,7 +350,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, created_at, updated_at from job"
+	query := "select id, name, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, schedule, created_at, updated_at from job"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -369,7 +369,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -394,7 +394,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 
 func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, created_at, updated_at from job where repository_id = ?"
+	query := "select id, name, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, schedule, created_at, updated_at from job where repository_id = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -414,7 +414,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -448,8 +448,8 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `job` (`repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		job.RepositoryId, job.Command, job.Target, job.Active, job.AllRevision, job.GithubStatus, job.CpuLimit, job.MemoryLimit, job.Exclusive, job.Sync, job.ConfigName, job.BazelVersion, job.JobType, time.Now(),
+		"INSERT INTO `job` (`name`, `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		job.Name, job.RepositoryId, job.Command, job.Target, job.Active, job.AllRevision, job.GithubStatus, job.CpuLimit, job.MemoryLimit, job.Exclusive, job.Sync, job.ConfigName, job.BazelVersion, job.JobType, job.Schedule, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

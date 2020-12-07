@@ -19,6 +19,7 @@ go_library(
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
         "//vendor/k8s.io/api/batch/v1:batch",
+        "//vendor/k8s.io/api/batch/v1beta1",
         "//vendor/k8s.io/api/core/v1:core",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/informers/batch/v1:batch",
@@ -31,5 +32,8 @@ go_test(
     srcs = ["discovery_test.go"],
     data = glob(["testdata/**"]),
     embed = [":discovery"],
-    deps = ["//vendor/github.com/stretchr/testify/assert"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
 )

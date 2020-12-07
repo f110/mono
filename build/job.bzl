@@ -20,5 +20,6 @@ job = rule(
             default = "commit",
             doc = "Name of job type",
         ),
+        "schedule": attr.string(doc = "Job schedule"),
     },
 )

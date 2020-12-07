@@ -422,7 +422,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	job, err := a.dao.Job.Select(req.Context(), int32(jobId))
+	j, err := a.dao.Job.Select(req.Context(), int32(jobId))
 	if err != nil {
 		logger.Log.Info("job not found", zap.Int("job_id", jobId), zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -431,7 +431,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 
 	rev := req.FormValue("revision")
 	if rev == "" {
-		u, err := url.Parse(job.Repository.Url)
+		u, err := url.Parse(j.Repository.Url)
 		if err != nil {
 			logger.Log.Info("Could not parse repository url", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
@@ -448,7 +448,12 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		rev = r
 	}
 
-	task, err := a.builder.Build(req.Context(), job, rev, job.Command, job.Target, "api")
+	via := req.FormValue("via")
+	if via == "" {
+		via = "api"
+	}
+
+	task, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Target, via)
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

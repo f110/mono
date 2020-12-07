@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
@@ -113,6 +114,8 @@ type Discover struct {
 
 	builder              *coordinator.BazelBuilder
 	sidecarImage         string
+	ctlImage             string
+	builderApi           string
 	dao                  dao.Options
 	githubAppId          int64
 	githubInstallationId int64
@@ -128,6 +131,8 @@ func NewDiscover(
 	daoOpt dao.Options,
 	builder *coordinator.BazelBuilder,
 	sidecarImage string,
+	ctlImage string,
+	builderApi string,
 	ghClient *github.Client,
 	appId int64,
 	installationId int64,
@@ -141,6 +146,8 @@ func NewDiscover(
 		dao:                  daoOpt,
 		builder:              builder,
 		sidecarImage:         sidecarImage,
+		ctlImage:             ctlImage,
+		builderApi:           builderApi,
 		githubClient:         ghClient,
 		githubAppId:          appId,
 		githubInstallationId: installationId,
@@ -288,35 +295,24 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		bazelVersion = v
 	}
 
+	repo, err := d.dao.Repository.Select(ctx, repoId)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
 	newJobs := make([]*database.Job, 0)
 	for _, j := range jobs {
 		if v, ok := jobMap[j.Command+"/"+j.Target]; ok {
-			v.Active = true
-			v.AllRevision = j.AllRevision
-			v.GithubStatus = j.GithubStatus
-			v.CpuLimit = j.CPULimit
-			v.MemoryLimit = j.MemoryLimit
-			v.Exclusive = j.Exclusive
-			v.ConfigName = j.ConfigName
+			v.Into(j)
 			v.BazelVersion = bazelVersion
-			v.Sync = true
-			v.JobType = j.Type
 		} else {
-			newJobs = append(newJobs, &database.Job{
-				Command:      j.Command,
-				Target:       j.Target,
-				RepositoryId: repoId,
-				Active:       true,
-				AllRevision:  j.AllRevision,
-				GithubStatus: j.GithubStatus,
-				CpuLimit:     j.CPULimit,
-				MemoryLimit:  j.MemoryLimit,
-				Exclusive:    j.Exclusive,
-				ConfigName:   j.ConfigName,
-				BazelVersion: bazelVersion,
-				Sync:         true,
-				JobType:      j.Type,
-			})
+			n := &database.Job{}
+			n.Into(j)
+			n.BazelVersion = bazelVersion
+			n.RepositoryId = repoId
+			n.Active = true
+			n.Repository = repo
+			newJobs = append(newJobs, n)
 		}
 	}
 
@@ -326,9 +322,15 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		}
 	}
 	for _, v := range newJobs {
-		if _, err := d.dao.Job.Create(context.Background(), v); err != nil {
+		if created, err := d.dao.Job.Create(context.Background(), v); err != nil {
 			return xerrors.Errorf(": %w", err)
+		} else {
+			v.Id = created.Id
 		}
+	}
+
+	if err := d.syncCronJob(ctx, append(currentJobs, newJobs...)); err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 
 	if err := d.teardownJob(ctx, job); err != nil {
@@ -401,8 +403,124 @@ func (d *Discover) teardownJob(ctx context.Context, job *batchv1.Job) error {
 	return nil
 }
 
+func (d *Discover) syncCronJob(ctx context.Context, jobs []*database.Job) error {
+	cronJobs, err := d.client.BatchV1beta1().CronJobs(d.Namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	cronJobMap := make(map[string]*batchv1beta1.CronJob)
+	deleteCronJobs := make([]*batchv1beta1.CronJob, 0)
+	for _, v := range cronJobs.Items {
+		cronJobMap[v.Name] = &v
+
+		found := false
+		for _, j := range jobs {
+			if fmt.Sprintf("%s-%d", j.Repository.Name, j.Id) == v.Name {
+				found = true
+				break
+			}
+		}
+		if found {
+			deleteCronJobs = append(deleteCronJobs, &v)
+		}
+	}
+
+	newCronJobs := make([]*batchv1beta1.CronJob, 0)
+	updateCronJobs := make([]*batchv1beta1.CronJob, 0)
+	for _, v := range jobs {
+		if v.Schedule == "" {
+			if cj, ok := cronJobMap[fmt.Sprintf("%s-%d", v.Repository.Name, v.Id)]; ok {
+				deleteCronJobs = append(deleteCronJobs, cj)
+			}
+			continue
+		}
+
+		if cj, ok := cronJobMap[fmt.Sprintf("%s-%d", v.Repository.Name, v.Id)]; !ok {
+			backoffLimit := int32(1)
+			jobHistory := int32(1)
+			newCronJobs = append(newCronJobs, &batchv1beta1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%s-%d", v.Repository.Name, v.Id),
+					Namespace: d.Namespace,
+					Labels: map[string]string{
+						labelKeyRepoName:     v.Repository.Name,
+						labelKeyRepositoryId: strconv.Itoa(int(v.RepositoryId)),
+						labelKeyBazelVersion: v.BazelVersion,
+					},
+				},
+				Spec: batchv1beta1.CronJobSpec{
+					Schedule:                   v.Schedule,
+					SuccessfulJobsHistoryLimit: &jobHistory,
+					FailedJobsHistoryLimit:     &jobHistory,
+					JobTemplate: batchv1beta1.JobTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								labelKeyRepoName:     v.Repository.Name,
+								labelKeyRepositoryId: strconv.Itoa(int(v.RepositoryId)),
+								labelKeyBazelVersion: v.BazelVersion,
+							},
+						},
+						Spec: batchv1.JobSpec{
+							BackoffLimit: &backoffLimit,
+							Template: corev1.PodTemplateSpec{
+								Spec: corev1.PodSpec{
+									RestartPolicy: corev1.RestartPolicyNever,
+									Containers: []corev1.Container{
+										{
+											Name:            "trigger",
+											Image:           d.ctlImage,
+											ImagePullPolicy: corev1.PullAlways,
+											Args: []string{
+												"job",
+												"trigger",
+												fmt.Sprintf("--job-id=%d", v.Id),
+												fmt.Sprintf("--endpoint=%s", d.builderApi),
+												"--via=cron",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+		} else {
+			if cj.Spec.Schedule != v.Schedule {
+				newCJ := cj.DeepCopy()
+				newCJ.Spec.Schedule = v.Schedule
+				updateCronJobs = append(updateCronJobs, newCJ)
+			}
+		}
+	}
+
+	for _, v := range deleteCronJobs {
+		logger.Log.Debug("Delete CronJob", zap.String("name", v.Name))
+		err := d.client.BatchV1beta1().CronJobs(d.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	for _, v := range newCronJobs {
+		logger.Log.Debug("Create CronJob", zap.String("name", v.Name))
+		_, err := d.client.BatchV1beta1().CronJobs(d.Namespace).Create(ctx, v, metav1.CreateOptions{})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	for _, v := range updateCronJobs {
+		logger.Log.Debug("Update CronJob", zap.String("name", v.Name))
+		_, err := d.client.BatchV1beta1().CronJobs(d.Namespace).Update(ctx, v, metav1.UpdateOptions{})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (d *Discover) buildJob(ctx context.Context, repository *database.SourceRepository, revision, bazelVersion string) error {
-	j := d.jobTemplate(repository, revision, bazelVersion)
+	j := d.newDiscoveryJob(repository, revision, bazelVersion)
 	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(ctx, j, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -411,7 +529,7 @@ func (d *Discover) buildJob(ctx context.Context, repository *database.SourceRepo
 	return nil
 }
 
-func (d *Discover) jobTemplate(repository *database.SourceRepository, revision, bazelVersion string) *batchv1.Job {
+func (d *Discover) newDiscoveryJob(repository *database.SourceRepository, revision, bazelVersion string) *batchv1.Job {
 	volumes := []corev1.Volume{
 		{
 			Name: "workdir",
@@ -504,10 +622,6 @@ func Discovery(b []byte) ([]*job.Job, error) {
 	seen := make(map[string]struct{})
 	jobs := make([]*job.Job, 0)
 	for _, v := range res.Results {
-		if _, ok := seen[v.Configuration.Checksum]; ok {
-			continue
-		}
-
 		j := &job.Job{}
 		keyAndValue := v.Target.Rule.Attrs()
 
@@ -539,10 +653,13 @@ func Discovery(b []byte) ([]*job.Job, error) {
 		if j.Targets != "" && j.Target == "" {
 			j.Target = j.Targets
 		}
+		if _, ok := seen[j.Name]; ok {
+			continue
+		}
 		jobs = append(jobs, j)
 
 		// Mark
-		seen[v.Configuration.Checksum] = struct{}{}
+		seen[j.Name] = struct{}{}
 	}
 
 	return jobs, nil

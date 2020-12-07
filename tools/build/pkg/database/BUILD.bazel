@@ -13,14 +13,17 @@ proto_library(
 
 go_library(
     name = "database",
-    srcs = [],  # keep
+    srcs = ["util.go"],  # keep
     embed = [
         ":schema",
         ":entity",
     ],  # keep
     importpath = "go.f110.dev/mono/tools/build/pkg/database",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/go.f110.dev/protoc-ddl"],
+    deps = [
+        "//tools/build/pkg/job",
+        "//vendor/go.f110.dev/protoc-ddl",
+    ],
 )
 
 load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_entity", "sql_schema", "vendor_ddl")
