@@ -3,19 +3,19 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "08c3cd71857d58af3cda759112437d9e63339ac9c6e0042add43f4d94caf632d",
+    sha256 = "6f111c57fd50baf5b8ee9d63024874dd2a014b069426156c55adbf6d3d22cb7b",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.24.2/rules_go-v0.24.2.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.24.2/rules_go-v0.24.2.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.25.0/rules_go-v0.25.0.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.25.0/rules_go-v0.25.0.tar.gz",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "d4113967ab451dd4d2d767c3ca5f927fec4b30f3b2c6f8135a2033b9c05a5687",
+    sha256 = "b85f48fa105c4403326e9525ad2b2cc437babaa6e15a3fc0b1dbab0ab064bc7c",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.0/bazel-gazelle-v0.22.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.0/bazel-gazelle-v0.22.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.2/bazel-gazelle-v0.22.2.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.2/bazel-gazelle-v0.22.2.tar.gz",
     ],
 )
 
@@ -51,22 +51,22 @@ http_archive(
 
 http_archive(
     name = "dev_f110_rules_k8s_controller",
-    sha256 = "ca1a766f5af0b23907c0dc331ecf43fb0218e1bbe89da2b6a62829204de101e2",
-    strip_prefix = "rules_k8s_controller-0.2.0",
+    sha256 = "ef41886cf0082db21455d00c5b2e99b1fed034a8df1d721b20bf0fb6bb90e367",
+    strip_prefix = "rules_k8s_controller-0.5.0",
     urls = [
-        "https://github.com/f110/rules_k8s_controller/archive/v0.2.0.tar.gz",
+        "https://github.com/f110/rules_k8s_controller/archive/v0.5.0.tar.gz",
     ],
 )
 
 git_repository(
     name = "dev_f110_rules_extras",
-    commit = "1868f41788b5c945ddfed34879ff96b02da17c2c",
+    commit = "186d8d33b74f1ad888298e34510eeac4f86d0f9d",
     remote = "https://github.com/f110/rules_extras",
 )
 
 git_repository(
     name = "dev_f110_protoc_ddl",
-    commit = "40329481f59fc12c187e1e8378f070df3bc78b19",
+    commit = "95db40d2d124e72b3714d6c3bbfd08a8a68616a1",
     remote = "https://github.com/f110/protoc-ddl",
 )
 
@@ -78,7 +78,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 
 go_rules_dependencies()
 
-go_register_toolchains()
+go_register_toolchains(version = "1.15.6")
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 

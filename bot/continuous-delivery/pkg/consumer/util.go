@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/xerrors"
@@ -13,7 +14,7 @@ import (
 )
 
 func WaitForFinish(client *kubernetes.Clientset, namespace, name string) (bool, error) {
-	watchCh, err := client.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
+	watchCh, err := client.CoreV1().Pods(namespace).Watch(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name=%s", name),
 	})
 	if err != nil {

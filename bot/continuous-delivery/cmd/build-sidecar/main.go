@@ -189,7 +189,7 @@ func actionWait(artifactHost, artifactBucket, artifactPath string) error {
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
 	}
-	w, err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Watch(metav1.ListOptions{
+	w, err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Watch(context.TODO(), metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.name=%s", os.Getenv("POD_NAME")),
 	})
 	if err != nil {
@@ -271,7 +271,7 @@ Watch:
 		return err
 	}
 
-	pod, err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(os.Getenv("POD_NAME"), metav1.GetOptions{})
+	pod, err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Get(context.TODO(), os.Getenv("POD_NAME"), metav1.GetOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
 	}
@@ -290,7 +290,7 @@ Watch:
 	}
 	if stillRunning {
 		log.Print("Force shutdown")
-		if err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Delete(os.Getenv("POD_NAME"), &metav1.DeleteOptions{}); err != nil {
+		if err := client.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Delete(context.TODO(), os.Getenv("POD_NAME"), metav1.DeleteOptions{}); err != nil {
 			return xerrors.Errorf(": %v", err)
 		}
 	}

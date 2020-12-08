@@ -152,7 +152,7 @@ func (b *BazelBuild) cleanup(client *kubernetes.Clientset, buildId string) error
 		return nil
 	}
 
-	podList, err := client.CoreV1().Pods(b.Namespace).List(metav1.ListOptions{
+	podList, err := client.CoreV1().Pods(b.Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", labelKeyJobId, buildId),
 	})
 	if err != nil {
@@ -160,7 +160,7 @@ func (b *BazelBuild) cleanup(client *kubernetes.Clientset, buildId string) error
 	}
 
 	for _, v := range podList.Items {
-		err := client.CoreV1().Pods(b.Namespace).Delete(v.Name, nil)
+		err := client.CoreV1().Pods(b.Namespace).Delete(context.TODO(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %v", err)
 		}
@@ -171,7 +171,7 @@ func (b *BazelBuild) cleanup(client *kubernetes.Clientset, buildId string) error
 
 func (b *BazelBuild) buildRepository(buildCtx *eventContext, client *kubernetes.Clientset, buildId string) error {
 	buildPod := b.buildPod(buildCtx, buildId)
-	_, err := client.CoreV1().Pods(b.Namespace).Create(buildPod)
+	_, err := client.CoreV1().Pods(b.Namespace).Create(context.TODO(), buildPod, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
 	}

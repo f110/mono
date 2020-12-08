@@ -241,7 +241,7 @@ func (c *DNSControlConsumer) runExecute(ctx *dnsControlContext, client *kubernet
 	}()
 
 	pod := c.runPod(ctx, buildId, "push")
-	_, err := client.CoreV1().Pods(c.Namespace).Create(pod)
+	_, err := client.CoreV1().Pods(c.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
@@ -250,7 +250,7 @@ func (c *DNSControlConsumer) runExecute(ctx *dnsControlContext, client *kubernet
 		return "", xerrors.Errorf(": %v", err)
 	}
 
-	body, err := client.CoreV1().Pods(c.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "dnscontrol"}).DoRaw()
+	body, err := client.CoreV1().Pods(c.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "dnscontrol"}).DoRaw(context.TODO())
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
@@ -268,7 +268,7 @@ func (c *DNSControlConsumer) runPreview(ctx *dnsControlContext, client *kubernet
 	}()
 
 	pod := c.runPod(ctx, buildId, "preview")
-	_, err := client.CoreV1().Pods(c.Namespace).Create(pod)
+	_, err := client.CoreV1().Pods(c.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
@@ -277,7 +277,7 @@ func (c *DNSControlConsumer) runPreview(ctx *dnsControlContext, client *kubernet
 		return "", xerrors.Errorf(": %v", err)
 	}
 
-	body, err := client.CoreV1().Pods(c.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "dnscontrol"}).DoRaw()
+	body, err := client.CoreV1().Pods(c.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "dnscontrol"}).DoRaw(context.TODO())
 	if err != nil {
 		return "", xerrors.Errorf(": %v", err)
 	}
@@ -346,7 +346,7 @@ func (c *DNSControlConsumer) cleanup(client *kubernetes.Clientset, buildId strin
 		return nil
 	}
 
-	podList, err := client.CoreV1().Pods(c.Namespace).List(metav1.ListOptions{
+	podList, err := client.CoreV1().Pods(c.Namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", labelKeyJobId, buildId),
 	})
 	if err != nil {
@@ -354,7 +354,7 @@ func (c *DNSControlConsumer) cleanup(client *kubernetes.Clientset, buildId strin
 	}
 
 	for _, v := range podList.Items {
-		err := client.CoreV1().Pods(c.Namespace).Delete(v.Name, nil)
+		err := client.CoreV1().Pods(c.Namespace).Delete(context.TODO(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %v", err)
 		}
