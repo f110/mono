@@ -287,7 +287,7 @@ go.etcd.io/etcd/raft/quorum
 go.etcd.io/etcd/raft/raftpb
 go.etcd.io/etcd/raft/tracker
 go.etcd.io/etcd/version
-# go.f110.dev/protoc-ddl v0.0.0-20201210115038-eee28d3afbdd
+# go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 ## explicit
 go.f110.dev/protoc-ddl
 go.f110.dev/protoc-ddl/internal/generator

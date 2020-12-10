@@ -812,7 +812,7 @@ func (s *GoDAOStruct) selectQuery(
 
 	var comp []*schema.Field
 	if stmt.Where != nil {
-		comp = s.findArgs(s.m.Fields.List(), stmt.Where.(*ast.BinaryOperationExpr))
+		comp = s.findArgs(s.m.Fields.List(), stmt.Where)
 	}
 
 	isReturningSingleRow := s.m.IsReturningSingleRow(comp...)
@@ -864,7 +864,7 @@ func (s *GoDAOStruct) selectQuery(
 	}
 }
 
-func (s *GoDAOStruct) findArgs(fields []*schema.Field, stmt *ast.BinaryOperationExpr) []*schema.Field {
+func (s *GoDAOStruct) findArgs(fields []*schema.Field, stmt ast.ExprNode) []*schema.Field {
 	fieldMap := make(map[string]*schema.Field)
 	for _, v := range fields {
 		fieldMap[v.Name] = v
