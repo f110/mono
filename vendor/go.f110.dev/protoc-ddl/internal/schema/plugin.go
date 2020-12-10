@@ -26,6 +26,7 @@ type DDLOption struct {
 
 type EntityOption struct {
 	Lang       string
+	DAOPath    string
 	OutputFile string
 }
 
@@ -572,6 +573,8 @@ func parseOptionEntity(p string) EntityOption {
 		switch key {
 		case "lang":
 			opt.Lang = value
+		case "daopath":
+			opt.DAOPath = value
 		}
 	}
 

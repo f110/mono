@@ -10,7 +10,7 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/transport/server",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-billy.v4",
+        "//vendor/gopkg.in/src-d/go-billy.v4:go-billy_v4",
         "//vendor/gopkg.in/src-d/go-billy.v4/osfs",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing/cache",

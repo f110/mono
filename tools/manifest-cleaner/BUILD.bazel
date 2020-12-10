@@ -5,7 +5,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "go.f110.dev/mono/tools/manifest-cleaner",
     visibility = ["//visibility:private"],
-    deps = ["//vendor/gopkg.in/yaml.v2"],
+    deps = ["//vendor/gopkg.in/yaml.v2:yaml_v2"],
 )
 
 go_binary(

@@ -17,6 +17,6 @@ go_library(
         "//vendor/github.com/src-d/gcfg/scanner",
         "//vendor/github.com/src-d/gcfg/token",
         "//vendor/github.com/src-d/gcfg/types",
-        "//vendor/gopkg.in/warnings.v0",
+        "//vendor/gopkg.in/warnings.v0:warnings_v0",
     ],
 )

@@ -118,7 +118,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, url, clone_url, name, private, created_at, updated_at from source_repository"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -150,7 +150,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, url, clone_url, name, private, created_at, updated_at from source_repository where url = ?"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -350,7 +350,7 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, name, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, schedule, created_at, updated_at from job"
+	query := "SELECT `id`, `name`, `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`, `updated_at` FROM `job`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -394,7 +394,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 
 func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, name, repository_id, command, target, active, all_revision, github_status, cpu_limit, memory_limit, exclusive, sync, config_name, bazel_version, job_type, schedule, created_at, updated_at from job where repository_id = ?"
+	query := "SELECT `id`, `name`, `repository_id`, `command`, `target`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`, `updated_at` FROM `job` WHERE `repository_id` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -606,7 +606,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, job_id, revision, success, log_file, command, target, via, config_name, start_at, finished_at, created_at, updated_at from task where job_id = ?"
+	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -651,7 +651,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, job_id, revision, success, log_file, command, target, via, config_name, start_at, finished_at, created_at, updated_at from task where start_at is null"
+	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -851,7 +851,7 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 
 func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*database.TrustedUser, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, github_id, username, created_at, updated_at from trusted_user"
+	query := "SELECT `id`, `github_id`, `username`, `created_at`, `updated_at` FROM `trusted_user`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -883,7 +883,7 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 
 func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ...ListOption) ([]*database.TrustedUser, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, github_id, username, created_at, updated_at from trusted_user where github_id = ?"
+	query := "SELECT `id`, `github_id`, `username`, `created_at`, `updated_at` FROM `trusted_user` WHERE `github_id` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -1071,7 +1071,7 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 
 func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...ListOption) ([]*database.PermitPullRequest, error) {
 	listOpts := newListOpt(opt...)
-	query := "select id, repository, number, created_at, updated_at from permit_pull_request where repository = ? and number = ?"
+	query := "SELECT `id`, `repository`, `number`, `created_at`, `updated_at` FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {

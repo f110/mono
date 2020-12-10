@@ -10,7 +10,7 @@ go_library(
         "//vendor/github.com/google/go-github/v29/github",
         "//vendor/github.com/spf13/pflag",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/gopkg.in/src-d/go-git.v4",
+        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",

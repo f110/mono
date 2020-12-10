@@ -23,7 +23,7 @@ go_library(
         "//vendor/github.com/sourcegraph/go-diff/diff",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/gopkg.in/src-d/go-git.v4",
+        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
         "//vendor/gopkg.in/src-d/go-git.v4/config",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing/object",

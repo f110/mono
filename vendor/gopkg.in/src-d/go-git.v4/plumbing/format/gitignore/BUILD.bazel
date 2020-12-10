@@ -12,7 +12,7 @@ go_library(
     importpath = "gopkg.in/src-d/go-git.v4/plumbing/format/gitignore",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-billy.v4",
+        "//vendor/gopkg.in/src-d/go-billy.v4:go-billy_v4",
         "//vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config",
         "//vendor/gopkg.in/src-d/go-git.v4/utils/ioutil",
     ],

@@ -11,7 +11,7 @@ go_library(
     importpath = "gopkg.in/src-d/go-billy.v4/osfs",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/gopkg.in/src-d/go-billy.v4",
+        "//vendor/gopkg.in/src-d/go-billy.v4:go-billy_v4",
         "//vendor/gopkg.in/src-d/go-billy.v4/helper/chroot",
     ] + select({
         "@io_bazel_rules_go//go/platform:aix": [

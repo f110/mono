@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go-git.v4",
+    name = "go-git_v4",
     srcs = [
         "blame.go",
         "common.go",
@@ -28,7 +28,7 @@ go_library(
     deps = [
         "//vendor/github.com/sergi/go-diff/diffmatchpatch",
         "//vendor/golang.org/x/crypto/openpgp",
-        "//vendor/gopkg.in/src-d/go-billy.v4",
+        "//vendor/gopkg.in/src-d/go-billy.v4:go-billy_v4",
         "//vendor/gopkg.in/src-d/go-billy.v4/osfs",
         "//vendor/gopkg.in/src-d/go-billy.v4/util",
         "//vendor/gopkg.in/src-d/go-git.v4/config",

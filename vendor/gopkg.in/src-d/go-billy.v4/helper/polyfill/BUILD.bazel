@@ -6,5 +6,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/gopkg.in/src-d/go-billy.v4/helper/polyfill",
     importpath = "gopkg.in/src-d/go-billy.v4/helper/polyfill",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/gopkg.in/src-d/go-billy.v4"],
+    deps = ["//vendor/gopkg.in/src-d/go-billy.v4:go-billy_v4"],
 )

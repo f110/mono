@@ -27,6 +27,19 @@ func (b *Buffer) LineBreak() {
 	b.Buffer.WriteRune('\n')
 }
 
+func (b *Buffer) WriteFunc(funcs ...*goFunc) {
+	for _, v := range funcs {
+		b.Write(v.String())
+		b.LineBreak()
+	}
+}
+
+func (b *Buffer) WriteInterface(funcs ...*goFunc) {
+	for _, v := range funcs {
+		b.Write(v.Interface())
+	}
+}
+
 func (b *Buffer) GoFormat() ([]byte, error) {
 	return format.Source(b.Buffer.Bytes())
 }
