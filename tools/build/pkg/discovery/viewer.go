@@ -36,10 +36,6 @@ func (d *Viewer) IsDiscovering(repoId int32) bool {
 }
 
 func (d *Viewer) syncJob(job *batchv1.Job) error {
-	if !job.DeletionTimestamp.IsZero() {
-		return nil
-	}
-
 	rId, ok := job.Labels[labelKeyRepositoryId]
 	if !ok {
 		return nil
