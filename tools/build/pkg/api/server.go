@@ -367,10 +367,6 @@ func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	if req.Header.Get("Origin") != "" {
-		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-	}
 
 	if err := req.ParseForm(); err != nil {
 		logger.Log.Info("Failed parse form", zap.Error(err))
@@ -403,10 +399,6 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
-	}
-	if req.Header.Get("Origin") != "" {
-		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -474,10 +466,6 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
-	}
-	if req.Header.Get("Origin") != "" {
-		w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 
 	if err := req.ParseForm(); err != nil {
