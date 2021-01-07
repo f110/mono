@@ -21,8 +21,8 @@ http_archive(
 
 http_archive(
     name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
     sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
 )
 
 http_archive(
@@ -34,11 +34,11 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
+    sha256 = "6b5969a7acd7b60c02f816773b06fcf32fbe8ba0c7919ccdc2df4f8fb923804a",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.3.0/rules_pkg-0.3.0.tar.gz",
         "https://github.com/bazelbuild/rules_pkg/releases/download/0.3.0/rules_pkg-0.3.0.tar.gz",
     ],
-    sha256 = "6b5969a7acd7b60c02f816773b06fcf32fbe8ba0c7919ccdc2df4f8fb923804a",
 )
 
 http_archive(
@@ -50,12 +50,18 @@ http_archive(
 
 http_archive(
     name = "dev_f110_rules_k8s_controller",
-    sha256 = "ef41886cf0082db21455d00c5b2e99b1fed034a8df1d721b20bf0fb6bb90e367",
-    strip_prefix = "rules_k8s_controller-0.5.0",
+    sha256 = "7fc332ccc1c23f356f6ac43720c00349419fbf641a06e589703cdd12358136db",
+    strip_prefix = "rules_k8s_controller-0.6.0",
     urls = [
-        "https://github.com/f110/rules_k8s_controller/archive/v0.5.0.tar.gz",
+        "https://github.com/f110/rules_k8s_controller/archive/v0.6.0.tar.gz",
     ],
 )
+
+#git_repository(
+#    name = "dev_f110_rules_k8s_controller",
+#    commit = "e2ec2d65ba389933e3f538f9d135ffcf36d46e7b",
+#    remote = "https://github.com/f110/rules_k8s_controller",
+#)
 
 git_repository(
     name = "dev_f110_rules_extras",
@@ -118,4 +124,18 @@ http_archive(
     build_file_content = "filegroup(name = \"bin\", srcs = [\"migrate.linux-amd64\"], visibility = [\"//visibility:public\"])",
     sha256 = "9b39a0fe0e4dd1d6d3f0705f938a89c9d98c31152e0f097bb2e1556f9030387c",
     urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz"],
+)
+
+load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary")
+
+kustomize_binary(
+    name = "kustomize",
+    version = "3.9.1",
+)
+
+load("//build/rules/kind:def.bzl", "kind_binary")
+
+kind_binary(
+    name = "kind",
+    version = "0.9.0",
 )

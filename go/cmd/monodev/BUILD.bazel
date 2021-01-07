@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "monodev_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/monodev",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/cmd/monodev",
+        "//vendor/github.com/spf13/cobra",
+    ],
+)
+
+go_binary(
+    name = "monodev",
+    embed = [":monodev_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,9 @@
+apiVersion: grafana.f110.dev/v1alpha1
+kind: GrafanaUser
+metadata:
+  name: hoge
+  namespace: grafana
+  labels:
+    instance: prod
+spec:
+  email: fmhrit@gmail.com

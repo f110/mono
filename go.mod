@@ -43,6 +43,8 @@ require (
 	k8s.io/apimachinery v0.18.8
 	k8s.io/client-go v0.18.8
 	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.4.0
+	sigs.k8s.io/kind v0.9.0
 	sigs.k8s.io/yaml v1.2.0
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
 )

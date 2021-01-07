@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "fake",
+    srcs = [
+        "doc.go",
+        "fake_grafana.go",
+        "fake_grafana_client.go",
+        "fake_grafanauser.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1/fake",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/api/grafana/v1alpha1",
+        "//go/pkg/k8s/client/versioned/typed/grafana/v1alpha1",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/labels",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema",
+        "//vendor/k8s.io/apimachinery/pkg/types",
+        "//vendor/k8s.io/apimachinery/pkg/watch",
+        "//vendor/k8s.io/client-go/rest",
+        "//vendor/k8s.io/client-go/testing",
+    ],
+)

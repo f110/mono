@@ -1,0 +1,6 @@
+resources:
+  - ../../../crd/grafana
+  - ../../../rbac/grafana
+  - ../../../rbac/leader-election
+  - ../../../controller/grafana
+  - role_binding.yaml

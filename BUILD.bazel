@@ -4,3 +4,33 @@
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 
 go_vendor(name = "vendor")
+
+alias(
+    name = "monodev",
+    actual = "//go/cmd/monodev",
+)
+
+sh_binary(
+    name = "create_cluster",
+    srcs = [":monodev"],
+    args = [
+        "cluster",
+        "create",
+        "--kind=$(location @kind//:file)",
+        "--k8s-version=v1.19.1",
+    ],
+    data = [
+        "@kind//:file",
+    ],
+)
+
+sh_binary(
+    name = "delete_cluster",
+    srcs = [":monodev"],
+    args = [
+        "cluster",
+        "delete",
+        "--kind=$(location @kind//:file)",
+    ],
+    data = ["@kind//:file"],
+)

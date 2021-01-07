@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "v1alpha1",
+    srcs = [
+        "grafana.go",
+        "grafanauser.go",
+        "interface.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/grafana/v1alpha1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/api/grafana/v1alpha1",
+        "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/informers/externalversions/internalinterfaces",
+        "//go/pkg/k8s/listers/grafana/v1alpha1",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/k8s.io/apimachinery/pkg/watch",
+        "//vendor/k8s.io/client-go/tools/cache",
+    ],
+)

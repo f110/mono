@@ -1,0 +1,15 @@
+apiVersion: grafana.f110.dev/v1alpha1
+kind: Grafana
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  adminUser: admin
+  adminPasswordSecret:
+    name: admin-password
+    key: password
+  service:
+    name: grafana
+  userSelector:
+    matchLabels:
+      instance: prod

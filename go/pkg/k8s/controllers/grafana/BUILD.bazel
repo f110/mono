@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grafana",
+    srcs = [
+        "grafana.go",
+        "rbac.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/grafana",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/api/grafana/v1alpha1",
+        "//go/pkg/collections/set",
+        "//go/pkg/grafana",
+        "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/controllers/controllerutil",
+        "//go/pkg/k8s/informers/externalversions",
+        "//go/pkg/k8s/listers/grafana/v1alpha1",
+        "//lib/logger",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/k8s.io/apimachinery/pkg/api/errors",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/labels",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/k8s.io/apimachinery/pkg/util/wait",
+        "//vendor/k8s.io/client-go/informers",
+        "//vendor/k8s.io/client-go/listers/core/v1:core",
+        "//vendor/k8s.io/client-go/tools/cache",
+        "//vendor/k8s.io/client-go/util/workqueue",
+    ],
+)
+
+load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
+
+rbac_gen(
+    name = "rbac",
+    srcs = [":grafana"],
+    dir = "manifests/rbac/grafana",
+    rolename = "grafana-admin",
+    visibility = ["//visibility:public"],
+)

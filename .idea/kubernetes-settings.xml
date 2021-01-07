@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="KubernetesSettings">
+    <specSources>
+      <SpecSource>
+        <option name="pathOrUrl" value="$PROJECT_DIR$/manifests/crd/grafana/grafana.f110.dev_grafanas.yaml" />
+      </SpecSource>
+      <SpecSource>
+        <option name="pathOrUrl" value="$PROJECT_DIR$/manifests/crd/grafana/grafana.f110.dev_grafanausers.yaml" />
+      </SpecSource>
+    </specSources>
+  </component>
+</project>
