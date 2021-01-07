@@ -7,3 +7,4 @@ metadata:
     instance: prod
 spec:
   email: fmhrit@gmail.com
+  admin: true

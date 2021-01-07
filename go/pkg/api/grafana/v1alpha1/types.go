@@ -47,12 +47,11 @@ type GrafanaUser struct {
 
 type GrafanaUserSpec struct {
 	Email string `json:"email"`
+	Admin bool   `json:"admin,omitempty"`
 }
 
 type GrafanaUserStatus struct {
-	Ready     bool   `json:"ready,omitempty"`
-	ProjectId int    `json:"project_id,omitempty"`
-	Registry  string `json:"registry,omitempty"`
+	Ready bool `json:"ready,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

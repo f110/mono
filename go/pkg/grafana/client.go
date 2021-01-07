@@ -101,6 +101,33 @@ func (c *Client) DeleteUser(id int) error {
 	return nil
 }
 
+func (c *Client) ChangeUserPermission(id int, admin bool) error {
+	u, err := url.Parse(c.host)
+	if err != nil {
+		return err
+	}
+	u.Path = fmt.Sprintf("/api/admin/users/%d/permissions", id)
+
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(UserPermission{admin}); err != nil {
+		return err
+	}
+	req, err := c.newRequest(http.MethodPut, u.String(), buf)
+	if err != nil {
+		return err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return xerrors.Errorf("failed update user permission: %s", res.Status)
+	}
+
+	return nil
+}
+
 func (c *Client) newRequest(method, url string, body io.Reader) (*http.Request, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
@@ -125,4 +152,8 @@ type User struct {
 	LastSeenAt    time.Time
 	LastSeenAtAge string
 	AuthLabels    []string
+}
+
+type UserPermission struct {
+	IsGrafanaAdmin bool
 }

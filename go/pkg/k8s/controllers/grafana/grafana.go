@@ -225,6 +225,23 @@ func (a *AdminController) ensureUsers(app *grafanav1alpha1.Grafana, users []*gra
 		}
 	}
 
+	currentUsers, err = grafanaClient.Users()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	for _, v := range currentUsers {
+		u, ok := allUsers[v.Email]
+		if !ok {
+			continue
+		}
+		if u.Spec.Admin != v.IsAdmin {
+			logger.Log.Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", u.Spec.Admin))
+			if err := grafanaClient.ChangeUserPermission(v.Id, u.Spec.Admin); err != nil {
+				logger.Log.Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -338,7 +355,7 @@ func (a *AdminController) worker() {
 		if shutdown {
 			return
 		}
-		logger.Log.Info("Get next queue", zap.Any("queue", obj))
+		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
 
 		ctx, cancelFunc := context.WithCancel(context.Background())
 		err := func(obj interface{}) error {

@@ -34,6 +34,8 @@ spec:
             type: object
           spec:
             properties:
+              admin:
+                type: boolean
               email:
                 type: string
             required:
@@ -41,12 +43,8 @@ spec:
             type: object
           status:
             properties:
-              project_id:
-                type: integer
               ready:
                 type: boolean
-              registry:
-                type: string
             type: object
         type: object
     served: true
