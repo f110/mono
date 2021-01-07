@@ -20,7 +20,7 @@ spec:
       serviceAccountName: grafana-admin
       containers:
         - name: controller
-          image: quay.io/f110/grafana-admin-controller:latest
+          image: registry.f110.dev/tools/grafana-admin-controller:latest
           imagePullPolicy: IfNotPresent
           args:
             - --lease-lock-name=grafana-admin

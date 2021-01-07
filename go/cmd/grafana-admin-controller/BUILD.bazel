@@ -38,7 +38,7 @@ sh_binary(
         "run",
         "--kind=$(location @kind//:file)",
         "--manifest=$(location //manifests/deploy/grafana/dev:dev)",
-        "--images=quay.io/f110/grafana-admin-controller:latest=$(location //containers/grafana-admin-controller:image.tar)",
+        "--images=registry.f110.dev/tools/grafana-admin-controller:latest=$(location //containers/grafana-admin-controller:image.tar)",
     ],
     data = [
         "//containers/grafana-admin-controller:image.tar",

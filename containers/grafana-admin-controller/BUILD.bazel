@@ -22,6 +22,6 @@ container_push(
     name = "push",
     format = "Docker",
     image = ":image",
-    registry = "quay.io",
-    repository = "f110/grafana-admin-controller",
+    registry = "registry.f110.dev",
+    repository = "tools/grafana-admin-controller",
 )
