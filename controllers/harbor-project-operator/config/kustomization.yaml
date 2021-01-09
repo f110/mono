@@ -1,9 +1,0 @@
-resources:
-  - rbac/service_account.yaml
-  - rbac/leader_election_role.yaml
-  - rbac/leader_election_role_binding.yaml
-  - rbac/role.yaml
-  - rbac/role_binding.yaml
-  - crd/harbor.f110.dev_harborprojects.yaml
-  - crd/harbor.f110.dev_harborrobotaccounts.yaml
-  - deploy/deployment.yaml

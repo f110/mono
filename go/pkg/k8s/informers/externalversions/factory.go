@@ -32,6 +32,7 @@ import (
 
 	versioned "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	grafana "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/grafana"
+	harbor "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/harbor"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -180,8 +181,13 @@ type SharedInformerFactory interface {
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
 	Grafana() grafana.Interface
+	Harbor() harbor.Interface
 }
 
 func (f *sharedInformerFactory) Grafana() grafana.Interface {
 	return grafana.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Harbor() harbor.Interface {
+	return harbor.New(f, f.namespace, f.tweakListOptions)
 }

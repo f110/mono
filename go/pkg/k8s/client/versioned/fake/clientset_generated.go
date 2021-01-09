@@ -29,6 +29,8 @@ import (
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1"
 	fakegrafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1/fake"
+	harborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1"
+	fakeharborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -86,4 +88,9 @@ var _ clientset.Interface = &Clientset{}
 // GrafanaV1alpha1 retrieves the GrafanaV1alpha1Client
 func (c *Clientset) GrafanaV1alpha1() grafanav1alpha1.GrafanaV1alpha1Interface {
 	return &fakegrafanav1alpha1.FakeGrafanaV1alpha1{Fake: &c.Fake}
+}
+
+// HarborV1alpha1 retrieves the HarborV1alpha1Client
+func (c *Clientset) HarborV1alpha1() harborv1alpha1.HarborV1alpha1Interface {
+	return &fakeharborv1alpha1.FakeHarborV1alpha1{Fake: &c.Fake}
 }

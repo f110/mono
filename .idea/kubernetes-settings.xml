@@ -8,6 +8,12 @@
       <SpecSource>
         <option name="pathOrUrl" value="$PROJECT_DIR$/manifests/crd/grafana/grafana.f110.dev_grafanausers.yaml" />
       </SpecSource>
+      <SpecSource>
+        <option name="pathOrUrl" value="$PROJECT_DIR$/manifests/crd/harbor/harbor.f110.dev_harborprojects.yaml" />
+      </SpecSource>
+      <SpecSource>
+        <option name="pathOrUrl" value="$PROJECT_DIR$/manifests/crd/harbor/harbor.f110.dev_harborrobotaccounts.yaml" />
+      </SpecSource>
     </specSources>
   </component>
 </project>

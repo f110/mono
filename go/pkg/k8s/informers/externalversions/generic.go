@@ -29,6 +29,7 @@ import (
 	"fmt"
 
 	v1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -64,6 +65,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Grafana().V1alpha1().Grafanas().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("grafanausers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Grafana().V1alpha1().GrafanaUsers().Informer()}, nil
+
+		// Group=harbor.f110.dev, Version=v1alpha1
+	case harborv1alpha1.SchemeGroupVersion.WithResource("harborprojects"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborProjects().Informer()}, nil
+	case harborv1alpha1.SchemeGroupVersion.WithResource("harborrobotaccounts"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborRobotAccounts().Informer()}, nil
 
 	}
 
