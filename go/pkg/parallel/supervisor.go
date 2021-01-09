@@ -96,6 +96,7 @@ type childProcess struct {
 	c               int
 	rand            *rand.Rand
 	lastRestartTime time.Time
+	exited          bool
 
 	fn func(ctx context.Context)
 }
@@ -106,6 +107,10 @@ func newChildProcess(id int, fn func(ctx context.Context)) *childProcess {
 }
 
 func (c *childProcess) Run(ctx context.Context) {
+	defer func() {
+		c.exited = true
+	}()
+
 	for {
 		c.run(ctx)
 

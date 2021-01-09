@@ -2,8 +2,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "controllerutil",
-    srcs = ["base.go"],
+    srcs = [
+        "base.go",
+        "queue.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/k8s.io/client-go/tools/cache"],
+    deps = [
+        "//vendor/k8s.io/client-go/tools/cache",
+        "//vendor/k8s.io/client-go/util/workqueue",
+    ],
 )

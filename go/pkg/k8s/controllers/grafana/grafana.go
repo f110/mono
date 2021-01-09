@@ -16,7 +16,6 @@ import (
 	kubeinformers "k8s.io/client-go/informers"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
 	"go.f110.dev/mono/go/pkg/collections/set"
@@ -38,17 +37,12 @@ type AdminController struct {
 
 	client clientset.Interface
 
-	secretLister     corev1listers.SecretLister
-	secretHasSynced  cache.InformerSynced
-	serviceLister    corev1listers.ServiceLister
-	serviceHasSynced cache.InformerSynced
-
+	secretLister  corev1listers.SecretLister
+	serviceLister corev1listers.ServiceLister
 	appLister     listers.GrafanaLister
-	appHasSynced  cache.InformerSynced
 	userLister    listers.GrafanaUserLister
-	userHasSynced cache.InformerSynced
 
-	queue workqueue.RateLimitingInterface
+	queue *controllerutil.WorkQueue
 }
 
 func NewAdminController(
@@ -62,19 +56,16 @@ func NewAdminController(
 	userInformer := sharedInformerFactory.Grafana().V1alpha1().GrafanaUsers()
 
 	a := &AdminController{
-		ControllerBase:   controllerutil.NewBase(),
-		client:           client,
-		secretLister:     secretInformer.Lister(),
-		secretHasSynced:  secretInformer.Informer().HasSynced,
-		serviceLister:    serviceInformer.Lister(),
-		serviceHasSynced: serviceInformer.Informer().HasSynced,
-		appLister:        appInformer.Lister(),
-		appHasSynced:     appInformer.Informer().HasSynced,
-		userLister:       userInformer.Lister(),
-		userHasSynced:    userInformer.Informer().HasSynced,
-		queue:            workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "grafana-admin-controller"),
+		ControllerBase: controllerutil.NewBase(),
+		client:         client,
+		secretLister:   secretInformer.Lister(),
+		serviceLister:  serviceInformer.Lister(),
+		appLister:      appInformer.Lister(),
+		userLister:     userInformer.Lister(),
+		queue:          controllerutil.NewWorkQueue(),
 	}
 	a.UseInformer(secretInformer.Informer())
+	a.UseInformer(serviceInformer.Informer())
 	a.UseInformer(appInformer.Informer())
 	a.UseInformer(userInformer.Informer())
 
@@ -95,13 +86,7 @@ func NewAdminController(
 
 func (a *AdminController) Run(ctx context.Context, workers int) {
 	logger.Log.Info("Wait for informer caches to sync")
-	if !cache.WaitForCacheSync(
-		ctx.Done(),
-		a.secretHasSynced,
-		a.serviceHasSynced,
-		a.appHasSynced,
-		a.userHasSynced,
-	) {
+	if !a.WaitForSync(ctx) {
 		return
 	}
 
@@ -112,7 +97,7 @@ func (a *AdminController) Run(ctx context.Context, workers int) {
 
 	<-ctx.Done()
 
-	a.queue.ShutDown()
+	a.queue.Shutdown()
 	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	sv.Shutdown(sCtx)
 	cancel()
@@ -355,18 +340,22 @@ func (a *AdminController) superordinateEnqueue(obj runtime.Object) {
 
 func (a *AdminController) worker(ctx context.Context) {
 	for {
-		obj, shutdown := a.queue.Get()
-		if shutdown {
-			return
+		var obj interface{}
+		select {
+		case v, ok := <-a.queue.Get():
+			if !ok {
+				return
+			}
+			obj = v
 		}
 		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
 
-		ctx, cancelFunc := context.WithCancel(context.Background())
+		wCtx, cancelFunc := context.WithCancel(ctx)
 		err := func(obj interface{}) error {
 			defer a.queue.Done(obj)
 			defer cancelFunc()
 
-			err := a.syncGrafana(ctx, obj.(string))
+			err := a.syncGrafana(wCtx, obj.(string))
 			if err != nil {
 				a.queue.AddRateLimited(obj)
 				return err

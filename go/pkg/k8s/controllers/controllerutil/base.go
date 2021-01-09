@@ -28,3 +28,12 @@ func (b *ControllerBase) Run(ctx context.Context) {
 		return
 	}
 }
+
+func (b *ControllerBase) WaitForSync(ctx context.Context) bool {
+	hasSynced := make([]cache.InformerSynced, len(b.informers))
+	for i := range b.informers {
+		hasSynced[i] = b.informers[i].HasSynced
+	}
+
+	return cache.WaitForCacheSync(ctx.Done(), hasSynced...)
+}
