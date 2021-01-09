@@ -28,8 +28,10 @@ package externalversions
 import (
 	"fmt"
 
+	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	v1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
+	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -71,6 +73,16 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborProjects().Informer()}, nil
 	case harborv1alpha1.SchemeGroupVersion.WithResource("harborrobotaccounts"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborRobotAccounts().Informer()}, nil
+
+		// Group=min.io.io, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().MinIOInstances().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().Mirrors().Informer()}, nil
+
+		// Group=minio.f110.dev, Version=v1alpha1
+	case miniov1alpha1.SchemeGroupVersion.WithResource("miniobuckets"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Minio().V1alpha1().MinIOBuckets().Informer()}, nil
 
 	}
 

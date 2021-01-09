@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "miniocontroller",
+    srcs = ["interface.go"],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/miniocontroller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/k8s/informers/externalversions/internalinterfaces",
+        "//go/pkg/k8s/informers/externalversions/miniocontroller/v1beta1",
+    ],
+)

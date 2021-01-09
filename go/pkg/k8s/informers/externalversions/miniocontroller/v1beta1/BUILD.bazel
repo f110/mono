@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "v1beta1",
+    srcs = [
+        "interface.go",
+        "minioinstance.go",
+        "mirror.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/miniocontroller/v1beta1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/informers/externalversions/internalinterfaces",
+        "//go/pkg/k8s/listers/miniocontroller/v1beta1",
+        "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/k8s.io/apimachinery/pkg/watch",
+        "//vendor/k8s.io/client-go/tools/cache",
+    ],
+)

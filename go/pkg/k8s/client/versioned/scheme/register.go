@@ -26,8 +26,10 @@ SOFTWARE.
 package scheme
 
 import (
+	minv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
+	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,6 +43,8 @@ var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	grafanav1alpha1.AddToScheme,
 	harborv1alpha1.AddToScheme,
+	miniov1alpha1.AddToScheme,
+	minv1beta1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

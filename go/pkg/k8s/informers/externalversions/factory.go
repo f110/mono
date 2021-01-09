@@ -34,6 +34,8 @@ import (
 	grafana "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/grafana"
 	harbor "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/harbor"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
+	minio "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/minio"
+	miniocontroller "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/miniocontroller"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -182,6 +184,8 @@ type SharedInformerFactory interface {
 
 	Grafana() grafana.Interface
 	Harbor() harbor.Interface
+	Minio() minio.Interface
+	Min() miniocontroller.Interface
 }
 
 func (f *sharedInformerFactory) Grafana() grafana.Interface {
@@ -190,4 +194,12 @@ func (f *sharedInformerFactory) Grafana() grafana.Interface {
 
 func (f *sharedInformerFactory) Harbor() harbor.Interface {
 	return harbor.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Minio() minio.Interface {
+	return minio.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Min() miniocontroller.Interface {
+	return miniocontroller.New(f, f.namespace, f.tweakListOptions)
 }
