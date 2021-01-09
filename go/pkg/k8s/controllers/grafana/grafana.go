@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	kubeinformers "k8s.io/client-go/informers"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -26,6 +25,7 @@ import (
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	listers "go.f110.dev/mono/go/pkg/k8s/listers/grafana/v1alpha1"
+	"go.f110.dev/mono/go/pkg/parallel"
 	"go.f110.dev/mono/lib/logger"
 )
 
@@ -94,8 +94,6 @@ func NewAdminController(
 }
 
 func (a *AdminController) Run(ctx context.Context, workers int) {
-	defer a.queue.ShutDown()
-
 	logger.Log.Info("Wait for informer caches to sync")
 	if !cache.WaitForCacheSync(
 		ctx.Done(),
@@ -107,11 +105,17 @@ func (a *AdminController) Run(ctx context.Context, workers int) {
 		return
 	}
 
+	sv := parallel.NewSupervisor(ctx)
 	for i := 0; i < workers; i++ {
-		go wait.Until(a.worker, time.Second, ctx.Done())
+		sv.Add(a.worker)
 	}
 
 	<-ctx.Done()
+
+	a.queue.ShutDown()
+	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sv.Shutdown(sCtx)
+	cancel()
 }
 
 func (a *AdminController) syncGrafana(ctx context.Context, key string) error {
@@ -349,7 +353,7 @@ func (a *AdminController) superordinateEnqueue(obj runtime.Object) {
 	}
 }
 
-func (a *AdminController) worker() {
+func (a *AdminController) worker(ctx context.Context) {
 	for {
 		obj, shutdown := a.queue.Get()
 		if shutdown {
