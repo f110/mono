@@ -6,7 +6,7 @@ go_library(
         "imageindex.go",
         "main.go",
     ],
-    importpath = "go.f110.dev/mono/tools/gantry-crane",
+    importpath = "go.f110.dev/mono/go/cmd/gantry-crane",
     visibility = ["//visibility:private"],
     deps = [
         "//vendor/github.com/google/go-containerregistry/pkg/authn",
