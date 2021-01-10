@@ -34,3 +34,12 @@ sh_binary(
     ],
     data = ["@kind//:file"],
 )
+
+load("//build:job.bzl", "job")
+
+job(
+    name = "unissh",
+    all_revision = True,
+    command = "build",
+    target = ":pkg",
+)

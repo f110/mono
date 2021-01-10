@@ -3,7 +3,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_deb", "pkg_tar")
 pkg_tar(
     name = "bin",
     srcs = [
-        "//tools/unissh/cmd/unissh-list-machines",
+        "//go/cmd/unissh-list-machines",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",
@@ -20,13 +20,4 @@ pkg_deb(
     maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
     package = "unissh",
     version = "0.1.0",
-)
-
-load("//build:job.bzl", builder_job = "job")
-
-builder_job(
-    name = "unissh",
-    all_revision = True,
-    command = "build",
-    target = ":pkg",
 )
