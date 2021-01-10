@@ -1,0 +1,14 @@
+load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomization")
+
+kustomization(
+    name = "base",
+    src = "kustomization.yaml",
+    resources = [
+        "role_binding.yaml",
+        "//manifests/controller/harbor",
+        "//manifests/crd/harbor",
+        "//manifests/rbac/harbor",
+        "//manifests/rbac/leader-election",
+    ],
+    visibility = ["//visibility:public"],
+)
