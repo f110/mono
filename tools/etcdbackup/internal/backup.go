@@ -13,7 +13,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/xerrors"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type Backup struct {

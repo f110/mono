@@ -8,7 +8,7 @@ import (
 	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/tools/build/pkg/watcher"
 )
 

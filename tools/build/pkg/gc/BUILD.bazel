@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/gc",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/logger",
+        "//go/pkg/logger",
         "//tools/build/pkg/database",
         "//tools/build/pkg/database/dao",
         "//tools/build/pkg/storage",

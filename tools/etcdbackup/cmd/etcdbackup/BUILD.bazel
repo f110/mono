@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/tools/etcdbackup/cmd/etcdbackup",
     visibility = ["//visibility:private"],
     deps = [
-        "//lib/logger",
+        "//go/pkg/logger",
         "//tools/etcdbackup/internal",
         "//vendor/github.com/spf13/pflag",
         "//vendor/golang.org/x/xerrors",

@@ -6,7 +6,7 @@ go_library(
         "init.go",
         "klog.go",
     ],
-    importpath = "go.f110.dev/mono/lib/logger",
+    importpath = "go.f110.dev/mono/go/pkg/logger",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/spf13/pflag",

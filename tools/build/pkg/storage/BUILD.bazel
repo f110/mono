@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/tools/build/pkg/storage",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/logger",
+        "//go/pkg/logger",
         "//vendor/github.com/minio/minio-go/v6:minio-go",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",

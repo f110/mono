@@ -20,7 +20,7 @@ import (
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/tools/build/pkg/coordinator"
 	"go.f110.dev/mono/tools/build/pkg/database"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"

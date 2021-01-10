@@ -24,8 +24,8 @@ import (
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	listers "go.f110.dev/mono/go/pkg/k8s/listers/grafana/v1alpha1"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/parallel"
-	"go.f110.dev/mono/lib/logger"
 )
 
 const (

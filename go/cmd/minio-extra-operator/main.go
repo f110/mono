@@ -16,7 +16,7 @@ import (
 	"k8s.io/klog"
 
 	"go.f110.dev/mono/go/pkg/k8s/controllers/minio"
-	"go.f110.dev/mono/lib/signals"
+	"go.f110.dev/mono/go/pkg/signals"
 )
 
 func main() {

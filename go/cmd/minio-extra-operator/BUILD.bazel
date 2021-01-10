@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/k8s/controllers/minio",
-        "//lib/signals",
+        "//go/pkg/signals",
         "//vendor/github.com/google/uuid",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/kubernetes",

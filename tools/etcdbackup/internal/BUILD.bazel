@@ -10,7 +10,7 @@ go_library(
     importpath = "go.f110.dev/mono/tools/etcdbackup/internal",
     visibility = ["//tools/etcdbackup:__subpackages__"],
     deps = [
-        "//lib/logger",
+        "//go/pkg/logger",
         "//vendor/cloud.google.com/go/storage",
         "//vendor/go.etcd.io/etcd/clientv3",
         "//vendor/go.uber.org/zap",

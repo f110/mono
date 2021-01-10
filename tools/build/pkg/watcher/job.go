@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 const (

@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/parallel",
     visibility = ["//visibility:public"],
     deps = [
-        "//lib/logger",
+        "//go/pkg/logger",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
     ],

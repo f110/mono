@@ -23,8 +23,8 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 
-	"go.f110.dev/mono/lib/logger"
-	"go.f110.dev/mono/lib/signals"
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/signals"
 	"go.f110.dev/mono/tools/build/pkg/api"
 	"go.f110.dev/mono/tools/build/pkg/coordinator"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"

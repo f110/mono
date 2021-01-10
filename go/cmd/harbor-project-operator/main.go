@@ -19,7 +19,7 @@ import (
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/harbor"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	"go.f110.dev/mono/lib/signals"
+	"go.f110.dev/mono/go/pkg/signals"
 )
 
 func main() {

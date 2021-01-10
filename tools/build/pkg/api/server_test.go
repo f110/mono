@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/tools/build/pkg/database"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"
 	"go.f110.dev/mono/tools/build/pkg/database/dao/daotest"

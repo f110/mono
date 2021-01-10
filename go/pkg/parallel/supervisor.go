@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type supervisorState int

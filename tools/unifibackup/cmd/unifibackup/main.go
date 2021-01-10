@@ -15,7 +15,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/api/option"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 func unifiBackup(args []string) error {

@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//bot/continuous-delivery/pkg/config",
-        "//lib/logger",
+        "//go/pkg/logger",
         "//vendor/github.com/google/go-github/v29/github",
         "//vendor/go.uber.org/zap",
     ],

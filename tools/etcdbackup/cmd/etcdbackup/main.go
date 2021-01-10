@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/tools/etcdbackup/internal"
 )
 

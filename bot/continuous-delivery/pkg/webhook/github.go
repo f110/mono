@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 const (

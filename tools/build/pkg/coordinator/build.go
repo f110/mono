@@ -25,7 +25,7 @@ import (
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/rest"
 
-	"go.f110.dev/mono/lib/logger"
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/tools/build/pkg/database"
 	"go.f110.dev/mono/tools/build/pkg/database/dao"
 	"go.f110.dev/mono/tools/build/pkg/storage"
