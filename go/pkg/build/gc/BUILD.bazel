@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gc",
+    srcs = ["gc.go"],
+    importpath = "go.f110.dev/mono/go/pkg/build/gc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/build/database",
+        "//go/pkg/build/database/dao",
+        "//go/pkg/build/web",
+        "//go/pkg/logger",
+        "//go/pkg/storage",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
+    ],
+)

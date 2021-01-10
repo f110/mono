@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "web",
+    srcs = [
+        "dashboard.go",
+        "template.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/build/web",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/build/database",
+        "//go/pkg/build/database/dao",
+        "//go/pkg/build/discovery",
+        "//go/pkg/logger",
+        "//go/pkg/storage",
+        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/go.f110.dev/protoc-ddl/probe",
+        "//vendor/go.uber.org/zap",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
+    ],
+)

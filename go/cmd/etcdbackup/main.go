@@ -15,6 +15,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/etcd"
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/storage"
 )
 
 func etcdBackup(args []string) error {
@@ -79,9 +80,9 @@ func etcdBackup(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	up := etcd.NewUploader(credential, bucket)
+	up := storage.NewGCS(credential, bucket)
 	path := filepath.Join(pathPrefix, bu.Time().In(loc).Format("2006-01-02_15.zlib"))
-	if err := up.Upload(context.Background(), compressed, path); err != nil {
+	if err := up.Put(context.Background(), compressed, path); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 

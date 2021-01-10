@@ -1,0 +1,22 @@
+load("@dev_f110_protoc_ddl//rules:def.bzl", "vendor_ddl")
+
+vendor_ddl(
+    name = "vendor",
+    src = "//go/pkg/build/database:schema",
+)
+
+sh_binary(
+    name = "migrate",
+    srcs = [
+        "@dev_f110_protoc_ddl//cmd/migrate",
+    ],
+    args = [
+        "--schema=$(location //sql/build:schema.sql)",
+        "--driver=mysql",
+        "--dsn=build:build@tcp(127.0.0.1:3306)/build",
+        "--execute",
+    ],
+    data = [
+        "schema.sql",
+    ],
+)

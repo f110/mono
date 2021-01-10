@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "build-sidecar_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/build-sidecar",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/bradleyfalzon/ghinstallation",
+        "//vendor/github.com/google/go-github/v29/github",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
+    ],
+)
+
+go_binary(
+    name = "build-sidecar",
+    embed = [":build-sidecar_lib"],
+    visibility = ["//visibility:public"],
+)

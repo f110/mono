@@ -24,16 +24,12 @@ go_library(
     srcs = [
         "backup.go",
         "cert.go",
-        "upload.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/etcd",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/logger",
-        "//vendor/cloud.google.com/go/storage",
         "//vendor/go.etcd.io/etcd/clientv3",
-        "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/google.golang.org/api/option",
     ],
 )

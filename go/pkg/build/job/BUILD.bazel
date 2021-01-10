@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "job",
+    srcs = ["job.go"],
+    importpath = "go.f110.dev/mono/go/pkg/build/job",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/go.uber.org/zap"],
+)

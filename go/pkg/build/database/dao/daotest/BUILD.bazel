@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao_mock", "vendor_ddl")
+
+schema_dao_mock(
+    name = "mock",
+    daopath = "go.f110.dev/mono/tools/build/pkg/database/dao",
+    lang = "go",
+    proto = "//go/pkg/build/database:database_proto",
+)
+
+vendor_ddl(
+    name = "vendor_mock",
+    src = ":mock",
+)
+
+go_library(
+    name = "daotest",
+    srcs = ["schema.mock.go"],
+    importpath = "go.f110.dev/mono/go/pkg/build/database/dao/daotest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/build/database",
+        "//go/pkg/build/database/dao",
+        "//vendor/go.f110.dev/protoc-ddl/mock",
+    ],
+)
