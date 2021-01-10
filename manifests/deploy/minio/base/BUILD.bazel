@@ -1,0 +1,14 @@
+load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomization")
+
+kustomization(
+    name = "base",
+    src = "kustomization.yaml",
+    resources = [
+        "role_binding.yaml",
+        "//manifests/controller/minio",
+        "//manifests/crd/minio",
+        "//manifests/rbac/leader-election",
+        "//manifests/rbac/minio",
+    ],
+    visibility = ["//visibility:public"],
+)

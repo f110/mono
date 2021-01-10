@@ -1,0 +1,6 @@
+resources:
+  - ../../../crd/minio
+  - ../../../rbac/minio
+  - ../../../controller/minio
+  - ../../../rbac/leader-election
+  - role_binding.yaml
