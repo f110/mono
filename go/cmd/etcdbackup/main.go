@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/etcd"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/tools/etcdbackup/internal"
 )
 
 func etcdBackup(args []string) error {
@@ -50,7 +50,7 @@ func etcdBackup(args []string) error {
 
 	var caCert *x509.Certificate
 	if caCertPath != "" {
-		c, err := internal.ReadCACertificate(caCertPath)
+		c, err := etcd.ReadCACertificate(caCertPath)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -70,7 +70,7 @@ func etcdBackup(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	bu, err := internal.NewBackup(context.Background(), endpoints, caCert, clientCert)
+	bu, err := etcd.NewBackup(context.Background(), endpoints, caCert, clientCert)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -79,7 +79,7 @@ func etcdBackup(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	up := internal.NewUploader(credential, bucket)
+	up := etcd.NewUploader(credential, bucket)
 	path := filepath.Join(pathPrefix, bu.Time().In(loc).Format("2006-01-02_15.zlib"))
 	if err := up.Upload(context.Background(), compressed, path); err != nil {
 		return xerrors.Errorf(": %w", err)

@@ -1,4 +1,4 @@
-package internal
+package etcd
 
 import (
 	"crypto/x509"

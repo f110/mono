@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "bin",
     srcs = [
-        "//tools/etcdbackup/cmd/etcdbackup",
+        "//go/cmd/etcdbackup",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",

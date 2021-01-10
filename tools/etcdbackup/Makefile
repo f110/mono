@@ -1,3 +1,0 @@
-.PHONY: push
-push:
-	bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64 //tools/etcdbackup:push
