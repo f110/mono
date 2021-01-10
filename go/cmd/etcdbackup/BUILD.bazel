@@ -3,11 +3,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "etcdbackup_lib",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/tools/etcdbackup/cmd/etcdbackup",
+    importpath = "go.f110.dev/mono/go/cmd/etcdbackup",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/pkg/etcd",
         "//go/pkg/logger",
-        "//tools/etcdbackup/internal",
         "//vendor/github.com/spf13/pflag",
         "//vendor/golang.org/x/xerrors",
     ],
