@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,6 +35,8 @@ func finalizer(in io.Reader, out io.Writer) error {
 		switch kind {
 		case "CustomResourceDefinition":
 			editCustomResourceDefinition(v)
+		case "ClusterRole":
+			editClusterRole(v)
 		}
 
 		if err := e.Encode(v); err != nil {
@@ -70,8 +73,27 @@ func editCustomResourceDefinition(v map[interface{}]interface{}) {
 	delete(m, "annotations")
 }
 
+func editClusterRole(v map[interface{}]interface{}) {
+	m := v["metadata"].(map[interface{}]interface{})
+	delete(m, "creationTimestamp")
+}
+
 func main() {
-	if err := finalizer(os.Stdin, os.Stdout); err != nil {
+	var in, out string
+	pflag.CommandLine.StringVar(&in, "in", "", "Input file")
+	pflag.CommandLine.StringVar(&out, "out", "", "Output path")
+	pflag.Parse()
+
+	reader, err := os.Open(in)
+	if err != nil {
+		panic(err)
+	}
+	writer, err := os.Create(out)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := finalizer(reader, writer); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
