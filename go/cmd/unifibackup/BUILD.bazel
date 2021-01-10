@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "unifibackup_lib",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/tools/unifibackup/cmd/unifibackup",
+    importpath = "go.f110.dev/mono/go/cmd/unifibackup",
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/logger",
