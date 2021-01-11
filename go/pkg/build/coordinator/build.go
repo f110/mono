@@ -274,6 +274,9 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Log.Info("Not found task", zap.String("task.id", taskId))
+			if err := b.teardownJob(ctx, job); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 			return nil
 		}
 		return xerrors.Errorf(": %w", err)
