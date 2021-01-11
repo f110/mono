@@ -272,7 +272,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	taskId := job.Labels[labelKeyTaskId]
 	task, err := b.getTask(taskId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			logger.Log.Info("Not found task", zap.String("task.id", taskId))
 			return nil
 		}
