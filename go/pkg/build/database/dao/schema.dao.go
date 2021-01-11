@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.f110.dev/mono/tools/build/pkg/database"
+	"go.f110.dev/mono/go/pkg/build/database"
 )
 
 type ListOption func(opt *listOpt)

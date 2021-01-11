@@ -1,6 +1,6 @@
 syntax = "proto3";
 package build.schema;
-option go_package = "go.f110.dev/mono/tools/build/pkg/database;database";
+option go_package = "go.f110.dev/mono/go/pkg/build/database;database";
 
 import "ddl.proto";
 import "google/protobuf/timestamp.proto";
