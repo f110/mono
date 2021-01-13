@@ -98,12 +98,12 @@ func main() {
 		RetryPeriod:     5 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				projectController, err := harbor.NewHarborProjectController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
+				projectController, err := harbor.NewProjectController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, coreConfigMapName, dev)
 				if err != nil {
 					klog.Error(err)
 					return
 				}
-				robotAccountController, err := harbor.NewHarborRobotAccountController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, dev)
+				robotAccountController, err := harbor.NewRobotAccountController(ctx, kubeClient, cfg, sharedInformerFactory, harborNamespace, harborServiceName, adminSecretName, dev)
 				if err != nil {
 					klog.Error(err)
 					return

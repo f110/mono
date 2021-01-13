@@ -11,38 +11,41 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	hpLister "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1"
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 const (
 	harborRobotAccountControllerFinalizerName = "harbor-project-controller.harbor.f110.dev/robot-account-finalizer"
 )
 
-type HarborRobotAccountController struct {
-	config             *rest.Config
-	coreClient         *kubernetes.Clientset
-	hClient            clientset.Interface
-	hraLister          hpLister.HarborRobotAccountLister
-	hraListerHasSynced cache.InformerSynced
+type RobotAccountController struct {
+	*controllerutil.ControllerBase
 
-	queue workqueue.RateLimitingInterface
+	config     *rest.Config
+	coreClient *kubernetes.Clientset
+	hClient    clientset.Interface
+	hraLister  hpLister.HarborRobotAccountLister
+
+	queue *controllerutil.WorkQueue
 
 	harborService     *corev1.Service
 	adminPassword     string
@@ -55,7 +58,7 @@ type HarborRobotAccountController struct {
 // +kubebuilder:rbac:groups=*,resources=secrets,verbs=get;create;update;delete
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*HarborRobotAccountController, error) {
+func NewRobotAccountController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*RobotAccountController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -72,17 +75,18 @@ func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes
 
 	hraInformer := sharedInformerFactory.Harbor().V1alpha1().HarborRobotAccounts()
 
-	c := &HarborRobotAccountController{
-		config:             cfg,
-		coreClient:         coreClient,
-		hClient:            hClient,
-		hraLister:          hraInformer.Lister(),
-		hraListerHasSynced: hraInformer.Informer().HasSynced,
-		queue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "HarborRobotAccount"),
-		harborService:      svc,
-		adminPassword:      string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
-		runOutsideCluster:  runOutsideCluster,
+	c := &RobotAccountController{
+		ControllerBase:    controllerutil.NewBase(),
+		config:            cfg,
+		coreClient:        coreClient,
+		hClient:           hClient,
+		hraLister:         hraInformer.Lister(),
+		queue:             controllerutil.NewWorkQueue(),
+		harborService:     svc,
+		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
+		runOutsideCluster: runOutsideCluster,
 	}
+	c.UseInformer(hraInformer.Informer())
 
 	hraInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.addHarborRobotAccount,
@@ -93,7 +97,7 @@ func NewHarborRobotAccountController(ctx context.Context, coreClient *kubernetes
 	return c, nil
 }
 
-func (c *HarborRobotAccountController) syncHarborRobotAccount(ctx context.Context, key string) error {
+func (c *RobotAccountController) syncHarborRobotAccount(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
@@ -193,7 +197,7 @@ func (c *HarborRobotAccountController) syncHarborRobotAccount(ctx context.Contex
 	return nil
 }
 
-func (c *HarborRobotAccountController) createRobotAccount(ctx context.Context, client *harbor.Harbor, project *harborv1alpha1.HarborProject, robotAccount *harborv1alpha1.HarborRobotAccount) error {
+func (c *RobotAccountController) createRobotAccount(ctx context.Context, client *harbor.Harbor, project *harborv1alpha1.HarborProject, robotAccount *harborv1alpha1.HarborRobotAccount) error {
 	newAccount, err := client.CreateRobotAccount(
 		project.Status.ProjectId,
 		&harbor.NewRobotAccountRequest{
@@ -233,7 +237,7 @@ func (c *HarborRobotAccountController) createRobotAccount(ctx context.Context, c
 	return nil
 }
 
-func (c *HarborRobotAccountController) finalizeHarborRobotAccount(ctx context.Context, client *harbor.Harbor, projectId int, ra *harborv1alpha1.HarborRobotAccount) error {
+func (c *RobotAccountController) finalizeHarborRobotAccount(ctx context.Context, client *harbor.Harbor, projectId int, ra *harborv1alpha1.HarborRobotAccount) error {
 	if ra.Status.Ready == false {
 		klog.V(4).Infof("Skip finalize project because the project still not shipped: %s", ra.Name)
 		ra.Finalizers = removeString(ra.Finalizers, harborRobotAccountControllerFinalizerName)
@@ -249,7 +253,7 @@ func (c *HarborRobotAccountController) finalizeHarborRobotAccount(ctx context.Co
 	return err
 }
 
-func (c *HarborRobotAccountController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *RobotAccountController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
@@ -298,59 +302,60 @@ func (c *HarborRobotAccountController) portForward(ctx context.Context, svc *cor
 	return pf, nil
 }
 
-func (c *HarborRobotAccountController) Run(ctx context.Context, workers int) {
-	defer c.queue.ShutDown()
-
-	if !cache.WaitForCacheSync(ctx.Done(), c.hraListerHasSynced) {
+func (c *RobotAccountController) Run(ctx context.Context, workers int) {
+	if !c.WaitForSync(ctx) {
 		klog.Error("Failed to sync informer caches")
 		return
 	}
 
+	sv := parallel.NewSupervisor(ctx)
 	for i := 0; i < workers; i++ {
-		go wait.Until(c.worker, time.Second, ctx.Done())
+		sv.Add(c.worker)
 	}
 
-	klog.Info("Start workers of HarborRobotAccountController")
+	klog.Info("Start workers of RobotAccountController")
 	<-ctx.Done()
 	klog.Info("Shutdown workers")
+
+	c.queue.Shutdown()
+	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sv.Shutdown(sCtx)
+	cancel()
 }
 
-func (c *HarborRobotAccountController) worker() {
-	defer klog.V(4).Info("Finish worker")
-
-	for c.processNextItem() {
-	}
-}
-
-func (c *HarborRobotAccountController) processNextItem() bool {
-	obj, shutdown := c.queue.Get()
-	if shutdown {
-		return false
-	}
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	err := func() error {
-		defer c.queue.Done(obj)
-		defer cancelFunc()
-
-		err := c.syncHarborRobotAccount(ctx, obj.(string))
-		if err != nil {
-			c.queue.AddRateLimited(obj)
-			return err
+func (c *RobotAccountController) worker(ctx context.Context) {
+	for {
+		var obj interface{}
+		select {
+		case v, ok := <-c.queue.Get():
+			if !ok {
+				return
+			}
+			obj = v
 		}
+		logger.Log.Debug("Got next queue", zap.Any("queue", obj))
 
-		c.queue.Forget(obj)
-		return nil
-	}()
-	if err != nil {
-		klog.Info(err)
-		return true
+		wCtx, cancelFunc := context.WithCancel(context.Background())
+		err := func() error {
+			defer c.queue.Done(obj)
+			defer cancelFunc()
+
+			err := c.syncHarborRobotAccount(wCtx, obj.(string))
+			if err != nil {
+				c.queue.AddRateLimited(obj)
+				return err
+			}
+
+			c.queue.Forget(obj)
+			return nil
+		}()
+		if err != nil {
+			logger.Log.Warn("Reconcile has error", zap.Error(err))
+		}
 	}
-
-	return true
 }
 
-func (c *HarborRobotAccountController) enqueue(hra *harborv1alpha1.HarborRobotAccount) {
+func (c *RobotAccountController) enqueue(hra *harborv1alpha1.HarborRobotAccount) {
 	if key, err := cache.MetaNamespaceKeyFunc(hra); err != nil {
 		return
 	} else {
@@ -358,13 +363,13 @@ func (c *HarborRobotAccountController) enqueue(hra *harborv1alpha1.HarborRobotAc
 	}
 }
 
-func (c *HarborRobotAccountController) addHarborRobotAccount(obj interface{}) {
+func (c *RobotAccountController) addHarborRobotAccount(obj interface{}) {
 	hra := obj.(*harborv1alpha1.HarborRobotAccount)
 
 	c.enqueue(hra)
 }
 
-func (c *HarborRobotAccountController) updateHarborRobotAccount(old, cur interface{}) {
+func (c *RobotAccountController) updateHarborRobotAccount(old, cur interface{}) {
 	oldHRA := old.(*harborv1alpha1.HarborRobotAccount)
 	curHRA := cur.(*harborv1alpha1.HarborRobotAccount)
 
@@ -379,7 +384,7 @@ func (c *HarborRobotAccountController) updateHarborRobotAccount(old, cur interfa
 	c.enqueue(curHRA)
 }
 
-func (c *HarborRobotAccountController) deleteHarborRobotAccount(obj interface{}) {
+func (c *RobotAccountController) deleteHarborRobotAccount(obj interface{}) {
 	hra, ok := obj.(*harborv1alpha1.HarborRobotAccount)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)

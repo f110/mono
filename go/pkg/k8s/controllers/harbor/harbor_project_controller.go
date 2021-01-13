@@ -9,38 +9,41 @@ import (
 	"reflect"
 	"time"
 
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	hpLister "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1"
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 const (
 	harborProjectControllerFinalizerName = "harbor-project-controller.harbor.f110.dev/finalizer"
 )
 
-type HarborProjectController struct {
-	config            *rest.Config
-	coreClient        *kubernetes.Clientset
-	hpClient          clientset.Interface
-	hpLister          hpLister.HarborProjectLister
-	hpListerHasSynced cache.InformerSynced
+type ProjectController struct {
+	*controllerutil.ControllerBase
 
-	queue workqueue.RateLimitingInterface
+	config     *rest.Config
+	coreClient *kubernetes.Clientset
+	hpClient   clientset.Interface
+	hpLister   hpLister.HarborProjectLister
+
+	queue *controllerutil.WorkQueue
 
 	harborService     *corev1.Service
 	adminPassword     string
@@ -53,7 +56,17 @@ type HarborProjectController struct {
 // +kubebuilder:rbac:groups=*,resources=pods;secrets;services;configmaps,verbs=get
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName, coreConfigMapName string, runOutsideCluster bool) (*HarborProjectController, error) {
+func NewProjectController(
+	ctx context.Context,
+	coreClient *kubernetes.Clientset,
+	cfg *rest.Config,
+	sharedInformerFactory informers.SharedInformerFactory,
+	harborNamespace,
+	harborName,
+	adminSecretName,
+	coreConfigMapName string,
+	runOutsideCluster bool,
+) (*ProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -78,18 +91,19 @@ func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clie
 
 	hpInformer := sharedInformerFactory.Harbor().V1alpha1().HarborProjects()
 
-	c := &HarborProjectController{
+	c := &ProjectController{
+		ControllerBase:    controllerutil.NewBase(),
 		config:            cfg,
 		coreClient:        coreClient,
 		hpClient:          hpClient,
 		hpLister:          hpInformer.Lister(),
-		hpListerHasSynced: hpInformer.Informer().HasSynced,
-		queue:             workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "HarborProject"),
+		queue:             controllerutil.NewWorkQueue(),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
 		registryName:      registryUrl.Hostname(),
 		runOutsideCluster: runOutsideCluster,
 	}
+	c.UseInformer(hpInformer.Informer())
 
 	hpInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.addHarborProject,
@@ -100,7 +114,7 @@ func NewHarborProjectController(ctx context.Context, coreClient *kubernetes.Clie
 	return c, nil
 }
 
-func (c *HarborProjectController) syncHarborProject(ctx context.Context, key string) error {
+func (c *ProjectController) syncHarborProject(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
@@ -178,7 +192,7 @@ func (c *HarborProjectController) syncHarborProject(ctx context.Context, key str
 	return nil
 }
 
-func (c *HarborProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
+func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
 	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
 	if currentHP.Spec.Public {
 		newProject.Metadata.Public = "true"
@@ -190,7 +204,7 @@ func (c *HarborProjectController) createProject(currentHP *harborv1alpha1.Harbor
 	return nil
 }
 
-func (c *HarborProjectController) finalizeHarborProject(ctx context.Context, client *harbor.Harbor, hp *harborv1alpha1.HarborProject) error {
+func (c *ProjectController) finalizeHarborProject(ctx context.Context, client *harbor.Harbor, hp *harborv1alpha1.HarborProject) error {
 	if hp.Status.Ready == false {
 		klog.V(4).Infof("Skip finalize project because the project still not shipped: %s", hp.Name)
 		hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
@@ -206,7 +220,7 @@ func (c *HarborProjectController) finalizeHarborProject(ctx context.Context, cli
 	return err
 }
 
-func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
@@ -255,59 +269,59 @@ func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.S
 	return pf, nil
 }
 
-func (c *HarborProjectController) Run(ctx context.Context, workers int) {
-	defer c.queue.ShutDown()
-
-	if !cache.WaitForCacheSync(ctx.Done(), c.hpListerHasSynced) {
-		klog.Error("Failed to sync informer caches")
+func (c *ProjectController) Run(ctx context.Context, workers int) {
+	if !c.WaitForSync(ctx) {
 		return
 	}
 
+	sv := parallel.NewSupervisor(ctx)
 	for i := 0; i < workers; i++ {
-		go wait.Until(c.worker, time.Second, ctx.Done())
+		sv.Add(c.worker)
 	}
 
-	klog.Info("Start workers of HarborProjectController")
+	klog.Info("Start workers of ProjectController")
 	<-ctx.Done()
 	klog.Info("Shutdown workers")
+
+	c.queue.Shutdown()
+	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sv.Shutdown(sCtx)
+	cancel()
 }
 
-func (c *HarborProjectController) worker() {
-	defer klog.V(4).Info("Finish worker")
-
-	for c.processNextItem() {
-	}
-}
-
-func (c *HarborProjectController) processNextItem() bool {
-	obj, shutdown := c.queue.Get()
-	if shutdown {
-		return false
-	}
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	err := func() error {
-		defer c.queue.Done(obj)
-		defer cancelFunc()
-
-		err := c.syncHarborProject(ctx, obj.(string))
-		if err != nil {
-			c.queue.AddRateLimited(obj)
-			return err
+func (c *ProjectController) worker(ctx context.Context) {
+	for {
+		var obj interface{}
+		select {
+		case v, ok := <-c.queue.Get():
+			if !ok {
+				return
+			}
+			obj = v
 		}
+		logger.Log.Debug("Got next queue", zap.Any("queue", obj))
 
-		c.queue.Forget(obj)
-		return nil
-	}()
-	if err != nil {
-		klog.Info(err)
-		return true
+		wCtx, cancelFunc := context.WithCancel(ctx)
+		err := func(obj interface{}) error {
+			defer c.queue.Done(obj)
+			defer cancelFunc()
+
+			err := c.syncHarborProject(wCtx, obj.(string))
+			if err != nil {
+				c.queue.AddRateLimited(obj)
+				return err
+			}
+
+			c.queue.Forget(obj)
+			return nil
+		}(obj)
+		if err != nil {
+			logger.Log.Warn("Reconcile has error", zap.Error(err))
+		}
 	}
-
-	return true
 }
 
-func (c *HarborProjectController) enqueue(hp *harborv1alpha1.HarborProject) {
+func (c *ProjectController) enqueue(hp *harborv1alpha1.HarborProject) {
 	if key, err := cache.MetaNamespaceKeyFunc(hp); err != nil {
 		return
 	} else {
@@ -315,13 +329,13 @@ func (c *HarborProjectController) enqueue(hp *harborv1alpha1.HarborProject) {
 	}
 }
 
-func (c *HarborProjectController) addHarborProject(obj interface{}) {
+func (c *ProjectController) addHarborProject(obj interface{}) {
 	hp := obj.(*harborv1alpha1.HarborProject)
 
 	c.enqueue(hp)
 }
 
-func (c *HarborProjectController) updateHarborProject(old, cur interface{}) {
+func (c *ProjectController) updateHarborProject(old, cur interface{}) {
 	oldHP := old.(*harborv1alpha1.HarborProject)
 	curHP := cur.(*harborv1alpha1.HarborProject)
 
@@ -336,7 +350,7 @@ func (c *HarborProjectController) updateHarborProject(old, cur interface{}) {
 	c.enqueue(curHP)
 }
 
-func (c *HarborProjectController) deleteHarborProject(obj interface{}) {
+func (c *ProjectController) deleteHarborProject(obj interface{}) {
 	hp, ok := obj.(*harborv1alpha1.HarborProject)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
