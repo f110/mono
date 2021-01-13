@@ -29,10 +29,10 @@ import (
 )
 
 const (
-	grafanaAdminControllerFinalizerName = "grafana-admin-controller.grafana.f110.dev/finalizer"
+	grafanaUserControllerFinalizerName = "grafana-user-controller.grafana.f110.dev/finalizer"
 )
 
-type AdminController struct {
+type UserController struct {
 	*controllerutil.ControllerBase
 
 	client clientset.Interface
@@ -45,17 +45,17 @@ type AdminController struct {
 	queue *controllerutil.WorkQueue
 }
 
-func NewAdminController(
+func NewUserController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	sharedInformerFactory informers.SharedInformerFactory,
 	client clientset.Interface,
-) (*AdminController, error) {
+) (*UserController, error) {
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	appInformer := sharedInformerFactory.Grafana().V1alpha1().Grafanas()
 	userInformer := sharedInformerFactory.Grafana().V1alpha1().GrafanaUsers()
 
-	a := &AdminController{
+	a := &UserController{
 		ControllerBase: controllerutil.NewBase(),
 		client:         client,
 		secretLister:   secretInformer.Lister(),
@@ -84,7 +84,7 @@ func NewAdminController(
 	return a, nil
 }
 
-func (a *AdminController) Run(ctx context.Context, workers int) {
+func (a *UserController) Run(ctx context.Context, workers int) {
 	logger.Log.Info("Wait for informer caches to sync")
 	if !a.WaitForSync(ctx) {
 		return
@@ -103,7 +103,7 @@ func (a *AdminController) Run(ctx context.Context, workers int) {
 	cancel()
 }
 
-func (a *AdminController) syncGrafana(ctx context.Context, key string) error {
+func (a *UserController) syncGrafana(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -117,8 +117,8 @@ func (a *AdminController) syncGrafana(ctx context.Context, key string) error {
 	}
 
 	if app.DeletionTimestamp.IsZero() {
-		if !containsString(app.Finalizers, grafanaAdminControllerFinalizerName) {
-			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, grafanaAdminControllerFinalizerName)
+		if !containsString(app.Finalizers, grafanaUserControllerFinalizerName) {
+			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, grafanaUserControllerFinalizerName)
 			app, err = a.client.GrafanaV1alpha1().Grafanas(namespace).Update(ctx, app, metav1.UpdateOptions{})
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
@@ -146,11 +146,11 @@ func (a *AdminController) syncGrafana(ctx context.Context, key string) error {
 	return nil
 }
 
-func (a *AdminController) finalizeGrafana(ctx context.Context, app *grafanav1alpha1.Grafana) error {
+func (a *UserController) finalizeGrafana(ctx context.Context, app *grafanav1alpha1.Grafana) error {
 	return nil
 }
 
-func (a *AdminController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
+func (a *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
 	secret, err := a.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -234,13 +234,13 @@ func (a *AdminController) ensureUsers(app *grafanav1alpha1.Grafana, users []*gra
 	return nil
 }
 
-func (a *AdminController) addApp(obj interface{}) {
+func (a *UserController) addApp(obj interface{}) {
 	app := obj.(*grafanav1alpha1.Grafana)
 
 	a.enqueue(app)
 }
 
-func (a *AdminController) updateApp(old, cur interface{}) {
+func (a *UserController) updateApp(old, cur interface{}) {
 	oldA := old.(*grafanav1alpha1.Grafana)
 	curA := cur.(*grafanav1alpha1.Grafana)
 
@@ -255,7 +255,7 @@ func (a *AdminController) updateApp(old, cur interface{}) {
 	a.enqueue(curA)
 }
 
-func (a *AdminController) deleteApp(obj interface{}) {
+func (a *UserController) deleteApp(obj interface{}) {
 	app, ok := obj.(*grafanav1alpha1.Grafana)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -271,13 +271,13 @@ func (a *AdminController) deleteApp(obj interface{}) {
 	a.enqueue(app)
 }
 
-func (a *AdminController) addUser(obj interface{}) {
+func (a *UserController) addUser(obj interface{}) {
 	u := obj.(*grafanav1alpha1.GrafanaUser)
 
 	a.superordinateEnqueue(u)
 }
 
-func (a *AdminController) updateUser(old, cur interface{}) {
+func (a *UserController) updateUser(old, cur interface{}) {
 	oldU := old.(*grafanav1alpha1.GrafanaUser)
 	curU := cur.(*grafanav1alpha1.GrafanaUser)
 
@@ -292,7 +292,7 @@ func (a *AdminController) updateUser(old, cur interface{}) {
 	a.superordinateEnqueue(curU)
 }
 
-func (a *AdminController) deleteUser(obj interface{}) {
+func (a *UserController) deleteUser(obj interface{}) {
 	u, ok := obj.(*grafanav1alpha1.GrafanaUser)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -308,7 +308,7 @@ func (a *AdminController) deleteUser(obj interface{}) {
 	a.superordinateEnqueue(u)
 }
 
-func (a *AdminController) enqueue(app *grafanav1alpha1.Grafana) {
+func (a *UserController) enqueue(app *grafanav1alpha1.Grafana) {
 	if key, err := cache.MetaNamespaceKeyFunc(app); err != nil {
 		return
 	} else {
@@ -316,7 +316,7 @@ func (a *AdminController) enqueue(app *grafanav1alpha1.Grafana) {
 	}
 }
 
-func (a *AdminController) superordinateEnqueue(obj runtime.Object) {
+func (a *UserController) superordinateEnqueue(obj runtime.Object) {
 	accessor, ok := obj.(metav1.Object)
 	if !ok {
 		return
@@ -338,7 +338,7 @@ func (a *AdminController) superordinateEnqueue(obj runtime.Object) {
 	}
 }
 
-func (a *AdminController) worker(ctx context.Context) {
+func (a *UserController) worker(ctx context.Context) {
 	for {
 		var obj interface{}
 		select {

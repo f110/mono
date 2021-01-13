@@ -110,7 +110,7 @@ func main() {
 				coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(coreClient, 30*time.Second)
 				sharedInformerFactory := informers.NewSharedInformerFactory(client, 30*time.Second)
 
-				c, err := grafana.NewAdminController(coreSharedInformerFactory, sharedInformerFactory, client)
+				c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, client)
 				if err != nil {
 					logger.Log.Error("Failed start admin controller", zap.Error(err))
 					return
