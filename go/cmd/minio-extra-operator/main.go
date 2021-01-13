@@ -79,7 +79,7 @@ func main() {
 		RetryPeriod:     5 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				c, err := minio.NewMinioBucketController(ctx, kubeClient, cfg, dev)
+				c, err := minio.NewBucketController(ctx, kubeClient, cfg, dev)
 				if err != nil {
 					klog.Error(err)
 					os.Exit(1)

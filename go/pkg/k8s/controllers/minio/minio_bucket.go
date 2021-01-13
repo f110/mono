@@ -13,23 +13,25 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
 
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	mbLister "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 // +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete
@@ -42,19 +44,20 @@ const (
 	minIOBucketControllerFinalizerName = "minio-bucket-controller.minio.f110.dev/finalizer"
 )
 
-type MinIOBucketController struct {
-	config            *rest.Config
-	coreClient        *kubernetes.Clientset
-	mClient           *clientset.Clientset
-	mbLister          mbLister.MinIOBucketLister
-	mbListerHasSynced cache.InformerSynced
+type BucketController struct {
+	*controllerutil.ControllerBase
 
-	queue workqueue.RateLimitingInterface
+	config     *rest.Config
+	coreClient *kubernetes.Clientset
+	mClient    *clientset.Clientset
+	mbLister   mbLister.MinIOBucketLister
+
+	queue *controllerutil.WorkQueue
 
 	runOutsideCluster bool
 }
 
-func NewMinioBucketController(ctx context.Context, client *kubernetes.Clientset, cfg *rest.Config, runOutsideCluster bool) (*MinIOBucketController, error) {
+func NewBucketController(ctx context.Context, client *kubernetes.Clientset, cfg *rest.Config, runOutsideCluster bool) (*BucketController, error) {
 	mClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -82,15 +85,16 @@ func NewMinioBucketController(ctx context.Context, client *kubernetes.Clientset,
 	sharedInformerFactory := informers.NewSharedInformerFactory(mClient, 30*time.Second)
 	mbInformer := sharedInformerFactory.Minio().V1alpha1().MinIOBuckets()
 
-	c := &MinIOBucketController{
+	c := &BucketController{
+		ControllerBase:    controllerutil.NewBase(),
 		config:            cfg,
 		coreClient:        client,
 		mClient:           mClient,
 		mbLister:          mbInformer.Lister(),
-		mbListerHasSynced: mbInformer.Informer().HasSynced,
-		queue:             workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "MinioBucket"),
+		queue:             controllerutil.NewWorkQueue(),
 		runOutsideCluster: runOutsideCluster,
 	}
+	c.UseInformer(mbInformer.Informer())
 
 	mbInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.addMinioBucket,
@@ -103,7 +107,7 @@ func NewMinioBucketController(ctx context.Context, client *kubernetes.Clientset,
 	return c, nil
 }
 
-func (c *MinIOBucketController) syncMinioBucket(ctx context.Context, key string) error {
+func (c *BucketController) syncMinioBucket(ctx context.Context, key string) error {
 	klog.V(4).Info("syncMinioBucket")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -189,7 +193,7 @@ func (c *MinIOBucketController) syncMinioBucket(ctx context.Context, key string)
 	return nil
 }
 
-func (c *MinIOBucketController) ensureBucket(mc *minio.Client, name string) error {
+func (c *BucketController) ensureBucket(mc *minio.Client, name string) error {
 	if exists, err := mc.BucketExists(name); err != nil {
 		return err
 	} else if exists {
@@ -205,7 +209,7 @@ func (c *MinIOBucketController) ensureBucket(mc *minio.Client, name string) erro
 	return nil
 }
 
-func (c *MinIOBucketController) ensureBucketPolicy(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
+func (c *BucketController) ensureBucketPolicy(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
 	var statements []policy.Statement
 	switch spec.Spec.Policy {
 	case "", miniov1alpha1.PolicyPrivate:
@@ -233,7 +237,7 @@ func (c *MinIOBucketController) ensureBucketPolicy(mc *minio.Client, spec *minio
 	return nil
 }
 
-func (c *MinIOBucketController) ensureIndexFile(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
+func (c *BucketController) ensureIndexFile(mc *minio.Client, spec *miniov1alpha1.MinIOBucket) error {
 	if !spec.Spec.CreateIndexFile {
 		return nil
 	}
@@ -259,7 +263,7 @@ func (c *MinIOBucketController) ensureIndexFile(mc *minio.Client, spec *miniov1a
 	return err
 }
 
-func (c *MinIOBucketController) finalizeMinIOBucket(ctx context.Context, b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
+func (c *BucketController) finalizeMinIOBucket(ctx context.Context, b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
 	if b.Spec.BucketFinalizePolicy == "" || b.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
 		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
@@ -308,7 +312,7 @@ func (c *MinIOBucketController) finalizeMinIOBucket(ctx context.Context, b *mini
 	return err
 }
 
-func (c *MinIOBucketController) getMinIOInstanceEndpoint(ctx context.Context, instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
+func (c *BucketController) getMinIOInstanceEndpoint(ctx context.Context, instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
 	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
 	if err != nil {
 		return "", nil, err
@@ -332,7 +336,7 @@ func (c *MinIOBucketController) getMinIOInstanceEndpoint(ctx context.Context, in
 	return instanceEndpoint, forwarder, nil
 }
 
-func (c *MinIOBucketController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *BucketController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
@@ -381,63 +385,57 @@ func (c *MinIOBucketController) portForward(ctx context.Context, svc *corev1.Ser
 	return pf, nil
 }
 
-func (c *MinIOBucketController) Run(ctx context.Context, workers int) {
-	defer c.queue.ShutDown()
-
-	klog.V(2).Info("Wait for informer caches to sync")
-	if !cache.WaitForCacheSync(ctx.Done(), c.mbListerHasSynced) {
-		klog.Error("Failed to sync informer caches")
+func (c *BucketController) Run(ctx context.Context, workers int) {
+	if !c.WaitForSync(ctx) {
 		return
 	}
 
+	sv := parallel.NewSupervisor(ctx)
 	for i := 0; i < workers; i++ {
-		go wait.Until(c.worker, time.Second, ctx.Done())
+		sv.Add(c.worker)
 	}
 
-	klog.Info("Start workers of MinIOBucketController")
+	klog.Info("Start workers of BucketController")
 	<-ctx.Done()
 	klog.Info("Shutdown workers")
+	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	sv.Shutdown(sCtx)
+	cancel()
 }
 
-func (c *MinIOBucketController) worker() {
-	defer klog.V(4).Info("Finish worker")
-
-	for c.processNextItem() {
-	}
-}
-
-func (c *MinIOBucketController) processNextItem() bool {
-	defer klog.V(4).Info("Finish processNextItem")
-
-	obj, shutdown := c.queue.Get()
-	if shutdown {
-		return false
-	}
-	klog.V(4).Infof("Get next queue: %s", obj)
-
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	err := func(obj interface{}) error {
-		defer c.queue.Done(obj)
-		defer cancelFunc()
-
-		err := c.syncMinioBucket(ctx, obj.(string))
-		if err != nil {
-			c.queue.AddRateLimited(obj)
-			return err
+func (c *BucketController) worker(ctx context.Context) {
+	for {
+		var obj interface{}
+		select {
+		case v, ok := <-c.queue.Get():
+			if !ok {
+				return
+			}
+			obj = v
 		}
+		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
 
-		c.queue.Forget(obj)
-		return nil
-	}(obj)
-	if err != nil {
-		klog.Info(err)
-		return true
+		wCtx, cancelFunc := context.WithCancel(context.Background())
+		err := func(obj interface{}) error {
+			defer c.queue.Done(obj)
+			defer cancelFunc()
+
+			err := c.syncMinioBucket(wCtx, obj.(string))
+			if err != nil {
+				c.queue.AddRateLimited(obj)
+				return err
+			}
+
+			c.queue.Forget(obj)
+			return nil
+		}(obj)
+		if err != nil {
+			logger.Log.Warn("Reconcile has error", zap.Error(err))
+		}
 	}
-
-	return true
 }
 
-func (c *MinIOBucketController) enqueue(bucket *miniov1alpha1.MinIOBucket) {
+func (c *BucketController) enqueue(bucket *miniov1alpha1.MinIOBucket) {
 	if key, err := cache.MetaNamespaceKeyFunc(bucket); err != nil {
 		return
 	} else {
@@ -445,13 +443,13 @@ func (c *MinIOBucketController) enqueue(bucket *miniov1alpha1.MinIOBucket) {
 	}
 }
 
-func (c *MinIOBucketController) addMinioBucket(obj interface{}) {
+func (c *BucketController) addMinioBucket(obj interface{}) {
 	b := obj.(*miniov1alpha1.MinIOBucket)
 
 	c.enqueue(b)
 }
 
-func (c *MinIOBucketController) updateMinioBucket(old, cur interface{}) {
+func (c *BucketController) updateMinioBucket(old, cur interface{}) {
 	oldBucket := old.(*miniov1alpha1.MinIOBucket)
 	curBucket := cur.(*miniov1alpha1.MinIOBucket)
 
@@ -467,7 +465,7 @@ func (c *MinIOBucketController) updateMinioBucket(old, cur interface{}) {
 	c.enqueue(curBucket)
 }
 
-func (c *MinIOBucketController) deleteMinioBucket(obj interface{}) {
+func (c *BucketController) deleteMinioBucket(obj interface{}) {
 	b, ok := obj.(*miniov1alpha1.MinIOBucket)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
