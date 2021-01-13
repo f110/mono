@@ -9,7 +9,7 @@ import (
 	"go.f110.dev/protoc-ddl/mock"
 
 	"go.f110.dev/mono/go/pkg/build/database"
-	"go.f110.dev/mono/tools/build/pkg/database/dao"
+	"go.f110.dev/mono/go/pkg/build/database/dao"
 )
 
 type SourceRepository struct {
