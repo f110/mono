@@ -34,6 +34,7 @@ const (
 
 type UserController struct {
 	*controllerutil.ControllerBase
+	supervisor *parallel.Supervisor
 
 	client clientset.Interface
 
@@ -84,32 +85,33 @@ func NewUserController(
 	return a, nil
 }
 
-func (a *UserController) Run(ctx context.Context, workers int) {
+func (u *UserController) Run(ctx context.Context, workers int) {
 	logger.Log.Info("Wait for informer caches to sync")
-	if !a.WaitForSync(ctx) {
+	if !u.WaitForSync(ctx) {
 		return
 	}
 
-	sv := parallel.NewSupervisor(ctx)
+	u.supervisor = parallel.NewSupervisor(ctx)
 	for i := 0; i < workers; i++ {
-		sv.Add(a.worker)
+		u.supervisor.Add(u.worker)
 	}
+}
 
-	<-ctx.Done()
+func (u *UserController) Shutdown() {
+	u.queue.Shutdown()
 
-	a.queue.Shutdown()
-	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	sv.Shutdown(sCtx)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	u.supervisor.Shutdown(ctx)
 	cancel()
 }
 
-func (a *UserController) syncGrafana(ctx context.Context, key string) error {
+func (u *UserController) syncGrafana(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	app, err := a.appLister.Grafanas(namespace).Get(name)
+	app, err := u.appLister.Grafanas(namespace).Get(name)
 	if err != nil && apierrors.IsNotFound(err) {
 		return nil
 	} else if err != nil {
@@ -119,7 +121,7 @@ func (a *UserController) syncGrafana(ctx context.Context, key string) error {
 	if app.DeletionTimestamp.IsZero() {
 		if !containsString(app.Finalizers, grafanaUserControllerFinalizerName) {
 			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, grafanaUserControllerFinalizerName)
-			app, err = a.client.GrafanaV1alpha1().Grafanas(namespace).Update(ctx, app, metav1.UpdateOptions{})
+			app, err = u.client.GrafanaV1alpha1().Grafanas(namespace).Update(ctx, app, metav1.UpdateOptions{})
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -127,31 +129,31 @@ func (a *UserController) syncGrafana(ctx context.Context, key string) error {
 	}
 
 	if !app.DeletionTimestamp.IsZero() {
-		return a.finalizeGrafana(ctx, app)
+		return u.finalizeGrafana(ctx, app)
 	}
 
 	sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	users, err := a.userLister.GrafanaUsers(namespace).List(sel)
+	users, err := u.userLister.GrafanaUsers(namespace).List(sel)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	if err := a.ensureUsers(app, users); err != nil {
+	if err := u.ensureUsers(app, users); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
 }
 
-func (a *UserController) finalizeGrafana(ctx context.Context, app *grafanav1alpha1.Grafana) error {
+func (u *UserController) finalizeGrafana(ctx context.Context, app *grafanav1alpha1.Grafana) error {
 	return nil
 }
 
-func (a *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
-	secret, err := a.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
+func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
+	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -159,7 +161,7 @@ func (a *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 	if !ok {
 		return xerrors.Errorf("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name)
 	}
-	svc, err := a.serviceLister.Services(app.Namespace).Get(app.Spec.Service.Name)
+	svc, err := u.serviceLister.Services(app.Namespace).Get(app.Spec.Service.Name)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -234,13 +236,13 @@ func (a *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 	return nil
 }
 
-func (a *UserController) addApp(obj interface{}) {
+func (u *UserController) addApp(obj interface{}) {
 	app := obj.(*grafanav1alpha1.Grafana)
 
-	a.enqueue(app)
+	u.enqueue(app)
 }
 
-func (a *UserController) updateApp(old, cur interface{}) {
+func (u *UserController) updateApp(old, cur interface{}) {
 	oldA := old.(*grafanav1alpha1.Grafana)
 	curA := cur.(*grafanav1alpha1.Grafana)
 
@@ -248,14 +250,14 @@ func (a *UserController) updateApp(old, cur interface{}) {
 		if key, err := cache.MetaNamespaceKeyFunc(oldA); err != nil {
 			return
 		} else {
-			a.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldA})
+			u.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldA})
 		}
 	}
 
-	a.enqueue(curA)
+	u.enqueue(curA)
 }
 
-func (a *UserController) deleteApp(obj interface{}) {
+func (u *UserController) deleteApp(obj interface{}) {
 	app, ok := obj.(*grafanav1alpha1.Grafana)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -268,16 +270,16 @@ func (a *UserController) deleteApp(obj interface{}) {
 		}
 	}
 
-	a.enqueue(app)
+	u.enqueue(app)
 }
 
-func (a *UserController) addUser(obj interface{}) {
-	u := obj.(*grafanav1alpha1.GrafanaUser)
+func (u *UserController) addUser(obj interface{}) {
+	user := obj.(*grafanav1alpha1.GrafanaUser)
 
-	a.superordinateEnqueue(u)
+	u.superordinateEnqueue(user)
 }
 
-func (a *UserController) updateUser(old, cur interface{}) {
+func (u *UserController) updateUser(old, cur interface{}) {
 	oldU := old.(*grafanav1alpha1.GrafanaUser)
 	curU := cur.(*grafanav1alpha1.GrafanaUser)
 
@@ -285,44 +287,44 @@ func (a *UserController) updateUser(old, cur interface{}) {
 		if key, err := cache.MetaNamespaceKeyFunc(oldU); err != nil {
 			return
 		} else {
-			a.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldU})
+			u.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldU})
 		}
 	}
 
-	a.superordinateEnqueue(curU)
+	u.superordinateEnqueue(curU)
 }
 
-func (a *UserController) deleteUser(obj interface{}) {
-	u, ok := obj.(*grafanav1alpha1.GrafanaUser)
+func (u *UserController) deleteUser(obj interface{}) {
+	user, ok := obj.(*grafanav1alpha1.GrafanaUser)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
 			return
 		}
-		u, ok = tombstone.Obj.(*grafanav1alpha1.GrafanaUser)
+		user, ok = tombstone.Obj.(*grafanav1alpha1.GrafanaUser)
 		if !ok {
 			return
 		}
 	}
 
-	a.superordinateEnqueue(u)
+	u.superordinateEnqueue(user)
 }
 
-func (a *UserController) enqueue(app *grafanav1alpha1.Grafana) {
+func (u *UserController) enqueue(app *grafanav1alpha1.Grafana) {
 	if key, err := cache.MetaNamespaceKeyFunc(app); err != nil {
 		return
 	} else {
-		a.queue.Add(key)
+		u.queue.Add(key)
 	}
 }
 
-func (a *UserController) superordinateEnqueue(obj runtime.Object) {
+func (u *UserController) superordinateEnqueue(obj runtime.Object) {
 	accessor, ok := obj.(metav1.Object)
 	if !ok {
 		return
 	}
 
-	apps, err := a.appLister.List(labels.Everything())
+	apps, err := u.appLister.List(labels.Everything())
 	if err != nil {
 		return
 	}
@@ -333,16 +335,16 @@ func (a *UserController) superordinateEnqueue(obj runtime.Object) {
 			continue
 		}
 		if sel.Matches(labels.Set(accessor.GetLabels())) {
-			a.enqueue(v)
+			u.enqueue(v)
 		}
 	}
 }
 
-func (a *UserController) worker(ctx context.Context) {
+func (u *UserController) worker(ctx context.Context) {
 	for {
 		var obj interface{}
 		select {
-		case v, ok := <-a.queue.Get():
+		case v, ok := <-u.queue.Get():
 			if !ok {
 				return
 			}
@@ -352,16 +354,16 @@ func (a *UserController) worker(ctx context.Context) {
 
 		wCtx, cancelFunc := context.WithCancel(ctx)
 		err := func(obj interface{}) error {
-			defer a.queue.Done(obj)
+			defer u.queue.Done(obj)
 			defer cancelFunc()
 
-			err := a.syncGrafana(wCtx, obj.(string))
+			err := u.syncGrafana(wCtx, obj.(string))
 			if err != nil {
-				a.queue.AddRateLimited(obj)
+				u.queue.AddRateLimited(obj)
 				return err
 			}
 
-			a.queue.Forget(obj)
+			u.queue.Forget(obj)
 			return nil
 		}(obj)
 		if err != nil {

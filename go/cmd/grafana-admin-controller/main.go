@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/pflag"
-	"go.uber.org/zap"
+	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -20,12 +20,129 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
 
+	"go.f110.dev/mono/go/pkg/fsm"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/signals"
 )
+
+const (
+	stateInit fsm.State = iota
+	stateLeaderElection
+	stateStartWorker
+	stateShutdown
+)
+
+type process struct {
+	FSM    *fsm.FSM
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	userController *grafana.UserController
+
+	id                 string
+	dev                bool
+	workers            int
+	leaseLockName      string
+	leaseLockNamespace string
+
+	coreClient kubernetes.Interface
+	client     clientset.Interface
+}
+
+func (p *process) init() (fsm.State, error) {
+	kubeconfigPath := ""
+	if p.dev {
+		h, err := os.UserHomeDir()
+		if err != nil {
+			return fsm.Error(xerrors.Errorf(": %w", err))
+		}
+		kubeconfigPath = filepath.Join(h, ".kube", "config")
+	}
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+
+	coreClient, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.coreClient = coreClient
+	client, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.client = client
+
+	return stateLeaderElection, nil
+}
+
+func (p *process) leaderElection() (fsm.State, error) {
+	lock := &resourcelock.LeaseLock{
+		LeaseMeta: metav1.ObjectMeta{
+			Name:      p.leaseLockName,
+			Namespace: p.leaseLockNamespace,
+		},
+		Client: p.coreClient.CoordinationV1(),
+		LockConfig: resourcelock.ResourceLockConfig{
+			Identity: p.id,
+		},
+	}
+
+	elected := make(chan struct{})
+	e, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock:            lock,
+		ReleaseOnCancel: true,
+		LeaseDuration:   30 * time.Second,
+		RenewDeadline:   15 * time.Second,
+		RetryPeriod:     5 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(_ context.Context) {
+				close(elected)
+			},
+			OnStoppedLeading: func() {
+				p.FSM.Shutdown()
+			},
+			OnNewLeader: func(_ string) {},
+		},
+	})
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	go e.Run(p.ctx)
+
+	select {
+	case <-elected:
+	case <-p.ctx.Done():
+		return fsm.UnknownState, nil
+	}
+	return stateStartWorker, nil
+}
+
+func (p *process) startWorker() (fsm.State, error) {
+	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
+	sharedInformerFactory := informers.NewSharedInformerFactory(p.client, 30*time.Second)
+
+	c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, p.client)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.userController = c
+
+	coreSharedInformerFactory.Start(p.ctx.Done())
+	sharedInformerFactory.Start(p.ctx.Done())
+
+	p.userController.Run(p.ctx, p.workers)
+	return fsm.WaitState, nil
+}
+
+func (p *process) shutdown() (fsm.State, error) {
+	p.cancel()
+	p.userController.Shutdown()
+	return fsm.CloseState, nil
+}
 
 func main() {
 	id := ""
@@ -60,86 +177,30 @@ func main() {
 		panic(err)
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	signals.SetupSignalHandler(cancelFunc)
-
-	kubeconfigPath := ""
-	if dev {
-		h, err := os.UserHomeDir()
-		if err != nil {
-			klog.Error(err)
-			os.Exit(1)
-		}
-		kubeconfigPath = filepath.Join(h, ".kube", "config")
+	ctx, cancel := context.WithCancel(context.Background())
+	p := &process{
+		ctx:                ctx,
+		cancel:             cancel,
+		id:                 id,
+		workers:            workers,
+		dev:                dev,
+		leaseLockName:      leaseLockName,
+		leaseLockNamespace: leaseLockNamespace,
 	}
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-	if err != nil {
-		log.Print(err)
+	p.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateInit:           p.init,
+			stateLeaderElection: p.leaderElection,
+			stateStartWorker:    p.startWorker,
+			stateShutdown:       p.shutdown,
+		},
+		stateInit,
+		stateShutdown,
+	)
+
+	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
+	if err := p.FSM.Loop(); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
-
-	coreClient, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		log.Print(err)
-		os.Exit(1)
-	}
-	client, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		log.Print(err)
-		os.Exit(1)
-	}
-
-	lock := &resourcelock.LeaseLock{
-		LeaseMeta: metav1.ObjectMeta{
-			Name:      leaseLockName,
-			Namespace: leaseLockNamespace,
-		},
-		Client: coreClient.CoordinationV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: id,
-		},
-	}
-	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
-		Lock:            lock,
-		ReleaseOnCancel: true,
-		LeaseDuration:   30 * time.Second,
-		RenewDeadline:   15 * time.Second,
-		RetryPeriod:     5 * time.Second,
-		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {
-				coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(coreClient, 30*time.Second)
-				sharedInformerFactory := informers.NewSharedInformerFactory(client, 30*time.Second)
-
-				c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, client)
-				if err != nil {
-					logger.Log.Error("Failed start admin controller", zap.Error(err))
-					return
-				}
-
-				coreSharedInformerFactory.Start(ctx.Done())
-				sharedInformerFactory.Start(ctx.Done())
-
-				var wg sync.WaitGroup
-
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-
-					c.Run(ctx, workers)
-				}()
-
-				wg.Wait()
-			},
-			OnStoppedLeading: func() {
-				logger.Log.Debug("Leader lost", zap.String("id", id))
-				os.Exit(0)
-			},
-			OnNewLeader: func(identity string) {
-				if identity == id {
-					return
-				}
-				logger.Log.Debug("New leader elected", zap.String("id", identity))
-			},
-		},
-	})
 }
