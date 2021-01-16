@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -18,6 +19,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog"
 
 	"go.f110.dev/mono/go/pkg/fsm"
@@ -29,6 +31,7 @@ import (
 
 const (
 	stateInit fsm.State = iota
+	stateStartMetricsServer
 	stateLeaderElection
 	stateStartWorker
 	stateShutdown
@@ -75,6 +78,13 @@ func (p *process) init() (fsm.State, error) {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	p.client = client
+
+	return stateStartMetricsServer, nil
+}
+
+func (p *process) startMetricsServer() (fsm.State, error) {
+	http.Handle("/metrics", legacyregistry.HandlerWithReset())
+	go http.ListenAndServe(":9300", nil)
 
 	return stateLeaderElection, nil
 }
@@ -140,7 +150,9 @@ func (p *process) startWorker() (fsm.State, error) {
 
 func (p *process) shutdown() (fsm.State, error) {
 	p.cancel()
-	p.userController.Shutdown()
+	if p.userController != nil {
+		p.userController.Shutdown()
+	}
 	return fsm.CloseState, nil
 }
 

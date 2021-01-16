@@ -18,7 +18,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/minio/minio-go/v6 v6.0.50
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
-	github.com/prometheus/client_golang v1.4.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shurcooL/githubv4 v0.0.0-20200915023059-bc5e4feb2971
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
@@ -41,6 +40,7 @@ require (
 	k8s.io/api v0.19.6
 	k8s.io/apimachinery v0.19.6
 	k8s.io/client-go v0.19.6
+	k8s.io/component-base v0.19.6
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
 	sigs.k8s.io/kind v0.9.0

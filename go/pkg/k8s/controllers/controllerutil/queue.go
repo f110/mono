@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"k8s.io/client-go/util/workqueue"
+	_ "k8s.io/component-base/metrics/prometheus/workqueue"
 )
 
 type WorkQueue struct {
