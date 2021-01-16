@@ -9,11 +9,11 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
@@ -24,8 +24,6 @@ import (
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	listers "go.f110.dev/mono/go/pkg/k8s/listers/grafana/v1alpha1"
-	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 const (
@@ -34,7 +32,6 @@ const (
 
 type UserController struct {
 	*controllerutil.ControllerBase
-	supervisor *parallel.Supervisor
 
 	client clientset.Interface
 
@@ -42,13 +39,14 @@ type UserController struct {
 	serviceLister corev1listers.ServiceLister
 	appLister     listers.GrafanaLister
 	userLister    listers.GrafanaUserLister
-
-	queue *controllerutil.WorkQueue
 }
+
+var _ controllerutil.Controller = &UserController{}
 
 func NewUserController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	sharedInformerFactory informers.SharedInformerFactory,
+	coreClient kubernetes.Interface,
 	client clientset.Interface,
 ) (*UserController, error) {
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
@@ -57,86 +55,70 @@ func NewUserController(
 	userInformer := sharedInformerFactory.Grafana().V1alpha1().GrafanaUsers()
 
 	a := &UserController{
-		ControllerBase: controllerutil.NewBase(),
-		client:         client,
-		secretLister:   secretInformer.Lister(),
-		serviceLister:  serviceInformer.Lister(),
-		appLister:      appInformer.Lister(),
-		userLister:     userInformer.Lister(),
-		queue:          controllerutil.NewWorkQueue(),
+		client:        client,
+		secretLister:  secretInformer.Lister(),
+		serviceLister: serviceInformer.Lister(),
+		appLister:     appInformer.Lister(),
+		userLister:    userInformer.Lister(),
 	}
-	a.UseInformer(secretInformer.Informer())
-	a.UseInformer(serviceInformer.Informer())
-	a.UseInformer(appInformer.Informer())
-	a.UseInformer(userInformer.Informer())
-
-	appInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    a.addApp,
-		UpdateFunc: a.updateApp,
-		DeleteFunc: a.deleteApp,
-	})
-
-	userInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    a.addUser,
-		UpdateFunc: a.updateUser,
-		DeleteFunc: a.deleteUser,
-	})
+	a.ControllerBase = controllerutil.NewBase(
+		"grafana-user-controller",
+		a,
+		coreClient,
+		[]cache.SharedIndexInformer{appInformer.Informer(), userInformer.Informer()},
+		[]cache.SharedIndexInformer{secretInformer.Informer(), serviceInformer.Informer()},
+		[]string{grafanaUserControllerFinalizerName},
+	)
 
 	return a, nil
 }
 
-func (u *UserController) Run(ctx context.Context, workers int) {
-	logger.Log.Info("Wait for informer caches to sync")
-	if !u.WaitForSync(ctx) {
-		return
-	}
+func (u *UserController) ObjectToKeys(obj interface{}) []string {
+	switch v := obj.(type) {
+	case *grafanav1alpha1.Grafana:
+		return []string{u.toKey(v)}
+	case *grafanav1alpha1.GrafanaUser:
+		apps, err := u.appLister.List(labels.Everything())
+		if err != nil {
+			return nil
+		}
 
-	u.supervisor = parallel.NewSupervisor(ctx)
-	for i := 0; i < workers; i++ {
-		u.supervisor.Add(u.worker)
-	}
-}
-
-func (u *UserController) Shutdown() {
-	u.queue.Shutdown()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	u.supervisor.Shutdown(ctx)
-	cancel()
-}
-
-func (u *UserController) syncGrafana(ctx context.Context, key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	app, err := u.appLister.Grafanas(namespace).Get(name)
-	if err != nil && apierrors.IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	if app.DeletionTimestamp.IsZero() {
-		if !containsString(app.Finalizers, grafanaUserControllerFinalizerName) {
-			app.ObjectMeta.Finalizers = append(app.ObjectMeta.Finalizers, grafanaUserControllerFinalizerName)
-			app, err = u.client.GrafanaV1alpha1().Grafanas(namespace).Update(ctx, app, metav1.UpdateOptions{})
+		keys := make([]string, 0)
+		for _, app := range apps {
+			sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				continue
+			}
+			if sel.Matches(labels.Set(v.GetLabels())) {
+				key := u.toKey(app)
+				if key != "" {
+					keys = append(keys, key)
+				}
 			}
 		}
-	}
 
-	if !app.DeletionTimestamp.IsZero() {
-		return u.finalizeGrafana(ctx, app)
+		return keys
+	default:
+		return nil
 	}
+}
+
+func (u *UserController) toKey(v *grafanav1alpha1.Grafana) string {
+	key, err := cache.MetaNamespaceKeyFunc(v)
+	if err != nil {
+		return ""
+	}
+	return key
+}
+
+func (u *UserController) Reconcile(ctx context.Context, obj runtime.Object) error {
+	app := obj.(*grafanav1alpha1.Grafana)
 
 	sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	users, err := u.userLister.GrafanaUsers(namespace).List(sel)
+	users, err := u.userLister.GrafanaUsers(app.Namespace).List(sel)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -148,8 +130,34 @@ func (u *UserController) syncGrafana(ctx context.Context, key string) error {
 	return nil
 }
 
-func (u *UserController) finalizeGrafana(ctx context.Context, app *grafanav1alpha1.Grafana) error {
+func (u *UserController) Finalize(ctx context.Context, obj runtime.Object) error {
 	return nil
+}
+
+func (u *UserController) GetObject(key string) (runtime.Object, error) {
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	obj, err := u.appLister.Grafanas(namespace).Get(name)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return obj, nil
+}
+
+func (u *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+	app, ok := obj.(*grafanav1alpha1.Grafana)
+	if !ok {
+		return nil, xerrors.Errorf("unexpected object type: %v", obj)
+	}
+
+	app, err := u.client.GrafanaV1alpha1().Grafanas(app.Namespace).Update(ctx, app, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return app, nil
 }
 
 func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
@@ -193,12 +201,12 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 	missingUsersSet := idealUsersSet.Diff(currentUsersSet)
 	for _, v := range missingUsersSet.ToSlice() {
 		email := v.(string)
-		u := allUsers[email]
-		s := strings.Split(u.Spec.Email, "@")
+		grafanaUser := allUsers[email]
+		s := strings.Split(grafanaUser.Spec.Email, "@")
 		name := s[0]
-		logger.Log.Info("Add User", zap.String("email", u.Spec.Email), zap.String("name", name))
-		if err := grafanaClient.AddUser(&grafana.User{Name: name, Login: name, Email: u.Spec.Email, Password: randomString(32)}); err != nil {
-			logger.Log.Warn("Failed add user", zap.String("email", email), zap.Error(err))
+		u.Log().Info("Add User", zap.String("email", grafanaUser.Spec.Email), zap.String("name", name))
+		if err := grafanaClient.AddUser(&grafana.User{Name: name, Login: name, Email: grafanaUser.Spec.Email, Password: randomString(32)}); err != nil {
+			u.Log().Warn("Failed add user", zap.String("email", email), zap.Error(err))
 		}
 	}
 
@@ -209,10 +217,10 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 		if email == "admin@localhost" {
 			continue
 		}
-		u := currentUsersMap[email]
-		logger.Log.Info("Delete User", zap.Int("id", u.Id))
-		if err := grafanaClient.DeleteUser(u.Id); err != nil {
-			logger.Log.Warn("Failed delete user", zap.String("email", u.Email), zap.Int("id", u.Id), zap.Error(err))
+		grafanaUser := currentUsersMap[email]
+		u.Log().Info("Delete User", zap.Int("id", grafanaUser.Id))
+		if err := grafanaClient.DeleteUser(grafanaUser.Id); err != nil {
+			u.Log().Warn("Failed delete user", zap.String("email", grafanaUser.Email), zap.Int("id", grafanaUser.Id), zap.Error(err))
 		}
 	}
 
@@ -221,165 +229,19 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 		return xerrors.Errorf(": %w", err)
 	}
 	for _, v := range currentUsers {
-		u, ok := allUsers[v.Email]
+		grafanaUser, ok := allUsers[v.Email]
 		if !ok {
 			continue
 		}
-		if u.Spec.Admin != v.IsAdmin {
-			logger.Log.Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", u.Spec.Admin))
-			if err := grafanaClient.ChangeUserPermission(v.Id, u.Spec.Admin); err != nil {
-				logger.Log.Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
+		if grafanaUser.Spec.Admin != v.IsAdmin {
+			u.Log().Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", grafanaUser.Spec.Admin))
+			if err := grafanaClient.ChangeUserPermission(v.Id, grafanaUser.Spec.Admin); err != nil {
+				u.Log().Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
 			}
 		}
 	}
 
 	return nil
-}
-
-func (u *UserController) addApp(obj interface{}) {
-	app := obj.(*grafanav1alpha1.Grafana)
-
-	u.enqueue(app)
-}
-
-func (u *UserController) updateApp(old, cur interface{}) {
-	oldA := old.(*grafanav1alpha1.Grafana)
-	curA := cur.(*grafanav1alpha1.Grafana)
-
-	if oldA.UID != curA.UID {
-		if key, err := cache.MetaNamespaceKeyFunc(oldA); err != nil {
-			return
-		} else {
-			u.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldA})
-		}
-	}
-
-	u.enqueue(curA)
-}
-
-func (u *UserController) deleteApp(obj interface{}) {
-	app, ok := obj.(*grafanav1alpha1.Grafana)
-	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			return
-		}
-		app, ok = tombstone.Obj.(*grafanav1alpha1.Grafana)
-		if !ok {
-			return
-		}
-	}
-
-	u.enqueue(app)
-}
-
-func (u *UserController) addUser(obj interface{}) {
-	user := obj.(*grafanav1alpha1.GrafanaUser)
-
-	u.superordinateEnqueue(user)
-}
-
-func (u *UserController) updateUser(old, cur interface{}) {
-	oldU := old.(*grafanav1alpha1.GrafanaUser)
-	curU := cur.(*grafanav1alpha1.GrafanaUser)
-
-	if oldU.UID != curU.UID {
-		if key, err := cache.MetaNamespaceKeyFunc(oldU); err != nil {
-			return
-		} else {
-			u.deleteUser(cache.DeletedFinalStateUnknown{Key: key, Obj: oldU})
-		}
-	}
-
-	u.superordinateEnqueue(curU)
-}
-
-func (u *UserController) deleteUser(obj interface{}) {
-	user, ok := obj.(*grafanav1alpha1.GrafanaUser)
-	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			return
-		}
-		user, ok = tombstone.Obj.(*grafanav1alpha1.GrafanaUser)
-		if !ok {
-			return
-		}
-	}
-
-	u.superordinateEnqueue(user)
-}
-
-func (u *UserController) enqueue(app *grafanav1alpha1.Grafana) {
-	if key, err := cache.MetaNamespaceKeyFunc(app); err != nil {
-		return
-	} else {
-		u.queue.Add(key)
-	}
-}
-
-func (u *UserController) superordinateEnqueue(obj runtime.Object) {
-	accessor, ok := obj.(metav1.Object)
-	if !ok {
-		return
-	}
-
-	apps, err := u.appLister.List(labels.Everything())
-	if err != nil {
-		return
-	}
-
-	for _, v := range apps {
-		sel, err := metav1.LabelSelectorAsSelector(&v.Spec.UserSelector)
-		if err != nil {
-			continue
-		}
-		if sel.Matches(labels.Set(accessor.GetLabels())) {
-			u.enqueue(v)
-		}
-	}
-}
-
-func (u *UserController) worker(ctx context.Context) {
-	for {
-		var obj interface{}
-		select {
-		case v, ok := <-u.queue.Get():
-			if !ok {
-				return
-			}
-			obj = v
-		}
-		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
-
-		wCtx, cancelFunc := context.WithCancel(ctx)
-		err := func(obj interface{}) error {
-			defer u.queue.Done(obj)
-			defer cancelFunc()
-
-			err := u.syncGrafana(wCtx, obj.(string))
-			if err != nil {
-				u.queue.AddRateLimited(obj)
-				return err
-			}
-
-			u.queue.Forget(obj)
-			return nil
-		}(obj)
-		if err != nil {
-			logger.Log.Warn("Reconcile has error", zap.Error(err))
-		}
-	}
-}
-
-func containsString(v []string, s string) bool {
-	for _, item := range v {
-		if item == s {
-			return true
-		}
-	}
-
-	return false
 }
 
 var chars = []rune("ABVDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")

@@ -13,11 +13,12 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	"go.uber.org/zap"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -30,8 +31,6 @@ import (
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	mbLister "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"
-	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 // +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete
@@ -56,6 +55,8 @@ type BucketController struct {
 
 	runOutsideCluster bool
 }
+
+var _ controllerutil.Controller = &BucketController{}
 
 func NewBucketController(ctx context.Context, client *kubernetes.Clientset, cfg *rest.Config, runOutsideCluster bool) (*BucketController, error) {
 	mClient, err := clientset.NewForConfig(cfg)
@@ -86,54 +87,67 @@ func NewBucketController(ctx context.Context, client *kubernetes.Clientset, cfg 
 	mbInformer := sharedInformerFactory.Minio().V1alpha1().MinIOBuckets()
 
 	c := &BucketController{
-		ControllerBase:    controllerutil.NewBase(),
 		config:            cfg,
 		coreClient:        client,
 		mClient:           mClient,
 		mbLister:          mbInformer.Lister(),
-		queue:             controllerutil.NewWorkQueue(),
 		runOutsideCluster: runOutsideCluster,
 	}
-	c.UseInformer(mbInformer.Informer())
-
-	mbInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    c.addMinioBucket,
-		UpdateFunc: c.updateMinioBucket,
-		DeleteFunc: c.deleteMinioBucket,
-	})
+	c.ControllerBase = controllerutil.NewBase(
+		"minio-bucket-operator",
+		c,
+		client,
+		[]cache.SharedIndexInformer{mbInformer.Informer()},
+		[]cache.SharedIndexInformer{},
+		[]string{minIOBucketControllerFinalizerName},
+	)
 
 	sharedInformerFactory.Start(ctx.Done())
 
 	return c, nil
 }
 
-func (c *BucketController) syncMinioBucket(ctx context.Context, key string) error {
-	klog.V(4).Info("syncMinioBucket")
+func (c *BucketController) ObjectToKeys(obj interface{}) []string {
+	bucket, ok := obj.(*miniov1alpha1.MinIOBucket)
+	if !ok {
+		return nil
+	}
+	key, err := cache.MetaNamespaceKeyFunc(bucket)
+	if err != nil {
+		return nil
+	}
+
+	return []string{key}
+}
+
+func (c *BucketController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	currentBucket, err := c.mClient.MinioV1alpha1().MinIOBuckets(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil && apierrors.IsNotFound(err) {
-		klog.V(4).Infof("%s/%s is not found", namespace, name)
-		return nil
-	} else if err != nil {
-		return err
+	bucket, err := c.mbLister.MinIOBuckets(namespace).Get(name)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
 	}
+	return bucket, nil
+}
+
+func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+	bucket := obj.(*miniov1alpha1.MinIOBucket)
+
+	bucket, err := c.mClient.MinioV1alpha1().MinIOBuckets(bucket.Namespace).Update(ctx, bucket, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return bucket, nil
+}
+
+func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) error {
+	currentBucket := obj.(*miniov1alpha1.MinIOBucket)
 	minioBucket := currentBucket.DeepCopy()
 
-	if minioBucket.DeletionTimestamp.IsZero() {
-		if !containsString(minioBucket.Finalizers, minIOBucketControllerFinalizerName) {
-			minioBucket.ObjectMeta.Finalizers = append(minioBucket.ObjectMeta.Finalizers, minIOBucketControllerFinalizerName)
-			_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).Update(ctx, minioBucket, metav1.UpdateOptions{})
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	instances, err := c.mClient.MinV1beta1().MinIOInstances(namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
+	instances, err := c.mClient.MinV1beta1().MinIOInstances(minioBucket.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
 	if err != nil {
 		return err
 	}
@@ -143,11 +157,6 @@ func (c *BucketController) syncMinioBucket(ctx context.Context, key string) erro
 	}
 	if len(instances.Items) > 1 {
 		return errors.New("found some instances")
-	}
-
-	// Object has been deleted
-	if !minioBucket.DeletionTimestamp.IsZero() {
-		return c.finalizeMinIOBucket(ctx, minioBucket, instances.Items)
 	}
 
 	for _, instance := range instances.Items {
@@ -263,16 +272,22 @@ func (c *BucketController) ensureIndexFile(mc *minio.Client, spec *miniov1alpha1
 	return err
 }
 
-func (c *BucketController) finalizeMinIOBucket(ctx context.Context, b *miniov1alpha1.MinIOBucket, instances []miniocontrollerv1beta1.MinIOInstance) error {
-	if b.Spec.BucketFinalizePolicy == "" || b.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
+func (c *BucketController) Finalize(ctx context.Context, obj runtime.Object) error {
+	bucket := obj.(*miniov1alpha1.MinIOBucket)
+	if bucket.Spec.BucketFinalizePolicy == "" || bucket.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
 		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
-		b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
-		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(ctx, b, metav1.UpdateOptions{})
+		bucket.Finalizers = removeString(bucket.Finalizers, minIOBucketControllerFinalizerName)
+		_, err := c.mClient.MinioV1alpha1().MinIOBuckets(bucket.Namespace).Update(ctx, bucket, metav1.UpdateOptions{})
 		return err
 	}
 
-	for _, instance := range instances {
+	instances, err := c.mClient.MinV1beta1().MinIOInstances(bucket.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&bucket.Spec.Selector)})
+	if err != nil {
+		return err
+	}
+
+	for _, instance := range instances.Items {
 		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(ctx, instance.Spec.CredsSecret.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
@@ -293,22 +308,22 @@ func (c *BucketController) finalizeMinIOBucket(ctx context.Context, b *miniov1al
 
 		doneCh := make(chan struct{})
 		defer close(doneCh)
-		for v := range mc.ListObjectsV2(b.Name, "", true, doneCh) {
-			if err := mc.RemoveObject(b.Name, v.Key); err != nil {
+		for v := range mc.ListObjectsV2(bucket.Name, "", true, doneCh) {
+			if err := mc.RemoveObject(bucket.Name, v.Key); err != nil {
 				return err
 			}
-			klog.Infof("%s/%s is removed", b.Name, v.Key)
+			klog.Infof("%s/%s is removed", bucket.Name, v.Key)
 		}
 
-		if err := mc.RemoveBucket(b.Name); err != nil {
+		if err := mc.RemoveBucket(bucket.Name); err != nil {
 			return err
 		}
-		klog.V(4).Infof("Remove bucket %s", b.Name)
+		klog.V(4).Infof("Remove bucket %s", bucket.Name)
 	}
 
-	b.Finalizers = removeString(b.Finalizers, minIOBucketControllerFinalizerName)
+	bucket.Finalizers = removeString(bucket.Finalizers, minIOBucketControllerFinalizerName)
 
-	_, err := c.mClient.MinioV1alpha1().MinIOBuckets(b.Namespace).Update(ctx, b, metav1.UpdateOptions{})
+	_, err = c.mClient.MinioV1alpha1().MinIOBuckets(bucket.Namespace).Update(ctx, bucket, metav1.UpdateOptions{})
 	return err
 }
 
@@ -383,112 +398,6 @@ func (c *BucketController) portForward(ctx context.Context, svc *corev1.Service,
 	}
 
 	return pf, nil
-}
-
-func (c *BucketController) Run(ctx context.Context, workers int) {
-	if !c.WaitForSync(ctx) {
-		return
-	}
-
-	sv := parallel.NewSupervisor(ctx)
-	for i := 0; i < workers; i++ {
-		sv.Add(c.worker)
-	}
-
-	klog.Info("Start workers of BucketController")
-	<-ctx.Done()
-	klog.Info("Shutdown workers")
-	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	sv.Shutdown(sCtx)
-	cancel()
-}
-
-func (c *BucketController) worker(ctx context.Context) {
-	for {
-		var obj interface{}
-		select {
-		case v, ok := <-c.queue.Get():
-			if !ok {
-				return
-			}
-			obj = v
-		}
-		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
-
-		wCtx, cancelFunc := context.WithCancel(context.Background())
-		err := func(obj interface{}) error {
-			defer c.queue.Done(obj)
-			defer cancelFunc()
-
-			err := c.syncMinioBucket(wCtx, obj.(string))
-			if err != nil {
-				c.queue.AddRateLimited(obj)
-				return err
-			}
-
-			c.queue.Forget(obj)
-			return nil
-		}(obj)
-		if err != nil {
-			logger.Log.Warn("Reconcile has error", zap.Error(err))
-		}
-	}
-}
-
-func (c *BucketController) enqueue(bucket *miniov1alpha1.MinIOBucket) {
-	if key, err := cache.MetaNamespaceKeyFunc(bucket); err != nil {
-		return
-	} else {
-		c.queue.Add(key)
-	}
-}
-
-func (c *BucketController) addMinioBucket(obj interface{}) {
-	b := obj.(*miniov1alpha1.MinIOBucket)
-
-	c.enqueue(b)
-}
-
-func (c *BucketController) updateMinioBucket(old, cur interface{}) {
-	oldBucket := old.(*miniov1alpha1.MinIOBucket)
-	curBucket := cur.(*miniov1alpha1.MinIOBucket)
-
-	if oldBucket.UID != curBucket.UID {
-		if key, err := cache.MetaNamespaceKeyFunc(oldBucket); err != nil {
-			klog.Info(err)
-			return
-		} else {
-			c.deleteMinioBucket(cache.DeletedFinalStateUnknown{Key: key, Obj: oldBucket})
-		}
-	}
-
-	c.enqueue(curBucket)
-}
-
-func (c *BucketController) deleteMinioBucket(obj interface{}) {
-	b, ok := obj.(*miniov1alpha1.MinIOBucket)
-	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			return
-		}
-		b, ok = tombstone.Obj.(*miniov1alpha1.MinIOBucket)
-		if !ok {
-			return
-		}
-	}
-
-	c.enqueue(b)
-}
-
-func containsString(v []string, s string) bool {
-	for _, item := range v {
-		if item == s {
-			return true
-		}
-	}
-
-	return false
 }
 
 func removeString(v []string, s string) []string {

@@ -125,7 +125,7 @@ func (p *process) startWorker() (fsm.State, error) {
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
 	sharedInformerFactory := informers.NewSharedInformerFactory(p.client, 30*time.Second)
 
-	c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, p.client)
+	c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, p.coreClient, p.client)
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
@@ -134,7 +134,7 @@ func (p *process) startWorker() (fsm.State, error) {
 	coreSharedInformerFactory.Start(p.ctx.Done())
 	sharedInformerFactory.Start(p.ctx.Done())
 
-	p.userController.Run(p.ctx, p.workers)
+	p.userController.StartWorkers(p.ctx, p.workers)
 	return fsm.WaitState, nil
 }
 

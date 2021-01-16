@@ -10,16 +10,17 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/klog"
 
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
@@ -27,8 +28,6 @@ import (
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	hpLister "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1"
-	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 const (
@@ -50,6 +49,8 @@ type ProjectController struct {
 	registryName      string
 	runOutsideCluster bool
 }
+
+var _ controllerutil.Controller = &ProjectController{}
 
 // +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects/status,verbs=get;update;patch
@@ -92,7 +93,6 @@ func NewProjectController(
 	hpInformer := sharedInformerFactory.Harbor().V1alpha1().HarborProjects()
 
 	c := &ProjectController{
-		ControllerBase:    controllerutil.NewBase(),
 		config:            cfg,
 		coreClient:        coreClient,
 		hpClient:          hpClient,
@@ -103,61 +103,25 @@ func NewProjectController(
 		registryName:      registryUrl.Hostname(),
 		runOutsideCluster: runOutsideCluster,
 	}
-	c.UseInformer(hpInformer.Informer())
-
-	hpInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    c.addHarborProject,
-		UpdateFunc: c.updateHarborProject,
-		DeleteFunc: c.deleteHarborProject,
-	})
+	c.ControllerBase = controllerutil.NewBase(
+		"harbor-project-controller",
+		c,
+		coreClient,
+		[]cache.SharedIndexInformer{hpInformer.Informer()},
+		[]cache.SharedIndexInformer{hpInformer.Informer()},
+		[]string{harborProjectControllerFinalizerName},
+	)
 
 	return c, nil
 }
 
-func (c *ProjectController) syncHarborProject(ctx context.Context, key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		return err
-	}
-
-	currentHP, err := c.hpClient.HarborV1alpha1().HarborProjects(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil && apierrors.IsNotFound(err) {
-		klog.V(4).Infof("%s/%s is not found", namespace, name)
-		return nil
-	} else if err != nil {
-		return err
-	}
+func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) error {
+	currentHP := obj.(*harborv1alpha1.HarborProject)
 	harborProject := currentHP.DeepCopy()
 
-	if harborProject.DeletionTimestamp.IsZero() {
-		if !containsString(harborProject.Finalizers, harborProjectControllerFinalizerName) {
-			harborProject.ObjectMeta.Finalizers = append(harborProject.ObjectMeta.Finalizers, harborProjectControllerFinalizerName)
-			_, err = c.hpClient.HarborV1alpha1().HarborProjects(harborProject.Namespace).Update(ctx, harborProject, metav1.UpdateOptions{})
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
-	if c.runOutsideCluster {
-		pf, err := c.portForward(ctx, c.harborService, 8080)
-		if err != nil {
-			return err
-		}
-		defer pf.Close()
-
-		ports, err := pf.GetPorts()
-		if err != nil {
-			return err
-		}
-		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
-	}
-	harborClient := harbor.New(harborHost, "admin", c.adminPassword)
-
-	// Object has been deleted
-	if !harborProject.DeletionTimestamp.IsZero() {
-		return c.finalizeHarborProject(ctx, harborClient, harborProject)
+	harborClient, err := c.harborClient(ctx)
+	if err != nil {
+		return err
 	}
 
 	if ok, err := harborClient.ExistProject(harborProject.Name); err == nil && !ok {
@@ -192,6 +156,26 @@ func (c *ProjectController) syncHarborProject(ctx context.Context, key string) e
 	return nil
 }
 
+func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, error) {
+	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
+	if c.runOutsideCluster {
+		pf, err := c.portForward(ctx, c.harborService, 8080)
+		if err != nil {
+			return nil, err
+		}
+		defer pf.Close()
+
+		ports, err := pf.GetPorts()
+		if err != nil {
+			return nil, err
+		}
+		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
+	}
+	harborClient := harbor.New(harborHost, "admin", c.adminPassword)
+
+	return harborClient, nil
+}
+
 func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
 	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
 	if currentHP.Spec.Public {
@@ -204,14 +188,15 @@ func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProjec
 	return nil
 }
 
-func (c *ProjectController) finalizeHarborProject(ctx context.Context, client *harbor.Harbor, hp *harborv1alpha1.HarborProject) error {
-	if hp.Status.Ready == false {
-		klog.V(4).Infof("Skip finalize project because the project still not shipped: %s", hp.Name)
-		hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
-		return nil
+func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) error {
+	hp := obj.(*harborv1alpha1.HarborProject)
+
+	harborClient, err := c.harborClient(ctx)
+	if err != nil {
+		return err
 	}
 
-	err := client.DeleteProject(hp.Status.ProjectId)
+	err = harborClient.DeleteProject(hp.Status.ProjectId)
 	if err != nil {
 		return err
 	}
@@ -252,10 +237,10 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	go func() {
 		err := pf.ForwardPorts()
 		if err != nil {
-			klog.Error(err)
-			switch v := err.(type) {
+			c.Log().Warn("Failed port forwarding", zap.Error(err))
+			switch err.(type) {
 			case *apierrors.StatusError:
-				klog.Info(v)
+				c.Log().Info("Got error", zap.Error(err))
 			}
 		}
 	}()
@@ -269,111 +254,40 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	return pf, nil
 }
 
-func (c *ProjectController) Run(ctx context.Context, workers int) {
-	if !c.WaitForSync(ctx) {
-		return
-	}
-
-	sv := parallel.NewSupervisor(ctx)
-	for i := 0; i < workers; i++ {
-		sv.Add(c.worker)
-	}
-
-	klog.Info("Start workers of ProjectController")
-	<-ctx.Done()
-	klog.Info("Shutdown workers")
-
-	c.queue.Shutdown()
-	sCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	sv.Shutdown(sCtx)
-	cancel()
-}
-
-func (c *ProjectController) worker(ctx context.Context) {
-	for {
-		var obj interface{}
-		select {
-		case v, ok := <-c.queue.Get():
-			if !ok {
-				return
-			}
-			obj = v
-		}
-		logger.Log.Debug("Got next queue", zap.Any("queue", obj))
-
-		wCtx, cancelFunc := context.WithCancel(ctx)
-		err := func(obj interface{}) error {
-			defer c.queue.Done(obj)
-			defer cancelFunc()
-
-			err := c.syncHarborProject(wCtx, obj.(string))
-			if err != nil {
-				c.queue.AddRateLimited(obj)
-				return err
-			}
-
-			c.queue.Forget(obj)
-			return nil
-		}(obj)
-		if err != nil {
-			logger.Log.Warn("Reconcile has error", zap.Error(err))
-		}
-	}
-}
-
-func (c *ProjectController) enqueue(hp *harborv1alpha1.HarborProject) {
-	if key, err := cache.MetaNamespaceKeyFunc(hp); err != nil {
-		return
-	} else {
-		c.queue.Add(key)
-	}
-}
-
-func (c *ProjectController) addHarborProject(obj interface{}) {
-	hp := obj.(*harborv1alpha1.HarborProject)
-
-	c.enqueue(hp)
-}
-
-func (c *ProjectController) updateHarborProject(old, cur interface{}) {
-	oldHP := old.(*harborv1alpha1.HarborProject)
-	curHP := cur.(*harborv1alpha1.HarborProject)
-
-	if oldHP.UID != curHP.UID {
-		if key, err := cache.MetaNamespaceKeyFunc(oldHP); err != nil {
-			return
-		} else {
-			c.deleteHarborProject(cache.DeletedFinalStateUnknown{Key: key, Obj: oldHP})
-		}
-	}
-
-	c.enqueue(curHP)
-}
-
-func (c *ProjectController) deleteHarborProject(obj interface{}) {
+func (c *ProjectController) ObjectToKeys(obj interface{}) []string {
 	hp, ok := obj.(*harborv1alpha1.HarborProject)
 	if !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			return
-		}
-		hp, ok = tombstone.Obj.(*harborv1alpha1.HarborProject)
-		if !ok {
-			return
-		}
+		return nil
+	}
+	key, err := cache.MetaNamespaceKeyFunc(hp)
+	if err != nil {
+		return nil
 	}
 
-	c.enqueue(hp)
+	return []string{key}
 }
 
-func containsString(v []string, s string) bool {
-	for _, item := range v {
-		if item == s {
-			return true
-		}
+func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	return false
+	hp, err := c.hpLister.HarborProjects(namespace).Get(name)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return hp, nil
+}
+
+func (c *ProjectController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+	hp := obj.(*harborv1alpha1.HarborProject)
+
+	hp, err := c.hpClient.HarborV1alpha1().HarborProjects(hp.Namespace).Update(ctx, hp, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return hp, nil
 }
 
 func removeString(v []string, s string) []string {
