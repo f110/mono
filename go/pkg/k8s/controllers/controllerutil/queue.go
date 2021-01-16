@@ -12,8 +12,11 @@ type WorkQueue struct {
 	queue     workqueue.RateLimitingInterface
 }
 
-func NewWorkQueue() *WorkQueue {
-	q := &WorkQueue{ch: make(chan interface{}), queue: workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())}
+func NewWorkQueue(name string) *WorkQueue {
+	q := &WorkQueue{
+		ch:    make(chan interface{}),
+		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), name),
+	}
 	go q.run()
 
 	return q

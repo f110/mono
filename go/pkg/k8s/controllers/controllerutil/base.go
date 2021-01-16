@@ -57,7 +57,7 @@ func NewBase(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: name})
 
 	return &ControllerBase{
-		queue:       NewWorkQueue(),
+		queue:       NewWorkQueue(name),
 		recoder:     recorder,
 		log:         log,
 		impl:        v,
