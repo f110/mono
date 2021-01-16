@@ -85,7 +85,7 @@ func main() {
 					os.Exit(1)
 				}
 
-				c.Run(ctx, 1)
+				c.StartWorkers(ctx, 1)
 				klog.Info("Shutdown")
 			},
 			OnStoppedLeading: func() {

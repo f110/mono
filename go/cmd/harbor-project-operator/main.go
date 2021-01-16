@@ -115,14 +115,14 @@ func main() {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					projectController.Run(ctx, 1)
+					projectController.StartWorkers(ctx, 1)
 					cancelFunc()
 				}()
 
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					robotAccountController.Run(ctx, 1)
+					robotAccountController.StartWorkers(ctx, 1)
 					cancelFunc()
 				}()
 
