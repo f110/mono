@@ -44,26 +44,32 @@ func getKubeConfig(kubeConfig string) string {
 	return kubeConfig
 }
 
-func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig string) error {
+func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, manifestFile string) error {
 	kubeConfig = getKubeConfig(kubeConfig)
 	kindCluster, err := kind.NewCluster(kindPath, name, kubeConfig)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if exists, err := kindCluster.IsExist(context.Background(), name); err != nil {
+	exists, err := kindCluster.IsExist(context.Background(), name)
+	if err != nil {
 		return xerrors.Errorf(": %w", err)
-	} else if exists {
-		return xerrors.New("Cluster already exists. abort.")
 	}
 
-	if err := kindCluster.Create(context.Background(), k8sVersion, workerNum); err != nil {
-		return xerrors.Errorf(": %w", err)
+	if !exists {
+		if err := kindCluster.Create(context.Background(), k8sVersion, workerNum); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	} else {
+		log.Print("Cluster is already exist. Only apply the manifest.")
 	}
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 3*time.Minute)
 	if err := kindCluster.WaitReady(ctx); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	cancelFunc()
+	if err := kindCluster.Apply(manifestFile, "monodev"); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 
 	return nil
 }
@@ -313,12 +319,13 @@ func Cluster(rootCmd *cobra.Command) {
 	kubeConfig := ""
 	crdFile := ""
 	workerNum := 1
+	manifestFile := ""
 
 	createCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create the cluster by kind",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return setupCluster(kindPath, clusterName, k8sVersion, workerNum, kubeConfig)
+			return setupCluster(kindPath, clusterName, k8sVersion, workerNum, kubeConfig, manifestFile)
 		},
 	}
 	createCmd.Flags().StringVar(&kindPath, "kind", "", "kind command path")
@@ -327,6 +334,7 @@ func Cluster(rootCmd *cobra.Command) {
 	createCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "Path to the kubeconfig file. If not specified, will be used default file of kubectl")
 	createCmd.Flags().StringVar(&crdFile, "crd", "", "Applying manifest file after create the cluster")
 	createCmd.Flags().IntVar(&workerNum, "worker-num", 3, "The number of k8s workers")
+	createCmd.Flags().StringVar(&manifestFile, "manifest", "", "A manifest file for the container")
 	clusterCmd.AddCommand(createCmd)
 
 	deleteCmd := &cobra.Command{
@@ -341,7 +349,6 @@ func Cluster(rootCmd *cobra.Command) {
 	deleteCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "Path to the kubeconfig file. If not specified, will be used default file of kubectl")
 	clusterCmd.AddCommand(deleteCmd)
 
-	manifestFile := ""
 	namespace := ""
 	var images []string
 	runCmd := &cobra.Command{
