@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -25,6 +26,8 @@ import (
 	"go.f110.dev/mono/go/pkg/fsm"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/harbor"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/minio"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	"go.f110.dev/mono/go/pkg/k8s/probe"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -34,9 +37,14 @@ const (
 	stateInit fsm.State = iota
 	stateStartMetricsServer
 	stateLeaderElection
-	stateStartWorker
+	stateStartWorkers
 	stateShutdown
 )
+
+type controller interface {
+	StartWorkers(ctx context.Context, workers int)
+	Shutdown()
+}
 
 type process struct {
 	FSM    *fsm.FSM
@@ -44,16 +52,48 @@ type process struct {
 	cancel context.CancelFunc
 	probe  *probe.Probe
 
-	userController *grafana.UserController
+	controllers []controller
 
-	id                 string
-	dev                bool
-	workers            int
-	leaseLockName      string
-	leaseLockNamespace string
+	id                   string
+	metricsAddr          string
+	enableLeaderElection bool
+	dev                  bool
+	workers              int
+	leaseLockName        string
+	leaseLockNamespace   string
+	clusterDomain        string
+	harborNamespace      string
+	harborServiceName    string
+	adminSecretName      string
+	coreConfigMapName    string
 
-	coreClient kubernetes.Interface
-	client     clientset.Interface
+	config     *rest.Config
+	coreClient *kubernetes.Clientset
+	client     *clientset.Clientset
+}
+
+func newProcess() *process {
+	ctx, cancel := context.WithCancel(context.Background())
+	p := &process{
+		ctx:         ctx,
+		cancel:      cancel,
+		controllers: make([]controller, 0),
+		workers:     1,
+	}
+	p.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateInit:               p.init,
+			stateStartMetricsServer: p.startMetricsServer,
+			stateLeaderElection:     p.leaderElection,
+			stateStartWorkers:       p.startWorkers,
+			stateShutdown:           p.shutdown,
+		},
+		stateInit,
+		stateShutdown,
+	)
+	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
+
+	return p
 }
 
 func (p *process) init() (fsm.State, error) {
@@ -69,6 +109,7 @@ func (p *process) init() (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
+	p.config = cfg
 
 	coreClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
@@ -80,6 +121,8 @@ func (p *process) init() (fsm.State, error) {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	p.client = client
+
+	p.probe = probe.NewProbe(p.metricsAddr)
 
 	return stateStartMetricsServer, nil
 }
@@ -139,53 +182,93 @@ func (p *process) leaderElection() (fsm.State, error) {
 	case <-p.ctx.Done():
 		return fsm.UnknownState, nil
 	}
-	return stateStartWorker, nil
+	return stateStartWorkers, nil
 }
 
-func (p *process) startWorker() (fsm.State, error) {
+func (p *process) startWorkers() (fsm.State, error) {
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
 	sharedInformerFactory := informers.NewSharedInformerFactory(p.client, 30*time.Second)
 
-	c, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, p.coreClient, p.client)
+	gu, err := grafana.NewUserController(coreSharedInformerFactory, sharedInformerFactory, p.coreClient, p.client)
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	p.userController = c
+	p.controllers = append(p.controllers, gu)
+
+	hpc, err := harbor.NewProjectController(
+		p.ctx,
+		p.coreClient,
+		p.client,
+		p.config,
+		sharedInformerFactory,
+		p.harborNamespace,
+		p.harborServiceName,
+		p.adminSecretName,
+		p.coreConfigMapName,
+		p.dev,
+	)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.controllers = append(p.controllers, hpc)
+
+	hrac, err := harbor.NewRobotAccountController(
+		p.ctx,
+		p.coreClient,
+		p.client,
+		p.config,
+		sharedInformerFactory,
+		p.harborNamespace,
+		p.harborServiceName,
+		p.adminSecretName,
+		p.dev,
+	)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.controllers = append(p.controllers, hrac)
+
+	mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, sharedInformerFactory, p.dev)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.controllers = append(p.controllers, mbc)
 
 	coreSharedInformerFactory.Start(p.ctx.Done())
 	sharedInformerFactory.Start(p.ctx.Done())
 
-	p.userController.StartWorkers(p.ctx, p.workers)
+	for _, v := range p.controllers {
+		v.StartWorkers(p.ctx, p.workers)
+	}
 	return fsm.WaitState, nil
 }
 
 func (p *process) shutdown() (fsm.State, error) {
 	p.cancel()
-	if p.userController != nil {
-		p.userController.Shutdown()
+
+	for _, v := range p.controllers {
+		v.Shutdown()
 	}
+
 	return fsm.CloseState, nil
 }
 
 func main() {
-	id := ""
-	metricsAddr := ""
-	enableLeaderElection := false
-	leaseLockName := ""
-	leaseLockNamespace := ""
-	clusterDomain := ""
-	workers := 1
-	dev := false
-	fs := pflag.NewFlagSet("grafana-admin-controller", pflag.ExitOnError)
-	fs.StringVar(&id, "id", uuid.New().String(), "the holder identity name")
-	fs.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	fs.BoolVar(&enableLeaderElection, "enable-leader-election", enableLeaderElection,
+	p := newProcess()
+	fs := pflag.NewFlagSet("controller-manager", pflag.ExitOnError)
+	fs.StringVar(&p.id, "id", uuid.New().String(), "the holder identity name")
+	fs.StringVar(&p.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	fs.BoolVar(&p.enableLeaderElection, "enable-leader-election", p.enableLeaderElection,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	fs.StringVar(&leaseLockName, "lease-lock-name", "", "the lease lock resource name")
-	fs.StringVar(&leaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
-	fs.StringVar(&clusterDomain, "cluster-domain", clusterDomain, "Cluster domain")
-	fs.IntVar(&workers, "workers", workers, "The number of workers on each controller")
-	fs.BoolVar(&dev, "dev", dev, "development mode")
+	fs.StringVar(&p.leaseLockName, "lease-lock-name", "", "the lease lock resource name")
+	fs.StringVar(&p.leaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
+	fs.StringVar(&p.clusterDomain, "cluster-domain", p.clusterDomain, "Cluster domain")
+	fs.IntVar(&p.workers, "workers", p.workers, "The number of workers on each controller")
+	fs.StringVar(&p.harborNamespace, "harbor-namespace", "", "the namespace name to which harbor service belongs")
+	fs.StringVar(&p.harborServiceName, "harbor-service-name", "", "the service name of harbor")
+	fs.StringVar(&p.adminSecretName, "admin-secret-name", "", "the secret name that including admin password")
+	fs.StringVar(&p.coreConfigMapName, "core-configmap-name", "", "the configmap name that used harbor core")
+	fs.BoolVar(&p.dev, "dev", p.dev, "development mode")
 	logger.Flags(fs)
 
 	goFlagSet := flag.NewFlagSet("", flag.ContinueOnError)
@@ -200,30 +283,6 @@ func main() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	p := &process{
-		ctx:                ctx,
-		cancel:             cancel,
-		probe:              probe.NewProbe(":8000"),
-		id:                 id,
-		workers:            workers,
-		dev:                dev,
-		leaseLockName:      leaseLockName,
-		leaseLockNamespace: leaseLockNamespace,
-	}
-	p.FSM = fsm.NewFSM(
-		map[fsm.State]fsm.StateFunc{
-			stateInit:               p.init,
-			stateStartMetricsServer: p.startMetricsServer,
-			stateLeaderElection:     p.leaderElection,
-			stateStartWorker:        p.startWorker,
-			stateShutdown:           p.shutdown,
-		},
-		stateInit,
-		stateShutdown,
-	)
-
-	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
 	if err := p.FSM.Loop(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)

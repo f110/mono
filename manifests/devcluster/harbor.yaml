@@ -4,6 +4,14 @@ metadata:
   name: harbor
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: harbor
+  namespace: harbor
+data:
+  EXT_ENDPOINT: http://registry.f110.dev
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: harbor

@@ -96,9 +96,11 @@ func (b *ControllerBase) StartWorkers(ctx context.Context, workers int) {
 func (b *ControllerBase) Shutdown() {
 	b.queue.Shutdown()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	b.supervisor.Shutdown(ctx)
-	cancel()
+	if b.supervisor != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		b.supervisor.Shutdown(ctx)
+		cancel()
+	}
 }
 
 func (b *ControllerBase) WaitForSync(ctx context.Context) bool {

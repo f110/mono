@@ -1,14 +1,22 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
+go_binary(
+    name = "controller-manager",
+    embed = [":controller-manager_lib"],
+    visibility = ["//visibility:public"],
+)
+
 go_library(
-    name = "grafana-admin-controller_lib",
+    name = "controller-manager_lib",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/go/cmd/grafana-admin-controller",
+    importpath = "go.f110.dev/mono/go/cmd/controller-manager",
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/fsm",
         "//go/pkg/k8s/client/versioned",
         "//go/pkg/k8s/controllers/grafana",
+        "//go/pkg/k8s/controllers/harbor",
+        "//go/pkg/k8s/controllers/minio",
         "//go/pkg/k8s/informers/externalversions",
         "//go/pkg/k8s/probe",
         "//go/pkg/logger",
@@ -18,18 +26,13 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/informers",
         "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
         "//vendor/k8s.io/client-go/tools/clientcmd",
         "//vendor/k8s.io/client-go/tools/leaderelection",
         "//vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
         "//vendor/k8s.io/component-base/metrics/legacyregistry",
         "//vendor/k8s.io/klog",
     ],
-)
-
-go_binary(
-    name = "grafana-admin-controller",
-    embed = [":grafana-admin-controller_lib"],
-    visibility = ["//visibility:public"],
 )
 
 sh_binary(
@@ -39,12 +42,12 @@ sh_binary(
         "cluster",
         "run",
         "--kind=$(location @kind//:file)",
-        "--manifest=$(location //manifests/deploy/grafana/dev:dev)",
-        "--images=registry.f110.dev/tools/grafana-admin-controller:latest=$(location //containers/grafana-admin-controller:image.tar)",
+        "--manifest=$(location //manifests/deploy/controller-manager/dev:dev)",
+        "--images=registry.f110.dev/tools/controller-manager:latest=$(location //containers/controller-manager:image.tar)",
     ],
     data = [
-        "//containers/grafana-admin-controller:image.tar",
-        "//manifests/deploy/grafana/dev",
+        "//containers/controller-manager:image.tar",
+        "//manifests/deploy/controller-manager/dev",
         "@kind//:file",
     ],
 )

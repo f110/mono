@@ -4,7 +4,7 @@ kustomization(
     name = "kustomize",
     src = "kustomization.yaml",
     resources = [
-        "//manifests/deploy/harbor/base",
+        "//manifests/deploy/controller-manager/base",
     ],
     visibility = ["//visibility:public"],
 )

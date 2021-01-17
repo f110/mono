@@ -1,0 +1,10 @@
+resources:
+  - ../../../crd/grafana
+  - ../../../crd/harbor
+  - ../../../crd/minio
+  - ../../../rbac/grafana
+  - ../../../rbac/harbor
+  - ../../../rbac/minio
+  - ../../../rbac/leader-election
+  - ../../../controller-manager
+  - role_binding.yaml

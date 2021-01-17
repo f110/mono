@@ -1,31 +1,35 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: grafana-admin
+  name: controller-manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: grafana-admin-controller
+  name: controller-manager
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: grafana-admin-controller
+      app.kubernetes.io/name: controller-manager
   replicas: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: grafana-admin-controller
+        app.kubernetes.io/name: controller-manager
     spec:
-      serviceAccountName: grafana-admin
+      serviceAccountName: controller-manager
       containers:
         - name: controller
-          image: registry.f110.dev/tools/grafana-admin-controller:latest
+          image: registry.f110.dev/tools/controller-manager:latest
           imagePullPolicy: IfNotPresent
           args:
-            - --lease-lock-name=grafana-admin
+            - --lease-lock-name=controller-manager
             - --lease-lock-namespace=$(MY_NAMESPACE)
             - --cluster-domain=cluster.local
+            - --harbor-namespace=harbor
+            - --harbor-service-name=harbor
+            - --admin-secret-name=harbor
+            - --core-configmap-name=harbor
           env:
             - name: MY_NAMESPACE
               valueFrom:
@@ -37,11 +41,11 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              port: 8000
+              port: 8080
               path: /liveness
           readinessProbe:
             httpGet:
-              port: 8000
+              port: 8080
               path: /readiness
           resources:
             limits:

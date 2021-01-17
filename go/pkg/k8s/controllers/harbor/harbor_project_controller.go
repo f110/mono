@@ -38,11 +38,9 @@ type ProjectController struct {
 	*controllerutil.ControllerBase
 
 	config     *rest.Config
-	coreClient *kubernetes.Clientset
+	coreClient kubernetes.Interface
 	hpClient   clientset.Interface
 	hpLister   hpLister.HarborProjectLister
-
-	queue *controllerutil.WorkQueue
 
 	harborService     *corev1.Service
 	adminPassword     string
@@ -59,7 +57,8 @@ var _ controllerutil.Controller = &ProjectController{}
 
 func NewProjectController(
 	ctx context.Context,
-	coreClient *kubernetes.Clientset,
+	coreClient kubernetes.Interface,
+	client clientset.Interface,
 	cfg *rest.Config,
 	sharedInformerFactory informers.SharedInformerFactory,
 	harborNamespace,
@@ -70,24 +69,19 @@ func NewProjectController(
 ) (*ProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(ctx, harborName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	cm, err := coreClient.CoreV1().ConfigMaps(harborNamespace).Get(ctx, coreConfigMapName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	registryUrl, err := url.Parse(cm.Data["EXT_ENDPOINT"])
 	if err != nil {
-		return nil, err
-	}
-
-	hpClient, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	hpInformer := sharedInformerFactory.Harbor().V1alpha1().HarborProjects()
@@ -95,9 +89,8 @@ func NewProjectController(
 	c := &ProjectController{
 		config:            cfg,
 		coreClient:        coreClient,
-		hpClient:          hpClient,
+		hpClient:          client,
 		hpLister:          hpInformer.Lister(),
-		queue:             controllerutil.NewWorkQueue(),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
 		registryName:      registryUrl.Hostname(),

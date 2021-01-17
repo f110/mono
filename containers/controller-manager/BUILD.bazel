@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "bin",
     srcs = [
-        "//go/cmd/minio-extra-operator",
+        "//go/cmd/controller-manager",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",
@@ -13,15 +13,15 @@ pkg_tar(
 container_image(
     name = "image",
     base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/minio-extra-operator"],
+    entrypoint = ["/usr/local/bin/controller-manager"],
     tars = [":bin"],
+    visibility = ["//visibility:public"],
 )
 
 container_push(
     name = "push",
     format = "Docker",
     image = ":image",
-    registry = "quay.io",
-    repository = "f110/minio-extra-operator",
-    tag = "{BUILD_TIMESTAMP}",
+    registry = "registry.f110.dev",
+    repository = "tools/controller-manager",
 )

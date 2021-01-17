@@ -5,8 +5,12 @@ kustomization(
     src = "kustomization.yaml",
     resources = [
         "role_binding.yaml",
-        "//manifests/controller/minio",
+        "//manifests/controller-manager",
+        "//manifests/crd/grafana",
+        "//manifests/crd/harbor",
         "//manifests/crd/minio",
+        "//manifests/rbac/grafana",
+        "//manifests/rbac/harbor",
         "//manifests/rbac/leader-election",
         "//manifests/rbac/minio",
     ],

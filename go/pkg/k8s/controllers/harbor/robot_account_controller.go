@@ -41,7 +41,7 @@ type RobotAccountController struct {
 	*controllerutil.ControllerBase
 
 	config     *rest.Config
-	coreClient *kubernetes.Clientset
+	coreClient kubernetes.Interface
 	hClient    clientset.Interface
 	hraLister  hpLister.HarborRobotAccountLister
 
@@ -56,7 +56,17 @@ type RobotAccountController struct {
 // +kubebuilder:rbac:groups=*,resources=secrets,verbs=get;create;update;delete
 // +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
 
-func NewRobotAccountController(ctx context.Context, coreClient *kubernetes.Clientset, cfg *rest.Config, sharedInformerFactory informers.SharedInformerFactory, harborNamespace, harborName, adminSecretName string, runOutsideCluster bool) (*RobotAccountController, error) {
+func NewRobotAccountController(
+	ctx context.Context,
+	coreClient kubernetes.Interface,
+	client clientset.Interface,
+	cfg *rest.Config,
+	sharedInformerFactory informers.SharedInformerFactory,
+	harborNamespace,
+	harborName,
+	adminSecretName string,
+	runOutsideCluster bool,
+) (*RobotAccountController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -66,17 +76,12 @@ func NewRobotAccountController(ctx context.Context, coreClient *kubernetes.Clien
 		return nil, err
 	}
 
-	hClient, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	hraInformer := sharedInformerFactory.Harbor().V1alpha1().HarborRobotAccounts()
 
 	c := &RobotAccountController{
 		config:            cfg,
 		coreClient:        coreClient,
-		hClient:           hClient,
+		hClient:           client,
 		hraLister:         hraInformer.Lister(),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),

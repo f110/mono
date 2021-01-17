@@ -1,6 +1,0 @@
-resources:
-  - ../../../crd/harbor
-  - ../../../rbac/harbor
-  - ../../../rbac/leader-election
-  - ../../../controller/harbor
-  - role_binding.yaml

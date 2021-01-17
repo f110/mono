@@ -47,8 +47,8 @@ type BucketController struct {
 	*controllerutil.ControllerBase
 
 	config     *rest.Config
-	coreClient *kubernetes.Clientset
-	mClient    *clientset.Clientset
+	coreClient kubernetes.Interface
+	mClient    clientset.Interface
 	mbLister   mbLister.MinIOBucketLister
 
 	queue *controllerutil.WorkQueue
@@ -58,13 +58,14 @@ type BucketController struct {
 
 var _ controllerutil.Controller = &BucketController{}
 
-func NewBucketController(ctx context.Context, client *kubernetes.Clientset, cfg *rest.Config, runOutsideCluster bool) (*BucketController, error) {
-	mClient, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	_, apiList, err := client.ServerGroupsAndResources()
+func NewBucketController(
+	coreClient kubernetes.Interface,
+	client clientset.Interface,
+	cfg *rest.Config,
+	sharedInformerFactory informers.SharedInformerFactory,
+	runOutsideCluster bool,
+) (*BucketController, error) {
+	_, apiList, err := coreClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return nil, err
 	}
@@ -80,29 +81,26 @@ func NewBucketController(ctx context.Context, client *kubernetes.Clientset, cfg 
 		}
 	}
 	if !found {
-		return nil, errors.New("minio-operator is not installed")
+		return nil, xerrors.New("minio-operator is not installed")
 	}
 
-	sharedInformerFactory := informers.NewSharedInformerFactory(mClient, 30*time.Second)
 	mbInformer := sharedInformerFactory.Minio().V1alpha1().MinIOBuckets()
 
 	c := &BucketController{
 		config:            cfg,
-		coreClient:        client,
-		mClient:           mClient,
+		coreClient:        coreClient,
+		mClient:           client,
 		mbLister:          mbInformer.Lister(),
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
 		"minio-bucket-operator",
 		c,
-		client,
+		coreClient,
 		[]cache.SharedIndexInformer{mbInformer.Informer()},
 		[]cache.SharedIndexInformer{},
 		[]string{minIOBucketControllerFinalizerName},
 	)
-
-	sharedInformerFactory.Start(ctx.Done())
 
 	return c, nil
 }
