@@ -26,6 +26,7 @@ import (
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
+	"go.f110.dev/mono/go/pkg/k8s/probe"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -41,6 +42,7 @@ type process struct {
 	FSM    *fsm.FSM
 	ctx    context.Context
 	cancel context.CancelFunc
+	probe  *probe.Probe
 
 	userController *grafana.UserController
 
@@ -85,6 +87,15 @@ func (p *process) init() (fsm.State, error) {
 func (p *process) startMetricsServer() (fsm.State, error) {
 	http.Handle("/metrics", legacyregistry.HandlerWithReset())
 	go http.ListenAndServe(":9300", nil)
+
+	go func() {
+		for {
+			select {
+			case c := <-p.probe.Readiness():
+				close(c)
+			}
+		}
+	}()
 
 	return stateLeaderElection, nil
 }
@@ -193,6 +204,7 @@ func main() {
 	p := &process{
 		ctx:                ctx,
 		cancel:             cancel,
+		probe:              probe.NewProbe(":8000"),
 		id:                 id,
 		workers:            workers,
 		dev:                dev,
@@ -201,10 +213,11 @@ func main() {
 	}
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:           p.init,
-			stateLeaderElection: p.leaderElection,
-			stateStartWorker:    p.startWorker,
-			stateShutdown:       p.shutdown,
+			stateInit:               p.init,
+			stateStartMetricsServer: p.startMetricsServer,
+			stateLeaderElection:     p.leaderElection,
+			stateStartWorker:        p.startWorker,
+			stateShutdown:           p.shutdown,
 		},
 		stateInit,
 		stateShutdown,

@@ -35,6 +35,14 @@ spec:
             - name: metrics
               containerPort: 9300
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: 8000
+              path: /liveness
+          readinessProbe:
+            httpGet:
+              port: 8000
+              path: /readiness
           resources:
             limits:
               cpu: 100m
