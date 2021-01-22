@@ -31,7 +31,7 @@ type Controller interface {
 type ControllerBase struct {
 	queue      *WorkQueue
 	supervisor *parallel.Supervisor
-	recoder    record.EventRecorder
+	recorder   record.EventRecorder
 	log        *zap.Logger
 
 	impl        Controller
@@ -58,7 +58,7 @@ func NewBase(
 
 	return &ControllerBase{
 		queue:       NewWorkQueue(name),
-		recoder:     recorder,
+		recorder:    recorder,
 		log:         log,
 		impl:        v,
 		eventSource: eventSource,
@@ -116,7 +116,7 @@ func (b *ControllerBase) WaitForSync(ctx context.Context) bool {
 }
 
 func (b *ControllerBase) EventRecorder() record.EventRecorder {
-	return b.recoder
+	return b.recorder
 }
 
 func (b *ControllerBase) Log() *zap.Logger {
