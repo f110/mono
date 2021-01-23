@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GoImports">
+    <option name="excludedPackages">
+      <array>
+        <option value="github.com/bmizerany/assert" />
+        <option value="github.com/labstack/gommon/log" />
+        <option value="golang.org/x/tools/go/ssa/interp/testdata/src/errors" />
+        <option value="gotest.tools/assert" />
+        <option value="gotest.tools/v3/assert" />
+        <option value="sigs.k8s.io/kind/pkg/errors" />
+      </array>
+    </option>
+  </component>
+</project>
