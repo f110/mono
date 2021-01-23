@@ -39,12 +39,12 @@ sh_binary(
 
 load("//build:job.bzl", "job")
 
-job(
-    name = "unissh",
-    all_revision = True,
-    command = "build",
-    target = "//deb/unissh:pkg",
-)
+#job(
+#    name = "unissh",
+#    all_revision = True,
+#    command = "build",
+#    target = "//deb/unissh:pkg",
+#)
 
 job(
     name = "test_all",
