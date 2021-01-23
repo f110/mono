@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "backup.go",
         "cert.go",
-        "upload.go",
     ],
     importpath = "go.f110.dev/mono/tools/etcdbackup/internal",
     visibility = ["//tools/etcdbackup:__subpackages__"],

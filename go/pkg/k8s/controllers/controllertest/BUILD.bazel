@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "controllertest",
+    srcs = ["runner.go"],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllertest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/k8s/client/versioned/fake",
+        "//go/pkg/k8s/client/versioned/scheme",
+        "//go/pkg/k8s/controllers/controllerutil",
+        "//go/pkg/k8s/informers/externalversions",
+        "//go/pkg/logger",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema",
+        "//vendor/k8s.io/client-go/informers",
+        "//vendor/k8s.io/client-go/kubernetes/fake",
+        "//vendor/k8s.io/client-go/kubernetes/scheme",
+        "//vendor/k8s.io/client-go/testing",
+        "//vendor/k8s.io/gengo/namer",
+        "//vendor/k8s.io/gengo/types",
+    ],
+)
+
+go_test(
+    name = "controllertest_test",
+    srcs = ["runner_test.go"],
+    embed = [":controllertest"],
+    deps = [
+        "//go/pkg/api/grafana/v1alpha1",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/k8s.io/api/apps/v1:apps",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/labels",
+    ],
+)

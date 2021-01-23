@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
+	github.com/jarcoal/httpmock v1.0.7
 	github.com/minio/minio-go/v6 v6.0.50
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
 	github.com/sergi/go-diff v1.1.0 // indirect
@@ -41,6 +42,7 @@ require (
 	k8s.io/apimachinery v0.19.6
 	k8s.io/client-go v0.19.6
 	k8s.io/component-base v0.19.6
+	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.4.0
 	sigs.k8s.io/kind v0.9.0

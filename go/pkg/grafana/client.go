@@ -20,31 +20,38 @@ type Client struct {
 	host     string
 	user     string
 	password string
+
+	client *http.Client
 }
 
-func NewClient(host, user, password string) *Client {
-	return &Client{host: host, user: user, password: password}
+func NewClient(host, user, password string, transport http.RoundTripper) *Client {
+	client := http.DefaultClient
+	if transport != nil {
+		client = &http.Client{Transport: transport}
+	}
+
+	return &Client{host: host, user: user, password: password, client: client}
 }
 
 func (c *Client) Users() ([]*User, error) {
 	u, err := url.Parse(c.host)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	u.Path = "/api/users"
 
 	req, err := c.newRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	users := make([]*User, 0)
 	if err := json.NewDecoder(res.Body).Decode(&users); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	return users, nil
@@ -65,7 +72,7 @@ func (c *Client) AddUser(user *User) error {
 	if err != nil {
 		return err
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -89,7 +96,7 @@ func (c *Client) DeleteUser(id int) error {
 	if err != nil {
 		return err
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -116,7 +123,7 @@ func (c *Client) ChangeUserPermission(id int, admin bool) error {
 	if err != nil {
 		return err
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}

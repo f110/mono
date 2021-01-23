@@ -24,6 +24,7 @@ type GrafanaSpec struct {
 }
 
 type GrafanaStatus struct {
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

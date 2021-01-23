@@ -113,6 +113,10 @@ spec:
             - userSelector
             type: object
           status:
+            properties:
+              observedGeneration:
+                format: int64
+                type: integer
             type: object
         type: object
     served: true

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -39,6 +41,9 @@ type UserController struct {
 	serviceLister corev1listers.ServiceLister
 	appLister     listers.GrafanaLister
 	userLister    listers.GrafanaUserLister
+
+	// for testing
+	transport http.RoundTripper
 }
 
 var _ controllerutil.Controller = &UserController{}
@@ -127,6 +132,14 @@ func (u *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 		return xerrors.Errorf(": %w", err)
 	}
 
+	newA := app.DeepCopy()
+	newA.Status.ObservedGeneration = app.ObjectMeta.Generation
+	if !reflect.DeepEqual(newA.Status, app.Status) {
+		_, err = u.client.GrafanaV1alpha1().Grafanas(newA.Namespace).UpdateStatus(ctx, newA, metav1.UpdateOptions{})
+		if err != nil {
+			return controllerutil.WrapRetryError(err)
+		}
+	}
 	return nil
 }
 
@@ -161,6 +174,7 @@ func (u *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (
 }
 
 func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
+	u.Log().Info("users", zap.Int("len", len(users)))
 	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -173,7 +187,12 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	grafanaClient := grafana.NewClient(fmt.Sprintf("http://%s.%s.svc:%d", svc.Name, app.Namespace, 3000), app.Spec.AdminUser, string(password))
+	grafanaClient := grafana.NewClient(
+		fmt.Sprintf("http://%s.%s.svc:%d", svc.Name, app.Namespace, 3000),
+		app.Spec.AdminUser,
+		string(password),
+		u.transport,
+	)
 
 	allUsers := make(map[string]*grafanav1alpha1.GrafanaUser)
 	for _, v := range users {

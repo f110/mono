@@ -20,4 +20,5 @@ pkg_deb(
     maintainer = "Fumihiro Ito <fmhrit@gmail.com>",
     package = "unissh",
     version = "0.1.0",
+    visibility = ["//visibility:public"],
 )

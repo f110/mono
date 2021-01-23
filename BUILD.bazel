@@ -18,11 +18,11 @@ sh_binary(
         "create",
         "--kind=$(location @kind//:file)",
         "--k8s-version=v1.19.3",
-        "--manifest=$(location //manifests/devcluster)"
+        "--manifest=$(location //manifests/devcluster)",
     ],
     data = [
-        "@kind//:file",
         "//manifests/devcluster",
+        "@kind//:file",
     ],
 )
 
@@ -43,5 +43,15 @@ job(
     name = "unissh",
     all_revision = True,
     command = "build",
-    target = ":pkg",
+    target = "//deb/unissh:pkg",
+)
+
+job(
+    name = "test_all",
+    all_revision = True,
+    command = "test",
+    config_name = "ci",
+    cpu_limit = "2000m",
+    github_status = True,
+    targets = "//...",
 )
