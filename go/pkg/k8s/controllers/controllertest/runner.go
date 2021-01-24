@@ -61,24 +61,28 @@ func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) err
 }
 
 func (r *TestRunner) AssertAction(t *testing.T, a Action) bool {
-	match := false
+	matchVerb := false
+	matchObj := false
 Match:
 	for _, v := range append(r.Client.Actions(), r.CoreClient.Actions()...) {
 		if v.Matches(a.Verb.String(), a.Resource()) {
+			matchVerb = true
 			switch doneAction := v.(type) {
 			case k8stesting.UpdateAction:
 				if reflect.DeepEqual(doneAction.GetObject(), a.Object) {
-					match = true
+					matchObj = true
 					break Match
 				}
 			}
 		}
 	}
-	if !match {
-		assert.Failf(t, "The expect action was not called", "%v", a.Resource)
+	if !matchVerb {
+		assert.Fail(t, "The expect action was not called")
+	} else if !matchObj {
+		assert.Fail(t, "The expect action was called but the matched object was not found")
 	}
 
-	return match
+	return matchVerb && matchObj
 }
 
 func (r *TestRunner) RegisterFixture(objs ...runtime.Object) {

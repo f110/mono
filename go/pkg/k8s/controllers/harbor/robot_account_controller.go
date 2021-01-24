@@ -47,6 +47,7 @@ type RobotAccountController struct {
 
 	harborService     *corev1.Service
 	adminPassword     string
+	transport         http.RoundTripper
 	runOutsideCluster bool
 }
 
@@ -226,6 +227,9 @@ func (c *RobotAccountController) harborClient(ctx context.Context) (*harbor.Harb
 	}
 
 	harborClient := harbor.New(harborHost, "admin", c.adminPassword)
+	if c.transport != nil {
+		harborClient.SetTransport(c.transport)
+	}
 	return harborClient, nil
 }
 

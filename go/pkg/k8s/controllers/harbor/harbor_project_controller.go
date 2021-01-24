@@ -45,6 +45,7 @@ type ProjectController struct {
 	harborService     *corev1.Service
 	adminPassword     string
 	registryName      string
+	transport         http.RoundTripper
 	runOutsideCluster bool
 }
 
@@ -165,6 +166,9 @@ func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, e
 		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
 	}
 	harborClient := harbor.New(harborHost, "admin", c.adminPassword)
+	if c.transport != nil {
+		harborClient.SetTransport(c.transport)
+	}
 
 	return harborClient, nil
 }

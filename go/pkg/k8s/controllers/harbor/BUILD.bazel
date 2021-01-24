@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "harbor",
@@ -39,4 +39,24 @@ rbac_gen(
     srcs = [":harbor"],
     dir = "manifests/rbac/harbor",
     rolename = "harbor-project-operator",
+)
+
+go_test(
+    name = "harbor_test",
+    srcs = [
+        "project_controller_test.go",
+        "robot_account_controller_test.go",
+    ],
+    embed = [":harbor"],
+    deps = [
+        "//go/pkg/api/harbor/v1alpha1",
+        "//go/pkg/harbor",
+        "//go/pkg/http/mockutil",
+        "//go/pkg/k8s/controllers/controllertest",
+        "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+    ],
 )

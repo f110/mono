@@ -14,16 +14,17 @@ const (
 	userAgent = "harbor-client/1.0"
 )
 
-type roundtripper struct {
+type roundTripper struct {
+	http.RoundTripper
 	username string
 	password string
 }
 
-func (rt *roundtripper) RoundTrip(r *http.Request) (*http.Response, error) {
+func (rt *roundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	r.SetBasicAuth(rt.username, rt.password)
 	r.Header.Set("User-Agent", userAgent)
 
-	return http.DefaultTransport.RoundTrip(r)
+	return rt.RoundTripper.RoundTrip(r)
 }
 
 type Harbor struct {
@@ -41,9 +42,13 @@ func New(host, username, password string) *Harbor {
 		password: password,
 		client:   &http.Client{},
 	}
-	h.client.Transport = &roundtripper{username: username, password: password}
+	h.client.Transport = &roundTripper{username: username, password: password}
 
 	return h
+}
+
+func (h *Harbor) SetTransport(t http.RoundTripper) {
+	h.client.Transport.(*roundTripper).RoundTripper = t
 }
 
 func (h *Harbor) ListProjects() ([]Project, error) {
@@ -52,7 +57,7 @@ func (h *Harbor) ListProjects() ([]Project, error) {
 		return nil, err
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := h.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
