@@ -53,6 +53,7 @@ type BucketController struct {
 
 	queue *controllerutil.WorkQueue
 
+	transport         http.RoundTripper
 	runOutsideCluster bool
 }
 
@@ -145,9 +146,12 @@ func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) er
 	currentBucket := obj.(*miniov1alpha1.MinIOBucket)
 	minioBucket := currentBucket.DeepCopy()
 
-	instances, err := c.mClient.MinV1beta1().MinIOInstances(minioBucket.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)})
+	instances, err := c.mClient.MiniocontrollerV1beta1().MinIOInstances(minioBucket.Namespace).List(
+		ctx,
+		metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&minioBucket.Spec.Selector)},
+	)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	if len(instances.Items) == 0 {
 		klog.V(4).Infof("%s not found", metav1.FormatLabelSelector(&minioBucket.Spec.Selector))
@@ -158,7 +162,11 @@ func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) er
 	}
 
 	for _, instance := range instances.Items {
-		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(ctx, instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(
+			ctx,
+			instance.Spec.CredsSecret.Name,
+			metav1.GetOptions{},
+		)
 		if err != nil {
 			return err
 		}
@@ -174,6 +182,9 @@ func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) er
 		mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
 		if err != nil {
 			return err
+		}
+		if c.transport != nil {
+			mc.SetCustomTransport(c.transport)
 		}
 		if err := c.ensureBucket(mc, minioBucket.Name); err != nil {
 			return err
@@ -191,9 +202,13 @@ func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) er
 	minioBucket.Status.Ready = true
 
 	if !reflect.DeepEqual(minioBucket.Status, currentBucket.Status) {
-		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).UpdateStatus(ctx, minioBucket, metav1.UpdateOptions{})
+		_, err = c.mClient.MinioV1alpha1().MinIOBuckets(minioBucket.Namespace).UpdateStatus(
+			ctx,
+			minioBucket,
+			metav1.UpdateOptions{},
+		)
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 	}
 
@@ -266,7 +281,14 @@ func (c *BucketController) ensureIndexFile(mc *minio.Client, spec *miniov1alpha1
 	}
 
 	klog.V(4).Info("Create index.html")
-	_, err = mc.PutObjectWithContext(context.TODO(), spec.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{})
+	_, err = mc.PutObjectWithContext(
+		context.TODO(),
+		spec.Name,
+		"index.html",
+		strings.NewReader(""),
+		0,
+		minio.PutObjectOptions{},
+	)
 	return err
 }
 
@@ -280,13 +302,20 @@ func (c *BucketController) Finalize(ctx context.Context, obj runtime.Object) err
 		return err
 	}
 
-	instances, err := c.mClient.MinV1beta1().MinIOInstances(bucket.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&bucket.Spec.Selector)})
+	instances, err := c.mClient.MiniocontrollerV1beta1().MinIOInstances(bucket.Namespace).List(
+		ctx,
+		metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&bucket.Spec.Selector)},
+	)
 	if err != nil {
 		return err
 	}
 
 	for _, instance := range instances.Items {
-		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(ctx, instance.Spec.CredsSecret.Name, metav1.GetOptions{})
+		creds, err := c.coreClient.CoreV1().Secrets(instance.Namespace).Get(
+			ctx,
+			instance.Spec.CredsSecret.Name,
+			metav1.GetOptions{},
+		)
 		if err != nil {
 			return err
 		}
@@ -325,8 +354,15 @@ func (c *BucketController) Finalize(ctx context.Context, obj runtime.Object) err
 	return err
 }
 
-func (c *BucketController) getMinIOInstanceEndpoint(ctx context.Context, instance miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
-	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", instance.Name), metav1.GetOptions{})
+func (c *BucketController) getMinIOInstanceEndpoint(
+	ctx context.Context,
+	instance miniocontrollerv1beta1.MinIOInstance,
+) (string, *portforward.PortForwarder, error) {
+	svc, err := c.coreClient.CoreV1().Services(instance.Namespace).Get(
+		ctx,
+		fmt.Sprintf("%s-hl-svc", instance.Name),
+		metav1.GetOptions{},
+	)
 	if err != nil {
 		return "", nil, err
 	}
@@ -349,9 +385,16 @@ func (c *BucketController) getMinIOInstanceEndpoint(ctx context.Context, instanc
 	return instanceEndpoint, forwarder, nil
 }
 
-func (c *BucketController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *BucketController) portForward(
+	ctx context.Context,
+	svc *corev1.Service,
+	port int,
+) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(
+		ctx,
+		metav1.ListOptions{LabelSelector: selector.String()},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +417,14 @@ func (c *BucketController) portForward(ctx context.Context, svc *corev1.Service,
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
 	readyCh := make(chan struct{})
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
+	pf, err := portforward.New(
+		dialer,
+		[]string{fmt.Sprintf(":%d", port)},
+		context.Background().Done(),
+		readyCh,
+		nil,
+		nil,
+	)
 	if err != nil {
 		return nil, err
 	}

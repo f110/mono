@@ -185,7 +185,7 @@ type SharedInformerFactory interface {
 	Grafana() grafana.Interface
 	Harbor() harbor.Interface
 	Minio() minio.Interface
-	Min() miniocontroller.Interface
+	Miniocontroller() miniocontroller.Interface
 }
 
 func (f *sharedInformerFactory) Grafana() grafana.Interface {
@@ -200,6 +200,6 @@ func (f *sharedInformerFactory) Minio() minio.Interface {
 	return minio.New(f, f.namespace, f.tweakListOptions)
 }
 
-func (f *sharedInformerFactory) Min() miniocontroller.Interface {
+func (f *sharedInformerFactory) Miniocontroller() miniocontroller.Interface {
 	return miniocontroller.New(f, f.namespace, f.tweakListOptions)
 }

@@ -39,13 +39,13 @@ import (
 
 // FakeMinIOInstances implements MinIOInstanceInterface
 type FakeMinIOInstances struct {
-	Fake *FakeMinV1beta1
+	Fake *FakeMiniocontrollerV1beta1
 	ns   string
 }
 
-var minioinstancesResource = schema.GroupVersionResource{Group: "min.io.io", Version: "v1beta1", Resource: "minioinstances"}
+var minioinstancesResource = schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "minioinstances"}
 
-var minioinstancesKind = schema.GroupVersionKind{Group: "min.io.io", Version: "v1beta1", Kind: "MinIOInstance"}
+var minioinstancesKind = schema.GroupVersionKind{Group: "miniocontroller.min.io", Version: "v1beta1", Kind: "MinIOInstance"}
 
 // Get takes name of the minIOInstance, and returns the corresponding minIOInstance object, and an error if there is any.
 func (c *FakeMinIOInstances) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.MinIOInstance, err error) {

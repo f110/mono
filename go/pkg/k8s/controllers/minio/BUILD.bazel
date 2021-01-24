@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "minio",
@@ -36,4 +36,20 @@ rbac_gen(
     srcs = [":minio"],
     dir = "manifests/rbac/minio",
     rolename = "minio-extra-operator",
+)
+
+go_test(
+    name = "minio_test",
+    srcs = ["minio_bucket_test.go"],
+    embed = [":minio"],
+    deps = [
+        "//go/pkg/api/minio/v1alpha1",
+        "//go/pkg/k8s/controllers/controllertest",
+        "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+    ],
 )

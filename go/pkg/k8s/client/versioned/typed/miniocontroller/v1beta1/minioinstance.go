@@ -64,7 +64,7 @@ type minIOInstances struct {
 }
 
 // newMinIOInstances returns a MinIOInstances
-func newMinIOInstances(c *MinV1beta1Client, namespace string) *minIOInstances {
+func newMinIOInstances(c *MiniocontrollerV1beta1Client, namespace string) *minIOInstances {
 	return &minIOInstances{
 		client: c.RESTClient(),
 		ns:     namespace,

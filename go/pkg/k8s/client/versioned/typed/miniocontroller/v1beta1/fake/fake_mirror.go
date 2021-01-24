@@ -39,13 +39,13 @@ import (
 
 // FakeMirrors implements MirrorInterface
 type FakeMirrors struct {
-	Fake *FakeMinV1beta1
+	Fake *FakeMiniocontrollerV1beta1
 	ns   string
 }
 
-var mirrorsResource = schema.GroupVersionResource{Group: "min.io.io", Version: "v1beta1", Resource: "mirrors"}
+var mirrorsResource = schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "mirrors"}
 
-var mirrorsKind = schema.GroupVersionKind{Group: "min.io.io", Version: "v1beta1", Kind: "Mirror"}
+var mirrorsKind = schema.GroupVersionKind{Group: "miniocontroller.min.io", Version: "v1beta1", Kind: "Mirror"}
 
 // Get takes name of the mirror, and returns the corresponding mirror object, and an error if there is any.
 func (c *FakeMirrors) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1beta1.Mirror, err error) {

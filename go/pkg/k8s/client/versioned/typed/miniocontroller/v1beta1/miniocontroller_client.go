@@ -31,27 +31,27 @@ import (
 	rest "k8s.io/client-go/rest"
 )
 
-type MinV1beta1Interface interface {
+type MiniocontrollerV1beta1Interface interface {
 	RESTClient() rest.Interface
 	MinIOInstancesGetter
 	MirrorsGetter
 }
 
-// MinV1beta1Client is used to interact with features provided by the min.io.io group.
-type MinV1beta1Client struct {
+// MiniocontrollerV1beta1Client is used to interact with features provided by the miniocontroller.min.io group.
+type MiniocontrollerV1beta1Client struct {
 	restClient rest.Interface
 }
 
-func (c *MinV1beta1Client) MinIOInstances(namespace string) MinIOInstanceInterface {
+func (c *MiniocontrollerV1beta1Client) MinIOInstances(namespace string) MinIOInstanceInterface {
 	return newMinIOInstances(c, namespace)
 }
 
-func (c *MinV1beta1Client) Mirrors(namespace string) MirrorInterface {
+func (c *MiniocontrollerV1beta1Client) Mirrors(namespace string) MirrorInterface {
 	return newMirrors(c, namespace)
 }
 
-// NewForConfig creates a new MinV1beta1Client for the given config.
-func NewForConfig(c *rest.Config) (*MinV1beta1Client, error) {
+// NewForConfig creates a new MiniocontrollerV1beta1Client for the given config.
+func NewForConfig(c *rest.Config) (*MiniocontrollerV1beta1Client, error) {
 	config := *c
 	if err := setConfigDefaults(&config); err != nil {
 		return nil, err
@@ -60,12 +60,12 @@ func NewForConfig(c *rest.Config) (*MinV1beta1Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MinV1beta1Client{client}, nil
+	return &MiniocontrollerV1beta1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new MinV1beta1Client for the given config and
+// NewForConfigOrDie creates a new MiniocontrollerV1beta1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *MinV1beta1Client {
+func NewForConfigOrDie(c *rest.Config) *MiniocontrollerV1beta1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -73,9 +73,9 @@ func NewForConfigOrDie(c *rest.Config) *MinV1beta1Client {
 	return client
 }
 
-// New creates a new MinV1beta1Client for the given RESTClient.
-func New(c rest.Interface) *MinV1beta1Client {
-	return &MinV1beta1Client{c}
+// New creates a new MiniocontrollerV1beta1Client for the given RESTClient.
+func New(c rest.Interface) *MiniocontrollerV1beta1Client {
+	return &MiniocontrollerV1beta1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) error {
@@ -93,7 +93,7 @@ func setConfigDefaults(config *rest.Config) error {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *MinV1beta1Client) RESTClient() rest.Interface {
+func (c *MiniocontrollerV1beta1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

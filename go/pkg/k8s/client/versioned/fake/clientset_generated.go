@@ -33,8 +33,8 @@ import (
 	fakeharborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1/fake"
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1"
 	fakeminiov1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1/fake"
-	minv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1"
-	fakeminv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1/fake"
+	miniocontrollerv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1"
+	fakeminiocontrollerv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -104,7 +104,7 @@ func (c *Clientset) MinioV1alpha1() miniov1alpha1.MinioV1alpha1Interface {
 	return &fakeminiov1alpha1.FakeMinioV1alpha1{Fake: &c.Fake}
 }
 
-// MinV1beta1 retrieves the MinV1beta1Client
-func (c *Clientset) MinV1beta1() minv1beta1.MinV1beta1Interface {
-	return &fakeminv1beta1.FakeMinV1beta1{Fake: &c.Fake}
+// MiniocontrollerV1beta1 retrieves the MiniocontrollerV1beta1Client
+func (c *Clientset) MiniocontrollerV1beta1() miniocontrollerv1beta1.MiniocontrollerV1beta1Interface {
+	return &fakeminiocontrollerv1beta1.FakeMiniocontrollerV1beta1{Fake: &c.Fake}
 }

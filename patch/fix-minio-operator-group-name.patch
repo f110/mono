@@ -1,0 +1,10 @@
+diff -uprN vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go vendor.patched/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go
+--- vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go	2021-01-24 13:28:16.138684209 +0900
++++ vendor.patched/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go	2021-01-24 13:45:53.928928815 +0900
+@@ -18,5 +18,5 @@
+ // +k8s:deepcopy-gen=package
+ 
+ // Package v1beta1 is the v1beta1 version of the API.
+-// +groupName=min.io.io
++// +groupName=miniocontroller.min.io
+ package v1beta1

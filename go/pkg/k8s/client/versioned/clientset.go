@@ -31,7 +31,7 @@ import (
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1"
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1"
-	minv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1"
+	miniocontrollerv1beta1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/miniocontroller/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -42,17 +42,17 @@ type Interface interface {
 	GrafanaV1alpha1() grafanav1alpha1.GrafanaV1alpha1Interface
 	HarborV1alpha1() harborv1alpha1.HarborV1alpha1Interface
 	MinioV1alpha1() miniov1alpha1.MinioV1alpha1Interface
-	MinV1beta1() minv1beta1.MinV1beta1Interface
+	MiniocontrollerV1beta1() miniocontrollerv1beta1.MiniocontrollerV1beta1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	grafanaV1alpha1 *grafanav1alpha1.GrafanaV1alpha1Client
-	harborV1alpha1  *harborv1alpha1.HarborV1alpha1Client
-	minioV1alpha1   *miniov1alpha1.MinioV1alpha1Client
-	minV1beta1      *minv1beta1.MinV1beta1Client
+	grafanaV1alpha1        *grafanav1alpha1.GrafanaV1alpha1Client
+	harborV1alpha1         *harborv1alpha1.HarborV1alpha1Client
+	minioV1alpha1          *miniov1alpha1.MinioV1alpha1Client
+	miniocontrollerV1beta1 *miniocontrollerv1beta1.MiniocontrollerV1beta1Client
 }
 
 // GrafanaV1alpha1 retrieves the GrafanaV1alpha1Client
@@ -70,9 +70,9 @@ func (c *Clientset) MinioV1alpha1() miniov1alpha1.MinioV1alpha1Interface {
 	return c.minioV1alpha1
 }
 
-// MinV1beta1 retrieves the MinV1beta1Client
-func (c *Clientset) MinV1beta1() minv1beta1.MinV1beta1Interface {
-	return c.minV1beta1
+// MiniocontrollerV1beta1 retrieves the MiniocontrollerV1beta1Client
+func (c *Clientset) MiniocontrollerV1beta1() miniocontrollerv1beta1.MiniocontrollerV1beta1Interface {
+	return c.miniocontrollerV1beta1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -108,7 +108,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
-	cs.minV1beta1, err = minv1beta1.NewForConfig(&configShallowCopy)
+	cs.miniocontrollerV1beta1, err = miniocontrollerv1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	cs.grafanaV1alpha1 = grafanav1alpha1.NewForConfigOrDie(c)
 	cs.harborV1alpha1 = harborv1alpha1.NewForConfigOrDie(c)
 	cs.minioV1alpha1 = miniov1alpha1.NewForConfigOrDie(c)
-	cs.minV1beta1 = minv1beta1.NewForConfigOrDie(c)
+	cs.miniocontrollerV1beta1 = miniocontrollerv1beta1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -139,7 +139,7 @@ func New(c rest.Interface) *Clientset {
 	cs.grafanaV1alpha1 = grafanav1alpha1.New(c)
 	cs.harborV1alpha1 = harborv1alpha1.New(c)
 	cs.minioV1alpha1 = miniov1alpha1.New(c)
-	cs.minV1beta1 = minv1beta1.New(c)
+	cs.miniocontrollerV1beta1 = miniocontrollerv1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

@@ -18,5 +18,5 @@
 // +k8s:deepcopy-gen=package
 
 // Package v1beta1 is the v1beta1 version of the API.
-// +groupName=min.io.io
+// +groupName=miniocontroller.min.io
 package v1beta1

@@ -74,15 +74,15 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	case harborv1alpha1.SchemeGroupVersion.WithResource("harborrobotaccounts"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Harbor().V1alpha1().HarborRobotAccounts().Informer()}, nil
 
-		// Group=min.io.io, Version=v1beta1
-	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().MinIOInstances().Informer()}, nil
-	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Min().V1beta1().Mirrors().Informer()}, nil
-
 		// Group=minio.f110.dev, Version=v1alpha1
 	case miniov1alpha1.SchemeGroupVersion.WithResource("miniobuckets"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Minio().V1alpha1().MinIOBuckets().Informer()}, nil
+
+		// Group=miniocontroller.min.io, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Miniocontroller().V1beta1().MinIOInstances().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Miniocontroller().V1beta1().Mirrors().Informer()}, nil
 
 	}
 

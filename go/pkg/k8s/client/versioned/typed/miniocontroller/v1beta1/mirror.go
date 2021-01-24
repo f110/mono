@@ -64,7 +64,7 @@ type mirrors struct {
 }
 
 // newMirrors returns a Mirrors
-func newMirrors(c *MinV1beta1Client, namespace string) *mirrors {
+func newMirrors(c *MiniocontrollerV1beta1Client, namespace string) *mirrors {
 	return &mirrors{
 		client: c.RESTClient(),
 		ns:     namespace,
