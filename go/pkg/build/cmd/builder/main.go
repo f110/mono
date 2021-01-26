@@ -81,7 +81,12 @@ func builder(opt Options) error {
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
 
-	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, opt.GithubAppId, opt.GithubInstallationId, opt.GithubPrivateKeyFile)
+	t, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		opt.GithubAppId,
+		opt.GithubInstallationId,
+		opt.GithubPrivateKeyFile,
+	)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -96,7 +101,11 @@ func builder(opt Options) error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 30*time.Second, kubeinformers.WithNamespace(opt.Namespace))
+	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(
+		kubeClient,
+		30*time.Second,
+		kubeinformers.WithNamespace(opt.Namespace),
+	)
 
 	parsedDSN, err := mysql.ParseDSN(opt.DSN)
 	if err != nil {
@@ -127,107 +136,134 @@ func builder(opt Options) error {
 			Identity: opt.Id,
 		},
 	}
-	leaderelection.RunOrDie(ctx, leaderelection.LeaderElectionConfig{
-		Lock:            lock,
-		ReleaseOnCancel: true,
-		LeaseDuration:   30 * time.Second,
-		RenewDeadline:   15 * time.Second,
-		RetryPeriod:     5 * time.Second,
-		Callbacks: leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(ctx context.Context) {
-				jobWatcher := watcher.NewJobWatcher(coreSharedInformerFactory.Batch().V1().Jobs())
+	leaderelection.RunOrDie(
+		ctx,
+		leaderelection.LeaderElectionConfig{
+			Lock:            lock,
+			ReleaseOnCancel: true,
+			LeaseDuration:   30 * time.Second,
+			RenewDeadline:   15 * time.Second,
+			RetryPeriod:     5 * time.Second,
+			Callbacks: leaderelection.LeaderCallbacks{
+				OnStartedLeading: func(ctx context.Context) {
+					jobWatcher := watcher.NewJobWatcher(coreSharedInformerFactory.Batch().V1().Jobs())
 
-				minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
-				kubernetesOpt := coordinator.NewKubernetesOptions(coreSharedInformerFactory.Batch().V1().Jobs(), kubeClient, cfg, opt.TaskCPULimit, opt.TaskMemoryLimit)
-				bazelOpt := coordinator.NewBazelOptions(
-					opt.RemoteCache,
-					opt.RemoteAssetApi,
-					opt.SidecarImage,
-					opt.BazelImage,
-					opt.DefaultBazelVersion,
-					opt.GithubAppId,
-					opt.GithubInstallationId,
-					opt.GithubAppSecretName,
-				)
-				c, err := coordinator.NewBazelBuilder(opt.DashboardUrl, kubernetesOpt, daoOpt, opt.Namespace, ghClient, minioOpt, bazelOpt, opt.Dev)
-				if err != nil {
-					logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
-					return
-				}
-
-				d := discovery.NewDiscover(
-					coreSharedInformerFactory.Batch().V1().Jobs(),
-					kubeClient,
-					opt.Namespace,
-					daoOpt,
-					c,
-					opt.SidecarImage,
-					opt.CLIImage,
-					opt.BuilderApiUrl,
-					ghClient,
-					opt.GithubAppId,
-					opt.GithubInstallationId,
-					opt.GithubAppSecretName,
-					opt.Debug,
-				)
-
-				apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, ghClient)
-				if err != nil {
-					return
-				}
-
-				g := gc.NewGC(1*time.Hour, daoOpt, kubeClient, cfg, minioOpt, opt.Dev)
-
-				coreSharedInformerFactory.Start(ctx.Done())
-
-				var wg sync.WaitGroup
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-
-					logger.Log.Info("Start API Server", zap.String("addr", apiServer.Addr))
-					apiServer.ListenAndServe()
-				}()
-
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-
-					if err := jobWatcher.Run(ctx, 1); err != nil {
-						logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
+					minioOpt := storage.NewMinIOOptions(
+						opt.MinIOName,
+						opt.MinIONamespace,
+						opt.MinIOPort,
+						opt.MinIOBucket,
+						opt.MinIOAccessKey,
+						opt.MinIOSecretAccessKey,
+					)
+					kubernetesOpt := coordinator.NewKubernetesOptions(
+						coreSharedInformerFactory.Batch().V1().Jobs(),
+						kubeClient,
+						cfg,
+						opt.TaskCPULimit,
+						opt.TaskMemoryLimit,
+					)
+					bazelOpt := coordinator.NewBazelOptions(
+						opt.RemoteCache,
+						opt.RemoteAssetApi,
+						opt.SidecarImage,
+						opt.BazelImage,
+						opt.DefaultBazelVersion,
+						opt.GithubAppId,
+						opt.GithubInstallationId,
+						opt.GithubAppSecretName,
+					)
+					c, err := coordinator.NewBazelBuilder(
+						opt.DashboardUrl,
+						kubernetesOpt,
+						daoOpt,
+						opt.Namespace,
+						ghClient,
+						minioOpt,
+						bazelOpt,
+						opt.Dev,
+					)
+					if err != nil {
+						logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
 						return
 					}
-				}()
 
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+					d := discovery.NewDiscover(
+						coreSharedInformerFactory.Batch().V1().Jobs(),
+						kubeClient,
+						cfg,
+						opt.Namespace,
+						daoOpt,
+						c,
+						opt.SidecarImage,
+						opt.CLIImage,
+						opt.BuilderApiUrl,
+						ghClient,
+						minioOpt,
+						opt.GithubAppId,
+						opt.GithubInstallationId,
+						opt.GithubAppSecretName,
+						opt.Debug,
+					)
 
-					<-ctx.Done()
-					apiServer.Shutdown(context.Background())
-				}()
+					apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, ghClient)
+					if err != nil {
+						return
+					}
 
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+					g := gc.NewGC(1*time.Hour, daoOpt, kubeClient, cfg, minioOpt, opt.Dev)
 
-					g.Start()
-				}()
+					coreSharedInformerFactory.Start(ctx.Done())
 
-				wg.Wait()
-				logger.Log.Debug("Shutdown")
-			},
-			OnStoppedLeading: func() {
-				logger.Log.Debug("leader lost", zap.String("id", opt.Id))
-			},
-			OnNewLeader: func(identity string) {
-				if identity == opt.Id {
-					return
-				}
-				logger.Log.Info("new leader elected", zap.String("id", identity))
+					var wg sync.WaitGroup
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+
+						logger.Log.Info("Start API Server", zap.String("addr", apiServer.Addr))
+						apiServer.ListenAndServe()
+					}()
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+
+						if err := jobWatcher.Run(ctx, 1); err != nil {
+							logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
+							return
+						}
+					}()
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+
+						<-ctx.Done()
+						apiServer.Shutdown(context.Background())
+					}()
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+
+						g.Start()
+					}()
+
+					wg.Wait()
+					logger.Log.Debug("Shutdown")
+				},
+				OnStoppedLeading: func() {
+					logger.Log.Debug("leader lost", zap.String("id", opt.Id))
+				},
+				OnNewLeader: func(identity string) {
+					if identity == opt.Id {
+						return
+					}
+					logger.Log.Info("new leader elected", zap.String("id", identity))
+				},
 			},
 		},
-	})
+	)
 
 	return nil
 }
@@ -245,12 +281,21 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs := cmd.Flags()
 	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
 	fs.StringVar(&opt.Id, "id", uuid.New().String(), "the holder identity name")
-	fs.BoolVar(&opt.EnableLeaderElection, "enable-leader-election", opt.EnableLeaderElection,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	fs.BoolVar(
+		&opt.EnableLeaderElection,
+		"enable-leader-election",
+		opt.EnableLeaderElection,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
+	)
 	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
 	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
 	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
-	fs.StringVar(&opt.GithubAppSecretName, "github-app-secret-name", "", "The name of Secret which contains github app id, installation id and private key.")
+	fs.StringVar(
+		&opt.GithubAppSecretName,
+		"github-app-secret-name",
+		"",
+		"The name of Secret which contains github app id, installation id and private key.",
+	)
 	fs.Int64Var(&opt.GithubAppId, "github-app-id", 0, "GitHub App id")
 	fs.Int64Var(&opt.GithubInstallationId, "github-installation-id", 0, "GitHub Installation id")
 	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
@@ -270,8 +315,18 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
-	fs.StringVar(&opt.TaskCPULimit, "task-cpu-limit", "1000m", "Task cpu limit. If the job set the limit, It will used the job defined value.")
-	fs.StringVar(&opt.TaskMemoryLimit, "task-memory-limit", "4096Mi", "Task memory limit. If the job set the limit, It will used the job defined value.")
+	fs.StringVar(
+		&opt.TaskCPULimit,
+		"task-cpu-limit",
+		"1000m",
+		"Task cpu limit. If the job set the limit, It will used the job defined value.",
+	)
+	fs.StringVar(
+		&opt.TaskMemoryLimit,
+		"task-memory-limit",
+		"4096Mi",
+		"Task memory limit. If the job set the limit, It will used the job defined value.",
+	)
 	fs.BoolVar(&opt.Debug, "debug", false, "Enable debugging mode")
 
 	rootCmd.AddCommand(cmd)

@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
@@ -19,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"go.f110.dev/mono/go/pkg/build/coordinator"
 	"go.f110.dev/mono/go/pkg/build/database"
@@ -26,6 +29,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/job"
 	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/storage"
 )
 
 const (
@@ -33,10 +37,22 @@ const (
 	labelKeyRepositoryId = "build.f110.dev/repository-id"
 	labelKeyRevision     = "build.f110.dev/revision"
 	labelKeyBazelVersion = "build.f110.dev/bazel-version"
-	discoveryBazelQuery  = "kind(job, //...)"
 	jobType              = "bazelDiscovery"
 	defaultBazelVersion  = "3.5.0"
 )
+
+const discoveryJobScript = `{{ .Bazel }} cquery 'kind(job, //...)' --output jsonproto > /tmp/out.log 2> /tmp/err.log
+status=$?
+if [ $status -eq "0" ]; then
+	cat /tmp/out.log
+else
+	cat /tmp/err.log
+fi
+exit $status`
+
+type discoveryJobVar struct {
+	Bazel string
+}
 
 type BuildFile struct {
 	Path    string
@@ -111,6 +127,7 @@ type Discover struct {
 	githubClient *github.Client
 	client       kubernetes.Interface
 	jobInformer  batchv1informers.JobInformer
+	minio        *storage.MinIO
 
 	builder              *coordinator.BazelBuilder
 	sidecarImage         string
@@ -127,6 +144,7 @@ type Discover struct {
 func NewDiscover(
 	jobInformer batchv1informers.JobInformer,
 	client kubernetes.Interface,
+	cfg *rest.Config,
 	namespace string,
 	daoOpt dao.Options,
 	builder *coordinator.BazelBuilder,
@@ -134,6 +152,7 @@ func NewDiscover(
 	ctlImage string,
 	builderApi string,
 	ghClient *github.Client,
+	minioOpt storage.MinIOOptions,
 	appId int64,
 	installationId int64,
 	appSecretName string,
@@ -146,6 +165,7 @@ func NewDiscover(
 		dao:                  daoOpt,
 		builder:              builder,
 		sidecarImage:         sidecarImage,
+		minio:                storage.NewMinIOStorage(client, cfg, minioOpt, debug),
 		ctlImage:             ctlImage,
 		builderApi:           builderApi,
 		githubClient:         ghClient,
@@ -233,7 +253,26 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		switch v.Type {
 		case batchv1.JobComplete:
 			success = true
+			if err := d.minio.Delete(ctx, job.Name); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 		case batchv1.JobFailed:
+			pods, err := d.client.CoreV1().Pods(job.Namespace).List(
+				ctx,
+				metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)},
+			)
+			if err == nil && len(pods.Items) == 1 {
+				pod := pods.Items[0]
+				logReq := d.client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "main"})
+				rawLog, err := logReq.DoRaw(ctx)
+				if err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				if err := d.minio.Put(ctx, job.Name, bytes.NewBuffer(rawLog)); err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+			}
+
 			if d.debug {
 				logger.Log.Info("Skip delete job due to enabled debugging mode", zap.String("job.name", job.Name))
 				return nil
@@ -563,6 +602,15 @@ func (d *Discover) newDiscoveryJob(repository *database.SourceRepository, revisi
 		)
 	}
 
+	discoveryScriptTemplate := template.Must(template.New("").Parse(discoveryJobScript))
+	discoveryScript := new(bytes.Buffer)
+	err := discoveryScriptTemplate.Execute(discoveryScript, discoveryJobVar{
+		Bazel: "bazel",
+	})
+	if err != nil {
+		return nil
+	}
+
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -599,7 +647,7 @@ func (d *Discover) newDiscoveryJob(repository *database.SourceRepository, revisi
 							Name:            "main",
 							Image:           "l.gcr.io/google/bazel:" + bazelVersion,
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Command:         []string{"sh", "-c", fmt.Sprintf("bazel cquery '%s' --output jsonproto 2> /dev/null", discoveryBazelQuery)},
+							Command:         []string{"sh", "-c", discoveryScript.String()},
 							WorkingDir:      "/work",
 							VolumeMounts: []corev1.VolumeMount{
 								{Name: "workdir", MountPath: "/work"},

@@ -15,6 +15,7 @@ go_library(
         "//go/pkg/build/job",
         "//go/pkg/build/watcher",
         "//go/pkg/logger",
+        "//go/pkg/storage",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
@@ -24,6 +25,7 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/informers/batch/v1:batch",
         "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
     ],
 )
 

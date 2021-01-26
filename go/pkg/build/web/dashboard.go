@@ -77,6 +77,7 @@ type Task struct {
 type RepositoryAndJobs struct {
 	Repo          *database.SourceRepository
 	IsDiscovering bool
+	LogFile       string
 	Jobs          []*Job
 }
 
@@ -97,6 +98,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		repoAndJobs[v.Id] = &RepositoryAndJobs{
 			Repo:          v,
 			IsDiscovering: d.discovery.IsDiscovering(v.Id),
+			LogFile:       v.Name + "-discovery",
 			Jobs:          make([]*Job, 0),
 		}
 	}
