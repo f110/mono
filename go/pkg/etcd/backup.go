@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/v3/clientv3"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"

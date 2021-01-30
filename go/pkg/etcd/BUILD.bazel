@@ -28,7 +28,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/logger",
-        "//vendor/go.etcd.io/etcd/clientv3",
+        "//vendor/go.etcd.io/etcd/v3/clientv3",
         "//vendor/golang.org/x/xerrors",
     ],
 )
