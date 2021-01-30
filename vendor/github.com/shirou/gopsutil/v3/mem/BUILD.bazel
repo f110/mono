@@ -1,0 +1,49 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mem",
+    srcs = [
+        "mem.go",
+        "mem_darwin.go",
+        "mem_darwin_cgo.go",
+        "mem_darwin_nocgo.go",
+        "mem_fallback.go",
+        "mem_freebsd.go",
+        "mem_linux.go",
+        "mem_openbsd.go",
+        "mem_openbsd_386.go",
+        "mem_openbsd_amd64.go",
+        "mem_solaris.go",
+        "mem_windows.go",
+    ],
+    cgo = True,
+    importmap = "go.f110.dev/mono/vendor/github.com/shirou/gopsutil/v3/mem",
+    importpath = "github.com/shirou/gopsutil/v3/mem",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/shirou/gopsutil/v3/internal/common",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

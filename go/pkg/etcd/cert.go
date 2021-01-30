@@ -3,8 +3,9 @@ package etcd
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"golang.org/x/xerrors"
 	"io/ioutil"
+
+	"golang.org/x/xerrors"
 )
 
 func ReadCACertificate(path string) (*x509.Certificate, error) {

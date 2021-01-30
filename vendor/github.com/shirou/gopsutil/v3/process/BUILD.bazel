@@ -1,0 +1,62 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "process",
+    srcs = [
+        "process.go",
+        "process_bsd.go",
+        "process_darwin.go",
+        "process_darwin_386.go",
+        "process_darwin_amd64.go",
+        "process_darwin_arm64.go",
+        "process_darwin_cgo.go",
+        "process_darwin_nocgo.go",
+        "process_fallback.go",
+        "process_freebsd.go",
+        "process_freebsd_386.go",
+        "process_freebsd_amd64.go",
+        "process_freebsd_arm.go",
+        "process_freebsd_arm64.go",
+        "process_linux.go",
+        "process_openbsd.go",
+        "process_openbsd_386.go",
+        "process_openbsd_amd64.go",
+        "process_posix.go",
+        "process_windows.go",
+        "process_windows_386.go",
+        "process_windows_amd64.go",
+    ],
+    cgo = True,
+    importmap = "go.f110.dev/mono/vendor/github.com/shirou/gopsutil/v3/process",
+    importpath = "github.com/shirou/gopsutil/v3/process",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/shirou/gopsutil/v3/cpu",
+        "//vendor/github.com/shirou/gopsutil/v3/internal/common",
+        "//vendor/github.com/shirou/gopsutil/v3/mem",
+        "//vendor/github.com/shirou/gopsutil/v3/net",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

@@ -59,6 +59,10 @@ func (r *Reader) NextItem() bool {
 }
 
 func (r *Reader) Items() map[string]*Item {
+	if r.items != nil {
+		return r.items
+	}
+
 	if err := r.ensureReadProfile(); err != nil {
 		r.err = xerrors.Errorf(": %w", err)
 		return nil
@@ -101,6 +105,13 @@ func (r *Reader) Unlock(password string) error {
 	}
 
 	return nil
+}
+
+func (r *Reader) IsLocked() (bool, error) {
+	if err := r.ensureReadProfile(); err != nil {
+		return false, xerrors.Errorf(": %w", err)
+	}
+	return r.Profile.IsLocked(), nil
 }
 
 func (r *Reader) ensureReadProfile() error {
@@ -174,6 +185,20 @@ func (r *Reader) readItems() error {
 				}
 				v.HasAttachment = true
 				v.Attachments = attachments
+			}
+			if len(v.detail) > 2 {
+				detail := &ItemDetail{}
+				if err := json.Unmarshal([]byte(v.detail), detail); err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				v.Detail = detail
+			}
+			if len(v.overview) > 2 {
+				overview := &ItemOverview{}
+				if err := json.Unmarshal([]byte(v.overview), overview); err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
+				v.Overview = overview
 			}
 
 			items[k] = v
@@ -329,8 +354,10 @@ type Item struct {
 	CreatedUnix          int64    `json:"created"`
 	UpdatedUnix          int64    `json:"updated"`
 
-	Detail        string        `json:"-"`
-	Overview      string        `json:"-"`
+	Detail        *ItemDetail `json:"-"`
+	detail        string
+	Overview      *ItemOverview `json:"-"`
+	overview      string
 	HasAttachment bool          `json:"-"`
 	Attachments   []*Attachment `json:"-"`
 	Created       time.Time     `json:"-"`
@@ -392,6 +419,10 @@ func (p *Profile) Unlock(password string) error {
 	return nil
 }
 
+func (p *Profile) IsLocked() bool {
+	return p.encryptionKey == nil || p.hmacKey == nil
+}
+
 func (p *Profile) Decrypt() error {
 	if p.hmacKey == nil || p.encryptionKey == nil {
 		return xerrors.Errorf(": %w", ErrLocked)
@@ -433,13 +464,13 @@ func (i *Item) Decrypt(masterHMACKey, masterEncryptionKey, overviewHMACKey, over
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	i.Detail = string(decryptedDetail)
+	i.detail = string(decryptedDetail)
 
 	decryptedOverview, err := decryptOpdata(i.OverviewRaw, overviewHMACKey, overviewEncryptionKey)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	i.Overview = string(decryptedOverview)
+	i.overview = string(decryptedOverview)
 
 	return nil
 }

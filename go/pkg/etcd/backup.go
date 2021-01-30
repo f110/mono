@@ -42,11 +42,11 @@ func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate
 			RootCAs:      systemPool,
 		},
 	}
-	client, err := clientv3.New(cfg)
+	etcdClient, err := clientv3.New(cfg)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	data, err := client.Snapshot(ctx)
+	data, err := etcdClient.Snapshot(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

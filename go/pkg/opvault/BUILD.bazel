@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "const.go",
         "doc.go",
+        "onepassword.go",
         "reader.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/opvault",
