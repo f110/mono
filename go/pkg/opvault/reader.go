@@ -107,6 +107,13 @@ func (r *Reader) Unlock(password string) error {
 	return nil
 }
 
+func (r *Reader) Lock() {
+	r.Profile.Lock()
+	r.items = nil
+	r.folders = nil
+	r.err = nil
+}
+
 func (r *Reader) IsLocked() (bool, error) {
 	if err := r.ensureReadProfile(); err != nil {
 		return false, xerrors.Errorf(": %w", err)
@@ -417,6 +424,15 @@ func (p *Profile) Unlock(password string) error {
 	p.hmacKey = key[32:]
 
 	return nil
+}
+
+func (p *Profile) Lock() {
+	p.encryptionKey = nil
+	p.hmacKey = nil
+	p.OverviewEncryptionKey = nil
+	p.OverviewHMACKey = nil
+	p.MasterEncryptionKey = nil
+	p.MasterHMACKey = nil
 }
 
 func (p *Profile) IsLocked() bool {

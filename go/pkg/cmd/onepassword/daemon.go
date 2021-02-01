@@ -2,6 +2,7 @@ package onepassword
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net"
 	"os"
@@ -120,12 +121,22 @@ func (v *vault) Unlock(_ context.Context, req *RequestUnlock) (*ResponseUnlock, 
 	if err := v.reader.Unlock(string(req.MasterPassword)); err != nil {
 		return nil, err
 	}
+	_ = v.reader.Items()
+	if errors.Is(v.reader.Err(), opvault.ErrInvalidData) {
+		v.reader.Lock()
+		return &ResponseUnlock{Success: false}, v.reader.Err()
+	}
 
 	return &ResponseUnlock{Success: true}, nil
 }
 
 func (v *vault) Lock(_ context.Context, _ *RequestLock) (*ResponseLock, error) {
-	return nil, nil
+	if v.reader == nil {
+		return nil, xerrors.New("opvault is not opened")
+	}
+	v.reader.Lock()
+
+	return &ResponseLock{}, nil
 }
 
 func (v *vault) UseVault(_ context.Context, useVault *RequestUseVault) (*ResponseUseVault, error) {
