@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "pdebug",
+    srcs = [
+        "common.go",
+        "debug_off.go",
+        "doc.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/lestrrat-go/pdebug",
+    importpath = "github.com/lestrrat-go/pdebug",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "hub",
+    srcs = [
+        "hub.go",
+        "interface.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/hub",
+    importpath = "github.com/peco/peco/hub",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/lestrrat-go/pdebug"],
+)

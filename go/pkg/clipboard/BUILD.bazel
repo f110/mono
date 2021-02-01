@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "clipboard",
+    srcs = ["clipboard_unix.go"],
+    importpath = "go.f110.dev/mono/go/pkg/clipboard",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/BurntSushi/xgb",
+        "//vendor/github.com/BurntSushi/xgb/xproto",
+        "//vendor/golang.org/x/xerrors",
+    ],
+)

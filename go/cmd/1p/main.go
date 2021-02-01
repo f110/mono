@@ -2,11 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"syscall"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -15,7 +11,6 @@ import (
 )
 
 func onep() error {
-	daemon := false
 	rootCmd := &cobra.Command{
 		Use:   "1p",
 		Short: "The CLI for 1Password",
@@ -23,34 +18,9 @@ func onep() error {
 			logger.Init()
 		},
 		RunE: func(_ *cobra.Command, args []string) error {
-			if !daemon {
-				cmd := exec.Command(os.Args[0], "--daemon")
-				log.Print("start")
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				cmd.Start()
-				time.Sleep(200 * time.Millisecond)
-				return nil
-			}
-
-			log.Print("OK")
-			log.Print(os.Getppid())
-			log.Print(os.Getpid())
-			log.Print(syscall.Getpgrp())
-			syscall.Setsid()
-			// syscall.Setpgid(0, 0)
-			log.Print(syscall.Getpgrp())
-
-			os.Stdout.Close()
-			os.Stdin.Close()
-			os.Stderr.Close()
-
-			time.Sleep(10 * time.Second)
-
-			return nil
+			return onepassword.Main()
 		},
 	}
-	rootCmd.Flags().BoolVar(&daemon, "daemon", daemon, "Daemonize")
 
 	onepassword.AddCommand(rootCmd)
 

@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"go.f110.dev/mono/go/pkg/clipboard"
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/opvault"
@@ -34,6 +35,7 @@ type vault struct {
 	config         *vaultConfig
 	configFilePath string
 	reader         *opvault.Reader
+	clipboard      *clipboard.Clipboard
 }
 
 func NewVault() (*vault, error) {
@@ -48,7 +50,15 @@ func NewVault() (*vault, error) {
 		}
 	}
 
-	v := &vault{configFilePath: filepath.Join(confDir, configFilename)}
+	cb, err := clipboard.New()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	v := &vault{
+		configFilePath: filepath.Join(confDir, configFilename),
+		clipboard:      cb,
+	}
 	if err := v.readConfig(v.configFilePath); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -193,6 +203,37 @@ func (v *vault) Get(_ context.Context, req *RequestGet) (*ResponseGet, error) {
 	}
 
 	return &ResponseGet{Item: item}, nil
+}
+
+func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*ResponseSetClipboard, error) {
+	locked, err := v.reader.IsLocked()
+	if err != nil {
+		return nil, err
+	}
+	if locked {
+		return nil, xerrors.New("Vault is locked. You have to unlock first")
+	}
+
+	items := v.reader.Items()
+	if err := v.reader.Err(); err != nil {
+		return nil, err
+	}
+	k, ok := items[req.Uuid]
+	if !ok {
+		return nil, xerrors.Errorf("item not found: %s", req.Uuid)
+	}
+
+	password := ""
+	if k.Detail != nil {
+		for _, v := range k.Detail.Fields {
+			if v.Type == "P" {
+				password = v.Value
+			}
+		}
+	}
+	v.clipboard.Set(password)
+
+	return &ResponseSetClipboard{}, nil
 }
 
 func toItem(in *opvault.Item) (*Item, error) {

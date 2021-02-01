@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xproto",
+    srcs = ["xproto.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/BurntSushi/xgb/xproto",
+    importpath = "github.com/BurntSushi/xgb/xproto",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/BurntSushi/xgb"],
+)

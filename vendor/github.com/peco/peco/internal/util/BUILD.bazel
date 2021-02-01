@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "util",
+    srcs = [
+        "homedir_darwin.go",
+        "homedir_posix.go",
+        "homedir_windows.go",
+        "shell_unix.go",
+        "shell_windows.go",
+        "tty_bsd.go",
+        "tty_posix.go",
+        "tty_windows.go",
+        "util.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/internal/util",
+    importpath = "github.com/peco/peco/internal/util",
+    visibility = ["//vendor/github.com/peco/peco:__subpackages__"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/github.com/pkg/errors",
+        ],
+        "//conditions:default": [],
+    }),
+)

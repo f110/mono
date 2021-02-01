@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	cloud.google.com/go/storage v1.6.0
+	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/aws/aws-sdk-go v1.31.6
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/coreos/go-semver v0.3.0 // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/jarcoal/httpmock v1.0.7
 	github.com/minio/minio-go/v6 v6.0.50
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
+	github.com/peco/peco v0.5.8
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.20.12
 	github.com/shurcooL/githubv4 v0.0.0-20200915023059-bc5e4feb2971

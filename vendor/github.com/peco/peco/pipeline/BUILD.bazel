@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "pipeline",
+    srcs = [
+        "interface.go",
+        "pipeline.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/pipeline",
+    importpath = "github.com/peco/peco/pipeline",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/lestrrat-go/pdebug",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

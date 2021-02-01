@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "filter",
+    srcs = [
+        "external.go",
+        "filter.go",
+        "fuzzy.go",
+        "interface.go",
+        "regexp.go",
+        "set.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/filter",
+    importpath = "github.com/peco/peco/filter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/lestrrat-go/pdebug",
+        "//vendor/github.com/peco/peco/internal/util",
+        "//vendor/github.com/peco/peco/line",
+        "//vendor/github.com/peco/peco/pipeline",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sig",
+    srcs = ["sig.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/sig",
+    importpath = "github.com/peco/peco/sig",
+    visibility = ["//visibility:public"],
+)

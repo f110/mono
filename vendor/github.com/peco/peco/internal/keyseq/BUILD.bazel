@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "keyseq",
+    srcs = [
+        "ahocorasick.go",
+        "keys.go",
+        "keyseq.go",
+        "ternary.go",
+        "trie.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/peco/peco/internal/keyseq",
+    importpath = "github.com/peco/peco/internal/keyseq",
+    visibility = ["//vendor/github.com/peco/peco:__subpackages__"],
+    deps = [
+        "//vendor/github.com/nsf/termbox-go",
+        "//vendor/github.com/pkg/errors",
+    ],
+)
