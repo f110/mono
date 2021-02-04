@@ -10,6 +10,9 @@ gen:
 
 .PHONY: update-deps gen
 
+push-unifibackup:
+	bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64 //containers/unifibackup:push
+
 DATABASE_HOST     = localhost
 DATABASE_USER     = build
 DATABASE_NAME     = build
