@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -17,6 +19,43 @@ import (
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
+
+type backupMeta struct {
+	Version  string    `json:"version"`
+	Time     int64     `json:"time"`
+	DateTime time.Time `json:"datetime"`
+	Format   string    `json:"format"`
+	Days     int       `json:"days"`
+	Size     int32     `json:"size"`
+
+	Filename string `json:"-"`
+}
+
+func parseBackupMeta(file string) (map[string]*backupMeta, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	meta := make(map[string]*backupMeta)
+	if err := json.NewDecoder(f).Decode(&meta); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	return meta, nil
+}
+
+func selectLatestBackup(m map[string]*backupMeta) string {
+	meta := make([]*backupMeta, 0, len(m))
+	for filename, v := range m {
+		v.Filename = filename
+		meta = append(meta, v)
+	}
+	sort.Slice(meta, func(i, j int) bool {
+		return meta[i].DateTime.After(meta[j].DateTime)
+	})
+
+	return meta[0].Filename
+}
 
 func unifiBackup(args []string) error {
 	var bucket, pathPrefix, credentialFile, backupDir string
@@ -50,13 +89,20 @@ func unifiBackup(args []string) error {
 	for event := range w.Events {
 		logger.Log.Info("Got event", zap.String("name", event.Name), zap.String("op", event.Op.String()))
 
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
-		if event.Op&fsnotify.Create == fsnotify.Create {
-			path := filepath.Join(pathPrefix, filepath.Base(event.Name))
+		if event.Op&fsnotify.Write == fsnotify.Write && filepath.Base(event.Name) == "autobackup_meta.json" {
+			m, err := parseBackupMeta(event.Name)
+			if err != nil {
+				logger.Log.Info("Failed parse metadata file", zap.Error(err))
+				continue
+			}
+			latestBackup := selectLatestBackup(m)
+
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			path := filepath.Join(pathPrefix, latestBackup)
 			obj := client.Bucket(bucket).Object(path)
 			if _, err := obj.Attrs(ctx); err == storage.ErrObjectNotExist {
 				w := obj.NewWriter(ctx)
-				f, err := os.Open(event.Name)
+				f, err := os.Open(filepath.Join(filepath.Dir(event.Name), latestBackup))
 				if err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
@@ -72,8 +118,8 @@ func unifiBackup(args []string) error {
 
 				logger.Log.Info("Succeeded upload", zap.String("object_name", obj.ObjectName()), zap.String("bucket", obj.BucketName()))
 			}
+			cancelFunc()
 		}
-		cancelFunc()
 	}
 
 	return nil
