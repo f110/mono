@@ -3,7 +3,12 @@
 
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 
-go_vendor(name = "vendor")
+go_vendor(
+    name = "vendor",
+    patches = [
+        "patch/fix-minio-operator-group-name.patch",
+    ],
+)
 
 alias(
     name = "monodev",

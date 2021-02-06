@@ -1,6 +1,5 @@
 update-deps:
 	bazel run //:vendor
-	patch -p0 < patch/fix-minio-operator-group-name.patch
 
 gen:
 	bazel query 'attr(generator_function, k8s_client_generator, //...)' | xargs -n1 bazel run

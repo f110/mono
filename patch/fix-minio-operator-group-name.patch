@@ -1,6 +1,7 @@
-diff -uprN vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go vendor.patched/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go
---- vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go	2021-01-24 13:28:16.138684209 +0900
-+++ vendor.patched/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go	2021-01-24 13:45:53.928928815 +0900
+diff --git a/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go b/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go
+index 0c169b0a..4ec73953 100644
+--- a/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go
++++ b/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/doc.go
 @@ -18,5 +18,5 @@
  // +k8s:deepcopy-gen=package
  
