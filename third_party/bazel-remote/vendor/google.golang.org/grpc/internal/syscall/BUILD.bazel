@@ -39,9 +39,6 @@ go_library(
             "//third_party/bazel-remote/vendor/golang.org/x/sys/unix",
             "//third_party/bazel-remote/vendor/google.golang.org/grpc/grpclog",
         ],
-        "@io_bazel_rules_go//go/platform:nacl": [
-            "//third_party/bazel-remote/vendor/google.golang.org/grpc/grpclog",
-        ],
         "@io_bazel_rules_go//go/platform:netbsd": [
             "//third_party/bazel-remote/vendor/google.golang.org/grpc/grpclog",
         ],
