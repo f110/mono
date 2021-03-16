@@ -71,6 +71,8 @@ type Options struct {
 
 const (
 	stateInit fsm.State = iota
+	stateSetup
+	stateStartApiServer
 	stateLeaderElection
 	stateStartWorker
 	stateShutdown
@@ -87,8 +89,11 @@ type process struct {
 	restCfg                   *rest.Config
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory
 	dao                       dao.Options
+	minioOpt                  storage.MinIOOptions
 
-	apiServer *api.Api
+	bazelBuilder *coordinator.BazelBuilder
+	discover     *discovery.Discover
+	apiServer    *api.Api
 }
 
 func newProcess(opt Options) *process {
@@ -97,6 +102,8 @@ func newProcess(opt Options) *process {
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:           p.init,
+			stateSetup:          p.setup,
+			stateStartApiServer: p.startApiServer,
 			stateLeaderElection: p.leaderElection,
 			stateStartWorker:    p.startWorker,
 			stateShutdown:       p.shutdown,
@@ -166,6 +173,85 @@ func (p *process) init() (fsm.State, error) {
 	}
 	p.dao = dao.NewOptions(conn)
 
+	return stateSetup, nil
+}
+
+func (p *process) setup() (fsm.State, error) {
+	minioOpt := storage.NewMinIOOptions(
+		p.opt.MinIOName,
+		p.opt.MinIONamespace,
+		p.opt.MinIOPort,
+		p.opt.MinIOBucket,
+		p.opt.MinIOAccessKey,
+		p.opt.MinIOSecretAccessKey,
+	)
+	p.minioOpt = minioOpt
+	kubernetesOpt := coordinator.NewKubernetesOptions(
+		p.coreSharedInformerFactory.Batch().V1().Jobs(),
+		p.kubeClient,
+		p.restCfg,
+		p.opt.TaskCPULimit,
+		p.opt.TaskMemoryLimit,
+	)
+	bazelOpt := coordinator.NewBazelOptions(
+		p.opt.RemoteCache,
+		p.opt.RemoteAssetApi,
+		p.opt.SidecarImage,
+		p.opt.BazelImage,
+		p.opt.DefaultBazelVersion,
+		p.opt.GithubAppId,
+		p.opt.GithubInstallationId,
+		p.opt.GithubAppSecretName,
+	)
+	c, err := coordinator.NewBazelBuilder(
+		p.opt.DashboardUrl,
+		kubernetesOpt,
+		p.dao,
+		p.opt.Namespace,
+		p.ghClient,
+		minioOpt,
+		bazelOpt,
+		p.opt.Dev,
+	)
+	if err != nil {
+		logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.bazelBuilder = c
+
+	p.discover = discovery.NewDiscover(
+		p.coreSharedInformerFactory.Batch().V1().Jobs(),
+		p.kubeClient,
+		p.restCfg,
+		p.opt.Namespace,
+		p.dao,
+		c,
+		p.opt.SidecarImage,
+		p.opt.CLIImage,
+		p.opt.BuilderApiUrl,
+		p.ghClient,
+		minioOpt,
+		p.opt.GithubAppId,
+		p.opt.GithubInstallationId,
+		p.opt.GithubAppSecretName,
+		p.opt.Debug,
+	)
+
+	return stateStartApiServer, nil
+}
+
+func (p *process) startApiServer() (fsm.State, error) {
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.discover, p.dao, p.ghClient)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.apiServer = apiServer
+
+	go func() {
+		logger.Log.Info("Start API Server", zap.String("addr", p.apiServer.Addr))
+		p.apiServer.ListenAndServe()
+	}()
+
 	return stateLeaderElection, nil
 }
 
@@ -214,81 +300,12 @@ func (p *process) leaderElection() (fsm.State, error) {
 
 func (p *process) startWorker() (fsm.State, error) {
 	jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
-
-	minioOpt := storage.NewMinIOOptions(
-		p.opt.MinIOName,
-		p.opt.MinIONamespace,
-		p.opt.MinIOPort,
-		p.opt.MinIOBucket,
-		p.opt.MinIOAccessKey,
-		p.opt.MinIOSecretAccessKey,
-	)
-	kubernetesOpt := coordinator.NewKubernetesOptions(
-		p.coreSharedInformerFactory.Batch().V1().Jobs(),
-		p.kubeClient,
-		p.restCfg,
-		p.opt.TaskCPULimit,
-		p.opt.TaskMemoryLimit,
-	)
-	bazelOpt := coordinator.NewBazelOptions(
-		p.opt.RemoteCache,
-		p.opt.RemoteAssetApi,
-		p.opt.SidecarImage,
-		p.opt.BazelImage,
-		p.opt.DefaultBazelVersion,
-		p.opt.GithubAppId,
-		p.opt.GithubInstallationId,
-		p.opt.GithubAppSecretName,
-	)
-	c, err := coordinator.NewBazelBuilder(
-		p.opt.DashboardUrl,
-		kubernetesOpt,
-		p.dao,
-		p.opt.Namespace,
-		p.ghClient,
-		minioOpt,
-		bazelOpt,
-		p.opt.Dev,
-	)
-	if err != nil {
-		logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
-		return fsm.Error(xerrors.Errorf(": %w", err))
-	}
-
-	d := discovery.NewDiscover(
-		p.coreSharedInformerFactory.Batch().V1().Jobs(),
-		p.kubeClient,
-		p.restCfg,
-		p.opt.Namespace,
-		p.dao,
-		c,
-		p.opt.SidecarImage,
-		p.opt.CLIImage,
-		p.opt.BuilderApiUrl,
-		p.ghClient,
-		minioOpt,
-		p.opt.GithubAppId,
-		p.opt.GithubInstallationId,
-		p.opt.GithubAppSecretName,
-		p.opt.Debug,
-	)
-
-	apiServer, err := api.NewApi(p.opt.Addr, c, d, p.dao, p.ghClient)
-	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
-	}
-	p.apiServer = apiServer
-
-	g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, minioOpt, p.opt.Dev)
+	g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, p.minioOpt, p.opt.Dev)
 
 	p.coreSharedInformerFactory.Start(p.ctx.Done())
 
 	go func() {
-		logger.Log.Info("Start API Server", zap.String("addr", apiServer.Addr))
-		apiServer.ListenAndServe()
-	}()
-
-	go func() {
+		logger.Log.Info("Start JobWatcher")
 		if err := jobWatcher.Run(p.ctx, 1); err != nil {
 			logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
 			return
@@ -296,6 +313,7 @@ func (p *process) startWorker() (fsm.State, error) {
 	}()
 
 	go func() {
+		logger.Log.Info("Start GC")
 		g.Start()
 	}()
 
