@@ -34,8 +34,8 @@ APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock
 
 .PHONY: run-dashboard
 run-dashboard:
-	bazel run //tools/build/cmd/build -- dashboard $(DASHBOARDFLAGS)
+	bazel run //go/cmd/build -- dashboard $(DASHBOARDFLAGS)
 
 .PHONY: run-api
 run-api:
-	bazel run //tools/build/cmd/build -- builder $(APIFLAGS)
+	bazel run //go/cmd/build -- builder $(APIFLAGS)

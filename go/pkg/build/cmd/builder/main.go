@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
+	"syscall"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -29,8 +30,8 @@ import (
 	"go.f110.dev/mono/go/pkg/build/discovery"
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
+	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/signals"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
@@ -68,202 +69,253 @@ type Options struct {
 	Debug bool
 }
 
-func builder(opt Options) error {
-	ctx, cancelFunc := context.WithCancel(context.Background())
-	signals.SetupSignalHandler(cancelFunc)
+const (
+	stateInit fsm.State = iota
+	stateLeaderElection
+	stateStartWorker
+	stateShutdown
+)
 
+type process struct {
+	FSM    *fsm.FSM
+	opt    Options
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	ghClient                  *github.Client
+	kubeClient                *kubernetes.Clientset
+	restCfg                   *rest.Config
+	coreSharedInformerFactory kubeinformers.SharedInformerFactory
+	dao                       dao.Options
+
+	apiServer *api.Api
+}
+
+func newProcess(opt Options) *process {
+	ctx, cancel := context.WithCancel(context.Background())
+	p := &process{ctx: ctx, cancel: cancel, opt: opt}
+	p.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateInit:           p.init,
+			stateLeaderElection: p.leaderElection,
+			stateStartWorker:    p.startWorker,
+			stateShutdown:       p.shutdown,
+		},
+		stateInit,
+		stateShutdown,
+	)
+	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
+
+	return p
+}
+
+func (p *process) init() (fsm.State, error) {
 	kubeConfigPath := ""
-	if opt.Dev {
+	if p.opt.Dev {
 		h, err := os.UserHomeDir()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return fsm.Error(xerrors.Errorf(": %w", err))
 		}
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
 
 	t, err := ghinstallation.NewKeyFromFile(
 		http.DefaultTransport,
-		opt.GithubAppId,
-		opt.GithubInstallationId,
-		opt.GithubPrivateKeyFile,
+		p.opt.GithubAppId,
+		p.opt.GithubInstallationId,
+		p.opt.GithubPrivateKeyFile,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	ghClient := github.NewClient(&http.Client{Transport: t})
+	p.ghClient = github.NewClient(&http.Client{Transport: t})
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
+	p.restCfg = cfg
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(
+	p.kubeClient = kubeClient
+	p.coreSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(
 		kubeClient,
 		30*time.Second,
-		kubeinformers.WithNamespace(opt.Namespace),
+		kubeinformers.WithNamespace(p.opt.Namespace),
 	)
 
-	parsedDSN, err := mysql.ParseDSN(opt.DSN)
+	parsedDSN, err := mysql.ParseDSN(p.opt.DSN)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	parsedDSN.ParseTime = true
 	loc, err := time.LoadLocation("Local")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	parsedDSN.Loc = loc
-	opt.DSN = parsedDSN.FormatDSN()
+	p.opt.DSN = parsedDSN.FormatDSN()
 
-	logger.Log.Debug("Open sql connection", zap.String("dsn", opt.DSN))
-	conn, err := sql.Open("mysql", opt.DSN)
+	logger.Log.Debug("Open sql connection", zap.String("dsn", p.opt.DSN))
+	conn, err := sql.Open("mysql", p.opt.DSN)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	daoOpt := dao.NewOptions(conn)
+	p.dao = dao.NewOptions(conn)
 
+	return stateLeaderElection, nil
+}
+
+func (p *process) leaderElection() (fsm.State, error) {
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
-			Name:      opt.LeaseLockName,
-			Namespace: opt.LeaseLockNamespace,
+			Name:      p.opt.LeaseLockName,
+			Namespace: p.opt.LeaseLockNamespace,
 		},
-		Client: kubeClient.CoordinationV1(),
+		Client: p.kubeClient.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
-			Identity: opt.Id,
+			Identity: p.opt.Id,
 		},
 	}
-	leaderelection.RunOrDie(
-		ctx,
-		leaderelection.LeaderElectionConfig{
-			Lock:            lock,
-			ReleaseOnCancel: true,
-			LeaseDuration:   30 * time.Second,
-			RenewDeadline:   15 * time.Second,
-			RetryPeriod:     5 * time.Second,
-			Callbacks: leaderelection.LeaderCallbacks{
-				OnStartedLeading: func(ctx context.Context) {
-					jobWatcher := watcher.NewJobWatcher(coreSharedInformerFactory.Batch().V1().Jobs())
 
-					minioOpt := storage.NewMinIOOptions(
-						opt.MinIOName,
-						opt.MinIONamespace,
-						opt.MinIOPort,
-						opt.MinIOBucket,
-						opt.MinIOAccessKey,
-						opt.MinIOSecretAccessKey,
-					)
-					kubernetesOpt := coordinator.NewKubernetesOptions(
-						coreSharedInformerFactory.Batch().V1().Jobs(),
-						kubeClient,
-						cfg,
-						opt.TaskCPULimit,
-						opt.TaskMemoryLimit,
-					)
-					bazelOpt := coordinator.NewBazelOptions(
-						opt.RemoteCache,
-						opt.RemoteAssetApi,
-						opt.SidecarImage,
-						opt.BazelImage,
-						opt.DefaultBazelVersion,
-						opt.GithubAppId,
-						opt.GithubInstallationId,
-						opt.GithubAppSecretName,
-					)
-					c, err := coordinator.NewBazelBuilder(
-						opt.DashboardUrl,
-						kubernetesOpt,
-						daoOpt,
-						opt.Namespace,
-						ghClient,
-						minioOpt,
-						bazelOpt,
-						opt.Dev,
-					)
-					if err != nil {
-						logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
-						return
-					}
-
-					d := discovery.NewDiscover(
-						coreSharedInformerFactory.Batch().V1().Jobs(),
-						kubeClient,
-						cfg,
-						opt.Namespace,
-						daoOpt,
-						c,
-						opt.SidecarImage,
-						opt.CLIImage,
-						opt.BuilderApiUrl,
-						ghClient,
-						minioOpt,
-						opt.GithubAppId,
-						opt.GithubInstallationId,
-						opt.GithubAppSecretName,
-						opt.Debug,
-					)
-
-					apiServer, err := api.NewApi(opt.Addr, c, d, daoOpt, ghClient)
-					if err != nil {
-						return
-					}
-
-					g := gc.NewGC(1*time.Hour, daoOpt, kubeClient, cfg, minioOpt, opt.Dev)
-
-					coreSharedInformerFactory.Start(ctx.Done())
-
-					var wg sync.WaitGroup
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-
-						logger.Log.Info("Start API Server", zap.String("addr", apiServer.Addr))
-						apiServer.ListenAndServe()
-					}()
-
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-
-						if err := jobWatcher.Run(ctx, 1); err != nil {
-							logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
-							return
-						}
-					}()
-
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-
-						<-ctx.Done()
-						apiServer.Shutdown(context.Background())
-					}()
-
-					wg.Add(1)
-					go func() {
-						defer wg.Done()
-
-						g.Start()
-					}()
-
-					wg.Wait()
-					logger.Log.Debug("Shutdown")
-				},
-				OnStoppedLeading: func() {
-					logger.Log.Debug("leader lost", zap.String("id", opt.Id))
-				},
-				OnNewLeader: func(identity string) {
-					if identity == opt.Id {
-						return
-					}
-					logger.Log.Info("new leader elected", zap.String("id", identity))
-				},
+	elected := make(chan struct{})
+	e, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock:            lock,
+		ReleaseOnCancel: true,
+		LeaseDuration:   30 * time.Second,
+		RenewDeadline:   15 * time.Second,
+		RetryPeriod:     5 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(_ context.Context) {
+				close(elected)
 			},
+			OnStoppedLeading: func() {
+				p.FSM.Shutdown()
+			},
+			OnNewLeader: func(_ string) {},
 		},
+	})
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	go e.Run(p.ctx)
+
+	select {
+	case <-elected:
+	case <-p.ctx.Done():
+		return fsm.UnknownState, nil
+	}
+
+	return stateStartWorker, nil
+}
+
+func (p *process) startWorker() (fsm.State, error) {
+	jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
+
+	minioOpt := storage.NewMinIOOptions(
+		p.opt.MinIOName,
+		p.opt.MinIONamespace,
+		p.opt.MinIOPort,
+		p.opt.MinIOBucket,
+		p.opt.MinIOAccessKey,
+		p.opt.MinIOSecretAccessKey,
 	)
+	kubernetesOpt := coordinator.NewKubernetesOptions(
+		p.coreSharedInformerFactory.Batch().V1().Jobs(),
+		p.kubeClient,
+		p.restCfg,
+		p.opt.TaskCPULimit,
+		p.opt.TaskMemoryLimit,
+	)
+	bazelOpt := coordinator.NewBazelOptions(
+		p.opt.RemoteCache,
+		p.opt.RemoteAssetApi,
+		p.opt.SidecarImage,
+		p.opt.BazelImage,
+		p.opt.DefaultBazelVersion,
+		p.opt.GithubAppId,
+		p.opt.GithubInstallationId,
+		p.opt.GithubAppSecretName,
+	)
+	c, err := coordinator.NewBazelBuilder(
+		p.opt.DashboardUrl,
+		kubernetesOpt,
+		p.dao,
+		p.opt.Namespace,
+		p.ghClient,
+		minioOpt,
+		bazelOpt,
+		p.opt.Dev,
+	)
+	if err != nil {
+		logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+
+	d := discovery.NewDiscover(
+		p.coreSharedInformerFactory.Batch().V1().Jobs(),
+		p.kubeClient,
+		p.restCfg,
+		p.opt.Namespace,
+		p.dao,
+		c,
+		p.opt.SidecarImage,
+		p.opt.CLIImage,
+		p.opt.BuilderApiUrl,
+		p.ghClient,
+		minioOpt,
+		p.opt.GithubAppId,
+		p.opt.GithubInstallationId,
+		p.opt.GithubAppSecretName,
+		p.opt.Debug,
+	)
+
+	apiServer, err := api.NewApi(p.opt.Addr, c, d, p.dao, p.ghClient)
+	if err != nil {
+		return fsm.Error(xerrors.Errorf(": %w", err))
+	}
+	p.apiServer = apiServer
+
+	g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, minioOpt, p.opt.Dev)
+
+	p.coreSharedInformerFactory.Start(p.ctx.Done())
+
+	go func() {
+		logger.Log.Info("Start API Server", zap.String("addr", apiServer.Addr))
+		apiServer.ListenAndServe()
+	}()
+
+	go func() {
+		if err := jobWatcher.Run(p.ctx, 1); err != nil {
+			logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
+			return
+		}
+	}()
+
+	go func() {
+		g.Start()
+	}()
+
+	return fsm.WaitState, nil
+}
+
+func (p *process) shutdown() (fsm.State, error) {
+	if p.apiServer != nil {
+		p.apiServer.Shutdown(context.Background())
+		logger.Log.Info("Shutdown API Server")
+	}
+	return fsm.CloseState, nil
+}
+
+func builder(opt Options) error {
+	p := newProcess(opt)
+
+	if err := p.FSM.Loop(); err != nil {
+		return err
+	}
 
 	return nil
 }
