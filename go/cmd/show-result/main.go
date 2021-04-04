@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -58,6 +60,7 @@ type Issue struct {
 	Id     string
 	URL    string
 	Title  string
+	Number int
 	Author struct {
 		Login string
 	}
@@ -101,7 +104,8 @@ var query struct {
 			EndCursor   githubv4.String
 			HasNextPage bool
 		}
-		Nodes []Node
+		Nodes      []Node
+		IssueCount int
 	} `graphql:"search(query: $searchQuery type: ISSUE first: 100 after: $cursor)"`
 }
 
@@ -154,8 +158,12 @@ func excludeReviewOnly(username string) filterFunc {
 	}
 }
 
-func getIssueAndPullRequest(client *githubv4.Client, user, start, org string, max int) ([]Node, error) {
-	q := fmt.Sprintf("involves:%s updated:>=%s is:closed", user, start)
+func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org string, max int) ([]Node, error) {
+	updated := fmt.Sprintf(">=%s", start)
+	if end != "" {
+		updated = fmt.Sprintf("%s..%s", start, end)
+	}
+	q := fmt.Sprintf("involves:%s updated:%s is:closed", user, updated)
 	if org != "" {
 		q += " org:" + org
 	}
@@ -165,30 +173,43 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, org string, ma
 	}
 
 	tickets := make([]Node, 0)
+	page := 1
 	for {
 		if err := client.Query(context.Background(), &query, variables); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
+		// Is first page
+		if len(tickets) == 0 {
+			fmt.Fprintf(os.Stderr, "Found %d issues\n", query.Search.IssueCount)
+		}
+		if query.Search.IssueCount > 1000 {
+			return nil, errors.New("result over than 1000. GitHub API can not fetch results over than 1000")
+		}
 		tickets = append(tickets, query.Search.Nodes...)
 
+		fmt.Fprintf(os.Stderr, "Got %d page\n", page)
 		if !query.Search.PageInfo.HasNextPage {
+			fmt.Fprintln(os.Stderr, "Doesn't have next page")
 			break
 		}
 		if max > 0 && len(tickets) > max {
 			break
 		}
 
+		page++
 		variables["cursor"] = githubv4.NewString(query.Search.PageInfo.EndCursor)
+		fmt.Fprintf(os.Stderr, "Cursor: %s\n", query.Search.PageInfo.EndCursor)
 	}
 
 	return tickets, nil
 }
 
 func showResult() error {
-	var start, org string
+	var start, end, org string
 	max := -1
 	fs := pflag.NewFlagSet("show-result", pflag.ContinueOnError)
 	fs.StringVar(&start, "start", "", "")
+	fs.StringVar(&end, "end", "", "")
 	fs.IntVar(&max, "max", max, "")
 	fs.StringVar(&org, "org", "", "(Optional) Organization name")
 	if err := fs.Parse(os.Args); err != nil {
@@ -214,9 +235,18 @@ func showResult() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	issues, err := getIssueAndPullRequest(client, meQuery.Viewer.Login, start, org, max)
+	issues, err := getIssueAndPullRequest(client, meQuery.Viewer.Login, start, end, org, max)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
+	}
+	rawList := new(bytes.Buffer)
+	for _, v := range issues {
+		switch v.Type {
+		case "Issue":
+			fmt.Fprintf(rawList, "* [%s#%d - %s](%s)\n", v.Issue.Repository.Name, v.Issue.Number, v.Issue.Title, v.Issue.URL)
+		case "PullRequest":
+			fmt.Fprintf(rawList, "* [%s#%d - %s](%s)\n", v.PullRequest.Repository.Name, v.PullRequest.Number, v.PullRequest.Title, v.PullRequest.URL)
+		}
 	}
 	issues = Nodes(issues).Filter(excludeReviewOnly(meQuery.Viewer.Login))
 
@@ -237,6 +267,7 @@ func showResult() error {
 		}
 	}
 
+	body := new(bytes.Buffer)
 	for _, v := range issues {
 		switch v.Type {
 		case "PullRequest":
@@ -244,9 +275,9 @@ func showResult() error {
 				continue
 			}
 
-			fmt.Printf("[%s#%d - %s](%s)\n", v.PullRequest.Repository.Name, v.PullRequest.Number, v.PullRequest.Title, v.PullRequest.URL)
+			fmt.Fprintf(body, "[%s#%d - %s](%s)\n", v.PullRequest.Repository.Name, v.PullRequest.Number, v.PullRequest.Title, v.PullRequest.URL)
 		case "Issue":
-			fmt.Printf("[%s#%s](%s)\n", v.Issue.Repository.Name, v.Issue.Title, v.Issue.URL)
+			fmt.Fprintf(body, "[%s#%s](%s)\n", v.Issue.Repository.Name, v.Issue.Title, v.Issue.URL)
 			for _, r := range v.Issue.TimelineItems.Nodes {
 				if r.Type != "CrossReferencedEvent" {
 					continue
@@ -254,7 +285,7 @@ func showResult() error {
 				if r.CrossReferencedEvent.Source.Type != "PullRequest" {
 					continue
 				}
-				fmt.Printf("\t[%s#%d - %s](%s)\n",
+				fmt.Fprintf(body, "\t[%s#%d - %s](%s)\n",
 					r.CrossReferencedEvent.Source.PullRequest.Repository.Name,
 					r.CrossReferencedEvent.Source.PullRequest.Number,
 					r.CrossReferencedEvent.Source.PullRequest.Title,
@@ -263,6 +294,12 @@ func showResult() error {
 			}
 		}
 	}
+
+	fmt.Println("# Raw")
+	fmt.Print(rawList.String())
+	fmt.Println()
+	fmt.Println("# Organized")
+	fmt.Print(body.String())
 
 	return nil
 }
