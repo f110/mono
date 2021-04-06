@@ -1,0 +1,27 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "plugins",
+    files = {
+        "@argocd_vault_plugin//file": "/plugins/argocd-vault-plugin",
+    },
+    mode = "0755",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    tars = [
+        ":plugins",
+    ],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "tools/argocd-plugins",
+    tag = "latest",
+)

@@ -163,3 +163,11 @@ kind_binary(
     name = "kind",
     version = "0.9.0",
 )
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "argocd_vault_plugin",
+    sha256 = "8888551f80efae9a4c95120c241b729b7bf8926570e64339840adc2852d9e185",
+    urls = ["https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64"],
+)
