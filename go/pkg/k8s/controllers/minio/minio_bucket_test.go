@@ -73,6 +73,7 @@ func TestBucketController(t *testing.T) {
 			Subresource: "status",
 			Object:      updated,
 		})
+		runner.AssertNoUnexpectedAction(t)
 	})
 }
 

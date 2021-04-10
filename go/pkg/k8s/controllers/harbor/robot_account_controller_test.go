@@ -52,6 +52,16 @@ func TestRobotAccountController(t *testing.T) {
 		Subresource: "status",
 		Object:      expect,
 	})
+	runner.AssertAction(t, controllertest.Action{
+		Verb: controllertest.ActionCreate,
+		Object: &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      target.Spec.SecretName,
+				Namespace: target.Namespace,
+			},
+		},
+	})
+	runner.AssertNoUnexpectedAction(t)
 }
 
 func newRobotAccountController(t *testing.T) (*controllertest.TestRunner, *RobotAccountController) {
@@ -106,6 +116,7 @@ func newRobotAccountFixtures() (*harborv1alpha1.HarborRobotAccount, []runtime.Ob
 			Namespace: metav1.NamespaceDefault,
 		},
 		Spec: harborv1alpha1.HarborRobotAccountSpec{
+			SecretName:       "robot1-account",
 			ProjectName:      project.Name,
 			ProjectNamespace: project.Namespace,
 		},

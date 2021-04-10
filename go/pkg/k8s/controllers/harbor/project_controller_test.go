@@ -54,6 +54,7 @@ func TestProjectController(t *testing.T) {
 		Subresource: "status",
 		Object:      expect,
 	})
+	runner.AssertNoUnexpectedAction(t)
 }
 
 func newProjectController(t *testing.T) (*controllertest.TestRunner, *ProjectController) {

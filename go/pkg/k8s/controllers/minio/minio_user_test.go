@@ -51,6 +51,7 @@ func TestUserController(t *testing.T) {
 				},
 			},
 		})
+		runner.AssertNoUnexpectedAction(t)
 	})
 }
 

@@ -2,7 +2,9 @@ package controllertest
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,6 +31,7 @@ type TestRunner struct {
 	CoreClient                *corefake.Clientset
 	SharedInformerFactory     informers.SharedInformerFactory
 	CoreSharedInformerFactory kubeinformers.SharedInformerFactory
+	Actions                   []*Action
 }
 
 func NewTestRunner() *TestRunner {
@@ -67,31 +70,65 @@ func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) err
 	return c.Finalize(ctx, v)
 }
 
-func (r *TestRunner) AssertAction(t *testing.T, a Action) bool {
+func (r *TestRunner) editActions() []*Action {
+	if r.Actions != nil {
+		return r.Actions
+	}
+
+	actions := make([]*Action, 0)
+	for _, v := range append(r.Client.Actions(), r.CoreClient.Actions()...) {
+		switch a := v.(type) {
+		case k8stesting.CreateActionImpl:
+			actions = append(actions, &Action{
+				Verb:        ActionVerb(v.GetVerb()),
+				Subresource: v.GetSubresource(),
+				Object:      a.GetObject(),
+			})
+		case k8stesting.UpdateActionImpl:
+			actions = append(actions, &Action{
+				Verb:        ActionVerb(v.GetVerb()),
+				Subresource: v.GetSubresource(),
+				Object:      a.GetObject(),
+			})
+		case k8stesting.DeleteActionImpl:
+			actions = append(actions, &Action{
+				Verb:        ActionVerb(v.GetVerb()),
+				Subresource: v.GetSubresource(),
+			})
+		}
+	}
+	r.Actions = actions
+
+	return actions
+}
+
+func (r *TestRunner) AssertAction(t *testing.T, e Action) bool {
 	matchVerb := false
 	matchObj := false
 Match:
-	for _, v := range append(r.Client.Actions(), r.CoreClient.Actions()...) {
-		if v.Matches(a.Verb.String(), a.Resource()) {
+	for _, v := range r.editActions() {
+		if v.Verb == e.Verb {
 			matchVerb = true
-			switch doneAction := v.(type) {
-			case k8stesting.CreateAction:
-				doneActionObjMeta, ok := doneAction.GetObject().(metav1.Object)
+			switch v.Verb {
+			case ActionCreate:
+				actualActionObjMeta, ok := v.Object.(metav1.Object)
 				if !ok {
 					continue
 				}
-				objMeta, ok := a.Object.(metav1.Object)
+				objMeta, ok := e.Object.(metav1.Object)
 				if !ok {
 					continue
 				}
-				if doneActionObjMeta.GetNamespace() == objMeta.GetNamespace() &&
-					doneActionObjMeta.GetName() == objMeta.GetName() {
+				if actualActionObjMeta.GetNamespace() == objMeta.GetNamespace() &&
+					actualActionObjMeta.GetName() == objMeta.GetName() {
 					matchObj = true
+					v.Visited = true
 					break Match
 				}
-			case k8stesting.UpdateAction:
-				if reflect.DeepEqual(doneAction.GetObject(), a.Object) {
+			case ActionUpdate:
+				if reflect.DeepEqual(v.Object, e.Object) {
 					matchObj = true
+					v.Visited = true
 					break Match
 				}
 			}
@@ -104,6 +141,36 @@ Match:
 	}
 
 	return matchVerb && matchObj
+}
+
+func (r *TestRunner) AssertNoUnexpectedAction(t *testing.T) {
+	unexpectedActions := make([]*Action, 0)
+	for _, v := range r.editActions() {
+		if v.Visited {
+			continue
+		}
+		unexpectedActions = append(unexpectedActions, v)
+	}
+
+	msg := ""
+	if len(unexpectedActions) > 0 {
+		line := make([]string, 0, len(unexpectedActions))
+		for _, v := range unexpectedActions {
+			key := ""
+			meta, ok := v.Object.(metav1.Object)
+			if ok {
+				key = fmt.Sprintf(" %s/%s", meta.GetNamespace(), meta.GetName())
+			}
+			kind := ""
+			if v.Object != nil {
+				kind = reflect.TypeOf(v.Object).Elem().Name()
+			}
+			line = append(line, fmt.Sprintf("%s %s%s", v.Verb, kind, key))
+		}
+		msg = strings.Join(line, " ")
+	}
+
+	assert.Len(t, unexpectedActions, 0, "There are %d unexpected actions: %s", len(unexpectedActions), msg)
 }
 
 func (r *TestRunner) RegisterFixture(objs ...runtime.Object) {
@@ -177,6 +244,7 @@ type Action struct {
 	Verb        ActionVerb
 	Subresource string
 	Object      runtime.Object
+	Visited     bool
 }
 
 func (a Action) Resource() string {

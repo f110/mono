@@ -155,6 +155,7 @@ func TestUserController(t *testing.T) {
 			Object:      expect,
 		},
 	)
+	runner.AssertNoUnexpectedAction(t)
 }
 
 func newController(t *testing.T) (*controllertest.TestRunner, *UserController) {
