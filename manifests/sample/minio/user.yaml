@@ -1,0 +1,9 @@
+apiVersion: minio.f110.dev/v1alpha1
+kind: MinIOUser
+metadata:
+  name: test
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  path: /object-storage/test

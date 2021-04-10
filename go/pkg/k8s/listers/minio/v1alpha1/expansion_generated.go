@@ -32,3 +32,11 @@ type MinIOBucketListerExpansion interface{}
 // MinIOBucketNamespaceListerExpansion allows custom methods to be added to
 // MinIOBucketNamespaceLister.
 type MinIOBucketNamespaceListerExpansion interface{}
+
+// MinIOUserListerExpansion allows custom methods to be added to
+// MinIOUserLister.
+type MinIOUserListerExpansion interface{}
+
+// MinIOUserNamespaceListerExpansion allows custom methods to be added to
+// MinIOUserNamespaceLister.
+type MinIOUserNamespaceListerExpansion interface{}

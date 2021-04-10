@@ -34,6 +34,7 @@ import (
 type MinioV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	MinIOBucketsGetter
+	MinIOUsersGetter
 }
 
 // MinioV1alpha1Client is used to interact with features provided by the minio.f110.dev group.
@@ -43,6 +44,10 @@ type MinioV1alpha1Client struct {
 
 func (c *MinioV1alpha1Client) MinIOBuckets(namespace string) MinIOBucketInterface {
 	return newMinIOBuckets(c, namespace)
+}
+
+func (c *MinioV1alpha1Client) MinIOUsers(namespace string) MinIOUserInterface {
+	return newMinIOUsers(c, namespace)
 }
 
 // NewForConfig creates a new MinioV1alpha1Client for the given config.

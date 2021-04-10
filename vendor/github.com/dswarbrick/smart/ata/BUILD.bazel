@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ata",
+    srcs = [
+        "commands.go",
+        "identify.go",
+        "smart.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/dswarbrick/smart/ata",
+    importpath = "github.com/dswarbrick/smart/ata",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/dswarbrick/smart/drivedb",
+        "//vendor/github.com/dswarbrick/smart/utils",
+    ],
+)

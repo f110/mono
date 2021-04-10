@@ -25,6 +25,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&MinIOBucket{},
 		&MinIOBucketList{},
+		&MinIOUser{},
+		&MinIOUserList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

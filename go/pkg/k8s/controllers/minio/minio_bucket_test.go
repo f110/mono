@@ -21,7 +21,8 @@ import (
 
 func TestBucketController(t *testing.T) {
 	t.Run("CreateBucket", func(t *testing.T) {
-		runner, controller := newController(t)
+		runner := newRunner()
+		controller := newBucketController(t, runner)
 		target, fixtures := minioFixture()
 		runner.RegisterFixture(fixtures...)
 
@@ -73,22 +74,6 @@ func TestBucketController(t *testing.T) {
 			Object:      updated,
 		})
 	})
-}
-
-func newController(t *testing.T) (*controllertest.TestRunner, *BucketController) {
-	runner := controllertest.NewTestRunner()
-	runner.CoreClient.Resources = append(
-		runner.CoreClient.Resources, &metav1.APIResourceList{
-			GroupVersion: miniocontrollerv1beta1.SchemeGroupVersion.String(),
-			APIResources: []metav1.APIResource{
-				{Kind: "MinIOInstance"},
-			},
-		},
-	)
-	controller, err := NewBucketController(runner.CoreClient, runner.Client, nil, runner.SharedInformerFactory, false)
-	require.NoError(t, err)
-
-	return runner, controller
 }
 
 func minioFixture() (*miniov1alpha1.MinIOBucket, []runtime.Object) {

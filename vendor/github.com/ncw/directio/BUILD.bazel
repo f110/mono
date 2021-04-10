@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "directio",
+    srcs = [
+        "direct_io.go",
+        "direct_io_darwin.go",
+        "direct_io_unix.go",
+        "direct_io_windows.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/ncw/directio",
+    importpath = "github.com/ncw/directio",
+    visibility = ["//visibility:public"],
+)

@@ -39,6 +39,10 @@ func (c *FakeMinioV1alpha1) MinIOBuckets(namespace string) v1alpha1.MinIOBucketI
 	return &FakeMinIOBuckets{c, namespace}
 }
 
+func (c *FakeMinioV1alpha1) MinIOUsers(namespace string) v1alpha1.MinIOUserInterface {
+	return &FakeMinIOUsers{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeMinioV1alpha1) RESTClient() rest.Interface {

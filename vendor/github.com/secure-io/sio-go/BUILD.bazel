@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sio-go",
+    srcs = [
+        "reader.go",
+        "sio.go",
+        "writer.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/secure-io/sio-go",
+    importpath = "github.com/secure-io/sio-go",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/crypto/chacha20poly1305"],
+)

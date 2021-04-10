@@ -26,3 +26,5 @@ SOFTWARE.
 package v1alpha1
 
 type MinIOBucketExpansion interface{}
+
+type MinIOUserExpansion interface{}

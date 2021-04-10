@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "fake_minio_client.go",
         "fake_miniobucket.go",
+        "fake_miniouser.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1/fake",
     visibility = ["//visibility:public"],

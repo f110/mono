@@ -26,6 +26,7 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go/aws/awserr",
         "//vendor/github.com/aws/aws-sdk-go/aws/awsutil",
         "//vendor/github.com/aws/aws-sdk-go/aws/client",
+        "//vendor/github.com/aws/aws-sdk-go/aws/corehandlers",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
         "//vendor/github.com/aws/aws-sdk-go/aws/request",
         "//vendor/github.com/aws/aws-sdk-go/internal/sdkio",

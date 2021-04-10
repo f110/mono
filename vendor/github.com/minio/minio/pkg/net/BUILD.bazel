@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "net",
+    srcs = [
+        "health.go",
+        "host.go",
+        "port.go",
+        "url.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio/pkg/net",
+    importpath = "github.com/minio/minio/pkg/net",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/montanaflynn/stats"],
+)

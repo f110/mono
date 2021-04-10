@@ -53,10 +53,43 @@ type MinIOBucketStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 type MinIOBucketList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []MinIOBucket `json:"items"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ready",type="string",JSONPath=".status.ready",description="Ready",format="byte",priority=0
+
+type MinIOUser struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   MinIOUserSpec   `json:"spec,omitempty"`
+	Status MinIOUserStatus `json:"status,omitempty"`
+}
+
+type MinIOUserSpec struct {
+	// Selector is a selector of MinIOInstance
+	Selector metav1.LabelSelector `json:"selector"`
+	// Path is a path in Vault.
+	Path string `json:"path"`
+}
+
+type MinIOUserStatus struct {
+	Ready     bool   `json:"ready"`
+	AccessKey string `json:"accessKey,omitempty"`
+	Vault     bool   `json:"vault,omitempty"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type MinIOUserList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []MinIOBucket `json:"items"`
+	Items []MinIOUser `json:"items"`
 }

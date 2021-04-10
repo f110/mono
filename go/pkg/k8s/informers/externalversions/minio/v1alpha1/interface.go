@@ -33,6 +33,8 @@ import (
 type Interface interface {
 	// MinIOBuckets returns a MinIOBucketInformer.
 	MinIOBuckets() MinIOBucketInformer
+	// MinIOUsers returns a MinIOUserInformer.
+	MinIOUsers() MinIOUserInformer
 }
 
 type version struct {
@@ -49,4 +51,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // MinIOBuckets returns a MinIOBucketInformer.
 func (v *version) MinIOBuckets() MinIOBucketInformer {
 	return &minIOBucketInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// MinIOUsers returns a MinIOUserInformer.
+func (v *version) MinIOUsers() MinIOUserInformer {
+	return &minIOUserInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

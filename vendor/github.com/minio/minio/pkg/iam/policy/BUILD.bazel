@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "policy",
+    srcs = [
+        "action.go",
+        "actionset.go",
+        "admin-action.go",
+        "constants.go",
+        "error.go",
+        "policy.go",
+        "resource.go",
+        "resourceset.go",
+        "statement.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio/pkg/iam/policy",
+    importpath = "github.com/minio/minio/pkg/iam/policy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/minio/minio-go/v7/pkg/set",
+        "//vendor/github.com/minio/minio/pkg/bucket/policy",
+        "//vendor/github.com/minio/minio/pkg/bucket/policy/condition",
+        "//vendor/github.com/minio/minio/pkg/wildcard",
+    ],
+)

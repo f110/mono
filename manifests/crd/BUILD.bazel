@@ -1,0 +1,15 @@
+load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomization")
+
+kustomization(
+    name = "crd",
+    src = "kustomization.yaml",
+    resources = [
+        "grafana.f110.dev_grafanas.yaml",
+        "grafana.f110.dev_grafanausers.yaml",
+        "harbor.f110.dev_harborprojects.yaml",
+        "harbor.f110.dev_harborrobotaccounts.yaml",
+        "minio.f110.dev_miniobuckets.yaml",
+        "minio.f110.dev_miniousers.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)

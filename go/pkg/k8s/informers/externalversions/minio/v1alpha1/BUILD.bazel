@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "interface.go",
         "miniobucket.go",
+        "miniouser.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/minio/v1alpha1",
     visibility = ["//visibility:public"],

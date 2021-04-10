@@ -9,4 +9,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/golang.org/x/tools/go/internal/cgo",
     importpath = "golang.org/x/tools/go/internal/cgo",
     visibility = ["//vendor/golang.org/x/tools/go:__subpackages__"],
+    deps = ["//vendor/golang.org/x/sys/execabs"],
 )

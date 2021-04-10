@@ -3,13 +3,16 @@ package controllers
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/vault/api"
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +40,7 @@ const (
 	ControllerHarborProject      = "harbor-project"
 	ControllerHarborRobotAccount = "harbor-robot-account"
 	ControllerMinIOBucket        = "minio-bucket"
+	ControllerMinIOUser          = "minio-user"
 )
 
 type ChildController struct {
@@ -108,6 +112,24 @@ var AllChildControllers = ChildControllers{
 			return mbc, nil
 		},
 	},
+	{
+		Name: ControllerMinIOUser,
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+			muc, err := minio.NewUserController(
+				p.coreClient,
+				p.client,
+				p.config,
+				core,
+				shared,
+				p.vaultClient,
+				p.dev,
+			)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			return muc, nil
+		},
+	},
 }
 
 func NewChildControllers(args []string) (ChildControllers, error) {
@@ -156,22 +178,28 @@ type Controllers struct {
 
 	controllers []controller
 
-	id                   string
-	metricsAddr          string
-	enableLeaderElection bool
-	dev                  bool
-	workers              int
-	leaseLockName        string
-	leaseLockNamespace   string
-	clusterDomain        string
-	harborNamespace      string
-	harborServiceName    string
-	adminSecretName      string
-	coreConfigMapName    string
+	id                      string
+	metricsAddr             string
+	enableLeaderElection    bool
+	dev                     bool
+	workers                 int
+	leaseLockName           string
+	leaseLockNamespace      string
+	clusterDomain           string
+	harborNamespace         string
+	harborServiceName       string
+	adminSecretName         string
+	coreConfigMapName       string
+	serviceAccountTokenFile string
+	vaultAddr               string
+	vaultToken              string
+	vaultK8sAuthPath        string
+	vaultK8sAuthRole        string
 
-	config     *rest.Config
-	coreClient *kubernetes.Clientset
-	client     *clientset.Clientset
+	config      *rest.Config
+	coreClient  *kubernetes.Clientset
+	client      *clientset.Clientset
+	vaultClient *api.Client
 }
 
 func New(args []string) *Controllers {
@@ -214,6 +242,11 @@ func (p *Controllers) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.adminSecretName, "admin-secret-name", "", "the secret name that including admin password")
 	fs.StringVar(&p.coreConfigMapName, "core-configmap-name", "", "the configmap name that used harbor core")
 	fs.BoolVar(&p.dev, "dev", p.dev, "development mode")
+	fs.StringVar(&p.serviceAccountTokenFile, "service-account-token-file", "/var/run/secrets/kubernetes.io/serviceaccount/token", "a file path that contains JWT token")
+	fs.StringVar(&p.vaultAddr, "vault-addr", "http://127.0.0.1:8200", "the address to vault")
+	fs.StringVar(&p.vaultToken, "vault-token", "", "the token for vault")
+	fs.StringVar(&p.vaultK8sAuthPath, "vault-k8s-auth-path", "auth/kubernetes", "The mount path of kubernetes auth method")
+	fs.StringVar(&p.vaultK8sAuthRole, "vault-k8s-auth-role", "", "Role name for k8s auth method")
 	logger.Flags(fs)
 }
 
@@ -257,6 +290,34 @@ func (p *Controllers) init() (fsm.State, error) {
 	p.client = client
 
 	p.probe = probe.NewProbe(p.metricsAddr)
+
+	if p.vaultAddr != "" {
+		vaultClient, err := api.NewClient(&api.Config{Address: p.vaultAddr})
+		if err != nil {
+			return fsm.Error(xerrors.Errorf(": %w", err))
+		}
+		if p.vaultToken != "" {
+			vaultClient.SetToken(p.vaultToken)
+		} else if _, err := os.Stat(p.serviceAccountTokenFile); err == nil {
+			buf, err := os.ReadFile(p.serviceAccountTokenFile)
+			if err != nil {
+				return fsm.Error(xerrors.Errorf(": %w", err))
+			}
+			saToken := strings.TrimSpace(string(buf))
+			data, err := vaultClient.Logical().Write(
+				fmt.Sprintf("%s/login", p.vaultK8sAuthPath),
+				map[string]interface{}{
+					"jwt":  saToken,
+					"role": p.vaultK8sAuthRole,
+				},
+			)
+			if err != nil {
+				return fsm.Error(xerrors.Errorf(": %w", err))
+			}
+			vaultClient.SetToken(data.Auth.ClientToken)
+		}
+		p.vaultClient = vaultClient
+	}
 
 	return stateCheckResources, nil
 }

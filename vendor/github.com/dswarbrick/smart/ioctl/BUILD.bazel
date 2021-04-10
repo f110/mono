@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ioctl",
+    srcs = ["ioctl.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/dswarbrick/smart/ioctl",
+    importpath = "github.com/dswarbrick/smart/ioctl",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/sys/unix"],
+)
