@@ -51,13 +51,19 @@ func NewTestRunner() *TestRunner {
 func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) error {
 	r.RegisterFixture(v)
 
-	return c.Reconcile(context.Background(), v)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	return c.Reconcile(ctx, v)
 }
 
 func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) error {
 	r.RegisterFixture(v)
 
-	return c.Finalize(context.Background(), v)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	return c.Finalize(ctx, v)
 }
 
 func (r *TestRunner) AssertAction(t *testing.T, a Action) bool {
