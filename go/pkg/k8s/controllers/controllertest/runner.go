@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubeinformers "k8s.io/client-go/informers"
@@ -74,6 +75,20 @@ Match:
 		if v.Matches(a.Verb.String(), a.Resource()) {
 			matchVerb = true
 			switch doneAction := v.(type) {
+			case k8stesting.CreateAction:
+				doneActionObjMeta, ok := doneAction.GetObject().(metav1.Object)
+				if !ok {
+					continue
+				}
+				objMeta, ok := a.Object.(metav1.Object)
+				if !ok {
+					continue
+				}
+				if doneActionObjMeta.GetNamespace() == objMeta.GetNamespace() &&
+					doneActionObjMeta.GetName() == objMeta.GetName() {
+					matchObj = true
+					break Match
+				}
 			case k8stesting.UpdateAction:
 				if reflect.DeepEqual(doneAction.GetObject(), a.Object) {
 					matchObj = true
@@ -151,6 +166,7 @@ type ActionVerb string
 
 const (
 	ActionUpdate ActionVerb = "update"
+	ActionCreate ActionVerb = "create"
 )
 
 func (a ActionVerb) String() string {
