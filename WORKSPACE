@@ -48,20 +48,20 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.zip"],
 )
 
-#http_archive(
-#    name = "dev_f110_rules_k8s_controller",
-#    sha256 = "7fc332ccc1c23f356f6ac43720c00349419fbf641a06e589703cdd12358136db",
-#    strip_prefix = "rules_k8s_controller-0.6.0",
-#    urls = [
-#        "https://github.com/f110/rules_k8s_controller/archive/v0.6.0.tar.gz",
-#    ],
-#)
-
-git_repository(
+http_archive(
     name = "dev_f110_rules_k8s_controller",
-    commit = "3077786aaa108f22ee02298f959e1220fd6813c8",
-    remote = "https://github.com/f110/rules_k8s_controller",
+    sha256 = "ec185cf615f01d69ce25ad0ca60c7dbb22b5f570af6f6ce199ca6c1812a86ae6",
+    strip_prefix = "rules_k8s_controller-0.10.0",
+    urls = [
+        "https://github.com/f110/rules_k8s_controller/archive/v0.10.0.tar.gz",
+    ],
 )
+
+#git_repository(
+#    name = "dev_f110_rules_k8s_controller",
+#    commit = "e1fc637572e9c6f5b0d3d397fc8d91cb6583e1c4",
+#    remote = "https://github.com/f110/rules_k8s_controller",
+#)
 
 git_repository(
     name = "dev_f110_rules_extras",
@@ -161,7 +161,7 @@ load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary"
 
 kustomize_binary(
     name = "kustomize",
-    version = "3.9.1",
+    version = "v3.9.1",
 )
 
 load("//build/rules/kind:def.bzl", "kind_binary")
