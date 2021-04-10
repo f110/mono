@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "controllers",
+    srcs = ["controllers.go"],
+    importpath = "go.f110.dev/mono/go/pkg/cmd/controllers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/fsm",
+        "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/controllers/grafana",
+        "//go/pkg/k8s/controllers/harbor",
+        "//go/pkg/k8s/controllers/minio",
+        "//go/pkg/k8s/informers/externalversions",
+        "//go/pkg/k8s/probe",
+        "//go/pkg/logger",
+        "//vendor/github.com/google/uuid",
+        "//vendor/github.com/hashicorp/vault/api",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/client-go/informers",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
+        "//vendor/k8s.io/client-go/tools/clientcmd",
+        "//vendor/k8s.io/client-go/tools/leaderelection",
+        "//vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
+        "//vendor/k8s.io/component-base/metrics/legacyregistry",
+        "//vendor/k8s.io/klog",
+    ],
+)

@@ -66,25 +66,6 @@ func NewBucketController(
 	sharedInformerFactory informers.SharedInformerFactory,
 	runOutsideCluster bool,
 ) (*BucketController, error) {
-	_, apiList, err := coreClient.Discovery().ServerGroupsAndResources()
-	if err != nil {
-		return nil, err
-	}
-	found := false
-	for _, v := range apiList {
-		if v.GroupVersion == "miniocontroller.min.io/v1beta1" {
-			for _, v := range v.APIResources {
-				if v.Kind == "MinIOInstance" {
-					found = true
-					break
-				}
-			}
-		}
-	}
-	if !found {
-		return nil, xerrors.New("minio-operator is not installed")
-	}
-
 	mbInformer := sharedInformerFactory.Minio().V1alpha1().MinIOBuckets()
 
 	c := &BucketController{
