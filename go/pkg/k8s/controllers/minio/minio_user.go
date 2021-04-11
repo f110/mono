@@ -280,7 +280,7 @@ func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, sec
 	}
 
 	_, err := c.vaultClient.Logical().Write(
-		"/"+path.Join(user.Spec.MountPath, user.Spec.Path),
+		"/"+path.Join(user.Spec.MountPath, "data", user.Spec.Path),
 		data,
 	)
 	if err != nil {

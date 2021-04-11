@@ -62,7 +62,8 @@ func minIOUserFixture() (*miniov1alpha1.MinIOUser, []runtime.Object) {
 			Namespace: metav1.NamespaceDefault,
 		},
 		Spec: miniov1alpha1.MinIOUserSpec{
-			Path: "/test",
+			Path:      "/test",
+			MountPath: "/secret",
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "minio",
