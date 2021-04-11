@@ -40,6 +40,9 @@ spec:
             type: object
           spec:
             properties:
+              mountPath:
+                description: MountPath is a mount path of KV secrets engine
+                type: string
               path:
                 description: Path is a path in Vault.
                 type: string
@@ -88,6 +91,7 @@ spec:
                     type: object
                 type: object
             required:
+            - mountPath
             - path
             - selector
             type: object

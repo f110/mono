@@ -78,6 +78,8 @@ type MinIOUserSpec struct {
 	Selector metav1.LabelSelector `json:"selector"`
 	// Path is a path in Vault.
 	Path string `json:"path"`
+	// MountPath is a mount path of KV secrets engine
+	MountPath string `json:"mountPath"`
 }
 
 type MinIOUserStatus struct {

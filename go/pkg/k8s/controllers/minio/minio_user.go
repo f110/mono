@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"reflect"
 	"time"
 
@@ -277,8 +278,9 @@ func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, sec
 			"secretkey": string(secret.Data["secretkey"]),
 		},
 	}
+
 	_, err := c.vaultClient.Logical().Write(
-		"/secret/data"+user.Spec.Path,
+		"/"+path.Join(user.Spec.MountPath, user.Spec.Path),
 		data,
 	)
 	if err != nil {
