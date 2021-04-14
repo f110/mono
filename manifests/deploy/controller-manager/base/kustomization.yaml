@@ -1,7 +1,5 @@
 resources:
-  - ../../../crd/grafana
-  - ../../../crd/harbor
-  - ../../../crd/minio
+  - ../../../crd
   - ../../../rbac/grafana
   - ../../../rbac/harbor
   - ../../../rbac/minio

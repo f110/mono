@@ -6,9 +6,7 @@ kustomization(
     resources = [
         "role_binding.yaml",
         "//manifests/controller-manager",
-        "//manifests/crd/grafana",
-        "//manifests/crd/harbor",
-        "//manifests/crd/minio",
+        "//manifests/crd",
         "//manifests/rbac/grafana",
         "//manifests/rbac/harbor",
         "//manifests/rbac/leader-election",
