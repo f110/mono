@@ -43,6 +43,26 @@ rules:
   - patch
   - update
 - apiGroups:
+  - minio.f110.dev
+  resources:
+  - miniousers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - minio.f110.dev
+  resources:
+  - miniousers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - miniocontroller.min.io
   resources:
   - minioinstances
