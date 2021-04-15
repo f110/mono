@@ -1,14 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: grafana-admin-leader-election-binding
+  name: mono-controller-manager-leader-election-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: leader-election
 subjects:
   - kind: ServiceAccount
-    name: controller-manager
+    name: mono-controller-manager
     namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -21,7 +21,7 @@ roleRef:
   name: grafana-admin
 subjects:
   - kind: ServiceAccount
-    name: controller-manager
+    name: mono-controller-manager
     namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -34,7 +34,7 @@ roleRef:
   name: harbor-project-operator
 subjects:
   - kind: ServiceAccount
-    name: controller-manager
+    name: mono-controller-manager
     namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -47,5 +47,5 @@ roleRef:
   name: minio-extra-operator
 subjects:
   - kind: ServiceAccount
-    name: controller-manager
+    name: mono-controller-manager
     namespace: default
