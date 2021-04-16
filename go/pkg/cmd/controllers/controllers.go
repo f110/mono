@@ -104,8 +104,8 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOBucket,
-		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
-			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, shared, p.dev)
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, core, shared, p.dev)
 			if err != nil {
 				return nil, xerrors.Errorf(": %w", err)
 			}

@@ -40,6 +40,10 @@ func Error(err error) (State, error) {
 	return UnknownState, err
 }
 
+func Finish() (State, error) {
+	return CloseState, nil
+}
+
 func (f *FSM) SignalHandling(signals ...os.Signal) {
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh, signals...)

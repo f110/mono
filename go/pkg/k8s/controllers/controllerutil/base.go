@@ -28,6 +28,11 @@ type Controller interface {
 	Finalize(ctx context.Context, obj runtime.Object) error
 }
 
+type Reconciler interface {
+	Reconcile(ctx context.Context, obj runtime.Object) error
+	Finalize(ctx context.Context, obj runtime.Object) error
+}
+
 type ControllerBase struct {
 	queue      *WorkQueue
 	supervisor *parallel.Supervisor
@@ -35,6 +40,7 @@ type ControllerBase struct {
 	log        *zap.Logger
 
 	impl        Controller
+	reconciler  Reconciler
 	eventSource []cache.SharedIndexInformer
 	informers   []cache.SharedIndexInformer
 	finalizers  []string
@@ -56,11 +62,19 @@ func NewBase(
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: name})
 
+	var r Reconciler
+	if fn, ok := v.(interface {
+		NewReconciler() Reconciler
+	}); ok {
+		r = fn.NewReconciler()
+	}
+
 	return &ControllerBase{
 		queue:       NewWorkQueue(name),
 		recorder:    recorder,
 		log:         log,
 		impl:        v,
+		reconciler:  r,
 		eventSource: eventSource,
 		informers:   informers,
 		finalizers:  finalizers,
@@ -175,9 +189,17 @@ func (b *ControllerBase) process(key string) error {
 	}
 
 	if objMeta.GetDeletionTimestamp().IsZero() {
-		err = b.impl.Reconcile(ctx, obj)
+		if b.reconciler != nil {
+			err = b.reconciler.Reconcile(ctx, obj)
+		} else {
+			err = b.impl.Reconcile(ctx, obj)
+		}
 	} else {
-		err = b.impl.Finalize(ctx, obj)
+		if b.reconciler != nil {
+			err = b.reconciler.Finalize(ctx, obj)
+		} else {
+			err = b.impl.Finalize(ctx, obj)
+		}
 	}
 	if err != nil {
 		if errors.Is(err, &RetryError{}) {
@@ -245,17 +267,4 @@ func containsString(v []string, s string) bool {
 	}
 
 	return false
-}
-
-func removeString(v []string, s string) []string {
-	result := make([]string, 0, len(v))
-	for _, item := range v {
-		if item == s {
-			continue
-		}
-
-		result = append(result, item)
-	}
-
-	return result
 }

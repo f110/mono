@@ -28,7 +28,7 @@ func newRunner() *controllertest.TestRunner {
 }
 
 func newBucketController(t *testing.T, runner *controllertest.TestRunner) *BucketController {
-	controller, err := NewBucketController(runner.CoreClient, runner.Client, nil, runner.SharedInformerFactory, false)
+	controller, err := NewBucketController(runner.CoreClient, runner.Client, nil, runner.CoreSharedInformerFactory, runner.SharedInformerFactory, false)
 	require.NoError(t, err)
 
 	return controller

@@ -58,7 +58,13 @@ func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) er
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return c.Reconcile(ctx, v)
+	if fn, ok := c.(interface {
+		NewReconciler() controllerutil.Reconciler
+	}); ok {
+		return fn.NewReconciler().Reconcile(ctx, v)
+	} else {
+		return c.Reconcile(ctx, v)
+	}
 }
 
 func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) error {
@@ -67,7 +73,13 @@ func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) err
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	return c.Finalize(ctx, v)
+	if fn, ok := c.(interface {
+		NewReconciler() controllerutil.Reconciler
+	}); ok {
+		return fn.NewReconciler().Finalize(ctx, v)
+	} else {
+		return c.Finalize(ctx, v)
+	}
 }
 
 func (r *TestRunner) editActions() []*Action {
