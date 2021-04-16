@@ -11,7 +11,6 @@ pkg_tar(
 
 container_image(
     name = "image",
-    base = "@com_google_distroless_base_debug//image",
     tars = [
         ":plugins",
     ],
