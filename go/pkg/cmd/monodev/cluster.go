@@ -267,46 +267,6 @@ func childPodsOfStatefulSet(ctx context.Context, client kubernetes.Interface, st
 	return childPods, nil
 }
 
-func waitForReadyPod(ctx context.Context, client kubernetes.Interface, namespace, name string) error {
-	ticker := time.NewTicker(time.Second)
-
-	for {
-		select {
-		case <-ticker.C:
-			deploy, err := client.AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
-			if err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			if deploy.Status.ObservedGeneration != deploy.Generation {
-				continue
-			}
-
-			if deploy.Status.ReadyReplicas != *deploy.Spec.Replicas {
-				continue
-			}
-
-			return nil
-		case <-ctx.Done():
-			return xerrors.New("time out:")
-		}
-	}
-}
-
-func tailLog(ctx context.Context, client kubernetes.Interface, namespace, name string) error {
-	req := client.CoreV1().Pods(namespace).GetLogs(name, &corev1.PodLogOptions{Follow: true})
-	s, err := req.Stream(ctx)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	_, err = io.Copy(os.Stdout, s)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	return nil
-}
-
 func Cluster(rootCmd *cobra.Command) {
 	clusterCmd := &cobra.Command{
 		Use: "cluster",

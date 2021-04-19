@@ -10,36 +10,13 @@ go_vendor(
     ],
 )
 
-alias(
-    name = "monodev",
-    actual = "//go/cmd/monodev",
-)
+load("@dev_f110_rules_k8s_controller//k8s/kind:cluster.bzl", "cluster")
 
-sh_binary(
-    name = "create_cluster",
-    srcs = [":monodev"],
-    args = [
-        "cluster",
-        "create",
-        "--kind=$(location @kind//:file)",
-        "--k8s-version=v1.19.3",
-        "--manifest=$(location //manifests/devcluster)",
-    ],
-    data = [
-        "//manifests/devcluster",
-        "@kind//:file",
-    ],
-)
-
-sh_binary(
-    name = "delete_cluster",
-    srcs = [":monodev"],
-    args = [
-        "cluster",
-        "delete",
-        "--kind=$(location @kind//:file)",
-    ],
-    data = ["@kind//:file"],
+cluster(
+    name = "mono",
+    version = "v1.19.3",
+    worker_num = 3,
+    manifest = "//manifests/devcluster",
 )
 
 load("//build:job.bzl", "job")

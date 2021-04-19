@@ -48,20 +48,20 @@ http_archive(
     urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.11.4.zip"],
 )
 
-http_archive(
-    name = "dev_f110_rules_k8s_controller",
-    sha256 = "ec185cf615f01d69ce25ad0ca60c7dbb22b5f570af6f6ce199ca6c1812a86ae6",
-    strip_prefix = "rules_k8s_controller-0.10.0",
-    urls = [
-        "https://github.com/f110/rules_k8s_controller/archive/v0.10.0.tar.gz",
-    ],
-)
-
-#git_repository(
+#http_archive(
 #    name = "dev_f110_rules_k8s_controller",
-#    commit = "e1fc637572e9c6f5b0d3d397fc8d91cb6583e1c4",
-#    remote = "https://github.com/f110/rules_k8s_controller",
+#    sha256 = "ec185cf615f01d69ce25ad0ca60c7dbb22b5f570af6f6ce199ca6c1812a86ae6",
+#    strip_prefix = "rules_k8s_controller-0.10.0",
+#    urls = [
+#        "https://github.com/f110/rules_k8s_controller/archive/v0.10.0.tar.gz",
+#    ],
 #)
+
+git_repository(
+    name = "dev_f110_rules_k8s_controller",
+    commit = "d1b7b5f207c738cc25c306e36bd6e174e450d225",
+    remote = "https://github.com/f110/rules_k8s_controller",
+)
 
 git_repository(
     name = "dev_f110_rules_extras",
