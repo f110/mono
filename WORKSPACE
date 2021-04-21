@@ -59,7 +59,7 @@ http_archive(
 
 git_repository(
     name = "dev_f110_rules_k8s_controller",
-    commit = "d1b7b5f207c738cc25c306e36bd6e174e450d225",
+    commit = "f90eae06f614aba0c065e6fd1d5c09b5dd476851",
     remote = "https://github.com/f110/rules_k8s_controller",
 )
 
@@ -161,7 +161,7 @@ load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary"
 
 kustomize_binary(
     name = "kustomize",
-    version = "v3.9.1",
+    version = "v4.0.5",
 )
 
 load("//build/rules/kind:def.bzl", "kind_binary")
