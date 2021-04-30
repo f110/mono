@@ -8,7 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"go.f110.dev/mono/go/pkg/k8s/portforward"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -88,7 +89,7 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size in
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	_, err = mc.PutObjectWithContext(ctx, m.bucket, name, r, size, minio.PutObjectOptions{})
+	_, err = mc.PutObject(ctx, m.bucket, name, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -105,7 +106,7 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	obj, err := mc.GetObjectWithContext(ctx, m.bucket, name, minio.GetObjectOptions{})
+	obj, err := mc.GetObject(ctx, m.bucket, name, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -126,20 +127,12 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	names := make(chan string)
-	go func() {
-		defer close(names)
-		names <- name
-	}()
-
-	errCh := mc.RemoveObjectsWithContext(ctx, m.bucket, names)
-	select {
-	case err, ok := <-errCh:
-		if !ok {
-			return nil
-		}
-		return xerrors.Errorf(": %w", err.Err)
+	err = mc.RemoveObject(ctx, m.bucket, name, minio.RemoveObjectOptions{})
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
+
+	return nil
 }
 
 func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *pf.PortForwarder, error) {
@@ -147,11 +140,15 @@ func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *pf.PortForw
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
-	mc, err := minio.New(endpoint, m.accessKey, m.secretAccessKey, false)
+	creds := credentials.NewStaticV4(m.accessKey, m.secretAccessKey, "")
+	mc, err := minio.New(endpoint, &minio.Options{
+		Creds:     creds,
+		Secure:    false,
+		Transport: m.opt.Transport,
+	})
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
-	mc.SetCustomTransport(m.opt.Transport)
 
 	return mc, forwarder, nil
 }

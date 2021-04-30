@@ -25,6 +25,7 @@ require (
 	github.com/jarcoal/httpmock v1.0.7
 	github.com/minio/minio v0.0.0-20210407225602-2899cc92b45f
 	github.com/minio/minio-go/v6 v6.0.50
+	github.com/minio/minio-go/v7 v7.0.11-0.20210302210017-6ae69c73ce78
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/peco/peco v0.5.8
