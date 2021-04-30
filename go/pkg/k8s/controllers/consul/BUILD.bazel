@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "consul",
@@ -21,5 +21,21 @@ go_library(
         "//vendor/k8s.io/client-go/listers/core/v1:core",
         "//vendor/k8s.io/client-go/rest",
         "//vendor/k8s.io/client-go/tools/cache",
+    ],
+)
+
+go_test(
+    name = "consul_test",
+    srcs = ["backup_test.go"],
+    embed = [":consul"],
+    deps = [
+        "//go/pkg/api/consul/v1alpha1",
+        "//go/pkg/k8s/controllers/controllertest",
+        "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
     ],
 )
