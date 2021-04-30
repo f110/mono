@@ -7,20 +7,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/minio/minio-go/v6"
-	"go.uber.org/zap"
+	"go.f110.dev/mono/go/pkg/k8s/portforward"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
-
-	"go.f110.dev/mono/go/pkg/logger"
+	pf "k8s.io/client-go/tools/portforward"
 )
 
 type MinIOOptions struct {
@@ -30,6 +26,13 @@ type MinIOOptions struct {
 	Bucket          string
 	AccessKey       string
 	SecretAccessKey string
+
+	// PodLister is an optional value.
+	PodLister corev1listers.PodLister
+	// ServiceLister is an optional value.
+	ServiceLister corev1listers.ServiceLister
+	// Transport is an optional value.
+	Transport http.RoundTripper
 }
 
 func NewMinIOOptions(name, namespace string, port int, bucket, accessKey, secretAccessKey string) MinIOOptions {
@@ -54,6 +57,8 @@ type MinIO struct {
 	bucket          string
 	accessKey       string
 	secretAccessKey string
+
+	opt MinIOOptions
 }
 
 func NewMinIOStorage(client kubernetes.Interface, config *rest.Config, opt MinIOOptions, dev bool) *MinIO {
@@ -67,6 +72,7 @@ func NewMinIOStorage(client kubernetes.Interface, config *rest.Config, opt MinIO
 		accessKey:       opt.AccessKey,
 		secretAccessKey: opt.SecretAccessKey,
 		dev:             dev,
+		opt:             opt,
 	}
 }
 
@@ -136,7 +142,7 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 	}
 }
 
-func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *portforward.PortForwarder, error) {
+func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *pf.PortForwarder, error) {
 	endpoint, forwarder, err := m.getMinIOEndpoint(ctx, m.name, m.namespace, m.port)
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
@@ -145,74 +151,36 @@ func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *portforward
 	if err != nil {
 		return nil, nil, xerrors.Errorf(": %w", err)
 	}
+	mc.SetCustomTransport(m.opt.Transport)
 
 	return mc, forwarder, nil
 }
 
-func (m *MinIO) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *portforward.PortForwarder, error) {
-	var forwarder *portforward.PortForwarder
+func (m *MinIO) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
+	var forwarder *pf.PortForwarder
 	endpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
 	if m.dev {
-		svc, err := m.client.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
+		var svc *corev1.Service
+		if m.opt.ServiceLister != nil {
+			if s, err := m.opt.ServiceLister.Services(namespace).Get(name); err != nil {
+				return "", nil, xerrors.Errorf(": %w", err)
+			} else {
+				svc = s
+			}
+		} else {
+			s, err := m.client.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
+			if err != nil {
+				return "", nil, xerrors.Errorf(": %w", err)
+			}
+			svc = s
+		}
+		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.config, m.client, m.opt.PodLister)
 		if err != nil {
 			return "", nil, xerrors.Errorf(": %w", err)
 		}
-		forwarder, err = m.portForward(ctx, svc, int(svc.Spec.Ports[0].Port))
-		if err != nil {
-			return "", nil, err
-		}
-
-		ports, err := forwarder.GetPorts()
-		if err != nil {
-			return "", nil, err
-		}
-		endpoint = fmt.Sprintf("127.0.0.1:%d", ports[0].Local)
+		forwarder = f
+		endpoint = fmt.Sprintf("127.0.0.1:%d", port)
 	}
 
 	return endpoint, forwarder, nil
-}
-
-func (m *MinIO) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
-	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := m.client.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
-	if err != nil {
-		return nil, err
-	}
-	var pod *corev1.Pod
-	for i, v := range podList.Items {
-		if v.Status.Phase == corev1.PodRunning {
-			pod = &podList.Items[i]
-			break
-		}
-	}
-	if pod == nil {
-		return nil, xerrors.New("all pods are not running yet")
-	}
-
-	req := m.client.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
-	transport, upgrader, err := spdy.RoundTripperFor(m.config)
-	if err != nil {
-		return nil, err
-	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
-
-	readyCh := make(chan struct{})
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		err := pf.ForwardPorts()
-		if err != nil {
-			logger.Log.Error("Failed get ports", zap.Error(err))
-		}
-	}()
-
-	select {
-	case <-readyCh:
-	case <-time.After(5 * time.Second):
-		return nil, xerrors.New("timed out")
-	}
-
-	return pf, nil
 }

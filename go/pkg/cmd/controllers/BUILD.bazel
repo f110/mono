@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//go/pkg/fsm",
         "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/controllers/consul",
         "//go/pkg/k8s/controllers/grafana",
         "//go/pkg/k8s/controllers/harbor",
         "//go/pkg/k8s/controllers/minio",

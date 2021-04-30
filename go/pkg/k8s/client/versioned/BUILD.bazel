@@ -9,6 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/client/versioned",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/k8s/client/versioned/typed/consul/v1alpha1",
         "//go/pkg/k8s/client/versioned/typed/grafana/v1alpha1",
         "//go/pkg/k8s/client/versioned/typed/harbor/v1alpha1",
         "//go/pkg/k8s/client/versioned/typed/minio/v1alpha1",

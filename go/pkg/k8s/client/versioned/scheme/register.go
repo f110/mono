@@ -27,6 +27,7 @@ package scheme
 
 import (
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
@@ -41,6 +42,7 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	consulv1alpha1.AddToScheme,
 	grafanav1alpha1.AddToScheme,
 	harborv1alpha1.AddToScheme,
 	miniov1alpha1.AddToScheme,

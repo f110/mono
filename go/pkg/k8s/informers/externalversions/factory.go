@@ -31,6 +31,7 @@ import (
 	time "time"
 
 	versioned "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	consul "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/consul"
 	grafana "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/grafana"
 	harbor "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/harbor"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
@@ -182,10 +183,15 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
+	Consul() consul.Interface
 	Grafana() grafana.Interface
 	Harbor() harbor.Interface
 	Minio() minio.Interface
 	Miniocontroller() miniocontroller.Interface
+}
+
+func (f *sharedInformerFactory) Consul() consul.Interface {
+	return consul.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Grafana() grafana.Interface {

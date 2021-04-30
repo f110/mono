@@ -14,9 +14,9 @@ load("@dev_f110_rules_k8s_controller//k8s/kind:cluster.bzl", "cluster")
 
 cluster(
     name = "mono",
+    manifest = "//manifests/devcluster",
     version = "v1.19.3",
     worker_num = 3,
-    manifest = "//manifests/devcluster",
 )
 
 load("//build:job.bzl", "job")

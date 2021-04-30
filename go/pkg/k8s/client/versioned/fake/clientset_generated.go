@@ -27,6 +27,8 @@ package fake
 
 import (
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	consulv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/consul/v1alpha1"
+	fakeconsulv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/consul/v1alpha1/fake"
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1"
 	fakegrafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1/fake"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1"
@@ -88,6 +90,11 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 }
 
 var _ clientset.Interface = &Clientset{}
+
+// ConsulV1alpha1 retrieves the ConsulV1alpha1Client
+func (c *Clientset) ConsulV1alpha1() consulv1alpha1.ConsulV1alpha1Interface {
+	return &fakeconsulv1alpha1.FakeConsulV1alpha1{Fake: &c.Fake}
+}
 
 // GrafanaV1alpha1 retrieves the GrafanaV1alpha1Client
 func (c *Clientset) GrafanaV1alpha1() grafanav1alpha1.GrafanaV1alpha1Interface {

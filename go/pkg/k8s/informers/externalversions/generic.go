@@ -29,7 +29,8 @@ import (
 	"fmt"
 
 	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	v1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	v1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
+	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -62,10 +63,14 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=grafana.f110.dev, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("grafanas"):
+	// Group=consul.f110.dev, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("consulbackups"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Consul().V1alpha1().ConsulBackups().Informer()}, nil
+
+		// Group=grafana.f110.dev, Version=v1alpha1
+	case grafanav1alpha1.SchemeGroupVersion.WithResource("grafanas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Grafana().V1alpha1().Grafanas().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("grafanausers"):
+	case grafanav1alpha1.SchemeGroupVersion.WithResource("grafanausers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Grafana().V1alpha1().GrafanaUsers().Informer()}, nil
 
 		// Group=harbor.f110.dev, Version=v1alpha1

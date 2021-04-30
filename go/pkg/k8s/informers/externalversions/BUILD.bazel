@@ -9,10 +9,12 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/api/consul/v1alpha1",
         "//go/pkg/api/grafana/v1alpha1",
         "//go/pkg/api/harbor/v1alpha1",
         "//go/pkg/api/minio/v1alpha1",
         "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/informers/externalversions/consul",
         "//go/pkg/k8s/informers/externalversions/grafana",
         "//go/pkg/k8s/informers/externalversions/harbor",
         "//go/pkg/k8s/informers/externalversions/internalinterfaces",

@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/pflag"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/consul"
 	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
@@ -41,6 +42,7 @@ const (
 	ControllerHarborRobotAccount = "harbor-robot-account"
 	ControllerMinIOBucket        = "minio-bucket"
 	ControllerMinIOUser          = "minio-user"
+	ControllerConsulBackup       = "consul-backup"
 )
 
 type ChildController struct {
@@ -128,6 +130,16 @@ var AllChildControllers = ChildControllers{
 				return nil, xerrors.Errorf(": %w", err)
 			}
 			return muc, nil
+		},
+	},
+	{
+		Name: ControllerConsulBackup,
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+			b, err := consul.NewBackupController(core, shared, p.coreClient, p.client, p.config, p.dev)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			return b, nil
 		},
 	},
 }

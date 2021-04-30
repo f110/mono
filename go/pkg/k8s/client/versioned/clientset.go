@@ -28,6 +28,7 @@ package versioned
 import (
 	"fmt"
 
+	consulv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/consul/v1alpha1"
 	grafanav1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/grafana/v1alpha1"
 	harborv1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/harbor/v1alpha1"
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1"
@@ -39,6 +40,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	ConsulV1alpha1() consulv1alpha1.ConsulV1alpha1Interface
 	GrafanaV1alpha1() grafanav1alpha1.GrafanaV1alpha1Interface
 	HarborV1alpha1() harborv1alpha1.HarborV1alpha1Interface
 	MinioV1alpha1() miniov1alpha1.MinioV1alpha1Interface
@@ -49,10 +51,16 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	consulV1alpha1         *consulv1alpha1.ConsulV1alpha1Client
 	grafanaV1alpha1        *grafanav1alpha1.GrafanaV1alpha1Client
 	harborV1alpha1         *harborv1alpha1.HarborV1alpha1Client
 	minioV1alpha1          *miniov1alpha1.MinioV1alpha1Client
 	miniocontrollerV1beta1 *miniocontrollerv1beta1.MiniocontrollerV1beta1Client
+}
+
+// ConsulV1alpha1 retrieves the ConsulV1alpha1Client
+func (c *Clientset) ConsulV1alpha1() consulv1alpha1.ConsulV1alpha1Interface {
+	return c.consulV1alpha1
 }
 
 // GrafanaV1alpha1 retrieves the GrafanaV1alpha1Client
@@ -96,6 +104,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.consulV1alpha1, err = consulv1alpha1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.grafanaV1alpha1, err = grafanav1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -124,6 +136,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.consulV1alpha1 = consulv1alpha1.NewForConfigOrDie(c)
 	cs.grafanaV1alpha1 = grafanav1alpha1.NewForConfigOrDie(c)
 	cs.harborV1alpha1 = harborv1alpha1.NewForConfigOrDie(c)
 	cs.minioV1alpha1 = miniov1alpha1.NewForConfigOrDie(c)
@@ -136,6 +149,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.consulV1alpha1 = consulv1alpha1.New(c)
 	cs.grafanaV1alpha1 = grafanav1alpha1.New(c)
 	cs.harborV1alpha1 = harborv1alpha1.New(c)
 	cs.minioV1alpha1 = miniov1alpha1.New(c)

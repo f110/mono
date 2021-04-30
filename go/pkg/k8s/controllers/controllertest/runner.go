@@ -115,6 +115,8 @@ func (r *TestRunner) editActions() []*Action {
 }
 
 func (r *TestRunner) AssertAction(t *testing.T, e Action) bool {
+	t.Helper()
+
 	matchVerb := false
 	matchObj := false
 Match:

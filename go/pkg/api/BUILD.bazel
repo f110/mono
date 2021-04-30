@@ -3,6 +3,7 @@ load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "k8s_code_generator")
 k8s_code_generator(
     name = "gen",
     srcs = [
+        "//go/pkg/api/consul/v1alpha1",
         "//go/pkg/api/grafana/v1alpha1",
         "//go/pkg/api/harbor/v1alpha1",
         "//go/pkg/api/minio/v1alpha1",
