@@ -48,30 +48,34 @@ func (m *MockMinIO) Transport(mock *httpmock.MockTransport) {
 	// Bucket location
 	mock.RegisterRegexpResponder(
 		http.MethodGet,
-		regexp.MustCompile(fmt.Sprintf(`.*/(%s)/\?location=$`, buckets)),
-		httpmock.NewStringResponder(
-			http.StatusOK, `<?xml version="1.0" encoding="UTF-8"?>
+		regexp.MustCompile(`.*/.+/\?location=$`),
+		func(req *http.Request) (*http.Response, error) {
+			s := strings.Split(req.URL.Path, "/")
+			bucket := s[1]
+			if _, ok := m.objects[bucket]; ok {
+				return httpmock.NewStringResponse(http.StatusOK, `<?xml version="1.0" encoding="UTF-8"?>
 <LocationConstraint>
   <LocationConstraint>us-east-1</LocationConstraint>
-</LocationConstraint>`,
-		),
-	)
-	mock.RegisterRegexpResponder(
-		http.MethodGet,
-		regexp.MustCompile(`.*/.+/\?location=$`),
-		httpmock.NewXmlResponderOrPanic(http.StatusNotFound, &minio.ErrorResponse{Code: "NoSuchBucket"}),
+</LocationConstraint>`), nil
+			} else {
+				return httpmock.NewXmlResponse(http.StatusNotFound, &minio.ErrorResponse{Code: "NoSuchBucket"})
+			}
+		},
 	)
 
 	// BucketExists
 	mock.RegisterRegexpResponder(
 		http.MethodHead,
-		regexp.MustCompile(fmt.Sprintf(`.*/(%s)/$`, buckets)),
-		httpmock.NewXmlResponderOrPanic(http.StatusOK, &minio.ErrorResponse{}),
-	)
-	mock.RegisterRegexpResponder(
-		http.MethodHead,
 		regexp.MustCompile(`.*/.+/$`),
-		httpmock.NewXmlResponderOrPanic(http.StatusNotFound, &minio.ErrorResponse{Code: "NoSuchBucket"}),
+		func(req *http.Request) (*http.Response, error) {
+			s := strings.Split(req.URL.Path, "/")
+			bucket := s[1]
+			if _, ok := m.objects[bucket]; ok {
+				return httpmock.NewXmlResponse(http.StatusOK, &minio.ErrorResponse{})
+			} else {
+				return httpmock.NewXmlResponse(http.StatusNotFound, &minio.ErrorResponse{Code: "NoSuchBucket"})
+			}
+		},
 	)
 
 	// Pub Object
