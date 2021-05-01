@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storagetest",
+    srcs = ["minio.go"],
+    importpath = "go.f110.dev/mono/go/pkg/storage/storagetest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/minio/minio-go/v7:minio-go",
+    ],
+)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"reflect"
+	"sort"
 
 	"github.com/hashicorp/consul/api"
 	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
@@ -143,11 +144,29 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 		return xerrors.Errorf(": %w", err)
 	}
 
+	if err := b.rotateBackupFiles(ctx, backup); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
 	if history.Succeeded {
 		updated.Status.Succeeded = true
 		updated.Status.LastSucceededTime = &now
 	}
 	updated.Status.History = append(updated.Status.History, *history)
+	succeededCount := 0
+	firstIndex := 0
+	for i := len(updated.Status.History) - 1; i >= 0; i-- {
+		if updated.Status.History[i].Succeeded {
+			succeededCount++
+			firstIndex = i
+		}
+		if succeededCount == updated.Spec.MaxBackups {
+			break
+		}
+	}
+	if succeededCount == updated.Spec.MaxBackups && firstIndex+1 < len(updated.Status.History) {
+		updated.Status.History = updated.Status.History[firstIndex:]
+	}
 	if !reflect.DeepEqual(backup.Status, updated.Status) {
 		_, err := b.client.ConsulV1alpha1().ConsulBackups(backup.Namespace).UpdateStatus(ctx, updated, metav1.UpdateOptions{})
 		if err != nil {
@@ -219,13 +238,86 @@ func (b *BackupController) storeBackupFile(
 
 		client := storage.NewGCS(b, spec.Bucket)
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
+		history.Path = filepath.Join(spec.Path, filename)
 		if err := client.Put(ctx, data, filepath.Join(spec.Path, filename)); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		history.Path = filepath.Join(spec.Path, filename)
 
+		history.Succeeded = true
 		return nil
 	default:
 		return xerrors.New("Not configured a storage")
 	}
+}
+
+func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consulv1alpha1.ConsulBackup) error {
+	if backup.Spec.MaxBackups == 0 {
+		// In this case, we don't have to rotate a backup file.
+		return nil
+	}
+
+	switch {
+	case backup.Spec.Storage.MinIO != nil:
+		spec := backup.Spec.Storage.MinIO
+
+		accessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.AccessKeyID.Name)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		accessKey, ok := accessKeySecret.Data[spec.Credential.AccessKeyID.Key]
+		if !ok {
+			return xerrors.Errorf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+		}
+		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		secretAccessKey, ok := secretAccessKeySecret.Data[spec.Credential.SecretAccessKey.Key]
+		if !ok {
+			return xerrors.Errorf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+		}
+
+		mcOpt := storage.NewMinIOOptions(spec.Service.Name, spec.Service.Namespace, 9000, spec.Bucket, string(accessKey), string(secretAccessKey))
+		mcOpt.Transport = b.transport
+		mc := storage.NewMinIOStorage(b.coreClient, b.config, mcOpt, b.runOutsideCluster)
+
+		files, err := mc.List(ctx, spec.Path)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if len(files) <= backup.Spec.MaxBackups {
+			return nil
+		}
+		sort.Strings(files)
+		sort.Sort(sort.Reverse(sort.StringSlice(files)))
+		purgeTargets := files[backup.Spec.MaxBackups:]
+		for _, v := range purgeTargets {
+			if err := mc.Delete(ctx, v); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+		}
+	case backup.Spec.Storage.GCS != nil:
+		spec := backup.Spec.Storage.GCS
+		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSONKey.Name)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		b, ok := credential.Data[spec.Credential.ServiceAccountJSONKey.Key]
+		if !ok {
+			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSONKey.Key, spec.Credential.ServiceAccountJSONKey.Name)
+		}
+
+		client := storage.NewGCS(b, spec.Bucket)
+		files, err := client.List(ctx, spec.Path)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		for _, v := range files {
+			if err := client.Delete(ctx, v.Name); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+		}
+	}
+
+	return nil
 }

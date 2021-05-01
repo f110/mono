@@ -31,7 +31,9 @@ go_test(
     deps = [
         "//go/pkg/api/consul/v1alpha1",
         "//go/pkg/k8s/controllers/controllertest",
+        "//go/pkg/storage/storagetest",
         "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/minio/minio-go/v7:minio-go",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
         "//vendor/k8s.io/api/core/v1:core",

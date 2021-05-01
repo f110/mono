@@ -97,6 +97,30 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size in
 	return nil
 }
 
+func (m *MinIO) List(ctx context.Context, prefix string) ([]string, error) {
+	mc, forwarder, err := m.newMinIOClient(ctx)
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	if prefix[len(prefix)-1] != '/' {
+		prefix += "/"
+	}
+	listCh := mc.ListObjects(ctx, m.bucket, minio.ListObjectsOptions{Prefix: prefix})
+	files := make([]string, 0)
+	for obj := range listCh {
+		if obj.Err != nil {
+			return nil, xerrors.Errorf(": %w", obj.Err)
+		}
+		files = append(files, obj.Key)
+	}
+
+	return files, nil
+}
+
 func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 	mc, forwarder, err := m.newMinIOClient(ctx)
 	if forwarder != nil {
