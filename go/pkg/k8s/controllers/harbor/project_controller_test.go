@@ -26,17 +26,17 @@ func TestProjectController(t *testing.T) {
 	controller.transport = mockTransport
 	mockTransport.RegisterRegexpResponder(
 		http.MethodHead,
-		regexp.MustCompile(".+/api/projects.+"),
+		regexp.MustCompile(`.+/api/v2.0/projects.+`),
 		httpmock.NewStringResponder(http.StatusNotFound, ""),
 	)
 	mockTransport.RegisterRegexpResponder(
 		http.MethodPost,
-		regexp.MustCompile(".+/api/projects$"),
+		regexp.MustCompile(`.+/api/v2.0/projects$`),
 		httpmock.NewStringResponder(http.StatusCreated, ""),
 	)
 	mockTransport.RegisterRegexpResponder(
 		http.MethodGet,
-		regexp.MustCompile(".+/api/projects$"),
+		regexp.MustCompile(`.+/api/v2.0/projects$`),
 		httpmock.NewJsonResponderOrPanic(http.StatusOK, []harbor.Project{
 			{Id: 1, Name: target.Name},
 		}),
