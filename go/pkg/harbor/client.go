@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -58,12 +60,12 @@ func (h *Harbor) SetTransport(t http.RoundTripper) {
 func (h *Harbor) ListProjects() ([]Project, error) {
 	req, err := h.newRequest(http.MethodGet, "projects", nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	res, err := h.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -73,12 +75,12 @@ func (h *Harbor) ListProjects() ([]Project, error) {
 	case http.StatusUnauthorized:
 		return nil, errors.New("unauthorized")
 	default:
-		return nil, fmt.Errorf("unknown status code: %d", res.StatusCode)
+		return nil, fmt.Errorf("harbor: list project. unknown status code: %d", res.StatusCode)
 	}
 
 	projects := make([]Project, 0)
 	if err := json.NewDecoder(res.Body).Decode(&projects); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	return projects, nil
 }
@@ -86,11 +88,11 @@ func (h *Harbor) ListProjects() ([]Project, error) {
 func (h *Harbor) ExistProject(name string) (bool, error) {
 	req, err := h.newRequest(http.MethodHead, "projects?project_name="+name, nil)
 	if err != nil {
-		return false, err
+		return false, xerrors.Errorf(": %w", err)
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
-		return false, err
+		return false, xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -100,23 +102,23 @@ func (h *Harbor) ExistProject(name string) (bool, error) {
 	case http.StatusNotFound:
 		return false, nil
 	default:
-		return false, fmt.Errorf("exists project: unknown status code: %d", res.StatusCode)
+		return false, fmt.Errorf("harbor: exists project. unknown status code: %d", res.StatusCode)
 	}
 }
 
 func (h *Harbor) NewProject(p *NewProjectRequest) error {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(p); err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	req, err := h.newRequest(http.MethodPost, "projects", bytes.NewReader(buf.Bytes()))
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -126,7 +128,7 @@ func (h *Harbor) NewProject(p *NewProjectRequest) error {
 	case http.StatusConflict:
 		return fmt.Errorf("%s already exists", p.ProjectName)
 	default:
-		return fmt.Errorf("new project: unknown status code: %d", res.StatusCode)
+		return fmt.Errorf("harbor: new project. unknown status code: %d", res.StatusCode)
 	}
 
 	return nil
@@ -135,12 +137,12 @@ func (h *Harbor) NewProject(p *NewProjectRequest) error {
 func (h *Harbor) DeleteProject(projectId int) error {
 	req, err := h.newRequest(http.MethodDelete, fmt.Sprintf("projects/%d", projectId), nil)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	res, err := h.client.Do(req)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -152,23 +154,23 @@ func (h *Harbor) DeleteProject(projectId int) error {
 	case http.StatusNotFound:
 		return errors.New("project not found")
 	default:
-		return fmt.Errorf("delete project: unknown status code: %d", res.StatusCode)
+		return fmt.Errorf("harbor: delete project. unknown status code: %d", res.StatusCode)
 	}
 }
 
 func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccountRequest) (*RobotAccount, error) {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(robotRequest); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	req, err := h.newRequest(http.MethodPost, fmt.Sprintf("projects/%d/robots", projectId), bytes.NewReader(buf.Bytes()))
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -180,14 +182,14 @@ func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccount
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return nil, err
+			return nil, xerrors.Errorf(": %w", err)
 		}
 		return nil, fmt.Errorf("create robot acount: unknown status code: %d %s", res.StatusCode, string(b))
 	}
 
 	result := &RobotAccount{}
 	if err := json.NewDecoder(res.Body).Decode(result); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	return result, nil
@@ -196,11 +198,11 @@ func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccount
 func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 	req, err := h.newRequest(http.MethodDelete, fmt.Sprintf("projects/%d/robots/%d", projectId, robotId), nil)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -212,7 +214,7 @@ func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 		return fmt.Errorf("delete robot account: unknown status code: %d %s", res.StatusCode, string(b))
 	}
@@ -223,11 +225,11 @@ func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 func (h *Harbor) GetRobotAccounts(projectId int) ([]*RobotAccount, error) {
 	req, err := h.newRequest(http.MethodGet, fmt.Sprintf("projects/%d/robots", projectId), nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	res, err := h.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	defer res.Body.Close()
 
@@ -244,16 +246,16 @@ func (h *Harbor) GetRobotAccounts(projectId int) ([]*RobotAccount, error) {
 
 	result := make([]*RobotAccount, 0)
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	return result, nil
 }
 
 func (h *Harbor) newRequest(method string, endpoint string, body io.Reader) (*http.Request, error) {
-	r, err := http.NewRequest(method, fmt.Sprintf("%s/api/%s", h.host, endpoint), body)
+	r, err := http.NewRequest(method, fmt.Sprintf("%s/api/v2.0/%s", h.host, endpoint), body)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	r.SetBasicAuth(h.username, h.password)
 	r.Header.Set("Accept", "application/json")
