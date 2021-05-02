@@ -312,7 +312,14 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		for _, v := range files {
+		if len(files) <= backup.Spec.MaxBackups {
+			return nil
+		}
+		sort.Slice(files, func(i, j int) bool {
+			return files[j].Name < files[i].Name
+		})
+		purgeTargets := files[backup.Spec.MaxBackups:]
+		for _, v := range purgeTargets {
 			if err := client.Delete(ctx, v.Name); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
