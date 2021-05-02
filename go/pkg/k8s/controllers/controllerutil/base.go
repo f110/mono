@@ -148,11 +148,11 @@ func (b *ControllerBase) worker(ctx context.Context) {
 			}
 			obj = v
 		}
-		logger.Log.Debug("Get next queue", zap.Any("queue", obj))
+		b.log.Debug("Get next queue", zap.Any("queue", obj))
 
 		err := b.process(obj.(string))
 		if err != nil {
-			logger.Log.Info("Failed sync", zap.Error(err))
+			b.log.Info("Failed sync", zap.String("key", obj.(string)), zap.Error(err))
 		}
 	}
 }
