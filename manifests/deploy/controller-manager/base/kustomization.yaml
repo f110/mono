@@ -3,6 +3,7 @@ resources:
   - ../../../rbac/grafana
   - ../../../rbac/harbor
   - ../../../rbac/minio
+  - ../../../rbac/consul
   - ../../../rbac/leader-election
   - ../../../controller-manager
   - role_binding.yaml

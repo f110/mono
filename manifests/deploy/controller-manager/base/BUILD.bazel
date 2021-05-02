@@ -11,6 +11,7 @@ kustomization(
         "//manifests/rbac/harbor",
         "//manifests/rbac/leader-election",
         "//manifests/rbac/minio",
+        "//manifests/rbac/consul",
     ],
     visibility = ["//visibility:public"],
 )

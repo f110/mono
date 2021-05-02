@@ -4,6 +4,7 @@ kustomization(
     name = "crd",
     src = "kustomization.yaml",
     resources = [
+        "consul.f110.dev_consulbackups.yaml",
         "grafana.f110.dev_grafanas.yaml",
         "grafana.f110.dev_grafanausers.yaml",
         "harbor.f110.dev_harborprojects.yaml",

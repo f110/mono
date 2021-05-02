@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "consul",
-    srcs = ["backup.go"],
+    srcs = [
+        "backup.go",
+        "rbac.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/consul",
     visibility = ["//visibility:public"],
     deps = [
@@ -40,4 +43,14 @@ go_test(
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/runtime",
     ],
+)
+
+load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
+
+rbac_gen(
+    name = "rbac",
+    srcs = [":consul"],
+    dir = "manifests/rbac/consul",
+    rolename = "consul-admin",
+    visibility = ["//visibility:public"],
 )
