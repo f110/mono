@@ -3,13 +3,13 @@ package parallel
 import (
 	"context"
 	"math/rand"
+	"runtime"
 	"sync"
 	"time"
 
+	"go.f110.dev/mono/go/pkg/logger"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
-
-	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type supervisorState int
@@ -143,6 +143,10 @@ func (c *childProcess) run(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			c.restart++
+			const size = 64 << 10
+			stacktrace := make([]byte, size)
+			stacktrace = stacktrace[:runtime.Stack(stacktrace, false)]
+			c.Log.Warn("Panic", zap.String("stacktrace", string(stacktrace)))
 		}
 	}()
 
