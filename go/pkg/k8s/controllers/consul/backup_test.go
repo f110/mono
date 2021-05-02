@@ -84,7 +84,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		controller.transport = mockTransport
 		mockTransport.RegisterResponder(
 			http.MethodGet,
-			"http://127.0.0.1:8500/v1/snapshot",
+			"http://consul-server.default.svc:8500/v1/snapshot",
 			httpmock.NewStringResponder(http.StatusOK, "backup_data"),
 		)
 		mockMinio := storagetest.NewMockMinIO()
