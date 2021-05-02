@@ -17,6 +17,7 @@ import (
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	"go.f110.dev/mono/go/pkg/storage"
 	"golang.org/x/xerrors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeinformers "k8s.io/client-go/informers"
@@ -99,8 +100,11 @@ func (b *BackupController) GetObject(key string) (runtime.Object, error) {
 	}
 
 	backup, err := b.backupLister.ConsulBackups(namespace).Get(name)
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, xerrors.Errorf(": %w", err)
+	}
+	if apierrors.IsNotFound(err) {
+		return nil, nil
 	}
 
 	return backup, nil
