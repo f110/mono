@@ -42,7 +42,11 @@ func New(host, username, password string) *Harbor {
 		password: password,
 		client:   &http.Client{},
 	}
-	h.client.Transport = &roundTripper{username: username, password: password}
+	h.client.Transport = &roundTripper{
+		RoundTripper: http.DefaultTransport.(*http.Transport).Clone(),
+		username:     username,
+		password:     password,
+	}
 
 	return h
 }
