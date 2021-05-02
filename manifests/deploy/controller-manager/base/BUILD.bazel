@@ -7,11 +7,11 @@ kustomization(
         "role_binding.yaml",
         "//manifests/controller-manager",
         "//manifests/crd",
+        "//manifests/rbac/consul",
         "//manifests/rbac/grafana",
         "//manifests/rbac/harbor",
         "//manifests/rbac/leader-election",
         "//manifests/rbac/minio",
-        "//manifests/rbac/consul",
     ],
     visibility = ["//visibility:public"],
 )
