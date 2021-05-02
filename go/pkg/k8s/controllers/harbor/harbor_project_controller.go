@@ -115,20 +115,20 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	if ok, err := harborClient.ExistProject(harborProject.Name); err == nil && !ok {
 		if err := c.createProject(harborProject, harborClient); err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 	} else if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	projects, err := harborClient.ListProjects()
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	for _, v := range projects {
 		if v.Name == harborProject.Name {
@@ -143,7 +143,7 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 	if !reflect.DeepEqual(harborProject.Status, currentHP.Status) {
 		_, err = c.hpClient.HarborV1alpha1().HarborProjects(currentHP.Namespace).UpdateStatus(ctx, harborProject, metav1.UpdateOptions{})
 		if err != nil {
-			return err
+			return xerrors.Errorf(": %w", err)
 		}
 	}
 
@@ -155,13 +155,13 @@ func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, e
 	if c.runOutsideCluster {
 		pf, err := c.portForward(ctx, c.harborService, 8080)
 		if err != nil {
-			return nil, err
+			return nil, xerrors.Errorf(": %w", err)
 		}
 		defer pf.Close()
 
 		ports, err := pf.GetPorts()
 		if err != nil {
-			return nil, err
+			return nil, xerrors.Errorf(": %w", err)
 		}
 		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
 	}
@@ -179,7 +179,7 @@ func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProjec
 		newProject.Metadata.Public = "true"
 	}
 	if err := client.NewProject(newProject); err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
@@ -190,23 +190,23 @@ func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) er
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 
 	err = harborClient.DeleteProject(hp.Status.ProjectId)
 	if err != nil {
-		return err
+		return xerrors.Errorf(": %w", err)
 	}
 	hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
 	_, err = c.hpClient.HarborV1alpha1().HarborProjects(hp.Namespace).Update(ctx, hp, metav1.UpdateOptions{})
-	return err
+	return xerrors.Errorf(": %w", err)
 }
 
 func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	var pod *corev1.Pod
 	for i, v := range podList.Items {
@@ -222,14 +222,14 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
 	transport, upgrader, err := spdy.RoundTripperFor(c.config)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
 	readyCh := make(chan struct{})
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf(": %w", err)
 	}
 	go func() {
 		err := pf.ForwardPorts()
