@@ -26,6 +26,8 @@ const (
 )
 
 type Supervisor struct {
+	Log *zap.Logger
+
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 	wg         sync.WaitGroup
@@ -37,16 +39,17 @@ type Supervisor struct {
 
 func NewSupervisor(ctx context.Context) *Supervisor {
 	c, cancel := context.WithCancel(ctx)
-	return &Supervisor{ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
+	return &Supervisor{Log: logger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
 }
 
 func (s *Supervisor) Add(f func(ctx context.Context)) {
 	child := newChildProcess(s.Len()+1, f)
+	child.Log = s.Log
 	s.mu.Lock()
 	s.children = append(s.children, child)
 	s.mu.Unlock()
 
-	logger.Log.Info("Add new process", zap.Int("num", s.Len()))
+	s.Log.Info("Add new process", zap.Int("num", s.Len()))
 
 	go child.Run(s.ctx)
 }
@@ -91,6 +94,7 @@ func (s *Supervisor) Shutdown(ctx context.Context) error {
 type childProcess struct {
 	Id       int
 	Interval time.Duration
+	Log      *zap.Logger
 
 	restart         int
 	c               int
@@ -103,7 +107,7 @@ type childProcess struct {
 
 func newChildProcess(id int, fn func(ctx context.Context)) *childProcess {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return &childProcess{Id: id, c: 1, Interval: restartBackoff, rand: r, fn: fn}
+	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: logger.Log, rand: r, fn: fn}
 }
 
 func (c *childProcess) Run(ctx context.Context) {
@@ -125,7 +129,7 @@ func (c *childProcess) Run(ctx context.Context) {
 		}
 
 		backoff := c.calculateNextBackoff()
-		logger.Log.Info("Wait restart", zap.Duration("backoff", backoff), zap.Int("id", c.Id), zap.Int("count", c.restart))
+		c.Log.Info("Wait restart", zap.Duration("backoff", backoff), zap.Int("id", c.Id), zap.Int("count", c.restart))
 		select {
 		case <-ctx.Done():
 			return

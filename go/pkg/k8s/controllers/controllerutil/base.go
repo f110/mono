@@ -96,12 +96,13 @@ func (b *ControllerBase) StartWorkers(ctx context.Context, workers int) {
 		})
 	}
 
-	logger.Log.Info("Wait to sync all informers cache")
+	b.log.Info("Wait to sync all informers cache")
 	if !b.WaitForSync(ctx) {
 		return
 	}
 
 	b.supervisor = parallel.NewSupervisor(ctx)
+	b.supervisor.Log = b.log
 	for i := 0; i < workers; i++ {
 		b.supervisor.Add(b.worker)
 	}
