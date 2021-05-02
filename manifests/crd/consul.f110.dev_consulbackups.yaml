@@ -38,6 +38,15 @@ spec:
                 type: integer
               maxBackups:
                 type: integer
+              service:
+                description: LocalObjectReference contains enough information to let
+                  you locate the referenced object inside the same namespace.
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
               storage:
                 properties:
                   gcs:
@@ -46,7 +55,7 @@ spec:
                         type: string
                       credential:
                         properties:
-                          serviceAccountJSONKey:
+                          serviceAccountJSON:
                             description: SecretKeySelector selects a key of a Secret.
                             properties:
                               key:
@@ -113,6 +122,9 @@ spec:
                             required:
                             - key
                             type: object
+                        required:
+                        - accessKeyID
+                        - secretAccessKey
                         type: object
                       path:
                         type: string
@@ -124,15 +136,20 @@ spec:
                             type: string
                           namespace:
                             type: string
+                        required:
+                        - name
                         type: object
                     required:
+                    - bucket
                     - credential
+                    - path
                     - service
                     type: object
                 type: object
             required:
             - intervalInSeconds
             - maxBackups
+            - service
             type: object
           status:
             properties:

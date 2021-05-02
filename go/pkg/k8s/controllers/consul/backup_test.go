@@ -32,7 +32,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		controller.transport = mockTransport
 		mockTransport.RegisterResponder(
 			http.MethodGet,
-			"http://127.0.0.1:8500/v1/snapshot",
+			"http://consul-server.default.svc:8500/v1/snapshot",
 			httpmock.NewStringResponder(http.StatusOK, "backup_data"),
 		)
 		mockMinio := storagetest.NewMockMinIO()
@@ -148,6 +148,9 @@ func fixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
 		Spec: consulv1alpha1.ConsulBackupSpec{
 			MaxBackups:       5,
 			IntervalInSecond: 600,
+			Service: corev1.LocalObjectReference{
+				Name: "consul-server",
+			},
 			Storage: consulv1alpha1.ConsulBackupStorageSpec{
 				MinIO: &consulv1alpha1.BackupStorageMinIOSpec{
 					Bucket: "backup",

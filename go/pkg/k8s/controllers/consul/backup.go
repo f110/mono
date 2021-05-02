@@ -133,6 +133,7 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 	}
 
 	consulClient, err := api.NewClient(&api.Config{
+		Address: fmt.Sprintf("http://%s.%s.svc:8500", backup.Spec.Service.Name, backup.Namespace),
 		HttpClient: &http.Client{
 			Transport: b.transport,
 		},
@@ -235,13 +236,13 @@ func (b *BackupController) storeBackupFile(
 		return nil
 	case backup.Spec.Storage.GCS != nil:
 		spec := backup.Spec.Storage.GCS
-		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSONKey.Name)
+		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		b, ok := credential.Data[spec.Credential.ServiceAccountJSONKey.Key]
+		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSONKey.Key, spec.Credential.ServiceAccountJSONKey.Name)
+			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
 		client := storage.NewGCS(b, spec.Bucket)
@@ -306,13 +307,13 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		}
 	case backup.Spec.Storage.GCS != nil:
 		spec := backup.Spec.Storage.GCS
-		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSONKey.Name)
+		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		b, ok := credential.Data[spec.Credential.ServiceAccountJSONKey.Key]
+		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSONKey.Key, spec.Credential.ServiceAccountJSONKey.Name)
+			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
 		client := storage.NewGCS(b, spec.Bucket)
