@@ -174,7 +174,7 @@ func (u *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (
 }
 
 func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
-	u.Log().Info("users", zap.Int("len", len(users)))
+	u.Log().Debug("users", zap.Int("len", len(users)))
 	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
