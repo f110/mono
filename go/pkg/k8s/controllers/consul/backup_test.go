@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/minio/minio-go/v7"
@@ -23,6 +24,9 @@ func TestBackupController_Reconcile(t *testing.T) {
 		runner, controller := newController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
+		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSecond+1) * time.Second)
+		target.Status.Succeeded = true
+		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
 
 		mockTransport := httpmock.NewMockTransport()
 		controller.transport = mockTransport
@@ -49,6 +53,18 @@ func TestBackupController_Reconcile(t *testing.T) {
 		assert.True(t, expect.Status.Succeeded)
 		assert.Equal(t, expect.Status.LastSucceededTime, expect.Status.History[0].ExecuteTime)
 		assert.Equal(t, fmt.Sprintf("%s_%d", target.Name, expect.Status.LastSucceededTime.Unix()), expect.Status.History[0].Path)
+	})
+
+	t.Run("WithInInterval", func(t *testing.T) {
+		runner, controller := newController(t)
+		target, fixtures := fixture()
+		runner.RegisterFixture(fixtures...)
+		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSecond-1) * time.Second)
+		target.Status.Succeeded = true
+		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
+
+		err := runner.Reconcile(controller, target)
+		require.NoError(t, err)
 	})
 
 	t.Run("RotateHistory", func(t *testing.T) {

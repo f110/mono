@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
@@ -122,6 +123,14 @@ func (b *BackupController) UpdateObject(ctx context.Context, obj runtime.Object)
 func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) error {
 	backup := obj.(*consulv1alpha1.ConsulBackup)
 	updated := backup.DeepCopy()
+	now := metav1.Now()
+
+	if backup.Status.Succeeded && backup.Status.LastSucceededTime != nil {
+		nextBackupTime := backup.Status.LastSucceededTime.Add(time.Duration(backup.Spec.IntervalInSecond) * time.Second)
+		if now.Before(&metav1.Time{Time: nextBackupTime}) {
+			return nil
+		}
+	}
 
 	consulClient, err := api.NewClient(&api.Config{
 		HttpClient: &http.Client{
@@ -131,7 +140,6 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	now := metav1.Now()
 	buf, _, err := consulClient.Snapshot().Save(&api.QueryOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)

@@ -17,9 +17,10 @@ type ConsulBackup struct {
 }
 
 type ConsulBackupSpec struct {
-	IntervalInSecond int                     `json:"intervalInSeconds"`
-	MaxBackups       int                     `json:"maxBackups"`
-	Storage          ConsulBackupStorageSpec `json:"storage,omitempty"`
+	IntervalInSecond int                         `json:"intervalInSeconds"`
+	MaxBackups       int                         `json:"maxBackups"`
+	Service          corev1.LocalObjectReference `json:"service"`
+	Storage          ConsulBackupStorageSpec     `json:"storage,omitempty"`
 }
 
 type ConsulBackupStorageSpec struct {
@@ -52,7 +53,7 @@ type BackupStorageGCSSpec struct {
 }
 
 type GCPCredential struct {
-	ServiceAccountJSONKey *corev1.SecretKeySelector `json:"serviceAccountJSONKey,omitempty"`
+	ServiceAccountJSON *corev1.SecretKeySelector `json:"serviceAccountJSON,omitempty"`
 }
 
 type ConsulBackupStatus struct {
