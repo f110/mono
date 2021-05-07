@@ -16,6 +16,7 @@ func monoDev() error {
 	}
 
 	monodev.Cluster(rootCmd)
+	monodev.Graph(rootCmd)
 
 	return rootCmd.Execute()
 }
