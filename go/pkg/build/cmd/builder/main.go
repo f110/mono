@@ -64,6 +64,7 @@ type Options struct {
 	CLIImage            string
 	TaskCPULimit        string
 	TaskMemoryLimit     string
+	WithGC              bool
 
 	Dev   bool
 	Debug bool
@@ -300,7 +301,6 @@ func (p *process) leaderElection() (fsm.State, error) {
 
 func (p *process) startWorker() (fsm.State, error) {
 	jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
-	g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, p.minioOpt, p.opt.Dev)
 
 	p.coreSharedInformerFactory.Start(p.ctx.Done())
 
@@ -312,10 +312,13 @@ func (p *process) startWorker() (fsm.State, error) {
 		}
 	}()
 
-	go func() {
-		logger.Log.Info("Start GC")
-		g.Start()
-	}()
+	if p.opt.WithGC {
+		g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, p.minioOpt, p.opt.Dev)
+		go func() {
+			logger.Log.Info("Start GC")
+			g.Start()
+		}()
+	}
 
 	return fsm.WaitState, nil
 }
@@ -397,6 +400,7 @@ func AddCommand(rootCmd *cobra.Command) {
 		"4096Mi",
 		"Task memory limit. If the job set the limit, It will used the job defined value.",
 	)
+	fs.BoolVar(&opt.WithGC, "with-gc", false, "Enable GC for the job")
 	fs.BoolVar(&opt.Debug, "debug", false, "Enable debugging mode")
 
 	rootCmd.AddCommand(cmd)
