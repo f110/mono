@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+require 'nokogiri'
+require 'open-uri'
+require 'csv'
+
+YEAR = 2021
+
+class Schedule
+  attr_accessor :datetime, :url, :stage
+
+  def subject
+    @stage
+  end
+
+  def start_date
+    m = /(\d+)月(\d+)日/.match(datetime)
+    "#{YEAR}/#{m[1]}/#{m[2]}"
+  end
+
+  def start_time
+    m = /(.{2})(\d+):(\d+) -/.match(datetime)
+    "#{m[2]}:#{m[3]} #{m[1] == "午後" ? "PM" : "AM"}"
+  end
+
+  def end_date
+    if datetime.include? "深夜"
+      m = /(\d+)月(\d+)日/.match(datetime)
+      "#{YEAR}/#{m[1]}/#{m[2].to_i+1}"
+    else
+      start_date
+    end
+  end
+
+  def end_time
+    m = / -\s*(.{2})(\d+):(\d+)\s*$/.match(datetime)
+    "#{m[2]}:#{m[3]} #{m[1] == "深夜" ? "AM" : "PM"}"
+  end
+
+  def description
+    @url
+  end
+end
+
+if ARGV[0].nil?
+  $stderr.puts "Usage: tdf file"
+  exit 1
+end
+
+doc = Nokogiri::HTML(URI.open("https://www.jsports.co.jp/cycle/tour/schedule/"))
+
+schedules = []
+# Stage
+doc.xpath("//section[@class='s-table__wrapper']/div/div[1]/div[2]/div[2]").each do |element|
+  s = Schedule.new
+  s.stage = element.content
+
+  schedules << s
+end
+
+# Datetime
+doc.xpath("//section[@class='s-table__wrapper']/div/div[2]/div[2]/div[2]").each_with_index do |element, idx|
+  schedules[idx].datetime = element.content
+end
+
+
+# Link
+doc.xpath("//section[@class='s-table__wrapper']/div/div[2]/div[2]/div[3]/a[2]").each_with_index do |element, idx|
+  schedules[idx].url = element.values.first
+end
+
+CSV.open(ARGV[0], "wb") do |csv|
+  csv << ["Subject", "Start Date", "Start Time", "End Date", "End Time", "Description"]
+  schedules.each do |schedule|
+    csv << [schedule.subject, schedule.start_date, schedule.start_time, schedule.end_date, schedule.end_time, schedule.description]
+  end
+end
