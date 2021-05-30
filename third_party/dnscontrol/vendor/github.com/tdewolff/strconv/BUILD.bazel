@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "float.go",
+        "int.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/tdewolff/strconv",
+    importpath = "github.com/tdewolff/strconv",
+    visibility = ["//visibility:public"],
+)

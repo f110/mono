@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "js.go",
+        "static.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/js",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/pkg/printer:go_default_library",
+        "//third_party/dnscontrol/pkg/transform:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/underscore:go_default_library",
+    ],
+)

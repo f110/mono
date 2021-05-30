@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["parse.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/tdewolff/parse/json",
+    importpath = "github.com/tdewolff/parse/json",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/tdewolff/parse:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/tdewolff/parse/buffer:go_default_library",
+    ],
+)

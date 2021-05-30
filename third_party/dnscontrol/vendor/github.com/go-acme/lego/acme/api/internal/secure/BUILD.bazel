@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["jws.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/acme/api/internal/secure",
+    importpath = "github.com/go-acme/lego/acme/api/internal/secure",
+    visibility = ["//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api:__subpackages__"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api/internal/nonces:go_default_library",
+        "//third_party/dnscontrol/vendor/gopkg.in/square/go-jose.v2:go_default_library",
+    ],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "source.go",
+        "underscore.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/underscore",
+    importpath = "github.com/robertkrimen/otto/underscore",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/registry:go_default_library"],
+)

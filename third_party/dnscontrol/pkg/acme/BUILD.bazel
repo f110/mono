@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "acme.go",
+        "checkDns.go",
+        "directoryStorage.go",
+        "registration.go",
+        "storage.go",
+        "vaultStorage.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/acme",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/pkg/nameservers:go_default_library",
+        "//third_party/dnscontrol/pkg/notifications:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certcrypto:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certificate:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge/dns01:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/lego:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/log:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/registration:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/hashicorp/vault/api:go_default_library",
+    ],
+)

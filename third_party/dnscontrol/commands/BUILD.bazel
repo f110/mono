@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "commands.go",
+        "createDomains.go",
+        "getCerts.go",
+        "previewPush.go",
+        "printIR.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v2/commands",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/pkg/acme:go_default_library",
+        "//third_party/dnscontrol/pkg/js:go_default_library",
+        "//third_party/dnscontrol/pkg/nameservers:go_default_library",
+        "//third_party/dnscontrol/pkg/normalize:go_default_library",
+        "//third_party/dnscontrol/pkg/notifications:go_default_library",
+        "//third_party/dnscontrol/pkg/printer:go_default_library",
+        "//third_party/dnscontrol/providers:go_default_library",
+        "//third_party/dnscontrol/providers/config:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/urfave/cli/v2:go_default_library",
+    ],
+)

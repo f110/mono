@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "authentication.go",
+        "domains.go",
+        "opensrs.go",
+        "structs.go",
+        "xml.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/philhug/opensrs-go/opensrs",
+    importpath = "github.com/philhug/opensrs-go/opensrs",
+    visibility = ["//visibility:public"],
+)

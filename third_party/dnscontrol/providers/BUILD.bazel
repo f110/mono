@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "capabilities.go",
+        "providers.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v2/providers",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/models:go_default_library"],
+)

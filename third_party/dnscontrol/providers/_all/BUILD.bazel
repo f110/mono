@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["all.go"],
+    importpath = "github.com/StackExchange/dnscontrol/v2/providers/_all",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/providers/activedir:go_default_library",
+        "//third_party/dnscontrol/providers/azuredns:go_default_library",
+        "//third_party/dnscontrol/providers/bind:go_default_library",
+        "//third_party/dnscontrol/providers/cloudflare:go_default_library",
+        "//third_party/dnscontrol/providers/cloudns:go_default_library",
+        "//third_party/dnscontrol/providers/digitalocean:go_default_library",
+        "//third_party/dnscontrol/providers/dnsimple:go_default_library",
+        "//third_party/dnscontrol/providers/exoscale:go_default_library",
+        "//third_party/dnscontrol/providers/gandi:go_default_library",
+        "//third_party/dnscontrol/providers/gandi_v5:go_default_library",
+        "//third_party/dnscontrol/providers/gcloud:go_default_library",
+        "//third_party/dnscontrol/providers/hexonet:go_default_library",
+        "//third_party/dnscontrol/providers/internetbs:go_default_library",
+        "//third_party/dnscontrol/providers/linode:go_default_library",
+        "//third_party/dnscontrol/providers/namecheap:go_default_library",
+        "//third_party/dnscontrol/providers/namedotcom:go_default_library",
+        "//third_party/dnscontrol/providers/ns1:go_default_library",
+        "//third_party/dnscontrol/providers/octodns:go_default_library",
+        "//third_party/dnscontrol/providers/opensrs:go_default_library",
+        "//third_party/dnscontrol/providers/ovh:go_default_library",
+        "//third_party/dnscontrol/providers/route53:go_default_library",
+        "//third_party/dnscontrol/providers/softlayer:go_default_library",
+        "//third_party/dnscontrol/providers/vultr:go_default_library",
+    ],
+)

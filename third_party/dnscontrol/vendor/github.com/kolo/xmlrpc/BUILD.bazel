@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "client.go",
+        "decoder.go",
+        "encoder.go",
+        "request.go",
+        "response.go",
+        "xmlrpc.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/kolo/xmlrpc",
+    importpath = "github.com/kolo/xmlrpc",
+    visibility = ["//visibility:public"],
+)

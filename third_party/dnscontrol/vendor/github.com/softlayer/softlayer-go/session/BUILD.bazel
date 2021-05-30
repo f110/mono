@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "rest.go",
+        "session.go",
+        "xmlrpc.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/softlayer/softlayer-go/session",
+    importpath = "github.com/softlayer/softlayer-go/session",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/renier/xmlrpc:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/config:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/datatypes:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/sl:go_default_library",
+    ],
+)

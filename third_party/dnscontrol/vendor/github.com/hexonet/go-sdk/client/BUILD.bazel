@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["client.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hexonet/go-sdk/client",
+    importpath = "github.com/hexonet/go-sdk/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/client/socketcfg:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/response/hashresponse:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/response/listresponse:go_default_library",
+    ],
+)

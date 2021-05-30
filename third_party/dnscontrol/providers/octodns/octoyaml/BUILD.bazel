@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "js.go",
+        "read.go",
+        "sort.go",
+        "write.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v2/providers/octodns/octoyaml",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/pkg/natsort:go_default_library",
+        "//third_party/dnscontrol/pkg/transform:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/underscore:go_default_library",
+        "//third_party/dnscontrol/vendor/gopkg.in/yaml.v2:go_default_library",
+    ],
+)

@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["listresponse.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hexonet/go-sdk/response/listresponse",
+    importpath = "github.com/hexonet/go-sdk/response/listresponse",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/response/hashresponse:go_default_library"],
+)

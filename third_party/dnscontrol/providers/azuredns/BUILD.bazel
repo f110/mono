@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["azureDnsProvider.go"],
+    importpath = "github.com/StackExchange/dnscontrol/v2/providers/azuredns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/providers:go_default_library",
+        "//third_party/dnscontrol/providers/diff:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2018-05-01/dns:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/autorest/azure/auth:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/autorest/to:go_default_library",
+    ],
+)

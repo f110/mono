@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["syntax.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/gobwas/glob/syntax",
+    importpath = "github.com/gobwas/glob/syntax",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/syntax/ast:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/syntax/lexer:go_default_library",
+    ],
+)

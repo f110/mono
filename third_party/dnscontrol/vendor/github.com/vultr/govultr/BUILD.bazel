@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "account.go",
+        "api.go",
+        "application.go",
+        "backup.go",
+        "bare_metal_server.go",
+        "block_storage.go",
+        "dns_domains.go",
+        "dns_records.go",
+        "firewall_group.go",
+        "firewall_rule.go",
+        "govultr.go",
+        "iso.go",
+        "network.go",
+        "os.go",
+        "plans.go",
+        "regions.go",
+        "reserved_ip.go",
+        "server.go",
+        "snapshot.go",
+        "ssh_key.go",
+        "startup_script.go",
+        "user.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/vultr/govultr",
+    importpath = "github.com/vultr/govultr",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/hashicorp/go-retryablehttp:go_default_library"],
+)

@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "domain.go",
+        "structs.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/prasmussen/gandi-api/live_dns/domain",
+    importpath = "github.com/prasmussen/gandi-api/live_dns/domain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/google/uuid:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/prasmussen/gandi-api/client:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/prasmussen/gandi-api/live_dns/record:go_default_library",
+    ],
+)

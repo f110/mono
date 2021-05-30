@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["namecheapProvider.go"],
+    importpath = "github.com/StackExchange/dnscontrol/v2/providers/namecheap",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models:go_default_library",
+        "//third_party/dnscontrol/pkg/printer:go_default_library",
+        "//third_party/dnscontrol/providers:go_default_library",
+        "//third_party/dnscontrol/providers/diff:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/billputer/go-namecheap:go_default_library",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/publicsuffix:go_default_library",
+    ],
+)
