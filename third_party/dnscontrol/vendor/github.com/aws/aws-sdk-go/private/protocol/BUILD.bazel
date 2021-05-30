@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "protocol",
     srcs = [
         "host.go",
         "host_prefix.go",
@@ -15,8 +15,8 @@ go_library(
     importpath = "github.com/aws/aws-sdk-go/private/protocol",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/client/metadata:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/request:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/client/metadata",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/request",
     ],
 )

@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "route53",
     srcs = ["route53Provider.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/route53",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/providers:go_default_library",
-        "//third_party/dnscontrol/providers/diff:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/credentials:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/service/route53:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/service/route53domains:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/providers/diff",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/session",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/service/route53",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/service/route53domains",
     ],
 )

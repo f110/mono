@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "match",
     srcs = [
         "any.go",
         "any_of.go",
@@ -29,7 +29,7 @@ go_library(
     importpath = "github.com/gobwas/glob/match",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/util/runes:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/util/strings:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/util/runes",
+        "//third_party/dnscontrol/vendor/github.com/gobwas/glob/util/strings",
     ],
 )

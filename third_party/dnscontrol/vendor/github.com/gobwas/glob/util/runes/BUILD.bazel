@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "runes",
     srcs = ["runes.go"],
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/gobwas/glob/util/runes",
     importpath = "github.com/gobwas/glob/util/runes",

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "services",
     srcs = [
         "account.go",
         "auxiliary.go",
@@ -41,8 +41,8 @@ go_library(
     importpath = "github.com/softlayer/softlayer-go/services",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/datatypes:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/session:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/sl:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/datatypes",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/session",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/sl",
     ],
 )

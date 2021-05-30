@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "lego",
     srcs = [
         "client.go",
         "client_config.go",
@@ -10,10 +10,10 @@ go_library(
     importpath = "github.com/go-acme/lego/lego",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certcrypto:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certificate:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge/resolver:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/registration:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certcrypto",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certificate",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge/resolver",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/registration",
     ],
 )

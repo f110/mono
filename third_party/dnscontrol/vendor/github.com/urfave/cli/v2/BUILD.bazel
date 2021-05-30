@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "cli",
     srcs = [
         "app.go",
         "args.go",
@@ -37,5 +37,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/urfave/cli/v2",
     importpath = "github.com/urfave/cli/v2",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/cpuguy83/go-md2man/v2/md2man:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/cpuguy83/go-md2man/v2/md2man"],
 )

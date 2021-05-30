@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "idna",
     srcs = [
         "idna10.0.0.go",
         "idna9.0.0.go",
@@ -16,8 +16,8 @@ go_library(
     importpath = "golang.org/x/net/idna",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/golang.org/x/text/secure/bidirule:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/unicode/bidi:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/unicode/norm:go_default_library",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/secure/bidirule",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/unicode/bidi",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/unicode/norm",
     ],
 )

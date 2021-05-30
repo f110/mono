@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ipv6",
     srcs = [
         "batch.go",
         "control.go",
@@ -29,6 +29,7 @@ go_library(
         "sockopt.go",
         "sockopt_posix.go",
         "sockopt_stub.go",
+        "sys_aix.go",
         "sys_asmreq.go",
         "sys_asmreq_stub.go",
         "sys_bpf.go",
@@ -42,6 +43,7 @@ go_library(
         "sys_ssmreq_stub.go",
         "sys_stub.go",
         "sys_windows.go",
+        "zsys_aix_ppc64.go",
         "zsys_darwin.go",
         "zsys_dragonfly.go",
         "zsys_freebsd_386.go",
@@ -58,6 +60,7 @@ go_library(
         "zsys_linux_ppc.go",
         "zsys_linux_ppc64.go",
         "zsys_linux_ppc64le.go",
+        "zsys_linux_riscv64.go",
         "zsys_linux_s390x.go",
         "zsys_netbsd.go",
         "zsys_openbsd.go",
@@ -67,8 +70,8 @@ go_library(
     importpath = "golang.org/x/net/ipv6",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/golang.org/x/net/bpf:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/net/internal/iana:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/net/internal/socket:go_default_library",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/bpf",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/internal/iana",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/internal/socket",
     ],
 )

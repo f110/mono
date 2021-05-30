@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "namecom",
     srcs = [
         "dns.go",
         "dnssecs.go",
@@ -16,5 +16,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/namedotcom/go/namecom",
     importpath = "github.com/namedotcom/go/namecom",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/pkg/errors:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/pkg/errors"],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "dnsimple",
     srcs = [
         "accounts.go",
         "authentication.go",
@@ -36,5 +36,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/dnsimple/dnsimple-go/dnsimple",
     importpath = "github.com/dnsimple/dnsimple-go/dnsimple",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/google/go-querystring/query:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/google/go-querystring/query"],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "gandi_v5",
     srcs = [
         "convert.go",
         "gandi_v5Provider.go",
@@ -9,12 +9,12 @@ go_library(
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/gandi_v5",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/pkg/printer:go_default_library",
-        "//third_party/dnscontrol/providers:go_default_library",
-        "//third_party/dnscontrol/providers/diff:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/tiramiseb/go-gandi:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/tiramiseb/go-gandi/livedns:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/printer",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/providers/diff",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
+        "//third_party/dnscontrol/vendor/github.com/tiramiseb/go-gandi",
+        "//third_party/dnscontrol/vendor/github.com/tiramiseb/go-gandi/livedns",
     ],
 )

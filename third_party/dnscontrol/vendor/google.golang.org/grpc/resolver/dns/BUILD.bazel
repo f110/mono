@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "dns",
     srcs = ["dns_resolver.go"],
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/resolver/dns",
     importpath = "google.golang.org/grpc/resolver/dns",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/grpclog:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/backoff:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcrand:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/resolver:go_default_library",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/grpclog",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/backoff",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcrand",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/resolver",
     ],
 )

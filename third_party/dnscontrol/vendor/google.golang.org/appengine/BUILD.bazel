@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "appengine",
     srcs = [
         "appengine.go",
         "appengine_vm.go",
@@ -14,10 +14,10 @@ go_library(
     importpath = "google.golang.org/appengine",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/golang/protobuf/proto:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/net/context:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal/app_identity:go_default_library",
-        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal/modules:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/golang/protobuf/proto",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/context",
+        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal",
+        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal/app_identity",
+        "//third_party/dnscontrol/vendor/google.golang.org/appengine/internal/modules",
     ],
 )

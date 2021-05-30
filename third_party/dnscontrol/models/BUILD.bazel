@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "models",
     srcs = [
         "dns.go",
         "domain.go",
@@ -22,8 +22,8 @@ go_library(
     importpath = "github.com/StackExchange/dnscontrol/v2/models",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/miekg/dns:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/net/idna:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/idna",
     ],
 )

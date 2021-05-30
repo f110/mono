@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "gensupport",
     srcs = [
         "backoff.go",
         "buffer.go",
@@ -18,5 +18,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/api/gensupport",
     importpath = "google.golang.org/api/gensupport",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/google.golang.org/api/googleapi:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/google.golang.org/api/googleapi"],
 )

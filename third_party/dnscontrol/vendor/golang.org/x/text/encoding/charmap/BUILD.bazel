@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "charmap",
     srcs = [
         "charmap.go",
         "tables.go",
@@ -10,9 +10,9 @@ go_library(
     importpath = "golang.org/x/text/encoding/charmap",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/internal:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/internal/identifier:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/transform:go_default_library",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/internal",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/internal/identifier",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/transform",
     ],
 )

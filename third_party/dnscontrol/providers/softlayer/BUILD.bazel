@@ -1,17 +1,17 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "softlayer",
     srcs = ["softlayerProvider.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/softlayer",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/providers:go_default_library",
-        "//third_party/dnscontrol/providers/diff:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/datatypes:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/filter:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/services:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/session:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/providers/diff",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/datatypes",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/filter",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/services",
+        "//third_party/dnscontrol/vendor/github.com/softlayer/softlayer-go/session",
     ],
 )

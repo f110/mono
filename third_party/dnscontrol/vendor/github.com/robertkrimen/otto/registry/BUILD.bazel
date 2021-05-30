@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "registry",
     srcs = ["registry.go"],
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/registry",
     importpath = "github.com/robertkrimen/otto/registry",

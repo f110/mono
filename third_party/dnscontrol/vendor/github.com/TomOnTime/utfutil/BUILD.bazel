@@ -1,14 +1,14 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "utfutil",
     srcs = ["utfutil.go"],
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/TomOnTime/utfutil",
     importpath = "github.com/TomOnTime/utfutil",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/unicode:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/text/transform:go_default_library",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/encoding/unicode",
+        "//third_party/dnscontrol/vendor/golang.org/x/text/transform",
     ],
 )

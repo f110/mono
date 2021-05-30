@@ -1,16 +1,16 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "digitalocean",
     srcs = ["digitaloceanProvider.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/digitalocean",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/providers:go_default_library",
-        "//third_party/dnscontrol/providers/diff:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/digitalocean/godo:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/oauth2:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/providers/diff",
+        "//third_party/dnscontrol/vendor/github.com/digitalocean/godo",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
+        "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
     ],
 )

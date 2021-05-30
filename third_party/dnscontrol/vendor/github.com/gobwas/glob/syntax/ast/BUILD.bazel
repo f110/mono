@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ast",
     srcs = [
         "ast.go",
         "parser.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/gobwas/glob/syntax/ast",
     importpath = "github.com/gobwas/glob/syntax/ast",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/gobwas/glob/syntax/lexer:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/gobwas/glob/syntax/lexer"],
 )

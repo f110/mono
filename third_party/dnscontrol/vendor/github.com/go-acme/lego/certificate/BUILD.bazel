@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "certificate",
     srcs = [
         "authorization.go",
         "certificates.go",
@@ -11,13 +11,13 @@ go_library(
     importpath = "github.com/go-acme/lego/certificate",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certcrypto:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/log:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/platform/wait:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/crypto/ocsp:go_default_library",
-        "//third_party/dnscontrol/vendor/golang.org/x/net/idna:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/certcrypto",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/challenge",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/log",
+        "//third_party/dnscontrol/vendor/github.com/go-acme/lego/platform/wait",
+        "//third_party/dnscontrol/vendor/golang.org/x/crypto/ocsp",
+        "//third_party/dnscontrol/vendor/golang.org/x/net/idna",
     ],
 )

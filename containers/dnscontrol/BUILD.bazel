@@ -6,7 +6,7 @@ pkg_tar(
     srcs = [
         "//third_party/dnscontrol",
         "//third_party/dnscontrol/cmd/convertzone",
-        "//tools/dns-config-generator",
+        "//go/cmd/dns-config-generator",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",

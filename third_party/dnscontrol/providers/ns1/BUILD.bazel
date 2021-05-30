@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "ns1",
     srcs = ["ns1provider.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/ns1",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/providers:go_default_library",
-        "//third_party/dnscontrol/providers/diff:go_default_library",
-        "//third_party/dnscontrol/vendor/gopkg.in/ns1/ns1-go.v2/rest:go_default_library",
-        "//third_party/dnscontrol/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/dns:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/providers/diff",
+        "//third_party/dnscontrol/vendor/gopkg.in/ns1/ns1-go.v2/rest",
+        "//third_party/dnscontrol/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/dns",
     ],
 )

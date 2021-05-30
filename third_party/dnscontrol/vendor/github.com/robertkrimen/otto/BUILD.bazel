@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "otto",
     srcs = [
         "builtin.go",
         "builtin_array.go",
@@ -61,11 +61,11 @@ go_library(
     importpath = "github.com/robertkrimen/otto",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/ast:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/dbg:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/file:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/parser:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/registry:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/token:go_default_library",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/ast",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/dbg",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/file",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/parser",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/registry",
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/token",
     ],
 )

@@ -7,18 +7,18 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 gazelle(name = "gazelle")
 
 go_library(
-    name = "go_default_library",
+    name = "dnscontrol_lib",
     srcs = ["main.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/dnscontrol/commands:go_default_library",
-        "//third_party/dnscontrol/providers/_all:go_default_library",
+        "//third_party/dnscontrol/commands",
+        "//third_party/dnscontrol/providers/_all",
     ],
 )
 
 go_binary(
     name = "dnscontrol",
-    embed = [":go_default_library"],
+    embed = [":dnscontrol_lib"],
     visibility = ["//visibility:public"],
 )

@@ -1,13 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "diff",
     srcs = ["diff.go"],
     importpath = "github.com/StackExchange/dnscontrol/v2/providers/diff",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/models:go_default_library",
-        "//third_party/dnscontrol/pkg/printer:go_default_library",
-        "//third_party/dnscontrol/vendor/github.com/gobwas/glob:go_default_library",
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/printer",
+        "//third_party/dnscontrol/vendor/github.com/gobwas/glob",
     ],
 )

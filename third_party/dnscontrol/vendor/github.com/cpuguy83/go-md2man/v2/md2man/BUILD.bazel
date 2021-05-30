@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "md2man",
     srcs = [
         "md2man.go",
         "roff.go",
@@ -9,5 +9,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/cpuguy83/go-md2man/v2/md2man",
     importpath = "github.com/cpuguy83/go-md2man/v2/md2man",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/russross/blackfriday/v2:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/russross/blackfriday/v2:blackfriday"],
 )

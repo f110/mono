@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "norm",
     srcs = [
         "composition.go",
         "forminfo.go",
@@ -18,5 +18,5 @@ go_library(
     importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/text/unicode/norm",
     importpath = "golang.org/x/text/unicode/norm",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/golang.org/x/text/transform:go_default_library"],
+    deps = ["//third_party/dnscontrol/vendor/golang.org/x/text/transform"],
 )
