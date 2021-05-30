@@ -2,7 +2,7 @@
 set -e
 
 REPOSITORY_URL="https://github.com/StackExchange/dnscontrol.git"
-VERSION="v2.11"
+VERSION="v3.9.0"
 
 THIRD_PARTY_DIR=$(cd $(dirname $0)/../third_party; pwd)
 TARGET_NAME="${THIRD_PARTY_DIR}/dnscontrol"
@@ -23,7 +23,7 @@ cat <<EOS > BUILD.bazel
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:proto disable_global
-# gazelle:prefix github.com/StackExchange/dnscontrol/v2
+# gazelle:prefix github.com/StackExchange/dnscontrol/v3
 
 gazelle(name = "gazelle")
 EOS

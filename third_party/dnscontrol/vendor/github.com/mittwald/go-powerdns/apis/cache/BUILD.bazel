@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cache",
+    srcs = [
+        "client.go",
+        "doc.go",
+        "flush.go",
+        "interface.go",
+        "types.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mittwald/go-powerdns/apis/cache",
+    importpath = "github.com/mittwald/go-powerdns/apis/cache",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/pdnshttp"],
+)

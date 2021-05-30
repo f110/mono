@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "unpackers",
+    srcs = [
+        "packer.go",
+        "unpackers.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/ditashi/jsbeautifier-go/unpackers",
+    importpath = "github.com/ditashi/jsbeautifier-go/unpackers",
+    visibility = ["//visibility:public"],
+)

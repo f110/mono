@@ -5,9 +5,9 @@ import (
 	"net"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/pkg/transform"
-	"github.com/StackExchange/dnscontrol/v2/providers"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/transform"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/miekg/dns"
 	"github.com/miekg/dns/dnsutil"
 )
@@ -33,13 +33,13 @@ func checkTarget(target string) error {
 	if target == "@" {
 		return nil
 	}
-	if len(target) < 1 {
+	if target == "" {
 		return fmt.Errorf("empty target")
 	}
 	if strings.ContainsAny(target, `'" +,|!£$%&/()=?^*ç°§;:<>[]()@`) {
 		return fmt.Errorf("target (%v) includes invalid char", target)
 	}
-	// If it containts a ".", it must end in a ".".
+	// If it contains a ".", it must end in a ".".
 	if strings.ContainsRune(target, '.') && target[len(target)-1] != '.' {
 		return fmt.Errorf("target (%v) must end with a (.) [https://stackexchange.github.io/dnscontrol/why-the-dot]", target)
 	}
@@ -53,9 +53,11 @@ func validateRecordTypes(rec *models.RecordConfig, domain string, pTypes []strin
 		"AAAA":             true,
 		"CNAME":            true,
 		"CAA":              true,
+		"DS":               true,
 		"TLSA":             true,
 		"IMPORT_TRANSFORM": false,
 		"MX":               true,
+		"SOA":              true,
 		"SRV":              true,
 		"SSHFP":            true,
 		"TXT":              true,
@@ -68,11 +70,11 @@ func validateRecordTypes(rec *models.RecordConfig, domain string, pTypes []strin
 	if !ok {
 		cType := providers.GetCustomRecordType(rec.Type)
 		if cType == nil {
-			return fmt.Errorf("Unsupported record type (%v) domain=%v name=%v", rec.Type, domain, rec.GetLabel())
+			return fmt.Errorf("unsupported record type (%v) domain=%v name=%v", rec.Type, domain, rec.GetLabel())
 		}
 		for _, providerType := range pTypes {
 			if providerType != cType.Provider {
-				return fmt.Errorf("Custom record type %s is not compatible with provider type %s", rec.Type, providerType)
+				return fmt.Errorf("custom record type %s is not compatible with provider type %s", rec.Type, providerType)
 			}
 		}
 		// it is ok. Lets replace the type with real type and add metadata to say we checked it
@@ -84,35 +86,19 @@ func validateRecordTypes(rec *models.RecordConfig, domain string, pTypes []strin
 	return nil
 }
 
-// underscores in names are often used erroneously. They are valid for dns records, but invalid for urls.
-// here we list common records expected to have underscores. Anything else containing an underscore will print a warning.
-var labelUnderscores = []string{
-	"_acme-challenge",
-	"_amazonses",
-	"_dmarc",
-	"_domainkey",
-	"_jabber",
-	"_mta-sts",
-	"_sip",
-	"_xmpp",
-}
-
-// these record types may contain underscores
-var rTypeUnderscores = []string{"SRV", "TLSA", "TXT"}
-
-func checkLabel(label string, rType string, domain string, meta map[string]string) error {
+func checkLabel(label string, rType string, target, domain string, meta map[string]string) error {
 	if label == "@" {
 		return nil
 	}
-	if len(label) < 1 {
+	if label == "" {
 		return fmt.Errorf("empty %s label in %s", rType, domain)
 	}
 	if label[len(label)-1] == '.' {
 		return fmt.Errorf("label %s.%s ends with a (.)", label, domain)
 	}
-	if strings.HasSuffix(label, domain) {
+	if label == domain || strings.HasSuffix(label, "."+domain) {
 		if m := meta["skip_fqdn_check"]; m != "true" {
-			return fmt.Errorf(`label %s ends with domain name %s. Record names should not be fully qualified. Add {skip_fqdn_check:"true"} to this record if you really want to make %s.%s`, label, domain, label, domain)
+			return fmt.Errorf(`label %q ends with domain name %q. Record names should not be fully qualified. Add {skip_fqdn_check:"true"} to this record if you really want to make %s.%s`, label, domain, label, domain)
 		}
 	}
 
@@ -120,22 +106,44 @@ func checkLabel(label string, rType string, domain string, meta map[string]strin
 	// are used in a way we consider typical.  Yes, we're opinionated here.
 
 	// Don't warn for certain rtypes:
-	for _, ex := range rTypeUnderscores {
+	for _, ex := range []string{"SRV", "TLSA", "TXT"} {
 		if rType == ex {
 			return nil
 		}
 	}
-	// Don't warn for certain label substrings
-	for _, ex := range labelUnderscores {
-		if strings.Contains(label, ex) {
-			return nil
-		}
+	// Don't warn for records that start with _
+	// See https://github.com/StackExchange/dnscontrol/issues/829
+	if strings.HasPrefix(label, "_") || strings.Contains(label, "._") {
+		return nil
 	}
+
 	// Otherwise, warn.
 	if strings.ContainsRune(label, '_') {
 		return Warning{fmt.Errorf("label %s.%s contains an underscore", label, domain)}
 	}
 
+	return nil
+}
+
+func checkSoa(expire uint32, minttl uint32, refresh uint32, retry uint32, serial uint32, mbox string) error {
+	if expire <= 0 {
+		return fmt.Errorf("SOA Expire must be > 0")
+	}
+	if minttl <= 0 {
+		return fmt.Errorf("SOA Minimum TTL must be > 0")
+	}
+	if refresh <= 0 {
+		return fmt.Errorf("SOA Refresh must be > 0")
+	}
+	if retry <= 0 {
+		return fmt.Errorf("SOA Retry must be > 0")
+	}
+	if mbox == "" {
+		return fmt.Errorf("SOA MBox must be specified")
+	}
+	if strings.ContainsRune(mbox, '@') {
+		return fmt.Errorf("SOA MBox must have '.' instead of '@'")
+	}
 	return nil
 }
 
@@ -145,7 +153,7 @@ func checkTargets(rec *models.RecordConfig, domain string) (errs []error) {
 	target := rec.GetTargetField()
 	check := func(e error) {
 		if e != nil {
-			err := fmt.Errorf("In %s %s.%s: %s", rec.Type, rec.GetLabel(), domain, e.Error())
+			err := fmt.Errorf("in %s %s.%s: %s", rec.Type, rec.GetLabel(), domain, e.Error())
 			if _, ok := e.(Warning); ok {
 				err = Warning{err}
 			}
@@ -175,9 +183,15 @@ func checkTargets(rec *models.RecordConfig, domain string) (errs []error) {
 		check(checkTarget(target))
 	case "ALIAS":
 		check(checkTarget(target))
+	case "SOA":
+		check(checkSoa(rec.SoaExpire, rec.SoaMinttl, rec.SoaRefresh, rec.SoaRetry, rec.SoaSerial, rec.SoaMbox))
+		check(checkTarget(target))
+		if label != "@" {
+			check(fmt.Errorf("SOA record is only valid for bare domain."))
+		}
 	case "SRV":
 		check(checkTarget(target))
-	case "TXT", "IMPORT_TRANSFORM", "CAA", "SSHFP", "TLSA":
+	case "TXT", "IMPORT_TRANSFORM", "CAA", "SSHFP", "TLSA", "DS":
 	default:
 		if rec.Metadata["orig_custom_type"] != "" {
 			// it is a valid custom type. We perform no validation on target
@@ -199,7 +213,7 @@ func transformCNAME(target, oldDomain, newDomain string) string {
 }
 
 // import_transform imports the records of one zone into another, modifying records along the way.
-func importTransform(srcDomain, dstDomain *models.DomainConfig, transforms []transform.IpConversion, ttl uint32) error {
+func importTransform(srcDomain, dstDomain *models.DomainConfig, transforms []transform.IPConversion, ttl uint32) error {
 	// Read srcDomain.Records, transform, and append to dstDomain.Records:
 	// 1. Skip any that aren't A or CNAMEs.
 	// 2. Append destDomainname to the end of the label.
@@ -207,7 +221,7 @@ func importTransform(srcDomain, dstDomain *models.DomainConfig, transforms []tra
 	// 4. For As, change the target as described the transforms.
 
 	for _, rec := range srcDomain.Records {
-		if dstDomain.HasRecordTypeName(rec.Type, rec.GetLabelFQDN()) {
+		if dstDomain.Records.HasRecordTypeName(rec.Type, rec.GetLabelFQDN()) {
 			continue
 		}
 		newRec := func() *models.RecordConfig {
@@ -221,7 +235,7 @@ func importTransform(srcDomain, dstDomain *models.DomainConfig, transforms []tra
 		}
 		switch rec.Type { // #rtype_variations
 		case "A":
-			trs, err := transform.TransformIPToList(net.ParseIP(rec.GetTargetField()), transforms)
+			trs, err := transform.IPToList(net.ParseIP(rec.GetTargetField()), transforms)
 			if err != nil {
 				return fmt.Errorf("import_transform: TransformIP(%v, %v) returned err=%s", rec.GetTargetField(), transforms, err)
 			}
@@ -234,7 +248,7 @@ func importTransform(srcDomain, dstDomain *models.DomainConfig, transforms []tra
 			r := newRec()
 			r.SetTarget(transformCNAME(r.GetTargetField(), srcDomain.Name, dstDomain.Name))
 			dstDomain.Records = append(dstDomain.Records, r)
-		case "MX", "NAPTR", "NS", "SRV", "TXT", "CAA", "TLSA":
+		case "MX", "NAPTR", "NS", "SOA", "SRV", "TXT", "CAA", "TLSA":
 			// Not imported.
 			continue
 		default:
@@ -261,40 +275,69 @@ type Warning struct {
 	error
 }
 
-// NormalizeAndValidateConfig performs and normalization and/or validation of the IR.
-func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
+// ValidateAndNormalizeConfig performs and normalization and/or validation of the IR.
+func ValidateAndNormalizeConfig(config *models.DNSConfig) (errs []error) {
+	err := processSplitHorizonDomains(config)
+	if err != nil {
+		return []error{err}
+	}
+
 	for _, domain := range config.Domains {
 		pTypes := []string{}
-		txtMultiDissenters := []string{}
 		for _, provider := range domain.DNSProviderInstances {
 			pType := provider.ProviderType
 			// If NO_PURGE is in use, make sure this *isn't* a provider that *doesn't* support NO_PURGE.
 			if domain.KeepUnknown && providers.ProviderHasCapability(pType, providers.CantUseNOPURGE) {
 				errs = append(errs, fmt.Errorf("%s uses NO_PURGE which is not supported by %s(%s)", domain.Name, provider.Name, pType))
 			}
-
-			// Record if any providers do not support TXTMulti:
-			if !providers.ProviderHasCapability(pType, providers.CanUseTXTMulti) {
-				txtMultiDissenters = append(txtMultiDissenters, provider.Name)
-			}
 		}
 
 		// Normalize Nameservers.
 		for _, ns := range domain.Nameservers {
-			ns.Name = dnsutil.AddOrigin(ns.Name, domain.Name)
-			ns.Name = strings.TrimRight(ns.Name, ".")
+			// NB(tlim): Like any target, NAMESERVER() is input by the user
+			// as a shortname or a FQDN+dot.
+			if err := checkTarget(ns.Name); err != nil {
+				errs = append(errs, err)
+			}
+			// Unlike any other FQDN in this system, it is stored as a FQDN without the trailing dot.
+			n := dnsutil.AddOrigin(ns.Name, domain.Name+".")
+			ns.Name = strings.TrimSuffix(n, ".")
 		}
+
 		// Normalize Records.
 		models.PostProcessRecords(domain.Records)
 		for _, rec := range domain.Records {
 			if rec.TTL == 0 {
 				rec.TTL = models.DefaultTTL
 			}
+
+			// Canonicalize Label:
+			if rec.GetLabel() == (domain.Name + ".") {
+				// If label == ${domain}DOT, change to "@"
+				rec.SetLabel("@", domain.Name)
+			} else if lab, suf := rec.GetLabel(), "."+domain.Name+"."; strings.HasSuffix(lab, suf) {
+				// If label ends with DOT${domain}DOT, strip it to a short name.
+				rec.SetLabel(lab[:len(lab)-len(suf)], domain.Name)
+			}
+			// If label ends with dot, add to the list of errors.
+			if strings.HasSuffix(rec.GetLabel(), ".") {
+				errs = append(errs, fmt.Errorf("label %q does not match D(%q)", rec.GetLabel(), domain.Name))
+				return errs // Exit early.
+			}
+
+			// in-addr.arpa magic
+			if strings.HasSuffix(domain.Name, ".in-addr.arpa") || strings.HasSuffix(domain.Name, ".ip6.arpa") {
+				label := rec.GetLabel()
+				if strings.HasSuffix(label, "."+domain.Name) {
+					rec.SetLabel(label[0:(len(label)-len("."+domain.Name))], domain.Name)
+				}
+			}
+
 			// Validate the unmodified inputs:
 			if err := validateRecordTypes(rec, domain.Name, pTypes); err != nil {
 				errs = append(errs, err)
 			}
-			if err := checkLabel(rec.GetLabel(), rec.Type, domain.Name, rec.Metadata); err != nil {
+			if err := checkLabel(rec.GetLabel(), rec.Type, rec.GetTargetField(), domain.Name, rec.Metadata); err != nil {
 				errs = append(errs, err)
 			}
 			if errs2 := checkTargets(rec, domain.Name); errs2 != nil {
@@ -307,7 +350,11 @@ func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
 				// These record types have a target that is a hostname.
 				// We normalize them to a FQDN so there is less variation to handle.  If a
 				// provider API requires a shortname, the provider must do the shortening.
-				rec.SetTarget(dnsutil.AddOrigin(rec.GetTargetField(), domain.Name+"."))
+				origin := domain.Name + "."
+				if rec.SubDomain != "" {
+					origin = rec.SubDomain + "." + origin
+				}
+				rec.SetTarget(dnsutil.AddOrigin(rec.GetTargetField(), origin))
 			} else if rec.Type == "A" || rec.Type == "AAAA" {
 				rec.SetTarget(net.ParseIP(rec.GetTargetField()).String())
 			} else if rec.Type == "PTR" {
@@ -322,24 +369,18 @@ func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
 					errs = append(errs, fmt.Errorf("CAA tag %s is invalid", rec.CaaTag))
 				}
 			} else if rec.Type == "TLSA" {
-				if rec.TlsaUsage < 0 || rec.TlsaUsage > 3 {
+				if rec.TlsaUsage > 3 {
 					errs = append(errs, fmt.Errorf("TLSA Usage %d is invalid in record %s (domain %s)",
 						rec.TlsaUsage, rec.GetLabel(), domain.Name))
 				}
-				if rec.TlsaSelector < 0 || rec.TlsaSelector > 1 {
+				if rec.TlsaSelector > 1 {
 					errs = append(errs, fmt.Errorf("TLSA Selector %d is invalid in record %s (domain %s)",
 						rec.TlsaSelector, rec.GetLabel(), domain.Name))
 				}
-				if rec.TlsaMatchingType < 0 || rec.TlsaMatchingType > 2 {
+				if rec.TlsaMatchingType > 2 {
 					errs = append(errs, fmt.Errorf("TLSA MatchingType %d is invalid in record %s (domain %s)",
 						rec.TlsaMatchingType, rec.GetLabel(), domain.Name))
 				}
-			} else if rec.Type == "TXT" && len(txtMultiDissenters) != 0 && len(rec.TxtStrings) > 1 {
-				// There are providers that  don't support TXTMulti yet there is
-				// a TXT record with multiple strings:
-				errs = append(errs,
-					fmt.Errorf("TXT records with multiple strings (label %v domain: %v) not supported by %s",
-						rec.GetLabel(), domain.Name, strings.Join(txtMultiDissenters, ",")))
 			}
 
 			// Populate FQDN:
@@ -361,7 +402,12 @@ func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
 					errs = append(errs, err)
 					continue
 				}
-				err = importTransform(config.FindDomain(rec.GetTargetField()), domain, table, rec.TTL)
+				c := config.FindDomain(rec.GetTargetField())
+				if c == nil {
+					err = fmt.Errorf("IMPORT_TRANSFORM mentions non-existant domain %q", rec.GetTargetField())
+					errs = append(errs, err)
+				}
+				err = importTransform(c, domain, table, rec.TTL)
 				if err != nil {
 					errs = append(errs, err)
 				}
@@ -392,7 +438,20 @@ func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
 		// Validate FQDN consistency
 		for _, r := range d.Records {
 			if r.NameFQDN == "" || !strings.HasSuffix(r.NameFQDN, d.Name) {
-				errs = append(errs, fmt.Errorf("Record named '%s' does not have correct FQDN in domain '%s'. FQDN: %s", r.Name, d.Name, r.NameFQDN))
+				errs = append(errs, fmt.Errorf("record named '%s' does not have correct FQDN for domain '%s'. FQDN: %s", r.Name, d.Name, r.NameFQDN))
+			}
+		}
+		// Verify AutoDNSSEC is valid.
+		errs = append(errs, checkAutoDNSSEC(d)...)
+	}
+
+	// At this point we've munged anything that needs to be munged, and
+	// validated anything that can be globally validated.
+	// Let's ask // the provider if there are any records they can't handle.
+	for _, domain := range config.Domains { // For each domain..
+		for _, provider := range domain.DNSProviderInstances { // For each provider...
+			if err := providers.AuditRecords(provider.ProviderBase.ProviderType, domain.Records); err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}
@@ -400,19 +459,68 @@ func NormalizeAndValidateConfig(config *models.DNSConfig) (errs []error) {
 	return errs
 }
 
+// UpdateNameSplitHorizon fills in the split horizon fields.
+func UpdateNameSplitHorizon(dc *models.DomainConfig) {
+	if dc.UniqueName == "" {
+		dc.UniqueName = dc.Name
+	}
+	if dc.Tag == "" {
+		l := strings.SplitN(dc.Name, "!", 2)
+		if len(l) == 2 {
+			dc.Name = l[0]
+			dc.Tag = l[1]
+		}
+	}
+}
+
+// processSplitHorizonDomains finds "domain.tld!tag" domains and pre-processes them.
+func processSplitHorizonDomains(config *models.DNSConfig) error {
+	// Parse out names and tags.
+	for _, d := range config.Domains {
+		UpdateNameSplitHorizon(d)
+	}
+
+	// Verify uniquenames are unique
+	seen := map[string]bool{}
+	for _, d := range config.Domains {
+		if seen[d.UniqueName] {
+			return fmt.Errorf("duplicate domain name: %q", d.UniqueName)
+		}
+		seen[d.UniqueName] = true
+	}
+
+	return nil
+}
+
+// parseDomainSpec parses "domain.tld!tag" into its component parts.
+func parseDomainSpec(s string) (domain, tag string) {
+	l := strings.SplitN(s, "!", 2)
+	if len(l) == 2 {
+		return l[0], l[1]
+	}
+	return l[0], ""
+}
+
+func checkAutoDNSSEC(dc *models.DomainConfig) (errs []error) {
+	if dc.AutoDNSSEC != "" && dc.AutoDNSSEC != "on" && dc.AutoDNSSEC != "off" {
+		errs = append(errs, fmt.Errorf("Domain %q AutoDNSSEC=%q is invalid (expecting \"\", \"off\", or \"on\")", dc.Name, dc.AutoDNSSEC))
+	}
+	return
+}
+
 func checkCNAMEs(dc *models.DomainConfig) (errs []error) {
 	cnames := map[string]bool{}
 	for _, r := range dc.Records {
 		if r.Type == "CNAME" {
 			if cnames[r.GetLabel()] {
-				errs = append(errs, fmt.Errorf("Cannot have multiple CNAMEs with same name: %s", r.GetLabelFQDN()))
+				errs = append(errs, fmt.Errorf("cannot have multiple CNAMEs with same name: %s", r.GetLabelFQDN()))
 			}
 			cnames[r.GetLabel()] = true
 		}
 	}
 	for _, r := range dc.Records {
 		if cnames[r.GetLabel()] && r.Type != "CNAME" {
-			errs = append(errs, fmt.Errorf("Cannot have CNAME and %s record with same name: %s", r.Type, r.GetLabelFQDN()))
+			errs = append(errs, fmt.Errorf("cannot have CNAME and %s record with same name: %s", r.Type, r.GetLabelFQDN()))
 		}
 	}
 	return
@@ -423,38 +531,123 @@ func checkDuplicates(records []*models.RecordConfig) (errs []error) {
 	for _, r := range records {
 		diffable := fmt.Sprintf("%s %s %s", r.GetLabelFQDN(), r.Type, r.ToDiffable())
 		if seen[diffable] != nil {
-			errs = append(errs, fmt.Errorf("Exact duplicate record found: %s", diffable))
+			errs = append(errs, fmt.Errorf("exact duplicate record found: %s", diffable))
 		}
 		seen[diffable] = r
 	}
 	return errs
 }
 
-func checkProviderCapabilities(dc *models.DomainConfig) error {
-	types := []struct {
-		rType string
-		cap   providers.Capability
-	}{
-		{"ALIAS", providers.CanUseAlias},
-		{"PTR", providers.CanUsePTR},
-		{"SRV", providers.CanUseSRV},
-		{"CAA", providers.CanUseCAA},
-		{"TLSA", providers.CanUseTLSA},
+// We pull this out of checkProviderCapabilities() so that it's visible within
+// the package elsewhere, so that our test suite can look at the list of
+// capabilities we're checking and make sure that it's up-to-date.
+var providerCapabilityChecks = []pairTypeCapability{
+	// If a zone uses rType X, the provider must support capability Y.
+	//{"X", providers.Y},
+	capabilityCheck("ALIAS", providers.CanUseAlias),
+	capabilityCheck("AUTODNSSEC", providers.CanAutoDNSSEC),
+	capabilityCheck("CAA", providers.CanUseCAA),
+	capabilityCheck("NAPTR", providers.CanUseNAPTR),
+	capabilityCheck("PTR", providers.CanUsePTR),
+	capabilityCheck("R53_ALIAS", providers.CanUseRoute53Alias),
+	capabilityCheck("SSHFP", providers.CanUseSSHFP),
+	capabilityCheck("SOA", providers.CanUseSOA),
+	capabilityCheck("SRV", providers.CanUseSRV),
+	capabilityCheck("TLSA", providers.CanUseTLSA),
+	capabilityCheck("AZURE_ALIAS", providers.CanUseAzureAlias),
+
+	// DS needs special record-level checks
+	{
+		rType:     "DS",
+		caps:      []providers.Capability{providers.CanUseDS, providers.CanUseDSForChildren},
+		checkFunc: checkProviderDS,
+	},
+}
+
+type pairTypeCapability struct {
+	rType string
+	// Capabilities the provider must implement if any records of type rType are found
+	// in the zonefile. This is a disjunction - implementing at least one of the listed
+	// capabilities is sufficient.
+	caps []providers.Capability
+	// checkFunc provides additional checks of each provider. This function should be
+	// called if records of type rType are found in the zonefile.
+	checkFunc func(pType string, _ models.Records) error
+}
+
+func capabilityCheck(rType string, caps ...providers.Capability) pairTypeCapability {
+	return pairTypeCapability{
+		rType: rType,
+		caps:  caps,
 	}
-	for _, ty := range types {
-		hasAny := false
-		for _, r := range dc.Records {
-			if r.Type == ty.rType {
-				hasAny = true
-				break
+}
+
+func providerHasAtLeastOneCapability(pType string, caps ...providers.Capability) bool {
+	for _, cap := range caps {
+		if providers.ProviderHasCapability(pType, cap) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func checkProviderDS(pType string, records models.Records) error {
+	switch {
+	case providers.ProviderHasCapability(pType, providers.CanUseDS):
+		// The provider can use DS records anywhere, including at the root
+		return nil
+	case !providers.ProviderHasCapability(pType, providers.CanUseDSForChildren):
+		// Provider has no support for DS records
+		return fmt.Errorf("provider %s uses DS records but does not support them", pType)
+	default:
+		// Provider supports DS records but not at the root
+		for _, record := range records {
+			if record.Type == "DS" && record.Name == "@" {
+				return fmt.Errorf(
+					"provider %s only supports child DS records, but zone had a record at the root (@)",
+					pType,
+				)
 			}
+		}
+	}
+
+	return nil
+}
+
+func checkProviderCapabilities(dc *models.DomainConfig) error {
+	// Check if the zone uses a capability that the provider doesn't
+	// support.
+	for _, ty := range providerCapabilityChecks {
+		hasAny := false
+		switch ty.rType {
+		case "AUTODNSSEC":
+			if dc.AutoDNSSEC != "" {
+				hasAny = true
+			}
+		default:
+			for _, r := range dc.Records {
+				if r.Type == ty.rType {
+					hasAny = true
+					break
+				}
+			}
+
 		}
 		if !hasAny {
 			continue
 		}
 		for _, provider := range dc.DNSProviderInstances {
-			if !providers.ProviderHasCapability(provider.ProviderType, ty.cap) {
-				return fmt.Errorf("Domain %s uses %s records, but DNS provider type %s does not support them", dc.Name, ty.rType, provider.ProviderType)
+			// fmt.Printf("  (checking if %q can %q for domain %q)\n", provider.ProviderType, ty.rType, dc.Name)
+			if !providerHasAtLeastOneCapability(provider.ProviderType, ty.caps...) {
+				return fmt.Errorf("domain %s uses %s records, but DNS provider type %s does not support them", dc.Name, ty.rType, provider.ProviderType)
+			}
+
+			if ty.checkFunc != nil {
+				checkErr := ty.checkFunc(provider.ProviderType, dc.Records)
+				if checkErr != nil {
+					return fmt.Errorf("while checking %s records in domain %s: %w", ty.rType, dc.Name, checkErr)
+				}
 			}
 		}
 	}
@@ -475,7 +668,7 @@ func applyRecordTransforms(domain *models.DomainConfig) error {
 			return err
 		}
 		ip := net.ParseIP(rec.GetTargetField()) // ip already validated above
-		newIPs, err := transform.TransformIPToList(net.ParseIP(rec.GetTargetField()), table)
+		newIPs, err := transform.IPToList(net.ParseIP(rec.GetTargetField()), table)
 		if err != nil {
 			return err
 		}

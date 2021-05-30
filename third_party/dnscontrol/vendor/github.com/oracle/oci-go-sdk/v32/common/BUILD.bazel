@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "common",
+    srcs = [
+        "client.go",
+        "common.go",
+        "configuration.go",
+        "errors.go",
+        "helpers.go",
+        "http.go",
+        "http_signer.go",
+        "log.go",
+        "retry.go",
+        "version.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/oracle/oci-go-sdk/v32/common",
+    importpath = "github.com/oracle/oci-go-sdk/v32/common",
+    visibility = ["//visibility:public"],
+)

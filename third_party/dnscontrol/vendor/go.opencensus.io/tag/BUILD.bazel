@@ -13,7 +13,7 @@ go_library(
         "profile_not19.go",
         "validate.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/tag",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/tag",
     importpath = "go.opencensus.io/tag",
     visibility = ["//visibility:public"],
 )

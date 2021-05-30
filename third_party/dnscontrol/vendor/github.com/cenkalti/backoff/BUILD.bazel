@@ -10,7 +10,7 @@ go_library(
         "ticker.go",
         "tries.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/cenkalti/backoff",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/cenkalti/backoff",
     importpath = "github.com/cenkalti/backoff",
     visibility = ["//visibility:public"],
 )

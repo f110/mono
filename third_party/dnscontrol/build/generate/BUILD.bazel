@@ -6,7 +6,7 @@ go_library(
         "featureMatrix.go",
         "generate.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/build/generate",
+    importpath = "github.com/StackExchange/dnscontrol/v3/build/generate",
     visibility = ["//visibility:private"],
     deps = [
         "//third_party/dnscontrol/providers",

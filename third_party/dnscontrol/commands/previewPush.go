@@ -7,13 +7,13 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/pkg/nameservers"
-	"github.com/StackExchange/dnscontrol/v2/pkg/normalize"
-	"github.com/StackExchange/dnscontrol/v2/pkg/notifications"
-	"github.com/StackExchange/dnscontrol/v2/pkg/printer"
-	"github.com/StackExchange/dnscontrol/v2/providers"
-	"github.com/StackExchange/dnscontrol/v2/providers/config"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/nameservers"
+	"github.com/StackExchange/dnscontrol/v3/pkg/normalize"
+	"github.com/StackExchange/dnscontrol/v3/pkg/notifications"
+	"github.com/StackExchange/dnscontrol/v3/pkg/printer"
+	"github.com/StackExchange/dnscontrol/v3/providers"
+	"github.com/StackExchange/dnscontrol/v3/providers/config"
 )
 
 var _ = cmd(catMain, func() *cli.Command {
@@ -99,9 +99,9 @@ func run(args PreviewArgs, push bool, interactive bool, out printer.CLI) error {
 	if err != nil {
 		return err
 	}
-	errs := normalize.NormalizeAndValidateConfig(cfg)
+	errs := normalize.ValidateAndNormalizeConfig(cfg)
 	if PrintValidationErrors(errs) {
-		return fmt.Errorf("Exiting due to validation errors")
+		return fmt.Errorf("exiting due to validation errors")
 	}
 	// TODO:
 	notifier, err := InitializeProviders(args.CredsFile, cfg, args.Notify)
@@ -112,10 +112,10 @@ func run(args PreviewArgs, push bool, interactive bool, out printer.CLI) error {
 	totalCorrections := 0
 DomainLoop:
 	for _, domain := range cfg.Domains {
-		if !args.shouldRunDomain(domain.Name) {
+		if !args.shouldRunDomain(domain.UniqueName) {
 			continue
 		}
-		out.StartDomain(domain.Name)
+		out.StartDomain(domain.UniqueName)
 		nsList, err := nameservers.DetermineNameservers(domain)
 		if err != nil {
 			return err
@@ -132,6 +132,9 @@ DomainLoop:
 			if !shouldrun {
 				continue
 			}
+
+			/// This is where we should audit?
+
 			corrections, err := provider.Driver.GetDomainCorrections(dc)
 			out.EndProvider(len(corrections), err)
 			if err != nil {
@@ -169,10 +172,10 @@ DomainLoop:
 	notifier.Done()
 	out.Printf("Done. %d corrections.\n", totalCorrections)
 	if anyErrors {
-		return fmt.Errorf("Completed with errors")
+		return fmt.Errorf("completed with errors")
 	}
 	if totalCorrections != 0 && args.WarnChanges {
-		return fmt.Errorf("There are pending changes")
+		return fmt.Errorf("there are pending changes")
 	}
 	return nil
 }

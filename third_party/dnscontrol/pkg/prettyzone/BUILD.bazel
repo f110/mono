@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "prettyzone",
+    srcs = [
+        "prettyzone.go",
+        "sorting.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/prettyzone",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/vendor/github.com/miekg/dns",
+    ],
+)

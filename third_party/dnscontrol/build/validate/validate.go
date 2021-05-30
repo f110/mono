@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v35/github"
 	"golang.org/x/oauth2"
 )
 
@@ -58,7 +58,7 @@ func checkGoFmt() error {
 	if fList == "" {
 		return nil
 	}
-	return fmt.Errorf("The following files need to have gofmt run on them:\n%s", fList)
+	return fmt.Errorf("the following files need to have gofmt run on them:\n%s", fList)
 }
 
 func checkGoGenerate() error {

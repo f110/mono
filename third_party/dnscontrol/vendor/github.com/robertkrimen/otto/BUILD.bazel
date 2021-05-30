@@ -57,7 +57,7 @@ go_library(
         "value_primitive.go",
         "value_string.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/robertkrimen/otto",
     importpath = "github.com/robertkrimen/otto",
     visibility = ["//visibility:public"],
     deps = [

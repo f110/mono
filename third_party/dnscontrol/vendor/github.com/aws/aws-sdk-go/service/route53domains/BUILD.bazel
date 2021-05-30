@@ -8,7 +8,7 @@ go_library(
         "errors.go",
         "service.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/service/route53domains",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/service/route53domains",
     importpath = "github.com/aws/aws-sdk-go/service/route53domains",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"sort"
 
-	"github.com/StackExchange/dnscontrol/v2/providers"
-	_ "github.com/StackExchange/dnscontrol/v2/providers/_all"
+	"github.com/StackExchange/dnscontrol/v3/providers"
+	_ "github.com/StackExchange/dnscontrol/v3/providers/_all"
 )
 
 func generateFeatureMatrix() error {
@@ -30,18 +30,23 @@ func generateFeatureMatrix() error {
 			{"DNS Provider", "Can manage and serve DNS zones"},
 			{"Registrar", "The provider has registrar capabilities to set nameservers for zones"},
 			{"ALIAS", "Provider supports some kind of ALIAS, ANAME or flattened CNAME record type"},
+			{"AUTODNSSEC", "Provider can automatically manage DNSSEC"},
 			{"CAA", "Provider can manage CAA records"},
 			{"PTR", "Provider supports adding PTR records for reverse lookup zones"},
 			{"NAPTR", "Provider can manage NAPTR records"},
+			{"SOA", "Provider can manage SOA records"},
 			{"SRV", "Driver has explicitly implemented SRV record management"},
 			{"SSHFP", "Provider can manage SSHFP records"},
 			{"TLSA", "Provider can manage TLSA records"},
 			{"TXTMulti", "Provider can manage TXT records with multiple strings"},
 			{"R53_ALIAS", "Provider supports Route 53 limited ALIAS"},
+			{"AZURE_ALIAS", "Provider supports Azure DNS limited ALIAS"},
+			{"DS", "Provider supports adding DS records"},
 
 			{"dual host", "This provider is recommended for use in 'dual hosting' scenarios. Usually this means the provider allows full control over the apex NS records"},
 			{"create-domains", "This means the provider can automatically create domains that do not currently exist on your account. The 'dnscontrol create-domains' command will initialize any missing domains"},
 			{"no_purge", "indicates you can use NO_PURGE macro to prevent deleting records not managed by dnscontrol. A few providers that generate the entire zone from scratch have a problem implementing this."},
+			{"get-zones", "indicates the dnscontrol get-zones subcommand is implemented."},
 		},
 	}
 	for _, p := range providerTypes {
@@ -70,17 +75,21 @@ func generateFeatureMatrix() error {
 			}
 		}
 		setDoc("Official Support", providers.DocOfficiallySupported, true)
-		fm.SetSimple("DNS Provider", false, func() bool { return providers.DNSProviderTypes[p] != nil })
+		fm.SetSimple("DNS Provider", false, func() bool { return providers.DNSProviderTypes[p].Initializer != nil })
 		fm.SetSimple("Registrar", false, func() bool { return providers.RegistrarTypes[p] != nil })
 		setCap("ALIAS", providers.CanUseAlias)
+		setCap("AUTODNSSEC", providers.CanAutoDNSSEC)
 		setCap("CAA", providers.CanUseCAA)
 		setCap("NAPTR", providers.CanUseNAPTR)
 		setCap("PTR", providers.CanUsePTR)
 		setCap("R53_ALIAS", providers.CanUseRoute53Alias)
+		setCap("AZURE_ALIAS", providers.CanUseAzureAlias)
+		setCap("SOA", providers.CanUseSOA)
 		setCap("SRV", providers.CanUseSRV)
 		setCap("SSHFP", providers.CanUseSSHFP)
 		setCap("TLSA", providers.CanUseTLSA)
-		setCap("TXTMulti", providers.CanUseTXTMulti)
+		setCap("get-zones", providers.CanGetZones)
+		setCap("DS", providers.CanUseDS)
 		setDoc("dual host", providers.DocDualHost, false)
 		setDoc("create-domains", providers.DocCreateDomains, true)
 

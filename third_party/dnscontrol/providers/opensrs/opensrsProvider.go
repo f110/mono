@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 
 	opensrs "github.com/philhug/opensrs-go/opensrs"
 )
@@ -17,6 +17,7 @@ var docNotes = providers.DocumentationNotes{
 	providers.DocCreateDomains:       providers.Cannot(),
 	providers.DocOfficiallySupported: providers.Cannot(),
 	providers.CanUseTLSA:             providers.Cannot(),
+	providers.CanGetZones:            providers.Unimplemented(),
 }
 
 func init() {
@@ -29,19 +30,22 @@ var defaultNameServerNames = []string{
 	"ns3.systemdns.com",
 }
 
-type OpenSRSApi struct {
+// opensrsProvider is the api handle.
+type opensrsProvider struct {
 	UserName string // reseller user name
-	ApiKey   string // API Key
+	APIKey   string // API Key
 
 	BaseURL string          // An alternate base URI
 	client  *opensrs.Client // Client
 }
 
-func (c *OpenSRSApi) GetNameservers(domainName string) ([]*models.Nameserver, error) {
-	return models.StringsToNameservers(defaultNameServerNames), nil
+// GetNameservers returns a list of nameservers.
+func (c *opensrsProvider) GetNameservers(domainName string) ([]*models.Nameserver, error) {
+	return models.ToNameservers(defaultNameServerNames)
 }
 
-func (c *OpenSRSApi) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
+// GetRegistrarCorrections returns a list of corrections for a registrar.
+func (c *opensrsProvider) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
 	corrections := []*models.Correction{}
 
 	nameServers, err := c.getNameservers(dc.Name)
@@ -73,14 +77,14 @@ func (c *OpenSRSApi) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models
 
 // OpenSRS calls
 
-func (c *OpenSRSApi) getClient() *opensrs.Client {
+func (c *opensrsProvider) getClient() *opensrs.Client {
 	return c.client
 }
 
 // Returns the name server names that should be used. If the domain is registered
 // then this method will return the delegation name servers. If this domain
 // is hosted only, then it will return the default OpenSRS name servers.
-func (c *OpenSRSApi) getNameservers(domainName string) ([]string, error) {
+func (c *opensrsProvider) getNameservers(domainName string) ([]string, error) {
 	client := c.getClient()
 
 	status, err := client.Domains.GetDomain(domainName, "status", 1)
@@ -94,13 +98,12 @@ func (c *OpenSRSApi) getNameservers(domainName string) ([]string, error) {
 			return nil, err
 		}
 		return dom.Attributes.NameserverList.ToString(), nil
-	} else {
-		return nil, errors.New("Domain is locked")
 	}
+	return nil, errors.New("domain is locked")
 }
 
 // Returns a function that can be invoked to change the delegation of the domain to the given name server names.
-func (c *OpenSRSApi) updateNameserversFunc(nameServerNames []string, domainName string) func() error {
+func (c *opensrsProvider) updateNameserversFunc(nameServerNames []string, domainName string) func() error {
 	return func() error {
 		client := c.getClient()
 
@@ -118,24 +121,24 @@ func newReg(conf map[string]string) (providers.Registrar, error) {
 	return newProvider(conf, nil)
 }
 
-func newProvider(m map[string]string, metadata json.RawMessage) (*OpenSRSApi, error) {
-	api := &OpenSRSApi{}
-	api.ApiKey = m["apikey"]
+func newProvider(m map[string]string, metadata json.RawMessage) (*opensrsProvider, error) {
+	api := &opensrsProvider{}
+	api.APIKey = m["apikey"]
 
-	if api.ApiKey == "" {
-		return nil, fmt.Errorf("OpenSRS apikey must be provided.")
+	if api.APIKey == "" {
+		return nil, fmt.Errorf("openSRS apikey must be provided")
 	}
 
 	api.UserName = m["username"]
 	if api.UserName == "" {
-		return nil, fmt.Errorf("OpenSRS username key must be provided.")
+		return nil, fmt.Errorf("openSRS username key must be provided")
 	}
 
 	if m["baseurl"] != "" {
 		api.BaseURL = m["baseurl"]
 	}
 
-	api.client = opensrs.NewClient(opensrs.NewApiKeyMD5Credentials(api.UserName, api.ApiKey))
+	api.client = opensrs.NewClient(opensrs.NewApiKeyMD5Credentials(api.UserName, api.APIKey))
 	if api.BaseURL != "" {
 		api.client.BaseURL = api.BaseURL
 	}

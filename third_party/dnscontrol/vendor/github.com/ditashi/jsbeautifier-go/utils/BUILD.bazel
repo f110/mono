@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "utils",
+    srcs = ["utils.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/ditashi/jsbeautifier-go/utils",
+    importpath = "github.com/ditashi/jsbeautifier-go/utils",
+    visibility = ["//visibility:public"],
+)

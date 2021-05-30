@@ -8,7 +8,7 @@ go_library(
         "sort.go",
         "write.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/octodns/octoyaml",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/octodns/octoyaml",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",

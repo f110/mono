@@ -6,11 +6,11 @@ go_library(
         "client.go",
         "decoder.go",
         "encoder.go",
+        "is_zero.go",
         "request.go",
         "response.go",
-        "xmlrpc.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/kolo/xmlrpc",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/kolo/xmlrpc",
     importpath = "github.com/kolo/xmlrpc",
     visibility = ["//visibility:public"],
 )

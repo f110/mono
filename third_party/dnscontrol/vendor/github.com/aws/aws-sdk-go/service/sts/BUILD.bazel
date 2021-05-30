@@ -4,11 +4,12 @@ go_library(
     name = "sts",
     srcs = [
         "api.go",
+        "customizations.go",
         "doc.go",
         "errors.go",
         "service.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/service/sts",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/service/sts",
     importpath = "github.com/aws/aws-sdk-go/service/sts",
     visibility = ["//visibility:public"],
     deps = [

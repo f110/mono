@@ -6,7 +6,7 @@ go_library(
         "cond.go",
         "runes.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/text/runes",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/golang.org/x/text/runes",
     importpath = "golang.org/x/text/runes",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/golang.org/x/text/transform"],

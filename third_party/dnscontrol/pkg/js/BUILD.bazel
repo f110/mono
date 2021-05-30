@@ -6,7 +6,7 @@ go_library(
         "js.go",
         "static.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/js",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/js",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
@@ -14,5 +14,9 @@ go_library(
         "//third_party/dnscontrol/pkg/transform",
         "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto",
         "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/underscore",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/fetch",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/loop",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/promise",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/timers",
     ],
 )

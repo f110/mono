@@ -6,7 +6,7 @@ go_library(
         "error.go",
         "parser.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/hcl/hcl/parser",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/hcl/hcl/parser",
     importpath = "github.com/hashicorp/hcl/hcl/parser",
     visibility = ["//visibility:public"],
     deps = [

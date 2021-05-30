@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "xxh32",
     srcs = ["xxh32zero.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/pierrec/lz4/internal/xxh32",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/pierrec/lz4/internal/xxh32",
     importpath = "github.com/pierrec/lz4/internal/xxh32",
     visibility = ["//third_party/dnscontrol/vendor/github.com/pierrec/lz4:__subpackages__"],
 )

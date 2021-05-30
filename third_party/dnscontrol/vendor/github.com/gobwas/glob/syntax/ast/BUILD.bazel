@@ -6,7 +6,7 @@ go_library(
         "ast.go",
         "parser.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/gobwas/glob/syntax/ast",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/gobwas/glob/syntax/ast",
     importpath = "github.com/gobwas/glob/syntax/ast",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/github.com/gobwas/glob/syntax/lexer"],

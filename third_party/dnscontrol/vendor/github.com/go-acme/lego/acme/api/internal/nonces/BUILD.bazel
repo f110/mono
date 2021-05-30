@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "nonces",
     srcs = ["nonce_manager.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/acme/api/internal/nonces",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/acme/api/internal/nonces",
     importpath = "github.com/go-acme/lego/acme/api/internal/nonces",
     visibility = ["//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api:__subpackages__"],
     deps = ["//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api/internal/sender"],

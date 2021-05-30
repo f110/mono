@@ -1,9 +1,67 @@
 # Change Log
 
+## [v1.0.0](https://github.com/vultr/govultr/compare/v0.5.0..v1.0.0) (2020-09-03)
+### Feature
+*  Promoting GoVultr to v1.0.0. Moving forward all v1 changes will be made against the [v1](https://github.com/vultr/govultr/tree/v1) branch.
+
+## [v0.5.0](https://github.com/vultr/govultr/compare/v0.4.2..v0.5.0) (2020-08-25)
+### Enhancement
+*  Servers: Enable/Disable DDOS Protection [#75](https://github.com/vultr/govultr/pull/75)
+
+### Breaking Changes
+* Servers: SetUserData userData param should already be base64 encoded. This call will no longer encode supplied string. [#73](https://github.com/vultr/govultr/pull/73)
+* BareMetalServer: SetUserData userData param should already be base64 encoded. This call will no longer encode supplied string. [#73](https://github.com/vultr/govultr/pull/73)
+* Servers: AddIPV4 now returns the created IP address. The call also has a new parameter called `reboot` which will let you hold off on rebooting the server. [#77](https://github.com/vultr/govultr/pull/77)
+
+## [v0.4.2](https://github.com/vultr/govultr/compare/v0.4.1..v0.4.2) (2020-06-02)
+### Bug Fix
+*  DNS Records: Allow DNS Records on updates to have priority of 0 [#67](https://github.com/vultr/govultr/pull/67)
+
+## [v0.4.1](https://github.com/vultr/govultr/compare/v0.4.0..v0.4.1) (2020-05-08)
+### Bug Fix
+*  LoadBalancers: Fix nil pointer in create call [#65](https://github.com/vultr/govultr/pull/65)
+
+## [v0.4.0](https://github.com/vultr/govultr/compare/v0.3.3..v0.4.0) (2020-04-29)
+### Enhancement
+*  LoadBalancers: Proxy protocol is now available as an option [#62](https://github.com/vultr/govultr/pull/62)
+*  LoadBalancers: Ability to attach instances during Create (note this adds a new param to create call) [#62](https://github.com/vultr/govultr/pull/62)
+
+### Bug Fix
+*  LoadBalancers: Create call will now properly pass your algorithm [#61](https://github.com/vultr/govultr/pull/61)
+
+### CI/CD
+* Drop go 1.12 and add 1.14 [#63](https://github.com/vultr/govultr/pull/63)
+
+## [v0.3.3](https://github.com/vultr/govultr/compare/v0.3.2..v0.3.3) (2020-04-15)
+### Dependencies
+*  go-retryablehttp 0.6.4 -> 0.6.6 [#58](https://github.com/vultr/govultr/pull/58)
+
+## [v0.3.2](https://github.com/vultr/govultr/compare/v0.3.1..v0.3.2) (2020-03-25)
+### Enhancement
+*  Added support to live attach/detach blockstorage [#55](https://github.com/vultr/govultr/pull/55)
+
+## [v0.3.1](https://github.com/vultr/govultr/compare/v0.3.0..v0.3.1) (2020-03-11)
+### Enhancement
+*  Added support for Load Balancers SSL Calls [#53](https://github.com/vultr/govultr/pull/53)
+### Bug Fix
+* Fixed InstanceList type from string to int [#50](https://github.com/vultr/govultr/pull/50)
+* Fixed struct json marshalling issue [#48](https://github.com/vultr/govultr/pull/48)
+### Dependencies
+* go-retryablehttp 0.6.3 -> 0.6.4 [#51](https://github.com/vultr/govultr/pull/51)
+
+## [v0.3.0](https://github.com/vultr/govultr/compare/v0.2.0..v0.3.0) (2020-02-24)
+### Enhancement
+*  Added support for Load Balancers [#44](https://github.com/vultr/govultr/pull/44)
+### Bug Fix
+* Fixed Object Storage Get call [#46](https://github.com/vultr/govultr/pull/46)
+
+## [v0.2.0](https://github.com/vultr/govultr/compare/v0.1.7..v0.2.0) (2020-02-06)
+### Enhancement
+*  Added support for Object Storage [#39](https://github.com/vultr/govultr/pull/39)
+
 ## [v0.1.7](https://github.com/vultr/govultr/compare/v0.1.6..v0.1.7) (2019-11-11)
 ### Enhancement
 *  Version number was missing in v0.1.6 - Attempt was made to fix however it will not work. Cutting new release to remedy this.
-
 
 ## [v0.1.6](https://github.com/vultr/govultr/compare/v0.1.5..v0.1.6) (2019-11-07)
 ### Enhancement

@@ -10,7 +10,7 @@ go_library(
         "storage.go",
         "vaultStorage.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/acme",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/acme",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",

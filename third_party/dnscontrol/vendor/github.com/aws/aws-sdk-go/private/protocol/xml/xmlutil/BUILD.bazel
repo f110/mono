@@ -4,10 +4,11 @@ go_library(
     name = "xmlutil",
     srcs = [
         "build.go",
+        "sort.go",
         "unmarshal.go",
         "xml_to_struct.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
     importpath = "github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
     visibility = ["//visibility:public"],
     deps = [

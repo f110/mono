@@ -7,6 +7,6 @@ go_library(
         "parse.go",
         "resolver.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/spflib",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/spflib",
     visibility = ["//visibility:public"],
 )

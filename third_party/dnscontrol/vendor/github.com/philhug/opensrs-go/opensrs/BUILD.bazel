@@ -9,7 +9,7 @@ go_library(
         "structs.go",
         "xml.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/philhug/opensrs-go/opensrs",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/philhug/opensrs-go/opensrs",
     importpath = "github.com/philhug/opensrs-go/opensrs",
     visibility = ["//visibility:public"],
 )

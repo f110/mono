@@ -4,14 +4,15 @@ go_library(
     name = "linode",
     srcs = [
         "api.go",
+        "auditrecords.go",
         "linodeProvider.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/linode",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/linode",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/diff",
         "//third_party/dnscontrol/providers",
-        "//third_party/dnscontrol/providers/diff",
         "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
         "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
     ],

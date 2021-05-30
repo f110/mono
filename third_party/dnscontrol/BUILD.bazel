@@ -2,17 +2,18 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:proto disable_global
-# gazelle:prefix github.com/StackExchange/dnscontrol/v2
+# gazelle:prefix github.com/StackExchange/dnscontrol/v3
 
 gazelle(name = "gazelle")
 
 go_library(
     name = "dnscontrol_lib",
     srcs = ["main.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2",
+    importpath = "github.com/StackExchange/dnscontrol/v3",
     visibility = ["//visibility:private"],
     deps = [
         "//third_party/dnscontrol/commands",
+        "//third_party/dnscontrol/pkg/version",
         "//third_party/dnscontrol/providers/_all",
     ],
 )

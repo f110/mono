@@ -13,7 +13,7 @@ go_library(
         "urlforwardings.go",
         "vanitynameservers.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/namedotcom/go/namecom",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/namedotcom/go/namecom",
     importpath = "github.com/namedotcom/go/namecom",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/github.com/pkg/errors"],

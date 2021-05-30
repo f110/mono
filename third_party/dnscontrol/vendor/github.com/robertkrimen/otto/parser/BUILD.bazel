@@ -12,7 +12,7 @@ go_library(
         "scope.go",
         "statement.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/parser",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/robertkrimen/otto/parser",
     importpath = "github.com/robertkrimen/otto/parser",
     visibility = ["//visibility:public"],
     deps = [

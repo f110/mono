@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-gandi",
+    srcs = ["gandi.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-gandi/go-gandi",
+    importpath = "github.com/go-gandi/go-gandi",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/go-gandi/go-gandi/domain",
+        "//third_party/dnscontrol/vendor/github.com/go-gandi/go-gandi/livedns",
+    ],
+)

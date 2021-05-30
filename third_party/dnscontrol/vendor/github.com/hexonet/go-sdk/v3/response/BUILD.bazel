@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "response",
+    srcs = ["response.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hexonet/go-sdk/v3/response",
+    importpath = "github.com/hexonet/go-sdk/v3/response",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/column",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/record",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/responsetemplate",
+    ],
+)

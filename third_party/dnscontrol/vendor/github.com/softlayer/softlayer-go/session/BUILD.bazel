@@ -7,7 +7,7 @@ go_library(
         "session.go",
         "xmlrpc.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/softlayer/softlayer-go/session",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/softlayer/softlayer-go/session",
     importpath = "github.com/softlayer/softlayer-go/session",
     visibility = ["//visibility:public"],
     deps = [

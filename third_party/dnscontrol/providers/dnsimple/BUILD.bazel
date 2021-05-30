@@ -2,13 +2,17 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "dnsimple",
-    srcs = ["dnsimpleProvider.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/dnsimple",
+    srcs = [
+        "auditrecords.go",
+        "dnsimpleProvider.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/dnsimple",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/diff",
+        "//third_party/dnscontrol/pkg/txtutil",
         "//third_party/dnscontrol/providers",
-        "//third_party/dnscontrol/providers/diff",
         "//third_party/dnscontrol/vendor/github.com/dnsimple/dnsimple-go/dnsimple",
         "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
     ],

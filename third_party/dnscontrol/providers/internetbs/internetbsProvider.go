@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 )
 
 /*
@@ -24,7 +24,7 @@ func init() {
 }
 
 func newInternetBs(m map[string]string) (providers.Registrar, error) {
-	api := &api{}
+	api := &internetbsProvider{}
 
 	api.key, api.password = m["api-key"], m["password"]
 	if api.key == "" || api.password == "" {
@@ -35,7 +35,7 @@ func newInternetBs(m map[string]string) (providers.Registrar, error) {
 }
 
 // GetRegistrarCorrections gathers corrections that would being n to match dc.
-func (c *api) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
+func (c *internetbsProvider) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
 	nss, err := c.getNameservers(dc.Name)
 	if err != nil {
 		return nil, err

@@ -6,7 +6,7 @@ go_library(
         "flatten.go",
         "validate.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/normalize",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/normalize",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",

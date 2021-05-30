@@ -126,6 +126,7 @@ func (d Droplet) String() string {
 	return Stringify(d)
 }
 
+// URN returns the droplet ID in a valid DO API URN form.
 func (d Droplet) URN() string {
 	return ToURN("Droplet", d.ID)
 }
@@ -139,21 +140,25 @@ type dropletRoot struct {
 type dropletsRoot struct {
 	Droplets []Droplet `json:"droplets"`
 	Links    *Links    `json:"links"`
+	Meta     *Meta     `json:"meta"`
 }
 
 type kernelsRoot struct {
 	Kernels []Kernel `json:"kernels,omitempty"`
 	Links   *Links   `json:"links"`
+	Meta    *Meta    `json:"meta"`
 }
 
 type dropletSnapshotsRoot struct {
 	Snapshots []Image `json:"snapshots,omitempty"`
 	Links     *Links  `json:"links"`
+	Meta      *Meta   `json:"meta"`
 }
 
 type backupsRoot struct {
 	Backups []Image `json:"backups,omitempty"`
 	Links   *Links  `json:"links"`
+	Meta    *Meta   `json:"meta"`
 }
 
 // DropletCreateImage identifies an image for the create request. It prefers slug over ID.
@@ -172,25 +177,25 @@ func (d DropletCreateImage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.ID)
 }
 
-// DropletCreateVolume identifies a volume to attach for the create request. It
-// prefers Name over ID,
+// DropletCreateVolume identifies a volume to attach for the create request.
 type DropletCreateVolume struct {
-	ID   string
+	ID string
+	// Deprecated: You must pass a the volume's ID when creating a Droplet.
 	Name string
 }
 
-// MarshalJSON returns an object with either the name or id of the volume. It
-// returns the id if the name is empty.
+// MarshalJSON returns an object with either the ID or name of the volume. It
+// prefers the ID over the name.
 func (d DropletCreateVolume) MarshalJSON() ([]byte, error) {
-	if d.Name != "" {
+	if d.ID != "" {
 		return json.Marshal(struct {
-			Name string `json:"name"`
-		}{Name: d.Name})
+			ID string `json:"id"`
+		}{ID: d.ID})
 	}
 
 	return json.Marshal(struct {
-		ID string `json:"id"`
-	}{ID: d.ID})
+		Name string `json:"name"`
+	}{Name: d.Name})
 }
 
 // DropletCreateSSHKey identifies a SSH Key for the create request. It prefers fingerprint over ID.
@@ -294,6 +299,9 @@ func (s *DropletsServiceOp) list(ctx context.Context, path string) ([]Droplet, *
 	}
 	if l := root.Links; l != nil {
 		resp.Links = l
+	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
 	}
 
 	return root.Droplets, resp, err
@@ -449,6 +457,9 @@ func (s *DropletsServiceOp) Kernels(ctx context.Context, dropletID int, opt *Lis
 	if l := root.Links; l != nil {
 		resp.Links = l
 	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
+	}
 
 	return root.Kernels, resp, err
 }
@@ -477,6 +488,9 @@ func (s *DropletsServiceOp) Actions(ctx context.Context, dropletID int, opt *Lis
 	}
 	if l := root.Links; l != nil {
 		resp.Links = l
+	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
 	}
 
 	return root.Actions, resp, err
@@ -507,6 +521,9 @@ func (s *DropletsServiceOp) Backups(ctx context.Context, dropletID int, opt *Lis
 	if l := root.Links; l != nil {
 		resp.Links = l
 	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
+	}
 
 	return root.Backups, resp, err
 }
@@ -535,6 +552,9 @@ func (s *DropletsServiceOp) Snapshots(ctx context.Context, dropletID int, opt *L
 	}
 	if l := root.Links; l != nil {
 		resp.Links = l
+	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
 	}
 
 	return root.Snapshots, resp, err

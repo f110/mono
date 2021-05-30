@@ -6,7 +6,7 @@ go_library(
         "sender.go",
         "useragent.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/acme/api/internal/sender",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/acme/api/internal/sender",
     importpath = "github.com/go-acme/lego/acme/api/internal/sender",
     visibility = ["//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme/api:__subpackages__"],
     deps = ["//third_party/dnscontrol/vendor/github.com/go-acme/lego/acme"],

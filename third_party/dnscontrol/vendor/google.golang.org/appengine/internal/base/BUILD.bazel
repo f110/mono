@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "base",
     srcs = ["api_base.pb.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/appengine/internal/base",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/appengine/internal/base",
     importpath = "google.golang.org/appengine/internal/base",
     visibility = ["//third_party/dnscontrol/vendor/google.golang.org/appengine:__subpackages__"],
     deps = ["//third_party/dnscontrol/vendor/github.com/golang/protobuf/proto"],

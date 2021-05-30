@@ -6,7 +6,7 @@ go_library(
         "token.go",
         "token_const.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/token",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/robertkrimen/otto/token",
     importpath = "github.com/robertkrimen/otto/token",
     visibility = ["//visibility:public"],
 )

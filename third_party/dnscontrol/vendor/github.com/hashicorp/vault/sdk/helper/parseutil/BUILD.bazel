@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "parseutil",
     srcs = ["parseutil.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/vault/sdk/helper/parseutil",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/vault/sdk/helper/parseutil",
     importpath = "github.com/hashicorp/vault/sdk/helper/parseutil",
     visibility = ["//visibility:public"],
     deps = [

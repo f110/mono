@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "resource",
     srcs = ["resource.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/resource",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/resource",
     importpath = "go.opencensus.io/resource",
     visibility = ["//visibility:public"],
 )

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "apiclient",
+    srcs = ["apiclient.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hexonet/go-sdk/v3/apiclient",
+    importpath = "github.com/hexonet/go-sdk/v3/apiclient",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/logger",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/response",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/responsetemplatemanager",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/socketconfig",
+    ],
+)

@@ -46,8 +46,8 @@ import (
 	"github.com/miekg/dns"
 	"github.com/miekg/dns/dnsutil"
 
-	"github.com/StackExchange/dnscontrol/v2/providers/bind"
-	"github.com/StackExchange/dnscontrol/v2/providers/octodns/octoyaml"
+	"github.com/StackExchange/dnscontrol/v3/pkg/prettyzone"
+	"github.com/StackExchange/dnscontrol/v3/providers/octodns/octoyaml"
 )
 
 var flagInfmt = flag.String("in", "zone", "zone|octodns")
@@ -83,7 +83,7 @@ func main() {
 
 	switch *flagOutfmt {
 	case "pretty":
-		bind.WriteZoneFile(os.Stdout, recs, zonename)
+		prettyzone.WriteZoneFileRR(os.Stdout, recs, zonename)
 	case "dsl":
 		fmt.Printf(`D("%s", %s, DnsProvider(%s)`, zonename, *flagRegText, *flagProviderText)
 		rrFormat(zonename, filename, recs, defTTL, true)
@@ -116,7 +116,7 @@ func parseargs(args []string) (zonename string, filename string, r io.Reader, er
 		filename = flag.Arg(1)
 		r, err = os.Open(filename)
 		if err != nil {
-			return "", "", nil, fmt.Errorf("Could not open file: %s: %w", filename, err)
+			return "", "", nil, fmt.Errorf("could not open file: %s: %w", filename, err)
 		}
 	} else {
 		return "", "", nil, fmt.Errorf("too many command line parameters")
@@ -126,15 +126,17 @@ func parseargs(args []string) (zonename string, filename string, r io.Reader, er
 }
 
 func readZone(zonename string, r io.Reader, filename string) []dns.RR {
-	var l []dns.RR
-	for x := range dns.ParseZone(r, zonename, filename) {
-		if x.Error != nil {
-			log.Println(x.Error)
-		} else {
-			l = append(l, x.RR)
-		}
+
+	zp := dns.NewZoneParser(r, zonename, filename)
+
+	var parsed []dns.RR
+	for rr, ok := zp.Next(); ok; rr, ok = zp.Next() {
+		parsed = append(parsed, rr)
 	}
-	return l
+	if err := zp.Err(); err != nil {
+		log.Fatalf("Error in zonefile: %v", err)
+	}
+	return parsed
 }
 
 func readOctodns(zonename string, r io.Reader, filename string) []dns.RR {
@@ -149,11 +151,6 @@ func readOctodns(zonename string, r io.Reader, filename string) []dns.RR {
 		l = append(l, x.ToRR())
 	}
 	return l
-}
-
-// pretty outputs the zonefile using the prettyprinter.
-func writePretty(zonename string, recs []dns.RR, defaultTTL uint32) {
-	bind.WriteZoneFile(os.Stdout, recs, zonename)
 }
 
 // rrFormat outputs the zonefile in either DSL or TSV format.

@@ -1,5 +1,7 @@
 package monitor
 
+import "time"
+
 // Job wraps an NS1 /monitoring/jobs resource
 type Job struct {
 	ID string `json:"id,omitempty"`
@@ -123,13 +125,35 @@ type Rule struct {
 // connTimeout is the timeout(in sec) to wait for query output.
 func NewHTTPConfig(url, method, ua, auth string, connTimeout int) *Config {
 	return &Config{
-		"url":                url, // Required
-		"method":             method,
-		"user_agent":         ua,
-		"auth":               auth,
-		"connection_timeout": connTimeout,
+		"url":             url, // Required
+		"method":          method,
+		"user_agent":      ua,
+		"authorization":   auth,
+		"connect_timeout": connTimeout,
 	}
 
+}
+
+// NewHTTPV3Config constructs/returns a job configuration for HTTP type jobs, with additional V3 fields.
+// v3 must be enabled in customer configuration
+// url is the URL to query. (Required)
+// method is the HTTP method(valid methods are HEAD, GET, and POST).
+// ua is the user agent text in the request header.
+// auth is the authorization header to use in request.
+// connTimeout is the timeout(in sec) to wait for query output.
+func NewHTTPV3Config(url, method, ua, auth string, connTimeout int, it time.Duration, reqIPV4 bool, vhost string, tlsSkipVerify bool, followRedir bool) *Config {
+	return &Config{
+		"url":             url, // Required
+		"method":          method,
+		"user_agent":      ua,
+		"authorization":   auth,
+		"connect_timeout": connTimeout,
+		"idle_timeout":    it,
+		"require_ipv4":    reqIPV4,
+		"virtual_host":    vhost,
+		"tls_skip_verify": tlsSkipVerify,
+		"follow_redirect": followRedir,
+	}
 }
 
 // NewDNSConfig constructs/returns a job configuration for DNS type jobs.
@@ -157,12 +181,12 @@ func NewDNSConfig(host, domain string, port int, t string, respTimeout int) *Con
 // ssl determines whether to attempt negotiating an SSL connection.
 func NewTCPConfig(host string, port, connTimeout, respTimeout int, send string, ssl bool) *Config {
 	return &Config{
-		"host":               host, // Required
-		"port":               port, // Required
-		"connection_timeout": connTimeout,
-		"response_timeout":   respTimeout,
-		"send":               send,
-		"ssl":                ssl,
+		"host":             host, // Required
+		"port":             port, // Required
+		"connect_timeout":  connTimeout,
+		"response_timeout": respTimeout,
+		"send":             send,
+		"ssl":              ssl,
 	}
 }
 

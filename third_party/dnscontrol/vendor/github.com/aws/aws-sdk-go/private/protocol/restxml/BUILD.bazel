@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "restxml",
     srcs = ["restxml.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/private/protocol/restxml",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/private/protocol/restxml",
     importpath = "github.com/aws/aws-sdk-go/private/protocol/restxml",
     visibility = ["//visibility:public"],
     deps = [

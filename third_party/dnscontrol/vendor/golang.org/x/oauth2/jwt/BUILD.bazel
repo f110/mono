@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "jwt",
     srcs = ["jwt.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/oauth2/jwt",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/golang.org/x/oauth2/jwt",
     importpath = "golang.org/x/oauth2/jwt",
     visibility = ["//visibility:public"],
     deps = [

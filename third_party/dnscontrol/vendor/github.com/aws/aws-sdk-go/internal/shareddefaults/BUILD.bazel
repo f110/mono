@@ -6,7 +6,7 @@ go_library(
         "ecs_container.go",
         "shared_config.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/internal/shareddefaults",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/internal/shareddefaults",
     importpath = "github.com/aws/aws-sdk-go/internal/shareddefaults",
     visibility = ["//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go:__subpackages__"],
 )

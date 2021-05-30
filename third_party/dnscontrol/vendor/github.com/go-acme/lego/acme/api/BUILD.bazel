@@ -11,7 +11,7 @@ go_library(
         "order.go",
         "service.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/acme/api",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/acme/api",
     importpath = "github.com/go-acme/lego/acme/api",
     visibility = ["//visibility:public"],
     deps = [

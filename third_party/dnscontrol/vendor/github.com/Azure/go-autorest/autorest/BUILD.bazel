@@ -16,9 +16,11 @@ go_library(
         "retriablerequest_1.8.go",
         "sender.go",
         "utility.go",
+        "utility_1.13.go",
+        "utility_legacy.go",
         "version.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/Azure/go-autorest/autorest",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/Azure/go-autorest/autorest",
     importpath = "github.com/Azure/go-autorest/autorest",
     visibility = ["//visibility:public"],
     deps = [

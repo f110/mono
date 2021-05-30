@@ -6,7 +6,7 @@ go_library(
         "flatten.go",
         "parser.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/hcl/json/parser",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/hcl/json/parser",
     importpath = "github.com/hashicorp/hcl/json/parser",
     visibility = ["//visibility:public"],
     deps = [

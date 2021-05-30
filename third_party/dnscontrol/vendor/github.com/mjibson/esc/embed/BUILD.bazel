@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "embed",
     srcs = ["embed.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/mjibson/esc/embed",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mjibson/esc/embed",
     importpath = "github.com/mjibson/esc/embed",
     visibility = ["//visibility:public"],
     deps = [

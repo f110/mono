@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-powerdns",
+    srcs = [
+        "client.go",
+        "doc.go",
+        "interface.go",
+        "options.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mittwald/go-powerdns",
+    importpath = "github.com/mittwald/go-powerdns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/apis/cache",
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/apis/cryptokeys",
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/apis/search",
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/apis/servers",
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/apis/zones",
+        "//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/pdnshttp",
+    ],
+)

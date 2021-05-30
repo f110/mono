@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "roundrobin",
     srcs = ["roundrobin.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/balancer/roundrobin",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/balancer/roundrobin",
     importpath = "google.golang.org/grpc/balancer/roundrobin",
     visibility = ["//visibility:public"],
     deps = [
@@ -11,6 +11,5 @@ go_library(
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/balancer/base",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/grpclog",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcrand",
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/resolver",
     ],
 )

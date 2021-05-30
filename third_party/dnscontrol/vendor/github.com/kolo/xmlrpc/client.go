@@ -1,12 +1,14 @@
 package xmlrpc
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/rpc"
 	"net/url"
+	"sync"
 )
 
 type Client struct {
@@ -27,24 +29,28 @@ type clientCodec struct {
 	// responses presents map of active requests. It is required to return request id, that
 	// rpc.Client can mark them as done.
 	responses map[uint64]*http.Response
+	mutex     sync.Mutex
 
-	response *Response
+	response Response
 
 	// ready presents channel, that is used to link request and it`s response.
 	ready chan uint64
+
+	// close notifies codec is closed.
+	close chan uint64
 }
 
 func (codec *clientCodec) WriteRequest(request *rpc.Request, args interface{}) (err error) {
 	httpRequest, err := NewRequest(codec.url.String(), request.ServiceMethod, args)
 
+	if err != nil {
+		return err
+	}
+
 	if codec.cookies != nil {
 		for _, cookie := range codec.cookies.Cookies(codec.url) {
 			httpRequest.AddCookie(cookie)
 		}
-	}
-
-	if err != nil {
-		return err
 	}
 
 	var httpResponse *http.Response
@@ -58,38 +64,49 @@ func (codec *clientCodec) WriteRequest(request *rpc.Request, args interface{}) (
 		codec.cookies.SetCookies(codec.url, httpResponse.Cookies())
 	}
 
+	codec.mutex.Lock()
 	codec.responses[request.Seq] = httpResponse
+	codec.mutex.Unlock()
+
 	codec.ready <- request.Seq
 
 	return nil
 }
 
 func (codec *clientCodec) ReadResponseHeader(response *rpc.Response) (err error) {
-	seq := <-codec.ready
+	var seq uint64
+	select {
+	case seq = <-codec.ready:
+	case <-codec.close:
+		return errors.New("codec is closed")
+	}
+	response.Seq = seq
+
+	codec.mutex.Lock()
 	httpResponse := codec.responses[seq]
+	delete(codec.responses, seq)
+	codec.mutex.Unlock()
+
+	defer httpResponse.Body.Close()
 
 	if httpResponse.StatusCode < 200 || httpResponse.StatusCode >= 300 {
-		return fmt.Errorf("request error: bad status code - %d", httpResponse.StatusCode)
+		response.Error = fmt.Sprintf("request error: bad status code - %d", httpResponse.StatusCode)
+		return nil
 	}
 
-	respData, err := ioutil.ReadAll(httpResponse.Body)
-
+	body, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return err
+		response.Error = err.Error()
+		return nil
 	}
 
-	httpResponse.Body.Close()
-
-	resp := NewResponse(respData)
-
-	if resp.Failed() {
-		response.Error = fmt.Sprintf("%v", resp.Err())
+	resp := Response(body)
+	if err := resp.Err(); err != nil {
+		response.Error = err.Error()
+		return nil
 	}
 
 	codec.response = resp
-
-	response.Seq = seq
-	delete(codec.responses, seq)
 
 	return nil
 }
@@ -98,17 +115,16 @@ func (codec *clientCodec) ReadResponseBody(v interface{}) (err error) {
 	if v == nil {
 		return nil
 	}
-
-	if err = codec.response.Unmarshal(v); err != nil {
-		return err
-	}
-
-	return nil
+	return codec.response.Unmarshal(v)
 }
 
 func (codec *clientCodec) Close() error {
-	transport := codec.httpClient.Transport.(*http.Transport)
-	transport.CloseIdleConnections()
+	if transport, ok := codec.httpClient.Transport.(*http.Transport); ok {
+		transport.CloseIdleConnections()
+	}
+
+	close(codec.close)
+
 	return nil
 }
 
@@ -135,6 +151,7 @@ func NewClient(requrl string, transport http.RoundTripper) (*Client, error) {
 	codec := clientCodec{
 		url:        u,
 		httpClient: httpClient,
+		close:      make(chan uint64),
 		ready:      make(chan uint64),
 		responses:  make(map[uint64]*http.Response),
 		cookies:    jar,

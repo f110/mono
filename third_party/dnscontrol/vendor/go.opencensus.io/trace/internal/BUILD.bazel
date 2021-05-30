@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "internal",
     srcs = ["internal.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/trace/internal",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/trace/internal",
     importpath = "go.opencensus.io/trace/internal",
     visibility = ["//third_party/dnscontrol/vendor/go.opencensus.io/trace:__subpackages__"],
 )

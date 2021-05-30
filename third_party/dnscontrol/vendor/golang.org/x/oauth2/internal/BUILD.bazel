@@ -8,7 +8,7 @@ go_library(
         "token.go",
         "transport.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/oauth2/internal",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/golang.org/x/oauth2/internal",
     importpath = "golang.org/x/oauth2/internal",
     visibility = ["//third_party/dnscontrol/vendor/golang.org/x/oauth2:__subpackages__"],
     deps = ["//third_party/dnscontrol/vendor/golang.org/x/net/context/ctxhttp"],

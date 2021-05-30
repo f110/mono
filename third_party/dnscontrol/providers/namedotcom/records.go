@@ -8,8 +8,8 @@ import (
 
 	"github.com/namedotcom/go/namecom"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers/diff"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/diff"
 )
 
 var defaultNameservers = []*models.Nameserver{
@@ -19,16 +19,28 @@ var defaultNameservers = []*models.Nameserver{
 	{Name: "ns4.name.com"},
 }
 
-// GetDomainCorrections gathers correctios that would bring n to match dc.
-func (n *NameCom) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
-	dc.Punycode()
-	records, err := n.getRecords(dc.Name)
+// GetZoneRecords gets the records of a zone and returns them in RecordConfig format.
+func (n *namedotcomProvider) GetZoneRecords(domain string) (models.Records, error) {
+	records, err := n.getRecords(domain)
 	if err != nil {
 		return nil, err
 	}
+
 	actual := make([]*models.RecordConfig, len(records))
 	for i, r := range records {
-		actual[i] = toRecord(r, dc.Name)
+		actual[i] = toRecord(r, domain)
+	}
+
+	return actual, nil
+}
+
+// GetDomainCorrections gathers correctios that would bring n to match dc.
+func (n *namedotcomProvider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
+	dc.Punycode()
+
+	actual, err := n.GetZoneRecords(dc.Name)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, rec := range dc.Records {
@@ -43,7 +55,11 @@ func (n *NameCom) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Corre
 	models.PostProcessRecords(actual)
 
 	differ := diff.New(dc)
-	_, create, del, mod := differ.IncrementalDiff(actual)
+	_, create, del, mod, err := differ.IncrementalDiff(actual)
+	if err != nil {
+		return nil, err
+	}
+
 	corrections := []*models.Correction{}
 
 	for _, d := range del {
@@ -112,7 +128,7 @@ func toRecord(r *namecom.Record, origin string) *models.RecordConfig {
 	return rc
 }
 
-func (n *NameCom) getRecords(domain string) ([]*namecom.Record, error) {
+func (n *namedotcomProvider) getRecords(domain string) ([]*namecom.Record, error) {
 	var (
 		err      error
 		records  []*namecom.Record
@@ -142,7 +158,7 @@ func (n *NameCom) getRecords(domain string) ([]*namecom.Record, error) {
 	return records, nil
 }
 
-func (n *NameCom) createRecord(rc *models.RecordConfig, domain string) error {
+func (n *namedotcomProvider) createRecord(rc *models.RecordConfig, domain string) error {
 	record := &namecom.Record{
 		DomainName: domain,
 		Host:       rc.GetLabel(),
@@ -153,9 +169,9 @@ func (n *NameCom) createRecord(rc *models.RecordConfig, domain string) error {
 	}
 	switch rc.Type { // #rtype_variations
 	case "A", "AAAA", "ANAME", "CNAME", "MX", "NS":
-		// nothing
+	// nothing
 	case "TXT":
-		record.Answer = encodeTxt(rc.TxtStrings)
+	// 	record.Answer = encodeTxt(rc.TxtStrings)
 	case "SRV":
 		if rc.GetTargetField() == "." {
 			return errors.New("SRV records with empty targets are not supported (as of 2019-11-05, the API returns 'Parameter Value Error - Invalid Srv Format')")
@@ -171,20 +187,20 @@ func (n *NameCom) createRecord(rc *models.RecordConfig, domain string) error {
 	return err
 }
 
-// makeTxt encodes TxtStrings for sending in the CREATE/MODIFY API:
-func encodeTxt(txts []string) string {
-	ans := txts[0]
+// // makeTxt encodes TxtStrings for sending in the CREATE/MODIFY API:
+// func encodeTxt(txts []string) string {
+// 	ans := txts[0]
 
-	if len(txts) > 1 {
-		ans = ""
-		for _, t := range txts {
-			ans += `"` + strings.Replace(t, `"`, `\"`, -1) + `"`
-		}
-	}
-	return ans
-}
+// 	if len(txts) > 1 {
+// 		ans = ""
+// 		for _, t := range txts {
+// 			ans += `"` + strings.Replace(t, `"`, `\"`, -1) + `"`
+// 		}
+// 	}
+// 	return ans
+// }
 
-// finds a string surrounded by quotes that might contain an escaped quote charactor.
+// finds a string surrounded by quotes that might contain an escaped quote character.
 var quotedStringRegexp = regexp.MustCompile(`"((?:[^"\\]|\\.)*)"`)
 
 // decodeTxt decodes the TXT record as received from name.com and
@@ -202,7 +218,7 @@ func decodeTxt(s string) []string {
 	return []string{s}
 }
 
-func (n *NameCom) deleteRecord(id int32, domain string) error {
+func (n *namedotcomProvider) deleteRecord(id int32, domain string) error {
 	request := &namecom.DeleteRecordRequest{
 		DomainName: domain,
 		ID:         id,

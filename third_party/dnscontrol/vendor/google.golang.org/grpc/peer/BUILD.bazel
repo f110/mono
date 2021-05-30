@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "peer",
     srcs = ["peer.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/peer",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/peer",
     importpath = "google.golang.org/grpc/peer",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/google.golang.org/grpc/credentials"],

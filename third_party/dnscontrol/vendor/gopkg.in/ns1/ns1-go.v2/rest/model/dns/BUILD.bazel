@@ -4,11 +4,12 @@ go_library(
     name = "dns",
     srcs = [
         "answer.go",
+        "dnssec.go",
         "doc.go",
         "record.go",
         "zone.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/dns",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/dns",
     importpath = "gopkg.in/ns1/ns1-go.v2/rest/model/dns",
     visibility = ["//visibility:public"],
     deps = [

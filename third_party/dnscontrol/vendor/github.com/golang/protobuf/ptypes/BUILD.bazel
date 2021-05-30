@@ -8,7 +8,7 @@ go_library(
         "duration.go",
         "timestamp.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/golang/protobuf/ptypes",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/golang/protobuf/ptypes",
     importpath = "github.com/golang/protobuf/ptypes",
     visibility = ["//visibility:public"],
     deps = [
@@ -16,5 +16,7 @@ go_library(
         "//third_party/dnscontrol/vendor/github.com/golang/protobuf/ptypes/any",
         "//third_party/dnscontrol/vendor/github.com/golang/protobuf/ptypes/duration",
         "//third_party/dnscontrol/vendor/github.com/golang/protobuf/ptypes/timestamp",
+        "//third_party/dnscontrol/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/dnscontrol/vendor/google.golang.org/protobuf/reflect/protoregistry",
     ],
 )

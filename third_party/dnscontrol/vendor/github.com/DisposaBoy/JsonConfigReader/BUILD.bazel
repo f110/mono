@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "JsonConfigReader",
     srcs = ["reader.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/DisposaBoy/JsonConfigReader",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/DisposaBoy/JsonConfigReader",
     importpath = "github.com/DisposaBoy/JsonConfigReader",
     visibility = ["//visibility:public"],
 )

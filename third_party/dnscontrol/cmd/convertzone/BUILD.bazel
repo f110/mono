@@ -3,10 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "convertzone_lib",
     srcs = ["main.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2/cmd/convertzone",
+    importpath = "github.com/StackExchange/dnscontrol/v3/cmd/convertzone",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/dnscontrol/providers/bind",
+        "//third_party/dnscontrol/pkg/prettyzone",
         "//third_party/dnscontrol/providers/octodns/octoyaml",
         "//third_party/dnscontrol/vendor/github.com/miekg/dns",
         "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",

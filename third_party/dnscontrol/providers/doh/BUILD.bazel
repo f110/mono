@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "doh",
+    srcs = [
+        "api.go",
+        "auditrecords.go",
+        "dohProvider.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/doh",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/providers",
+        "//third_party/dnscontrol/vendor/github.com/babolivier/go-doh-client",
+    ],
+)

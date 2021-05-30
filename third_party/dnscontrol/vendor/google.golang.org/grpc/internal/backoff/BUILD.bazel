@@ -3,8 +3,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "backoff",
     srcs = ["backoff.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/internal/backoff",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/internal/backoff",
     importpath = "google.golang.org/grpc/internal/backoff",
     visibility = ["//third_party/dnscontrol/vendor/google.golang.org/grpc:__subpackages__"],
-    deps = ["//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcrand"],
+    deps = [
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/backoff",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcrand",
+    ],
 )

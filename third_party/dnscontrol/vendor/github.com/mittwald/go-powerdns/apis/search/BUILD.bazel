@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "search",
+    srcs = [
+        "client.go",
+        "interface.go",
+        "search.go",
+        "types.go",
+        "types_resultlist.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mittwald/go-powerdns/apis/search",
+    importpath = "github.com/mittwald/go-powerdns/apis/search",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/pdnshttp"],
+)

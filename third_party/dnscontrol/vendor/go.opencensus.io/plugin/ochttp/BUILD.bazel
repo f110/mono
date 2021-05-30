@@ -13,7 +13,7 @@ go_library(
         "trace.go",
         "wrapped_body.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/plugin/ochttp",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/plugin/ochttp",
     importpath = "go.opencensus.io/plugin/ochttp",
     visibility = ["//visibility:public"],
     deps = [

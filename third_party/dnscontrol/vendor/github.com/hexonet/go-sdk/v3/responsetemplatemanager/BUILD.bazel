@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "responsetemplatemanager",
+    srcs = ["responsetemplatemanager.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hexonet/go-sdk/v3/responsetemplatemanager",
+    importpath = "github.com/hexonet/go-sdk/v3/responsetemplatemanager",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/responseparser",
+        "//third_party/dnscontrol/vendor/github.com/hexonet/go-sdk/v3/responsetemplate",
+    ],
+)

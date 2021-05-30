@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "backend",
+    srcs = [
+        "local.go",
+        "ssh.go",
+        "types.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/bhendo/go-powershell/backend",
+    importpath = "github.com/bhendo/go-powershell/backend",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/juju/errors"],
+)

@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "file",
     srcs = ["file.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/file",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/robertkrimen/otto/file",
     importpath = "github.com/robertkrimen/otto/file",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/gopkg.in/sourcemap.v1:sourcemap_v1"],

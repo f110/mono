@@ -6,10 +6,11 @@ go_library(
         "balancer.go",
         "base.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/balancer/base",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/balancer/base",
     importpath = "google.golang.org/grpc/balancer/base",
     visibility = ["//visibility:public"],
     deps = [
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/attributes",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/balancer",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/connectivity",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/grpclog",

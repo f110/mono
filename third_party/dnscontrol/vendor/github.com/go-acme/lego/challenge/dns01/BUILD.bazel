@@ -10,7 +10,7 @@ go_library(
         "nameserver.go",
         "precheck.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/challenge/dns01",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/challenge/dns01",
     importpath = "github.com/go-acme/lego/challenge/dns01",
     visibility = ["//visibility:public"],
     deps = [

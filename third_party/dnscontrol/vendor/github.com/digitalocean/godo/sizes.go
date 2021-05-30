@@ -31,6 +31,7 @@ type Size struct {
 	Regions      []string `json:"regions,omitempty"`
 	Available    bool     `json:"available,omitempty"`
 	Transfer     float64  `json:"transfer,omitempty"`
+	Description  string   `json:"description,omitempty"`
 }
 
 func (s Size) String() string {
@@ -40,6 +41,7 @@ func (s Size) String() string {
 type sizesRoot struct {
 	Sizes []Size
 	Links *Links `json:"links"`
+	Meta  *Meta  `json:"meta"`
 }
 
 // List all images
@@ -62,6 +64,9 @@ func (s *SizesServiceOp) List(ctx context.Context, opt *ListOptions) ([]Size, *R
 	}
 	if l := root.Links; l != nil {
 		resp.Links = l
+	}
+	if m := root.Meta; m != nil {
+		resp.Meta = m
 	}
 
 	return root.Sizes, resp, err

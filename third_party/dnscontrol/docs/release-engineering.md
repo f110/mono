@@ -5,55 +5,50 @@ title: How to build and ship a release
 
 # How to build and ship a release
 
-Here are my notes from producing the v2.8 release.  Change the version number as appropriate.
+These are the instructions for producing a release.
+Please change the version number as appropriate.
 
 
-## Step 1. Vendor the modules
+## Step 1. Tools check
 
-Vendor the modules. The vendored files are not used (unless you change
-the builds to use `-mod=vendor`). They are maintained simply to make
-sure that we have a backup in the unlikely event of a disaster.
-
-```
-go mod vendor
-git add vendor
-git commit -m'vendor modules' vendor
-```
-
-TODO(Tom): build.go should verify that this was done, similar to
-how it tests that gofmt was run.
-
-
-## Step 2. Run the integration tests
-
-* If you are at StackOverflow, this is in TC as "DNS > Integration Tests".
-* Otherwise:
-  * Run "go test" (documented in [Creating new DNS Resource Types](adding-new-rtypes))
-  * Run the integration tests (documented in [Writing new DNS providers](writing-providers)
-
-
-## Step 3. Bump the version number
-
-Edit the "Version" variable in `main.go` and commit.
+Make sure you are using the latest version of `go`
+(listed on [https://golang.org/dl/](https://golang.org/dl/))
 
 ```
-export PREVVERSION=2.8
-export VERSION=2.9
-git checkout master
-vi main.go
-git commit -m'Release v'"$VERSION" main.go
-git tag v"$VERSION"
-git push origin tag v"$VERSION"
+go version
 ```
 
 
-## Step 4. Write the release notes.
+## Step 2. Create a new release branch
 
-The release notes that you write will be used in a few places.
+From the "master" branch, run `bin/make-release.sh v1.2.3` where
+"v1.2.3" should be the release version.
 
-To find items to write about, review the git log using this command:
+This will do a few things.
 
-    git log v"$VERSION"...v"$PREVVERSION"
+1. Tag the current branch locally and remotely.
+2. Update main.go with the new version string.
+3. Create a file called draft-notes.txt which you will edit into the
+   release notes.
+4. Print instructions on how to create the release PR.
+
+NOTE: If you bump the major version, you need to change all the source
+files.  The last time this was done (v2 -> v3) these two commands
+automated all that:
+
+```
+#  Make all the changes:
+sed -i.bak -e 's@github.com.StackExchange.dnscontrol.v2@github.com/StackExchange/dnscontrol/v3@g' go.* $(fgrep -lri --include '*.go' github.com/StackExchange/dnscontrol/v2 *)
+# Delete the backup files:
+find * -name \*.bak -delete
+```
+
+## Step 3. Write the release notes.
+
+draft-notes.txt is just a draft and needs considerable editing.
+
+Once complete, the contents of this file will be used in multiple
+places (release notes, email announcements, etc.)
 
 Entries in the bullet list should be phrased in the positive: "Feature
 FOO now does BAR".  This is often the opposite of the related issue,
@@ -64,11 +59,8 @@ If there was no issue, create one and close it.
 
 Sort the list most important/exciting changes earlier in the list.
 
-Put the "[BREAKING CHANGE]" on any breaking change.
-
 Items related to a specific provier should begin with the all-caps
 name of the provider, such as "ROUTE53: Added support for sandwiches (#100)"
-
 
 See [https://github.com/StackExchange/dnscontrol/releases for examples](https://github.com/StackExchange/dnscontrol/releases) for recent release notes and copy that style.
 
@@ -92,59 +84,49 @@ Provider-specific changes:
 * CLOUDFLARE: Fix CF trying to update non-changeable TTL (#issueid)
 ```
 
-## Step 5. Make the draft release.
+## Step 4. Make the draft release.
 
 [On github.com, click on "Draft a new release"](https://github.com/StackExchange/dnscontrol/releases/new)
 
 Fill in the `Tag version` @ `Target` with:
 
   * Tag version: v$VERSION (this should be the first tag listed)
-  * Target: master (this should be the default)
+  * Target: master (this should be the default; and disappears when
+    you enter the tag)
 
 Release title: Release v$VERSION
 
 Fill in the text box with the release notes written above.
 
-(Don't click SAVE until the next step is complete!)
+(DON'T click SAVE until the next step is complete!)
 
-Create the binaries and attach them to the release:
+(DO use the "preview" tab to proofread the text.)
 
-    go run build/build.go
+## Step 5. Merge the release.
 
-NOTE: This command creates binaries with the version number and git hash embedded. It also builds the releases for all supported platforms (i.e. creates a .exe for Windows even if you are running on Linux.  Isn't Go amazing?)
+Verify that the automated tests passed. If not, fix the problems
+before you continue.
 
-WARNING: if there are files that haven't been checked in, the version string will have "dirty" appended.
+This is also an opportunity to update any dependencies (go modules).
+See the last section for commands that make that possible. Only
+update modules related to the providers in the automated testing
+system.  When those tests pass, wait for the Github Actions to
+complete and verify the tests all passed.
 
-This is what it looks like when you did it right:
+Merge the PR into Master.
 
-```
-$ ./dnscontrol-Darwin version
-dnscontrol 2.8 ("ee5208bd5f19b9e5dd0bdba8d0e13403c43a469a") built 19 Dec 18 11:16 EST
-```
+## Step 6. Publish the release
 
-This is what it looks like when there was a file that wasn't checked in:
+a. Publish the release.
 
-```
-$ ./dnscontrol-Darwin version
-dnscontrol 2.8 ("ee5208bd5f19b9e5dd0bdba8d0e13403c43a469a[dirty]") built 19 Dec 18 11:14 EST
-                                                          ^^^^^
-                                                          ^^^^^
-                                                          ^^^^^
-```
+* Make sure the "This is a pre-release" checkbox is UNchecked.
+* Click "Publish Release".
 
+b. Wait for workflow to complete
 
-## Step 6. Attach the binaries and release.
-
-a. Drag and drop binaries into the web form.
-
-There is a box labeled "Attach binaries by dropping them here or
-selecting them".  Drag dnscontrol-Darwin, dnscontrol-Linux, and
-dnscontrol.exe onto that box (one at a time or all at once). This
-will upload the binaries.
-
-b. Submit the release.
-
-Make sure the "This is a pre-release" checkbox is UNchecked. Then click "Publish Release".
+There's a GitHub Actions [workflow](https://github.com/StackExchange/dnscontrol/actions?query=workflow%3Arelease) which automatically builds and attaches
+all 3 binaries to the release. Refresh the page after a few minutes and you'll
+see dnscontrol-Darwin, dnscontrol-Linux, and dnscontrol.exe attached as assets.
 
 
 ## Step 7. Announce it via email
@@ -169,7 +151,7 @@ it.  [Click here to join](https://groups.google.com/forum/#!forum/dnscontrol-dis
 Mention on [https://gitter.im/dnscontrol/Lobby](https://gitter.im/dnscontrol/Lobby) that the new release has shipped.
 
 ```
-dnscontrol $VERSION has been released! https://github.com/StackExchange/dnscontrol/releases/tag/v$VERSION
+ANNOUNCEMENT: dnscontrol v$VERSION has been released! https://github.com/StackExchange/dnscontrol/releases/tag/v$VERSION
 ```
 
 
@@ -185,25 +167,27 @@ If you are at Stack Overflow:
 
 # Tip: How to update modules
 
-List out-of-date modules and update any that 
+List out-of-date modules and update any that seem worth updating:
 
 ```
-go get -u github.com/psampaz/go-mod-outdated
-go list -u -m -json all | go-mod-outdated -update -direct 
-```
-
-To update a module, `get` it, then re-run the unit and integration tests.
-
-```
-go get -u
-    or
-go get -u module/path
-```
-
-Once the updates are complete, tidy up:
-
-```
+go get github.com/oligot/go-mod-upgrade
+go-mod-upgrade
 go mod tidy
 ```
 
-When done, vendor the modules (see Step 1 above).
+OLD WAY:
+
+```
+go get -u github.com/psampaz/go-mod-outdated
+go list -mod=mod -u -m -json all | go-mod-outdated -update -direct
+
+# If any are out of date, update via:
+
+go get -u
+    or
+go get -u module/path
+
+# Once the updates are complete, tidy up:
+
+go mod tidy
+```

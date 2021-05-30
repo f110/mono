@@ -8,9 +8,8 @@ go_library(
         "env_config.go",
         "method_logger.go",
         "sink.go",
-        "util.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/internal/binarylog",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/internal/binarylog",
     importpath = "google.golang.org/grpc/internal/binarylog",
     visibility = ["//third_party/dnscontrol/vendor/google.golang.org/grpc:__subpackages__"],
     deps = [
@@ -18,6 +17,7 @@ go_library(
         "//third_party/dnscontrol/vendor/github.com/golang/protobuf/ptypes",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/binarylog/grpc_binarylog_v1",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/grpclog",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/grpcutil",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/metadata",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/status",
     ],

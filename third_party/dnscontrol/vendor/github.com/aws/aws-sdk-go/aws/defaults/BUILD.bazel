@@ -6,7 +6,7 @@ go_library(
         "defaults.go",
         "shared_config.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/aws/defaults",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/aws/defaults",
     importpath = "github.com/aws/aws-sdk-go/aws/defaults",
     visibility = ["//visibility:public"],
     deps = [

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "pdnshttp",
+    srcs = [
+        "auth.go",
+        "auth_key.go",
+        "auth_tls.go",
+        "client.go",
+        "errors.go",
+        "req_opt.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mittwald/go-powerdns/pdnshttp",
+    importpath = "github.com/mittwald/go-powerdns/pdnshttp",
+    visibility = ["//visibility:public"],
+)

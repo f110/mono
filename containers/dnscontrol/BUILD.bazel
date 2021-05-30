@@ -4,9 +4,9 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "bin",
     srcs = [
+        "//go/cmd/dns-config-generator",
         "//third_party/dnscontrol",
         "//third_party/dnscontrol/cmd/convertzone",
-        "//go/cmd/dns-config-generator",
     ],
     mode = "0755",
     package_dir = "/usr/local/bin",

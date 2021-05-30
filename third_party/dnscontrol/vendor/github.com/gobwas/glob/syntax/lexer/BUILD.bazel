@@ -6,7 +6,7 @@ go_library(
         "lexer.go",
         "token.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/gobwas/glob/syntax/lexer",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/gobwas/glob/syntax/lexer",
     importpath = "github.com/gobwas/glob/syntax/lexer",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/github.com/gobwas/glob/util/runes"],

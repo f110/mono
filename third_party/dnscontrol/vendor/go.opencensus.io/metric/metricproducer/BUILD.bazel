@@ -6,7 +6,7 @@ go_library(
         "manager.go",
         "producer.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/metric/metricproducer",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/metric/metricproducer",
     importpath = "go.opencensus.io/metric/metricproducer",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/go.opencensus.io/metric/metricdata"],

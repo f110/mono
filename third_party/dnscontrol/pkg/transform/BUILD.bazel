@@ -7,6 +7,6 @@ go_library(
         "ptr.go",
         "transform.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/transform",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/transform",
     visibility = ["//visibility:public"],
 )

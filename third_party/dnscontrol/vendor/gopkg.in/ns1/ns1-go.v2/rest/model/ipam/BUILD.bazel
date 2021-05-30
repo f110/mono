@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ipam",
+    srcs = [
+        "doc.go",
+        "network.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/ipam",
+    importpath = "gopkg.in/ns1/ns1-go.v2/rest/model/ipam",
+    visibility = ["//visibility:public"],
+)

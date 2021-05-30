@@ -34,7 +34,7 @@ go_library(
         "sort.go",
         "template.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/urfave/cli/v2",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/urfave/cli/v2",
     importpath = "github.com/urfave/cli/v2",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/github.com/cpuguy83/go-md2man/v2/md2man"],

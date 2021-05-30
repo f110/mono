@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "helpers",
+    srcs = [
+        "args.go",
+        "helper.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/oracle/oci-go-sdk/v32/example/helpers",
+    importpath = "github.com/oracle/oci-go-sdk/v32/example/helpers",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/oracle/oci-go-sdk/v32/common"],
+)

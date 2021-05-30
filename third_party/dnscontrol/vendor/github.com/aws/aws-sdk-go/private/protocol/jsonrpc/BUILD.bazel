@@ -2,13 +2,17 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "jsonrpc",
-    srcs = ["jsonrpc.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/private/protocol/jsonrpc",
+    srcs = [
+        "jsonrpc.go",
+        "unmarshal_error.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/private/protocol/jsonrpc",
     importpath = "github.com/aws/aws-sdk-go/private/protocol/jsonrpc",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/awserr",
         "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/private/protocol",
         "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/private/protocol/json/jsonutil",
         "//third_party/dnscontrol/vendor/github.com/aws/aws-sdk-go/private/protocol/rest",
     ],

@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "passthrough",
+    srcs = ["passthrough.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/internal/resolver/passthrough",
+    importpath = "google.golang.org/grpc/internal/resolver/passthrough",
+    visibility = ["//third_party/dnscontrol/vendor/google.golang.org/grpc:__subpackages__"],
+    deps = ["//third_party/dnscontrol/vendor/google.golang.org/grpc/resolver"],
+)

@@ -6,7 +6,7 @@ go_library(
         "source.go",
         "underscore.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/robertkrimen/otto/underscore",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/robertkrimen/otto/underscore",
     importpath = "github.com/robertkrimen/otto/underscore",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/github.com/robertkrimen/otto/registry"],

@@ -4,9 +4,10 @@ go_library(
     name = "providers",
     srcs = [
         "capabilities.go",
+        "capability_string.go",
         "providers.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/models"],
 )

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -14,16 +15,18 @@ import (
 	r53 "github.com/aws/aws-sdk-go/service/route53"
 	r53d "github.com/aws/aws-sdk-go/service/route53domains"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers"
-	"github.com/StackExchange/dnscontrol/v2/providers/diff"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/diff"
+	"github.com/StackExchange/dnscontrol/v3/pkg/txtutil"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 )
 
 type route53Provider struct {
-	client        *r53.Route53
-	registrar     *r53d.Route53Domains
-	delegationSet *string
-	zones         map[string]*r53.HostedZone
+	client          *r53.Route53
+	registrar       *r53d.Route53Domains
+	delegationSet   *string
+	zones           map[string]*r53.HostedZone
+	originalRecords []*r53.ResourceRecordSet
 }
 
 func newRoute53Reg(conf map[string]string) (providers.Registrar, error) {
@@ -50,7 +53,7 @@ func newRoute53(m map[string]string, metadata json.RawMessage) (*route53Provider
 	}
 	sess := session.Must(session.NewSession(config))
 
-	var dls *string = nil
+	var dls *string
 	if val, ok := m["DelegationSet"]; ok {
 		fmt.Printf("ROUTE53 DelegationSet %s configured\n", val)
 		dls = sPtr(val)
@@ -70,13 +73,17 @@ var features = providers.DocumentationNotes{
 	providers.DocOfficiallySupported: providers.Can(),
 	providers.CanUsePTR:              providers.Can(),
 	providers.CanUseSRV:              providers.Can(),
-	providers.CanUseTXTMulti:         providers.Can(),
 	providers.CanUseCAA:              providers.Can(),
 	providers.CanUseRoute53Alias:     providers.Can(),
+	providers.CanGetZones:            providers.Can(),
 }
 
 func init() {
-	providers.RegisterDomainServiceProviderType("ROUTE53", newRoute53Dsp, features)
+	fns := providers.DspFuncs{
+		Initializer:   newRoute53Dsp,
+		RecordAuditor: AuditRecords,
+	}
+	providers.RegisterDomainServiceProviderType("ROUTE53", fns, features)
 	providers.RegisterRegistrarType("ROUTE53", newRoute53Reg)
 	providers.RegisterCustomRecordType("R53_ALIAS", "ROUTE53", "")
 }
@@ -89,7 +96,7 @@ func withRetry(f func() error) {
 	const maxRetries = 23
 	// TODO: exponential backoff
 	const sleepTime = 5 * time.Second
-	var currentRetry int = 0
+	var currentRetry int
 	for {
 		err := f()
 		if err == nil {
@@ -108,6 +115,16 @@ func withRetry(f func() error) {
 	}
 }
 
+// ListZones lists the zones on this account.
+func (r *route53Provider) ListZones() ([]string, error) {
+	var zones []string
+	// Assumes r.zones was filled already by newRoute53().
+	for i := range r.zones {
+		zones = append(zones, i)
+	}
+	return zones, nil
+}
+
 func (r *route53Provider) getZones() error {
 	var nextMarker *string
 	r.zones = make(map[string]*r53.HostedZone)
@@ -120,7 +137,7 @@ func (r *route53Provider) getZones() error {
 			return err
 		})
 		if err != nil && strings.Contains(err.Error(), "is not authorized") {
-			return errors.New("Check your credentials, your not authorized to perform actions on Route 53 AWS Service")
+			return errors.New("check your credentials, you're not authorized to perform actions on Route 53 AWS Service")
 		} else if err != nil {
 			return err
 		}
@@ -160,34 +177,56 @@ func (r *route53Provider) GetNameservers(domain string) ([]*models.Nameserver, e
 	if err != nil {
 		return nil, err
 	}
-	ns := []*models.Nameserver{}
+
+	var nss []string
 	if z.DelegationSet != nil {
 		for _, nsPtr := range z.DelegationSet.NameServers {
-			ns = append(ns, &models.Nameserver{Name: *nsPtr})
+			nss = append(nss, *nsPtr)
 		}
 	}
-	return ns, nil
+	return models.ToNameservers(nss)
 }
 
-func (r *route53Provider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
-	dc.Punycode()
+// GetZoneRecords gets the records of a zone and returns them in RecordConfig format.
+func (r *route53Provider) GetZoneRecords(domain string) (models.Records, error) {
 
-	var corrections = []*models.Correction{}
-	zone, ok := r.zones[dc.Name]
-	// add zone if it doesn't exist
+	zone, ok := r.zones[domain]
 	if !ok {
-		return nil, errNoExist{dc.Name}
+		return nil, errNoExist{domain}
 	}
 
 	records, err := r.fetchRecordSets(zone.Id)
 	if err != nil {
 		return nil, err
 	}
+	r.originalRecords = records
 
 	var existingRecords = []*models.RecordConfig{}
 	for _, set := range records {
-		existingRecords = append(existingRecords, nativeToRecords(set, dc.Name)...)
+		rts, err := nativeToRecords(set, domain)
+		if err != nil {
+			return nil, err
+		}
+		existingRecords = append(existingRecords, rts...)
 	}
+	return existingRecords, nil
+}
+
+func (r *route53Provider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
+	dc.Punycode()
+
+	var corrections = []*models.Correction{}
+
+	existingRecords, err := r.GetZoneRecords(dc.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	zone, ok := r.zones[dc.Name]
+	if !ok {
+		return nil, errNoExist{dc.Name}
+	}
+
 	for _, want := range dc.Records {
 		// update zone_id to current zone.id if not specified by the user
 		if want.Type == "R53_ALIAS" && want.R53Alias["zone_id"] == "" {
@@ -197,10 +236,14 @@ func (r *route53Provider) GetDomainCorrections(dc *models.DomainConfig) ([]*mode
 
 	// Normalize
 	models.PostProcessRecords(existingRecords)
+	txtutil.SplitSingleLongTxt(dc.Records) // Autosplit long TXT records
 
 	// diff
 	differ := diff.New(dc, getAliasMap)
-	namesToUpdate := differ.ChangedGroups(existingRecords)
+	namesToUpdate, err := differ.ChangedGroups(existingRecords)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(namesToUpdate) == 0 {
 		return nil, nil
@@ -218,56 +261,114 @@ func (r *route53Provider) GetDomainCorrections(dc *models.DomainConfig) ([]*mode
 		}
 	}
 
+	// updateOrder is the order that the updates will happen.
+	// The order should be sorted by NameFQDN, then Type, with R53_ALIAS_*
+	// types sorted after all other types. R53_ALIAS_* needs to be last
+	// because they are order dependent (aliases must refer to labels
+	// that already exist).
+	var updateOrder []models.RecordKey
+	// Collect the keys
+	for k := range updates {
+		updateOrder = append(updateOrder, k)
+	}
+	// Sort themm
+	sort.Slice(updateOrder, func(i, j int) bool {
+		if updateOrder[i].Type == updateOrder[j].Type {
+			return updateOrder[i].NameFQDN < updateOrder[j].NameFQDN
+		}
+
+		if strings.HasPrefix(updateOrder[i].Type, "R53_ALIAS_") {
+			return false
+		}
+		if strings.HasPrefix(updateOrder[j].Type, "R53_ALIAS_") {
+			return true
+		}
+
+		if updateOrder[i].NameFQDN == updateOrder[j].NameFQDN {
+			return updateOrder[i].Type < updateOrder[j].Type
+		}
+		return updateOrder[i].NameFQDN < updateOrder[j].NameFQDN
+	})
+
 	// we collect all changes into one of two categories now:
 	// pure deletions where we delete an entire record set,
 	// or changes where we upsert an entire record set.
 	dels := []*r53.Change{}
+	delDesc := []string{}
 	changes := []*r53.Change{}
 	changeDesc := []string{}
-	delDesc := []string{}
 
-	for k, recs := range updates {
-		chg := &r53.Change{}
-		var rrset *r53.ResourceRecordSet
-		// if there are no records in our desired state for a key, then we just delete it from r53
+	for _, k := range updateOrder {
+		recs := updates[k]
+		// If there are no records in our desired state for a key, this
+		// indicates we should delete all records at that key.
 		if len(recs) == 0 {
-			dels = append(dels, chg)
-			chg.Action = sPtr("DELETE")
-			delDesc = append(delDesc, strings.Join(namesToUpdate[k], "\n"))
-			// on delete just submit the original resource set we got from r53.
-			for _, r := range records {
+			// To delete, we submit the original resource set we got from r53.
+			var rrset *r53.ResourceRecordSet
+			// Find the original resource set:
+			for _, r := range r.originalRecords {
 				if unescape(r.Name) == k.NameFQDN && (*r.Type == k.Type || k.Type == "R53_ALIAS_"+*r.Type) {
 					rrset = r
 					break
 				}
 			}
 			if rrset == nil {
-				return nil, fmt.Errorf("No record set found to delete. Name: '%s'. Type: '%s'", k.NameFQDN, k.Type)
+				// This should not happen.
+				return nil, fmt.Errorf("no record set found to delete. Name: '%s'. Type: '%s'", k.NameFQDN, k.Type)
 			}
+			// Assemble the change and add it to the list:
+			chg := &r53.Change{
+				Action:            sPtr("DELETE"),
+				ResourceRecordSet: rrset,
+			}
+			dels = append(dels, chg)
+			delDesc = append(delDesc, strings.Join(namesToUpdate[k], "\n"))
 		} else {
-			changes = append(changes, chg)
-			changeDesc = append(changeDesc, strings.Join(namesToUpdate[k], "\n"))
-			// on change or create, just build a new record set from our desired state
-			chg.Action = sPtr("UPSERT")
-			rrset = &r53.ResourceRecordSet{
-				Name: sPtr(k.NameFQDN),
-				Type: sPtr(k.Type),
-			}
-			for _, r := range recs {
-				val := r.GetTargetCombined()
-				if r.Type != "R53_ALIAS" {
+			// If it isn't a delete, it must be either a change or create. In
+			// either case, we build a new record set from the desired state and
+			// UPSERT it.
+
+			if strings.HasPrefix(k.Type, "R53_ALIAS_") {
+				// Each R53_ALIAS_* requires an individual change.
+				if len(recs) != 1 {
+					log.Fatal("Only one R53_ALIAS_ permitted on a label")
+				}
+				for _, r := range recs {
+					rrset := aliasToRRSet(zone, r)
+					rrset.Name = sPtr(k.NameFQDN)
+					// Assemble the change and add it to the list:
+					chg := &r53.Change{
+						Action:            sPtr("UPSERT"),
+						ResourceRecordSet: rrset,
+					}
+					changes = append(changes, chg)
+					changeDesc = append(changeDesc, strings.Join(namesToUpdate[k], "\n"))
+				}
+			} else {
+				// All other keys combine their updates into one rrset:
+				rrset := &r53.ResourceRecordSet{
+					Name: sPtr(k.NameFQDN),
+					Type: sPtr(k.Type),
+				}
+				for _, r := range recs {
+					val := r.GetTargetCombined()
 					rr := &r53.ResourceRecord{
 						Value: &val,
 					}
 					rrset.ResourceRecords = append(rrset.ResourceRecords, rr)
 					i := int64(r.TTL)
 					rrset.TTL = &i // TODO: make sure that ttls are consistent within a set
-				} else {
-					rrset = aliasToRRSet(zone, r)
 				}
+				// Assemble the change and add it to the list:
+				chg := &r53.Change{
+					Action:            sPtr("UPSERT"),
+					ResourceRecordSet: rrset,
+				}
+				changes = append(changes, chg)
+				changeDesc = append(changeDesc, strings.Join(namesToUpdate[k], "\n"))
 			}
+
 		}
-		chg.ResourceRecordSet = rrset
 	}
 
 	addCorrection := func(msg string, req *r53.ChangeResourceRecordSetsInput) {
@@ -326,7 +427,7 @@ func (r *route53Provider) GetDomainCorrections(dc *models.DomainConfig) ([]*mode
 
 }
 
-func nativeToRecords(set *r53.ResourceRecordSet, origin string) []*models.RecordConfig {
+func nativeToRecords(set *r53.ResourceRecordSet, origin string) ([]*models.RecordConfig, error) {
 	results := []*models.RecordConfig{}
 	if set.AliasTarget != nil {
 		rc := &models.RecordConfig{
@@ -347,17 +448,21 @@ func nativeToRecords(set *r53.ResourceRecordSet, origin string) []*models.Record
 			switch rtype := *set.Type; rtype {
 			case "SOA":
 				continue
+			case "SPF":
+				// route53 uses a custom record type for SPF
+				rtype = "TXT"
+				fallthrough
 			default:
 				rc := &models.RecordConfig{TTL: uint32(*set.TTL)}
 				rc.SetLabelFromFQDN(unescape(set.Name), origin)
-				if err := rc.PopulateFromString(*set.Type, *rec.Value, origin); err != nil {
-					panic(fmt.Errorf("unparsable record received from R53: %w", err))
+				if err := rc.PopulateFromString(rtype, *rec.Value, origin); err != nil {
+					return nil, fmt.Errorf("unparsable record received from R53: %w", err)
 				}
 				results = append(results, rc)
 			}
 		}
 	}
-	return results
+	return results, nil
 }
 
 func getAliasMap(r *models.RecordConfig) map[string]string {
@@ -368,17 +473,16 @@ func getAliasMap(r *models.RecordConfig) map[string]string {
 }
 
 func aliasToRRSet(zone *r53.HostedZone, r *models.RecordConfig) *r53.ResourceRecordSet {
-	rrset := &r53.ResourceRecordSet{
-		Name: sPtr(r.GetLabelFQDN()),
-		Type: sPtr(r.R53Alias["type"]),
-	}
+	target := r.GetTargetField()
 	zoneID := getZoneID(zone, r)
 	targetHealth := false
-	target := r.GetTargetField()
-	rrset.AliasTarget = &r53.AliasTarget{
-		DNSName:              &target,
-		HostedZoneId:         aws.String(zoneID),
-		EvaluateTargetHealth: &targetHealth,
+	rrset := &r53.ResourceRecordSet{
+		Type: sPtr(r.R53Alias["type"]),
+		AliasTarget: &r53.AliasTarget{
+			DNSName:              &target,
+			HostedZoneId:         aws.String(zoneID),
+			EvaluateTargetHealth: &targetHealth,
+		},
 	}
 	return rrset
 }

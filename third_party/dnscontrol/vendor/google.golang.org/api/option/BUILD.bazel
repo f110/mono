@@ -7,13 +7,14 @@ go_library(
         "credentials_notgo19.go",
         "option.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/api/option",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/api/option",
     importpath = "google.golang.org/api/option",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
         "//third_party/dnscontrol/vendor/golang.org/x/oauth2/google",
         "//third_party/dnscontrol/vendor/google.golang.org/api/internal",
+        "//third_party/dnscontrol/vendor/google.golang.org/api/internal/impersonate",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc",
     ],
 )

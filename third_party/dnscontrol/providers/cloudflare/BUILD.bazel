@@ -3,17 +3,19 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "cloudflare",
     srcs = [
+        "auditrecords.go",
         "cloudflareProvider.go",
         "rest.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/cloudflare",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/cloudflare",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/diff",
         "//third_party/dnscontrol/pkg/printer",
         "//third_party/dnscontrol/pkg/transform",
+        "//third_party/dnscontrol/pkg/txtutil",
         "//third_party/dnscontrol/providers",
-        "//third_party/dnscontrol/providers/diff",
         "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
     ],
 )

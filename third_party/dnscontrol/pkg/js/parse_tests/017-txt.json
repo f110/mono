@@ -9,7 +9,7 @@
       "records": [
         {
           "type": "TXT",
-          "name": "@",
+          "name": "a",
           "target": "simple",
           "txtstrings": [
             "simple"
@@ -17,7 +17,15 @@
         },
         {
           "type": "TXT",
-          "name": "@",
+          "name": "b",
+          "target": "ws at end ",
+          "txtstrings": [
+            "ws at end "
+          ]
+        },
+        {
+          "type": "TXT",
+          "name": "c",
           "target": "one",
           "txtstrings": [
             "one"
@@ -25,8 +33,8 @@
         },
         {
           "type": "TXT",
-          "name": "@",
-          "target": "bonie",
+          "name": "d",
+          "target": "bonieclyde",
           "txtstrings": [
             "bonie",
             "clyde"
@@ -34,8 +42,8 @@
         },
         {
           "type": "TXT",
-          "name": "@",
-          "target": "straw",
+          "name": "e",
+          "target": "strawwoodbrick",
           "txtstrings": [
             "straw",
             "wood",

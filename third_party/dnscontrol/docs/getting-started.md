@@ -7,14 +7,39 @@ title: Getting Started
 
 ## 1. Install the software
 
-You can either download the latest
-[github release](https://github.com/StackExchange/dnscontrol/releases),
-or build from the go source:
+## From source
 
-    go get github.com/StackExchange/dnscontrol
+DNSControl can be built with Go version 1.14 or higher.
 
-The `go get` command will will download the source, compile it, and
-install `dnscontrol` in your `bin` directory.
+The `go get` command will download the source, compile it, and
+install `dnscontrol` in your `$GOBIN` directory.
+
+To install, simply run
+
+    GO111MODULE=on go get github.com/StackExchange/dnscontrol/v3
+
+To download the source
+
+    git clone github.com/StackExchange/dnscontrol
+
+If these don't work, more info is in [#805](https://github.com/StackExchange/dnscontrol/issues/805).
+
+---
+
+
+## Via packages
+
+Get prebuilt binaries from [github releases](https://github.com/StackExchange/dnscontrol/releases/latest)
+
+Alternatively, on Mac you can install it using homebrew:
+
+`brew install dnscontrol`
+
+## Via [docker](https://hub.docker.com/r/stackexchange/dnscontrol/)
+
+```
+docker run --rm -it -v $(pwd)/dnsconfig.js:/dns/dnsconfig.js -v $(pwd)/creds.json:/dns/creds.json stackexchange/dnscontrol dnscontrol preview
+```
 
 
 ## 2. Create a place for the config files.
@@ -24,8 +49,9 @@ We highly recommend storing these files in a Git repo, but for
 simple tests anything will do.
 
 Note: Do **not** store your creds.json file in Git unencrypted.
-That is unsafe. In fact you should include `creds.json` in your
-`.gitignore` file.  We recommend you encrypt the file using something
+That is unsafe. Add `creds.json` to your
+`.gitignore` file as a precaution.  This file should be encrypted
+using something
 like [git-crypt](https://www.agwa.name/projects/git-crypt) or
 [Blackbox](https://github.com/StackExchange/blackbox).
 
@@ -125,9 +151,9 @@ jq:
 
     jq < creds.json
 
-FYI: `creds.json` fields can be an environment variable. The field must begin with a `$` followed by the variable name. No other text. For example:
+FYI: `creds.json` fields can be read from an environment variable. The field must begin with a `$` followed by the variable name. No other text. For example:
 
-    "apiuser": "$GANDI_APIUSER",
+    "apikey": "$GANDI_V5_APIKEY",
 
 ## 5. Test the sample files.
 
@@ -244,9 +270,10 @@ The [Migrating]({{site.github.url}}/migrating) doc has advice
 about converting from other systems.
 You can manually create the `D()` statements, or you can
 generate them automatically using the
-[convertzone](https://github.com/StackExchange/dnscontrol/blob/master/cmd/convertzone/README.md)
-utility that is included in the DNSControl repo (it converts
-BIND-style zone files and OctoDNS-style YAML files to DNSControl's language).
+[dnscontrol get-zones]({{site.github.url}}/get-zones)
+command to import the zone from (most) providers and output it as code
+that can be added to `dnsconfig.js` and used with very little
+modification.
 
 Now you can make change to the domain(s)  and run `dnscontrol preview`
 
@@ -256,6 +283,7 @@ Now you can make change to the domain(s)  and run `dnscontrol preview`
 If you are going to use this in production, we highly recommend the following:
 
 * Store the configuration files in Git.
-* Encrypt the `creds.json` file before storing it in Git.
-* Use a CI/CD tool like Jenkins to automatically push DNS changes.
+* Encrypt the `creds.json` file before storing it in Git. Do NOT store
+  API keys or other credentials without encrypting them.
+* Use a CI/CD tool like Jenkins/CircleCI/Github Actions/etc. to automatically push DNS changes.
 * Join the DNSControl community. File [issues and PRs](https://github.com/StackExchange/dnscontrol).

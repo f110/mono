@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "filter.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/filter",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/gopkg.in/ns1/ns1-go.v2/rest/model/filter",
     importpath = "gopkg.in/ns1/ns1-go.v2/rest/model/filter",
     visibility = ["//visibility:public"],
 )

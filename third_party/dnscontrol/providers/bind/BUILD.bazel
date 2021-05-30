@@ -3,17 +3,20 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "bind",
     srcs = [
+        "auditrecords.go",
         "bindProvider.go",
-        "prettyzone.go",
+        "fnames.go",
         "serial.go",
+        "soa.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/bind",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/bind",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/diff",
+        "//third_party/dnscontrol/pkg/prettyzone",
+        "//third_party/dnscontrol/pkg/txtutil",
         "//third_party/dnscontrol/providers",
-        "//third_party/dnscontrol/providers/diff",
         "//third_party/dnscontrol/vendor/github.com/miekg/dns",
-        "//third_party/dnscontrol/vendor/github.com/miekg/dns/dnsutil",
     ],
 )

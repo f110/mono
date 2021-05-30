@@ -6,7 +6,7 @@ go_library(
         "ed25519.go",
         "ed25519_go113.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/crypto/ed25519",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/golang.org/x/crypto/ed25519",
     importpath = "golang.org/x/crypto/ed25519",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/golang.org/x/crypto/ed25519/internal/edwards25519"],

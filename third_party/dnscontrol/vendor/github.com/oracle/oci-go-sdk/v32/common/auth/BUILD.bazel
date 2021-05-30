@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "auth",
+    srcs = [
+        "certificate_retriever.go",
+        "configuration.go",
+        "dispatcher_modifier.go",
+        "federation_client.go",
+        "instance_principal_delegation_token_provider.go",
+        "instance_principal_key_provider.go",
+        "jwt.go",
+        "resouce_principal_key_provider.go",
+        "resource_principal_token_path_provider.go",
+        "resource_principals_v1.go",
+        "utils.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/oracle/oci-go-sdk/v32/common/auth",
+    importpath = "github.com/oracle/oci-go-sdk/v32/common/auth",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/oracle/oci-go-sdk/v32/common"],
+)

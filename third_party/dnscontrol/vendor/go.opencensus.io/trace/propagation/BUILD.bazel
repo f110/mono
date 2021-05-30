@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "propagation",
     srcs = ["propagation.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/go.opencensus.io/trace/propagation",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/go.opencensus.io/trace/propagation",
     importpath = "go.opencensus.io/trace/propagation",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/go.opencensus.io/trace"],

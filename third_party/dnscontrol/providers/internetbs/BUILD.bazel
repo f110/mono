@@ -4,9 +4,10 @@ go_library(
     name = "internetbs",
     srcs = [
         "api.go",
+        "auditrecords.go",
         "internetbsProvider.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/internetbs",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/internetbs",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",

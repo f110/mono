@@ -34,8 +34,7 @@ func (d directoryStorage) accountKeyFile(acmeHost string) string {
 	return filepath.Join(d.accountDirectory(acmeHost), "account.key")
 }
 
-// TODO: probably lock these down more
-const perms os.FileMode = 0644
+const perms os.FileMode = 0600
 const dirPerms os.FileMode = 0700
 
 func (d directoryStorage) GetCertificate(name string) (*certificate.Resource, error) {
@@ -71,6 +70,7 @@ func (d directoryStorage) StoreCertificate(name string, cert *certificate.Resour
 	cert.Certificate = nil
 	priv := cert.PrivateKey
 	cert.PrivateKey = nil
+	combined := []byte(string(pub) + "\n" + string(priv))
 	jDAt, err := json.MarshalIndent(cert, "", "  ")
 	if err != nil {
 		return err
@@ -79,6 +79,9 @@ func (d directoryStorage) StoreCertificate(name string, cert *certificate.Resour
 		return err
 	}
 	if err = ioutil.WriteFile(d.certFile(name, "crt"), pub, perms); err != nil {
+		return err
+	}
+	if err = ioutil.WriteFile(d.certFile(name, "pem"), combined, perms); err != nil {
 		return err
 	}
 	return ioutil.WriteFile(d.certFile(name, "key"), priv, perms)
@@ -104,7 +107,7 @@ func (d directoryStorage) GetAccount(acmeHost string) (*Account, error) {
 	}
 	keyBlock, _ := pem.Decode(keyBytes)
 	if keyBlock == nil {
-		return nil, fmt.Errorf("Error decoding account private key")
+		return nil, fmt.Errorf("error decoding account private key")
 	}
 	acct.key, err = x509.ParseECPrivateKey(keyBlock.Bytes)
 	if err != nil {

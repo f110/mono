@@ -3,16 +3,19 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "namedotcom",
     srcs = [
+        "auditrecords.go",
         "namedotcomProvider.go",
         "nameservers.go",
         "records.go",
+        "zones.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/namedotcom",
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/namedotcom",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
+        "//third_party/dnscontrol/pkg/diff",
+        "//third_party/dnscontrol/pkg/recordaudit",
         "//third_party/dnscontrol/providers",
-        "//third_party/dnscontrol/providers/diff",
         "//third_party/dnscontrol/vendor/github.com/namedotcom/go/namecom",
     ],
 )

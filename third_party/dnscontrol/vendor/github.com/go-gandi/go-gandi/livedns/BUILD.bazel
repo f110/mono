@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "livedns",
+    srcs = [
+        "axfr.go",
+        "domain.go",
+        "domainrecord.go",
+        "keys.go",
+        "livedns.go",
+        "snapshots.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-gandi/go-gandi/livedns",
+    importpath = "github.com/go-gandi/go-gandi/livedns",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/go-gandi/go-gandi/internal/client"],
+)

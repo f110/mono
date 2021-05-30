@@ -23,7 +23,7 @@ go_library(
         "sockaddrs.go",
         "unixsock.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/go-sockaddr",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/go-sockaddr",
     importpath = "github.com/hashicorp/go-sockaddr",
     visibility = ["//visibility:public"],
 )

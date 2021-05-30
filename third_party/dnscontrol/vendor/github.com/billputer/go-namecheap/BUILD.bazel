@@ -9,7 +9,7 @@ go_library(
         "ns.go",
         "registrant.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/billputer/go-namecheap",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/billputer/go-namecheap",
     importpath = "github.com/billputer/go-namecheap",
     visibility = ["//visibility:public"],
 )

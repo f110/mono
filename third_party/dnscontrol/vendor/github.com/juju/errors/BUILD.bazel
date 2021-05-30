@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "errors",
+    srcs = [
+        "doc.go",
+        "error.go",
+        "errortypes.go",
+        "functions.go",
+        "path.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/juju/errors",
+    importpath = "github.com/juju/errors",
+    visibility = ["//visibility:public"],
+)

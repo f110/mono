@@ -3,8 +3,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "resolver",
     srcs = ["resolver.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/resolver",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/resolver",
     importpath = "google.golang.org/grpc/resolver",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/google.golang.org/grpc/serviceconfig"],
+    deps = [
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/attributes",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/credentials",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/serviceconfig",
+    ],
 )

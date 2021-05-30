@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "middleware",
+    srcs = [
+        "session.go",
+        "session_config.go",
+        "types.go",
+        "utf8.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/bhendo/go-powershell/middleware",
+    importpath = "github.com/bhendo/go-powershell/middleware",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/bhendo/go-powershell/utils",
+        "//third_party/dnscontrol/vendor/github.com/juju/errors",
+    ],
+)

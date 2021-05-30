@@ -7,7 +7,7 @@ go_library(
         "prober.go",
         "solver_manager.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/challenge/resolver",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/challenge/resolver",
     importpath = "github.com/go-acme/lego/challenge/resolver",
     visibility = ["//visibility:public"],
     deps = [

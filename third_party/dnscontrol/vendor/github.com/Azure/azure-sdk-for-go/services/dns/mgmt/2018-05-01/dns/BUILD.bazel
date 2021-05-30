@@ -4,13 +4,14 @@ go_library(
     name = "dns",
     srcs = [
         "client.go",
+        "enums.go",
         "models.go",
         "recordsets.go",
         "resourcereference.go",
         "version.go",
         "zones.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2018-05-01/dns",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2018-05-01/dns",
     importpath = "github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2018-05-01/dns",
     visibility = ["//visibility:public"],
     deps = [

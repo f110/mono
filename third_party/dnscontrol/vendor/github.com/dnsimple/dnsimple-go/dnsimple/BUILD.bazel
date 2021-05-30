@@ -33,8 +33,11 @@ go_library(
         "zones.go",
         "zones_records.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/dnsimple/dnsimple-go/dnsimple",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/dnsimple/dnsimple-go/dnsimple",
     importpath = "github.com/dnsimple/dnsimple-go/dnsimple",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/github.com/google/go-querystring/query"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/google/go-querystring/query",
+        "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
+    ],
 )

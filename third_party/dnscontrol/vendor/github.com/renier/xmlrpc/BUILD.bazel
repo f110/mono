@@ -10,7 +10,7 @@ go_library(
         "response.go",
         "xmlrpc.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/renier/xmlrpc",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/renier/xmlrpc",
     importpath = "github.com/renier/xmlrpc",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/golang.org/x/text/encoding/charmap"],

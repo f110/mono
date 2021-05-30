@@ -3,13 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "dns",
     srcs = ["dns-gen.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/api/dns/v1",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/api/dns/v1",
     importpath = "google.golang.org/api/dns/v1",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/google.golang.org/api/gensupport",
         "//third_party/dnscontrol/vendor/google.golang.org/api/googleapi",
+        "//third_party/dnscontrol/vendor/google.golang.org/api/internal/gensupport",
         "//third_party/dnscontrol/vendor/google.golang.org/api/option",
+        "//third_party/dnscontrol/vendor/google.golang.org/api/option/internaloption",
         "//third_party/dnscontrol/vendor/google.golang.org/api/transport/http",
     ],
 )

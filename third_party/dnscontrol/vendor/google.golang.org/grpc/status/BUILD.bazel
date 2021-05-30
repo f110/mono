@@ -3,14 +3,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "status",
     srcs = ["status.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/status",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/status",
     importpath = "google.golang.org/grpc/status",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/golang/protobuf/proto",
-        "//third_party/dnscontrol/vendor/github.com/golang/protobuf/ptypes",
         "//third_party/dnscontrol/vendor/google.golang.org/genproto/googleapis/rpc/status",
         "//third_party/dnscontrol/vendor/google.golang.org/grpc/codes",
-        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal",
+        "//third_party/dnscontrol/vendor/google.golang.org/grpc/internal/status",
     ],
 )

@@ -2,12 +2,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go-retryablehttp",
-    srcs = ["client.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/go-retryablehttp",
+    srcs = [
+        "client.go",
+        "roundtripper.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/go-retryablehttp",
     importpath = "github.com/hashicorp/go-retryablehttp",
     visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/dnscontrol/vendor/github.com/hashicorp/go-cleanhttp",
-        "//third_party/dnscontrol/vendor/github.com/hashicorp/go-hclog",
-    ],
+    deps = ["//third_party/dnscontrol/vendor/github.com/hashicorp/go-cleanhttp"],
 )

@@ -37,7 +37,7 @@ go_library(
         "utility.go",
         "virtual.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/softlayer/softlayer-go/services",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/softlayer/softlayer-go/services",
     importpath = "github.com/softlayer/softlayer-go/services",
     visibility = ["//visibility:public"],
     deps = [

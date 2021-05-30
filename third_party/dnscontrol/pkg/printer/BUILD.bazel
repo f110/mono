@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "printer",
     srcs = ["printer.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/printer",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/printer",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/models"],
 )

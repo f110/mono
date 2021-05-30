@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/StackExchange/dnscontrol/v2/providers"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/urfave/cli/v2"
 )
 
@@ -11,7 +11,7 @@ var _ = cmd(catUtils, func() *cli.Command {
 	var args CreateDomainsArgs
 	return &cli.Command{
 		Name:  "create-domains",
-		Usage: "ensures that all domains in your configuration are present in all providers.",
+		Usage: "Ensures that all domains in your configuration are activated at their Domain Service Provider (This does not purchase the domain or otherwise interact with Registrars.)",
 		Action: func(ctx *cli.Context) error {
 			return exit(CreateDomains(args))
 		},

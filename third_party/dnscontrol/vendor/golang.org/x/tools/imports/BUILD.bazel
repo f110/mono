@@ -3,8 +3,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "imports",
     srcs = ["forward.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/golang.org/x/tools/imports",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/golang.org/x/tools/imports",
     importpath = "golang.org/x/tools/imports",
     visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/vendor/golang.org/x/tools/internal/imports"],
+    deps = [
+        "//third_party/dnscontrol/vendor/golang.org/x/tools/internal/gocommand",
+        "//third_party/dnscontrol/vendor/golang.org/x/tools/internal/imports",
+    ],
 )

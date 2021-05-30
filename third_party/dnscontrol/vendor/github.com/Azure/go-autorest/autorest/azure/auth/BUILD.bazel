@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "auth",
     srcs = ["auth.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/Azure/go-autorest/autorest/azure/auth",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/Azure/go-autorest/autorest/azure/auth",
     importpath = "github.com/Azure/go-autorest/autorest/azure/auth",
     visibility = ["//visibility:public"],
     deps = [
@@ -11,7 +11,7 @@ go_library(
         "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/autorest/adal",
         "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/autorest/azure",
         "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/autorest/azure/cli",
+        "//third_party/dnscontrol/vendor/github.com/Azure/go-autorest/logger",
         "//third_party/dnscontrol/vendor/github.com/dimchansky/utfbom",
-        "//third_party/dnscontrol/vendor/golang.org/x/crypto/pkcs12",
     ],
 )

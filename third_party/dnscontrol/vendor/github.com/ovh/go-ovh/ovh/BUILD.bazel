@@ -9,7 +9,7 @@ go_library(
         "logger.go",
         "ovh.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/ovh/go-ovh/ovh",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/ovh/go-ovh/ovh",
     importpath = "github.com/ovh/go-ovh/ovh",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/gopkg.in/ini.v1:ini_v1"],

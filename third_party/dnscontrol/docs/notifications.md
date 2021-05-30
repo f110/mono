@@ -21,13 +21,28 @@ Notifications are set up in your credentials json file. They will use the `notif
         ...
   } ,
   "notifications":{
-      "bonfire_url": "https://chat.meta.stackexchange.com/feeds/rooms/123?key=xyz"
+      "slack_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+      "teams_url": "https://outlook.office.com/webhook/00000000-0000-0000-0000-000000000000@00000000-0000-0000-0000-000000000000/IncomingWebhook/00000000000000000000000000000000/00000000-0000-0000-0000-000000000000"
   }
 ```
 
 You also must run `dnscontrol preview` or `dnscontrol push` with the `-notify` flag to enable notification sending at all.
 
 ## Notification types
+
+### Slack/Mattermost
+
+If you want to use the Slack integration, you need to create a webhook in Slack.
+Please see the [Slack documentation](https://api.slack.com/messaging/webhooks) or the [Mattermost documentation](https://docs.mattermost.com/developer/webhooks-incoming.html)
+
+Configure `slack_url` to this webhook. Mattermost works as well, as they share the same api,
+
+### Microsoft Teams
+
+If you want to use the Teams integration, you need to create a webhook in Teams.
+Please see the [Teams documentation](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook#add-an-incoming-webhook-to-a-teams-channel)
+
+Configure `teams_url` to this webhook.
 
 ### Bonfire
 
@@ -37,11 +52,10 @@ Configure `bonfire_url` to be the full url including room and api key.
 
 ## Future work
 
-Yes, this seems pretty limited right now in what it can do. We didn't want to add a bunch of notification types if nobody was going to use them. The good news is, it should 
+Yes, this seems pretty limited right now in what it can do. We didn't want to add a bunch of notification types if nobody was going to use them. The good news is, it should
 be really simple to add more. We gladly welcome any PRs with new notification destinations. Some easy possibilities:
 
 - Email
-- Slack
 - Generic Webhooks
 
 Please update this documentation if you add anything.

@@ -4,7 +4,6 @@ go_library(
     name = "request",
     srcs = [
         "connection_reset_error.go",
-        "connection_reset_error_other.go",
         "handlers.go",
         "http_request.go",
         "offset_reader.go",
@@ -19,7 +18,7 @@ go_library(
         "validation.go",
         "waiter.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/aws/aws-sdk-go/aws/request",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/aws/aws-sdk-go/aws/request",
     importpath = "github.com/aws/aws-sdk-go/aws/request",
     visibility = ["//visibility:public"],
     deps = [

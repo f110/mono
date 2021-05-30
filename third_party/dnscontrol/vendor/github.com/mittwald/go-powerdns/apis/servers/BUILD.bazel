@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "servers",
+    srcs = [
+        "client.go",
+        "doc.go",
+        "interface.go",
+        "servers_get.go",
+        "servers_list.go",
+        "types.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/mittwald/go-powerdns/apis/servers",
+    importpath = "github.com/mittwald/go-powerdns/apis/servers",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/dnscontrol/vendor/github.com/mittwald/go-powerdns/pdnshttp"],
+)

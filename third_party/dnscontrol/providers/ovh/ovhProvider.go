@@ -6,9 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers"
-	"github.com/StackExchange/dnscontrol/v2/providers/diff"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/diff"
+	"github.com/StackExchange/dnscontrol/v3/pkg/txtutil"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 	"github.com/ovh/go-ovh/ovh"
 )
 
@@ -27,6 +28,7 @@ var features = providers.DocumentationNotes{
 	providers.DocCreateDomains:       providers.Cannot("New domains require registration"),
 	providers.DocDualHost:            providers.Can(),
 	providers.DocOfficiallySupported: providers.Cannot(),
+	providers.CanGetZones:            providers.Can(),
 }
 
 func newOVH(m map[string]string, metadata json.RawMessage) (*ovhProvider, error) {
@@ -53,14 +55,18 @@ func newReg(conf map[string]string) (providers.Registrar, error) {
 }
 
 func init() {
+	fns := providers.DspFuncs{
+		Initializer:   newDsp,
+		RecordAuditor: AuditRecords,
+	}
 	providers.RegisterRegistrarType("OVH", newReg)
-	providers.RegisterDomainServiceProviderType("OVH", newDsp, features)
+	providers.RegisterDomainServiceProviderType("OVH", fns, features)
 }
 
 func (c *ovhProvider) GetNameservers(domain string) ([]*models.Nameserver, error) {
 	_, ok := c.zones[domain]
 	if !ok {
-		return nil, fmt.Errorf("%s not listed in zones for ovh account", domain)
+		return nil, fmt.Errorf("'%s' not a zone in ovh account", domain)
 	}
 
 	ns, err := c.fetchRegistrarNS(domain)
@@ -68,7 +74,7 @@ func (c *ovhProvider) GetNameservers(domain string) ([]*models.Nameserver, error
 		return nil, err
 	}
 
-	return models.StringsToNameservers(ns), nil
+	return models.ToNameservers(ns)
 }
 
 type errNoExist struct {
@@ -79,32 +85,56 @@ func (e errNoExist) Error() string {
 	return fmt.Sprintf("Domain %s not found in your ovh account", e.domain)
 }
 
-func (c *ovhProvider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
-	dc.Punycode()
-	//dc.CombineMXs()
+// ListZones lists the zones on this account.
+func (c *ovhProvider) ListZones() (zones []string, err error) {
+	for zone := range c.zones {
+		zones = append(zones, zone)
+	}
+	return
+}
 
-	if !c.zones[dc.Name] {
-		return nil, errNoExist{dc.Name}
+// GetZoneRecords gets the records of a zone and returns them in RecordConfig format.
+func (c *ovhProvider) GetZoneRecords(domain string) (models.Records, error) {
+	if !c.zones[domain] {
+		return nil, errNoExist{domain}
 	}
 
-	records, err := c.fetchRecords(dc.Name)
+	records, err := c.fetchRecords(domain)
 	if err != nil {
 		return nil, err
 	}
 
-	var actual []*models.RecordConfig
+	var actual models.Records
 	for _, r := range records {
-		rec := nativeToRecord(r, dc.Name)
+		rec, err := nativeToRecord(r, domain)
+		if err != nil {
+			return nil, err
+		}
 		if rec != nil {
 			actual = append(actual, rec)
 		}
 	}
+	return actual, nil
+}
+
+func (c *ovhProvider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
+	dc.Punycode()
+	//dc.CombineMXs()
+
+	actual, err := c.GetZoneRecords(dc.Name)
+	if err != nil {
+		return nil, err
+	}
 
 	// Normalize
 	models.PostProcessRecords(actual)
+	txtutil.SplitSingleLongTxt(dc.Records) // Autosplit long TXT records
 
 	differ := diff.New(dc)
-	_, create, delete, modify := differ.IncrementalDiff(actual)
+	_, create, delete, modify, err := differ.IncrementalDiff(actual)
+	if err != nil {
+		return nil, err
+	}
 
 	corrections := []*models.Correction{}
 
@@ -145,9 +175,9 @@ func (c *ovhProvider) GetDomainCorrections(dc *models.DomainConfig) ([]*models.C
 	return corrections, nil
 }
 
-func nativeToRecord(r *Record, origin string) *models.RecordConfig {
+func nativeToRecord(r *Record, origin string) (*models.RecordConfig, error) {
 	if r.FieldType == "SOA" {
-		return nil
+		return nil, nil
 	}
 	rec := &models.RecordConfig{
 		TTL:      uint32(r.TTL),
@@ -163,7 +193,7 @@ func nativeToRecord(r *Record, origin string) *models.RecordConfig {
 
 	rec.SetLabel(r.SubDomain, origin)
 	if err := rec.PopulateFromString(rtype, r.Target, origin); err != nil {
-		panic(fmt.Errorf("unparsable record received from ovh: %w", err))
+		return nil, fmt.Errorf("unparsable record received from ovh: %w", err)
 	}
 
 	// ovh default is 3600
@@ -171,7 +201,7 @@ func nativeToRecord(r *Record, origin string) *models.RecordConfig {
 		rec.TTL = 3600
 	}
 
-	return rec
+	return rec, nil
 }
 
 func (c *ovhProvider) GetRegistrarCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {

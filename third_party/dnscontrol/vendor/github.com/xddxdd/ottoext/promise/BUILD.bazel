@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "promise",
+    srcs = [
+        "js.go",
+        "promise.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/xddxdd/ottoext/promise",
+    importpath = "github.com/xddxdd/ottoext/promise",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/robertkrimen/otto",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/loop",
+        "//third_party/dnscontrol/vendor/github.com/xddxdd/ottoext/timers",
+    ],
+)

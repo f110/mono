@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "goinwx",
+    srcs = [
+        "account.go",
+        "contact.go",
+        "domain.go",
+        "goinwx.go",
+        "nameserver.go",
+        "response.go",
+    ],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/nrdcg/goinwx",
+    importpath = "github.com/nrdcg/goinwx",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/dnscontrol/vendor/github.com/fatih/structs",
+        "//third_party/dnscontrol/vendor/github.com/kolo/xmlrpc",
+        "//third_party/dnscontrol/vendor/github.com/mitchellh/mapstructure",
+    ],
+)

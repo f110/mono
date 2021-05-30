@@ -6,7 +6,7 @@ go_library(
         "http_challenge.go",
         "http_challenge_server.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/go-acme/lego/challenge/http01",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/go-acme/lego/challenge/http01",
     importpath = "github.com/go-acme/lego/challenge/http01",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,7 @@ go_library(
         "handlers.go",
         "stats.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/grpc/stats",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/grpc/stats",
     importpath = "google.golang.org/grpc/stats",
     visibility = ["//visibility:public"],
     deps = ["//third_party/dnscontrol/vendor/google.golang.org/grpc/metadata"],

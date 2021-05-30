@@ -8,20 +8,29 @@ import (
 
 	"gopkg.in/ns1/ns1-go.v2/rest"
 	"gopkg.in/ns1/ns1-go.v2/rest/model/dns"
+	"gopkg.in/ns1/ns1-go.v2/rest/model/filter"
 
-	"github.com/StackExchange/dnscontrol/v2/models"
-	"github.com/StackExchange/dnscontrol/v2/providers"
-	"github.com/StackExchange/dnscontrol/v2/providers/diff"
+	"github.com/StackExchange/dnscontrol/v3/models"
+	"github.com/StackExchange/dnscontrol/v3/pkg/diff"
+	"github.com/StackExchange/dnscontrol/v3/providers"
 )
 
 var docNotes = providers.DocumentationNotes{
+	providers.CanUseAlias:            providers.Can(),
+	providers.CanUseCAA:              providers.Can(),
+	providers.CanUsePTR:              providers.Can(),
 	providers.DocCreateDomains:       providers.Cannot(),
-	providers.DocOfficiallySupported: providers.Cannot(),
 	providers.DocDualHost:            providers.Can(),
+	providers.DocOfficiallySupported: providers.Cannot(),
 }
 
 func init() {
-	providers.RegisterDomainServiceProviderType("NS1", newProvider, providers.CanUseSRV, docNotes)
+	fns := providers.DspFuncs{
+		Initializer:   newProvider,
+		RecordAuditor: AuditRecords,
+	}
+	providers.RegisterDomainServiceProviderType("NS1", fns, providers.CanUseSRV, docNotes)
+	providers.RegisterCustomRecordType("NS1_URLFWD", "NS1", "URLFWD")
 }
 
 type nsone struct {
@@ -40,7 +49,15 @@ func (n *nsone) GetNameservers(domain string) ([]*models.Nameserver, error) {
 	if err != nil {
 		return nil, err
 	}
-	return models.StringsToNameservers(z.DNSServers), nil
+	return models.ToNameservers(z.DNSServers)
+}
+
+// GetZoneRecords gets the records of a zone and returns them in RecordConfig format.
+func (n *nsone) GetZoneRecords(domain string) (models.Records, error) {
+	return nil, fmt.Errorf("not implemented")
+	// This enables the get-zones subcommand.
+	// Implement this by extracting the code from GetDomainCorrections into
+	// a single function.  For most providers this should be relatively easy.
 }
 
 func (n *nsone) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correction, error) {
@@ -66,11 +83,15 @@ func (n *nsone) GetDomainCorrections(dc *models.DomainConfig) ([]*models.Correct
 	models.PostProcessRecords(found)
 
 	differ := diff.New(dc)
-	changedGroups := differ.ChangedGroups(found)
+	changedGroups, err := differ.ChangedGroups(found)
+	if err != nil {
+		return nil, err
+	}
 	corrections := []*models.Correction{}
 	// each name/type is given to the api as a unit.
 	for k, descs := range changedGroups {
 		key := k
+
 		desc := strings.Join(descs, "\n")
 		_, current := foundGrouped[k]
 		recs, wanted := desiredGrouped[k]
@@ -115,15 +136,20 @@ func (n *nsone) modify(recs models.Records, domain string) error {
 func buildRecord(recs models.Records, domain string, id string) *dns.Record {
 	r := recs[0]
 	rec := &dns.Record{
-		Domain: r.GetLabelFQDN(),
-		Type:   r.Type,
-		ID:     id,
-		TTL:    int(r.TTL),
-		Zone:   domain,
+		Domain:  r.GetLabelFQDN(),
+		Type:    r.Type,
+		ID:      id,
+		TTL:     int(r.TTL),
+		Zone:    domain,
+		Filters: []*filter.Filter{}, // Work through a bug in the NS1 API library that causes 400 Input validation failed (Value None for field '<obj>.filters' is not of type array)
 	}
 	for _, r := range recs {
-		if r.Type == "TXT" {
+		if r.Type == "MX" {
+			rec.AddAnswer(&dns.Answer{Rdata: strings.Split(fmt.Sprintf("%d %v", r.MxPreference, r.GetTargetField()), " ")})
+		} else if r.Type == "TXT" {
 			rec.AddAnswer(&dns.Answer{Rdata: r.TxtStrings})
+		} else if r.Type == "CAA" {
+			rec.AddAnswer(&dns.Answer{Rdata: strings.Split(fmt.Sprintf("%v %s %s", r.CaaFlag, r.CaaTag, r.GetTargetField()), " ")})
 		} else if r.Type == "SRV" {
 			rec.AddAnswer(&dns.Answer{Rdata: strings.Split(fmt.Sprintf("%d %d %d %v", r.SrvPriority, r.SrvWeight, r.SrvPort, r.GetTargetField()), " ")})
 		} else {
@@ -142,6 +168,16 @@ func convert(zr *dns.ZoneRecord, domain string) ([]*models.RecordConfig, error) 
 		}
 		rec.SetLabelFromFQDN(zr.Domain, domain)
 		switch rtype := zr.Type; rtype {
+		case "ALIAS":
+			rec.Type = rtype
+			if err := rec.SetTarget(ans); err != nil {
+				panic(fmt.Errorf("unparsable %s record received from ns1: %w", rtype, err))
+			}
+		case "URLFWD":
+			rec.Type = rtype
+			if err := rec.SetTarget(ans); err != nil {
+				panic(fmt.Errorf("unparsable %s record received from ns1: %w", rtype, err))
+			}
 		default:
 			if err := rec.PopulateFromString(rtype, ans, domain); err != nil {
 				panic(fmt.Errorf("unparsable record received from ns1: %w", err))

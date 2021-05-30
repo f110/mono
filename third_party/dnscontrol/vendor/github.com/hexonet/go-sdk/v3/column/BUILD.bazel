@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "column",
+    srcs = ["column.go"],
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hexonet/go-sdk/v3/column",
+    importpath = "github.com/hexonet/go-sdk/v3/column",
+    visibility = ["//visibility:public"],
+)

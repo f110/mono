@@ -3,10 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "validate_lib",
     srcs = ["validate.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2/build/validate",
+    importpath = "github.com/StackExchange/dnscontrol/v3/build/validate",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/dnscontrol/vendor/github.com/google/go-github/github",
+        "//third_party/dnscontrol/vendor/github.com/google/go-github/v35/github",
         "//third_party/dnscontrol/vendor/golang.org/x/oauth2",
     ],
 )

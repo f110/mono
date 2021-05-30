@@ -5,7 +5,9 @@ go_library(
     srcs = [
         "bonfire.go",
         "notifications.go",
+        "slack.go",
+        "teams.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/pkg/notifications",
+    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/notifications",
     visibility = ["//visibility:public"],
 )

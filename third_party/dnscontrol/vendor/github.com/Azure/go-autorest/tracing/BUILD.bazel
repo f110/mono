@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "tracing",
     srcs = ["tracing.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/Azure/go-autorest/tracing",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/Azure/go-autorest/tracing",
     importpath = "github.com/Azure/go-autorest/tracing",
     visibility = ["//visibility:public"],
 )

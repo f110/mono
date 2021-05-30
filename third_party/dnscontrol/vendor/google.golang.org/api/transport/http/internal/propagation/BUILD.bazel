@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "propagation",
     srcs = ["http.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/google.golang.org/api/transport/http/internal/propagation",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/google.golang.org/api/transport/http/internal/propagation",
     importpath = "google.golang.org/api/transport/http/internal/propagation",
     visibility = ["//third_party/dnscontrol/vendor/google.golang.org/api/transport/http:__subpackages__"],
     deps = [

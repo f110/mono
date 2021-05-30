@@ -5,11 +5,13 @@ go_library(
     srcs = [
         "commands.go",
         "createDomains.go",
+        "fmt.go",
         "getCerts.go",
+        "getZones.go",
         "previewPush.go",
         "printIR.go",
     ],
-    importpath = "github.com/StackExchange/dnscontrol/v2/commands",
+    importpath = "github.com/StackExchange/dnscontrol/v3/commands",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",
@@ -18,9 +20,11 @@ go_library(
         "//third_party/dnscontrol/pkg/nameservers",
         "//third_party/dnscontrol/pkg/normalize",
         "//third_party/dnscontrol/pkg/notifications",
+        "//third_party/dnscontrol/pkg/prettyzone",
         "//third_party/dnscontrol/pkg/printer",
         "//third_party/dnscontrol/providers",
         "//third_party/dnscontrol/providers/config",
+        "//third_party/dnscontrol/vendor/github.com/ditashi/jsbeautifier-go/jsbeautifier",
         "//third_party/dnscontrol/vendor/github.com/urfave/cli/v2:cli",
     ],
 )

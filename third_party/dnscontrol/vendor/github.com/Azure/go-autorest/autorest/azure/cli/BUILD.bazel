@@ -6,7 +6,7 @@ go_library(
         "profile.go",
         "token.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/Azure/go-autorest/autorest/azure/cli",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/Azure/go-autorest/autorest/azure/cli",
     importpath = "github.com/Azure/go-autorest/autorest/azure/cli",
     visibility = ["//visibility:public"],
     deps = [

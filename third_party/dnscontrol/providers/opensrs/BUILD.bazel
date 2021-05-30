@@ -2,8 +2,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "opensrs",
-    srcs = ["opensrsProvider.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v2/providers/opensrs",
+    srcs = [
+        "auditrecords.go",
+        "opensrsProvider.go",
+    ],
+    importpath = "github.com/StackExchange/dnscontrol/v3/providers/opensrs",
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/dnscontrol/models",

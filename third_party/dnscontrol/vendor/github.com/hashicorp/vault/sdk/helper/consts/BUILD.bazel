@@ -9,7 +9,7 @@ go_library(
         "plugin_types.go",
         "replication.go",
     ],
-    importmap = "github.com/StackExchange/dnscontrol/v2/vendor/github.com/hashicorp/vault/sdk/helper/consts",
+    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/hashicorp/vault/sdk/helper/consts",
     importpath = "github.com/hashicorp/vault/sdk/helper/consts",
     visibility = ["//visibility:public"],
 )
