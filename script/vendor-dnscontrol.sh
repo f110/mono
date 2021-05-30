@@ -1,31 +1,30 @@
 #!/usr/bin/env bash
 set -e
 
-REPOSITORY_URL="https://github.com/StackExchange/dnscontrol.git"
-VERSION="v3.9.0"
+source "script/lib/vendor.sh"
 
-THIRD_PARTY_DIR=$(cd $(dirname $0)/../third_party; pwd)
-TARGET_NAME="${THIRD_PARTY_DIR}/dnscontrol"
+OWNER="StackExchange"
+REPO="dnscontrol"
+IMPORTPATH="github.com/${OWNER}/${REPO}/v3"
+TAG="v3.9.0"
 
-if [ -d "${TARGET_NAME}" ]; then
-  rm -rf "${TARGET_NAME}"
+if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then
+    echo "Please execute via bazel"
+    echo "bazel run //script:vendor-bazel-remote"
+    exit 1
 fi
+cd "$BUILD_WORKSPACE_DIRECTORY"
 
-cd "${THIRD_PARTY_DIR}"
-git clone --depth 1 "${REPOSITORY_URL}" -b "$VERSION"
+THIRD_PARTY_DIR="${BUILD_WORKSPACE_DIRECTORY}/third_party"
+TARGET_DIR="${THIRD_PARTY_DIR}/${REPO}"
 
-cd "${TARGET_NAME}"
-find . -name "*_test.go" -delete
-find . -name "testdata" -type d | xargs rm -rf
-find . -name ".*" -maxdepth 1 | grep -v "^.$" | xargs rm -rf {} +
+if [ -d "${TARGET_DIR}" ]; then
+  rm -rf "${TARGET_DIR}"
+fi
+mkdir -p "${TARGET_DIR}"
 
-cat <<EOS > BUILD.bazel
-load("@bazel_gazelle//:def.bzl", "gazelle")
+download_release_from_github "${TARGET_DIR}" "${OWNER}" "${REPO}" "${TAG}"
 
-# gazelle:proto disable_global
-# gazelle:prefix github.com/StackExchange/dnscontrol/v3
+clean_unnecessary_files "${TARGET_DIR}"
 
-gazelle(name = "gazelle")
-EOS
-
-bazel run //third_party/dnscontrol:gazelle
+generate_build_file "${TARGET_DIR}" "${IMPORTPATH}"

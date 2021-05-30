@@ -9,3 +9,9 @@ sh_binary(
     srcs = ["vendor-pkgsite.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "vendor_dnscontrol",
+    srcs = ["vendor-dnscontrol.sh"],
+    deps = ["//script/lib"],
+)

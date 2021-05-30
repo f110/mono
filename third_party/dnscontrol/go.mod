@@ -10,7 +10,6 @@ require (
 	github.com/DisposaBoy/JsonConfigReader v0.0.0-20201129172854-99cf318d67e7
 	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/TomOnTime/utfutil v0.0.0-20200626160131-0b0178852c8f
-	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883 // indirect
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.30
 	github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6
@@ -59,13 +58,11 @@ require (
 	github.com/renier/xmlrpc v0.0.0-20191022213033-ce560eccbd00 // indirect
 	github.com/robertkrimen/otto v0.0.0-20200922221731-ef014fd054ac
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/softlayer/softlayer-go v0.0.0-20170804160555-5e1c8cccc730
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
-	github.com/tdewolff/minify/v2 v2.9.16 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vultr/govultr v1.0.0
 	github.com/xddxdd/ottoext v0.0.0-20210101073831-439879ee6281
