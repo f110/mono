@@ -26,5 +26,6 @@ mkdir -p "${TARGET_DIR}"
 download_release_from_github "${TARGET_DIR}" "${OWNER}" "${REPO}" "${TAG}"
 
 clean_unnecessary_files "${TARGET_DIR}"
+rm -rf "${TARGET_DIR}/docs"
 
 generate_build_file "${TARGET_DIR}" "${IMPORTPATH}"
