@@ -42,22 +42,22 @@ require (
 	go.uber.org/zap v1.15.0
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.22.0
 	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98 // indirect
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	k8s.io/api v0.19.6
-	k8s.io/apimachinery v0.19.6
-	k8s.io/client-go v0.19.6
+	k8s.io/api v0.21.0
+	k8s.io/apimachinery v0.21.0
+	k8s.io/client-go v0.21.0
 	k8s.io/component-base v0.19.6
 	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.4.0
+	k8s.io/klog/v2 v2.8.0
 	sigs.k8s.io/kind v0.9.0
 	sigs.k8s.io/yaml v1.2.0
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
