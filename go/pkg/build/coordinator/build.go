@@ -21,8 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
+	corev1informers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
+	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
 
 	"go.f110.dev/mono/go/pkg/build/database"
@@ -54,14 +56,28 @@ var (
 
 type KubernetesOptions struct {
 	JobInformer        batchv1informers.JobInformer
+	PodInformer        corev1informers.PodInformer
 	Client             kubernetes.Interface
 	RESTConfig         *rest.Config
 	DefaultCPULimit    string
 	DefaultMemoryLimit string
 }
 
-func NewKubernetesOptions(jInformer batchv1informers.JobInformer, c kubernetes.Interface, cfg *rest.Config, cpuLimit, memoryLimit string) KubernetesOptions {
-	return KubernetesOptions{JobInformer: jInformer, Client: c, RESTConfig: cfg, DefaultCPULimit: cpuLimit, DefaultMemoryLimit: memoryLimit}
+func NewKubernetesOptions(
+	jInformer batchv1informers.JobInformer,
+	podI corev1informers.PodInformer,
+	c kubernetes.Interface,
+	cfg *rest.Config,
+	cpuLimit, memoryLimit string,
+) KubernetesOptions {
+	return KubernetesOptions{
+		JobInformer:        jInformer,
+		PodInformer:        podI,
+		Client:             c,
+		RESTConfig:         cfg,
+		DefaultCPULimit:    cpuLimit,
+		DefaultMemoryLimit: memoryLimit,
+	}
 }
 
 type BazelOptions struct {
@@ -129,9 +145,11 @@ type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
 
-	client    kubernetes.Interface
-	jobLister batchv1listers.JobLister
-	config    *rest.Config
+	client     kubernetes.Interface
+	jobLister  batchv1listers.JobLister
+	podLister  corev1listers.PodLister
+	nodeLister corev1listers.NodeLister
+	config     *rest.Config
 
 	dao                    dao.Options
 	githubClient           *github.Client
@@ -167,6 +185,7 @@ func NewBazelBuilder(
 		config:               kOpt.RESTConfig,
 		client:               kOpt.Client,
 		jobLister:            kOpt.JobInformer.Lister(),
+		podLister:            kOpt.PodInformer.Lister(),
 		dao:                  daoOpt,
 		githubClient:         ghClient,
 		minio:                storage.NewMinIOStorage(kOpt.Client, kOpt.RESTConfig, minIOOpt, dev),
@@ -436,16 +455,16 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 		return xerrors.Errorf(": %w", err)
 	}
 
-	pods, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if len(pods.Items) != 1 {
+	if len(podList.Items) != 1 {
 		return xerrors.New("Target pods not found or found more than 1")
 	}
 
 	buf := new(bytes.Buffer)
-	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
+	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
 	rawLog, err := logReq.DoRaw(ctx)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -453,7 +472,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 	buf.WriteString("----- pre-process -----\n")
 	buf.Write(rawLog)
 
-	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(pods.Items[0].Name, &corev1.PodLogOptions{})
+	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{})
 	rawLog, err = logReq.DoRaw(ctx)
 	buf.WriteString("\n")
 	buf.WriteString("----- main -----\n")
@@ -463,6 +482,31 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 		return xerrors.Errorf(": %w", err)
 	}
 	task.LogFile = job.Name
+
+	s, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	pods, err := b.podLister.Pods(b.Namespace).List(s)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if len(pods) > 0 {
+		nodeList, err := b.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	NodeList:
+		for _, v := range nodeList.Items {
+			for _, a := range v.Status.Addresses {
+				if a.Type == corev1.NodeInternalIP &&
+					a.Address == pods[0].Status.HostIP {
+					task.Node = v.Name
+					break NodeList
+				}
+			}
+		}
+	}
 
 	if j.GithubStatus {
 		state := "success"

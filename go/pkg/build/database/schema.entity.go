@@ -260,6 +260,7 @@ type Task struct {
 	Target     string
 	Via        string
 	ConfigName string
+	Node       string
 	StartAt    *time.Time
 	FinishedAt *time.Time
 	CreatedAt  time.Time
@@ -290,6 +291,7 @@ func (e *Task) IsChanged() bool {
 		e.Target != e.mark.Target ||
 		e.Via != e.mark.Via ||
 		e.ConfigName != e.mark.ConfigName ||
+		e.Node != e.mark.Node ||
 		((e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil)) ||
 		((e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil)) ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
@@ -324,6 +326,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.ConfigName != e.mark.ConfigName {
 		res = append(res, ddl.Column{Name: "config_name", Value: e.ConfigName})
+	}
+	if e.Node != e.mark.Node {
+		res = append(res, ddl.Column{Name: "node", Value: e.Node})
 	}
 	if (e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil) {
 		if e.StartAt != nil {
@@ -364,6 +369,7 @@ func (e *Task) Copy() *Task {
 		Target:     e.Target,
 		Via:        e.Via,
 		ConfigName: e.ConfigName,
+		Node:       e.Node,
 		CreatedAt:  e.CreatedAt,
 	}
 	if e.StartAt != nil {

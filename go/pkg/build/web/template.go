@@ -175,6 +175,7 @@ const indexTemplate = `<html>
           <th>Trigger</th>
           <th>Start at</th>
           <th>Duration</th>
+          <th>Node</th>
           <th></th>
         </tr>
       </thead>
@@ -188,6 +189,7 @@ const indexTemplate = `<html>
           <td>{{ .Via }}</td>
           <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
           <td>{{ Duration .StartAt .FinishedAt }}</td>
+          <td>{{ .Node }}</td>
           <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
         {{- end }}

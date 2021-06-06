@@ -75,8 +75,9 @@ message Task {
     string target      = 7;
     string via         = 8;
     string config_name = 9;
-    .google.protobuf.Timestamp start_at    = 10 [(dev.f110.ddl.column) = {null: true}];
-    .google.protobuf.Timestamp finished_at = 11 [(dev.f110.ddl.column) = {null: true}];
+    string node        = 10;
+    .google.protobuf.Timestamp start_at    = 11 [(dev.f110.ddl.column) = {null: true}];
+    .google.protobuf.Timestamp finished_at = 12 [(dev.f110.ddl.column) = {null: true}];
 
     option (dev.f110.ddl.table) = {
         primary_key: "id"

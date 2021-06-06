@@ -189,6 +189,7 @@ func (p *process) setup() (fsm.State, error) {
 	p.minioOpt = minioOpt
 	kubernetesOpt := coordinator.NewKubernetesOptions(
 		p.coreSharedInformerFactory.Batch().V1().Jobs(),
+		p.coreSharedInformerFactory.Core().V1().Pods(),
 		p.kubeClient,
 		p.restCfg,
 		p.opt.TaskCPULimit,

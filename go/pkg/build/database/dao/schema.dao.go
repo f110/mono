@@ -587,7 +587,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `task` WHERE `id` = ?", id)
 
 	v := &database.Task{}
-	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Via, &v.ConfigName, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Via, &v.ConfigName, &v.Node, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -606,7 +606,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?"
+	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -626,7 +626,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.ConfigName, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -651,7 +651,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at`"
+	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -670,7 +670,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.ConfigName, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		r.ResetMark()
@@ -704,8 +704,8 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		task.JobId, task.Revision, task.Success, task.LogFile, task.Command, task.Target, task.Via, task.ConfigName, task.StartAt, task.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `command`, `target`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		task.JobId, task.Revision, task.Success, task.LogFile, task.Command, task.Target, task.Via, task.ConfigName, task.Node, task.StartAt, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
