@@ -29,16 +29,16 @@ function download_release_from_github() {
     tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${target_dir}
 }
 
-function clean_unnecessary_files() {
+function remove_unnecessary_files() {
     target_dir=$1
 
-    clean_bazel_files "${target_dir}"
-    clean_git_files "${target_dir}"
-    clean_dev_files "${target_dir}"
+    remove_bazel_files "${target_dir}"
+    remove_git_files "${target_dir}"
+    remove_dev_files "${target_dir}"
     remove_unnecessary_go_files "${target_dir}"
 }
 
-function clean_bazel_files() {
+function remove_bazel_files() {
     target_dir=$1
 
     echo "Remove bazel's files"
@@ -46,7 +46,7 @@ function clean_bazel_files() {
     find "${target_dir}" -name WORKSPACE -or -name WORKSPACE.bazel | xargs rm -f
 }
 
-function clean_git_files() {
+function remove_git_files() {
     target_dir=$1
     files=(
         ".gitignore"
@@ -59,7 +59,7 @@ function clean_git_files() {
     done
 }
 
-function clean_dev_files() {
+function remove_dev_files() {
     target_dir=$1
     files=(
         ".editorconfig"

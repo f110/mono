@@ -19,8 +19,8 @@ mkdir -p "${TARGET_DIR}"
 
 download_repository_from_github "${TARGET_DIR}" "${OWNER}" "${REPO}" "${COMMIT}"
 
-clean_git_files "${TARGET_DIR}"
-clean_bazel_files "${TARGET_DIR}"
+remove_git_files "${TARGET_DIR}"
+remove_bazel_files "${TARGET_DIR}"
 remove_unnecessary_go_files "${TARGET_DIR}"
 
 cd "${TARGET_DIR}"
