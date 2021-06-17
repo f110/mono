@@ -6,14 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/build-sidecar",
     visibility = ["//visibility:private"],
     deps = [
-        "//vendor/github.com/bradleyfalzon/ghinstallation",
-        "//vendor/github.com/google/go-github/v29/github",
+        "//go/pkg/git",
         "//vendor/github.com/spf13/pflag",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
     ],
 )
 
