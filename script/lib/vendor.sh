@@ -19,6 +19,7 @@ function download_release_from_github() {
     owner=$2
     repo=$3
     tag=$4
+    sub_directory=$5
 
     if [ -f "/tmp/vendor.tar.gz" ]; then
         rm -f /tmp/vendor.tar.gz
@@ -26,7 +27,16 @@ function download_release_from_github() {
 
     echo "Download the release file from github"
     curl --silent --location --output /tmp/vendor.tar.gz https://github.com/${owner}/${repo}/archive/refs/tags/${tag}.tar.gz
-    tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${target_dir}
+    if [ -n "$sub_directory" ]; then
+        tmp_dir=$(mktemp -d)
+        tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory "$tmp_dir"
+        rmdir "$target_dir"
+        mv "$tmp_dir"/"$sub_directory" "$target_dir"/
+        rm -rf "$tmp_dir"
+    else
+        mkdir -p "${target_dir}"
+        tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${target_dir}
+    fi
 }
 
 function remove_unnecessary_files() {
@@ -65,6 +75,8 @@ function remove_dev_files() {
         ".editorconfig"
         ".prettierrc"
         ".travis.yml"
+        "docker-compose.yaml"
+        ".dockerignore"
     )
     dirs=(
         ".github"
@@ -104,9 +116,9 @@ load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 go_vendor(name = "vendor")
 EOS
 
-    echo "bazel run /${dir_path}:vendor"
+    echo "bazel run //${dir_path}:vendor"
     cd "${BUILD_WORKSPACE_DIRECTORY}"
-    bazel run /${dir_path}:vendor
+    bazel run //${dir_path}:vendor
 
     cd "${old_working_directory}"
 }

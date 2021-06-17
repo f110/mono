@@ -15,3 +15,9 @@ sh_binary(
     srcs = ["vendor-dnscontrol.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "vendor_stns",
+    srcs = ["vendor-stns.sh"],
+    deps = ["//script/lib"],
+)
