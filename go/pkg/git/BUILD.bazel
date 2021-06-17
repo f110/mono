@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "git",
+    srcs = ["git.go"],
+    importpath = "go.f110.dev/mono/go/pkg/git",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/bradleyfalzon/ghinstallation",
+        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
+    ],
+)
