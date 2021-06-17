@@ -30,7 +30,10 @@ function download_release_from_github() {
     if [ -n "$sub_directory" ]; then
         tmp_dir=$(mktemp -d)
         tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory "$tmp_dir"
-        rmdir "$target_dir"
+        if [ -e "$target_dir" ]; then
+            rm -rf "$target_dir"
+        fi
+
         mv "$tmp_dir"/"$sub_directory" "$target_dir"/
         rm -rf "$tmp_dir"
     else
@@ -116,9 +119,9 @@ load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 go_vendor(name = "vendor")
 EOS
 
-    echo "bazel run //${dir_path}:vendor"
+    echo "bazel run /${dir_path}:vendor"
     cd "${BUILD_WORKSPACE_DIRECTORY}"
-    bazel run //${dir_path}:vendor
+    bazel run /${dir_path}:vendor
 
     cd "${old_working_directory}"
 }
