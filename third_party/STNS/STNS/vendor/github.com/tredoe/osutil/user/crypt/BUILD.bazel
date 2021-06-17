@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "crypt",
+    srcs = ["crypt.go"],
+    importmap = "github.com/STNS/STNS/v2/vendor/github.com/tredoe/osutil/user/crypt",
+    importpath = "github.com/tredoe/osutil/user/crypt",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/STNS/STNS/vendor/github.com/tredoe/osutil/user/crypt/common"],
+)

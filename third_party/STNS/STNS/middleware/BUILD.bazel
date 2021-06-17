@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "middleware",
+    srcs = [
+        "add_header.go",
+        "backend.go",
+        "ipfilter.go",
+        "token_auth.go",
+    ],
+    importpath = "github.com/STNS/STNS/v2/middleware",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/model",
+        "//third_party/STNS/STNS/vendor/github.com/jpillora/ipfilter",
+        "//third_party/STNS/STNS/vendor/github.com/labstack/echo",
+        "//third_party/STNS/STNS/vendor/github.com/labstack/echo/middleware",
+        "//third_party/STNS/STNS/vendor/github.com/labstack/gommon/log",
+    ],
+)

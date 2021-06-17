@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = [
+        "auth_role.go",
+        "auth_user.go",
+        "cancelreq.go",
+        "client.go",
+        "cluster_error.go",
+        "curl.go",
+        "discover.go",
+        "doc.go",
+        "json.go",
+        "keys.go",
+        "members.go",
+        "util.go",
+    ],
+    importmap = "github.com/STNS/STNS/v2/vendor/github.com/etcd-io/etcd/client",
+    importpath = "github.com/etcd-io/etcd/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/vendor/github.com/coreos/etcd/pkg/pathutil",
+        "//third_party/STNS/STNS/vendor/github.com/coreos/etcd/pkg/srv",
+        "//third_party/STNS/STNS/vendor/github.com/coreos/etcd/pkg/types",
+        "//third_party/STNS/STNS/vendor/github.com/coreos/etcd/version",
+        "//third_party/STNS/STNS/vendor/github.com/json-iterator/go",
+        "//third_party/STNS/STNS/vendor/github.com/modern-go/reflect2",
+    ],
+)

@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ldap",
+    srcs = [
+        "bind.go",
+        "conn.go",
+        "control.go",
+        "debug.go",
+        "filter.go",
+        "ldap.go",
+        "modify.go",
+        "search.go",
+        "server.go",
+        "server_bind.go",
+        "server_modify.go",
+        "server_search.go",
+    ],
+    importmap = "github.com/STNS/STNS/v2/vendor/github.com/nmcclain/ldap",
+    importpath = "github.com/nmcclain/ldap",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/STNS/STNS/vendor/github.com/nmcclain/asn1-ber"],
+)

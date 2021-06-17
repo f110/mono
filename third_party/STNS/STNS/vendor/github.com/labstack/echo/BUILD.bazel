@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "echo",
+    srcs = [
+        "bind.go",
+        "context.go",
+        "echo.go",
+        "group.go",
+        "log.go",
+        "response.go",
+        "router.go",
+    ],
+    importmap = "github.com/STNS/STNS/v2/vendor/github.com/labstack/echo",
+    importpath = "github.com/labstack/echo",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/vendor/github.com/labstack/gommon/color",
+        "//third_party/STNS/STNS/vendor/github.com/labstack/gommon/log",
+        "//third_party/STNS/STNS/vendor/golang.org/x/crypto/acme/autocert",
+    ],
+)

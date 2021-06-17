@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "proto",
+    srcs = [
+        "reader.go",
+        "scan.go",
+        "write_buffer.go",
+    ],
+    importmap = "github.com/STNS/STNS/v2/vendor/gopkg.in/redis.v5/internal/proto",
+    importpath = "gopkg.in/redis.v5/internal/proto",
+    visibility = ["//third_party/STNS/STNS/vendor/gopkg.in/redis.v5:__subpackages__"],
+    deps = ["//third_party/STNS/STNS/vendor/gopkg.in/redis.v5/internal"],
+)

@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stns",
+    srcs = ["config.go"],
+    importpath = "github.com/STNS/STNS/v2/stns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/model",
+        "//third_party/STNS/STNS/vendor/github.com/BurntSushi/toml",
+        "//third_party/STNS/STNS/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/STNS/STNS/vendor/github.com/aws/aws-sdk-go/aws/session",
+        "//third_party/STNS/STNS/vendor/github.com/aws/aws-sdk-go/service/s3",
+        "//third_party/STNS/STNS/vendor/github.com/aws/aws-sdk-go/service/s3/s3manager",
+        "//third_party/STNS/STNS/vendor/github.com/go-yaml/yaml",
+    ],
+)

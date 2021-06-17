@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "model",
+    srcs = [
+        "backend.go",
+        "backend_redis.go",
+        "backend_toml_file.go",
+        "base.go",
+        "dummy.go",
+        "group.go",
+        "nil_buckend.go",
+        "user.go",
+    ],
+    importpath = "github.com/STNS/STNS/v2/model",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/vendor/github.com/labstack/gommon/log",
+        "//third_party/STNS/STNS/vendor/gopkg.in/go-playground/validator.v9:validator_v9",
+        "//third_party/STNS/STNS/vendor/gopkg.in/redis.v5:redis_v5",
+    ],
+)

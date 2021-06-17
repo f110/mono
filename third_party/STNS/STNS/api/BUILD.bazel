@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "api",
+    srcs = [
+        "api.go",
+        "group.go",
+        "user.go",
+    ],
+    importpath = "github.com/STNS/STNS/v2/api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/STNS/STNS/middleware",
+        "//third_party/STNS/STNS/model",
+        "//third_party/STNS/STNS/vendor/github.com/labstack/echo",
+        "//third_party/STNS/STNS/vendor/github.com/tredoe/osutil/user/crypt",
+        "//third_party/STNS/STNS/vendor/github.com/tredoe/osutil/user/crypt/md5_crypt",
+        "//third_party/STNS/STNS/vendor/github.com/tredoe/osutil/user/crypt/sha256_crypt",
+        "//third_party/STNS/STNS/vendor/github.com/tredoe/osutil/user/crypt/sha512_crypt",
+    ],
+)
