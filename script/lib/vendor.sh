@@ -32,6 +32,8 @@ function download_release_from_github() {
         tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory "$tmp_dir"
         if [ -e "$target_dir" ]; then
             rm -rf "$target_dir"
+        else
+            mkdir $(dirname $target_dir)
         fi
 
         mv "$tmp_dir"/"$sub_directory" "$target_dir"/
