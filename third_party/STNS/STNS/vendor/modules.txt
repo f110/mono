@@ -15,7 +15,6 @@ github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/credentials/processcreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
-github.com/aws/aws-sdk-go/aws/crr
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/defaults
 github.com/aws/aws-sdk-go/aws/ec2metadata
@@ -38,37 +37,22 @@ github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/eventstream
 github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
 github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
-github.com/aws/aws-sdk-go/private/protocol/jsonrpc
 github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
-github.com/aws/aws-sdk-go/service/dynamodb
-github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
 github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
-# github.com/coreos/etcd v3.3.22+incompatible
-## explicit
-github.com/coreos/etcd/pkg/pathutil
-github.com/coreos/etcd/pkg/srv
-github.com/coreos/etcd/pkg/types
-github.com/coreos/etcd/version
-# github.com/coreos/go-semver v0.3.0
-## explicit
-github.com/coreos/go-semver/semver
 # github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
 github.com/dgrijalva/jwt-go
-# github.com/etcd-io/etcd v3.3.22+incompatible
-## explicit
-github.com/etcd-io/etcd/client
 # github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5
 ## explicit
 github.com/facebookgo/atomicfile
@@ -92,11 +76,6 @@ github.com/jmespath/go-jmespath
 # github.com/jpillora/ipfilter v1.2.2
 ## explicit
 github.com/jpillora/ipfilter
-# github.com/json-iterator/go v1.1.10
-## explicit
-github.com/json-iterator/go
-# github.com/k0kubun/pp v3.0.1+incompatible
-## explicit
 # github.com/labstack/echo v3.3.10+incompatible
 ## explicit
 github.com/labstack/echo
@@ -113,31 +92,26 @@ github.com/leodido/go-urn
 # github.com/lestrrat/go-server-starter v0.0.0-20180220115249-6ac0b358431b
 ## explicit
 github.com/lestrrat/go-server-starter/listener
-# github.com/lib/pq v1.8.0
-## explicit
 # github.com/mattn/go-colorable v0.1.2
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.9
 github.com/mattn/go-isatty
-# github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421
-github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
-## explicit
-github.com/modern-go/reflect2
 # github.com/nmcclain/asn1-ber v0.0.0-20170104154839-2661553a0484
 ## explicit
 github.com/nmcclain/asn1-ber
 # github.com/nmcclain/ldap v0.0.0-20191021200707-3b3b69a7e9e3
 ## explicit
 github.com/nmcclain/ldap
+# github.com/onsi/ginkgo v1.16.4
+## explicit
+# github.com/onsi/gomega v1.13.0
+## explicit
 # github.com/phuslu/iploc v1.0.20200807
 github.com/phuslu/iploc
 # github.com/russross/blackfriday/v2 v2.0.1
 github.com/russross/blackfriday/v2
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
-# github.com/stretchr/testify v1.5.1
-## explicit
 # github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 github.com/tomasen/realip
 # github.com/tredoe/osutil v1.0.5
@@ -154,14 +128,21 @@ github.com/urfave/cli
 github.com/valyala/bytebufferpool
 # github.com/valyala/fasttemplate v1.0.1
 github.com/valyala/fasttemplate
-# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
-# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
-## explicit
-golang.org/x/net/context
-# golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
+# golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+golang.org/x/net/idna
+# golang.org/x/sys v0.0.0-20210423082822-04245dca01da
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
+# golang.org/x/text v0.3.6
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# gopkg.in/go-playground/assert.v1 v1.2.1
+## explicit
 # gopkg.in/go-playground/validator.v9 v9.31.0
 ## explicit
 gopkg.in/go-playground/validator.v9

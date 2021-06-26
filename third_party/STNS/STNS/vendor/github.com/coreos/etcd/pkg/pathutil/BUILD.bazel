@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "pathutil",
-    srcs = ["path.go"],
-    importmap = "github.com/STNS/STNS/v2/vendor/github.com/coreos/etcd/pkg/pathutil",
-    importpath = "github.com/coreos/etcd/pkg/pathutil",
-    visibility = ["//visibility:public"],
-)

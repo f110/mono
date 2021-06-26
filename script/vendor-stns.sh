@@ -27,5 +27,6 @@ download_release_from_github "${TARGET_DIR}" "${OWNER}" "${REPO}" "${TAG}" "${SU
 
 remove_unnecessary_files "${TARGET_DIR}"
 rm -rf "${TARGET_DIR}/docs"
+rm -rf "${TARGET_DIR}/modules"
 
 generate_build_file "${TARGET_DIR}" "${IMPORTPATH}"

@@ -33,7 +33,7 @@ function download_release_from_github() {
         if [ -e "$target_dir" ]; then
             rm -rf "$target_dir"
         else
-            mkdir $(dirname $target_dir)
+            mkdir -p $(dirname $target_dir)
         fi
 
         mv "$tmp_dir"/"$sub_directory" "$target_dir"/
