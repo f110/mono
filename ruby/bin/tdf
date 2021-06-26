@@ -65,7 +65,7 @@ end
 
 # Link
 doc.xpath("//section[@class='s-table__wrapper']/div/div[2]/div[2]/div[3]/a[2]").each_with_index do |element, idx|
-  schedules[idx].url = element.values.first
+  schedules[idx].url = element.attributes["href"].value
 end
 
 CSV.open(ARGV[0], "wb") do |csv|
