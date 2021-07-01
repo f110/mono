@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "introspect",
+    srcs = [
+        "call.go",
+        "introspect.go",
+        "introspectable.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/godbus/dbus/v5/introspect",
+    importpath = "github.com/godbus/dbus/v5/introspect",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/godbus/dbus/v5:dbus"],
+)

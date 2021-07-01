@@ -15,6 +15,8 @@ github.com/BurntSushi/toml
 ## explicit
 github.com/BurntSushi/xgb
 github.com/BurntSushi/xgb/xproto
+# github.com/JuulLabs-OSS/cbgo v0.0.2
+github.com/JuulLabs-OSS/cbgo
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
 # github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878
@@ -120,6 +122,8 @@ github.com/emirpasic/gods/utils
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.10.0
 github.com/fatih/color
+# github.com/fatih/structs v1.1.0
+github.com/fatih/structs
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
@@ -131,6 +135,10 @@ github.com/go-ole/go-ole/oleutil
 # github.com/go-sql-driver/mysql v1.5.0
 ## explicit
 github.com/go-sql-driver/mysql
+# github.com/godbus/dbus/v5 v5.0.3
+github.com/godbus/dbus/v5
+github.com/godbus/dbus/v5/introspect
+github.com/godbus/dbus/v5/prop
 # github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
@@ -272,6 +280,9 @@ github.com/klauspost/cpuid
 github.com/klauspost/cpuid/v2
 # github.com/lestrrat-go/pdebug v0.0.0-20180220043849-39f9a71bcabe
 github.com/lestrrat-go/pdebug
+# github.com/magefile/mage v1.10.0
+github.com/magefile/mage/mg
+github.com/magefile/mage/sh
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
@@ -339,6 +350,18 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/montanaflynn/stats v0.5.0
 github.com/montanaflynn/stats
+# github.com/muka/go-bluetooth v0.0.0-20200619025933-f6113f7141c5
+github.com/muka/go-bluetooth/api
+github.com/muka/go-bluetooth/api/service
+github.com/muka/go-bluetooth/bluez
+github.com/muka/go-bluetooth/bluez/profile
+github.com/muka/go-bluetooth/bluez/profile/adapter
+github.com/muka/go-bluetooth/bluez/profile/advertising
+github.com/muka/go-bluetooth/bluez/profile/agent
+github.com/muka/go-bluetooth/bluez/profile/device
+github.com/muka/go-bluetooth/bluez/profile/gatt
+github.com/muka/go-bluetooth/props
+github.com/muka/go-bluetooth/util
 # github.com/ncw/directio v1.0.5
 github.com/ncw/directio
 # github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317
@@ -430,6 +453,8 @@ github.com/shurcooL/githubv4
 github.com/shurcooL/graphql
 github.com/shurcooL/graphql/ident
 github.com/shurcooL/graphql/internal/jsonutil
+# github.com/sirupsen/logrus v1.8.0
+github.com/sirupsen/logrus
 # github.com/sourcegraph/go-diff v0.5.1
 ## explicit
 github.com/sourcegraph/go-diff/diff
@@ -1225,3 +1250,7 @@ software.sslmate.com/src/go-pkcs12
 software.sslmate.com/src/go-pkcs12/internal/rc2
 # sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4
 sourcegraph.com/sqs/pbtypes
+# tinygo.org/x/bluetooth v0.3.0
+## explicit
+tinygo.org/x/bluetooth
+tinygo.org/x/bluetooth/winbt

@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gatt",
+    srcs = [
+        "gatt.go",
+        "gen_GattCharacteristic1.go",
+        "gen_GattDescriptor1.go",
+        "gen_GattManager1.go",
+        "gen_GattProfile1.go",
+        "gen_GattService1.go",
+        "gen_gatt.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/muka/go-bluetooth/bluez/profile/gatt",
+    importpath = "github.com/muka/go-bluetooth/bluez/profile/gatt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/godbus/dbus/v5:dbus",
+        "//vendor/github.com/muka/go-bluetooth/bluez",
+        "//vendor/github.com/muka/go-bluetooth/props",
+        "//vendor/github.com/muka/go-bluetooth/util",
+    ],
+)

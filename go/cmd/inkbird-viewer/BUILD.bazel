@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "inkbird-viewer_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/inkbird-viewer",
+    visibility = ["//visibility:private"],
+    deps = ["//go/pkg/ble/inkbird"],
+)
+
+go_binary(
+    name = "inkbird-viewer",
+    embed = [":inkbird-viewer_lib"],
+    visibility = ["//visibility:public"],
+)

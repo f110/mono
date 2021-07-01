@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "structs",
+    srcs = [
+        "field.go",
+        "structs.go",
+        "tags.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/fatih/structs",
+    importpath = "github.com/fatih/structs",
+    visibility = ["//visibility:public"],
+)

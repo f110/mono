@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "service",
+    srcs = [
+        "agent.go",
+        "app.go",
+        "app_advertise.go",
+        "app_char.go",
+        "app_char_rw.go",
+        "app_descr.go",
+        "app_descr_rw.go",
+        "app_getter.go",
+        "app_service.go",
+        "app_service_mgm.go",
+        "gatt.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/muka/go-bluetooth/api/service",
+    importpath = "github.com/muka/go-bluetooth/api/service",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/godbus/dbus/v5:dbus",
+        "//vendor/github.com/godbus/dbus/v5/introspect",
+        "//vendor/github.com/muka/go-bluetooth/api",
+        "//vendor/github.com/muka/go-bluetooth/bluez",
+        "//vendor/github.com/muka/go-bluetooth/bluez/profile/adapter",
+        "//vendor/github.com/muka/go-bluetooth/bluez/profile/advertising",
+        "//vendor/github.com/muka/go-bluetooth/bluez/profile/agent",
+        "//vendor/github.com/muka/go-bluetooth/bluez/profile/gatt",
+        "//vendor/github.com/sirupsen/logrus",
+    ],
+)
