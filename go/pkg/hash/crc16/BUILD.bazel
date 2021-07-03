@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "crc16",
+    srcs = ["crc16.go"],
+    importpath = "go.f110.dev/mono/go/pkg/hash/crc16",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "crc16_test",
+    srcs = ["crc16_test.go"],
+    embed = [":crc16"],
+    deps = ["//vendor/github.com/stretchr/testify/assert"],
+)
