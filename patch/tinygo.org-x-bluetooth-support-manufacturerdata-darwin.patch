@@ -1,0 +1,49 @@
+diff --git a/vendor/tinygo.org/x/bluetooth/adapter_darwin.go b/vendor/tinygo.org/x/bluetooth/adapter_darwin.go
+index d721fe22..282b1cbe 100644
+--- a/vendor/tinygo.org/x/bluetooth/adapter_darwin.go
++++ b/vendor/tinygo.org/x/bluetooth/adapter_darwin.go
+@@ -120,8 +120,9 @@ func makeScanResult(prph cbgo.Peripheral, advFields cbgo.AdvFields, rssi int) Sc
+ 		},
+ 		AdvertisementPayload: &advertisementFields{
+ 			AdvertisementFields{
+-				LocalName:    advFields.LocalName,
+-				ServiceUUIDs: serviceUUIDs,
++				LocalName:         advFields.LocalName,
++				ServiceUUIDs:      serviceUUIDs,
++				ManufacturerData: advFields.ManufacturerData,
+ 			},
+ 		},
+ 	}
+diff --git a/vendor/tinygo.org/x/bluetooth/gap.go b/vendor/tinygo.org/x/bluetooth/gap.go
+index 63998f45..dec66d1e 100644
+--- a/vendor/tinygo.org/x/bluetooth/gap.go
++++ b/vendor/tinygo.org/x/bluetooth/gap.go
+@@ -126,6 +126,8 @@ type AdvertisementPayload interface {
+ 	// Bytes returns the raw advertisement packet, if available. It returns nil
+ 	// if this data is not available.
+ 	Bytes() []byte
++
++	ManufacturerData() []byte
+ }
+ 
+ // AdvertisementFields contains advertisement fields in structured form.
+@@ -138,6 +140,8 @@ type AdvertisementFields struct {
+ 	// part of the advertisement packet, in data types such as "complete list of
+ 	// 128-bit UUIDs".
+ 	ServiceUUIDs []UUID
++
++	ManufacturerData []byte
+ }
+ 
+ // advertisementFields wraps AdvertisementFields to implement the
+@@ -170,6 +174,10 @@ func (p *advertisementFields) Bytes() []byte {
+ 	return nil
+ }
+ 
++func (p *advertisementFields) ManufacturerData() []byte {
++	return p.AdvertisementFields.ManufacturerData
++}
++
+ // rawAdvertisementPayload encapsulates a raw advertisement packet. Methods to
+ // get the data (such as LocalName()) will parse just the needed field. Scanning
+ // the data should be fast as most advertisement packets only have a very small

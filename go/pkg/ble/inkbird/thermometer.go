@@ -24,6 +24,7 @@ type ThermometerData struct {
 	Temperature float32
 	Humidity    float32
 	External    bool
+	Battery     int8
 }
 
 func Read(ctx context.Context, id string) (*ThermometerData, error) {
@@ -31,47 +32,19 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 		adapter.Enable()
 	})
 
-	addr, err := parseAddress(id)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-
-	disconnected := false
-	device, err := adapter.Connect(addr, bluetooth.ConnectionParams{})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	defer func() {
-		if !disconnected {
-			device.Disconnect()
+	var buf []byte
+	err := adapter.Scan(func(a *bluetooth.Adapter, result bluetooth.ScanResult) {
+		if result.Address.String() == id && len(result.ManufacturerData()) == 9 {
+			buf = result.ManufacturerData()
+			adapter.StopScan()
 		}
-	}()
-
-	svcs, err := device.DiscoverServices([]bluetooth.UUID{ServiceUUIDThermometer})
+		select {
+		case <-ctx.Done():
+			adapter.StopScan()
+		default:
+		}
+	})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	if len(svcs) == 0 {
-		return nil, xerrors.Errorf("inkbird: Thermometer service is not found")
-	}
-
-	svc := svcs[0]
-	chars, err := svc.DiscoverCharacteristics([]bluetooth.UUID{CharacteristicUUIDRealtimeData})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	if len(chars) == 0 {
-		return nil, xerrors.Errorf("inkbird: Can not find real time data characteristic")
-	}
-
-	char := chars[0]
-	buf := make([]byte, 1024)
-	n, _ := char.Read(buf)
-	if n != 7 {
-		return nil, xerrors.Errorf("inkbird: expect 7 bytes but %d", n)
-	}
-	disconnected = true
-	if err := device.Disconnect(); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -85,11 +58,13 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 	if checksum != crc16.ChecksumModBus(buf[:5]) {
 		return nil, xerrors.Errorf("inkbird: Checksum mismatched")
 	}
+	battery := 100 - int8(buf[8])
 
 	return &ThermometerData{
 		Time:        time.Now(),
 		Temperature: float32(temp) / 100,
 		Humidity:    float32(humid) / 100,
 		External:    external,
+		Battery:     battery,
 	}, nil
 }

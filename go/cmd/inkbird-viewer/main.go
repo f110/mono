@@ -24,6 +24,7 @@ func inkbirdViewer(args []string) error {
 	fmt.Printf("Date: %s\n", data.Time.Format(time.RFC3339))
 	fmt.Printf("Temp: %.2f\n", data.Temperature)
 	fmt.Printf("Humid: %.2f\n", data.Humidity)
+	fmt.Printf("Battery: %d%%\n", data.Battery)
 	return nil
 }
 
