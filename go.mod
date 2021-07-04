@@ -29,6 +29,7 @@ require (
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/peco/peco v0.5.8
+	github.com/prometheus/client_golang v1.8.0
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.1
 	github.com/shurcooL/githubv4 v0.0.0-20200915023059-bc5e4feb2971

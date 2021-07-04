@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "inkbird-exporter_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/inkbird-exporter",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/logger",
+        "//go/pkg/prometheus/exporter",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "inkbird-exporter",
+    embed = [":inkbird-exporter_lib"],
+    visibility = ["//visibility:public"],
+)
