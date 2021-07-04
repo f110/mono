@@ -31,25 +31,25 @@ func NewInkBirdExporter(id string, minimumInterval time.Duration) *InkBird {
 		lastSeen: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "last_seen"),
 			"",
-			nil,
+			[]string{"addr"},
 			nil,
 		),
 		temperature: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "temperature"),
 			"",
-			nil,
+			[]string{"addr"},
 			nil,
 		),
 		humidity: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "humidity"),
 			"",
-			nil,
+			[]string{"addr"},
 			nil,
 		),
 		battery: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "battery"),
 			"",
-			nil,
+			[]string{"addr"},
 			nil,
 		),
 	}
@@ -77,8 +77,8 @@ func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
 	}
 	e.lastData = data
 
-	ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()))
-	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature))
-	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity))
-	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery))
+	ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()), e.id)
+	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), e.id)
+	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), e.id)
+	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
 }
