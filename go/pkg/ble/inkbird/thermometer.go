@@ -3,20 +3,11 @@ package inkbird
 import (
 	"context"
 	"encoding/binary"
-	"sync"
 	"time"
 
+	"go.f110.dev/mono/go/pkg/ble"
 	"go.f110.dev/mono/go/pkg/hash/crc16"
 	"golang.org/x/xerrors"
-	"tinygo.org/x/bluetooth"
-)
-
-var (
-	adapter    = bluetooth.DefaultAdapter
-	enableOnce = sync.Once{}
-
-	ServiceUUIDThermometer         = bluetooth.New16BitUUID(0xFFF0)
-	CharacteristicUUIDRealtimeData = bluetooth.New16BitUUID(0xFFF2)
 )
 
 type ThermometerData struct {
@@ -28,24 +19,20 @@ type ThermometerData struct {
 }
 
 func Read(ctx context.Context, id string) (*ThermometerData, error) {
-	enableOnce.Do(func() {
-		adapter.Enable()
-	})
+	sCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
+	scanCh := ble.Scan(sCtx)
 	var buf []byte
-	err := adapter.Scan(func(a *bluetooth.Adapter, result bluetooth.ScanResult) {
-		if result.Address.String() == id && len(result.ManufacturerData()) == 9 {
-			buf = result.ManufacturerData()
-			adapter.StopScan()
+	for prph := range scanCh {
+		if prph.Address == id && len(prph.ManufacturerData) == 9 {
+			cancel()
+			buf = prph.ManufacturerData
+			break
 		}
-		select {
-		case <-ctx.Done():
-			adapter.StopScan()
-		default:
-		}
-	})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	}
+	if buf == nil {
+		return nil, xerrors.Errorf("inkbird: sensor not found")
 	}
 
 	temp := binary.LittleEndian.Uint16(buf[:2])
@@ -58,7 +45,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 	if checksum != crc16.ChecksumModBus(buf[:5]) {
 		return nil, xerrors.Errorf("inkbird: Checksum mismatched")
 	}
-	battery := 100 - int8(buf[8])
+	battery := int8(buf[7])
 
 	return &ThermometerData{
 		Time:        time.Now(),

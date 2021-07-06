@@ -16,6 +16,7 @@ github.com/BurntSushi/toml
 github.com/BurntSushi/xgb
 github.com/BurntSushi/xgb/xproto
 # github.com/JuulLabs-OSS/cbgo v0.0.2
+## explicit
 github.com/JuulLabs-OSS/cbgo
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
@@ -122,8 +123,6 @@ github.com/emirpasic/gods/utils
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.10.0
 github.com/fatih/color
-# github.com/fatih/structs v1.1.0
-github.com/fatih/structs
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
@@ -135,10 +134,6 @@ github.com/go-ole/go-ole/oleutil
 # github.com/go-sql-driver/mysql v1.5.0
 ## explicit
 github.com/go-sql-driver/mysql
-# github.com/godbus/dbus/v5 v5.0.3
-github.com/godbus/dbus/v5
-github.com/godbus/dbus/v5/introspect
-github.com/godbus/dbus/v5/prop
 # github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
@@ -350,18 +345,6 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/montanaflynn/stats v0.5.0
 github.com/montanaflynn/stats
-# github.com/muka/go-bluetooth v0.0.0-20200619025933-f6113f7141c5
-github.com/muka/go-bluetooth/api
-github.com/muka/go-bluetooth/api/service
-github.com/muka/go-bluetooth/bluez
-github.com/muka/go-bluetooth/bluez/profile
-github.com/muka/go-bluetooth/bluez/profile/adapter
-github.com/muka/go-bluetooth/bluez/profile/advertising
-github.com/muka/go-bluetooth/bluez/profile/agent
-github.com/muka/go-bluetooth/bluez/profile/device
-github.com/muka/go-bluetooth/bluez/profile/gatt
-github.com/muka/go-bluetooth/props
-github.com/muka/go-bluetooth/util
 # github.com/ncw/directio v1.0.5
 github.com/ncw/directio
 # github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317
@@ -1251,7 +1234,3 @@ software.sslmate.com/src/go-pkcs12
 software.sslmate.com/src/go-pkcs12/internal/rc2
 # sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4
 sourcegraph.com/sqs/pbtypes
-# tinygo.org/x/bluetooth v0.3.0
-## explicit
-tinygo.org/x/bluetooth
-tinygo.org/x/bluetooth/winbt

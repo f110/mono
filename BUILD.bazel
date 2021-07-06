@@ -7,7 +7,6 @@ go_vendor(
     name = "vendor",
     patches = [
         "patch/fix-minio-operator-group-name.patch",
-        "patch/tinygo.org-x-bluetooth-support-manufacturerdata-darwin.patch",
     ],
 )
 

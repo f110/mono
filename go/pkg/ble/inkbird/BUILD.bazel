@@ -2,16 +2,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "inkbird",
-    srcs = [
-        "address_darwin.go",
-        "address_linux.go",
-        "thermometer.go",
-    ],
+    srcs = ["thermometer.go"],
     importpath = "go.f110.dev/mono/go/pkg/ble/inkbird",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/ble",
         "//go/pkg/hash/crc16",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/tinygo.org/x/bluetooth",
     ],
 )
