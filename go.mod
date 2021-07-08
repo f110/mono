@@ -12,6 +12,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-containerregistry v0.4.0

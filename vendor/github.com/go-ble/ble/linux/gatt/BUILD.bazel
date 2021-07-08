@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gatt",
+    srcs = [
+        "client.go",
+        "server.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/go-ble/ble/linux/gatt",
+    importpath = "github.com/go-ble/ble/linux/gatt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-ble/ble",
+        "//vendor/github.com/go-ble/ble/linux/att",
+    ],
+)

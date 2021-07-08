@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,12 +22,16 @@ func inkbirdExporter(args []string) error {
 	port := 9400
 	fs := pflag.NewFlagSet("inkbird-exporter", pflag.ContinueOnError)
 	fs.StringVar(&id, "id", id, "")
-	fs.DurationVar(&minimumInterval, "minimun-interval", minimumInterval, "")
+	fs.DurationVar(&minimumInterval, "minimum-interval", minimumInterval, "")
 	fs.IntVar(&port, "port", port, "")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+	if id == "" {
+		return errors.New("--id is required")
+	}
+	id = strings.ToLower(id)
 
 	if err := logger.Init(); err != nil {
 		return err

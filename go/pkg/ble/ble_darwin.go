@@ -7,7 +7,7 @@ import (
 	"github.com/JuulLabs-OSS/cbgo"
 )
 
-func scan(ctx context.Context) <-chan Peripheral {
+func scan(ctx context.Context) (<-chan Peripheral, error) {
 	cm := cbgo.NewCentralManager(nil)
 	ch := make(chan Peripheral)
 	delegate := &centralManagerDelegate{scanCh: ch}
@@ -23,7 +23,7 @@ func scan(ctx context.Context) <-chan Peripheral {
 		close(ch)
 	}()
 
-	return ch
+	return ch, nil
 }
 
 type centralManagerDelegate struct {

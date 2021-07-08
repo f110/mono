@@ -9,6 +9,6 @@ type Peripheral struct {
 	ManufacturerData []byte
 }
 
-func Scan(ctx context.Context) <-chan Peripheral {
+func Scan(ctx context.Context) (<-chan Peripheral, error) {
 	return scan(ctx)
 }

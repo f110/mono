@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "inkbird",
@@ -10,4 +10,10 @@ go_library(
         "//go/pkg/hash/crc16",
         "//vendor/golang.org/x/xerrors",
     ],
+)
+
+go_test(
+    name = "inkbird_test",
+    srcs = ["test_test.go"],
+    embed = [":inkbird"],
 )

@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "hci",
+    srcs = [
+        "adv.go",
+        "buffer.go",
+        "conn.go",
+        "const.go",
+        "error.go",
+        "gap.go",
+        "hci.go",
+        "log.go",
+        "option.go",
+        "params.go",
+        "signal.go",
+        "signal_gen.go",
+        "smp.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/go-ble/ble/linux/hci",
+    importpath = "github.com/go-ble/ble/linux/hci",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-ble/ble",
+        "//vendor/github.com/go-ble/ble/linux/adv",
+        "//vendor/github.com/go-ble/ble/linux/gatt",
+        "//vendor/github.com/go-ble/ble/linux/hci/cmd",
+        "//vendor/github.com/go-ble/ble/linux/hci/evt",
+        "//vendor/github.com/go-ble/ble/linux/hci/socket",
+        "//vendor/github.com/mgutz/logxi/v1:logxi",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

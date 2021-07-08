@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "evt",
+    srcs = [
+        "evt.go",
+        "evt_gen.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/go-ble/ble/linux/hci/evt",
+    importpath = "github.com/go-ble/ble/linux/hci/evt",
+    visibility = ["//visibility:public"],
+)

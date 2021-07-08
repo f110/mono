@@ -126,6 +126,17 @@ github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
+# github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
+## explicit
+github.com/go-ble/ble
+github.com/go-ble/ble/linux
+github.com/go-ble/ble/linux/adv
+github.com/go-ble/ble/linux/att
+github.com/go-ble/ble/linux/gatt
+github.com/go-ble/ble/linux/hci
+github.com/go-ble/ble/linux/hci/cmd
+github.com/go-ble/ble/linux/hci/evt
+github.com/go-ble/ble/linux/hci/socket
 # github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
 # github.com/go-ole/go-ole v1.2.4
@@ -286,6 +297,10 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+github.com/mgutz/ansi
+# github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab
+github.com/mgutz/logxi/v1
 # github.com/minio/md5-simd v1.1.1
 github.com/minio/md5-simd
 # github.com/minio/minio v0.0.0-20210407225602-2899cc92b45f

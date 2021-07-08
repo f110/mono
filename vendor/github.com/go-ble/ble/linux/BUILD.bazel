@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "linux",
+    srcs = ["device.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/go-ble/ble/linux",
+    importpath = "github.com/go-ble/ble/linux",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-ble/ble",
+        "//vendor/github.com/go-ble/ble/linux/att",
+        "//vendor/github.com/go-ble/ble/linux/gatt",
+        "//vendor/github.com/go-ble/ble/linux/hci",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

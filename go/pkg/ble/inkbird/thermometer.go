@@ -22,7 +22,11 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 	sCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	scanCh := ble.Scan(sCtx)
+	scanCh, err := ble.Scan(sCtx)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
 	var buf []byte
 	for prph := range scanCh {
 		if prph.Address == id && len(prph.ManufacturerData) == 9 {
