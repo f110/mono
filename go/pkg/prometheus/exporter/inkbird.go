@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,6 +22,7 @@ type InkBird struct {
 	humidity    *prometheus.Desc
 	battery     *prometheus.Desc
 
+	mu       sync.Mutex
 	lastData *inkbird.ThermometerData
 }
 
@@ -75,6 +77,9 @@ func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (e *InkBird) fetchData() *inkbird.ThermometerData {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if e.lastData != nil && time.Now().Before(e.lastData.Time.Add(e.minimumInterval)) {
 		return e.lastData
 	}
