@@ -63,8 +63,20 @@ func (e *InkBird) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
-	if e.lastData != nil && time.Now().Before(e.lastData.Time.Add(e.minimumInterval)) {
+	data := e.fetchData()
+	if data == nil {
 		return
+	}
+
+	ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()), e.id)
+	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), e.id)
+	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), e.id)
+	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
+}
+
+func (e *InkBird) fetchData() *inkbird.ThermometerData {
+	if e.lastData != nil && time.Now().Before(e.lastData.Time.Add(e.minimumInterval)) {
+		return e.lastData
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -73,12 +85,9 @@ func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
 	data, err := inkbird.Read(ctx, e.id)
 	if err != nil {
 		logger.Log.Warn("Failed to read data", zap.Error(err))
-		return
+		return nil
 	}
 	e.lastData = data
 
-	ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()), e.id)
-	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), e.id)
-	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), e.id)
-	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
+	return data
 }
