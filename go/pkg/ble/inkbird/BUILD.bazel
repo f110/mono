@@ -8,6 +8,8 @@ go_library(
     deps = [
         "//go/pkg/ble",
         "//go/pkg/hash/crc16",
+        "//go/pkg/logger",
+        "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
     ],
 )

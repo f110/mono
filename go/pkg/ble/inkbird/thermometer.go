@@ -7,6 +7,8 @@ import (
 
 	"go.f110.dev/mono/go/pkg/ble"
 	"go.f110.dev/mono/go/pkg/hash/crc16"
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 )
 
@@ -29,6 +31,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 
 	var buf []byte
 	for prph := range scanCh {
+		logger.Log.Debug("Found device", zap.String("id", prph.Address), zap.Int("data_length", len(prph.ManufacturerData)))
 		if prph.Address == id && len(prph.ManufacturerData) == 9 {
 			cancel()
 			buf = prph.ManufacturerData
