@@ -11,8 +11,10 @@ go_library(
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:android": [
+            "//go/pkg/logger",
             "//vendor/github.com/go-ble/ble",
             "//vendor/github.com/go-ble/ble/linux",
+            "//vendor/go.uber.org/zap",
         ],
         "@io_bazel_rules_go//go/platform:darwin": [
             "//vendor/github.com/JuulLabs-OSS/cbgo",
@@ -21,8 +23,10 @@ go_library(
             "//vendor/github.com/JuulLabs-OSS/cbgo",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "//go/pkg/logger",
             "//vendor/github.com/go-ble/ble",
             "//vendor/github.com/go-ble/ble/linux",
+            "//vendor/go.uber.org/zap",
         ],
         "//conditions:default": [],
     }),
