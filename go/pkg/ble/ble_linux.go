@@ -13,6 +13,7 @@ func scan(ctx context.Context) (<-chan Peripheral, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer d.Stop()
 	ble.SetDefaultDevice(d)
 
 	ch := make(chan Peripheral)
