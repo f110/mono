@@ -2,34 +2,31 @@ package exporter
 
 import (
 	"context"
-	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.f110.dev/mono/go/pkg/ble/inkbird"
-	"go.f110.dev/mono/go/pkg/logger"
-	"go.uber.org/zap"
+	"golang.org/x/xerrors"
 )
 
 const inkbirdNamespace = "inkbird"
 
 type InkBird struct {
-	id              string
-	minimumInterval time.Duration
+	id string
 
 	lastSeen    *prometheus.Desc
 	temperature *prometheus.Desc
 	humidity    *prometheus.Desc
 	battery     *prometheus.Desc
-
-	mu       sync.Mutex
-	lastData *inkbird.ThermometerData
 }
 
-func NewInkBirdExporter(id string, minimumInterval time.Duration) *InkBird {
+func NewInkBirdExporter(ctx context.Context, id string) (*InkBird, error) {
+	err := inkbird.DefaultThermometerDataProvider.Start(ctx)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
 	return &InkBird{
-		id:              id,
-		minimumInterval: minimumInterval,
+		id: id,
 		lastSeen: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "last_seen"),
 			"",
@@ -54,7 +51,7 @@ func NewInkBirdExporter(id string, minimumInterval time.Duration) *InkBird {
 			[]string{"addr"},
 			nil,
 		),
-	}
+	}, nil
 }
 
 func (e *InkBird) Describe(ch chan<- *prometheus.Desc) {
@@ -65,7 +62,7 @@ func (e *InkBird) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
-	data := e.fetchData()
+	data := inkbird.DefaultThermometerDataProvider.Get(e.id)
 	if data == nil {
 		return
 	}
@@ -76,23 +73,6 @@ func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
 }
 
-func (e *InkBird) fetchData() *inkbird.ThermometerData {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	if e.lastData != nil && time.Now().Before(e.lastData.Time.Add(e.minimumInterval)) {
-		return e.lastData
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	logger.Log.Debug("The cache is expired. Get from bluetooth")
-	data, err := inkbird.Read(ctx, e.id)
-	if err != nil {
-		logger.Log.Warn("Failed to read data", zap.Error(err))
-		return nil
-	}
-	e.lastData = data
-
-	return data
+func (e *InkBird) Shutdown() error {
+	return inkbird.DefaultThermometerDataProvider.Stop()
 }

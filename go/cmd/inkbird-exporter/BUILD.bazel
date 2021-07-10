@@ -12,6 +12,7 @@ go_library(
         "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
     ],
 )
 

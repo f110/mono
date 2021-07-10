@@ -7,8 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/ble/inkbird",
-        "//go/pkg/logger",
         "//vendor/github.com/prometheus/client_golang/prometheus",
-        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
     ],
 )

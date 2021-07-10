@@ -5,7 +5,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "go.f110.dev/mono/go/cmd/inkbird-viewer",
     visibility = ["//visibility:private"],
-    deps = ["//go/pkg/ble/inkbird"],
+    deps = [
+        "//go/pkg/ble/inkbird",
+        "//vendor/golang.org/x/xerrors",
+    ],
 )
 
 go_binary(
