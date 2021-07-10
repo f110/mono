@@ -13,9 +13,3 @@ go_library(
         "//vendor/golang.org/x/xerrors",
     ],
 )
-
-go_test(
-    name = "inkbird_test",
-    srcs = ["test_test.go"],
-    embed = [":inkbird"],
-)

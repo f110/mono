@@ -13,10 +13,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
-	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/prometheus/exporter"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/prometheus/exporter"
 )
 
 func inkbirdExporter(args []string) error {

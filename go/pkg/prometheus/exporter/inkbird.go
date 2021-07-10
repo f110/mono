@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.f110.dev/mono/go/pkg/ble/inkbird"
 	"golang.org/x/xerrors"
+
+	"go.f110.dev/mono/go/pkg/ble/inkbird"
 )
 
 const inkbirdNamespace = "inkbird"
