@@ -18,6 +18,7 @@ type InkBird struct {
 	temperature *prometheus.Desc
 	humidity    *prometheus.Desc
 	battery     *prometheus.Desc
+	rssi        *prometheus.Desc
 }
 
 func NewInkBirdExporter(ctx context.Context, id string) (*InkBird, error) {
@@ -52,6 +53,12 @@ func NewInkBirdExporter(ctx context.Context, id string) (*InkBird, error) {
 			[]string{"addr"},
 			nil,
 		),
+		rssi: prometheus.NewDesc(
+			prometheus.BuildFQName(inkbirdNamespace, "", "rssi"),
+			"",
+			[]string{"addr"},
+			nil,
+		),
 	}, nil
 }
 
@@ -60,6 +67,7 @@ func (e *InkBird) Describe(ch chan<- *prometheus.Desc) {
 	ch <- e.temperature
 	ch <- e.humidity
 	ch <- e.battery
+	ch <- e.rssi
 }
 
 func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
@@ -72,6 +80,7 @@ func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), e.id)
 	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), e.id)
 	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
+	ch <- prometheus.MustNewConstMetric(e.rssi, prometheus.GaugeValue, float64(data.RSSI), e.id)
 }
 
 func (e *InkBird) Shutdown() error {
