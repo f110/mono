@@ -19,8 +19,8 @@
           "nodep": false
         }, {
           "name": "targets",
-          "type": "STRING",
-          "stringValue": "//...",
+          "type": "STRING_LIST",
+          "stringListValue": ["//..."],
           "explicitlySpecified": true,
           "nodep": false
         }, {
@@ -173,8 +173,8 @@
           "nodep": false
         }, {
           "name": "targets",
-          "type": "STRING",
-          "stringValue": "//...",
+          "type": "STRING_LIST",
+          "stringListValue": ["//..."],
           "explicitlySpecified": true,
           "nodep": false
         }, {

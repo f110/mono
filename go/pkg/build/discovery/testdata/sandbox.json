@@ -96,8 +96,8 @@
           "explicitlySpecified": false
         }, {
           "name": "targets",
-          "type": "STRING",
-          "stringValue": "//...",
+          "type": "STRING_LIST",
+          "stringListValue": ["//..."],
           "explicitlySpecified": true,
           "nodep": false
         }, {
@@ -282,8 +282,8 @@
           "explicitlySpecified": false
         }, {
           "name": "targets",
-          "type": "STRING",
-          "stringValue": "//...",
+          "type": "STRING_LIST",
+          "stringListValue": ["//..."],
           "explicitlySpecified": true,
           "nodep": false
         }, {
