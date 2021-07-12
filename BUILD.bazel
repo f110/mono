@@ -34,5 +34,5 @@ job(
     command = "test",
     cpu_limit = "2000m",
     github_status = True,
-    targets = "//...",
+    targets = ["//..."],
 )

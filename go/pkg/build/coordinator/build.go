@@ -240,12 +240,12 @@ func NewBazelBuilder(
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error) {
+func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, targets, via string) (*database.Task, error) {
 	task, err := b.dao.Task.Create(ctx, &database.Task{
 		JobId:      job.Id,
 		Revision:   revision,
 		Command:    command,
-		Target:     target,
+		Targets:    targets,
 		Via:        via,
 		ConfigName: job.ConfigName,
 	})
@@ -550,7 +550,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 		task.Revision,
 		&github.RepoStatus{
 			State:     github.String(state),
-			Context:   github.String(fmt.Sprintf("%s %s", job.Command, job.Target)),
+			Context:   github.String(fmt.Sprintf("%s %s", job.Command, job.Name)),
 			TargetURL: github.String(targetUrl),
 		},
 	)
@@ -639,7 +639,9 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 	if task.ConfigName != "" {
 		args = append(args, fmt.Sprintf("--config=%s", task.ConfigName))
 	}
-	args = append(args, task.Target)
+	args = append(args, "--")
+	targets := strings.Split(task.Targets, "\n")
+	args = append(args, targets...)
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

@@ -28,6 +28,7 @@ func TestDiscovery(t *testing.T) {
 	assert.Equal(t, "build", job[0].Command)
 	assert.True(t, job[0].GithubStatus)
 	assert.True(t, job[0].Exclusive)
+	assert.Equal(t, []string{"//..."}, job[0].Targets)
 }
 
 func TestDiscoveryScript(t *testing.T) {

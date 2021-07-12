@@ -5,9 +5,9 @@ job = rule(
     implementation = _job_impl,
     attrs = {
         "target": attr.label(
-            doc = "target is the label of target for job. This value should be the full path not relative path.",
+            doc = "deprecated: target is the label of target for job. This value should be the full path not relative path.",
         ),
-        "targets": attr.string(doc = "(e.g. //...)"),
+        "targets": attr.string_list(doc = "(e.g. //...)"),
         "command": attr.string(default = "run"),
         "all_revision": attr.bool(doc = "If true, build at each revision."),
         "github_status": attr.bool(doc = "Enable updating commit status"),

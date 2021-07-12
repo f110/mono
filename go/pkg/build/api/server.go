@@ -292,7 +292,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string)
 			continue
 		}
 
-		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Target, via); err != nil {
+		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Targets, via); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
@@ -445,7 +445,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		via = "api"
 	}
 
-	task, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Target, via)
+	task, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Targets, via)
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -488,7 +488,7 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Target, "api")
+	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Targets, "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

@@ -19,9 +19,9 @@
           "nodep": false
         }, {
           "name": "targets",
-          "type": "STRING",
-          "stringValue": "",
-          "explicitlySpecified": false,
+          "type": "STRING_LIST",
+          "stringListValue": ["//..."],
+          "explicitlySpecified": true,
           "nodep": false
         }, {
           "name": "generator_name",

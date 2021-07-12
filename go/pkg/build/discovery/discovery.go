@@ -106,19 +106,22 @@ func (b BazelRule) Attrs() map[string]interface{} {
 			keyAndValue[a.Name] = a.StringValue
 		case "BOOLEAN":
 			keyAndValue[a.Name] = a.BoolValue
+		case "STRING_LIST":
+			keyAndValue[a.Name] = a.StringListValue
 		}
 	}
 	return keyAndValue
 }
 
 type BazelAttr struct {
-	Name                string `json:"name"`
-	Type                string `json:"type"`
-	IntValue            int    `json:"intValue"`
-	StringValue         string `json:"stringValue"`
-	BoolValue           bool   `json:"booleanValue"`
-	ExplicitlySpecified bool   `json:"explicitlySpecified"`
-	NoDep               bool   `json:"nodep"`
+	Name                string   `json:"name"`
+	Type                string   `json:"type"`
+	IntValue            int      `json:"intValue"`
+	StringValue         string   `json:"stringValue"`
+	BoolValue           bool     `json:"booleanValue"`
+	StringListValue     []string `json:"stringListValue"`
+	ExplicitlySpecified bool     `json:"explicitlySpecified"`
+	NoDep               bool     `json:"nodep"`
 }
 
 type Discover struct {
@@ -326,7 +329,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		// Temporary, all jobs will be deactivated.
 		v.Active = false
 
-		jobMap[v.Command+"/"+v.Target] = v
+		jobMap[v.Name] = v
 	}
 
 	bazelVersion := ""
@@ -341,7 +344,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	newJobs := make([]*database.Job, 0)
 	for _, j := range jobs {
-		if v, ok := jobMap[j.Command+"/"+j.Target]; ok {
+		if v, ok := jobMap[j.Name]; ok {
 			v.Into(j)
 			v.BazelVersion = bazelVersion
 		} else {
@@ -414,7 +417,7 @@ func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision s
 			continue
 		}
 
-		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Target, "push"); err != nil {
+		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Targets, "push"); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
@@ -691,15 +694,18 @@ func Discovery(b []byte) ([]*job.Job, error) {
 				if v != nil {
 					value.SetBool(v.(bool))
 				}
+			case reflect.Slice:
+				v := keyAndValue[attrName]
+				if v != nil {
+					val := reflect.ValueOf(v)
+					value.Set(val)
+				}
 			}
 		}
 
 		if j.Target != "" {
 			s := strings.SplitN(j.Target, ":", 2)
 			j.Package, j.Target = s[0], s[1]
-		}
-		if j.Targets != "" && j.Target == "" {
-			j.Target = j.Targets
 		}
 		if _, ok := seen[j.Name]; ok {
 			continue

@@ -103,7 +103,9 @@ type Job struct {
 	Name         string
 	RepositoryId int32
 	Command      string
+	// Deprecated
 	Target       string
+	Targets      string
 	Active       bool
 	AllRevision  bool
 	GithubStatus bool
@@ -139,6 +141,7 @@ func (e *Job) IsChanged() bool {
 		e.RepositoryId != e.mark.RepositoryId ||
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
+		e.Targets != e.mark.Targets ||
 		e.Active != e.mark.Active ||
 		e.AllRevision != e.mark.AllRevision ||
 		e.GithubStatus != e.mark.GithubStatus ||
@@ -170,6 +173,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	}
 	if e.Target != e.mark.Target {
 		res = append(res, ddl.Column{Name: "target", Value: e.Target})
+	}
+	if e.Targets != e.mark.Targets {
+		res = append(res, ddl.Column{Name: "targets", Value: e.Targets})
 	}
 	if e.Active != e.mark.Active {
 		res = append(res, ddl.Column{Name: "active", Value: e.Active})
@@ -225,6 +231,7 @@ func (e *Job) Copy() *Job {
 		RepositoryId: e.RepositoryId,
 		Command:      e.Command,
 		Target:       e.Target,
+		Targets:      e.Targets,
 		Active:       e.Active,
 		AllRevision:  e.AllRevision,
 		GithubStatus: e.GithubStatus,
@@ -251,13 +258,15 @@ func (e *Job) Copy() *Job {
 }
 
 type Task struct {
-	Id         int32
-	JobId      int32
-	Revision   string
-	Success    bool
-	LogFile    string
-	Command    string
+	Id       int32
+	JobId    int32
+	Revision string
+	Success  bool
+	LogFile  string
+	Command  string
+	// Deprecated
 	Target     string
+	Targets    string
 	Via        string
 	ConfigName string
 	Node       string
@@ -289,6 +298,7 @@ func (e *Task) IsChanged() bool {
 		e.LogFile != e.mark.LogFile ||
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
+		e.Targets != e.mark.Targets ||
 		e.Via != e.mark.Via ||
 		e.ConfigName != e.mark.ConfigName ||
 		e.Node != e.mark.Node ||
@@ -320,6 +330,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.Target != e.mark.Target {
 		res = append(res, ddl.Column{Name: "target", Value: e.Target})
+	}
+	if e.Targets != e.mark.Targets {
+		res = append(res, ddl.Column{Name: "targets", Value: e.Targets})
 	}
 	if e.Via != e.mark.Via {
 		res = append(res, ddl.Column{Name: "via", Value: e.Via})
@@ -367,6 +380,7 @@ func (e *Task) Copy() *Task {
 		LogFile:    e.LogFile,
 		Command:    e.Command,
 		Target:     e.Target,
+		Targets:    e.Targets,
 		Via:        e.Via,
 		ConfigName: e.ConfigName,
 		Node:       e.Node,
