@@ -3,14 +3,14 @@ package inkbird
 import (
 	"context"
 	"encoding/binary"
-	"log"
 	"time"
+
+	"go.uber.org/zap"
+	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/ble"
 	"go.f110.dev/mono/go/pkg/hash/crc16"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 )
 
 type ThermometerData struct {
@@ -42,9 +42,7 @@ func (t *ThermometerDataProvider) Start(ctx context.Context) error {
 		for {
 			select {
 			case prph := <-ch:
-				log.Printf("Found device %s %s %d", prph.Address, prph.Name, len(prph.ManufacturerData))
 				if prph.Name == "sps" && len(prph.ManufacturerData) == 9 {
-					log.Print("Found sensor")
 					d, err := readData(prph, prph.ManufacturerData)
 					if err == nil {
 						t.lastData[prph.Address] = d

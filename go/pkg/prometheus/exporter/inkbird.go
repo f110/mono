@@ -12,7 +12,7 @@ import (
 const inkbirdNamespace = "inkbird"
 
 type InkBird struct {
-	id string
+	ids map[string]struct{}
 
 	lastSeen    *prometheus.Desc
 	temperature *prometheus.Desc
@@ -21,14 +21,18 @@ type InkBird struct {
 	rssi        *prometheus.Desc
 }
 
-func NewInkBirdExporter(ctx context.Context, id string) (*InkBird, error) {
+func NewInkBirdExporter(ctx context.Context, ids []string) (*InkBird, error) {
 	err := inkbird.DefaultThermometerDataProvider.Start(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
+	id := make(map[string]struct{})
+	for _, v := range ids {
+		id[v] = struct{}{}
+	}
 	return &InkBird{
-		id: id,
+		ids: id,
 		lastSeen: prometheus.NewDesc(
 			prometheus.BuildFQName(inkbirdNamespace, "", "last_seen"),
 			"",
@@ -71,16 +75,18 @@ func (e *InkBird) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (e *InkBird) Collect(ch chan<- prometheus.Metric) {
-	data := inkbird.DefaultThermometerDataProvider.Get(e.id)
-	if data == nil {
-		return
-	}
+	for id := range e.ids {
+		data := inkbird.DefaultThermometerDataProvider.Get(id)
+		if data == nil {
+			return
+		}
 
-	ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()), e.id)
-	ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), e.id)
-	ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), e.id)
-	ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), e.id)
-	ch <- prometheus.MustNewConstMetric(e.rssi, prometheus.GaugeValue, float64(data.RSSI), e.id)
+		ch <- prometheus.MustNewConstMetric(e.lastSeen, prometheus.CounterValue, float64(data.Time.Unix()), id)
+		ch <- prometheus.MustNewConstMetric(e.temperature, prometheus.GaugeValue, float64(data.Temperature), id)
+		ch <- prometheus.MustNewConstMetric(e.humidity, prometheus.GaugeValue, float64(data.Humidity), id)
+		ch <- prometheus.MustNewConstMetric(e.battery, prometheus.GaugeValue, float64(data.Battery), id)
+		ch <- prometheus.MustNewConstMetric(e.rssi, prometheus.GaugeValue, float64(data.RSSI), id)
+	}
 }
 
 func (e *InkBird) Shutdown() error {

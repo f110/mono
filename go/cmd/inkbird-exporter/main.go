@@ -21,19 +21,21 @@ import (
 )
 
 func inkbirdExporter(args []string) error {
-	id := ""
+	var ids []string
 	port := 9400
 	fs := pflag.NewFlagSet("inkbird-exporter", pflag.ContinueOnError)
-	fs.StringVar(&id, "id", id, "")
+	fs.StringSliceVar(&ids, "id", ids, "")
 	fs.IntVar(&port, "port", port, "")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	if id == "" {
+	if len(ids) == 0 {
 		return errors.New("--id is required")
 	}
-	id = strings.ToLower(id)
+	for i := range ids {
+		ids[i] = strings.ToLower(ids[i])
+	}
 
 	if err := logger.Init(); err != nil {
 		return err
@@ -42,7 +44,7 @@ func inkbirdExporter(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	inkbirdExporter, err := exporter.NewInkBirdExporter(ctx, id)
+	inkbirdExporter, err := exporter.NewInkBirdExporter(ctx, ids)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
