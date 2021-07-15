@@ -9,8 +9,9 @@ import (
 	"os/signal"
 	"time"
 
-	"go.f110.dev/mono/go/pkg/ble/inkbird"
 	"golang.org/x/xerrors"
+
+	"go.f110.dev/mono/go/pkg/ble/inkbird"
 )
 
 func inkbirdViewer(args []string) error {

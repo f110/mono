@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "inkbird-scanner_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/inkbird-scanner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/ble/inkbird",
+        "//go/pkg/logger",
+        "//vendor/golang.org/x/xerrors",
+    ],
+)
+
+go_binary(
+    name = "inkbird-scanner",
+    embed = [":inkbird-scanner_lib"],
+    visibility = ["//visibility:public"],
+)

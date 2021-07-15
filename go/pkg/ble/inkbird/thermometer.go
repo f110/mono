@@ -3,6 +3,7 @@ package inkbird
 import (
 	"context"
 	"encoding/binary"
+	"log"
 	"time"
 
 	"go.uber.org/zap"
@@ -113,4 +114,22 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	return data, nil
+}
+
+func Scan(ctx context.Context) error {
+	sCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	scanCh, err := ble.Scan(sCtx)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	for prph := range scanCh {
+		if prph.Name == "sps" && len(prph.ManufacturerData) == 9 {
+			log.Printf("Found sensor: %s", prph.Address)
+		}
+	}
+
+	return nil
 }
