@@ -14,6 +14,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-containerregistry v0.4.0
 	github.com/google/go-github/v29 v29.0.3
@@ -65,3 +66,5 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
 )
+
+replace github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
