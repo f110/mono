@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/pflag"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/consul"
 	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
@@ -28,6 +27,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/consul"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/harbor"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/minio"
