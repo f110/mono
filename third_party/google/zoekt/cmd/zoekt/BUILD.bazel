@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zoekt_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/google/zoekt/cmd/zoekt",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/google/zoekt",
+        "//third_party/google/zoekt/query",
+        "//third_party/google/zoekt/shards",
+    ],
+)
+
+go_binary(
+    name = "zoekt",
+    embed = [":zoekt_lib"],
+    visibility = ["//visibility:public"],
+)

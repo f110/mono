@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "web",
+    srcs = [
+        "api.go",
+        "server.go",
+        "snippets.go",
+        "templates.go",
+    ],
+    importpath = "github.com/google/zoekt/web",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/google/zoekt",
+        "//third_party/google/zoekt/query",
+        "//third_party/google/zoekt/vendor/golang.org/x/net/context",
+    ],
+)

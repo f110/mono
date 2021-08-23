@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "knownhosts",
+    srcs = ["knownhosts.go"],
+    importmap = "github.com/google/zoekt/vendor/golang.org/x/crypto/ssh/knownhosts",
+    importpath = "golang.org/x/crypto/ssh/knownhosts",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/google/zoekt/vendor/golang.org/x/crypto/ssh"],
+)

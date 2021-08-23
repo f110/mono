@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zoekt-archive-index_lib",
+    srcs = [
+        "archive.go",
+        "main.go",
+    ],
+    importpath = "github.com/google/zoekt/cmd/zoekt-archive-index",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/google/zoekt",
+        "//third_party/google/zoekt/build",
+        "//third_party/google/zoekt/cmd",
+        "//third_party/google/zoekt/gitindex",
+        "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
+    ],
+)
+
+go_binary(
+    name = "zoekt-archive-index",
+    embed = [":zoekt-archive-index_lib"],
+    visibility = ["//visibility:public"],
+)

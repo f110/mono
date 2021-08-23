@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cgroups",
+    srcs = [
+        "cgroup.go",
+        "cgroups.go",
+        "doc.go",
+        "errors.go",
+        "mountpoint.go",
+        "subsys.go",
+    ],
+    importmap = "github.com/google/zoekt/vendor/go.uber.org/automaxprocs/internal/cgroups",
+    importpath = "go.uber.org/automaxprocs/internal/cgroups",
+    visibility = ["//third_party/google/zoekt/vendor/go.uber.org/automaxprocs:__subpackages__"],
+)

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gcfg",
+    srcs = [
+        "doc.go",
+        "errors.go",
+        "go1_0.go",
+        "go1_2.go",
+        "read.go",
+        "set.go",
+    ],
+    importmap = "github.com/google/zoekt/vendor/github.com/go-git/gcfg",
+    importpath = "github.com/go-git/gcfg",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/google/zoekt/vendor/github.com/go-git/gcfg/scanner",
+        "//third_party/google/zoekt/vendor/github.com/go-git/gcfg/token",
+        "//third_party/google/zoekt/vendor/github.com/go-git/gcfg/types",
+        "//third_party/google/zoekt/vendor/gopkg.in/warnings.v0:warnings_v0",
+    ],
+)

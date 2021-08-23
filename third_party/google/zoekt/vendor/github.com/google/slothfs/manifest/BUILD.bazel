@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "manifest",
+    srcs = [
+        "parser.go",
+        "types.go",
+    ],
+    importmap = "github.com/google/zoekt/vendor/github.com/google/slothfs/manifest",
+    importpath = "github.com/google/slothfs/manifest",
+    visibility = ["//visibility:public"],
+)

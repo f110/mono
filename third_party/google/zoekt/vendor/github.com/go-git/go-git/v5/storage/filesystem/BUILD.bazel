@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "filesystem",
+    srcs = [
+        "config.go",
+        "deltaobject.go",
+        "index.go",
+        "module.go",
+        "object.go",
+        "reference.go",
+        "shallow.go",
+        "storage.go",
+    ],
+    importmap = "github.com/google/zoekt/vendor/github.com/go-git/go-git/v5/storage/filesystem",
+    importpath = "github.com/go-git/go-git/v5/storage/filesystem",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-billy/v5:go-billy",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/config",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/cache",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/format/idxfile",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/format/index",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/format/objfile",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/format/packfile",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/storer",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/storage",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/storage/filesystem/dotgit",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/utils/ioutil",
+    ],
+)

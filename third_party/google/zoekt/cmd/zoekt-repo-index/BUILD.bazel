@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zoekt-repo-index_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/google/zoekt/cmd/zoekt-repo-index",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/google/zoekt",
+        "//third_party/google/zoekt/build",
+        "//third_party/google/zoekt/gitindex",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5:go-git",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing",
+        "//third_party/google/zoekt/vendor/github.com/google/slothfs/manifest",
+        "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
+    ],
+)
+
+go_binary(
+    name = "zoekt-repo-index",
+    embed = [":zoekt-repo-index_lib"],
+    visibility = ["//visibility:public"],
+)

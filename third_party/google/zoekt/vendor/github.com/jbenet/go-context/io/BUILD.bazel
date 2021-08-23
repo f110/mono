@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "io",
+    srcs = ["ctxio.go"],
+    importmap = "github.com/google/zoekt/vendor/github.com/jbenet/go-context/io",
+    importpath = "github.com/jbenet/go-context/io",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/google/zoekt/vendor/golang.org/x/net/context"],
+)

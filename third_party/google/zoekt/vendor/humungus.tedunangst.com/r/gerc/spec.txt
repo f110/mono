@@ -1,0 +1,43 @@
+This spec outlines what gerc understands, not necessarily what it should.
+
+The most important data structure is the revlog.
+
+A revlog consists of an index and a series of variable chunks. The index is
+stored in a .i file, the data in a .d file. However, many times the data is
+stored inline the the .i file, with each chunk coming after its index entry.
+
+An index entry has an offset, flags, compressed len, uncompressed len,
+baserev, linkrev, parent rev, other parent rev, and nodeid.
+Flags:
+	0x1 inline deltas
+	0x2 skip deltas
+
+If inline, it is followed by compressed len bytes of data.
+
+A chunk may be compressed. If the first byte is x, it is zlib. If the first
+byte is u, it is uncompressed. As a special case, if the first byte is 0, it
+is uncompressed and the 0 is part of the data.
+
+A chunk may either be a complete copy of data or a change relative to a
+previous baserev. The baserev numbers should be walked backwards collecting
+chunks until the baserev matches the index number. That rev stores a complete
+version of the data. If the skip deltas flag is present in the revlog, the
+walk should jump to the baserev of each new version. Otherwise, linear walk.
+
+If the chunk is relative, it stores a series of deltas. Each delta is three
+numbers and optional data. The offset in the original. (Copy data until this
+position.) An offset to be skipped. (Seek forward until this position.) An
+amount of new content. (Copy this much following data into the new copy.)
+
+The changelog, storing the history of the repository, is in 00changelog.i.
+Changelog entries consist of an ID, an author, a date, a list of files, a
+blank line, and a commit message.
+
+The manifest, storing a list of files in each revision, is in 00manifest.i.
+Each entry is a list of files, filename, 0 byte, file info.
+
+Each tracked file has a revlog file in the data directory. The name is
+mangled. Capital letters are reduced to _ lower case. Some other characters
+are hex encoded. (Long names and Windows special names are encodeded or
+hashed. Not implemented.)
+

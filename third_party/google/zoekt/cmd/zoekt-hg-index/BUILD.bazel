@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zoekt-hg-index_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/google/zoekt/cmd/zoekt-hg-index",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/google/zoekt",
+        "//third_party/google/zoekt/build",
+        "//third_party/google/zoekt/cmd",
+        "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
+        "//third_party/google/zoekt/vendor/humungus.tedunangst.com/r/gerc",
+    ],
+)
+
+go_binary(
+    name = "zoekt-hg-index",
+    embed = [":zoekt-hg-index_lib"],
+    visibility = ["//visibility:public"],
+)

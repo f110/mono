@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ctags",
+    srcs = [
+        "json.go",
+        "parse.go",
+    ],
+    importpath = "github.com/google/zoekt/ctags",
+    visibility = ["//visibility:public"],
+)

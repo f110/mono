@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = ["client.go"],
+    importmap = "github.com/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport/client",
+    importpath = "github.com/go-git/go-git/v5/plumbing/transport/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport/file",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport/git",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/transport/ssh",
+    ],
+)

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "memory",
+    srcs = ["storage.go"],
+    importmap = "github.com/google/zoekt/vendor/github.com/go-git/go-git/v5/storage/memory",
+    importpath = "github.com/go-git/go-git/v5/storage/memory",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/config",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/format/index",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing/storer",
+        "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/storage",
+    ],
+)
