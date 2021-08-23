@@ -11,6 +11,7 @@ function download_repository_from_github() {
     fi
 
     curl -s -L -o /tmp/vendor.tar.gz https://github.com/${owner}/${repo}/archive/${commit}.tar.gz
+    mkdir -p "${target_dir}"
     tar xfz /tmp/vendor.tar.gz --strip-components=1 --directory ${target_dir}
 }
 
