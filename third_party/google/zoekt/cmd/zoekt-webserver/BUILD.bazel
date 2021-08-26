@@ -6,13 +6,13 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-webserver",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/google/zoekt",
-        "//third_party/google/zoekt/build",
         "//third_party/google/zoekt/shards",
         "//third_party/google/zoekt/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
         "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
         "//third_party/google/zoekt/vendor/golang.org/x/net/trace",
         "//third_party/google/zoekt/web",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/build",
     ],
 )
 

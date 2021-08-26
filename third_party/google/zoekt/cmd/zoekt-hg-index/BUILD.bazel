@@ -6,11 +6,11 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-hg-index",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/google/zoekt",
-        "//third_party/google/zoekt/build",
         "//third_party/google/zoekt/cmd",
         "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
         "//third_party/google/zoekt/vendor/humungus.tedunangst.com/r/gerc",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/build",
     ],
 )
 

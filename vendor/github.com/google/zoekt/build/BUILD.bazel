@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "build",
+    srcs = [
+        "builder.go",
+        "builder_unix.go",
+        "ctags.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/build",
+    importpath = "github.com/google/zoekt/build",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/bmatcuk/doublestar",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/ctags",
+    ],
+)

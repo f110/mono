@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ecc",
+    srcs = [
+        "curveInfo.go",
+        "curveType.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+    importpath = "github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
+    visibility = ["//vendor/github.com/ProtonMail/go-crypto/openpgp:__subpackages__"],
+    deps = [
+        "//vendor/github.com/ProtonMail/go-crypto/bitcurves",
+        "//vendor/github.com/ProtonMail/go-crypto/brainpool",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/internal/encoding",
+    ],
+)

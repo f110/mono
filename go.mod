@@ -13,6 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.4.3
@@ -20,6 +21,7 @@ require (
 	github.com/google/go-github/v29 v29.0.3
 	github.com/google/go-github/v32 v32.0.0
 	github.com/google/uuid v1.1.2
+	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/hashicorp/consul/api v1.8.1
@@ -33,18 +35,17 @@ require (
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/peco/peco v0.5.8
 	github.com/prometheus/client_golang v1.8.0
-	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.21.1
-	github.com/shurcooL/githubv4 v0.0.0-20200915023059-bc5e4feb2971
+	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/sourcegraph/go-diff v0.5.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/v3 v3.3.0-rc.0.0.20200925060232-add86bbd1a7a
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.uber.org/zap v1.15.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1

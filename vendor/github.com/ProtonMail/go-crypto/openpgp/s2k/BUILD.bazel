@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "s2k",
+    srcs = ["s2k.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/ProtonMail/go-crypto/openpgp/s2k",
+    importpath = "github.com/ProtonMail/go-crypto/openpgp/s2k",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/errors",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/internal/algorithm",
+    ],
+)

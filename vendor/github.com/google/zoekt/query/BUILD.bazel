@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "query",
+    srcs = [
+        "bits.go",
+        "parse.go",
+        "query.go",
+        "regexp.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/query",
+    importpath = "github.com/google/zoekt/query",
+    visibility = ["//visibility:public"],
+)

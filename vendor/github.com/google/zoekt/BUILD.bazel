@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "zoekt",
+    srcs = [
+        "api.go",
+        "bits.go",
+        "contentprovider.go",
+        "eval.go",
+        "hititer.go",
+        "indexbuilder.go",
+        "indexdata.go",
+        "indexfile_other.go",
+        "indexfile_unix.go",
+        "matchiter.go",
+        "matchtree.go",
+        "read.go",
+        "section.go",
+        "toc.go",
+        "write.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt",
+    importpath = "github.com/google/zoekt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/zoekt/query",
+        "//vendor/golang.org/x/net/trace",
+    ],
+)

@@ -10,8 +10,8 @@ go_library(
     importpath = "github.com/google/zoekt/build",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/google/zoekt",
-        "//third_party/google/zoekt/ctags",
         "//third_party/google/zoekt/vendor/github.com/bmatcuk/doublestar",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/ctags",
     ],
 )

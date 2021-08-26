@@ -6,7 +6,7 @@ go_library(
     importpath = "github.com/google/zoekt/cmd",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/google/zoekt",
-        "//third_party/google/zoekt/build",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/build",
     ],
 )
