@@ -291,6 +291,7 @@ github.com/google/zoekt
 github.com/google/zoekt/build
 github.com/google/zoekt/ctags
 github.com/google/zoekt/query
+github.com/google/zoekt/shards
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
 # github.com/googleapis/gnostic v0.4.1
@@ -495,6 +496,7 @@ github.com/pmezard/go-difflib/difflib
 ## explicit
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
+github.com/prometheus/client_golang/prometheus/promauto
 github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
@@ -671,6 +673,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20210502180810-71e4cd670f79
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs

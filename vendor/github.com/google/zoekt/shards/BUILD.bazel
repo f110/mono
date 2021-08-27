@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "shards",
+    srcs = [
+        "shards.go",
+        "watcher.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/shards",
+    importpath = "github.com/google/zoekt/shards",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/query",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promauto",
+        "//vendor/golang.org/x/net/trace",
+        "//vendor/golang.org/x/sync/semaphore",
+    ],
+)
