@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/go-github/v32/github"
@@ -49,50 +51,6 @@ func (x *Indexer) Sync() error {
 			logger.Log.Info("Failed sync repository", zap.Error(err), zap.String("url", v.URL))
 			continue
 		}
-
-		if err := v.checkout(x.workDir); err != nil {
-			logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", v.Name))
-			continue
-		}
-	}
-
-	return nil
-}
-
-func (x *Indexer) Mutate() error {
-	for _, v := range x.listRepositories() {
-		dir := filepath.Join(x.workDir, v.Name)
-		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
-			if info.Name() == "go.mod" {
-				if strings.Contains(strings.TrimPrefix(path, dir), "vendor/") {
-					return nil
-				}
-
-				if _, err := os.Stat(filepath.Join(filepath.Dir(path), "vendor")); !os.IsNotExist(err) {
-					return nil
-				}
-
-				cmd := exec.Command("go", "mod", "vendor")
-				cmd.Dir = filepath.Dir(path)
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				if err := cmd.Run(); err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
-		if err != nil {
-			logger.Log.Info("Failed mutate repository", zap.String("name", v.Name))
-			continue
-		}
 	}
 
 	return nil
@@ -112,30 +70,80 @@ func (x *Indexer) BuildIndex() error {
 			return xerrors.Errorf(": %w", err)
 		}
 
-		dir := filepath.Join(x.workDir, v.Name)
-		err = filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
+		for _, refName := range append([]plumbing.ReferenceName{v.DefaultBranchRef}, v.Refs...) {
+			logger.Log.Debug("Indexing", zap.String("name", v.Name), zap.String("ref", refName.Short()))
+			dir := filepath.Join(x.workDir, v.Name)
+			if _, err := os.Stat(dir); !os.IsNotExist(err) {
+				if err := os.RemoveAll(dir); err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
 			}
 
-			buf, err := os.ReadFile(path)
+			if err := v.checkout(x.workDir, refName); err != nil {
+				logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", v.Name))
+				continue
+			}
+
+			err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+				if info.Name() == "go.mod" {
+					if strings.Contains(strings.TrimPrefix(path, dir), "vendor/") {
+						return nil
+					}
+					if strings.Contains(strings.TrimPrefix(path, dir), "testdata/") {
+						return nil
+					}
+
+					if _, err := os.Stat(filepath.Join(filepath.Dir(path), "vendor")); !os.IsNotExist(err) {
+						return nil
+					}
+
+					cmd := exec.Command("go", "mod", "vendor")
+					cmd.Dir = filepath.Dir(path)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					if err := cmd.Run(); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			})
 			if err != nil {
-				return err
+				logger.Log.Info("Failed mutate repository", zap.String("name", v.Name), zap.Error(err))
+				continue
 			}
-			if err := builder.Add(zoekt.Document{
-				Name:    path,
-				Content: buf,
-			}); err != nil {
-				return err
+
+			err = filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+
+				buf, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				if err := builder.Add(zoekt.Document{
+					Name:    path,
+					Content: buf,
+				}); err != nil {
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				logger.Log.Info("Failed add the document to the index", zap.String("name", v.Name))
+				continue
 			}
-			return nil
-		})
-		if err != nil {
-			logger.Log.Info("Failed create the index", zap.String("name", v.Name))
-			continue
+
 		}
 
 		if err := builder.Finish(); err != nil {
@@ -147,12 +155,15 @@ func (x *Indexer) BuildIndex() error {
 }
 
 type repository struct {
-	Name string
-	URL  string
+	Name             string
+	URL              string
+	Refs             []plumbing.ReferenceName
+	DefaultBranchRef plumbing.ReferenceName
 }
 
 func (x *repository) sync(workDir string) error {
 	bareDir := filepath.Join(workDir, ".bare", x.Name)
+	outOfDate := false
 	if _, err := os.Stat(bareDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(bareDir, 0755); err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -168,42 +179,68 @@ func (x *repository) sync(workDir string) error {
 	} else if err != nil {
 		return xerrors.Errorf(": %w", err)
 	} else {
+		outOfDate = true
+	}
+
+	if outOfDate || len(x.Refs) > 0 {
 		r, err := git.PlainOpen(bareDir)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
+		logger.Log.Debug("Fetch default branch", zap.String("name", x.Name))
 		err = r.Fetch(&git.FetchOptions{Depth: 1})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return xerrors.Errorf(": %w", err)
+		}
+		defaultBranchRef, err := r.Head()
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		x.DefaultBranchRef = defaultBranchRef.Name()
+
+		if len(x.Refs) > 0 {
+			refs := make([]config.RefSpec, 0, len(x.Refs))
+			for _, v := range x.Refs {
+				if v.IsRemote() {
+					b := strings.TrimPrefix(v.String(), "refs/remotes/origin/")
+					refs = append(refs, config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", b, b)))
+				} else {
+					refs = append(refs, config.RefSpec(v))
+				}
+			}
+			logger.Log.Debug("Fetch refs", zap.String("name", x.Name), zap.Any("refs", refs))
+			err = r.Fetch(&git.FetchOptions{Depth: 1, RefSpecs: refs})
+			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 	}
 
 	return nil
 }
 
-func (x *repository) checkout(workDir string) error {
+func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) error {
 	dir := filepath.Join(workDir, ".bare", x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	ref, err := repo.Head()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	commit, err := repo.CommitObject(ref.Hash())
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if _, err := os.Stat(filepath.Join(workDir, x.Name+".commit")); !os.IsNotExist(err) {
-		buf, err := os.ReadFile(filepath.Join(workDir, x.Name+".commit"))
+	var ref *plumbing.Reference
+	if refName == "" {
+		ref, err = repo.Head()
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if string(buf) == ref.Hash().String() {
-			logger.Log.Debug("Already checked out", zap.String("name", x.Name))
-			return nil
+	} else {
+		ref, err = repo.Reference(refName, false)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
 		}
+	}
+
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 
 	tree, err := commit.Tree()
@@ -212,10 +249,6 @@ func (x *repository) checkout(workDir string) error {
 	}
 
 	if err := os.MkdirAll(filepath.Dir(filepath.Join(workDir, x.Name)), 0755); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	err = os.WriteFile(filepath.Join(workDir, x.Name+".commit"), []byte(ref.Hash().String()), 0644)
-	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	repoRootDir := filepath.Join(workDir, x.Name)
@@ -265,7 +298,11 @@ func (x *Indexer) listRepositories() []*repository {
 				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
 				continue
 			}
-			repos = append(repos, &repository{Name: fmt.Sprintf("%s/%s", rule.Owner, rule.Name), URL: repo.GetGitURL()})
+			repos = append(repos, &repository{
+				Name: fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
+				URL:  repo.GetGitURL(),
+				Refs: x.refSpecs(rule.Branches, rule.Tags),
+			})
 		}
 
 		if rule.Query != "" {
@@ -285,7 +322,11 @@ func (x *Indexer) listRepositories() []*repository {
 				if v.Repository.IsArchived {
 					continue
 				}
-				repos = append(repos, &repository{Name: fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name), URL: v.Repository.URL.String()})
+				repos = append(repos, &repository{
+					Name: fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
+					URL:  v.Repository.URL.String(),
+					Refs: x.refSpecs(rule.Branches, rule.Tags),
+				})
 			}
 			if !listRepositoriesQuery.Search.PageInfo.HasNextPage {
 				break
@@ -296,6 +337,18 @@ func (x *Indexer) listRepositories() []*repository {
 
 	x.repositories = repos
 	return repos
+}
+
+func (*Indexer) refSpecs(branches, tags []string) []plumbing.ReferenceName {
+	refs := make([]plumbing.ReferenceName, 0, len(branches)+len(tags))
+	for _, v := range branches {
+		refs = append(refs, plumbing.NewRemoteReferenceName("origin", v))
+	}
+	for _, v := range tags {
+		refs = append(refs, plumbing.NewTagReferenceName(v))
+	}
+
+	return refs
 }
 
 func (x *Indexer) githubRESTClient() *github.Client {

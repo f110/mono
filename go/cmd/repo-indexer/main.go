@@ -38,9 +38,6 @@ func repoIndexer(args []string) error {
 	if err := indexer.Sync(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if err := indexer.Mutate(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
 	if err := indexer.BuildIndex(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
