@@ -58,10 +58,15 @@ func (x *Indexer) Sync() error {
 
 func (x *Indexer) BuildIndex() error {
 	for _, v := range x.listRepositories() {
+		branches := make([]zoekt.RepositoryBranch, 0)
+		for _, v := range append([]plumbing.ReferenceName{v.DefaultBranchRef}, v.Refs...) {
+			branches = append(branches, zoekt.RepositoryBranch{Name: v.Short()})
+		}
 		opt := build.Options{
 			IndexDir: filepath.Join(x.workDir, ".index"),
 			RepositoryDescription: zoekt.Repository{
-				Name: v.Name,
+				Name:     v.Name,
+				Branches: branches,
 			},
 		}
 		opt.SetDefaults()
@@ -132,8 +137,9 @@ func (x *Indexer) BuildIndex() error {
 					return err
 				}
 				if err := builder.Add(zoekt.Document{
-					Name:    strings.TrimPrefix(path, dir+"/"),
-					Content: buf,
+					Name:     strings.TrimPrefix(path, dir+"/"),
+					Content:  buf,
+					Branches: []string{refName.Short()},
 				}); err != nil {
 					return err
 				}
