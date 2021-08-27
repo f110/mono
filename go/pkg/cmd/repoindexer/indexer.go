@@ -132,7 +132,7 @@ func (x *Indexer) BuildIndex() error {
 					return err
 				}
 				if err := builder.Add(zoekt.Document{
-					Name:    path,
+					Name:    strings.TrimPrefix(path, dir+"/"),
 					Content: buf,
 				}); err != nil {
 					return err
