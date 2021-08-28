@@ -9,10 +9,10 @@ go_library(
         "//third_party/google/zoekt/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
         "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
         "//third_party/google/zoekt/vendor/golang.org/x/net/trace",
-        "//third_party/google/zoekt/web",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
         "//vendor/github.com/google/zoekt/shards",
+        "//vendor/github.com/google/zoekt/web",
     ],
 )
 
