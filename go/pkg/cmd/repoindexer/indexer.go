@@ -176,8 +176,7 @@ func (x *repository) sync(workDir string) error {
 		}
 
 		_, err = git.PlainClone(bareDir, true, &git.CloneOptions{
-			URL:   x.URL,
-			Depth: 1,
+			URL: x.URL,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -185,6 +184,7 @@ func (x *repository) sync(workDir string) error {
 	} else if err != nil {
 		return xerrors.Errorf(": %w", err)
 	} else {
+		logger.Log.Debug("Repository is out of date", zap.String("name", x.Name))
 		outOfDate = true
 	}
 
@@ -194,7 +194,7 @@ func (x *repository) sync(workDir string) error {
 			return xerrors.Errorf(": %w", err)
 		}
 		logger.Log.Debug("Fetch default branch", zap.String("name", x.Name))
-		err = r.Fetch(&git.FetchOptions{Depth: 1})
+		err = r.Fetch(&git.FetchOptions{Depth: 1, Force: true})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -215,7 +215,7 @@ func (x *repository) sync(workDir string) error {
 				}
 			}
 			logger.Log.Debug("Fetch refs", zap.String("name", x.Name), zap.Any("refs", refs))
-			err = r.Fetch(&git.FetchOptions{Depth: 1, RefSpecs: refs})
+			err = r.Fetch(&git.FetchOptions{Depth: 1, Force: true, RefSpecs: refs})
 			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 				return xerrors.Errorf(": %w", err)
 			}

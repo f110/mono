@@ -511,6 +511,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/robfig/cron/v3 v3.0.1
+## explicit
+github.com/robfig/cron/v3
 # github.com/rs/xid v1.2.1
 github.com/rs/xid
 # github.com/ryanuber/go-glob v1.0.0

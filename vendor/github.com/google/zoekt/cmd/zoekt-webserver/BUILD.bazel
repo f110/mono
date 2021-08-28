@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zoekt-webserver_lib",
+    srcs = ["main.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/cmd/zoekt-webserver",
+    importpath = "github.com/google/zoekt/cmd/zoekt-webserver",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/build",
+        "//vendor/github.com/google/zoekt/shards",
+        "//vendor/github.com/google/zoekt/web",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//vendor/go.uber.org/automaxprocs/maxprocs",
+        "//vendor/golang.org/x/net/trace",
+    ],
+)
+
+go_binary(
+    name = "zoekt-webserver",
+    embed = [":zoekt-webserver_lib"],
+    visibility = ["//visibility:public"],
+)
