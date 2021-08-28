@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "bin",
     files = {
-        "//go/cmd/repo/indexer": "/usr/local/bin/repo-indexer",
+        "//go/cmd/repo-indexer": "/usr/local/bin/repo-indexer",
     },
     mode = "0755",
     package_dir = "/usr/local/bin",
@@ -22,6 +22,6 @@ container_push(
     format = "Docker",
     image = ":image",
     registry = "registry.f110.dev",
-    repository = "tools/zoekt-webserver",
+    repository = "tools/zoekt-indexer",
     tag = "latest",
 )
