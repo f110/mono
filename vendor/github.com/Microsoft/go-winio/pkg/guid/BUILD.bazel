@@ -6,5 +6,10 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/Microsoft/go-winio/pkg/guid",
     importpath = "github.com/Microsoft/go-winio/pkg/guid",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/golang.org/x/sys/windows"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
 )

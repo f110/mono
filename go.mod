@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/storage v1.6.0
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
+	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/aws/aws-sdk-go v1.35.20
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/coreos/go-semver v0.3.0 // indirect

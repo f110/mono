@@ -18,10 +18,9 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/Microsoft/go-winio",
     importpath = "github.com/Microsoft/go-winio",
     visibility = ["//visibility:public"],
-    deps = [
-        "//vendor/github.com/Microsoft/go-winio/pkg/guid",
-    ] + select({
+    deps = select({
         "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/github.com/Microsoft/go-winio/pkg/guid",
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],

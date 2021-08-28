@@ -18,7 +18,8 @@ github.com/BurntSushi/xgb/xproto
 # github.com/JuulLabs-OSS/cbgo v0.0.2
 ## explicit
 github.com/JuulLabs-OSS/cbgo
-# github.com/Microsoft/go-winio v0.4.16
+# github.com/Microsoft/go-winio v0.4.17
+## explicit
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
 # github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
@@ -289,9 +290,11 @@ github.com/google/uuid
 ## explicit
 github.com/google/zoekt
 github.com/google/zoekt/build
+github.com/google/zoekt/cmd/zoekt-webserver
 github.com/google/zoekt/ctags
 github.com/google/zoekt/query
 github.com/google/zoekt/shards
+github.com/google/zoekt/web
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
 # github.com/googleapis/gnostic v0.4.1
@@ -612,6 +615,10 @@ go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
 # go.uber.org/atomic v1.6.0
 go.uber.org/atomic
+# go.uber.org/automaxprocs v1.3.0
+go.uber.org/automaxprocs/internal/cgroups
+go.uber.org/automaxprocs/internal/runtime
+go.uber.org/automaxprocs/maxprocs
 # go.uber.org/multierr v1.5.0
 go.uber.org/multierr
 # go.uber.org/zap v1.15.0
