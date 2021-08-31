@@ -7,13 +7,12 @@ pkg_tar(
         "//go/cmd/repo-indexer": "/usr/local/bin/repo-indexer",
     },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(
     name = "image",
-    base = "@com_google_distroless_base//image",
-    entrypoint = ["/usr/local/bin/zoekt-webserver"],
+    base = "@golang_container_1.17//image",
+    entrypoint = ["/usr/local/bin/repo-indexer"],
     tars = [":bin"],
 )
 

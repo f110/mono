@@ -7,7 +7,6 @@ pkg_tar(
         "//vendor/github.com/google/zoekt/cmd/zoekt-webserver": "/usr/local/bin/zoekt-webserver",
     },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(

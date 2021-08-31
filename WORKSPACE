@@ -75,6 +75,7 @@ git_repository(
     remote = "https://github.com/f110/protoc-ddl",
 )
 
+
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
 go_repository(
@@ -148,6 +149,13 @@ container_pull(
     digest = "sha256:c60be29941a0be6f748c8cf2e42832f95e9b73276042d3c44212af7cf4a152c9",
     registry = "gcr.io",
     repository = "distroless/base",
+)
+
+container_pull(
+    name = "golang_container_1.17",
+    digest = "sha256:c5d9a9078164b8255ff1833e59451d9ff59a5f9d30ac12d41aa4783e9d025643",
+    registry = "index.docker.io",
+    repository = "library/golang",
 )
 
 http_archive(
