@@ -1,5 +1,5 @@
 sh_binary(
-    name = "vendor-bazel-remote",
+    name = "vendor_bazel_remote",
     srcs = ["vendor-bazel-remote.sh"],
     deps = ["//script/lib"],
 )
@@ -25,5 +25,11 @@ sh_binary(
 sh_binary(
     name = "vendor_zoekt",
     srcs = ["vendor-zoekt.sh"],
+    deps = ["//script/lib"],
+)
+
+sh_binary(
+    name = "vendor_universal_ctags",
+    srcs = ["vendor-universal-ctags.sh"],
     deps = ["//script/lib"],
 )
