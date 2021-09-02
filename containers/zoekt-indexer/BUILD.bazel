@@ -2,6 +2,13 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
 
 pkg_tar(
+    name = "ctags",
+    srcs = ["//third_party/universal-ctags/ctags"],
+    mode = "0755",
+    package_dir = "/usr/local",
+)
+
+pkg_tar(
     name = "bin",
     files = {
         "//go/cmd/repo-indexer": "/usr/local/bin/repo-indexer",
@@ -13,7 +20,10 @@ container_image(
     name = "image",
     base = "@golang_container_1.17//image",
     entrypoint = ["/usr/local/bin/repo-indexer"],
-    tars = [":bin"],
+    tars = [
+        ":bin",
+        ":ctags",
+    ],
 )
 
 container_push(
