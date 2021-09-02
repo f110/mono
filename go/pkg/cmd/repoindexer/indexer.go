@@ -31,6 +31,7 @@ type Indexer struct {
 	config  *Config
 	workDir string
 	token   string
+	ctags   string
 
 	repositories []*repository
 
@@ -38,8 +39,8 @@ type Indexer struct {
 	graphQLClient *githubv4.Client
 }
 
-func NewIndexer(rules *Config, workDir, token string) *Indexer {
-	return &Indexer{config: rules, workDir: workDir, token: token}
+func NewIndexer(rules *Config, workDir, token, ctags string) *Indexer {
+	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags}
 }
 
 func (x *Indexer) Sync() error {
@@ -68,6 +69,7 @@ func (x *Indexer) BuildIndex() error {
 				Name:     v.Name,
 				Branches: branches,
 			},
+			CTags: x.ctags,
 		}
 		opt.SetDefaults()
 		builder, err := build.NewBuilder(opt)
@@ -194,7 +196,7 @@ func (x *repository) sync(workDir string) error {
 			return xerrors.Errorf(": %w", err)
 		}
 		logger.Log.Debug("Fetch default branch", zap.String("name", x.Name))
-		err = r.Fetch(&git.FetchOptions{Depth: 1, Force: true})
+		err = r.Fetch(&git.FetchOptions{Force: true})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -215,7 +217,7 @@ func (x *repository) sync(workDir string) error {
 				}
 			}
 			logger.Log.Debug("Fetch refs", zap.String("name", x.Name), zap.Any("refs", refs))
-			err = r.Fetch(&git.FetchOptions{Depth: 1, Force: true, RefSpecs: refs})
+			err = r.Fetch(&git.FetchOptions{Force: true, RefSpecs: refs})
 			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 				return xerrors.Errorf(": %w", err)
 			}
