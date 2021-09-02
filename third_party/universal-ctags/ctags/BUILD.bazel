@@ -23,8 +23,20 @@ configure_make(
     name = "ctags",
     autogen = True,
     configure_in_place = True,
-    configure_options = ["CFLAGS='-Dredacted=\"redacted\"'"],
+    configure_options = [
+        "CFLAGS='-Dredacted=\"redacted\"'",
+        "--enable-json",
+        "--enable-seccomp",
+        "--disable-xml",
+        "--disable-yaml",
+        "--without-included-regex",
+    ],
+    env = {
+        "LDFLAGS": "-static",
+    },
     install_prefix = "install",
+    lib_name = "universal-ctags",
     lib_source = ":srcs",
     out_binaries = ["ctags"],
+    visibility = ["//visibility:public"],
 )
