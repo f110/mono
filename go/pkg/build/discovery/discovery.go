@@ -133,6 +133,7 @@ type Discover struct {
 	minio        *storage.MinIO
 
 	builder              *coordinator.BazelBuilder
+	bazelImage           string
 	sidecarImage         string
 	ctlImage             string
 	builderApi           string
@@ -151,6 +152,7 @@ func NewDiscover(
 	namespace string,
 	daoOpt dao.Options,
 	builder *coordinator.BazelBuilder,
+	bazelImage string,
 	sidecarImage string,
 	ctlImage string,
 	builderApi string,
@@ -167,6 +169,7 @@ func NewDiscover(
 		client:               client,
 		dao:                  daoOpt,
 		builder:              builder,
+		bazelImage:           bazelImage,
 		sidecarImage:         sidecarImage,
 		minio:                storage.NewMinIOStorage(client, cfg, minioOpt, debug),
 		ctlImage:             ctlImage,
@@ -178,6 +181,9 @@ func NewDiscover(
 		debug:                debug,
 	}
 	watcher.Router.Add(jobType, d.syncJob)
+	if d.bazelImage == "" {
+		d.bazelImage = "l.gcr.io/google/bazel"
+	}
 
 	return d
 }
@@ -648,7 +654,7 @@ func (d *Discover) newDiscoveryJob(repository *database.SourceRepository, revisi
 					Containers: []corev1.Container{
 						{
 							Name:            "main",
-							Image:           "l.gcr.io/google/bazel:" + bazelVersion,
+							Image:           fmt.Sprintf("%s:%s", d.bazelImage, bazelVersion),
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Command:         []string{"sh", "-c", discoveryScript.String()},
 							WorkingDir:      "/work",

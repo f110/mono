@@ -228,6 +228,7 @@ func (p *process) setup() (fsm.State, error) {
 		p.opt.Namespace,
 		p.dao,
 		c,
+		p.opt.BazelImage,
 		p.opt.SidecarImage,
 		p.opt.CLIImage,
 		p.opt.BuilderApiUrl,
