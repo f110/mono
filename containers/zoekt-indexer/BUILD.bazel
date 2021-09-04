@@ -16,9 +16,25 @@ pkg_tar(
     mode = "0755",
 )
 
+pkg_tar(
+    name = "go",
+    srcs = ["@golang_1.17//:srcs"],
+    modes = {
+        "bin/go": "0755",
+    },
+    package_dir = "/usr/local/go",
+    strip_prefix = "/external/golang_1.17/go",
+)
+
+container_image(
+    name = "go_container",
+    base = "@com_google_distroless_base//image",
+    tars = [":go"],
+)
+
 container_image(
     name = "image",
-    base = "@golang_container_1.17//image",
+    base = ":go_container",
     entrypoint = ["/usr/local/bin/repo-indexer"],
     tars = [
         ":bin",

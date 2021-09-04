@@ -48,7 +48,6 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
 )
 
-
 http_archive(
     name = "com_google_protobuf",
     sha256 = "9748c0d90e54ea09e5e75fb7fac16edce15d2028d4356f32211cfa3c0e956564",
@@ -82,7 +81,6 @@ git_repository(
     commit = "f15651f509bf64e43a6493f5b11214af9b921e9b",
     remote = "https://github.com/f110/protoc-ddl",
 )
-
 
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
@@ -197,4 +195,19 @@ http_file(
     name = "argocd_vault_plugin",
     sha256 = "8888551f80efae9a4c95120c241b729b7bf8926570e64339840adc2852d9e185",
     urls = ["https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64"],
+)
+
+golang_tarball_build_file = """
+filegroup(
+    name = "srcs",
+    srcs = glob(["go/src/**", "go/bin/**", "go/pkg/**"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
+http_archive(
+    name = "golang_1.17",
+    build_file_content = golang_tarball_build_file,
+    sha256 = "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d",
+    urls = ["https://golang.org/dl/go1.17.linux-amd64.tar.gz"],
 )
