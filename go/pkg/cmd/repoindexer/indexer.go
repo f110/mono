@@ -2,10 +2,12 @@ package repoindexer
 
 import (
 	"context"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -155,6 +157,42 @@ func (x *Indexer) BuildIndex() error {
 		}
 
 		if err := builder.Finish(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (x *Indexer) Cleanup() error {
+	indexDir := filepath.Join(x.workDir, ".index")
+	entry, err := os.ReadDir(indexDir)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	files := make(map[string]struct{}, 0)
+	for _, v := range entry {
+		b := filepath.Base(v.Name())
+		files[b] = struct{}{}
+	}
+
+	for _, v := range x.listRepositories() {
+		n := url.QueryEscape(v.Name)
+		if len(n) > 200 {
+			h := sha1.New()
+			io.WriteString(h, n)
+			s := fmt.Sprintf("%x", h.Sum(nil))[:8]
+			n = n[:200] + s
+		}
+		for f := range files {
+			if strings.HasPrefix(f, n) {
+				delete(files, f)
+			}
+		}
+	}
+	for f := range files {
+		logger.Log.Debug("Delete index", zap.String("filename", f))
+		if err := os.Remove(filepath.Join(indexDir, f)); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}

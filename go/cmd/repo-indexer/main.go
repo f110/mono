@@ -52,6 +52,9 @@ func repoIndexer(args []string) error {
 	if err := indexer.BuildIndex(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	if err := indexer.Cleanup(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	if runScheduler {
 		c := cron.New()
 		_, err := c.AddFunc(config.RefreshSchedule, func() {
@@ -60,6 +63,9 @@ func repoIndexer(args []string) error {
 			}
 			if err := indexer.BuildIndex(); err != nil {
 				logger.Log.Info("Failed build index", zap.Error(err))
+			}
+			if err := indexer.Cleanup(); err != nil {
+				logger.Log.Info("Failed cleanup", zap.Error(err))
 			}
 		})
 		if err != nil {
