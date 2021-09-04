@@ -38,5 +38,6 @@ job(
     targets = [
         "//...",
         "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
+        "-//third_party/universal-ctags/ctags:ctags",
     ],
 )
