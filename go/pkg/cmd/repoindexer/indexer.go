@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -32,6 +31,7 @@ type Indexer struct {
 	workDir string
 	token   string
 	ctags   string
+	initRun bool
 
 	repositories []*repository
 
@@ -39,8 +39,8 @@ type Indexer struct {
 	graphQLClient *githubv4.Client
 }
 
-func NewIndexer(rules *Config, workDir, token, ctags string) *Indexer {
-	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags}
+func NewIndexer(rules *Config, workDir, token, ctags string, initRun bool) *Indexer {
+	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags, initRun: initRun}
 }
 
 func (x *Indexer) Sync() error {
@@ -48,7 +48,7 @@ func (x *Indexer) Sync() error {
 	for _, v := range repositories {
 		logger.Log.Debug("Found repository", zap.String("name", v.Name), zap.String("url", v.URL))
 
-		if err := v.sync(x.workDir); err != nil {
+		if err := v.sync(x.workDir, x.initRun); err != nil {
 			logger.Log.Info("Failed sync repository", zap.Error(err), zap.String("url", v.URL))
 			continue
 		}
@@ -169,7 +169,7 @@ type repository struct {
 	DefaultBranchRef plumbing.ReferenceName
 }
 
-func (x *repository) sync(workDir string) error {
+func (x *repository) sync(workDir string, initRun bool) error {
 	bareDir := filepath.Join(workDir, ".bare", x.Name)
 	outOfDate := false
 	if _, err := os.Stat(bareDir); os.IsNotExist(err) {
@@ -189,6 +189,9 @@ func (x *repository) sync(workDir string) error {
 		logger.Log.Debug("Repository is out of date", zap.String("name", x.Name))
 		outOfDate = true
 	}
+	if initRun {
+		return nil
+	}
 
 	if outOfDate || len(x.Refs) > 0 {
 		r, err := git.PlainOpen(bareDir)
@@ -196,7 +199,9 @@ func (x *repository) sync(workDir string) error {
 			return xerrors.Errorf(": %w", err)
 		}
 		logger.Log.Debug("Fetch default branch", zap.String("name", x.Name))
-		err = r.Fetch(&git.FetchOptions{Force: true})
+		err = r.Fetch(&git.FetchOptions{
+			Progress: os.Stdout,
+		})
 		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -205,23 +210,6 @@ func (x *repository) sync(workDir string) error {
 			return xerrors.Errorf(": %w", err)
 		}
 		x.DefaultBranchRef = defaultBranchRef.Name()
-
-		if len(x.Refs) > 0 {
-			refs := make([]config.RefSpec, 0, len(x.Refs))
-			for _, v := range x.Refs {
-				if v.IsRemote() {
-					b := strings.TrimPrefix(v.String(), "refs/remotes/origin/")
-					refs = append(refs, config.RefSpec(fmt.Sprintf("refs/heads/%s:refs/remotes/origin/%s", b, b)))
-				} else {
-					refs = append(refs, config.RefSpec(v))
-				}
-			}
-			logger.Log.Debug("Fetch refs", zap.String("name", x.Name), zap.Any("refs", refs))
-			err = r.Fetch(&git.FetchOptions{Force: true, RefSpecs: refs})
-			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-				return xerrors.Errorf(": %w", err)
-			}
-		}
 	}
 
 	return nil

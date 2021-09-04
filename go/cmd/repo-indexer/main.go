@@ -26,12 +26,14 @@ func repoIndexer(args []string) error {
 	token := ""
 	ctags := ""
 	runScheduler := false
+	initRun := false
 	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
 	fs.StringVarP(&configFile, "config", "c", configFile, "Config file")
 	fs.StringVar(&workDir, "work-dir", workDir, "Working root directory")
 	fs.StringVar(&token, "token", token, "GitHub API token")
 	fs.StringVar(&ctags, "ctags", ctags, "ctags path")
 	fs.BoolVar(&runScheduler, "run-scheduler", false, "")
+	fs.BoolVar(&initRun, "init-run", initRun, "")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -43,7 +45,7 @@ func repoIndexer(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	indexer := repoindexer.NewIndexer(config, workDir, token, ctags)
+	indexer := repoindexer.NewIndexer(config, workDir, token, ctags, initRun)
 	if err := indexer.Sync(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
