@@ -46,45 +46,54 @@ func repoIndexer(args []string) error {
 	}
 
 	indexer := repoindexer.NewIndexer(config, workDir, token, ctags, initRun)
-	if err := indexer.Sync(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if err := indexer.BuildIndex(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if err := indexer.Cleanup(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
 	if runScheduler {
-		c := cron.New()
-		_, err := c.AddFunc(config.RefreshSchedule, func() {
-			if err := indexer.Sync(); err != nil {
-				logger.Log.Info("Failed sync", zap.Error(err))
-			}
-			if err := indexer.BuildIndex(); err != nil {
-				logger.Log.Info("Failed build index", zap.Error(err))
-			}
-			if err := indexer.Cleanup(); err != nil {
-				logger.Log.Info("Failed cleanup", zap.Error(err))
-			}
-		})
-		if err != nil {
+		if err := scheduler(config, indexer); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		logger.Log.Info("Start scheduler")
-		c.Start()
-
-		ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		defer stopFunc()
-
-		<-ctx.Done()
-		logger.Log.Debug("Got signal")
-
-		ctx = c.Stop()
-
-		logger.Log.Info("Waiting for stop scheduler")
-		<-ctx.Done()
+	} else {
+		if err := indexer.Sync(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := indexer.BuildIndex(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := indexer.Cleanup(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
 	}
+
+	return nil
+}
+
+func scheduler(config *repoindexer.Config, indexer *repoindexer.Indexer) error {
+	c := cron.New()
+	_, err := c.AddFunc(config.RefreshSchedule, func() {
+		if err := indexer.Sync(); err != nil {
+			logger.Log.Info("Failed sync", zap.Error(err))
+		}
+		if err := indexer.BuildIndex(); err != nil {
+			logger.Log.Info("Failed build index", zap.Error(err))
+		}
+		if err := indexer.Cleanup(); err != nil {
+			logger.Log.Info("Failed cleanup", zap.Error(err))
+		}
+	})
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	logger.Log.Info("Start scheduler")
+	c.Start()
+
+	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopFunc()
+
+	<-ctx.Done()
+	logger.Log.Debug("Got signal")
+
+	ctx = c.Stop()
+
+	logger.Log.Info("Waiting for stop scheduler")
+	<-ctx.Done()
 
 	return nil
 }
