@@ -36,6 +36,9 @@ container_image(
     name = "image",
     base = ":go_container",
     entrypoint = ["/usr/local/bin/repo-indexer"],
+    env = {
+        "PATH": "/usr/local/go/bin",
+    },
     tars = [
         ":bin",
         ":ctags",
