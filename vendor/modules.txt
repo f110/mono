@@ -292,7 +292,6 @@ github.com/google/zoekt
 github.com/google/zoekt/build
 github.com/google/zoekt/cmd/zoekt-webserver
 github.com/google/zoekt/ctags
-github.com/google/zoekt/gitindex
 github.com/google/zoekt/query
 github.com/google/zoekt/shards
 github.com/google/zoekt/web

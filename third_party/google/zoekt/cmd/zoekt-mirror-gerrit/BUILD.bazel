@@ -6,8 +6,8 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-mirror-gerrit",
     visibility = ["//visibility:private"],
     deps = [
+        "//third_party/google/zoekt/gitindex",
         "//third_party/google/zoekt/vendor/github.com/andygrunwald/go-gerrit",
-        "//vendor/github.com/google/zoekt/gitindex",
     ],
 )
 

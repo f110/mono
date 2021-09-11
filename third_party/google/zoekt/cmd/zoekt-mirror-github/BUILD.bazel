@@ -6,9 +6,9 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-mirror-github",
     visibility = ["//visibility:private"],
     deps = [
+        "//third_party/google/zoekt/gitindex",
         "//third_party/google/zoekt/vendor/github.com/google/go-github/v27/github",
         "//third_party/google/zoekt/vendor/golang.org/x/oauth2",
-        "//vendor/github.com/google/zoekt/gitindex",
     ],
 )
 

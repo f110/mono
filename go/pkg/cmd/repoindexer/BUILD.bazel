@@ -16,7 +16,6 @@ go_library(
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
-        "//vendor/github.com/google/zoekt/gitindex",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",

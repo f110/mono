@@ -10,10 +10,10 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//third_party/google/zoekt/cmd",
+        "//third_party/google/zoekt/gitindex",
         "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
-        "//vendor/github.com/google/zoekt/gitindex",
     ],
 )
 

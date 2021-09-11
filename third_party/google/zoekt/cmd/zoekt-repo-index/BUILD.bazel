@@ -6,13 +6,13 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-repo-index",
     visibility = ["//visibility:private"],
     deps = [
+        "//third_party/google/zoekt/gitindex",
         "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5:go-git",
         "//third_party/google/zoekt/vendor/github.com/go-git/go-git/v5/plumbing",
         "//third_party/google/zoekt/vendor/github.com/google/slothfs/manifest",
         "//third_party/google/zoekt/vendor/go.uber.org/automaxprocs/maxprocs",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
-        "//vendor/github.com/google/zoekt/gitindex",
     ],
 )
 
