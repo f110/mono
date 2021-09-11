@@ -1,6 +1,7 @@
 package repoindexer
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"errors"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/go-github/v32/github"
 	"github.com/google/zoekt"
@@ -62,7 +62,7 @@ func (x *Indexer) Sync() error {
 func (x *Indexer) BuildIndex() error {
 	for _, v := range x.listRepositories() {
 		branches := make([]zoekt.RepositoryBranch, 0)
-		for _, v := range append([]plumbing.ReferenceName{v.DefaultBranchRef}, v.Refs...) {
+		for _, v := range v.Refs {
 			branches = append(branches, zoekt.RepositoryBranch{Name: v.Short()})
 		}
 		opt := build.Options{
@@ -71,7 +71,8 @@ func (x *Indexer) BuildIndex() error {
 				Name:     v.Name,
 				Branches: branches,
 			},
-			CTags: x.ctags,
+			CTags:       x.ctags,
+			Parallelism: 32,
 		}
 		opt.SetDefaults()
 		builder, err := build.NewBuilder(opt)
@@ -79,15 +80,9 @@ func (x *Indexer) BuildIndex() error {
 			return xerrors.Errorf(": %w", err)
 		}
 
-		for _, refName := range append([]plumbing.ReferenceName{v.DefaultBranchRef}, v.Refs...) {
-			logger.Log.Debug("Indexing", zap.String("name", v.Name), zap.String("ref", refName.Short()))
+		for _, refName := range v.Refs {
+			logger.Log.Debug("Prepare", zap.String("name", v.Name), zap.String("ref", refName.Short()))
 			dir := filepath.Join(x.workDir, v.Name)
-			if _, err := os.Stat(dir); !os.IsNotExist(err) {
-				if err := os.RemoveAll(dir); err != nil {
-					return xerrors.Errorf(": %w", err)
-				}
-			}
-
 			if err := v.checkout(x.workDir, refName); err != nil {
 				logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", v.Name))
 				continue
@@ -128,35 +123,75 @@ func (x *Indexer) BuildIndex() error {
 				continue
 			}
 
-			err = filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				if info.IsDir() {
-					return nil
-				}
-
-				buf, err := os.ReadFile(path)
-				if err != nil {
-					return err
-				}
-				if err := builder.Add(zoekt.Document{
-					Name:     strings.TrimPrefix(path, dir+"/"),
-					Content:  buf,
-					Branches: []string{refName.Short()},
-				}); err != nil {
-					return err
-				}
-				return nil
-			})
-			if err != nil {
-				logger.Log.Info("Failed add the document to the index", zap.String("name", v.Name))
+			if err := v.newCommit(); err != nil {
+				logger.Log.Info("Failed create commit", zap.String("name", v.Name), zap.Error(err))
 				continue
 			}
 
+			if err := v.cleanWorktree(); err != nil {
+				logger.Log.Info("Failed clean worktree", zap.String("name", v.Name), zap.Error(err))
+				continue
+			}
 		}
 
+		tempDir := os.TempDir()
+		files := make(map[file]map[plumbing.Hash]struct{})
+		fileBranches := make(map[plumbing.Hash][]string)
+		for _, refName := range v.Refs {
+			f, err := v.files(refName)
+			if err != nil {
+				logger.Log.Info("Failed traverse the tree", zap.String("name", v.Name), zap.String("ref", refName.String()))
+				continue
+			}
+			for k, v := range f {
+				if _, ok := files[k]; !ok {
+					files[k] = make(map[plumbing.Hash]struct{})
+				}
+				files[k][v] = struct{}{}
+				fileBranches[k.hash] = append(fileBranches[k.hash], refName.Short())
+			}
+		}
+		os.RemoveAll(tempDir)
+
+		buf := new(bytes.Buffer)
+		docCount := 0
+		for f := range files {
+			blob, err := v.repo.BlobObject(f.hash)
+			if err != nil {
+				logger.Log.Info("Failed to get blob object", zap.String("name", v.Name), zap.String("path", f.path), zap.String("hash", f.hash.String()))
+				continue
+			}
+			r, err := blob.Reader()
+			if err != nil {
+				logger.Log.Info("Skip read blob", zap.String("name", v.Name), zap.String("hash", f.hash.String()))
+				continue
+			}
+			buf.Grow(int(blob.Size))
+			_, err = buf.ReadFrom(r)
+			if err != nil {
+				logger.Log.Info("Skip read blob due to read error", zap.String("name", v.Name), zap.String("hash", f.hash.String()))
+				continue
+			}
+
+			brs := fileBranches[f.hash]
+			logger.Log.Debug("Add document", zap.String("name", f.path), zap.Strings("branches", brs))
+			if err := builder.Add(zoekt.Document{
+				Name:     f.path,
+				Content:  buf.Bytes(),
+				Branches: brs,
+			}); err != nil {
+				return err
+			}
+			buf.Reset()
+			docCount++
+		}
+
+		logger.Log.Debug("Total document", zap.String("name", v.Name), zap.Int("count", docCount))
 		if err := builder.Finish(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+
+		if err := v.cleanup(x.workDir); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -205,114 +240,200 @@ type repository struct {
 	URL              string
 	Refs             []plumbing.ReferenceName
 	DefaultBranchRef plumbing.ReferenceName
+
+	repo *git.Repository
 }
 
 func (x *repository) sync(workDir string, initRun bool) error {
+	// Clean up a directory for bare repository
 	bareDir := filepath.Join(workDir, ".bare", x.Name)
-	outOfDate := false
-	if _, err := os.Stat(bareDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(bareDir, 0755); err != nil {
+	if _, err := os.Stat(bareDir); !os.IsNotExist(err) {
+		logger.Log.Info("Remove bare repository", zap.String("dir", bareDir))
+		if err := os.RemoveAll(bareDir); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
+	}
 
-		_, err = git.PlainClone(bareDir, true, &git.CloneOptions{
-			URL: x.URL,
+	dir := filepath.Join(workDir, x.Name)
+	if _, err := os.Stat(filepath.Join(dir, ".git")); os.IsNotExist(err) {
+		logger.Log.Info("Remove old directory", zap.String("dir", dir))
+		// Old style directory If .git directory not exists.
+		if err := os.RemoveAll(dir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		logger.Log.Debug("Clone", zap.String("name", x.Name), zap.String("url", x.URL))
+		_, err = git.PlainCloneContext(context.TODO(), dir, false, &git.CloneOptions{
+			URL:        x.URL,
+			NoCheckout: true,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
-	} else {
-		logger.Log.Debug("Repository is out of date", zap.String("name", x.Name))
-		outOfDate = true
 	}
 	if initRun {
 		return nil
 	}
 
-	if outOfDate || len(x.Refs) > 0 {
-		r, err := git.PlainOpen(bareDir)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		logger.Log.Debug("Fetch default branch", zap.String("name", x.Name))
-		err = r.Fetch(&git.FetchOptions{
-			Progress: os.Stdout,
-		})
-		if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-			return xerrors.Errorf(": %w", err)
-		}
-		defaultBranchRef, err := r.Head()
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		x.DefaultBranchRef = defaultBranchRef.Name()
+	r, err := git.PlainOpen(dir)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
+	logger.Log.Debug("Fetch", zap.String("name", x.Name))
+	err = r.Fetch(&git.FetchOptions{
+		Progress: os.Stdout,
+	})
+	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return xerrors.Errorf(": %w", err)
+	}
+	defaultBranchRef, err := r.Head()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	x.DefaultBranchRef = defaultBranchRef.Name()
 
 	return nil
 }
 
 func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) error {
-	dir := filepath.Join(workDir, ".bare", x.Name)
+	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	var ref *plumbing.Reference
-	if refName == "" {
-		ref, err = repo.Head()
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
+	ref, err = repo.Reference(refName, false)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	wt, err := repo.Worktree()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	branchRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(strings.TrimPrefix(refName.Short(), "origin/")), ref.Hash())
+	if ref, err := repo.Reference(branchRef.Name(), true); err == plumbing.ErrReferenceNotFound {
+		// Skip
+	} else if err != nil {
+		return xerrors.Errorf(": %w", err)
 	} else {
-		ref, err = repo.Reference(refName, false)
-		if err != nil {
+		logger.Log.Debug("Remove branch(reference)", zap.String("name", ref.Name().String()), zap.String("name", x.Name))
+		if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
-
-	commit, err := repo.CommitObject(ref.Hash())
-	if err != nil {
+	logger.Log.Debug("Set reference", zap.String("ref", branchRef.Name().String()), zap.String("name", x.Name))
+	if err := repo.Storer.SetReference(branchRef); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-
-	tree, err := commit.Tree()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	if err := os.MkdirAll(filepath.Dir(filepath.Join(workDir, x.Name)), 0755); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	repoRootDir := filepath.Join(workDir, x.Name)
-	err = tree.Files().ForEach(func(f *object.File) error {
-		switch f.Mode {
-		case filemode.Regular:
-			r, err := f.Reader()
-			if err != nil {
-				return err
-			}
-			if err = os.MkdirAll(filepath.Dir(filepath.Join(repoRootDir, f.Name)), 0755); err != nil {
-				return err
-			}
-			newFile, err := os.Create(filepath.Join(repoRootDir, f.Name))
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(newFile, r)
-			if err != nil {
-				return err
-			}
-			newFile.Close()
-			r.Close()
-		case filemode.Symlink:
-		}
-
-		return nil
+	err = wt.Checkout(&git.CheckoutOptions{
+		Branch: branchRef.Name(),
 	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
+	}
+	x.repo = repo
+
+	return nil
+}
+
+type file struct {
+	path string
+	hash plumbing.Hash
+}
+
+func (f file) String() string {
+	return fmt.Sprintf("%s: %s", f.path, f.hash.String())
+}
+
+func (x *repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Hash, error) {
+	ref, err := x.repo.Reference(refName, true)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	commit, err := x.repo.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	files := make(map[file]plumbing.Hash)
+	w := object.NewTreeWalker(tree, true, make(map[plumbing.Hash]bool))
+	for {
+		name, entry, err := w.Next()
+		if err == io.EOF {
+			break
+		}
+		if entry.Mode.IsFile() {
+			files[file{path: name, hash: entry.Hash}] = entry.Hash
+		}
+	}
+
+	return files, nil
+}
+
+func (x *repository) newCommit() error {
+	wt, err := x.repo.Worktree()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	st, err := wt.Status()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	for path := range st {
+		if _, err := wt.Add(path); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
+	if _, err := wt.Commit("new commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "indexer",
+			Email: "example@example.com",
+		},
+	}); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (x *repository) cleanWorktree() error {
+	wt, err := x.repo.Worktree()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := wt.Clean(&git.CleanOptions{Dir: true}); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (x *repository) cleanup(workDir string) error {
+	dir := filepath.Join(workDir, x.Name)
+	repo, err := git.PlainOpen(dir)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	iter, err := repo.Branches()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	for {
+		ref, err := iter.Next()
+		if err != io.EOF {
+			break
+		}
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		logger.Log.Debug("Branch", zap.String("name", x.Name), zap.String("branch", ref.String()))
 	}
 
 	return nil

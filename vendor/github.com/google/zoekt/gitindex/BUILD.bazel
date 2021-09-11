@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gitindex",
+    srcs = [
+        "clone.go",
+        "delete.go",
+        "filter.go",
+        "index.go",
+        "repocache.go",
+        "submodule.go",
+        "tree.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/gitindex",
+    importpath = "github.com/google/zoekt/gitindex",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/build",
+    ],
+)

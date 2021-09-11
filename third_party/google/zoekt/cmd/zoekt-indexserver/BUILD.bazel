@@ -9,9 +9,9 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-indexserver",
     visibility = ["//visibility:private"],
     deps = [
-        "//third_party/google/zoekt/gitindex",
         "//third_party/google/zoekt/vendor/github.com/fsnotify/fsnotify",
         "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/google/zoekt/gitindex",
     ],
 )
 
