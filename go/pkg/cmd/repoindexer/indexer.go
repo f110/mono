@@ -92,7 +92,7 @@ func (x *Indexer) BuildIndex() error {
 
 		branches := make([]zoekt.RepositoryBranch, 0)
 		for _, v := range v.Refs {
-			branches = append(branches, zoekt.RepositoryBranch{Name: v.Short()})
+			branches = append(branches, zoekt.RepositoryBranch{Name: strings.TrimPrefix(v.Short(), "origin/")})
 		}
 		opt := build.Options{
 			IndexDir: filepath.Join(x.workDir, ".index"),
@@ -184,7 +184,11 @@ func (x *Indexer) addDocument(builder *build.Builder, repo *repository, f file, 
 	}); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	logger.Log.Debug("Add document", zap.String("name", f.path), zap.Strings("branches", brs), zap.Duration("elapsed", time.Since(t)))
+	logger.Log.Debug("Add document",
+		zap.String("name", f.path),
+		zap.Strings("branches", brs),
+		zap.Duration("elapsed", time.Since(t)),
+	)
 
 	return nil
 }
