@@ -80,47 +80,54 @@ func (x *Indexer) BuildIndex() error {
 			return xerrors.Errorf(": %w", err)
 		}
 
+		branchRefs := make([]plumbing.ReferenceName, 0)
 		for _, refName := range v.Refs {
 			logger.Log.Debug("Prepare", zap.String("name", v.Name), zap.String("ref", refName.Short()))
 			dir := filepath.Join(x.workDir, v.Name)
-			if err := v.checkout(x.workDir, refName); err != nil {
+			if branchRef, err := v.checkout(x.workDir, refName); err != nil {
 				logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", v.Name))
 				continue
+			} else {
+				branchRefs = append(branchRefs, branchRef)
 			}
 
-			err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				if info.IsDir() {
-					return nil
-				}
-				if info.Name() == "go.mod" {
-					if strings.Contains(strings.TrimPrefix(path, dir), "vendor/") {
-						return nil
-					}
-					if strings.Contains(strings.TrimPrefix(path, dir), "testdata/") {
-						return nil
-					}
-
-					if _, err := os.Stat(filepath.Join(filepath.Dir(path), "vendor")); !os.IsNotExist(err) {
-						return nil
-					}
-
-					cmd := exec.Command("go", "mod", "vendor")
-					cmd.Dir = filepath.Dir(path)
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-					if err := cmd.Run(); err != nil {
+			if !v.DisableVendoring {
+				logger.Log.Debug("Vendoring", zap.String("name", v.Name))
+				err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+					if err != nil {
 						return err
 					}
-				}
+					if info.IsDir() {
+						return nil
+					}
+					if info.Name() == "go.mod" {
+						if strings.Contains(strings.TrimPrefix(path, dir), "vendor/") {
+							return nil
+						}
+						if strings.Contains(strings.TrimPrefix(path, dir), "testdata/") {
+							return nil
+						}
 
-				return nil
-			})
-			if err != nil {
-				logger.Log.Info("Failed mutate repository", zap.String("name", v.Name), zap.Error(err))
-				continue
+						if _, err := os.Stat(filepath.Join(filepath.Dir(path), "vendor")); !os.IsNotExist(err) {
+							return nil
+						}
+
+						logger.Log.Info("Run go mod vendor", zap.String("go.mod", path))
+						cmd := exec.Command("go", "mod", "vendor")
+						cmd.Dir = filepath.Dir(path)
+						cmd.Stdout = os.Stdout
+						cmd.Stderr = os.Stderr
+						if err := cmd.Run(); err != nil {
+							return err
+						}
+					}
+
+					return nil
+				})
+				if err != nil {
+					logger.Log.Info("Failed mutate repository", zap.String("name", v.Name), zap.Error(err))
+					continue
+				}
 			}
 
 			if err := v.newCommit(); err != nil {
@@ -134,13 +141,12 @@ func (x *Indexer) BuildIndex() error {
 			}
 		}
 
-		tempDir := os.TempDir()
 		files := make(map[file]map[plumbing.Hash]struct{})
-		fileBranches := make(map[plumbing.Hash][]string)
-		for _, refName := range v.Refs {
+		fileBranches := make(map[file][]string)
+		for _, refName := range branchRefs {
 			f, err := v.files(refName)
 			if err != nil {
-				logger.Log.Info("Failed traverse the tree", zap.String("name", v.Name), zap.String("ref", refName.String()))
+				logger.Log.Info("Failed traverse the tree", zap.String("name", v.Name), zap.String("ref", refName.String()), zap.Error(err))
 				continue
 			}
 			for k, v := range f {
@@ -148,14 +154,10 @@ func (x *Indexer) BuildIndex() error {
 					files[k] = make(map[plumbing.Hash]struct{})
 				}
 				files[k][v] = struct{}{}
-				fileBranches[k.hash] = append(fileBranches[k.hash], refName.Short())
+				fileBranches[k] = append(fileBranches[k], refName.Short())
 			}
 		}
-		if err := os.RemoveAll(tempDir); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
 
-		buf := new(bytes.Buffer)
 		docCount := 0
 		for f := range files {
 			blob, err := v.repo.BlobObject(f.hash)
@@ -163,6 +165,7 @@ func (x *Indexer) BuildIndex() error {
 				logger.Log.Info("Failed to get blob object", zap.String("name", v.Name), zap.String("path", f.path), zap.String("hash", f.hash.String()))
 				continue
 			}
+			buf := new(bytes.Buffer)
 			r, err := blob.Reader()
 			if err != nil {
 				logger.Log.Info("Skip read blob", zap.String("name", v.Name), zap.String("hash", f.hash.String()))
@@ -174,17 +177,17 @@ func (x *Indexer) BuildIndex() error {
 				logger.Log.Info("Skip read blob due to read error", zap.String("name", v.Name), zap.String("hash", f.hash.String()))
 				continue
 			}
+			r.Close()
 
-			brs := fileBranches[f.hash]
+			brs := fileBranches[f]
 			logger.Log.Debug("Add document", zap.String("name", f.path), zap.Strings("branches", brs))
 			if err := builder.Add(zoekt.Document{
 				Name:     f.path,
 				Content:  buf.Bytes(),
 				Branches: brs,
 			}); err != nil {
-				return err
+				return xerrors.Errorf(": %w", err)
 			}
-			buf.Reset()
 			docCount++
 		}
 
@@ -240,8 +243,8 @@ func (x *Indexer) Cleanup() error {
 type repository struct {
 	Name             string
 	URL              string
+	DisableVendoring bool
 	Refs             []plumbing.ReferenceName
-	DefaultBranchRef plumbing.ReferenceName
 
 	repo *git.Repository
 }
@@ -289,55 +292,71 @@ func (x *repository) sync(workDir string, initRun bool) error {
 	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return xerrors.Errorf(": %w", err)
 	}
-	defaultBranchRef, err := r.Head()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	x.DefaultBranchRef = defaultBranchRef.Name()
 
 	return nil
 }
 
-func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) error {
+func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) (plumbing.ReferenceName, error) {
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	}
-	var ref *plumbing.Reference
-	ref, err = repo.Reference(refName, false)
+	x.repo = repo
+	hash, err := x.resolveReference(refName)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	}
-	branchRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(strings.TrimPrefix(refName.Short(), "origin/")), ref.Hash())
+	branchRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(strings.TrimPrefix(refName.Short(), "origin/")), hash)
 	if ref, err := repo.Reference(branchRef.Name(), true); err == plumbing.ErrReferenceNotFound {
 		// Skip
 	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	} else {
 		logger.Log.Debug("Remove branch(reference)", zap.String("name", ref.Name().String()), zap.String("name", x.Name))
 		if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return "", xerrors.Errorf(": %w", err)
 		}
 	}
-	logger.Log.Debug("Set reference", zap.String("ref", branchRef.Name().String()), zap.String("name", x.Name))
+	logger.Log.Debug("Set reference", zap.String("ref", branchRef.Name().String()), zap.String("hash", branchRef.Hash().String()), zap.String("name", x.Name))
 	if err := repo.Storer.SetReference(branchRef); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	}
+	logger.Log.Debug("Checkout", zap.String("branch", branchRef.Name().String()))
 	err = wt.Checkout(&git.CheckoutOptions{
 		Branch: branchRef.Name(),
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return "", xerrors.Errorf(": %w", err)
 	}
 	x.repo = repo
 
-	return nil
+	return branchRef.Name(), nil
+}
+
+func (x *repository) resolveReference(refName plumbing.ReferenceName) (plumbing.Hash, error) {
+	hash := plumbing.ZeroHash
+	ref, err := x.repo.Reference(refName, false)
+	if err != nil {
+		return hash, xerrors.Errorf(": %w", err)
+	}
+	obj, err := x.repo.Object(plumbing.AnyObject, ref.Hash())
+	if err != nil {
+		return hash, xerrors.Errorf(": %w", err)
+	}
+	switch v := obj.(type) {
+	case *object.Tag:
+		hash = v.Target
+	case *object.Commit:
+		hash = v.Hash
+	}
+
+	return hash, nil
 }
 
 type file struct {
@@ -456,9 +475,10 @@ func (x *Indexer) listRepositories() []*repository {
 				continue
 			}
 			repos = append(repos, &repository{
-				Name: fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
-				URL:  repo.GetGitURL(),
-				Refs: x.refSpecs(rule.Branches, rule.Tags),
+				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
+				URL:              repo.GetGitURL(),
+				Refs:             x.refSpecs(rule.Branches, rule.Tags),
+				DisableVendoring: rule.DisableVendoring,
 			})
 		}
 
@@ -480,9 +500,10 @@ func (x *Indexer) listRepositories() []*repository {
 					continue
 				}
 				repos = append(repos, &repository{
-					Name: fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
-					URL:  v.Repository.URL.String(),
-					Refs: x.refSpecs(rule.Branches, rule.Tags),
+					Name:             fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
+					URL:              v.Repository.URL.String(),
+					Refs:             x.refSpecs(rule.Branches, rule.Tags),
+					DisableVendoring: rule.DisableVendoring,
 				})
 			}
 			if !listRepositoriesQuery.Search.PageInfo.HasNextPage {

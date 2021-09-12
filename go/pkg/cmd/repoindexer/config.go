@@ -19,6 +19,8 @@ type Rule struct {
 	Query    string   `yaml:"query,omitempty"`
 	Branches []string `yaml:"branches,omitempty"`
 	Tags     []string `yaml:"tags,omitempty"`
+
+	DisableVendoring bool `yaml:"disable_vendoring"`
 }
 
 func ReadConfigFile(p string) (*Config, error) {
