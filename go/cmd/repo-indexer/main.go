@@ -27,6 +27,8 @@ func repoIndexer(args []string) error {
 	ctags := ""
 	runScheduler := false
 	initRun := false
+	withoutFetch := false
+	disableCleanup := false
 	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
 	fs.StringVarP(&configFile, "config", "c", configFile, "Config file")
 	fs.StringVar(&workDir, "work-dir", workDir, "Working root directory")
@@ -34,6 +36,8 @@ func repoIndexer(args []string) error {
 	fs.StringVar(&ctags, "ctags", ctags, "ctags path")
 	fs.BoolVar(&runScheduler, "run-scheduler", false, "")
 	fs.BoolVar(&initRun, "init-run", initRun, "")
+	fs.BoolVar(&withoutFetch, "without-fetch", withoutFetch, "Disable fetch")
+	fs.BoolVar(&disableCleanup, "disable-cleanup", disableCleanup, "Disable cleanup")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -51,14 +55,18 @@ func repoIndexer(args []string) error {
 			return xerrors.Errorf(": %w", err)
 		}
 	} else {
-		if err := indexer.Sync(); err != nil {
-			return xerrors.Errorf(": %w", err)
+		if !withoutFetch {
+			if err := indexer.Sync(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 		if err := indexer.BuildIndex(); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if err := indexer.Cleanup(); err != nil {
-			return xerrors.Errorf(": %w", err)
+		if !disableCleanup {
+			if err := indexer.Cleanup(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 	}
 
