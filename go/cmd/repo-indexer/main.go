@@ -29,6 +29,7 @@ func repoIndexer(args []string) error {
 	initRun := false
 	withoutFetch := false
 	disableCleanup := false
+	parallelism := 1
 	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
 	fs.StringVarP(&configFile, "config", "c", configFile, "Config file")
 	fs.StringVar(&workDir, "work-dir", workDir, "Working root directory")
@@ -38,6 +39,7 @@ func repoIndexer(args []string) error {
 	fs.BoolVar(&initRun, "init-run", initRun, "")
 	fs.BoolVar(&withoutFetch, "without-fetch", withoutFetch, "Disable fetch")
 	fs.BoolVar(&disableCleanup, "disable-cleanup", disableCleanup, "Disable cleanup")
+	fs.IntVar(&parallelism, "parallelism", parallelism, "The number of workers")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -49,7 +51,7 @@ func repoIndexer(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	indexer := repoindexer.NewIndexer(config, workDir, token, ctags, initRun)
+	indexer := repoindexer.NewIndexer(config, workDir, token, ctags, initRun, parallelism)
 	if runScheduler {
 		if err := scheduler(config, indexer); err != nil {
 			return xerrors.Errorf(": %w", err)

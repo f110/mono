@@ -29,11 +29,12 @@ import (
 )
 
 type Indexer struct {
-	config  *Config
-	workDir string
-	token   string
-	ctags   string
-	initRun bool
+	config      *Config
+	workDir     string
+	token       string
+	ctags       string
+	initRun     bool
+	parallelism int
 
 	repositories []*repository
 
@@ -41,8 +42,8 @@ type Indexer struct {
 	graphQLClient *githubv4.Client
 }
 
-func NewIndexer(rules *Config, workDir, token, ctags string, initRun bool) *Indexer {
-	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags, initRun: initRun}
+func NewIndexer(rules *Config, workDir, token, ctags string, initRun bool, parallelism int) *Indexer {
+	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags, initRun: initRun, parallelism: parallelism}
 }
 
 func (x *Indexer) Sync() error {
@@ -72,7 +73,7 @@ func (x *Indexer) BuildIndex() error {
 				Branches: branches,
 			},
 			CTags:       x.ctags,
-			Parallelism: 32,
+			Parallelism: x.parallelism,
 		}
 		opt.SetDefaults()
 		builder, err := build.NewBuilder(opt)
