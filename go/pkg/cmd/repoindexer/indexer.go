@@ -151,7 +151,9 @@ func (x *Indexer) BuildIndex() error {
 				fileBranches[k.hash] = append(fileBranches[k.hash], refName.Short())
 			}
 		}
-		os.RemoveAll(tempDir)
+		if err := os.RemoveAll(tempDir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
 
 		buf := new(bytes.Buffer)
 		docCount := 0
