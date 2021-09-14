@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -17,9 +18,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v32/github"
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
@@ -32,12 +36,15 @@ import (
 )
 
 type Indexer struct {
-	config      *Config
-	workDir     string
-	token       string
-	ctags       string
-	initRun     bool
-	parallelism int
+	config         *Config
+	workDir        string
+	token          string
+	ctags          string
+	initRun        bool
+	parallelism    int
+	appId          int64
+	installationId int64
+	privateKeyFile string
 
 	repositories []*repository
 
@@ -45,8 +52,18 @@ type Indexer struct {
 	graphQLClient *githubv4.Client
 }
 
-func NewIndexer(rules *Config, workDir, token, ctags string, initRun bool, parallelism int) *Indexer {
-	return &Indexer{config: rules, workDir: workDir, token: token, ctags: ctags, initRun: initRun, parallelism: parallelism}
+func NewIndexer(rules *Config, workDir, token, ctags string, appId, installationId int64, privateKeyFile string, initRun bool, parallelism int) *Indexer {
+	return &Indexer{
+		config:         rules,
+		workDir:        workDir,
+		token:          token,
+		ctags:          ctags,
+		initRun:        initRun,
+		parallelism:    parallelism,
+		appId:          appId,
+		installationId: installationId,
+		privateKeyFile: privateKeyFile,
+	}
 }
 
 func (x *Indexer) Sync() error {
@@ -54,7 +71,7 @@ func (x *Indexer) Sync() error {
 	for _, v := range repositories {
 		logger.Log.Debug("Found repository", zap.String("name", v.Name), zap.String("url", v.URL))
 
-		if err := v.sync(x.workDir, x.initRun); err != nil {
+		if err := v.sync(x.workDir, x.appId, x.installationId, x.privateKeyFile, x.initRun); err != nil {
 			logger.Log.Info("Failed sync repository", zap.Error(err), zap.String("url", v.URL))
 			continue
 		}
@@ -142,6 +159,10 @@ func (x *Indexer) BuildIndex() error {
 	}
 
 	return nil
+}
+
+func (x *Indexer) Reset() {
+	x.repositories = nil
 }
 
 func (x *Indexer) worker(queue chan file, builder *build.Builder, repo *repository, fileBranches map[file][]string, docCount *int32) {
@@ -312,7 +333,20 @@ type repository struct {
 	repo *git.Repository
 }
 
-func (x *repository) sync(workDir string, initRun bool) error {
+func (x *repository) sync(workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
+	var auth transport.AuthMethod
+	if privateKeyFile != "" {
+		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		token, err := t.Token(context.Background())
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		auth = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
+	}
+
 	// Clean up a directory for bare repository
 	bareDir := filepath.Join(workDir, ".bare", x.Name)
 	if _, err := os.Stat(bareDir); !os.IsNotExist(err) {
@@ -335,6 +369,7 @@ func (x *repository) sync(workDir string, initRun bool) error {
 		_, err = git.PlainCloneContext(context.TODO(), dir, false, &git.CloneOptions{
 			URL:        x.URL,
 			NoCheckout: true,
+			Auth:       auth,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -351,6 +386,7 @@ func (x *repository) sync(workDir string, initRun bool) error {
 	logger.Log.Debug("Fetch", zap.String("name", x.Name))
 	err = r.Fetch(&git.FetchOptions{
 		Progress: os.Stdout,
+		Auth:     auth,
 	})
 	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return xerrors.Errorf(": %w", err)
@@ -539,7 +575,7 @@ func (x *Indexer) listRepositories() []*repository {
 			}
 			repos = append(repos, &repository{
 				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
-				URL:              repo.GetGitURL(),
+				URL:              repo.GetCloneURL(),
 				Refs:             x.refSpecs(rule.Branches, rule.Tags),
 				DisableVendoring: rule.DisableVendoring,
 			})
@@ -597,10 +633,20 @@ func (x *Indexer) githubRESTClient() *github.Client {
 		return x.githubClient
 	}
 
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
-	tc := oauth2.NewClient(context.Background(), ts)
+	if x.privateKeyFile != "" {
+		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, x.appId, x.installationId, x.privateKeyFile)
+		if err != nil {
+			logger.Log.Info("Failed to read private key", zap.Error(err))
+			return nil
+		}
+		x.githubClient = github.NewClient(&http.Client{Transport: tr})
+	} else {
+		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
+		tc := oauth2.NewClient(context.Background(), ts)
 
-	x.githubClient = github.NewClient(tc)
+		x.githubClient = github.NewClient(tc)
+	}
+
 	return x.githubClient
 }
 
@@ -609,9 +655,20 @@ func (x *Indexer) githubGraphQLClient() *githubv4.Client {
 		return x.graphQLClient
 	}
 
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
-	tc := oauth2.NewClient(context.Background(), ts)
-	x.graphQLClient = githubv4.NewClient(tc)
+	if x.privateKeyFile != "" {
+		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, x.appId, x.installationId, x.privateKeyFile)
+		if err != nil {
+			logger.Log.Info("Failed to read private key", zap.Error(err))
+			return nil
+		}
+		x.graphQLClient = githubv4.NewClient(&http.Client{Transport: tr})
+	} else {
+		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
+		tc := oauth2.NewClient(context.Background(), ts)
+
+		x.graphQLClient = githubv4.NewClient(tc)
+	}
+
 	return x.graphQLClient
 }
 
