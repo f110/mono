@@ -161,13 +161,6 @@ container_pull(
     repository = "distroless/base",
 )
 
-container_pull(
-    name = "golang_container_1.17",
-    digest = "sha256:c5d9a9078164b8255ff1833e59451d9ff59a5f9d30ac12d41aa4783e9d025643",
-    registry = "index.docker.io",
-    repository = "library/golang",
-)
-
 http_archive(
     name = "com_github_migrate_migrate",
     build_file_content = "filegroup(name = \"bin\", srcs = [\"migrate.linux-amd64\"], visibility = [\"//visibility:public\"])",
