@@ -204,3 +204,10 @@ http_archive(
     sha256 = "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d",
     urls = ["https://golang.org/dl/go1.17.linux-amd64.tar.gz"],
 )
+
+load("@rules_python//python:pip.bzl", "pip_install")
+
+pip_install(
+    name = "py_deps",
+    requirements = "//:requirements.txt",
+)
