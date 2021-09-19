@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     fix, ax = plt.subplots()
     ax.stackplot(list(pandas.date_range(start_date, end_date)), list(plot_data.values()), labels=ages_label, colors=colors)
-    ax.set_title("New cases ratio by age")
+    ax.set_title("New cases ratio by age (Tokyo)")
     ax.set_ylabel("Percentage")
     ax.set_xlabel("Date")
     ax.set_xlim(pandas.Timestamp(start_date), pandas.Timestamp(end_date))

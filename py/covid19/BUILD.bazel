@@ -3,7 +3,8 @@ load("@py_deps//:requirements.bzl", "requirement")
 
 py_binary(
     name = "tokyo",
-    srcs = ["tokyo.py"],
+    srcs = ["tokyo-ratio-by-age.py"],
+    main = "tokyo-ratio-by-age.py",
     deps = [
         requirement("pandas"),
         requirement("matplotlib"),
