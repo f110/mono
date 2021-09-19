@@ -10,3 +10,21 @@ py_binary(
         requirement("matplotlib"),
     ],
 )
+
+py_binary(
+    name = "akita",
+    srcs = ["akita-ratio-by-age.py"],
+    main = "akita-ratio-by-age.py",
+    deps = [
+        requirement("pandas"),
+        requirement("matplotlib"),
+    ],
+)
+
+py_binary(
+    name = "create-data",
+    srcs = ["create-data.py"],
+    deps = [
+        requirement("beautifulsoup4"),
+    ],
+)
