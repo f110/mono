@@ -22,6 +22,16 @@ py_binary(
 )
 
 py_binary(
+    name = "akita-week",
+    srcs = ["akita-week-ratio-by-age.py"],
+    main = "akita-week-ratio-by-age.py",
+    deps = [
+        requirement("pandas"),
+        requirement("matplotlib"),
+    ],
+)
+
+py_binary(
     name = "create-data",
     srcs = ["create-data.py"],
     deps = [
