@@ -24,12 +24,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/google/go-github/v32/github"
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
-	"github.com/shurcooL/githubv4"
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
@@ -38,9 +35,7 @@ import (
 type Indexer struct {
 	Indexes []*RepositoryIndex
 
-	config         *Config
 	workDir        string
-	token          string
 	ctags          string
 	initRun        bool
 	parallelism    int
@@ -48,28 +43,37 @@ type Indexer struct {
 	installationId int64
 	privateKeyFile string
 
-	repositories []*repository
-
-	githubClient  *github.Client
-	graphQLClient *githubv4.Client
+	lister *RepositoryLister
 }
 
-func NewIndexer(rules *Config, workDir, token, ctags string, appId, installationId int64, privateKeyFile string, initRun bool, parallelism int) *Indexer {
+func NewIndexer(rules *Config, workDir, token, ctags string, appId, installationId int64, privateKeyFile string, initRun bool, parallelism int) (*Indexer, error) {
+	var listerOpts []RepositoryListerOpt
+	if appId > 0 && installationId > 0 && privateKeyFile != "" {
+		listerOpts = []RepositoryListerOpt{GitHubApp(appId, installationId, privateKeyFile)}
+	} else if token != "" {
+		listerOpts = []RepositoryListerOpt{GitHubToken(token)}
+	} else {
+		listerOpts = []RepositoryListerOpt{WithoutCredential()}
+	}
+	lister, err := NewRepositoryLister(rules.Rules, listerOpts...)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
 	return &Indexer{
-		config:         rules,
 		workDir:        workDir,
-		token:          token,
 		ctags:          ctags,
 		initRun:        initRun,
 		parallelism:    parallelism,
 		appId:          appId,
 		installationId: installationId,
 		privateKeyFile: privateKeyFile,
-	}
+		lister:         lister,
+	}, nil
 }
 
 func (x *Indexer) Sync() error {
-	repositories := x.listRepositories()
+	repositories := x.lister.List()
 	for _, v := range repositories {
 		logger.Log.Debug("Found repository", zap.String("name", v.Name), zap.String("url", v.URL))
 
@@ -85,7 +89,7 @@ func (x *Indexer) Sync() error {
 func (x *Indexer) BuildIndex() error {
 	indexDir := filepath.Join(x.workDir, ".index")
 
-	for _, v := range x.listRepositories() {
+	for _, v := range x.lister.List() {
 		t1 := time.Now()
 		m := newRepositoryMutator(v)
 		branchRefs, err := m.Mutate(x.workDir, v.Refs)
@@ -172,10 +176,10 @@ func (x *Indexer) BuildIndex() error {
 }
 
 func (x *Indexer) Reset() {
-	x.repositories = nil
+	x.lister.ClearCache()
 }
 
-func (x *Indexer) worker(queue chan file, builder *build.Builder, repo *repository, fileBranches map[file][]string, docCount *int32) {
+func (x *Indexer) worker(queue chan file, builder *build.Builder, repo *Repository, fileBranches map[file][]string, docCount *int32) {
 	for {
 		f, ok := <-queue
 		if !ok {
@@ -189,7 +193,7 @@ func (x *Indexer) worker(queue chan file, builder *build.Builder, repo *reposito
 	}
 }
 
-func (x *Indexer) addDocument(builder *build.Builder, repo *repository, f file, fileBranches map[file][]string) error {
+func (x *Indexer) addDocument(builder *build.Builder, repo *Repository, f file, fileBranches map[file][]string) error {
 	t := time.Now()
 	blob, err := repo.repo.BlobObject(f.hash)
 	if err != nil {
@@ -236,7 +240,7 @@ func (x *Indexer) Cleanup() error {
 		files[b] = struct{}{}
 	}
 
-	for _, v := range x.listRepositories() {
+	for _, v := range x.lister.List() {
 		n := url.QueryEscape(v.Name)
 		if len(n) > 200 {
 			h := sha1.New()
@@ -261,10 +265,10 @@ func (x *Indexer) Cleanup() error {
 }
 
 type repositoryMutator struct {
-	repo *repository
+	repo *Repository
 }
 
-func newRepositoryMutator(repo *repository) *repositoryMutator {
+func newRepositoryMutator(repo *Repository) *repositoryMutator {
 	return &repositoryMutator{repo: repo}
 }
 
@@ -334,16 +338,7 @@ func (m *repositoryMutator) Mutate(workDir string, refs []plumbing.ReferenceName
 	return branchRefs, nil
 }
 
-type repository struct {
-	Name             string
-	URL              string
-	DisableVendoring bool
-	Refs             []plumbing.ReferenceName
-
-	repo *git.Repository
-}
-
-func (x *repository) sync(workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
+func (x *Repository) sync(workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
 	var auth transport.AuthMethod
 	if privateKeyFile != "" {
 		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
@@ -405,7 +400,7 @@ func (x *repository) sync(workDir string, appId, installationId int64, privateKe
 	return nil
 }
 
-func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) (plumbing.ReferenceName, error) {
+func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (plumbing.ReferenceName, error) {
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
@@ -448,7 +443,7 @@ func (x *repository) checkout(workDir string, refName plumbing.ReferenceName) (p
 	return branchRef.Name(), nil
 }
 
-func (x *repository) resolveReference(refName plumbing.ReferenceName) (plumbing.Hash, error) {
+func (x *Repository) resolveReference(refName plumbing.ReferenceName) (plumbing.Hash, error) {
 	hash := plumbing.ZeroHash
 	ref, err := x.repo.Reference(refName, false)
 	if err != nil {
@@ -477,7 +472,7 @@ func (f file) String() string {
 	return fmt.Sprintf("%s: %s", f.path, f.hash.String())
 }
 
-func (x *repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Hash, error) {
+func (x *Repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Hash, error) {
 	ref, err := x.repo.Reference(refName, true)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -506,7 +501,7 @@ func (x *repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Ha
 	return files, nil
 }
 
-func (x *repository) newCommit() error {
+func (x *Repository) newCommit() error {
 	wt, err := x.repo.Worktree()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -533,7 +528,7 @@ func (x *repository) newCommit() error {
 	return nil
 }
 
-func (x *repository) cleanWorktree() error {
+func (x *Repository) cleanWorktree() error {
 	wt, err := x.repo.Worktree()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -545,7 +540,7 @@ func (x *repository) cleanWorktree() error {
 	return nil
 }
 
-func (x *repository) cleanup(workDir string) error {
+func (x *Repository) cleanup(workDir string) error {
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
@@ -567,141 +562,6 @@ func (x *repository) cleanup(workDir string) error {
 	}
 
 	return nil
-}
-
-func (x *Indexer) listRepositories() []*repository {
-	if x.repositories != nil {
-		return x.repositories
-	}
-
-	repos := make([]*repository, 0)
-
-	for _, rule := range x.config.Rules {
-		if rule.Owner != "" && rule.Name != "" {
-			repo, _, err := x.githubRESTClient().Repositories.Get(context.Background(), rule.Owner, rule.Name)
-			if err != nil {
-				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
-				continue
-			}
-			repos = append(repos, &repository{
-				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
-				URL:              repo.GetCloneURL(),
-				Refs:             x.refSpecs(rule.Branches, rule.Tags),
-				DisableVendoring: rule.DisableVendoring,
-			})
-		}
-
-		if rule.Query != "" {
-			vars := map[string]interface{}{
-				"searchQuery": githubv4.String(rule.Query),
-				"cursor":      (*githubv4.String)(nil),
-			}
-			err := x.githubGraphQLClient().Query(context.Background(), &listRepositoriesQuery, vars)
-			if err != nil {
-				logger.Log.Info("Failed execute query", zap.Error(err))
-				continue
-			}
-			for _, v := range listRepositoriesQuery.Search.Nodes {
-				if v.Type != "Repository" {
-					continue
-				}
-				if v.Repository.IsArchived {
-					continue
-				}
-				repos = append(repos, &repository{
-					Name:             fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
-					URL:              v.Repository.URL.String(),
-					Refs:             x.refSpecs(rule.Branches, rule.Tags),
-					DisableVendoring: rule.DisableVendoring,
-				})
-			}
-			if !listRepositoriesQuery.Search.PageInfo.HasNextPage {
-				break
-			}
-			vars["cursor"] = listRepositoriesQuery.Search.PageInfo.EndCursor
-		}
-	}
-
-	x.repositories = repos
-	return repos
-}
-
-func (*Indexer) refSpecs(branches, tags []string) []plumbing.ReferenceName {
-	refs := make([]plumbing.ReferenceName, 0, len(branches)+len(tags))
-	for _, v := range branches {
-		refs = append(refs, plumbing.NewRemoteReferenceName("origin", v))
-	}
-	for _, v := range tags {
-		refs = append(refs, plumbing.NewTagReferenceName(v))
-	}
-
-	return refs
-}
-
-func (x *Indexer) githubRESTClient() *github.Client {
-	if x.githubClient != nil {
-		return x.githubClient
-	}
-
-	if x.privateKeyFile != "" {
-		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, x.appId, x.installationId, x.privateKeyFile)
-		if err != nil {
-			logger.Log.Info("Failed to read private key", zap.Error(err))
-			return nil
-		}
-		x.githubClient = github.NewClient(&http.Client{Transport: tr})
-	} else {
-		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
-		tc := oauth2.NewClient(context.Background(), ts)
-
-		x.githubClient = github.NewClient(tc)
-	}
-
-	return x.githubClient
-}
-
-func (x *Indexer) githubGraphQLClient() *githubv4.Client {
-	if x.graphQLClient != nil {
-		return x.graphQLClient
-	}
-
-	if x.privateKeyFile != "" {
-		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, x.appId, x.installationId, x.privateKeyFile)
-		if err != nil {
-			logger.Log.Info("Failed to read private key", zap.Error(err))
-			return nil
-		}
-		x.graphQLClient = githubv4.NewClient(&http.Client{Transport: tr})
-	} else {
-		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: x.token})
-		tc := oauth2.NewClient(context.Background(), ts)
-
-		x.graphQLClient = githubv4.NewClient(tc)
-	}
-
-	return x.graphQLClient
-}
-
-var listRepositoriesQuery struct {
-	Search struct {
-		PageInfo struct {
-			EndCursor   githubv4.String
-			HasNextPage bool
-		}
-		Nodes []struct {
-			Type       string           `graphql:"__typename"`
-			Repository RepositorySchema `graphql:"... on Repository"`
-		}
-	} `graphql:"search(query: $searchQuery type: REPOSITORY first: 100 after: $cursor)"`
-}
-
-type RepositorySchema struct {
-	Name  string
-	Owner struct {
-		Login string
-	}
-	URL        githubv4.URI
-	IsArchived bool
 }
 
 type RepositoryIndex struct {

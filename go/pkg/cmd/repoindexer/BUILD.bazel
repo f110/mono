@@ -6,6 +6,7 @@ go_library(
         "command.go",
         "config.go",
         "indexer.go",
+        "lister.go",
         "objectstorage.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/cmd/repoindexer",
