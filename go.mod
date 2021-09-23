@@ -35,6 +35,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.11-0.20210302210017-6ae69c73ce78
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
+	github.com/nats-io/nats.go v1.12.3
 	github.com/peco/peco v0.5.8
 	github.com/prometheus/client_golang v1.8.0
 	github.com/robfig/cron/v3 v3.0.1

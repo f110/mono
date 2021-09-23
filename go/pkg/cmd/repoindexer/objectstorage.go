@@ -18,6 +18,7 @@ import (
 
 type ObjectStorageUploader struct {
 	executionKey string
+	bucket       string
 	backend      *storage.MinIO
 }
 
@@ -32,25 +33,26 @@ func NewObjectStorageUploader(
 	opt := storage.NewMinIOOptions(name, namespace, port, bucket, accessKey, secretAccessKey)
 	s := storage.NewMinIOStorage(k8sClient, k8sConf, opt, dev)
 
-	return &ObjectStorageUploader{backend: s, executionKey: fmt.Sprintf("%d", time.Now().Unix())}
+	return &ObjectStorageUploader{bucket: bucket, backend: s, executionKey: fmt.Sprintf("%d", time.Now().Unix())}
 }
 
-func (s *ObjectStorageUploader) Upload(ctx context.Context, name string, files []string) error {
+func (s *ObjectStorageUploader) Upload(ctx context.Context, name string, files []string) (string, error) {
 	for _, v := range files {
 		f, err := os.Open(v)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return "", xerrors.Errorf(": %w", err)
 		}
 		info, err := f.Stat()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return "", xerrors.Errorf(": %w", err)
 		}
-		err = s.backend.PutReader(ctx, filepath.Join(name, s.executionKey, filepath.Base(v)), f, info.Size())
+		objectPath := filepath.Join(name, s.executionKey, filepath.Base(v))
+		err = s.backend.PutReader(ctx, objectPath, f, info.Size())
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return "", xerrors.Errorf(": %w", err)
 		}
-		logger.Log.Info("Successfully upload", zap.String("name", filepath.Join(name, s.executionKey, filepath.Base(v))))
+		logger.Log.Info("Successfully upload", zap.String("name", objectPath))
 	}
 
-	return nil
+	return fmt.Sprintf("minio://%s/%s", s.bucket, filepath.Join(name, s.executionKey)), nil
 }

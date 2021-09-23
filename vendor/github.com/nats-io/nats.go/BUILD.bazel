@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "nats_go",
+    srcs = [
+        "context.go",
+        "enc.go",
+        "js.go",
+        "jsm.go",
+        "nats.go",
+        "netchan.go",
+        "parser.go",
+        "timer.go",
+        "ws.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/nats-io/nats.go",
+    importpath = "github.com/nats-io/nats.go",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/nats-io/nats.go/encoders/builtin",
+        "//vendor/github.com/nats-io/nats.go/util",
+        "//vendor/github.com/nats-io/nkeys",
+        "//vendor/github.com/nats-io/nuid",
+    ],
+)

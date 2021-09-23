@@ -33,6 +33,7 @@ func repoIndexer(args []string) error {
 	fs.StringVar(&opt.MinIOBucket, "minio-bucket", opt.MinIOBucket, "The bucket name that will be used")
 	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", opt.MinIOAccessKey, "The access key")
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", opt.MinIOSecretAccessKey, "The secret access key")
+	fs.StringVar(&opt.NATSURL, "nats-url", opt.NATSURL, "The URL for nats-server")
 	fs.BoolVar(&dev, "dev", dev, "Development mode")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
