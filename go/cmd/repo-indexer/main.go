@@ -13,7 +13,7 @@ import (
 
 func repoIndexer(args []string) error {
 	dev := false
-	opt := repoindexer.NewRunOption()
+	opt := repoindexer.NewIndexerRunOption()
 	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
 	fs.StringVarP(&opt.ConfigFile, "config", "c", opt.ConfigFile, "Config file")
 	fs.StringVar(&opt.WorkDir, "work-dir", opt.WorkDir, "Working root directory")
@@ -34,6 +34,7 @@ func repoIndexer(args []string) error {
 	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", opt.MinIOAccessKey, "The access key")
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", opt.MinIOSecretAccessKey, "The secret access key")
 	fs.StringVar(&opt.NATSURL, "nats-url", opt.NATSURL, "The URL for nats-server")
+	fs.BoolVar(&opt.DisableObjectStorageCleanup, "disable-object-storage-cleanup", opt.DisableObjectStorageCleanup, "Disable cleanup of the object storage")
 	fs.BoolVar(&dev, "dev", dev, "Development mode")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {

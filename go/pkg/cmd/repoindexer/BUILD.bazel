@@ -7,6 +7,7 @@ go_library(
         "config.go",
         "indexer.go",
         "lister.go",
+        "manifest.go",
         "notify.go",
         "objectstorage.go",
     ],

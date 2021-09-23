@@ -44,19 +44,17 @@ func NewNotify(u string) (*Notify, error) {
 	return n, nil
 }
 
-func (n *Notify) Notify(ctx context.Context, urls []string) error {
-	for _, v := range urls {
-		pubAck, err := n.js.PublishAsync(NotifySubject, []byte(v))
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		select {
-		case <-pubAck.Ok():
-		case err := <-pubAck.Err():
-			return xerrors.Errorf(": %w", err)
-		case <-ctx.Done():
-			return ctx.Err()
-		}
+func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
+	pubAck, err := n.js.PublishAsync(NotifySubject, []byte(manifest.filename))
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	select {
+	case <-pubAck.Ok():
+	case err := <-pubAck.Err():
+		return xerrors.Errorf(": %w", err)
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
 	select {

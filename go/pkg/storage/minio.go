@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/minio/minio-go/v7"
@@ -136,7 +135,7 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	buf, err := ioutil.ReadAll(obj)
+	buf, err := io.ReadAll(obj)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
