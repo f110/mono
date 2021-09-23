@@ -58,7 +58,7 @@ func RepoIndexer(opt *RunOption, dev bool) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	indexer := NewIndexer(
+	indexer, err := NewIndexer(
 		config,
 		opt.WorkDir,
 		opt.Token,
@@ -69,6 +69,9 @@ func RepoIndexer(opt *RunOption, dev bool) error {
 		opt.InitRun,
 		opt.Parallelism,
 	)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	if opt.RunScheduler {
 		if err := scheduler(config, indexer); err != nil {
 			return xerrors.Errorf(": %w", err)
