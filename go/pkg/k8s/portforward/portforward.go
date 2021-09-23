@@ -44,6 +44,7 @@ func PortForward(
 		for i := range p.Items {
 			pp[i] = &p.Items[i]
 		}
+		pods = pp
 	}
 
 	var targetPod *corev1.Pod

@@ -36,6 +36,8 @@ import (
 )
 
 type Indexer struct {
+	Indexes []*RepositoryIndex
+
 	config         *Config
 	workDir        string
 	token          string
@@ -81,6 +83,8 @@ func (x *Indexer) Sync() error {
 }
 
 func (x *Indexer) BuildIndex() error {
+	indexDir := filepath.Join(x.workDir, ".index")
+
 	for _, v := range x.listRepositories() {
 		t1 := time.Now()
 		m := newRepositoryMutator(v)
@@ -112,7 +116,7 @@ func (x *Indexer) BuildIndex() error {
 			branches = append(branches, zoekt.RepositoryBranch{Name: strings.TrimPrefix(v.Short(), "origin/")})
 		}
 		opt := build.Options{
-			IndexDir: filepath.Join(x.workDir, ".index"),
+			IndexDir: indexDir,
 			RepositoryDescription: zoekt.Repository{
 				Name:     v.Name,
 				Branches: branches,
@@ -156,6 +160,12 @@ func (x *Indexer) BuildIndex() error {
 		if err := v.cleanup(x.workDir); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
+
+		index, err := NewRepositoryIndex(v.Name, indexDir)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		x.Indexes = append(x.Indexes, index)
 	}
 
 	return nil
@@ -692,4 +702,33 @@ type RepositorySchema struct {
 	}
 	URL        githubv4.URI
 	IsArchived bool
+}
+
+type RepositoryIndex struct {
+	Name  string
+	Files []string
+}
+
+func NewRepositoryIndex(name, indexDir string) (*RepositoryIndex, error) {
+	entry, err := os.ReadDir(indexDir)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	n := url.QueryEscape(name)
+	if len(n) > 200 {
+		h := sha1.New()
+		io.WriteString(h, n)
+		s := fmt.Sprintf("%x", h.Sum(nil))[:8]
+		n = n[:200] + s
+	}
+
+	files := make([]string, 0)
+	for _, v := range entry {
+		if strings.HasPrefix(v.Name(), n) {
+			files = append(files, filepath.Join(indexDir, v.Name()))
+		}
+	}
+
+	return &RepositoryIndex{Name: name, Files: files}, nil
 }

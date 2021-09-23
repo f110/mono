@@ -1,15 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/pflag"
-	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/repoindexer"
@@ -17,100 +12,40 @@ import (
 )
 
 func repoIndexer(args []string) error {
-	d, err := os.Getwd()
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	configFile := ""
-	workDir := d
-	token := ""
-	ctags := ""
-	runScheduler := false
-	initRun := false
-	withoutFetch := false
-	disableCleanup := false
-	parallelism := 1
-	appId := int64(0)
-	installationId := int64(0)
-	privateKeyFile := ""
+	dev := false
+	opt := repoindexer.NewRunOption()
 	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
-	fs.StringVarP(&configFile, "config", "c", configFile, "Config file")
-	fs.StringVar(&workDir, "work-dir", workDir, "Working root directory")
-	fs.StringVar(&token, "token", token, "GitHub API token")
-	fs.StringVar(&ctags, "ctags", ctags, "ctags path")
-	fs.BoolVar(&runScheduler, "run-scheduler", false, "")
-	fs.BoolVar(&initRun, "init-run", initRun, "")
-	fs.BoolVar(&withoutFetch, "without-fetch", withoutFetch, "Disable fetch")
-	fs.BoolVar(&disableCleanup, "disable-cleanup", disableCleanup, "Disable cleanup")
-	fs.IntVar(&parallelism, "parallelism", parallelism, "The number of workers")
-	fs.Int64Var(&appId, "app-id", appId, "GitHub Application ID")
-	fs.Int64Var(&installationId, "installation-id", installationId, "GitHub Application installation ID")
-	fs.StringVar(&privateKeyFile, "private-key-file", privateKeyFile, "Private key file for GitHub App")
+	fs.StringVarP(&opt.ConfigFile, "config", "c", opt.ConfigFile, "Config file")
+	fs.StringVar(&opt.WorkDir, "work-dir", opt.WorkDir, "Working root directory")
+	fs.StringVar(&opt.Token, "token", opt.Token, "GitHub API token")
+	fs.StringVar(&opt.Ctags, "ctags", opt.Ctags, "ctags path")
+	fs.BoolVar(&opt.RunScheduler, "run-scheduler", opt.RunScheduler, "")
+	fs.BoolVar(&opt.InitRun, "init-run", opt.InitRun, "")
+	fs.BoolVar(&opt.WithoutFetch, "without-fetch", opt.WithoutFetch, "Disable fetch")
+	fs.BoolVar(&opt.DisableCleanup, "disable-cleanup", opt.DisableCleanup, "Disable cleanup")
+	fs.IntVar(&opt.Parallelism, "parallelism", opt.Parallelism, "The number of workers")
+	fs.Int64Var(&opt.AppId, "app-id", opt.AppId, "GitHub Application ID")
+	fs.Int64Var(&opt.InstallationId, "installation-id", opt.InstallationId, "GitHub Application installation ID")
+	fs.StringVar(&opt.PrivateKeyFile, "private-key-file", opt.PrivateKeyFile, "Private key file for GitHub App")
+	fs.StringVar(&opt.MinIOName, "minio-name", opt.MinIOName, "The name of MinIO")
+	fs.StringVar(&opt.MinIONamespace, "minio-namespace", opt.MinIONamespace, "The namespace of MinIO")
+	fs.IntVar(&opt.MinIOPort, "minio-port", opt.MinIOPort, "Port number of MinIO")
+	fs.StringVar(&opt.MinIOBucket, "minio-bucket", opt.MinIOBucket, "The bucket name that will be used")
+	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", opt.MinIOAccessKey, "The access key")
+	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", opt.MinIOSecretAccessKey, "The secret access key")
+	fs.BoolVar(&dev, "dev", dev, "Development mode")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	logger.Init()
-
-	config, err := repoindexer.ReadConfigFile(configFile)
-	if err != nil {
+	if err := logger.Init(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	indexer := repoindexer.NewIndexer(config, workDir, token, ctags, appId, installationId, privateKeyFile, initRun, parallelism)
-	if runScheduler {
-		if err := scheduler(config, indexer); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-	} else {
-		if !withoutFetch {
-			if err := indexer.Sync(); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-		}
-		if err := indexer.BuildIndex(); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		if !disableCleanup {
-			if err := indexer.Cleanup(); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-func scheduler(config *repoindexer.Config, indexer *repoindexer.Indexer) error {
-	c := cron.New()
-	_, err := c.AddFunc(config.RefreshSchedule, func() {
-		if err := indexer.Sync(); err != nil {
-			logger.Log.Info("Failed sync", zap.Error(err))
-		}
-		if err := indexer.BuildIndex(); err != nil {
-			logger.Log.Info("Failed build index", zap.Error(err))
-		}
-		if err := indexer.Cleanup(); err != nil {
-			logger.Log.Info("Failed cleanup", zap.Error(err))
-		}
-		indexer.Reset()
-	})
+	err := repoindexer.RepoIndexer(opt, dev)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	logger.Log.Info("Start scheduler")
-	c.Start()
-
-	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stopFunc()
-
-	<-ctx.Done()
-	logger.Log.Debug("Got signal")
-
-	ctx = c.Stop()
-
-	logger.Log.Info("Waiting for stop scheduler")
-	<-ctx.Done()
 
 	return nil
 }
