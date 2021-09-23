@@ -25,8 +25,8 @@ func NewObjectStorageIndexManager(s *storage.MinIO, bucket string) *ObjectStorag
 	return &ObjectStorageIndexManager{bucket: bucket, backend: s, executionKey: time.Now().Unix()}
 }
 
-func (s *ObjectStorageIndexManager) ExecutionKey() int64 {
-	return s.executionKey
+func (s *ObjectStorageIndexManager) ExecutionKey() uint64 {
+	return uint64(s.executionKey)
 }
 
 func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files []string) (string, error) {

@@ -11,9 +11,9 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-func repoIndexer(args []string) error {
-	cmd := repoindexer.NewIndexerCommand()
-	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
+func indexUpdater(args []string) error {
+	cmd := repoindexer.NewUpdaterCommand()
+	fs := pflag.NewFlagSet("index-updater", pflag.ContinueOnError)
 	cmd.Flags(fs)
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
@@ -31,7 +31,7 @@ func repoIndexer(args []string) error {
 }
 
 func main() {
-	if err := repoIndexer(os.Args); err != nil {
+	if err := indexUpdater(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

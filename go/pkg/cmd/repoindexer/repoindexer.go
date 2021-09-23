@@ -4,22 +4,19 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/robfig/cron/v3"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
-type IndexerRunOption struct {
+type IndexerCommand struct {
 	ConfigFile     string
 	WorkDir        string
 	Token          string
@@ -42,59 +39,85 @@ type IndexerRunOption struct {
 	DisableObjectStorageCleanup bool
 
 	NATSURL string
+
+	Dev bool
 }
 
-func NewIndexerRunOption() *IndexerRunOption {
+func NewIndexerCommand() *IndexerCommand {
 	d, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
-	return &IndexerRunOption{
+	return &IndexerCommand{
 		WorkDir:     d,
 		MinIOPort:   9000,
 		Parallelism: 1,
 	}
 }
 
-func RepoIndexer(opt *IndexerRunOption, dev bool) error {
-	config, err := ReadConfigFile(opt.ConfigFile)
+func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
+	fs.StringVarP(&r.ConfigFile, "config", "c", r.ConfigFile, "Config file")
+	fs.StringVar(&r.WorkDir, "work-dir", r.WorkDir, "Working root directory")
+	fs.StringVar(&r.Token, "token", r.Token, "GitHub API token")
+	fs.StringVar(&r.Ctags, "ctags", r.Ctags, "ctags path")
+	fs.BoolVar(&r.RunScheduler, "run-scheduler", r.RunScheduler, "")
+	fs.BoolVar(&r.InitRun, "init-run", r.InitRun, "")
+	fs.BoolVar(&r.WithoutFetch, "without-fetch", r.WithoutFetch, "Disable fetch")
+	fs.BoolVar(&r.DisableCleanup, "disable-cleanup", r.DisableCleanup, "Disable cleanup")
+	fs.IntVar(&r.Parallelism, "parallelism", r.Parallelism, "The number of workers")
+	fs.Int64Var(&r.AppId, "app-id", r.AppId, "GitHub Application ID")
+	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
+	fs.StringVar(&r.PrivateKeyFile, "private-key-file", r.PrivateKeyFile, "Private key file for GitHub App")
+	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
+	fs.StringVar(&r.MinIONamespace, "minio-namespace", r.MinIONamespace, "The namespace of MinIO")
+	fs.IntVar(&r.MinIOPort, "minio-port", r.MinIOPort, "Port number of MinIO")
+	fs.StringVar(&r.MinIOBucket, "minio-bucket", r.MinIOBucket, "The bucket name that will be used")
+	fs.StringVar(&r.MinIOAccessKey, "minio-access-key", r.MinIOAccessKey, "The access key")
+	fs.StringVar(&r.MinIOSecretAccessKey, "minio-secret-access-key", r.MinIOSecretAccessKey, "The secret access key")
+	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
+	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup of the object storage")
+	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
+}
+
+func (r *IndexerCommand) Run() error {
+	config, err := ReadConfigFile(r.ConfigFile)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	indexer, err := NewIndexer(
 		config,
-		opt.WorkDir,
-		opt.Token,
-		opt.Ctags,
-		opt.AppId,
-		opt.InstallationId,
-		opt.PrivateKeyFile,
-		opt.InitRun,
-		opt.Parallelism,
+		r.WorkDir,
+		r.Token,
+		r.Ctags,
+		r.AppId,
+		r.InstallationId,
+		r.PrivateKeyFile,
+		r.InitRun,
+		r.Parallelism,
 	)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if opt.RunScheduler {
-		if err := scheduler(config, indexer, opt, dev); err != nil {
+	if r.RunScheduler {
+		if err := r.scheduler(config, indexer); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		return nil
 	}
 
-	if err := run(indexer, opt, dev); err != nil {
+	if err := r.run(indexer); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
 }
 
-func run(indexer *Indexer, opt *IndexerRunOption, dev bool) error {
-	enableObjectStorageUpload := opt.MinIOName != "" && opt.MinIONamespace != "" && opt.MinIOBucket != ""
+func (r *IndexerCommand) run(indexer *Indexer) error {
+	enableObjectStorageUpload := r.MinIOName != "" && r.MinIONamespace != "" && r.MinIOBucket != ""
 
-	if !opt.WithoutFetch {
+	if !r.WithoutFetch {
 		if err := indexer.Sync(); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -103,23 +126,23 @@ func run(indexer *Indexer, opt *IndexerRunOption, dev bool) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	if enableObjectStorageUpload {
-		manifest, err := uploadIndex(
+		manifest, err := r.uploadIndex(
 			indexer,
-			opt.MinIOName,
-			opt.MinIONamespace,
-			opt.MinIOPort,
-			opt.MinIOBucket,
-			opt.MinIOAccessKey,
-			opt.MinIOSecretAccessKey,
-			opt.DisableObjectStorageCleanup,
-			dev,
+			r.MinIOName,
+			r.MinIONamespace,
+			r.MinIOPort,
+			r.MinIOBucket,
+			r.MinIOAccessKey,
+			r.MinIOSecretAccessKey,
+			r.DisableObjectStorageCleanup,
+			r.Dev,
 		)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 
-		if opt.NATSURL != "" {
-			n, err := NewNotify(opt.NATSURL)
+		if r.NATSURL != "" {
+			n, err := NewNotify(r.NATSURL)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -131,7 +154,7 @@ func run(indexer *Indexer, opt *IndexerRunOption, dev bool) error {
 			cancel()
 		}
 	}
-	if !opt.DisableCleanup {
+	if !r.DisableCleanup {
 		if err := indexer.Cleanup(); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -140,12 +163,12 @@ func run(indexer *Indexer, opt *IndexerRunOption, dev bool) error {
 	return nil
 }
 
-func scheduler(config *Config, indexer *Indexer, opt *IndexerRunOption, dev bool) error {
+func (r *IndexerCommand) scheduler(config *Config, indexer *Indexer) error {
 	c := cron.New()
 	_, err := c.AddFunc(config.RefreshSchedule, func() {
 		defer indexer.Reset()
 
-		if err := run(indexer, opt, dev); err != nil {
+		if err := r.run(indexer); err != nil {
 			logger.Log.Info("Failed indexing", zap.Error(err))
 		}
 	})
@@ -169,7 +192,7 @@ func scheduler(config *Config, indexer *Indexer, opt *IndexerRunOption, dev bool
 	return nil
 }
 
-func uploadIndex(
+func (r *IndexerCommand) uploadIndex(
 	indexer *Indexer,
 	minioName, minioNamespace string,
 	minioPort int,
@@ -220,74 +243,4 @@ func uploadIndex(
 	}
 
 	return &manifest, nil
-}
-
-func newK8sClient(dev bool) (kubernetes.Interface, *rest.Config, error) {
-	var k8sConf *rest.Config
-	if dev {
-		h, err := os.UserHomeDir()
-		if err != nil {
-			return nil, nil, xerrors.Errorf(": %w", err)
-		}
-		kubeconfigPath := filepath.Join(h, ".kube/config")
-		cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
-		if err != nil {
-			return nil, nil, xerrors.Errorf(": %w", err)
-		}
-		k8sConf = cfg
-	} else {
-		cfg, err := rest.InClusterConfig()
-		if err != nil {
-			return nil, nil, xerrors.Errorf(": %w", err)
-		}
-		k8sConf = cfg
-	}
-	k8sClient, err := kubernetes.NewForConfig(k8sConf)
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-
-	return k8sClient, k8sConf, nil
-}
-
-type UpdaterRunOption struct {
-	IndexDir string
-
-	MinIOName            string
-	MinIONamespace       string
-	MinIOPort            int
-	MinIOBucket          string
-	MinIOAccessKey       string
-	MinIOSecretAccessKey string
-
-	NATSURL string
-}
-
-func NewUpdaterRunOptions() *UpdaterRunOption {
-	return &UpdaterRunOption{
-		MinIOPort: 9000,
-	}
-}
-
-func IndexUpdater(opt *UpdaterRunOption, dev bool) error {
-	k8sClient, k8sConf, err := newK8sClient(dev)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
-	s := storage.NewMinIOStorage(k8sClient, k8sConf, minioOpt, dev)
-
-	mm := NewManifestManager(s)
-	manifest, err := mm.GetLatest(context.Background())
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	logger.Log.Info("Found manifest", zap.Int64("createdAt", manifest.CreatedAt.Unix()))
-
-	manager := NewObjectStorageIndexManager(s, opt.MinIOBucket)
-	if err := manager.Download(context.Background(), opt.IndexDir, manifest); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	return nil
 }

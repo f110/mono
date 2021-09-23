@@ -286,7 +286,7 @@ func (m *repositoryMutator) Mutate(workDir string, refs []plumbing.ReferenceName
 		}
 
 		if !m.repo.DisableVendoring {
-			logger.Log.Debug("Vendoring", zap.String("name", m.repo.Name))
+			logger.Log.Debug("Vendoring", zap.String("name", m.repo.Name), zap.String("dir", dir))
 			err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
 					return err

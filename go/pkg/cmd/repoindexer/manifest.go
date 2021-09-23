@@ -20,12 +20,12 @@ import (
 type Manifest struct {
 	CreatedAt    time.Time
 	Indexes      map[string]string
-	ExecutionKey int64
+	ExecutionKey uint64
 
 	filename string
 }
 
-func NewManifest(executionKey int64, indexes map[string]string) Manifest {
+func NewManifest(executionKey uint64, indexes map[string]string) Manifest {
 	return Manifest{
 		CreatedAt:    time.Now(),
 		Indexes:      indexes,
@@ -94,7 +94,7 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 	return manifest, nil
 }
 
-func (m *ManifestManager) Get(ctx context.Context, ts int64) (Manifest, error) {
+func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) {
 	manifest := Manifest{}
 
 	buf, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", ts))
@@ -139,7 +139,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 	targets := timestamps[2:]
 	result := make([]Manifest, 0)
 	for _, v := range targets {
-		manifest, err := m.Get(ctx, v)
+		manifest, err := m.Get(ctx, uint64(v))
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}

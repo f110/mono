@@ -2,6 +2,7 @@ package repoindexer
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 
 	"github.com/nats-io/nats.go"
@@ -45,7 +46,9 @@ func NewNotify(u string) (*Notify, error) {
 }
 
 func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
-	pubAck, err := n.js.PublishAsync(NotifySubject, []byte(manifest.filename))
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(buf, manifest.ExecutionKey)
+	pubAck, err := n.js.PublishAsync(NotifySubject, buf)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -65,10 +68,19 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 	}
 }
 
-func (n *Notify) Subscribe() (*Subscription, error) {
-	ch := make(chan string)
+func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, error) {
+	ch := make(chan Manifest)
 	sub, err := n.js.Subscribe(NotifySubject, func(msg *nats.Msg) {
-		ch <- string(msg.Data)
+		executionKey := binary.LittleEndian.Uint64(msg.Data)
+		manifest, err := manifestManager.Get(context.TODO(), executionKey)
+		if err != nil {
+			logger.Log.Info("Failed get manifest", zap.Error(err), zap.Uint64("key", executionKey))
+			return
+		}
+		ch <- manifest
+		if err := msg.Ack(); err != nil {
+			logger.Log.Warn("Something occurred when acknowledge", zap.Error(err), zap.Uint64("key", executionKey))
+		}
 	})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -100,7 +112,7 @@ func (n *Notify) setupStream() error {
 }
 
 type Subscription struct {
-	ch   chan string
+	ch   chan Manifest
 	done chan struct{}
 }
 
