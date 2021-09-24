@@ -51,7 +51,18 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 }
 
 func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir string, manifest Manifest) error {
-	for repoName, v := range manifest.Indexes {
+	tmpDir := filepath.Join(indexDir, ".tmp")
+	if _, err := os.Stat(tmpDir); err == nil {
+		logger.Log.Debug("Remove tmp directory", zap.String("dir", tmpDir))
+		if err := os.RemoveAll(tmpDir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	for _, v := range manifest.Indexes {
 		files, err := s.listFiles(ctx, v)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -63,22 +74,42 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 				return xerrors.Errorf(": %w", err)
 			}
 
-			filePath := filepath.Join(indexDir, repoName, filepath.Base(f))
-			if _, err := os.Stat(filepath.Dir(filePath)); err == nil {
-				logger.Log.Debug("Remove old index directory", zap.String("dir", filepath.Dir(filePath)))
-				if err := os.RemoveAll(filepath.Dir(filePath)); err != nil {
-					return xerrors.Errorf(": %w", err)
-				}
-			}
-			if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-
+			filePath := filepath.Join(tmpDir, filepath.Base(f))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 			logger.Log.Debug("Download file", zap.String("path", filePath))
 		}
+	}
+
+	entry, err := os.ReadDir(indexDir)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	logger.Log.Debug("Remove old index files", zap.Int("len", len(entry)-1))
+	for _, v := range entry {
+		if v.Name() == ".tmp" {
+			continue
+		}
+		if err := os.Remove(filepath.Join(indexDir, v.Name())); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	entry, err = os.ReadDir(tmpDir)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	for _, v := range entry {
+		logger.Log.Debug("Move index file",
+			zap.String("from", filepath.Join(tmpDir, v.Name())),
+			zap.String("to", filepath.Join(indexDir, v.Name())),
+		)
+		if err := os.Rename(filepath.Join(tmpDir, v.Name()), filepath.Join(indexDir, v.Name())); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+	if err := os.Remove(tmpDir); err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
