@@ -95,10 +95,6 @@ func (u *UpdaterCommand) downloadLatest() error {
 }
 
 func (u *UpdaterCommand) subscribe(ctx context.Context) error {
-	if err := u.downloadLatest(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
 	n, err := NewNotify(u.NATSURL, u.NATSStreamName, u.NATSSubject)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
