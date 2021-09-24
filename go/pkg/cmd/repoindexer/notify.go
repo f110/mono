@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -12,16 +13,13 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-const (
-	StreamName    = "repoindexer"
-	NotifySubject = StreamName + "." + "notify"
-)
-
 type Notify struct {
+	subject string
+
 	js nats.JetStreamContext
 }
 
-func NewNotify(u string) (*Notify, error) {
+func NewNotify(u, streamName, subject string) (*Notify, error) {
 	nc, err := nats.Connect(u)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -30,11 +28,11 @@ func NewNotify(u string) (*Notify, error) {
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	n := &Notify{js: js}
+	n := &Notify{subject: fmt.Sprintf("%s.%s", streamName, subject), js: js}
 
-	_, err = js.StreamInfo(StreamName)
+	_, err = js.StreamInfo(streamName)
 	if errors.Is(err, nats.ErrStreamNotFound) {
-		if err := n.setupStream(); err != nil {
+		if err := n.setupStream(streamName); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 	}
@@ -48,7 +46,7 @@ func NewNotify(u string) (*Notify, error) {
 func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, manifest.ExecutionKey)
-	pubAck, err := n.js.PublishAsync(NotifySubject, buf)
+	pubAck, err := n.js.PublishAsync(n.subject, buf)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -70,7 +68,7 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 
 func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, error) {
 	ch := make(chan Manifest)
-	sub, err := n.js.Subscribe(NotifySubject, func(msg *nats.Msg) {
+	sub, err := n.js.Subscribe(n.subject, func(msg *nats.Msg) {
 		executionKey := binary.LittleEndian.Uint64(msg.Data)
 		manifest, err := manifestManager.Get(context.TODO(), executionKey)
 		if err != nil {
@@ -98,10 +96,10 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 	return subscription, nil
 }
 
-func (n *Notify) setupStream() error {
+func (n *Notify) setupStream(streamName string) error {
 	_, err := n.js.AddStream(&nats.StreamConfig{
-		Name:      StreamName,
-		Subjects:  []string{StreamName + ".*"},
+		Name:      streamName,
+		Subjects:  []string{streamName + ".*"},
 		Retention: nats.InterestPolicy,
 	})
 	if err != nil {

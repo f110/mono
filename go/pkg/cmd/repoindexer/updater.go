@@ -22,7 +22,9 @@ type UpdaterCommand struct {
 	MinIOAccessKey       string
 	MinIOSecretAccessKey string
 
-	NATSURL string
+	NATSURL        string
+	NATSStreamName string
+	NATSSubject    string
 
 	Dev bool
 
@@ -33,7 +35,9 @@ type UpdaterCommand struct {
 
 func NewUpdaterCommand() *UpdaterCommand {
 	return &UpdaterCommand{
-		MinIOPort: 9000,
+		MinIOPort:      9000,
+		NATSStreamName: "repoindexer",
+		NATSSubject:    "notify",
 	}
 }
 
@@ -47,6 +51,8 @@ func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&u.MinIOAccessKey, "minio-access-key", u.MinIOAccessKey, "The access key")
 	fs.StringVar(&u.MinIOSecretAccessKey, "minio-secret-access-key", u.MinIOSecretAccessKey, "The secret access key")
 	fs.StringVar(&u.NATSURL, "nats-url", u.NATSURL, "The URL for nats-server")
+	fs.StringVar(&u.NATSStreamName, "nats-stream-name", u.NATSStreamName, "The name of stream for JetStream")
+	fs.StringVar(&u.NATSSubject, "nats-subject", u.NATSSubject, "The subject of stream")
 	fs.BoolVar(&u.Dev, "dev", u.Dev, "Development mode")
 }
 
@@ -93,7 +99,7 @@ func (u *UpdaterCommand) subscribe(ctx context.Context) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	n, err := NewNotify(u.NATSURL)
+	n, err := NewNotify(u.NATSURL, u.NATSStreamName, u.NATSSubject)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

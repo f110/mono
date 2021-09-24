@@ -38,7 +38,9 @@ type IndexerCommand struct {
 	MinIOSecretAccessKey        string
 	DisableObjectStorageCleanup bool
 
-	NATSURL string
+	NATSURL        string
+	NATSStreamName string
+	NATSSubject    string
 
 	Dev bool
 }
@@ -50,9 +52,11 @@ func NewIndexerCommand() *IndexerCommand {
 	}
 
 	return &IndexerCommand{
-		WorkDir:     d,
-		MinIOPort:   9000,
-		Parallelism: 1,
+		WorkDir:        d,
+		MinIOPort:      9000,
+		Parallelism:    1,
+		NATSStreamName: "repoindexer",
+		NATSSubject:    "notify",
 	}
 }
 
@@ -76,6 +80,8 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.MinIOAccessKey, "minio-access-key", r.MinIOAccessKey, "The access key")
 	fs.StringVar(&r.MinIOSecretAccessKey, "minio-secret-access-key", r.MinIOSecretAccessKey, "The secret access key")
 	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
+	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
+	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
 	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup of the object storage")
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
 }
@@ -142,7 +148,7 @@ func (r *IndexerCommand) run(indexer *Indexer) error {
 		}
 
 		if r.NATSURL != "" {
-			n, err := NewNotify(r.NATSURL)
+			n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
