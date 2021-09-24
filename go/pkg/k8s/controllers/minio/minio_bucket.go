@@ -13,8 +13,6 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	"go.f110.dev/mono/go/pkg/fsm"
-	"go.f110.dev/mono/go/pkg/logger"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +27,9 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	"k8s.io/klog"
+
+	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/pkg/logger"
 
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
@@ -355,7 +356,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 }
 
 func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
-	if exists, err := r.MinIOClient.BucketExists(r.Obj.Name); err != nil {
+	if exists, err := r.MinIOClient.BucketExistsWithContext(r.ctx, r.Obj.Name); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	} else if exists {
 		klog.V(4).Infof("%s already exists", r.Obj.Name)
@@ -363,7 +364,7 @@ func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 	}
 	klog.V(4).Infof("%s is created", r.Obj.Name)
 
-	if err := r.MinIOClient.MakeBucket(r.Obj.Name, ""); err != nil {
+	if err := r.MinIOClient.MakeBucketWithContext(r.ctx, r.Obj.Name, ""); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 

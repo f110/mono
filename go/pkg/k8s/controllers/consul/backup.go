@@ -11,11 +11,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	"go.f110.dev/mono/go/pkg/storage"
 	"golang.org/x/xerrors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +21,12 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
+	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
+	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
+	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	consulv1alpha1listers "go.f110.dev/mono/go/pkg/k8s/listers/consul/v1alpha1"
+	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type BackupController struct {
