@@ -60,6 +60,7 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 
 	select {
 	case <-n.js.PublishAsyncComplete():
+		logger.Log.Debug("Notify", zap.String("subject", n.subject))
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
