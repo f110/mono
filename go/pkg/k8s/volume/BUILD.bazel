@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "volume",
+    srcs = ["watcher.go"],
+    importpath = "go.f110.dev/mono/go/pkg/k8s/volume",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/golang.org/x/xerrors",
+    ],
+)
+
+go_test(
+    name = "volume_test",
+    srcs = ["watcher_test.go"],
+    embed = [":volume"],
+    deps = [
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

@@ -16,6 +16,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/cmd/repoindexer",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/k8s/volume",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/bradleyfalzon/ghinstallation",

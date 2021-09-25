@@ -72,12 +72,12 @@ func NewIndexer(rules *Config, workDir, token, ctags string, appId, installation
 	}, nil
 }
 
-func (x *Indexer) Sync() error {
-	repositories := x.lister.List()
+func (x *Indexer) Sync(ctx context.Context) error {
+	repositories := x.lister.List(ctx)
 	for _, v := range repositories {
 		logger.Log.Debug("Found repository", zap.String("name", v.Name), zap.String("url", v.URL))
 
-		if err := v.sync(x.workDir, x.appId, x.installationId, x.privateKeyFile, x.initRun); err != nil {
+		if err := v.sync(ctx, x.workDir, x.appId, x.installationId, x.privateKeyFile, x.initRun); err != nil {
 			logger.Log.Info("Failed sync repository", zap.Error(err), zap.String("url", v.URL))
 			continue
 		}
@@ -86,13 +86,13 @@ func (x *Indexer) Sync() error {
 	return nil
 }
 
-func (x *Indexer) BuildIndex() error {
+func (x *Indexer) BuildIndex(ctx context.Context) error {
 	indexDir := filepath.Join(x.workDir, ".index")
 
-	for _, v := range x.lister.List() {
+	for _, v := range x.lister.List(ctx) {
 		t1 := time.Now()
 		m := newRepositoryMutator(v)
-		branchRefs, err := m.Mutate(x.workDir, v.Refs)
+		branchRefs, err := m.Mutate(ctx, x.workDir, v.Refs)
 		if err != nil {
 			logger.Log.Info("Failed to mutate repository", zap.String("name", v.Name), zap.Error(err))
 			continue
@@ -149,7 +149,16 @@ func (x *Indexer) BuildIndex() error {
 			queue <- f
 		}
 		close(queue)
-		wg.Wait()
+		doneCh := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(doneCh)
+		}()
+		select {
+		case <-doneCh:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 
 		logger.Log.Info("Total document",
 			zap.String("name", v.Name),
@@ -228,7 +237,7 @@ func (x *Indexer) addDocument(builder *build.Builder, repo *Repository, f file, 
 	return nil
 }
 
-func (x *Indexer) Cleanup() error {
+func (x *Indexer) Cleanup(ctx context.Context) error {
 	indexDir := filepath.Join(x.workDir, ".index")
 	entry, err := os.ReadDir(indexDir)
 	if err != nil {
@@ -240,7 +249,7 @@ func (x *Indexer) Cleanup() error {
 		files[b] = struct{}{}
 	}
 
-	for _, v := range x.lister.List() {
+	for _, v := range x.lister.List(ctx) {
 		n := url.QueryEscape(v.Name)
 		if len(n) > 200 {
 			h := sha1.New()
@@ -272,7 +281,7 @@ func newRepositoryMutator(repo *Repository) *repositoryMutator {
 	return &repositoryMutator{repo: repo}
 }
 
-func (m *repositoryMutator) Mutate(workDir string, refs []plumbing.ReferenceName) ([]plumbing.ReferenceName, error) {
+func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []plumbing.ReferenceName) ([]plumbing.ReferenceName, error) {
 	branchRefs := make([]plumbing.ReferenceName, 0)
 
 	for _, refName := range refs {
@@ -307,7 +316,7 @@ func (m *repositoryMutator) Mutate(workDir string, refs []plumbing.ReferenceName
 					}
 
 					logger.Log.Info("Run go mod vendor", zap.String("go.mod", path))
-					cmd := exec.Command("go", "mod", "vendor")
+					cmd := exec.CommandContext(ctx, "go", "mod", "vendor")
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
@@ -338,7 +347,7 @@ func (m *repositoryMutator) Mutate(workDir string, refs []plumbing.ReferenceName
 	return branchRefs, nil
 }
 
-func (x *Repository) sync(workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
+func (x *Repository) sync(ctx context.Context, workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
 	var auth transport.AuthMethod
 	if privateKeyFile != "" {
 		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
@@ -371,7 +380,7 @@ func (x *Repository) sync(workDir string, appId, installationId int64, privateKe
 	}
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		logger.Log.Debug("Clone", zap.String("name", x.Name), zap.String("url", x.URL))
-		_, err = git.PlainCloneContext(context.TODO(), dir, false, &git.CloneOptions{
+		_, err = git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 			URL:        x.URL,
 			NoCheckout: true,
 			Auth:       auth,
@@ -389,7 +398,7 @@ func (x *Repository) sync(workDir string, appId, installationId int64, privateKe
 		return xerrors.Errorf(": %w", err)
 	}
 	logger.Log.Debug("Fetch", zap.String("name", x.Name))
-	err = r.Fetch(&git.FetchOptions{
+	err = r.FetchContext(ctx, &git.FetchOptions{
 		Progress: os.Stdout,
 		Auth:     auth,
 	})

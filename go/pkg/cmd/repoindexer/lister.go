@@ -81,7 +81,7 @@ func NewRepositoryLister(rules []*Rule, opts ...RepositoryListerOpt) (*Repositor
 	return lister, nil
 }
 
-func (x *RepositoryLister) List() []*Repository {
+func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 	x.mu.Lock()
 	if x.repositories != nil {
 		defer x.mu.Unlock()
@@ -92,7 +92,7 @@ func (x *RepositoryLister) List() []*Repository {
 	repos := make([]*Repository, 0)
 	for _, rule := range x.rules {
 		if rule.Owner != "" && rule.Name != "" {
-			repo, _, err := x.githubClient.Repositories.Get(context.Background(), rule.Owner, rule.Name)
+			repo, _, err := x.githubClient.Repositories.Get(ctx, rule.Owner, rule.Name)
 			if err != nil {
 				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
 				continue
@@ -110,7 +110,7 @@ func (x *RepositoryLister) List() []*Repository {
 				"searchQuery": githubv4.String(rule.Query),
 				"cursor":      (*githubv4.String)(nil),
 			}
-			err := x.githubGraphQLClient.Query(context.Background(), &listRepositoriesQuery, vars)
+			err := x.githubGraphQLClient.Query(ctx, &listRepositoriesQuery, vars)
 			if err != nil {
 				logger.Log.Info("Failed execute query", zap.Error(err))
 				continue

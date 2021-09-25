@@ -5,13 +5,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/k8s/volume"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -43,6 +43,12 @@ type IndexerCommand struct {
 	NATSSubject    string
 
 	Dev bool
+
+	config  *Config
+	indexer *Indexer
+	cron    *cron.Cron
+	entryId cron.EntryID
+	cancel  context.CancelFunc
 }
 
 func NewIndexerCommand() *IndexerCommand {
@@ -91,6 +97,7 @@ func (r *IndexerCommand) Run() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	r.config = config
 
 	indexer, err := NewIndexer(
 		config,
@@ -106,34 +113,43 @@ func (r *IndexerCommand) Run() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	r.indexer = indexer
 	if r.RunScheduler {
-		if err := r.scheduler(config, indexer); err != nil {
+		if err := r.scheduler(config.RefreshSchedule); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		return nil
 	}
 
-	if err := r.run(indexer); err != nil {
+	if err := r.run(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
 	return nil
 }
 
-func (r *IndexerCommand) run(indexer *Indexer) error {
+func (r *IndexerCommand) run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		r.indexer.Reset()
+		cancel()
+	}()
+	r.cancel = cancel
+
 	enableObjectStorageUpload := r.MinIOName != "" && r.MinIONamespace != "" && r.MinIOBucket != ""
 
 	if !r.WithoutFetch {
-		if err := indexer.Sync(); err != nil {
+		if err := r.indexer.Sync(ctx); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
-	if err := indexer.BuildIndex(); err != nil {
+	if err := r.indexer.BuildIndex(ctx); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	if enableObjectStorageUpload {
 		manifest, err := r.uploadIndex(
-			indexer,
+			ctx,
+			r.indexer,
 			r.MinIOName,
 			r.MinIONamespace,
 			r.MinIOPort,
@@ -152,16 +168,13 @@ func (r *IndexerCommand) run(indexer *Indexer) error {
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			if err := n.Notify(ctx, manifest); err != nil {
-				cancel()
 				return xerrors.Errorf(": %w", err)
 			}
-			cancel()
 		}
 	}
 	if !r.DisableCleanup {
-		if err := indexer.Cleanup(); err != nil {
+		if err := r.indexer.Cleanup(ctx); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -169,20 +182,31 @@ func (r *IndexerCommand) run(indexer *Indexer) error {
 	return nil
 }
 
-func (r *IndexerCommand) scheduler(config *Config, indexer *Indexer) error {
-	c := cron.New()
-	_, err := c.AddFunc(config.RefreshSchedule, func() {
-		defer indexer.Reset()
+func (r *IndexerCommand) scheduler(schedule string) error {
+	if volume.CanWatchVolume(r.ConfigFile) {
+		mountPath, err := volume.FindMountPath(r.ConfigFile)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		_, err = volume.NewWatcher(mountPath, r.reloadConfig)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		logger.Log.Debug("Watch config file changes")
+	}
 
-		if err := r.run(indexer); err != nil {
+	r.cron = cron.New()
+	e, err := r.cron.AddFunc(schedule, func() {
+		if err := r.run(); err != nil {
 			logger.Log.Info("Failed indexing", zap.Error(err))
 		}
 	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	r.entryId = e
 	logger.Log.Info("Start scheduler")
-	c.Start()
+	r.cron.Start()
 
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
@@ -190,7 +214,7 @@ func (r *IndexerCommand) scheduler(config *Config, indexer *Indexer) error {
 	<-ctx.Done()
 	logger.Log.Debug("Got signal")
 
-	ctx = c.Stop()
+	ctx = r.cron.Stop()
 
 	logger.Log.Info("Waiting for stop scheduler")
 	<-ctx.Done()
@@ -198,7 +222,60 @@ func (r *IndexerCommand) scheduler(config *Config, indexer *Indexer) error {
 	return nil
 }
 
+func (r *IndexerCommand) reloadConfig() {
+	logger.Log.Debug("Detect change config file")
+	config, err := ReadConfigFile(r.ConfigFile)
+	if err != nil {
+		logger.Log.Warn("Failed to read a config file", zap.Error(err))
+		return
+	}
+	indexer, err := NewIndexer(
+		config,
+		r.WorkDir,
+		r.Token,
+		r.Ctags,
+		r.AppId,
+		r.InstallationId,
+		r.PrivateKeyFile,
+		r.InitRun,
+		r.Parallelism,
+	)
+	if err != nil {
+		logger.Log.Warn("Failed initialize indexer", zap.Error(err))
+		return
+	}
+	r.indexer = indexer
+
+	if config.RefreshSchedule != r.config.RefreshSchedule {
+		r.cron.Remove(r.entryId)
+		e, err := r.cron.AddFunc(config.RefreshSchedule, func() {
+			if err := r.run(); err != nil {
+				logger.Log.Info("Failed indexing", zap.Error(err))
+				return
+			}
+		})
+		if err != nil {
+			panic(err)
+		}
+		r.entryId = e
+	}
+
+	r.config = config
+	if r.cancel != nil {
+		r.cancel()
+	}
+	logger.Log.Info("Reload configuration was finished")
+
+	logger.Log.Info("Build the index with new configuration")
+	if err := r.run(); err != nil {
+		logger.Log.Warn("Failed to create index", zap.Error(err))
+		return
+	}
+	logger.Log.Info("Finished reload configuration file")
+}
+
 func (r *IndexerCommand) uploadIndex(
+	ctx context.Context,
 	indexer *Indexer,
 	minioName, minioNamespace string,
 	minioPort int,
@@ -220,7 +297,7 @@ func (r *IndexerCommand) uploadIndex(
 	manager := NewObjectStorageIndexManager(s, minioBucket)
 	uploadedPath := make(map[string]string, 0)
 	for _, v := range indexer.Indexes {
-		uploadDir, err := manager.Add(context.Background(), v.Name, v.Files)
+		uploadDir, err := manager.Add(ctx, v.Name, v.Files)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
@@ -229,20 +306,20 @@ func (r *IndexerCommand) uploadIndex(
 
 	manifest := NewManifest(manager.ExecutionKey(), uploadedPath)
 	mm := NewManifestManager(s)
-	if err := mm.Update(context.Background(), manifest); err != nil {
+	if err := mm.Update(ctx, manifest); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
 	if !disableCleanup {
-		expired, err := mm.FindExpiredManifests(context.Background())
+		expired, err := mm.FindExpiredManifests(ctx)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-		if err := manager.Delete(context.Background(), expired); err != nil {
+		if err := manager.Delete(ctx, expired); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		for _, m := range expired {
-			if err := mm.Delete(context.Background(), m); err != nil {
+			if err := mm.Delete(ctx, m); err != nil {
 				return nil, xerrors.Errorf(": %w", err)
 			}
 		}
