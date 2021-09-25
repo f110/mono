@@ -44,7 +44,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 		if err != nil {
 			return "", xerrors.Errorf(": %w", err)
 		}
-		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket))
+		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket), zap.Int64("size", info.Size()))
 	}
 
 	return fmt.Sprintf("minio://%s/%s", s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey))), nil

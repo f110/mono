@@ -32,7 +32,7 @@ func NewNotify(u, streamName, subject string) (*Notify, error) {
 
 	_, err = js.StreamInfo(streamName)
 	if errors.Is(err, nats.ErrStreamNotFound) {
-		if err := n.setupStream(streamName); err != nil {
+		if err = n.setupStream(streamName); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 	}
