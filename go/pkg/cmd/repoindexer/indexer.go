@@ -32,6 +32,10 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
+const (
+	goProxy = "https://proxy.golang.org"
+)
+
 type Indexer struct {
 	Indexes []*RepositoryIndex
 
@@ -97,6 +101,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 			logger.Log.Info("Failed to mutate repository", zap.String("name", v.Name), zap.Error(err))
 			continue
 		}
+		t2 := time.Now()
 
 		files := make(map[file]map[plumbing.Hash]struct{})
 		fileBranches := make(map[file][]string)
@@ -134,7 +139,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 			return xerrors.Errorf(": %w", err)
 		}
 
-		t2 := time.Now()
+		t3 := time.Now()
 		queue := make(chan file, x.parallelism)
 		var docCount int32
 		var wg sync.WaitGroup
@@ -164,7 +169,8 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 			zap.String("name", v.Name),
 			zap.Int32("count", docCount),
 			zap.Duration("elapsed", time.Since(t1)),
-			zap.Duration("indexing_elapsed", time.Since(t2)),
+			zap.Duration("mutating_elapsed", t2.Sub(t1)),
+			zap.Duration("indexing_elapsed", time.Since(t3)),
 		)
 		if err := builder.Finish(); err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -320,6 +326,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
+					cmd.Env = append(cmd.Env, fmt.Sprintf("GOPROXY=%s", goProxy))
 					if err := cmd.Run(); err != nil {
 						return err
 					}
