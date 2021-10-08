@@ -326,7 +326,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
-					cmd.Env = append(cmd.Env, fmt.Sprintf("GOPROXY=%s", goProxy))
+					cmd.Env = append(cmd.Env, fmt.Sprintf("GOPROXY=%s", goProxy), "GOPATH=/go")
 					if err := cmd.Run(); err != nil {
 						return err
 					}
