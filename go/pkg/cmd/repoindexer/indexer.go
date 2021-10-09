@@ -326,7 +326,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
-					cmd.Env = append(cmd.Env, fmt.Sprintf("GOPROXY=%s", goProxy), "GOPATH=/go")
+					cmd.Env = append(os.Environ(), fmt.Sprintf("GOPROXY=%s", goProxy))
 					if err := cmd.Run(); err != nil {
 						return err
 					}
@@ -340,11 +340,13 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 			}
 		}
 
+		logger.Log.Debug("Commit", zap.String("name", m.repo.Name), zap.String("ref", refName.Short()))
 		if err := m.repo.newCommit(); err != nil {
 			logger.Log.Info("Failed create commit", zap.String("name", m.repo.Name), zap.Error(err))
 			continue
 		}
 
+		logger.Log.Debug("Clean worktree", zap.String("name", m.repo.Name), zap.String("ref", refName.Short()))
 		if err := m.repo.cleanWorktree(); err != nil {
 			logger.Log.Info("Failed clean worktree", zap.String("name", m.repo.Name), zap.Error(err))
 			continue
@@ -522,14 +524,9 @@ func (x *Repository) newCommit() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	st, err := wt.Status()
+	err = wt.AddWithOptions(&git.AddOptions{All: true})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
-	}
-	for path := range st {
-		if _, err := wt.Add(path); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
 	}
 
 	if _, err := wt.Commit("new commit", &git.CommitOptions{
