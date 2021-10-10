@@ -72,10 +72,6 @@ func gantryCrane(args []string) error {
 				log.Printf("%s:%s will be synchronized %d images", v.Src, tag, len(platform)-exists)
 				continue
 			}
-			if exists == len(platform) {
-				log.Printf("%s:%s: all images have been synced", v.Dst, tag)
-				continue
-			}
 
 			srcRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Src, tag))
 			if err != nil {
@@ -84,6 +80,11 @@ func gantryCrane(args []string) error {
 			desc, err := remote.Get(srcRef)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
+			}
+
+			if desc.Digest.String() == oldDigest.String() {
+				log.Printf("%s:%s: the image has been synced", v.Dst, tag)
+				continue
 			}
 
 			var newIndex v1.ImageIndex
