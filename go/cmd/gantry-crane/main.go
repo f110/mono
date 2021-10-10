@@ -54,6 +54,7 @@ func gantryCrane(args []string) error {
 			platform = v.Platform
 		}
 
+	Tags:
 		for _, tag := range v.Tags {
 			log.Printf("Synchronize %s:%s", v.Dst, tag)
 			oldDigest, dstIM, err := getIndexManifest(fmt.Sprintf("%s:%s", v.Dst, tag))
@@ -72,15 +73,27 @@ func gantryCrane(args []string) error {
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
-			desc, err := remote.Get(srcRef)
+			srcDescriptor, err := remote.Get(srcRef)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 
-			log.Printf("Old digest: %s, Src digest: %s", oldDigest.String(), desc.Digest.String())
-			if desc.Digest.String() == oldDigest.String() {
+			log.Printf("Old digest: %s, Src digest: %s", oldDigest.String(), srcDescriptor.Digest.String())
+			if srcDescriptor.Digest.String() == oldDigest.String() {
 				log.Printf("%s:%s: the image has been synced", v.Dst, tag)
 				continue
+			}
+
+			switch srcDescriptor.MediaType {
+			case types.DockerManifestSchema2:
+				if dstIM != nil && dstIM.MediaType == types.DockerManifestList {
+					for _, d := range dstIM.Manifests {
+						if d.Digest == srcDescriptor.Digest {
+							log.Printf("%s:%s: the image has been synced", v.Dst, tag)
+							continue Tags
+						}
+					}
+				}
 			}
 
 			if !execute {
@@ -89,20 +102,20 @@ func gantryCrane(args []string) error {
 			}
 
 			var newIndex v1.ImageIndex
-			switch desc.MediaType {
+			switch srcDescriptor.MediaType {
 			case types.DockerManifestSchema2, types.OCIManifestSchema1:
-				img, err := desc.Image()
+				img, err := srcDescriptor.Image()
 				if err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 				newIndex = NewImageIndex(img)
 			case types.DockerManifestList:
-				newIndex, err = desc.ImageIndex()
+				newIndex, err = srcDescriptor.ImageIndex()
 				if err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			default:
-				index, err := desc.ImageIndex()
+				index, err := srcDescriptor.ImageIndex()
 				if err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
@@ -157,10 +170,12 @@ func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
 			for _, dErr := range tErr.Errors {
 				// Manifest not found
 				if dErr.Code == transport.ManifestUnknownErrorCode {
+					log.Printf("%s is not found", ref)
 					return emptyHash, nil, nil
 				}
 				// Harbor will return "NOT_FOUND"
 				if dErr.Code == "NOT_FOUND" {
+					log.Printf("%s: returned NOT_FOUND", ref)
 					return emptyHash, nil, nil
 				}
 			}

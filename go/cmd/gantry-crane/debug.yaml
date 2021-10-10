@@ -4,6 +4,9 @@
 - src: docker.io/mvance/unbound
   dst: registry.f110.dev/mirror/unbound
   tags: ["1.9.5"]
+- src: docker.io/goharbor/harbor-db
+  dst: asia.gcr.io/fighting-falcon/goharbor/harbor-db
+  tags: ["v1.10.0", "v2.1.1"]
 - src: ghcr.io/f110/bazel-container
   dst: registry.f110.dev/mirror/bazel
   tags: ["3.5.1"]
