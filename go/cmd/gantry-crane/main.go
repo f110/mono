@@ -68,11 +68,6 @@ func gantryCrane(args []string) error {
 				}
 			}
 
-			if !execute {
-				log.Printf("%s:%s will be synchronized %d images", v.Src, tag, len(platform)-exists)
-				continue
-			}
-
 			srcRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Src, tag))
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
@@ -82,8 +77,14 @@ func gantryCrane(args []string) error {
 				return xerrors.Errorf(": %w", err)
 			}
 
+			log.Printf("Old digest: %s, Src digest: %s", oldDigest.String(), desc.Digest.String())
 			if desc.Digest.String() == oldDigest.String() {
 				log.Printf("%s:%s: the image has been synced", v.Dst, tag)
+				continue
+			}
+
+			if !execute {
+				log.Printf("%s:%s will be synchronized %d images", v.Src, tag, len(platform)-exists)
 				continue
 			}
 
@@ -95,6 +96,11 @@ func gantryCrane(args []string) error {
 					return xerrors.Errorf(": %w", err)
 				}
 				newIndex = NewImageIndex(img)
+			case types.DockerManifestList:
+				newIndex, err = desc.ImageIndex()
+				if err != nil {
+					return xerrors.Errorf(": %w", err)
+				}
 			default:
 				index, err := desc.ImageIndex()
 				if err != nil {
@@ -104,6 +110,7 @@ func gantryCrane(args []string) error {
 			}
 
 			dstRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Dst, tag))
+			log.Printf("Write index: %s", dstRef.String())
 			if err := remote.WriteIndex(dstRef, newIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}

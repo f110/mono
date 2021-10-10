@@ -1,3 +1,9 @@
+- src: docker.io/calico/node
+  dst: asia.gcr.io/fighting-falcon/calico/node
+  tags: ["v3.12.0"]
 - src: docker.io/mvance/unbound
   dst: registry.f110.dev/mirror/unbound
   tags: ["1.9.5"]
+- src: ghcr.io/f110/bazel-container
+  dst: registry.f110.dev/mirror/bazel
+  tags: ["3.5.1"]
