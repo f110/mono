@@ -275,9 +275,9 @@ func showResult() error {
 				continue
 			}
 
-			fmt.Fprintf(body, "[%s#%d - %s](%s)\n", v.PullRequest.Repository.Name, v.PullRequest.Number, v.PullRequest.Title, v.PullRequest.URL)
+			fmt.Fprintf(body, "* [%s#%d - %s](%s)\n", v.PullRequest.Repository.Name, v.PullRequest.Number, v.PullRequest.Title, v.PullRequest.URL)
 		case "Issue":
-			fmt.Fprintf(body, "[%s#%s](%s)\n", v.Issue.Repository.Name, v.Issue.Title, v.Issue.URL)
+			fmt.Fprintf(body, "* [%s#%s](%s)\n", v.Issue.Repository.Name, v.Issue.Title, v.Issue.URL)
 			for _, r := range v.Issue.TimelineItems.Nodes {
 				if r.Type != "CrossReferencedEvent" {
 					continue
@@ -285,7 +285,7 @@ func showResult() error {
 				if r.CrossReferencedEvent.Source.Type != "PullRequest" {
 					continue
 				}
-				fmt.Fprintf(body, "\t[%s#%d - %s](%s)\n",
+				fmt.Fprintf(body, "    * [%s#%d - %s](%s)\n",
 					r.CrossReferencedEvent.Source.PullRequest.Repository.Name,
 					r.CrossReferencedEvent.Source.PullRequest.Number,
 					r.CrossReferencedEvent.Source.PullRequest.Title,
