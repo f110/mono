@@ -17,7 +17,7 @@ import (
 func notionToDoServer(args []string) error {
 	addr := ":7000"
 	conf := ""
-	fs := pflag.NewFlagSet("notion-todo-server", pflag.ContinueOnError)
+	fs := pflag.NewFlagSet("notion-doc-server", pflag.ContinueOnError)
 	fs.StringVar(&addr, "addr", addr, "Listen addr")
 	fs.StringVar(&conf, "conf", conf, "Config file path")
 	logger.Flags(fs)

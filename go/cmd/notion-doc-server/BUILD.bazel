@@ -1,9 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
+go_binary(
+    name = "notion-doc-server",
+    embed = [":notion-doc-server_lib"],
+    visibility = ["//visibility:public"],
+)
+
 go_library(
-    name = "notion-todo-server_lib",
+    name = "notion-doc-server_lib",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/go/cmd/notion-todo-server",
+    importpath = "go.f110.dev/mono/go/cmd/notion-doc-server",
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/logger",
@@ -12,10 +18,4 @@ go_library(
         "//vendor/github.com/spf13/pflag",
         "//vendor/golang.org/x/xerrors",
     ],
-)
-
-go_binary(
-    name = "notion-todo-server",
-    embed = [":notion-todo-server_lib"],
-    visibility = ["//visibility:public"],
 )
