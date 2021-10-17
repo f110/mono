@@ -20,23 +20,25 @@ import (
 
 type config struct {
 	Id         string `yaml:"id"`
-	Token      string `yaml:"token"`
 	DatabaseID string `yaml:"database_id"`
 }
 
 type DatabaseDocServer struct {
 	configFile string
-	mu         sync.RWMutex
-	conf       []*config
+	token      string
 	w          *volume.Watcher
+
+	mu   sync.RWMutex
+	conf []*config
 
 	s *http.Server
 }
 
-func NewDatabaseDocServer(addr, configPath string) (*DatabaseDocServer, error) {
+func NewDatabaseDocServer(addr, configPath, token string) (*DatabaseDocServer, error) {
 	mux := http.NewServeMux()
 	s := &DatabaseDocServer{
 		configFile: configPath,
+		token:      token,
 		s: &http.Server{
 			Addr:    addr,
 			Handler: mux,
@@ -86,7 +88,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.Token})
+		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: s.token})
 		tc := oauth2.NewClient(context.Background(), ts)
 		client, err := notion.New(tc, notion.BaseURL)
 		if err != nil {
