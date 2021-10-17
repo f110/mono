@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notion-api",
+    srcs = [
+        "client.go",
+        "database.go",
+        "page.go",
+        "types.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/go.f110.dev/notion-api/v2",
+    importpath = "go.f110.dev/notion-api/v2",
+    visibility = ["//visibility:public"],
+)

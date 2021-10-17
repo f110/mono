@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notion",
+    srcs = ["doc-server.go"],
+    importpath = "go.f110.dev/mono/go/pkg/notion",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/go.f110.dev/notion-api/v2:notion-api",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/oauth2",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/gopkg.in/yaml.v2:yaml_v2",
+    ],
+)
