@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sync"
 
 	"go.f110.dev/notion-api/v2"
 	"go.uber.org/zap"
@@ -12,6 +13,7 @@ import (
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 
+	"go.f110.dev/mono/go/pkg/k8s/volume"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -22,29 +24,36 @@ type config struct {
 }
 
 type DatabaseDocServer struct {
-	conf []*config
-	s    *http.Server
+	configFile string
+	mu         sync.RWMutex
+	conf       []*config
+	w          *volume.Watcher
+
+	s *http.Server
 }
 
 func NewDatabaseDocServer(addr, configPath string) (*DatabaseDocServer, error) {
-	f, err := os.Open(configPath)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	var conf []*config
-	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-
 	mux := http.NewServeMux()
 	s := &DatabaseDocServer{
-		conf: conf,
+		configFile: configPath,
 		s: &http.Server{
 			Addr:    addr,
 			Handler: mux,
 		},
 	}
 	mux.HandleFunc("/add", s.Add)
+	s.loadConfig()
+
+	if volume.CanWatchVolume(configPath) {
+		mountPath, err := volume.FindMountPath(configPath)
+		if err == nil {
+			w, err := volume.NewWatcher(mountPath, s.loadConfig)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			s.w = w
+		}
+	}
 
 	return s, nil
 }
@@ -62,12 +71,14 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		}
 
 		var c *config
+		s.mu.RLock()
 		for _, v := range s.conf {
 			if v.Id == b.Id {
 				c = v
 				break
 			}
 		}
+		s.mu.RUnlock()
 		if c == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -103,6 +114,22 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *DatabaseDocServer) loadConfig() {
+	f, err := os.Open(s.configFile)
+	if err != nil {
+		logger.Log.Error("Failed to open config file", zap.Error(err), zap.String("path", s.configFile))
+		return
+	}
+	var conf []*config
+	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
+		logger.Log.Error("Decode failure", zap.Error(err))
+		return
+	}
+	s.mu.Lock()
+	s.conf = conf
+	s.mu.Unlock()
+}
+
 func (s *DatabaseDocServer) Start() error {
 	logger.Log.Info("Listen", zap.String("addr", s.s.Addr))
 	return s.s.ListenAndServe()
@@ -110,5 +137,8 @@ func (s *DatabaseDocServer) Start() error {
 
 func (s *DatabaseDocServer) Stop(ctx context.Context) error {
 	logger.Log.Info("Stopping server")
+	if s.w != nil {
+		s.w.Stop()
+	}
 	return s.s.Shutdown(ctx)
 }

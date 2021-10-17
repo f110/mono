@@ -6,6 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/notion",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/k8s/volume",
         "//go/pkg/logger",
         "//vendor/go.f110.dev/notion-api/v2:notion-api",
         "//vendor/go.uber.org/zap",
