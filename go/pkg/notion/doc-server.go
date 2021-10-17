@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -62,7 +63,8 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		b := struct {
 			Id    string
-			Value string
+			Title string
+			Data  map[string]interface{}
 		}{}
 
 		if err := json.NewDecoder(req.Body).Decode(&b); err != nil {
@@ -98,12 +100,35 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		page, err := notion.NewPage(db, b.Value, nil)
+		page, err := notion.NewPage(db, b.Title, nil)
 		if err != nil {
 			logger.Log.Warn("Failed to initialize new page", zap.Error(err), zap.String("id", c.Id))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		for k, v := range b.Data {
+			prop, ok := db.Properties[k]
+			if !ok {
+				logger.Log.Warn("Property not found", zap.String("key", k))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			switch prop.Type {
+			case "number":
+				num, ok := v.(float64)
+				if !ok {
+					logger.Log.Info("The value is not float64", zap.Any("value", v), zap.Any("type", fmt.Sprintf("%T", v)))
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				page.SetProperty(k, &notion.PropertyData{
+					Type:   "number",
+					Number: int(num),
+				})
+			}
+		}
+
 		_, err = client.CreatePage(req.Context(), page)
 		if err != nil {
 			logger.Log.Warn("Failed to create a page", zap.Error(err))
