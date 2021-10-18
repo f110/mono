@@ -38,7 +38,6 @@ go_library(
         "//vendor/k8s.io/client-go/tools/cache",
         "//vendor/k8s.io/client-go/tools/portforward",
         "//vendor/k8s.io/client-go/transport/spdy",
-        "//vendor/k8s.io/klog",
     ],
 )
 

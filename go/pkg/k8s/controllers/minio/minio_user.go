@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/vault/api"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/minio/minio/pkg/madmin"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,7 +26,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/klog"
 
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
@@ -156,7 +156,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 		return xerrors.Errorf(": %w", err)
 	}
 	if len(instances) == 0 {
-		klog.V(4).Infof("%s not found", metav1.FormatLabelSelector(&minioUser.Spec.Selector))
+		c.Log().Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(&minioUser.Spec.Selector)))
 		return nil
 	}
 	if len(instances) > 1 {
@@ -332,7 +332,7 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 		if err := adminClient.RemoveUser(ctx, string(secret.Data["accesskey"])); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		klog.V(4).Infof("Remove minio user %s", minioUser.Name)
+		c.Log().Debug("Remove minio user", zap.String("name", minioUser.Name))
 
 		if err := c.coreClient.CoreV1().Secrets(secret.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -420,9 +420,9 @@ func (c *UserController) portForward(
 		if err != nil {
 			switch v := err.(type) {
 			case *apierrors.StatusError:
-				klog.Info(v)
+				c.Log().Debug("StatusError", zap.Error(v))
 			}
-			klog.Error(err)
+			c.Log().Error("Failed port forwarding", zap.Error(err))
 		}
 	}()
 
