@@ -13,6 +13,7 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,7 +27,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
-	"k8s.io/klog"
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -159,6 +159,7 @@ func (c *BucketController) NewReconciler() controllerutil.Reconciler {
 		c.instanceLister,
 		c.runOutsideCluster,
 		c.transport,
+		c.Log(),
 	)
 }
 
@@ -182,6 +183,7 @@ type BucketReconciler struct {
 	runOutsideCluster bool
 	config            *rest.Config
 	transport         http.RoundTripper
+	logger            *zap.Logger
 
 	Original *miniov1alpha1.MinIOBucket
 	Obj      *miniov1alpha1.MinIOBucket
@@ -211,6 +213,7 @@ func NewBucketReconciler(
 	instanceLister mclisters.MinIOInstanceLister,
 	runOutsideCluster bool,
 	transport http.RoundTripper,
+	log *zap.Logger,
 ) *BucketReconciler {
 	r := &BucketReconciler{
 		CoreClient:        coreClient,
@@ -222,6 +225,7 @@ func NewBucketReconciler(
 		secretLister:      secretLister,
 		transport:         transport,
 		runOutsideCluster: runOutsideCluster,
+		logger:            log,
 	}
 	return r
 }
@@ -295,13 +299,13 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 			if err := mc.RemoveObject(r.Obj.Name, v.Key); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
-			klog.Infof("%s/%s is removed", r.Obj.Name, v.Key)
+			r.logger.Info("Object removed", zap.String("name", r.Obj.Name))
 		}
 
 		if err := mc.RemoveBucket(r.Obj.Name); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		klog.V(4).Infof("Remove bucket %s", r.Obj.Name)
+		r.logger.Debug("Remove bucket", zap.String("name", r.Obj.Name))
 	}
 
 	r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
@@ -323,7 +327,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	if len(instances) == 0 {
-		klog.V(4).Infof("%s not found", metav1.FormatLabelSelector(&r.Obj.Spec.Selector))
+		r.logger.Debug("MinIO instance is not found", zap.String("selector", metav1.FormatLabelSelector(&r.Obj.Spec.Selector)))
 		return bucketStateUpdateStatus, nil
 	}
 	if len(instances) > 1 {
@@ -359,10 +363,10 @@ func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 	if exists, err := r.MinIOClient.BucketExistsWithContext(r.ctx, r.Obj.Name); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	} else if exists {
-		klog.V(4).Infof("%s already exists", r.Obj.Name)
+		r.logger.Debug("Already exists", zap.String("name", r.Obj.Name))
 		return bucketStateEnsureBucketPolicy, nil
 	}
-	klog.V(4).Infof("%s is created", r.Obj.Name)
+	r.logger.Debug("Created", zap.String("name", r.Obj.Name))
 
 	if err := r.MinIOClient.MakeBucketWithContext(r.ctx, r.Obj.Name, ""); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
@@ -411,7 +415,7 @@ func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	klog.V(4).Infof("SetBucketPolicy %s: %s", r.Obj.Name, string(b))
+	r.logger.Debug("SetBucketPolicy", zap.String("name", r.Obj.Name), zap.String("policy", string(b)))
 	if err := r.MinIOClient.SetBucketPolicyWithContext(r.ctx, r.Obj.Name, string(b)); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
@@ -436,11 +440,11 @@ func (r *BucketReconciler) ensureIndexFile() (fsm.State, error) {
 		}
 	}
 	if stat.Key != "" {
-		klog.V(4).Info("Skip create index file because file already exists")
+		r.logger.Debug("Skip create index file", zap.String("name", r.Obj.Name))
 		return bucketStateUpdateStatus, nil
 	}
 
-	klog.V(4).Info("Create index.html")
+	r.logger.Debug("Create index.html", zap.String("name", r.Obj.Name))
 	_, err = r.MinIOClient.PutObjectWithContext(
 		r.ctx,
 		r.Obj.Name,
@@ -552,9 +556,9 @@ func (r *BucketReconciler) portForward(
 		if err != nil {
 			switch v := err.(type) {
 			case *apierrors.StatusError:
-				klog.Info(v)
+				r.logger.Info("StatusError", zap.Error(v))
 			}
-			klog.Error(err)
+			r.logger.Error("Failed port forwarding", zap.Error(err))
 		}
 	}()
 
