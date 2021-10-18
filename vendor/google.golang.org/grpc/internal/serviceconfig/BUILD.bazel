@@ -8,6 +8,7 @@ go_library(
     visibility = ["//vendor/google.golang.org/grpc:__subpackages__"],
     deps = [
         "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/codes",
         "//vendor/google.golang.org/grpc/grpclog",
         "//vendor/google.golang.org/grpc/serviceconfig",
     ],
