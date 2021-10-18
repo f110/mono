@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 func InitFlag(flagset *flag.FlagSet) {

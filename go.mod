@@ -63,7 +63,6 @@ require (
 	k8s.io/client-go v0.21.0
 	k8s.io/component-base v0.19.6
 	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027
-	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.8.0
 	sigs.k8s.io/kind v0.9.0
 	sigs.k8s.io/yaml v1.2.0

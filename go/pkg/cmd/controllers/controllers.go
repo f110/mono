@@ -23,7 +23,6 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/component-base/metrics/legacyregistry"
-	"k8s.io/klog"
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
@@ -266,7 +265,6 @@ func (p *Controllers) init() (fsm.State, error) {
 	fs := pflag.NewFlagSet("controller-manager", pflag.ExitOnError)
 	p.Flags(fs)
 	goFlagSet := flag.NewFlagSet("", flag.ContinueOnError)
-	klog.InitFlags(goFlagSet)
 	fs.AddGoFlagSet(goFlagSet)
 	if err := fs.Parse(p.args); err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
