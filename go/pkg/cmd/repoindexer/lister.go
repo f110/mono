@@ -89,7 +89,7 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 	}
 	x.mu.Unlock()
 
-	repos := make([]*Repository, 0)
+	repos := make(map[string]*Repository, 0)
 	for _, rule := range x.rules {
 		if rule.Owner != "" && rule.Name != "" {
 			repo, _, err := x.githubClient.Repositories.Get(ctx, rule.Owner, rule.Name)
@@ -97,14 +97,16 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
 				continue
 			}
-			repos = append(repos, &Repository{
+			repos[fmt.Sprintf("%s/%s", rule.Owner, rule.Name)] = &Repository{
 				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
 				URL:              repo.GetCloneURL(),
 				Refs:             x.refSpecs(rule.Branches, rule.Tags),
 				DisableVendoring: rule.DisableVendoring,
-			})
+			}
 		}
+	}
 
+	for _, rule := range x.rules {
 		if rule.Query != "" {
 			vars := map[string]interface{}{
 				"searchQuery": githubv4.String(rule.Query),
@@ -122,12 +124,15 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 				if v.Repository.IsArchived {
 					continue
 				}
-				repos = append(repos, &Repository{
+				if _, ok := repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)]; ok {
+					continue
+				}
+				repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)] = &Repository{
 					Name:             fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
 					URL:              v.Repository.URL.String(),
 					Refs:             x.refSpecs(rule.Branches, rule.Tags),
 					DisableVendoring: rule.DisableVendoring,
-				})
+				}
 			}
 			if !listRepositoriesQuery.Search.PageInfo.HasNextPage {
 				break
@@ -139,10 +144,14 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 		logger.Log.Warn("Not found any repository")
 	}
 
+	repositories := make([]*Repository, 0)
+	for _, v := range repos {
+		repositories = append(repositories, v)
+	}
 	x.mu.Lock()
-	x.repositories = repos
+	x.repositories = repositories
 	x.mu.Unlock()
-	return repos
+	return repositories
 }
 
 func (x *RepositoryLister) ClearCache() {
