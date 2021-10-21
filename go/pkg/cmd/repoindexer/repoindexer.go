@@ -2,6 +2,7 @@ package repoindexer
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,7 @@ type IndexerCommand struct {
 	AppId          int64
 	InstallationId int64
 	PrivateKeyFile string
+	HTTPAddr       string
 
 	MinIOName                   string
 	MinIONamespace              string
@@ -90,6 +92,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
 	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup of the object storage")
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
+	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
 }
 
 func (r *IndexerCommand) Run() error {
@@ -114,6 +117,11 @@ func (r *IndexerCommand) Run() error {
 		return xerrors.Errorf(": %w", err)
 	}
 	r.indexer = indexer
+	if r.HTTPAddr != "" {
+		if err := r.webEndpoint(r.HTTPAddr); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
 	if r.RunScheduler {
 		if err := r.scheduler(config.RefreshSchedule); err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -218,6 +226,27 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 
 	logger.Log.Info("Waiting for stop scheduler")
 	<-ctx.Done()
+
+	return nil
+}
+
+func (r *IndexerCommand) webEndpoint(addr string) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/run", func(w http.ResponseWriter, req *http.Request) {
+		go func() {
+			if err := r.run(); err != nil {
+				logger.Log.Info("Failed indexing", zap.Error(err))
+			}
+		}()
+	})
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+
+	logger.Log.Info("Listen web endpoint", zap.String("addr", addr))
+	go srv.ListenAndServe()
 
 	return nil
 }
