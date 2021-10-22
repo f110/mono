@@ -293,7 +293,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 	for _, refName := range refs {
 		logger.Log.Debug("Prepare", zap.String("name", m.repo.Name), zap.String("ref", refName.Short()))
 		dir := filepath.Join(workDir, m.repo.Name)
-		if branchRef, err := m.repo.checkout(workDir, refName, 0); err != nil {
+		if branchRef, err := m.repo.checkout(workDir, refName); err != nil {
 			logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", m.repo.Name))
 			continue
 		} else {
@@ -418,7 +418,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, appId, installati
 	return nil
 }
 
-func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName, retryCount int) (plumbing.ReferenceName, error) {
+func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (plumbing.ReferenceName, error) {
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
@@ -454,12 +454,9 @@ func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName, re
 		Branch: branchRef.Name(),
 	})
 	if err != nil {
-		if retryCount == 0 {
-			if err := x.cleanWorktree(); err != nil {
-				return "", xerrors.Errorf(": %w", err)
-			}
-			retryCount++
-			return x.checkout(workDir, refName, retryCount)
+		st, err := wt.Status()
+		if err == nil {
+			fmt.Printf("%v\n", st)
 		}
 		return "", xerrors.Errorf(": %w", err)
 	}
