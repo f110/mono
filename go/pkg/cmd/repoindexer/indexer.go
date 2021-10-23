@@ -549,6 +549,13 @@ func (x *Repository) cleanWorktree() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	ref, err := x.repo.Head()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := wt.Reset(&git.ResetOptions{Commit: ref.Hash(), Mode: git.HardReset}); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	if err := wt.Clean(&git.CleanOptions{Dir: true}); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
