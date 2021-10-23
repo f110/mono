@@ -20,6 +20,8 @@ type ObjectStorageIndexManager struct {
 	executionKey int64
 	bucket       string
 	backend      *storage.MinIO
+
+	uploadedFiles []string
 }
 
 func NewObjectStorageIndexManager(s *storage.MinIO, bucket string) *ObjectStorageIndexManager {
@@ -46,6 +48,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 			return "", xerrors.Errorf(": %w", err)
 		}
 		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket), zap.Int64("size", info.Size()))
+		s.uploadedFiles = append(s.uploadedFiles, objectPath)
 	}
 
 	return fmt.Sprintf("minio://%s/%s", s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey))), nil
@@ -129,6 +132,16 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 					return xerrors.Errorf(": %w", err)
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func (s *ObjectStorageIndexManager) CleanUploadedFiles(ctx context.Context) error {
+	for _, v := range s.uploadedFiles {
+		if err := s.backend.Delete(ctx, v); err != nil {
+			return xerrors.Errorf(": %w", err)
 		}
 	}
 

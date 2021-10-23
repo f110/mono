@@ -328,6 +328,9 @@ func (r *IndexerCommand) uploadIndex(
 	for _, v := range indexer.Indexes {
 		uploadDir, err := manager.Add(ctx, v.Name, v.Files)
 		if err != nil {
+			if err := manager.CleanUploadedFiles(ctx); err != nil {
+				logger.Log.Warn("Failed cleanup uploaded files", zap.Error(err))
+			}
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		uploadedPath[v.Name] = uploadDir
@@ -336,6 +339,9 @@ func (r *IndexerCommand) uploadIndex(
 	manifest := NewManifest(manager.ExecutionKey(), uploadedPath)
 	mm := NewManifestManager(s)
 	if err := mm.Update(ctx, manifest); err != nil {
+		if err := manager.CleanUploadedFiles(ctx); err != nil {
+			logger.Log.Warn("Failed cleanup loaded files", zap.Error(err))
+		}
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
