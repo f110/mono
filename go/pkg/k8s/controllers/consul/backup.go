@@ -301,9 +301,13 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		if len(files) <= backup.Spec.MaxBackups {
 			return nil
 		}
-		sort.Strings(files)
-		sort.Sort(sort.Reverse(sort.StringSlice(files)))
-		purgeTargets := files[backup.Spec.MaxBackups:]
+		filenames := make([]string, 0)
+		for _, v := range files {
+			filenames = append(filenames, v.Key)
+		}
+		sort.Strings(filenames)
+		sort.Sort(sort.Reverse(sort.StringSlice(filenames)))
+		purgeTargets := filenames[backup.Spec.MaxBackups:]
 		for _, v := range purgeTargets {
 			if err := mc.Delete(ctx, v); err != nil {
 				return xerrors.Errorf(": %w", err)

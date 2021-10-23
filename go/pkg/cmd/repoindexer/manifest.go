@@ -65,11 +65,11 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 
 	latest := int64(0)
 	for _, v := range manifests {
-		if !strings.HasPrefix(v, "manifest_") {
+		if !strings.HasPrefix(v.Key, "manifest_") {
 			continue
 		}
 
-		s := strings.TrimSuffix(strings.TrimPrefix(v, "manifest_"), ".json")
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return manifest, xerrors.Errorf(": %w", err)
@@ -117,11 +117,11 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 
 	timestamps := make([]int64, 0)
 	for _, v := range manifests {
-		if !strings.HasPrefix(v, "manifest_") {
+		if !strings.HasPrefix(v.Key, "manifest_") {
 			continue
 		}
 
-		s := strings.TrimSuffix(strings.TrimPrefix(v, "manifest_"), ".json")
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)

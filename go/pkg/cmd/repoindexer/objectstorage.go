@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
@@ -69,12 +70,12 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 		}
 
 		for _, f := range files {
-			buf, err := s.backend.Get(ctx, f)
+			buf, err := s.backend.Get(ctx, f.Key)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 
-			filePath := filepath.Join(tmpDir, filepath.Base(f))
+			filePath := filepath.Join(tmpDir, filepath.Base(f.Key))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -124,7 +125,7 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 			}
 
 			for _, f := range files {
-				if err := s.backend.Delete(ctx, f); err != nil {
+				if err := s.backend.Delete(ctx, f.Key); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}
@@ -134,7 +135,7 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 	return nil
 }
 
-func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string) ([]string, error) {
+func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string) ([]minio.ObjectInfo, error) {
 	u, err := url.Parse(indexDirURL)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
