@@ -23,10 +23,12 @@ import (
 type MinIOOptions struct {
 	Name            string
 	Namespace       string
+	Endpoint        string
 	Port            int
-	Bucket          string
 	AccessKey       string
 	SecretAccessKey string
+
+	Dev bool
 
 	// PodLister is an optional value.
 	PodLister corev1listers.PodLister
@@ -34,46 +36,131 @@ type MinIOOptions struct {
 	ServiceLister corev1listers.ServiceLister
 	// Transport is an optional value.
 	Transport http.RoundTripper
+
+	client *minio.Client
+
+	k8sClient     kubernetes.Interface
+	restConfig    *rest.Config
+	portForwarder *pf.PortForwarder
 }
 
-func NewMinIOOptions(name, namespace string, port int, bucket, accessKey, secretAccessKey string) MinIOOptions {
+func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
+	if m.client != nil {
+		return m.client, nil
+	}
+
+	if m.k8sClient != nil {
+		c, forwarder, err := m.newMinIOClientViaService(ctx)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		m.client = c
+		m.portForwarder = forwarder
+	} else if m.Endpoint != "" {
+		creds := credentials.NewStaticV4(m.AccessKey, m.SecretAccessKey, "")
+		c, err := minio.New(m.Endpoint, &minio.Options{
+			Creds:     creds,
+			Secure:    false,
+			Transport: m.Transport,
+		})
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		m.client = c
+	}
+
+	return m.client, nil
+}
+
+func (m *MinIOOptions) newMinIOClientViaService(ctx context.Context) (*minio.Client, *pf.PortForwarder, error) {
+	endpoint, forwarder, err := m.getMinIOEndpoint(ctx, m.Name, m.Namespace, m.Port)
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+	creds := credentials.NewStaticV4(m.AccessKey, m.SecretAccessKey, "")
+	mc, err := minio.New(endpoint, &minio.Options{
+		Creds:     creds,
+		Secure:    false,
+		Transport: m.Transport,
+	})
+	if err != nil {
+		return nil, nil, xerrors.Errorf(": %w", err)
+	}
+
+	return mc, forwarder, nil
+}
+
+func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
+	var forwarder *pf.PortForwarder
+	endpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+	if m.Dev {
+		var svc *corev1.Service
+		if m.ServiceLister != nil {
+			if s, err := m.ServiceLister.Services(namespace).Get(name); err != nil {
+				return "", nil, xerrors.Errorf(": %w", err)
+			} else {
+				svc = s
+			}
+		} else {
+			s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
+			if err != nil {
+				return "", nil, xerrors.Errorf(": %w", err)
+			}
+			svc = s
+		}
+		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.restConfig, m.k8sClient, m.PodLister)
+		if err != nil {
+			return "", nil, xerrors.Errorf(": %w", err)
+		}
+		forwarder = f
+		endpoint = fmt.Sprintf("127.0.0.1:%d", port)
+	}
+
+	return endpoint, forwarder, nil
+}
+
+func (m *MinIOOptions) Close() {
+	if m.portForwarder != nil {
+		m.portForwarder.Close()
+	}
+}
+func NewMinIOOptionsViaService(
+	client kubernetes.Interface,
+	config *rest.Config,
+	name, namespace string,
+	port int,
+	accessKey, secretAccessKey string,
+	dev bool,
+) MinIOOptions {
 	return MinIOOptions{
 		Name:            name,
 		Namespace:       namespace,
 		Port:            port,
-		Bucket:          bucket,
+		AccessKey:       accessKey,
+		SecretAccessKey: secretAccessKey,
+		Dev:             dev,
+		k8sClient:       client,
+		restConfig:      config,
+	}
+}
+
+func NewMinIOOptionsViaEndpoint(endpoint, accessKey, secretAccessKey string) MinIOOptions {
+	return MinIOOptions{
+		Endpoint:        endpoint,
 		AccessKey:       accessKey,
 		SecretAccessKey: secretAccessKey,
 	}
 }
 
 type MinIO struct {
-	client kubernetes.Interface
-	config *rest.Config
-	dev    bool
-
-	name            string
-	namespace       string
-	port            int
-	bucket          string
-	accessKey       string
-	secretAccessKey string
-
-	opt MinIOOptions
+	bucket string
+	opt    MinIOOptions
 }
 
-func NewMinIOStorage(client kubernetes.Interface, config *rest.Config, opt MinIOOptions, dev bool) *MinIO {
+func NewMinIOStorage(bucket string, opt MinIOOptions) *MinIO {
 	return &MinIO{
-		client:          client,
-		config:          config,
-		name:            opt.Name,
-		namespace:       opt.Namespace,
-		port:            opt.Port,
-		bucket:          opt.Bucket,
-		accessKey:       opt.AccessKey,
-		secretAccessKey: opt.SecretAccessKey,
-		dev:             dev,
-		opt:             opt,
+		bucket: bucket,
+		opt:    opt,
 	}
 }
 
@@ -82,13 +169,11 @@ func (m *MinIO) Put(ctx context.Context, name string, data *bytes.Buffer) error 
 }
 
 func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size int64) error {
-	mc, forwarder, err := m.newMinIOClient(ctx)
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
+	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+
 	_, err = mc.PutObject(ctx, m.bucket, name, r, size, minio.PutObjectOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -98,10 +183,11 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size in
 }
 
 func (m *MinIO) List(ctx context.Context, prefix string) ([]minio.ObjectInfo, error) {
-	mc, forwarder, err := m.newMinIOClient(ctx)
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
+	return m.ListRecursive(ctx, prefix, false)
+}
+
+func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool) ([]minio.ObjectInfo, error) {
+	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -109,7 +195,7 @@ func (m *MinIO) List(ctx context.Context, prefix string) ([]minio.ObjectInfo, er
 	if prefix[len(prefix)-1] != '/' {
 		prefix += "/"
 	}
-	listCh := mc.ListObjects(ctx, m.bucket, minio.ListObjectsOptions{Prefix: prefix})
+	listCh := mc.ListObjects(ctx, m.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: recursive})
 	files := make([]minio.ObjectInfo, 0)
 	for obj := range listCh {
 		if obj.Err != nil {
@@ -122,10 +208,7 @@ func (m *MinIO) List(ctx context.Context, prefix string) ([]minio.ObjectInfo, er
 }
 
 func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
-	mc, forwarder, err := m.newMinIOClient(ctx)
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
+	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -143,10 +226,7 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 }
 
 func (m *MinIO) Delete(ctx context.Context, name string) error {
-	mc, forwarder, err := m.newMinIOClient(ctx)
-	if forwarder != nil {
-		defer forwarder.Close()
-	}
+	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -159,49 +239,6 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m *MinIO) newMinIOClient(ctx context.Context) (*minio.Client, *pf.PortForwarder, error) {
-	endpoint, forwarder, err := m.getMinIOEndpoint(ctx, m.name, m.namespace, m.port)
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-	creds := credentials.NewStaticV4(m.accessKey, m.secretAccessKey, "")
-	mc, err := minio.New(endpoint, &minio.Options{
-		Creds:     creds,
-		Secure:    false,
-		Transport: m.opt.Transport,
-	})
-	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
-	}
-
-	return mc, forwarder, nil
-}
-
-func (m *MinIO) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
-	var forwarder *pf.PortForwarder
-	endpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
-	if m.dev {
-		var svc *corev1.Service
-		if m.opt.ServiceLister != nil {
-			if s, err := m.opt.ServiceLister.Services(namespace).Get(name); err != nil {
-				return "", nil, xerrors.Errorf(": %w", err)
-			} else {
-				svc = s
-			}
-		} else {
-			s, err := m.client.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
-			if err != nil {
-				return "", nil, xerrors.Errorf(": %w", err)
-			}
-			svc = s
-		}
-		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.config, m.client, m.opt.PodLister)
-		if err != nil {
-			return "", nil, xerrors.Errorf(": %w", err)
-		}
-		forwarder = f
-		endpoint = fmt.Sprintf("127.0.0.1:%d", port)
-	}
-
-	return endpoint, forwarder, nil
+func (m *MinIO) Close() {
+	m.opt.Close()
 }

@@ -18,7 +18,9 @@ import (
 )
 
 type Manifest struct {
-	CreatedAt    time.Time
+	CreatedAt time.Time
+	// Indexes has Repository.Name and the index path prefix.
+	// The key is Repository.Name. The value is the index path prefix.
 	Indexes      map[string]string
 	ExecutionKey uint64
 
@@ -107,6 +109,43 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 
 	return manifest, nil
+}
+
+func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
+	objects, err := m.backend.List(ctx, "/")
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	var timestamps []int64
+	for _, v := range objects {
+		if !strings.HasPrefix(v.Key, "manifest_") {
+			continue
+		}
+
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
+		ts, err := strconv.ParseInt(s, 10, 32)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		timestamps = append(timestamps, ts)
+	}
+
+	var manifests []Manifest
+	for _, v := range timestamps {
+		buf, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", v))
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		var manifest Manifest
+		if err := json.NewDecoder(bytes.NewReader(buf)).Decode(&manifest); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
+		manifests = append(manifests, manifest)
+	}
+
+	return manifests, nil
 }
 
 func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest, error) {

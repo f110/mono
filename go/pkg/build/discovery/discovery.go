@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"go.f110.dev/mono/go/pkg/build/coordinator"
 	"go.f110.dev/mono/go/pkg/build/database"
@@ -148,7 +147,6 @@ type Discover struct {
 func NewDiscover(
 	jobInformer batchv1informers.JobInformer,
 	client kubernetes.Interface,
-	cfg *rest.Config,
 	namespace string,
 	daoOpt dao.Options,
 	builder *coordinator.BazelBuilder,
@@ -157,6 +155,7 @@ func NewDiscover(
 	ctlImage string,
 	builderApi string,
 	ghClient *github.Client,
+	bucket string,
 	minioOpt storage.MinIOOptions,
 	appId int64,
 	installationId int64,
@@ -171,7 +170,7 @@ func NewDiscover(
 		builder:              builder,
 		bazelImage:           bazelImage,
 		sidecarImage:         sidecarImage,
-		minio:                storage.NewMinIOStorage(client, cfg, minioOpt, debug),
+		minio:                storage.NewMinIOStorage(bucket, minioOpt),
 		ctlImage:             ctlImage,
 		builderApi:           builderApi,
 		githubClient:         ghClient,

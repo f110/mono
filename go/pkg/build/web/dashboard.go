@@ -10,8 +10,6 @@ import (
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
@@ -33,11 +31,11 @@ type Dashboard struct {
 	discovery *discovery.Viewer
 }
 
-func NewDashboard(addr string, daoOpt dao.Options, apiHost string, client kubernetes.Interface, config *rest.Config, minioOpt storage.MinIOOptions, dev bool) *Dashboard {
+func NewDashboard(addr string, daoOpt dao.Options, apiHost string, bucket string, minioOpt storage.MinIOOptions) *Dashboard {
 	d := &Dashboard{
 		dao:       daoOpt,
 		apiHost:   apiHost,
-		minio:     storage.NewMinIOStorage(client, config, minioOpt, dev),
+		minio:     storage.NewMinIOStorage(bucket, minioOpt),
 		discovery: discovery.NewViewer(),
 	}
 

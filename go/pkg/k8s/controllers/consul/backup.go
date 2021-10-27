@@ -223,9 +223,9 @@ func (b *BackupController) storeBackupFile(
 			return xerrors.Errorf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 
-		mcOpt := storage.NewMinIOOptions(spec.Service.Name, spec.Service.Namespace, 9000, spec.Bucket, string(accessKey), string(secretAccessKey))
+		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
 		mcOpt.Transport = b.transport
-		mc := storage.NewMinIOStorage(b.coreClient, b.config, mcOpt, b.runOutsideCluster)
+		mc := storage.NewMinIOStorage(spec.Bucket, mcOpt)
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
 		path := spec.Path
 		if path[0] == '/' {
@@ -290,9 +290,9 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 			return xerrors.Errorf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 
-		mcOpt := storage.NewMinIOOptions(spec.Service.Name, spec.Service.Namespace, 9000, spec.Bucket, string(accessKey), string(secretAccessKey))
+		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
 		mcOpt.Transport = b.transport
-		mc := storage.NewMinIOStorage(b.coreClient, b.config, mcOpt, b.runOutsideCluster)
+		mc := storage.NewMinIOStorage(spec.Bucket, mcOpt)
 
 		files, err := mc.List(ctx, spec.Path)
 		if err != nil {

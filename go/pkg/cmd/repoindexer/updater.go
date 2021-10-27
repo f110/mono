@@ -61,8 +61,8 @@ func (u *UpdaterCommand) Run() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	minioOpt := storage.NewMinIOOptions(u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOBucket, u.MinIOAccessKey, u.MinIOSecretAccessKey)
-	s := storage.NewMinIOStorage(k8sClient, k8sConf, minioOpt, u.Dev)
+	minioOpt := storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, u.MinIOSecretAccessKey, u.Dev)
+	s := storage.NewMinIOStorage(u.MinIOBucket, minioOpt)
 	u.manifestManager = NewManifestManager(s)
 	u.indexManager = NewObjectStorageIndexManager(s, u.MinIOBucket)
 

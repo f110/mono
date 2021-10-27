@@ -7,8 +7,6 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
@@ -23,11 +21,11 @@ type GC struct {
 	minio    *storage.MinIO
 }
 
-func NewGC(interval time.Duration, daoOpt dao.Options, client kubernetes.Interface, config *rest.Config, minioOpt storage.MinIOOptions, dev bool) *GC {
+func NewGC(interval time.Duration, daoOpt dao.Options, bucket string, minioOpt storage.MinIOOptions) *GC {
 	return &GC{
 		interval: interval,
 		dao:      daoOpt,
-		minio:    storage.NewMinIOStorage(client, config, minioOpt, dev),
+		minio:    storage.NewMinIOStorage(bucket, minioOpt),
 	}
 }
 

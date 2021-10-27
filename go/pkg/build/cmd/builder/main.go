@@ -178,13 +178,15 @@ func (p *process) init() (fsm.State, error) {
 }
 
 func (p *process) setup() (fsm.State, error) {
-	minioOpt := storage.NewMinIOOptions(
+	minioOpt := storage.NewMinIOOptionsViaService(
+		p.kubeClient,
+		p.restCfg,
 		p.opt.MinIOName,
 		p.opt.MinIONamespace,
 		p.opt.MinIOPort,
-		p.opt.MinIOBucket,
 		p.opt.MinIOAccessKey,
 		p.opt.MinIOSecretAccessKey,
+		p.opt.Dev,
 	)
 	p.minioOpt = minioOpt
 	kubernetesOpt := coordinator.NewKubernetesOptions(
@@ -211,6 +213,7 @@ func (p *process) setup() (fsm.State, error) {
 		p.dao,
 		p.opt.Namespace,
 		p.ghClient,
+		p.opt.MinIOBucket,
 		minioOpt,
 		bazelOpt,
 		p.opt.Dev,
@@ -224,7 +227,6 @@ func (p *process) setup() (fsm.State, error) {
 	p.discover = discovery.NewDiscover(
 		p.coreSharedInformerFactory.Batch().V1().Jobs(),
 		p.kubeClient,
-		p.restCfg,
 		p.opt.Namespace,
 		p.dao,
 		c,
@@ -233,6 +235,7 @@ func (p *process) setup() (fsm.State, error) {
 		p.opt.CLIImage,
 		p.opt.BuilderApiUrl,
 		p.ghClient,
+		p.opt.MinIOBucket,
 		minioOpt,
 		p.opt.GithubAppId,
 		p.opt.GithubInstallationId,
@@ -315,7 +318,7 @@ func (p *process) startWorker() (fsm.State, error) {
 	}()
 
 	if p.opt.WithGC {
-		g := gc.NewGC(1*time.Hour, p.dao, p.kubeClient, p.restCfg, p.minioOpt, p.opt.Dev)
+		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.minioOpt)
 		go func() {
 			logger.Log.Info("Start GC")
 			g.Start()

@@ -71,8 +71,8 @@ func dashboard(opt Options) error {
 
 	coreSharedInformerFactory.Start(ctx.Done())
 
-	minioOpt := storage.NewMinIOOptions(opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOBucket, opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
-	d := web.NewDashboard(opt.Addr, dao.NewOptions(conn), opt.ApiHost, kubeClient, cfg, minioOpt, opt.Dev)
+	minioOpt := storage.NewMinIOOptionsViaService(kubeClient, cfg, opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOAccessKey, opt.MinIOSecretAccessKey, opt.Dev)
+	d := web.NewDashboard(opt.Addr, dao.NewOptions(conn), opt.ApiHost, opt.MinIOBucket, minioOpt)
 
 	go func() {
 		<-ctx.Done()

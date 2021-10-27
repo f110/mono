@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/robfig/cron/v3"
@@ -32,6 +33,7 @@ type IndexerCommand struct {
 	PrivateKeyFile string
 	HTTPAddr       string
 
+	MinIOEndpoint               string
 	MinIOName                   string
 	MinIONamespace              string
 	MinIOPort                   int
@@ -51,6 +53,8 @@ type IndexerCommand struct {
 	cron    *cron.Cron
 	entryId cron.EntryID
 	cancel  context.CancelFunc
+
+	mu sync.Mutex
 }
 
 func NewIndexerCommand() *IndexerCommand {
@@ -81,6 +85,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.Int64Var(&r.AppId, "app-id", r.AppId, "GitHub Application ID")
 	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
 	fs.StringVar(&r.PrivateKeyFile, "private-key-file", r.PrivateKeyFile, "Private key file for GitHub App")
+	fs.StringVar(&r.MinIOEndpoint, "minio-endpoint", r.MinIOEndpoint, "The endpoint of MinIO")
 	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
 	fs.StringVar(&r.MinIONamespace, "minio-namespace", r.MinIONamespace, "The namespace of MinIO")
 	fs.IntVar(&r.MinIOPort, "minio-port", r.MinIOPort, "Port number of MinIO")
@@ -122,14 +127,17 @@ func (r *IndexerCommand) Run() error {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
+
 	if r.RunScheduler {
 		if err := r.scheduler(config.RefreshSchedule); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		return nil
 	}
-
 	if err := r.run(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := r.gc(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -137,14 +145,15 @@ func (r *IndexerCommand) Run() error {
 }
 
 func (r *IndexerCommand) run() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer func() {
 		r.indexer.Reset()
 		cancel()
 	}()
 	r.cancel = cancel
-
-	enableObjectStorageUpload := r.MinIOName != "" && r.MinIONamespace != "" && r.MinIOBucket != ""
 
 	if !r.WithoutFetch {
 		if err := r.indexer.Sync(ctx); err != nil {
@@ -154,7 +163,7 @@ func (r *IndexerCommand) run() error {
 	if err := r.indexer.BuildIndex(ctx); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if enableObjectStorageUpload {
+	if r.enableUpload() {
 		manifest, err := r.uploadIndex(
 			ctx,
 			r.indexer,
@@ -204,6 +213,11 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 	}
 
 	r.cron = cron.New()
+	_, err := r.cron.AddFunc("0 0 0 * *", func() {
+		if err := r.gc(); err != nil {
+			logger.Log.Info("Failed garbage collection", zap.Error(err))
+		}
+	})
 	e, err := r.cron.AddFunc(schedule, func() {
 		if err := r.run(); err != nil {
 			logger.Log.Info("Failed indexing", zap.Error(err))
@@ -249,6 +263,37 @@ func (r *IndexerCommand) webEndpoint(addr string) error {
 	go srv.ListenAndServe()
 
 	return nil
+}
+
+func (r *IndexerCommand) gc() error {
+	if !r.enableUpload() {
+		return nil
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	logger.Log.Info("Start garbage collection")
+
+	var opt storage.MinIOOptions
+	if r.MinIOName != "" && r.MinIONamespace != "" {
+		k8sClient, k8sConf, err := newK8sClient(r.Dev)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
+	} else if r.MinIOEndpoint != "" {
+		opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIOAccessKey, r.MinIOSecretAccessKey)
+	}
+	s := storage.NewMinIOStorage(r.MinIOBucket, opt)
+	gc := NewIndexGC(s, r.MinIOBucket)
+	if err := gc.GC(context.Background()); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	return nil
+}
+
+func (r *IndexerCommand) enableUpload() bool {
+	return r.MinIOBucket != "" && ((r.MinIOName != "" && r.MinIONamespace != "") || r.MinIOEndpoint != "")
 }
 
 func (r *IndexerCommand) reloadConfig() {
@@ -321,8 +366,8 @@ func (r *IndexerCommand) uploadIndex(
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	opt := storage.NewMinIOOptions(minioName, minioNamespace, minioPort, minioBucket, minioAccessKey, minioSecretAccessKey)
-	s := storage.NewMinIOStorage(k8sClient, k8sConf, opt, dev)
+	opt := storage.NewMinIOOptionsViaService(k8sClient, k8sConf, minioName, minioNamespace, minioPort, minioAccessKey, minioSecretAccessKey, dev)
+	s := storage.NewMinIOStorage(minioBucket, opt)
 	manager := NewObjectStorageIndexManager(s, minioBucket)
 	uploadedPath := make(map[string]string, 0)
 	for _, v := range indexer.Indexes {
