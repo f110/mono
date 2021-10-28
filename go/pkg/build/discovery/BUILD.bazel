@@ -25,7 +25,6 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/informers/batch/v1:batch",
         "//vendor/k8s.io/client-go/kubernetes",
-        "//vendor/k8s.io/client-go/rest",
     ],
 )
 

@@ -13,7 +13,5 @@ go_library(
         "//go/pkg/storage",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
-        "//vendor/k8s.io/client-go/kubernetes",
-        "//vendor/k8s.io/client-go/rest",
     ],
 )
