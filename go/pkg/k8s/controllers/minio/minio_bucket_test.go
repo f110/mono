@@ -30,6 +30,11 @@ func TestBucketController(t *testing.T) {
 		controller.transport = mockTransport
 		mockTransport.RegisterRegexpResponder(
 			http.MethodGet,
+			regexp.MustCompile("./bucket1/\\?policy="),
+			httpmock.NewStringResponder(http.StatusOK, ""),
+		)
+		mockTransport.RegisterRegexpResponder(
+			http.MethodGet,
 			regexp.MustCompile(".*/bucket1/"),
 			httpmock.NewStringResponder(
 				http.StatusOK, `<?xml version="1.0" encoding="UTF-8"?>

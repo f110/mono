@@ -54,25 +54,25 @@ func NewBase(
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
 ) *ControllerBase {
-	log := logger.Log.Named(name)
+	logger := logger.Log.Named(name)
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
-		log.Info(fmt.Sprintf(format, args...))
+		logger.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: name})
 
 	var r Reconciler
 	if fn, ok := v.(interface {
-		NewReconciler() Reconciler
+		NewReconciler(log *zap.Logger) Reconciler
 	}); ok {
-		r = fn.NewReconciler()
+		r = fn.NewReconciler(logger)
 	}
 
 	return &ControllerBase{
 		queue:       NewWorkQueue(name),
 		recorder:    recorder,
-		log:         log,
+		log:         logger,
 		impl:        v,
 		reconciler:  r,
 		eventSource: eventSource,

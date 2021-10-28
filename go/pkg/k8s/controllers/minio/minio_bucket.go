@@ -28,15 +28,14 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	"go.f110.dev/mono/go/pkg/fsm"
-	"go.f110.dev/mono/go/pkg/logger"
-
 	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
+	"go.f110.dev/mono/go/pkg/fsm"
 	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	mbLister "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"
 	mclisters "go.f110.dev/mono/go/pkg/k8s/listers/miniocontroller/v1beta1"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 // +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete
@@ -148,7 +147,7 @@ func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object)
 	return b, nil
 }
 
-func (c *BucketController) NewReconciler() controllerutil.Reconciler {
+func (c *BucketController) NewReconciler(log *zap.Logger) controllerutil.Reconciler {
 	return NewBucketReconciler(
 		c.coreClient,
 		c.mClient,
@@ -159,7 +158,7 @@ func (c *BucketController) NewReconciler() controllerutil.Reconciler {
 		c.instanceLister,
 		c.runOutsideCluster,
 		c.transport,
-		c.Log(),
+		log,
 	)
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,9 +60,9 @@ func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) er
 	defer cancel()
 
 	if fn, ok := c.(interface {
-		NewReconciler() controllerutil.Reconciler
+		NewReconciler(*zap.Logger) controllerutil.Reconciler
 	}); ok {
-		return fn.NewReconciler().Reconcile(ctx, v)
+		return fn.NewReconciler(logger.Log).Reconcile(ctx, v)
 	} else {
 		return c.Reconcile(ctx, v)
 	}
