@@ -37,7 +37,7 @@ require (
 	github.com/peco/peco v0.5.8
 	github.com/prometheus/client_golang v1.11.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/shirou/gopsutil/v3 v3.21.1
+	github.com/shirou/gopsutil/v3 v3.21.9
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/sourcegraph/go-diff v0.5.1

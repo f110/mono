@@ -13,6 +13,7 @@ go_library(
         "mem_openbsd.go",
         "mem_openbsd_386.go",
         "mem_openbsd_amd64.go",
+        "mem_openbsd_arm64.go",
         "mem_solaris.go",
         "mem_windows.go",
     ],

@@ -32,6 +32,7 @@ go_library(
         "host_openbsd.go",
         "host_openbsd_386.go",
         "host_openbsd_amd64.go",
+        "host_openbsd_arm64.go",
         "host_posix.go",
         "host_solaris.go",
         "host_windows.go",

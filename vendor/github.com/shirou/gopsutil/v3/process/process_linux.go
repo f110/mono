@@ -18,15 +18,23 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/internal/common"
 	"github.com/shirou/gopsutil/v3/net"
+	"github.com/tklauser/go-sysconf"
 	"golang.org/x/sys/unix"
 )
 
 var pageSize = uint64(os.Getpagesize())
 
-const (
-	prioProcess = 0   // linux/resource.h
-	clockTicks  = 100 // C.sysconf(C._SC_CLK_TCK)
-)
+const prioProcess = 0 // linux/resource.h
+
+var clockTicks = 100 // default value
+
+func init() {
+	clkTck, err := sysconf.Sysconf(sysconf.SC_CLK_TCK)
+	// ignore errors
+	if err == nil {
+		clockTicks = int(clkTck)
+	}
+}
 
 // MemoryInfoExStat is different between OSes
 type MemoryInfoExStat struct {
@@ -74,7 +82,7 @@ func (p *Process) PpidWithContext(ctx context.Context) (int32, error) {
 
 func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 	if p.name == "" {
-		if err := p.fillFromStatusWithContext(ctx); err != nil {
+		if err := p.fillNameWithContext(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -343,7 +351,7 @@ func (p *Process) PageFaultsWithContext(ctx context.Context) (*PageFaultsStat, e
 func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 	pids, err := common.CallPgrepWithContext(ctx, invoke, p.Pid)
 	if err != nil {
-		if pids == nil || len(pids) == 0 {
+		if len(pids) == 0 {
 			return nil, ErrorNoChildren
 		}
 		return nil, err
@@ -477,6 +485,17 @@ func (p *Process) MemoryMapsWithContext(ctx context.Context, grouped bool) (*[]M
 	return &ret, nil
 }
 
+func (p *Process) EnvironWithContext(ctx context.Context) ([]string, error) {
+	environPath := common.HostProc(strconv.Itoa(int(p.Pid)), "environ")
+
+	environContent, err := ioutil.ReadFile(environPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return strings.Split(string(environContent), "\000"), nil
+}
+
 /**
 ** Internal functions
 **/
@@ -485,11 +504,11 @@ func limitToUint(val string) (uint64, error) {
 	if val == "unlimited" {
 		return math.MaxUint64, nil
 	} else {
-		res, err := strconv.ParseInt(val, 10, 32)
+		res, err := strconv.ParseUint(val, 10, 64)
 		if err != nil {
 			return 0, err
 		}
-		return uint64(res), nil
+		return res, nil
 	}
 }
 
@@ -659,10 +678,7 @@ func (p *Process) fillFromCmdlineWithContext(ctx context.Context) (string, error
 		return "", err
 	}
 	ret := strings.FieldsFunc(string(cmdline), func(r rune) bool {
-		if r == '\u0000' {
-			return true
-		}
-		return false
+		return r == '\u0000'
 	})
 
 	return strings.Join(ret, " "), nil
@@ -781,6 +797,28 @@ func (p *Process) fillFromStatmWithContext(ctx context.Context) (*MemoryInfoStat
 	return memInfo, memInfoEx, nil
 }
 
+// Get name from /proc/(pid)/comm or /proc/(pid)/status
+func (p *Process) fillNameWithContext(ctx context.Context) error {
+	err := p.fillFromCommWithContext(ctx)
+	if err == nil && p.name != "" && len(p.name) < 15 {
+		return nil
+	}
+	return p.fillFromStatusWithContext(ctx)
+}
+
+// Get name from /proc/(pid)/comm
+func (p *Process) fillFromCommWithContext(ctx context.Context) error {
+	pid := p.Pid
+	statPath := common.HostProc(strconv.Itoa(int(pid)), "comm")
+	contents, err := ioutil.ReadFile(statPath)
+	if err != nil {
+		return err
+	}
+
+	p.name = strings.TrimSuffix(string(contents), "\n")
+	return nil
+}
+
 // Get various status from /proc/(pid)/status
 func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 	pid := p.Pid
@@ -816,8 +854,12 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 					}
 				}
 			}
+			// Ensure we have a copy and not reference into slice
+			p.name = string([]byte(p.name))
 		case "State":
 			p.status = convertStatusChar(value[0:1])
+			// Ensure we have a copy and not reference into slice
+			p.status = string([]byte(p.status))
 		case "PPid", "Ppid":
 			pval, err := strconv.ParseInt(value, 10, 32)
 			if err != nil {
@@ -926,30 +968,45 @@ func (p *Process) fillFromStatusWithContext(ctx context.Context) error {
 			}
 			p.memInfo.Locked = v * 1024
 		case "SigPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.PendingThread = v
 		case "ShdPnd":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.PendingProcess = v
 		case "SigBlk":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.Blocked = v
 		case "SigIgn":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
 			}
 			p.sigInfo.Ignored = v
 		case "SigCgt":
+			if len(value) > 16 {
+				value = value[len(value)-16:]
+			}
 			v, err := strconv.ParseUint(value, 16, 64)
 			if err != nil {
 				return err
@@ -975,28 +1032,24 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	fields := strings.Fields(string(contents))
+	// Indexing from one, as described in `man proc` about the file /proc/[pid]/stat
+	fields := splitProcStat(contents)
 
-	i := 1
-	for !strings.HasSuffix(fields[i], ")") {
-		i++
-	}
-
-	terminal, err := strconv.ParseUint(fields[i+5], 10, 64)
+	terminal, err := strconv.ParseUint(fields[7], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	ppid, err := strconv.ParseInt(fields[i+2], 10, 32)
+	ppid, err := strconv.ParseInt(fields[4], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	utime, err := strconv.ParseFloat(fields[i+12], 64)
+	utime, err := strconv.ParseFloat(fields[14], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 
-	stime, err := strconv.ParseFloat(fields[i+13], 64)
+	stime, err := strconv.ParseFloat(fields[15], 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1004,27 +1057,32 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	// There is no such thing as iotime in stat file.  As an approximation, we
 	// will use delayacct_blkio_ticks (aggregated block I/O delays, as per Linux
 	// docs).  Note: I am assuming at least Linux 2.6.18
-	iotime, err := strconv.ParseFloat(fields[i+40], 64)
-	if err != nil {
-		iotime = 0 // Ancient linux version, most likely
+	var iotime float64
+	if len(fields) > 42 {
+		iotime, err = strconv.ParseFloat(fields[42], 64)
+		if err != nil {
+			iotime = 0 // Ancient linux version, most likely
+		}
+	} else {
+		iotime = 0 // e.g. SmartOS containers
 	}
 
 	cpuTimes := &cpu.TimesStat{
 		CPU:    "cpu",
-		User:   float64(utime / clockTicks),
-		System: float64(stime / clockTicks),
-		Iowait: float64(iotime / clockTicks),
+		User:   utime / float64(clockTicks),
+		System: stime / float64(clockTicks),
+		Iowait: iotime / float64(clockTicks),
 	}
 
 	bootTime, _ := common.BootTimeWithContext(ctx)
-	t, err := strconv.ParseUint(fields[i+20], 10, 64)
+	t, err := strconv.ParseUint(fields[22], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
 	ctime := (t / uint64(clockTicks)) + uint64(bootTime)
 	createTime := int64(ctime * 1000)
 
-	rtpriority, err := strconv.ParseInt(fields[i+16], 10, 32)
+	rtpriority, err := strconv.ParseInt(fields[18], 10, 32)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1039,19 +1097,19 @@ func (p *Process) fillFromTIDStatWithContext(ctx context.Context, tid int32) (ui
 	snice, _ := unix.Getpriority(prioProcess, int(pid))
 	nice := int32(snice) // FIXME: is this true?
 
-	minFault, err := strconv.ParseUint(fields[i+8], 10, 64)
+	minFault, err := strconv.ParseUint(fields[10], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	cMinFault, err := strconv.ParseUint(fields[i+9], 10, 64)
+	cMinFault, err := strconv.ParseUint(fields[11], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	majFault, err := strconv.ParseUint(fields[i+10], 10, 64)
+	majFault, err := strconv.ParseUint(fields[12], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
-	cMajFault, err := strconv.ParseUint(fields[i+11], 10, 64)
+	cMajFault, err := strconv.ParseUint(fields[13], 10, 64)
 	if err != nil {
 		return 0, 0, nil, 0, 0, 0, nil, err
 	}
@@ -1116,4 +1174,17 @@ func readPidsFromDir(path string) ([]int32, error) {
 	}
 
 	return ret, nil
+}
+
+func splitProcStat(content []byte) []string {
+	nameStart := bytes.IndexByte(content, '(')
+	nameEnd := bytes.LastIndexByte(content, ')')
+	restFields := strings.Fields(string(content[nameEnd+2:])) // +2 skip ') '
+	name := content[nameStart+1 : nameEnd]
+	pid := strings.TrimSpace(string(content[:nameStart]))
+	fields := make([]string, 3, len(restFields)+3)
+	fields[1] = string(pid)
+	fields[2] = string(name)
+	fields = append(fields, restFields...)
+	return fields
 }

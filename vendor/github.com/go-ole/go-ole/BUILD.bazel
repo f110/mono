@@ -57,4 +57,10 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/go-ole/go-ole",
     importpath = "github.com/go-ole/go-ole",
     visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
 )

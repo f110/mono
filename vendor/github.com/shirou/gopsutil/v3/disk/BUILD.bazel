@@ -17,6 +17,7 @@ go_library(
         "disk_openbsd.go",
         "disk_openbsd_386.go",
         "disk_openbsd_amd64.go",
+        "disk_openbsd_arm64.go",
         "disk_solaris.go",
         "disk_unix.go",
         "disk_windows.go",
