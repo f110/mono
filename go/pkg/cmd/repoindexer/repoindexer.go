@@ -80,7 +80,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&r.RunScheduler, "run-scheduler", r.RunScheduler, "")
 	fs.BoolVar(&r.InitRun, "init-run", r.InitRun, "")
 	fs.BoolVar(&r.WithoutFetch, "without-fetch", r.WithoutFetch, "Disable fetch")
-	fs.BoolVar(&r.DisableCleanup, "disable-cleanup", r.DisableCleanup, "Disable cleanup")
+	fs.BoolVar(&r.DisableCleanup, "disable-cleanup", r.DisableCleanup, "Disable cleanup in the working directory not the object storage")
 	fs.IntVar(&r.Parallelism, "parallelism", r.Parallelism, "The number of workers")
 	fs.Int64Var(&r.AppId, "app-id", r.AppId, "GitHub Application ID")
 	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
@@ -95,7 +95,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
 	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
 	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
-	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup of the object storage")
+	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup in the object storage after uploaded the index")
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
 	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
 }

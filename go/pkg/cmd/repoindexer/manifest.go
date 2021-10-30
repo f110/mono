@@ -49,7 +49,7 @@ func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	err := m.backend.Put(ctx, manifest.filename, buf)
+	err := m.backend.Put(ctx, manifest.filename, buf.Bytes())
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -67,11 +67,11 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 
 	latest := int64(0)
 	for _, v := range manifests {
-		if !strings.HasPrefix(v.Key, "manifest_") {
+		if !strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
 
-		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return manifest, xerrors.Errorf(": %w", err)
@@ -84,11 +84,11 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 		return manifest, xerrors.New("repoindexer: Could not found the latest manifest")
 	}
 
-	buf, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", latest))
+	r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", latest))
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
-	if err := json.NewDecoder(bytes.NewReader(buf)).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
@@ -99,11 +99,11 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) {
 	manifest := Manifest{}
 
-	buf, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", ts))
+	r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", ts))
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
-	if err := json.NewDecoder(bytes.NewReader(buf)).Decode(&manifest); err != nil {
+	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
@@ -119,11 +119,11 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 
 	var timestamps []int64
 	for _, v := range objects {
-		if !strings.HasPrefix(v.Key, "manifest_") {
+		if !strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
 
-		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
@@ -133,12 +133,12 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 
 	var manifests []Manifest
 	for _, v := range timestamps {
-		buf, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", v))
+		r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", v))
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		var manifest Manifest
-		if err := json.NewDecoder(bytes.NewReader(buf)).Decode(&manifest); err != nil {
+		if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
@@ -156,11 +156,11 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 
 	timestamps := make([]int64, 0)
 	for _, v := range manifests {
-		if !strings.HasPrefix(v.Key, "manifest_") {
+		if !strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
 
-		s := strings.TrimSuffix(strings.TrimPrefix(v.Key, "manifest_"), ".json")
+		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)

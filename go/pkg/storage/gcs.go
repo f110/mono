@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"io"
 
@@ -18,17 +19,23 @@ type Google struct {
 	bucket         string
 }
 
+var _ storageInterface = &Google{}
+
 func NewGCS(creds []byte, bucket string) *Google {
 	return &Google{credentialJSON: creds, bucket: bucket}
 }
 
-func (g *Google) Put(ctx context.Context, data io.Reader, path string) error {
+func (g *Google) Put(ctx context.Context, name string, data []byte) error {
+	return g.PutReader(ctx, name, bytes.NewReader(data))
+}
+
+func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) error {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	obj := client.Bucket(g.bucket).Object(path)
+	obj := client.Bucket(g.bucket).Object(name)
 	w := obj.NewWriter(ctx)
 	if _, err := io.Copy(w, data); err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -41,13 +48,13 @@ func (g *Google) Put(ctx context.Context, data io.Reader, path string) error {
 	return nil
 }
 
-func (g *Google) List(ctx context.Context, prefix string) ([]*storage.ObjectAttrs, error) {
+func (g *Google) List(ctx context.Context, prefix string) ([]*Object, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	iter := client.Bucket(g.bucket).Objects(ctx, &storage.Query{Prefix: prefix})
-	files := make([]*storage.ObjectAttrs, 0)
+	var files []*Object
 	for {
 		objAttr, err := iter.Next()
 		if err == iterator.Done {
@@ -56,7 +63,11 @@ func (g *Google) List(ctx context.Context, prefix string) ([]*storage.ObjectAttr
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-		files = append(files, objAttr)
+		files = append(files, &Object{
+			Name:         objAttr.Name,
+			LastModified: objAttr.Updated,
+			Size:         objAttr.Size,
+		})
 	}
 
 	return files, nil
@@ -74,4 +85,19 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+func (g *Google) Get(ctx context.Context, name string) (io.Reader, error) {
+	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	obj := client.Bucket(g.bucket).Object(name)
+	r, err := obj.NewReader(ctx)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	return r, nil
 }

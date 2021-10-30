@@ -56,7 +56,7 @@ func NewTestRunner() *TestRunner {
 func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) error {
 	r.RegisterFixture(v)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if fn, ok := c.(interface {

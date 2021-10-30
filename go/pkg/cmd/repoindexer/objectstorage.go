@@ -3,12 +3,12 @@ package repoindexer
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/minio/minio-go/v7"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
@@ -43,7 +43,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 			return "", xerrors.Errorf(": %w", err)
 		}
 		objectPath := filepath.Join(name, fmt.Sprintf("%d", s.executionKey), filepath.Base(v))
-		err = s.backend.PutReader(ctx, objectPath, f, info.Size())
+		err = s.backend.PutReader(ctx, objectPath, f)
 		if err != nil {
 			return "", xerrors.Errorf(": %w", err)
 		}
@@ -73,12 +73,16 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 		}
 
 		for _, f := range files {
-			buf, err := s.backend.Get(ctx, f.Key)
+			r, err := s.backend.Get(ctx, f.Name)
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			buf, err := io.ReadAll(r)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 
-			filePath := filepath.Join(tmpDir, filepath.Base(f.Key))
+			filePath := filepath.Join(tmpDir, filepath.Base(f.Name))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -128,7 +132,7 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 			}
 
 			for _, f := range files {
-				if err := s.backend.Delete(ctx, f.Key); err != nil {
+				if err := s.backend.Delete(ctx, f.Name); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}
@@ -148,7 +152,7 @@ func (s *ObjectStorageIndexManager) CleanUploadedFiles(ctx context.Context) erro
 	return nil
 }
 
-func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string) ([]minio.ObjectInfo, error) {
+func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string) ([]*storage.Object, error) {
 	u, err := url.Parse(indexDirURL)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

@@ -276,7 +276,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				if err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
-				if err := d.minio.Put(ctx, job.Name, bytes.NewBuffer(rawLog)); err != nil {
+				if err := d.minio.Put(ctx, job.Name, rawLog); err != nil {
 					return xerrors.Errorf(": %w", err)
 				}
 			}

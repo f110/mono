@@ -479,7 +479,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 	buf.WriteString("----- main -----\n")
 	buf.Write(rawLog)
 
-	if err := b.minio.Put(context.Background(), job.Name, buf); err != nil {
+	if err := b.minio.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	task.LogFile = job.Name

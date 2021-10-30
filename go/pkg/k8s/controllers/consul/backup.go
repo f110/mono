@@ -232,7 +232,7 @@ func (b *BackupController) storeBackupFile(
 			path = path[1:]
 		}
 		history.Path = filepath.Join(path, filename)
-		if err := mc.PutReader(ctx, filepath.Join(path, filename), data, dataSize); err != nil {
+		if err := mc.PutReader(ctx, filepath.Join(path, filename), data); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 
@@ -252,7 +252,7 @@ func (b *BackupController) storeBackupFile(
 		client := storage.NewGCS(b, spec.Bucket)
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
 		history.Path = filepath.Join(spec.Path, filename)
-		if err := client.Put(ctx, data, filepath.Join(spec.Path, filename)); err != nil {
+		if err := client.PutReader(ctx, filepath.Join(spec.Path, filename), data); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 
@@ -303,7 +303,7 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		}
 		filenames := make([]string, 0)
 		for _, v := range files {
-			filenames = append(filenames, v.Key)
+			filenames = append(filenames, v.Name)
 		}
 		sort.Strings(filenames)
 		sort.Sort(sort.Reverse(sort.StringSlice(filenames)))

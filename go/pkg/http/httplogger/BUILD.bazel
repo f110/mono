@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "httplogger",
+    srcs = ["httplogger.go"],
+    importpath = "go.f110.dev/mono/go/pkg/http/httplogger",
+    visibility = ["//visibility:public"],
+)

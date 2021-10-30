@@ -78,11 +78,17 @@ func (m *MockMinIO) Transport(mock *httpmock.MockTransport) {
 		},
 	)
 
-	// Pub Object
+	// Put Object
 	mock.RegisterRegexpResponder(
 		http.MethodPut,
 		regexp.MustCompile(fmt.Sprintf(`.*/(%s)/`, buckets)),
 		func(req *http.Request) (*http.Response, error) {
+			q := req.URL.Query()
+			if q.Get("partNumber") != "" && q.Get("uploadId") != "" {
+				// Multipart upload
+				return httpmock.NewStringResponse(http.StatusOK, ""), nil
+			}
+
 			s := strings.Split(req.URL.Path, "/")
 			bucket, key := s[1], strings.Join(s[2:], "/")
 			found := false
@@ -98,6 +104,22 @@ func (m *MockMinIO) Transport(mock *httpmock.MockTransport) {
 				})
 			}
 			return httpmock.NewStringResponse(http.StatusOK, ""), nil
+		},
+	)
+
+	// Put Object with multipart
+	mock.RegisterRegexpResponder(
+		http.MethodPost,
+		regexp.MustCompile(fmt.Sprintf(`.*/(%s)/.+`, buckets)),
+		func(req *http.Request) (*http.Response, error) {
+			s := strings.Split(req.URL.Path, "/")
+			bucket, key := s[1], strings.Join(s[2:], "/")
+			body := initiateMultipartUploadResult{
+				Bucket:   bucket,
+				Key:      key,
+				UploadID: "foobar",
+			}
+			return httpmock.NewXmlResponse(http.StatusOK, body)
 		},
 	)
 
@@ -241,4 +263,10 @@ func (m *StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	}
 
 	return nil
+}
+
+type initiateMultipartUploadResult struct {
+	Bucket   string
+	Key      string
+	UploadID string `xml:"UploadId"`
 }

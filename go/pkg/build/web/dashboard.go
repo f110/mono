@@ -2,6 +2,7 @@ package web
 
 import (
 	"html/template"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -173,13 +174,13 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, req *http.Request) {
 	}
 
 	path := strings.Join(s[2:], "/")
-	buf, err := d.minio.Get(req.Context(), path)
+	r, err := d.minio.Get(req.Context(), path)
 	if err != nil {
 		logger.Log.Warn("Failed get a log data", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.Write(buf)
+	io.Copy(w, r)
 }
 
 func (d *Dashboard) handleNewRepository(w http.ResponseWriter, req *http.Request) {

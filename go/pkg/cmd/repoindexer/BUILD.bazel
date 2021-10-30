@@ -29,7 +29,6 @@ go_library(
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
-        "//vendor/github.com/minio/minio-go/v7:minio-go",
         "//vendor/github.com/nats-io/nats.go:nats_go",
         "//vendor/github.com/robfig/cron/v3:cron",
         "//vendor/github.com/shurcooL/githubv4",

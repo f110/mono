@@ -4,6 +4,7 @@ go_library(
     name = "storage",
     srcs = [
         "gcs.go",
+        "interface.go",
         "minio.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/storage",

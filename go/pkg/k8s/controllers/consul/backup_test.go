@@ -11,12 +11,13 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
-	"go.f110.dev/mono/go/pkg/storage/storagetest"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
+	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/pkg/storage/storagetest"
 )
 
 func TestBackupController_Reconcile(t *testing.T) {
@@ -102,8 +103,8 @@ func TestBackupController_Reconcile(t *testing.T) {
 		err := runner.Reconcile(controller, target)
 		require.NoError(t, err)
 
-		require.Len(t, mockMinio.Removed("backup"), 2)
-		assert.ElementsMatch(t, []string{"/test_1", "/test_2"}, mockMinio.Removed("backup"))
+		require.Len(t, mockMinio.Removed("backup"), 1)
+		assert.ElementsMatch(t, []string{"/test_1"}, mockMinio.Removed("backup"))
 		expect, err := runner.Client.ConsulV1alpha1().ConsulBackups(target.Namespace).Get(context.TODO(), target.Name, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Len(t, expect.Status.History, expect.Spec.MaxBackups)

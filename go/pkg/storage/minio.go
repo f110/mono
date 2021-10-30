@@ -157,6 +157,8 @@ type MinIO struct {
 	opt    MinIOOptions
 }
 
+var _ storageInterface = &MinIO{}
+
 func NewMinIOStorage(bucket string, opt MinIOOptions) *MinIO {
 	return &MinIO{
 		bucket: bucket,
@@ -164,17 +166,17 @@ func NewMinIOStorage(bucket string, opt MinIOOptions) *MinIO {
 	}
 }
 
-func (m *MinIO) Put(ctx context.Context, name string, data *bytes.Buffer) error {
-	return m.PutReader(ctx, name, data, int64(data.Len()))
+func (m *MinIO) Put(ctx context.Context, name string, data []byte) error {
+	return m.PutReader(ctx, name, bytes.NewReader(data))
 }
 
-func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size int64) error {
+func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	_, err = mc.PutObject(ctx, m.bucket, name, r, size, minio.PutObjectOptions{})
+	_, err = mc.PutObject(ctx, m.bucket, name, r, -1, minio.PutObjectOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -182,8 +184,20 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader, size in
 	return nil
 }
 
-func (m *MinIO) List(ctx context.Context, prefix string) ([]minio.ObjectInfo, error) {
-	return m.ListRecursive(ctx, prefix, false)
+func (m *MinIO) List(ctx context.Context, prefix string) ([]*Object, error) {
+	files, err := m.ListRecursive(ctx, prefix, true)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	var objs []*Object
+	for _, v := range files {
+		objs = append(objs, &Object{
+			Name:         v.Key,
+			LastModified: v.LastModified,
+			Size:         v.Size,
+		})
+	}
+	return objs, nil
 }
 
 func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool) ([]minio.ObjectInfo, error) {
@@ -207,7 +221,7 @@ func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool
 	return files, nil
 }
 
-func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
+func (m *MinIO) Get(ctx context.Context, name string) (io.Reader, error) {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -218,11 +232,7 @@ func (m *MinIO) Get(ctx context.Context, name string) ([]byte, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	buf, err := io.ReadAll(obj)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	return buf, nil
+	return obj, nil
 }
 
 func (m *MinIO) Delete(ctx context.Context, name string) error {
