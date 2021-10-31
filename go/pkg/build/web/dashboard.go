@@ -180,6 +180,7 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	defer r.Close()
 	io.Copy(w, r)
 }
 

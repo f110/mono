@@ -19,12 +19,21 @@ import (
 type ObjectStorageIndexManager struct {
 	executionKey int64
 	bucket       string
-	backend      *storage.MinIO
+	backend      StorageClient
 
 	uploadedFiles []string
 }
 
-func NewObjectStorageIndexManager(s *storage.MinIO, bucket string) *ObjectStorageIndexManager {
+type StorageClient interface {
+	Name() string
+	Get(context.Context, string) (io.ReadCloser, error)
+	Delete(context.Context, string) error
+	Put(context.Context, string, []byte) error
+	PutReader(context.Context, string, io.Reader) error
+	List(context.Context, string) ([]*storage.Object, error)
+}
+
+func NewObjectStorageIndexManager(s StorageClient, bucket string) *ObjectStorageIndexManager {
 	return &ObjectStorageIndexManager{bucket: bucket, backend: s, executionKey: time.Now().Unix()}
 }
 
@@ -51,7 +60,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 		s.uploadedFiles = append(s.uploadedFiles, objectPath)
 	}
 
-	return fmt.Sprintf("minio://%s/%s", s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey))), nil
+	return fmt.Sprintf("%s://%s/%s", s.backend.Name(), s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey))), nil
 }
 
 func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir string, manifest Manifest) error {
@@ -79,8 +88,10 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			}
 			buf, err := io.ReadAll(r)
 			if err != nil {
+				r.Close()
 				return xerrors.Errorf(": %w", err)
 			}
+			r.Close()
 
 			filePath := filepath.Join(tmpDir, filepath.Base(f.Name))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {

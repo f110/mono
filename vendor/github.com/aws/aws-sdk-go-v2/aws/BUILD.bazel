@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "aws",
+    srcs = [
+        "config.go",
+        "context.go",
+        "credential_cache.go",
+        "credentials.go",
+        "doc.go",
+        "endpoints.go",
+        "errors.go",
+        "from_ptr.go",
+        "go_module_metadata.go",
+        "logging.go",
+        "request.go",
+        "retryer.go",
+        "to_ptr.go",
+        "types.go",
+        "version.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/aws",
+    importpath = "github.com/aws/aws-sdk-go-v2/aws",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/aws/aws-sdk-go-v2/internal/rand",
+        "//vendor/github.com/aws/aws-sdk-go-v2/internal/sdk",
+        "//vendor/github.com/aws/aws-sdk-go-v2/internal/sync/singleflight",
+        "//vendor/github.com/aws/smithy-go/logging",
+        "//vendor/github.com/aws/smithy-go/middleware",
+        "//vendor/github.com/aws/smithy-go/ptr",
+    ],
+)

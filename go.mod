@@ -8,6 +8,10 @@ require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/aws/aws-sdk-go v1.35.20
+	github.com/aws/aws-sdk-go-v2 v1.10.0
+	github.com/aws/aws-sdk-go-v2/credentials v1.5.0
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.6.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.17.0
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

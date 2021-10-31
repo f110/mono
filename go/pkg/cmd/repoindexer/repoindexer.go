@@ -2,6 +2,7 @@ package repoindexer
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -33,13 +34,17 @@ type IndexerCommand struct {
 	PrivateKeyFile string
 	HTTPAddr       string
 
+	Bucket                      string
 	MinIOEndpoint               string
 	MinIOName                   string
 	MinIONamespace              string
 	MinIOPort                   int
-	MinIOBucket                 string
 	MinIOAccessKey              string
 	MinIOSecretAccessKey        string
+	S3Endpoint                  string
+	S3Region                    string
+	S3AccessKey                 string
+	S3SecretAccessKey           string
 	DisableObjectStorageCleanup bool
 
 	NATSURL        string
@@ -89,9 +94,14 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
 	fs.StringVar(&r.MinIONamespace, "minio-namespace", r.MinIONamespace, "The namespace of MinIO")
 	fs.IntVar(&r.MinIOPort, "minio-port", r.MinIOPort, "Port number of MinIO")
-	fs.StringVar(&r.MinIOBucket, "minio-bucket", r.MinIOBucket, "The bucket name that will be used")
-	fs.StringVar(&r.MinIOAccessKey, "minio-access-key", r.MinIOAccessKey, "The access key")
-	fs.StringVar(&r.MinIOSecretAccessKey, "minio-secret-access-key", r.MinIOSecretAccessKey, "The secret access key")
+	fs.StringVar(&r.Bucket, "minio-bucket", r.Bucket, "Deprecated. Use --bucket instead. The bucket name that will be used")
+	fs.StringVar(&r.MinIOAccessKey, "minio-access-key", r.MinIOAccessKey, "The access key for MinIO API")
+	fs.StringVar(&r.MinIOSecretAccessKey, "minio-secret-access-key", r.MinIOSecretAccessKey, "The secret access key for MinIO API")
+	fs.StringVar(&r.S3Endpoint, "s3-endpoint", r.S3Endpoint, "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param")
+	fs.StringVar(&r.S3Region, "s3-region", r.S3Region, "The region name")
+	fs.StringVar(&r.S3AccessKey, "s3-access-key", r.S3AccessKey, "The access key for S3 API")
+	fs.StringVar(&r.S3SecretAccessKey, "s3-secret-access-key", r.S3SecretAccessKey, "The secret access key for S3 API")
+	fs.StringVar(&r.Bucket, "bucket", r.Bucket, "The bucket name")
 	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
 	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
 	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
@@ -100,7 +110,32 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
 }
 
+func (r *IndexerCommand) ValidateFlags() error {
+	if r.ConfigFile == "" {
+		return errors.New("--config is required")
+	}
+
+	if r.AppId > 0 || r.InstallationId > 0 || r.PrivateKeyFile != "" {
+		// Run as GitHub App
+		if r.Token != "" {
+			return errors.New("GitHub token and App both configuration specified")
+		}
+	}
+
+	if r.MinIOEndpoint != "" {
+		if r.MinIOName != "" || r.MinIONamespace != "" {
+			return errors.New("--minio-endpoint and --minio-name both specified")
+		}
+	}
+
+	return nil
+}
+
 func (r *IndexerCommand) Run() error {
+	if err := r.ValidateFlags(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
 	config, err := ReadConfigFile(r.ConfigFile)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -164,18 +199,7 @@ func (r *IndexerCommand) run() error {
 		return xerrors.Errorf(": %w", err)
 	}
 	if r.enableUpload() {
-		manifest, err := r.uploadIndex(
-			ctx,
-			r.indexer,
-			r.MinIOName,
-			r.MinIONamespace,
-			r.MinIOPort,
-			r.MinIOBucket,
-			r.MinIOAccessKey,
-			r.MinIOSecretAccessKey,
-			r.DisableObjectStorageCleanup,
-			r.Dev,
-		)
+		manifest, err := r.uploadIndex(ctx, r.indexer, r.Bucket, r.DisableObjectStorageCleanup)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -189,6 +213,8 @@ func (r *IndexerCommand) run() error {
 				return xerrors.Errorf(": %w", err)
 			}
 		}
+	} else {
+		logger.Log.Debug("Disable upload", zap.Bool("can_use_minio", r.canUseMinIO()), zap.Bool("can_use_s3", r.canUseS3()))
 	}
 	if !r.DisableCleanup {
 		if err := r.indexer.Cleanup(ctx); err != nil {
@@ -274,18 +300,11 @@ func (r *IndexerCommand) gc() error {
 	defer r.mu.Unlock()
 	logger.Log.Info("Start garbage collection")
 
-	var opt storage.MinIOOptions
-	if r.MinIOName != "" && r.MinIONamespace != "" {
-		k8sClient, k8sConf, err := newK8sClient(r.Dev)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
-	} else if r.MinIOEndpoint != "" {
-		opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIOAccessKey, r.MinIOSecretAccessKey)
+	s, err := r.newStorageClient()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
 	}
-	s := storage.NewMinIOStorage(r.MinIOBucket, opt)
-	gc := NewIndexGC(s, r.MinIOBucket)
+	gc := NewIndexGC(s, r.Bucket)
 	if err := gc.GC(context.Background()); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -293,7 +312,44 @@ func (r *IndexerCommand) gc() error {
 }
 
 func (r *IndexerCommand) enableUpload() bool {
-	return r.MinIOBucket != "" && ((r.MinIOName != "" && r.MinIONamespace != "") || r.MinIOEndpoint != "")
+	return r.Bucket != "" &&
+		(r.canUseMinIO() || r.canUseS3())
+}
+
+func (r *IndexerCommand) canUseMinIO() bool {
+	return (r.MinIOName != "" && r.MinIONamespace != "") || r.MinIOEndpoint != ""
+}
+
+func (r *IndexerCommand) canUseS3() bool {
+	return r.S3Endpoint != "" && r.S3AccessKey != "" && r.S3SecretAccessKey != "" && r.S3Region != ""
+}
+
+func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
+	if r.canUseMinIO() {
+		var opt storage.MinIOOptions
+		if r.MinIOName != "" && r.MinIONamespace != "" {
+			k8sClient, k8sConf, err := newK8sClient(r.Dev)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
+		} else if r.MinIOEndpoint != "" {
+			opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIOAccessKey, r.MinIOSecretAccessKey)
+		}
+		return storage.NewMinIOStorage(r.Bucket, opt), nil
+	}
+	if r.canUseS3() {
+		var opt storage.S3Options
+		if r.S3Endpoint != "" {
+			opt = storage.NewS3OptionToExternal(r.S3Endpoint, r.S3Region, r.S3AccessKey, r.S3SecretAccessKey)
+		} else {
+			opt = storage.NewS3OptionToAWS(r.S3Region, r.S3AccessKey, r.S3SecretAccessKey)
+		}
+		opt.PathStyle = true
+		return storage.NewS3(r.Bucket, opt), nil
+	}
+
+	return nil, nil
 }
 
 func (r *IndexerCommand) reloadConfig() {
@@ -351,24 +407,14 @@ func (r *IndexerCommand) reloadConfig() {
 func (r *IndexerCommand) uploadIndex(
 	ctx context.Context,
 	indexer *Indexer,
-	minioName, minioNamespace string,
-	minioPort int,
-	minioBucket, minioAccessKey, minioSecretAccessKey string,
+	bucket string,
 	disableCleanup bool,
-	dev bool,
 ) (*Manifest, error) {
-	if minioName == "" || minioNamespace == "" || minioBucket == "" {
-		return nil, nil
-	}
-
-	k8sClient, k8sConf, err := newK8sClient(dev)
+	s, err := r.newStorageClient()
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-
-	opt := storage.NewMinIOOptionsViaService(k8sClient, k8sConf, minioName, minioNamespace, minioPort, minioAccessKey, minioSecretAccessKey, dev)
-	s := storage.NewMinIOStorage(minioBucket, opt)
-	manager := NewObjectStorageIndexManager(s, minioBucket)
+	manager := NewObjectStorageIndexManager(s, bucket)
 	uploadedPath := make(map[string]string, 0)
 	for _, v := range indexer.Indexes {
 		uploadDir, err := manager.Add(ctx, v.Name, v.Files)

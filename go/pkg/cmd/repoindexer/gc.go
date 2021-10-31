@@ -9,15 +9,14 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type IndexGC struct {
-	backend *storage.MinIO
+	backend StorageClient
 	bucket  string
 }
 
-func NewIndexGC(s *storage.MinIO, bucket string) *IndexGC {
+func NewIndexGC(s StorageClient, bucket string) *IndexGC {
 	return &IndexGC{
 		backend: s,
 		bucket:  bucket,
@@ -42,7 +41,7 @@ func (g *IndexGC) GC(ctx context.Context) error {
 		}
 	}
 
-	allFiles, err := g.backend.ListRecursive(ctx, "/", true)
+	allFiles, err := g.backend.List(ctx, "/")
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -51,16 +50,16 @@ func (g *IndexGC) GC(ctx context.Context) error {
 	var totalSize int64
 GC:
 	for _, v := range allFiles {
-		if strings.HasPrefix(v.Key, "manifest_") {
+		if strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
 		for _, u := range used {
-			if strings.HasPrefix(v.Key, u) {
+			if strings.HasPrefix(v.Name, u) {
 				continue GC
 			}
 		}
 
-		unusedFiles = append(unusedFiles, v.Key)
+		unusedFiles = append(unusedFiles, v.Name)
 		totalSize += v.Size
 	}
 

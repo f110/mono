@@ -25,6 +25,10 @@ func NewGCS(creds []byte, bucket string) *Google {
 	return &Google{credentialJSON: creds, bucket: bucket}
 }
 
+func (g *Google) Name() string {
+	return "gcs"
+}
+
 func (g *Google) Put(ctx context.Context, name string, data []byte) error {
 	return g.PutReader(ctx, name, bytes.NewReader(data))
 }
@@ -87,7 +91,7 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (g *Google) Get(ctx context.Context, name string) (io.Reader, error) {
+func (g *Google) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

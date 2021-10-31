@@ -14,7 +14,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type Manifest struct {
@@ -37,10 +36,10 @@ func NewManifest(executionKey uint64, indexes map[string]string) Manifest {
 }
 
 type ManifestManager struct {
-	backend *storage.MinIO
+	backend StorageClient
 }
 
-func NewManifestManager(backend *storage.MinIO) *ManifestManager {
+func NewManifestManager(backend StorageClient) *ManifestManager {
 	return &ManifestManager{backend: backend}
 }
 
@@ -88,6 +87,7 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
+	defer r.Close()
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
@@ -103,6 +103,7 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
+	defer r.Close()
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
@@ -139,10 +140,12 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 		}
 		var manifest Manifest
 		if err := json.NewDecoder(r).Decode(&manifest); err != nil {
+			r.Close()
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 		manifests = append(manifests, manifest)
+		r.Close()
 	}
 
 	return manifests, nil

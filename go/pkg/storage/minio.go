@@ -166,6 +166,10 @@ func NewMinIOStorage(bucket string, opt MinIOOptions) *MinIO {
 	}
 }
 
+func (m *MinIO) Name() string {
+	return "minio"
+}
+
 func (m *MinIO) Put(ctx context.Context, name string, data []byte) error {
 	return m.PutReader(ctx, name, bytes.NewReader(data))
 }
@@ -221,7 +225,7 @@ func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool
 	return files, nil
 }
 
-func (m *MinIO) Get(ctx context.Context, name string) (io.Reader, error) {
+func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
