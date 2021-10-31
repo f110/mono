@@ -17,5 +17,5 @@ k8s_code_generator(
     informerpackage = "go.f110.dev/mono/go/pkg/k8s/informers",
     listerpackage = "go.f110.dev/mono/go/pkg/k8s/listers",
     no_gazelle = True,
-    version = "v0.19",
+    version = "v0.21",
 )
