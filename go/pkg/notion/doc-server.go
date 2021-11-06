@@ -73,6 +73,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 			logger.Log.Warn("Failed parse request body", zap.Error(err))
 			return
 		}
+		logger.Log.Info("Input data", zap.Any("body", b))
 
 		var c *config
 		s.mu.RLock()
