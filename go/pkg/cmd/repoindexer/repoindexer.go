@@ -60,6 +60,9 @@ type IndexerCommand struct {
 	cancel  context.CancelFunc
 
 	mu sync.Mutex
+
+	readyMu sync.Mutex
+	ready   bool
 }
 
 func NewIndexerCommand() *IndexerCommand {
@@ -256,6 +259,14 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 	logger.Log.Info("Start scheduler")
 	r.cron.Start()
 
+	r.readyMu.Lock()
+	r.ready = true
+	r.readyMu.Unlock()
+	defer func() {
+		r.readyMu.Lock()
+		r.ready = false
+		r.readyMu.Unlock()
+	}()
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
@@ -278,6 +289,16 @@ func (r *IndexerCommand) webEndpoint(addr string) error {
 				logger.Log.Info("Failed indexing", zap.Error(err))
 			}
 		}()
+	})
+	mux.HandleFunc("/readiness", func(w http.ResponseWriter, req *http.Request) {
+		r.readyMu.Lock()
+		ready := r.ready
+		r.readyMu.Unlock()
+
+		if !ready {
+			http.Error(w, "not ready", http.StatusServiceUnavailable)
+			return
+		}
 	})
 
 	srv := &http.Server{
