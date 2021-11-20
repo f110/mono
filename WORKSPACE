@@ -172,7 +172,7 @@ load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary"
 
 kustomize_binary(
     name = "kustomize",
-    version = "v4.0.5",
+    version = "v4.4.0",
 )
 
 load("//build/rules/kind:def.bzl", "kind_binary")
