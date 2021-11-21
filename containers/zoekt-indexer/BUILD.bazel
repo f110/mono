@@ -53,3 +53,12 @@ container_push(
     repository = "tools/zoekt-indexer",
     tag = "latest",
 )
+
+container_push(
+    name = "push_quay",
+    format = "Docker",
+    image = ":image",
+    registry = "quay.io",
+    repository = "f110/zoekt-indexer",
+    tag = "latest",
+)
