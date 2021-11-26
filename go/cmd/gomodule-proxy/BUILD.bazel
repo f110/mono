@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "gomodule-proxy_lib",
+    srcs = [
+        "command.go",
+        "main.go",
+    ],
+    importpath = "go.f110.dev/mono/go/cmd/gomodule-proxy",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/gomodule",
+        "//go/pkg/logger",
+        "//vendor/github.com/google/go-github/v40/github",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/oauth2",
+        "//vendor/golang.org/x/xerrors",
+    ],
+)
+
+go_binary(
+    name = "gomodule-proxy",
+    embed = [":gomodule-proxy_lib"],
+    visibility = ["//visibility:public"],
+)

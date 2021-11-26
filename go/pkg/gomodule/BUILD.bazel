@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "gomodule",
+    srcs = [
+        "config.go",
+        "fetcher.go",
+        "proxy.go",
+        "server.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/gomodule",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/google/go-github/v40/github",
+        "//vendor/github.com/gorilla/mux",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/mod/modfile",
+        "//vendor/golang.org/x/mod/semver",
+        "//vendor/golang.org/x/tools/go/vcs",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/gopkg.in/yaml.v2:yaml_v2",
+    ],
+)
+
+go_test(
+    name = "gomodule_test",
+    srcs = ["fetcher_test.go"],
+    embed = [":gomodule"],
+    deps = [
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

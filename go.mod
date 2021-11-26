@@ -25,9 +25,11 @@ require (
 	github.com/google/go-containerregistry v0.4.0
 	github.com/google/go-github/v29 v29.0.3
 	github.com/google/go-github/v32 v32.0.0
+	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.1.2
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
+	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/hashicorp/vault/api v1.0.4
@@ -52,9 +54,11 @@ require (
 	go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.uber.org/zap v1.17.0
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/mod v0.4.2
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
+	golang.org/x/tools v0.1.2
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.30.0
 	google.golang.org/grpc v1.38.0
