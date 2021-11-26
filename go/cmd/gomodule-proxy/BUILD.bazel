@@ -11,10 +11,8 @@ go_library(
     deps = [
         "//go/pkg/gomodule",
         "//go/pkg/logger",
-        "//vendor/github.com/google/go-github/v40/github",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
-        "//vendor/golang.org/x/oauth2",
         "//vendor/golang.org/x/xerrors",
     ],
 )
