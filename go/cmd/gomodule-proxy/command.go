@@ -2,16 +2,13 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/google/go-github/v40/github"
 	"github.com/spf13/pflag"
-	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/gomodule"
@@ -19,23 +16,24 @@ import (
 )
 
 type goModuleProxyCommand struct {
-	ConfigPath   string
-	ModuleDir    string
-	Addr         string
-	UpstreamURL  string
-	GitHubToken  string
-	GitHubAPIURL string
+	ConfigPath  string
+	ModuleDir   string
+	Addr        string
+	UpstreamURL string
+	GitHubToken string
 
-	upstream     *url.URL
-	config       gomodule.Config
-	githubClient *github.Client
+	GitHubAppId          int64
+	GitHubInstallationId int64
+	PrivateKeyFile       string
+
+	upstream *url.URL
+	config   gomodule.Config
 }
 
 func newGoModuleProxyCommand() *goModuleProxyCommand {
 	return &goModuleProxyCommand{
-		Addr:         ":7589",
-		UpstreamURL:  "https://proxy.golang.org",
-		GitHubAPIURL: "https://api.github.com/",
+		Addr:        ":7589",
+		UpstreamURL: "https://proxy.golang.org",
 	}
 }
 
@@ -45,7 +43,9 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Addr, "addr", c.Addr, "Listen addr")
 	fs.StringVar(&c.UpstreamURL, "upstream", c.UpstreamURL, "Upstream module proxy URL")
 	fs.StringVar(&c.GitHubToken, "github-token", c.GitHubToken, "GitHub API token")
-	fs.StringVar(&c.GitHubAPIURL, "github-api-url", c.GitHubAPIURL, "URL of GitHub REST endpoint")
+	fs.Int64Var(&c.GitHubAppId, "github-app-id", c.GitHubAppId, "GitHub App ID")
+	fs.Int64Var(&c.GitHubInstallationId, "github-installation-id", c.GitHubInstallationId, "GitHub App Installation ID")
+	fs.StringVar(&c.PrivateKeyFile, "github-app-private-key-file", c.PrivateKeyFile, "PEM-encoded private key file for GitHub App")
 }
 
 func (c *goModuleProxyCommand) RequiredFlags() []string {
@@ -65,24 +65,17 @@ func (c *goModuleProxyCommand) Init() error {
 	}
 	c.upstream = uu
 
-	gu, err := url.Parse(c.GitHubAPIURL)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	var tc *http.Client
 	if os.Getenv("GITHUB_TOKEN") != "" {
 		c.GitHubToken = os.Getenv("GITHUB_TOKEN")
 	}
-	if c.GitHubToken != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: c.GitHubToken},
-		)
-		tc = oauth2.NewClient(context.Background(), ts)
+
+	if _, err := os.Stat(c.PrivateKeyFile); os.IsNotExist(err) {
+		return xerrors.Errorf(": %w", err)
 	}
-	githubClient := github.NewClient(tc)
-	githubClient.BaseURL = gu
-	c.githubClient = githubClient
 
 	return nil
 }
@@ -91,7 +84,7 @@ func (c *goModuleProxyCommand) Run() error {
 	stopErrCh := make(chan error, 1)
 	startErrCh := make(chan error, 1)
 
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.githubClient)
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.GitHubAppId, c.GitHubInstallationId, c.PrivateKeyFile)
 	server := gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

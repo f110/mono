@@ -21,27 +21,10 @@ func TestModuleRoot(t *testing.T) {
 	wt, err := repo.Worktree()
 	require.NoError(t, err)
 
-	err = os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module github.com/f110/gomodule-proxy-test"), 0644)
-	require.NoError(t, err)
-	_, err = wt.Add("go.mod")
-	require.NoError(t, err)
-
-	err = os.WriteFile(filepath.Join(dir, "const.go"), []byte("package proxy\n\nconst Foo = \"bar\""), 0644)
-	require.NoError(t, err)
-	_, err = wt.Add("const.go")
-	require.NoError(t, err)
-
-	err = os.MkdirAll(filepath.Join(dir, "pkg/api"), 0755)
-	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(dir, "pkg/api/go.mod"), []byte("module github.com/f110/gomodule-proxy-test/pkg/api"), 0644)
-	require.NoError(t, err)
-	_, err = wt.Add("pkg/api/go.mod")
-	require.NoError(t, err)
-
-	err = os.WriteFile(filepath.Join(dir, "pkg/api/const2.go"), []byte("package api\n\nconst Baz = \"foo\""), 0644)
-	require.NoError(t, err)
-	_, err = wt.Add("pkg/api/const2.go")
-	require.NoError(t, err)
+	addFile(t, wt, dir, "go.mod", []byte("module github.com/f110/gomodule-proxy-test"))
+	addFile(t, wt, dir, "const.go", []byte("package proxy\n\nconst Foo = \"bar\""))
+	addFile(t, wt, dir, "pkg/api/go.mod", []byte("module github.com/f110/gomodule-proxy-test/pkg/api"))
+	addFile(t, wt, dir, "pkg/api/const2.go", []byte("package api\n\nconst Baz = \"foo\""))
 
 	commitHash, err := wt.Commit("init", &git.CommitOptions{
 		Author: &object.Signature{
@@ -67,7 +50,8 @@ func TestModuleRoot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	vcsRepo := NewVCS("git", "")
+	vcsRepo, err := NewVCS("git", "", 0, 0, "")
+	require.NoError(t, err)
 	err = vcsRepo.Open(dir)
 	require.NoError(t, err)
 	moduleRoot := &ModuleRoot{
@@ -81,6 +65,7 @@ func TestModuleRoot(t *testing.T) {
 	err = moduleRoot.findVersions()
 	require.NoError(t, err)
 
+	require.Len(t, modules, 2)
 	for _, v := range modules {
 		var vers []string
 		for _, ver := range v.Versions {
@@ -122,4 +107,13 @@ func TestModuleRoot(t *testing.T) {
 		"github.com/f110/gomodule-proxy-test@v1.0.0/go.mod",
 		"github.com/f110/gomodule-proxy-test@v1.0.0/const.go",
 	}, files)
+}
+
+func addFile(t *testing.T, wt *git.Worktree, dir, filename string, buf []byte) {
+	err := os.MkdirAll(filepath.Dir(filepath.Join(dir, filename)), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(dir, filename), buf, 0644)
+	require.NoError(t, err)
+	_, err = wt.Add(filename)
+	require.NoError(t, err)
 }

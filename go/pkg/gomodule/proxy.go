@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v40/github"
 	"golang.org/x/xerrors"
 )
 
@@ -17,17 +16,15 @@ const (
 type ModuleProxy struct {
 	conf Config
 
-	fetcher      *ModuleFetcher
-	httpClient   *http.Client
-	githubClient *github.Client
+	fetcher    *ModuleFetcher
+	httpClient *http.Client
 }
 
-func NewModuleProxy(conf Config, moduleDir string, githubClient *github.Client) *ModuleProxy {
+func NewModuleProxy(conf Config, moduleDir string, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
 	return &ModuleProxy{
-		conf:         conf,
-		fetcher:      NewModuleFetcher(moduleDir),
-		githubClient: githubClient,
-		httpClient:   &http.Client{},
+		conf:       conf,
+		fetcher:    NewModuleFetcher(moduleDir, githubAppId, githubInstallationId, privateKeyFile),
+		httpClient: &http.Client{},
 	}
 }
 

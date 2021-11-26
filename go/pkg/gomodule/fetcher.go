@@ -4,16 +4,20 @@ import (
 	"archive/zip"
 	"context"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.uber.org/zap"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/semver"
@@ -48,11 +52,14 @@ type ModuleVersion struct {
 }
 
 type ModuleFetcher struct {
-	baseDir string
+	baseDir        string
+	appId          int64
+	installationId int64
+	privateKeyFile string
 }
 
-func NewModuleFetcher(baseDir string) *ModuleFetcher {
-	return &ModuleFetcher{baseDir: baseDir}
+func NewModuleFetcher(baseDir string, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleFetcher {
+	return &ModuleFetcher{baseDir: baseDir, appId: githubAppId, installationId: githubInstallationId, privateKeyFile: privateKeyFile}
 }
 
 func (f *ModuleFetcher) Fetch(ctx context.Context, importPath string) (*ModuleRoot, error) {
@@ -62,7 +69,10 @@ func (f *ModuleFetcher) Fetch(ctx context.Context, importPath string) (*ModuleRo
 	}
 
 	dir := filepath.Join(f.baseDir, repoRoot.Root)
-	vcsRepo := NewVCS("git", repoRoot.Repo)
+	vcsRepo, err := NewVCS("git", repoRoot.Repo, f.appId, f.installationId, f.privateKeyFile)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
 	if err := f.updateOrCreate(ctx, vcsRepo, dir); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -448,18 +458,30 @@ type VCS struct {
 	Type string
 	URL  string
 
+	appId          int64
+	installationId int64
+	privateKeyFile string
+	authMethod     transport.AuthMethod
+
 	gitRepo           *git.Repository
 	defaultBranchName string
 }
 
-func NewVCS(typ, url string) *VCS {
-	return &VCS{Type: typ, URL: url}
+func NewVCS(typ, url string, appId, installationId int64, privateKeyFile string) (*VCS, error) {
+	v := &VCS{Type: typ, URL: url, appId: appId, installationId: installationId, privateKeyFile: privateKeyFile}
+	if appId > 0 && installationId > 0 && privateKeyFile != "" {
+		if err := v.getAppToken(); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+	}
+	return v, nil
 }
 
 func (vcs *VCS) Create(ctx context.Context, dir string) error {
 	repo, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 		URL:        vcs.URL,
 		NoCheckout: true,
+		Auth:       vcs.authMethod,
 	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -473,11 +495,25 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	if err := vcs.Open(dir); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
+	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin", Auth: vcs.authMethod})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	return nil
+}
+
+func (vcs *VCS) getAppToken() error {
+	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, vcs.appId, vcs.installationId, vcs.privateKeyFile)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	token, err := t.Token(context.Background())
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	vcs.authMethod = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
 	return nil
 }
 
