@@ -5,8 +5,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/monodev"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 func monoDev() error {
@@ -15,9 +17,12 @@ func monoDev() error {
 		Short: "Utilities for development",
 	}
 
-	monodev.Cluster(rootCmd)
-	monodev.Graph(rootCmd)
+	monodev.CommandManager.Add(rootCmd)
 
+	logger.Flags(rootCmd.Flags())
+	if err := logger.Init(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	return rootCmd.Execute()
 }
 

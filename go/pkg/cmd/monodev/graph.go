@@ -5,9 +5,14 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"go.f110.dev/mono/go/pkg/fsm"
 	"golang.org/x/xerrors"
+
+	"go.f110.dev/mono/go/pkg/fsm"
 )
+
+func init() {
+	CommandManager.Register(Graph())
+}
 
 func graph(dir string) error {
 	buf := new(bytes.Buffer)
@@ -18,7 +23,7 @@ func graph(dir string) error {
 	return nil
 }
 
-func Graph(rootCmd *cobra.Command) {
+func Graph() *cobra.Command {
 	graphCmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Visualize FSM",
@@ -27,5 +32,5 @@ func Graph(rootCmd *cobra.Command) {
 		},
 	}
 
-	rootCmd.AddCommand(graphCmd)
+	return graphCmd
 }

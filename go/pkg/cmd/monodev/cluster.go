@@ -27,6 +27,10 @@ const (
 	defaultClusterName = "mono"
 )
 
+func init() {
+	CommandManager.Register(Cluster())
+}
+
 func getKubeConfig(kubeConfig string) string {
 	if kubeConfig == "" {
 		if v := os.Getenv("BUILD_WORKSPACE_DIRECTORY"); v != "" {
@@ -267,11 +271,10 @@ func childPodsOfStatefulSet(ctx context.Context, client kubernetes.Interface, st
 	return childPods, nil
 }
 
-func Cluster(rootCmd *cobra.Command) {
+func Cluster() *cobra.Command {
 	clusterCmd := &cobra.Command{
 		Use: "cluster",
 	}
-	rootCmd.AddCommand(clusterCmd)
 
 	clusterName := ""
 	kindPath := ""
@@ -324,4 +327,6 @@ func Cluster(rootCmd *cobra.Command) {
 	runCmd.Flags().StringVar(&namespace, "namespace", metav1.NamespaceDefault, "Namespace")
 	runCmd.Flags().StringArrayVar(&images, "images", []string{}, "Load image and tagging (e.g. --images=quay.io/f110/example:latest=./image.tar)")
 	clusterCmd.AddCommand(runCmd)
+
+	return clusterCmd
 }

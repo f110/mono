@@ -7,7 +7,9 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/cmd/monodev",
+        "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",
+        "//vendor/golang.org/x/xerrors",
     ],
 )
 
