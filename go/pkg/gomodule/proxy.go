@@ -20,10 +20,10 @@ type ModuleProxy struct {
 	httpClient *http.Client
 }
 
-func NewModuleProxy(conf Config, moduleDir string, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
+func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
 	return &ModuleProxy{
 		conf:       conf,
-		fetcher:    NewModuleFetcher(moduleDir, githubAppId, githubInstallationId, privateKeyFile),
+		fetcher:    NewModuleFetcher(moduleDir, nil, githubAppId, githubInstallationId, privateKeyFile),
 		httpClient: &http.Client{},
 	}
 }
@@ -48,7 +48,7 @@ type Info struct {
 }
 
 func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, error) {
-	modRoot, err := m.fetcher.Fetch(ctx, module)
+	modRoot, err := m.fetcher.Get(ctx, module)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -66,7 +66,7 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 }
 
 func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info, error) {
-	modRoot, err := m.fetcher.Fetch(ctx, module)
+	modRoot, err := m.fetcher.Get(ctx, module)
 	if err != nil {
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
@@ -91,7 +91,7 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 }
 
 func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info, error) {
-	modRoot, err := m.fetcher.Fetch(ctx, module)
+	modRoot, err := m.fetcher.Get(ctx, module)
 	if err != nil {
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
@@ -112,7 +112,7 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 }
 
 func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (string, error) {
-	modRoot, err := m.fetcher.Fetch(ctx, module)
+	modRoot, err := m.fetcher.Get(ctx, module)
 	if err != nil {
 		return "", xerrors.Errorf(": %w", err)
 	}
@@ -137,12 +137,12 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (str
 }
 
 func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, module, version string) error {
-	modRoot, err := m.fetcher.Fetch(ctx, module)
+	modRoot, err := m.fetcher.Get(ctx, module)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	err = modRoot.Archive(w, module, version)
+	err = modRoot.Archive(ctx, w, module, version)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -31,8 +32,9 @@ type ModuleRoot struct {
 	RootPath string
 	Modules  []*Module
 
-	dir string
-	vcs *VCS
+	dir   string
+	vcs   *VCS
+	cache *ModuleCache
 }
 
 type Module struct {
@@ -52,17 +54,25 @@ type ModuleVersion struct {
 }
 
 type ModuleFetcher struct {
+	cache *ModuleCache
+
 	baseDir        string
 	appId          int64
 	installationId int64
 	privateKeyFile string
 }
 
-func NewModuleFetcher(baseDir string, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleFetcher {
-	return &ModuleFetcher{baseDir: baseDir, appId: githubAppId, installationId: githubInstallationId, privateKeyFile: privateKeyFile}
+func NewModuleFetcher(baseDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleFetcher {
+	return &ModuleFetcher{
+		baseDir:        baseDir,
+		appId:          githubAppId,
+		installationId: githubInstallationId,
+		privateKeyFile: privateKeyFile,
+		cache:          cache,
+	}
 }
 
-func (f *ModuleFetcher) Fetch(ctx context.Context, importPath string) (*ModuleRoot, error) {
+func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot, error) {
 	repoRoot, err := vcs.RepoRootForImportPath(importPath, false)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -73,12 +83,9 @@ func (f *ModuleFetcher) Fetch(ctx context.Context, importPath string) (*ModuleRo
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	if err := f.updateOrCreate(ctx, vcsRepo, dir); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
 
-	moduleRoot := NewModuleRoot(repoRoot, vcsRepo, dir)
-	modules, err := moduleRoot.findModules()
+	moduleRoot := NewModuleRoot(repoRoot, vcsRepo, f.cache, dir)
+	modules, err := moduleRoot.findModules(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -91,32 +98,16 @@ func (f *ModuleFetcher) Fetch(ctx context.Context, importPath string) (*ModuleRo
 	return moduleRoot, nil
 }
 
-func (f *ModuleFetcher) updateOrCreate(ctx context.Context, repo *VCS, dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		if err := repo.Create(ctx, dir); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-	} else {
-		if err := repo.Download(ctx, dir); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-	}
-
-	return nil
-}
-
-func NewModuleRoot(repoRoot *vcs.RepoRoot, vcsRepo *VCS, dir string) *ModuleRoot {
+func NewModuleRoot(repoRoot *vcs.RepoRoot, vcsRepo *VCS, cache *ModuleCache, dir string) *ModuleRoot {
 	return &ModuleRoot{
 		RootPath: repoRoot.Root,
 		dir:      dir,
 		vcs:      vcsRepo,
+		cache:    cache,
 	}
 }
 
-func (m *ModuleRoot) Archive(w io.Writer, module, version string) error {
+func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
 	var mod *Module
 	for _, v := range m.Modules {
 		if v.Path == module {
@@ -145,6 +136,13 @@ func (m *ModuleRoot) Archive(w io.Writer, module, version string) error {
 	}
 
 	if isTag {
+		if err := m.cache.Archive(ctx, module, version, w); err == nil {
+			logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
+			return nil
+		} else if err != CacheMiss {
+			return xerrors.Errorf(": %w", err)
+		}
+
 		tagRef, err := m.vcs.gitRepo.Tag(versionTag)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -255,7 +253,11 @@ func (m *ModuleRoot) Archive(w io.Writer, module, version string) error {
 	return xerrors.New("specified commit is not support")
 }
 
-func (m *ModuleRoot) findModules() ([]*Module, error) {
+func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
+	if err := m.vcs.Sync(ctx, m.dir); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
 	ref, err := m.vcs.gitRepo.Head()
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -458,6 +460,9 @@ type VCS struct {
 	Type string
 	URL  string
 
+	mu     sync.Mutex
+	synced bool
+
 	appId          int64
 	installationId int64
 	privateKeyFile string
@@ -475,6 +480,30 @@ func NewVCS(typ, url string, appId, installationId int64, privateKeyFile string)
 		}
 	}
 	return v, nil
+}
+
+func (vcs *VCS) Sync(ctx context.Context, dir string) error {
+	vcs.mu.Lock()
+	if vcs.synced {
+		vcs.mu.Unlock()
+		return nil
+	}
+	defer vcs.mu.Unlock()
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := vcs.Create(ctx, dir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	} else {
+		if err := vcs.Download(ctx, dir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (vcs *VCS) Create(ctx context.Context, dir string) error {

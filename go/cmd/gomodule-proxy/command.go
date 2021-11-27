@@ -26,8 +26,15 @@ type goModuleProxyCommand struct {
 	GitHubInstallationId int64
 	PrivateKeyFile       string
 
+	StorageEndpoint        string
+	StorageRegion          string
+	StorageAccessKey       string
+	StorageSecretAccessKey string
+	StorageBucket          string
+
 	upstream *url.URL
 	config   gomodule.Config
+	cache    *gomodule.ModuleCache
 }
 
 func newGoModuleProxyCommand() *goModuleProxyCommand {
@@ -46,6 +53,11 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.Int64Var(&c.GitHubAppId, "github-app-id", c.GitHubAppId, "GitHub App ID")
 	fs.Int64Var(&c.GitHubInstallationId, "github-installation-id", c.GitHubInstallationId, "GitHub App Installation ID")
 	fs.StringVar(&c.PrivateKeyFile, "github-app-private-key-file", c.PrivateKeyFile, "PEM-encoded private key file for GitHub App")
+	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of object storage")
+	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The name of region of object storage")
+	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
+	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "Access key")
+	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "Secret access key")
 }
 
 func (c *goModuleProxyCommand) RequiredFlags() []string {
@@ -77,6 +89,11 @@ func (c *goModuleProxyCommand) Init() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	if c.StorageEndpoint != "" && c.StorageRegion != "" &&
+		c.StorageBucket != "" && c.StorageAccessKey != "" && c.StorageSecretAccessKey != "" {
+		c.cache = gomodule.NewModuleCache(c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey)
+	}
+
 	return nil
 }
 
@@ -84,7 +101,7 @@ func (c *goModuleProxyCommand) Run() error {
 	stopErrCh := make(chan error, 1)
 	startErrCh := make(chan error, 1)
 
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.GitHubAppId, c.GitHubInstallationId, c.PrivateKeyFile)
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.GitHubAppId, c.GitHubInstallationId, c.PrivateKeyFile)
 	server := gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

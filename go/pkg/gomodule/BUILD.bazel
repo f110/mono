@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "gomodule",
     srcs = [
+        "cache.go",
         "config.go",
         "fetcher.go",
         "proxy.go",
@@ -12,6 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/logger",
+        "//go/pkg/storage",
         "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",

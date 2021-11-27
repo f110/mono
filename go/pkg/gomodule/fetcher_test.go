@@ -3,6 +3,7 @@ package gomodule
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -59,7 +60,7 @@ func TestModuleRoot(t *testing.T) {
 		RootPath: "github.com/f110/gomodule-proxy-test",
 		vcs:      vcsRepo,
 	}
-	modules, err := moduleRoot.findModules()
+	modules, err := moduleRoot.findModules(context.Background())
 	require.NoError(t, err)
 	moduleRoot.Modules = modules
 	err = moduleRoot.findVersions()
@@ -81,7 +82,7 @@ func TestModuleRoot(t *testing.T) {
 	}
 
 	buf := new(bytes.Buffer)
-	err = moduleRoot.Archive(buf, "github.com/f110/gomodule-proxy-test/pkg/api", "v1.5.0")
+	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test/pkg/api", "v1.5.0")
 	require.NoError(t, err)
 	zipReader, err := zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
 	require.NoError(t, err)
@@ -95,7 +96,7 @@ func TestModuleRoot(t *testing.T) {
 		"github.com/f110/gomodule-proxy-test/pkg/api@v1.5.0/const2.go",
 	}, files)
 
-	err = moduleRoot.Archive(buf, "github.com/f110/gomodule-proxy-test", "v1.0.0")
+	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test", "v1.0.0")
 	require.NoError(t, err)
 	zipReader, err = zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
 	require.NoError(t, err)
