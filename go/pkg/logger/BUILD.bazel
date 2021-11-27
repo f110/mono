@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "logger",
@@ -6,6 +6,7 @@ go_library(
         "init.go",
         "k8s.go",
         "klog.go",
+        "named.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/logger",
     visibility = ["//visibility:public"],
@@ -17,5 +18,15 @@ go_library(
         "//vendor/k8s.io/apimachinery/pkg/api/meta",
         "//vendor/k8s.io/apimachinery/pkg/runtime",
         "//vendor/k8s.io/klog/v2:klog",
+    ],
+)
+
+go_test(
+    name = "logger_test",
+    srcs = ["named_test.go"],
+    embed = [":logger"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
     ],
 )
