@@ -52,7 +52,8 @@ func (s *Supervisor) Add(f func(ctx context.Context)) {
 
 	s.Log.Info("Add new process", zap.Int("num", s.Len()))
 
-	go child.Run(s.ctx)
+	s.wg.Add(1)
+	go child.Run(s.ctx, s.wg.Done)
 }
 
 func (s *Supervisor) Len() int {
@@ -111,9 +112,10 @@ func newChildProcess(id int, fn func(ctx context.Context)) *childProcess {
 	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: logger.Log, rand: r, fn: fn}
 }
 
-func (c *childProcess) Run(ctx context.Context) {
+func (c *childProcess) Run(ctx context.Context, done func()) {
 	defer func() {
 		c.exited = true
+		done()
 	}()
 
 	for {
