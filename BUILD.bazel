@@ -43,3 +43,8 @@ job(
         "-//containers/zoekt-indexer/...",
     ],
 )
+
+alias(
+    name = "monodev",
+    actual = "//go/cmd/monodev",
+)
