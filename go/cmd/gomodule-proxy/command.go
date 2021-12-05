@@ -5,8 +5,11 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
+
+	"go.f110.dev/go-memcached/client"
 
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
@@ -31,6 +34,8 @@ type goModuleProxyCommand struct {
 	StorageAccessKey       string
 	StorageSecretAccessKey string
 	StorageBucket          string
+
+	MemcachedServers []string
 
 	upstream *url.URL
 	config   gomodule.Config
@@ -58,6 +63,7 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "Access key")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "Secret access key")
+	fs.StringSliceVar(&c.MemcachedServers, "memcached-servers", nil, "Memcached server name and address for the metadata cache")
 }
 
 func (c *goModuleProxyCommand) RequiredFlags() []string {
@@ -85,13 +91,28 @@ func (c *goModuleProxyCommand) Init() error {
 		c.GitHubToken = os.Getenv("GITHUB_TOKEN")
 	}
 
-	if _, err := os.Stat(c.PrivateKeyFile); os.IsNotExist(err) {
-		return xerrors.Errorf(": %w", err)
+	if c.PrivateKeyFile != "" {
+		if _, err := os.Stat(c.PrivateKeyFile); os.IsNotExist(err) {
+			return xerrors.Errorf(": %w", err)
+		}
 	}
 
 	if c.StorageEndpoint != "" && c.StorageRegion != "" &&
-		c.StorageBucket != "" && c.StorageAccessKey != "" && c.StorageSecretAccessKey != "" {
-		c.cache = gomodule.NewModuleCache(c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey)
+		c.StorageBucket != "" && c.StorageAccessKey != "" && c.StorageSecretAccessKey != "" && len(c.MemcachedServers) > 0 {
+		var servers []client.Server
+		for _, v := range c.MemcachedServers {
+			s := strings.SplitN(v, "=", 2)
+			server, err := client.NewServerWithMetaProtocol(context.Background(), s[0], "tcp", s[1])
+			if err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+			servers = append(servers, server)
+		}
+		cachePool, err := client.NewSinglePool(servers...)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey)
 	}
 
 	return nil

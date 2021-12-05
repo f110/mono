@@ -997,6 +997,8 @@ go.etcd.io/etcd/client/pkg/v3 v3.5.1 h1:XIQcHCFSG53bJETYeRJtIxdLv2EWRGxcfzR8lSnT
 go.etcd.io/etcd/client/pkg/v3 v3.5.1/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
 go.etcd.io/etcd/client/v3 v3.5.1 h1:oImGuV5LGKjCqXdjkMHCyWa5OO1gYKCnC/1sgdfj1Uk=
 go.etcd.io/etcd/client/v3 v3.5.1/go.mod h1:OnjH4M8OnAotwaB2l9bVgZzRFKru7/ZMoS46OtKyd3Q=
+go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a h1:ezpSHBajLPKB3nVdOc/y9GjC7u7EylND8PYJqH7l14g=
+go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a/go.mod h1:b1j2g5L98Sjce14cAyX9e7J4KGpo2JkhXZ02f/UWqDU=
 go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f h1:VPjVGcPHOCN83eMNlndXikqiczt0j03IoPLEqNr6kDA=
 go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f/go.mod h1:Ha/edjjY50qtr9Fy/TFoETmF+NsofGLRbMU7Fr3wn94=
 go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265 h1:6n6uSgci7+2/iinxJAUvQpExApAWU3+qUQyKOl7c4wY=

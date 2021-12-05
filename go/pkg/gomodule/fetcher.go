@@ -2,6 +2,7 @@ package gomodule
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.uber.org/zap"
 	"golang.org/x/mod/modfile"
@@ -38,13 +38,14 @@ type ModuleRoot struct {
 }
 
 type Module struct {
-	Path     string
-	Versions []*ModuleVersion
-	Root     string
-
-	modFilePath string
-	dir         string
-	vcs         *VCS
+	Path        string
+	Versions    []*ModuleVersion
+	Root        string
+	ModFilePath string
+	
+	dir   string
+	vcs   *VCS
+	cache *ModuleCache
 }
 
 type ModuleVersion struct {
@@ -73,24 +74,60 @@ func NewModuleFetcher(baseDir string, cache *ModuleCache, githubAppId, githubIns
 }
 
 func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot, error) {
-	repoRoot, err := vcs.RepoRootForImportPath(importPath, false)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+	var repoRoot *vcs.RepoRoot
+	if root, u, err := f.cache.GetRepoRoot(importPath); err == nil {
+		logger.Log.Debug("RepoRoot found in cache", zap.String("importPath", importPath))
+		repoRoot = &vcs.RepoRoot{Root: root, Repo: u}
+	}
+	if repoRoot == nil {
+		logger.Log.Debug("Not found RepoRoot in cache", zap.String("importPath", importPath))
+		r, err := vcs.RepoRootForImportPath(importPath, false)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		repoRoot = r
+		if err := f.cache.SetRepoRoot(importPath, r.Root, r.Repo); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
 	}
 
-	dir := filepath.Join(f.baseDir, repoRoot.Root)
 	vcsRepo, err := NewVCS("git", repoRoot.Repo, f.appId, f.installationId, f.privateKeyFile)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
+	var moduleRoot *ModuleRoot
+	if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
+		logger.Log.Debug("Found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
+		moduleRoot = mr
+	}
+	if moduleRoot == nil {
+		logger.Log.Debug("Not found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
+		dir := filepath.Join(f.baseDir, repoRoot.Root)
+		moduleRoot, err = NewModuleRoot(ctx, repoRoot.Root, vcsRepo, f.cache, dir)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
 
-	moduleRoot := NewModuleRoot(repoRoot, vcsRepo, f.cache, dir)
+		if err := moduleRoot.SetCache(); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+	}
+
+	return moduleRoot, nil
+}
+
+func NewModuleRoot(ctx context.Context, rootPath string, vcsRepo *VCS, cache *ModuleCache, dir string) (*ModuleRoot, error) {
+	moduleRoot := &ModuleRoot{
+		RootPath: rootPath,
+		dir:      dir,
+		vcs:      vcsRepo,
+		cache:    cache,
+	}
 	modules, err := moduleRoot.findModules(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	moduleRoot.Modules = modules
-
 	if err := moduleRoot.findVersions(); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -98,23 +135,41 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot
 	return moduleRoot, nil
 }
 
-func NewModuleRoot(repoRoot *vcs.RepoRoot, vcsRepo *VCS, cache *ModuleCache, dir string) *ModuleRoot {
+func NewModuleRootFromCache(rootPath string, modules []*Module, cache *ModuleCache, vcs *VCS, dir string) *ModuleRoot {
+	for _, v := range modules {
+		v.dir = dir
+		v.vcs = vcs
+		v.cache = cache
+	}
 	return &ModuleRoot{
-		RootPath: repoRoot.Root,
+		RootPath: rootPath,
+		Modules:  modules,
 		dir:      dir,
-		vcs:      vcsRepo,
+		vcs:      vcs,
 		cache:    cache,
 	}
 }
 
-func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
-	var mod *Module
-	for _, v := range m.Modules {
-		if v.Path == module {
-			mod = v
-			break
+func (m *ModuleRoot) SetCache() error {
+	if err := m.cache.SetModuleRoot(m); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (m *ModuleRoot) FindModule(module string) *Module {
+	for _, mod := range m.Modules {
+		if mod.Path == module {
+			return mod
 		}
 	}
+
+	return nil
+}
+
+func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
+	mod := m.FindModule(module)
 	if mod == nil {
 		return xerrors.Errorf("%s is not found", module)
 	}
@@ -132,7 +187,7 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 		if v == mod {
 			continue
 		}
-		excludeDirs[filepath.Dir(v.modFilePath)+"/"] = struct{}{}
+		excludeDirs[filepath.Dir(v.ModFilePath)+"/"] = struct{}{}
 	}
 
 	if isTag {
@@ -143,6 +198,9 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 			return xerrors.Errorf(": %w", err)
 		}
 
+		if err := m.vcs.Sync(ctx, m.dir); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
 		tagRef, err := m.vcs.gitRepo.Tag(versionTag)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -156,9 +214,10 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 			return xerrors.Errorf(": %w", err)
 		}
 
-		zipWriter := zip.NewWriter(w)
+		buf := new(bytes.Buffer)
+		zipWriter := zip.NewWriter(buf)
 		modDir := mod.Path + "@" + version
-		goModFileDir := filepath.Dir(mod.modFilePath)
+		goModFileDir := filepath.Dir(mod.ModFilePath)
 		foundLicenseFile := false
 		walker := object.NewTreeWalker(tree, true, make(map[plumbing.Hash]bool))
 	Walk:
@@ -183,11 +242,11 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 				continue Walk
 			}
 
-			if filepath.Join(filepath.Dir(mod.modFilePath), "LICENSE") == name {
+			if filepath.Join(filepath.Dir(mod.ModFilePath), "LICENSE") == name {
 				foundLicenseFile = true
 			}
 
-			p := strings.TrimPrefix(name, filepath.Dir(mod.modFilePath))
+			p := strings.TrimPrefix(name, filepath.Dir(mod.ModFilePath))
 			fileWriter, err := zipWriter.Create(filepath.Join(modDir, p))
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
@@ -245,6 +304,12 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 		}
 
 		if err := zipWriter.Close(); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if _, err := io.Copy(w, buf); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if err := m.cache.SaveArchive(ctx, module, version, buf.Bytes()); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		return nil
@@ -310,9 +375,10 @@ func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
 		mods = append(mods, &Module{
 			Path:        modFile.Module.Mod.Path,
 			Root:        m.RootPath,
-			modFilePath: name,
+			ModFilePath: name,
 			dir:         m.dir,
 			vcs:         m.vcs,
+			cache:       m.cache,
 		})
 	}
 
@@ -392,6 +458,14 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		}
 	}
 	if isTag {
+		if buf, err := m.cache.GetModFile(m.Path, version); err == nil {
+			logger.Log.Debug("Got the go.mod from cache", zap.String("path", m.Path), zap.String("version", version))
+			return buf, nil
+		}
+
+		if err := m.vcs.Sync(context.Background(), m.dir); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
 		tagRef, err := m.vcs.gitRepo.Tag(version)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
@@ -404,7 +478,7 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-		f, err := tree.File(m.modFilePath)
+		f, err := tree.File(m.ModFilePath)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
@@ -417,6 +491,9 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		if err := r.Close(); err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		if err := m.cache.SetModFile(m.Path, version, buf); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
 
@@ -466,7 +543,7 @@ type VCS struct {
 	appId          int64
 	installationId int64
 	privateKeyFile string
-	authMethod     transport.AuthMethod
+	transport      *ghinstallation.Transport
 
 	gitRepo           *git.Repository
 	defaultBranchName string
@@ -475,9 +552,11 @@ type VCS struct {
 func NewVCS(typ, url string, appId, installationId int64, privateKeyFile string) (*VCS, error) {
 	v := &VCS{Type: typ, URL: url, appId: appId, installationId: installationId, privateKeyFile: privateKeyFile}
 	if appId > 0 && installationId > 0 && privateKeyFile != "" {
-		if err := v.getAppToken(); err != nil {
+		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
+		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
+		v.transport = t
 	}
 	return v, nil
 }
@@ -510,7 +589,7 @@ func (vcs *VCS) Create(ctx context.Context, dir string) error {
 	repo, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 		URL:        vcs.URL,
 		NoCheckout: true,
-		Auth:       vcs.authMethod,
+		Auth:       vcs.getAuthMethod(),
 	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -524,7 +603,7 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	if err := vcs.Open(dir); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin", Auth: vcs.authMethod})
+	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin", Auth: vcs.getAuthMethod()})
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -532,18 +611,12 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	return nil
 }
 
-func (vcs *VCS) getAppToken() error {
-	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, vcs.appId, vcs.installationId, vcs.privateKeyFile)
+func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
+	token, err := vcs.transport.Token(context.Background())
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return nil
 	}
-	token, err := t.Token(context.Background())
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-
-	vcs.authMethod = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
-	return nil
+	return &gogitHttp.BasicAuth{Username: "octocat", Password: token}
 }
 
 func (vcs *VCS) Open(dir string) error {

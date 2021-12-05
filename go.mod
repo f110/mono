@@ -51,6 +51,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/client/v3 v3.5.1
+	go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
 	go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.uber.org/zap v1.17.0

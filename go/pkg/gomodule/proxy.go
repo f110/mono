@@ -18,12 +18,13 @@ type ModuleProxy struct {
 
 	fetcher    *ModuleFetcher
 	httpClient *http.Client
+	cache      *ModuleCache
 }
 
 func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
 	return &ModuleProxy{
 		conf:       conf,
-		fetcher:    NewModuleFetcher(moduleDir, nil, githubAppId, githubInstallationId, privateKeyFile),
+		fetcher:    NewModuleFetcher(moduleDir, cache, githubAppId, githubInstallationId, privateKeyFile),
 		httpClient: &http.Client{},
 	}
 }
@@ -52,17 +53,16 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	for _, mod := range modRoot.Modules {
-		if mod.Path == module {
-			var versions []string
-			for _, v := range mod.Versions {
-				versions = append(versions, v.Semver)
-			}
-			return versions, nil
-		}
+	mod := modRoot.FindModule(module)
+	if mod == nil {
+		return nil, xerrors.Errorf("%s is not found", module)
 	}
 
-	return nil, xerrors.Errorf("%s is not found", module)
+	var versions []string
+	for _, v := range mod.Versions {
+		versions = append(versions, v.Semver)
+	}
+	return versions, nil
 }
 
 func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info, error) {
@@ -71,13 +71,7 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
 
-	var mod *Module
-	for _, v := range modRoot.Modules {
-		if v.Path == module {
-			mod = v
-			break
-		}
-	}
+	mod := modRoot.FindModule(module)
 	if mod == nil {
 		return Info{}, xerrors.Errorf("%s is not found", module)
 	}

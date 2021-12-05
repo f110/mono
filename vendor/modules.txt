@@ -656,6 +656,10 @@ go.etcd.io/etcd/client/v3
 go.etcd.io/etcd/client/v3/credentials
 go.etcd.io/etcd/client/v3/internal/endpoint
 go.etcd.io/etcd/client/v3/internal/resolver
+# go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
+## explicit
+go.f110.dev/go-memcached/client
+go.f110.dev/go-memcached/errors
 # go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f
 ## explicit
 go.f110.dev/notion-api/v2

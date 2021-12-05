@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = [
+        "client.go",
+        "ring.go",
+        "server.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/go.f110.dev/go-memcached/client",
+    importpath = "go.f110.dev/go-memcached/client",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/go.f110.dev/go-memcached/errors"],
+)
