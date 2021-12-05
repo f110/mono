@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -141,6 +142,10 @@ func (s *ProxyServer) latest(w http.ResponseWriter, req *http.Request, module, _
 
 func middlewareAccessLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		t1 := time.Now()
+
+		next.ServeHTTP(w, req)
+
 		logger.Log.Info("access",
 			zap.String("host", req.Host),
 			zap.String("protocol", req.Proto),
@@ -148,9 +153,8 @@ func middlewareAccessLog(next http.Handler) http.Handler {
 			zap.String("path", req.URL.Path),
 			zap.String("remote_addr", req.RemoteAddr),
 			zap.String("ua", req.Header.Get("User-Agent")),
+			zap.Duration("response_time", time.Since(t1)),
 		)
-
-		next.ServeHTTP(w, req)
 	})
 }
 
