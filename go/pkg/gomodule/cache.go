@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"time"
 
 	"go.f110.dev/go-memcached/client"
 	merrors "go.f110.dev/go-memcached/errors"
@@ -27,6 +28,7 @@ type ModuleCache struct {
 
 func NewModuleCache(cachePool *client.SinglePool, endpoint, region, bucket, accessKey, secretAccessKey string) *ModuleCache {
 	opt := storage.NewS3OptionToExternal(endpoint, region, accessKey, secretAccessKey)
+	opt.PathStyle = true
 	objStorage := storage.NewS3(bucket, opt)
 	return &ModuleCache{
 		cachePool:     cachePool,
@@ -56,7 +58,7 @@ func (c *ModuleCache) GetRepoRoot(importPath string) (repoRoot string, repoURL s
 		return "", "", xerrors.Errorf(": %w", err)
 	}
 
-	return root.Root, repoURL, nil
+	return root.Root, root.RepoURL, nil
 }
 
 func (c *ModuleCache) SetRepoRoot(importPath, repoRoot, repoURL string) error {
@@ -183,6 +185,11 @@ func (c *ModuleCache) addCachedModule(repoRoot string) error {
 			logger.Log.Debug("The module already cached", zap.String("repoRoot", repoRoot))
 			return nil
 		}
+	} else {
+		item = &client.Item{
+			Key:        "cachedModules",
+			Expiration: 60 * 60 * 24 * 7, // 1 week
+		}
 	}
 
 	cachedModules = append(cachedModules, repoRoot)
@@ -192,6 +199,37 @@ func (c *ModuleCache) addCachedModule(repoRoot string) error {
 	}
 	item.Value = buf.Bytes()
 	if err := c.cachePool.Set(item); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (c *ModuleCache) GetModInfo(module, sha string) (time.Time, error) {
+	if len(sha) < 12 {
+		return time.Time{}, merrors.ItemNotFound
+	}
+
+	item, err := c.cachePool.Get(fmt.Sprintf("modInfo/%s/%s", module, sha[:12]))
+	if err != nil {
+		return time.Time{}, xerrors.Errorf(": %w", err)
+	}
+
+	t, err := time.Parse(time.RFC3339, string(item.Value))
+	if err != nil {
+		return time.Time{}, xerrors.Errorf(": %w", err)
+	}
+
+	return t, nil
+}
+
+func (c *ModuleCache) SetModInfo(module, sha string, t time.Time) error {
+	err := c.cachePool.Set(&client.Item{
+		Key:        fmt.Sprintf("modInfo/%s/%s", module, sha[:12]),
+		Value:      []byte(t.Format(time.RFC3339)),
+		Expiration: 60 * 60 * 24 * 3, // 3 days
+	})
+	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 

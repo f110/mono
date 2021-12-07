@@ -29,8 +29,10 @@ import (
 )
 
 type ModuleRoot struct {
-	RootPath string
-	Modules  []*Module
+	RootPath      string
+	RepositoryURL string
+	Modules       []*Module
+	IsGitHub      bool
 
 	dir   string
 	vcs   *VCS
@@ -42,7 +44,7 @@ type Module struct {
 	Versions    []*ModuleVersion
 	Root        string
 	ModFilePath string
-	
+
 	dir   string
 	vcs   *VCS
 	cache *ModuleCache
@@ -76,7 +78,11 @@ func NewModuleFetcher(baseDir string, cache *ModuleCache, githubAppId, githubIns
 func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot, error) {
 	var repoRoot *vcs.RepoRoot
 	if root, u, err := f.cache.GetRepoRoot(importPath); err == nil {
-		logger.Log.Debug("RepoRoot found in cache", zap.String("importPath", importPath))
+		logger.Log.Debug("RepoRoot was found in cache",
+			zap.String("importPath", importPath),
+			zap.String("RepoRoot", root),
+			zap.String("url", u),
+		)
 		repoRoot = &vcs.RepoRoot{Root: root, Repo: u}
 	}
 	if repoRoot == nil {
@@ -118,10 +124,12 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot
 
 func NewModuleRoot(ctx context.Context, rootPath string, vcsRepo *VCS, cache *ModuleCache, dir string) (*ModuleRoot, error) {
 	moduleRoot := &ModuleRoot{
-		RootPath: rootPath,
-		dir:      dir,
-		vcs:      vcsRepo,
-		cache:    cache,
+		RootPath:      rootPath,
+		RepositoryURL: vcsRepo.URL,
+		IsGitHub:      strings.Contains(vcsRepo.URL, "github.com"),
+		dir:           dir,
+		vcs:           vcsRepo,
+		cache:         cache,
 	}
 	modules, err := moduleRoot.findModules(ctx)
 	if err != nil {
@@ -142,11 +150,13 @@ func NewModuleRootFromCache(rootPath string, modules []*Module, cache *ModuleCac
 		v.cache = cache
 	}
 	return &ModuleRoot{
-		RootPath: rootPath,
-		Modules:  modules,
-		dir:      dir,
-		vcs:      vcs,
-		cache:    cache,
+		RootPath:      rootPath,
+		RepositoryURL: vcs.URL,
+		Modules:       modules,
+		IsGitHub:      strings.Contains(vcs.URL, "github.com"),
+		dir:           dir,
+		vcs:           vcs,
+		cache:         cache,
 	}
 }
 
@@ -306,10 +316,11 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 		if err := zipWriter.Close(); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if _, err := io.Copy(w, buf); err != nil {
+		data := buf.Bytes()
+		if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if err := m.cache.SaveArchive(ctx, module, version, buf.Bytes()); err != nil {
+		if err := m.cache.SaveArchive(ctx, module, version, data); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		return nil
@@ -500,7 +511,7 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		return buf, nil
 	}
 
-	return nil, xerrors.New("specified commit is not supported")
+	return nil, xerrors.Errorf("%s is not found", version)
 }
 
 func (m *Module) setVersions(vers []*ModuleVersion) {
