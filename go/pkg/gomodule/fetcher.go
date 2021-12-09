@@ -623,6 +623,10 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 }
 
 func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
+	if vcs.transport == nil {
+		return nil
+	}
+
 	token, err := vcs.transport.Token(context.Background())
 	if err != nil {
 		return nil

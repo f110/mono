@@ -237,6 +237,10 @@ func (c *ModuleCache) SetModInfo(module, sha string, t time.Time) error {
 }
 
 func (c *ModuleCache) Archive(ctx context.Context, module, version string, w io.Writer) error {
+	if c == nil {
+		return CacheMiss
+	}
+
 	if c.objectStorage == nil {
 		return CacheMiss
 	}
@@ -253,6 +257,9 @@ func (c *ModuleCache) Archive(ctx context.Context, module, version string, w io.
 }
 
 func (c *ModuleCache) SaveArchive(ctx context.Context, module, version string, data []byte) error {
+	if c == nil {
+		return nil
+	}
 	if c.objectStorage == nil {
 		return nil
 	}

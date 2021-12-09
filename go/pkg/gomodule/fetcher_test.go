@@ -53,6 +53,7 @@ func TestModuleRoot(t *testing.T) {
 
 	vcsRepo, err := NewVCS("git", "", 0, 0, "")
 	require.NoError(t, err)
+	vcsRepo.synced = true
 	err = vcsRepo.Open(dir)
 	require.NoError(t, err)
 	moduleRoot := &ModuleRoot{
@@ -72,7 +73,6 @@ func TestModuleRoot(t *testing.T) {
 		for _, ver := range v.Versions {
 			vers = append(vers, ver.Semver)
 		}
-		t.Logf("%s: %v", v.Path, vers)
 		switch v.Path {
 		case "github.com/f110/gomodule-proxy-test":
 			assert.ElementsMatch(t, []string{"v1.0.0"}, vers)
