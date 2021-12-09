@@ -41,17 +41,13 @@ func (w *NamedWriter) Write(b []byte) (int, error) {
 		}
 	}
 	if startIndex != len(b)-1 {
-		n, err := w.w.Write(b[startIndex : len(b)-1])
+		n, err := w.w.Write(b[startIndex:])
 		if err != nil {
 			return totalN + n, err
 		}
 		totalN += n
 	}
 	if b[len(b)-1] == '\n' {
-		if _, err := w.w.Write([]byte("\n")); err != nil {
-			return totalN + 1, err
-		}
-		totalN += 1
 		w.lineStart = true
 	}
 
