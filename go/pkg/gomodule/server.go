@@ -35,11 +35,18 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxySe
 		Handler: s.r,
 	}
 
+	// Endpoints for Go module proxy
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/list").HandlerFunc(s.handle(s.list))
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/{version}.info").HandlerFunc(s.handle(s.info))
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/{version}.mod").HandlerFunc(s.handle(s.mod))
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/{version}.zip").HandlerFunc(s.handle(s.zip))
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@latest").HandlerFunc(s.handle(s.latest))
+
+	// Endpoints for frontend
+	s.r.Methods(http.MethodGet).Path("/").HandlerFunc(s.index)
+	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/invalidate").HandlerFunc(s.handle(s.invalidate))
+	s.r.Methods(http.MethodPost).Path("/flush_all").HandlerFunc(s.flushAll) // This endpoint is hidden.
+
 	s.r.Use(middlewareAccessLog)
 	s.r.Use(middlewareDebugInfo)
 
@@ -76,6 +83,46 @@ func (s *ProxyServer) handle(h func(w http.ResponseWriter, req *http.Request, mo
 		}
 
 		s.rr.ServeHTTP(w, req)
+	}
+}
+
+func (s *ProxyServer) index(w http.ResponseWriter, _ *http.Request) {
+	cachedModuleRoots, err := s.proxy.CachedModuleRoots()
+	if err != nil {
+		logger.Log.Info("failed to get a list of modules", zap.Error(err))
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, "<html><head></head><body>")
+	io.WriteString(w, "<h3>Cached modules</h3>\n")
+	io.WriteString(w, "<ul>")
+	for _, v := range cachedModuleRoots {
+		io.WriteString(w, "<li>")
+		fmt.Fprintf(w, "%s <a href=\"/%s/@v/invalidate\">[invalidate]</a>", v.RootPath, v.RootPath)
+		io.WriteString(w, "<ul>\n")
+		for _, v := range v.Modules {
+			fmt.Fprintf(w, "<li>%s</li>", v.Path)
+		}
+		io.WriteString(w, "</ul>\n")
+		io.WriteString(w, "</li>\n")
+	}
+	io.WriteString(w, "</ul></body></html>")
+}
+
+func (s *ProxyServer) invalidate(w http.ResponseWriter, req *http.Request, module, _ string) {
+	if err := s.proxy.InvalidateCache(module); err != nil {
+		logger.Log.Info("Failed invalidate cache", zap.Error(err), zap.String("module", module))
+		http.Error(w, "failed invalidate cache", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, req, "/", http.StatusSeeOther)
+}
+
+func (s *ProxyServer) flushAll(w http.ResponseWriter, _ *http.Request) {
+	if err := s.proxy.FlushAllCache(); err != nil {
+		http.Error(w, fmt.Sprintf("failed flush all cache: %v", err), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -161,7 +208,9 @@ func middlewareAccessLog(next http.Handler) http.Handler {
 func middlewareDebugInfo(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
-		logger.Log.Debug("Debug info", zap.Any("vars", vars))
+		if len(vars) != 0 {
+			logger.Log.Debug("Debug info", zap.Any("vars", vars))
+		}
 
 		next.ServeHTTP(w, req)
 	})

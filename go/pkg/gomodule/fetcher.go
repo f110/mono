@@ -149,15 +149,19 @@ func NewModuleRootFromCache(rootPath string, modules []*Module, cache *ModuleCac
 		v.vcs = vcs
 		v.cache = cache
 	}
-	return &ModuleRoot{
-		RootPath:      rootPath,
-		RepositoryURL: vcs.URL,
-		Modules:       modules,
-		IsGitHub:      strings.Contains(vcs.URL, "github.com"),
-		dir:           dir,
-		vcs:           vcs,
-		cache:         cache,
+	moduleRoot := &ModuleRoot{
+		RootPath: rootPath,
+		Modules:  modules,
+		dir:      dir,
+		vcs:      vcs,
+		cache:    cache,
 	}
+	if vcs != nil {
+		moduleRoot.RepositoryURL = vcs.URL
+		moduleRoot.IsGitHub = strings.Contains(vcs.URL, "github.com")
+	}
+
+	return moduleRoot
 }
 
 func (m *ModuleRoot) SetCache() error {

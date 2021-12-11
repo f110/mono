@@ -62,9 +62,9 @@ func goModuleProxy(cmd *cobra.Command) {
 					fmt.Sprintf("MINIO_ROOT_USER=minioadmin"),
 					fmt.Sprintf("MINIO_ROOT_PASSWORD=minioadmin"),
 				}...)
-				w := logger.NewNamedWriter(os.Stdout, "minio")
-				minio.Stdout = w
-				minio.Stderr = w
+				//w := logger.NewNamedWriter(os.Stdout, "minio")
+				minio.Stdout = os.Stdout
+				minio.Stderr = os.Stdout
 				logger.Log.Info("Start minio", zap.Int("port", 9000), zap.String("user", "minioadmin"), zap.String("password", "minioadmin"))
 				if err := minio.Run(); err != nil {
 					logger.Log.Info("Some error was occurred", zap.Error(err))

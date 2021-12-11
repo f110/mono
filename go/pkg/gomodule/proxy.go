@@ -170,6 +170,31 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, module, version s
 	return xerrors.Errorf("%s is not found", version)
 }
 
+func (m *ModuleProxy) CachedModuleRoots() ([]*ModuleRoot, error) {
+	moduleRoots, err := m.cache.CachedModuleRoots()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	return moduleRoots, nil
+}
+
+func (m *ModuleProxy) InvalidateCache(module string) error {
+	if err := m.cache.Invalidate(module); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (m *ModuleProxy) FlushAllCache() error {
+	if err := m.cache.FlushAll(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
 type httpTransport struct {
 	http.RoundTripper
 }
