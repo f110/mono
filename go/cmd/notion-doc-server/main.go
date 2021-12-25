@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 
@@ -14,32 +15,39 @@ import (
 	"go.f110.dev/mono/go/pkg/signals"
 )
 
-func notionToDoServer(args []string) error {
-	addr := ":7000"
-	conf := ""
-	token := ""
-	fs := pflag.NewFlagSet("notion-doc-server", pflag.ContinueOnError)
-	fs.StringVar(&addr, "addr", addr, "Listen addr")
-	fs.StringVar(&conf, "conf", conf, "Config file path")
-	fs.StringVar(&token, "token", "", "API token for notion")
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+type docServerCommand struct {
+	addr  string
+	conf  string
+	token string
+}
+
+func newDocServerCommand() *docServerCommand {
+	return &docServerCommand{
+		addr: ":7000",
 	}
+}
+
+func (s *docServerCommand) Flags(fs *pflag.FlagSet) {
+	fs.StringVar(&s.addr, "addr", s.addr, "Listen addr")
+	fs.StringVar(&s.conf, "conf", s.conf, "Config file path")
+	fs.StringVar(&s.token, "token", "", "API token for notion")
+}
+
+func (s *docServerCommand) Execute() error {
 	if err := logger.Init(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	if token == "" && os.Getenv("NOTION_TOKEN") != "" {
-		token = os.Getenv("NOTION_TOKEN")
+	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
+		s.token = os.Getenv("NOTION_TOKEN")
 	}
-	if token == "" {
+	if s.token == "" {
 		return xerrors.Errorf("--token or NOTION_TOKEN is required")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals.SetupSignalHandler(cancel)
 
-	srv, err := notion.NewDatabaseDocServer(addr, conf, token)
+	srv, err := notion.NewDatabaseDocServer(s.addr, s.conf, s.token)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -56,8 +64,24 @@ func notionToDoServer(args []string) error {
 	return nil
 }
 
+func notionDocServer(args []string) error {
+	docServerCmd := newDocServerCommand()
+	cmd := &cobra.Command{
+		Use: "notion-doc-server",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			return docServerCmd.Execute()
+		},
+	}
+	docServerCmd.Flags(cmd.Flags())
+	logger.Flags(cmd.Flags())
+
+	cmd.SetArgs(args)
+
+	return cmd.Execute()
+}
+
 func main() {
-	if err := notionToDoServer(os.Args); err != nil {
+	if err := notionDocServer(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

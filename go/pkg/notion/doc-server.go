@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-type config struct {
+type databaseDocServerConfig struct {
 	Id         string `yaml:"id"`
 	DatabaseID string `yaml:"database_id"`
 }
@@ -29,7 +29,7 @@ type DatabaseDocServer struct {
 	w          *volume.Watcher
 
 	mu   sync.RWMutex
-	conf []*config
+	conf []*databaseDocServerConfig
 
 	s *http.Server
 }
@@ -75,7 +75,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		}
 		logger.Log.Info("Input data", zap.Any("body", b))
 
-		var c *config
+		var c *databaseDocServerConfig
 		s.mu.RLock()
 		for _, v := range s.conf {
 			if v.Id == b.Id {
@@ -148,7 +148,7 @@ func (s *DatabaseDocServer) loadConfig() {
 		logger.Log.Error("Failed to open config file", zap.Error(err), zap.String("path", s.configFile))
 		return
 	}
-	var conf []*config
+	var conf []*databaseDocServerConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
 		logger.Log.Error("Decode failure", zap.Error(err))
 		return
