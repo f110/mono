@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/repoindexer"
@@ -12,22 +12,29 @@ import (
 )
 
 func repoIndexer(args []string) error {
-	cmd := repoindexer.NewIndexerCommand()
-	fs := pflag.NewFlagSet("repo-indexer", pflag.ContinueOnError)
-	cmd.Flags(fs)
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+	indexer := repoindexer.NewIndexerCommand()
+
+	cmd := &cobra.Command{
+		Use: "repo-indexer",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			if err := logger.Init(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			if err := indexer.Run(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+
+			return nil
+		},
 	}
 
-	if err := cmd.Run(); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
+	indexer.Flags(cmd.Flags())
+	logger.Flags(cmd.Flags())
 
-	return nil
+
+	cmd.SetArgs(args)
+	return cmd.Execute()
 }
 
 func main() {

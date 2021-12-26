@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/pkg/cmd/repoindexer",
         "//go/pkg/logger",
-        "//vendor/github.com/spf13/pflag",
+        "//vendor/github.com/spf13/cobra",
         "//vendor/golang.org/x/xerrors",
     ],
 )
