@@ -1,17 +1,31 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "notion",
-    srcs = ["doc-server.go"],
+    srcs = [
+        "doc-server.go",
+        "todo-scheduler.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/notion",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/k8s/volume",
         "//go/pkg/logger",
+        "//vendor/github.com/robfig/cron/v3:cron",
         "//vendor/go.f110.dev/notion-api/v2:notion-api",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",
         "//vendor/golang.org/x/xerrors",
         "//vendor/gopkg.in/yaml.v2:yaml_v2",
+    ],
+)
+
+go_test(
+    name = "notion_test",
+    srcs = ["todo-scheduler_test.go"],
+    embed = [":notion"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
     ],
 )
