@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync"
 
-	"go.f110.dev/notion-api/v2"
+	"go.f110.dev/notion-api/v3"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
@@ -125,9 +125,10 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+				i := int(num)
 				page.SetProperty(k, &notion.PropertyData{
 					Type:   "number",
-					Number: int(num),
+					Number: &i,
 				})
 			}
 		}

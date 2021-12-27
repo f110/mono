@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,18 +13,9 @@ import (
 
 const (
 	BaseURL   = "https://api.notion.com/v1"
-	UserAgent = "go.f110.dev/notion-api v2"
+	UserAgent = "go.f110.dev/notion-api v3"
 
 	notionVersion = "2021-08-16"
-)
-
-var (
-	ErrBadRequest       = errors.New("notion: bad request")
-	ErrLimitExceeded    = errors.New("notion: limit exceeded")
-	ErrUserNotFound     = errors.New("notion: user not found")
-	ErrDatabaseNotFound = errors.New("notion: database not found")
-	ErrPageNotFound     = errors.New("notion: page not found")
-	ErrBlockNotFound    = errors.New("notion: block not found")
 )
 
 type Client struct {
@@ -60,10 +50,8 @@ func (c *Client) GetUser(ctx context.Context, userID string) (*User, error) {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrUserNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &User{}
@@ -93,9 +81,10 @@ func (c *Client) ListAllUsers(ctx context.Context) ([]*User, error) {
 
 		switch res.StatusCode {
 		case http.StatusOK:
-		case http.StatusBadRequest:
-			res.Body.Close()
-			return nil, ErrBadRequest
+		default:
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
+			return nil, c.decodeError(res)
 		}
 
 		obj := &UserList{}
@@ -134,18 +123,21 @@ func (c *Client) ListDatabases(ctx context.Context) ([]*Database, error) {
 
 		switch res.StatusCode {
 		case http.StatusOK:
-		case http.StatusBadRequest:
-			res.Body.Close()
-			return nil, ErrBadRequest
-		case http.StatusTooManyRequests:
-			res.Body.Close()
-			return nil, ErrLimitExceeded
+		default:
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
+			return nil, c.decodeError(res)
 		}
 
 		obj := &DatabaseList{}
 		if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 			res.Body.Close()
 			return nil, fmt.Errorf("failed parse a response: %v", err)
+		}
+		for _, v := range obj.Results {
+			if err := v.decode(); err != nil {
+				return nil, err
+			}
 		}
 		databases = append(databases, obj.Results...)
 		res.Body.Close()
@@ -174,17 +166,16 @@ func (c *Client) GetDatabase(ctx context.Context, databaseID string) (*Database,
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrDatabaseNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Database{}
 	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 		return nil, fmt.Errorf("failed parse a response: %v", err)
+	}
+	if err := obj.decode(); err != nil {
+		return nil, err
 	}
 
 	return obj, nil
@@ -216,12 +207,8 @@ func (c *Client) UpdateDatabase(ctx context.Context, db *Database) (*Database, e
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrDatabaseNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Database{}
@@ -262,12 +249,8 @@ func (c *Client) GetPages(ctx context.Context, databaseID string, filter *Filter
 
 		switch res.StatusCode {
 		case http.StatusOK:
-		case http.StatusBadRequest:
-			res.Body.Close()
-			return nil, ErrBadRequest
-		case http.StatusTooManyRequests:
-			res.Body.Close()
-			return nil, ErrLimitExceeded
+		default:
+			return nil, c.decodeError(res)
 		}
 
 		obj := &PageList{}
@@ -302,15 +285,40 @@ func (c *Client) GetPage(ctx context.Context, pageID string) (*Page, error) {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrPageNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Page{}
+	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
+		return nil, fmt.Errorf("failed parse a response body: %v", err)
+	}
+	if err := obj.decode(); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// GetPageProperty can get a page property item
+func (c *Client) GetPageProperty(ctx context.Context, pageID, propertyID string) (*PropertyData, error) {
+	req, err := c.newRequest(ctx, http.MethodGet, fmt.Sprintf("/pages/%s/properties/%s", pageID, propertyID), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+	default:
+		return nil, c.decodeError(res)
+	}
+
+	obj := &PropertyData{}
 	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 		return nil, fmt.Errorf("failed parse a response body: %v", err)
 	}
@@ -337,12 +345,10 @@ func (c *Client) GetBlocks(ctx context.Context, pageID string) ([]*Block, error)
 
 		switch res.StatusCode {
 		case http.StatusOK:
-		case http.StatusBadRequest:
-			res.Body.Close()
-			return nil, ErrBadRequest
-		case http.StatusTooManyRequests:
-			res.Body.Close()
-			return nil, ErrLimitExceeded
+		default:
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
+			return nil, c.decodeError(res)
 		}
 
 		obj := &BlockList{}
@@ -377,10 +383,8 @@ func (c *Client) GetBlock(ctx context.Context, blockID string) (*Block, error) {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrBlockNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Block{}
@@ -410,12 +414,8 @@ func (c *Client) UpdateBlock(ctx context.Context, block *Block) (*Block, error) 
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusNotFound:
-		return nil, ErrBlockNotFound
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Block{}
@@ -439,12 +439,8 @@ func (c *Client) DeleteBlock(ctx context.Context, blockID string) error {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusBadRequest:
-		return ErrBadRequest
-	case http.StatusNotFound:
-		return ErrBlockNotFound
-	case http.StatusTooManyRequests:
-		return ErrLimitExceeded
+	default:
+		return c.decodeError(res)
 	}
 
 	return nil
@@ -469,15 +465,16 @@ func (c *Client) CreatePage(ctx context.Context, page *Page) (*Page, error) {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Page{}
 	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 		return nil, fmt.Errorf("failed parse a response: %v", err)
+	}
+	if err := obj.decode(); err != nil {
+		return nil, err
 	}
 
 	return obj, nil
@@ -508,15 +505,16 @@ func (c *Client) UpdateProperties(ctx context.Context, pageID string, properties
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Page{}
 	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 		return nil, fmt.Errorf("failed parse a response: %v", err)
+	}
+	if err := obj.decode(); err != nil {
+		return nil, err
 	}
 
 	return obj, nil
@@ -547,10 +545,8 @@ func (c *Client) AppendBlock(ctx context.Context, blockID string, children []*Bl
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusTooManyRequests:
-		return nil, ErrLimitExceeded
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &BlockList{}
@@ -592,12 +588,10 @@ func (c *Client) Search(ctx context.Context, query string, sort *Sort) ([]Object
 
 		switch res.StatusCode {
 		case http.StatusOK:
-		case http.StatusBadRequest:
-			res.Body.Close()
-			return nil, ErrBadRequest
-		case http.StatusTooManyRequests:
-			res.Body.Close()
-			return nil, ErrLimitExceeded
+		default:
+			//goland:noinspection GoDeferInLoop
+			defer res.Body.Close()
+			return nil, c.decodeError(res)
 		}
 
 		obj := &SearchResult{}
@@ -619,10 +613,16 @@ func (c *Client) Search(ctx context.Context, query string, sort *Sort) ([]Object
 				if err := json.Unmarshal(*v, db); err != nil {
 					return nil, err
 				}
+				if err := db.decode(); err != nil {
+					return nil, err
+				}
 				tmp = append(tmp, db)
 			case "page":
 				page := &Page{}
 				if err := json.Unmarshal(*v, page); err != nil {
+					return nil, err
+				}
+				if err := page.decode(); err != nil {
 					return nil, err
 				}
 				tmp = append(tmp, page)
@@ -661,15 +661,16 @@ func (c *Client) CreateDatabase(ctx context.Context, db *Database) (*Database, e
 
 	switch res.StatusCode {
 	case http.StatusOK:
-	case http.StatusBadRequest:
-		return nil, ErrBadRequest
-	case http.StatusNotFound:
-		return nil, ErrPageNotFound
+	default:
+		return nil, c.decodeError(res)
 	}
 
 	obj := &Database{}
 	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
 		return nil, fmt.Errorf("notion: failed parse a response: %v", err)
+	}
+	if err := obj.decode(); err != nil {
+		return nil, err
 	}
 
 	return obj, nil
@@ -693,4 +694,13 @@ func (c *Client) newRequest(ctx context.Context, method string, apiPath string, 
 	}
 
 	return req, nil
+}
+
+func (c *Client) decodeError(res *http.Response) error {
+	err := &Error{}
+	if err := json.NewDecoder(res.Body).Decode(err); err != nil {
+		return err
+	}
+
+	return err
 }

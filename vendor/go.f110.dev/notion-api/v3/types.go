@@ -4,24 +4,34 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 )
 
 type Object interface{}
 
+type ObjectType string
+
+const (
+	ObjectTypeDatabase ObjectType = "database"
+	ObjectTypePage     ObjectType = "page"
+	ObjectTypeBlock    ObjectType = "block"
+	ObjectTypeList     ObjectType = "list"
+)
+
 type Meta struct {
 	// Type of object
-	Object string `json:"object,omitempty"`
+	Object ObjectType `json:"object,omitempty"`
 	// Unique identifier
 	ID string `json:"id,omitempty"`
 }
 
 type ListMeta struct {
 	// Type of object
-	Object     string `json:"object,omitempty"`
-	HasMore    bool   `json:"has_more,omitempty"`
-	NextCursor string `json:"next_cursor,omitempty"`
+	Object     ObjectType `json:"object,omitempty"`
+	HasMore    bool       `json:"has_more,omitempty"`
+	NextCursor string     `json:"next_cursor,omitempty"`
 }
 
 type Time struct {
@@ -58,11 +68,18 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + t.Time.Format(ISO8601) + "\""), nil
 }
 
+type UserType string
+
+const (
+	UserTypePerson UserType = "person"
+	UserTypeBot    UserType = "bot"
+)
+
 type User struct {
 	*Meta
 
 	// Type of the user.
-	Type string `json:"type"`
+	Type UserType `json:"type"`
 	// Displayed name
 	Name string `json:"name"`
 	// Avatar image url
@@ -70,6 +87,17 @@ type User struct {
 
 	Person *Person `json:"person"`
 	Bot    *Bot    `json:"bot"`
+}
+
+func (u *User) String() string {
+	var b strings.Builder
+	b.WriteString(u.Name)
+	if u.Person != nil && u.Person.Email != "" {
+		b.WriteString(" <")
+		b.WriteString(u.Person.Email)
+		b.WriteString(">")
+	}
+	return b.String()
 }
 
 type Date struct {
@@ -101,11 +129,19 @@ type UserList struct {
 	Results []*User `json:"results"`
 }
 
+type RichTextObjectType string
+
+const (
+	RichTextObjectTypeText     RichTextObjectType = "text"
+	RichTextObjectTypeMention  RichTextObjectType = "mention"
+	RichTextObjectTypeEquation RichTextObjectType = "equation"
+)
+
 type RichTextObject struct {
-	Type        string          `json:"type,omitempty"`
-	PlainText   string          `json:"plain_text,omitempty"`
-	Href        string          `json:"href,omitempty"`
-	Annotations *TextAnnotation `json:"annotations,omitempty"`
+	Type        RichTextObjectType `json:"type,omitempty"`
+	PlainText   string             `json:"plain_text,omitempty"`
+	Href        string             `json:"href,omitempty"`
+	Annotations *TextAnnotation    `json:"annotations,omitempty"`
 
 	Text     *Text     `json:"text,omitempty"`
 	Mention  *Mention  `json:"mention,omitempty"`
@@ -126,12 +162,22 @@ type Text struct {
 	Link    *Link  `json:"link"`
 }
 
-type Mention struct {
-	Type string `json:"type"`
+type MentionType string
 
-	User     *User `json:"user"`
-	Page     *Meta `json:"page"`
-	Database *Meta `json:"database"`
+const (
+	MentionTypeUser        MentionType = "user"
+	MentionTypePage        MentionType = "page"
+	MentionTypeDatabase    MentionType = "database"
+	MentionTypeDate        MentionType = "date"
+	MentionTypeLinkPreview MentionType = "link_preview"
+)
+
+type Mention struct {
+	Type MentionType `json:"type"`
+
+	User     *User `json:"user,omitempty"`
+	Page     *Meta `json:"page,omitempty"`
+	Database *Meta `json:"database,omitempty"`
 }
 
 type Equation struct {
@@ -154,15 +200,27 @@ type Database struct {
 	URL            string                       `json:"url,omitempty"`
 }
 
+func (d *Database) decode() error {
+	for _, v := range d.Properties {
+		id, err := url.QueryUnescape(v.ID)
+		if err != nil {
+			return err
+		}
+		v.ID = id
+	}
+
+	return nil
+}
+
 type DatabaseList struct {
 	*ListMeta
 	Results []*Database `json:"results"`
 }
 
 type PropertyMetadata struct {
-	ID   string `json:"id,omitempty"`
-	Type string `json:"type,omitempty"`
-	Name string `json:"name,omitempty"`
+	ID   string       `json:"id,omitempty"`
+	Type PropertyType `json:"type,omitempty"`
+	Name string       `json:"name,omitempty"`
 
 	Title          *RichTextObject      `json:"title,omitempty"`
 	RichText       *struct{}            `json:"rich_text,omitempty"`
@@ -187,15 +245,15 @@ type PropertyMetadata struct {
 
 func (p *PropertyMetadata) String() string {
 	b := new(strings.Builder)
-	b.WriteString(p.Type)
+	b.WriteString(string(p.Type))
 	b.WriteString(": ")
 
 	switch p.Type {
-	case "title":
+	case PropertyTypeTitle:
 		b.WriteString(fmt.Sprintf("%v", p.Title))
-	case "number":
+	case PropertyTypeNumber:
 		b.WriteString(fmt.Sprintf("%v", p.Number))
-	case "select":
+	case PropertyTypeSelect:
 		b.WriteString(fmt.Sprintf("%v", p.Select))
 	}
 
@@ -225,8 +283,17 @@ type DateProperty struct {
 	End   *Date `json:"end,omitempty"`
 }
 
+type FormulaType string
+
+const (
+	FormulaTypeString  FormulaType = "string"
+	FormulaTypeNumber  FormulaType = "number"
+	FormulaTypeBoolean FormulaType = "boolean"
+	FormulaTypeDate    FormulaType = "date"
+)
+
 type FormulaProperty struct {
-	Type string `json:"type"`
+	Type FormulaType `json:"type"`
 
 	String  string        `json:"string,omitempty"`
 	Number  int           `json:"number,omitempty"`
@@ -261,8 +328,16 @@ type RollupProperty struct {
 	Function           RollupFunction `json:"function"`
 }
 
+type RollupType string
+
+const (
+	RollupTypeNumber RollupType = "number"
+	RollupTypeDate   RollupType = "date"
+	RollupTypeArray  RollupType = "array"
+)
+
 type Rollup struct {
-	Type string `json:"type"`
+	Type RollupType `json:"type"`
 
 	Number *NumberProperty `json:"number,omitempty"`
 	Date   *DateProperty   `json:"date,omitempty"`
@@ -274,13 +349,25 @@ type Rollup struct {
 type Page struct {
 	*Meta
 
-	CreatedTime    Time                     `json:"created_time"`
-	LastEditedTime Time                     `json:"last_edited_time"`
+	CreatedTime    *Time                    `json:"created_time,omitempty"`
+	LastEditedTime *Time                    `json:"last_edited_time,omitempty"`
 	Archived       bool                     `json:"archived,omitempty"`
 	Parent         *PageParent              `json:"parent,omitempty"`
 	Properties     map[string]*PropertyData `json:"properties"`
 	Children       []*Block                 `json:"children,omitempty"`
 	URL            string                   `json:"url,omitempty"`
+}
+
+func (p *Page) decode() error {
+	for _, v := range p.Properties {
+		id, err := url.PathUnescape(v.ID)
+		if err != nil {
+			return err
+		}
+		v.ID = id
+	}
+
+	return nil
 }
 
 type PageList struct {
@@ -289,23 +376,48 @@ type PageList struct {
 }
 
 type PageParent struct {
-	Type       string `json:"type,omitempty"`
-	DatabaseID string `json:"database_id,omitempty"`
-	PageID     string `json:"page_id,omitempty"`
+	Type       ObjectType `json:"type,omitempty"`
+	DatabaseID string     `json:"database_id,omitempty"`
+	PageID     string     `json:"page_id,omitempty"`
 
 	Database *Database `json:"-"`
 	Page     *Page     `json:"-"`
 }
 
+type PropertyType string
+
+const (
+	PropertyTypeTitle          PropertyType = "title"
+	PropertyTypeText           PropertyType = "text"
+	PropertyTypeRichText       PropertyType = "rich_text"
+	PropertyTypeNumber         PropertyType = "number"
+	PropertyTypeSelect         PropertyType = "select"
+	PropertyTypeMultiSelect    PropertyType = "multi_select"
+	PropertyTypeDate           PropertyType = "date"
+	PropertyTypePeople         PropertyType = "people"
+	PropertyTypeFiles          PropertyType = "files"
+	PropertyTypeCheckbox       PropertyType = "checkbox"
+	PropertyTypeURL            PropertyType = "url"
+	PropertyTypeEmail          PropertyType = "email"
+	PropertyTypePhoneNumber    PropertyType = "phone_number"
+	PropertyTypeFormula        PropertyType = "formula"
+	PropertyTypeRelation       PropertyType = "relation"
+	PropertyTypeRollup         PropertyType = "rollup"
+	PropertyTypeCreatedTime    PropertyType = "created_time"
+	PropertyTypeCreatedBy      PropertyType = "created_by"
+	PropertyTypeLastEditedTime PropertyType = "last_edited_time"
+	PropertyTypeLastEditedBy   PropertyType = "last_edited_by"
+)
+
 type PropertyData struct {
-	ID   string `json:"id,omitempty"`
-	Type string `json:"type"`
+	ID   string       `json:"id,omitempty"`
+	Type PropertyType `json:"type"`
 
 	Title          []*RichTextObject `json:"title,omitempty"`
 	MultiSelect    []*Option         `json:"multi_select,omitempty"`
 	Text           []*RichTextObject `json:"text,omitempty"`
 	RichText       []*RichTextObject `json:"rich_text,omitempty"`
-	Number         int               `json:"number,omitempty"`
+	Number         *int              `json:"number,omitempty"`
 	Select         *Option           `json:"select,omitempty"`
 	Date           *DateProperty     `json:"date,omitempty"`
 	People         []*User           `json:"people,omitempty"`
@@ -321,6 +433,94 @@ type PropertyData struct {
 	CreatedBy      *User             `json:"created_by,omitempty"`
 	LastEditedTime *Time             `json:"last_edited_time,omitempty"`
 	LastEditedBy   *User             `json:"last_edited_by,omitempty"`
+}
+
+// TODO: Support formula, relation and rollup
+func (d *PropertyData) String() string {
+	switch d.Type {
+	case PropertyTypeTitle:
+		if len(d.Title) == 0 {
+			return ""
+		}
+		return d.Title[0].PlainText
+	case PropertyTypeMultiSelect:
+		var b strings.Builder
+		for i, v := range d.MultiSelect {
+			if i != 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(v.Name)
+		}
+		return b.String()
+	case PropertyTypeText:
+		var b strings.Builder
+		for _, v := range d.Text {
+			b.WriteString(v.PlainText)
+		}
+		return b.String()
+	case PropertyTypeRichText:
+		var b strings.Builder
+		for _, v := range d.RichText {
+			b.WriteString(v.PlainText)
+		}
+		return b.String()
+	case PropertyTypeNumber:
+		return fmt.Sprintf("%d", d.Number)
+	case PropertyTypeSelect:
+		if d.Select == nil {
+			return ""
+		}
+		return d.Select.Name
+	case PropertyTypeDate:
+		if d.Date.Start == nil {
+			return ""
+		}
+		return d.Date.Start.Format("2006-01-02")
+	case PropertyTypePeople:
+		var b strings.Builder
+		for i, p := range d.People {
+			if i != 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(p.String())
+		}
+		return b.String()
+	case PropertyTypeFiles:
+		var b strings.Builder
+		for i, f := range d.Files {
+			if i != 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(f.Name)
+		}
+		return b.String()
+	case PropertyTypeCheckbox:
+		if d.Checkbox {
+			return "checked"
+		} else {
+			return "not checked"
+		}
+	case PropertyTypeURL:
+		return d.URL
+	case PropertyTypePhoneNumber:
+		return d.PhoneNumber
+	case PropertyTypeCreatedTime:
+		if d.CreatedTime == nil {
+			return ""
+		}
+		return d.CreatedTime.Format(time.RFC3339)
+	case PropertyTypeCreatedBy:
+		return d.CreatedBy.String()
+	case PropertyTypeLastEditedTime:
+		if d.LastEditedTime == nil {
+			return ""
+		}
+		return d.LastEditedTime.Format(time.RFC3339)
+	case PropertyTypeLastEditedBy:
+		return d.LastEditedBy.String()
+	}
+
+	return ""
 }
 
 type File struct {
@@ -435,16 +635,49 @@ type Sort struct {
 	Direction string `json:"direction"`
 }
 
+type BlockType string
+
+const (
+	BlockTypeParagraph        BlockType = "paragraph"
+	BlockTypeHeading1         BlockType = "heading_1"
+	BlockTypeHeading2         BlockType = "heading_2"
+	BlockTypeHeading3         BlockType = "heading_3"
+	BlockTypeCallOut          BlockType = "callout"
+	BlockTypeQuote            BlockType = "quote"
+	BlockTypeBulletedListItem BlockType = "bulleted_list_item"
+	BlockTypeNumberedListItem BlockType = "numbered_list_item"
+	BlockTypeToDo             BlockType = "to_do"
+	BlockTypeToggle           BlockType = "toggle"
+	BlockTypeCode             BlockType = "code"
+	BlockTypeChildPage        BlockType = "child_page"
+	BlockTypeChildDatabase    BlockType = "child_database"
+	BlockTypeEmbed            BlockType = "embed"
+	BlockTypeImage            BlockType = "image"
+	BlockTypeVideo            BlockType = "video"
+	BlockTypeFile             BlockType = "file"
+	BlockTypePDF              BlockType = "pdf"
+	BlockTypeBookmark         BlockType = "bookmark"
+	BlockTypeEquation         BlockType = "equation"
+	BlockTypeDivider          BlockType = "divider"
+	BlockTypeTableOfContent   BlockType = "table_of_contents"
+	BlockTypeBreadcrumb       BlockType = "breadcrumb"
+	BlockTypeColumnList       BlockType = "column_list"
+	BlockTypeColumn           BlockType = "column"
+	BlockTypeLinkPreview      BlockType = "link_preview"
+	BlockTypeLinkToPage       BlockType = "link_to_page"
+	BlockTypeSynced           BlockType = "synced_block"
+)
+
 // Block is a block object.
 // ref: https://developers.notion.com/reference/block
 type Block struct {
 	*Meta
 
-	CreatedTime    Time   `json:"created_time,omitempty"`
-	LastEditedTime Time   `json:"last_edited_time,omitempty"`
-	HasChildren    bool   `json:"has_children"`
-	Archived       bool   `json:"archived"`
-	Type           string `json:"type"`
+	CreatedTime    Time      `json:"created_time,omitempty"`
+	LastEditedTime Time      `json:"last_edited_time,omitempty"`
+	HasChildren    bool      `json:"has_children"`
+	Archived       bool      `json:"archived"`
+	Type           BlockType `json:"type"`
 
 	Paragraph        *Paragraph `json:"paragraph,omitempty"`
 	Heading1         *Heading   `json:"heading_1,omitempty"`
@@ -455,6 +688,11 @@ type Block struct {
 	ToDo             *ToDo      `json:"to_do,omitempty"`
 	Toggle           *Paragraph `json:"toggle,omitempty"`
 	ChildPage        *ChildPage `json:"child_page,omitempty"`
+	Divider          *struct{}  `json:"divider,omitempty"`
+	Code             *Code      `json:"code,omitempty"`
+	ColumnList       *struct{}  `json:"column_list,omitempty"`
+	Breadcrumb       *struct{}  `json:"breadcrumb,omitempty"`
+	TableOfContents  *struct{}  `json:"table_of_contents,omitempty"`
 }
 
 type BlockList struct {
@@ -481,7 +719,25 @@ type ChildPage struct {
 	Title string `json:"title"`
 }
 
+type Code struct {
+	Text     []*RichTextObject `json:"text"`
+	Language string            `json:"language"`
+}
+
 type SearchResult struct {
 	*ListMeta
 	Results []*json.RawMessage `json:"results"`
+}
+
+type Error struct {
+	*Meta
+	Status  int    `json:"status"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+var _ error = &Error{}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }

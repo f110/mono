@@ -8,7 +8,7 @@ go_library(
         "page.go",
         "types.go",
     ],
-    importmap = "go.f110.dev/mono/vendor/go.f110.dev/notion-api/v2",
-    importpath = "go.f110.dev/notion-api/v2",
+    importmap = "go.f110.dev/mono/vendor/go.f110.dev/notion-api/v3",
+    importpath = "go.f110.dev/notion-api/v3",
     visibility = ["//visibility:public"],
 )

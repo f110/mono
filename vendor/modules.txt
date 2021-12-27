@@ -660,9 +660,9 @@ go.etcd.io/etcd/client/v3/internal/resolver
 ## explicit
 go.f110.dev/go-memcached/client
 go.f110.dev/go-memcached/errors
-# go.f110.dev/notion-api/v2 v2.0.0-20211016040417-069c014b548f
+# go.f110.dev/notion-api/v3 v3.0.0-20211227045902-9b9362de2634
 ## explicit
-go.f110.dev/notion-api/v2
+go.f110.dev/notion-api/v3
 # go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 ## explicit
 go.f110.dev/protoc-ddl

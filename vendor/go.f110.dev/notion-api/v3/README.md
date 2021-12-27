@@ -47,10 +47,13 @@ And example code exists under [example directory](./example)
 * [x] [Create a database](https://developers.notion.com/reference/create-a-database)
 * [x] [Retrieve a block](https://developers.notion.com/reference/retrieve-a-block)
 * [x] [Update a block](https://developers.notion.com/reference/update-a-block)
+* [x] [Update a database](https://developers.notion.com/reference/update-a-database)
+* [x] [Delete a block](https://developers.notion.com/reference/delete-a-block)
+* [x] [Retrieve a page property](https://developers.notion.com/reference/retrieve-a-page-property)
 
 # Implemented version
 
-Implemented [Notion API version](https://developers.notion.com/reference/versioning) is **2021-05-13** .
+Implemented [Notion API version](https://developers.notion.com/reference/versioning) is **2021-08-16** .
 
 # Author
 

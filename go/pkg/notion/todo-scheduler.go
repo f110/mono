@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"go.f110.dev/notion-api/v2"
+	"go.f110.dev/notion-api/v3"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/xerrors"
@@ -115,10 +115,8 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			}
 
 			if shouldCreateNewPage {
-				lastPage.CreatedTime = notion.Time{}
-				lastPage.LastEditedTime = notion.Time{}
-				lastPage.URL = ""
-				lastPage.Properties[config.ScheduleColumn] = &notion.PropertyData{
+				newPage := lastPage.New()
+				newPage.Properties[config.ScheduleColumn] = &notion.PropertyData{
 					Type: "rich_text",
 					RichText: []*notion.RichTextObject{
 						{
@@ -134,21 +132,10 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 						},
 					},
 				}
-				delete(lastPage.Properties, "After")
-				delete(lastPage.Properties, "Before")
-				delete(lastPage.Properties, "Childs")
-				delete(lastPage.Properties, "Parent")
-				delete(lastPage.Properties, "Component")
-				delete(lastPage.Properties, "Project")
-				delete(lastPage.Properties, "Created at")
-				delete(lastPage.Properties, "Updated at")
-				delete(lastPage.Properties, "Status")
-				delete(lastPage.Properties, "Tags")
-				delete(lastPage.Properties, "Version")
 				if dryRun {
 					logger.Log.Info("Create page")
 				} else {
-					_, err = s.client.CreatePage(context.TODO(), lastPage)
+					_, err = s.client.CreatePage(context.TODO(), newPage)
 					if err != nil {
 						logger.Log.Warn("Failed to create new page", zap.Error(err))
 						return err

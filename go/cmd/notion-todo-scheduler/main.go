@@ -16,9 +16,10 @@ import (
 )
 
 type toDoSchedulerCommand struct {
-	conf   string
-	token  string
-	dryRun bool
+	conf    string
+	token   string
+	dryRun  bool
+	oneshot bool
 }
 
 func newToDoSchedulerCommand() *toDoSchedulerCommand {
@@ -29,6 +30,7 @@ func (s *toDoSchedulerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.conf, "conf", s.conf, "Config file path")
 	fs.StringVar(&s.token, "token", s.token, "API token for notion")
 	fs.BoolVar(&s.dryRun, "dry-run", s.dryRun, "Dry run")
+	fs.BoolVar(&s.oneshot, "oneshot", s.oneshot, "Execute only once")
 }
 
 func (s *toDoSchedulerCommand) Execute() error {
@@ -42,13 +44,21 @@ func (s *toDoSchedulerCommand) Execute() error {
 		return xerrors.Errorf("--token or NOTION_TOKEN is required")
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
-	defer cancel()
-
 	scheduler, err := notion.NewToDoScheduler(s.conf, s.token)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+
+	if s.oneshot {
+		if err := scheduler.Execute(s.dryRun); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		return nil
+	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
+	defer cancel()
+
 	if err := scheduler.Start(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
