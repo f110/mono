@@ -93,6 +93,17 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 		}
 
 		for _, spec := range schedules {
+			switch spec.Interval {
+			case intervalWeekly:
+				if time.Now().Weekday() != spec.Weekday {
+					continue
+				}
+			case intervalMonthly:
+				if time.Now().Day() != spec.Day {
+					continue
+				}
+			}
+
 			lastPage := s.findLastPage(pages, config.ScheduleColumn, spec)
 			var shouldCreateNewPage bool
 			if lastPage != nil {
@@ -101,21 +112,20 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				case intervalDaily:
 					interval = 24*time.Hour - maxProcessingTime
 				case intervalWeekly:
-					interval = 7*24*time.Hour - maxProcessingTime
+					interval = 7 * 24 * time.Hour
 				case intervalMonthly:
-					interval = 30*24*time.Hour - maxProcessingTime
+					interval = 7 * 24 * time.Hour
 				}
 
 				if time.Now().After(lastPage.CreatedTime.Add(interval)) {
 					shouldCreateNewPage = true
 				}
 			} else {
-				lastPage = pageMap[spec.ID]
 				shouldCreateNewPage = true
 			}
 
 			if shouldCreateNewPage {
-				newPage := lastPage.New()
+				newPage := pageMap[spec.ID].New()
 				newPage.Properties[config.ScheduleColumn] = &notion.PropertyData{
 					Type: "rich_text",
 					RichText: []*notion.RichTextObject{
