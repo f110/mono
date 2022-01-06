@@ -11,6 +11,7 @@ go_library(
         "manifest.go",
         "notify.go",
         "objectstorage.go",
+        "regexp.go",
         "repoindexer.go",
         "updater.go",
     ],
@@ -45,7 +46,11 @@ go_library(
 
 go_test(
     name = "repoindexer_test",
-    srcs = ["config_test.go"],
+    srcs = [
+        "config_test.go",
+        "lister_test.go",
+        "regexp_test.go",
+    ],
     embed = [":repoindexer"],
     deps = [
         "//vendor/github.com/stretchr/testify/assert",

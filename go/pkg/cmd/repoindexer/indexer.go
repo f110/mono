@@ -50,7 +50,14 @@ type Indexer struct {
 	lister *RepositoryLister
 }
 
-func NewIndexer(rules *Config, workDir, token, ctags string, appId, installationId int64, privateKeyFile string, initRun bool, parallelism int) (*Indexer, error) {
+func NewIndexer(
+	rules *Config,
+	workDir, token, ctags string,
+	appId, installationId int64,
+	privateKeyFile string,
+	initRun bool,
+	parallelism int,
+) (*Indexer, error) {
 	var listerOpts []RepositoryListerOpt
 	if appId > 0 && installationId > 0 && privateKeyFile != "" {
 		listerOpts = []RepositoryListerOpt{GitHubApp(appId, installationId, privateKeyFile)}

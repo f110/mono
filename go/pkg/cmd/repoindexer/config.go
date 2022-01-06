@@ -20,7 +20,11 @@ type Rule struct {
 	Branches []string `yaml:"branches,omitempty"`
 	Tags     []string `yaml:"tags,omitempty"`
 
+	URLReplace string `yaml:"url_replace"`
+
 	DisableVendoring bool `yaml:"disable_vendoring"`
+
+	urlReplaceRule *replaceRule
 }
 
 func ReadConfigFile(p string) (*Config, error) {
@@ -42,6 +46,18 @@ func ReadConfig(r io.Reader) (*Config, error) {
 	config := &Config{}
 	if err := yaml.NewDecoder(r).Decode(&config); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	for _, v := range config.Rules {
+		if v.URLReplace == "" {
+			continue
+		}
+		
+		replaceRule, err := parseRegexp(v.URLReplace)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		v.urlReplaceRule = replaceRule
 	}
 
 	return config, nil

@@ -20,19 +20,20 @@ import (
 )
 
 type IndexerCommand struct {
-	ConfigFile     string
-	WorkDir        string
-	Token          string
-	Ctags          string
-	RunScheduler   bool
-	InitRun        bool
-	WithoutFetch   bool
-	DisableCleanup bool
-	Parallelism    int
-	AppId          int64
-	InstallationId int64
-	PrivateKeyFile string
-	HTTPAddr       string
+	ConfigFile       string
+	WorkDir          string
+	Token            string
+	Ctags            string
+	RunScheduler     bool
+	InitRun          bool
+	WithoutFetch     bool
+	DisableCleanup   bool
+	Parallelism      int
+	AppId            int64
+	InstallationId   int64
+	PrivateKeyFile   string
+	HTTPAddr         string
+	URLReplaceRegexp []string
 
 	Bucket                      string
 	MinIOEndpoint               string

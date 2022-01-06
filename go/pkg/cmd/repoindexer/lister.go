@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sync"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -28,6 +29,11 @@ type Repository struct {
 }
 
 type RepositoryListerOpt func(lister *RepositoryLister) error
+
+type replaceRule struct {
+	re      *regexp.Regexp
+	replace string
+}
 
 type RepositoryLister struct {
 	rules               []*Rule
@@ -97,9 +103,17 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
 				continue
 			}
+
+			u := repo.GetCloneURL()
+			if rule.urlReplaceRule != nil {
+				replaced := rule.urlReplaceRule.re.ReplaceAllString(u, rule.urlReplaceRule.replace)
+				if u != replaced {
+					u = replaced
+				}
+			}
 			repos[fmt.Sprintf("%s/%s", rule.Owner, rule.Name)] = &Repository{
 				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
-				URL:              repo.GetCloneURL(),
+				URL:              u,
 				Refs:             x.refSpecs(rule.Branches, rule.Tags),
 				DisableVendoring: rule.DisableVendoring,
 			}
@@ -127,9 +141,18 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 				if _, ok := repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)]; ok {
 					continue
 				}
+
+				u := v.Repository.URL.String()
+				if rule.urlReplaceRule != nil {
+					replaced := rule.urlReplaceRule.re.ReplaceAllString(u, rule.urlReplaceRule.replace)
+					if u != replaced {
+						u = replaced
+						break
+					}
+				}
 				repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)] = &Repository{
 					Name:             fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
-					URL:              v.Repository.URL.String(),
+					URL:              u,
 					Refs:             x.refSpecs(rule.Branches, rule.Tags),
 					DisableVendoring: rule.DisableVendoring,
 				}
