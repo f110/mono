@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
@@ -33,6 +34,9 @@ type ModuleProxy struct {
 	fetcher *ModuleFetcher
 	ghProxy *GitHubProxy
 	cache   *ModuleCache
+
+	mu              sync.Mutex
+	confLookupCache map[string]*ModuleSetting
 }
 
 func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
@@ -40,18 +44,37 @@ func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, githubApp
 	ghClient := github.NewClient(&http.Client{Transport: &httpTransport{RoundTripper: t}})
 
 	return &ModuleProxy{
-		conf:    conf,
-		fetcher: NewModuleFetcher(moduleDir, cache, githubAppId, githubInstallationId, privateKeyFile),
-		ghProxy: NewGitHubProxy(cache, ghClient),
-		cache:   cache,
+		conf:            conf,
+		fetcher:         NewModuleFetcher(moduleDir, cache, githubAppId, githubInstallationId, privateKeyFile),
+		ghProxy:         NewGitHubProxy(cache, ghClient),
+		cache:           cache,
+		confLookupCache: make(map[string]*ModuleSetting),
 	}
 }
 
-func (m *ModuleProxy) IsProxy(module string) bool {
+func (m *ModuleProxy) GetConfig(module string) *ModuleSetting {
+	m.mu.Lock()
+	if v, ok := m.confLookupCache[module]; ok {
+		m.mu.Unlock()
+		return v
+	}
+	m.mu.Unlock()
+
 	for _, v := range m.conf {
 		if v.match.MatchString(module) {
-			return true
+			m.mu.Lock()
+			m.confLookupCache[module] = v
+			m.mu.Unlock()
+			return v
 		}
+	}
+
+	return nil
+}
+
+func (m *ModuleProxy) IsProxy(module string) bool {
+	if v := m.GetConfig(module); v != nil {
+		return true
 	}
 
 	return false
@@ -67,11 +90,11 @@ type Info struct {
 }
 
 func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, error) {
-	modRoot, err := m.fetcher.Get(ctx, module)
+	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	mod := modRoot.FindModule(module)
+	mod := moduleRoot.FindModule(module)
 	if mod == nil {
 		return nil, xerrors.Errorf("%s is not found", module)
 	}
@@ -84,7 +107,7 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 }
 
 func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info, error) {
-	moduleRoot, err := m.fetcher.Get(ctx, module)
+	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
@@ -110,12 +133,12 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 }
 
 func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info, error) {
-	modRoot, err := m.fetcher.Get(ctx, module)
+	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
 
-	mod := modRoot.FindModule(module)
+	mod := moduleRoot.FindModule(module)
 	if mod == nil {
 		return Info{}, xerrors.Errorf("%s is not found", module)
 	}
@@ -125,7 +148,7 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 }
 
 func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (string, error) {
-	moduleRoot, err := m.fetcher.Get(ctx, module)
+	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
 		return "", xerrors.Errorf(": %w", err)
 	}
@@ -151,7 +174,7 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (str
 }
 
 func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, module, version string) error {
-	moduleRoot, err := m.fetcher.Get(ctx, module)
+	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

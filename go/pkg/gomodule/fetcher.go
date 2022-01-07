@@ -75,15 +75,17 @@ func NewModuleFetcher(baseDir string, cache *ModuleCache, githubAppId, githubIns
 	}
 }
 
-func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot, error) {
+func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *ModuleSetting) (*ModuleRoot, error) {
 	var repoRoot *vcs.RepoRoot
-	if root, u, err := f.cache.GetRepoRoot(importPath); err == nil {
-		logger.Log.Debug("RepoRoot was found in cache",
-			zap.String("importPath", importPath),
-			zap.String("RepoRoot", root),
-			zap.String("url", u),
-		)
-		repoRoot = &vcs.RepoRoot{Root: root, Repo: u}
+	if f.cache != nil {
+		if root, u, err := f.cache.GetRepoRoot(importPath); err == nil {
+			logger.Log.Debug("RepoRoot was found in cache",
+				zap.String("importPath", importPath),
+				zap.String("RepoRoot", root),
+				zap.String("url", u),
+			)
+			repoRoot = &vcs.RepoRoot{Root: root, Repo: u}
+		}
 	}
 	if repoRoot == nil {
 		logger.Log.Debug("Not found RepoRoot in cache", zap.String("importPath", importPath))
@@ -92,19 +94,27 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string) (*ModuleRoot
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		repoRoot = r
-		if err := f.cache.SetRepoRoot(importPath, r.Root, r.Repo); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+		if f.cache != nil {
+			if err := f.cache.SetRepoRoot(importPath, r.Root, r.Repo); err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
 		}
 	}
 
+	u := repoRoot.Repo
+	if setting.replaceRegexp != nil {
+		u = setting.replaceRegexp.Match.ReplaceAllString(u, setting.replaceRegexp.Replace)
+	}
 	vcsRepo, err := NewVCS("git", repoRoot.Repo, f.appId, f.installationId, f.privateKeyFile)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 	var moduleRoot *ModuleRoot
-	if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
-		logger.Log.Debug("Found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
-		moduleRoot = mr
+	if f.cache != nil {
+		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
+			logger.Log.Debug("Found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
+			moduleRoot = mr
+		}
 	}
 	if moduleRoot == nil {
 		logger.Log.Debug("Not found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
@@ -165,6 +175,10 @@ func NewModuleRootFromCache(rootPath string, modules []*Module, cache *ModuleCac
 }
 
 func (m *ModuleRoot) SetCache() error {
+	if m.cache == nil {
+		return nil
+	}
+
 	if err := m.cache.SetModuleRoot(m); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -205,11 +219,13 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 	}
 
 	if isTag {
-		if err := m.cache.Archive(ctx, module, version, w); err == nil {
-			logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
-			return nil
-		} else if err != CacheMiss {
-			return xerrors.Errorf(": %w", err)
+		if m.cache != nil {
+			if err := m.cache.Archive(ctx, module, version, w); err == nil {
+				logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
+				return nil
+			} else if err != CacheMiss {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 
 		if err := m.vcs.Sync(ctx, m.dir); err != nil {
@@ -324,8 +340,10 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 		if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if err := m.cache.SaveArchive(ctx, module, version, data); err != nil {
-			return xerrors.Errorf(": %w", err)
+		if m.cache != nil {
+			if err := m.cache.SaveArchive(ctx, module, version, data); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 		return nil
 	}
@@ -473,9 +491,11 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		}
 	}
 	if isTag {
-		if buf, err := m.cache.GetModFile(m.Path, version); err == nil {
-			logger.Log.Debug("Got the go.mod from cache", zap.String("path", m.Path), zap.String("version", version))
-			return buf, nil
+		if m.cache != nil {
+			if buf, err := m.cache.GetModFile(m.Path, version); err == nil {
+				logger.Log.Debug("Got the go.mod from cache", zap.String("path", m.Path), zap.String("version", version))
+				return buf, nil
+			}
 		}
 
 		if err := m.vcs.Sync(context.Background(), m.dir); err != nil {
@@ -508,8 +528,10 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		if err := r.Close(); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-		if err := m.cache.SetModFile(m.Path, version, buf); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+		if m.cache != nil {
+			if err := m.cache.SetModFile(m.Path, version, buf); err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
 		}
 
 		return buf, nil
