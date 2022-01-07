@@ -11,7 +11,6 @@ go_library(
         "manifest.go",
         "notify.go",
         "objectstorage.go",
-        "regexp.go",
         "repoindexer.go",
         "updater.go",
     ],
@@ -20,6 +19,7 @@ go_library(
     deps = [
         "//go/pkg/k8s/volume",
         "//go/pkg/logger",
+        "//go/pkg/regexp/regexputil",
         "//go/pkg/storage",
         "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/go-git/go-git/v5:go-git",
@@ -49,10 +49,10 @@ go_test(
     srcs = [
         "config_test.go",
         "lister_test.go",
-        "regexp_test.go",
     ],
     embed = [":repoindexer"],
     deps = [
+        "//go/pkg/regexp/regexputil",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
     ],

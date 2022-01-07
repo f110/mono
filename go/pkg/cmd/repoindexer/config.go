@@ -6,6 +6,8 @@ import (
 
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
+
+	"go.f110.dev/mono/go/pkg/regexp/regexputil"
 )
 
 type Config struct {
@@ -52,12 +54,12 @@ func ReadConfig(r io.Reader) (*Config, error) {
 		if v.URLReplace == "" {
 			continue
 		}
-		
-		replaceRule, err := parseRegexp(v.URLReplace)
+
+		regexpLiteral, err := regexputil.ParseRegexpLiteral(v.URLReplace)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-		v.urlReplaceRule = replaceRule
+		v.urlReplaceRule = &replaceRule{re: regexpLiteral.Match, replace: regexpLiteral.Replace}
 	}
 
 	return config, nil

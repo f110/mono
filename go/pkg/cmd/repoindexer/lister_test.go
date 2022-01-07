@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.f110.dev/mono/go/pkg/regexp/regexputil"
 )
 
 func TestReplaceRule(t *testing.T) {
@@ -32,10 +34,10 @@ func TestReplaceRule(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.Regexp, func(t *testing.T) {
-			r, err := parseRegexp(tc.Regexp)
+			r, err := regexputil.ParseRegexpLiteral(tc.Regexp)
 			require.NoError(t, err)
 
-			actual := r.re.ReplaceAllString(tc.In, r.replace)
+			actual := r.Match.ReplaceAllString(tc.In, r.Replace)
 			assert.Equal(t, tc.Expected, actual)
 		})
 	}

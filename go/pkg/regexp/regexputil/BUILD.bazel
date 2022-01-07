@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "regexputil",
+    srcs = ["literal.go"],
+    importpath = "go.f110.dev/mono/go/pkg/regexp/regexputil",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/golang.org/x/xerrors"],
+)
+
+go_test(
+    name = "regexputil_test",
+    srcs = ["literal_test.go"],
+    embed = [":regexputil"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

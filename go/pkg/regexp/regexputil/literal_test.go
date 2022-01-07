@@ -1,4 +1,4 @@
-package repoindexer
+package regexputil
 
 import (
 	"regexp"
@@ -8,32 +8,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseRegexp(t *testing.T) {
+func TestParseRegexpLiteral(t *testing.T) {
 	cases := []struct {
 		In  string
-		Out *replaceRule
+		Out *RegexpLiteral
 	}{
 		{
 			In:  `s/github\.com/gitlab.com/`,
-			Out: &replaceRule{re: regexp.MustCompile(`github\.com`), replace: "gitlab.com"},
+			Out: &RegexpLiteral{Match: regexp.MustCompile(`github\.com`), Replace: "gitlab.com"},
 		},
 		{
 			In:  `s/ssh:\/\/github.com/https:\/\/proxy.example.com/`,
-			Out: &replaceRule{re: regexp.MustCompile(`ssh:\/\/github.com`), replace: "https://proxy.example.com"},
+			Out: &RegexpLiteral{Match: regexp.MustCompile(`ssh:\/\/github.com`), Replace: "https://proxy.example.com"},
 		},
 		{In: `s/github/gitlab//`},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.In, func(t *testing.T) {
-			actual, err := parseRegexp(tc.In)
+			actual, err := ParseRegexpLiteral(tc.In)
 			if tc.Out == nil {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 
-				assert.Equal(t, tc.Out.re.String(), actual.re.String())
-				assert.Equal(t, tc.Out.replace, actual.replace)
+				assert.Equal(t, tc.Out.Match.String(), actual.Match.String())
+				assert.Equal(t, tc.Out.Replace, actual.Replace)
 			}
 		})
 	}
