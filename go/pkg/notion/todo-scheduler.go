@@ -277,7 +277,7 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 
 func (s *ToDoScheduler) Start() error {
 	s.cron = cron.New()
-	_, err := s.cron.AddFunc("* * * * *", func() {
+	_, err := s.cron.AddFunc("0 * * * *", func() {
 		logger.Log.Debug("Schedule check")
 		if err := s.run(false); err != nil {
 			logger.Log.Warn("Failed to run", zap.Error(err))
