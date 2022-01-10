@@ -89,6 +89,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			}
 			e.ID = page.ID
 			schedules = append(schedules, e)
+			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)))
 			pageMap[page.ID] = page
 		}
 
@@ -107,6 +108,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			lastPage := s.findLastPage(pages, config.ScheduleColumn, spec)
 			var shouldCreateNewPage bool
 			if lastPage != nil {
+				logger.Log.Debug("Found last page", zap.String("id", lastPage.ID))
 				var interval time.Duration
 				switch spec.Interval {
 				case intervalDaily:
@@ -123,33 +125,34 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			} else {
 				shouldCreateNewPage = true
 			}
+			if !shouldCreateNewPage {
+				continue
+			}
 
-			if shouldCreateNewPage {
-				newPage := pageMap[spec.ID].New()
-				newPage.Properties[config.ScheduleColumn] = &notion.PropertyData{
-					Type: "rich_text",
-					RichText: []*notion.RichTextObject{
-						{
-							Type: "text",
-							Text: &notion.Text{Content: "Made by "},
-						},
-						{
-							Type: "mention",
-							Mention: &notion.Mention{
-								Type: "page",
-								Page: &notion.Meta{ID: spec.ID},
-							},
+			newPage := pageMap[spec.ID].New()
+			newPage.Properties[config.ScheduleColumn] = &notion.PropertyData{
+				Type: "rich_text",
+				RichText: []*notion.RichTextObject{
+					{
+						Type: "text",
+						Text: &notion.Text{Content: "Made by "},
+					},
+					{
+						Type: "mention",
+						Mention: &notion.Mention{
+							Type: "page",
+							Page: &notion.Meta{ID: spec.ID},
 						},
 					},
-				}
-				if dryRun {
-					logger.Log.Info("Create page")
-				} else {
-					_, err = s.client.CreatePage(context.TODO(), newPage)
-					if err != nil {
-						logger.Log.Warn("Failed to create new page", zap.Error(err))
-						return err
-					}
+				},
+			}
+			if dryRun {
+				logger.Log.Info("Create page")
+			} else {
+				_, err = s.client.CreatePage(context.TODO(), newPage)
+				if err != nil {
+					logger.Log.Warn("Failed to create new page", zap.Error(err))
+					return err
 				}
 			}
 		}
@@ -274,7 +277,8 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 
 func (s *ToDoScheduler) Start() error {
 	s.cron = cron.New()
-	_, err := s.cron.AddFunc("0 * * * *", func() {
+	_, err := s.cron.AddFunc("* * * * *", func() {
+		logger.Log.Debug("Schedule check")
 		if err := s.run(false); err != nil {
 			logger.Log.Warn("Failed to run", zap.Error(err))
 		}
@@ -282,5 +286,7 @@ func (s *ToDoScheduler) Start() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	s.cron.Start()
+
 	return nil
 }
