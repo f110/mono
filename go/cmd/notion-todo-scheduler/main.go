@@ -16,14 +16,17 @@ import (
 )
 
 type toDoSchedulerCommand struct {
-	conf    string
-	token   string
-	dryRun  bool
-	oneshot bool
+	conf     string
+	token    string
+	schedule string
+	dryRun   bool
+	oneshot  bool
 }
 
 func newToDoSchedulerCommand() *toDoSchedulerCommand {
-	return &toDoSchedulerCommand{}
+	return &toDoSchedulerCommand{
+		schedule: "0 * * * *",
+	}
 }
 
 func (s *toDoSchedulerCommand) Flags(fs *pflag.FlagSet) {
@@ -31,6 +34,7 @@ func (s *toDoSchedulerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.token, "token", s.token, "API token for notion")
 	fs.BoolVar(&s.dryRun, "dry-run", s.dryRun, "Dry run")
 	fs.BoolVar(&s.oneshot, "oneshot", s.oneshot, "Execute only once")
+	fs.StringVar(&s.schedule, "schedule", s.schedule, "Check schedule")
 }
 
 func (s *toDoSchedulerCommand) Execute() error {
@@ -59,7 +63,7 @@ func (s *toDoSchedulerCommand) Execute() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
 	defer cancel()
 
-	if err := scheduler.Start(); err != nil {
+	if err := scheduler.Start(s.schedule); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	<-ctx.Done()
