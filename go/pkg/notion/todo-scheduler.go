@@ -114,11 +114,12 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				case intervalDaily:
 					interval = 24*time.Hour - maxProcessingTime
 				case intervalWeekly:
-					interval = 7 * 24 * time.Hour
+					interval = 24 * time.Hour
 				case intervalMonthly:
 					interval = 7 * 24 * time.Hour
 				}
 
+				logger.Log.Debug("Last page created at", zap.Time("created", lastPage.CreatedTime.Time), zap.Duration("interval", interval))
 				if time.Now().After(lastPage.CreatedTime.Add(interval)) {
 					shouldCreateNewPage = true
 				}
@@ -277,7 +278,7 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 
 func (s *ToDoScheduler) Start() error {
 	s.cron = cron.New()
-	_, err := s.cron.AddFunc("0 * * * *", func() {
+	_, err := s.cron.AddFunc("15 * * * *", func() {
 		logger.Log.Debug("Schedule check")
 		if err := s.run(false); err != nil {
 			logger.Log.Warn("Failed to run", zap.Error(err))
@@ -286,6 +287,7 @@ func (s *ToDoScheduler) Start() error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	logger.Log.Info("Start cron")
 	s.cron.Start()
 
 	return nil
