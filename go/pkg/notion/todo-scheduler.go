@@ -88,8 +88,9 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				continue
 			}
 			e.ID = page.ID
+			e.Title = page.Properties["Name"].Title[0].PlainText
 			schedules = append(schedules, e)
-			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)))
+			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)), zap.String("id", e.ID))
 			pageMap[page.ID] = page
 		}
 
@@ -101,6 +102,11 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				}
 			case intervalMonthly:
 				if time.Now().Day() != spec.Day {
+					logger.Log.Debug("Skip because the day is mismatch",
+						zap.Int("now", time.Now().Day()),
+						zap.Int("spec", spec.Day),
+						zap.String("id", spec.ID),
+					)
 					continue
 				}
 			}
@@ -108,7 +114,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			lastPage := s.findLastPage(pages, config.ScheduleColumn, spec)
 			var shouldCreateNewPage bool
 			if lastPage != nil {
-				logger.Log.Debug("Found last page", zap.String("id", lastPage.ID))
+				logger.Log.Debug("Found last page", zap.String("id", lastPage.ID), zap.String("spec_id", spec.ID))
 				var interval time.Duration
 				switch spec.Interval {
 				case intervalDaily:
@@ -168,6 +174,9 @@ func (s *ToDoScheduler) findLastPage(pages []*notion.Page, col string, schedule 
 		if !strings.HasPrefix(page.Properties[col].RichText[0].PlainText, "Made by") {
 			continue
 		}
+		if page.Properties[col].RichText[1].PlainText != schedule.Title {
+			continue
+		}
 		if lastPage == nil {
 			lastPage = page
 		}
@@ -190,6 +199,7 @@ const (
 
 type scheduleEvent struct {
 	ID       string
+	Title    string
 	Interval scheduleInterval
 	Minute   int
 	Hour     int
