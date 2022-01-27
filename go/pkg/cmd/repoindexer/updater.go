@@ -15,12 +15,19 @@ type UpdaterCommand struct {
 	IndexDir  string
 	Subscribe bool
 
+	Bucket               string
+	MinIOEndpoint        string
+	MinIORegion          string
 	MinIOName            string
 	MinIONamespace       string
 	MinIOPort            int
-	MinIOBucket          string
 	MinIOAccessKey       string
 	MinIOSecretAccessKey string
+	S3Endpoint           string
+	S3Region             string
+	S3AccessKey          string
+	S3SecretAccessKey    string
+	S3CACertFile         string
 
 	NATSURL        string
 	NATSStreamName string
@@ -44,12 +51,19 @@ func NewUpdaterCommand() *UpdaterCommand {
 func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&u.IndexDir, "index-dir", u.IndexDir, "Index directory")
 	fs.BoolVar(&u.Subscribe, "subscribe", u.Subscribe, "Enable subscribe the stream")
+	fs.StringVar(&u.MinIOEndpoint, "minio-endpoint", u.MinIOEndpoint, "The endpoint of MinIO")
+	fs.StringVar(&u.MinIORegion, "minio-region", u.MinIORegion, "The region name")
 	fs.StringVar(&u.MinIOName, "minio-name", u.MinIOName, "The name of MinIO")
 	fs.StringVar(&u.MinIONamespace, "minio-namespace", u.MinIONamespace, "The namespace of MinIO")
 	fs.IntVar(&u.MinIOPort, "minio-port", u.MinIOPort, "Port number of MinIO")
-	fs.StringVar(&u.MinIOBucket, "minio-bucket", u.MinIOBucket, "The bucket name that will be used")
 	fs.StringVar(&u.MinIOAccessKey, "minio-access-key", u.MinIOAccessKey, "The access key")
 	fs.StringVar(&u.MinIOSecretAccessKey, "minio-secret-access-key", u.MinIOSecretAccessKey, "The secret access key")
+	fs.StringVar(&u.S3Endpoint, "s3-endpoint", u.S3Endpoint, "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param")
+	fs.StringVar(&u.S3Region, "s3-region", u.S3Region, "The region name")
+	fs.StringVar(&u.S3AccessKey, "s3-access-key", u.S3AccessKey, "The access key for S3 API")
+	fs.StringVar(&u.S3SecretAccessKey, "s3-secret-access-key", u.S3SecretAccessKey, "The secret access key for S3 API")
+	fs.StringVar(&u.S3CACertFile, "s3-ca-file", u.S3CACertFile, "File path that contains the certificate of CA")
+	fs.StringVar(&u.Bucket, "bucket", u.Bucket, "The bucket name")
 	fs.StringVar(&u.NATSURL, "nats-url", u.NATSURL, "The URL for nats-server")
 	fs.StringVar(&u.NATSStreamName, "nats-stream-name", u.NATSStreamName, "The name of stream for JetStream")
 	fs.StringVar(&u.NATSSubject, "nats-subject", u.NATSSubject, "The subject of stream")
@@ -57,14 +71,12 @@ func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 }
 
 func (u *UpdaterCommand) Run() error {
-	k8sClient, k8sConf, err := newK8sClient(u.Dev)
+	s, err := u.newStorageClient()
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	minioOpt := storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, u.MinIOSecretAccessKey, u.Dev)
-	s := storage.NewMinIOStorage(u.MinIOBucket, minioOpt)
 	u.manifestManager = NewManifestManager(s)
-	u.indexManager = NewObjectStorageIndexManager(s, u.MinIOBucket)
+	u.indexManager = NewObjectStorageIndexManager(s, u.Bucket)
 
 	if u.Subscribe {
 		if err := u.subscribe(context.Background()); err != nil {
@@ -81,7 +93,11 @@ func (u *UpdaterCommand) Run() error {
 
 func (u *UpdaterCommand) downloadLatest() error {
 	logger.Log.Debug("Download latest the manifest")
-	manifest, err := u.manifestManager.GetLatest(context.Background())
+	prefix := ""
+	if u.canUseMinIO() {
+		prefix = "/"
+	}
+	manifest, err := u.manifestManager.GetLatest(context.Background(), prefix)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -123,4 +139,41 @@ Loop:
 		}
 	}
 	return nil
+}
+
+func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
+	if u.canUseMinIO() {
+		var opt storage.MinIOOptions
+		if u.MinIOName != "" && u.MinIONamespace != "" {
+			k8sClient, k8sConf, err := newK8sClient(u.Dev)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, u.MinIOSecretAccessKey, u.Dev)
+		} else if u.MinIOEndpoint != "" {
+			opt = storage.NewMinIOOptionsViaEndpoint(u.MinIOEndpoint, u.MinIORegion, u.MinIOAccessKey, u.MinIOSecretAccessKey)
+		}
+		return storage.NewMinIOStorage(u.Bucket, opt), nil
+	}
+	if u.canUseS3() {
+		var opt storage.S3Options
+		if u.S3Endpoint != "" {
+			opt = storage.NewS3OptionToExternal(u.S3Endpoint, u.S3Region, u.S3AccessKey, u.S3SecretAccessKey)
+		} else {
+			opt = storage.NewS3OptionToAWS(u.S3Region, u.S3AccessKey, u.S3SecretAccessKey)
+		}
+		opt.PathStyle = true
+		opt.CACertFile = u.S3CACertFile
+		return storage.NewS3(u.Bucket, opt), nil
+	}
+
+	return nil, nil
+}
+
+func (u *UpdaterCommand) canUseMinIO() bool {
+	return (u.MinIOName != "" && u.MinIONamespace != "") || u.MinIOEndpoint != ""
+}
+
+func (u *UpdaterCommand) canUseS3() bool {
+	return u.S3Endpoint != "" && u.S3AccessKey != "" && u.S3SecretAccessKey != "" && u.S3Region != ""
 }

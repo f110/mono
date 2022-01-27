@@ -17,9 +17,10 @@ import (
 )
 
 type ObjectStorageIndexManager struct {
-	executionKey int64
-	bucket       string
-	backend      StorageClient
+	executionKey     int64
+	bucket           string
+	backend          StorageClient
+	stripPrefixSlash bool
 
 	uploadedFiles []string
 }
@@ -34,7 +35,14 @@ type StorageClient interface {
 }
 
 func NewObjectStorageIndexManager(s StorageClient, bucket string) *ObjectStorageIndexManager {
-	return &ObjectStorageIndexManager{bucket: bucket, backend: s, executionKey: time.Now().Unix()}
+	stripPrefixSlash := false
+	switch s.(type) {
+	case *storage.MinIO:
+		stripPrefixSlash = true
+	default:
+		stripPrefixSlash = true
+	}
+	return &ObjectStorageIndexManager{bucket: bucket, backend: s, executionKey: time.Now().Unix(), stripPrefixSlash: stripPrefixSlash}
 }
 
 func (s *ObjectStorageIndexManager) ExecutionKey() uint64 {
@@ -76,7 +84,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 	}
 
 	for _, v := range manifest.Indexes {
-		files, err := s.listFiles(ctx, v)
+		files, err := s.listFiles(ctx, v, s.stripPrefixSlash)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -137,7 +145,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Manifest) error {
 	for _, manifest := range manifests {
 		for _, index := range manifest.Indexes {
-			files, err := s.listFiles(ctx, index)
+			files, err := s.listFiles(ctx, index, s.stripPrefixSlash)
 			if err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
@@ -163,12 +171,16 @@ func (s *ObjectStorageIndexManager) CleanUploadedFiles(ctx context.Context) erro
 	return nil
 }
 
-func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string) ([]*storage.Object, error) {
+func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string, stripPrefixSlash bool) ([]*storage.Object, error) {
 	u, err := url.Parse(indexDirURL)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-	files, err := s.backend.List(ctx, u.Path)
+	path := u.Path
+	if stripPrefixSlash && u.Path[0] == '/' {
+		path = u.Path[1:]
+	}
+	files, err := s.backend.List(ctx, path)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

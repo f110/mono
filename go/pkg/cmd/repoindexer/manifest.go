@@ -57,15 +57,16 @@ func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	return nil
 }
 
-func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
+func (m *ManifestManager) GetLatest(ctx context.Context, prefix string) (Manifest, error) {
 	manifest := Manifest{}
-	manifests, err := m.backend.List(ctx, "/")
+	manifests, err := m.backend.List(ctx, prefix)
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
 
 	latest := int64(0)
 	for _, v := range manifests {
+		logger.Log.Debug("name", zap.String("name", v.Name))
 		if !strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
