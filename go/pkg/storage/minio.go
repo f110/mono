@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -24,6 +26,7 @@ type MinIOOptions struct {
 	Name            string
 	Namespace       string
 	Endpoint        string
+	Region          string
 	Port            int
 	AccessKey       string
 	SecretAccessKey string
@@ -57,10 +60,22 @@ func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
 		m.client = c
 		m.portForwarder = forwarder
 	} else if m.Endpoint != "" {
+		secure := false
+		if strings.HasPrefix(m.Endpoint, "http") {
+			u, err := url.Parse(m.Endpoint)
+			if err != nil {
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			if u.Scheme == "https" {
+				secure = true
+			}
+			m.Endpoint = u.Host
+		}
 		creds := credentials.NewStaticV4(m.AccessKey, m.SecretAccessKey, "")
 		c, err := minio.New(m.Endpoint, &minio.Options{
 			Creds:     creds,
-			Secure:    false,
+			Secure:    secure,
+			Region:    m.Region,
 			Transport: m.Transport,
 		})
 		if err != nil {
@@ -144,9 +159,10 @@ func NewMinIOOptionsViaService(
 	}
 }
 
-func NewMinIOOptionsViaEndpoint(endpoint, accessKey, secretAccessKey string) MinIOOptions {
+func NewMinIOOptionsViaEndpoint(endpoint, region, accessKey, secretAccessKey string) MinIOOptions {
 	return MinIOOptions{
 		Endpoint:        endpoint,
+		Region:          region,
 		AccessKey:       accessKey,
 		SecretAccessKey: secretAccessKey,
 	}

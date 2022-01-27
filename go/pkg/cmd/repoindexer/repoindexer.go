@@ -37,6 +37,7 @@ type IndexerCommand struct {
 
 	Bucket                      string
 	MinIOEndpoint               string
+	MinIORegion                 string
 	MinIOName                   string
 	MinIONamespace              string
 	MinIOPort                   int
@@ -46,6 +47,8 @@ type IndexerCommand struct {
 	S3Region                    string
 	S3AccessKey                 string
 	S3SecretAccessKey           string
+	S3CACertFile                string
+	S3PartSize                  uint64
 	DisableObjectStorageCleanup bool
 
 	NATSURL        string
@@ -78,6 +81,7 @@ func NewIndexerCommand() *IndexerCommand {
 		Parallelism:    1,
 		NATSStreamName: "repoindexer",
 		NATSSubject:    "notify",
+		S3PartSize:     1 * 1024 * 1024 * 1024, // 1GiB
 	}
 }
 
@@ -95,6 +99,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
 	fs.StringVar(&r.PrivateKeyFile, "private-key-file", r.PrivateKeyFile, "Private key file for GitHub App")
 	fs.StringVar(&r.MinIOEndpoint, "minio-endpoint", r.MinIOEndpoint, "The endpoint of MinIO")
+	fs.StringVar(&r.MinIORegion, "minio-region", r.MinIORegion, "The region name")
 	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
 	fs.StringVar(&r.MinIONamespace, "minio-namespace", r.MinIONamespace, "The namespace of MinIO")
 	fs.IntVar(&r.MinIOPort, "minio-port", r.MinIOPort, "Port number of MinIO")
@@ -105,6 +110,8 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.S3Region, "s3-region", r.S3Region, "The region name")
 	fs.StringVar(&r.S3AccessKey, "s3-access-key", r.S3AccessKey, "The access key for S3 API")
 	fs.StringVar(&r.S3SecretAccessKey, "s3-secret-access-key", r.S3SecretAccessKey, "The secret access key for S3 API")
+	fs.StringVar(&r.S3CACertFile, "s3-ca-file", r.S3CACertFile, "File path that contains the certificate of CA")
+	fs.Uint64Var(&r.S3PartSize, "s3-part-size", r.S3PartSize, "Part size")
 	fs.StringVar(&r.Bucket, "bucket", r.Bucket, "The bucket name")
 	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
 	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
@@ -356,7 +363,7 @@ func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
 			}
 			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
 		} else if r.MinIOEndpoint != "" {
-			opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIOAccessKey, r.MinIOSecretAccessKey)
+			opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIORegion, r.MinIOAccessKey, r.MinIOSecretAccessKey)
 		}
 		return storage.NewMinIOStorage(r.Bucket, opt), nil
 	}
@@ -368,6 +375,8 @@ func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
 			opt = storage.NewS3OptionToAWS(r.S3Region, r.S3AccessKey, r.S3SecretAccessKey)
 		}
 		opt.PathStyle = true
+		opt.CACertFile = r.S3CACertFile
+		opt.PartSize = r.S3PartSize
 		return storage.NewS3(r.Bucket, opt), nil
 	}
 

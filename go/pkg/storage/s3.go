@@ -3,7 +3,11 @@ package storage
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"io"
+	"net/http"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -16,10 +20,10 @@ type S3Options struct {
 	Region          string
 	AccessKey       string
 	SecretAccessKey string
-
-	Endpoint string
-
-	PathStyle bool
+	Endpoint        string
+	PathStyle       bool
+	CACertFile      string
+	PartSize        uint64
 
 	client *s3.Client
 }
@@ -46,13 +50,30 @@ func (s *S3Options) Client() (*s3.Client, error) {
 		return s.client, nil
 	}
 
+	cp, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	if s.CACertFile != "" {
+		b, err := os.ReadFile(s.CACertFile)
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		cp.AppendCertsFromPEM(b)
+	}
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{RootCAs: cp}
+	client := &http.Client{Transport: tr}
+
 	credsProvider := credentials.NewStaticCredentialsProvider(s.AccessKey, s.SecretAccessKey, "")
 	cfg := aws.Config{
 		Region:      s.Region,
+		HTTPClient:  client,
 		Credentials: credsProvider,
 		EndpointResolver: aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
 			return aws.Endpoint{
-				URL: s.Endpoint,
+				URL:           s.Endpoint,
+				SigningRegion: region,
 			}, nil
 		}),
 	}
@@ -73,7 +94,11 @@ func (s *S3Options) Uploader() (*manager.Uploader, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	return manager.NewUploader(c), nil
+	u := manager.NewUploader(c)
+	if s.PartSize > 0 {
+		u.PartSize = int64(s.PartSize)
+	}
+	return u, nil
 }
 
 type S3 struct {
