@@ -447,8 +447,9 @@ func (r *IndexerCommand) uploadIndex(
 	}
 	manager := NewObjectStorageIndexManager(s, bucket)
 	uploadedPath := make(map[string]string, 0)
+	totalSize := uint64(0)
 	for _, v := range indexer.Indexes {
-		uploadDir, err := manager.Add(ctx, v.Name, v.Files)
+		uploadDir, size, err := manager.Add(ctx, v.Name, v.Files)
 		if err != nil {
 			if err := manager.CleanUploadedFiles(ctx); err != nil {
 				logger.Log.Warn("Failed cleanup uploaded files", zap.Error(err))
@@ -456,9 +457,10 @@ func (r *IndexerCommand) uploadIndex(
 			return nil, xerrors.Errorf(": %w", err)
 		}
 		uploadedPath[v.Name] = uploadDir
+		totalSize += size
 	}
 
-	manifest := NewManifest(manager.ExecutionKey(), uploadedPath)
+	manifest := NewManifest(manager.ExecutionKey(), uploadedPath, totalSize)
 	mm := NewManifestManager(s)
 	if err := mm.Update(ctx, manifest); err != nil {
 		if err := manager.CleanUploadedFiles(ctx); err != nil {

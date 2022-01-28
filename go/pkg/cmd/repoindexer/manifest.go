@@ -20,18 +20,20 @@ type Manifest struct {
 	CreatedAt time.Time
 	// Indexes has Repository.Name and the index path prefix.
 	// The key is Repository.Name. The value is the index path prefix.
-	Indexes      map[string]string
-	ExecutionKey uint64
+	Indexes        map[string]string
+	ExecutionKey   uint64
+	TotalIndexSize uint64
 
 	filename string
 }
 
-func NewManifest(executionKey uint64, indexes map[string]string) Manifest {
+func NewManifest(executionKey uint64, indexes map[string]string, totalSize uint64) Manifest {
 	return Manifest{
-		CreatedAt:    time.Now(),
-		Indexes:      indexes,
-		ExecutionKey: executionKey,
-		filename:     fmt.Sprintf("manifest_%d.json", executionKey),
+		CreatedAt:      time.Now(),
+		Indexes:        indexes,
+		ExecutionKey:   executionKey,
+		TotalIndexSize: totalSize,
+		filename:       fmt.Sprintf("manifest_%d.json", executionKey),
 	}
 }
 

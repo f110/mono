@@ -49,26 +49,29 @@ func (s *ObjectStorageIndexManager) ExecutionKey() uint64 {
 	return uint64(s.executionKey)
 }
 
-func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files []string) (string, error) {
+func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files []string) (string, uint64, error) {
+	totalSize := uint64(0)
 	for _, v := range files {
 		f, err := os.Open(v)
 		if err != nil {
-			return "", xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.Errorf(": %w", err)
 		}
 		info, err := f.Stat()
 		if err != nil {
-			return "", xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.Errorf(": %w", err)
 		}
 		objectPath := filepath.Join(name, fmt.Sprintf("%d", s.executionKey), filepath.Base(v))
 		err = s.backend.PutReader(ctx, objectPath, f)
 		if err != nil {
-			return "", xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.Errorf(": %w", err)
 		}
 		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket), zap.Int64("size", info.Size()))
 		s.uploadedFiles = append(s.uploadedFiles, objectPath)
+		totalSize += uint64(info.Size())
 	}
 
-	return fmt.Sprintf("%s://%s/%s", s.backend.Name(), s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey))), nil
+	uploadedURL := fmt.Sprintf("%s://%s/%s", s.backend.Name(), s.bucket, filepath.Join(name, fmt.Sprintf("%d", s.executionKey)))
+	return uploadedURL, totalSize, nil
 }
 
 func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir string, manifest Manifest) error {
