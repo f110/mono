@@ -55,16 +55,17 @@ func NewIndexer(
 	workDir, token, ctags string,
 	appId, installationId int64,
 	privateKeyFile string,
+	apiEndpoint, graphQLEndpoint string,
 	initRun bool,
 	parallelism int,
 ) (*Indexer, error) {
 	var listerOpts []RepositoryListerOpt
 	if appId > 0 && installationId > 0 && privateKeyFile != "" {
-		listerOpts = []RepositoryListerOpt{GitHubApp(appId, installationId, privateKeyFile)}
+		listerOpts = []RepositoryListerOpt{GitHubApp(appId, installationId, privateKeyFile, apiEndpoint, graphQLEndpoint)}
 	} else if token != "" {
-		listerOpts = []RepositoryListerOpt{GitHubToken(token)}
+		listerOpts = []RepositoryListerOpt{GitHubToken(token, apiEndpoint, graphQLEndpoint)}
 	} else {
-		listerOpts = []RepositoryListerOpt{WithoutCredential()}
+		listerOpts = []RepositoryListerOpt{WithoutCredential(apiEndpoint, graphQLEndpoint)}
 	}
 	lister, err := NewRepositoryLister(rules.Rules, listerOpts...)
 	if err != nil {

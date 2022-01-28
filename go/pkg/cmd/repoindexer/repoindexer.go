@@ -20,20 +20,22 @@ import (
 )
 
 type IndexerCommand struct {
-	ConfigFile       string
-	WorkDir          string
-	Token            string
-	Ctags            string
-	RunScheduler     bool
-	InitRun          bool
-	WithoutFetch     bool
-	DisableCleanup   bool
-	Parallelism      int
-	AppId            int64
-	InstallationId   int64
-	PrivateKeyFile   string
-	HTTPAddr         string
-	URLReplaceRegexp []string
+	ConfigFile            string
+	WorkDir               string
+	Token                 string
+	Ctags                 string
+	RunScheduler          bool
+	InitRun               bool
+	WithoutFetch          bool
+	DisableCleanup        bool
+	Parallelism           int
+	AppId                 int64
+	InstallationId        int64
+	PrivateKeyFile        string
+	GitHubAPIEndpoint     string
+	GitHubGraphQLEndpoint string
+	HTTPAddr              string
+	URLReplaceRegexp      []string
 
 	Bucket                      string
 	MinIOEndpoint               string
@@ -98,6 +100,8 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.Int64Var(&r.AppId, "app-id", r.AppId, "GitHub Application ID")
 	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
 	fs.StringVar(&r.PrivateKeyFile, "private-key-file", r.PrivateKeyFile, "Private key file for GitHub App")
+	fs.StringVar(&r.GitHubAPIEndpoint, "github-api-endpoint", r.GitHubAPIEndpoint, "REST API endpoint of github if you want to use non-default endpoint")
+	fs.StringVar(&r.GitHubGraphQLEndpoint, "github-graphql-endpoint", r.GitHubGraphQLEndpoint, "GraphQL endpoint of github if you want to use non-default endpoint")
 	fs.StringVar(&r.MinIOEndpoint, "minio-endpoint", r.MinIOEndpoint, "The endpoint of MinIO")
 	fs.StringVar(&r.MinIORegion, "minio-region", r.MinIORegion, "The region name")
 	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
@@ -161,6 +165,8 @@ func (r *IndexerCommand) Run() error {
 		r.AppId,
 		r.InstallationId,
 		r.PrivateKeyFile,
+		r.GitHubAPIEndpoint,
+		r.GitHubGraphQLEndpoint,
 		r.InitRun,
 		r.Parallelism,
 	)
@@ -398,6 +404,8 @@ func (r *IndexerCommand) reloadConfig() {
 		r.AppId,
 		r.InstallationId,
 		r.PrivateKeyFile,
+		r.GitHubAPIEndpoint,
+		r.GitHubGraphQLEndpoint,
 		r.InitRun,
 		r.Parallelism,
 	)
