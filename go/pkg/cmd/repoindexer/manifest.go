@@ -68,7 +68,6 @@ func (m *ManifestManager) GetLatest(ctx context.Context, prefix string) (Manifes
 
 	latest := int64(0)
 	for _, v := range manifests {
-		logger.Log.Debug("name", zap.String("name", v.Name))
 		if !strings.HasPrefix(v.Name, "manifest_") {
 			continue
 		}
