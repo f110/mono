@@ -93,14 +93,8 @@ func WithoutCredential(customRESTEndpoint, customGraphQLEndpoint string) Reposit
 	}
 }
 
-func NewRepositoryLister(rules []*Rule, opts ...RepositoryListerOpt) (*RepositoryLister, error) {
-	lister := &RepositoryLister{rules: rules}
-	for _, v := range opts {
-		if err := v(lister); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
-		}
-	}
-	return lister, nil
+func NewRepositoryLister(rules []*Rule, restClient *github.Client, graphqlClient *githubv4.Client) *RepositoryLister {
+	return &RepositoryLister{rules: rules, githubClient: restClient, githubGraphQLClient: graphqlClient}
 }
 
 func (x *RepositoryLister) List(ctx context.Context) []*Repository {

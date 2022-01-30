@@ -14,28 +14,23 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/k8s/volume"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type IndexerCommand struct {
-	ConfigFile            string
-	WorkDir               string
-	Token                 string
-	Ctags                 string
-	RunScheduler          bool
-	InitRun               bool
-	WithoutFetch          bool
-	DisableCleanup        bool
-	Parallelism           int
-	AppId                 int64
-	InstallationId        int64
-	PrivateKeyFile        string
-	GitHubAPIEndpoint     string
-	GitHubGraphQLEndpoint string
-	HTTPAddr              string
-	URLReplaceRegexp      []string
+	ConfigFile       string
+	WorkDir          string
+	Ctags            string
+	RunScheduler     bool
+	InitRun          bool
+	WithoutFetch     bool
+	DisableCleanup   bool
+	Parallelism      int
+	HTTPAddr         string
+	URLReplaceRegexp []string
 
 	Bucket                      string
 	MinIOEndpoint               string
@@ -59,11 +54,12 @@ type IndexerCommand struct {
 
 	Dev bool
 
-	config  *Config
-	indexer *Indexer
-	cron    *cron.Cron
-	entryId cron.EntryID
-	cancel  context.CancelFunc
+	githubClientFactory *githubutil.GitHubClientFactory
+	config              *Config
+	indexer             *Indexer
+	cron                *cron.Cron
+	entryId             cron.EntryID
+	cancel              context.CancelFunc
 
 	mu sync.Mutex
 
@@ -78,30 +74,25 @@ func NewIndexerCommand() *IndexerCommand {
 	}
 
 	return &IndexerCommand{
-		WorkDir:        d,
-		MinIOPort:      9000,
-		Parallelism:    1,
-		NATSStreamName: "repoindexer",
-		NATSSubject:    "notify",
-		S3PartSize:     1 * 1024 * 1024 * 1024, // 1GiB
+		WorkDir:             d,
+		MinIOPort:           9000,
+		Parallelism:         1,
+		NATSStreamName:      "repoindexer",
+		NATSSubject:         "notify",
+		S3PartSize:          1 * 1024 * 1024 * 1024, // 1GiB
+		githubClientFactory: githubutil.NewGitHubClientFactory("repo-indexer", false),
 	}
 }
 
 func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVarP(&r.ConfigFile, "config", "c", r.ConfigFile, "Config file")
 	fs.StringVar(&r.WorkDir, "work-dir", r.WorkDir, "Working root directory")
-	fs.StringVar(&r.Token, "token", r.Token, "GitHub API token")
 	fs.StringVar(&r.Ctags, "ctags", r.Ctags, "ctags path")
 	fs.BoolVar(&r.RunScheduler, "run-scheduler", r.RunScheduler, "")
 	fs.BoolVar(&r.InitRun, "init-run", r.InitRun, "")
 	fs.BoolVar(&r.WithoutFetch, "without-fetch", r.WithoutFetch, "Disable fetch")
 	fs.BoolVar(&r.DisableCleanup, "disable-cleanup", r.DisableCleanup, "Disable cleanup in the working directory not the object storage")
 	fs.IntVar(&r.Parallelism, "parallelism", r.Parallelism, "The number of workers")
-	fs.Int64Var(&r.AppId, "app-id", r.AppId, "GitHub Application ID")
-	fs.Int64Var(&r.InstallationId, "installation-id", r.InstallationId, "GitHub Application installation ID")
-	fs.StringVar(&r.PrivateKeyFile, "private-key-file", r.PrivateKeyFile, "Private key file for GitHub App")
-	fs.StringVar(&r.GitHubAPIEndpoint, "github-api-endpoint", r.GitHubAPIEndpoint, "REST API endpoint of github if you want to use non-default endpoint")
-	fs.StringVar(&r.GitHubGraphQLEndpoint, "github-graphql-endpoint", r.GitHubGraphQLEndpoint, "GraphQL endpoint of github if you want to use non-default endpoint")
 	fs.StringVar(&r.MinIOEndpoint, "minio-endpoint", r.MinIOEndpoint, "The endpoint of MinIO")
 	fs.StringVar(&r.MinIORegion, "minio-region", r.MinIORegion, "The region name")
 	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
@@ -123,18 +114,13 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup in the object storage after uploaded the index")
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
 	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
+
+	r.githubClientFactory.Flags(fs)
 }
 
 func (r *IndexerCommand) ValidateFlags() error {
 	if r.ConfigFile == "" {
 		return errors.New("--config is required")
-	}
-
-	if r.AppId > 0 || r.InstallationId > 0 || r.PrivateKeyFile != "" {
-		// Run as GitHub App
-		if r.Token != "" {
-			return errors.New("GitHub token and App both configuration specified")
-		}
 	}
 
 	if r.MinIOEndpoint != "" {
@@ -146,33 +132,34 @@ func (r *IndexerCommand) ValidateFlags() error {
 	return nil
 }
 
-func (r *IndexerCommand) Run() error {
+func (r *IndexerCommand) Init() error {
 	if err := r.ValidateFlags(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	if err := r.githubClientFactory.Init(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (r *IndexerCommand) Run() error {
 	config, err := ReadConfigFile(r.ConfigFile)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	r.config = config
 
-	indexer, err := NewIndexer(
+	indexer := NewIndexer(
 		config,
 		r.WorkDir,
-		r.Token,
 		r.Ctags,
-		r.AppId,
-		r.InstallationId,
-		r.PrivateKeyFile,
-		r.GitHubAPIEndpoint,
-		r.GitHubGraphQLEndpoint,
+		r.githubClientFactory.REST,
+		r.githubClientFactory.GraphQL,
 		r.InitRun,
 		r.Parallelism,
 	)
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
 	r.indexer = indexer
 	if r.HTTPAddr != "" {
 		if err := r.webEndpoint(r.HTTPAddr); err != nil {
@@ -396,23 +383,15 @@ func (r *IndexerCommand) reloadConfig() {
 		logger.Log.Warn("Failed to read a config file", zap.Error(err))
 		return
 	}
-	indexer, err := NewIndexer(
+	indexer := NewIndexer(
 		config,
 		r.WorkDir,
-		r.Token,
 		r.Ctags,
-		r.AppId,
-		r.InstallationId,
-		r.PrivateKeyFile,
-		r.GitHubAPIEndpoint,
-		r.GitHubGraphQLEndpoint,
+		r.githubClientFactory.REST,
+		r.githubClientFactory.GraphQL,
 		r.InitRun,
 		r.Parallelism,
 	)
-	if err != nil {
-		logger.Log.Warn("Failed initialize indexer", zap.Error(err))
-		return
-	}
 	r.indexer = indexer
 
 	if config.RefreshSchedule != r.config.RefreshSchedule {

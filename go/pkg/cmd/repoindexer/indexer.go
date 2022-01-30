@@ -24,8 +24,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/google/go-github/v32/github"
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
+	"github.com/shurcooL/githubv4"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
@@ -52,36 +54,21 @@ type Indexer struct {
 
 func NewIndexer(
 	rules *Config,
-	workDir, token, ctags string,
-	appId, installationId int64,
-	privateKeyFile string,
-	apiEndpoint, graphQLEndpoint string,
+	workDir, ctags string,
+	githubRESTClient *github.Client,
+	githubGraphQLClient *githubv4.Client,
 	initRun bool,
 	parallelism int,
-) (*Indexer, error) {
-	var listerOpts []RepositoryListerOpt
-	if appId > 0 && installationId > 0 && privateKeyFile != "" {
-		listerOpts = []RepositoryListerOpt{GitHubApp(appId, installationId, privateKeyFile, apiEndpoint, graphQLEndpoint)}
-	} else if token != "" {
-		listerOpts = []RepositoryListerOpt{GitHubToken(token, apiEndpoint, graphQLEndpoint)}
-	} else {
-		listerOpts = []RepositoryListerOpt{WithoutCredential(apiEndpoint, graphQLEndpoint)}
-	}
-	lister, err := NewRepositoryLister(rules.Rules, listerOpts...)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
+) *Indexer {
+	lister := NewRepositoryLister(rules.Rules, githubRESTClient, githubGraphQLClient)
 
 	return &Indexer{
-		workDir:        workDir,
-		ctags:          ctags,
-		initRun:        initRun,
-		parallelism:    parallelism,
-		appId:          appId,
-		installationId: installationId,
-		privateKeyFile: privateKeyFile,
-		lister:         lister,
-	}, nil
+		workDir:     workDir,
+		ctags:       ctags,
+		initRun:     initRun,
+		parallelism: parallelism,
+		lister:      lister,
+	}
 }
 
 func (x *Indexer) Sync(ctx context.Context) error {

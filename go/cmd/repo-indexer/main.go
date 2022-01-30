@@ -20,6 +20,9 @@ func repoIndexer(args []string) error {
 			if err := logger.Init(); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
+			if err := indexer.Init(); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 
 			if err := indexer.Run(); err != nil {
 				return xerrors.Errorf(": %w", err)
@@ -31,7 +34,6 @@ func repoIndexer(args []string) error {
 
 	indexer.Flags(cmd.Flags())
 	logger.Flags(cmd.Flags())
-
 
 	cmd.SetArgs(args)
 	return cmd.Execute()
