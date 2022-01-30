@@ -2,8 +2,11 @@ package githubutil
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v32/github"
@@ -25,6 +28,7 @@ type GitHubClientFactory struct {
 	Token                 string
 	GitHubAPIEndpoint     string
 	GitHubGraphQLEndpoint string
+	CACertFile            string
 
 	requiredCredential bool
 }
@@ -40,6 +44,7 @@ func (g *GitHubClientFactory) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&g.Token, "github-token", g.Token, "Personal access token for GitHub")
 	fs.StringVar(&g.GitHubAPIEndpoint, "github-api-endpoint", g.GitHubAPIEndpoint, "REST API endpoint of github if you want to use non-default endpoint")
 	fs.StringVar(&g.GitHubGraphQLEndpoint, "github-graphql-endpoint", g.GitHubGraphQLEndpoint, "GraphQL endpoint of github if you want to use non-default endpoint")
+	fs.StringVar(&g.CACertFile, "github-ca-cert-file", g.CACertFile, "Certificate file path")
 }
 
 func (g *GitHubClientFactory) Init() error {
@@ -50,6 +55,21 @@ func (g *GitHubClientFactory) Init() error {
 	}
 
 	httpClient := http.DefaultClient
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if g.CACertFile != "" {
+		cp, err := x509.SystemCertPool()
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		b, err := os.ReadFile(g.CACertFile)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		if ok := cp.AppendCertsFromPEM(b); !ok {
+			return xerrors.Errorf("failed to read a certificate")
+		}
+		transport.TLSClientConfig = &tls.Config{RootCAs: cp}
+	}
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
 		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
