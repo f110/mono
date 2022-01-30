@@ -49,6 +49,10 @@ func (g *GitHubClientFactory) Flags(fs *pflag.FlagSet) {
 }
 
 func (g *GitHubClientFactory) Init() error {
+	if os.Getenv("GITHUB_TOKEN") != "" && g.Token == "" {
+		g.Token = os.Getenv("GITHUB_TOKEN")
+	}
+
 	if g.requiredCredential {
 		if g.Token == "" && !(g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "") {
 			return xerrors.Errorf("any a credential for GitHub is mandatory. GitHub app or Personal access token is required")
