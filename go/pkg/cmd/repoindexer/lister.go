@@ -3,19 +3,14 @@ package repoindexer
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"net/url"
 	"regexp"
 	"sync"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -43,54 +38,6 @@ type RepositoryLister struct {
 
 	mu           sync.Mutex
 	repositories []*Repository
-}
-
-func GitHubApp(appId, installationId int64, privateKeyFile string, customRESTEndpoint, customGraphQLEndpoint string) RepositoryListerOpt {
-	return func(lister *RepositoryLister) error {
-		restClient, err := newGitHubAppRESTClient(appId, installationId, privateKeyFile, customRESTEndpoint)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		lister.githubClient = restClient
-		graphQLClient, err := newGitHubAppGraphQLClient(appId, installationId, privateKeyFile, customGraphQLEndpoint)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		lister.githubGraphQLClient = graphQLClient
-
-		return nil
-	}
-}
-
-func GitHubToken(token string, customRESTEndpoint, customGraphQLEndpoint string) RepositoryListerOpt {
-	return func(lister *RepositoryLister) error {
-		var err error
-		lister.githubClient, err = newGitHubTokenRESTClient(token, customRESTEndpoint)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		lister.githubGraphQLClient = newGitHubTokenGraphQLClient(token, customGraphQLEndpoint)
-		return nil
-	}
-}
-
-func WithoutCredential(customRESTEndpoint, customGraphQLEndpoint string) RepositoryListerOpt {
-	return func(lister *RepositoryLister) error {
-		lister.githubClient = github.NewClient(http.DefaultClient)
-		if customRESTEndpoint != "" {
-			u, err := url.Parse(customRESTEndpoint)
-			if err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			lister.githubClient.BaseURL = u
-		}
-		if customGraphQLEndpoint != "" {
-			lister.githubGraphQLClient = githubv4.NewEnterpriseClient(customGraphQLEndpoint, http.DefaultClient)
-		} else {
-			lister.githubGraphQLClient = githubv4.NewClient(http.DefaultClient)
-		}
-		return nil
-	}
 }
 
 func NewRepositoryLister(rules []*Rule, restClient *github.Client, graphqlClient *githubv4.Client) *RepositoryLister {
@@ -203,68 +150,6 @@ func (*RepositoryLister) refSpecs(branches, tags []string) []plumbing.ReferenceN
 	}
 
 	return refs
-}
-
-func newGitHubAppRESTClient(appId, installationId int64, privateKeyFile string, customEndpoint string) (*github.Client, error) {
-	tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-
-	if c, err := newGitHubClient(&http.Client{Transport: tr}, customEndpoint); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	} else {
-		return c, nil
-	}
-}
-
-func newGitHubTokenRESTClient(token string, customEndpoint string) (*github.Client, error) {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(context.Background(), ts)
-
-	if c, err := newGitHubClient(tc, customEndpoint); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	} else {
-		return c, nil
-	}
-}
-
-func newGitHubClient(httpClient *http.Client, customEndpoint string) (*github.Client, error) {
-	if customEndpoint != "" {
-		u, err := url.Parse(customEndpoint)
-		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
-		}
-		c := github.NewClient(httpClient)
-		c.BaseURL = u
-		return c, nil
-	} else {
-		return github.NewClient(httpClient), nil
-	}
-}
-
-func newGitHubAppGraphQLClient(appId, installationId int64, privateKeyFile string, customGraphQLEndpoint string) (*githubv4.Client, error) {
-	tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-
-	if customGraphQLEndpoint != "" {
-		return githubv4.NewEnterpriseClient(customGraphQLEndpoint, &http.Client{Transport: tr}), nil
-	} else {
-		return githubv4.NewClient(&http.Client{Transport: tr}), nil
-	}
-}
-
-func newGitHubTokenGraphQLClient(token string, customEndpoint string) *githubv4.Client {
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(context.Background(), ts)
-
-	if customEndpoint != "" {
-		return githubv4.NewEnterpriseClient(customEndpoint, tc)
-	} else {
-		return githubv4.NewClient(tc)
-	}
 }
 
 var listRepositoriesQuery struct {

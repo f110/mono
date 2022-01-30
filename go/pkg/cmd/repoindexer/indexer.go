@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -18,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -31,6 +29,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -41,13 +40,11 @@ const (
 type Indexer struct {
 	Indexes []*RepositoryIndex
 
-	workDir        string
-	ctags          string
-	initRun        bool
-	parallelism    int
-	appId          int64
-	installationId int64
-	privateKeyFile string
+	workDir       string
+	ctags         string
+	initRun       bool
+	parallelism   int
+	tokenProvider *githubutil.TokenProvider
 
 	lister *RepositoryLister
 }
@@ -57,17 +54,19 @@ func NewIndexer(
 	workDir, ctags string,
 	githubRESTClient *github.Client,
 	githubGraphQLClient *githubv4.Client,
+	tokenProvider *githubutil.TokenProvider,
 	initRun bool,
 	parallelism int,
 ) *Indexer {
 	lister := NewRepositoryLister(rules.Rules, githubRESTClient, githubGraphQLClient)
 
 	return &Indexer{
-		workDir:     workDir,
-		ctags:       ctags,
-		initRun:     initRun,
-		parallelism: parallelism,
-		lister:      lister,
+		workDir:       workDir,
+		ctags:         ctags,
+		initRun:       initRun,
+		parallelism:   parallelism,
+		lister:        lister,
+		tokenProvider: tokenProvider,
 	}
 }
 
@@ -76,7 +75,7 @@ func (x *Indexer) Sync(ctx context.Context) error {
 	for _, v := range repositories {
 		logger.Log.Debug("Found repository", zap.String("name", v.Name), zap.String("url", v.URL))
 
-		if err := v.sync(ctx, x.workDir, x.appId, x.installationId, x.privateKeyFile, x.initRun); err != nil {
+		if err := v.sync(ctx, x.workDir, x.tokenProvider, x.initRun); err != nil {
 			logger.Log.Info("Failed sync repository", zap.Error(err), zap.String("url", v.URL))
 			continue
 		}
@@ -351,14 +350,10 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 	return branchRefs, nil
 }
 
-func (x *Repository) sync(ctx context.Context, workDir string, appId, installationId int64, privateKeyFile string, initRun bool) error {
+func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *githubutil.TokenProvider, initRun bool) error {
 	var auth transport.AuthMethod
-	if privateKeyFile != "" {
-		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		token, err := t.Token(context.Background())
+	if tokenProvider != nil {
+		token, err := tokenProvider.Token(ctx)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}

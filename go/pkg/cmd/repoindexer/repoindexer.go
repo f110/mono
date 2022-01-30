@@ -157,6 +157,7 @@ func (r *IndexerCommand) Run() error {
 		r.Ctags,
 		r.githubClientFactory.REST,
 		r.githubClientFactory.GraphQL,
+		r.githubClientFactory.TokenProvider,
 		r.InitRun,
 		r.Parallelism,
 	)
@@ -389,6 +390,7 @@ func (r *IndexerCommand) reloadConfig() {
 		r.Ctags,
 		r.githubClientFactory.REST,
 		r.githubClientFactory.GraphQL,
+		r.githubClientFactory.TokenProvider,
 		r.InitRun,
 		r.Parallelism,
 	)
