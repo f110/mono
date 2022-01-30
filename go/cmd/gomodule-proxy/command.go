@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/gomodule"
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -23,11 +24,6 @@ type goModuleProxyCommand struct {
 	ModuleDir   string
 	Addr        string
 	UpstreamURL string
-	GitHubToken string
-
-	GitHubAppId          int64
-	GitHubInstallationId int64
-	PrivateKeyFile       string
 
 	StorageEndpoint        string
 	StorageRegion          string
@@ -40,12 +36,15 @@ type goModuleProxyCommand struct {
 	upstream *url.URL
 	config   gomodule.Config
 	cache    *gomodule.ModuleCache
+
+	githubClientFactory *githubutil.GitHubClientFactory
 }
 
 func newGoModuleProxyCommand() *goModuleProxyCommand {
 	return &goModuleProxyCommand{
-		Addr:        ":7589",
-		UpstreamURL: "https://proxy.golang.org",
+		Addr:                ":7589",
+		UpstreamURL:         "https://proxy.golang.org",
+		githubClientFactory: githubutil.NewGitHubClientFactory("gomodule-proxy", false),
 	}
 }
 
@@ -54,16 +53,14 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ModuleDir, "mod-dir", c.ModuleDir, "Module directory")
 	fs.StringVar(&c.Addr, "addr", c.Addr, "Listen addr")
 	fs.StringVar(&c.UpstreamURL, "upstream", c.UpstreamURL, "Upstream module proxy URL")
-	fs.StringVar(&c.GitHubToken, "github-token", c.GitHubToken, "GitHub API token")
-	fs.Int64Var(&c.GitHubAppId, "github-app-id", c.GitHubAppId, "GitHub App ID")
-	fs.Int64Var(&c.GitHubInstallationId, "github-installation-id", c.GitHubInstallationId, "GitHub App Installation ID")
-	fs.StringVar(&c.PrivateKeyFile, "github-app-private-key-file", c.PrivateKeyFile, "PEM-encoded private key file for GitHub App")
 	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of object storage")
 	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The name of region of object storage")
 	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "Access key")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "Secret access key")
 	fs.StringSliceVar(&c.MemcachedServers, "memcached-servers", nil, "Memcached server name and address for the metadata cache")
+
+	c.githubClientFactory.Flags(fs)
 }
 
 func (c *goModuleProxyCommand) RequiredFlags() []string {
@@ -71,6 +68,10 @@ func (c *goModuleProxyCommand) RequiredFlags() []string {
 }
 
 func (c *goModuleProxyCommand) Init() error {
+	if err := c.githubClientFactory.Init(); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
 	conf, err := gomodule.ReadConfig(c.ConfigPath)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -85,16 +86,6 @@ func (c *goModuleProxyCommand) Init() error {
 
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
-	}
-
-	if os.Getenv("GITHUB_TOKEN") != "" {
-		c.GitHubToken = os.Getenv("GITHUB_TOKEN")
-	}
-
-	if c.PrivateKeyFile != "" {
-		if _, err := os.Stat(c.PrivateKeyFile); os.IsNotExist(err) {
-			return xerrors.Errorf(": %w", err)
-		}
 	}
 
 	if c.StorageEndpoint != "" && c.StorageRegion != "" &&
@@ -122,7 +113,7 @@ func (c *goModuleProxyCommand) Run() error {
 	stopErrCh := make(chan error, 1)
 	startErrCh := make(chan error, 1)
 
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.GitHubAppId, c.GitHubInstallationId, c.PrivateKeyFile)
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider)
 	server := gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

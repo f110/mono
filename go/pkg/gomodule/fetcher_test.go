@@ -51,7 +51,7 @@ func TestModuleRoot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	vcsRepo, err := NewVCS("git", "", 0, 0, "")
+	vcsRepo := NewVCS("git", "", nil)
 	require.NoError(t, err)
 	vcsRepo.synced = true
 	err = vcsRepo.Open(dir)

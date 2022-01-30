@@ -16,11 +16,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -39,13 +39,10 @@ type ModuleProxy struct {
 	confLookupCache map[string]*ModuleSetting
 }
 
-func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleProxy {
-	t, _ := ghinstallation.NewKeyFromFile(http.DefaultTransport, githubAppId, githubInstallationId, privateKeyFile)
-	ghClient := github.NewClient(&http.Client{Transport: &httpTransport{RoundTripper: t}})
-
+func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, ghClient *github.Client, tokenProvider *githubutil.TokenProvider) *ModuleProxy {
 	return &ModuleProxy{
 		conf:            conf,
-		fetcher:         NewModuleFetcher(moduleDir, cache, githubAppId, githubInstallationId, privateKeyFile),
+		fetcher:         NewModuleFetcher(moduleDir, cache, tokenProvider),
 		ghProxy:         NewGitHubProxy(cache, ghClient),
 		cache:           cache,
 		confLookupCache: make(map[string]*ModuleSetting),

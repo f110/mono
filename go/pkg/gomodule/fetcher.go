@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
@@ -25,6 +23,7 @@ import (
 	"golang.org/x/tools/go/vcs"
 	"golang.org/x/xerrors"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -59,19 +58,15 @@ type ModuleVersion struct {
 type ModuleFetcher struct {
 	cache *ModuleCache
 
-	baseDir        string
-	appId          int64
-	installationId int64
-	privateKeyFile string
+	baseDir       string
+	tokenProvider *githubutil.TokenProvider
 }
 
-func NewModuleFetcher(baseDir string, cache *ModuleCache, githubAppId, githubInstallationId int64, privateKeyFile string) *ModuleFetcher {
+func NewModuleFetcher(baseDir string, cache *ModuleCache, tokenProvider *githubutil.TokenProvider) *ModuleFetcher {
 	return &ModuleFetcher{
-		baseDir:        baseDir,
-		appId:          githubAppId,
-		installationId: githubInstallationId,
-		privateKeyFile: privateKeyFile,
-		cache:          cache,
+		baseDir:       baseDir,
+		tokenProvider: tokenProvider,
+		cache:         cache,
 	}
 }
 
@@ -105,10 +100,7 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	if setting.replaceRegexp != nil {
 		u = setting.replaceRegexp.Match.ReplaceAllString(u, setting.replaceRegexp.Replace)
 	}
-	vcsRepo, err := NewVCS("git", repoRoot.Repo, f.appId, f.installationId, f.privateKeyFile)
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
+	vcsRepo := NewVCS("git", repoRoot.Repo, f.tokenProvider)
 	var moduleRoot *ModuleRoot
 	if f.cache != nil {
 		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
@@ -119,14 +111,15 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	if moduleRoot == nil {
 		logger.Log.Debug("Not found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
 		dir := filepath.Join(f.baseDir, repoRoot.Root)
-		moduleRoot, err = NewModuleRoot(ctx, repoRoot.Root, vcsRepo, f.cache, dir)
+		mr, err := NewModuleRoot(ctx, repoRoot.Root, vcsRepo, f.cache, dir)
 		if err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
-
-		if err := moduleRoot.SetCache(); err != nil {
+		if err := mr.SetCache(); err != nil {
 			return nil, xerrors.Errorf(": %w", err)
 		}
+
+		moduleRoot = mr
 	}
 
 	return moduleRoot, nil
@@ -577,25 +570,14 @@ type VCS struct {
 	mu     sync.Mutex
 	synced bool
 
-	appId          int64
-	installationId int64
-	privateKeyFile string
-	transport      *ghinstallation.Transport
+	tokenProvider *githubutil.TokenProvider
 
 	gitRepo           *git.Repository
 	defaultBranchName string
 }
 
-func NewVCS(typ, url string, appId, installationId int64, privateKeyFile string) (*VCS, error) {
-	v := &VCS{Type: typ, URL: url, appId: appId, installationId: installationId, privateKeyFile: privateKeyFile}
-	if appId > 0 && installationId > 0 && privateKeyFile != "" {
-		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
-		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
-		}
-		v.transport = t
-	}
-	return v, nil
+func NewVCS(typ, url string, tokenProvider *githubutil.TokenProvider) *VCS {
+	return &VCS{Type: typ, URL: url, tokenProvider: tokenProvider}
 }
 
 func (vcs *VCS) Sync(ctx context.Context, dir string) error {
@@ -649,11 +631,11 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 }
 
 func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
-	if vcs.transport == nil {
+	if vcs.tokenProvider == nil {
 		return nil
 	}
 
-	token, err := vcs.transport.Token(context.Background())
+	token, err := vcs.tokenProvider.Token(context.Background())
 	if err != nil {
 		return nil
 	}

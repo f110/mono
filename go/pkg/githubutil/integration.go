@@ -17,9 +17,10 @@ import (
 )
 
 type GitHubClientFactory struct {
-	Initialized bool
-	REST        *github.Client
-	GraphQL     *githubv4.Client
+	Initialized   bool
+	REST          *github.Client
+	GraphQL       *githubv4.Client
+	TokenProvider *TokenProvider
 
 	Name                  string
 	AppID                 int64
@@ -70,12 +71,14 @@ func (g *GitHubClientFactory) Init() error {
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: cp}
 	}
+	var appTransport *ghinstallation.Transport
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
 		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 		httpClient = &http.Client{Transport: tr}
+		appTransport = tr
 	}
 	if g.Token != "" {
 		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: g.Token})
@@ -98,6 +101,23 @@ func (g *GitHubClientFactory) Init() error {
 		g.GraphQL = githubv4.NewClient(httpClient)
 	}
 
+	g.TokenProvider = &TokenProvider{pat: g.Token, appProvider: appTransport}
 	g.Initialized = true
 	return nil
+}
+
+type TokenProvider struct {
+	pat         string
+	appProvider *ghinstallation.Transport
+}
+
+func (p *TokenProvider) Token(ctx context.Context) (string, error) {
+	if p.pat != "" {
+		return p.pat, nil
+	}
+	if p.appProvider != nil {
+		return p.appProvider.Token(ctx)
+	}
+
+	return "", xerrors.New("does not configure with any credential")
 }
