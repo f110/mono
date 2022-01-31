@@ -57,7 +57,7 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 		if rule.Owner != "" && rule.Name != "" {
 			repo, _, err := x.githubClient.Repositories.Get(ctx, rule.Owner, rule.Name)
 			if err != nil {
-				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name))
+				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name), zap.Error(err))
 				continue
 			}
 

@@ -59,25 +59,26 @@ func (g *GitHubClientFactory) Init() error {
 		}
 	}
 
-	httpClient := http.DefaultClient
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	rootCAs, err := x509.SystemCertPool()
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 	if g.CACertFile != "" {
-		cp, err := x509.SystemCertPool()
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
 		b, err := os.ReadFile(g.CACertFile)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		if ok := cp.AppendCertsFromPEM(b); !ok {
+		if ok := rootCAs.AppendCertsFromPEM(b); !ok {
 			return xerrors.Errorf("failed to read a certificate")
 		}
-		transport.TLSClientConfig = &tls.Config{RootCAs: cp}
+		transport.TLSClientConfig = &tls.Config{RootCAs: rootCAs}
 	}
+
+	var httpClient *http.Client
 	var appTransport *ghinstallation.Transport
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
-		tr, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, g.AppID, g.InstallationID, g.PrivateKeyFile)
+		tr, err := ghinstallation.NewKeyFromFile(transport, g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -86,7 +87,12 @@ func (g *GitHubClientFactory) Init() error {
 	}
 	if g.Token != "" {
 		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: g.Token})
-		httpClient = oauth2.NewClient(context.Background(), ts)
+		c := oauth2.NewClient(context.Background(), ts)
+		c.Transport.(*oauth2.Transport).Base = transport
+		httpClient = c
+	}
+	if httpClient == nil {
+		httpClient = &http.Client{Transport: transport}
 	}
 
 	restClient := github.NewClient(httpClient)
@@ -105,7 +111,9 @@ func (g *GitHubClientFactory) Init() error {
 		g.GraphQL = githubv4.NewClient(httpClient)
 	}
 
-	g.TokenProvider = &TokenProvider{pat: g.Token, appProvider: appTransport}
+	if g.Token != "" || appTransport != nil {
+		g.TokenProvider = &TokenProvider{pat: g.Token, appProvider: appTransport}
+	}
 	g.Initialized = true
 	return nil
 }
