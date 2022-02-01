@@ -57,8 +57,9 @@ func NewIndexer(
 	tokenProvider *githubutil.TokenProvider,
 	initRun bool,
 	parallelism int,
+	caBundle []byte,
 ) *Indexer {
-	lister := NewRepositoryLister(rules.Rules, githubRESTClient, githubGraphQLClient)
+	lister := NewRepositoryLister(rules.Rules, githubRESTClient, githubGraphQLClient, caBundle)
 
 	return &Indexer{
 		workDir:       workDir,
@@ -383,6 +384,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 			URL:        x.URL,
 			NoCheckout: true,
 			Auth:       auth,
+			CABundle:   x.CABundle,
 		})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
@@ -400,6 +402,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 	err = r.FetchContext(ctx, &git.FetchOptions{
 		Progress: os.Stdout,
 		Auth:     auth,
+		CABundle: x.CABundle,
 	})
 	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return xerrors.Errorf(": %w", err)

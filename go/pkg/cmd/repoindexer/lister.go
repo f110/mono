@@ -20,8 +20,19 @@ type Repository struct {
 	URL              string
 	DisableVendoring bool
 	Refs             []plumbing.ReferenceName
+	CABundle         []byte
 
 	repo *git.Repository
+}
+
+func NewRepository(name, url string, refs []plumbing.ReferenceName, disableVendoring bool, caBundle []byte) *Repository {
+	return &Repository{
+		Name:             name,
+		URL:              url,
+		Refs:             refs,
+		DisableVendoring: disableVendoring,
+		CABundle:         caBundle,
+	}
 }
 
 type RepositoryListerOpt func(lister *RepositoryLister) error
@@ -35,13 +46,14 @@ type RepositoryLister struct {
 	rules               []*Rule
 	githubClient        *github.Client
 	githubGraphQLClient *githubv4.Client
+	caBundle            []byte
 
 	mu           sync.Mutex
 	repositories []*Repository
 }
 
-func NewRepositoryLister(rules []*Rule, restClient *github.Client, graphqlClient *githubv4.Client) *RepositoryLister {
-	return &RepositoryLister{rules: rules, githubClient: restClient, githubGraphQLClient: graphqlClient}
+func NewRepositoryLister(rules []*Rule, restClient *github.Client, graphqlClient *githubv4.Client, caBundle []byte) *RepositoryLister {
+	return &RepositoryLister{rules: rules, githubClient: restClient, githubGraphQLClient: graphqlClient, caBundle: caBundle}
 }
 
 func (x *RepositoryLister) List(ctx context.Context) []*Repository {
@@ -68,12 +80,13 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 					u = replaced
 				}
 			}
-			repos[fmt.Sprintf("%s/%s", rule.Owner, rule.Name)] = &Repository{
-				Name:             fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
-				URL:              u,
-				Refs:             x.refSpecs(rule.Branches, rule.Tags),
-				DisableVendoring: rule.DisableVendoring,
-			}
+			repos[fmt.Sprintf("%s/%s", rule.Owner, rule.Name)] = NewRepository(
+				fmt.Sprintf("%s/%s", rule.Owner, rule.Name),
+				u,
+				x.refSpecs(rule.Branches, rule.Tags),
+				rule.DisableVendoring,
+				x.caBundle,
+			)
 		}
 	}
 
@@ -107,12 +120,14 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 						break
 					}
 				}
-				repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)] = &Repository{
-					Name:             fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
-					URL:              u,
-					Refs:             x.refSpecs(rule.Branches, rule.Tags),
-					DisableVendoring: rule.DisableVendoring,
-				}
+
+				repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)] = NewRepository(
+					fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name),
+					u,
+					x.refSpecs(rule.Branches, rule.Tags),
+					rule.DisableVendoring,
+					x.caBundle,
+				)
 			}
 			if !listRepositoriesQuery.Search.PageInfo.HasNextPage {
 				break

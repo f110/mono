@@ -31,6 +31,7 @@ type IndexerCommand struct {
 	Parallelism      int
 	HTTPAddr         string
 	URLReplaceRegexp []string
+	CABundleFile     string
 
 	Bucket                      string
 	MinIOEndpoint               string
@@ -60,6 +61,7 @@ type IndexerCommand struct {
 	cron                *cron.Cron
 	entryId             cron.EntryID
 	cancel              context.CancelFunc
+	caBundle            []byte
 
 	mu sync.Mutex
 
@@ -112,6 +114,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
 	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
 	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup in the object storage after uploaded the index")
+	fs.StringVar(&r.CABundleFile, "ca-bundle-file", r.CABundleFile, "A file path that contains ca certificates for clone a repository")
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
 	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
 
@@ -137,6 +140,14 @@ func (r *IndexerCommand) Init() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	if r.CABundleFile != "" {
+		b, err := os.ReadFile(r.CABundleFile)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		r.caBundle = b
+	}
+
 	if err := r.githubClientFactory.Init(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -160,6 +171,7 @@ func (r *IndexerCommand) Run() error {
 		r.githubClientFactory.TokenProvider,
 		r.InitRun,
 		r.Parallelism,
+		r.caBundle,
 	)
 	r.indexer = indexer
 	if r.HTTPAddr != "" {
@@ -393,6 +405,7 @@ func (r *IndexerCommand) reloadConfig() {
 		r.githubClientFactory.TokenProvider,
 		r.InitRun,
 		r.Parallelism,
+		r.caBundle,
 	)
 	r.indexer = indexer
 
