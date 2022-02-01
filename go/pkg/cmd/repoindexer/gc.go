@@ -41,7 +41,7 @@ func (g *IndexGC) GC(ctx context.Context) error {
 		}
 	}
 
-	allFiles, err := g.backend.List(ctx, "/")
+	allFiles, err := g.backend.List(ctx, "")
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

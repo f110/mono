@@ -93,11 +93,7 @@ func (u *UpdaterCommand) Run() error {
 
 func (u *UpdaterCommand) downloadLatest() error {
 	logger.Log.Debug("Download latest the manifest")
-	prefix := ""
-	if u.canUseMinIO() {
-		prefix = "/"
-	}
-	manifest, err := u.manifestManager.GetLatest(context.Background(), prefix)
+	manifest, err := u.manifestManager.GetLatest(context.Background())
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

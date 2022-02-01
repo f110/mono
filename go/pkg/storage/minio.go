@@ -205,6 +205,9 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 }
 
 func (m *MinIO) List(ctx context.Context, prefix string) ([]*Object, error) {
+	if prefix == "" {
+		prefix = "/"
+	}
 	files, err := m.ListRecursive(ctx, prefix, true)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)

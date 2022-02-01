@@ -59,9 +59,9 @@ func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	return nil
 }
 
-func (m *ManifestManager) GetLatest(ctx context.Context, prefix string) (Manifest, error) {
+func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 	manifest := Manifest{}
-	manifests, err := m.backend.List(ctx, prefix)
+	manifests, err := m.backend.List(ctx, "")
 	if err != nil {
 		return manifest, xerrors.Errorf(": %w", err)
 	}
@@ -115,7 +115,7 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 }
 
 func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
-	objects, err := m.backend.List(ctx, "/")
+	objects, err := m.backend.List(ctx, "")
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -154,7 +154,7 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 }
 
 func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest, error) {
-	manifests, err := m.backend.List(ctx, "/")
+	manifests, err := m.backend.List(ctx, "")
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
