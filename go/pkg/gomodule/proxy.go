@@ -39,10 +39,10 @@ type ModuleProxy struct {
 	confLookupCache map[string]*ModuleSetting
 }
 
-func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, ghClient *github.Client, tokenProvider *githubutil.TokenProvider) *ModuleProxy {
+func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, ghClient *github.Client, tokenProvider *githubutil.TokenProvider, caBundle []byte) *ModuleProxy {
 	return &ModuleProxy{
 		conf:            conf,
-		fetcher:         NewModuleFetcher(moduleDir, cache, tokenProvider),
+		fetcher:         NewModuleFetcher(moduleDir, cache, tokenProvider, caBundle),
 		ghProxy:         NewGitHubProxy(cache, ghClient),
 		cache:           cache,
 		confLookupCache: make(map[string]*ModuleSetting),

@@ -60,12 +60,14 @@ type ModuleFetcher struct {
 
 	baseDir       string
 	tokenProvider *githubutil.TokenProvider
+	caBundle      []byte
 }
 
-func NewModuleFetcher(baseDir string, cache *ModuleCache, tokenProvider *githubutil.TokenProvider) *ModuleFetcher {
+func NewModuleFetcher(baseDir string, cache *ModuleCache, tokenProvider *githubutil.TokenProvider, caBundle []byte) *ModuleFetcher {
 	return &ModuleFetcher{
 		baseDir:       baseDir,
 		tokenProvider: tokenProvider,
+		caBundle:      caBundle,
 		cache:         cache,
 	}
 }
@@ -100,7 +102,7 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	if setting.replaceRegexp != nil {
 		u = setting.replaceRegexp.Match.ReplaceAllString(u, setting.replaceRegexp.Replace)
 	}
-	vcsRepo := NewVCS("git", repoRoot.Repo, f.tokenProvider)
+	vcsRepo := NewVCS("git", repoRoot.Repo, f.tokenProvider, f.caBundle)
 	var moduleRoot *ModuleRoot
 	if f.cache != nil {
 		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
@@ -571,13 +573,14 @@ type VCS struct {
 	synced bool
 
 	tokenProvider *githubutil.TokenProvider
+	caBundle      []byte
 
 	gitRepo           *git.Repository
 	defaultBranchName string
 }
 
-func NewVCS(typ, url string, tokenProvider *githubutil.TokenProvider) *VCS {
-	return &VCS{Type: typ, URL: url, tokenProvider: tokenProvider}
+func NewVCS(typ, url string, tokenProvider *githubutil.TokenProvider, caBundle []byte) *VCS {
+	return &VCS{Type: typ, URL: url, tokenProvider: tokenProvider, caBundle: caBundle}
 }
 
 func (vcs *VCS) Sync(ctx context.Context, dir string) error {
@@ -609,6 +612,7 @@ func (vcs *VCS) Create(ctx context.Context, dir string) error {
 		URL:        vcs.URL,
 		NoCheckout: true,
 		Auth:       vcs.getAuthMethod(),
+		CABundle:   vcs.caBundle,
 	})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)

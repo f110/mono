@@ -20,10 +20,11 @@ import (
 )
 
 type goModuleProxyCommand struct {
-	ConfigPath  string
-	ModuleDir   string
-	Addr        string
-	UpstreamURL string
+	ConfigPath   string
+	ModuleDir    string
+	Addr         string
+	UpstreamURL  string
+	CABundleFile string
 
 	StorageEndpoint        string
 	StorageRegion          string
@@ -36,6 +37,7 @@ type goModuleProxyCommand struct {
 	upstream *url.URL
 	config   gomodule.Config
 	cache    *gomodule.ModuleCache
+	caBundle []byte
 
 	githubClientFactory *githubutil.GitHubClientFactory
 }
@@ -53,6 +55,7 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ModuleDir, "mod-dir", c.ModuleDir, "Module directory")
 	fs.StringVar(&c.Addr, "addr", c.Addr, "Listen addr")
 	fs.StringVar(&c.UpstreamURL, "upstream", c.UpstreamURL, "Upstream module proxy URL")
+	fs.StringVar(&c.CABundleFile, "ca-bundle-file", c.CABundleFile, "A file path that contains ca certificate to clone a repository")
 	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of object storage")
 	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The name of region of object storage")
 	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
@@ -84,8 +87,12 @@ func (c *goModuleProxyCommand) Init() error {
 	}
 	c.upstream = uu
 
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
+	if c.CABundleFile != "" {
+		b, err := os.ReadFile(c.CABundleFile)
+		if err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+		c.caBundle = b
 	}
 
 	if c.StorageEndpoint != "" && c.StorageRegion != "" &&
@@ -113,7 +120,7 @@ func (c *goModuleProxyCommand) Run() error {
 	stopErrCh := make(chan error, 1)
 	startErrCh := make(chan error, 1)
 
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider)
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle)
 	server := gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
