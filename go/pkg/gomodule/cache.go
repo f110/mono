@@ -26,9 +26,10 @@ type ModuleCache struct {
 	objectStorage *storage.S3
 }
 
-func NewModuleCache(cachePool *client.SinglePool, endpoint, region, bucket, accessKey, secretAccessKey string) *ModuleCache {
+func NewModuleCache(cachePool *client.SinglePool, endpoint, region, bucket, accessKey, secretAccessKey, caCertFile string) *ModuleCache {
 	opt := storage.NewS3OptionToExternal(endpoint, region, accessKey, secretAccessKey)
 	opt.PathStyle = true
+	opt.CACertFile = caCertFile
 	objStorage := storage.NewS3(bucket, opt)
 	return &ModuleCache{
 		cachePool:     cachePool,

@@ -31,6 +31,7 @@ type goModuleProxyCommand struct {
 	StorageAccessKey       string
 	StorageSecretAccessKey string
 	StorageBucket          string
+	StorageCACertFile      string
 
 	MemcachedServers []string
 
@@ -61,6 +62,7 @@ func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "Access key")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "Secret access key")
+	fs.StringVar(&c.StorageCACertFile, "storage-ca-file", c.StorageCACertFile, "File path that contains the certificate of CA")
 	fs.StringSliceVar(&c.MemcachedServers, "memcached-servers", nil, "Memcached server name and address for the metadata cache")
 
 	c.githubClientFactory.Flags(fs)
@@ -110,7 +112,7 @@ func (c *goModuleProxyCommand) Init() error {
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
-		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey)
+		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey, c.StorageCACertFile)
 	}
 
 	return nil
