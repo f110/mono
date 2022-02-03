@@ -25,9 +25,25 @@ type ProxyServer struct {
 }
 
 func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxyServer {
+	targetQuery := upstream.RawQuery
+	director := func(req *http.Request) {
+		req.URL.Scheme = upstream.Scheme
+		req.URL.Host = upstream.Host
+		if targetQuery == "" || req.URL.RawQuery == "" {
+			req.URL.RawQuery = targetQuery + req.URL.RawQuery
+		} else {
+			req.URL.RawQuery = targetQuery + "&" + req.URL.RawQuery
+		}
+		if _, ok := req.Header["User-Agent"]; !ok {
+			// explicitly disable User-Agent so it's not set to default value
+			req.Header.Set("User-Agent", "")
+		}
+		req.Host = upstream.Host
+	}
+
 	s := &ProxyServer{
 		r:     mux.NewRouter(),
-		rr:    httputil.NewSingleHostReverseProxy(upstream),
+		rr:    &httputil.ReverseProxy{Director: director},
 		proxy: proxy,
 	}
 	s.s = &http.Server{
