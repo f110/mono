@@ -102,7 +102,7 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	if setting.replaceRegexp != nil {
 		u = setting.replaceRegexp.Match.ReplaceAllString(u, setting.replaceRegexp.Replace)
 	}
-	vcsRepo := NewVCS("git", u, f.tokenProvider, f.caBundle)
+	vcsRepo := NewVCS("git", u, repoRoot.Repo, f.tokenProvider, f.caBundle)
 	var moduleRoot *ModuleRoot
 	if f.cache != nil {
 		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
@@ -566,8 +566,9 @@ func (m *Module) setVersions(vers []*ModuleVersion) {
 }
 
 type VCS struct {
-	Type string
-	URL  string
+	Type     string
+	CloneURL string
+	URL      string
 
 	mu     sync.Mutex
 	synced bool
@@ -579,8 +580,8 @@ type VCS struct {
 	defaultBranchName string
 }
 
-func NewVCS(typ, url string, tokenProvider *githubutil.TokenProvider, caBundle []byte) *VCS {
-	return &VCS{Type: typ, URL: url, tokenProvider: tokenProvider, caBundle: caBundle}
+func NewVCS(typ, cloneURL, originalURL string, tokenProvider *githubutil.TokenProvider, caBundle []byte) *VCS {
+	return &VCS{Type: typ, CloneURL: cloneURL, URL: originalURL, tokenProvider: tokenProvider, caBundle: caBundle}
 }
 
 func (vcs *VCS) Sync(ctx context.Context, dir string) error {
@@ -608,8 +609,9 @@ func (vcs *VCS) Sync(ctx context.Context, dir string) error {
 }
 
 func (vcs *VCS) Create(ctx context.Context, dir string) error {
+	logger.Log.Debug("Clone repository", zap.String("url", vcs.CloneURL))
 	repo, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
-		URL:        vcs.URL,
+		URL:        vcs.CloneURL,
 		NoCheckout: true,
 		Auth:       vcs.getAuthMethod(),
 		CABundle:   vcs.caBundle,
@@ -626,7 +628,11 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	if err := vcs.Open(dir); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin", Auth: vcs.getAuthMethod()})
+	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{
+		RemoteName: "origin",
+		Auth:       vcs.getAuthMethod(),
+		CABundle:   vcs.caBundle},
+	)
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return xerrors.Errorf(": %w", err)
 	}
