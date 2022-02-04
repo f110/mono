@@ -102,7 +102,7 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	if setting.replaceRegexp != nil {
 		u = setting.replaceRegexp.Match.ReplaceAllString(u, setting.replaceRegexp.Replace)
 	}
-	vcsRepo := NewVCS("git", repoRoot.Repo, f.tokenProvider, f.caBundle)
+	vcsRepo := NewVCS("git", u, f.tokenProvider, f.caBundle)
 	var moduleRoot *ModuleRoot
 	if f.cache != nil {
 		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
