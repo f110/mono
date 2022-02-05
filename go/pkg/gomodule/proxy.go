@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -118,12 +119,26 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 			return Info{Version: v.Semver, Time: v.Time}, nil
 		}
 	}
+
 	if moduleRoot.IsGitHub {
-		i, err := m.ghProxy.GetInfo(ctx, moduleRoot, module, version)
-		if err != nil {
-			return i, xerrors.Errorf(": %w", err)
+		if IsSemanticVersion(version) {
+			i, err := m.ghProxy.GetInfo(ctx, moduleRoot, module, version)
+			if err != nil {
+				return i, xerrors.Errorf(": %w", err)
+			}
+			return i, nil
+		} else {
+			// Pseudo-version
+			pseudoVersion, err := ParsePseudoVersion(version)
+			if err != nil {
+				return Info{}, xerrors.Errorf(": %w", err)
+			}
+			i, err := m.ghProxy.GetInfoRevision(ctx, moduleRoot, module, pseudoVersion)
+			if err != nil {
+				return i, xerrors.Errorf(": %w", err)
+			}
+			return i, nil
 		}
-		return i, nil
 	}
 
 	return Info{}, xerrors.Errorf("%s is not found in %s", version, module)
@@ -160,11 +175,24 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (str
 		return string(goMod), nil
 	}
 	if moduleRoot.IsGitHub {
-		modFile, err := m.ghProxy.GetGoMod(ctx, moduleRoot, mod, version)
-		if err != nil {
-			return "", xerrors.Errorf(": %w", err)
+		if IsSemanticVersion(version) {
+			modFile, err := m.ghProxy.GetGoMod(ctx, moduleRoot, mod, version)
+			if err != nil {
+				return "", xerrors.Errorf(": %w", err)
+			}
+			return modFile, nil
+		} else {
+			// Pseudo-version
+			pseudoVersion, err := ParsePseudoVersion(version)
+			if err != nil {
+				return "", xerrors.Errorf(": %w", err)
+			}
+			modFile, err := m.ghProxy.GetGoModRevision(ctx, moduleRoot, mod, pseudoVersion)
+			if err != nil {
+				return "", xerrors.Errorf(": %w", err)
+			}
+			return modFile, nil
 		}
-		return modFile, nil
 	}
 
 	return "", xerrors.Errorf("%s is not found", version)
@@ -181,8 +209,15 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, module, version s
 		return nil
 	}
 	if moduleRoot.IsGitHub {
-		if err := m.ghProxy.Archive(ctx, w, moduleRoot, module, version); err != nil {
-			return xerrors.Errorf(": %w", err)
+		if IsSemanticVersion(version) {
+			if err := m.ghProxy.Archive(ctx, w, moduleRoot, module, version); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
+		} else {
+			// Pseudo-version
+			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, module, version); err != nil {
+				return xerrors.Errorf(": %w", err)
+			}
 		}
 		return nil
 	}
@@ -264,7 +299,33 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 		logger.Log.Warn("Failed set cache", zap.Error(err))
 	}
 	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t}, nil
+}
 
+func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoot, module string, pseudoVersion *PseudoVersion) (Info, error) {
+	if len(pseudoVersion.Revision) > 11 {
+		t, err := g.cache.GetModInfo(module, pseudoVersion.Revision)
+		if err == nil {
+			logger.Log.Debug("The mod info was found in cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision))
+			return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150504"), pseudoVersion.Revision)}, nil
+		}
+	}
+	logger.Log.Debug("Get commit information of pseudo-version from GitHub API")
+	u, err := url.Parse(moduleRoot.RepositoryURL)
+	if err != nil {
+		return Info{}, xerrors.Errorf(": %w", err)
+	}
+	s := strings.Split(u.Path, "/")
+	owner, repo := s[1], s[2]
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
+	if err != nil {
+		return Info{}, xerrors.Errorf(": %w", err)
+	}
+
+	t := commit.Commit.Committer.GetDate()
+	if err := g.cache.SetModInfo(module, commit.GetSHA(), t); err != nil {
+		logger.Log.Warn("Failed set cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision), zap.Error(err))
+	}
+	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t}, nil
 }
 
 func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, module *Module, version string) (string, error) {
@@ -310,6 +371,50 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 	return buf, nil
 }
 
+func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRoot, module *Module, pseudoVersion *PseudoVersion) (string, error) {
+	if len(pseudoVersion.Revision) > 11 {
+		modFile, err := g.cache.GetModFile(module.Path, pseudoVersion.Revision)
+		if err == nil {
+			logger.Log.Debug("The module file was found in cache",
+				zap.String("module", module.Path),
+				zap.String("version", pseudoVersion.Revision),
+			)
+			return string(modFile), nil
+		}
+	}
+	logger.Log.Debug("Get the module file of pseudo-version from GitHub API", zap.String("url", moduleRoot.RepositoryURL))
+	u, err := url.Parse(moduleRoot.RepositoryURL)
+	if err != nil {
+		return "", xerrors.Errorf(": %w", err)
+	}
+	s := strings.Split(u.Path, "/")
+	owner, repo := s[1], s[2]
+	contents, _, _, err := g.githubClient.Repositories.GetContents(
+		ctx,
+		owner,
+		repo,
+		module.ModFilePath,
+		&github.RepositoryContentGetOptions{
+			Ref: pseudoVersion.Revision,
+		},
+	)
+	if err != nil {
+		return "", xerrors.Errorf(": %w", err)
+	}
+	if contents == nil {
+		return "", xerrors.Errorf("%s is not found", pseudoVersion)
+	}
+	buf, err := contents.GetContent()
+	if err != nil {
+		return "", xerrors.Errorf(": %w", err)
+	}
+
+	if err := g.cache.SetModFile(module.Path, pseudoVersion.Revision, []byte(buf)); err != nil {
+		logger.Log.Warn("Failed set the module fie", zap.Error(err))
+	}
+	return buf, nil
+}
+
 func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, module, version string) error {
 	if len(version) > 11 {
 		if err := g.cache.Archive(ctx, module, version[:12], w); err == nil {
@@ -337,13 +442,102 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	archiveUrl, _, err := g.githubClient.Repositories.GetArchiveLink(
+
+	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, module, version, commit)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	buf := new(bytes.Buffer)
+	if err := archiver.Pack(ctx, buf); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	data := buf.Bytes()
+	if err := g.cache.SaveArchive(ctx, module, commit.GetSHA()[:12], data); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, module, version string) error {
+	mod := moduleRoot.FindModule(module)
+	if mod == nil {
+		return xerrors.Errorf("%s module is not found", module)
+	}
+
+	logger.Log.Debug("Make the archive file for pseudo-version through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
+	pseudoVersion, err := ParsePseudoVersion(version)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	u, err := url.Parse(moduleRoot.RepositoryURL)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	s := strings.Split(u.Path, "/")
+	owner, repo := s[1], s[2]
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, module, version, commit)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	buf := new(bytes.Buffer)
+	if err := archiver.Pack(ctx, buf); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	data := buf.Bytes()
+	if err := g.cache.SaveArchive(ctx, module, commit.GetSHA()[:12], data); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	return nil
+}
+
+type ModuleArchive struct {
+	ModuleRoot *ModuleRoot
+	Module     *Module
+	Version    string
+	Revision   string
+
+	ghClient *github.Client
+}
+
+func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot, module, version string, commit *github.RepositoryCommit) (*ModuleArchive, error) {
+	mod := moduleRoot.FindModule(module)
+	if mod == nil {
+		return nil, xerrors.Errorf("%s module is not found", module)
+	}
+
+	return &ModuleArchive{ModuleRoot: moduleRoot, Module: mod, Version: version, Revision: commit.GetSHA(), ghClient: ghClient}, nil
+}
+
+func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
+	logger.Log.Debug("Make the archive file through GitHub API", zap.String("url", a.ModuleRoot.RepositoryURL))
+	u, err := url.Parse(a.ModuleRoot.RepositoryURL)
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	s := strings.Split(u.Path, "/")
+	owner, repo := s[1], s[2]
+	archiveUrl, _, err := a.ghClient.Repositories.GetArchiveLink(
 		ctx,
 		owner,
 		repo,
 		github.Tarball,
 		&github.RepositoryContentGetOptions{
-			Ref: version,
+			Ref: a.Revision,
 		},
 		true,
 	)
@@ -383,19 +577,18 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	}
 
 	excludeDirs := make(map[string]struct{})
-	for _, v := range moduleRoot.Modules {
-		if v.Path == module {
+	for _, v := range a.ModuleRoot.Modules {
+		if v.Path == a.Module.Path {
 			continue
 		}
 		excludeDirs[filepath.Dir(v.ModFilePath)+"/"] = struct{}{}
 	}
-	goModFileDir := filepath.Dir(mod.ModFilePath)
-	modDir := mod.Path + "@" + version
+	goModFileDir := filepath.Dir(a.Module.ModFilePath)
+	modDir := a.Module.Path + "@" + a.Version
 	foundLicenseFile := false
 	licenseFiles := make(map[string]*bytes.Buffer)
 
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
+	zipWriter := zip.NewWriter(w)
 	archiveFileReader := tar.NewReader(fr)
 Walk:
 	for {
@@ -426,7 +619,7 @@ Walk:
 			licenseFiles[path] = buf
 		}
 
-		// Skip the file is under exclude directories
+		// Skip a file it is located under exclude directories
 		for k := range excludeDirs {
 			if strings.HasPrefix(path, k) {
 				if _, err := io.Copy(io.Discard, archiveFileReader); err != nil {
@@ -482,13 +675,53 @@ Walk:
 	if err := zipWriter.Close(); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	data := buf.Bytes()
-	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	if err := g.cache.SaveArchive(ctx, module, commit.GetSHA()[:12], data); err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
 
 	return nil
+}
+
+type PseudoVersion struct {
+	BaseVersion string
+	Timestamp   string
+	Revision    string
+}
+
+func ParsePseudoVersion(version string) (*PseudoVersion, error) {
+	s := strings.Split(version, "-")
+	if len(s) != 3 {
+		return nil, xerrors.New("invalid pseudo-version format")
+	}
+	_, err := time.Parse("20060102150405", s[1])
+	if err != nil {
+		return nil, xerrors.Errorf("invalid timestamp in pseudo-version: %w", err)
+	}
+	if len(s[2]) < 12 {
+		return nil, xerrors.Errorf("invalid revision: revision is shorter")
+	} else if len(s[2]) > 12 {
+		return nil, xerrors.Errorf("invalid revision: revision is longer")
+	}
+
+	return &PseudoVersion{BaseVersion: s[0], Timestamp: s[1], Revision: s[2]}, nil
+}
+
+func (p *PseudoVersion) String() string {
+	return fmt.Sprintf("%s-%s-%s", p.BaseVersion, p.Timestamp, p.Revision)
+}
+
+func IsSemanticVersion(version string) bool {
+	if len(version) == 0 {
+		return false
+	}
+
+	ver, err := semver.Parse(version[1:])
+	if err != nil {
+		return false
+	}
+	if len(ver.Pre) != 0 {
+		if ver.Pre[0].VersionStr == "pre" && len(ver.Pre) == 1 {
+			return true
+		}
+		return false
+	}
+
+	return true
 }

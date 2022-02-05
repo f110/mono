@@ -16,6 +16,7 @@ go_library(
         "//go/pkg/logger",
         "//go/pkg/regexp/regexputil",
         "//go/pkg/storage",
+        "//vendor/github.com/blang/semver",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
@@ -36,7 +37,10 @@ go_library(
 
 go_test(
     name = "gomodule_test",
-    srcs = ["fetcher_test.go"],
+    srcs = [
+        "fetcher_test.go",
+        "proxy_test.go",
+    ],
     embed = [":gomodule"],
     deps = [
         "//vendor/github.com/go-git/go-git/v5:go-git",

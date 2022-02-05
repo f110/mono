@@ -113,6 +113,8 @@ func (c *goModuleProxyCommand) Init() error {
 			return xerrors.Errorf(": %w", err)
 		}
 		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey, c.StorageCACertFile)
+	} else {
+		logger.Log.Debug("Disable cache")
 	}
 
 	return nil
