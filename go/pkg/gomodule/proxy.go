@@ -690,17 +690,26 @@ func ParsePseudoVersion(version string) (*PseudoVersion, error) {
 	if len(s) != 3 {
 		return nil, xerrors.New("invalid pseudo-version format")
 	}
-	_, err := time.Parse("20060102150405", s[1])
+	ver, ts, rev := s[0], s[1], s[2]
+	if strings.Contains(ts, "0.") {
+		t := strings.Split(ts, "0.")
+		ts = t[len(t)-1]
+		if t[0] != "" {
+			pre := strings.Join(t[:len(t)-1], "0.")
+			ver = fmt.Sprintf("%s-%s", ver, pre[:len(pre)-1])
+		}
+	}
+	_, err := time.Parse("20060102150405", ts)
 	if err != nil {
 		return nil, xerrors.Errorf("invalid timestamp in pseudo-version: %w", err)
 	}
-	if len(s[2]) < 12 {
+	if len(rev) < 12 {
 		return nil, xerrors.Errorf("invalid revision: revision is shorter")
-	} else if len(s[2]) > 12 {
+	} else if len(rev) > 12 {
 		return nil, xerrors.Errorf("invalid revision: revision is longer")
 	}
 
-	return &PseudoVersion{BaseVersion: s[0], Timestamp: s[1], Revision: s[2]}, nil
+	return &PseudoVersion{BaseVersion: ver, Timestamp: ts, Revision: rev}, nil
 }
 
 func (p *PseudoVersion) String() string {
