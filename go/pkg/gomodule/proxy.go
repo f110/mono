@@ -411,14 +411,12 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 }
 
 func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
-	if len(version) > 11 {
-		if err := g.cache.Archive(ctx, moduleName, version[:12], w); err == nil {
-			logger.Log.Debug("An archive file of module was found in cache",
-				zap.String("module", moduleName),
-				zap.String("version", version[:12]),
-			)
-			return nil
-		}
+	if err := g.cache.Archive(ctx, moduleName, version, w); err == nil {
+		logger.Log.Debug("An archive file of module was found in cache",
+			zap.String("module", moduleName),
+			zap.String("version", version),
+		)
+		return nil
 	}
 
 	mod := moduleRoot.FindModule(moduleName)
@@ -448,7 +446,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	}
 
 	data := buf.Bytes()
-	if err := g.cache.SaveArchive(ctx, moduleName, commit.GetSHA()[:12], data); err != nil {
+	if err := g.cache.SaveArchive(ctx, moduleName, version, data); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
@@ -458,10 +456,10 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	return nil
 }
 
-func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, module, version string) error {
-	mod := moduleRoot.FindModule(module)
+func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
+	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Errorf("%s module is not found", module)
+		return xerrors.Errorf("%s module is not found", moduleName)
 	}
 
 	logger.Log.Debug("Make the archive file for pseudo-version through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
@@ -479,8 +477,15 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
+	if err := g.cache.Archive(ctx, moduleName, commit.GetSHA()[:12], w); err == nil {
+		logger.Log.Debug("An archive file of module was found in cache",
+			zap.String("module", moduleName),
+			zap.String("revision", commit.GetSHA()[:12]),
+		)
+		return nil
+	}
 
-	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, module, version, commit)
+	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, moduleName, version, commit)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -490,7 +495,7 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 	}
 
 	data := buf.Bytes()
-	if err := g.cache.SaveArchive(ctx, module, commit.GetSHA()[:12], data); err != nil {
+	if err := g.cache.SaveArchive(ctx, moduleName, commit.GetSHA()[:12], data); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
