@@ -1,24 +1,22 @@
 package gomodule
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/blang/semver"
 	"github.com/google/go-github/v32/github"
 	"go.uber.org/zap"
+	"golang.org/x/mod/module"
+	modzip "golang.org/x/mod/zip"
 	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
@@ -104,15 +102,15 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 	return versions, nil
 }
 
-func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info, error) {
-	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
+func (m *ModuleProxy) GetInfo(ctx context.Context, moduleName, version string) (Info, error) {
+	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
 		return Info{}, xerrors.Errorf(": %w", err)
 	}
 
-	mod := moduleRoot.FindModule(module)
+	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return Info{}, xerrors.Errorf("%s is not found", module)
+		return Info{}, xerrors.Errorf("%s is not found", moduleName)
 	}
 	for _, v := range mod.Versions {
 		if version == v.Semver {
@@ -121,19 +119,18 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 	}
 
 	if moduleRoot.IsGitHub {
-		if IsSemanticVersion(version) {
-			i, err := m.ghProxy.GetInfo(ctx, moduleRoot, module, version)
+		if module.IsPseudoVersion(version) {
+			pseudoVersion, err := ParsePseudoVersion(version)
+			if err != nil {
+				return Info{}, xerrors.Errorf(": %w", err)
+			}
+			i, err := m.ghProxy.GetInfoRevision(ctx, moduleRoot, moduleName, pseudoVersion)
 			if err != nil {
 				return i, xerrors.Errorf(": %w", err)
 			}
 			return i, nil
 		} else {
-			// Pseudo-version
-			pseudoVersion, err := ParsePseudoVersion(version)
-			if err != nil {
-				return Info{}, xerrors.Errorf(": %w", err)
-			}
-			i, err := m.ghProxy.GetInfoRevision(ctx, moduleRoot, module, pseudoVersion)
+			i, err := m.ghProxy.GetInfo(ctx, moduleRoot, moduleName, version)
 			if err != nil {
 				return i, xerrors.Errorf(": %w", err)
 			}
@@ -141,7 +138,7 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, module, version string) (Info
 		}
 	}
 
-	return Info{}, xerrors.Errorf("%s is not found in %s", version, module)
+	return Info{}, xerrors.Errorf("%s is not found in %s", version, moduleName)
 }
 
 func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info, error) {
@@ -159,35 +156,34 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 	return Info{Version: modVer.Version, Time: modVer.Time}, nil
 }
 
-func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (string, error) {
-	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
+func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) (string, error) {
+	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
 		return "", xerrors.Errorf(": %w", err)
 	}
 
-	mod := moduleRoot.FindModule(module)
-	if mod == nil {
+	goMod := moduleRoot.FindModule(moduleName)
+	if goMod == nil {
 		return "", xerrors.Errorf("%s is not found", version)
 	}
 
-	goMod, err := mod.ModuleFile(version)
+	goModFile, err := goMod.ModuleFile(version)
 	if err == nil {
-		return string(goMod), nil
+		return string(goModFile), nil
 	}
 	if moduleRoot.IsGitHub {
-		if IsSemanticVersion(version) {
-			modFile, err := m.ghProxy.GetGoMod(ctx, moduleRoot, mod, version)
+		if module.IsPseudoVersion(version) {
+			pseudoVersion, err := ParsePseudoVersion(version)
+			if err != nil {
+				return "", xerrors.Errorf(": %w", err)
+			}
+			modFile, err := m.ghProxy.GetGoModRevision(ctx, moduleRoot, goMod, pseudoVersion)
 			if err != nil {
 				return "", xerrors.Errorf(": %w", err)
 			}
 			return modFile, nil
 		} else {
-			// Pseudo-version
-			pseudoVersion, err := ParsePseudoVersion(version)
-			if err != nil {
-				return "", xerrors.Errorf(": %w", err)
-			}
-			modFile, err := m.ghProxy.GetGoModRevision(ctx, moduleRoot, mod, pseudoVersion)
+			modFile, err := m.ghProxy.GetGoMod(ctx, moduleRoot, goMod, version)
 			if err != nil {
 				return "", xerrors.Errorf(": %w", err)
 			}
@@ -198,24 +194,23 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, module, version string) (str
 	return "", xerrors.Errorf("%s is not found", version)
 }
 
-func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, module, version string) error {
-	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
+func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, version string) error {
+	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	err = moduleRoot.Archive(ctx, w, module, version)
+	err = moduleRoot.Archive(ctx, w, moduleName, version)
 	if err == nil {
 		return nil
 	}
 	if moduleRoot.IsGitHub {
-		if IsSemanticVersion(version) {
-			if err := m.ghProxy.Archive(ctx, w, moduleRoot, module, version); err != nil {
+		if module.IsPseudoVersion(version) {
+			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		} else {
-			// Pseudo-version
-			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, module, version); err != nil {
+			if err := m.ghProxy.Archive(ctx, w, moduleRoot, moduleName, version); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}
@@ -415,20 +410,20 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 	return buf, nil
 }
 
-func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, module, version string) error {
+func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
 	if len(version) > 11 {
-		if err := g.cache.Archive(ctx, module, version[:12], w); err == nil {
+		if err := g.cache.Archive(ctx, moduleName, version[:12], w); err == nil {
 			logger.Log.Debug("An archive file of module was found in cache",
-				zap.String("module", module),
+				zap.String("module", moduleName),
 				zap.String("version", version[:12]),
 			)
 			return nil
 		}
 	}
 
-	mod := moduleRoot.FindModule(module)
+	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Errorf("%s module is not found", module)
+		return xerrors.Errorf("%s module is not found", moduleName)
 	}
 
 	logger.Log.Debug("Make the archive file through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
@@ -443,7 +438,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 		return xerrors.Errorf(": %w", err)
 	}
 
-	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, module, version, commit)
+	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, moduleName, version, commit)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -453,7 +448,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	}
 
 	data := buf.Bytes()
-	if err := g.cache.SaveArchive(ctx, module, commit.GetSHA()[:12], data); err != nil {
+	if err := g.cache.SaveArchive(ctx, moduleName, commit.GetSHA()[:12], data); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
@@ -524,7 +519,7 @@ func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot,
 }
 
 func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
-	logger.Log.Debug("Make the archive file through GitHub API", zap.String("url", a.ModuleRoot.RepositoryURL))
+	logger.Log.Debug("Pack the archive file through GitHub API", zap.String("url", a.ModuleRoot.RepositoryURL))
 	u, err := url.Parse(a.ModuleRoot.RepositoryURL)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -535,7 +530,7 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 		ctx,
 		owner,
 		repo,
-		github.Tarball,
+		github.Zipball,
 		&github.RepositoryContentGetOptions{
 			Ref: a.Revision,
 		},
@@ -567,115 +562,21 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	archiveFile, err := os.Open(tmpFile.Name())
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
-	fr, err := gzip.NewReader(archiveFile)
+	fr, err := zip.OpenReader(tmpFile.Name())
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	excludeDirs := make(map[string]struct{})
-	for _, v := range a.ModuleRoot.Modules {
-		if v.Path == a.Module.Path {
+	var files []modzip.File
+	for _, v := range fr.File {
+		if v.Mode().IsDir() {
 			continue
 		}
-		excludeDirs[filepath.Dir(v.ModFilePath)+"/"] = struct{}{}
+		files = append(files, newModFile(v))
 	}
-	goModFileDir := filepath.Dir(a.Module.ModFilePath)
-	modDir := a.Module.Path + "@" + a.Version
-	foundLicenseFile := false
-	licenseFiles := make(map[string]*bytes.Buffer)
-
-	zipWriter := zip.NewWriter(w)
-	archiveFileReader := tar.NewReader(fr)
-Walk:
-	for {
-		header, err := archiveFileReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if header.Typeflag != tar.TypeReg {
-			if _, err := io.Copy(io.Discard, archiveFileReader); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			continue Walk
-		}
-		s := strings.Split(header.Name, "/")
-		if len(s) < 2 {
-			if _, err := io.Copy(io.Discard, archiveFileReader); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			continue Walk
-		}
-		path := strings.Join(s[1:], "/")
-
-		if !foundLicenseFile && filepath.Base(path) == "LICENSE" {
-			buf := new(bytes.Buffer)
-			if _, err := io.Copy(buf, archiveFileReader); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			licenseFiles[path] = buf
-		}
-
-		// Skip a file it is located under exclude directories
-		for k := range excludeDirs {
-			if strings.HasPrefix(path, k) {
-				if _, err := io.Copy(io.Discard, archiveFileReader); err != nil {
-					return xerrors.Errorf(": %w", err)
-				}
-				continue Walk
-			}
-		}
-
-		if goModFileDir != "." && !strings.HasPrefix(path, goModFileDir) {
-			if _, err := io.Copy(io.Discard, archiveFileReader); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			continue Walk
-		}
-
-		if filepath.Join(goModFileDir, "LICENSE") == path {
-			foundLicenseFile = true
-		}
-
-		p := strings.TrimPrefix(path, goModFileDir)
-		fileWriter, err := zipWriter.Create(filepath.Join(modDir, p))
-		if err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-		if _, err := io.Copy(fileWriter, archiveFileReader); err != nil {
-			return xerrors.Errorf(": %w", err)
-		}
-	}
-
-	if !foundLicenseFile {
-		d := goModFileDir
-		for {
-			buf, ok := licenseFiles[filepath.Join(d, "LICENSE")]
-			if !ok {
-				if d == "." {
-					break
-				}
-				d = filepath.Dir(d)
-				continue
-			}
-
-			fileWriter, err := zipWriter.Create(filepath.Join(modDir, "LICENSE"))
-			if err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			if _, err := io.Copy(fileWriter, buf); err != nil {
-				return xerrors.Errorf(": %w", err)
-			}
-			break
-		}
-	}
-	if err := zipWriter.Close(); err != nil {
+	if err := modzip.Create(w, module.Version{Path: a.Module.Path, Version: a.Version}, files); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-
 	return nil
 }
 
@@ -716,21 +617,26 @@ func (p *PseudoVersion) String() string {
 	return fmt.Sprintf("%s-%s-%s", p.BaseVersion, p.Timestamp, p.Revision)
 }
 
-func IsSemanticVersion(version string) bool {
-	if len(version) == 0 {
-		return false
-	}
+type modFile struct {
+	f *zip.File
+}
 
-	ver, err := semver.Parse(version[1:])
-	if err != nil {
-		return false
-	}
-	if len(ver.Pre) != 0 {
-		if ver.Pre[0].VersionStr == "pre" && len(ver.Pre) == 1 {
-			return true
-		}
-		return false
-	}
+func newModFile(f *zip.File) *modFile {
+	return &modFile{f: f}
+}
 
-	return true
+func (f *modFile) Path() string {
+	s := strings.Split(f.f.Name, "/")[1:]
+	if s[len(s)-1] == "" {
+		s = s[:len(s)-1]
+	}
+	return strings.Join(s, "/")
+}
+
+func (f *modFile) Lstat() (os.FileInfo, error) {
+	return f.f.FileInfo(), nil
+}
+
+func (f *modFile) Open() (io.ReadCloser, error) {
+	return f.f.Open()
 }

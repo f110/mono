@@ -12,7 +12,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.5.0
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.17.0
-	github.com/blang/semver v3.5.0+incompatible
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -57,7 +56,7 @@ require (
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
-	golang.org/x/mod v0.4.2
+	golang.org/x/mod v0.5.1
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/tools v0.1.2
