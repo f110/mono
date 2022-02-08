@@ -33,10 +33,6 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-const (
-	goProxy = "https://proxy.golang.org"
-)
-
 type Indexer struct {
 	Indexes []*RepositoryIndex
 
@@ -321,7 +317,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
-					cmd.Env = append(os.Environ(), fmt.Sprintf("GOPROXY=%s", goProxy))
+					cmd.Env = append(os.Environ(), fmt.Sprintf("GOPROXY=%s", os.Getenv("GOPROXY")))
 					if err := cmd.Run(); err != nil {
 						return err
 					}
