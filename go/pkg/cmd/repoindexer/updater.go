@@ -2,6 +2,8 @@ package repoindexer
 
 import (
 	"context"
+	"net/http"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -14,6 +16,7 @@ import (
 type UpdaterCommand struct {
 	IndexDir  string
 	Subscribe bool
+	HTTPAddr  string
 
 	Bucket               string
 	MinIOEndpoint        string
@@ -38,6 +41,9 @@ type UpdaterCommand struct {
 	manifestManager *ManifestManager
 	indexManager    *ObjectStorageIndexManager
 	latestKey       uint64
+
+	readyMu sync.Mutex
+	ready   bool
 }
 
 func NewUpdaterCommand() *UpdaterCommand {
@@ -68,6 +74,8 @@ func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&u.NATSStreamName, "nats-stream-name", u.NATSStreamName, "The name of stream for JetStream")
 	fs.StringVar(&u.NATSSubject, "nats-subject", u.NATSSubject, "The subject of stream")
 	fs.BoolVar(&u.Dev, "dev", u.Dev, "Development mode")
+	fs.StringVar(&u.HTTPAddr, "http-addr", u.HTTPAddr, "HTTP listen addr")
+
 }
 
 func (u *UpdaterCommand) Run() error {
@@ -78,8 +86,16 @@ func (u *UpdaterCommand) Run() error {
 	u.manifestManager = NewManifestManager(s)
 	u.indexManager = NewObjectStorageIndexManager(s, u.Bucket)
 
+	ch := make(chan Manifest)
+	go u.downloadThread(ch)
+
+	if u.HTTPAddr != "" {
+		if err := u.webEndpoint(u.HTTPAddr, ch); err != nil {
+			return xerrors.Errorf(": %w", err)
+		}
+	}
 	if u.Subscribe {
-		if err := u.subscribe(context.Background()); err != nil {
+		if err := u.subscribe(context.Background(), ch); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	} else {
@@ -89,6 +105,60 @@ func (u *UpdaterCommand) Run() error {
 	}
 
 	return nil
+}
+
+func (u *UpdaterCommand) webEndpoint(addr string, ch chan Manifest) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/update", func(w http.ResponseWriter, req *http.Request) {
+		go func() {
+			manifest, err := u.manifestManager.GetLatest(context.Background())
+			if err != nil {
+				logger.Log.Warn("Failed to get a latest manifest", zap.Error(err))
+				return
+			}
+			logger.Log.Info("Found manifest", zap.Uint64("key", manifest.ExecutionKey))
+
+			ch <- manifest
+		}()
+	})
+	mux.HandleFunc("/readiness", func(w http.ResponseWriter, req *http.Request) {
+		u.readyMu.Lock()
+		ready := u.ready
+		u.readyMu.Unlock()
+
+		if !ready {
+			http.Error(w, "not ready", http.StatusServiceUnavailable)
+			return
+		}
+	})
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+	logger.Log.Info("Listen web webpoint", zap.String("addr", addr))
+	go srv.ListenAndServe()
+
+	return nil
+}
+
+func (u *UpdaterCommand) downloadThread(ch chan Manifest) {
+	for {
+		select {
+		case m := <-ch:
+			if err := u.downloadIndex(m); err != nil {
+				u.readyMu.Lock()
+				u.ready = false
+				u.readyMu.Unlock()
+				logger.Log.Debug("Failed download an index", zap.Error(err), zap.Uint64("key", m.ExecutionKey))
+				continue
+			}
+			
+			u.readyMu.Lock()
+			u.ready = true
+			u.readyMu.Unlock()
+		}
+	}
 }
 
 func (u *UpdaterCommand) downloadLatest() error {
@@ -106,7 +176,7 @@ func (u *UpdaterCommand) downloadLatest() error {
 	return nil
 }
 
-func (u *UpdaterCommand) subscribe(ctx context.Context) error {
+func (u *UpdaterCommand) subscribe(ctx context.Context, ch chan Manifest) error {
 	n, err := NewNotify(u.NATSURL, u.NATSStreamName, u.NATSSubject)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
@@ -116,24 +186,36 @@ func (u *UpdaterCommand) subscribe(ctx context.Context) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	u.readyMu.Lock()
+	u.ready = true
+	u.readyMu.Unlock()
 	logger.Log.Info("Subscribe stream")
 Loop:
 	for {
 		select {
 		case m := <-sub.ch:
 			logger.Log.Info("Got notify", zap.Uint64("key", m.ExecutionKey))
-			if m.ExecutionKey < u.latestKey {
-				logger.Log.Debug("Notified manifest is old", zap.Uint64("latest", u.latestKey), zap.Uint64("got", m.ExecutionKey))
-				continue
-			}
-			if err := u.indexManager.Download(context.Background(), u.IndexDir, m); err != nil {
-				logger.Log.Warn("Failed download an index", zap.Error(err), zap.Uint64("key", m.ExecutionKey))
-			}
-			u.latestKey = m.ExecutionKey
+			ch <- m
 		case <-ctx.Done():
 			break Loop
 		}
 	}
+	return nil
+}
+
+func (u *UpdaterCommand) downloadIndex(m Manifest) error {
+	if m.ExecutionKey < u.latestKey {
+		logger.Log.Debug("Notified manifest is old", zap.Uint64("latest", u.latestKey), zap.Uint64("got", m.ExecutionKey))
+		return nil
+	}
+	if err := u.indexManager.Download(context.Background(), u.IndexDir, m); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	u.latestKey = m.ExecutionKey
+
+	u.readyMu.Lock()
+	u.ready = true
+	u.readyMu.Unlock()
 	return nil
 }
 
