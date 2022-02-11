@@ -249,7 +249,7 @@ func (b *BackupController) storeBackupFile(
 			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
-		client := storage.NewGCS(b, spec.Bucket)
+		client := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
 		history.Path = filepath.Join(spec.Path, filename)
 		if err := client.PutReader(ctx, filepath.Join(spec.Path, filename), data); err != nil {
@@ -324,7 +324,7 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
-		client := storage.NewGCS(b, spec.Bucket)
+		client := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
 		files, err := client.List(ctx, spec.Path)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)

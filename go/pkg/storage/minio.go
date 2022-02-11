@@ -11,6 +11,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +21,7 @@ import (
 	pf "k8s.io/client-go/tools/portforward"
 
 	"go.f110.dev/mono/go/pkg/k8s/portforward"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type MinIOOptions struct {
@@ -30,6 +32,7 @@ type MinIOOptions struct {
 	Port            int
 	AccessKey       string
 	SecretAccessKey string
+	Retries         int
 
 	Dev bool
 
@@ -196,18 +199,26 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	_, err = mc.PutObject(ctx, m.bucket, name, r, -1, minio.PutObjectOptions{})
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
+	retryCount := 1
+	for {
+		_, err = mc.PutObject(ctx, m.bucket, name, r, -1, minio.PutObjectOptions{})
+		if err != nil {
+			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
+				logger.Log.Info("Retrying put a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return xerrors.Errorf(": %w", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 func (m *MinIO) List(ctx context.Context, prefix string) ([]*Object, error) {
 	if prefix == "" {
 		prefix = "/"
 	}
+
 	files, err := m.ListRecursive(ctx, prefix, true)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -232,13 +243,23 @@ func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool
 	if prefix[len(prefix)-1] != '/' {
 		prefix += "/"
 	}
-	listCh := mc.ListObjects(ctx, m.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: recursive})
-	files := make([]minio.ObjectInfo, 0)
-	for obj := range listCh {
-		if obj.Err != nil {
-			return nil, xerrors.Errorf(": %w", obj.Err)
+	var files []minio.ObjectInfo
+	retryCount := 1
+ListObjects:
+	for {
+		listCh := mc.ListObjects(ctx, m.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: recursive})
+		for obj := range listCh {
+			if obj.Err != nil {
+				if m.opt.Retries > 0 && retryCount < m.opt.Retries {
+					logger.Log.Info("Retrying list objects", zap.Int("retryCount", retryCount), zap.String("prefi", prefix))
+					retryCount++
+					continue ListObjects
+				}
+				return nil, xerrors.Errorf(": %w", obj.Err)
+			}
+			files = append(files, obj)
 		}
-		files = append(files, obj)
+		break
 	}
 
 	return files, nil
@@ -250,12 +271,20 @@ func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	obj, err := mc.GetObject(ctx, m.bucket, name, minio.GetObjectOptions{})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
+	retryCount := 1
+	for {
+		obj, err := mc.GetObject(ctx, m.bucket, name, minio.GetObjectOptions{})
+		if err != nil {
+			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
+				logger.Log.Info("Retrying get a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return nil, xerrors.Errorf(": %w", err)
+		}
 
-	return obj, nil
+		return obj, nil
+	}
 }
 
 func (m *MinIO) Delete(ctx context.Context, name string) error {
@@ -264,12 +293,19 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	err = mc.RemoveObject(ctx, m.bucket, name, minio.RemoveObjectOptions{})
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
+	retryCount := 1
+	for {
+		err = mc.RemoveObject(ctx, m.bucket, name, minio.RemoveObjectOptions{})
+		if err != nil {
+			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
+				logger.Log.Info("Retrying remove a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return xerrors.Errorf(": %w", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 func (m *MinIO) Close() {

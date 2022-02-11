@@ -149,6 +149,7 @@ func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
 		} else if u.MinIOEndpoint != "" {
 			opt = storage.NewMinIOOptionsViaEndpoint(u.MinIOEndpoint, u.MinIORegion, u.MinIOAccessKey, u.MinIOSecretAccessKey)
 		}
+		opt.Retries = 3
 		return storage.NewMinIOStorage(u.Bucket, opt), nil
 	}
 	if u.canUseS3() {
@@ -160,6 +161,7 @@ func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
 		}
 		opt.PathStyle = true
 		opt.CACertFile = u.S3CACertFile
+		opt.Retries = 3
 		return storage.NewS3(u.Bucket, opt), nil
 	}
 

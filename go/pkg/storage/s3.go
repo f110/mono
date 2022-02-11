@@ -13,7 +13,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.uber.org/zap"
 	"golang.org/x/xerrors"
+
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type S3Options struct {
@@ -24,6 +27,7 @@ type S3Options struct {
 	PathStyle       bool
 	CACertFile      string
 	PartSize        uint64
+	Retries         int
 
 	client *s3.Client
 }
@@ -122,15 +126,23 @@ func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	obj, err := c.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(name),
-	})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
+	retryCount := 1
+	for {
+		obj, err := c.GetObject(ctx, &s3.GetObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(name),
+		})
+		if err != nil {
+			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
+				logger.Log.Info("Retrying get a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return nil, xerrors.Errorf(": %w", err)
+		}
 
-	return obj.Body, nil
+		return obj.Body, nil
+	}
 }
 
 func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
@@ -146,10 +158,22 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 
 	var objs []*Object
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+		var page *s3.ListObjectsV2Output
+		retryCount := 1
+		for {
+			p, err := paginator.NextPage(ctx)
+			if err != nil {
+				if s.opt.Retries > 0 && retryCount < s.opt.Retries {
+					logger.Log.Info("Retrying get a next page", zap.Int("retryCount", retryCount), zap.String("prefix", prefix))
+					retryCount++
+					continue
+				}
+				return nil, xerrors.Errorf(": %w", err)
+			}
+			page = p
+			break
 		}
+
 		for _, v := range page.Contents {
 			objs = append(objs, &Object{
 				Name:         aws.ToString(v.Key),
@@ -171,16 +195,24 @@ func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(name),
-		Body:   r,
-	})
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
+	retryCount := 1
+	for {
+		_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(name),
+			Body:   r,
+		})
+		if err != nil {
+			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
+				logger.Log.Info("Retrying put a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return xerrors.Errorf(": %w", err)
+		}
 
-	return nil
+		return nil
+	}
 }
 
 func (s *S3) Delete(ctx context.Context, name string) error {
@@ -189,13 +221,21 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	_, err = c.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(name),
-	})
-	if err != nil {
-		return xerrors.Errorf(": %w", err)
-	}
+	retryCount := 1
+	for {
+		_, err = c.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(name),
+		})
+		if err != nil {
+			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
+				logger.Log.Info("Retrying delete a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				retryCount++
+				continue
+			}
+			return xerrors.Errorf(": %w", err)
+		}
 
-	return nil
+		return nil
+	}
 }

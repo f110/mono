@@ -80,7 +80,7 @@ func etcdBackup(args []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	up := storage.NewGCS(credential, bucket)
+	up := storage.NewGCS(credential, bucket, storage.GCSOptions{})
 	path := filepath.Join(pathPrefix, bu.Time().In(loc).Format("2006-01-02_15.zlib"))
 	if err := up.PutReader(context.Background(), path, compressed); err != nil {
 		return xerrors.Errorf(": %w", err)
