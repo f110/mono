@@ -4,6 +4,7 @@ go_library(
     name = "notion",
     srcs = [
         "doc-server.go",
+        "github-task.go",
         "todo-scheduler.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/notion",
@@ -11,7 +12,9 @@ go_library(
     deps = [
         "//go/pkg/k8s/volume",
         "//go/pkg/logger",
+        "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/robfig/cron/v3:cron",
+        "//vendor/github.com/shurcooL/githubv4",
         "//vendor/go.f110.dev/notion-api/v3:notion-api",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",

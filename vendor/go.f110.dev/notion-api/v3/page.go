@@ -58,6 +58,9 @@ func (p *Page) SetProperty(key string, value *PropertyData) {
 	if schema == nil {
 		return
 	}
+	if value.Type == "" {
+		value.Type = schema.Type
+	}
 
 	p.Properties[key] = value
 }

@@ -273,9 +273,9 @@ type MultiSelectProperty struct {
 }
 
 type Option struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Color string `json:"color,omitempty"`
 }
 
 type DateProperty struct {
