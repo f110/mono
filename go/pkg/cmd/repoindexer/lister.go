@@ -101,14 +101,24 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 				logger.Log.Info("Failed execute query", zap.Error(err))
 				continue
 			}
+			logger.Log.Debug(
+				"Found some repository candidates",
+				zap.String("query", rule.Query),
+				zap.Int32("count", listRepositoriesQuery.Search.RepositoryCount),
+			)
 			for _, v := range listRepositoriesQuery.Search.Nodes {
 				if v.Type != "Repository" {
+					logger.Log.Debug("Skip because the type is not Repository", zap.String("type", v.Type))
 					continue
 				}
 				if v.Repository.IsArchived {
+					logger.Log.Debug("Skip because the repository is archived",
+						zap.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
 					continue
 				}
 				if _, ok := repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)]; ok {
+					logger.Log.Debug("Skip because already listed",
+						zap.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
 					continue
 				}
 
@@ -117,7 +127,6 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 					replaced := rule.urlReplaceRule.re.ReplaceAllString(u, rule.urlReplaceRule.replace)
 					if u != replaced {
 						u = replaced
-						break
 					}
 				}
 
@@ -173,7 +182,8 @@ var listRepositoriesQuery struct {
 			EndCursor   githubv4.String
 			HasNextPage bool
 		}
-		Nodes []struct {
+		RepositoryCount int32
+		Nodes           []struct {
 			Type       string           `graphql:"__typename"`
 			Repository RepositorySchema `graphql:"... on Repository"`
 		}
