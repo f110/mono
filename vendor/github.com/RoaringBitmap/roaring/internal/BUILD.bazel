@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = [
+        "byte_input.go",
+        "pools.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/RoaringBitmap/roaring/internal",
+    importpath = "github.com/RoaringBitmap/roaring/internal",
+    visibility = ["//vendor/github.com/RoaringBitmap/roaring:__subpackages__"],
+)

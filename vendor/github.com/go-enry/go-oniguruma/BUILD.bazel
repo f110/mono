@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-oniguruma",
+    srcs = [
+        "chelper.c",
+        "chelper.h",
+        "constants.go",
+        "quotemeta.go",
+        "regex.go",
+    ],
+    cgo = True,
+    clinkopts = ["-L/usr/local/lib -lonig"],
+    copts = ["-I/usr/local/include"],
+    importmap = "go.f110.dev/mono/vendor/github.com/go-enry/go-oniguruma",
+    importpath = "github.com/go-enry/go-oniguruma",
+    visibility = ["//visibility:public"],
+)

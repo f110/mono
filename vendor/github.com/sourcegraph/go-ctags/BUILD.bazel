@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-ctags",
+    srcs = [
+        "args.go",
+        "ctags.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/sourcegraph/go-ctags",
+    importpath = "github.com/sourcegraph/go-ctags",
+    visibility = ["//visibility:public"],
+)

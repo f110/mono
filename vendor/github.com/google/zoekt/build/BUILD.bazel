@@ -14,5 +14,8 @@ go_library(
         "//vendor/github.com/bmatcuk/doublestar",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/ctags",
+        "//vendor/github.com/grafana/regexp",
+        "//vendor/github.com/rs/xid",
+        "//vendor/gopkg.in/natefinch/lumberjack.v2:lumberjack_v2",
     ],
 )

@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpcmetrics",
+    srcs = [
+        "doc.go",
+        "endpoints.go",
+        "metrics.go",
+        "normalizer.go",
+        "observer.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/rpcmetrics",
+    importpath = "github.com/uber/jaeger-client-go/rpcmetrics",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/opentracing/opentracing-go",
+        "//vendor/github.com/opentracing/opentracing-go/ext",
+        "//vendor/github.com/uber/jaeger-client-go",
+        "//vendor/github.com/uber/jaeger-lib/metrics",
+    ],
+)

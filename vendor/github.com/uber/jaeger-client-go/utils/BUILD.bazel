@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "utils",
+    srcs = [
+        "http_json.go",
+        "localip.go",
+        "rand.go",
+        "rate_limiter.go",
+        "reconnecting_udp_conn.go",
+        "udp_client.go",
+        "utils.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/utils",
+    importpath = "github.com/uber/jaeger-client-go/utils",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/uber/jaeger-client-go/log",
+        "//vendor/github.com/uber/jaeger-client-go/thrift",
+        "//vendor/github.com/uber/jaeger-client-go/thrift-gen/agent",
+        "//vendor/github.com/uber/jaeger-client-go/thrift-gen/jaeger",
+        "//vendor/github.com/uber/jaeger-client-go/thrift-gen/zipkincore",
+    ],
+)

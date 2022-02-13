@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rpc",
+    srcs = [
+        "client.go",
+        "debug.go",
+        "server.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/keegancsmith/rpc",
+    importpath = "github.com/keegancsmith/rpc",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/keegancsmith/rpc/internal/svc"],
+)

@@ -4,6 +4,7 @@ go_library(
     name = "query",
     srcs = [
         "bits.go",
+        "marshal.go",
         "parse.go",
         "query.go",
         "regexp.go",
@@ -11,4 +12,9 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/query",
     importpath = "github.com/google/zoekt/query",
     visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/RoaringBitmap/roaring",
+        "//vendor/github.com/go-enry/go-enry/v2:go-enry",
+        "//vendor/github.com/grafana/regexp",
+    ],
 )

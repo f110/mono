@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "debugserver",
+    srcs = [
+        "debug.go",
+        "expvar.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/debugserver",
+    importpath = "github.com/google/zoekt/debugserver",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/zoekt",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promauto",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//vendor/golang.org/x/net/trace",
+    ],
+)

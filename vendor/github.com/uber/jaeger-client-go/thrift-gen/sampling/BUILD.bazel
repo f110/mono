@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sampling",
+    srcs = [
+        "constants.go",
+        "samplingmanager.go",
+        "ttypes.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/thrift-gen/sampling",
+    importpath = "github.com/uber/jaeger-client-go/thrift-gen/sampling",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/uber/jaeger-client-go/thrift"],
+)

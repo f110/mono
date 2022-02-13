@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "smat",
+    srcs = [
+        "actionseq.go",
+        "smat.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/mschoch/smat",
+    importpath = "github.com/mschoch/smat",
+    visibility = ["//visibility:public"],
+)

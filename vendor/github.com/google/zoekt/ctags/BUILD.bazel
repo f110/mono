@@ -9,4 +9,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/ctags",
     importpath = "github.com/google/zoekt/ctags",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/sourcegraph/go-ctags"],
 )

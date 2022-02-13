@@ -7,13 +7,21 @@ go_library(
     importpath = "github.com/google/zoekt/cmd/zoekt-webserver",
     visibility = ["//visibility:private"],
     deps = [
+        "//vendor/cloud.google.com/go/profiler",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
+        "//vendor/github.com/google/zoekt/debugserver",
+        "//vendor/github.com/google/zoekt/query",
         "//vendor/github.com/google/zoekt/shards",
+        "//vendor/github.com/google/zoekt/stream",
         "//vendor/github.com/google/zoekt/web",
-        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//vendor/github.com/opentracing/opentracing-go",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promauto",
+        "//vendor/github.com/uber/jaeger-client-go",
+        "//vendor/github.com/uber/jaeger-client-go/config",
+        "//vendor/github.com/uber/jaeger-lib/metrics",
         "//vendor/go.uber.org/automaxprocs/maxprocs",
-        "//vendor/golang.org/x/net/trace",
     ],
 )
 

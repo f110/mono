@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "svc",
+    srcs = ["svc.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/keegancsmith/rpc/internal/svc",
+    importpath = "github.com/keegancsmith/rpc/internal/svc",
+    visibility = ["//vendor/github.com/keegancsmith/rpc:__subpackages__"],
+)
