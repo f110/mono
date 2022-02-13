@@ -1503,9 +1503,10 @@ static bool isTagWritable(const tagEntryInfo *const tag)
 	}
 	else if (isLanguageKindRefOnly(tag->langType, tag->kindIndex))
 	{
-		error (WARNING, "definition tag for refonly kind(%s) is made: %s",
+		error (WARNING, "PARSER BUG: a definition tag for a refonly kind(%s.%s) of is made: %s found in %s.",
+			   getLanguageName(tag->langType),
 			   getLanguageKind(tag->langType, tag->kindIndex)->name,
-			   tag->name);
+			   tag->name, tag->inputFileName);
 		/* This one is not so critical. */
 	}
 
@@ -1545,7 +1546,7 @@ static void writeTagEntry (const tagEntryInfo *const tag)
 
 	if (includeExtensionFlags ()
 	    && isXtagEnabled (XTAG_QUALIFIED_TAGS)
-	    && doesInputLanguageRequestAutomaticFQTag ()
+	    && doesInputLanguageRequestAutomaticFQTag (tag)
 		&& !isTagExtraBitMarked (tag, XTAG_QUALIFIED_TAGS)
 		&& !tag->skipAutoFQEmission)
 	{
@@ -1615,7 +1616,7 @@ extern void uncorkTagFile(void)
 
 		writeTagEntry (tag);
 
-		if (doesInputLanguageRequestAutomaticFQTag ()
+		if (doesInputLanguageRequestAutomaticFQTag (tag)
 		    && isXtagEnabled (XTAG_QUALIFIED_TAGS)
 			&& !isTagExtraBitMarked (tag, XTAG_QUALIFIED_TAGS)
 			&& !tag->skipAutoFQEmission
@@ -1775,6 +1776,7 @@ extern void setTagPositionFromTag (tagEntryInfo *const dst,
 								   const tagEntryInfo *const src)
 {
 		dst->lineNumber = src->lineNumber;
+		dst->boundaryInfo = src->boundaryInfo;
 		dst->filePosition = src->filePosition;
 }
 
@@ -1914,6 +1916,11 @@ static void    markTagExtraBitFull     (tagEntryInfo *const tag, xtagType extra,
 extern void    markTagExtraBit     (tagEntryInfo *const tag, xtagType extra)
 {
 	markTagExtraBitFull (tag, extra, true);
+}
+
+extern void    unmarkTagExtraBit    (tagEntryInfo *const tag, xtagType extra)
+{
+	markTagExtraBitFull (tag, extra, false);
 }
 
 extern bool isTagExtraBitMarked (const tagEntryInfo *const tag, xtagType extra)

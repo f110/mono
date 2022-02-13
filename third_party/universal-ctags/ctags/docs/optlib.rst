@@ -33,9 +33,9 @@ thus easily become a built-in parser. See ":ref:`optlib2c`" for details.
 Regular expression (regex) engine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Universal Ctags currently uses `the POSIX Extended Regular Expressions (ERE)
+Universal Ctags uses `the POSIX Extended Regular Expressions (ERE)
 <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html>`_
-syntax as same as Exuberant Ctags.
+syntax as same as Exuberant Ctags by default.
 
 During building Universal Ctags the ``configure`` script runs compatibility
 tests of the regex engine in the system library.  If tests pass the engine is
@@ -107,6 +107,24 @@ single literal character control codes before passing the pattern to glibc.
 You should always test your regex patterns against test files with strings that
 do and do not match. Pay particular emphasis to when it should *not* match, and
 how *much* it matches when it should.
+
+Perl-compatible regular expressions (PCRE2) engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Universal Ctags optionally supports `Perl-Compatible Regular Expressions (PCRE2)
+<https://www.pcre.org/current/doc/html/pcre2syntax.html>`_ syntax
+only if the Universal Ctags is built with ``pcre2`` library.
+See the output of ``--list-features`` option to know whether your Universal
+Ctags is built-with ``pcre2`` or not.
+
+PCRE2 *does* support many "modern" extensions.
+For example this pattern::
+
+       foo.*?bar
+
+Will match just the first part, ``foobar``, not this entire string,::
+
+       foobar, bar, and even more bar
 
 Regex option argument flags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -550,6 +568,56 @@ Example 2:
 	$ ctags --options=/tmp/pp.ctags -o - /tmp/input.pp
 	bar	/tmp/input.pp	/^    int bar$/;"	v	class:foo
 	foo	/tmp/input.pp	/^class foo {$/;"	c
+
+
+Example 3:
+
+.. code-block::
+
+	# in /tmp/input.docdoc
+	title T
+	...
+	section S0
+	...
+	section S1
+	...
+
+.. code-block:: ctags
+	:emphasize-lines: 15,21
+
+	# in /tmp/doc.ctags:
+	--langdef=doc
+	--map-doc=+.docdoc
+	--kinddef-doc=s,section,sections
+	--kinddef-doc=S,subsection,subsections
+
+	--_tabledef-doc=main
+	--_tabledef-doc=section
+	--_tabledef-doc=subsection
+
+	--_mtable-regex-doc=main/section +([^\n]+)\n/\1/s/{scope=push}{tenter=section}
+	--_mtable-regex-doc=main/[^\n]+\n|[^\n]+|\n//
+	--_mtable-regex-doc=main///{scope=clear}{tquit}
+
+	--_mtable-regex-doc=section/section +([^\n]+)\n/\1/s/{scope=replace}
+	--_mtable-regex-doc=section/subsection +([^\n]+)\n/\1/S/{scope=push}{tenter=subsection}
+	--_mtable-regex-doc=section/[^\n]+\n|[^\n]+|\n//
+	--_mtable-regex-doc=section///{scope=clear}{tquit}
+
+	--_mtable-regex-doc=subsection/(section )//{_advanceTo=0start}{tleave}{scope=pop}
+	--_mtable-regex-doc=subsection/subsection +([^\n]+)\n/\1/S/{scope=replace}
+	--_mtable-regex-doc=subsection/[^\n]+\n|[^\n]+|\n//
+	--_mtable-regex-doc=subsection///{scope=clear}{tquit}
+
+.. code-block:: console
+
+	% ctags --sort=no --fields=+nl --options=/tmp/doc.ctags -o - /tmp/input.docdoc
+	SEC0	/tmp/input.docdoc	/^section SEC0$/;"	s	line:1	language:doc
+	SUB0-1	/tmp/input.docdoc	/^subsection SUB0-1$/;"	S	line:3	language:doc	section:SEC0
+	SUB0-2	/tmp/input.docdoc	/^subsection SUB0-2$/;"	S	line:5	language:doc	section:SEC0
+	SEC1	/tmp/input.docdoc	/^section SEC1$/;"	s	line:7	language:doc
+	SUB1-1	/tmp/input.docdoc	/^subsection SUB1-1$/;"	S	line:9	language:doc	section:SEC1
+	SUB1-2	/tmp/input.docdoc	/^subsection SUB1-2$/;"	S	line:11	language:doc	section:SEC1
 
 
 NOTE: This flag doesn't work well with ``--mline-regex-<LANG>=``.
@@ -1469,7 +1537,8 @@ For *<PARSER>*, you can specify one of the following items:
 a name of a parser
 
 	If you know the guest parser you want to run before parsing
-	the input file, specify the name of the parser.
+	the input file, specify the name of the parser. Aliases of parsers
+	are also considered when finding a parser for the name.
 
 	An example of running C parser as a guest parser::
 
@@ -1480,7 +1549,8 @@ the group number of a regex pattern started from '``\``' (backslash)
 	If a parser name appears in an input file, write a regex pattern
 	to capture the name.  Specify the group number where the name is
 	stored to the parser.  In such case, use '``\``' as the prefix for
-	the number.
+	the number. Aliases of parsers are also considered when finding
+	a parser for the name.
 
 	Let's see an example. Git Flavor Markdown (GFM) is a language for
 	documentation. It provides a notation for quoting a snippet of
@@ -1659,6 +1729,8 @@ In addition you can enable/disable with the subparser usable
 
 Direction flags
 .........................................................................
+
+.. TESTCASE: Units/flags-langdef-directions.r
 
 As explained in ":ref:`multiple_parsers_directions`" in
 ":ref:`multiple_parsers`", you can choose direction(s) how a base parser and a

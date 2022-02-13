@@ -32,6 +32,8 @@ EXTRA_DIST   = README.md autogen.sh \
 	       win32/ctags.rc win32/ctags.exe.manifest win32/resource.h \
 	       win32/ctags_vs2013.sln \
 	       win32/ctags_vs2013.vcxproj win32/ctags_vs2013.vcxproj.filters \
+	       win32/ctags_vs2013.vcxproj.in win32/ctags_vs2013.vcxproj.filters.in \
+	       win32/Makefile \
 	       win32/gen-repoinfo.bat \
 	       misc/txt2cstr \
 	       $(PEG_INPUT) $(OPTLIB2C_INPUT) $(TXT2CSTR_INPUT) \
@@ -54,7 +56,9 @@ maintainer-clean-local:
 	rm -rf .deps misc/packcc/.dirstamp
 
 bin_PROGRAMS = ctags
-noinst_LIBRARIES = libctags.a
+noinst_LIBRARIES =
+noinst_LIBRARIES += libctags.a
+noinst_LIBRARIES += libutil.a
 
 noinst_PROGRAMS =
 
@@ -77,12 +81,22 @@ $(PACKCC): $(srcdir)/$(PACKCC_SRC)
 if USE_READCMD
 bin_PROGRAMS+= readtags
 readtags_CPPFLAGS = -I. -I$(srcdir) -I$(srcdir)/main -I$(srcdir)/libreadtags
+if ENABLE_DEBUGGING
+readtags_CPPFLAGS+= $(DEBUG_CPPFLAGS)
+endif
 readtags_CFLAGS = $(COVERAGE_CFLAGS) $(WARNING_CFLAGS)
 dist_readtags_SOURCES = $(READTAGS_SRCS) $(READTAGS_HEADS)
 readtags_CPPFLAGS += $(GNULIB_CPPFLAGS)
 readtags_CPPFLAGS += -DREADTAGS_DSL -I$(srcdir)/dsl
-readtags_LDADD = $(GNULIB_LIBS)
+readtags_LDADD  =
+readtags_LDADD += $(GNULIB_LIBS)
+readtags_LDADD += libutil.a
 dist_readtags_SOURCES += $(READTAGS_DSL_SRCS) $(READTAGS_DSL_HEADS)
+endif
+
+if HAVE_PCRE2
+PARSER_SRCS += $(PCRE2_SRCS)
+PARSER_HEADS += $(PCRE2_HEADS)
 endif
 
 if HAVE_LIBXML
@@ -101,6 +115,16 @@ PARSER_HEADS += $(YAML_HEADS)
 endif
 
 PARSER_HEADS += $(PEG_EXTRA_HEADS)
+
+libutil_a_CPPFLAGS = -I$(srcdir) -I$(srcdir)/main
+libutil_a_CFLAGS   =
+libutil_a_CFLAGS  += $(EXTRA_CFLAGS)
+libutil_a_CFLAGS  += $(WARNING_CFLAGS)
+libutil_a_CFLAGS  += $(COVERAGE_CFLAGS)
+if ENABLE_DEBUGGING
+libutil_a_CPPFLAGS+= $(DEBUG_CPPFLAGS)
+endif
+dist_libutil_a_SOURCES = $(UTIL_HEADS) $(UTIL_SRCS)
 
 libctags_a_CPPFLAGS = -I. -I$(srcdir) -I$(srcdir)/main -I$(srcdir)/dsl -I$(srcdir)/peg -DHAVE_PACKCC
 if ENABLE_DEBUGGING
@@ -121,6 +145,7 @@ libctags_a_CFLAGS  += $(LIBXML_CFLAGS)
 libctags_a_CFLAGS  += $(JANSSON_CFLAGS)
 libctags_a_CFLAGS  += $(LIBYAML_CFLAGS)
 libctags_a_CFLAGS  += $(SECCOMP_CFLAGS)
+libctags_a_CFLAGS  += $(PCRE2_CFLAGS)
 
 nodist_libctags_a_SOURCES = $(REPOINFO_HEADS) $(PEG_SRCS) $(PEG_HEADS)
 BUILT_SOURCES = $(REPOINFO_HEADS)
@@ -187,6 +212,7 @@ ctags_LDADD += $(JANSSON_LIBS)
 ctags_LDADD += $(LIBYAML_LIBS)
 ctags_LDADD += $(SECCOMP_LIBS)
 ctags_LDADD += $(ICONV_LIBS)
+ctags_LDADD += $(PCRE2_LIBS)
 dist_ctags_SOURCES = $(CMDLINE_HEADS) $(CMDLINE_SRCS)
 
 if HOST_MINGW
@@ -211,6 +237,7 @@ mini_geany_LDADD += $(JANSSON_LIBS)
 mini_geany_LDADD += $(LIBYAML_LIBS)
 mini_geany_LDADD += $(SECCOMP_LIBS)
 mini_geany_LDADD += $(ICONV_LIBS)
+mini_geany_LDADD += $(PCRE2_LIBS)
 mini_geany_SOURCES = $(MINI_GEANY_HEADS) $(MINI_GEANY_SRCS)
 
 bin_PROGRAMS += optscript
@@ -224,6 +251,7 @@ optscript_LDADD += $(JANSSON_LIBS)
 optscript_LDADD += $(LIBYAML_LIBS)
 optscript_LDADD += $(SECCOMP_LIBS)
 optscript_LDADD += $(ICONV_LIBS)
+optscript_LDADD += $(PCRE2_LIBS)
 optscript_SOURCES = $(OPTSCRIPT_SRCS)
 
 if INSTALL_ETAGS

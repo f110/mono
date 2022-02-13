@@ -353,6 +353,14 @@ can be used to control ctags generation programmatically.
 
 See :ref:`interactive-mode` for more details.
 
+PCRE2 regular expression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``{pcre2}`` (or ``p``) flag, PCRE2 expressions can be used in
+``--regex-<LANG>=``, ``--mline-regex-<LANG>=``, and
+``--_mtable-regex-<LANG>=`` if the ctags is built with ``pcre2`` library.
+
+
 Incompatible changes in command line
 ---------------------------------------------------------------------
 
@@ -406,6 +414,8 @@ The following parsers have been added:
 * Falcon
 * FunctionParameters *perl based subparser*
 * Gdbinit script *optlib*
+* GemSpec *Ruby based subparser*
+* GDScript
 * Glade *libxml*
 * Go
 * Haskell
@@ -418,8 +428,9 @@ The following parsers have been added:
 * Kconfig *optlib*
 * Kotlin *peg/packcc*
 * GNU linker script(LdScript)
+* LEX *optlib*
 * Man page *optlib*
-* Markdown *optlib*
+* Markdown
 * Maven2 *libxml*
 * MesonBuild (Meson) *optlib*
 * MesonOptions *optlib+script*
@@ -428,6 +439,8 @@ The following parsers have been added:
 * M4
 * NSIS
 * ObjectiveC
+* Org *optlib*
+* OpenAPI (3.x.x / Swagger 2.0) *Yaml based subparser*
 * Passwd *optlib*
 * PuppetManifest *optlib*
 * Perl6
@@ -445,7 +458,7 @@ The following parsers have been added:
 * Robot
 * RpmMacros *optlib*
 * RpmSpec
-* RSpec *optlib*
+* RSpec *Ruby based subparser*
 * Rust
 * S4Class *R based subparser*
 * SCSS *optlib*
@@ -454,6 +467,7 @@ The following parsers have been added:
 * SystemVerilog
 * SVG *libxml*
 * TclOO (see :ref:`The new Tcl parser <tcl>`)
+* Thrift *peg/packcc*
 * TTCN
 * Txt2tags
 * TypeScript

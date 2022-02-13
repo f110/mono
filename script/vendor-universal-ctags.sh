@@ -5,7 +5,7 @@ source "script/lib/vendor.sh"
 
 OWNER="universal-ctags"
 REPO="ctags"
-COMMIT="52b2a79de58bad1f2535af2606bb8af49b11a4e0"
+COMMIT="40603a68c1f3b14dc1db4671111096733f6d2485"
 
 if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then
     echo "Please execute via bazel"

@@ -8,6 +8,9 @@
  *   (BlitzMax), PureBasic and FreeBasic language files. For now, this is kept
  *   quite simple - but feel free to ask for more things added any time -
  *   patches are of course most welcome.
+ *
+ *   FreeBasic:
+ *   - https://www.freebasic.net/wiki/DocToc
  */
 
 /*
@@ -17,9 +20,12 @@
 
 #include <string.h>
 
+#include "entry.h"
+#include "keyword.h"
 #include "parse.h"
 #include "read.h"
 #include "routines.h"
+#include "trace.h"
 #include "vstring.h"
 
 /*
@@ -31,14 +37,9 @@ typedef enum {
 	K_LABEL,
 	K_TYPE,
 	K_VARIABLE,
-	K_ENUM
+	K_ENUM,
+	K_NAMESPACE,
 } BasicKind;
-
-typedef struct {
-	char const *token;
-	BasicKind kind;
-	int skip;
-} KeyWord;
 
 static kindDefinition BasicKinds[] = {
 	{true, 'c', "constant", "constants"},
@@ -46,79 +47,323 @@ static kindDefinition BasicKinds[] = {
 	{true, 'l', "label", "labels"},
 	{true, 't', "type", "types"},
 	{true, 'v', "variable", "variables"},
-	{true, 'g', "enum", "enumerations"}
+	{true, 'g', "enum", "enumerations"},
+	{true, 'n', "namespace", "namespace"},
 };
 
-static KeyWord blitzbasic_keywords[] = {
-	{"const", K_CONST, 0},
-	{"global", K_VARIABLE, 0},
-	{"dim", K_VARIABLE, 0},
-	{"function", K_FUNCTION, 0},
-	{"type", K_TYPE, 0},
-	{NULL, 0, 0}
+/* To force to trigger bugs, we make the orders of
+ * enum eKeywordID and BasicKind different. */
+enum eKeywordID {
+	KEYWORD_ENUM,
+	KEYWORD_CONST,
+	KEYWORD_FUNCTION,
+	KEYWORD_LABEL,
+	KEYWORD_TYPE,
+	KEYWORD_VARIABLE,
+	KEYWORD_NAMESPACE,
+	KEYWORD_END,
+	KEYWORD_ACCESS,
+};
+typedef int keywordId; /* to allow KEYWORD_NONE */
+
+static const keywordTable BasicKeywordTable[] = {
+	/* freebasic */
+	{"const", KEYWORD_CONST},
+	{"dim", KEYWORD_VARIABLE},
+	{"common", KEYWORD_VARIABLE},
+	{"function", KEYWORD_FUNCTION},
+	{"sub", KEYWORD_FUNCTION},
+	{"private", KEYWORD_ACCESS},
+	{"public", KEYWORD_ACCESS},
+	{"property", KEYWORD_FUNCTION},
+	{"constructor", KEYWORD_FUNCTION},
+	{"destructor", KEYWORD_FUNCTION},
+	{"type", KEYWORD_TYPE},
+	{"enum", KEYWORD_ENUM},
+	{"namespace", KEYWORD_NAMESPACE},
+	{"end", KEYWORD_END},
+
+	/* blitzbasic, purebasic */
+	{"global", KEYWORD_VARIABLE},
+
+	/* purebasic */
+	{"newlist", KEYWORD_VARIABLE},
+	{"procedure", KEYWORD_FUNCTION},
+	{"interface", KEYWORD_TYPE},
+	{"structure", KEYWORD_TYPE},
 };
 
-static KeyWord purebasic_keywords[] = {
-	{"newlist", K_VARIABLE, 0},
-	{"global", K_VARIABLE, 0},
-	{"dim", K_VARIABLE, 0},
-	{"procedure", K_FUNCTION, 0},
-	{"interface", K_TYPE, 0},
-	{"structure", K_TYPE, 0},
-	{NULL, 0, 0}
+struct BasicKeywordAttr {
+	int kind;
+} keywordAttrs [] = {
+	[KEYWORD_ENUM]  = {
+		.kind = K_ENUM,
+	},
+	[KEYWORD_CONST] = {
+		.kind = K_CONST,
+	},
+	[KEYWORD_FUNCTION] = {
+		.kind = K_FUNCTION,
+	},
+	[KEYWORD_LABEL] = {
+		.kind = K_LABEL,
+	},
+	[KEYWORD_TYPE] = {
+		.kind = K_TYPE,
+	},
+	[KEYWORD_VARIABLE] = {
+		.kind = K_VARIABLE,
+	},
+	[KEYWORD_NAMESPACE] = {
+		.kind = K_NAMESPACE,
+	},
+	[KEYWORD_END] = {
+		.kind = KIND_GHOST_INDEX,
+	},
+	[KEYWORD_ACCESS] = {
+		.kind = KIND_GHOST_INDEX,
+	},
 };
 
-static KeyWord freebasic_keywords[] = {
-	{"const", K_CONST, 0},
-	{"dim as", K_VARIABLE, 1},
-	{"dim", K_VARIABLE, 0},
-	{"common", K_VARIABLE, 0},
-	{"function", K_FUNCTION, 0},
-	{"sub", K_FUNCTION, 0},
-	{"private sub", K_FUNCTION, 0},
-	{"public sub", K_FUNCTION, 0},
-	{"private function", K_FUNCTION, 0},
-	{"public function", K_FUNCTION, 0},
-	{"type", K_TYPE, 0},
-	{"enum", K_ENUM, 0},
-	{NULL, 0, 0}
+struct matchState {
+	const char *access;
+	bool end;
 };
 
+static int currentScope;
 /*
  *   FUNCTION DEFINITIONS
  */
 
-/* Match the name of a tag (function, variable, type, ...) starting at pos. */
-static char const *extract_name (char const *pos, vString * name)
+static void pushScope (int corkIndex)
 {
-	while (isspace (*pos))
+#ifdef DEBUG
+	tagEntryInfo *e = getEntryInCorkQueue (corkIndex);
+	TRACE_PRINT ("scope push: %s<%d>", e? e->name: "-", corkIndex);
+#endif
+	currentScope = corkIndex;
+}
+
+static void popScope (void)
+{
+	tagEntryInfo *e = getEntryInCorkQueue (currentScope);
+#ifdef DEBUG
+	TRACE_PRINT ("scope pop: %s<%d>", e? e->name: "-", currentScope);
+#endif
+	if (e)
+	{
+		e->extensionFields.endLine = getInputLineNumber ();
+		currentScope = e->extensionFields.scopeIndex;
+	}
+	else
+		currentScope = CORK_NIL;
+}
+
+static void updateScope (int corkIndex, int kindIndex, int keywordId)
+{
+	if (corkIndex != CORK_NIL && kindIndex == K_NAMESPACE)
+		pushScope (corkIndex);
+	else if (corkIndex == CORK_NIL && kindIndex == K_NAMESPACE)
+		popScope ();
+}
+
+static int keywordToKind (keywordId keywordId)
+{
+	if (keywordId == KEYWORD_NONE)
+		return KIND_GHOST_INDEX;
+	return keywordAttrs [keywordId].kind;
+}
+
+static const char *skipToMatching (char begin, char end, const char *pos)
+{
+	int counter = 1;
+	pos++;
+	while (*pos && counter > 0)
+	{
+		if (*pos == end)
+			counter--;
+		else if (*pos == begin)
+			counter++;
+		else if (*pos == '"')
+			pos = skipToMatching ('"', '"', pos) - 1;
 		pos++;
-	vStringClear (name);
-	for (; *pos && !isspace (*pos) && *pos != '(' && *pos != ','; pos++)
-		vStringPut (name, *pos);
+	}
 	return pos;
 }
 
-/* Match a keyword starting at p (case insensitive). */
-static int match_keyword (const char *p, KeyWord const *kw)
+static const char *nextPos (const char *pos)
 {
-	vString *name;
-	size_t i;
-	int j;
-	for (i = 0; i < strlen (kw->token); i++)
+	if (*pos == '\0')
+		return pos;
+
+	pos++;
+	switch (*pos)
 	{
-		if (tolower (p[i]) != kw->token[i])
-			return 0;
+		case '(':
+			pos = skipToMatching ('(', ')', pos);
+			break;
+		case '"':
+			pos = skipToMatching ('"', '"', pos);
+			break;
 	}
-	name = vStringNew ();
-	p += i;
-	for (j = 0; j < 1 + kw->skip; j++)
+	return pos;
+}
+
+static bool isIdentChar (char c)
+{
+	return c && !isspace (c) && c != '(' && c != ',' && c != '=';
+}
+
+static int makeBasicTag (vString *name, int kindIndex)
+{
+	int r = makeSimpleTag (name, kindIndex);
+	tagEntryInfo *e = getEntryInCorkQueue (r);
+	if (e)
+		e->extensionFields.scopeIndex = currentScope;
+	return r;
+}
+
+/* Match the name of a dim or const starting at pos. */
+static void extract_dim (char const *pos, BasicKind kind)
+{
+	vString *name = vStringNew ();
+
+	if (strncasecmp (pos, "shared", 6) == 0)
+		pos += 6; /* skip keyword "shared" */
+
+	while (isspace (*pos))
+		pos++;
+
+	/* capture "dim as String str" */
+	if (strncasecmp (pos, "as", 2) == 0)
 	{
-		p = extract_name (p, name);
+			pos += 2; /* skip keyword "as" */
+
+		while (isspace (*pos))
+			pos++;
+		while (!isspace (*pos) && *pos) /* skip next part which is a type */
+			pos++;
+		while (isspace (*pos))
+			pos++;
+		/* now we are at the name */
 	}
-	makeSimpleTag (name, kw->kind);
+	/* capture "dim as foo ptr bar" */
+	if (strncasecmp (pos, "ptr", 3) == 0 && isspace(*(pos+3)))
+	{
+		pos += 3; /* skip keyword "ptr" */
+		while (isspace (*pos))
+			pos++;
+	}
+	/*	capture "dim as string * 4096 chunk" */
+	if (strncmp (pos, "*", 1) == 0)
+	{
+		pos += 1; /* skip "*" */
+		while (isspace (*pos) || isdigit(*pos) || ispunct(*pos))
+			pos++;
+	}
+
+	for (; isIdentChar (*pos); pos++)
+		vStringPut (name, *pos);
+	makeBasicTag (name, kind);
+
+	/* if the line contains a ',', we have multiple declarations */
+	while (*pos && strchr (pos, ','))
+	{
+		/* skip all we don't need(e.g. "..., new_array(5), " we skip "(5)") */
+		while (*pos != ',' && *pos != '\'' && *pos)
+			pos = nextPos (pos);
+
+		if (*pos == '\'')
+			break; /* break if we are in a comment */
+
+		while (isspace (*pos) || *pos == ',')
+			pos++;
+
+		if (*pos == '\'')
+			break; /* break if we are in a comment */
+
+		vStringClear (name);
+		for (; isIdentChar (*pos); pos++)
+			vStringPut (name, *pos);
+		makeBasicTag (name, kind);
+	}
+
 	vStringDelete (name);
-	return 1;
+}
+
+/* Match the name of a tag (function, variable, type, ...) starting at pos. */
+static int extract_name (char const *pos, BasicKind kind, struct matchState *state)
+{
+	int r = CORK_NIL;
+	vString *name = vStringNew ();
+	for (; isIdentChar (*pos); pos++)
+		vStringPut (name, *pos);
+	r = makeBasicTag (name, kind);
+	vStringDelete (name);
+
+	tagEntryInfo *e = getEntryInCorkQueue (r);
+	if (e && state && state->access)
+		e->extensionFields.access = eStrdup (state->access);
+
+	return r;
+}
+
+/* Match a keyword starting at p (case insensitive). */
+static void match_state_reset (struct matchState *state)
+{
+	state->access = NULL;
+	state->end = false;
+}
+
+static bool match_keyword (const char **cp, vString *buf,
+						   struct matchState *state)
+{
+	const char *p;
+
+	for (p = *cp; *p != '\0' && !isspace((unsigned char)*p); p++)
+	{
+		int c = tolower ((unsigned char)*p);
+		vStringPut (buf, c);
+	}
+
+	int kw = lookupKeyword (vStringValue (buf), getInputLanguage ());
+	if (kw == KEYWORD_NONE)
+		return false;
+
+	const char *old_p = p;
+	while (isspace (*p))
+		p++;
+
+	if (kw == KEYWORD_ACCESS)
+	{
+		state->access = vStringValue(buf)[1] == 'r'? "private": "public";
+		*cp = p;
+		return true;
+	}
+	else if (kw == KEYWORD_END)
+	{
+		state->end = true;
+		*cp = p;
+		return true;
+	}
+
+	int kind = keywordToKind (kw);
+	int index = CORK_NIL;
+	if (!state->end)
+	{
+		/* create tags only if there is some space between the keyword and the identifier */
+		if (kind != KIND_GHOST_INDEX && old_p == p)
+			return false;
+
+		if (kind == K_VARIABLE)
+			extract_dim (p, kind); /* extract_dim adds the found tag(s) */
+		else
+			index = extract_name (p, kind, state);
+	}
+
+	updateScope (index, kind, kw);
+
+	return false;
 }
 
 /* Match a "label:" style label. */
@@ -129,9 +374,8 @@ static void match_colon_label (char const *p)
 		end--;
 	if (*end == ':')
 	{
-		vString *name = vStringNew ();
-		vStringNCatS (name, p, end - p);
-		makeSimpleTag (name, K_LABEL);
+		vString *name = vStringNewNInit (p, end - p);
+		makeBasicTag (name, K_LABEL);
 		vStringDelete (name);
 	}
 }
@@ -139,32 +383,19 @@ static void match_colon_label (char const *p)
 /* Match a ".label" style label. */
 static void match_dot_label (char const *p)
 {
-	if (*p == '.')
-	{
-		vString *name = vStringNew ();
-		extract_name (p + 1, name);
-		makeSimpleTag (name, K_LABEL);
-		vStringDelete (name);
-	}
+	extract_name (p + 1, K_LABEL, NULL);
 }
 
 static void findBasicTags (void)
 {
 	const char *line;
-	const char *extension = fileExtension (getInputFileName ());
-	KeyWord *keywords;
 
-	if (strcmp (extension, "bb") == 0)
-		keywords = blitzbasic_keywords;
-	else if (strcmp (extension, "pb") == 0)
-		keywords = purebasic_keywords;
-	else
-		keywords = freebasic_keywords;
+	currentScope = CORK_NIL;
+	vString *buf = vStringNew ();
 
 	while ((line = (const char *) readLineFromInputFile ()) != NULL)
 	{
 		const char *p = line;
-		KeyWord const *kw;
 
 		while (isspace (*p))
 			p++;
@@ -183,15 +414,20 @@ static void findBasicTags (void)
 			continue;
 
 		/* In Basic, keywords always are at the start of the line. */
-		for (kw = keywords; kw->token; kw++)
-			if (match_keyword (p, kw)) break;
+		struct matchState state;
+		match_state_reset (&state);
+		do
+			vStringClear (buf);
+		while (match_keyword (&p, buf, &state));
+
 
 		/* Is it a label? */
-		if (strcmp (extension, "bb") == 0)
+		if (*p == '.')
 			match_dot_label (p);
 		else
 			match_colon_label (p);
 	}
+	vStringDelete (buf);
 }
 
 parserDefinition *BasicParser (void)
@@ -202,5 +438,8 @@ parserDefinition *BasicParser (void)
 	def->kindCount = ARRAY_SIZE (BasicKinds);
 	def->extensions = extensions;
 	def->parser = findBasicTags;
+	def->keywordTable = BasicKeywordTable;
+	def->keywordCount = ARRAY_SIZE (BasicKeywordTable);
+	def->useCork = CORK_QUEUE;
 	return def;
 }

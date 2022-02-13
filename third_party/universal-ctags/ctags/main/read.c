@@ -191,7 +191,7 @@ extern MIOPos getInputFilePositionForLine (unsigned int line)
 extern long getInputFileOffsetForLine (unsigned int line)
 {
 	compoundPos *cpos = getInputFileCompoundPosForLine (line);
-	return cpos->offset;
+	return cpos->offset - (File.bomFound? 3: 0);
 }
 
 extern langType getInputLanguage (void)
@@ -245,9 +245,9 @@ extern bool doesInputLanguageAllowNullTag (void)
 	return doesLanguageAllowNullTag (getInputLanguage ());
 }
 
-extern bool doesInputLanguageRequestAutomaticFQTag (void)
+extern bool doesInputLanguageRequestAutomaticFQTag (const tagEntryInfo *e)
 {
-	return doesLanguageRequestAutomaticFQTag (getInputLanguage ());
+	return doesLanguageRequestAutomaticFQTag (e->langType);
 }
 
 extern const char *getSourceFileTagPath (void)
@@ -361,6 +361,9 @@ static int compoundPosForOffset (const void* oft, const void *p)
 extern unsigned long getInputLineNumberForFileOffset(long offset)
 {
 	compoundPos *p;
+
+	if (File.bomFound)
+		offset += 3;
 
 	p = bsearch (&offset, File.lineFposMap.pos, File.lineFposMap.count, sizeof (compoundPos),
 		     compoundPosForOffset);
@@ -891,7 +894,7 @@ static eolType readLine (vString *const vLine, MIO *const mio)
 	return r;
 }
 
-static vString *iFileGetLine (void)
+static vString *iFileGetLine (bool chop_newline)
 {
 	eolType eol;
 	langType lang = getInputLanguage();
@@ -911,10 +914,16 @@ static vString *iFileGetLine (void)
 
 		if (Option.lineDirectives && vStringChar (File.line, 0) == '#')
 			parseLineDirective (vStringValue (File.line) + 1);
-		matchLanguageRegex (lang, File.line);
 
 		if (File.allLines)
 			vStringCat (File.allLines, File.line);
+
+		bool chopped = vStringStripNewline (File.line);
+
+		matchLanguageRegex (lang, File.line);
+
+		if (chopped && !chop_newline)
+			vStringPutNewlinAgainUnsafe (File.line);
 
 		return File.line;
 	}
@@ -959,7 +968,7 @@ extern int getcFromInputFile (void)
 		}
 		else
 		{
-			vString* const line = iFileGetLine ();
+			vString* const line = iFileGetLine (false);
 			if (line != NULL)
 				File.currentLine = (unsigned char*) vStringValue (line);
 			if (File.currentLine == NULL)
@@ -1015,12 +1024,11 @@ extern int skipToCharacterInInputFile2 (int c0, int c1)
  */
 extern const unsigned char *readLineFromInputFile (void)
 {
-	vString* const line = iFileGetLine ();
+	vString* const line = iFileGetLine (true);
 	const unsigned char* result = NULL;
 	if (line != NULL)
 	{
 		result = (const unsigned char*) vStringValue (line);
-		vStringStripNewline (line);
 		DebugStatement ( debugPrintf (DEBUG_READ, "%s\n", result); )
 	}
 	return result;

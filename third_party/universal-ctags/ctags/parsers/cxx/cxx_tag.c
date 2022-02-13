@@ -22,6 +22,7 @@
 #define CXX_COMMON_MACRO_ROLES(__langPrefix) \
 	static roleDefinition __langPrefix##MacroRoles [] = { \
 		RoleTemplateUndef, \
+		RoleTemplateCondition, \
 	}
 
 CXX_COMMON_MACRO_ROLES(C);
@@ -74,8 +75,7 @@ static kindDefinition g_aCXXCPPKinds [] = {
 	{ true,  'n', "namespace",  "namespaces" },
 	{ false, 'A', "alias",      "namespace aliases" },
 	{ false, 'N', "name",       "names imported via using scope::symbol" },
-	{ false, 'U', "using",      "using namespace statements",
-			.referenceOnly = true },
+	{ false, 'U', "using",      "using namespace statements" },
 	{ false, 'Z', "tparam",     "template parameters" },
 };
 
@@ -601,8 +601,11 @@ void cxxTagHandleTemplateFields()
 
 }
 
-int cxxTagCommit(void)
+int cxxTagCommit(int *piCorkQueueIndexFQ)
 {
+	if(piCorkQueueIndexFQ)
+		*piCorkQueueIndexFQ = CORK_NIL;
+
 	if(g_oCXXTag.isFileScope)
 	{
 		if(!isXtagEnabled(XTAG_FILE_SCOPE))
@@ -681,7 +684,9 @@ int cxxTagCommit(void)
 			g_oCXXTag.lineNumber
 		);
 
-	makeTagEntry(&g_oCXXTag);
+	int iCorkQueueIndexFQ = makeTagEntry(&g_oCXXTag);
+	if(piCorkQueueIndexFQ)
+		*piCorkQueueIndexFQ = iCorkQueueIndexFQ;
 
 	vStringDelete(x);
 
@@ -691,5 +696,5 @@ int cxxTagCommit(void)
 void cxxTag(unsigned int uKind,CXXToken * pToken)
 {
 	if(cxxTagBegin(uKind,pToken) != NULL)
-		cxxTagCommit();
+		cxxTagCommit(NULL);
 }

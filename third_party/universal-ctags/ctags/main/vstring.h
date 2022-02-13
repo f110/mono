@@ -19,7 +19,6 @@
 #include <stdio.h>
 
 #include "inline.h"
-#include "mio.h"
 
 /*
 *   MACROS
@@ -56,7 +55,7 @@ typedef struct sVString {
 extern void vStringResize (vString *const string, const size_t newSize);
 extern vString *vStringNew (void);
 extern void vStringDelete (vString *const string);
-extern void vStringStripNewline (vString *const string);
+extern bool vStringStripNewline (vString *const string);
 extern void vStringStripLeading (vString *const string);
 extern void vStringChop (vString *const string);
 extern void vStringStripTrailing (vString *const string);
@@ -97,6 +96,10 @@ extern void vStringCatSWithEscapingAsPattern (vString *output, const char* input
 /*
 *   INLINE FUNCTIONS
 */
+CTAGS_INLINE void vStringPutNewlinAgainUnsafe (vString *const string)
+{
+	string->buffer [string->length++] = '\n';
+}
 
 CTAGS_INLINE void vStringPut (vString *const string, const int c)
 {

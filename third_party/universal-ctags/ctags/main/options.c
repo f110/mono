@@ -337,7 +337,7 @@ static optionDescription LongOptionDescription [] = {
  {0,0,"  --put-field-prefix"},
  {0,0,"       Put \"" CTAGS_FIELD_PREFIX "\" as prefix for the name of fields newly introduced in"},
  {0,0,"       universal-ctags."},
- {1,0,"  --roles-(<LANG>|all).(<kind>|all)=[+|-][<roles>|*]"},
+ {1,0,"  --roles-(<LANG>|all).(<kind>|*)=[+|-][<roles>|*]"},
  {1,0,"       Enable/disable tag roles for kinds of language <LANG>."},
  {0,0,"  --tag-relative=(yes|no|always|never)"},
  {0,0,"       Should paths be relative to location of tag file [no; yes when -e]?"},
@@ -407,7 +407,7 @@ static optionDescription LongOptionDescription [] = {
  {1,0,"  -I [+|-]<list>|@<file>"},
  {1,0,"       A <list> of tokens to be specially handled is read from either the"},
  {1,0,"       command line or the specified <file>."},
- {1,0,"  --param-<LANG>:<name>=<argument>"},
+ {1,0,"  --param-<LANG>.<name>=<argument>"},
  {1,0,"       Set <LANG> specific parameter. Available parameters can be listed with --list-params."},
  {1,0,""},
  {1,0,"Listing Options"},
@@ -603,6 +603,9 @@ static struct Feature {
 	{"packcc", "has peg based parser(s)"},
 #endif
 	{"optscript", "can use the interpreter"},
+#ifdef HAVE_PCRE2
+	{"pcre2", "has pcre2 regex engine"},
+#endif
 	{NULL,}
 };
 
@@ -796,11 +799,17 @@ extern langType getLanguageComponentInOptionFull (const char *const option,
 	}
 
 	/* Extract <LANG> from
-	 * --param-<LANG>:<PARAM>=..., and
+	 * --param-<LANG>.<PARAM>=..., and
 	 * --_roledef-<LANG>.<KIND>=... */
+
+	/*  `:' is only for keeping self compatibility. */
 	sep = strpbrk (lang, ":.");
 	if (sep)
+	{
+		if (*sep == ':')
+			error (WARNING, "using `:' as a separator is obsolete; use `.' instead: --%s", option);
 		lang_len = sep - lang;
+	}
 	language = getNamedLanguageFull (lang, lang_len, noPretending, false);
 	if (language == LANG_IGNORE)
 	{
@@ -1356,8 +1365,6 @@ static void processFieldsOption (
 	bool inLongName = false;
 
 	longName = vStringNewOrClearWithAutoRelease (longName);
-
-	Option.fieldsReset = false;
 
 	if (*p == '*')
 	{
@@ -2018,8 +2025,9 @@ extern bool processParamOption (
 		return false;
 
 	sep = option + strlen ("param-") + strlen (getLanguageName (language));
-	if (*sep != ':')
-		error (FATAL, "no separator(:) is given for %s=%s", option, value);
+	/* `:' is only for keeping self compatibility */
+	if (! (*sep == '.' || *sep == ':' ))
+		error (FATAL, "no separator(.) is given for %s=%s", option, value);
 	name = sep + 1;
 
 	if (value == NULL || value [0] == '\0')
@@ -2189,25 +2197,25 @@ static void processListPseudoTagsOptions (
 
 static void processListRegexFlagsOptions (
 		const char *const option CTAGS_ATTR_UNUSED,
-		const char *const parameter CTAGS_ATTR_UNUSED)
+		const char *const parameter)
 {
-	printRegexFlags (localOption.withListHeader, localOption.machinable, stdout);
+	printRegexFlags (localOption.withListHeader, localOption.machinable, parameter, stdout);
 	exit (0);
 }
 
 static void processListMultilineRegexFlagsOptions (
 		const char *const option CTAGS_ATTR_UNUSED,
-		const char *const parameter CTAGS_ATTR_UNUSED)
+		const char *const parameter)
 {
-	printMultilineRegexFlags (localOption.withListHeader, localOption.machinable, stdout);
+	printMultilineRegexFlags (localOption.withListHeader, localOption.machinable, parameter, stdout);
 	exit (0);
 }
 
 static void processListMultitableRegexFlagsOptions (
 		const char *const option CTAGS_ATTR_UNUSED,
-		const char *const parameter CTAGS_ATTR_UNUSED)
+		const char *const parameter)
 {
-	printMultitableRegexFlags (localOption.withListHeader, localOption.machinable, stdout);
+	printMultitableRegexFlags (localOption.withListHeader, localOption.machinable, parameter, stdout);
 	exit (0);
 }
 
@@ -2897,24 +2905,24 @@ static parametricOption ParametricOptions [] = {
 
 static booleanOption BooleanOptions [] = {
 	{ "append",         &Option.append,                 true,  STAGE_ANY },
-	{ "file-scope",     ((bool *)XTAG_FILE_SCOPE),   false, STAGE_ANY, setBooleanToXtagWithWarning },
-	{ "file-tags",      ((bool *)XTAG_FILE_NAMES),   false, STAGE_ANY, setBooleanToXtagWithWarning },
+	{ "file-scope",     ((bool *)XTAG_FILE_SCOPE),      false, STAGE_ANY, setBooleanToXtagWithWarning },
+	{ "file-tags",      ((bool *)XTAG_FILE_NAMES),      false, STAGE_ANY, setBooleanToXtagWithWarning },
 	{ "filter",         &Option.filter,                 true,  STAGE_ANY },
 	{ "guess-language-eagerly", &Option.guessLanguageEagerly, false, STAGE_ANY },
 	{ "line-directives",&Option.lineDirectives,         false, STAGE_ANY },
 	{ "links",          &Option.followLinks,            false, STAGE_ANY },
-	{ "machinable",     &localOption.machinable,             true,  STAGE_ANY },
+	{ "machinable",     &localOption.machinable,        true,  STAGE_ANY },
 	{ "put-field-prefix", &Option.putFieldPrefix,       false, STAGE_ANY },
 	{ "print-language", &Option.printLanguage,          true,  STAGE_ANY },
 	{ "quiet",          &Option.quiet,                  false, STAGE_ANY },
 #ifdef RECURSE_SUPPORTED
 	{ "recurse",        &Option.recurse,                false, STAGE_ANY },
 #endif
-	{ "verbose",        &ctags_verbose,                false, STAGE_ANY },
+	{ "verbose",        &ctags_verbose,                 false, STAGE_ANY },
 #ifdef WIN32
 	{ "use-slash-as-filename-separator", (bool *)&Option.useSlashAsFilenameSeparator, false, STAGE_ANY },
 #endif
-	{ "with-list-header", &localOption.withListHeader,       true,  STAGE_ANY },
+	{ "with-list-header", &localOption.withListHeader,  true,  STAGE_ANY },
 	{ "_fatal-warnings",&Option.fatalWarnings,          false, STAGE_ANY },
 };
 
@@ -3346,6 +3354,10 @@ static void processLongOption (
 	else if (processPretendOption (option, parameter))
 		;
 	else if (processRolesOption (option, parameter))
+		;
+	else if (option[0] == '_' && option[1] == '_')
+		/* ctags ignores an argument started from --__.
+		 * optlib2c may handle the argument. */
 		;
 	else
 		error (FATAL, "Unknown option: --%s", option);

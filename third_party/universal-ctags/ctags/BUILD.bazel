@@ -29,6 +29,7 @@ configure_make(
         "--enable-seccomp",
         "--disable-xml",
         "--disable-yaml",
+        "--disable-pcre2",
         "--without-included-regex",
     ],
     env = {

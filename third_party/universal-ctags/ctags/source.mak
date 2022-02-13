@@ -14,14 +14,44 @@ REPOINFO_OBJS  = $(REPOINFO_SRCS:.c=.$(OBJEXT))
 MIO_HEADS = main/mio.h
 MIO_SRCS  = main/mio.c
 
+UTIL_PUBLIC_HEADS = \
+	main/general.h		\
+	\
+	main/gcc-attr.h		\
+	main/inline.h		\
+	main/routines.h		\
+	main/trashbox.h 	\
+	main/vstring.h		\
+	\
+	$(NULL)
+
+UTIL_PRIVATE_HEADS = \
+	main/routines_p.h	\
+	\
+	$(NULL)
+
+UTIL_HEADS = \
+	$(UTIL_PUBLIC_HEADS)	\
+	$(UTIL_PRIVATE_HEADS)	\
+	\
+	$(NULL)
+
+UTIL_SRCS = \
+	main/routines.c		\
+	main/trashbox.c		\
+	main/vstring.c		\
+	\
+	$(NULL)
+UTIL_OBJS = $(UTIL_SRCS:.c=.$(OBJEXT))
+
 MAIN_PUBLIC_HEADS =		\
+	$(UTIL_PUBLIC_HEADS)	\
+	\
 	main/dependency.h	\
 	main/entry.h		\
 	main/field.h		\
-	main/gcc-attr.h		\
 	main/gvars.h		\
 	main/htable.h		\
-	main/inline.h		\
 	main/keyword.h		\
 	main/kind.h		\
 	main/lregex.h		\
@@ -37,21 +67,20 @@ MAIN_PUBLIC_HEADS =		\
 	main/ptrarray.h		\
 	main/rbtree.h		\
 	main/read.h		\
-	main/routines.h		\
 	main/selectors.h	\
 	main/strlist.h		\
 	main/subparser.h	\
 	main/tokeninfo.h	\
 	main/trace.h		\
-	main/trashbox.h 	\
 	main/types.h		\
 	main/unwindi.h  	\
-	main/vstring.h		\
 	main/xtag.h		\
 	\
 	$(NULL)
 
 LIB_PRIVATE_HEADS =		\
+	$(UTIL_PRIVATE_HEADS)	\
+	\
 	main/args_p.h		\
 	main/colprint_p.h	\
 	main/dependency_p.h	\
@@ -75,7 +104,6 @@ LIB_PRIVATE_HEADS =		\
 	main/promise_p.h	\
 	main/ptag_p.h		\
 	main/read_p.h		\
-	main/routines_p.h	\
 	main/script_p.h		\
 	main/sort_p.h		\
 	main/stats_p.h		\
@@ -88,7 +116,6 @@ LIB_PRIVATE_HEADS =		\
 
 LIB_HEADS =			\
 	main/ctags.h		\
-	main/general.h		\
 	\
 	$(MAIN_PUBLIC_HEADS)	\
 	$(LIB_PRIVATE_HEADS)	\
@@ -98,6 +125,8 @@ LIB_HEADS =			\
 	$(NULL)
 
 LIB_SRCS =			\
+	$(UTIL_SRCS)			\
+	\
 	main/args.c			\
 	main/colprint.c			\
 	main/dependency.c		\
@@ -111,6 +140,7 @@ LIB_SRCS =			\
 	main/keyword.c			\
 	main/kind.c			\
 	main/lregex.c			\
+	main/lregex-default.c		\
 	main/lxpath.c			\
 	main/main.c			\
 	main/mbcs.c			\
@@ -126,7 +156,6 @@ LIB_SRCS =			\
 	main/ptrarray.c			\
 	main/rbtree.c			\
 	main/read.c			\
-	main/routines.c			\
 	main/script.c			\
 	main/seccomp.c			\
 	main/selectors.c		\
@@ -134,10 +163,8 @@ LIB_SRCS =			\
 	main/stats.c			\
 	main/strlist.c			\
 	main/trace.c			\
-	main/trashbox.c			\
 	main/tokeninfo.c		\
 	main/unwindi.c			\
-	main/vstring.c			\
 	main/writer.c			\
 	main/writer-etags.c		\
 	main/writer-ctags.c		\
@@ -174,7 +201,6 @@ OPTSCRIPT_SRCS = \
 OPTSCRIPT_OBJS = $(OPTSCRIPT_SRCS:.c=.$(OBJEXT))
 
 OPTLIB2C_INPUT = \
-	optlib/RSpec.ctags			\
 	optlib/cmake.ctags			\
 	optlib/ctags-optlib.ctags		\
 	optlib/elixir.ctags			\
@@ -183,10 +209,11 @@ OPTLIB2C_INPUT = \
 	optlib/inko.ctags			\
 	optlib/iPythonCell.ctags		\
 	optlib/kconfig.ctags			\
+	optlib/lex.ctags			\
 	optlib/man.ctags			\
-	optlib/markdown.ctags			\
 	optlib/meson.ctags			\
 	optlib/mesonOptions.ctags		\
+	optlib/org.ctags			\
 	optlib/passwd.ctags			\
 	optlib/pod.ctags			\
 	optlib/puppetManifest.ctags		\
@@ -194,6 +221,7 @@ OPTLIB2C_INPUT = \
 	optlib/rpmMacros.ctags			\
 	optlib/scss.ctags			\
 	optlib/systemtap.ctags			\
+	optlib/yacc.ctags			\
 	\
 	$(NULL)
 OPTLIB2C_SRCS = $(OPTLIB2C_INPUT:.ctags=.c)
@@ -207,6 +235,7 @@ TXT2CSTR_SRCS = $(TXT2CSTR_INPUT:.ps=.c)
 PEG_INPUT = \
        peg/varlink.peg				\
        peg/kotlin.peg				\
+       peg/thrift.peg				\
        \
        $(NULL)
 PEG_SRCS = $(PEG_INPUT:.peg=.c)
@@ -234,6 +263,7 @@ PARSER_HEADS = \
 	parsers/make.h \
 	parsers/perl.h \
 	parsers/r.h \
+	parsers/ruby.h \
 	parsers/tcl.h \
 	parsers/tex.h \
 	\
@@ -289,6 +319,8 @@ PARSER_SRCS =				\
 	parsers/flex.c			\
 	parsers/fortran.c		\
 	parsers/fypp.c			\
+	parsers/gdscript.c		\
+	parsers/gemspec.c		\
 	parsers/go.c			\
 	parsers/haskell.c		\
 	parsers/haxe.c			\
@@ -304,6 +336,7 @@ PARSER_SRCS =				\
 	parsers/lua.c			\
 	parsers/m4.c			\
 	parsers/make.c			\
+	parsers/markdown.c			\
 	parsers/matlab.c		\
 	parsers/myrddin.c		\
 	parsers/nsis.c			\
@@ -325,6 +358,7 @@ PARSER_SRCS =				\
 	parsers/rexx.c			\
 	parsers/robot.c			\
 	parsers/rpmspec.c		\
+	parsers/rspec.c			\
 	parsers/rst.c			\
 	parsers/ruby.c			\
 	parsers/rust.c			\
@@ -345,7 +379,6 @@ PARSER_SRCS =				\
 	parsers/vhdl.c			\
 	parsers/vim.c			\
 	parsers/windres.c		\
-	parsers/yacc.c			\
 	parsers/yumrepo.c		\
 	\
 	$(OPTLIB2C_SRCS)		\
@@ -369,9 +402,17 @@ YAML_HEADS = parsers/yaml.h
 YAML_SRCS = \
 	parsers/yaml.c		\
 	\
+	parsers/openapi.c	\
+	\
 	parsers/ansibleplaybook.c	\
 	\
 	$(NULL)
+
+PCRE2_HEADS =
+PCRE2_SRCS = \
+	    main/lregex-pcre2.c \
+	    \
+	    $(NULL)
 
 OPTSCRIPT_DSL_HEADS = \
 	dsl/es.h \
@@ -389,6 +430,7 @@ OPTSCRIPT_DSL_OBJS = $(OPTSCRIPT_DSL_SRCS:.c=.$(OBJEXT))
 READTAGS_DSL_HEADS = \
 	dsl/es.h \
 	dsl/dsl.h \
+	dsl/formatter.h \
 	dsl/qualifier.h \
 	dsl/sorter.h \
 	\
@@ -399,23 +441,26 @@ READTAGS_DSL_HEADS = \
 READTAGS_DSL_SRCS = \
 	dsl/es.c \
 	dsl/dsl.c \
+	dsl/formatter.c \
 	dsl/qualifier.c \
 	dsl/sorter.c \
 	\
 	$(MIO_SRCS) \
 	\
 	$(NULL)
-READTAGS_DSL_OBJS = $(QUALIFIER_SRCS:.c=.$(OBJEXT))
+READTAGS_DSL_OBJS = $(READTAGS_DSL_SRCS:.c=.$(OBJEXT))
 
 READTAGS_SRCS  = \
 	libreadtags/readtags.c      \
 	extra-cmds/printtags.c  \
 	extra-cmds/readtags-cmd.c  \
+	extra-cmds/readtags-stub.c \
 	\
 	$(NULL)
 READTAGS_HEADS = \
 	libreadtags/readtags.h \
 	extra-cmds/printtags.h  \
+	extra-cmds/readtags-stub.h \
 	\
 	$(NULL)
 READTAGS_OBJS  = $(READTAGS_SRCS:.c=.$(OBJEXT))

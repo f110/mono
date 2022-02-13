@@ -313,6 +313,13 @@ representation. ``--list-regex-flags`` lists all the flags.
 	The pattern is interpreted as a POSIX extended regular
 	expression (default).
 
+``pcre2`` (one-letter form ``p``, experimental)
+	The pattern is interpreted as a PCRE2 regular expression explained
+	in pcre2syntax(3).  This flag is available only if the ctags is
+	built with ``pcre2`` library. See the output of
+	``--list-features`` option to know whether your ctags is
+	built-with ``pcre2`` or not.
+
 ``icase`` (one-letter form ``i``)
 	The regular expression is to be applied in a case-insensitive
 	manner.
@@ -322,7 +329,7 @@ representation. ``--list-regex-flags`` lists all the flags.
 	can be an empty string.  See the following description of
 	``scope=...`` flag about how this is useful.
 
-``scope=(ref|push|pop|clear|set)``
+``scope=(ref|push|pop|clear|set|replace)``
 
 	Specify what to do with the internal scope stack.
 
@@ -335,7 +342,7 @@ representation. ``--list-regex-flags`` lists all the flags.
 	``--regex-<LANG>`` is pushed to the stack. ``{scope=push}``
 	implies ``{scope=ref}``.
 
-	You can fill the scope field of captured tag with
+	You can fill the scope field (``scope:``) of captured tag with
 	``{scope=ref}``. If ``{scope=ref}`` flag is given,
 	ctags attaches the tag at the top to the tag
 	captured with ``--regex-<LANG>`` as the value for the ``scope:``
@@ -348,6 +355,21 @@ representation. ``--list-regex-flags`` lists all the flags.
 	Specifying ``{scope=clear}`` removes all the tags in the scope.
 	Specifying ``{scope=set}`` removes all the tags in the scope, and
 	then pushes the captured tag as ``{scope=push}`` does.
+
+	``{scope=replace}`` does the three things sequentially. First it
+	does the same as ``{scope=pop}``, then fills the ``scope:`` field
+	of the tag captured with ``--regex-<LANG>``, and pushes the tag to
+	the scope stack as if ``{scope=push}`` was given finally.
+	You cannot specify another scope action together with
+	``{scope=replace}``.
+
+	You don't want to specify ``{scope=pop}{scope=push}`` as an
+	alternative to ``{scope=replace}``; ``{scope=pop}{scope=push}``
+	fills the ``scope:`` field of the tag captured with ``--regex-<LANG>``
+	first, then pops the tag at the top of the stack, and pushes
+	the captured tag to the scope stack finally. The timing when
+	filling the end field is different between ``{scope=replace}`` and
+	``{scope=pop}{scope=push}``.
 
 	In some cases, you may want to use ``--regex-<LANG>`` only for its
 	side effects: using it only to manipulate the stack but not for
@@ -458,7 +480,7 @@ The official Universal Ctags web site at:
 
 https://ctags.io/
 
-:ref:`ctags(1) <ctags(1)>`, :ref:`tags(5) <tags(5)>`, regex(3), regex(7), egrep(1)
+:ref:`ctags(1) <ctags(1)>`, :ref:`tags(5) <tags(5)>`, regex(3), regex(7), egrep(1), pcre2syntax(3)
 
 AUTHOR
 ------

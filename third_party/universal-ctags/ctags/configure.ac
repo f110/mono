@@ -350,7 +350,7 @@ AC_PROG_LN_S
 AC_CHECK_PROG(STRIP, strip, strip, :)
 AC_SYS_LARGEFILE
 
-AC_CHECK_PROGS([perl_found], [perl], [yes], [no])
+AC_CHECK_PROG([perl_found], [perl], [yes], [no])
 AM_CONDITIONAL([RUN_OPTLIB2C], [test "${perl_found}" = "no"])
 AM_CONDITIONAL([RUN_TXT2CSTR], [test "${perl_found}" = "no"])
 
@@ -510,7 +510,7 @@ case "$host" in
 	AC_DEFINE(MANUAL_GLOBBING)
 	AC_DEFINE(HAVE__FINDFIRST)
 	;;
-  *-cygwin*)
+  *-cygwin | *-msys)
 	gl_cv_have_weak=no
 	;;
 esac
@@ -694,6 +694,30 @@ AS_IF([test "x$enable_yaml" != "xno"], [
 			           AC_MSG_ERROR([libyaml not found])])])
 ])
 AM_CONDITIONAL(HAVE_LIBYAML, test "x$have_libyaml" = xyes)
+
+AC_ARG_ENABLE([pcre2],
+	[AS_HELP_STRING([--disable-pcre2],
+		[disable pcre2 support])])
+
+AH_TEMPLATE([HAVE_PCRE2],
+	[Define this value if pcre2 is available.])
+AS_IF([test "x$enable_pcre2" != "xno"], [
+	PKG_CHECK_MODULES(PCRE2, libpcre2-8,
+			       [have_libpcre2_8=yes
+			       AC_DEFINE(HAVE_PCRE2)],
+			       [AS_IF([test "x$enable_pcre2" = "xyes"], [
+			           AC_MSG_ERROR([libpcre2-8 not found])])])
+])
+AM_CONDITIONAL(HAVE_PCRE2, test "x$have_libpcre2_8" = xyes)
+
+if test "${enable_static}" = "yes"; then
+	if test "${have_libpcre2_8}" = "yes"; then
+		if test "${host_mingw}" = "yes"; then
+			dnl -DPCRE2_STATIC needs to be added manually.
+			PCRE2_CFLAGS="$PCRE2_CFLAGS -DPCRE2_STATIC"
+		fi
+	fi
+fi
 
 
 # Checks for missing prototypes

@@ -758,11 +758,30 @@ bool cxxParserParseEnum(void)
 			return false;
 		}
 
-		if(cxxTokenTypeIsOneOf(g_cxx.pToken,CXXTokenTypeEOF | CXXTokenTypeSemicolon))
+		if(cxxTokenTypeIs(g_cxx.pToken,CXXTokenTypeEOF))
 		{
 			// tolerate EOF, treat as forward declaration
 			cxxParserNewStatement();
-			CXX_DEBUG_LEAVE_TEXT("EOF or semicolon before enum block: can't decode this");
+			CXX_DEBUG_LEAVE_TEXT("EOF before enum block: can't decode this");
+			return true;
+		}
+
+		if(cxxTokenTypeIs(g_cxx.pToken,CXXTokenTypeSemicolon))
+		{
+			bool bMember = (cxxScopeGetVariableKind() == CXXTagKindMEMBER);
+			if (bMember)
+			{
+				// enum type structure member with bit-width:
+				// e.g.
+				//    sturct { enum E m: 2; } v;
+				CXX_DEBUG_PRINT("Found semicolon, member definition with bit-width");
+				cxxParserExtractVariableDeclarations(g_cxx.pTokenChain, 0);
+			}
+			cxxParserNewStatement();
+			if (bMember)
+				CXX_DEBUG_LEAVE_TEXT("Semicolon before enum block: can't decode this");
+			else
+				CXX_DEBUG_LEAVE();
 			return true;
 		}
 
@@ -831,6 +850,7 @@ bool cxxParserParseEnum(void)
 	tagEntryInfo * tag = cxxTagBegin(CXXTagKindENUM,pEnumName);
 
 	int iCorkQueueIndex = CORK_NIL;
+	int iCorkQueueIndexFQ = CORK_NIL;
 
 	if(tag)
 	{
@@ -852,7 +872,7 @@ bool cxxParserParseEnum(void)
 		if(bIsScopedEnum)
 			pszProperties = cxxTagSetProperties(CXXTagPropertyScopedEnum);
 
-		iCorkQueueIndex = cxxTagCommit();
+		iCorkQueueIndex = cxxTagCommit(&iCorkQueueIndexFQ);
 
 		if (pszProperties)
 			vStringDelete (pszProperties);
@@ -894,7 +914,7 @@ bool cxxParserParseEnum(void)
 			if(tag)
 			{
 				tag->isFileScope = !isInputHeaderFile();
-				cxxTagCommit();
+				cxxTagCommit(NULL);
 			}
 		}
 
@@ -906,7 +926,11 @@ bool cxxParserParseEnum(void)
 	}
 
 	if(iCorkQueueIndex > CORK_NIL)
+	{
 		cxxParserMarkEndLineForTagInCorkQueue(iCorkQueueIndex);
+		if(iCorkQueueIndexFQ > CORK_NIL)
+			cxxParserMarkEndLineForTagInCorkQueue(iCorkQueueIndexFQ);
+	}
 
 	while(iPushedScopes > 0)
 	{
@@ -1261,6 +1285,7 @@ static bool cxxParserParseClassStructOrUnionInternal(
 	tagEntryInfo * tag = cxxTagBegin(uTagKind,pClassName);
 
 	int iCorkQueueIndex = CORK_NIL;
+	int iCorkQueueIndexFQ = CORK_NIL;
 
 	bool bGotTemplate = g_cxx.pTemplateTokenChain &&
 			(g_cxx.pTemplateTokenChain->iCount > 0) &&
@@ -1315,7 +1340,7 @@ static bool cxxParserParseClassStructOrUnionInternal(
 
 		tag->isFileScope = !isInputHeaderFile();
 
-		iCorkQueueIndex = cxxTagCommit();
+		iCorkQueueIndex = cxxTagCommit(&iCorkQueueIndexFQ);
 
 	}
 
@@ -1343,7 +1368,11 @@ static bool cxxParserParseClassStructOrUnionInternal(
 	}
 
 	if(iCorkQueueIndex > CORK_NIL)
+	{
 		cxxParserMarkEndLineForTagInCorkQueue(iCorkQueueIndex);
+		if(iCorkQueueIndexFQ > CORK_NIL)
+			cxxParserMarkEndLineForTagInCorkQueue(iCorkQueueIndexFQ);
+	}
 
 	iPushedScopes++;
 	while(iPushedScopes > 0)
@@ -1505,12 +1534,14 @@ check_function_signature:
 			// out its proper scope. Better avoid emitting this one.
 			CXX_DEBUG_PRINT("But it has been preceded by the 'friend' keyword: this is not a real prototype");
 		} else {
-			int piCorkQueueIndex;
-			int iScopesPushed = cxxParserEmitFunctionTags(&oInfo,CXXTagKindPROTOTYPE,CXXEmitFunctionTagsPushScopes, &piCorkQueueIndex);
-			if (piCorkQueueIndex != CORK_NIL)
+			int iCorkQueueIndex, iCorkQueueIndexFQ;
+			int iScopesPushed = cxxParserEmitFunctionTags(&oInfo,CXXTagKindPROTOTYPE,CXXEmitFunctionTagsPushScopes,&iCorkQueueIndex,&iCorkQueueIndexFQ);
+			if (iCorkQueueIndex != CORK_NIL)
 			{
 				CXXToken * t = cxxTokenChainLast(g_cxx.pTokenChain);
-				cxxParserSetEndLineForTagInCorkQueue (piCorkQueueIndex, t->iLineNumber);
+				cxxParserSetEndLineForTagInCorkQueue (iCorkQueueIndex, t->iLineNumber);
+				if (iCorkQueueIndexFQ != CORK_NIL)
+					cxxParserSetEndLineForTagInCorkQueue (iCorkQueueIndexFQ, t->iLineNumber);
 			}
 
 			if(bPrototypeParams)
@@ -1848,6 +1879,7 @@ static rescanReason cxxParserMain(const unsigned int passCount)
 	int kind_for_header = CXXTagKindINCLUDE;
 	int kind_for_macro_param = CXXTagKindMACROPARAM;
 	int role_for_macro_undef = CR_MACRO_UNDEF;
+	int role_for_macro_condition = CR_MACRO_CONDITION;
 	int role_for_header_system = CR_HEADER_SYSTEM;
 	int role_for_header_local = CR_HEADER_LOCAL;
 
@@ -1860,6 +1892,7 @@ static rescanReason cxxParserMain(const unsigned int passCount)
 			false,
 			kind_for_define,
 			role_for_macro_undef,
+			role_for_macro_condition,
 			kind_for_macro_param,
 			kind_for_header,
 			role_for_header_system,

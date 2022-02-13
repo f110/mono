@@ -24,6 +24,7 @@ EXTRA_OBJS = $(GNULIB_OBJS) $(WIN32_OBJS) $(PEG_OBJS) $(RES_OBJ)
 ALL_OBJS = $(ALL_SRCS:.c=.obj) $(EXTRA_OBJS)
 ALL_LIB_OBJS = $(ALL_LIB_SRCS:.c=.obj) $(EXTRA_OBJS)
 READTAGS_OBJS = $(READTAGS_SRCS:.c=.obj)
+UTIL_OBJS = $(UTIL_SRCS:.c=.obj)
 READTAGS_DSL_OBJS = $(READTAGS_DSL_SRCS:.c=.obj)
 OPTSCRIPT_OBJS = $(OPTSCRIPT_SRCS:.c=.obj)
 
@@ -83,8 +84,8 @@ ctags: ctags.exe
 ctags.exe: $(ALL_OBJS) $(ALL_HEADS) $(PEG_HEADS) $(PEG_EXTRA_HEADS) $(MVC_GNULIB_HEADS) $(WIN32_HEADS) $(REPOINFO_HEADS)
 	$(CC) $(OPT) /Fe$@ $(ALL_OBJS) /link setargv.obj $(LIBS) $(PDBFLAG)
 
-readtags.exe: $(READTAGS_OBJS) $(READTAGS_HEADS) $(READTAGS_DSL_OBJS) $(READTAGS_DSL_HEADS) $(GNULIB_OBJS) $(MVC_GNULIB_HEADS)
-	$(CC) $(OPT) /Fe$@ $(READTAGS_OBJS) $(READTAGS_DSL_OBJS) $(GNULIB_OBJS) /link setargv.obj $(PDBFLAG)
+readtags.exe: $(READTAGS_OBJS) $(READTAGS_HEADS) $(UTIL_OBJS) $(UTIL_HEADS) $(READTAGS_DSL_OBJS) $(READTAGS_DSL_HEADS) $(GNULIB_OBJS) $(MVC_GNULIB_HEADS) $(WIN32_HEADS) $(WIN32_OBJS)
+	$(CC) $(OPT) /Fe$@ $(READTAGS_OBJS) $(READTAGS_DSL_OBJS) $(UTIL_OBJS) $(GNULIB_OBJS) $(WIN32_OBJS) /link setargv.obj $(PDBFLAG)
 
 optscript.exe: $(ALL_LIB_OBJS) $(OPTSCRIPT_OBJS) $(ALL_LIB_HEADS) $(OPTSCRIPT_DSL_HEADS) $(WIN32_HEADS)
 	$(CC) $(OPT) /Fe$@ $(ALL_LIB_OBJS) $(OPTSCRIPT_OBJS) /link setargv.obj $(LIBS)
@@ -99,6 +100,7 @@ main\repoinfo.obj: main\repoinfo.c main\repoinfo.h
 
 peg\varlink.c peg\varlink.h: peg\varlink.peg $(PACKCC)
 peg\kotlin.c peg\kotlin.h: peg\kotlin.peg $(PACKCC)
+peg\thrift.c peg\thrift.h: peg\thrift.peg $(PACKCC)
 
 $(RES_OBJ): win32/ctags.rc win32/ctags.exe.manifest win32/resource.h
 	$(RC) /nologo /l 0x409 /Fo$@ $*.rc

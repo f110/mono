@@ -23,7 +23,6 @@
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>  /* declare off_t (not known to regex.h on FreeBSD) */
 #endif
-#include <regex.h>
 
 #include <inttypes.h>
 
@@ -53,9 +52,6 @@ static bool regexAvailable = false;
 *   MACROS
 */
 
-/* Back-references \0 through \9 */
-#define BACK_REFERENCE_COUNT 10
-
 /* The max depth of taction=enter/leave stack */
 #define MTABLE_STACK_MAX_DEPTH 64
 
@@ -67,6 +63,7 @@ static bool regexAvailable = false;
    Tmain cases. */
 #define MTABLE_MOTIONLESS_MAX (MTABLE_STACK_MAX_DEPTH + 1)
 
+#define DEFAULT_REGEX_BACKEND "e"
 
 /*
 *   DATA DECLARATIONS
@@ -79,7 +76,8 @@ enum scopeAction {
 	SCOPE_POP     = 1UL << 1,
 	SCOPE_PUSH    = 1UL << 2,
 	SCOPE_CLEAR   = 1UL << 3,
-	SCOPE_PLACEHOLDER = 1UL << 4,
+	SCOPE_REF_AFTER_POP = 1UL << 4,
+	SCOPE_PLACEHOLDER = 1UL << 5,
 };
 
 enum tableAction {
@@ -140,7 +138,7 @@ struct mTableActionSpec {
 };
 
 typedef struct {
-	regex_t *pattern;
+	regexCompiledCode pattern;
 	enum pType type;
 	bool exclusive;
 	bool accept_empty_name;
@@ -296,9 +294,7 @@ static void deletePattern (regexPattern *p)
 	if (p->refcount > 0)
 		return;
 
-	regfree (p->pattern);
-	eFree (p->pattern);
-	p->pattern = NULL;
+	p->pattern.backend->delete_code (p->pattern.code);
 
 	if (p->type == PTRN_TAG)
 	{
@@ -581,6 +577,8 @@ static void scope_ptrn_flag_eval (const char* const f  CTAGS_ATTR_UNUSED,
 		*bfields |= SCOPE_CLEAR;
 	else if (strcmp (v, "set") == 0)
 		*bfields |= (SCOPE_CLEAR | SCOPE_PUSH);
+	else if (strcmp (v, "replace") == 0)
+		*bfields |= (SCOPE_POP|SCOPE_REF_AFTER_POP|SCOPE_PUSH);
 	else
 		error (FATAL, "Unexpected value for scope flag in regex definition: scope=%s", v);
 }
@@ -594,7 +592,7 @@ static void placeholder_ptrn_flag_eval (const char* const f  CTAGS_ATTR_UNUSED,
 
 static flagDefinition scopePtrnFlagDef[] = {
 	{ '\0', "scope",     NULL, scope_ptrn_flag_eval,
-	  "ACTION", "use scope stack: ACTION = ref|push|pop|clear|set"},
+	  "ACTION", "use scope stack: ACTION = ref|push|pop|clear|set|replace"},
 	{ '\0', "placeholder",  NULL, placeholder_ptrn_flag_eval,
 	  NULL, "don't put this tag to tags file."},
 };
@@ -643,12 +641,14 @@ static regexPattern * refPattern (regexPattern * ptrn)
 	return ptrn;
 }
 
-static regexPattern * newPattern (regex_t* const pattern,
+static regexPattern * newPattern (regexCompiledCode* const pattern,
 								  enum regexParserType regptype)
 {
 	regexPattern *ptrn = xCalloc(1, regexPattern);
 
-	ptrn->pattern = pattern;
+	ptrn->pattern.backend = pattern->backend;
+	ptrn->pattern.code = pattern->code;
+
 	ptrn->exclusive = false;
 	ptrn->accept_empty_name = false;
 	ptrn->regptype = regptype;
@@ -679,7 +679,7 @@ static regexTableEntry * newRefPatternEntry (regexTableEntry * other)
 	return entry;
 }
 
-static regexTableEntry * newEntry (regex_t* const pattern,
+static regexTableEntry * newEntry (regexCompiledCode* const pattern,
 								   enum regexParserType regptype)
 {
 	regexTableEntry *entry = xCalloc (1, regexTableEntry);
@@ -689,7 +689,7 @@ static regexTableEntry * newEntry (regex_t* const pattern,
 
 static regexPattern* addCompiledTagCommon (struct lregexControlBlock *lcb,
 										   int table_index,
-										   regex_t* const pattern,
+										   regexCompiledCode* const pattern,
 										   enum regexParserType regptype)
 {
 	regexTableEntry *entry = newEntry (pattern, regptype);
@@ -839,7 +839,7 @@ static void pre_ptrn_flag_guest_long (const char* const s, const char* const v, 
 	}
 	else
 	{
-		guest->lang.spec.lang = getNamedLanguage (v, (tmp - v));
+		guest->lang.spec.lang = getNamedLanguageOrAlias (v, (tmp - v));
 		if (guest->lang.spec.lang == LANG_IGNORE)
 		{
 			error (WARNING, "no parser found for the guest spec: %s", v);
@@ -1303,7 +1303,12 @@ static void patternEvalFlags (struct lregexControlBlock *lcb,
 	}
 
 	if (regptype == REG_PARSER_SINGLE_LINE || regptype == REG_PARSER_MULTI_TABLE)
+	{
 		flagsEval (flags, scopePtrnFlagDef, ARRAY_SIZE(scopePtrnFlagDef), &ptrn->scopeActions);
+		if ((ptrn->scopeActions & (SCOPE_REF|SCOPE_REF_AFTER_POP)) == (SCOPE_REF|SCOPE_REF_AFTER_POP))
+			error (WARNING, "%s: don't combine \"replace\" with the other scope action.",
+				   getLanguageName (lcb->owner));
+	}
 
 	if (regptype == REG_PARSER_MULTI_LINE || regptype == REG_PARSER_MULTI_TABLE)
 	{
@@ -1324,7 +1329,7 @@ static void patternEvalFlags (struct lregexControlBlock *lcb,
 
 static regexPattern *addCompiledTagPattern (struct lregexControlBlock *lcb,
 											int table_index,
-											enum regexParserType regptype, regex_t* const pattern,
+											enum regexParserType regptype, regexCompiledCode* const pattern,
 					    const char* const name, char kindLetter, const char* kindName,
 					    char *const description, const char* flags,
 					    bool kind_explicitly_defined,
@@ -1342,7 +1347,7 @@ static regexPattern *addCompiledTagPattern (struct lregexControlBlock *lcb,
 	return ptrn;
 }
 
-static regexPattern *addCompiledCallbackPattern (struct lregexControlBlock *lcb, regex_t* const pattern,
+static regexPattern *addCompiledCallbackPattern (struct lregexControlBlock *lcb, regexCompiledCode* const pattern,
 					const regexCallback callback, const char* flags,
 					bool *disabled,
 					void *userData)
@@ -1359,33 +1364,35 @@ static regexPattern *addCompiledCallbackPattern (struct lregexControlBlock *lcb,
 	return ptrn;
 }
 
-
-static void regex_flag_basic_short (char c CTAGS_ATTR_UNUSED, void* data)
+#ifndef HAVE_PCRE2
+static void no_pcre2_regex_flag_short (char c, void* data)
 {
-	int* cflags = data;
-	*cflags &= ~REG_EXTENDED;
+	error (WARNING, "'p' flag is specied but pcre2 regex engine is not linked.");
 }
-
-static void regex_flag_basic_long (const char* const s CTAGS_ATTR_UNUSED, const char* const unused CTAGS_ATTR_UNUSED, void* data)
+static void no_pcre2_regex_flag_long (const char* const s, const char* const unused CTAGS_ATTR_UNUSED, void* data)
 {
-	regex_flag_basic_short ('b', data);
+	error (WARNING, "{pcre2} flag is specied but pcre2 regex engine is not linked.");
 }
+#endif
 
-static void regex_flag_extend_short (char c CTAGS_ATTR_UNUSED, void* data)
-{
-	int* cflags = data;
-	*cflags |= REG_EXTENDED;
-}
-
-static void regex_flag_extend_long (const char* const c CTAGS_ATTR_UNUSED, const char* const unused CTAGS_ATTR_UNUSED, void* data)
-{
-	regex_flag_extend_short('e', data);
-}
+static flagDefinition backendFlagDefs[] = {
+	{ 'b', "basic",  basic_regex_flag_short,  basic_regex_flag_long,
+	  NULL, "interpreted as a Posix basic regular expression."},
+	{ 'e', "extend", extend_regex_flag_short, extend_regex_flag_long,
+	  NULL, "interpreted as a Posix extended regular expression (default)"},
+#ifdef HAVE_PCRE2
+	{ 'p', "pcre2",  pcre2_regex_flag_short, pcre2_regex_flag_long,
+	  NULL, "use pcre2 regex engine"},
+#else
+	{ 'p', "pcre2",  no_pcre2_regex_flag_short, no_pcre2_regex_flag_long,
+	  NULL, "pcre2 is NOT linked!"},
+#endif
+};
 
 static void regex_flag_icase_short (char c CTAGS_ATTR_UNUSED, void* data)
 {
-	int* cflags = data;
-	*cflags |= REG_ICASE;
+	struct flagDefsDescriptor *desc = data;
+	desc->backend->set_icase_flag (&desc->flags);
 }
 
 static void regex_flag_icase_long (const char* s CTAGS_ATTR_UNUSED, const char* const unused CTAGS_ATTR_UNUSED, void* data)
@@ -1393,44 +1400,57 @@ static void regex_flag_icase_long (const char* s CTAGS_ATTR_UNUSED, const char* 
 	regex_flag_icase_short ('i', data);
 }
 
-
-static flagDefinition regexFlagDefs[] = {
-	{ 'b', "basic",  regex_flag_basic_short,  regex_flag_basic_long,
-	  NULL, "interpreted as a Posix basic regular expression."},
-	{ 'e', "extend", regex_flag_extend_short, regex_flag_extend_long,
-	  NULL, "interpreted as a Posix extended regular expression (default)"},
+static flagDefinition backendCommonRegexFlagDefs[] = {
 	{ 'i', "icase",  regex_flag_icase_short,  regex_flag_icase_long,
 	  NULL, "applied in a case-insensitive manner"},
 };
 
-static regex_t* compileRegex (enum regexParserType regptype,
-							  const char* const regexp, const char* const flags)
+
+static struct flagDefsDescriptor choose_backend (const char *flags, enum regexParserType regptype, bool error_if_no_backend)
 {
-	int cflags = REG_EXTENDED | REG_NEWLINE;
+	struct flagDefsDescriptor desc = {
+		.backend  = NULL,
+		.flags = 0,
+		.regptype = regptype,
+	};
 
-	if (regptype == REG_PARSER_MULTI_TABLE)
-		cflags &= ~REG_NEWLINE;
+	if (flags)
+		flagsEval (flags,
+				   backendFlagDefs,
+				   ARRAY_SIZE(backendFlagDefs),
+				   &desc);
 
-	regex_t *result;
-	int errcode;
+	/* Choose the default backend. */
+	if (desc.backend == NULL)
+	{
+		if (flags && error_if_no_backend)
+			error (FATAL, "No sunch backend for the name: \"%s\"", flags);
+
+		flagsEval (DEFAULT_REGEX_BACKEND,
+				   backendFlagDefs,
+				   ARRAY_SIZE(backendFlagDefs),
+				   &desc);
+	}
+	return desc;
+}
+
+static regexCompiledCode compileRegex (enum regexParserType regptype,
+									   const char* const regexp, const char* const flags)
+{
+	struct flagDefsDescriptor desc = choose_backend (flags, regptype, false);
+
+	/* Evaluate backend specific flags */
+	flagsEval (flags,
+			   desc.backend->fdefs,
+			   desc.backend->fdef_count,
+			   &desc.flags);
 
 	flagsEval (flags,
-		   regexFlagDefs,
-		   ARRAY_SIZE(regexFlagDefs),
-		   &cflags);
+			   backendCommonRegexFlagDefs,
+			   ARRAY_SIZE (backendCommonRegexFlagDefs),
+			   &desc);
 
-	result = xMalloc (1, regex_t);
-	errcode = regcomp (result, regexp, cflags);
-	if (errcode != 0)
-	{
-		char errmsg[256];
-		regerror (errcode, result, errmsg, 256);
-		error (WARNING, "regcomp %s: %s", regexp, errmsg);
-		regfree (result);
-		eFree (result);
-		result = NULL;
-	}
-	return result;
+	return desc.backend->compile (desc.backend, regexp, desc.flags);
 }
 
 
@@ -1552,6 +1572,16 @@ static bool hasNameSlot (const regexPattern* const patbuf)
 			|| patbuf->anonymous_tag_prefix);
 }
 
+static int scopeActionRef (int currentScope)
+{
+	int scope = currentScope;
+	tagEntryInfo *entry;
+	while ((entry = getEntryInCorkQueue (scope)) && entry->placeholder)
+		/* Look at parent */
+		scope = entry->extensionFields.scopeIndex;
+	return scope;
+}
+
 static void matchTagPattern (struct lregexControlBlock *lcb,
 		const char* line,
 		const regexPattern* const patbuf,
@@ -1573,17 +1603,20 @@ static void matchTagPattern (struct lregexControlBlock *lcb,
 	vStringStripTrailing (name);
 
 	if (patbuf->scopeActions & SCOPE_REF)
-	{
-		tagEntryInfo *entry;
-
-		scope = lcb->currentScope;
-		while ((entry = getEntryInCorkQueue (scope)) && entry->placeholder)
-			/* Look at parent */
-			scope = entry->extensionFields.scopeIndex;
-	}
+		scope = scopeActionRef (lcb->currentScope);
 	if (patbuf->scopeActions & SCOPE_CLEAR)
 	{
 		unsigned long endline = getInputLineNumberInRegPType(patbuf->regptype, offset);
+
+		/*
+		 * SCOPE_CLEAR|SCOPE_PUSH implies that "set" was specified as the scope action.
+		 * If the specified action is "set", getInputLineNumberInRegPType()
+		 * returns the start line of the NEW scope. The cleared scopes are ended BEFORE
+		 * the new scope. There is a gap. We must adjust the "end:" field here.
+		 */
+		if (patbuf->scopeActions & SCOPE_PUSH && endline > 0)
+			endline--;
+
 		fillEndLineFieldOfUpperScopes (lcb, endline);
 		lcb->currentScope = CORK_NIL;
 	}
@@ -1592,10 +1625,24 @@ static void matchTagPattern (struct lregexControlBlock *lcb,
 		tagEntryInfo *entry = getEntryInCorkQueue (lcb->currentScope);
 
 		if (entry && (entry->extensionFields.endLine == 0))
+		{
 			entry->extensionFields.endLine = getInputLineNumberInRegPType(patbuf->regptype, offset);
+
+			/*
+			 * SCOPE_POP|SCOPE_REF_AFTER_POP implies that "replace" was specified as the
+			 * scope action. If the specified action is "replace", getInputLineNumberInRegPType()
+			 * returns the start line of the NEW scope. The popped scope is ended BEFORE
+			 * the new scope. There is a gap. We must adjust the "end:" field here.
+			 */
+			if ((patbuf->scopeActions & SCOPE_REF_AFTER_POP) &&
+				entry->extensionFields.endLine > 1)
+				entry->extensionFields.endLine--;
+		}
 
 		lcb->currentScope = entry? entry->extensionFields.scopeIndex: CORK_NIL;
 	}
+	if (patbuf->scopeActions & SCOPE_REF_AFTER_POP)
+		scope = scopeActionRef (lcb->currentScope);
 
 	if (vStringLength (name) == 0 && (placeholder == false))
 	{
@@ -1763,7 +1810,7 @@ static bool fillGuestRequest (const char *start,
 			- pmatch [guest_spec->lang.spec.patternGroup].rm_so;
 		if (size > 0)
 		{
-			guest_req->lang = getNamedLanguage (name, size);
+			guest_req->lang = getNamedLanguageOrAlias (name, size);
 			guest_req->lang_set = true;
 		}
 	}
@@ -1810,8 +1857,11 @@ static bool matchRegexPattern (struct lregexControlBlock *lcb,
 	if (patbuf->disabled && *(patbuf->disabled))
 		return false;
 
-	match = regexec (patbuf->pattern, vStringValue (line),
-			 BACK_REFERENCE_COUNT, pmatch, 0);
+	match = patbuf->pattern.backend->match (patbuf->pattern.backend,
+											patbuf->pattern.code, vStringValue (line),
+											vStringLength (line),
+											pmatch);
+
 	if (match == 0)
 	{
 		result = true;
@@ -1894,8 +1944,11 @@ static bool matchMultilineRegexPattern (struct lregexControlBlock *lcb,
 	current = start = vStringValue (allLines);
 	do
 	{
-		match = regexec (patbuf->pattern, current,
-						 BACK_REFERENCE_COUNT, pmatch, 0);
+		match = patbuf->pattern.backend->match (patbuf->pattern.backend,
+												patbuf->pattern.code, current,
+												vStringLength (allLines) - (current - start),
+												pmatch);
+
 		if (match != 0)
 		{
 			entry->statistics.unmatch++;
@@ -2117,9 +2170,21 @@ static regexPattern *addTagRegexInternal (struct lregexControlBlock *lcb,
 	if (!regexAvailable)
 		return NULL;
 
-	regex_t* const cp = compileRegex (regptype, regex, flags);
-	if (cp == NULL)
+	regexCompiledCode cp = compileRegex (regptype, regex, flags);
+	if (cp.code == NULL)
+	{
+		error (WARNING, "pattern: %s", regex);
+		if (table_index != TABLE_INDEX_UNUSED)
+		{
+			struct regexTable *table = ptrArrayItem (lcb->tables, table_index);
+			error (WARNING, "table: %s[%u]", table->name, ptrArrayCount (table->entries));
+			error (WARNING, "language: %s", getLanguageName (lcb->owner));
+		}
+		else
+			error (WARNING, "language: %s[%u]", getLanguageName (lcb->owner),
+				   ptrArrayCount (lcb->entries[regptype]));
 		return NULL;
+	}
 
 	char kindLetter;
 	char* kindName;
@@ -2184,7 +2249,7 @@ static regexPattern *addTagRegexInternal (struct lregexControlBlock *lcb,
 	}
 
 	regexPattern *rptr = addCompiledTagPattern (lcb, table_index,
-												regptype, cp, name,
+												regptype, &cp, name,
 												kindLetter, kindName, description, flags,
 												explictly_defined,
 												disabled);
@@ -2257,13 +2322,17 @@ extern void addCallbackRegex (struct lregexControlBlock *lcb,
 		return;
 
 
-	regex_t* const cp = compileRegex (REG_PARSER_SINGLE_LINE, regex, flags);
-	if (cp != NULL)
+	regexCompiledCode cp = compileRegex (REG_PARSER_SINGLE_LINE, regex, flags);
+	if (cp.code == NULL)
 	{
-		regexPattern *rptr = addCompiledCallbackPattern (lcb, cp, callback, flags,
-														 disabled, userData);
-		rptr->pattern_string = escapeRegexPattern(regex);
+		error (WARNING, "pattern: %s", regex);
+		error (WARNING, "language: %s", getLanguageName (lcb->owner));
+		return;
 	}
+
+	regexPattern *rptr = addCompiledCallbackPattern (lcb, &cp, callback, flags,
+													 disabled, userData);
+	rptr->pattern_string = escapeRegexPattern(regex);
 }
 
 static void addTagRegexOption (struct lregexControlBlock *lcb,
@@ -2356,49 +2425,79 @@ extern void processTagRegexOption (struct lregexControlBlock *lcb,
 *   Regex option parsing
 */
 
-extern void printRegexFlags (bool withListHeader, bool machinable, FILE *fp)
+extern void printRegexFlags (bool withListHeader, bool machinable, const char *flags, FILE *fp)
 {
-	struct colprintTable * table;
+	struct colprintTable * table = flagsColprintTableNew ();
 
-	table = flagsColprintTableNew ();
-
-	flagsColprintAddDefinitions (table, regexFlagDefs,  ARRAY_SIZE (regexFlagDefs));
-	flagsColprintAddDefinitions (table, prePtrnFlagDef, ARRAY_SIZE (prePtrnFlagDef));
-	flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
-	flagsColprintAddDefinitions (table, scopePtrnFlagDef, ARRAY_SIZE (scopePtrnFlagDef));
-	flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	if (flags && *flags != '\0')
+	{
+		/* Print backend specific flags.
+		 * This code is just stub because there is no backend having a specific flag.
+		 * The help message for this option is not updated. */
+		struct flagDefsDescriptor desc = choose_backend (flags, REG_PARSER_SINGLE_LINE, true);
+		flagsColprintAddDefinitions (table, desc.backend->fdefs, desc.backend->fdef_count);
+	}
+	else
+	{
+		flagsColprintAddDefinitions (table, backendFlagDefs, ARRAY_SIZE(backendFlagDefs));
+		flagsColprintAddDefinitions (table, backendCommonRegexFlagDefs, ARRAY_SIZE(backendCommonRegexFlagDefs));
+		flagsColprintAddDefinitions (table, prePtrnFlagDef, ARRAY_SIZE (prePtrnFlagDef));
+		flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
+		flagsColprintAddDefinitions (table, scopePtrnFlagDef, ARRAY_SIZE (scopePtrnFlagDef));
+		flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	}
 
 	flagsColprintTablePrint (table, withListHeader, machinable, fp);
 	colprintTableDelete(table);
 }
 
-extern void printMultilineRegexFlags (bool withListHeader, bool machinable, FILE *fp)
+extern void printMultilineRegexFlags (bool withListHeader, bool machinable, const char *flags, FILE *fp)
 {
-	struct colprintTable * table;
+	struct colprintTable * table = flagsColprintTableNew ();
 
-	table = flagsColprintTableNew ();
-
-	flagsColprintAddDefinitions (table, regexFlagDefs,  ARRAY_SIZE (regexFlagDefs));
-	flagsColprintAddDefinitions (table, multilinePtrnFlagDef, ARRAY_SIZE (multilinePtrnFlagDef));
-	flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
-	flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	if (flags && *flags != '\0')
+	{
+		/* Print backend specific flags.
+		 * This code is just stub because there is no backend having a specific flag.
+		 * The help message for this option is not updated. */
+		struct flagDefsDescriptor desc = choose_backend (flags, REG_PARSER_MULTI_LINE, true);
+		flagsColprintAddDefinitions (table, desc.backend->fdefs, desc.backend->fdef_count);
+	}
+	else
+	{
+		flagsColprintAddDefinitions (table, backendFlagDefs, ARRAY_SIZE(backendFlagDefs));
+		flagsColprintAddDefinitions (table, backendCommonRegexFlagDefs, ARRAY_SIZE(backendCommonRegexFlagDefs));
+		flagsColprintAddDefinitions (table, multilinePtrnFlagDef, ARRAY_SIZE (multilinePtrnFlagDef));
+		flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
+		flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	}
 
 	flagsColprintTablePrint (table, withListHeader, machinable, fp);
 	colprintTableDelete(table);
 }
 
-extern void printMultitableRegexFlags (bool withListHeader, bool machinable, FILE *fp)
+extern void printMultitableRegexFlags (bool withListHeader, bool machinable, const char *flags, FILE *fp)
 {
-	struct colprintTable * table;
+	struct colprintTable * table = flagsColprintTableNew ();
 
-	table = flagsColprintTableNew ();
-
-	flagsColprintAddDefinitions (table, regexFlagDefs,  ARRAY_SIZE (regexFlagDefs));
-	flagsColprintAddDefinitions (table, multilinePtrnFlagDef, ARRAY_SIZE (multilinePtrnFlagDef));
-	flagsColprintAddDefinitions (table, multitablePtrnFlagDef, ARRAY_SIZE (multitablePtrnFlagDef));
-	flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
-	flagsColprintAddDefinitions (table, scopePtrnFlagDef, ARRAY_SIZE (scopePtrnFlagDef));
-	flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	if (flags && *flags != '\0')
+	{
+		/* Print backend specific flags.
+		 * This code is just stub because there is no backend having a specific flag.
+		 * The help message for this option is not updated. */
+		struct flagDefsDescriptor desc = choose_backend (flags, REG_PARSER_MULTI_TABLE, true);
+		flagsColprintAddDefinitions (table, desc.backend->fdefs, desc.backend->fdef_count);
+	}
+	else
+	{
+		flagsColprintAddDefinitions (table, backendFlagDefs, ARRAY_SIZE(backendFlagDefs));
+		flagsColprintAddDefinitions (table, backendCommonRegexFlagDefs, ARRAY_SIZE(backendCommonRegexFlagDefs));
+		flagsColprintAddDefinitions (table, multilinePtrnFlagDef, ARRAY_SIZE (multilinePtrnFlagDef));
+		flagsColprintAddDefinitions (table, multitablePtrnFlagDef, ARRAY_SIZE (multitablePtrnFlagDef));
+		flagsColprintAddDefinitions (table, guestPtrnFlagDef, ARRAY_SIZE (guestPtrnFlagDef));
+		flagsColprintAddDefinitions (table, scopePtrnFlagDef, ARRAY_SIZE (scopePtrnFlagDef));
+		flagsColprintAddDefinitions (table, commonSpecFlagDef, ARRAY_SIZE (commonSpecFlagDef));
+	}
 
 	flagsColprintTablePrint (table, withListHeader, machinable, fp);
 	colprintTableDelete(table);
@@ -2632,9 +2731,10 @@ static struct regexTable * matchMultitableRegexTable (struct lregexControlBlock 
 		if (ptrn->disabled && *(ptrn->disabled))
 			continue;
 
-		match = regexec (ptrn->pattern, current,
-						 BACK_REFERENCE_COUNT, pmatch, 0);
-
+		match = ptrn->pattern.backend->match (ptrn->pattern.backend,
+											  ptrn->pattern.code, current,
+											  vStringLength(start) - (current - cstart),
+											  pmatch);
 		if (match == 0)
 		{
 			entry->statistics.match++;
@@ -2923,6 +3023,9 @@ static int  makePromiseForAreaSpecifiedWithOffsets (const char *parser,
 	unsigned long endLine = getInputLineNumberForFileOffset(endOffset);
 	unsigned long startLineOffset = getInputFileOffsetForLine (startLine);
 	unsigned long endLineOffset = getInputFileOffsetForLine (endLine);
+
+	Assert(startOffset >= startLineOffset);
+	Assert(endOffset >= endLineOffset);
 
 	return makePromise (parser,
 						startLine, startOffset - startLineOffset,
@@ -3284,6 +3387,23 @@ static EsObject* lrop_get_match_loc (OptVM *vm, EsObject *name)
 	return es_false;
 }
 
+static EsObject* ldrop_get_line_from_matchloc (OptVM *vm, EsObject *name)
+{
+	EsObject *mlocobj = opt_vm_ostack_top (vm);
+	if (es_object_get_type (mlocobj) != OPT_TYPE_MATCHLOC)
+		return OPT_ERR_TYPECHECK;
+
+	matchLoc *mloc = es_pointer_get (mlocobj);
+	EsObject *lineobj = es_integer_new (mloc->line);
+	if (es_error_p (lineobj))
+		return lineobj;
+
+	opt_vm_ostack_pop (vm);
+	opt_vm_ostack_push (vm, lineobj);
+	es_object_unref (lineobj);
+	return es_false;
+}
+
 static matchLoc* make_mloc_from_tagEntryInfo(tagEntryInfo *e)
 {
 	matchLoc *mloc = xMalloc (1, matchLoc);
@@ -3355,7 +3475,7 @@ static EsObject* lrop_get_match_string_named_group (OptVM *vm, EsObject *name)
 	return lrop_get_match_string_common (vm, i, 0);
 }
 
-static EsObject* lrop_get_match_string_gorup_on_stack (OptVM *vm, EsObject *name)
+static EsObject* lrop_get_match_string_group_on_stack (OptVM *vm, EsObject *name)
 {
 	EsObject *group = opt_vm_ostack_top (vm);
 	if (!es_integer_p (group))
@@ -3803,7 +3923,7 @@ static EsObject *lrop_markplaceholder (OptVM *vm, EsObject *name)
 static struct optscriptOperatorRegistration lropOperators [] = {
 	{
 		.name     = "_matchstr",
-		.fn       = lrop_get_match_string_gorup_on_stack,
+		.fn       = lrop_get_match_string_group_on_stack,
 		.arity    = 1,
 		.help_str = "group:int _MATCHSTR string true%"
 		"group:int _MATCHSTR false",
@@ -3814,6 +3934,12 @@ static struct optscriptOperatorRegistration lropOperators [] = {
 		.arity    = -1,
 		.help_str = "group:int /start|/end _MATCHLOC matchloc%"
 		"group:int _MATCHLOC matchloc",
+	},
+	{
+		.name     = "_matchloc2line",
+		.fn       = ldrop_get_line_from_matchloc,
+		.arity    = 1,
+		.help_str = "matchloc _MATCHLOC2LINE int:line",
 	},
 	{
 		.name     = "_tagloc",

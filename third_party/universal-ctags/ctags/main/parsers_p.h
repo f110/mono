@@ -29,7 +29,8 @@
 #ifdef HAVE_LIBYAML
 #define YAML_PARSER_LIST						\
 	YamlParser,									\
-	AnsiblePlaybookParser
+	AnsiblePlaybookParser, \
+	OpenAPIParser
 #else
 #define YAML_PARSER_LIST
 #endif
@@ -37,7 +38,8 @@
 #ifdef HAVE_PACKCC
 #define PEG_PARSER_LIST						\
 	VarlinkParser, \
-	KotlinParser
+	KotlinParser,  \
+	ThriftParser
 #else
 #define PEG_PARSER_LIST
 #endif
@@ -86,6 +88,8 @@
 	FunctionParametersParser, \
 	FyppParser,	   \
 	GdbinitParser, \
+	GDScriptParser, \
+	GemSpecParser, \
 	GoParser, \
 	HaskellParser, \
 	HaxeParser, \
@@ -101,6 +105,7 @@
 	JuliaParser, \
 	KconfigParser, \
 	LdScriptParser, \
+	LEXParser, \
 	LispParser, \
 	LiterateHaskellParser, \
 	LuaParser, \
@@ -118,6 +123,7 @@
 	OldCppParser, \
 	OldCParser, \
 	OcamlParser, \
+	OrgParser, \
 	PasswdParser, \
 	PascalParser, \
 	PerlParser, \
@@ -163,7 +169,7 @@
 	VhdlParser, \
 	VimParser, \
 	WindResParser, \
-	YaccParser, \
+	YACCParser, \
 	YumRepoParser, \
 	ZephirParser
 
