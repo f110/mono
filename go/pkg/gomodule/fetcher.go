@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -475,6 +476,32 @@ func (m *ModuleRoot) findVersions() error {
 	}
 
 	return nil
+}
+
+func (m *Module) LatestVersion(ctx context.Context) (*ModuleVersion, error) {
+	if len(m.Versions) > 0 {
+		return m.Versions[0], nil
+	}
+	if err := m.vcs.Sync(ctx, m.dir); err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	defaultBranch, err := m.vcs.defaultBranch(ctx)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	ref, err := m.vcs.gitRepo.Reference(plumbing.NewBranchReferenceName(defaultBranch), true)
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+	commit, err := m.vcs.gitRepo.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, xerrors.Errorf(": %w", err)
+	}
+
+	return &ModuleVersion{
+		Version: fmt.Sprintf("v0.0.0-%s-%s", commit.Committer.When.Format("20060102150405"), commit.Hash.String()[:12]),
+		Time:    commit.Committer.When,
+	}, nil
 }
 
 func (m *Module) ModuleFile(version string) ([]byte, error) {

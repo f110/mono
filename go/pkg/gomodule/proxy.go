@@ -151,9 +151,16 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 	if mod == nil {
 		return Info{}, xerrors.Errorf("%s is not found", module)
 	}
+	if len(mod.Versions) > 0 {
+		modVer := mod.Versions[len(mod.Versions)-1]
+		return Info{Version: modVer.Version, Time: modVer.Time}, nil
+	}
 
-	modVer := mod.Versions[len(mod.Versions)-1]
-	return Info{Version: modVer.Version, Time: modVer.Time}, nil
+	moduleVer, err := mod.LatestVersion(ctx)
+	if err != nil {
+		return Info{}, xerrors.Errorf(": %w", err)
+	}
+	return Info{Version: moduleVer.Version, Time: moduleVer.Time}, nil
 }
 
 func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) (string, error) {
