@@ -1,0 +1,26 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "bin",
+    files = {
+        "//go/cmd/notion-github-task": "/usr/local/bin/notion-github-task",
+    },
+    mode = "0755",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/notion-github-task"],
+    tars = [":bin"],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "tools/notion-github-task",
+    tag = "latest",
+)
