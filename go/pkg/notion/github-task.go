@@ -24,6 +24,7 @@ type githubTaskConfig struct {
 	DatabaseID  string            `yaml:"database_id"`
 	Properties  map[string]string `yaml:"properties"`
 	URLProperty string            `yaml:"url_property"`
+	RestrictOrg string            `yaml:"restrict_org"`
 }
 
 type GitHubTask struct {
@@ -131,15 +132,18 @@ func (g *GitHubTask) Execute() error {
 		return xerrors.Errorf(": %w", err)
 	}
 
+	g.confMu.Lock()
+	defer g.confMu.Unlock()
 	assigned := make(map[string]*IssueSchema)
 	for _, v := range query.Search.Nodes {
+		if g.config.RestrictOrg != "" && v.Issue.Repository.Owner.Login != g.config.RestrictOrg {
+			continue
+		}
 		issue := v.Issue
 		assigned[v.Issue.URL.String()] = &issue
 	}
 
 	g.mu.Lock()
-	g.confMu.Lock()
-	defer g.confMu.Unlock()
 	if len(g.checked) > 0 {
 		for v := range g.checked {
 			if _, ok := assigned[v]; ok {
@@ -226,7 +230,12 @@ var query struct {
 }
 
 type IssueSchema struct {
-	Number int
-	Title  string
-	URL    githubv4.URI
+	Number     int
+	Title      string
+	URL        githubv4.URI
+	Repository struct {
+		Owner struct {
+			Login string
+		}
+	}
 }
