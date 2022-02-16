@@ -27,7 +27,9 @@ type githubTaskCommand struct {
 }
 
 func newGitHubTaskCommand() *githubTaskCommand {
-	return &githubTaskCommand{}
+	return &githubTaskCommand{
+		schedule: "0 * * * *",
+	}
 }
 
 func (g *githubTaskCommand) Flags(fs *pflag.FlagSet) {
@@ -37,7 +39,7 @@ func (g *githubTaskCommand) Flags(fs *pflag.FlagSet) {
 	fs.Int64Var(&g.installationId, "github-installation-id", 0, "GitHub App installation Id")
 	fs.StringVar(&g.privateKeyFile, "github-private-key-file", "", "Private key file")
 	fs.StringVar(&g.configFile, "config-file", "", "Config file path")
-	fs.StringVar(&g.schedule, "schedule", "", "Check schedule")
+	fs.StringVar(&g.schedule, "schedule", g.schedule, "Check schedule")
 	fs.BoolVar(&g.oneshot, "oneshot", false, "Oneshot execution")
 }
 
