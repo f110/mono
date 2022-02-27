@@ -31,6 +31,8 @@ go_library(
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
         "//vendor/github.com/nats-io/nats.go:nats_go",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
         "//vendor/github.com/robfig/cron/v3:cron",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/github.com/spf13/pflag",

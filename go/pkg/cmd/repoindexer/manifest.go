@@ -82,7 +82,7 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 		}
 	}
 	if latest == 0 {
-		return manifest, xerrors.New("repoindexer: Could not found the latest manifest")
+		return manifest, xerrors.New("repoindexer: Could not find the latest manifest")
 	}
 
 	r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", latest))

@@ -2,9 +2,14 @@ package repoindexer
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -44,13 +49,23 @@ type UpdaterCommand struct {
 
 	readyMu sync.Mutex
 	ready   bool
+
+	latestKeyDesc *prometheus.Desc
 }
+
+var _ prometheus.Collector = &UpdaterCommand{}
 
 func NewUpdaterCommand() *UpdaterCommand {
 	return &UpdaterCommand{
 		MinIOPort:      9000,
 		NATSStreamName: "repoindexer",
 		NATSSubject:    "notify",
+		latestKeyDesc: prometheus.NewDesc(
+			prometheus.BuildFQName("repo_indexer", "", "latest_key"),
+			"",
+			nil,
+			nil,
+		),
 	}
 }
 
@@ -131,12 +146,14 @@ func (u *UpdaterCommand) webEndpoint(addr string, ch chan Manifest) error {
 			return
 		}
 	})
+	prometheus.MustRegister(u)
+	mux.Handle("/metrics", promhttp.Handler())
 
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: mux,
 	}
-	logger.Log.Info("Listen web webpoint", zap.String("addr", addr))
+	logger.Log.Info("Listen http endpoint", zap.String("addr", addr))
 	go srv.ListenAndServe()
 
 	return nil
@@ -153,7 +170,7 @@ func (u *UpdaterCommand) downloadThread(ch chan Manifest) {
 				logger.Log.Debug("Failed download an index", zap.Error(err), zap.Uint64("key", m.ExecutionKey))
 				continue
 			}
-			
+
 			u.readyMu.Lock()
 			u.ready = true
 			u.readyMu.Unlock()
@@ -170,6 +187,14 @@ func (u *UpdaterCommand) downloadLatest() error {
 	logger.Log.Info("Found manifest", zap.Uint64("key", manifest.ExecutionKey))
 
 	if err := u.indexManager.Download(context.Background(), u.IndexDir, manifest); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+
+	f, err := os.Create(filepath.Join(u.IndexDir, "manifest.json"))
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := json.NewEncoder(f).Encode(manifest); err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -212,6 +237,14 @@ func (u *UpdaterCommand) downloadIndex(m Manifest) error {
 		return xerrors.Errorf(": %w", err)
 	}
 	u.latestKey = m.ExecutionKey
+
+	f, err := os.Create(filepath.Join(u.IndexDir, "manifest.json"))
+	if err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
+	if err := json.NewEncoder(f).Encode(m); err != nil {
+		return xerrors.Errorf(": %w", err)
+	}
 
 	u.readyMu.Lock()
 	u.ready = true
@@ -256,4 +289,22 @@ func (u *UpdaterCommand) canUseMinIO() bool {
 
 func (u *UpdaterCommand) canUseS3() bool {
 	return u.S3Endpoint != "" && u.S3AccessKey != "" && u.S3SecretAccessKey != "" && u.S3Region != ""
+}
+
+func (u *UpdaterCommand) Describe(desc chan<- *prometheus.Desc) {
+	desc <- u.latestKeyDesc
+}
+
+func (u *UpdaterCommand) Collect(ch chan<- prometheus.Metric) {
+	f, err := os.Open(filepath.Join(u.IndexDir, "manifest.json"))
+	if err != nil {
+		logger.Log.Warn("Could not open the manifest file", zap.Error(err))
+		return
+	}
+	var manifest Manifest
+	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
+		logger.Log.Warn("Failed to parse the manifest json", zap.Error(err))
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(u.latestKeyDesc, prometheus.GaugeValue, float64(manifest.ExecutionKey))
 }
