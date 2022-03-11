@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -47,8 +46,7 @@ type UpdaterCommand struct {
 	indexManager    *ObjectStorageIndexManager
 	latestKey       uint64
 
-	readyMu sync.Mutex
-	ready   bool
+	ready bool
 
 	latestKeyDesc *prometheus.Desc
 }
@@ -137,9 +135,7 @@ func (u *UpdaterCommand) webEndpoint(addr string, ch chan Manifest) error {
 		}()
 	})
 	mux.HandleFunc("/readiness", func(w http.ResponseWriter, req *http.Request) {
-		u.readyMu.Lock()
 		ready := u.ready
-		u.readyMu.Unlock()
 
 		if !ready {
 			http.Error(w, "not ready", http.StatusServiceUnavailable)
@@ -164,16 +160,12 @@ func (u *UpdaterCommand) downloadThread(ch chan Manifest) {
 		select {
 		case m := <-ch:
 			if err := u.downloadIndex(m); err != nil {
-				u.readyMu.Lock()
 				u.ready = false
-				u.readyMu.Unlock()
 				logger.Log.Debug("Failed download an index", zap.Error(err), zap.Uint64("key", m.ExecutionKey))
 				continue
 			}
 
-			u.readyMu.Lock()
 			u.ready = true
-			u.readyMu.Unlock()
 		}
 	}
 }
@@ -211,10 +203,11 @@ func (u *UpdaterCommand) subscribe(ctx context.Context, ch chan Manifest) error 
 		return xerrors.Errorf(": %w", err)
 	}
 
-	u.readyMu.Lock()
 	u.ready = true
-	u.readyMu.Unlock()
-	logger.Log.Info("Subscribe stream")
+	defer func() {
+		u.ready = false
+	}()
+	logger.Log.Info("Subscribe a stream")
 Loop:
 	for {
 		select {
@@ -225,6 +218,7 @@ Loop:
 			break Loop
 		}
 	}
+	logger.Log.Info("Stop subscribing a stream")
 	return nil
 }
 
@@ -246,9 +240,7 @@ func (u *UpdaterCommand) downloadIndex(m Manifest) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	u.readyMu.Lock()
 	u.ready = true
-	u.readyMu.Unlock()
 	return nil
 }
 
