@@ -20,7 +20,7 @@ type Notify struct {
 }
 
 func NewNotify(u, streamName, subject string) (*Notify, error) {
-	nc, err := nats.Connect(u)
+	nc, err := nats.Connect(u, nats.RetryOnFailedConnect(true))
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
