@@ -24,7 +24,7 @@ func zoektIndexShow(args []string) error {
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	repos, err := searcher.List(context.Background(), &query.Const{Value: true})
+	repos, err := searcher.List(context.Background(), &query.Const{Value: true}, nil)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
