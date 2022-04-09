@@ -60,10 +60,10 @@ http_archive(
 
 http_archive(
     name = "dev_f110_rules_k8s_controller",
-    sha256 = "b1ff68cd4724b3a61da022813e9415c71919a5a9fd45a781383d77bcedbd80e5",
-    strip_prefix = "rules_k8s_controller-0.12.0",
+    sha256 = "ddc05d5941371c08ee9145b2984c77b6b28c3ca7ed2d80ef1be1f61986405a3e",
+    strip_prefix = "rules_k8s_controller-0.14.0",
     urls = [
-        "https://github.com/f110/rules_k8s_controller/archive/v0.12.0.tar.gz",
+        "https://github.com/f110/rules_k8s_controller/archive/v0.14.0.tar.gz",
     ],
 )
 
@@ -151,7 +151,7 @@ load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary"
 
 kustomize_binary(
     name = "kustomize",
-    version = "v4.4.0",
+    version = "v4.5.4",
 )
 
 load("//build/rules/kind:def.bzl", "kind_binary")
