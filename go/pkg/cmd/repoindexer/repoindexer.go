@@ -256,7 +256,7 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 	}
 
 	r.cron = cron.New()
-	_, err := r.cron.AddFunc("0 0 0 * *", func() {
+	_, err := r.cron.AddFunc("0 0 * * *", func() {
 		if err := r.gc(); err != nil {
 			logger.Log.Info("Failed garbage collection", zap.Error(err))
 		}
