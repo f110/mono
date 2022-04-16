@@ -1,0 +1,21 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "common_proto",
+    srcs = ["common.proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "rst_converter_proto",
+    srcs = ["rst.proto"],
+    visibility = ["//visibility:public"],
+    deps = [":common_proto"],
+)
+
+proto_library(
+    name = "md_converter_proto",
+    srcs = ["md.proto"],
+    visibility = ["//visibility:public"],
+    deps = [":common_proto"],
+)

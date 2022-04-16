@@ -2,6 +2,7 @@
 # gazelle:proto disable_global
 # gazelle:exclude containers/zoekt-webserver
 # gazelle:exclude third_party/universal-ctags/ctags
+# gazelle:resolve go go.f110.dev/mono/go/pkg/text/converter //go/pkg/text/converter
 
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 
@@ -41,7 +42,7 @@ job(
         "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
         "-//third_party/universal-ctags/ctags:ctags",
         "-//containers/zoekt-indexer/...",
-        "-//vendor/github.com/go-enry/go-oniguruma/..."
+        "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
 )
 

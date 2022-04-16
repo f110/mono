@@ -1,0 +1,57 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+go_proto_library(
+    name = "common_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    proto = "//proto/text/converter:common_proto",
+    visibility = ["//visibility:private"],
+)
+
+go_proto_library(
+    name = "converter_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    protos = [
+        "//proto/text/converter:md_converter_proto",
+        "//proto/text/converter:rst_converter_proto",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source", "vendor_proto_source")
+
+vendor_proto_source(
+    name = "vendor_common_proto_source",
+    src = ":common_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+vendor_grpc_source(
+    name = "vendor_converter_grpc_source",
+    src = ":converter_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "converter",
+    srcs = [
+        "common.pb.go",
+        "markdown.go",
+        "md.pb.go",
+        "rst.pb.go",
+        "service.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/yuin/goldmark",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)

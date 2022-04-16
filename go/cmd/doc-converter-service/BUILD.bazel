@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "doc-converter-service_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/doc-converter-service",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/logger",
+        "//go/pkg/text/converter",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.uber.org/zap",
+        "//vendor/golang.org/x/xerrors",
+        "//vendor/google.golang.org/grpc",
+    ],
+)
+
+go_binary(
+    name = "doc-converter-service",
+    embed = [":doc-converter-service_lib"],
+    visibility = ["//visibility:public"],
+)

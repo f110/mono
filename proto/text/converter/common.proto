@@ -1,0 +1,16 @@
+syntax = "proto3";
+package mono.text.converter;
+option go_package = "go.f110.dev/mono/go/pkg/text/converter";
+
+enum Format {
+  HTML = 0;
+}
+
+message RequestConvert {
+  string in = 1;
+  Format format = 2;
+}
+
+message ResponseConvert {
+  string out = 1;
+}

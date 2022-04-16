@@ -1,0 +1,9 @@
+syntax = "proto3";
+package mono.text.converter;
+option go_package = "go.f110.dev/mono/go/pkg/text/converter";
+
+import "proto/text/converter/common.proto";
+
+service MarkdownTextConverter {
+  rpc Convert(RequestConvert) returns (ResponseConvert);
+}

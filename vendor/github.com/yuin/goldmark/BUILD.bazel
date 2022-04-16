@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "goldmark",
+    srcs = ["markdown.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/yuin/goldmark",
+    importpath = "github.com/yuin/goldmark",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/yuin/goldmark/parser",
+        "//vendor/github.com/yuin/goldmark/renderer",
+        "//vendor/github.com/yuin/goldmark/renderer/html",
+        "//vendor/github.com/yuin/goldmark/text",
+        "//vendor/github.com/yuin/goldmark/util",
+    ],
+)
