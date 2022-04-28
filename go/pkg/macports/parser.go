@@ -6,8 +6,16 @@ import (
 	"strings"
 )
 
-func ParsePortfile(in []byte) error {
-	return nil
+type Portfile struct {
+	Name            string
+	Homepage        string
+	Description     string
+	LongDescription string
+	License         string
+}
+
+func ParsePortfile(r io.Reader) (*Portfile, error) {
+	return nil, nil
 }
 
 type PortfileTokenType string
@@ -21,10 +29,19 @@ const (
 )
 
 type PortfileToken struct {
-	Type  PortfileTokenType
-	Value string
-	Start int
-	End   int
+	Type     PortfileTokenType
+	Value    string
+	StartPos int
+}
+
+func (t *PortfileToken) String() string {
+	s := new(strings.Builder)
+	s.Grow(t.StartPos)
+	for i := 0; i < t.StartPos; i++ {
+		s.WriteRune(' ')
+	}
+	s.WriteString(t.Value)
+	return s.String()
 }
 
 type lexerState int
@@ -103,6 +120,7 @@ func (l *Lexer) Scan() (*PortfileToken, error) {
 	switch r {
 	case '\n':
 		l.ctx.discard()
+		l.ctx.Pos = 0
 		return &PortfileToken{Type: PortfileTokenLineBreak}, nil
 	case '{':
 		l.ctx.discard()
@@ -124,6 +142,7 @@ func (l *Lexer) scanStatement() (*PortfileToken, error) {
 		return nil, err
 	}
 
+	startPos := l.ctx.Pos
 Loop:
 	for {
 		b, err := l.ctx.peek()
@@ -174,7 +193,7 @@ Loop:
 	case lexerStateValue:
 		l.ctx.State = lexerStateInit
 	}
-	return &PortfileToken{Type: PortfileTokenIdent, Value: value}, nil
+	return &PortfileToken{Type: PortfileTokenIdent, Value: value, StartPos: startPos}, nil
 }
 
 func (l *Lexer) scanComment() (*PortfileToken, error) {
@@ -183,8 +202,10 @@ func (l *Lexer) scanComment() (*PortfileToken, error) {
 		if err != nil {
 			return nil, err
 		}
+		l.ctx.Pos++
 		l.ctx.discard()
 		if b == '\n' {
+			l.ctx.Pos = 0
 			break
 		}
 		l.ctx.Builder.WriteRune(b)
