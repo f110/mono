@@ -3,19 +3,101 @@ package macports
 import (
 	"bufio"
 	"io"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
 type Portfile struct {
-	Name            string
-	Homepage        string
-	Description     string
-	LongDescription string
-	License         string
+	PortSystem      string `portfile:"PortSystem"`
+	Name            string `portfile:"name"`
+	Homepage        string `portfile:"homepage"`
+	Description     string `portfile:"description"`
+	LongDescription string `portfile:"long_description"`
+	License         string `portfile:"license"`
+	Checksum        map[string]string
+	Size            int64
+
+	Attrs map[string][]string
+
+	tokens []*PortfileToken
 }
 
 func ParsePortfile(r io.Reader) (*Portfile, error) {
-	return nil, nil
+	portfile := &Portfile{Attrs: make(map[string][]string), Checksum: make(map[string]string)}
+
+	lexer := NewLexer(r)
+	var tokens []*PortfileToken
+	ctx := &parserCtx{}
+	for {
+		token, err := lexer.Scan()
+		if err == io.EOF {
+			break
+		}
+		tokens = append(tokens, token)
+
+		switch token.Type {
+		case PortfileTokenIdent:
+			switch ctx.State {
+			case parserStateInit:
+				ctx.State = parserStateValue
+			case parserStateValue:
+				key := tokens[len(tokens)-2]
+				if key.Value == "checksums" {
+					kv := splitKeyAndValue(token.Value)
+					if v, ok := kv["size"]; ok {
+						size, err := strconv.ParseInt(v, 10, 64)
+						if err != nil {
+							return nil, err
+						}
+						portfile.Size = size
+						delete(kv, "size")
+					}
+					portfile.Checksum = kv
+				}
+
+				typ := reflect.TypeOf(*portfile)
+				set := false
+				for i := 0; i < typ.NumField(); i++ {
+					ft := typ.Field(i)
+					tag := ft.Tag.Get("portfile")
+					if tag == "" {
+						continue
+					}
+					if tag == key.Value {
+						v := reflect.ValueOf(portfile).Elem()
+						fv := v.Field(i)
+						fv.SetString(token.Value)
+						set = true
+						break
+					}
+				}
+				if !set {
+					portfile.Attrs[key.Value] = append(portfile.Attrs[key.Value], token.Value)
+				}
+
+				ctx.State = parserStateInit
+			}
+		case PortfileTokenLBracket:
+			ctx.State = parserStateCommand
+		case PortfileTokenRBracket:
+			ctx.State = parserStateInit
+		}
+	}
+
+	return portfile, nil
+}
+
+type parserState int
+
+const (
+	parserStateInit parserState = iota
+	parserStateValue
+	parserStateCommand
+)
+
+type parserCtx struct {
+	State parserState
 }
 
 type PortfileTokenType string
@@ -235,4 +317,23 @@ func isBackSlash(v rune) bool {
 		return true
 	}
 	return false
+}
+
+func splitKeyAndValue(v string) map[string]string {
+	kv := make(map[string]string)
+	s := strings.Split(v, " ")
+	key := ""
+	for _, v := range s {
+		if v == "" {
+			continue
+		}
+		if key == "" {
+			key = v
+		} else {
+			kv[key] = v
+			key = ""
+		}
+	}
+
+	return kv
 }

@@ -49,6 +49,32 @@ func TestParsePortfile(t *testing.T) {
 	port, err := ParsePortfile(strings.NewReader(portfile))
 	require.NoError(t, err)
 	require.NotNil(t, port)
+
+	assert.Equal(t, "1.0", port.PortSystem)
+	assert.Equal(t, "kubecfg", port.Name)
+	assert.Equal(t, "https://github.com/kubecfg/kubecfg", port.Homepage)
+	assert.Equal(t, "A tool for managing complex enterprise Kubernetes environments as code.", port.Description)
+	assert.Equal(t,
+		"kubecfg allows you to express the patterns across your infrastructure and reuse these powerful \"templates\" across many services, and then manage those templates as files in version control. The more complex your infrastructure is, the more you will gain from using kubecfg. objects through ownersReferences on them.",
+		port.LongDescription,
+	)
+	assert.Equal(t, "Apache-2.0", port.License)
+
+	assert.Equal(t, "f0dfa68de7f98847399f064aa8930d39483db97e", port.Checksum["rmd160"])
+	assert.Equal(t, "322ed2b6d4214bafac63ee3d666aa240b077a0949d68bc97e5b6dfc484345b7e", port.Checksum["sha256"])
+	assert.Equal(t, int64(266525), port.Size)
+
+	assert.Equal(t, "golang 1.0", port.Attrs["PortGroup"][0])
+	assert.Equal(t, "github.com/kubecfg/kubecfg 0.26.0 v", port.Attrs["go.setup"][0])
+	assert.Equal(t, "0", port.Attrs["revision"][0])
+	assert.Equal(t, "make", port.Attrs["build.cmd"][0])
+	assert.Equal(t, "kubecfg", port.Attrs["build.target"][0])
+	assert.Equal(t, "VERSION=v${version}", port.Attrs["build.post_args"][0])
+	assert.Equal(t, "GO111MODULE=off GOPROXY=off", port.Attrs["build.env-delete"][0])
+	assert.Equal(t, "sysutils", port.Attrs["categories"][0])
+	assert.Equal(t, "darwin", port.Attrs["platforms"][0])
+	assert.Equal(t, "x86_64 arm64", port.Attrs["supported_archs"][0])
+	assert.Equal(t, "no", port.Attrs["installs_libs"][0])
 }
 
 func TestTokenize(t *testing.T) {
