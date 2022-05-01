@@ -1,0 +1,54 @@
+syntax = "proto3";
+package mono.api.consulv1alpha1;
+option  go_package              = "go.f110.dev/mono/go/pkg/api/harborv1alpha1";
+option (dev.f110.kubeproto.k8s) = {
+  domain: "f110.dev",
+  sub_group: "harbor",
+  version: "v1alpha1",
+};
+
+import "kube.proto";
+
+message HarborProject {
+  HarborProjectSpec   spec   = 1;
+  HarborProjectStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "ready", type: "boolean", json_path: ".status.ready", description: "Ready", format: "byte", priority: 0 },
+    additional_printer_columns: { name: "age", type: "date", json_path: ".metadata.creationTimestamp", description: "age", format: "date", priority: 0 },
+  };
+}
+
+message HarborProjectSpec {
+  // public is an access level of the project.
+  // If public sets true, then anyone can read.
+  bool public = 1;
+}
+
+message HarborProjectStatus {
+  bool   ready      = 1;
+  int32  project_id = 2;
+  string registry   = 3;
+}
+
+message HarborRobotAccount {
+  HarborRobotAccountSpec   spec   = 1;
+  HarborRobotAccountStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "ready", type: "boolean", json_path: ".status.ready", description: "Ready", format: "byte", priority: 0 }
+    additional_printer_columns: { name: "age", type: "date", json_path: ".metadata.creationTimestamp", description: "age", format: "date", priority: 0 }
+  };
+}
+
+message HarborRobotAccountSpec {
+  string project_namespace = 1;
+  string project_name      = 2;
+  // secret_name is a name of docker config secret.
+  string secret_name = 3;
+}
+
+message HarborRobotAccountStatus {
+  bool  ready    = 1;
+  int32 robot_id = 2;
+}

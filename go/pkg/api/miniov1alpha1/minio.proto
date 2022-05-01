@@ -1,0 +1,75 @@
+syntax = "proto3";
+package mono.api.consulv1alpha1;
+option  go_package              = "go.f110.dev/mono/go/pkg/api/miniov1alpha1";
+option (dev.f110.kubeproto.k8s) = {
+  domain: "f110.dev",
+  sub_group: "minio",
+  version: "v1alpha1",
+};
+
+import "kube.proto";
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+
+enum BucketFinalizePolicy {
+  BUCKET_DELETE = 0 [(dev.f110.kubeproto.value) = { value: "Delete" }];
+  BUCKET_KEEP   = 1 [(dev.f110.kubeproto.value) = { value: "Keep" }];
+}
+
+enum BucketPolicy {
+  POLICY_PUBLIC    = 0 [(dev.f110.kubeproto.value) = { value: "Public" }];
+  POLICY_READ_ONLY = 1 [(dev.f110.kubeproto.value) = { value: "ReadOnly" }];
+  POLICY_PRIVATE   = 2 [(dev.f110.kubeproto.value) = { value: "Private" }];
+}
+
+message MinIOBucket {
+  MinIOBucketSpec   spec   = 1;
+  MinIOBucketStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "ready", type: "string", json_path: ".status.ready", description: "Ready", format: "byte", priority: 0 }
+    additional_printer_columns: { name: "age", type: "date", json_path: ".metadata.creationTimestamp", description: "age", format: "date", priority: 0 }
+  };
+}
+
+message MinIOBucketSpec {
+  // selector is a selector of MinIOInstance.
+  k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 1;
+  // bucket_finalize_policy is a plicy when deleted CR Object.
+  // If bucket_finalize_policy is an empty string, then it is the same as "keep".
+  BucketFinalizePolicy bucket_finalize_policy = 2;
+  // policy is the policy of the bucket. One of public, readOnly, private.
+  // If you don't want to give public access, set private or an empty value.
+  // If it is an empty value, The bucket will not have any policy.
+  // Currently, MinIOBucket can't use prefix based policy.
+  BucketPolicy policy = 3;
+  // create_index_file is a flag that creates index.html on top of bucket.
+  bool create_index_file = 4;
+}
+
+message MinIOBucketStatus {
+  bool ready = 1;
+}
+
+message MinIOUser {
+  MinIOUserSpec     spec   = 1;
+  MinIOBucketStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "ready", type: "string", json_path: ".status.ready", description: "Ready", format: "byte", priority: 0 }
+  };
+}
+
+message MinIOUserSpec {
+  // selector is a selector of MinIOInstance
+  k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 1;
+  // path is a path in vault
+  string path = 2;
+  // mount_path is a mount path of KV secrets engine.
+  string mount_path = 3;
+}
+
+message MInIOUserStatus {
+  bool   ready      = 1;
+  string access_key = 2;
+  bool   vault      = 3;
+}

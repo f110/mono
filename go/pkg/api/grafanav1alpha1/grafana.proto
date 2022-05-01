@@ -1,0 +1,48 @@
+syntax = "proto3";
+package mono.api.grafanav1alpha1;
+option  go_package              = "go.f110.dev/mono/go/pkg/api/garafanav1alpha1";
+option (dev.f110.kubeproto.k8s) = {
+  domain: "f110.dev",
+  sub_group: "grafana",
+  version: "v1alpha1",
+};
+
+import "kube.proto";
+import "k8s.io/api/core/v1/generated.proto";
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+
+message Grafana {
+  GrafanaSpec   spec   = 1;
+  GrafanaStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+  };
+}
+
+message GrafanaSpec {
+  k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector user_selector    = 1;
+  string                                             admin_user       = 2;
+  optional k8s.io.api.core.v1.SecretKeySelector admin_password_secret = 3;
+  optional k8s.io.api.core.v1.LocalObjectReference service            = 4;
+}
+
+message GrafanaStatus {
+  int64 observed_generation = 1;
+}
+
+message GrafanaUser {
+  GrafanaUserSpec   spec   = 1;
+  GrafanaUserStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+  };
+}
+
+message GrafanaUserSpec {
+  string email = 1;
+  bool   admin = 2;
+}
+
+message GrafanaUserStatus {
+  bool ready = 1;
+}

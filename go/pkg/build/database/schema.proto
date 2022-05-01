@@ -1,139 +1,138 @@
 syntax = "proto3";
 package build.schema;
-option go_package = "go.f110.dev/mono/go/pkg/build/database;database";
+option  go_package = "go.f110.dev/mono/go/pkg/build/database;database";
 
 import "ddl.proto";
 import "google/protobuf/timestamp.proto";
 
 message SourceRepository {
-    int32  id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    string url       = 2;
-    string clone_url = 3;
-    string name      = 4 [(dev.f110.ddl.column) = {size: 100}];
-    bool   private   = 5;
+  int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string url       = 2;
+  string clone_url = 3;
+  string name      = 4 [(dev.f110.ddl.column) = { size: 100 }];
+  bool private     = 5;
 
-    option (dev.f110.ddl.table) = {
-        primary_key: "id"
-        with_timestamp: true
-    };
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
 
-    option (dev.f110.ddl.dao) = {
-        queries: {
-            name: "All"
-            query: "SELECT * FROM `source_repository`"
-        };
-        queries: {
-            name: "ByUrl"
-            query: "SELECT * FROM `source_repository` WHERE `url` = ?"
-        };
-    };
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `source_repository`"
+    }
+    queries: {
+      name: "ByUrl"
+      query: "SELECT * FROM `source_repository` WHERE `url` = ?"
+    }
+  };
 }
 
 message Job {
-    int32            id            = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    string           name          = 2;
-    SourceRepository repository    = 3;
-    string           command       = 4 [(dev.f110.ddl.column) = {size: 20}];
-    string           target        = 5 [(dev.f110.ddl.column) = {size: 255}, deprecated = true];
-    string           targets       = 6  [(dev.f110.ddl.column) = {type: "text"}];
-    bool             active        = 7;
-    bool             all_revision  = 8;
-    bool             github_status = 9;
-    string           cpu_limit     = 10;
-    string           memory_limit  = 11;
-    bool             exclusive     = 12;
-    bool             sync          = 13;
-    string           config_name   = 14;
-    string           bazel_version = 15;
-    string           job_type      = 16;
-    string           schedule      = 17;
+  int32            id            = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string           name          = 2;
+  SourceRepository repository    = 3;
+  string           command       = 4 [(dev.f110.ddl.column) = { size: 20 }];
+  string           target        = 5 [(dev.f110.ddl.column) = { size: 255 }, deprecated = true];
+  string           targets       = 6 [(dev.f110.ddl.column) = { type: "text" }];
+  bool             active        = 7;
+  bool             all_revision  = 8;
+  bool             github_status = 9;
+  string           cpu_limit     = 10;
+  string           memory_limit  = 11;
+  bool             exclusive     = 12;
+  bool             sync          = 13;
+  string           config_name   = 14;
+  string           bazel_version = 15;
+  string           job_type      = 16;
+  string           schedule      = 17;
 
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
 
-    option (dev.f110.ddl.table) = {
-        primary_key: "id"
-        with_timestamp: true
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `job`"
+    }
+    queries: {
+      name: "BySourceRepositoryId"
+      query: "SELECT * FROM `job` WHERE `repository_id` = ?"
     };
-
-    option (dev.f110.ddl.dao) = {
-        queries: {
-            name: "All"
-            query: "SELECT * FROM `job`"
-        };
-        queries: {
-            name: "BySourceRepositoryId"
-            query: "SELECT * FROM `job` WHERE `repository_id` = ?"
-        };
-    };
+};
 }
 
 message Task {
-    int32  id          = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    Job    job         = 2;
-    string revision    = 3;
-    bool   success     = 4;
-    string log_file    = 5;
-    string command     = 6;
-    string target      = 7 [deprecated = true];
-    string targets     = 8 [(dev.f110.ddl.column) = {type: "text"}];
-    string via         = 9;
-    string config_name = 10;
-    string node        = 11;
-    .google.protobuf.Timestamp start_at    = 12 [(dev.f110.ddl.column) = {null: true}];
-    .google.protobuf.Timestamp finished_at = 13 [(dev.f110.ddl.column) = {null: true}];
+  int32                      id          = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Job                        job         = 2;
+  string                     revision    = 3;
+  bool                       success     = 4;
+  string                     log_file    = 5;
+  string                     command     = 6;
+  string                     target      = 7 [deprecated = true];
+  string                     targets     = 8 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via         = 9;
+  string                     config_name = 10;
+  string                     node        = 11;
+  .google.protobuf.Timestamp start_at    = 12 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at = 13 [(dev.f110.ddl.column) = { null: true }];
 
-    option (dev.f110.ddl.table) = {
-        primary_key: "id"
-        with_timestamp: true
-    };
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
 
-    option (dev.f110.ddl.dao) = {
-        queries: {
-            name: "ByJobId"
-            query: "SELECT * FROM `task` WHERE `job_id` = ?"
-        };
-        queries: {
-            name: "Pending"
-            query: "SELECT * FROM `task` WHERE `start_at` IS NULL"
-        };
-    };
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByJobId"
+      query: "SELECT * FROM `task` WHERE `job_id` = ?"
+    }
+    queries: {
+      name: "Pending"
+      query: "SELECT * FROM `task` WHERE `start_at` IS NULL"
+    }
+  };
 }
 
 message TrustedUser {
-    int32  id        = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    int64  github_id = 2;
-    string username  = 3;
+  int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  int64  github_id = 2;
+  string username  = 3;
 
-    option (dev.f110.ddl.table) = {
-        primary_key: "id"
-        with_timestamp: true
-    };
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
 
-    option (dev.f110.ddl.dao) = {
-        queries: {
-            name: "All"
-            query: "SELECT * FROM `trusted_user`"
-        };
-        queries: {
-            name: "ByGithubId"
-            query: "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
-        };
-    };
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `trusted_user`"
+    }
+    queries: {
+      name: "ByGithubId"
+      query: "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+    }
+  };
 }
 
 message PermitPullRequest {
-    int32  id         = 1 [(dev.f110.ddl.column) = {sequence: true}];
-    string repository = 2;
-    int32  number     = 3;
+  int32  id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string repository = 2;
+  int32  number     = 3;
 
-    option (dev.f110.ddl.table) = {
-        primary_key: "id"
-        with_timestamp: true
-    };
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
 
-    option (dev.f110.ddl.dao) = {
-        queries: {
-            name: "ByRepositoryAndNumber"
-            query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
-        };
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepositoryAndNumber"
+      query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
     };
+};
 }

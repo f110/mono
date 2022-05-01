@@ -1,0 +1,73 @@
+syntax = "proto3";
+package mono.api.consulv1alpha1;
+option  go_package              = "go.f110.dev/mono/go/pkg/api/consulv1alpha1";
+option (dev.f110.kubeproto.k8s) = {
+  domain: "f110.dev",
+  sub_group: "consul",
+  version: "v1alpha1",
+};
+
+import "kube.proto";
+import "k8s.io/api/core/v1/generated.proto";
+import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
+
+message ConsulBackup {
+  ConsulBackupSpec   spec   = 1;
+  ConsulBackupStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+  };
+}
+
+message ConsulBackupSpec {
+  int32                                   interval_in_seconds = 1;
+  int32                                   max_backups         = 2;
+  k8s.io.api.core.v1.LocalObjectReference service             = 3;
+  ConsulBackupStorageSpec                 storage             = 4;
+}
+
+message ConsulBackupStatus {
+  bool     succeeded                                                     = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time last_succeeded_time = 2;
+  repeated ConsulBackupStatusHistory                 history             = 3;
+}
+
+message ConsulBackupStatusHistory {
+  bool     succeeded                                              = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time execute_time = 2;
+  string                                             path         = 3;
+  string                                             message      = 4;
+}
+
+message ConsulBackupStorageSpec {
+  optional BackupStorageMinIOSpec minio = 1 [(dev.f110.kubeproto.field) = { go_name: "MinIO" }];
+  optional BackupStorageGCSSpec   gcs   = 2 [(dev.f110.kubeproto.field) = { go_name: "GCS" }];
+}
+
+message BackupStorageMinIOSpec {
+  optional ObjectReference service    = 1;
+  AWSCredential            credential = 2;
+  string                   bucket     = 3;
+  string                   path       = 4;
+  bool                     secure     = 5;
+}
+
+message ObjectReference {
+  string name      = 1;
+  string namespace = 2;
+}
+
+message AWSCredential {
+  optional k8s.io.api.core.v1.SecretKeySelector access_key_id     = 1 [(dev.f110.kubeproto.field) = { go_name: "AccessKeyID" }];
+  optional k8s.io.api.core.v1.SecretKeySelector secret_access_key = 2;
+}
+
+message BackupStorageGCSSpec {
+  string        bucket     = 1;
+  string        path       = 2;
+  GCPCredential credential = 3;
+}
+
+message GCPCredential {
+  optional k8s.io.api.core.v1.SecretKeySelector service_account_json = 1 [(dev.f110.kubeproto.field) = { go_name: "ServiceAccountJSON" }];
+}
