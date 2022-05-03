@@ -1,0 +1,25 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
+
+proto_library(
+    name = "grafana_proto",
+    srcs = ["grafana.proto"],
+    deps = [
+        "@dev_f110_kubeproto//:kubeproto",
+        "@dev_f110_kubeproto//:k8s_proto",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+kubeproto_go_api(
+    name = "go_api",
+    srcs = [":grafana_proto"],
+    importpath = "go.f110.dev/mono/go/pkg/api/grafanav1alpha1",
+)
+
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
+
+vendor_kubeproto(
+    name = "vendor_go_api",
+    src = ":go_api"
+)

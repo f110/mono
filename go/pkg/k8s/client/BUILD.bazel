@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@dev_f110_kubeproto//bazel:def.bzl", "go_client")
+
+go_client(
+    name = "client",
+    srcs = [
+        "//go/pkg/api/miniov1alpha1:minio_proto",
+        "//go/pkg/api/harborv1alpha1:harbor_proto",
+        "//go/pkg/api/grafanav1alpha1:grafana_proto",
+        "//go/pkg/api/consulv1alpha1:consul_proto",
+    ],
+    importpath = "go.f110.dev/kubeproto/example/pkg/client",
+    visibility = ["//visibility:public"],
+)
+
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
+
+vendor_kubeproto(
+    name = "vendor_client",
+    src = ":client"
+)

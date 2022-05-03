@@ -1,0 +1,24 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
+
+proto_library(
+    name = "harbor_proto",
+    srcs = ["harbor.proto"],
+    deps = [
+        "@dev_f110_kubeproto//:kubeproto",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+kubeproto_go_api(
+    name = "go_api",
+    srcs = [":harbor_proto"],
+    importpath = "go.f110.dev/mono/go/pkg/api/harborv1alpha1",
+)
+
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
+
+vendor_kubeproto(
+    name = "vendor_go_api",
+    src = ":go_api"
+)

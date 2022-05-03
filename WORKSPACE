@@ -34,11 +34,11 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
-    sha256 = "6b5969a7acd7b60c02f816773b06fcf32fbe8ba0c7919ccdc2df4f8fb923804a",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.3.0/rules_pkg-0.3.0.tar.gz",
-        "https://github.com/bazelbuild/rules_pkg/releases/download/0.3.0/rules_pkg-0.3.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+        "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
     ],
+    sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
 )
 
 http_archive(
@@ -50,11 +50,11 @@ http_archive(
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "d0f5f605d0d656007ce6c8b5a82df3037e1d8fe8b121ed42e536f569dec16113",
-    strip_prefix = "protobuf-3.14.0",
+    sha256 = "b07772d38ab07e55eca4d50f4b53da2d998bb221575c60a4f81100242d4b4889",
+    strip_prefix = "protobuf-3.20.0",
     urls = [
-        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
-        "https://github.com/protocolbuffers/protobuf/archive/v3.14.0.tar.gz",
+        "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.20.0.tar.gz",
+        "https://github.com/protocolbuffers/protobuf/archive/v3.20.0.tar.gz",
     ],
 )
 
@@ -83,6 +83,12 @@ git_repository(
     name = "dev_f110_protoc_ddl",
     commit = "f15651f509bf64e43a6493f5b11214af9b921e9b",
     remote = "https://github.com/f110/protoc-ddl",
+)
+
+git_repository(
+    name = "dev_f110_kubeproto",
+    commit = "8231f63ff1260bbb074b4bd2f3543ccdd5db850d",
+    remote = "https://github.com/f110/kubeproto",
 )
 
 load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
