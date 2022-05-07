@@ -126,19 +126,19 @@ func (in *ConsulBackupStatus) DeepCopy() *ConsulBackupStatus {
 }
 
 type ConsulBackupStorageSpec struct {
-	Minio *BackupStorageMinIOSpec `json:"minio,omitempty"`
-	Gcs   *BackupStorageGCSSpec   `json:"gcs,omitempty"`
+	MinIO *BackupStorageMinIOSpec `json:"minio,omitempty"`
+	GCS   *BackupStorageGCSSpec   `json:"gcs,omitempty"`
 }
 
 func (in *ConsulBackupStorageSpec) DeepCopyInto(out *ConsulBackupStorageSpec) {
 	*out = *in
-	if in.Minio != nil {
-		in, out := &in.Minio, &out.Minio
+	if in.MinIO != nil {
+		in, out := &in.MinIO, &out.MinIO
 		*out = new(BackupStorageMinIOSpec)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.Gcs != nil {
-		in, out := &in.Gcs, &out.Gcs
+	if in.GCS != nil {
+		in, out := &in.GCS, &out.GCS
 		*out = new(BackupStorageGCSSpec)
 		(*in).DeepCopyInto(*out)
 	}
@@ -244,14 +244,14 @@ func (in *ObjectReference) DeepCopy() *ObjectReference {
 }
 
 type AWSCredential struct {
-	Accesskeyid     *corev1.SecretKeySelector `json:"accessKeyId,omitempty"`
+	AccessKeyID     *corev1.SecretKeySelector `json:"accessKeyId,omitempty"`
 	SecretAccessKey *corev1.SecretKeySelector `json:"secretAccessKey,omitempty"`
 }
 
 func (in *AWSCredential) DeepCopyInto(out *AWSCredential) {
 	*out = *in
-	if in.Accesskeyid != nil {
-		in, out := &in.Accesskeyid, &out.Accesskeyid
+	if in.AccessKeyID != nil {
+		in, out := &in.AccessKeyID, &out.AccessKeyID
 		*out = new(corev1.SecretKeySelector)
 		(*in).DeepCopyInto(*out)
 	}
@@ -272,13 +272,13 @@ func (in *AWSCredential) DeepCopy() *AWSCredential {
 }
 
 type GCPCredential struct {
-	Serviceaccountjson *corev1.SecretKeySelector `json:"serviceAccountJson,omitempty"`
+	ServiceAccountJSON *corev1.SecretKeySelector `json:"serviceAccountJson,omitempty"`
 }
 
 func (in *GCPCredential) DeepCopyInto(out *GCPCredential) {
 	*out = *in
-	if in.Serviceaccountjson != nil {
-		in, out := &in.Serviceaccountjson, &out.Serviceaccountjson
+	if in.ServiceAccountJSON != nil {
+		in, out := &in.ServiceAccountJSON, &out.ServiceAccountJSON
 		*out = new(corev1.SecretKeySelector)
 		(*in).DeepCopyInto(*out)
 	}

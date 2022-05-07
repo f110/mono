@@ -153,17 +153,17 @@ func (in *MinIOUserList) DeepCopyObject() runtime.Object {
 }
 
 type MinIOBucketSpec struct {
-	// Selector is a selector of MinIOInstance.
+	// selector is a selector of MinIOInstance.
 	Selector metav1.LabelSelector `json:"selector"`
-	// BucketFinalizePolicy is a plicy when deleted CR Object.
+	// bucket_finalize_policy is a plicy when deleted CR Object.
 	//  If bucket_finalize_policy is an empty string, then it is the same as "keep".
 	BucketFinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy"`
-	// Policy is the policy of the bucket. One of public, readOnly, private.
+	// policy is the policy of the bucket. One of public, readOnly, private.
 	//  If you don't want to give public access, set private or an empty value.
 	//  If it is an empty value, The bucket will not have any policy.
 	//  Currently, MinIOBucket can't use prefix based policy.
 	Policy BucketPolicy `json:"policy"`
-	// CreateIndexFile is a flag that creates index.html on top of bucket.
+	// create_index_file is a flag that creates index.html on top of bucket.
 	CreateIndexFile bool `json:"createIndexFile"`
 }
 
@@ -199,11 +199,11 @@ func (in *MinIOBucketStatus) DeepCopy() *MinIOBucketStatus {
 }
 
 type MinIOUserSpec struct {
-	// Selector is a selector of MinIOInstance
+	// selector is a selector of MinIOInstance
 	Selector metav1.LabelSelector `json:"selector"`
-	// Path is a path in vault
+	// path is a path in vault
 	Path string `json:"path"`
-	// MountPath is a mount path of KV secrets engine.
+	// mount_path is a mount path of KV secrets engine.
 	MountPath string `json:"mountPath"`
 }
 

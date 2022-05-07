@@ -26,310 +26,15 @@ var (
 
 func init() {
 	for _, v := range []func(*runtime.Scheme) error{
+		miniov1alpha1.AddToScheme,
 		consulv1alpha1.AddToScheme,
 		grafanav1alpha1.AddToScheme,
 		harborv1alpha1.AddToScheme,
-		miniov1alpha1.AddToScheme,
 	} {
 		if err := v(Scheme); err != nil {
 			panic(err)
 		}
 	}
-}
-
-type ConsulV1alpha1 struct {
-	client *rest.RESTClient
-}
-
-func NewConsulV1alpha1Client(c *rest.Config) (*ConsulV1alpha1, error) {
-	client, err := rest.RESTClientFor(c)
-	if err != nil {
-		return nil, err
-	}
-	return &ConsulV1alpha1{
-		client: client,
-	}, nil
-}
-
-func (c *ConsulV1alpha1) GetConsulBackup(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result := &consulv1alpha1.ConsulBackup{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("consulbackups").
-		Name(name).
-		VersionedParams(&opts, ParameterCodec).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *ConsulV1alpha1) CreateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.CreateOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result := &consulv1alpha1.ConsulBackup{}
-	err := c.client.Post().
-		Namespace(v.Namespace).
-		Resource("consulbackups").
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *ConsulV1alpha1) UpdateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.UpdateOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result := &consulv1alpha1.ConsulBackup{}
-	err := c.client.Put().
-		Namespace(v.Namespace).
-		Resource("consulbackups").
-		Name(v.Name).
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *ConsulV1alpha1) DeleteConsulBackup(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(namespace).
-		Resource("consulbackups").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-func (c *ConsulV1alpha1) ListConsulBackup(ctx context.Context, namespace string, opts metav1.ListOptions) (*consulv1alpha1.ConsulBackupList, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result := &consulv1alpha1.ConsulBackupList{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("consulbackups").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *ConsulV1alpha1) WatchConsulBackup(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(namespace).
-		Resource("consulbackups").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-type GrafanaV1alpha1 struct {
-	client *rest.RESTClient
-}
-
-func NewGrafanaV1alpha1Client(c *rest.Config) (*GrafanaV1alpha1, error) {
-	client, err := rest.RESTClientFor(c)
-	if err != nil {
-		return nil, err
-	}
-	return &GrafanaV1alpha1{
-		client: client,
-	}, nil
-}
-
-func (c *GrafanaV1alpha1) GetGrafana(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.Grafana, error) {
-	result := &grafanav1alpha1.Grafana{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("grafanas").
-		Name(name).
-		VersionedParams(&opts, ParameterCodec).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) CreateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.CreateOptions) (*grafanav1alpha1.Grafana, error) {
-	result := &grafanav1alpha1.Grafana{}
-	err := c.client.Post().
-		Namespace(v.Namespace).
-		Resource("grafanas").
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) UpdateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.UpdateOptions) (*grafanav1alpha1.Grafana, error) {
-	result := &grafanav1alpha1.Grafana{}
-	err := c.client.Put().
-		Namespace(v.Namespace).
-		Resource("grafanas").
-		Name(v.Name).
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) DeleteGrafana(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(namespace).
-		Resource("grafanas").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-func (c *GrafanaV1alpha1) ListGrafana(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaList, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result := &grafanav1alpha1.GrafanaList{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("grafanas").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) WatchGrafana(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(namespace).
-		Resource("grafanas").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
-}
-
-func (c *GrafanaV1alpha1) GetGrafanaUser(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result := &grafanav1alpha1.GrafanaUser{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("grafanausers").
-		Name(name).
-		VersionedParams(&opts, ParameterCodec).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) CreateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.CreateOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result := &grafanav1alpha1.GrafanaUser{}
-	err := c.client.Post().
-		Namespace(v.Namespace).
-		Resource("grafanausers").
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) UpdateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.UpdateOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result := &grafanav1alpha1.GrafanaUser{}
-	err := c.client.Put().
-		Namespace(v.Namespace).
-		Resource("grafanausers").
-		Name(v.Name).
-		VersionedParams(&opts, ParameterCodec).
-		Body(v).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) DeleteGrafanaUser(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	return c.client.Delete().
-		Namespace(namespace).
-		Resource("grafanausers").
-		Name(name).
-		Body(&opts).
-		Do(ctx).
-		Error()
-}
-
-func (c *GrafanaV1alpha1) ListGrafanaUser(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaUserList, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	result := &grafanav1alpha1.GrafanaUserList{}
-	err := c.client.Get().
-		Namespace(namespace).
-		Resource("grafanausers").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Do(ctx).
-		Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (c *GrafanaV1alpha1) WatchGrafanaUser(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
-	}
-	opts.Watch = true
-	return c.client.Get().
-		Namespace(namespace).
-		Resource("grafanausers").
-		VersionedParams(&opts, ParameterCodec).
-		Timeout(timeout).
-		Watch(ctx)
 }
 
 type HarborV1alpha1 struct {
@@ -716,6 +421,301 @@ func (c *MinioV1alpha1) WatchMinIOUser(ctx context.Context, namespace string, op
 		Watch(ctx)
 }
 
+type ConsulV1alpha1 struct {
+	client *rest.RESTClient
+}
+
+func NewConsulV1alpha1Client(c *rest.Config) (*ConsulV1alpha1, error) {
+	client, err := rest.RESTClientFor(c)
+	if err != nil {
+		return nil, err
+	}
+	return &ConsulV1alpha1{
+		client: client,
+	}, nil
+}
+
+func (c *ConsulV1alpha1) GetConsulBackup(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*consulv1alpha1.ConsulBackup, error) {
+	result := &consulv1alpha1.ConsulBackup{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("consulbackups").
+		Name(name).
+		VersionedParams(&opts, ParameterCodec).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *ConsulV1alpha1) CreateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.CreateOptions) (*consulv1alpha1.ConsulBackup, error) {
+	result := &consulv1alpha1.ConsulBackup{}
+	err := c.client.Post().
+		Namespace(v.Namespace).
+		Resource("consulbackups").
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *ConsulV1alpha1) UpdateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.UpdateOptions) (*consulv1alpha1.ConsulBackup, error) {
+	result := &consulv1alpha1.ConsulBackup{}
+	err := c.client.Put().
+		Namespace(v.Namespace).
+		Resource("consulbackups").
+		Name(v.Name).
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *ConsulV1alpha1) DeleteConsulBackup(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	return c.client.Delete().
+		Namespace(namespace).
+		Resource("consulbackups").
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
+}
+
+func (c *ConsulV1alpha1) ListConsulBackup(ctx context.Context, namespace string, opts metav1.ListOptions) (*consulv1alpha1.ConsulBackupList, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	result := &consulv1alpha1.ConsulBackupList{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("consulbackups").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *ConsulV1alpha1) WatchConsulBackup(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(namespace).
+		Resource("consulbackups").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
+}
+
+type GrafanaV1alpha1 struct {
+	client *rest.RESTClient
+}
+
+func NewGrafanaV1alpha1Client(c *rest.Config) (*GrafanaV1alpha1, error) {
+	client, err := rest.RESTClientFor(c)
+	if err != nil {
+		return nil, err
+	}
+	return &GrafanaV1alpha1{
+		client: client,
+	}, nil
+}
+
+func (c *GrafanaV1alpha1) GetGrafana(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.Grafana, error) {
+	result := &grafanav1alpha1.Grafana{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("grafanas").
+		Name(name).
+		VersionedParams(&opts, ParameterCodec).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) CreateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.CreateOptions) (*grafanav1alpha1.Grafana, error) {
+	result := &grafanav1alpha1.Grafana{}
+	err := c.client.Post().
+		Namespace(v.Namespace).
+		Resource("grafanas").
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) UpdateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.UpdateOptions) (*grafanav1alpha1.Grafana, error) {
+	result := &grafanav1alpha1.Grafana{}
+	err := c.client.Put().
+		Namespace(v.Namespace).
+		Resource("grafanas").
+		Name(v.Name).
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) DeleteGrafana(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	return c.client.Delete().
+		Namespace(namespace).
+		Resource("grafanas").
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
+}
+
+func (c *GrafanaV1alpha1) ListGrafana(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaList, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	result := &grafanav1alpha1.GrafanaList{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("grafanas").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) WatchGrafana(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(namespace).
+		Resource("grafanas").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
+}
+
+func (c *GrafanaV1alpha1) GetGrafanaUser(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.GrafanaUser, error) {
+	result := &grafanav1alpha1.GrafanaUser{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("grafanausers").
+		Name(name).
+		VersionedParams(&opts, ParameterCodec).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) CreateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.CreateOptions) (*grafanav1alpha1.GrafanaUser, error) {
+	result := &grafanav1alpha1.GrafanaUser{}
+	err := c.client.Post().
+		Namespace(v.Namespace).
+		Resource("grafanausers").
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) UpdateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.UpdateOptions) (*grafanav1alpha1.GrafanaUser, error) {
+	result := &grafanav1alpha1.GrafanaUser{}
+	err := c.client.Put().
+		Namespace(v.Namespace).
+		Resource("grafanausers").
+		Name(v.Name).
+		VersionedParams(&opts, ParameterCodec).
+		Body(v).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) DeleteGrafanaUser(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	return c.client.Delete().
+		Namespace(namespace).
+		Resource("grafanausers").
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
+}
+
+func (c *GrafanaV1alpha1) ListGrafanaUser(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaUserList, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	result := &grafanav1alpha1.GrafanaUserList{}
+	err := c.client.Get().
+		Namespace(namespace).
+		Resource("grafanausers").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Do(ctx).
+		Into(result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *GrafanaV1alpha1) WatchGrafanaUser(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return c.client.Get().
+		Namespace(namespace).
+		Resource("grafanausers").
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
+}
+
 var Factory = NewInformerFactory()
 
 type InformerFactory struct {
@@ -921,6 +921,52 @@ func (f *MinioV1alpha1Informer) MinIOUserInformer(namespace string, resyncPeriod
 	)
 }
 
+type GrafanaV1alpha1Lister struct {
+	indexer cache.Indexer
+}
+
+func NewGrafanaV1alpha1Lister(indexer cache.Indexer) *GrafanaV1alpha1Lister {
+	return &GrafanaV1alpha1Lister{indexer: indexer}
+}
+
+func (x *GrafanaV1alpha1Lister) ListGrafana(namespace string, selector labels.Selector) ([]*grafanav1alpha1.Grafana, error) {
+	var ret []*grafanav1alpha1.Grafana
+	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*grafanav1alpha1.Grafana))
+	})
+	return ret, err
+}
+
+func (x *GrafanaV1alpha1Lister) GetGrafana(namespace, name string) (*grafanav1alpha1.Grafana, error) {
+	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, k8serrors.NewNotFound(grafanav1alpha1.SchemaGroupVersion.WithResource("grafana").GroupResource(), name)
+	}
+	return obj.(*grafanav1alpha1.Grafana), nil
+}
+
+func (x *GrafanaV1alpha1Lister) ListGrafanaUser(namespace string, selector labels.Selector) ([]*grafanav1alpha1.GrafanaUser, error) {
+	var ret []*grafanav1alpha1.GrafanaUser
+	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*grafanav1alpha1.GrafanaUser))
+	})
+	return ret, err
+}
+
+func (x *GrafanaV1alpha1Lister) GetGrafanaUser(namespace, name string) (*grafanav1alpha1.GrafanaUser, error) {
+	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, k8serrors.NewNotFound(grafanav1alpha1.SchemaGroupVersion.WithResource("grafanauser").GroupResource(), name)
+	}
+	return obj.(*grafanav1alpha1.GrafanaUser), nil
+}
+
 type HarborV1alpha1Lister struct {
 	indexer cache.Indexer
 }
@@ -1038,50 +1084,4 @@ func (x *ConsulV1alpha1Lister) GetConsulBackup(namespace, name string) (*consulv
 		return nil, k8serrors.NewNotFound(consulv1alpha1.SchemaGroupVersion.WithResource("consulbackup").GroupResource(), name)
 	}
 	return obj.(*consulv1alpha1.ConsulBackup), nil
-}
-
-type GrafanaV1alpha1Lister struct {
-	indexer cache.Indexer
-}
-
-func NewGrafanaV1alpha1Lister(indexer cache.Indexer) *GrafanaV1alpha1Lister {
-	return &GrafanaV1alpha1Lister{indexer: indexer}
-}
-
-func (x *GrafanaV1alpha1Lister) ListGrafana(namespace string, selector labels.Selector) ([]*grafanav1alpha1.Grafana, error) {
-	var ret []*grafanav1alpha1.Grafana
-	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*grafanav1alpha1.Grafana))
-	})
-	return ret, err
-}
-
-func (x *GrafanaV1alpha1Lister) GetGrafana(namespace, name string) (*grafanav1alpha1.Grafana, error) {
-	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, k8serrors.NewNotFound(grafanav1alpha1.SchemaGroupVersion.WithResource("grafana").GroupResource(), name)
-	}
-	return obj.(*grafanav1alpha1.Grafana), nil
-}
-
-func (x *GrafanaV1alpha1Lister) ListGrafanaUser(namespace string, selector labels.Selector) ([]*grafanav1alpha1.GrafanaUser, error) {
-	var ret []*grafanav1alpha1.GrafanaUser
-	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*grafanav1alpha1.GrafanaUser))
-	})
-	return ret, err
-}
-
-func (x *GrafanaV1alpha1Lister) GetGrafanaUser(namespace, name string) (*grafanav1alpha1.GrafanaUser, error) {
-	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, k8serrors.NewNotFound(grafanav1alpha1.SchemaGroupVersion.WithResource("grafanauser").GroupResource(), name)
-	}
-	return obj.(*grafanav1alpha1.GrafanaUser), nil
 }

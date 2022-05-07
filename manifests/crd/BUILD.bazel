@@ -14,3 +14,16 @@ kustomization(
     ],
     visibility = ["//visibility:public"],
 )
+
+load("@dev_f110_kubeproto//bazel:def.bzl", "crd_proto_manifest")
+
+crd_proto_manifest(
+    name = "proto",
+    srcs = [
+        "//go/pkg/api/miniov1alpha1:minio_proto",
+        "//go/pkg/api/harborv1alpha1:harbor_proto",
+        "//go/pkg/api/grafanav1alpha1:grafana_proto",
+        "//go/pkg/api/consulv1alpha1:consul_proto",
+    ],
+    visibility = ["//visibility:public"],
+)

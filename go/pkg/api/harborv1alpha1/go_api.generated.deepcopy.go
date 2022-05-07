@@ -138,7 +138,7 @@ func (in *HarborRobotAccountList) DeepCopyObject() runtime.Object {
 }
 
 type HarborProjectSpec struct {
-	// Public is an access level of the project.
+	// public is an access level of the project.
 	//  If public sets true, then anyone can read.
 	Public bool `json:"public"`
 }
@@ -178,7 +178,7 @@ func (in *HarborProjectStatus) DeepCopy() *HarborProjectStatus {
 type HarborRobotAccountSpec struct {
 	ProjectNamespace string `json:"projectNamespace"`
 	ProjectName      string `json:"projectName"`
-	// SecretName is a name of docker config secret.
+	// secret_name is a name of docker config secret.
 	SecretName string `json:"secretName"`
 }
 

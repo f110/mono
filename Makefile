@@ -8,6 +8,7 @@ gen:
 	bazel query 'kind(vendor_grpc_source, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_proto_source, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_kubeproto, //...)' | xargs -n1 bazel run
+	bazel query 'kind(crd_proto_manifest, //...)' | xargs -n1 bazel run
 
 .PHONY: update-deps gen
 
