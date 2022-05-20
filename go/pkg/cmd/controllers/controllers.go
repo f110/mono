@@ -25,12 +25,11 @@ import (
 	"k8s.io/component-base/metrics/legacyregistry"
 
 	"go.f110.dev/mono/go/pkg/fsm"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/consul"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/harbor"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/minio"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	"go.f110.dev/mono/go/pkg/k8s/probe"
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -46,7 +45,7 @@ const (
 
 type ChildController struct {
 	Name string
-	New  func(*Controllers, kubeinformers.SharedInformerFactory, informers.SharedInformerFactory) (controller, error)
+	New  func(*Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
 }
 
 type ChildControllers []ChildController
@@ -54,8 +53,8 @@ type ChildControllers []ChildController
 var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerGrafanaUser,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
-			gu, err := grafana.NewUserController(core, shared, p.coreClient, p.client)
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+			gu, err := grafana.NewUserController(core, factory, p.coreClient, p.client)
 			if err != nil {
 				return nil, xerrors.Errorf(": %w", err)
 			}
@@ -64,13 +63,13 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborProject,
-		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			hpc, err := harbor.NewProjectController(
 				p.ctx,
 				p.coreClient,
 				p.client,
 				p.config,
-				shared,
+				factory,
 				p.harborNamespace,
 				p.harborServiceName,
 				p.adminSecretName,
@@ -85,13 +84,13 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborRobotAccount,
-		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			hrac, err := harbor.NewRobotAccountController(
 				p.ctx,
 				p.coreClient,
 				p.client,
 				p.config,
-				shared,
+				factory,
 				p.harborNamespace,
 				p.harborServiceName,
 				p.adminSecretName,
@@ -105,8 +104,8 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOBucket,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
-			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, core, shared, p.dev)
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			if err != nil {
 				return nil, xerrors.Errorf(": %w", err)
 			}
@@ -115,13 +114,13 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOUser,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			muc, err := minio.NewUserController(
 				p.coreClient,
 				p.client,
 				p.config,
 				core,
-				shared,
+				factory,
 				p.vaultClient,
 				p.dev,
 			)
@@ -133,8 +132,8 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerConsulBackup,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, shared informers.SharedInformerFactory) (controller, error) {
-			b, err := consul.NewBackupController(core, shared, p.coreClient, p.client, p.config, p.dev)
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+			b, err := consul.NewBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
 			if err != nil {
 				return nil, xerrors.Errorf(": %w", err)
 			}
@@ -209,7 +208,7 @@ type Controllers struct {
 
 	config      *rest.Config
 	coreClient  *kubernetes.Clientset
-	client      *clientset.Clientset
+	client      *client.Set
 	vaultClient *api.Client
 }
 
@@ -293,11 +292,11 @@ func (p *Controllers) init() (fsm.State, error) {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	p.coreClient = coreClient
-	client, err := clientset.NewForConfig(cfg)
+	apiClientset, err := client.NewSet(cfg)
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	p.client = client
+	p.client = apiClientset
 
 	p.probe = probe.NewProbe(p.metricsAddr)
 
@@ -415,14 +414,14 @@ func (p *Controllers) leaderElection() (fsm.State, error) {
 
 func (p *Controllers) startWorkers() (fsm.State, error) {
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
-	sharedInformerFactory := informers.NewSharedInformerFactory(p.client, 30*time.Second)
+	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 
 	child, err := NewChildControllers(p.args)
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
 	for _, v := range child {
-		cont, err := v.New(p, coreSharedInformerFactory, sharedInformerFactory)
+		cont, err := v.New(p, coreSharedInformerFactory, factory)
 		if err != nil {
 			return fsm.Error(xerrors.Errorf("Failed create %s controller: %w", v.Name, err))
 		}
@@ -430,7 +429,7 @@ func (p *Controllers) startWorkers() (fsm.State, error) {
 	}
 
 	coreSharedInformerFactory.Start(p.ctx.Done())
-	sharedInformerFactory.Start(p.ctx.Done())
+	factory.Run(p.ctx)
 
 	for _, v := range p.controllers {
 		v.StartWorkers(p.ctx, p.workers)

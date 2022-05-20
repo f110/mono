@@ -1,14 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
 
 proto_library(
     name = "minio_proto",
     srcs = ["minio.proto"],
-    deps = [
-        "@dev_f110_kubeproto//:kubeproto",
-        "@dev_f110_kubeproto//:k8s_proto",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@dev_f110_kubeproto//:k8s_proto",
+        "@dev_f110_kubeproto//:kubeproto",
+    ],
 )
 
 kubeproto_go_api(
@@ -21,5 +22,20 @@ load("//build/rules:vendor.bzl", "vendor_kubeproto")
 
 vendor_kubeproto(
     name = "vendor_go_api",
-    src = ":go_api"
+    src = ":go_api",
+)
+
+go_library(
+    name = "miniov1alpha1",
+    srcs = [
+        "go_api.generated.deepcopy.go",
+        "go_api.generated.register.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/api/miniov1alpha1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/k8s.io/apimachinery/pkg/runtime/schema",
+    ],
 )

@@ -10,7 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/grafanav1alpha1"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 )
 
 func TestResourceName(t *testing.T) {
@@ -34,15 +35,16 @@ func TestRegisterFixture(t *testing.T) {
 	})
 
 	// Fetch from client via object tracker
-	grafana, err := r.Client.GrafanaV1alpha1().Grafanas(metav1.NamespaceDefault).Get(context.Background(), "foobar", metav1.GetOptions{})
+	grafana, err := r.Client.GrafanaV1alpha1.GetGrafana(context.Background(), metav1.NamespaceDefault, "foobar", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "foobar", grafana.Name)
 
 	// Fetch from lister
-	grafana, err = r.SharedInformerFactory.Grafana().V1alpha1().Grafanas().Lister().Grafanas(metav1.NamespaceDefault).Get("foobar")
+	informers := client.NewGrafanaV1alpha1Informer(r.Factory.Cache(), r.Client.GrafanaV1alpha1, metav1.NamespaceDefault, 0)
+	grafana, err = informers.GrafanaLister().Get(metav1.NamespaceDefault, "foobar")
 	require.NoError(t, err)
 	assert.Equal(t, "foobar", grafana.Name)
-	fromList, err := r.SharedInformerFactory.Grafana().V1alpha1().Grafanas().Lister().Grafanas(metav1.NamespaceDefault).List(labels.Everything())
+	fromList, err := informers.GrafanaLister().List(metav1.NamespaceDefault, labels.Everything())
 	require.NoError(t, err)
 	assert.Len(t, fromList, 1)
 

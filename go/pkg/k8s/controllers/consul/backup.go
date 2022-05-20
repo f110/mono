@@ -21,23 +21,21 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/api/consulv1alpha1"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	consulv1alpha1listers "go.f110.dev/mono/go/pkg/k8s/listers/consul/v1alpha1"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type BackupController struct {
 	*controllerutil.ControllerBase
 
-	client            clientset.Interface
+	client            *client.ConsulV1alpha1
 	coreClient        kubernetes.Interface
 	config            *rest.Config
 	runOutsideCluster bool
 
-	backupLister  consulv1alpha1listers.ConsulBackupLister
+	backupLister  *client.ConsulV1alpha1ConsulBackupLister
 	serviceLister corev1listers.ServiceLister
 	secretLister  corev1listers.SecretLister
 
@@ -49,22 +47,24 @@ var _ controllerutil.Controller = &BackupController{}
 
 func NewBackupController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 	config *rest.Config,
 	runOutsideCluster bool,
 ) (*BackupController, error) {
-	backupInformer := sharedInformerFactory.Consul().V1alpha1().ConsulBackups()
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 
+	informers := client.NewConsulV1alpha1Informer(factory.Cache(), apiClient.ConsulV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	backupInformer := informers.ConsulBackupInformer()
+
 	b := &BackupController{
-		client:            client,
+		client:            apiClient.ConsulV1alpha1,
 		coreClient:        coreClient,
 		config:            config,
 		runOutsideCluster: runOutsideCluster,
-		backupLister:      backupInformer.Lister(),
+		backupLister:      informers.ConsulBackupLister(),
 		serviceLister:     serviceInformer.Lister(),
 		secretLister:      secretInformer.Lister(),
 	}
@@ -72,7 +72,7 @@ func NewBackupController(
 		"consul-backup-controller",
 		b,
 		coreClient,
-		[]cache.SharedIndexInformer{backupInformer.Informer()},
+		[]cache.SharedIndexInformer{backupInformer},
 		[]cache.SharedIndexInformer{serviceInformer.Informer(), secretInformer.Informer()},
 		[]string{},
 	)
@@ -99,7 +99,7 @@ func (b *BackupController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	backup, err := b.backupLister.ConsulBackups(namespace).Get(name)
+	backup, err := b.backupLister.Get(namespace, name)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -116,7 +116,7 @@ func (b *BackupController) UpdateObject(ctx context.Context, obj runtime.Object)
 		return nil, xerrors.Errorf("unexpected object type: %T", obj)
 	}
 
-	updatedBackup, err := b.client.ConsulV1alpha1().ConsulBackups(backup.Namespace).Update(ctx, backup, metav1.UpdateOptions{})
+	updatedBackup, err := b.client.UpdateConsulBackup(ctx, backup, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -130,7 +130,7 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 	now := metav1.Now()
 
 	if backup.Status.Succeeded && backup.Status.LastSucceededTime != nil {
-		nextBackupTime := backup.Status.LastSucceededTime.Add(time.Duration(backup.Spec.IntervalInSecond) * time.Second)
+		nextBackupTime := backup.Status.LastSucceededTime.Add(time.Duration(backup.Spec.IntervalInSeconds) * time.Second)
 		if now.Before(&metav1.Time{Time: nextBackupTime}) {
 			return nil
 		}
@@ -181,7 +181,7 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 		updated.Status.History = updated.Status.History[firstIndex:]
 	}
 	if !reflect.DeepEqual(backup.Status, updated.Status) {
-		_, err := b.client.ConsulV1alpha1().ConsulBackups(backup.Namespace).UpdateStatus(ctx, updated, metav1.UpdateOptions{})
+		_, err := b.client.UpdateStatusConsulBackup(ctx, updated, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -249,10 +249,10 @@ func (b *BackupController) storeBackupFile(
 			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
-		client := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
+		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
 		history.Path = filepath.Join(spec.Path, filename)
-		if err := client.PutReader(ctx, filepath.Join(spec.Path, filename), data); err != nil {
+		if err := gcsClient.PutReader(ctx, filepath.Join(spec.Path, filename), data); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 
@@ -324,8 +324,8 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
-		client := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
-		files, err := client.List(ctx, spec.Path)
+		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
+		files, err := gcsClient.List(ctx, spec.Path)
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -337,7 +337,7 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		})
 		purgeTargets := files[backup.Spec.MaxBackups:]
 		for _, v := range purgeTargets {
-			if err := client.Delete(ctx, v.Name); err != nil {
+			if err := gcsClient.Delete(ctx, v.Name); err != nil {
 				return xerrors.Errorf(": %w", err)
 			}
 		}

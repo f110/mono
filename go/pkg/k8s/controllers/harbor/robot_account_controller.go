@@ -24,12 +24,10 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/harborv1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	hpLister "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -42,8 +40,8 @@ type RobotAccountController struct {
 
 	config     *rest.Config
 	coreClient kubernetes.Interface
-	hClient    clientset.Interface
-	hraLister  hpLister.HarborRobotAccountLister
+	hClient    *client.HarborV1alpha1
+	hraLister  *client.HarborV1alpha1HarborRobotAccountLister
 
 	harborService     *corev1.Service
 	adminPassword     string
@@ -60,9 +58,9 @@ type RobotAccountController struct {
 func NewRobotAccountController(
 	ctx context.Context,
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 	cfg *rest.Config,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	harborNamespace,
 	harborName,
 	adminSecretName string,
@@ -77,13 +75,14 @@ func NewRobotAccountController(
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	hraInformer := sharedInformerFactory.Harbor().V1alpha1().HarborRobotAccounts()
+	informers := client.NewHarborV1alpha1Informer(factory.Cache(), apiClient.HarborV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	hraInformer := informers.HarborRobotAccountInformer()
 
 	c := &RobotAccountController{
 		config:            cfg,
 		coreClient:        coreClient,
-		hClient:           client,
-		hraLister:         hraInformer.Lister(),
+		hClient:           apiClient.HarborV1alpha1,
+		hraLister:         informers.HarborRobotAccountLister(),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
 		runOutsideCluster: runOutsideCluster,
@@ -92,7 +91,7 @@ func NewRobotAccountController(
 		"harbor-robot-account-controller",
 		c,
 		coreClient,
-		[]cache.SharedIndexInformer{hraInformer.Informer()},
+		[]cache.SharedIndexInformer{hraInformer},
 		[]cache.SharedIndexInformer{},
 		[]string{harborRobotAccountControllerFinalizerName},
 	)
@@ -119,7 +118,7 @@ func (c *RobotAccountController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	hra, err := c.hraLister.HarborRobotAccounts(namespace).Get(name)
+	hra, err := c.hraLister.Get(namespace, name)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -129,7 +128,7 @@ func (c *RobotAccountController) GetObject(key string) (runtime.Object, error) {
 func (c *RobotAccountController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	hra := obj.(*harborv1alpha1.HarborRobotAccount)
 
-	hra, err := c.hClient.HarborV1alpha1().HarborRobotAccounts(hra.Namespace).Update(ctx, hra, metav1.UpdateOptions{})
+	hra, err := c.hClient.UpdateHarborRobotAccount(ctx, hra, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -189,7 +188,7 @@ func (c *RobotAccountController) Reconcile(ctx context.Context, obj runtime.Obje
 	harborRobotAccount.Status.Ready = true
 
 	if !reflect.DeepEqual(harborRobotAccount.Status, currentHRA.Status) {
-		_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(currentHRA.Namespace).UpdateStatus(ctx, harborRobotAccount, metav1.UpdateOptions{})
+		_, err = c.hClient.UpdateStatusHarborRobotAccount(ctx, harborRobotAccount, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -199,7 +198,7 @@ func (c *RobotAccountController) Reconcile(ctx context.Context, obj runtime.Obje
 }
 
 func (c *RobotAccountController) getProject(ctx context.Context, hra *harborv1alpha1.HarborRobotAccount) (*harborv1alpha1.HarborProject, error) {
-	project, err := c.hClient.HarborV1alpha1().HarborProjects(hra.Spec.ProjectNamespace).Get(ctx, hra.Spec.ProjectName, metav1.GetOptions{})
+	project, err := c.hClient.GetHarborProject(ctx, hra.Spec.ProjectNamespace, hra.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
 		return nil, errors.New("project not found")
@@ -258,7 +257,7 @@ func (c *RobotAccountController) createRobotAccount(ctx context.Context, client 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            robotAccount.Spec.SecretName,
 			Namespace:       robotAccount.Namespace,
-			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(robotAccount, harborv1alpha1.SchemeGroupVersion.WithKind("HarborRobotAccount"))},
+			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(robotAccount, harborv1alpha1.SchemaGroupVersion.WithKind("HarborRobotAccount"))},
 		},
 		Type: corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
@@ -291,7 +290,7 @@ func (c *RobotAccountController) Finalize(ctx context.Context, obj runtime.Objec
 	}
 
 	hra.Finalizers = removeString(hra.Finalizers, harborRobotAccountControllerFinalizerName)
-	_, err = c.hClient.HarborV1alpha1().HarborRobotAccounts(hra.Namespace).Update(ctx, hra, metav1.UpdateOptions{})
+	_, err = c.hClient.UpdateHarborRobotAccount(ctx, hra, metav1.UpdateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

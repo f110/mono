@@ -1,0 +1,12 @@
+diff --git a/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/register.go b/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/register.go
+index 8d4ac9a5..49cc2ec9 100644
+--- a/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/register.go
++++ b/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1/register.go
+@@ -27,6 +27,7 @@ import (
+ 
+ // SchemeGroupVersion is group version used to register these objects
+ var SchemeGroupVersion = schema.GroupVersion{Group: miniocontroller.GroupName, Version: "v1beta1"}
++var SchemaGroupVersion = SchemeGroupVersion
+ 
+ // Kind takes an unqualified kind and returns back a Group qualified GroupKind
+ func Kind(kind string) schema.GroupKind {

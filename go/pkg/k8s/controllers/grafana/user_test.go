@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/pkg/grafana"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 )
@@ -162,9 +162,9 @@ func newController(t *testing.T) (*controllertest.TestRunner, *UserController) {
 	runner := controllertest.NewTestRunner()
 	controller, err := NewUserController(
 		runner.CoreSharedInformerFactory,
-		runner.SharedInformerFactory,
+		runner.Factory,
 		runner.CoreClient,
-		runner.Client,
+		&runner.Client.Set,
 	)
 	require.NoError(t, err)
 

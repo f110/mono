@@ -22,12 +22,10 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/harborv1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	hpLister "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1"
 )
 
 const (
@@ -39,8 +37,8 @@ type ProjectController struct {
 
 	config     *rest.Config
 	coreClient kubernetes.Interface
-	hpClient   clientset.Interface
-	hpLister   hpLister.HarborProjectLister
+	hpClient   *client.HarborV1alpha1
+	hpLister   *client.HarborV1alpha1HarborProjectLister
 
 	harborService     *corev1.Service
 	adminPassword     string
@@ -59,9 +57,9 @@ var _ controllerutil.Controller = &ProjectController{}
 func NewProjectController(
 	ctx context.Context,
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 	cfg *rest.Config,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	harborNamespace,
 	harborName,
 	adminSecretName,
@@ -85,13 +83,14 @@ func NewProjectController(
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	hpInformer := sharedInformerFactory.Harbor().V1alpha1().HarborProjects()
+	informers := client.NewHarborV1alpha1Informer(factory.Cache(), apiClient.HarborV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	hpInformer := informers.HarborProjectInformer()
 
 	c := &ProjectController{
 		config:            cfg,
 		coreClient:        coreClient,
-		hpClient:          client,
-		hpLister:          hpInformer.Lister(),
+		hpClient:          apiClient.HarborV1alpha1,
+		hpLister:          informers.HarborProjectLister(),
 		harborService:     svc,
 		adminPassword:     string(adminSecret.Data["HARBOR_ADMIN_PASSWORD"]),
 		registryName:      registryUrl.Hostname(),
@@ -101,8 +100,8 @@ func NewProjectController(
 		"harbor-project-controller",
 		c,
 		coreClient,
-		[]cache.SharedIndexInformer{hpInformer.Informer()},
-		[]cache.SharedIndexInformer{hpInformer.Informer()},
+		[]cache.SharedIndexInformer{hpInformer},
+		[]cache.SharedIndexInformer{hpInformer},
 		[]string{harborProjectControllerFinalizerName},
 	)
 
@@ -141,7 +140,7 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 	harborProject.Status.Registry = c.registryName
 
 	if !reflect.DeepEqual(harborProject.Status, currentHP.Status) {
-		_, err = c.hpClient.HarborV1alpha1().HarborProjects(currentHP.Namespace).UpdateStatus(ctx, harborProject, metav1.UpdateOptions{})
+		_, err = c.hpClient.UpdateStatusHarborProject(ctx, harborProject, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -198,7 +197,7 @@ func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) er
 		return xerrors.Errorf(": %w", err)
 	}
 	hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
-	_, err = c.hpClient.HarborV1alpha1().HarborProjects(hp.Namespace).Update(ctx, hp, metav1.UpdateOptions{})
+	_, err = c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})
 	return xerrors.Errorf(": %w", err)
 }
 
@@ -270,7 +269,7 @@ func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	hp, err := c.hpLister.HarborProjects(namespace).Get(name)
+	hp, err := c.hpLister.Get(namespace, name)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -280,7 +279,7 @@ func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
 func (c *ProjectController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	hp := obj.(*harborv1alpha1.HarborProject)
 
-	hp, err := c.hpClient.HarborV1alpha1().HarborProjects(hp.Namespace).Update(ctx, hp, metav1.UpdateOptions{})
+	hp, err := c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

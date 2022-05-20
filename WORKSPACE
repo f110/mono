@@ -87,7 +87,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_kubeproto",
-    commit = "31904d5e5f7b2c9ba3030c685adbef37393972dd",
+    commit = "061b0eb466d08533bc98e45711fc1fd5b749407d",
     remote = "https://github.com/f110/kubeproto",
 )
 

@@ -20,17 +20,16 @@ import (
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 
-	"go.f110.dev/mono/go/pkg/k8s/client/versioned/fake"
-	"go.f110.dev/mono/go/pkg/k8s/client/versioned/scheme"
+	"go.f110.dev/mono/go/pkg/k8s/client"
+	"go.f110.dev/mono/go/pkg/k8s/client/testingclient"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type TestRunner struct {
-	Client                    *fake.Clientset
+	Client                    *testingclient.Set
 	CoreClient                *corefake.Clientset
-	SharedInformerFactory     informers.SharedInformerFactory
+	Factory                   *client.InformerFactory
 	CoreSharedInformerFactory kubeinformers.SharedInformerFactory
 	Actions                   []*Action
 }
@@ -38,18 +37,16 @@ type TestRunner struct {
 func NewTestRunner() *TestRunner {
 	logger.Init()
 
-	client := fake.NewSimpleClientset()
+	apiClient := testingclient.NewSet()
 	coreClient := corefake.NewSimpleClientset()
 
-	sharedInformerFactory := informers.NewSharedInformerFactory(client, 30*time.Second)
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(coreClient, 30*time.Second)
-	sharedInformerFactory.Harbor().V1alpha1().HarborProjects().Informer().GetIndexer()
 
 	return &TestRunner{
-		Client:                    client,
+		Client:                    apiClient,
 		CoreClient:                coreClient,
-		SharedInformerFactory:     sharedInformerFactory,
 		CoreSharedInformerFactory: coreSharedInformerFactory,
+		Factory:                   client.NewInformerFactory(&apiClient.Set, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second),
 	}
 }
 
@@ -196,7 +193,7 @@ func (r *TestRunner) RegisterFixture(objs ...runtime.Object) {
 			continue
 		}
 
-		gvks, _, err = scheme.Scheme.ObjectKinds(obj)
+		gvks, _, err = client.Scheme.ObjectKinds(obj)
 		if err == nil && len(gvks) == 1 {
 			r.registerObjectFixture(obj, gvks[0])
 			continue
@@ -223,11 +220,11 @@ func (r *TestRunner) registerObjectFixture(obj runtime.Object, gvk schema.GroupV
 		return
 	}
 	gvr := gvk.GroupVersion().WithResource(resourceName(obj))
-	informer, err := r.SharedInformerFactory.ForResource(gvr)
-	if err != nil {
+	informer := r.Factory.InformerForResource(gvr)
+	if informer == nil {
 		return
 	}
-	if err := informer.Informer().GetIndexer().Add(obj); err != nil {
+	if err := informer.GetIndexer().Add(obj); err != nil {
 		return
 	}
 }

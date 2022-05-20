@@ -11,7 +11,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/k8s/client/versioned/scheme",
+        "//go/pkg/k8s/client",
         "//go/pkg/logger",
         "//go/pkg/parallel",
         "//vendor/go.uber.org/zap",

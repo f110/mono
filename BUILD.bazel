@@ -10,6 +10,7 @@ go_vendor(
     name = "vendor",
     patches = [
         "patch/fix-minio-operator-group-name.patch",
+        "patch/fix-minio-operator-schemagroupversion.patch",
     ],
 )
 

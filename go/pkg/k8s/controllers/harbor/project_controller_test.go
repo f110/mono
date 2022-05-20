@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/harborv1alpha1"
 	"go.f110.dev/mono/go/pkg/harbor"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 )
@@ -87,9 +87,9 @@ func newProjectController(t *testing.T) (*controllertest.TestRunner, *ProjectCon
 	controller, err := NewProjectController(
 		context.Background(),
 		runner.CoreClient,
-		runner.Client,
+		&runner.Client.Set,
 		nil,
-		runner.SharedInformerFactory,
+		runner.Factory,
 		metav1.NamespaceDefault,
 		service.Name,
 		secret.Name,

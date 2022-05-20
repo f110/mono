@@ -1,0 +1,12 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
+
+proto_library(
+    name = "minio_proto",
+    srcs = ["generated.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@dev_f110_kubeproto//:k8s_proto",
+        "@dev_f110_kubeproto//:kubeproto",
+    ],
+)

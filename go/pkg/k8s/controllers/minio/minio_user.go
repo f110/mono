@@ -27,13 +27,9 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
-	"go.f110.dev/mono/go/pkg/k8s/client/versioned/scheme"
+	"go.f110.dev/mono/go/pkg/api/miniov1alpha1"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	miniov1alpha1listers "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"
-	miniocontrollerv1beta1listers "go.f110.dev/mono/go/pkg/k8s/listers/miniocontroller/v1beta1"
 	"go.f110.dev/mono/go/pkg/stringsutil"
 )
 
@@ -55,12 +51,12 @@ type UserController struct {
 	config      *rest.Config
 	coreClient  kubernetes.Interface
 	vaultClient *api.Client
-	mClient     clientset.Interface
-	muLister    miniov1alpha1listers.MinIOUserLister
+	mClient     *client.MinioV1alpha1
+	muLister    *client.MinioV1alpha1MinIOUserLister
 
 	secretLister   corev1listers.SecretLister
 	serviceLister  corev1listers.ServiceLister
-	instanceLister miniocontrollerv1beta1listers.MinIOInstanceLister
+	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
 
 	queue *controllerutil.WorkQueue
 
@@ -72,15 +68,21 @@ var _ controllerutil.Controller = &UserController{}
 
 func NewUserController(
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 	cfg *rest.Config,
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	vaultClient *api.Client,
 	runOutsideCluster bool,
 ) (*UserController, error) {
-	muInformer := sharedInformerFactory.Minio().V1alpha1().MinIOUsers()
-	instanceInformer := sharedInformerFactory.Miniocontroller().V1beta1().MinIOInstances()
+	minioInformers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	minioUserInformer := minioInformers.MinIOUserInformer()
+	minioUserLister := minioInformers.MinIOUserLister()
+
+	controllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceAll, 30*time.Second)
+	instanceInformer := controllerInformers.MinIOInstanceInformer()
+	instanceLister := controllerInformers.MinIOInstanceLister()
+
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 
@@ -88,19 +90,19 @@ func NewUserController(
 		config:            cfg,
 		coreClient:        coreClient,
 		vaultClient:       vaultClient,
-		mClient:           client,
-		muLister:          muInformer.Lister(),
+		mClient:           apiClient.MinioV1alpha1,
+		muLister:          minioUserLister,
 		secretLister:      secretInformer.Lister(),
 		serviceLister:     serviceInformer.Lister(),
-		instanceLister:    instanceInformer.Lister(),
+		instanceLister:    instanceLister,
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
 		"minio-user-operator",
 		c,
 		coreClient,
-		[]cache.SharedIndexInformer{muInformer.Informer()},
-		[]cache.SharedIndexInformer{instanceInformer.Informer(), serviceInformer.Informer(), secretInformer.Informer()},
+		[]cache.SharedIndexInformer{minioUserInformer},
+		[]cache.SharedIndexInformer{instanceInformer, serviceInformer.Informer(), secretInformer.Informer()},
 		[]string{minIOBucketControllerFinalizerName},
 	)
 
@@ -126,7 +128,7 @@ func (c *UserController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	user, err := c.muLister.MinIOUsers(namespace).Get(name)
+	user, err := c.muLister.Get(namespace, name)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -136,7 +138,7 @@ func (c *UserController) GetObject(key string) (runtime.Object, error) {
 func (c *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	user := obj.(*miniov1alpha1.MinIOUser)
 
-	user, err := c.mClient.MinioV1alpha1().MinIOUsers(user.Namespace).Update(ctx, user, metav1.UpdateOptions{})
+	user, err := c.mClient.UpdateMinIOUser(ctx, user, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -151,7 +153,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	instances, err := c.instanceLister.MinIOInstances(minioUser.Namespace).List(s)
+	instances, err := c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -207,11 +209,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	}
 
 	if !reflect.DeepEqual(minioUser.Status, currentUser.Status) {
-		_, err = c.mClient.MinioV1alpha1().MinIOUsers(minioUser.Namespace).UpdateStatus(
-			ctx,
-			minioUser,
-			metav1.UpdateOptions{},
-		)
+		_, err = c.mClient.UpdateStatusMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
@@ -237,7 +235,7 @@ func (c *UserController) setStatus(user *miniov1alpha1.MinIOUser) error {
 	return nil
 }
 
-func (c *UserController) ensureUser(ctx context.Context, client *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
+func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
 	secret, err := c.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, xerrors.Errorf(": %w", err)
@@ -248,7 +246,7 @@ func (c *UserController) ensureUser(ctx context.Context, client *madmin.AdminCli
 
 	accessKey := stringsutil.RandomString(accessKeyLength)
 	secretKey := stringsutil.RandomString(secretKeyLength)
-	if err := client.AddUser(ctx, accessKey, secretKey); err != nil {
+	if err := adminClient.AddUser(ctx, accessKey, secretKey); err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
@@ -262,7 +260,7 @@ func (c *UserController) ensureUser(ctx context.Context, client *madmin.AdminCli
 			"secretkey": []byte(secretKey),
 		},
 	}
-	controllerutil.SetOwner(secret, user, scheme.Scheme)
+	controllerutil.SetOwner(secret, user, client.Scheme)
 	secret, err = c.coreClient.CoreV1().Secrets(user.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
@@ -297,7 +295,7 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	instances, err := c.instanceLister.MinIOInstances(minioUser.Namespace).List(s)
+	instances, err := c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
 		return err
 	}
@@ -341,7 +339,7 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 
 	minioUser.Finalizers = removeString(minioUser.Finalizers, minIOUserControllerFinalizerName)
 
-	_, err = c.mClient.MinioV1alpha1().MinIOUsers(minioUser.Namespace).Update(ctx, minioUser, metav1.UpdateOptions{})
+	_, err = c.mClient.UpdateMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 	return err
 }
 

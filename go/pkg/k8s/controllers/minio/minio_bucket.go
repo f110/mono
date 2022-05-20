@@ -28,13 +28,10 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/miniov1alpha1"
 	"go.f110.dev/mono/go/pkg/fsm"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	mbLister "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"
-	mclisters "go.f110.dev/mono/go/pkg/k8s/listers/miniocontroller/v1beta1"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -53,12 +50,12 @@ type BucketController struct {
 
 	config         *rest.Config
 	coreClient     kubernetes.Interface
-	mClient        clientset.Interface
+	mClient        *client.MinioV1alpha1
 	secretLister   corev1listers.SecretLister
 	serviceLister  corev1listers.ServiceLister
 	podLister      corev1listers.PodLister
-	mbLister       mbLister.MinIOBucketLister
-	instanceLister mclisters.MinIOInstanceLister
+	mbLister       *client.MinioV1alpha1MinIOBucketLister
+	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
 
 	queue *controllerutil.WorkQueue
 
@@ -70,36 +67,39 @@ var _ controllerutil.Controller = &BucketController{}
 
 func NewBucketController(
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 	cfg *rest.Config,
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	runOutsideCluster bool,
 ) (*BucketController, error) {
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 	podInformer := coreSharedInformerFactory.Core().V1().Pods()
-	mbInformer := sharedInformerFactory.Minio().V1alpha1().MinIOBuckets()
-	miInformer := sharedInformerFactory.Miniocontroller().V1beta1().MinIOInstances()
+
+	informers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	mbInformer := informers.MinIOBucketInformer()
+	minioControllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceNone, 30*time.Second)
+	miInformer := minioControllerInformers.MinIOInstanceInformer()
 
 	c := &BucketController{
 		config:            cfg,
 		coreClient:        coreClient,
-		mClient:           client,
-		mbLister:          mbInformer.Lister(),
+		mClient:           apiClient.MinioV1alpha1,
+		mbLister:          informers.MinIOBucketLister(),
 		serviceLister:     serviceInformer.Lister(),
 		secretLister:      secretInformer.Lister(),
 		podLister:         podInformer.Lister(),
-		instanceLister:    miInformer.Lister(),
+		instanceLister:    minioControllerInformers.MinIOInstanceLister(),
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
 		"minio-bucket-operator",
 		c,
 		coreClient,
-		[]cache.SharedIndexInformer{mbInformer.Informer()},
+		[]cache.SharedIndexInformer{mbInformer},
 		[]cache.SharedIndexInformer{
-			miInformer.Informer(),
+			miInformer,
 			serviceInformer.Informer(),
 			secretInformer.Informer(),
 			podInformer.Informer(),
@@ -129,7 +129,7 @@ func (c *BucketController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	bucket, err := c.mbLister.MinIOBuckets(namespace).Get(name)
+	bucket, err := c.mbLister.Get(namespace, name)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -139,7 +139,7 @@ func (c *BucketController) GetObject(key string) (runtime.Object, error) {
 func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	bucket := obj.(*miniov1alpha1.MinIOBucket)
 
-	b, err := c.mClient.MinioV1alpha1().MinIOBuckets(bucket.Namespace).Update(ctx, bucket, metav1.UpdateOptions{})
+	b, err := c.mClient.UpdateMinIOBucket(ctx, bucket, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -172,11 +172,11 @@ func (c *BucketController) Finalize(ctx context.Context, obj runtime.Object) err
 
 type BucketReconciler struct {
 	CoreClient     kubernetes.Interface
-	Client         clientset.Interface
+	Client         *client.MinioV1alpha1
 	secretLister   corev1listers.SecretLister
 	serviceLister  corev1listers.ServiceLister
 	podLister      corev1listers.PodLister
-	instanceLister mclisters.MinIOInstanceLister
+	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
 
 	ctx               context.Context
 	runOutsideCluster bool
@@ -204,12 +204,12 @@ const (
 
 func NewBucketReconciler(
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	client *client.MinioV1alpha1,
 	config *rest.Config,
 	serviceLister corev1listers.ServiceLister,
 	podLister corev1listers.PodLister,
 	secretLister corev1listers.SecretLister,
-	instanceLister mclisters.MinIOInstanceLister,
+	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister,
 	runOutsideCluster bool,
 	transport http.RoundTripper,
 	log *zap.Logger,
@@ -256,11 +256,11 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 	r.Original = bucket
 	r.Obj = bucket.DeepCopy()
 
-	if r.Obj.Spec.BucketFinalizePolicy == "" || r.Obj.Spec.BucketFinalizePolicy == miniov1alpha1.BucketKeep {
+	if r.Obj.Spec.BucketFinalizePolicy == "" || r.Obj.Spec.BucketFinalizePolicy == miniov1alpha1.BucketFinalizePolicyKeep {
 		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
 		r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
-		_, err := r.Client.MinioV1alpha1().MinIOBuckets(r.Obj.Namespace).Update(ctx, r.Obj, metav1.UpdateOptions{})
+		_, err := r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
 		return xerrors.Errorf(": %w", err)
 	}
 
@@ -268,7 +268,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	instances, err := r.instanceLister.MinIOInstances(r.Obj.Namespace).List(sel)
+	instances, err := r.instanceLister.List(r.Obj.Namespace, sel)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -309,7 +309,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 
 	r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
 
-	_, err = r.Client.MinioV1alpha1().MinIOBuckets(r.Obj.Namespace).Update(ctx, r.Obj, metav1.UpdateOptions{})
+	_, err = r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -321,7 +321,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
-	instances, err := r.instanceLister.MinIOInstances(r.Obj.Namespace).List(sel)
+	instances, err := r.instanceLister.List(r.Obj.Namespace, sel)
 	if err != nil {
 		return fsm.Error(xerrors.Errorf(": %w", err))
 	}
@@ -392,15 +392,15 @@ func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 		Version: "2012-10-17",
 	}
 	switch r.Obj.Spec.Policy {
-	case "", miniov1alpha1.PolicyPrivate:
+	case "", miniov1alpha1.BucketPolicyPrivate:
 		// If .Spec.Policy is an empty value, We must not change anything.
 		err := r.MinIOClient.SetBucketPolicyWithContext(r.ctx, r.Obj.Name, "")
 		if err != nil {
 			return fsm.Error(xerrors.Errorf(": %w", err))
 		}
-	case miniov1alpha1.PolicyPublic:
+	case miniov1alpha1.BucketPolicyPublic:
 		p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, r.Obj.Name, "*")
-	case miniov1alpha1.PolicyReadOnly:
+	case miniov1alpha1.BucketPolicyReadOnly:
 		p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadOnly, r.Obj.Name, "*")
 	}
 	if len(p.Statements) > 0 && currentPolicy != nil {
@@ -462,11 +462,7 @@ func (r *BucketReconciler) updateStatus() (fsm.State, error) {
 	r.Obj.Status.Ready = true
 
 	if !reflect.DeepEqual(r.Original.Status, r.Obj.Status) {
-		_, err := r.Client.MinioV1alpha1().MinIOBuckets(r.Obj.Namespace).UpdateStatus(
-			r.ctx,
-			r.Obj,
-			metav1.UpdateOptions{},
-		)
+		_, err := r.Client.UpdateStatusMinIOBucket(r.ctx, r.Obj, metav1.UpdateOptions{})
 		if err != nil {
 			return fsm.Error(xerrors.Errorf(": %w", err))
 		}

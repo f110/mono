@@ -28,7 +28,7 @@ func newRunner() *controllertest.TestRunner {
 }
 
 func newBucketController(t *testing.T, runner *controllertest.TestRunner) *BucketController {
-	controller, err := NewBucketController(runner.CoreClient, runner.Client, nil, runner.CoreSharedInformerFactory, runner.SharedInformerFactory, false)
+	controller, err := NewBucketController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, false)
 	require.NoError(t, err)
 
 	return controller
@@ -45,10 +45,10 @@ func newUserController(t *testing.T, runner *controllertest.TestRunner) (*UserCo
 
 	controller, err := NewUserController(
 		runner.CoreClient,
-		runner.Client,
+		&runner.Client.Set,
 		nil,
 		runner.CoreSharedInformerFactory,
-		runner.SharedInformerFactory,
+		runner.Factory,
 		vaultClient,
 		false,
 	)

@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
-	"go.f110.dev/mono/go/pkg/k8s/client/versioned/scheme"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/parallel"
 )
@@ -60,7 +60,7 @@ func NewBase(
 		logger.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
-	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: name})
+	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
 
 	var r Reconciler
 	if fn, ok := v.(interface {

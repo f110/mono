@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/consulv1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/pkg/storage/storagetest"
 )
@@ -25,7 +25,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		runner, controller := newController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
-		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSecond+1) * time.Second)
+		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds+1) * time.Second)
 		target.Status.Succeeded = true
 		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
 
@@ -43,7 +43,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		err := runner.Reconcile(controller, target)
 		require.NoError(t, err)
 
-		expect, err := runner.Client.ConsulV1alpha1().ConsulBackups(target.Namespace).Get(context.TODO(), target.Name, metav1.GetOptions{})
+		expect, err := runner.Client.ConsulV1alpha1.GetConsulBackup(context.Background(), target.Namespace, target.Name, metav1.GetOptions{})
 		require.NoError(t, err)
 		runner.AssertAction(t, controllertest.Action{
 			Verb:        controllertest.ActionUpdate,
@@ -60,7 +60,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		runner, controller := newController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
-		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSecond-1) * time.Second)
+		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds-1) * time.Second)
 		target.Status.Succeeded = true
 		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
 
@@ -105,7 +105,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 
 		require.Len(t, mockMinio.Removed("backup"), 1)
 		assert.ElementsMatch(t, []string{"/test_1"}, mockMinio.Removed("backup"))
-		expect, err := runner.Client.ConsulV1alpha1().ConsulBackups(target.Namespace).Get(context.TODO(), target.Name, metav1.GetOptions{})
+		expect, err := runner.Client.ConsulV1alpha1.GetConsulBackup(context.Background(), target.Namespace, target.Name, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.Len(t, expect.Status.History, expect.Spec.MaxBackups)
 	})
@@ -147,8 +147,8 @@ func fixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
 			Namespace: metav1.NamespaceDefault,
 		},
 		Spec: consulv1alpha1.ConsulBackupSpec{
-			MaxBackups:       5,
-			IntervalInSecond: 600,
+			MaxBackups:        5,
+			IntervalInSeconds: 600,
 			Service: corev1.LocalObjectReference{
 				Name: "consul-server",
 			},
@@ -186,9 +186,9 @@ func newController(t *testing.T) (*controllertest.TestRunner, *BackupController)
 	runner := controllertest.NewTestRunner()
 	controller, err := NewBackupController(
 		runner.CoreSharedInformerFactory,
-		runner.SharedInformerFactory,
+		runner.Factory,
 		runner.CoreClient,
-		runner.Client,
+		&runner.Client.Set,
 		nil,
 		false,
 	)

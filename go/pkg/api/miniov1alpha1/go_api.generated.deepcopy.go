@@ -89,8 +89,8 @@ func (in *MinIOBucketList) DeepCopyObject() runtime.Object {
 type MinIOUser struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              MinIOUserSpec     `json:"spec"`
-	Status            MinIOBucketStatus `json:"status"`
+	Spec              MinIOUserSpec   `json:"spec"`
+	Status            MinIOUserStatus `json:"status"`
 }
 
 func (in *MinIOUser) DeepCopyInto(out *MinIOUser) {
@@ -217,6 +217,25 @@ func (in *MinIOUserSpec) DeepCopy() *MinIOUserSpec {
 		return nil
 	}
 	out := new(MinIOUserSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type MinIOUserStatus struct {
+	Ready     bool   `json:"ready"`
+	AccessKey string `json:"accessKey"`
+	Vault     bool   `json:"vault"`
+}
+
+func (in *MinIOUserStatus) DeepCopyInto(out *MinIOUserStatus) {
+	*out = *in
+}
+
+func (in *MinIOUserStatus) DeepCopy() *MinIOUserStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOUserStatus)
 	in.DeepCopyInto(out)
 	return out
 }

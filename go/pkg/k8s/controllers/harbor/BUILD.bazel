@@ -10,12 +10,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/harbor",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/harbor/v1alpha1",
+        "//go/pkg/api/harborv1alpha1",
         "//go/pkg/harbor",
-        "//go/pkg/k8s/client/versioned",
+        "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
-        "//go/pkg/k8s/informers/externalversions",
-        "//go/pkg/k8s/listers/harbor/v1alpha1",
         "//go/pkg/logger",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",
@@ -49,7 +47,7 @@ go_test(
     ],
     embed = [":harbor"],
     deps = [
-        "//go/pkg/api/harbor/v1alpha1",
+        "//go/pkg/api/harborv1alpha1",
         "//go/pkg/harbor",
         "//go/pkg/http/mockutil",
         "//go/pkg/k8s/controllers/controllertest",

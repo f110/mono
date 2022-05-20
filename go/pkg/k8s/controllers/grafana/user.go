@@ -19,13 +19,11 @@ import (
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
-	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	"go.f110.dev/mono/go/pkg/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/pkg/collections/set"
 	"go.f110.dev/mono/go/pkg/grafana"
-	clientset "go.f110.dev/mono/go/pkg/k8s/client/versioned"
+	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	informers "go.f110.dev/mono/go/pkg/k8s/informers/externalversions"
-	listers "go.f110.dev/mono/go/pkg/k8s/listers/grafana/v1alpha1"
 )
 
 const (
@@ -35,12 +33,12 @@ const (
 type UserController struct {
 	*controllerutil.ControllerBase
 
-	client clientset.Interface
+	client *client.GrafanaV1alpha1
 
 	secretLister  corev1listers.SecretLister
 	serviceLister corev1listers.ServiceLister
-	appLister     listers.GrafanaLister
-	userLister    listers.GrafanaUserLister
+	appLister     *client.GrafanaV1alpha1GrafanaLister
+	userLister    *client.GrafanaV1alpha1GrafanaUserLister
 
 	// for testing
 	transport http.RoundTripper
@@ -50,27 +48,28 @@ var _ controllerutil.Controller = &UserController{}
 
 func NewUserController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
-	sharedInformerFactory informers.SharedInformerFactory,
+	factory *client.InformerFactory,
 	coreClient kubernetes.Interface,
-	client clientset.Interface,
+	apiClient *client.Set,
 ) (*UserController, error) {
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
-	appInformer := sharedInformerFactory.Grafana().V1alpha1().Grafanas()
-	userInformer := sharedInformerFactory.Grafana().V1alpha1().GrafanaUsers()
+	grafanaInformers := client.NewGrafanaV1alpha1Informer(factory.Cache(), apiClient.GrafanaV1alpha1, metav1.NamespaceAll, 30*time.Second)
+	appInformer := grafanaInformers.GrafanaInformer()
+	userInformer := grafanaInformers.GrafanaUserInformer()
 
 	a := &UserController{
-		client:        client,
+		client:        apiClient.GrafanaV1alpha1,
 		secretLister:  secretInformer.Lister(),
 		serviceLister: serviceInformer.Lister(),
-		appLister:     appInformer.Lister(),
-		userLister:    userInformer.Lister(),
+		appLister:     grafanaInformers.GrafanaLister(),
+		userLister:    grafanaInformers.GrafanaUserLister(),
 	}
 	a.ControllerBase = controllerutil.NewBase(
 		"grafana-user-controller",
 		a,
 		coreClient,
-		[]cache.SharedIndexInformer{appInformer.Informer(), userInformer.Informer()},
+		[]cache.SharedIndexInformer{appInformer, userInformer},
 		[]cache.SharedIndexInformer{secretInformer.Informer(), serviceInformer.Informer()},
 		[]string{grafanaUserControllerFinalizerName},
 	)
@@ -83,7 +82,7 @@ func (u *UserController) ObjectToKeys(obj interface{}) []string {
 	case *grafanav1alpha1.Grafana:
 		return []string{u.toKey(v)}
 	case *grafanav1alpha1.GrafanaUser:
-		apps, err := u.appLister.List(labels.Everything())
+		apps, err := u.appLister.List(metav1.NamespaceAll, labels.Everything())
 		if err != nil {
 			return nil
 		}
@@ -123,7 +122,7 @@ func (u *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
-	users, err := u.userLister.GrafanaUsers(app.Namespace).List(sel)
+	users, err := u.userLister.List(app.Namespace, sel)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -135,7 +134,7 @@ func (u *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	newA := app.DeepCopy()
 	newA.Status.ObservedGeneration = app.ObjectMeta.Generation
 	if !reflect.DeepEqual(newA.Status, app.Status) {
-		_, err = u.client.GrafanaV1alpha1().Grafanas(newA.Namespace).UpdateStatus(ctx, newA, metav1.UpdateOptions{})
+		_, err = u.client.UpdateStatusGrafana(ctx, newA, metav1.UpdateOptions{})
 		if err != nil {
 			return controllerutil.WrapRetryError(err)
 		}
@@ -153,7 +152,7 @@ func (u *UserController) GetObject(key string) (runtime.Object, error) {
 		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	obj, err := u.appLister.Grafanas(namespace).Get(name)
+	obj, err := u.appLister.Get(namespace, name)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -166,7 +165,7 @@ func (u *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (
 		return nil, xerrors.Errorf("unexpected object type: %v", obj)
 	}
 
-	app, err := u.client.GrafanaV1alpha1().Grafanas(app.Namespace).Update(ctx, app, metav1.UpdateOptions{})
+	app, err := u.client.UpdateGrafana(ctx, app, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}

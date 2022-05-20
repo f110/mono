@@ -51,8 +51,8 @@ message MinIOBucketStatus {
 }
 
 message MinIOUser {
-  MinIOUserSpec     spec   = 1;
-  MinIOBucketStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+  MinIOUserSpec   spec   = 1;
+  MinIOUserStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
 
   option (dev.f110.kubeproto.kind) = {
     additional_printer_columns: { name: "ready", type: "string", json_path: ".status.ready", description: "Ready", format: "byte", priority: 0 }
@@ -68,7 +68,7 @@ message MinIOUserSpec {
   string mount_path = 3;
 }
 
-message MInIOUserStatus {
+message MinIOUserStatus {
   bool   ready      = 1;
   string access_key = 2;
   bool   vault      = 3;
