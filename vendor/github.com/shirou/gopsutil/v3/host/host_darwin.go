@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package host
@@ -6,9 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"unsafe"
 
@@ -21,11 +22,22 @@ import (
 const user_PROCESS = 7
 
 func HostIDWithContext(ctx context.Context) (string, error) {
-	uuid, err := unix.Sysctl("kern.uuid")
+	out, err := invoke.CommandWithContext(ctx, "ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
 	if err != nil {
 		return "", err
 	}
-	return strings.ToLower(uuid), err
+
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, "IOPlatformUUID") {
+			parts := strings.SplitAfter(line, `" = "`)
+			if len(parts) == 2 {
+				uuid := strings.TrimRight(parts[1], `"`)
+				return strings.ToLower(uuid), nil
+			}
+		}
+	}
+
+	return "", errors.New("cannot find host id")
 }
 
 func numProcs(ctx context.Context) (uint64, error) {
@@ -77,7 +89,6 @@ func UsersWithContext(ctx context.Context) ([]UserStat, error) {
 	}
 
 	return ret, nil
-
 }
 
 func PlatformInformationWithContext(ctx context.Context) (string, string, string, error) {
@@ -85,17 +96,12 @@ func PlatformInformationWithContext(ctx context.Context) (string, string, string
 	family := ""
 	pver := ""
 
-	sw_vers, err := exec.LookPath("sw_vers")
-	if err != nil {
-		return "", "", "", err
-	}
-
 	p, err := unix.Sysctl("kern.ostype")
 	if err == nil {
 		platform = strings.ToLower(p)
 	}
 
-	out, err := invoke.CommandWithContext(ctx, sw_vers, "-productVersion")
+	out, err := invoke.CommandWithContext(ctx, "sw_vers", "-productVersion")
 	if err == nil {
 		pver = strings.ToLower(strings.TrimSpace(string(out)))
 	}

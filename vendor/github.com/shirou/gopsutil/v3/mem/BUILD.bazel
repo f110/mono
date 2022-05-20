@@ -4,6 +4,8 @@ go_library(
     name = "mem",
     srcs = [
         "mem.go",
+        "mem_aix.go",
+        "mem_bsd.go",
         "mem_darwin.go",
         "mem_darwin_cgo.go",
         "mem_darwin_nocgo.go",
@@ -13,7 +15,9 @@ go_library(
         "mem_openbsd.go",
         "mem_openbsd_386.go",
         "mem_openbsd_amd64.go",
+        "mem_openbsd_arm.go",
         "mem_openbsd_arm64.go",
+        "mem_plan9.go",
         "mem_solaris.go",
         "mem_windows.go",
     ],
@@ -24,6 +28,9 @@ go_library(
     deps = [
         "//vendor/github.com/shirou/gopsutil/v3/internal/common",
     ] + select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//vendor/github.com/power-devops/perfstat",
+        ],
         "@io_bazel_rules_go//go/platform:android": [
             "//vendor/golang.org/x/sys/unix",
         ],
@@ -41,6 +48,9 @@ go_library(
         ],
         "@io_bazel_rules_go//go/platform:openbsd": [
             "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "//vendor/github.com/lufia/plan9stats",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",

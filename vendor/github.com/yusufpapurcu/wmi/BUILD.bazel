@@ -6,8 +6,8 @@ go_library(
         "swbemservices.go",
         "wmi.go",
     ],
-    importmap = "go.f110.dev/mono/vendor/github.com/StackExchange/wmi",
-    importpath = "github.com/StackExchange/wmi",
+    importmap = "go.f110.dev/mono/vendor/github.com/yusufpapurcu/wmi",
+    importpath = "github.com/yusufpapurcu/wmi",
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:windows": [

@@ -32,6 +32,7 @@ go_library(
         "host_openbsd.go",
         "host_openbsd_386.go",
         "host_openbsd_amd64.go",
+        "host_openbsd_arm.go",
         "host_openbsd_arm64.go",
         "host_posix.go",
         "host_solaris.go",
@@ -82,8 +83,8 @@ go_library(
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
-            "//vendor/github.com/StackExchange/wmi",
             "//vendor/github.com/shirou/gopsutil/v3/process",
+            "//vendor/github.com/yusufpapurcu/wmi",
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],

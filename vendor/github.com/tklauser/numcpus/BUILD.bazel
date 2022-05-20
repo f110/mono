@@ -8,6 +8,7 @@ go_library(
         "numcpus_linux.go",
         "numcpus_solaris.go",
         "numcpus_unsupported.go",
+        "numcpus_windows.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/tklauser/numcpus",
     importpath = "github.com/tklauser/numcpus",
@@ -39,6 +40,9 @@ go_library(
         ],
         "@io_bazel_rules_go//go/platform:solaris": [
             "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],
     }),

@@ -30,7 +30,7 @@ go_library(
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
-            "//vendor/github.com/StackExchange/wmi",
+            "//vendor/github.com/yusufpapurcu/wmi",
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],
