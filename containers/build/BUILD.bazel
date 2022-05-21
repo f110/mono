@@ -39,7 +39,7 @@ container_push(
 pkg_tar(
     name = "sidecar_bin",
     files = {
-        "//go/cmd/build-sidecar": "/usr/local/bin/sidecar"
+        "//go/cmd/build-sidecar": "/usr/local/bin/sidecar",
     },
     mode = "0755",
 )

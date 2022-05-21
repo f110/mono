@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -26,6 +27,7 @@ import (
 var (
 	Scheme         = runtime.NewScheme()
 	ParameterCodec = runtime.NewParameterCodec(Scheme)
+	Codecs         = serializer.NewCodecFactory(Scheme)
 )
 
 func init() {
@@ -60,17 +62,61 @@ type Set struct {
 }
 
 func NewSet(cfg *rest.Config) (*Set, error) {
-	c, err := rest.RESTClientFor(cfg)
-	if err != nil {
-		return nil, err
+	s := &Set{}
+	{
+		conf := *cfg
+		conf.GroupVersion = &consulv1alpha1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.ConsulV1alpha1 = NewConsulV1alpha1Client(&restBackend{client: c})
 	}
-	b := &restBackend{client: c}
-	s := &Set{
-		ConsulV1alpha1:         NewConsulV1alpha1Client(b),
-		GrafanaV1alpha1:        NewGrafanaV1alpha1Client(b),
-		HarborV1alpha1:         NewHarborV1alpha1Client(b),
-		MinioV1alpha1:          NewMinioV1alpha1Client(b),
-		MiniocontrollerV1beta1: NewMiniocontrollerV1beta1Client(b),
+	{
+		conf := *cfg
+		conf.GroupVersion = &grafanav1alpha1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.GrafanaV1alpha1 = NewGrafanaV1alpha1Client(&restBackend{client: c})
+	}
+	{
+		conf := *cfg
+		conf.GroupVersion = &harborv1alpha1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.HarborV1alpha1 = NewHarborV1alpha1Client(&restBackend{client: c})
+	}
+	{
+		conf := *cfg
+		conf.GroupVersion = &miniov1alpha1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.MinioV1alpha1 = NewMinioV1alpha1Client(&restBackend{client: c})
+	}
+	{
+		conf := *cfg
+		conf.GroupVersion = &v1beta1.SchemaGroupVersion
+		conf.APIPath = "/apis"
+		conf.NegotiatedSerializer = Codecs.WithoutConversion()
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.MiniocontrollerV1beta1 = NewMiniocontrollerV1beta1Client(&restBackend{client: c})
 	}
 
 	return s, nil

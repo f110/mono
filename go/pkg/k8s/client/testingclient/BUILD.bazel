@@ -23,7 +23,9 @@ vendor_kubeproto(
 
 go_library(
     name = "testingclient",
-    srcs = ["testingclient.generated.testingclient.go"],
+    srcs = [
+        "kubeproto_testingclient.generated.testingclient.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/client/testingclient",
     visibility = ["//visibility:public"],
     deps = [
