@@ -3,11 +3,10 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 
 pkg_tar(
     name = "bin",
-    srcs = [
-        "//go/cmd/controller-manager",
-    ],
+    files = {
+        "//go/cmd/controller-manager": "/usr/local/bin/controller-manager",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(
