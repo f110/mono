@@ -38,11 +38,10 @@ container_push(
 
 pkg_tar(
     name = "sidecar_bin",
-    srcs = [
-        "//go/cmd/build-sidecar",
-    ],
+    files = {
+        "//go/cmd/build-sidecar": "/usr/local/bin/sidecar"
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(
