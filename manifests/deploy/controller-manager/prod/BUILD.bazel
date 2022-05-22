@@ -1,18 +1,10 @@
 load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomization")
 
 kustomization(
-    name = "kustomize",
+    name = "prod",
     src = "kustomization.yaml",
     resources = [
         "//manifests/deploy/controller-manager/base",
     ],
-    visibility = ["//visibility:public"],
-)
-
-load("//build/rules:manifest-cleaner.bzl", "cleanup_manifest")
-
-cleanup_manifest(
-    name = "prod",
-    src = ":kustomize",
     visibility = ["//visibility:public"],
 )
