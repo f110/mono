@@ -1,8 +1,2 @@
 resources:
-  - grafana.f110.dev_grafanas.yaml
-  - grafana.f110.dev_grafanausers.yaml
-  - harbor.f110.dev_harborrobotaccounts.yaml
-  - harbor.f110.dev_harborprojects.yaml
-  - minio.f110.dev_miniobuckets.yaml
-  - minio.f110.dev_miniousers.yaml
-  - consul.f110.dev_consulbackups.yaml
+  - proto.crd.yaml

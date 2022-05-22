@@ -1,0 +1,616 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: consulbackups.consul.f110.dev
+spec:
+  group: consul.f110.dev
+  names:
+    kind: ConsulBackup
+    listKind: ConsulBackupList
+    plural: consulbackups
+    singular: consulbackup
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              intervalInSeconds:
+                type: integer
+              maxBackups:
+                type: integer
+              service:
+                properties:
+                  name:
+                    description: |-
+                      Name of the referent.
+                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+              storage:
+                properties:
+                  gcs:
+                    properties:
+                      bucket:
+                        type: string
+                      credential:
+                        properties:
+                          serviceAccountJson:
+                            properties:
+                              key:
+                                description: The key of the secret to select from.  Must
+                                  be a valid secret key.
+                                type: string
+                              localObjectReference:
+                                properties:
+                                  name:
+                                    description: |-
+                                      Name of the referent.
+                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    type: string
+                                type: object
+                              optional:
+                                description: Specify whether the Secret or its key
+                                  must be defined
+                                type: boolean
+                            type: object
+                        type: object
+                      path:
+                        type: string
+                    type: object
+                  minio:
+                    properties:
+                      bucket:
+                        type: string
+                      credential:
+                        properties:
+                          accessKeyId:
+                            properties:
+                              key:
+                                description: The key of the secret to select from.  Must
+                                  be a valid secret key.
+                                type: string
+                              localObjectReference:
+                                properties:
+                                  name:
+                                    description: |-
+                                      Name of the referent.
+                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    type: string
+                                type: object
+                              optional:
+                                description: Specify whether the Secret or its key
+                                  must be defined
+                                type: boolean
+                            type: object
+                          secretAccessKey:
+                            properties:
+                              key:
+                                description: The key of the secret to select from.  Must
+                                  be a valid secret key.
+                                type: string
+                              localObjectReference:
+                                properties:
+                                  name:
+                                    description: |-
+                                      Name of the referent.
+                                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    type: string
+                                type: object
+                              optional:
+                                description: Specify whether the Secret or its key
+                                  must be defined
+                                type: boolean
+                            type: object
+                        type: object
+                      path:
+                        type: string
+                      secure:
+                        type: boolean
+                      service:
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        type: object
+                    type: object
+                type: object
+            type: object
+          status:
+            properties:
+              history:
+                properties:
+                  executeTime:
+                    properties:
+                      nanos:
+                        description: |-
+                          Non-negative fractions of a second at nanosecond resolution. Negative
+                           second values with fractions must still have non-negative nanos values
+                           that count forward in time. Must be from 0 to 999,999,999
+                           inclusive. This field may be limited in precision depending on context.
+                        type: integer
+                      seconds:
+                        description: |-
+                          Represents seconds of UTC time since Unix epoch
+                           1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+                           9999-12-31T23:59:59Z inclusive.
+                        type: integer
+                    type: object
+                  message:
+                    type: string
+                  path:
+                    type: string
+                  succeeded:
+                    type: boolean
+                type: object
+              lastSucceededTime:
+                properties:
+                  nanos:
+                    description: |-
+                      Non-negative fractions of a second at nanosecond resolution. Negative
+                       second values with fractions must still have non-negative nanos values
+                       that count forward in time. Must be from 0 to 999,999,999
+                       inclusive. This field may be limited in precision depending on context.
+                    type: integer
+                  seconds:
+                    description: |-
+                      Represents seconds of UTC time since Unix epoch
+                       1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+                       9999-12-31T23:59:59Z inclusive.
+                    type: integer
+                type: object
+              succeeded:
+                type: boolean
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: grafanas.grafana.f110.dev
+spec:
+  group: grafana.f110.dev
+  names:
+    kind: Grafana
+    listKind: GrafanaList
+    plural: grafanas
+    singular: grafana
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              adminPasswordSecret:
+                properties:
+                  key:
+                    description: The key of the secret to select from.  Must be a
+                      valid secret key.
+                    type: string
+                  localObjectReference:
+                    properties:
+                      name:
+                        description: |-
+                          Name of the referent.
+                           More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                        type: string
+                    type: object
+                  optional:
+                    description: Specify whether the Secret or its key must be defined
+                    type: boolean
+                type: object
+              adminUser:
+                type: string
+              service:
+                properties:
+                  name:
+                    description: |-
+                      Name of the referent.
+                       More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    type: string
+                type: object
+              userSelector:
+                properties:
+                  matchExpressions:
+                    properties:
+                      key:
+                        description: key is the label key that the selector applies
+                          to.
+                        type: string
+                      values:
+                        items:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                             the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                             the values array must be empty. This array is replaced during a strategic
+                             merge patch.
+                          type: string
+                        type: array
+                    type: object
+                  matchLabels:
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            properties:
+              observedGeneration:
+                type: integer
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: grafanausers.grafana.f110.dev
+spec:
+  group: grafana.f110.dev
+  names:
+    kind: GrafanaUser
+    listKind: GrafanaUserList
+    plural: grafanausers
+    singular: grafanauser
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              admin:
+                type: boolean
+              email:
+                type: string
+            type: object
+          status:
+            properties:
+              ready:
+                type: boolean
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: harborprojects.harbor.f110.dev
+spec:
+  group: harbor.f110.dev
+  names:
+    kind: HarborProject
+    listKind: HarborProjectList
+    plural: harborprojects
+    singular: harborproject
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Ready
+      format: byte
+      jsonPath: .status.ready
+      name: ready
+      type: boolean
+    - description: age
+      format: date
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              public:
+                description: |-
+                  public is an access level of the project.
+                   If public sets true, then anyone can read.
+                type: boolean
+            type: object
+          status:
+            properties:
+              projectId:
+                type: integer
+              ready:
+                type: boolean
+              registry:
+                type: string
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: harborrobotaccounts.harbor.f110.dev
+spec:
+  group: harbor.f110.dev
+  names:
+    kind: HarborRobotAccount
+    listKind: HarborRobotAccountList
+    plural: harborrobotaccounts
+    singular: harborrobotaccount
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Ready
+      format: byte
+      jsonPath: .status.ready
+      name: ready
+      type: boolean
+    - description: age
+      format: date
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              projectName:
+                type: string
+              projectNamespace:
+                type: string
+              secretName:
+                description: secret_name is a name of docker config secret.
+                type: string
+            type: object
+          status:
+            properties:
+              ready:
+                type: boolean
+              robotId:
+                type: integer
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: miniobuckets.minio.f110.dev
+spec:
+  group: minio.f110.dev
+  names:
+    kind: MinIOBucket
+    listKind: MinIOBucketList
+    plural: miniobuckets
+    singular: miniobucket
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Ready
+      format: byte
+      jsonPath: .status.ready
+      name: ready
+      type: string
+    - description: age
+      format: date
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              createIndexFile:
+                description: create_index_file is a flag that creates index.html on
+                  top of bucket.
+                type: boolean
+              selector:
+                properties:
+                  matchExpressions:
+                    properties:
+                      key:
+                        description: key is the label key that the selector applies
+                          to.
+                        type: string
+                      values:
+                        items:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                             the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                             the values array must be empty. This array is replaced during a strategic
+                             merge patch.
+                          type: string
+                        type: array
+                    type: object
+                  matchLabels:
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            properties:
+              ready:
+                type: boolean
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: miniousers.minio.f110.dev
+spec:
+  group: minio.f110.dev
+  names:
+    kind: MinIOUser
+    listKind: MinIOUserList
+    plural: miniousers
+    singular: miniouser
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Ready
+      format: byte
+      jsonPath: .status.ready
+      name: ready
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated.
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              mountPath:
+                description: mount_path is a mount path of KV secrets engine.
+                type: string
+              path:
+                description: path is a path in vault
+                type: string
+              selector:
+                properties:
+                  matchExpressions:
+                    properties:
+                      key:
+                        description: key is the label key that the selector applies
+                          to.
+                        type: string
+                      values:
+                        items:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                             the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                             the values array must be empty. This array is replaced during a strategic
+                             merge patch.
+                          type: string
+                        type: array
+                    type: object
+                  matchLabels:
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                type: object
+            type: object
+          status:
+            properties:
+              accessKey:
+                type: string
+              ready:
+                type: boolean
+              vault:
+                type: boolean
+            type: object
+        type: object
+    served: false
+    storage: false
+    subresources: {}
