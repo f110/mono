@@ -95,9 +95,9 @@ func (in *ConsulBackupSpec) DeepCopy() *ConsulBackupSpec {
 }
 
 type ConsulBackupStatus struct {
-	Succeeded         bool                        `json:"succeeded"`
-	LastSucceededTime *metav1.Time                `json:"lastSucceededTime,omitempty"`
-	History           []ConsulBackupStatusHistory `json:"history"`
+	Succeeded           bool                        `json:"succeeded"`
+	LastSucceededTime   *metav1.Time                `json:"lastSucceededTime,omitempty"`
+	BackupStatusHistory []ConsulBackupStatusHistory `json:"backupStatusHistory"`
 }
 
 func (in *ConsulBackupStatus) DeepCopyInto(out *ConsulBackupStatus) {
@@ -107,12 +107,12 @@ func (in *ConsulBackupStatus) DeepCopyInto(out *ConsulBackupStatus) {
 		*out = new(metav1.Time)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.History != nil {
-		l := make([]ConsulBackupStatusHistory, len(in.History))
-		for i := range in.History {
-			in.History[i].DeepCopyInto(&l[i])
+	if in.BackupStatusHistory != nil {
+		l := make([]ConsulBackupStatusHistory, len(in.BackupStatusHistory))
+		for i := range in.BackupStatusHistory {
+			in.BackupStatusHistory[i].DeepCopyInto(&l[i])
 		}
-		out.History = l
+		out.BackupStatusHistory = l
 	}
 }
 
@@ -244,7 +244,7 @@ func (in *ObjectReference) DeepCopy() *ObjectReference {
 }
 
 type AWSCredential struct {
-	AccessKeyID     *corev1.SecretKeySelector `json:"accessKeyId,omitempty"`
+	AccessKeyID     *corev1.SecretKeySelector `json:"accessKeyID,omitempty"`
 	SecretAccessKey *corev1.SecretKeySelector `json:"secretAccessKey,omitempty"`
 }
 
@@ -272,7 +272,7 @@ func (in *AWSCredential) DeepCopy() *AWSCredential {
 }
 
 type GCPCredential struct {
-	ServiceAccountJSON *corev1.SecretKeySelector `json:"serviceAccountJson,omitempty"`
+	ServiceAccountJSON *corev1.SecretKeySelector `json:"serviceAccountJSON,omitempty"`
 }
 
 func (in *GCPCredential) DeepCopyInto(out *GCPCredential) {

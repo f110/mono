@@ -27,9 +27,9 @@ message ConsulBackupSpec {
 }
 
 message ConsulBackupStatus {
-  bool     succeeded                                                     = 1;
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time last_succeeded_time = 2;
-  repeated ConsulBackupStatusHistory                 history             = 3;
+  bool     succeeded                                                       = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time last_succeeded_time   = 2;
+  repeated ConsulBackupStatusHistory                 backup_status_history = 3;
 }
 
 message ConsulBackupStatusHistory {
@@ -58,7 +58,7 @@ message ObjectReference {
 }
 
 message AWSCredential {
-  optional k8s.io.api.core.v1.SecretKeySelector access_key_id     = 1 [(dev.f110.kubeproto.field) = { go_name: "AccessKeyID" }];
+  optional k8s.io.api.core.v1.SecretKeySelector access_key_id     = 1 [(dev.f110.kubeproto.field) = { go_name: "AccessKeyID", api_field_name: "accessKeyID" }];
   optional k8s.io.api.core.v1.SecretKeySelector secret_access_key = 2;
 }
 
@@ -69,5 +69,5 @@ message BackupStorageGCSSpec {
 }
 
 message GCPCredential {
-  optional k8s.io.api.core.v1.SecretKeySelector service_account_json = 1 [(dev.f110.kubeproto.field) = { go_name: "ServiceAccountJSON" }];
+  optional k8s.io.api.core.v1.SecretKeySelector service_account_json = 1 [(dev.f110.kubeproto.field) = { go_name: "ServiceAccountJSON", api_field_name: "serviceAccountJSON" }];
 }

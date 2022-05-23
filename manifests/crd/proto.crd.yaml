@@ -49,7 +49,7 @@ spec:
                         type: string
                       credential:
                         properties:
-                          serviceAccountJson:
+                          serviceAccountJSON:
                             properties:
                               key:
                                 description: The key of the secret to select from.  Must
@@ -78,7 +78,7 @@ spec:
                         type: string
                       credential:
                         properties:
-                          accessKeyId:
+                          accessKeyID:
                             properties:
                               key:
                                 description: The key of the secret to select from.  Must
@@ -133,54 +133,31 @@ spec:
             type: object
           status:
             properties:
-              history:
-                properties:
-                  executeTime:
-                    properties:
-                      nanos:
-                        description: |-
-                          Non-negative fractions of a second at nanosecond resolution. Negative
-                           second values with fractions must still have non-negative nanos values
-                           that count forward in time. Must be from 0 to 999,999,999
-                           inclusive. This field may be limited in precision depending on context.
-                        type: integer
-                      seconds:
-                        description: |-
-                          Represents seconds of UTC time since Unix epoch
-                           1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-                           9999-12-31T23:59:59Z inclusive.
-                        type: integer
-                    type: object
-                  message:
-                    type: string
-                  path:
-                    type: string
-                  succeeded:
-                    type: boolean
-                type: object
+              backupStatusHistory:
+                items:
+                  properties:
+                    executeTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    path:
+                      type: string
+                    succeeded:
+                      type: boolean
+                  type: object
+                type: array
               lastSucceededTime:
-                properties:
-                  nanos:
-                    description: |-
-                      Non-negative fractions of a second at nanosecond resolution. Negative
-                       second values with fractions must still have non-negative nanos values
-                       that count forward in time. Must be from 0 to 999,999,999
-                       inclusive. This field may be limited in precision depending on context.
-                    type: integer
-                  seconds:
-                    description: |-
-                      Represents seconds of UTC time since Unix epoch
-                       1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
-                       9999-12-31T23:59:59Z inclusive.
-                    type: integer
-                type: object
+                format: date-time
+                type: string
               succeeded:
                 type: boolean
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -244,21 +221,25 @@ spec:
               userSelector:
                 properties:
                   matchExpressions:
-                    properties:
-                      key:
-                        description: key is the label key that the selector applies
-                          to.
-                        type: string
-                      values:
-                        items:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        values:
                           description: |-
                             values is an array of string values. If the operator is In or NotIn,
                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
                              the values array must be empty. This array is replaced during a strategic
                              merge patch.
-                          type: string
-                        type: array
-                    type: object
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
                   matchLabels:
                     properties:
                       key:
@@ -271,12 +252,14 @@ spec:
           status:
             properties:
               observedGeneration:
+                format: int64
                 type: integer
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -320,9 +303,10 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -382,9 +366,10 @@ spec:
                 type: string
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -444,9 +429,10 @@ spec:
                 type: integer
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -490,28 +476,51 @@ spec:
             type: object
           spec:
             properties:
+              bucketFinalizePolicy:
+                description: |-
+                  bucket_finalize_policy is a plicy when deleted CR Object.
+                   If bucket_finalize_policy is an empty string, then it is the same as "keep".
+                enum:
+                - Delete
+                - Keep
+                type: string
               createIndexFile:
                 description: create_index_file is a flag that creates index.html on
                   top of bucket.
                 type: boolean
+              policy:
+                description: |-
+                  policy is the policy of the bucket. One of public, readOnly, private.
+                   If you don't want to give public access, set private or an empty value.
+                   If it is an empty value, The bucket will not have any policy.
+                   Currently, MinIOBucket can't use prefix based policy.
+                enum:
+                - Public
+                - ReadOnly
+                - Private
+                type: string
               selector:
                 properties:
                   matchExpressions:
-                    properties:
-                      key:
-                        description: key is the label key that the selector applies
-                          to.
-                        type: string
-                      values:
-                        items:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        values:
                           description: |-
                             values is an array of string values. If the operator is In or NotIn,
                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
                              the values array must be empty. This array is replaced during a strategic
                              merge patch.
-                          type: string
-                        type: array
-                    type: object
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
                   matchLabels:
                     properties:
                       key:
@@ -527,9 +536,10 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -577,21 +587,25 @@ spec:
               selector:
                 properties:
                   matchExpressions:
-                    properties:
-                      key:
-                        description: key is the label key that the selector applies
-                          to.
-                        type: string
-                      values:
-                        items:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        values:
                           description: |-
                             values is an array of string values. If the operator is In or NotIn,
                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
                              the values array must be empty. This array is replaced during a strategic
                              merge patch.
-                          type: string
-                        type: array
-                    type: object
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
                   matchLabels:
                     properties:
                       key:
@@ -611,6 +625,7 @@ spec:
                 type: boolean
             type: object
         type: object
-    served: false
-    storage: false
-    subresources: {}
+    served: true
+    storage: true
+    subresources:
+      status: {}

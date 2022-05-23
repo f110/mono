@@ -165,11 +165,11 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 		updated.Status.Succeeded = true
 		updated.Status.LastSucceededTime = &now
 	}
-	updated.Status.History = append(updated.Status.History, *history)
+	updated.Status.BackupStatusHistory = append(updated.Status.BackupStatusHistory, *history)
 	succeededCount := 0
 	firstIndex := 0
-	for i := len(updated.Status.History) - 1; i >= 0; i-- {
-		if updated.Status.History[i].Succeeded {
+	for i := len(updated.Status.BackupStatusHistory) - 1; i >= 0; i-- {
+		if updated.Status.BackupStatusHistory[i].Succeeded {
 			succeededCount++
 			firstIndex = i
 		}
@@ -177,8 +177,8 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 			break
 		}
 	}
-	if succeededCount == updated.Spec.MaxBackups && firstIndex+1 < len(updated.Status.History) {
-		updated.Status.History = updated.Status.History[firstIndex:]
+	if succeededCount == updated.Spec.MaxBackups && firstIndex+1 < len(updated.Status.BackupStatusHistory) {
+		updated.Status.BackupStatusHistory = updated.Status.BackupStatusHistory[firstIndex:]
 	}
 	if !reflect.DeepEqual(backup.Status, updated.Status) {
 		_, err := b.client.UpdateStatusConsulBackup(ctx, updated, metav1.UpdateOptions{})
