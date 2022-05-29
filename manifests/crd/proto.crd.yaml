@@ -64,6 +64,8 @@ spec:
                                 description: Specify whether the Secret or its key
                                   must be defined
                                 type: boolean
+                            required:
+                            - key
                             type: object
                         type: object
                       path:
@@ -90,6 +92,8 @@ spec:
                                 description: Specify whether the Secret or its key
                                   must be defined
                                 type: boolean
+                            required:
+                            - key
                             type: object
                           secretAccessKey:
                             properties:
@@ -106,6 +110,8 @@ spec:
                                 description: Specify whether the Secret or its key
                                   must be defined
                                 type: boolean
+                            required:
+                            - key
                             type: object
                         type: object
                       path:
@@ -118,9 +124,20 @@ spec:
                             type: string
                           namespace:
                             type: string
+                        required:
+                        - name
                         type: object
+                    required:
+                    - credential
+                    - bucket
+                    - path
                     type: object
                 type: object
+            required:
+            - intervalInSeconds
+            - maxBackups
+            - service
+            - storage
             type: object
           status:
             properties:
@@ -143,6 +160,9 @@ spec:
                 type: string
               succeeded:
                 type: boolean
+            required:
+            - succeeded
+            - backupStatusHistory
             type: object
         type: object
     served: true
@@ -195,6 +215,8 @@ spec:
                   optional:
                     description: Specify whether the Secret or its key must be defined
                     type: boolean
+                required:
+                - key
                 type: object
               adminUser:
                 type: string
@@ -236,22 +258,35 @@ spec:
                           items:
                             type: string
                           type: array
+                      required:
+                      - key
+                      - operator
+                      - values
                       type: object
                     type: array
                   matchLabels:
-                    properties:
-                      key:
-                        type: string
-                      value:
-                        type: string
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                       map is equivalent to an element of matchExpressions, whose key field is "key", the
+                       operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
+                required:
+                - matchLabels
+                - matchExpressions
                 type: object
+            required:
+            - userSelector
+            - adminUser
             type: object
           status:
             properties:
               observedGeneration:
                 format: int64
                 type: integer
+            required:
+            - observedGeneration
             type: object
         type: object
     served: true
@@ -294,11 +329,16 @@ spec:
                 type: boolean
               email:
                 type: string
+            required:
+            - email
+            - admin
             type: object
           status:
             properties:
               ready:
                 type: boolean
+            required:
+            - ready
             type: object
         type: object
     served: true
@@ -353,6 +393,8 @@ spec:
                   public is an access level of the project.
                    If public sets true, then anyone can read.
                 type: boolean
+            required:
+            - public
             type: object
           status:
             properties:
@@ -362,6 +404,10 @@ spec:
                 type: boolean
               registry:
                 type: string
+            required:
+            - ready
+            - projectId
+            - registry
             type: object
         type: object
     served: true
@@ -418,6 +464,10 @@ spec:
               secretName:
                 description: secret_name is a name of docker config secret.
                 type: string
+            required:
+            - projectNamespace
+            - projectName
+            - secretName
             type: object
           status:
             properties:
@@ -425,6 +475,9 @@ spec:
                 type: boolean
               robotId:
                 type: integer
+            required:
+            - ready
+            - robotId
             type: object
         type: object
     served: true
@@ -527,21 +580,36 @@ spec:
                           items:
                             type: string
                           type: array
+                      required:
+                      - key
+                      - operator
+                      - values
                       type: object
                     type: array
                   matchLabels:
-                    properties:
-                      key:
-                        type: string
-                      value:
-                        type: string
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                       map is equivalent to an element of matchExpressions, whose key field is "key", the
+                       operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
+                required:
+                - matchLabels
+                - matchExpressions
                 type: object
+            required:
+            - selector
+            - bucketFinalizePolicy
+            - policy
+            - createIndexFile
             type: object
           status:
             properties:
               ready:
                 type: boolean
+            required:
+            - ready
             type: object
         type: object
     served: true
@@ -622,16 +690,28 @@ spec:
                           items:
                             type: string
                           type: array
+                      required:
+                      - key
+                      - operator
+                      - values
                       type: object
                     type: array
                   matchLabels:
-                    properties:
-                      key:
-                        type: string
-                      value:
-                        type: string
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                       map is equivalent to an element of matchExpressions, whose key field is "key", the
+                       operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
+                required:
+                - matchLabels
+                - matchExpressions
                 type: object
+            required:
+            - selector
+            - path
+            - mountPath
             type: object
           status:
             properties:
@@ -641,6 +721,10 @@ spec:
                 type: boolean
               vault:
                 type: boolean
+            required:
+            - ready
+            - accessKey
+            - vault
             type: object
         type: object
     served: true

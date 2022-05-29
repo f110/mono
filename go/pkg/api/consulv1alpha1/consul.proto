@@ -33,10 +33,10 @@ message ConsulBackupStatus {
 }
 
 message ConsulBackupStatusHistory {
-  bool     succeeded                                              = 1;
+  optional bool succeeded                                         = 1;
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time execute_time = 2;
-  string                                             path         = 3;
-  string                                             message      = 4;
+  optional string                                    path         = 3;
+  optional string                                    message      = 4;
 }
 
 message ConsulBackupStorageSpec {
@@ -49,12 +49,12 @@ message BackupStorageMinIOSpec {
   AWSCredential            credential = 2;
   string                   bucket     = 3;
   string                   path       = 4;
-  bool                     secure     = 5;
+  optional bool            secure     = 5;
 }
 
 message ObjectReference {
-  string name      = 1;
-  string namespace = 2;
+  string   name             = 1;
+  optional string namespace = 2;
 }
 
 message AWSCredential {
@@ -63,9 +63,9 @@ message AWSCredential {
 }
 
 message BackupStorageGCSSpec {
-  string        bucket     = 1;
-  string        path       = 2;
-  GCPCredential credential = 3;
+  optional string        bucket     = 1;
+  optional string        path       = 2;
+  optional GCPCredential credential = 3;
 }
 
 message GCPCredential {

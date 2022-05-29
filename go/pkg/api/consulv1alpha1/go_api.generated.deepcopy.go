@@ -154,10 +154,10 @@ func (in *ConsulBackupStorageSpec) DeepCopy() *ConsulBackupStorageSpec {
 }
 
 type ConsulBackupStatusHistory struct {
-	Succeeded   bool         `json:"succeeded"`
+	Succeeded   bool         `json:"succeeded,omitempty"`
 	ExecuteTime *metav1.Time `json:"executeTime,omitempty"`
-	Path        string       `json:"path"`
-	Message     string       `json:"message"`
+	Path        string       `json:"path,omitempty"`
+	Message     string       `json:"message,omitempty"`
 }
 
 func (in *ConsulBackupStatusHistory) DeepCopyInto(out *ConsulBackupStatusHistory) {
@@ -183,7 +183,7 @@ type BackupStorageMinIOSpec struct {
 	Credential AWSCredential    `json:"credential"`
 	Bucket     string           `json:"bucket"`
 	Path       string           `json:"path"`
-	Secure     bool             `json:"secure"`
+	Secure     bool             `json:"secure,omitempty"`
 }
 
 func (in *BackupStorageMinIOSpec) DeepCopyInto(out *BackupStorageMinIOSpec) {
@@ -206,14 +206,18 @@ func (in *BackupStorageMinIOSpec) DeepCopy() *BackupStorageMinIOSpec {
 }
 
 type BackupStorageGCSSpec struct {
-	Bucket     string        `json:"bucket"`
-	Path       string        `json:"path"`
-	Credential GCPCredential `json:"credential"`
+	Bucket     string         `json:"bucket,omitempty"`
+	Path       string         `json:"path,omitempty"`
+	Credential *GCPCredential `json:"credential,omitempty"`
 }
 
 func (in *BackupStorageGCSSpec) DeepCopyInto(out *BackupStorageGCSSpec) {
 	*out = *in
-	in.Credential.DeepCopyInto(&out.Credential)
+	if in.Credential != nil {
+		in, out := &in.Credential, &out.Credential
+		*out = new(GCPCredential)
+		(*in).DeepCopyInto(*out)
+	}
 }
 
 func (in *BackupStorageGCSSpec) DeepCopy() *BackupStorageGCSSpec {
@@ -227,7 +231,7 @@ func (in *BackupStorageGCSSpec) DeepCopy() *BackupStorageGCSSpec {
 
 type ObjectReference struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 func (in *ObjectReference) DeepCopyInto(out *ObjectReference) {
