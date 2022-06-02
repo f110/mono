@@ -14,6 +14,7 @@ go_proto_library(
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
     importpath = "go.f110.dev/mono/go/pkg/text/converter",
     protos = [
+        "//proto/text/converter:common_proto",
         "//proto/text/converter:md_converter_proto",
         "//proto/text/converter:rst_converter_proto",
     ],
