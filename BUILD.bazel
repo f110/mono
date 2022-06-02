@@ -39,7 +39,7 @@ job(
     cpu_limit = "2000m",
     github_status = True,
     platforms = [
-        "@io_bazel_rules_go//go/platform:linux_amd64",
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
     ],
     targets = [
         "//...",
