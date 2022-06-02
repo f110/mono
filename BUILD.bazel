@@ -39,6 +39,7 @@ job(
     cpu_limit = "2000m",
     github_status = True,
     targets = [
+        "--platforms=io_bazel_rules_go//go/platform:linux_amd64",
         "//...",
         "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
         "-//third_party/universal-ctags/ctags:ctags",
