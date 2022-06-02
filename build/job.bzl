@@ -8,6 +8,7 @@ job = rule(
             doc = "deprecated: target is the label of target for job. This value should be the full path not relative path.",
         ),
         "targets": attr.string_list(doc = "(e.g. //...)"),
+        "platforms": attr.string_list(doc = "(e.g. @io_bazel_rules_go//go/platform:linux_amd64)"),
         "command": attr.string(default = "run"),
         "all_revision": attr.bool(doc = "If true, build at each revision."),
         "github_status": attr.bool(doc = "Enable updating commit status"),
