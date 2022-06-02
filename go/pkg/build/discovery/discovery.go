@@ -350,11 +350,11 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 	newJobs := make([]*database.Job, 0)
 	for _, j := range jobs {
 		if v, ok := jobMap[j.Name]; ok {
-			v.Into(j)
+			v.ImportFrom(j)
 			v.BazelVersion = bazelVersion
 		} else {
 			n := &database.Job{}
-			n.Into(j)
+			n.ImportFrom(j)
 			n.BazelVersion = bazelVersion
 			n.RepositoryId = repoId
 			n.Active = true
@@ -422,7 +422,7 @@ func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision s
 			continue
 		}
 
-		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Targets, "push"); err != nil {
+		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Targets, v.Platforms, "push"); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}

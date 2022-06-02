@@ -36,17 +36,18 @@ message Job {
   string           command       = 4 [(dev.f110.ddl.column) = { size: 20 }];
   string           target        = 5 [(dev.f110.ddl.column) = { size: 255 }, deprecated = true];
   string           targets       = 6 [(dev.f110.ddl.column) = { type: "text" }];
-  bool             active        = 7;
-  bool             all_revision  = 8;
-  bool             github_status = 9;
-  string           cpu_limit     = 10;
-  string           memory_limit  = 11;
-  bool             exclusive     = 12;
-  bool             sync          = 13;
-  string           config_name   = 14;
-  string           bazel_version = 15;
-  string           job_type      = 16;
-  string           schedule      = 17;
+  string           platforms     = 7 [(dev.f110.ddl.column) = { type: "text" }];
+  bool             active        = 8;
+  bool             all_revision  = 9;
+  bool             github_status = 10;
+  string           cpu_limit     = 11;
+  string           memory_limit  = 12;
+  bool             exclusive     = 13;
+  bool             sync          = 14;
+  string           config_name   = 15;
+  string           bazel_version = 16;
+  string           job_type      = 17;
+  string           schedule      = 18;
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
@@ -74,11 +75,12 @@ message Task {
   string                     command     = 6;
   string                     target      = 7 [deprecated = true];
   string                     targets     = 8 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     via         = 9;
-  string                     config_name = 10;
-  string                     node        = 11;
-  .google.protobuf.Timestamp start_at    = 12 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at = 13 [(dev.f110.ddl.column) = { null: true }];
+  string                     platform    = 9 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via         = 10;
+  string                     config_name = 11;
+  string                     node        = 12;
+  .google.protobuf.Timestamp start_at    = 13 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at = 14 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"

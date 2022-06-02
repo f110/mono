@@ -14,6 +14,7 @@ type Job struct {
 	Name         string   `attr:"name"`
 	Target       string   `attr:"target"`
 	Targets      []string `attr:"targets"`
+	Platforms    []string `attr:"platforms"`
 	Command      string   `attr:"command"`
 	AllRevision  bool     `attr:"all_revision"`
 	GithubStatus bool     `attr:"github_status"`
@@ -31,6 +32,8 @@ func (j *Job) ZapFields() []zap.Field {
 		zap.String("name", j.Name),
 		zap.String("command", j.Command),
 		zap.String("target", j.Target),
+		zap.Strings("targets", j.Targets),
+		zap.Strings("platforms", j.Platforms),
 		zap.Bool("all_revision", j.AllRevision),
 		zap.Bool("github_status", j.GithubStatus),
 		zap.String("schedule", j.Schedule),

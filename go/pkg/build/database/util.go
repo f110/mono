@@ -6,11 +6,12 @@ import (
 	"go.f110.dev/mono/go/pkg/build/job"
 )
 
-func (e *Job) Into(j *job.Job) {
+func (e *Job) ImportFrom(j *job.Job) {
 	e.Name = j.Name
 	e.Command = j.Command
 	e.Target = j.Target
 	e.Targets = strings.Join(j.Targets, "\n")
+	e.Platforms = strings.Join(j.Platforms, "\n")
 	e.AllRevision = j.AllRevision
 	e.GithubStatus = j.GithubStatus
 	e.CpuLimit = j.CPULimit

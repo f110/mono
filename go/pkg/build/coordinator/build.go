@@ -241,43 +241,49 @@ func NewBazelBuilder(
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, targets, via string) (*database.Task, error) {
-	task, err := b.dao.Task.Create(ctx, &database.Task{
-		JobId:      job.Id,
-		Revision:   revision,
-		Command:    command,
-		Targets:    targets,
-		Via:        via,
-		ConfigName: job.ConfigName,
-	})
-	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-	defer func() {
-		if task.IsChanged() {
-			if err := b.dao.Task.Update(ctx, task); err != nil {
-				logger.Log.Warn("Failed update task", zap.Error(err))
+func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, targets, platforms, via string) ([]*database.Task, error) {
+	var tasks []*database.Task
+
+	for _, platform := range strings.Split(platforms, "\n") {
+		task, err := b.dao.Task.Create(ctx, &database.Task{
+			JobId:      job.Id,
+			Revision:   revision,
+			Command:    command,
+			Targets:    targets,
+			Platform:   platform,
+			Via:        via,
+			ConfigName: job.ConfigName,
+		})
+		if err != nil {
+			return nil, xerrors.Errorf(": %w", err)
+		}
+		defer func() {
+			if task.IsChanged() {
+				if err := b.dao.Task.Update(ctx, task); err != nil {
+					logger.Log.Warn("Failed update task", zap.Error(err))
+				}
+			}
+		}()
+		tasks = append(tasks, task)
+
+		if err := b.buildJob(ctx, job, task); err != nil {
+			if errors.Is(err, ErrOtherTaskIsRunning) {
+				logger.Log.Info("Enqueue the task", zap.Int32("task.id", task.Id))
+				b.taskQueue.Enqueue(job, task)
+				return tasks, nil
+			}
+
+			return nil, xerrors.Errorf(": %w", err)
+		}
+
+		if job.GithubStatus {
+			if err := b.updateGithubStatus(ctx, job, task, "pending"); err != nil {
+				logger.Log.Warn("Failure update the status of github", zap.Error(err), zap.Int32("task.id", task.Id))
 			}
 		}
-	}()
-
-	if err := b.buildJob(ctx, job, task); err != nil {
-		if errors.Is(err, ErrOtherTaskIsRunning) {
-			logger.Log.Info("Enqueue the task", zap.Int32("task.id", task.Id))
-			b.taskQueue.Enqueue(job, task)
-			return task, nil
-		}
-
-		return nil, xerrors.Errorf(": %w", err)
 	}
 
-	if job.GithubStatus {
-		if err := b.updateGithubStatus(ctx, job, task, "pending"); err != nil {
-			logger.Log.Warn("Failure update the status of github", zap.Error(err), zap.Int32("task.id", task.Id))
-		}
-	}
-
-	return task, nil
+	return tasks, nil
 }
 
 func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
@@ -411,7 +417,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, job *database.Job, task *da
 		}
 	}
 
-	buildTemplate := b.buildJobTemplate(job, task)
+	buildTemplate := b.buildJobTemplate(job, task, task.Platform)
 	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf(": %v", err)
@@ -562,7 +568,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) *batchv1.Job {
+func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, platform string) *batchv1.Job {
 	bazelVersion := b.defaultBazelVersion
 	if job.BazelVersion != "" {
 		bazelVersion = job.BazelVersion
@@ -640,13 +646,21 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task) 
 	if task.ConfigName != "" {
 		args = append(args, fmt.Sprintf("--config=%s", task.ConfigName))
 	}
+	var platformName string
+	if platform != "" {
+		args = append(args, "--platforms="+platform)
+		if strings.Contains(platform, ":") {
+			s := strings.Split(platform, ":")
+			platformName = "-" + strings.Replace(s[1], "_", "-", -1)
+		}
+	}
 	args = append(args, "--")
 	targets := strings.Split(task.Targets, "\n")
 	args = append(args, targets...)
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%d", job.Repository.Name, task.Id),
+			Name:      fmt.Sprintf("%s-%d%s", job.Repository.Name, task.Id, platformName),
 			Namespace: b.Namespace,
 			Labels: map[string]string{
 				labelKeyJobId:     jobIdString,

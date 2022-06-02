@@ -106,6 +106,7 @@ type Job struct {
 	// Deprecated
 	Target       string
 	Targets      string
+	Platforms    string
 	Active       bool
 	AllRevision  bool
 	GithubStatus bool
@@ -142,6 +143,7 @@ func (e *Job) IsChanged() bool {
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
 		e.Targets != e.mark.Targets ||
+		e.Platforms != e.mark.Platforms ||
 		e.Active != e.mark.Active ||
 		e.AllRevision != e.mark.AllRevision ||
 		e.GithubStatus != e.mark.GithubStatus ||
@@ -176,6 +178,9 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	}
 	if e.Targets != e.mark.Targets {
 		res = append(res, ddl.Column{Name: "targets", Value: e.Targets})
+	}
+	if e.Platforms != e.mark.Platforms {
+		res = append(res, ddl.Column{Name: "platforms", Value: e.Platforms})
 	}
 	if e.Active != e.mark.Active {
 		res = append(res, ddl.Column{Name: "active", Value: e.Active})
@@ -232,6 +237,7 @@ func (e *Job) Copy() *Job {
 		Command:      e.Command,
 		Target:       e.Target,
 		Targets:      e.Targets,
+		Platforms:    e.Platforms,
 		Active:       e.Active,
 		AllRevision:  e.AllRevision,
 		GithubStatus: e.GithubStatus,
@@ -267,6 +273,7 @@ type Task struct {
 	// Deprecated
 	Target     string
 	Targets    string
+	Platform   string
 	Via        string
 	ConfigName string
 	Node       string
@@ -299,6 +306,7 @@ func (e *Task) IsChanged() bool {
 		e.Command != e.mark.Command ||
 		e.Target != e.mark.Target ||
 		e.Targets != e.mark.Targets ||
+		e.Platform != e.mark.Platform ||
 		e.Via != e.mark.Via ||
 		e.ConfigName != e.mark.ConfigName ||
 		e.Node != e.mark.Node ||
@@ -333,6 +341,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.Targets != e.mark.Targets {
 		res = append(res, ddl.Column{Name: "targets", Value: e.Targets})
+	}
+	if e.Platform != e.mark.Platform {
+		res = append(res, ddl.Column{Name: "platform", Value: e.Platform})
 	}
 	if e.Via != e.mark.Via {
 		res = append(res, ddl.Column{Name: "via", Value: e.Via})
@@ -381,6 +392,7 @@ func (e *Task) Copy() *Task {
 		Command:    e.Command,
 		Target:     e.Target,
 		Targets:    e.Targets,
+		Platform:   e.Platform,
 		Via:        e.Via,
 		ConfigName: e.ConfigName,
 		Node:       e.Node,

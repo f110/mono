@@ -31,7 +31,7 @@ const (
 )
 
 type Builder interface {
-	Build(ctx context.Context, job *database.Job, revision, command, target, via string) (*database.Task, error)
+	Build(ctx context.Context, job *database.Job, revision, command, target, platforms, via string) ([]*database.Task, error)
 }
 
 type Api struct {
@@ -292,7 +292,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string)
 			continue
 		}
 
-		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Targets, via); err != nil {
+		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Targets, v.Platforms, via); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
 			return xerrors.Errorf(": %w", err)
 		}
@@ -445,7 +445,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		via = "api"
 	}
 
-	task, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Targets, via)
+	tasks, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Targets, j.Platforms, via)
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -453,7 +453,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Log.Info("Success enqueue job", zap.Int("job_id", jobId))
-	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: task.Id}); err != nil {
+	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: tasks[len(tasks)-1].Id}); err != nil {
 		logger.Log.Warn("Failed encode response", zap.Error(err))
 	}
 }
@@ -488,15 +488,15 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newTask, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Targets, "api")
+	newTasks, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Targets, task.Platform, "api")
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	logger.Log.Info("Success enqueue redo-job", zap.Int32("task_id", task.Id), zap.Int32("new_task_id", newTask.Id))
-	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTask.Id}); err != nil {
+	logger.Log.Info("Success enqueue redo-job", zap.Int32("task_id", task.Id), zap.Int32("new_task_id", newTasks[len(newTasks)-1].Id))
+	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
 		logger.Log.Warn("Failed encode response", zap.Error(err))
 	}
 }
