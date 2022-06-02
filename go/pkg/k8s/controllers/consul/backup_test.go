@@ -52,8 +52,8 @@ func TestBackupController_Reconcile(t *testing.T) {
 		})
 		runner.AssertNoUnexpectedAction(t)
 		assert.True(t, expect.Status.Succeeded)
-		assert.Equal(t, expect.Status.LastSucceededTime, expect.Status.History[0].ExecuteTime)
-		assert.Equal(t, fmt.Sprintf("%s_%d", target.Name, expect.Status.LastSucceededTime.Unix()), expect.Status.History[0].Path)
+		assert.Equal(t, expect.Status.LastSucceededTime, expect.Status.BackupStatusHistory[0].ExecuteTime)
+		assert.Equal(t, fmt.Sprintf("%s_%d", target.Name, expect.Status.LastSucceededTime.Unix()), expect.Status.BackupStatusHistory[0].Path)
 	})
 
 	t.Run("WithInInterval", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		runner, controller := newController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
-		target.Status.History = append(target.Status.History,
+		target.Status.BackupStatusHistory = append(target.Status.BackupStatusHistory,
 			consulv1alpha1.ConsulBackupStatusHistory{Path: "/test_1", Succeeded: true},
 			consulv1alpha1.ConsulBackupStatusHistory{Path: "/test_2", Succeeded: true},
 			consulv1alpha1.ConsulBackupStatusHistory{Path: "/test_3", Succeeded: true},
@@ -107,7 +107,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 		assert.ElementsMatch(t, []string{"/test_1"}, mockMinio.Removed("backup"))
 		expect, err := runner.Client.ConsulV1alpha1.GetConsulBackup(context.Background(), target.Namespace, target.Name, metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.Len(t, expect.Status.History, expect.Spec.MaxBackups)
+		assert.Len(t, expect.Status.BackupStatusHistory, expect.Spec.MaxBackups)
 	})
 }
 
