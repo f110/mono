@@ -89,7 +89,9 @@ type LineMatch struct {
 
 	// The higher the better. Only ranks the quality of the match
 	// within the file, does not take rank of file into account
-	Score         float64
+	Score      float64
+	DebugScore string
+
 	LineFragments []LineFragmentMatch
 }
 
@@ -245,6 +247,10 @@ type RepositoryBranch struct {
 	Version string
 }
 
+func (r RepositoryBranch) String() string {
+	return fmt.Sprintf("%s@%s", r.Name, r.Version)
+}
+
 // Repository holds repository metadata.
 type Repository struct {
 	// Sourcergaph's repository ID
@@ -307,6 +313,10 @@ type Repository struct {
 	// The date might be time.Time's 0-value if the repository was last indexed
 	// before this field was added.
 	LatestCommitDate time.Time
+
+	// FileTombstones is a set of file paths that should be ignored across all branches
+	// in this shard.
+	FileTombstones map[string]struct{} `json:",omitempty"`
 }
 
 func (r *Repository) UnmarshalJSON(data []byte) error {
@@ -538,6 +548,9 @@ type SearchOptions struct {
 	// Trace turns on opentracing for this request if true and if the Jaeger address was provided as
 	// a command-line flag
 	Trace bool
+
+	// If set, the search results will contain debug information for scoring.
+	DebugScore bool
 
 	// SpanContext is the opentracing span context, if it exists, from the zoekt client
 	SpanContext map[string]string

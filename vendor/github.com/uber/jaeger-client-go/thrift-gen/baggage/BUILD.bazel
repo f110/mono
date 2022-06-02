@@ -3,9 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "baggage",
     srcs = [
-        "baggagerestrictionmanager.go",
-        "constants.go",
-        "ttypes.go",
+        "GoUnusedProtection__.go",
+        "baggage.go",
+        "baggage-consts.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/thrift-gen/baggage",
     importpath = "github.com/uber/jaeger-client-go/thrift-gen/baggage",

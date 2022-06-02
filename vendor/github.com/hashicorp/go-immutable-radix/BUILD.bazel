@@ -8,6 +8,7 @@ go_library(
         "iter.go",
         "node.go",
         "raw_iter.go",
+        "reverse_iter.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/hashicorp/go-immutable-radix",
     importpath = "github.com/hashicorp/go-immutable-radix",

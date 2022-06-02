@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sketchpb",
+    srcs = ["ddsketch.pb.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/sketches-go/ddsketch/pb/sketchpb",
+    importpath = "github.com/DataDog/sketches-go/ddsketch/pb/sketchpb",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+    ],
+)

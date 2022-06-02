@@ -94,6 +94,15 @@ type Options struct {
 	// regardless of their size. The full pattern syntax is here:
 	// https://github.com/bmatcuk/doublestar/tree/v1#patterns.
 	LargeFiles []string
+
+	// IsDelta is true if this run contains only the changed documents since the
+	// last run.
+	IsDelta bool
+
+	// changedOrRemovedFiles is a list of file paths that have been changed or removed
+	// since the last indexing job for this repository. These files will be tombstoned
+	// in the older shards for this repository.
+	changedOrRemovedFiles []string
 }
 
 // HashOptions creates a hash of the options that affect an index.
@@ -213,32 +222,33 @@ type Builder struct {
 
 	// a sortable 20 chars long id.
 	id string
+
+	finishCalled bool
 }
 
 type finishedShard struct {
 	temp, final string
 }
 
+func checkCTags() string {
+	if ctags := os.Getenv("CTAGS_COMMAND"); ctags != "" {
+		return ctags
+	}
+
+	if ctags, err := exec.LookPath("universal-ctags"); err == nil {
+		return ctags
+	}
+
+	if ctags, err := exec.LookPath("ctags-exuberant"); err == nil {
+		return ctags
+	}
+	return ""
+}
+
 // SetDefaults sets reasonable default options.
 func (o *Options) SetDefaults() {
 	if o.CTags == "" {
-		if ctags := os.Getenv("CTAGS_COMMAND"); ctags != "" {
-			o.CTags = ctags
-		}
-	}
-
-	if o.CTags == "" {
-		ctags, err := exec.LookPath("universal-ctags")
-		if err == nil {
-			o.CTags = ctags
-		}
-	}
-
-	if o.CTags == "" {
-		ctags, err := exec.LookPath("ctags-exuberant")
-		if err == nil {
-			o.CTags = ctags
-		}
+		o.CTags = checkCTags()
 	}
 
 	if o.Parallelism == 0 {
@@ -367,6 +377,36 @@ func (o *Options) IndexState() (IndexState, string) {
 	return IndexStateEqual, fn
 }
 
+// FindRepositoryMetadata returns the index metadata for the repository
+// specified in the options. 'ok' is false if the repository's metadata
+// couldn't be found or if an error occurred.
+func (o *Options) FindRepositoryMetadata() (repository *zoekt.Repository, ok bool, err error) {
+	shard := o.findShard()
+	if shard == "" {
+		return nil, false, nil
+	}
+
+	repositories, _, err := zoekt.ReadMetadataPathAlive(shard)
+	if err != nil {
+		return nil, false, fmt.Errorf("reading metadata for shard %q: %w", shard, err)
+	}
+
+	ID := o.RepositoryDescription.ID
+	for _, r := range repositories {
+		// compound shards contain multiple repositories, so we
+		// have to pick only the one we're looking for
+		if r.ID == ID {
+			return r, true, nil
+		}
+	}
+
+	// If we're here, then we're somehow in a state where we found a matching
+	// shard that's missing the repository metadata we're looking for. This
+	// should never happen.
+	name := o.RepositoryDescription.Name
+	return nil, false, fmt.Errorf("matching shard %q doesn't contain metadata for repo id %d (%q)", shard, ID, name)
+}
+
 func (o *Options) findShard() string {
 	for _, v := range readVersions {
 		fn := o.shardNameVersion(v.IndexFormatVersion, 0)
@@ -472,6 +512,17 @@ func NewBuilder(opts Options) (*Builder, error) {
 		MaxBackups: 5,
 	}
 
+	if opts.IsDelta {
+		// Delta shards build on top of previously existing shards.
+		// As a consequence, the shardNum for delta shards starts from
+		// the number following the most recently generated shard - not 0.
+		//
+		// Using this numbering scheme allows all the shards to be
+		// discovered as a set.
+		shards := b.opts.FindAllShards()
+		b.nextShardNum = len(shards) // shards are zero indexed, so len() provides the next number after the last one
+	}
+
 	if _, err := b.newShardBuilder(); err != nil {
 		return nil, err
 	}
@@ -489,6 +540,10 @@ func (b *Builder) AddFile(name string, content []byte) error {
 }
 
 func (b *Builder) Add(doc zoekt.Document) error {
+	if b.finishCalled {
+		return nil
+	}
+
 	allowLargeFile := b.opts.IgnoreSizeMax(doc.Name)
 
 	// Adjust trigramMax for allowed large files so we don't exclude them.
@@ -523,10 +578,26 @@ func (b *Builder) Add(doc zoekt.Document) error {
 	return nil
 }
 
+// MarkFileAsChangedOrRemoved indicates that the file specified by the given path
+// has been changed or removed since the last indexing job for this repository.
+//
+// If this build is a delta build, these files will be tombstoned in the older shards for this repository.
+func (b *Builder) MarkFileAsChangedOrRemoved(path string) {
+	b.opts.changedOrRemovedFiles = append(b.opts.changedOrRemovedFiles, path)
+}
+
 // Finish creates a last shard from the buffered documents, and clears
 // stale shards from previous runs. This should always be called, also
 // in failure cases, to ensure cleanup.
+//
+// It is safe to call Finish() multiple times.
 func (b *Builder) Finish() error {
+	if b.finishCalled {
+		return b.buildError
+	}
+
+	b.finishCalled = true
+
 	b.flush()
 	b.building.Wait()
 
@@ -539,10 +610,67 @@ func (b *Builder) Finish() error {
 		return b.buildError
 	}
 
+	// map of temporary -> final names for all updated shards + shard metadata files
+	artifactPaths := make(map[string]string)
+	for tmp, final := range b.finishedShards {
+		artifactPaths[tmp] = final
+	}
+
+	oldShards := b.opts.FindAllShards()
+
+	if b.opts.IsDelta {
+		// Delta shard builds need to update FileTombstone and branch commit information for all
+		// existing shards
+		for _, shard := range oldShards {
+			repositories, _, err := zoekt.ReadMetadataPathAlive(shard)
+			if err != nil {
+				return fmt.Errorf("reading metadata from shard %q: %w", shard, err)
+			}
+
+			if len(repositories) > 1 {
+				return fmt.Errorf("delta shard builds don't support repositories contained in compound shards (shard %q)", shard)
+			}
+
+			if len(repositories) == 0 {
+				return fmt.Errorf("failed to update repository metadata for shard %q - shard contains no repositories", shard)
+			}
+
+			repository := repositories[0]
+			if repository.ID != b.opts.RepositoryDescription.ID {
+				return fmt.Errorf("shard %q doesn't contain repository ID %d (%q)", shard, b.opts.RepositoryDescription.ID, b.opts.RepositoryDescription.Name)
+			}
+
+			if len(b.opts.changedOrRemovedFiles) > 0 && repository.FileTombstones == nil {
+				repository.FileTombstones = make(map[string]struct{}, len(b.opts.changedOrRemovedFiles))
+			}
+
+			for _, f := range b.opts.changedOrRemovedFiles {
+				repository.FileTombstones[f] = struct{}{}
+			}
+
+			if !BranchNamesEqual(repository.Branches, b.opts.RepositoryDescription.Branches) {
+				return deltaBranchSetError{
+					shardName: shard,
+					old:       repository.Branches,
+					new:       b.opts.RepositoryDescription.Branches,
+				}
+			}
+
+			repository.Branches = b.opts.RepositoryDescription.Branches
+
+			tempPath, finalPath, err := zoekt.JsonMarshalRepoMetaTemp(shard, repository)
+			if err != nil {
+				return fmt.Errorf("writing repository metadta for shard %q: %w", shard, err)
+			}
+
+			artifactPaths[tempPath] = finalPath
+		}
+	}
+
 	// We mark finished shards as empty when we successfully finish. Return now
 	// to allow call sites to call Finish idempotently.
-	if len(b.finishedShards) == 0 {
-		return nil
+	if len(artifactPaths) == 0 {
+		return b.buildError
 	}
 
 	defer b.shardLogger.Close()
@@ -550,18 +678,27 @@ func (b *Builder) Finish() error {
 	// Collect a map of the old shards on disk. For each new shard we replace we
 	// delete it from toDelete. Anything remaining in toDelete will be removed
 	// after we have renamed everything into place.
-	toDelete := map[string]struct{}{}
-	for _, name := range b.opts.FindAllShards() {
-		paths, err := zoekt.IndexFilePaths(name)
-		if err != nil {
-			b.buildError = fmt.Errorf("failed to find old paths for %s: %w", name, err)
-		}
-		for _, p := range paths {
-			toDelete[p] = struct{}{}
+
+	var toDelete map[string]struct{}
+	if !b.opts.IsDelta {
+		// Non-delta shard builds delete all existing shards before they write out
+		// new ones.
+		// By contrast, delta shard builds work by stacking changes on top of existing shards.
+		// So, we skip populating the toDelete map if we're building delta shards.
+
+		toDelete = make(map[string]struct{})
+		for _, name := range oldShards {
+			paths, err := zoekt.IndexFilePaths(name)
+			if err != nil {
+				b.buildError = fmt.Errorf("failed to find old paths for %s: %w", name, err)
+			}
+			for _, p := range paths {
+				toDelete[p] = struct{}{}
+			}
 		}
 	}
 
-	for tmp, final := range b.finishedShards {
+	for tmp, final := range artifactPaths {
 		if err := os.Rename(tmp, final); err != nil {
 			b.buildError = err
 			continue
@@ -571,6 +708,7 @@ func (b *Builder) Finish() error {
 
 		b.shardLog("upsert", final, b.opts.RepositoryDescription.Name)
 	}
+
 	b.finishedShards = map[string]string{}
 
 	for p := range toDelete {
@@ -592,6 +730,23 @@ func (b *Builder) Finish() error {
 	}
 
 	return b.buildError
+}
+
+// BranchNamesEqual compares the given zoekt.RepositoryBranch slices, and returns true
+// iff both slices specify the same set of branch names in the same order.
+func BranchNamesEqual(a, b []zoekt.RepositoryBranch) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		x, y := a[i], b[i]
+		if x.Name != y.Name {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (b *Builder) flush() error {
@@ -655,7 +810,7 @@ func (b *Builder) shardLog(action, shard string, repoName string) {
 	if fi, err := os.Stat(filepath.Join(b.opts.IndexDir, shard)); err == nil {
 		shardSize = fi.Size()
 	}
-	_, _ = fmt.Fprintf(b.shardLogger, "%d\t%s\t%s\t%d\t%s\n", time.Now().UTC().Unix(), action, shard, shardSize, repoName)
+	_, _ = fmt.Fprintf(b.shardLogger, "%s\t%s\t%s\t%d\t%s\n", time.Now().UTC().Format(time.RFC3339), action, shard, shardSize, repoName)
 }
 
 var profileNumber int
@@ -831,6 +986,15 @@ func (b *Builder) writeShard(fn string, ib *zoekt.IndexBuilder) (*finishedShard,
 		float64(fi.Size())/float64(ib.ContentSize()+1))
 
 	return &finishedShard{f.Name(), fn}, nil
+}
+
+type deltaBranchSetError struct {
+	shardName string
+	old, new  []zoekt.RepositoryBranch
+}
+
+func (e deltaBranchSetError) Error() string {
+	return fmt.Sprintf("repository metadata in shard %q contains a different set of branch names than what was requested, which is unsupported in a delta shard build. old: %+v, new: %+v", e.shardName, e.old, e.new)
 }
 
 // umask holds the Umask of the current process

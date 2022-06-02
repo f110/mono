@@ -7,13 +7,18 @@ go_library(
         "gax.go",
         "header.go",
         "invoke.go",
+        "proto_json_stream.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/googleapis/gax-go/v2",
     importpath = "github.com/googleapis/gax-go/v2",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/github.com/googleapis/gax-go/v2/apierror",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/codes",
         "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/encoding/protojson",
+        "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
     ],
 )

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storage",
+    srcs = ["storage.pb.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/genproto/googleapis/storage/v2",
+    importpath = "google.golang.org/genproto/googleapis/storage/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//vendor/google.golang.org/genproto/googleapis/iam/v1:iam",
+        "//vendor/google.golang.org/genproto/googleapis/type/date",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/emptypb",
+        "//vendor/google.golang.org/protobuf/types/known/fieldmaskpb",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

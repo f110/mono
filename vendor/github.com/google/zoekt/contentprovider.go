@@ -16,8 +16,10 @@ package zoekt
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -130,7 +132,7 @@ func (p *contentProvider) findOffset(filename bool, r uint32) uint32 {
 	return byteOff
 }
 
-func (p *contentProvider) fillMatches(ms []*candidateMatch, numContextLines int) []LineMatch {
+func (p *contentProvider) fillMatches(ms []*candidateMatch, numContextLines int, language string, debug bool) []LineMatch {
 	var result []LineMatch
 	if ms[0].fileName {
 		// There is only "line" in a filename.
@@ -155,7 +157,7 @@ func (p *contentProvider) fillMatches(ms []*candidateMatch, numContextLines int)
 
 	sects := p.docSections()
 	for i, m := range result {
-		result[i].Score = matchScore(sects, &m)
+		result[i].Score, result[i].DebugScore = p.matchScore(sects, &m, language, debug)
 	}
 
 	return result
@@ -267,63 +269,125 @@ const (
 	// TODO - how to scale this relative to rank?
 	scorePartialWordMatch   = 50.0
 	scoreWordMatch          = 500.0
+	scoreBase               = 7000.0
+	scorePartialBase        = 4000.0
 	scoreImportantThreshold = 2000.0
-	scorePartialSymbol      = 4000.0
 	scoreSymbol             = 7000.0
+	scorePartialSymbol      = 4000.0
+	scoreKindMatch          = 1000.0
 	scoreFactorAtomMatch    = 400.0
 	scoreShardRankFactor    = 20.0
 	scoreFileOrderFactor    = 10.0
 	scoreLineOrderFactor    = 1.0
 )
 
-func findSection(secs []DocumentSection, off, sz uint32) *DocumentSection {
+// findSection checks whether a section defined by offset and size lies within
+// one of the sections in secs.
+func findSection(secs []DocumentSection, off, sz uint32) (int, bool) {
 	j := sort.Search(len(secs), func(i int) bool {
 		return secs[i].End >= off+sz
 	})
 
 	if j == len(secs) {
-		return nil
+		return 0, false
 	}
 
 	if secs[j].Start <= off && off+sz <= secs[j].End {
-		return &secs[j]
+		return j, true
 	}
-	return nil
+	return 0, false
 }
 
-func matchScore(secs []DocumentSection, m *LineMatch) float64 {
-	var maxScore float64
+func (p *contentProvider) matchScore(secs []DocumentSection, m *LineMatch, language string, debug bool) (float64, string) {
+	type debugScore struct {
+		score float64
+		what  string
+	}
+
+	score := &debugScore{}
+	maxScore := &debugScore{}
+
+	addScore := func(what string, s float64) {
+		if debug {
+			score.what += fmt.Sprintf("%s:%f, ", what, s)
+		}
+		score.score += s
+	}
+
 	for _, f := range m.LineFragments {
 		startBoundary := f.LineOffset < len(m.Line) && (f.LineOffset == 0 || byteClass(m.Line[f.LineOffset-1]) != byteClass(m.Line[f.LineOffset]))
 
 		end := int(f.LineOffset) + f.MatchLength
 		endBoundary := end > 0 && (end == len(m.Line) || byteClass(m.Line[end-1]) != byteClass(m.Line[end]))
 
-		score := 0.0
+		score.score = 0
+		score.what = ""
+
 		if startBoundary && endBoundary {
-			score = scoreWordMatch
+			addScore("WordMatch", scoreWordMatch)
 		} else if startBoundary || endBoundary {
-			score = scorePartialWordMatch
+			addScore("PartialWordMatch", scorePartialWordMatch)
 		}
 
-		sec := findSection(secs, f.Offset, uint32(f.MatchLength))
-		if sec != nil {
+		if m.FileName {
+			sep := bytes.LastIndexByte(m.Line, '/')
+			startMatch := sep+1 == f.LineOffset
+			endMatch := len(m.Line) == f.LineOffset+f.MatchLength
+			if startMatch && endMatch {
+				addScore("Base", scoreBase)
+			} else if startMatch || endMatch {
+				addScore("EdgeBase", (scoreBase+scorePartialBase)/2)
+			} else if sep < f.LineOffset {
+				addScore("InnerBase", scorePartialBase)
+			}
+		} else if secIdx, ok := findSection(secs, f.Offset, uint32(f.MatchLength)); ok {
+			sec := secs[secIdx]
 			startMatch := sec.Start == f.Offset
 			endMatch := sec.End == f.Offset+uint32(f.MatchLength)
 			if startMatch && endMatch {
-				score += scoreSymbol
+				addScore("Symbol", scoreSymbol)
 			} else if startMatch || endMatch {
-				score += (scoreSymbol + scorePartialSymbol) / 2
+				addScore("EdgeSymbol", (scoreSymbol+scorePartialSymbol)/2)
 			} else {
-				score += scorePartialSymbol
+				addScore("InnerSymbol", scorePartialSymbol)
+			}
+
+			si := f.SymbolInfo
+			if si == nil {
+				// for non-symbol queries, we need to hydrate in SymbolInfo.
+				start := p.id.fileEndSymbol[p.idx]
+				si = p.id.symbols.data(start + uint32(secIdx))
+			}
+			if si != nil {
+				// the LineFragment may not be on a symbol, then si will be nil.
+				addScore(fmt.Sprintf("kind:%s:%s", language, si.Kind), scoreKind(language, si.Kind))
 			}
 		}
 
-		if score > maxScore {
-			maxScore = score
+		if score.score > maxScore.score {
+			maxScore.score = score.score
+			maxScore.what = score.what
 		}
 	}
-	return maxScore
+	return maxScore.score, strings.TrimRight(maxScore.what, ", ")
+}
+
+// scoreKind boosts a match based on the combination of language and kind. The
+// language string comes from go-enry, the kind string from ctags.
+func scoreKind(language string, kind string) float64 {
+	// Refer to universal-ctags --list-kinds=<language> to learn about the mappings
+	// for a language.
+	switch language {
+	case "Java":
+		switch kind {
+		// 2022-03-30: go-ctags contains a regex rule for Java classes that sets "kind"
+		// to "classes" instead of "c". We have to cover both cases to support existing
+		// indexes.
+		case "c", "classes":
+			return scoreKindMatch
+		}
+	}
+	return 0
 }
 
 type matchScoreSlice []LineMatch

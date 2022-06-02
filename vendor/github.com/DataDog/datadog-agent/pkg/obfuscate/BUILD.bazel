@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "obfuscate",
+    srcs = [
+        "cache.go",
+        "credit_cards.go",
+        "http.go",
+        "json.go",
+        "json_scanner.go",
+        "memcached.go",
+        "obfuscate.go",
+        "redis.go",
+        "redis_tokenizer.go",
+        "sql.go",
+        "sql_tokenizer.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/datadog-agent/pkg/obfuscate",
+    importpath = "github.com/DataDog/datadog-agent/pkg/obfuscate",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/datadog-go/statsd",
+        "//vendor/github.com/dgraph-io/ristretto",
+    ],
+)

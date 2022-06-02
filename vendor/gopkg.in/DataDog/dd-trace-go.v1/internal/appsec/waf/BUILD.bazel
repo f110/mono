@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "waf",
+    srcs = [
+        "types.go",
+        "waf_disabled.go",
+        "waf_disabled_build_tag.go",
+    ],
+    cgo = True,
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/waf",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/waf",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+)

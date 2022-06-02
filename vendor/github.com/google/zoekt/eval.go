@@ -23,18 +23,15 @@ import (
 	"strings"
 
 	enry_data "github.com/go-enry/go-enry/v2/data"
-	"github.com/google/zoekt/query"
 	"github.com/grafana/regexp"
+
+	"github.com/google/zoekt/query"
 )
 
 const maxUInt16 = 0xffff
 
-// DebugScore controls whether we collect data on match scores are
-// constructed. Intended for use in tests.
-var DebugScore = false
-
-func (m *FileMatch) addScore(what string, s float64) {
-	if DebugScore {
+func (m *FileMatch) addScore(what string, s float64, debugScore bool) {
+	if debugScore {
 		m.Debug += fmt.Sprintf("%s:%f, ", what, s)
 	}
 	m.Score += s
@@ -79,18 +76,6 @@ func (d *indexData) simplify(in query.Q) query.Q {
 					if br.Repos.Contains(d.repoMetaData[i].ID) {
 						return q
 					}
-				}
-			}
-			return &query.Const{Value: false}
-		case *query.RepoBranches:
-			if len(d.repoMetaData) == 1 {
-				// Can simplify query now. compound too complicated since each repo
-				// may have different branches.
-				return r.Branches(d.repoMetaData[0].Name)
-			}
-			for _, md := range d.repoMetaData {
-				if _, ok := r.Set[md.Name]; ok {
-					return q
 				}
 			}
 			return &query.Const{Value: false}
@@ -237,14 +222,28 @@ nextFileMatch:
 		}
 
 		for ; nextDoc < docCount; nextDoc++ {
-			// Skip tombstoned docs
-			if d.repoMetaData[d.repos[nextDoc]].Tombstone {
+			repoID := d.repos[nextDoc]
+			repoMetadata := &d.repoMetaData[repoID]
+
+			// Skip tombstoned repositories
+			if repoMetadata.Tombstone {
 				continue
+			}
+
+			// Skip documents that are tombstoned
+			// TODO: This FileTombstones implementation (looking up by filenames) creates a lot of small allocations
+			// (string filenames) and can have poor cache performance. This should be addressed before we officially
+			// roll this out.
+			if len(repoMetadata.FileTombstones) > 0 {
+				fileName := string(d.fileName(nextDoc))
+				if _, tombstoned := repoMetadata.FileTombstones[fileName]; tombstoned {
+					continue
+				}
 			}
 
 			// Skip documents over ShardRepoMaxMatchCount if specified.
 			if opts.ShardRepoMaxMatchCount > 0 {
-				if repoMatchCount >= opts.ShardRepoMaxMatchCount && d.repos[nextDoc] == lastRepoID {
+				if repoMatchCount >= opts.ShardRepoMaxMatchCount && repoID == lastRepoID {
 					res.Stats.FilesSkipped++
 					continue
 				}
@@ -339,7 +338,7 @@ nextFileMatch:
 					byteMatchSz:   uint32(len(nm)),
 				})
 		}
-		fileMatch.LineMatches = cp.fillMatches(finalCands, opts.NumContextLines)
+		fileMatch.LineMatches = cp.fillMatches(finalCands, opts.NumContextLines, fileMatch.Language, opts.DebugScore)
 
 		maxFileScore := 0.0
 		for i := range fileMatch.LineMatches {
@@ -354,12 +353,12 @@ nextFileMatch:
 		// Maintain ordering of input files. This
 		// strictly dominates the in-file ordering of
 		// the matches.
-		fileMatch.addScore("fragment", maxFileScore)
-		fileMatch.addScore("atom", float64(atomMatchCount)/float64(totalAtomCount)*scoreFactorAtomMatch)
+		fileMatch.addScore("fragment", maxFileScore, opts.DebugScore)
+		fileMatch.addScore("atom", float64(atomMatchCount)/float64(totalAtomCount)*scoreFactorAtomMatch, opts.DebugScore)
 
 		// Prefer earlier docs.
-		fileMatch.addScore("doc-order", scoreFileOrderFactor*(1.0-float64(nextDoc)/float64(len(d.boundaries))))
-		fileMatch.addScore("shard-order", scoreShardRankFactor*float64(md.Rank)/maxUInt16)
+		fileMatch.addScore("doc-order", scoreFileOrderFactor*(1.0-float64(nextDoc)/float64(len(d.boundaries))), opts.DebugScore)
+		fileMatch.addScore("shard-order", scoreShardRankFactor*float64(md.Rank)/maxUInt16, opts.DebugScore)
 
 		if fileMatch.Score > scoreImportantThreshold {
 			importantMatchCount++

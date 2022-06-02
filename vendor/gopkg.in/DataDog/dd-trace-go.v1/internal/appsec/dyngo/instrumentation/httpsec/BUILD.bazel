@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "httpsec",
+    srcs = [
+        "http.go",
+        "tags.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo/instrumentation/httpsec",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo/instrumentation/httpsec",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = [
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo/instrumentation",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+    ],
+)

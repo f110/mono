@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "appsec",
+    srcs = [
+        "appsec_disabled.go",
+        "config.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log"],
+)

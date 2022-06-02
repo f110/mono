@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tracer",
+    srcs = ["tracer.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/zoekt/internal/tracer",
+    importpath = "github.com/google/zoekt/internal/tracer",
+    visibility = ["//vendor/github.com/google/zoekt:__subpackages__"],
+    deps = [
+        "//vendor/github.com/opentracing/opentracing-go",
+        "//vendor/github.com/uber/jaeger-client-go",
+        "//vendor/github.com/uber/jaeger-client-go/config",
+        "//vendor/github.com/uber/jaeger-lib/metrics",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer",
+    ],
+)

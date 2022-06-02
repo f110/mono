@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "cgroup.go",
         "cgroups.go",
+        "cgroups2.go",
         "doc.go",
         "errors.go",
         "mountpoint.go",

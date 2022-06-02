@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mapping",
+    srcs = [
+        "bit_operation_helper.go",
+        "cubically_interpolated_mapping.go",
+        "index_mapping.go",
+        "linearly_interpolated_mapping.go",
+        "logarithmic_mapping.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/sketches-go/ddsketch/mapping",
+    importpath = "github.com/DataDog/sketches-go/ddsketch/mapping",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/encoding",
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/pb/sketchpb",
+    ],
+)

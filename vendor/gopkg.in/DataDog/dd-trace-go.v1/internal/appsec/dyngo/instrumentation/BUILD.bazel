@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "instrumentation",
+    srcs = ["common.go"],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo/instrumentation",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo/instrumentation",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = [
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/samplernames",
+    ],
+)

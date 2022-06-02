@@ -889,12 +889,19 @@ func (d *indexData) newMatchTree(q query.Q) (matchTree, error) {
 		}
 
 		if substr, ok := subMT.(*substrMatchTree); ok {
+			// Temporary: We have a feature flag for lazy decoding. If
+			// runeDocSections is nil it means we need to lazily decode on request.
+			sections := d.runeDocSections
+			if sections == nil {
+				sections = unmarshalDocSections(d.runeDocSectionsRaw, nil)
+			}
+
 			return &symbolSubstrMatchTree{
 				substrMatchTree: substr,
 				patternSize:     uint32(utf8.RuneCountInString(substr.query.Pattern)),
 				fileEndRunes:    d.fileEndRunes,
 				fileEndSymbol:   d.fileEndSymbol,
-				sections:        unmarshalDocSections(d.runeDocSections, nil),
+				sections:        sections,
 			}, nil
 		}
 
@@ -927,29 +934,6 @@ func (d *indexData) newMatchTree(q query.Q) (matchTree, error) {
 		}
 		return &docMatchTree{
 			reason:  "BranchesRepos",
-			numDocs: d.numDocs(),
-			predicate: func(docID uint32) bool {
-				return d.fileBranchMasks[docID]&reposBranchesWant[d.repos[docID]] != 0
-			},
-		}, nil
-
-	case *query.RepoBranches:
-		reposBranchesWant := make([]uint64, len(d.repoMetaData))
-		for repoIdx, r := range d.repoMetaData {
-			if branches, ok := s.Set[r.Name]; ok {
-				var mask uint64
-				for _, branch := range branches {
-					m, ok := d.branchIDs[repoIdx][branch]
-					if !ok {
-						continue
-					}
-					mask = mask | uint64(m)
-				}
-				reposBranchesWant[repoIdx] = mask
-			}
-		}
-		return &docMatchTree{
-			reason:  "RepoBranches",
 			numDocs: d.numDocs(),
 			predicate: func(docID uint32) bool {
 				return d.fileBranchMasks[docID]&reposBranchesWant[d.repos[docID]] != 0

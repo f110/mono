@@ -14,6 +14,7 @@ go_library(
         "middleware_headers.go",
         "middleware_http_logging.go",
         "middleware_metadata.go",
+        "middleware_min_proto.go",
         "request.go",
         "response.go",
         "time.go",

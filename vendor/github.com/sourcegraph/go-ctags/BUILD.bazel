@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "args.go",
         "ctags.go",
+        "language-mapping.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/sourcegraph/go-ctags",
     importpath = "github.com/sourcegraph/go-ctags",

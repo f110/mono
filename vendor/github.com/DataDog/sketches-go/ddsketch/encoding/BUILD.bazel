@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "encoding",
+    srcs = [
+        "encoding.go",
+        "flag.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/sketches-go/ddsketch/encoding",
+    importpath = "github.com/DataDog/sketches-go/ddsketch/encoding",
+    visibility = ["//visibility:public"],
+)

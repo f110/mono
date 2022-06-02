@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "profiler",
+    srcs = [
+        "doc.go",
+        "metrics.go",
+        "options.go",
+        "profile.go",
+        "profiler.go",
+        "upload.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/profiler",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/datadog-go/v5/statsd",
+        "//vendor/github.com/DataDog/gostackparse",
+        "//vendor/github.com/google/pprof/profile",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/osinfo",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/version",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler/internal/pprofutils",
+    ],
+)

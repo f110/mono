@@ -29,28 +29,27 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
-	"cloud.google.com/go/profiler"
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
 	"github.com/google/zoekt/debugserver"
+	"github.com/google/zoekt/internal/profiler"
+	"github.com/google/zoekt/internal/tracer"
 	"github.com/google/zoekt/query"
 	"github.com/google/zoekt/shards"
 	"github.com/google/zoekt/stream"
 	"github.com/google/zoekt/web"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.uber.org/automaxprocs/maxprocs"
-
 	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegermetrics "github.com/uber/jaeger-lib/metrics"
+	"go.uber.org/automaxprocs/maxprocs"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 )
 
 const logFormat = "2006-01-02T15-04-05.999999999Z07"
@@ -117,7 +116,6 @@ func writeTemplates(dir string) error {
 }
 
 func main() {
-	logDir := flag.String("log_dir", "", "log to this directory rather than stderr.")
 	logRefresh := flag.Duration("log_refresh", 24*time.Hour, "if using --log_dir, start writing a new file this often.")
 
 	listen := flag.String("listen", ":6070", "listen on this address.")
@@ -135,7 +133,22 @@ func main() {
 	templateDir := flag.String("template_dir", "", "set directory from which to load custom .html.tpl template files")
 	dumpTemplates := flag.Bool("dump_templates", false, "dump templates into --template_dir and exit.")
 	version := flag.Bool("version", false, "Print version number")
+
 	flag.Parse()
+	// avoid a panic due to log_dir flag already being defined in glog (a transient dependency)
+	logDirFlag := flag.Lookup("log_dir")
+	if logDirFlag != nil {
+		logDir := logDirFlag.Value.String()
+		if logDir != "" {
+			if fi, err := os.Lstat(logDir); err != nil || !fi.IsDir() {
+				log.Fatalf("%s is not a directory", logDir)
+			}
+			// We could do fdup acrobatics to also redirect
+			// stderr, but it is simpler and more portable for the
+			// caller to divert stderr output if necessary.
+			go divertLogs(logDir, *logRefresh)
+		}
+	}
 
 	if *version {
 		fmt.Printf("zoekt-webserver version %q\n", zoekt.Version)
@@ -149,18 +162,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	initializeJaeger()
-	initializeGoogleCloudProfiler()
-
-	if *logDir != "" {
-		if fi, err := os.Lstat(*logDir); err != nil || !fi.IsDir() {
-			log.Fatalf("%s is not a directory", *logDir)
-		}
-		// We could do fdup acrobatics to also redirect
-		// stderr, but it is simpler and more portable for the
-		// caller to divert stderr output if necessary.
-		go divertLogs(*logDir, *logRefresh)
-	}
+	tracer.Init("zoekt-webserver", zoekt.Version)
+	profiler.Init("zoekt-webserver", zoekt.Version, -1)
 
 	// Tune GOMAXPROCS to match Linux container CPU quota.
 	_, _ = maxprocs.Set()
@@ -283,7 +286,7 @@ func shutdownOnSignal(srv *http.Server) error {
 	signal.Notify(c, os.Interrupt)    // terminal C-c and goreman
 	signal.Notify(c, syscall.SIGTERM) // Kubernetes
 
-	sig := <-c
+	<-c
 
 	// If we receive another signal, immediate shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -296,26 +299,6 @@ func shutdownOnSignal(srv *http.Server) error {
 			cancel()
 		}
 	}()
-
-	// Feature flagged. If we are not respecting ready status, we don't need to
-	// wait for it to propogate. This is the case currently for sourcegraph.com
-	// due to using our custom statefulset service discovery.
-	fast := os.Getenv("SHUTDOWN_MODE") == "fast"
-	if fast {
-		log.Println("SHUTDOWN_MODE=fast so not waiting for unready state to propogate")
-	}
-
-	// SIGTERM is sent by kubernetes. We give 15s to allow our endpoint to be
-	// removed from service discovery before draining traffic.
-	if sig == syscall.SIGTERM && !fast {
-		wait := 15 * time.Second
-		log.Printf("received SIGTERM, waiting %v before shutting down", wait)
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(wait):
-		}
-	}
 
 	// Wait for 10s to drain ongoing requests. Kubernetes gives us 30s to
 	// shutdown, we have already used 15s waiting for our endpoint removal to
@@ -493,77 +476,14 @@ func traceID(ctx context.Context) string {
 
 // traceIDFromSpan returns a trace ID, if any, found in the given span.
 func traceIDFromSpan(span opentracing.Span) string {
-	spanCtx, ok := span.Context().(jaeger.SpanContext)
-	if !ok {
-		return ""
-	}
-	return spanCtx.TraceID().String()
-}
+	switch v := span.Context().(type) {
+	case jaeger.SpanContext:
+		return v.TraceID().String()
 
-func initializeJaeger() {
-	jaegerDisabled := os.Getenv("JAEGER_DISABLED")
-	if jaegerDisabled == "" {
-		return
+	case ddtrace.SpanContext:
+		return strconv.FormatUint(v.TraceID(), 10)
 	}
-	isJaegerDisabled, err := strconv.ParseBool(jaegerDisabled)
-	if err != nil {
-		log.Printf("EROR: failed to parse JAEGER_DISABLED: %s", err)
-		return
-	}
-	if isJaegerDisabled {
-		return
-	}
-	cfg, err := jaegercfg.FromEnv()
-	cfg.ServiceName = "zoekt"
-	if err != nil {
-		log.Printf("EROR: could not initialize jaeger tracer from env, error: %v", err.Error())
-		return
-	}
-	cfg.Tags = append(cfg.Tags, opentracing.Tag{Key: "service.version", Value: zoekt.Version})
-	if reflect.DeepEqual(cfg.Sampler, &jaegercfg.SamplerConfig{}) {
-		// Default sampler configuration for when it is not specified via
-		// JAEGER_SAMPLER_* env vars. In most cases, this is sufficient
-		// enough to connect to Jaeger without any env vars.
-		cfg.Sampler.Type = jaeger.SamplerTypeConst
-		cfg.Sampler.Param = 1
-	}
-	tracer, _, err := cfg.NewTracer(
-		jaegercfg.Logger(&jaegerLogger{}),
-		jaegercfg.Metrics(jaegermetrics.NullFactory),
-	)
-	if err != nil {
-		log.Printf("could not initialize jaeger tracer, error: %v", err.Error())
-	}
-	opentracing.SetGlobalTracer(tracer)
-}
-
-type jaegerLogger struct{}
-
-func (l *jaegerLogger) Error(msg string) {
-	log.Printf("ERROR: %s", msg)
-}
-
-// Infof logs a message at info priority
-func (l *jaegerLogger) Infof(msg string, args ...interface{}) {
-	log.Printf(msg, args...)
-}
-
-func initializeGoogleCloudProfiler() {
-	// Google cloud profiler is opt-in since we only want to run it on
-	// Sourcegraph.com.
-	if os.Getenv("GOOGLE_CLOUD_PROFILER_ENABLED") == "" {
-		return
-	}
-
-	err := profiler.Start(profiler.Config{
-		Service:        "zoekt-webserver",
-		ServiceVersion: zoekt.Version,
-		MutexProfiling: true,
-		AllocForceGC:   true,
-	})
-	if err != nil {
-		log.Printf("could not initialize google cloud profiler: %s", err.Error())
-	}
+	return ""
 }
 
 var (

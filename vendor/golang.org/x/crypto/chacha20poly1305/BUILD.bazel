@@ -15,8 +15,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/golang.org/x/crypto/chacha20",
+        "//vendor/golang.org/x/crypto/internal/poly1305",
         "//vendor/golang.org/x/crypto/internal/subtle",
-        "//vendor/golang.org/x/crypto/poly1305",
     ] + select({
         "@io_bazel_rules_go//go/platform:amd64": [
             "//vendor/golang.org/x/sys/cpu",

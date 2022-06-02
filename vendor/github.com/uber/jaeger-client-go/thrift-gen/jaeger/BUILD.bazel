@@ -3,9 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "jaeger",
     srcs = [
-        "agent.go",
-        "constants.go",
-        "ttypes.go",
+        "GoUnusedProtection__.go",
+        "jaeger.go",
+        "jaeger-consts.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/thrift-gen/jaeger",
     importpath = "github.com/uber/jaeger-client-go/thrift-gen/jaeger",

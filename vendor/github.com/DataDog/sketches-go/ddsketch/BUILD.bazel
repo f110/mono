@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ddsketch",
+    srcs = ["ddsketch.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/sketches-go/ddsketch",
+    importpath = "github.com/DataDog/sketches-go/ddsketch",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/encoding",
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/mapping",
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/pb/sketchpb",
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/stat",
+        "//vendor/github.com/DataDog/sketches-go/ddsketch/store",
+    ],
+)

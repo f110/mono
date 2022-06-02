@@ -13,6 +13,7 @@ go_library(
     deps = [
         "//vendor/cloud.google.com/go/compute/metadata",
         "//vendor/cloud.google.com/go/internal/version",
+        "//vendor/cloud.google.com/go/profiler/internal",
         "//vendor/github.com/golang/protobuf/proto",
         "//vendor/github.com/golang/protobuf/ptypes",
         "//vendor/github.com/google/pprof/profile",
