@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "macports",
+    srcs = ["parser.go"],
+    importpath = "go.f110.dev/mono/go/pkg/macports",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "macports_test",
+    srcs = ["parser_test.go"],
+    embed = [":macports"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
