@@ -40,9 +40,7 @@ go_library(
         "//go/pkg/fsm",
         "//go/pkg/logger",
         "//go/pkg/opvault",
-        "//vendor/github.com/golang/protobuf/proto",
         "//vendor/github.com/golang/protobuf/ptypes",
-        "//vendor/github.com/golang/protobuf/ptypes/timestamp",
         "//vendor/github.com/peco/peco",
         "//vendor/github.com/shirou/gopsutil/v3/process",
         "//vendor/github.com/spf13/cobra",
@@ -54,6 +52,7 @@ go_library(
         "//vendor/google.golang.org/grpc/status",
         "//vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
         "//vendor/gopkg.in/yaml.v3:yaml_v3",
     ],
 )
