@@ -1,5 +1,5 @@
 syntax = "proto3";
-package mono.api.consulv1alpha1;
+package mono.api.miniov1alpha1;
 option  go_package              = "go.f110.dev/mono/go/pkg/api/miniov1alpha1";
 option (dev.f110.kubeproto.k8s) = {
   domain: "f110.dev",
@@ -34,7 +34,7 @@ message MinIOBucket {
 message MinIOBucketSpec {
   // selector is a selector of MinIOInstance.
   k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 1;
-  // bucket_finalize_policy is a plicy when deleted CR Object.
+  // bucket_finalize_policy is a policy when deleted CR Object.
   // If bucket_finalize_policy is an empty string, then it is the same as "keep".
   BucketFinalizePolicy bucket_finalize_policy = 2;
   // policy is the policy of the bucket. One of public, readOnly, private.
