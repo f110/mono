@@ -162,7 +162,6 @@ spec:
                 type: boolean
             required:
             - succeeded
-            - backupStatusHistory
             type: object
         type: object
     served: true
@@ -272,21 +271,15 @@ spec:
                        map is equivalent to an element of matchExpressions, whose key field is "key", the
                        operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
-                required:
-                - matchLabels
-                - matchExpressions
                 type: object
             required:
             - userSelector
-            - adminUser
             type: object
           status:
             properties:
               observedGeneration:
                 format: int64
                 type: integer
-            required:
-            - observedGeneration
             type: object
         type: object
     served: true
@@ -331,14 +324,11 @@ spec:
                 type: string
             required:
             - email
-            - admin
             type: object
           status:
             properties:
               ready:
                 type: boolean
-            required:
-            - ready
             type: object
         type: object
     served: true
@@ -404,10 +394,6 @@ spec:
                 type: boolean
               registry:
                 type: string
-            required:
-            - ready
-            - projectId
-            - registry
             type: object
         type: object
     served: true
@@ -467,7 +453,6 @@ spec:
             required:
             - projectNamespace
             - projectName
-            - secretName
             type: object
           status:
             properties:
@@ -594,9 +579,6 @@ spec:
                        map is equivalent to an element of matchExpressions, whose key field is "key", the
                        operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
-                required:
-                - matchLabels
-                - matchExpressions
                 type: object
             required:
             - selector
@@ -704,9 +686,6 @@ spec:
                        map is equivalent to an element of matchExpressions, whose key field is "key", the
                        operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
-                required:
-                - matchLabels
-                - matchExpressions
                 type: object
             required:
             - selector
@@ -723,8 +702,6 @@ spec:
                 type: boolean
             required:
             - ready
-            - accessKey
-            - vault
             type: object
         type: object
     served: true
