@@ -157,9 +157,9 @@ func (in *HarborProjectSpec) DeepCopy() *HarborProjectSpec {
 }
 
 type HarborProjectStatus struct {
-	Ready     bool   `json:"ready"`
-	ProjectId int    `json:"projectId"`
-	Registry  string `json:"registry"`
+	Ready     bool   `json:"ready,omitempty"`
+	ProjectId int    `json:"projectId,omitempty"`
+	Registry  string `json:"registry,omitempty"`
 }
 
 func (in *HarborProjectStatus) DeepCopyInto(out *HarborProjectStatus) {
@@ -179,7 +179,7 @@ type HarborRobotAccountSpec struct {
 	ProjectNamespace string `json:"projectNamespace"`
 	ProjectName      string `json:"projectName"`
 	// secret_name is a name of docker config secret.
-	SecretName string `json:"secretName"`
+	SecretName string `json:"secretName,omitempty"`
 }
 
 func (in *HarborRobotAccountSpec) DeepCopyInto(out *HarborRobotAccountSpec) {

@@ -69,7 +69,7 @@ message MinIOUserSpec {
 }
 
 message MinIOUserStatus {
-  bool   ready      = 1;
-  string access_key = 2;
-  bool   vault      = 3;
+  bool            ready      = 1;
+  optional string access_key = 2;
+  optional bool   vault      = 3;
 }

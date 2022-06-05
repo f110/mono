@@ -223,8 +223,8 @@ func (in *MinIOUserSpec) DeepCopy() *MinIOUserSpec {
 
 type MinIOUserStatus struct {
 	Ready     bool   `json:"ready"`
-	AccessKey string `json:"accessKey"`
-	Vault     bool   `json:"vault"`
+	AccessKey string `json:"accessKey,omitempty"`
+	Vault     bool   `json:"vault,omitempty"`
 }
 
 func (in *MinIOUserStatus) DeepCopyInto(out *MinIOUserStatus) {

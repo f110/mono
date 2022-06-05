@@ -140,7 +140,7 @@ func (in *GrafanaUserList) DeepCopyObject() runtime.Object {
 
 type GrafanaSpec struct {
 	UserSelector        metav1.LabelSelector         `json:"userSelector"`
-	AdminUser           string                       `json:"adminUser"`
+	AdminUser           string                       `json:"adminUser,omitempty"`
 	AdminPasswordSecret *corev1.SecretKeySelector    `json:"adminPasswordSecret,omitempty"`
 	Service             *corev1.LocalObjectReference `json:"service,omitempty"`
 }
@@ -170,7 +170,7 @@ func (in *GrafanaSpec) DeepCopy() *GrafanaSpec {
 }
 
 type GrafanaStatus struct {
-	ObservedGeneration int64 `json:"observedGeneration"`
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 func (in *GrafanaStatus) DeepCopyInto(out *GrafanaStatus) {
@@ -188,7 +188,7 @@ func (in *GrafanaStatus) DeepCopy() *GrafanaStatus {
 
 type GrafanaUserSpec struct {
 	Email string `json:"email"`
-	Admin bool   `json:"admin"`
+	Admin bool   `json:"admin,omitempty"`
 }
 
 func (in *GrafanaUserSpec) DeepCopyInto(out *GrafanaUserSpec) {
@@ -205,7 +205,7 @@ func (in *GrafanaUserSpec) DeepCopy() *GrafanaUserSpec {
 }
 
 type GrafanaUserStatus struct {
-	Ready bool `json:"ready"`
+	Ready bool `json:"ready,omitempty"`
 }
 
 func (in *GrafanaUserStatus) DeepCopyInto(out *GrafanaUserStatus) {

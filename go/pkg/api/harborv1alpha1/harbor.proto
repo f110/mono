@@ -26,9 +26,9 @@ message HarborProjectSpec {
 }
 
 message HarborProjectStatus {
-  bool   ready      = 1;
-  int32  project_id = 2;
-  string registry   = 3;
+  optional bool   ready      = 1;
+  optional int32  project_id = 2;
+  optional string registry   = 3;
 }
 
 message HarborRobotAccount {
@@ -45,7 +45,7 @@ message HarborRobotAccountSpec {
   string project_namespace = 1;
   string project_name      = 2;
   // secret_name is a name of docker config secret.
-  string secret_name = 3;
+  optional string secret_name = 3;
 }
 
 message HarborRobotAccountStatus {

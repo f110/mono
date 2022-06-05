@@ -21,13 +21,13 @@ message Grafana {
 
 message GrafanaSpec {
   k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector user_selector    = 1;
-  string                                             admin_user       = 2;
+  optional string                                    admin_user       = 2;
   optional k8s.io.api.core.v1.SecretKeySelector admin_password_secret = 3;
   optional k8s.io.api.core.v1.LocalObjectReference service            = 4;
 }
 
 message GrafanaStatus {
-  int64 observed_generation = 1;
+  optional int64 observed_generation = 1;
 }
 
 message GrafanaUser {
@@ -39,10 +39,10 @@ message GrafanaUser {
 }
 
 message GrafanaUserSpec {
-  string email = 1;
-  bool   admin = 2;
+  string        email = 1;
+  optional bool admin = 2;
 }
 
 message GrafanaUserStatus {
-  bool ready = 1;
+  optional bool ready = 1;
 }
