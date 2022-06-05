@@ -21,8 +21,8 @@ http_archive(
 
 http_archive(
     name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.5.0/rules_python-0.5.0.tar.gz",
     sha256 = "cd6730ed53a002c56ce4e2f396ba3b3be262fd7cb68339f0377a45e8227fe332",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.5.0/rules_python-0.5.0.tar.gz",
 )
 
 http_archive(
@@ -34,11 +34,11 @@ http_archive(
 
 http_archive(
     name = "rules_pkg",
+    sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
         "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
     ],
-    sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
 )
 
 http_archive(
@@ -87,7 +87,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_kubeproto",
-    commit = "f8f4156d6cdf2d59fd621c0834250f5a514da9c4",
+    commit = "96094605874d1aedbb1b70621fda6fec914084bc",
     remote = "https://github.com/f110/kubeproto",
 )
 
