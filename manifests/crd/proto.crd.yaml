@@ -514,7 +514,7 @@ spec:
             properties:
               bucketFinalizePolicy:
                 description: |-
-                  bucket_finalize_policy is a plicy when deleted CR Object.
+                  bucket_finalize_policy is a policy when deleted CR Object.
                    If bucket_finalize_policy is an empty string, then it is the same as "keep".
                 enum:
                 - Delete

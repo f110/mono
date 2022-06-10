@@ -155,7 +155,7 @@ func (in *MinIOUserList) DeepCopyObject() runtime.Object {
 type MinIOBucketSpec struct {
 	// selector is a selector of MinIOInstance.
 	Selector metav1.LabelSelector `json:"selector"`
-	// bucket_finalize_policy is a plicy when deleted CR Object.
+	// bucket_finalize_policy is a policy when deleted CR Object.
 	//  If bucket_finalize_policy is an empty string, then it is the same as "keep".
 	BucketFinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy"`
 	// policy is the policy of the bucket. One of public, readOnly, private.
