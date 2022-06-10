@@ -3,7 +3,7 @@ require 'nokogiri'
 require 'open-uri'
 require 'csv'
 
-YEAR = 2021
+YEAR = 2022
 
 class Schedule
   attr_accessor :datetime, :url, :stage
