@@ -49,12 +49,6 @@ type RobotAccountController struct {
 	runOutsideCluster bool
 }
 
-// +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborrobotaccounts,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborrobotaccounts/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=*,resources=pods;services,verbs=get
-// +kubebuilder:rbac:groups=*,resources=secrets,verbs=get;create;update;delete
-// +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
-
 func NewRobotAccountController(
 	ctx context.Context,
 	coreClient kubernetes.Interface,

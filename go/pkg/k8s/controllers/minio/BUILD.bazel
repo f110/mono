@@ -37,15 +37,6 @@ go_library(
     ],
 )
 
-load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
-
-rbac_gen(
-    name = "rbac",
-    srcs = [":minio"],
-    dir = "manifests/rbac/minio",
-    rolename = "minio-extra-operator",
-)
-
 go_test(
     name = "minio_test",
     srcs = [

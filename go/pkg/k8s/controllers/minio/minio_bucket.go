@@ -35,12 +35,6 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniobuckets/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=miniocontroller.min.io,resources=minioinstances,verbs=get;list;watch
-// +kubebuilder:rbac:groups=*,resources=pods;secrets;services,verbs=get;list;watch
-// +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
-
 const (
 	minIOBucketControllerFinalizerName = "minio-bucket-controller.minio.f110.dev/finalizer"
 )

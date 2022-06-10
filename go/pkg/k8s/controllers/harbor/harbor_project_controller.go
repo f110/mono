@@ -49,11 +49,6 @@ type ProjectController struct {
 
 var _ controllerutil.Controller = &ProjectController{}
 
-// +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=harbor.f110.dev,resources=harborprojects/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=*,resources=pods;secrets;services;configmaps,verbs=get
-// +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
-
 func NewProjectController(
 	ctx context.Context,
 	coreClient kubernetes.Interface,

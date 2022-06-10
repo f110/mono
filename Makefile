@@ -2,8 +2,6 @@ update-deps:
 	bazel run //:vendor
 
 gen:
-	bazel query 'attr(generator_function, k8s_code_generator, //...)' | xargs -n1 bazel run
-	bazel query 'kind(rbac_gen, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_ddl, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_grpc_source, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_proto_source, //...)' | xargs -n1 bazel run

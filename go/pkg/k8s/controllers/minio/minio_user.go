@@ -33,12 +33,6 @@ import (
 	"go.f110.dev/mono/go/pkg/stringsutil"
 )
 
-// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniousers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=minio.f110.dev,resources=miniousers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=miniocontroller.min.io,resources=minioinstances,verbs=get;list
-// +kubebuilder:rbac:groups=*,resources=pods;secrets;services,verbs=get
-// +kubebuilder:rbac:groups=*,resources=pods/portforward,verbs=get;list;create
-
 const (
 	minIOUserControllerFinalizerName = "minio-user-controller.minio.f110.dev/finalizer"
 	accessKeyLength                  = 16

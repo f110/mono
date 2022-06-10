@@ -3,7 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "grafana",
     srcs = [
-        "rbac.go",
         "user.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/grafana",
@@ -24,16 +23,6 @@ go_library(
         "//vendor/k8s.io/client-go/listers/core/v1:core",
         "//vendor/k8s.io/client-go/tools/cache",
     ],
-)
-
-load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
-
-rbac_gen(
-    name = "rbac",
-    srcs = [":grafana"],
-    dir = "manifests/rbac/grafana",
-    rolename = "grafana-admin",
-    visibility = ["//visibility:public"],
 )
 
 go_test(

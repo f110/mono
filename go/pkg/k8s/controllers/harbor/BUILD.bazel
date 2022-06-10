@@ -30,15 +30,6 @@ go_library(
     ],
 )
 
-load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
-
-rbac_gen(
-    name = "rbac",
-    srcs = [":harbor"],
-    dir = "manifests/rbac/harbor",
-    rolename = "harbor-project-operator",
-)
-
 go_test(
     name = "harbor_test",
     srcs = [

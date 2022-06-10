@@ -4,7 +4,6 @@ go_library(
     name = "coordinator",
     srcs = [
         "build.go",
-        "rbac.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/build/coordinator",
     visibility = ["//visibility:public"],
@@ -29,13 +28,4 @@ go_library(
         "//vendor/k8s.io/client-go/listers/core/v1:core",
         "//vendor/k8s.io/client-go/rest",
     ],
-)
-
-load("@dev_f110_rules_k8s_controller//k8s:def.bzl", "rbac_gen")
-
-rbac_gen(
-    name = "rbac",
-    srcs = [":coordinator"],
-    dir = "manifests/rbac/build",
-    rolename = "build-coordinator",
 )
