@@ -2,9 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "coordinator",
-    srcs = [
-        "build.go",
-    ],
+    srcs = ["build.go"],
     importpath = "go.f110.dev/mono/go/pkg/build/coordinator",
     visibility = ["//visibility:public"],
     deps = [

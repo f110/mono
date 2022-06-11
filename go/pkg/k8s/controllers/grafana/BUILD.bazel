@@ -2,9 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "grafana",
-    srcs = [
-        "user.go",
-    ],
+    srcs = ["user.go"],
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/grafana",
     visibility = ["//visibility:public"],
     deps = [
