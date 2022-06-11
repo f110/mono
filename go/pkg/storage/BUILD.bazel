@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "storage",
@@ -6,6 +6,7 @@ go_library(
         "gcs.go",
         "interface.go",
         "minio.go",
+        "mock.go",
         "s3.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/storage",
@@ -30,5 +31,15 @@ go_library(
         "//vendor/k8s.io/client-go/listers/core/v1:core",
         "//vendor/k8s.io/client-go/rest",
         "//vendor/k8s.io/client-go/tools/portforward",
+    ],
+)
+
+go_test(
+    name = "storage_test",
+    srcs = ["mock_test.go"],
+    embed = [":storage"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
     ],
 )
