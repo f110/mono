@@ -49,11 +49,14 @@ go_test(
     name = "repoindexer_test",
     srcs = [
         "config_test.go",
+        "gc_test.go",
         "lister_test.go",
     ],
     embed = [":repoindexer"],
     deps = [
+        "//go/pkg/logger",
         "//go/pkg/regexp/regexputil",
+        "//go/pkg/storage",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
     ],
