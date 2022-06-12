@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "complete",
-    srcs = ["completion.go"],
-    importpath = "golang.org/x/pkgsite/internal/complete",
-    visibility = ["//third_party/pkgsite:__subpackages__"],
-    deps = ["//third_party/pkgsite/internal/derrors"],
-)

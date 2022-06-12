@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "hashtag",
-    srcs = ["hashtag.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/go-redis/redis/v7/internal/hashtag",
-    importpath = "github.com/go-redis/redis/v7/internal/hashtag",
-    visibility = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v7:__subpackages__"],
-)

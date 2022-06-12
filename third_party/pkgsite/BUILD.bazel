@@ -1,5 +1,0 @@
-load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
-
-# gazelle:prefix golang.org/x/pkgsite
-
-go_vendor(name = "vendor")

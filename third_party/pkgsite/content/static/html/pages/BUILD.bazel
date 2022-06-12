@@ -1,8 +1,0 @@
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
-
-pkg_tar(
-    name = "files",
-    srcs = glob(["*.tmpl"]),
-    package_dir = "/content/static/html/pages",
-    visibility = ["//visibility:public"],
-)
