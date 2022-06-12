@@ -123,7 +123,21 @@ go_repository(
     version = "v0.3.6",
 )
 
-#End of workaround
+http_archive(
+    name = "org_golang_x_sys",
+    generator_function = "go_rules_dependencies",
+    generator_name = "org_golang_x_sys",
+    patch_args = ["-p1"],
+    patches = ["@io_bazel_rules_go//third_party:org_golang_x_sys-gazelle.patch"],
+    sha256 = "58173316192a3633655a1b4f444f68b41867991007ee70010526fd7bdfee95d2",
+    strip_prefix = "sys-bc2c85ada10aa9b6aa9607e9ac9ad0761b95cf1d",
+    urls = [
+        "https://mirror.bazel.build/github.com/golang/sys/archive/bc2c85ada10aa9b6aa9607e9ac9ad0761b95cf1d.zip",
+        "https://github.com/golang/sys/archive/bc2c85ada10aa9b6aa9607e9ac9ad0761b95cf1d.zip",
+    ],
+)
+
+# End of workaround
 
 load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
