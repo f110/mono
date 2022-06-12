@@ -91,6 +91,39 @@ git_repository(
     remote = "https://github.com/f110/kubeproto",
 )
 
+# This is workaround for dependency problem.
+# Ref: https://github.com/bazelbuild/bazel-gazelle/issues/1217
+
+load("@bazel_gazelle//:deps.bzl", "go_repository")
+
+go_repository(
+    name = "org_golang_x_mod",
+    build_external = "external",
+    importpath = "golang.org/x/mod",
+    sum = "h1:kQgndtyPBW/JIYERgdxfwMYh3AVStj88WQTlNDi2a+o=",
+    version = "v0.6.0-dev.0.20220106191415-9b9b3d81d5e3",
+)
+
+go_repository(
+    name = "org_golang_x_net",
+    generator_function = "gazelle_dependencies",
+    generator_name = "org_golang_x_net",
+    importpath = "golang.org/x/net",
+    sum = "h1:20cMwl2fHAzkJMEA+8J4JgqBQcQGzbisXo31MIeenXI=",
+    version = "v0.0.0-20210805182204-aaa1db679c0d",
+)
+
+go_repository(
+    name = "org_golang_x_text",
+    generator_function = "gazelle_dependencies",
+    generator_name = "org_golang_x_text",
+    importpath = "golang.org/x/text",
+    sum = "h1:aRYxNxv6iGQlyVaZmk6ZgYEDa+Jg18DxebPSrd6bg1M=",
+    version = "v0.3.6",
+)
+
+#End of workaround
+
 load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
 go_extras_dependencies()
