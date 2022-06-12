@@ -72,13 +72,7 @@ go_library(
         "@io_bazel_rules_go//go/platform:illumos_amd64": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:ios_386": [
-            "//vendor/golang.org/x/sys/unix",
-        ],
         "@io_bazel_rules_go//go/platform:ios_amd64": [
-            "//vendor/golang.org/x/sys/unix",
-        ],
-        "@io_bazel_rules_go//go/platform:ios_arm": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:ios_arm64": [
