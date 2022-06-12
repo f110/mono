@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -63,22 +64,23 @@ func (s *grpcServer) FetchBlob(ctx context.Context, req *asset.FetchBlobRequest)
 
 			sha256Str = hex.EncodeToString(decoded)
 
-			found, size := s.cache.Contains(cache.CAS, sha256Str, -1)
+			found, size := s.cache.Contains(ctx, cache.CAS, sha256Str, -1)
 			if !found {
 				continue
 			}
 
 			if size < 0 {
 				// We don't know the size yet (bad http backend?).
-				r, size, err := s.cache.Get(cache.CAS, sha256Str, -1)
+				r, actualSize, err := s.cache.Get(ctx, cache.CAS, sha256Str, -1, 0)
 				if r != nil {
 					defer r.Close()
 				}
-				if err != nil || size < 0 {
+				if err != nil || actualSize < 0 {
 					s.errorLogger.Printf("failed to get CAS %s from proxy backend size: %d err: %v",
-						size, sha256Str, err)
+						actualSize, sha256Str, err)
 					continue
 				}
+				size = actualSize
 			}
 
 			return &asset.FetchBlobResponse{
@@ -91,10 +93,12 @@ func (s *grpcServer) FetchBlob(ctx context.Context, req *asset.FetchBlobRequest)
 		}
 	}
 
-	// Cache miss. See if we can download one of the URIs.
+	// Cache miss.
+
+	// See if we can download one of the URIs.
 
 	for _, uri := range req.GetUris() {
-		ok, actualHash, size := s.fetchItem(uri, sha256Str)
+		ok, actualHash, size := s.fetchItem(ctx, uri, sha256Str)
 		if ok {
 			return &asset.FetchBlobResponse{
 				Status: &status.Status{Code: int32(codes.OK)},
@@ -114,7 +118,7 @@ func (s *grpcServer) FetchBlob(ctx context.Context, req *asset.FetchBlobRequest)
 	}, nil
 }
 
-func (s *grpcServer) fetchItem(uri string, expectedHash string) (bool, string, int64) {
+func (s *grpcServer) fetchItem(ctx context.Context, uri string, expectedHash string) (bool, string, int64) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		s.errorLogger.Printf("unable to parse URI: %s err: %v", uri, err)
@@ -163,8 +167,8 @@ func (s *grpcServer) fetchItem(uri string, expectedHash string) (bool, string, i
 		rc = ioutil.NopCloser(bytes.NewReader(data))
 	}
 
-	err = s.cache.Put(cache.CAS, expectedHash, expectedSize, rc)
-	if err != nil {
+	err = s.cache.Put(ctx, cache.CAS, expectedHash, expectedSize, rc)
+	if err != nil && err != io.EOF {
 		s.errorLogger.Printf("failed to Put %s: %v", expectedHash, err)
 		return false, "", int64(-1)
 	}

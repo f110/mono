@@ -54,6 +54,13 @@ const (
 	SelectCompressionNONE SelectCompressionType = "NONE"
 	SelectCompressionGZIP                       = "GZIP"
 	SelectCompressionBZIP                       = "BZIP2"
+
+	// Non-standard compression schemes, supported by MinIO hosts:
+
+	SelectCompressionZSTD   = "ZSTD"   // Zstandard compression.
+	SelectCompressionLZ4    = "LZ4"    // LZ4 Stream
+	SelectCompressionS2     = "S2"     // S2 Stream
+	SelectCompressionSNAPPY = "SNAPPY" // Snappy stream
 )
 
 // CSVQuoteFields - is the parameter for how CSV fields are quoted.
@@ -330,10 +337,10 @@ func (j JSONOutputOptions) MarshalXML(e *xml.Encoder, start xml.StartElement) er
 
 // SelectObjectInputSerialization - input serialization parameters
 type SelectObjectInputSerialization struct {
-	CompressionType SelectCompressionType
-	Parquet         *ParquetInputOptions `xml:"Parquet,omitempty"`
-	CSV             *CSVInputOptions     `xml:"CSV,omitempty"`
-	JSON            *JSONInputOptions    `xml:"JSON,omitempty"`
+	CompressionType SelectCompressionType `xml:"CompressionType,omitempty"`
+	Parquet         *ParquetInputOptions  `xml:"Parquet,omitempty"`
+	CSV             *CSVInputOptions      `xml:"CSV,omitempty"`
+	JSON            *JSONInputOptions     `xml:"JSON,omitempty"`
 }
 
 // SelectObjectOutputSerialization - output serialization parameters.
@@ -431,7 +438,7 @@ const (
 )
 
 // SelectObjectContent is a implementation of http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectSELECTContent.html AWS S3 API.
-func (c Client) SelectObjectContent(ctx context.Context, bucketName, objectName string, opts SelectObjectOptions) (*SelectResults, error) {
+func (c *Client) SelectObjectContent(ctx context.Context, bucketName, objectName string, opts SelectObjectOptions) (*SelectResults, error) {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return nil, err
@@ -450,7 +457,7 @@ func (c Client) SelectObjectContent(ctx context.Context, bucketName, objectName 
 	urlValues.Set("select-type", "2")
 
 	// Execute POST on bucket/object.
-	resp, err := c.executeMethod(ctx, "POST", requestMetadata{
+	resp, err := c.executeMethod(ctx, http.MethodPost, requestMetadata{
 		bucketName:       bucketName,
 		objectName:       objectName,
 		queryValues:      urlValues,
@@ -709,7 +716,7 @@ func extractString(source io.Reader, lenBytes int) (string, error) {
 // extractUint32 extracts a 4 byte integer from the byte array.
 func extractUint32(r io.Reader) (uint32, error) {
 	buf := make([]byte, 4)
-	_, err := io.ReadFull(r, buf)
+	_, err := readFull(r, buf)
 	if err != nil {
 		return 0, err
 	}
@@ -719,7 +726,7 @@ func extractUint32(r io.Reader) (uint32, error) {
 // extractUint16 extracts a 2 byte integer from the byte array.
 func extractUint16(r io.Reader) (uint16, error) {
 	buf := make([]byte, 2)
-	_, err := io.ReadFull(r, buf)
+	_, err := readFull(r, buf)
 	if err != nil {
 		return 0, err
 	}
@@ -729,7 +736,7 @@ func extractUint16(r io.Reader) (uint16, error) {
 // extractUint8 extracts a 1 byte integer from the byte array.
 func extractUint8(r io.Reader) (uint8, error) {
 	buf := make([]byte, 1)
-	_, err := io.ReadFull(r, buf)
+	_, err := readFull(r, buf)
 	if err != nil {
 		return 0, err
 	}

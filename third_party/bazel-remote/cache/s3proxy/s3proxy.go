@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path"
 
 	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/config"
+	"github.com/buchgr/bazel-remote/cache/disk/casblob"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,10 +27,11 @@ type s3Cache struct {
 	mcore        *minio.Core
 	prefix       string
 	bucket       string
-	keyVersion   int
 	uploadQueue  chan<- uploadReq
 	accessLogger cache.Logger
 	errorLogger  cache.Logger
+	v2mode       bool
+	objectKey    func(hash string, kind cache.EntryKind) string
 }
 
 var (
@@ -47,7 +49,16 @@ var (
 var errNotFound = errors.New("NOT FOUND")
 
 // New returns a new instance of the S3-API based cache
-func New(s3Config *config.S3CloudStorageConfig, accessLogger cache.Logger,
+func New(
+	// S3CloudStorageConfig struct fields:
+	Endpoint string,
+	Bucket string,
+	Prefix string,
+	Credentials *credentials.Credentials,
+	DisableSSL bool,
+	Region string,
+
+	storageMode string, accessLogger cache.Logger,
 	errorLogger cache.Logger, numUploaders, maxQueuedUploads int) cache.Proxy {
 
 	fmt.Println("Using S3 backend.")
@@ -55,47 +66,44 @@ func New(s3Config *config.S3CloudStorageConfig, accessLogger cache.Logger,
 	var minioCore *minio.Core
 	var err error
 
-	if s3Config.AccessKeyID != "" && s3Config.SecretAccessKey != "" {
-		// Initialize minio client object.
-		opts := &minio.Options{
-			Creds:  credentials.NewStaticV4(s3Config.AccessKeyID, s3Config.SecretAccessKey, ""),
-			Secure: !s3Config.DisableSSL,
-			Region: s3Config.Region,
-		}
-		minioCore, err = minio.NewCore(s3Config.Endpoint, opts)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	} else {
-		// Initialize minio client object with IAM credentials
-		opts := &minio.Options{
-			// This config value may be empty.
-			Creds: credentials.NewIAM(s3Config.IAMRoleEndpoint),
+	if Credentials == nil {
+		log.Fatalf("Failed to determine s3proxy credentials")
+	}
 
-			Region: s3Config.Region,
-			Secure: !s3Config.DisableSSL,
-		}
+	// Initialize minio client with credentials
+	opts := &minio.Options{
+		Creds: Credentials,
 
-		minioClient, err := minio.New(
-			s3Config.Endpoint,
-			opts,
-		)
-		if err != nil {
-			log.Fatalln(err)
-		}
+		Region: Region,
+		Secure: !DisableSSL,
+	}
+	minioCore, err = minio.NewCore(Endpoint, opts)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-		minioCore = &minio.Core{
-			Client: minioClient,
-		}
+	if storageMode != "zstd" && storageMode != "uncompressed" {
+		log.Fatalf("Unsupported storage mode for the s3proxy backend: %q, must be one of \"zstd\" or \"uncompressed\"",
+			storageMode)
 	}
 
 	c := &s3Cache{
 		mcore:        minioCore,
-		prefix:       s3Config.Prefix,
-		bucket:       s3Config.Bucket,
-		keyVersion:   s3Config.KeyVersion,
+		prefix:       Prefix,
+		bucket:       Bucket,
 		accessLogger: accessLogger,
 		errorLogger:  errorLogger,
+		v2mode:       storageMode == "zstd",
+	}
+
+	if c.v2mode {
+		c.objectKey = func(hash string, kind cache.EntryKind) string {
+			return objectKeyV2(c.prefix, hash, kind)
+		}
+	} else {
+		c.objectKey = func(hash string, kind cache.EntryKind) string {
+			return objectKeyV1(c.prefix, hash, kind)
+		}
 	}
 
 	if maxQueuedUploads > 0 && numUploaders > 0 {
@@ -114,17 +122,28 @@ func New(s3Config *config.S3CloudStorageConfig, accessLogger cache.Logger,
 	return c
 }
 
-func (c *s3Cache) objectKey(hash string, kind cache.EntryKind) string {
-	baseKey := fmt.Sprintf("%s/%s", kind, hash)
-	if c.keyVersion == 2 {
-		baseKey = cache.Key(kind, hash)
+func objectKeyV2(prefix string, hash string, kind cache.EntryKind) string {
+	var baseKey string
+	if kind == cache.CAS {
+		// Use "cas.v2" to distinguish new from old format blobs.
+		baseKey = path.Join("cas.v2", hash[:2], hash)
+	} else {
+		baseKey = path.Join(kind.String(), hash[:2], hash)
 	}
 
-	if c.prefix == "" {
+	if prefix == "" {
 		return baseKey
 	}
 
-	return fmt.Sprintf("%s/%s", c.prefix, baseKey)
+	return path.Join(prefix, baseKey)
+}
+
+func objectKeyV1(prefix string, hash string, kind cache.EntryKind) string {
+	if prefix == "" {
+		return path.Join(kind.String(), hash[:2], hash)
+	}
+
+	return path.Join(prefix, kind.String(), hash[:2], hash)
 }
 
 // Helper function for logging responses
@@ -138,11 +157,6 @@ func logResponse(log cache.Logger, method, bucket, key string, err error) {
 }
 
 func (c *s3Cache) uploadFile(item uploadReq) {
-	uploadDigest := ""
-	if item.kind == cache.CAS {
-		uploadDigest = item.hash
-	}
-
 	_, err := c.mcore.PutObject(
 		context.Background(),
 		c.bucket,                          // bucketName
@@ -150,7 +164,7 @@ func (c *s3Cache) uploadFile(item uploadReq) {
 		item.rc,                           // reader
 		item.size,                         // objectSize
 		"",                                // md5base64
-		uploadDigest,                      // sha256
+		"",                                // sha256
 		minio.PutObjectOptions{
 			UserMetadata: map[string]string{
 				"Content-Type": "application/octet-stream",
@@ -163,7 +177,7 @@ func (c *s3Cache) uploadFile(item uploadReq) {
 	item.rc.Close()
 }
 
-func (c *s3Cache) Put(kind cache.EntryKind, hash string, size int64, rc io.ReadCloser) {
+func (c *s3Cache) Put(ctx context.Context, kind cache.EntryKind, hash string, size int64, rc io.ReadCloser) {
 	if c.uploadQueue == nil {
 		rc.Close()
 		return
@@ -182,10 +196,10 @@ func (c *s3Cache) Put(kind cache.EntryKind, hash string, size int64, rc io.ReadC
 	}
 }
 
-func (c *s3Cache) Get(kind cache.EntryKind, hash string) (io.ReadCloser, int64, error) {
+func (c *s3Cache) Get(ctx context.Context, kind cache.EntryKind, hash string) (io.ReadCloser, int64, error) {
 
-	object, info, _, err := c.mcore.GetObject(
-		context.Background(),
+	rc, info, _, err := c.mcore.GetObject(
+		ctx,
 		c.bucket,                 // bucketName
 		c.objectKey(hash, kind),  // objectName
 		minio.GetObjectOptions{}, // opts
@@ -204,23 +218,28 @@ func (c *s3Cache) Get(kind cache.EntryKind, hash string) (io.ReadCloser, int64, 
 
 	logResponse(c.accessLogger, "DOWNLOAD", c.bucket, c.objectKey(hash, kind), nil)
 
-	return object, info.Size, nil
+	if kind == cache.CAS && c.v2mode {
+		return casblob.ExtractLogicalSize(rc)
+	}
+
+	return rc, info.Size, nil
 }
 
-func (c *s3Cache) Contains(kind cache.EntryKind, hash string) (bool, int64) {
+func (c *s3Cache) Contains(ctx context.Context, kind cache.EntryKind, hash string) (bool, int64) {
 	size := int64(-1)
+	exists := false
 
 	s, err := c.mcore.StatObject(
-		context.Background(),
+		ctx,
 		c.bucket,                  // bucketName
 		c.objectKey(hash, kind),   // objectName
 		minio.StatObjectOptions{}, // opts
 	)
 
-	exists := (err == nil)
+	exists = (err == nil)
 	if err != nil {
 		err = errNotFound
-	} else {
+	} else if kind != cache.CAS || !c.v2mode {
 		size = s.Size
 	}
 

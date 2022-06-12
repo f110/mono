@@ -17,6 +17,8 @@ go_library(
     deps = [
         "//third_party/bazel-remote/vendor/cloud.google.com/go/compute/metadata",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2",
+        "//third_party/bazel-remote/vendor/golang.org/x/oauth2/authhandler",
+        "//third_party/bazel-remote/vendor/golang.org/x/oauth2/google/internal/externalaccount",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2/internal",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2/jws",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2/jwt",

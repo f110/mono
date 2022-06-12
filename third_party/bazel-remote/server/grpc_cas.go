@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"io/ioutil"
 
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/codes"
 	grpc_status "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2"
 
@@ -27,26 +28,21 @@ var (
 func (s *grpcServer) FindMissingBlobs(ctx context.Context,
 	req *pb.FindMissingBlobsRequest) (*pb.FindMissingBlobsResponse, error) {
 
-	resp := pb.FindMissingBlobsResponse{}
-
-	errorPrefix := "GRPC CAS GET"
+	errorPrefix := "GRPC CAS HEAD"
 	for _, digest := range req.BlobDigests {
 		hash := digest.GetHash()
 		err := s.validateHash(hash, digest.SizeBytes, errorPrefix)
 		if err != nil {
 			return nil, err
 		}
-
-		found, _ := s.cache.Contains(cache.CAS, hash, digest.GetSizeBytes())
-		if !found {
-			s.accessLogger.Printf("GRPC CAS HEAD %s NOT FOUND", hash)
-			resp.MissingBlobDigests = append(resp.MissingBlobDigests, digest)
-		} else {
-			s.accessLogger.Printf("GRPC CAS HEAD %s OK", hash)
-		}
 	}
 
-	return &resp, nil
+	missingBlobs, err := s.cache.FindMissingCasBlobs(ctx, req.BlobDigests)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.FindMissingBlobsResponse{MissingBlobDigests: missingBlobs}, nil
 }
 
 func (s *grpcServer) BatchUpdateBlobs(ctx context.Context,
@@ -74,11 +70,26 @@ func (s *grpcServer) BatchUpdateBlobs(ctx context.Context,
 		}
 		resp.Responses = append(resp.Responses, &rr)
 
-		err = s.cache.Put(cache.CAS, req.Digest.Hash,
+		if req.Compressor != pb.Compressor_IDENTITY && req.Compressor != pb.Compressor_ZSTD {
+			s.errorLogger.Printf("%s %s UNSUPPORTED COMPRESSOR: %s", errorPrefix, req.Digest.Hash, req.Compressor)
+			rr.Status.Code = int32(gRPCErrCode(err, codes.InvalidArgument))
+			continue
+		}
+
+		if req.Compressor == pb.Compressor_ZSTD {
+			req.Data, err = decoder.DecodeAll(req.Data, nil)
+			if err != nil {
+				s.errorLogger.Printf("%s %s %s", errorPrefix, req.Digest.Hash, err)
+				rr.Status.Code = int32(gRPCErrCode(err, codes.Internal))
+				continue
+			}
+		}
+
+		err = s.cache.Put(ctx, cache.CAS, req.Digest.Hash,
 			int64(len(req.Data)), bytes.NewReader(req.Data))
-		if err != nil {
+		if err != nil && err != io.EOF {
 			s.errorLogger.Printf("%s %s %s", errorPrefix, req.Digest.Hash, err)
-			rr.Status.Code = int32(code.Code_UNKNOWN)
+			rr.Status.Code = int32(gRPCErrCode(err, codes.Internal))
 			continue
 		}
 
@@ -91,7 +102,7 @@ func (s *grpcServer) BatchUpdateBlobs(ctx context.Context,
 // Return the data for a blob, or an error.  If the blob was not
 // found, the returned error is errBlobNotFound. Only use this
 // function when it's OK to buffer the entire blob in memory.
-func (s *grpcServer) getBlobData(hash string, size int64) ([]byte, error) {
+func (s *grpcServer) getBlobData(ctx context.Context, hash string, size int64) ([]byte, error) {
 	if size < 0 {
 		return []byte{}, errBadSize
 	}
@@ -100,7 +111,7 @@ func (s *grpcServer) getBlobData(hash string, size int64) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	rdr, sizeBytes, err := s.cache.Get(cache.CAS, hash, size)
+	rdr, sizeBytes, err := s.cache.Get(ctx, cache.CAS, hash, size, 0)
 	if err != nil {
 		rdr.Close()
 		return []byte{}, err
@@ -124,10 +135,43 @@ func (s *grpcServer) getBlobData(hash string, size int64) ([]byte, error) {
 	return data, rdr.Close()
 }
 
-func (s *grpcServer) getBlobResponse(digest *pb.Digest) *pb.BatchReadBlobsResponse_Response {
+func (s *grpcServer) getBlobResponse(ctx context.Context, digest *pb.Digest, allowZstd bool) *pb.BatchReadBlobsResponse_Response {
 	r := pb.BatchReadBlobsResponse_Response{Digest: digest}
 
-	data, err := s.getBlobData(digest.Hash, digest.SizeBytes)
+	var data []byte
+	var err error
+
+	if allowZstd {
+		rc, foundSize, err := s.cache.GetZstd(ctx, digest.Hash, digest.SizeBytes, 0)
+		if rc != nil {
+			defer rc.Close()
+		}
+		if rc == nil || foundSize != digest.SizeBytes {
+			s.accessLogger.Printf("GRPC CAS GET %s NOT FOUND", digest.Hash)
+			r.Status = &status.Status{Code: int32(code.Code_NOT_FOUND)}
+			return &r
+		}
+
+		if err != nil {
+			s.errorLogger.Printf("GRPC CAS GET %s INTERNAL ERROR: %v", digest.Hash, err)
+			r.Status = &status.Status{Code: int32(code.Code_INTERNAL)}
+			return &r
+		}
+
+		data, err := ioutil.ReadAll(rc)
+		if err != nil {
+			s.errorLogger.Printf("GRPC CAS GET %s INTERNAL ERROR: %v", digest.Hash, err)
+			r.Status = &status.Status{Code: int32(code.Code_INTERNAL)}
+			return &r
+		}
+
+		r.Data = data
+		r.Compressor = pb.Compressor_ZSTD
+
+		return &r
+	}
+
+	data, err = s.getBlobData(ctx, digest.Hash, digest.SizeBytes)
 	if err == errBlobNotFound {
 		s.accessLogger.Printf("GRPC CAS GET %s NOT FOUND", digest.Hash)
 		r.Status = &status.Status{Code: int32(code.Code_NOT_FOUND)}
@@ -142,6 +186,7 @@ func (s *grpcServer) getBlobResponse(digest *pb.Digest) *pb.BatchReadBlobsRespon
 	}
 
 	r.Data = data
+	r.Compressor = pb.Compressor_IDENTITY
 
 	s.accessLogger.Printf("GRPC CAS GET %s OK", digest.Hash)
 	r.Status = &status.Status{Code: int32(codes.OK)}
@@ -156,6 +201,14 @@ func (s *grpcServer) BatchReadBlobs(ctx context.Context,
 			0, len(in.Digests)),
 	}
 
+	allowZstd := false
+	for _, c := range in.AcceptableCompressors {
+		if c == pb.Compressor_ZSTD {
+			allowZstd = true
+			break
+		}
+	}
+
 	errorPrefix := "GRPC CAS GET"
 	for _, digest := range in.Digests {
 		// TODO: consider fanning-out goroutines here.
@@ -163,7 +216,7 @@ func (s *grpcServer) BatchReadBlobs(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		resp.Responses = append(resp.Responses, s.getBlobResponse(digest))
+		resp.Responses = append(resp.Responses, s.getBlobResponse(ctx, digest, allowZstd))
 	}
 
 	return &resp, nil
@@ -181,7 +234,7 @@ func (s *grpcServer) GetTree(in *pb.GetTreeRequest,
 		return err
 	}
 
-	data, err := s.getBlobData(in.RootDigest.Hash, in.RootDigest.SizeBytes)
+	data, err := s.getBlobData(stream.Context(), in.RootDigest.Hash, in.RootDigest.SizeBytes)
 	if err == errBlobNotFound {
 		s.accessLogger.Printf("GRPC CAS GETTREEREQUEST %s NOT FOUND",
 			in.RootDigest.Hash)
@@ -199,12 +252,15 @@ func (s *grpcServer) GetTree(in *pb.GetTreeRequest,
 		return grpc_status.Error(codes.DataLoss, err.Error())
 	}
 
-	err = s.fillDirectories(&resp, &dir, errorPrefix)
+	err = s.fillDirectories(stream.Context(), &resp, &dir, errorPrefix)
 	if err != nil {
 		return err
 	}
 
-	stream.Send(&resp)
+	err = stream.Send(&resp)
+	if err != nil {
+		return err
+	}
 	// TODO: if resp is too large, split it up and call Send multiple times,
 	// with resp.NextPageToken set for all but the last Send call?
 
@@ -214,7 +270,7 @@ func (s *grpcServer) GetTree(in *pb.GetTreeRequest,
 
 // Attempt to populate `resp`. Return errors for invalid requests, but
 // otherwise attempt to return as many blobs as possible.
-func (s *grpcServer) fillDirectories(resp *pb.GetTreeResponse, dir *pb.Directory, errorPrefix string) error {
+func (s *grpcServer) fillDirectories(ctx context.Context, resp *pb.GetTreeResponse, dir *pb.Directory, errorPrefix string) error {
 
 	// Add this dir.
 	resp.Directories = append(resp.Directories, dir)
@@ -227,7 +283,7 @@ func (s *grpcServer) fillDirectories(resp *pb.GetTreeResponse, dir *pb.Directory
 			return err
 		}
 
-		data, err := s.getBlobData(dirNode.Digest.Hash, dirNode.Digest.SizeBytes)
+		data, err := s.getBlobData(ctx, dirNode.Digest.Hash, dirNode.Digest.SizeBytes)
 		if err == errBlobNotFound {
 			s.accessLogger.Printf("GRPC GETTREEREQUEST BLOB %s NOT FOUND",
 				dirNode.Digest.Hash)
@@ -248,7 +304,7 @@ func (s *grpcServer) fillDirectories(resp *pb.GetTreeResponse, dir *pb.Directory
 		s.accessLogger.Printf("GRPC GETTREEREQUEST BLOB %s ADDED OK",
 			dirNode.Digest.Hash)
 
-		err = s.fillDirectories(resp, &dirMsg, errorPrefix)
+		err = s.fillDirectories(ctx, resp, &dirMsg, errorPrefix)
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "flags",
+    srcs = [
+        "flags.go",
+        "usage.go",
+    ],
+    importpath = "github.com/buchgr/bazel-remote/utils/flags",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/cache/s3proxy",
+        "//third_party/bazel-remote/vendor/github.com/urfave/cli/v2:cli",
+    ],
+)

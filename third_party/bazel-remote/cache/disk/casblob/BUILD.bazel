@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "casblob",
+    srcs = ["casblob.go"],
+    importpath = "github.com/buchgr/bazel-remote/cache/disk/casblob",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/utils/zstdpool",
+        "//third_party/bazel-remote/vendor/github.com/klauspost/compress/zstd",
+        "//third_party/bazel-remote/vendor/github.com/mostynb/zstdpool-syncpool",
+    ],
+)

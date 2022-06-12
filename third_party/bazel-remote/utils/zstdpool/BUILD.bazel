@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "zstdpool",
+    srcs = ["zstdpool.go"],
+    importpath = "github.com/buchgr/bazel-remote/utils/zstdpool",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/klauspost/compress/zstd",
+        "//third_party/bazel-remote/vendor/github.com/mostynb/zstdpool-syncpool",
+    ],
+)

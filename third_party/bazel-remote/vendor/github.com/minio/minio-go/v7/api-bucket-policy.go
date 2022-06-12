@@ -27,7 +27,7 @@ import (
 )
 
 // SetBucketPolicy sets the access permissions on an existing bucket.
-func (c Client) SetBucketPolicy(ctx context.Context, bucketName, policy string) error {
+func (c *Client) SetBucketPolicy(ctx context.Context, bucketName, policy string) error {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return err
@@ -43,7 +43,7 @@ func (c Client) SetBucketPolicy(ctx context.Context, bucketName, policy string) 
 }
 
 // Saves a new bucket policy.
-func (c Client) putBucketPolicy(ctx context.Context, bucketName, policy string) error {
+func (c *Client) putBucketPolicy(ctx context.Context, bucketName, policy string) error {
 	// Get resources properly escaped and lined up before
 	// using them in http request.
 	urlValues := make(url.Values)
@@ -57,13 +57,13 @@ func (c Client) putBucketPolicy(ctx context.Context, bucketName, policy string) 
 	}
 
 	// Execute PUT to upload a new bucket policy.
-	resp, err := c.executeMethod(ctx, "PUT", reqMetadata)
+	resp, err := c.executeMethod(ctx, http.MethodPut, reqMetadata)
 	defer closeResponse(resp)
 	if err != nil {
 		return err
 	}
 	if resp != nil {
-		if resp.StatusCode != http.StatusNoContent {
+		if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 			return httpRespToErrorResponse(resp, bucketName, "")
 		}
 	}
@@ -71,14 +71,14 @@ func (c Client) putBucketPolicy(ctx context.Context, bucketName, policy string) 
 }
 
 // Removes all policies on a bucket.
-func (c Client) removeBucketPolicy(ctx context.Context, bucketName string) error {
+func (c *Client) removeBucketPolicy(ctx context.Context, bucketName string) error {
 	// Get resources properly escaped and lined up before
 	// using them in http request.
 	urlValues := make(url.Values)
 	urlValues.Set("policy", "")
 
 	// Execute DELETE on objectName.
-	resp, err := c.executeMethod(ctx, "DELETE", requestMetadata{
+	resp, err := c.executeMethod(ctx, http.MethodDelete, requestMetadata{
 		bucketName:       bucketName,
 		queryValues:      urlValues,
 		contentSHA256Hex: emptySHA256Hex,
@@ -87,11 +87,16 @@ func (c Client) removeBucketPolicy(ctx context.Context, bucketName string) error
 	if err != nil {
 		return err
 	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		return httpRespToErrorResponse(resp, bucketName, "")
+	}
+
 	return nil
 }
 
 // GetBucketPolicy returns the current policy
-func (c Client) GetBucketPolicy(ctx context.Context, bucketName string) (string, error) {
+func (c *Client) GetBucketPolicy(ctx context.Context, bucketName string) (string, error) {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return "", err
@@ -108,14 +113,14 @@ func (c Client) GetBucketPolicy(ctx context.Context, bucketName string) (string,
 }
 
 // Request server for current bucket policy.
-func (c Client) getBucketPolicy(ctx context.Context, bucketName string) (string, error) {
+func (c *Client) getBucketPolicy(ctx context.Context, bucketName string) (string, error) {
 	// Get resources properly escaped and lined up before
 	// using them in http request.
 	urlValues := make(url.Values)
 	urlValues.Set("policy", "")
 
 	// Execute GET on bucket to list objects.
-	resp, err := c.executeMethod(ctx, "GET", requestMetadata{
+	resp, err := c.executeMethod(ctx, http.MethodGet, requestMetadata{
 		bucketName:       bucketName,
 		queryValues:      urlValues,
 		contentSHA256Hex: emptySHA256Hex,

@@ -13,11 +13,9 @@ go_library(
     deps = [
         "//third_party/bazel-remote/cache",
         "//third_party/bazel-remote/cache/disk",
-        "//third_party/bazel-remote/cache/gcsproxy",
-        "//third_party/bazel-remote/cache/httpproxy",
-        "//third_party/bazel-remote/cache/s3proxy",
         "//third_party/bazel-remote/config",
         "//third_party/bazel-remote/server",
+        "//third_party/bazel-remote/utils/flags",
         "//third_party/bazel-remote/utils/idle",
         "//third_party/bazel-remote/utils/rlimit",
         "//third_party/bazel-remote/vendor/github.com/abbot/go-http-auth",

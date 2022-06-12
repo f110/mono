@@ -7,13 +7,12 @@ go_library(
     importpath = "google.golang.org/genproto/googleapis/bytestream",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto",
-        "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/wrappers",
         "//third_party/bazel-remote/vendor/google.golang.org/genproto/googleapis/api/annotations",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/codes",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/status",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/types/known/wrapperspb",
     ],
 )

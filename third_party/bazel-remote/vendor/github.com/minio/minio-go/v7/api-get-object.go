@@ -24,13 +24,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 
 	"github.com/minio/minio-go/v7/pkg/s3utils"
 )
 
 // GetObject wrapper function that accepts a request context
-func (c Client) GetObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (*Object, error) {
+func (c *Client) GetObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (*Object, error) {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return nil, err
@@ -47,9 +48,12 @@ func (c Client) GetObject(ctx context.Context, bucketName, objectName string, op
 		}
 	}
 
-	var httpReader io.ReadCloser
-	var objectInfo ObjectInfo
-	var err error
+	var (
+		err        error
+		httpReader io.ReadCloser
+		objectInfo ObjectInfo
+		totalRead  int
+	)
 
 	// Create request channel.
 	reqCh := make(chan getRequest)
@@ -102,16 +106,31 @@ func (c Client) GetObject(ctx context.Context, bucketName, objectName string, op
 						etag = objectInfo.ETag
 						// Read at least firstReq.Buffer bytes, if not we have
 						// reached our EOF.
-						size, err := io.ReadFull(httpReader, req.Buffer)
+						size, err := readFull(httpReader, req.Buffer)
+						totalRead += size
 						if size > 0 && err == io.ErrUnexpectedEOF {
-							// If an EOF happens after reading some but not
-							// all the bytes ReadFull returns ErrUnexpectedEOF
-							err = io.EOF
+							if int64(size) < objectInfo.Size {
+								// In situations when returned size
+								// is less than the expected content
+								// length set by the server, make sure
+								// we return io.ErrUnexpectedEOF
+								err = io.ErrUnexpectedEOF
+							} else {
+								// If an EOF happens after reading some but not
+								// all the bytes ReadFull returns ErrUnexpectedEOF
+								err = io.EOF
+							}
+						} else if size == 0 && err == io.EOF && objectInfo.Size > 0 {
+							// Special cases when server writes more data
+							// than the content-length, net/http response
+							// body returns an error, instead of converting
+							// it to io.EOF - return unexpected EOF.
+							err = io.ErrUnexpectedEOF
 						}
 						// Send back the first response.
 						resCh <- getResponse{
 							objectInfo: objectInfo,
-							Size:       int(size),
+							Size:       size,
 							Error:      err,
 							didRead:    true,
 						}
@@ -121,7 +140,7 @@ func (c Client) GetObject(ctx context.Context, bucketName, objectName string, op
 
 						// Remove range header if already set, for stat Operations to get original file size.
 						delete(opts.headers, "Range")
-						objectInfo, err = c.statObject(ctx, bucketName, objectName, StatObjectOptions(opts))
+						objectInfo, err = c.StatObject(ctx, bucketName, objectName, StatObjectOptions(opts))
 						if err != nil {
 							resCh <- getResponse{
 								Error: err,
@@ -144,7 +163,7 @@ func (c Client) GetObject(ctx context.Context, bucketName, objectName string, op
 					if etag != "" && !snowball {
 						opts.SetMatchETag(etag)
 					}
-					objectInfo, err := c.statObject(ctx, bucketName, objectName, StatObjectOptions(opts))
+					objectInfo, err := c.StatObject(ctx, bucketName, objectName, StatObjectOptions(opts))
 					if err != nil {
 						resCh <- getResponse{
 							Error: err,
@@ -188,19 +207,36 @@ func (c Client) GetObject(ctx context.Context, bucketName, objectName string, op
 							}
 							return
 						}
+						totalRead = 0
 					}
 
 					// Read at least req.Buffer bytes, if not we have
 					// reached our EOF.
-					size, err := io.ReadFull(httpReader, req.Buffer)
-					if err == io.ErrUnexpectedEOF {
-						// If an EOF happens after reading some but not
-						// all the bytes ReadFull returns ErrUnexpectedEOF
-						err = io.EOF
+					size, err := readFull(httpReader, req.Buffer)
+					totalRead += size
+					if size > 0 && err == io.ErrUnexpectedEOF {
+						if int64(totalRead) < objectInfo.Size {
+							// In situations when returned size
+							// is less than the expected content
+							// length set by the server, make sure
+							// we return io.ErrUnexpectedEOF
+							err = io.ErrUnexpectedEOF
+						} else {
+							// If an EOF happens after reading some but not
+							// all the bytes ReadFull returns ErrUnexpectedEOF
+							err = io.EOF
+						}
+					} else if size == 0 && err == io.EOF && objectInfo.Size > 0 {
+						// Special cases when server writes more data
+						// than the content-length, net/http response
+						// body returns an error, instead of converting
+						// it to io.EOF - return unexpected EOF.
+						err = io.ErrUnexpectedEOF
 					}
+
 					// Reply back how much was read.
 					resCh <- getResponse{
-						Size:       int(size),
+						Size:       size,
 						Error:      err,
 						didRead:    true,
 						objectInfo: objectInfo,
@@ -604,7 +640,7 @@ func newObject(reqCh chan<- getRequest, resCh <-chan getResponse, doneCh chan<- 
 //
 // For more information about the HTTP Range header.
 // go to http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35.
-func (c Client) getObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (io.ReadCloser, ObjectInfo, http.Header, error) {
+func (c *Client) getObject(ctx context.Context, bucketName, objectName string, opts GetObjectOptions) (io.ReadCloser, ObjectInfo, http.Header, error) {
 	// Validate input arguments.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return nil, ObjectInfo{}, nil, err
@@ -617,9 +653,12 @@ func (c Client) getObject(ctx context.Context, bucketName, objectName string, op
 	if opts.VersionID != "" {
 		urlValues.Set("versionId", opts.VersionID)
 	}
+	if opts.PartNumber > 0 {
+		urlValues.Set("partNumber", strconv.Itoa(opts.PartNumber))
+	}
 
 	// Execute GET on objectName.
-	resp, err := c.executeMethod(ctx, "GET", requestMetadata{
+	resp, err := c.executeMethod(ctx, http.MethodGet, requestMetadata{
 		bucketName:       bucketName,
 		objectName:       objectName,
 		queryValues:      urlValues,

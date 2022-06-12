@@ -23,6 +23,7 @@ go_library(
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/encoding/prototext",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/encoding/protowire",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/proto",
+        "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protodesc",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoregistry",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoiface",

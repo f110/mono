@@ -81,7 +81,7 @@ func newObjectLegalHold(status *LegalHoldStatus) (*objectLegalHold, error) {
 }
 
 // PutObjectLegalHold : sets object legal hold for a given object and versionID.
-func (c Client) PutObjectLegalHold(ctx context.Context, bucketName, objectName string, opts PutObjectLegalHoldOptions) error {
+func (c *Client) PutObjectLegalHold(ctx context.Context, bucketName, objectName string, opts PutObjectLegalHoldOptions) error {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return err
@@ -121,7 +121,7 @@ func (c Client) PutObjectLegalHold(ctx context.Context, bucketName, objectName s
 	}
 
 	// Execute PUT Object Legal Hold.
-	resp, err := c.executeMethod(ctx, "PUT", reqMetadata)
+	resp, err := c.executeMethod(ctx, http.MethodPut, reqMetadata)
 	defer closeResponse(resp)
 	if err != nil {
 		return err
@@ -135,7 +135,7 @@ func (c Client) PutObjectLegalHold(ctx context.Context, bucketName, objectName s
 }
 
 // GetObjectLegalHold gets legal-hold status of given object.
-func (c Client) GetObjectLegalHold(ctx context.Context, bucketName, objectName string, opts GetObjectLegalHoldOptions) (status *LegalHoldStatus, err error) {
+func (c *Client) GetObjectLegalHold(ctx context.Context, bucketName, objectName string, opts GetObjectLegalHoldOptions) (status *LegalHoldStatus, err error) {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (c Client) GetObjectLegalHold(ctx context.Context, bucketName, objectName s
 	}
 
 	// Execute GET on bucket to list objects.
-	resp, err := c.executeMethod(ctx, "GET", requestMetadata{
+	resp, err := c.executeMethod(ctx, http.MethodGet, requestMetadata{
 		bucketName:       bucketName,
 		objectName:       objectName,
 		queryValues:      urlValues,

@@ -5,4 +5,5 @@ go_library(
     srcs = ["testutils.go"],
     importpath = "github.com/buchgr/bazel-remote/utils",
     visibility = ["//visibility:public"],
+    deps = ["//third_party/bazel-remote/genproto/build/bazel/remote/execution/v2:execution"],
 )

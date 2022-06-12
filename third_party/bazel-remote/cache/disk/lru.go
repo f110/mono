@@ -6,29 +6,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
-
-var (
-	gaugeCacheSizeBytes = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "bazel_remote_disk_cache_size_bytes",
-		Help: "The current number of bytes in the disk backend",
-	})
-
-	counterEvictedBytes = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "bazel_remote_disk_cache_evicted_bytes_total",
-		Help: "The total number of bytes evicted from disk backend, due to full cache",
-	})
-
-	counterOverwrittenBytes = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "bazel_remote_disk_cache_overwritten_bytes_total",
-		Help: "The total number of bytes removed from disk backend, due to put of already existing key",
-	})
-)
-
-type sizedItem interface {
-	Size() int64
-}
 
 // Key is the type used for identifying cache items. For non-test code,
 // this is a string of the form "<keyspace>/<hash>". Some test code uses
@@ -39,82 +17,120 @@ type sizedItem interface {
 type Key interface{}
 
 // EvictCallback is the type of callbacks that are invoked when items are evicted.
-type EvictCallback func(key Key, value sizedItem)
+type EvictCallback func(key Key, value lruItem)
 
 // SizedLRU is an LRU cache that will keep its total size below maxSize by evicting
 // items.
 // SizedLRU is not thread-safe.
-type SizedLRU interface {
-	Add(key Key, value sizedItem) (ok bool)
-	Get(key Key) (value sizedItem, ok bool)
-	Remove(key Key)
-	Len() int
-	TotalSize() int64
-	ReservedSize() int64
-	MaxSize() int64
-
-	// Reserve some amount of cache space.
-	Reserve(size int64) (ok bool, err error)
-
-	// Release some amount of reserved cache space.
-	Unreserve(size int64) error
-}
-
-type sizedLRU struct {
+type SizedLRU struct {
 	// Eviction double-linked list. Most recently accessed elements are at the front.
 	ll *list.List
 	// Map to access the items in O(1) time
 	cache map[interface{}]*list.Element
 
-	// Includes reserved size.
+	// Total cache size including reserved bytes and estimated filesystem overhead.
 	currentSize int64
 
+	// Total size of all blobs in uncompressed form.
+	// This does not include reserved space.
+	uncompressedSize int64
+
+	// Number of bytes reserved for incoming blobs.
 	reservedSize int64
 
-	// SizedLRU will evict items as needed to maintain the total size of the cache
-	// below maxSize.
+	// SizedLRU will evict items as needed to maintain the total size of the
+	// cache below maxSize.
 	maxSize int64
 
 	onEvict EvictCallback
+
+	gaugeCacheSizeBytes     prometheus.Gauge
+	gaugeCacheLogicalBytes  prometheus.Gauge
+	counterEvictedBytes     prometheus.Counter
+	counterOverwrittenBytes prometheus.Counter
 }
 
 type entry struct {
 	key   Key
-	value sizedItem
+	value lruItem
 }
 
-// NewSizedLRU returns a new sizedLRU cache
+// Actual disk usage will be estimated by rounding file sizes up to the
+// nearest multiple of this number.
+const BlockSize = 4096
+
+// NewSizedLRU returns a new SizedLRU cache
 func NewSizedLRU(maxSize int64, onEvict EvictCallback) SizedLRU {
-	return &sizedLRU{
+	return SizedLRU{
 		maxSize: maxSize,
 		ll:      list.New(),
 		cache:   make(map[interface{}]*list.Element),
 		onEvict: onEvict,
+
+		gaugeCacheSizeBytes: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "bazel_remote_disk_cache_size_bytes",
+			Help: "The current number of bytes in the disk backend",
+		}),
+		gaugeCacheLogicalBytes: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "bazel_remote_disk_cache_logical_bytes",
+			Help: "The current number of bytes in the disk backend if they were uncompressed",
+		}),
+		counterEvictedBytes: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "bazel_remote_disk_cache_evicted_bytes_total",
+			Help: "The total number of bytes evicted from disk backend, due to full cache",
+		}),
+		counterOverwrittenBytes: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "bazel_remote_disk_cache_overwritten_bytes_total",
+			Help: "The total number of bytes removed from disk backend, due to put of already existing key",
+		}),
 	}
 }
 
-// Add adds a (key, value) to the cache, evicting items as necessary. Add returns false (
-// and does not add the item) if the item size is larger than the maximum size of the cache,
-// or it cannot be added to the cache because too much space is reserved.
-func (c *sizedLRU) Add(key Key, value sizedItem) (ok bool) {
-	if value.Size() > c.maxSize {
+func (c *SizedLRU) RegisterMetrics() {
+	prometheus.MustRegister(c.gaugeCacheSizeBytes)
+	prometheus.MustRegister(c.gaugeCacheLogicalBytes)
+	prometheus.MustRegister(c.counterEvictedBytes)
+	prometheus.MustRegister(c.counterOverwrittenBytes)
+}
+
+// Add adds a (key, value) to the cache, evicting items as necessary.
+// Add returns false and does not add the item if the item size is
+// larger than the maximum size of the cache, or if the item cannot
+// be added to the cache because too much space is reserved.
+//
+// Note that this function rounds file sizes up to the nearest
+// BlockSize (4096) bytes, as an estimate of actual disk usage since
+// most linux filesystems default to 4kb blocks.
+func (c *SizedLRU) Add(key Key, value lruItem) (ok bool) {
+
+	roundedUpSizeOnDisk := roundUp4k(value.sizeOnDisk)
+
+	if roundedUpSizeOnDisk > c.maxSize {
 		return false
 	}
 
-	var sizeDelta int64
+	var sizeDelta, uncompressedSizeDelta int64
 	if ee, ok := c.cache[key]; ok {
-		sizeDelta = value.Size() - ee.Value.(*entry).value.Size()
+		sizeDelta = roundedUpSizeOnDisk - roundUp4k(ee.Value.(*entry).value.sizeOnDisk)
 		if c.reservedSize+sizeDelta > c.maxSize {
 			return false
 		}
+		uncompressedSizeDelta = roundUp4k(value.size) - roundUp4k(ee.Value.(*entry).value.size)
 		c.ll.MoveToFront(ee)
-		counterOverwrittenBytes.Add(float64(ee.Value.(*entry).value.Size()))
+		c.counterOverwrittenBytes.Add(float64(ee.Value.(*entry).value.sizeOnDisk))
+
+		prevValue := ee.Value.(*entry).value
+		if c.onEvict != nil {
+			c.onEvict(key, prevValue)
+		}
+
 		ee.Value.(*entry).value = value
 	} else {
-		sizeDelta = value.Size()
+		sizeDelta = roundedUpSizeOnDisk
 		if c.reservedSize+sizeDelta > c.maxSize {
 			return false
 		}
+		uncompressedSizeDelta = roundUp4k(value.size)
 		ele := c.ll.PushFront(&entry{key, value})
 		c.cache[key] = ele
 	}
@@ -129,14 +145,16 @@ func (c *sizedLRU) Add(key Key, value sizedItem) (ok bool) {
 	}
 
 	c.currentSize += sizeDelta
+	c.uncompressedSize += uncompressedSizeDelta
 
-	gaugeCacheSizeBytes.Set(float64(c.currentSize))
+	c.gaugeCacheSizeBytes.Set(float64(c.currentSize))
+	c.gaugeCacheLogicalBytes.Set(float64(c.uncompressedSize))
 
 	return true
 }
 
 // Get looks up a key in the cache
-func (c *sizedLRU) Get(key Key) (value sizedItem, ok bool) {
+func (c *SizedLRU) Get(key Key) (value lruItem, ok bool) {
 	if ele, hit := c.cache[key]; hit {
 		c.ll.MoveToFront(ele)
 		return ele.Value.(*entry).value, true
@@ -146,27 +164,32 @@ func (c *sizedLRU) Get(key Key) (value sizedItem, ok bool) {
 }
 
 // Remove removes a (key, value) from the cache
-func (c *sizedLRU) Remove(key Key) {
+func (c *SizedLRU) Remove(key Key) {
 	if ele, hit := c.cache[key]; hit {
 		c.removeElement(ele)
-		gaugeCacheSizeBytes.Set(float64(c.currentSize))
+		c.gaugeCacheSizeBytes.Set(float64(c.currentSize))
+		c.gaugeCacheLogicalBytes.Set(float64(c.uncompressedSize))
 	}
 }
 
 // Len returns the number of items in the cache
-func (c *sizedLRU) Len() int {
+func (c *SizedLRU) Len() int {
 	return len(c.cache)
 }
 
-func (c *sizedLRU) TotalSize() int64 {
+func (c *SizedLRU) TotalSize() int64 {
 	return c.currentSize
 }
 
-func (c *sizedLRU) ReservedSize() int64 {
+func (c *SizedLRU) UncompressedSize() int64 {
+	return c.uncompressedSize
+}
+
+func (c *SizedLRU) ReservedSize() int64 {
 	return c.reservedSize
 }
 
-func (c *sizedLRU) MaxSize() int64 {
+func (c *SizedLRU) MaxSize() int64 {
 	return c.maxSize
 }
 
@@ -187,7 +210,7 @@ func sumLargerThan(a, b, c int64) bool {
 
 var errReservation = errors.New("internal reservation error")
 
-func (c *sizedLRU) Reserve(size int64) (bool, error) {
+func (c *SizedLRU) Reserve(size int64) (bool, error) {
 	if size == 0 {
 		return true, nil
 	}
@@ -218,7 +241,7 @@ func (c *sizedLRU) Reserve(size int64) (bool, error) {
 	return true, nil
 }
 
-func (c *sizedLRU) Unreserve(size int64) error {
+func (c *SizedLRU) Unreserve(size int64) error {
 	if size == 0 {
 		return nil
 	}
@@ -240,14 +263,30 @@ func (c *sizedLRU) Unreserve(size int64) error {
 	return nil
 }
 
-func (c *sizedLRU) removeElement(e *list.Element) {
+func (c *SizedLRU) removeElement(e *list.Element) {
 	c.ll.Remove(e)
 	kv := e.Value.(*entry)
 	delete(c.cache, kv.key)
-	c.currentSize -= kv.value.Size()
-	counterEvictedBytes.Add(float64(kv.value.Size()))
+	c.currentSize -= roundUp4k(kv.value.sizeOnDisk)
+	c.uncompressedSize -= roundUp4k(kv.value.size)
+	c.counterEvictedBytes.Add(float64(kv.value.sizeOnDisk))
 
 	if c.onEvict != nil {
 		c.onEvict(kv.key, kv.value)
 	}
+}
+
+// Round n up to the nearest multiple of BlockSize (4096).
+func roundUp4k(n int64) int64 {
+	return (n + BlockSize - 1) & -BlockSize
+}
+
+// Get the back item of the LRU cache.
+func (c *SizedLRU) getTailItem() (Key, lruItem) {
+	ele := c.ll.Back()
+	if ele != nil {
+		kv := ele.Value.(*entry)
+		return kv.key, kv.value
+	}
+	return nil, lruItem{}
 }

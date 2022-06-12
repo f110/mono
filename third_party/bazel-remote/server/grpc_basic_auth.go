@@ -24,18 +24,35 @@ var (
 // GrpcBasicAuth wraps an auth.SecretProvider, and provides gRPC interceptors
 // that verify that requests can be authenticated using HTTP basic auth.
 type GrpcBasicAuth struct {
-	secrets auth.SecretProvider
+	secrets                      auth.SecretProvider
+	allowUnauthenticatedReadOnly bool
 }
 
 // NewGrpcBasicAuth returns a GrpcBasicAuth that wraps the given
 // auth.SecretProvider.
-func NewGrpcBasicAuth(secrets auth.SecretProvider) *GrpcBasicAuth {
-	return &GrpcBasicAuth{secrets: secrets}
+func NewGrpcBasicAuth(secrets auth.SecretProvider, allowUnauthenticatedReadOnly bool) *GrpcBasicAuth {
+	return &GrpcBasicAuth{
+		secrets:                      secrets,
+		allowUnauthenticatedReadOnly: allowUnauthenticatedReadOnly,
+	}
 }
 
-// StreamServerInterceptor returns a streaming server interceptor that
-// verifies that each request can be authenticated using HTTP basic auth.
+// StreamServerInterceptor verifies that each request can be authenticated
+// using HTTP basic auth, or is allowed without authentication.
 func (b *GrpcBasicAuth) StreamServerInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+
+	// Always allow health service requests.
+	if info.FullMethod == grpcHealthServiceName {
+		return handler(srv, ss)
+	}
+
+	if b.allowUnauthenticatedReadOnly {
+		_, ro := readOnlyMethods[info.FullMethod]
+		if ro {
+			return handler(srv, ss)
+		}
+	}
+
 	username, password, err := getLogin(ss.Context())
 	if err != nil {
 		return err
@@ -51,9 +68,22 @@ func (b *GrpcBasicAuth) StreamServerInterceptor(srv interface{}, ss grpc.ServerS
 	return handler(srv, ss)
 }
 
-// UnaryServerInterceptor returns a unary server interceptor that verifies
-// that each request can be authenticated using HTTP basic auth.
+// UnaryServerInterceptor verifies that each request can be authenticated
+// using HTTP basic auth, or is allowed without authenticated.
 func (b *GrpcBasicAuth) UnaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+
+	// Always allow health service requests.
+	if info.FullMethod == grpcHealthServiceName {
+		return handler(ctx, req)
+	}
+
+	if b.allowUnauthenticatedReadOnly {
+		_, ro := readOnlyMethods[info.FullMethod]
+		if ro {
+			return handler(ctx, req)
+		}
+	}
+
 	username, password, err := getLogin(ctx)
 	if err != nil {
 		return nil, err

@@ -1,5 +1,5 @@
-// +build !darwin
-// +build !windows
+//go:build !darwin && !windows
+// +build !darwin,!windows
 
 package rlimit
 
@@ -30,6 +30,4 @@ func Raise() {
 		log.Println("Failed to set rlimit:", err)
 		return
 	}
-
-	return
 }

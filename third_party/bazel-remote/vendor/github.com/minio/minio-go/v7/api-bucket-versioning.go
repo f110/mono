@@ -27,7 +27,7 @@ import (
 )
 
 // SetBucketVersioning sets a bucket versioning configuration
-func (c Client) SetBucketVersioning(ctx context.Context, bucketName string, config BucketVersioningConfiguration) error {
+func (c *Client) SetBucketVersioning(ctx context.Context, bucketName string, config BucketVersioningConfiguration) error {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return err
@@ -53,7 +53,7 @@ func (c Client) SetBucketVersioning(ctx context.Context, bucketName string, conf
 	}
 
 	// Execute PUT to set a bucket versioning.
-	resp, err := c.executeMethod(ctx, "PUT", reqMetadata)
+	resp, err := c.executeMethod(ctx, http.MethodPut, reqMetadata)
 	defer closeResponse(resp)
 	if err != nil {
 		return err
@@ -67,12 +67,12 @@ func (c Client) SetBucketVersioning(ctx context.Context, bucketName string, conf
 }
 
 // EnableVersioning - enable object versioning in given bucket.
-func (c Client) EnableVersioning(ctx context.Context, bucketName string) error {
+func (c *Client) EnableVersioning(ctx context.Context, bucketName string) error {
 	return c.SetBucketVersioning(ctx, bucketName, BucketVersioningConfiguration{Status: "Enabled"})
 }
 
 // SuspendVersioning - suspend object versioning in given bucket.
-func (c Client) SuspendVersioning(ctx context.Context, bucketName string) error {
+func (c *Client) SuspendVersioning(ctx context.Context, bucketName string) error {
 	return c.SetBucketVersioning(ctx, bucketName, BucketVersioningConfiguration{Status: "Suspended"})
 }
 
@@ -83,9 +83,26 @@ type BucketVersioningConfiguration struct {
 	MFADelete string   `xml:"MfaDelete,omitempty"`
 }
 
+// Various supported states
+const (
+	Enabled = "Enabled"
+	// Disabled  State = "Disabled" only used by MFA Delete not supported yet.
+	Suspended = "Suspended"
+)
+
+// Enabled returns true if bucket versioning is enabled
+func (b BucketVersioningConfiguration) Enabled() bool {
+	return b.Status == Enabled
+}
+
+// Suspended returns true if bucket versioning is suspended
+func (b BucketVersioningConfiguration) Suspended() bool {
+	return b.Status == Suspended
+}
+
 // GetBucketVersioning gets the versioning configuration on
 // an existing bucket with a context to control cancellations and timeouts.
-func (c Client) GetBucketVersioning(ctx context.Context, bucketName string) (BucketVersioningConfiguration, error) {
+func (c *Client) GetBucketVersioning(ctx context.Context, bucketName string) (BucketVersioningConfiguration, error) {
 	// Input validation.
 	if err := s3utils.CheckValidBucketName(bucketName); err != nil {
 		return BucketVersioningConfiguration{}, err

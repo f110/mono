@@ -4,15 +4,13 @@ go_library(
     name = "grpcutil",
     srcs = [
         "encode_duration.go",
+        "grpcutil.go",
         "metadata.go",
         "method.go",
-        "target.go",
+        "regex.go",
     ],
     importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/internal/grpcutil",
     importpath = "google.golang.org/grpc/internal/grpcutil",
     visibility = ["//third_party/bazel-remote/vendor/google.golang.org/grpc:__subpackages__"],
-    deps = [
-        "//third_party/bazel-remote/vendor/google.golang.org/grpc/metadata",
-        "//third_party/bazel-remote/vendor/google.golang.org/grpc/resolver",
-    ],
+    deps = ["//third_party/bazel-remote/vendor/google.golang.org/grpc/metadata"],
 )
