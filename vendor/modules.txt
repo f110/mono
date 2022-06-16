@@ -47,6 +47,9 @@ github.com/DataDog/sketches-go/ddsketch/store
 # github.com/JuulLabs-OSS/cbgo v0.0.2
 ## explicit; go 1.14
 github.com/JuulLabs-OSS/cbgo
+# github.com/Masterminds/semver/v3 v3.1.1
+## explicit; go 1.12
+github.com/Masterminds/semver/v3
 # github.com/Microsoft/go-winio v0.5.2
 ## explicit; go 1.13
 github.com/Microsoft/go-winio
@@ -188,6 +191,10 @@ github.com/aws/smithy-go/time
 github.com/aws/smithy-go/transport/http
 github.com/aws/smithy-go/transport/http/internal/io
 github.com/aws/smithy-go/waiter
+# github.com/bazelbuild/buildtools v0.0.0-20220531122519-a43aed7014c8
+## explicit; go 1.15
+github.com/bazelbuild/buildtools/build
+github.com/bazelbuild/buildtools/tables
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
