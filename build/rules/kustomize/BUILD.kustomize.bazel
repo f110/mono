@@ -1,4 +1,4 @@
-load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_toolchain")
+load("@mono//build/rules/kustomize:def.bzl", "kustomize_toolchain")
 
 sh_binary(
     name = "bin",

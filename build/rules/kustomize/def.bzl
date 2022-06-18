@@ -1,6 +1,6 @@
-load("//k8s/kustomize:assets.bzl", "KUSTOMIZE_ASSETS")
+load("//build/rules/kustomize:assets.bzl", "KUSTOMIZE_ASSETS")
 load("@bazel_skylib//lib:paths.bzl", "paths")
-load("//k8s/private/util:semver.bzl", "semver")
+load("//build/private/util:semver.bzl", "semver")
 
 Kustomization = provider()
 
@@ -13,6 +13,7 @@ def _kustomize_binary_impl(ctx):
     else:
         fail("%s is not supported" % ctx.os.name)
     arch = ctx.execute(["uname", "-m"]).stdout.strip()
+
     # On Linux, uname returns x86_64 as CPU architecture.
     if arch == "x86_64":
         arch = "amd64"
@@ -29,7 +30,7 @@ def _kustomize_binary_impl(ctx):
 
     ctx.template(
         "BUILD.bazel",
-        Label("@dev_f110_rules_k8s_controller//k8s/kustomize:BUILD.kustomize.bazel"),
+        Label("//build/rules/kustomize:BUILD.kustomize.bazel"),
         executable = False,
         substitutions = {
             "{version}": ctx.attr.version,

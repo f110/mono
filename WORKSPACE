@@ -196,7 +196,7 @@ http_archive(
     urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz"],
 )
 
-load("@dev_f110_rules_k8s_controller//k8s/kustomize:def.bzl", "kustomize_binary")
+load("//build/rules/kustomize:def.bzl", "kustomize_binary")
 
 kustomize_binary(
     name = "kustomize",
