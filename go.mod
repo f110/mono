@@ -13,7 +13,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.17.0
 	github.com/bazelbuild/buildtools v0.0.0-20220531122519-a43aed7014c8
-	github.com/blang/semver v3.5.0+incompatible
 	github.com/bradleyfalzon/ghinstallation v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fsnotify/fsnotify v1.5.4
@@ -95,6 +94,7 @@ require (
 	github.com/aws/smithy-go v1.11.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.2 // indirect
+	github.com/blang/semver v3.5.0+incompatible // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
