@@ -14,12 +14,12 @@ go_vendor(
     ],
 )
 
-load("@dev_f110_rules_k8s_controller//k8s/kind:cluster.bzl", "cluster")
+load("//build/rules/kind:cluster.bzl", "cluster")
 
 cluster(
     name = "mono",
     manifest = "//manifests/devcluster",
-    version = "v1.19.3",
+    version = "v1.24.0",
     worker_num = 3,
 )
 

@@ -207,7 +207,7 @@ load("//build/rules/kind:def.bzl", "kind_binary")
 
 kind_binary(
     name = "kind",
-    version = "0.9.0",
+    version = "0.14.0",
 )
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
