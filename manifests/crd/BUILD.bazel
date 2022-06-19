@@ -6,7 +6,7 @@ kustomization(
     name = "crd",
     src = "kustomization.yaml",
     resources = [
-        ":proto",
+        "proto.crd.yaml",
     ],
     visibility = ["//visibility:public"],
 )
