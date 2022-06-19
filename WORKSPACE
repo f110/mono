@@ -241,3 +241,7 @@ pip_install(
     name = "py_deps",
     requirements = "//:requirements.txt",
 )
+
+load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
+
+register_unittest_toolchains()
