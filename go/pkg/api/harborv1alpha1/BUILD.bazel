@@ -26,10 +26,7 @@ vendor_kubeproto(
 
 go_library(
     name = "harborv1alpha1",
-    srcs = [
-        "go_api.generated.deepcopy.go",
-        "go_api.generated.register.go",
-    ],
+    srcs = ["go_api.generated.object.go"],
     importpath = "go.f110.dev/mono/go/pkg/api/harborv1alpha1",
     visibility = ["//visibility:public"],
     deps = [
