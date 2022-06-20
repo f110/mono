@@ -245,6 +245,19 @@ func (d *Dashboard) handleDeleteRepository(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	jobs, err := d.dao.Job.ListBySourceRepositoryId(req.Context(), int32(id))
+	if err != nil {
+		logger.Log.Error("Failed get jobs", zap.Int32("source_repository_id", int32(id)))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	for _, v := range jobs {
+		if err := d.dao.Job.Delete(req.Context(), v.Id); err != nil {
+			logger.Log.Error("Failed delete job", zap.Int32("id", v.Id))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
 	if err := d.dao.Repository.Delete(req.Context(), int32(id)); err != nil {
 		logger.Log.Warn("Failed delete repository", zap.Error(err), zap.Int("id", id))
 		w.WriteHeader(http.StatusInternalServerError)
