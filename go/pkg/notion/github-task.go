@@ -11,9 +11,9 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/shurcooL/githubv4"
 	"go.f110.dev/notion-api/v3"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 
 	"go.f110.dev/mono/go/pkg/k8s/volume"
@@ -45,7 +45,7 @@ type GitHubTask struct {
 func NewGitHubTask(appId, installationId int64, privateKeyFile, notionToken, configFile string) (*GitHubTask, error) {
 	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	ghClient := githubv4.NewClient(&http.Client{Transport: t})
 
@@ -53,11 +53,11 @@ func NewGitHubTask(appId, installationId int64, privateKeyFile, notionToken, con
 	tc := oauth2.NewClient(context.Background(), ts)
 	notionClient, err := notion.New(tc, notion.BaseURL)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if g, err := newGithubTask(ghClient, notionClient, configFile); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	} else {
 		return g, nil
 	}
@@ -72,11 +72,11 @@ func NewGitHubTaskWithToken(githubToken, notionToken, configFile string) (*GitHu
 	tc := oauth2.NewClient(context.Background(), ts)
 	notionClient, err := notion.New(tc, notion.BaseURL)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if g, err := newGithubTask(client, notionClient, configFile); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	} else {
 		return g, nil
 	}
@@ -91,7 +91,7 @@ func newGithubTask(client *githubv4.Client, notionClient *notion.Client, configF
 		if err == nil {
 			w, err := volume.NewWatcher(mountPath, g.loadConfig)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			g.w = w
 		}
@@ -99,7 +99,7 @@ func newGithubTask(client *githubv4.Client, notionClient *notion.Client, configF
 
 	db, err := g.NotionClient.GetDatabase(context.TODO(), g.config.DatabaseID)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	g.database = db
 	return g, nil
@@ -114,7 +114,7 @@ func (g *GitHubTask) Start(schedule string) error {
 		}
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Info("Start cron")
 	g.cron.Start()
@@ -129,7 +129,7 @@ func (g *GitHubTask) Start(schedule string) error {
 func (g *GitHubTask) Execute() error {
 	err := g.GHClient.Query(context.Background(), &query, map[string]interface{}{"query": githubv4.String("is:open assignee:@me")})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	g.confMu.Lock()
@@ -163,7 +163,7 @@ func (g *GitHubTask) Execute() error {
 			nil,
 		)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		for _, v := range pages {
 			if _, ok := assigned[v.Properties[g.config.URLProperty].URL]; ok {
@@ -176,7 +176,7 @@ func (g *GitHubTask) Execute() error {
 	for _, v := range assigned {
 		newPage, err := notion.NewPage(g.database, v.Title, nil)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		for k, v := range g.config.Properties {
 			for p := range g.database.Properties {
@@ -195,7 +195,7 @@ func (g *GitHubTask) Execute() error {
 		logger.Log.Info("Create page", zap.String("title", v.Title), zap.String("url", v.URL.String()))
 		_, err = g.NotionClient.CreatePage(context.TODO(), newPage)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		g.mu.Lock()
 		g.checked[v.URL.String()] = struct{}{}

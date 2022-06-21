@@ -9,9 +9,9 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"go.f110.dev/notion-api/v3"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 
 	"go.f110.dev/mono/go/pkg/logger"
@@ -33,18 +33,18 @@ type ToDoScheduler struct {
 func NewToDoScheduler(configPath, token string) (*ToDoScheduler, error) {
 	f, err := os.Open(configPath)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var conf []*todoSchedulerConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(context.Background(), ts)
 	client, err := notion.New(tc, notion.BaseURL)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return &ToDoScheduler{client: client, conf: conf}, nil
@@ -232,7 +232,7 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 			}
 			d, err := strconv.ParseInt(strings.TrimSuffix(sp[0], "th"), 10, 32)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			if d > 31 {
 				return nil, xerrors.New("the day is out of range")
@@ -267,11 +267,11 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 				t := strings.Split(sp[2], ":")
 				h, err := strconv.ParseInt(t[0], 10, 32)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, xerrors.WithStack(err)
 				}
 				m, err := strconv.ParseInt(t[1], 10, 32)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, xerrors.WithStack(err)
 				}
 				hour = int(h)
 				if sp[3] == "pm" {
@@ -295,7 +295,7 @@ func (s *ToDoScheduler) Start(c string) error {
 		}
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Info("Start cron")
 	s.cron.Start()

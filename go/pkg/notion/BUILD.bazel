@@ -16,9 +16,9 @@ go_library(
         "//vendor/github.com/robfig/cron/v3:cron",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/go.f110.dev/notion-api/v3:notion-api",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",
-        "//vendor/golang.org/x/xerrors",
         "//vendor/gopkg.in/yaml.v2:yaml_v2",
     ],
 )

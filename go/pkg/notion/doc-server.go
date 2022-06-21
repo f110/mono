@@ -9,9 +9,9 @@ import (
 	"sync"
 
 	"go.f110.dev/notion-api/v3"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 
 	"go.f110.dev/mono/go/pkg/k8s/volume"
@@ -52,7 +52,7 @@ func NewDatabaseDocServer(addr, configPath, token string) (*DatabaseDocServer, e
 		if err == nil {
 			w, err := volume.NewWatcher(mountPath, s.loadConfig)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			s.w = w
 		}
