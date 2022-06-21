@@ -11,7 +11,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	"software.sslmate.com/src/go-pkcs12"
 )
 
@@ -194,21 +194,21 @@ type client struct {
 func getClient(client *http.Client, host, site string) ([]*SiteClient, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/api/s/%s/stat/sta", host, site), nil)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	req.Header.Add("User-Agent", apiClientUserAgent)
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, xerrors.Errorf("returns status not ok: %s", res.Status)
+		return nil, fmt.Errorf("returns status not ok: %s", res.Status)
 	}
 
 	resBody := &ListClientResponse{}
 	if err := json.NewDecoder(res.Body).Decode(resBody); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if resBody.Meta.RC != RCOk {
@@ -221,20 +221,20 @@ func getClient(client *http.Client, host, site string) ([]*SiteClient, error) {
 func getDevice(client *http.Client, host, site string) ([]*SiteDevice, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("https://%s/api/s/%s/stat/device", host, site), nil)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	req.Header.Add("User-Agent", apiClientUserAgent)
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	resBody := &ListDeviceResponse{}
 	if err := json.NewDecoder(res.Body).Decode(resBody); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if err := res.Body.Close(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if resBody.Meta.RC != RCOk {
@@ -247,11 +247,11 @@ func getDevice(client *http.Client, host, site string) ([]*SiteDevice, error) {
 func unissh(host, credentialFile, password, site string) error {
 	b, err := ioutil.ReadFile(credentialFile)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	privateKey, certificate, _, err := pkcs12.DecodeChain(b, password)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	tlsCert := tls.Certificate{PrivateKey: privateKey, Certificate: [][]byte{certificate.Raw}}
@@ -265,11 +265,11 @@ func unissh(host, credentialFile, password, site string) error {
 
 	clients, err := getClient(httpClient, host, site)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	devices, err := getDevice(httpClient, host, site)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	siteClients := make([]*client, 0)

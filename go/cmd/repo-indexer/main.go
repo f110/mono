@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/repoindexer"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -18,14 +18,14 @@ func repoIndexer(args []string) error {
 		Use: "repo-indexer",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := logger.Init(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := indexer.Init(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			if err := indexer.Run(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			return nil

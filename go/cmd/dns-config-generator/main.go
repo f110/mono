@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -43,12 +43,12 @@ type Config struct {
 func ReadConfig(p string) ([]Config, error) {
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
-		return nil, xerrors.Errorf(": %v", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	conf := make([]Config, 0)
 	if err := yaml.Unmarshal(b, &conf); err != nil {
-		return nil, xerrors.Errorf(": %v", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return conf, nil

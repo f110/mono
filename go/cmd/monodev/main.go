@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/monodev"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -21,7 +21,7 @@ func monoDev() error {
 
 	logger.Flags(rootCmd.Flags())
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return rootCmd.Execute()
 }

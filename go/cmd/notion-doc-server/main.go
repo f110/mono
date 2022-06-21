@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/notion"
@@ -35,13 +36,13 @@ func (s *docServerCommand) Flags(fs *pflag.FlagSet) {
 
 func (s *docServerCommand) Execute() error {
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
 	if s.token == "" {
-		return xerrors.Errorf("--token or NOTION_TOKEN is required")
+		return errors.New("--token or NOTION_TOKEN is required")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -49,7 +50,7 @@ func (s *docServerCommand) Execute() error {
 
 	srv, err := notion.NewDatabaseDocServer(s.addr, s.conf, s.token)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	go srv.Start()
 	<-ctx.Done()
@@ -58,7 +59,7 @@ func (s *docServerCommand) Execute() error {
 	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Stop(ctx); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

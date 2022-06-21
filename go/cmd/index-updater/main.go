@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/cmd/repoindexer"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -17,14 +17,14 @@ func indexUpdater(args []string) error {
 	cmd.Flags(fs)
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := cmd.Run(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

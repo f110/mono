@@ -10,8 +10,8 @@ import (
 
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 )
 
 type PullRequest struct {
@@ -176,7 +176,7 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org strin
 	page := 1
 	for {
 		if err := client.Query(context.Background(), &query, variables); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		// Is first page
 		if len(tickets) == 0 {
@@ -232,12 +232,12 @@ func showResult() error {
 
 	err := client.Query(context.Background(), &meQuery, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	issues, err := getIssueAndPullRequest(client, meQuery.Viewer.Login, start, end, org, max)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	rawList := new(bytes.Buffer)
 	for _, v := range issues {

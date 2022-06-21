@@ -9,7 +9,7 @@ import (
 	"github.com/google/zoekt/query"
 	"github.com/google/zoekt/shards"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 func zoektIndexShow(args []string) error {
@@ -17,16 +17,16 @@ func zoektIndexShow(args []string) error {
 	fs := pflag.NewFlagSet("zoekt-index-show", pflag.ContinueOnError)
 	fs.StringVar(&indexDir, "index", indexDir, "Index directory")
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	searcher, err := shards.NewDirectorySearcher(indexDir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	repos, err := searcher.List(context.Background(), &query.Const{Value: true}, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range repos.Repos {
 		fmt.Printf("Name: %s\n", v.Repository.Name)

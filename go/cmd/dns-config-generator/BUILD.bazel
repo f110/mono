@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/dns-config-generator",
     visibility = ["//visibility:private"],
     deps = [
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/gopkg.in/yaml.v2:yaml_v2",
     ],
 )

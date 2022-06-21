@@ -5,8 +5,9 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
+
 	"go.f110.dev/mono/go/pkg/git"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -30,14 +31,14 @@ func buildSidecar(args []string) error {
 	fs.StringVar(&repo, "url", repo, "Repository url (e.g. git@github.com:octocat/example.git)")
 	fs.StringVarP(&commit, "commit", "b", "", "Specify commit")
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %v", err)
+		return xerrors.WithStack(err)
 	}
 
 	switch action {
 	case ActionClone:
 		return git.Clone(appId, installationId, privateKeyFile, workingDir, repo, commit)
 	default:
-		return xerrors.Errorf("unknown action: %v", action)
+		return fmt.Errorf("unknown action: %v", action)
 	}
 }
 

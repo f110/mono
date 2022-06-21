@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	goyaml "gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,14 +52,14 @@ func createCmd(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			cluster, err := NewCluster(kind, name, "")
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := cluster.Create(k8sVersion, workerNum); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if manifest != "" {
 				if err := cluster.Apply(manifest, "kindcluster"); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 
@@ -82,10 +82,10 @@ func deleteCmd(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			cluster, err := NewCluster(kind, name, "")
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := cluster.Delete(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			return nil
 		},
@@ -103,10 +103,10 @@ func applyCmd(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			cluster, err := NewCluster(kind, name, "")
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := cluster.Apply(manifest, "kindcluster"); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			return nil
 		},
@@ -165,7 +165,7 @@ func (c *Cluster) IsExist(name string) (bool, error) {
 	cmd := exec.CommandContext(context.TODO(), c.kind, "get", "clusters")
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, xerrors.Errorf(": %w", err)
+		return false, xerrors.WithStack(err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(buf))
 	for s.Scan() {
@@ -181,13 +181,13 @@ func (c *Cluster) IsExist(name string) (bool, error) {
 func (c *Cluster) Create(clusterVersion string, workerNum int) error {
 	kindConfFile, err := os.CreateTemp("", "kind.config.yaml")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer os.Remove(kindConfFile.Name())
 
 	imageHash, ok := KindNodeImageHash[clusterVersion]
 	if !ok {
-		return xerrors.Errorf("Not supported k8s version: %s", clusterVersion)
+		return fmt.Errorf("not supported k8s version: %s", clusterVersion)
 	}
 	image := fmt.Sprintf("kindest/node:%s@sha256:%s", clusterVersion, imageHash)
 
@@ -209,10 +209,10 @@ func (c *Cluster) Create(clusterVersion string, workerNum int) error {
 		}
 	}
 	if buf, err := goyaml.Marshal(clusterConf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	} else {
 		if _, err := kindConfFile.Write(buf); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -247,7 +247,7 @@ func (c *Cluster) KubeConfig() string {
 func (c *Cluster) Delete() error {
 	found, err := c.IsExist(c.name)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if !found {
 		return nil
@@ -264,14 +264,14 @@ func (c *Cluster) Delete() error {
 
 func (c *Cluster) RESTConfig() (*rest.Config, error) {
 	if exist, err := c.IsExist(c.name); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	} else if !exist {
 		return nil, xerrors.New("The cluster is not created yet")
 	}
 	if c.kubeConfig == "" {
 		kubeConf, err := os.CreateTemp("", "kubeconfig")
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		cmd := exec.CommandContext(
 			context.TODO(),
@@ -280,7 +280,7 @@ func (c *Cluster) RESTConfig() (*rest.Config, error) {
 			"--name", c.name,
 		)
 		if err := cmd.Run(); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		c.kubeConfig = kubeConf.Name()
 		defer func() {
@@ -291,7 +291,7 @@ func (c *Cluster) RESTConfig() (*rest.Config, error) {
 
 	cfg, err := clientcmd.LoadFromFile(c.kubeConfig)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	clientConfig := clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{})
 	restCfg, err := clientConfig.ClientConfig()
@@ -309,7 +309,7 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 
 	restCfg, err := c.RESTConfig()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	cs, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
@@ -323,7 +323,7 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 func (c *Cluster) WaitReady(ctx context.Context) error {
 	client, err := c.Clientset()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return PollImmediate(ctx, 1*time.Second, 3*time.Minute, func(ctx context.Context) (done bool, err error) {
@@ -353,15 +353,15 @@ func (c *Cluster) WaitReady(ctx context.Context) error {
 func (c *Cluster) Apply(f, fieldManager string) error {
 	buf, err := os.ReadFile(f)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	cfg, err := c.RESTConfig()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := ApplyManifestFromString(cfg, string(buf), fieldManager); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -376,7 +376,7 @@ func LoadUnstructuredFromString(manifest string) ([]*unstructured.Unstructured, 
 			if err == io.EOF {
 				break
 			}
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if len(ext.Raw) == 0 {
 			continue
@@ -384,7 +384,7 @@ func LoadUnstructuredFromString(manifest string) ([]*unstructured.Unstructured, 
 
 		obj, _, err := unstructured.UnstructuredJSONScheme.Decode(ext.Raw, nil, nil)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		objs = append(objs, obj.(*unstructured.Unstructured))
 	}
@@ -397,12 +397,12 @@ type Objects []*unstructured.Unstructured
 func ApplyManifestFromString(cfg *rest.Config, manifest, fieldManager string) error {
 	objs, err := LoadUnstructuredFromString(manifest)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	err = Objects(objs).Apply(cfg, fieldManager)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -410,11 +410,11 @@ func ApplyManifestFromString(cfg *rest.Config, manifest, fieldManager string) er
 func (k Objects) Apply(cfg *rest.Config, fieldManager string) error {
 	disClient, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	_, apiResourcesList, err := disClient.ServerGroupsAndResources()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, obj := range k {
@@ -430,7 +430,7 @@ func (k Objects) Apply(cfg *rest.Config, fieldManager string) error {
 		conf.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
 		client, err := rest.RESTClientFor(&conf)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		var apiResource *metav1.APIResource
@@ -478,7 +478,7 @@ func (k Objects) Apply(cfg *rest.Config, fieldManager string) error {
 			return true, nil
 		})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -497,7 +497,7 @@ func Poll(ctx context.Context, interval, timeout time.Duration, fn func(ctx cont
 			done, err := fn(fnCtx)
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if done {
 				return nil
@@ -518,7 +518,7 @@ func PollImmediate(ctx context.Context, interval, timeout time.Duration, fn func
 		return nil
 	}
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return Poll(ctx, interval, timeout, fn)

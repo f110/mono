@@ -13,8 +13,8 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"google.golang.org/api/option"
 
 	"go.f110.dev/mono/go/pkg/logger"
@@ -34,12 +34,12 @@ type backupMeta struct {
 func parseBackupMeta(file string) (map[string]*backupMeta, error) {
 	f, err := os.Open(file)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	meta := make(map[string]*backupMeta)
 	if err := json.NewDecoder(f).Decode(&meta); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return meta, nil
 }
@@ -66,23 +66,23 @@ func unifiBackup(args []string) error {
 	fs.StringVar(&credentialFile, "credential", "", "Credential file")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := w.Add(backupDir); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(credentialFile))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	logger.Log.Info("Waiting fs event")
@@ -104,16 +104,16 @@ func unifiBackup(args []string) error {
 				w := obj.NewWriter(ctx)
 				f, err := os.Open(filepath.Join(filepath.Dir(event.Name), latestBackup))
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if _, err := io.Copy(w, f); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if err := w.Close(); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if err := f.Close(); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 
 				logger.Log.Info("Succeeded upload", zap.String("object_name", obj.ObjectName()), zap.String("bucket", obj.BucketName()))

@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/pkg/git",
         "//vendor/github.com/spf13/pflag",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
 

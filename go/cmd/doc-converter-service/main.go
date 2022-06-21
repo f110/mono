@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/pkg/logger"
@@ -20,7 +20,7 @@ func docConverterService(args []string) error {
 		Use: "doc-converter-service",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			if err := logger.Init(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			s := grpc.NewServer()
@@ -28,11 +28,11 @@ func docConverterService(args []string) error {
 
 			l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			logger.Log.Info("Listen", zap.Int("port", port))
 			if err := s.Serve(l); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			return nil
 		},

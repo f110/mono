@@ -13,8 +13,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/prometheus/exporter"
@@ -46,7 +46,7 @@ func inkbirdExporter(args []string) error {
 
 	inkbirdExporter, err := exporter.NewInkBirdExporter(ctx, ids)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	prometheus.MustRegister(inkbirdExporter)
 

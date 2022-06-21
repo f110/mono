@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"time"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/ble/inkbird"
 )
@@ -25,7 +25,7 @@ func inkbirdViewer(args []string) error {
 
 	err := inkbird.DefaultThermometerDataProvider.Start(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer func() {
 		cancel()

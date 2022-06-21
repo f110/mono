@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,18 +34,18 @@ func gantryCrane(args []string) error {
 	fs.StringVar(&confFile, "config", confFile, "Config file path")
 	fs.BoolVar(&execute, "execute", execute, "Execute")
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	logs.Progress.SetOutput(os.Stdout)
 
 	buf, err := ioutil.ReadFile(confFile)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	conf := make([]*config, 0)
 	if err := yaml.Unmarshal(buf, &conf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, v := range conf {
@@ -59,7 +59,7 @@ func gantryCrane(args []string) error {
 			log.Printf("Synchronize %s:%s", v.Dst, tag)
 			oldDigest, dstIM, err := getIndexManifest(fmt.Sprintf("%s:%s", v.Dst, tag))
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			exists := 0
 			for _, a := range platform {
@@ -71,11 +71,11 @@ func gantryCrane(args []string) error {
 
 			srcRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Src, tag))
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			srcDescriptor, err := remote.Get(srcRef)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			log.Printf("Old digest: %s, Src digest: %s", oldDigest.String(), srcDescriptor.Digest.String())
@@ -106,18 +106,18 @@ func gantryCrane(args []string) error {
 			case types.DockerManifestSchema2, types.OCIManifestSchema1:
 				img, err := srcDescriptor.Image()
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				newIndex = NewImageIndex(img)
 			case types.DockerManifestList:
 				newIndex, err = srcDescriptor.ImageIndex()
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			default:
 				index, err := srcDescriptor.ImageIndex()
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				newIndex = NewPartialImageIndex(index, platform)
 			}
@@ -125,16 +125,16 @@ func gantryCrane(args []string) error {
 			dstRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Dst, tag))
 			log.Printf("Write index: %s", dstRef.String())
 			if err := remote.WriteIndex(dstRef, newIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			if oldDigest != emptyHash {
 				oldD, err := name.NewDigest(fmt.Sprintf("%s@%s", v.Dst, oldDigest.String()))
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if err := remote.Delete(oldD, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 		}
@@ -162,7 +162,7 @@ var emptyHash = v1.Hash{}
 func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
 	r, err := name.ParseReference(ref)
 	if err != nil {
-		return emptyHash, nil, xerrors.Errorf(": %w", err)
+		return emptyHash, nil, xerrors.WithStack(err)
 	}
 	desc, err := remote.Get(r, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	if err != nil {
@@ -180,11 +180,11 @@ func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
 				}
 			}
 		}
-		return emptyHash, nil, xerrors.Errorf(": %w", err)
+		return emptyHash, nil, xerrors.WithStack(err)
 	}
 	index, err := desc.ImageIndex()
 	if err != nil {
-		return emptyHash, nil, xerrors.Errorf(": %w", err)
+		return emptyHash, nil, xerrors.WithStack(err)
 	}
 
 	indexManifest, err := index.IndexManifest()

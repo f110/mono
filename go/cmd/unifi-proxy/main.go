@@ -21,7 +21,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 const (
@@ -55,7 +55,7 @@ func authByHeader(publicKey crypto.PublicKey, h http.HandlerFunc, debug bool) ht
 		}
 		token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (i interface{}, err error) {
 			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
-				return nil, xerrors.Errorf("Unexpected signature algorithm: %s", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signature algorithm: %s", token.Header["alg"])
 			}
 
 			return publicKey, nil
@@ -119,7 +119,7 @@ func NewInjectAuthRoundTripper(upstream *url.URL, username, password string, rou
 		client:       &http.Client{Transport: roundTripper},
 	}
 	if _, err := rt.login(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return rt, nil
@@ -129,12 +129,12 @@ func (rt *InjectAuthRoundTripper) login() (*http.Cookie, error) {
 	param := &LoginRequest{rt.Username, rt.Password}
 	buf, err := json.Marshal(param)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s://%s/api/login", rt.upstream.Scheme, rt.upstream.Host), bytes.NewReader(buf))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
@@ -142,19 +142,19 @@ func (rt *InjectAuthRoundTripper) login() (*http.Cookie, error) {
 
 	res, err := rt.client.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if err := res.Body.Close(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	resBody := &LoginResponse{}
 	if err := json.Unmarshal(body, resBody); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if resBody.Meta.RC != RCOk {
@@ -230,14 +230,14 @@ func uniFiProxy(args []string) error {
 	fs.BoolVar(&conf.Insecure, "insecure", false, "Skip verify server certification")
 	fs.BoolVar(&conf.Debug, "debug", false, "Enable debug mode")
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	conf.Username = os.Getenv("UNIFI_USERNAME")
 	conf.Password = os.Getenv("UNIFI_PASSWORD")
 
 	server, err := newProxy(conf)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	signalCh := make(chan os.Signal)
@@ -249,7 +249,7 @@ func uniFiProxy(args []string) error {
 	log.Printf("Start listening: %s", server.Addr)
 	err = server.ListenAndServe()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -257,11 +257,11 @@ func uniFiProxy(args []string) error {
 func newProxy(conf *Config) (*http.Server, error) {
 	u, err := url.Parse(conf.Upstream)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	buf, err := ioutil.ReadFile(conf.PublicKeyFile)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	block, _ := pem.Decode(buf)
 	if block.Type != "PUBLIC KEY" {
@@ -269,7 +269,7 @@ func newProxy(conf *Config) (*http.Server, error) {
 	}
 	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	rp := httputil.NewSingleHostReverseProxy(u)
@@ -278,7 +278,7 @@ func newProxy(conf *Config) (*http.Server, error) {
 	}
 	roundTripper, err := NewInjectAuthRoundTripper(u, conf.Username, conf.Password, http.DefaultTransport)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	rp.Transport = roundTripper
 	s := &http.Server{

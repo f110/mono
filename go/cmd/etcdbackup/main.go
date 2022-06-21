@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/etcd"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -37,23 +37,23 @@ func etcdBackup(args []string) error {
 	fs.StringVar(&credentialFile, "credential", "", "Credential file")
 	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	loc, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	var caCert *x509.Certificate
 	if caCertPath != "" {
 		c, err := etcd.ReadCACertificate(caCertPath)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		caCert = c
 	}
@@ -61,29 +61,29 @@ func etcdBackup(args []string) error {
 	if certPath != "" && keyPath != "" {
 		c, err := tls.LoadX509KeyPair(certPath, keyPath)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		clientCert = c
 	}
 
 	credential, err := ioutil.ReadFile(credentialFile)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	bu, err := etcd.NewBackup(context.Background(), endpoints, caCert, clientCert)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	compressed, err := bu.Compressed()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	up := storage.NewGCS(credential, bucket, storage.GCSOptions{})
 	path := filepath.Join(pathPrefix, bu.Time().In(loc).Format("2006-01-02_15.zlib"))
 	if err := up.PutReader(context.Background(), path, compressed); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

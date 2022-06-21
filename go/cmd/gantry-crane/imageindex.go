@@ -7,7 +7,7 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/types"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type partialImageIndex struct {
@@ -116,15 +116,15 @@ func (i *imageIndex) IndexManifest() (*v1.IndexManifest, error) {
 	for _, v := range i.images {
 		mt, err := v.MediaType()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		s, err := v.Size()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		d, err := v.Digest()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		desc = append(desc, v1.Descriptor{
@@ -149,12 +149,12 @@ func (i *imageIndex) IndexManifest() (*v1.IndexManifest, error) {
 func (i *imageIndex) RawManifest() ([]byte, error) {
 	m, err := i.IndexManifest()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(m); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return buf.Bytes(), nil
@@ -164,7 +164,7 @@ func (i *imageIndex) Image(hash v1.Hash) (v1.Image, error) {
 	for _, v := range i.images {
 		d, err := v.Digest()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if d.String() == hash.String() {
 			return v, nil

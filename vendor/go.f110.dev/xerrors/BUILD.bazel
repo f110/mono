@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xerrors",
+    srcs = ["error.go"],
+    importmap = "go.f110.dev/mono/vendor/go.f110.dev/xerrors",
+    importpath = "go.f110.dev/xerrors",
+    visibility = ["//visibility:public"],
+)

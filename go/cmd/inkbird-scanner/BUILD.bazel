@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/pkg/ble/inkbird",
         "//go/pkg/logger",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
 

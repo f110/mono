@@ -42,12 +42,13 @@ require (
 	github.com/sourcegraph/go-diff v0.5.1
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/yuin/goldmark v1.4.11
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
 	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
+	go.f110.dev/xerrors v0.0.0-20220615122804-4953369c72a6
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.org/x/mod v0.5.1
@@ -61,7 +62,7 @@ require (
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0

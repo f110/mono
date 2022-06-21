@@ -9,7 +9,7 @@ go_library(
         "//vendor/github.com/google/zoekt/query",
         "//vendor/github.com/google/zoekt/shards",
         "//vendor/github.com/spf13/pflag",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
 

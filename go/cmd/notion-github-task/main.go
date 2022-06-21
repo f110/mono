@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"golang.org/x/net/context"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/notion"
@@ -49,19 +50,19 @@ func (g *githubTaskCommand) RequiredFlags() []string {
 
 func (g *githubTaskCommand) Execute() error {
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if g.githubToken == "" && os.Getenv("GITHUB_TOKEN") != "" {
 		g.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
 	if g.githubToken == "" && !(g.appId > 0 && g.installationId > 0 && g.privateKeyFile != "") {
-		return xerrors.Errorf("Personal access token or GitHub App is required")
+		return errors.New("personal access token or GitHub App is required")
 	}
 	if g.notionToken == "" && os.Getenv("NOTION_TOKEN") != "" {
 		g.notionToken = os.Getenv("NOTION_TOKEN")
 	}
 	if g.notionToken == "" {
-		return xerrors.Errorf("--notion-token or NOTION_TOKEN is required")
+		return errors.New("--notion-token or NOTION_TOKEN is required")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -71,20 +72,20 @@ func (g *githubTaskCommand) Execute() error {
 	if g.githubToken != "" {
 		t, err := notion.NewGitHubTaskWithToken(g.githubToken, g.notionToken, g.configFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		ghTask = t
 	} else {
 		t, err := notion.NewGitHubTask(g.appId, g.installationId, g.privateKeyFile, g.notionToken, g.configFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		ghTask = t
 	}
 
 	if g.oneshot {
 		if err := ghTask.Execute(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}
@@ -108,7 +109,7 @@ func notionGitHubTask(args []string) error {
 	logger.Flags(cmd.Flags())
 	for _, v := range githubTask.RequiredFlags() {
 		if err := cmd.MarkFlagRequired(v); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 

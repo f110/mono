@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/ble/inkbird"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -19,7 +19,7 @@ func inkbirdScanner() error {
 	logger.Init()
 
 	if err := inkbird.Scan(ctx); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }

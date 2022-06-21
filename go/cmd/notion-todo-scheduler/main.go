@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/notion"
@@ -39,23 +40,23 @@ func (s *toDoSchedulerCommand) Flags(fs *pflag.FlagSet) {
 
 func (s *toDoSchedulerCommand) Execute() error {
 	if err := logger.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
 	if s.token == "" {
-		return xerrors.Errorf("--token or NOTION_TOKEN is required")
+		return errors.New("--token or NOTION_TOKEN is required")
 	}
 
 	scheduler, err := notion.NewToDoScheduler(s.conf, s.token)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if s.oneshot {
 		if err := scheduler.Execute(s.dryRun); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}
@@ -64,7 +65,7 @@ func (s *toDoSchedulerCommand) Execute() error {
 	defer cancel()
 
 	if err := scheduler.Start(s.schedule); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	<-ctx.Done()
 

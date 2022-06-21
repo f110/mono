@@ -12,7 +12,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/gomodule"
@@ -74,25 +74,25 @@ func (c *goModuleProxyCommand) RequiredFlags() []string {
 
 func (c *goModuleProxyCommand) Init() error {
 	if err := c.githubClientFactory.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	conf, err := gomodule.ReadConfig(c.ConfigPath)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	c.config = conf
 
 	uu, err := url.Parse(c.UpstreamURL)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	c.upstream = uu
 
 	if c.CABundleFile != "" {
 		b, err := os.ReadFile(c.CABundleFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		c.caBundle = b
 	}
@@ -104,13 +104,13 @@ func (c *goModuleProxyCommand) Init() error {
 			s := strings.SplitN(v, "=", 2)
 			server, err := client.NewServerWithMetaProtocol(context.Background(), s[0], "tcp", s[1])
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			servers = append(servers, server)
 		}
 		cachePool, err := client.NewSinglePool(servers...)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey, c.StorageCACertFile)
 	} else {
@@ -136,7 +136,7 @@ func (c *goModuleProxyCommand) Run() error {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			logger.Log.Info("Shutting down the server")
 			if err := server.Stop(ctx); err != nil {
-				stopErrCh <- xerrors.Errorf(": %w", err)
+				stopErrCh <- xerrors.WithStack(err)
 			}
 			cancel()
 			logger.Log.Info("Server shutdown successfully")
@@ -148,7 +148,7 @@ func (c *goModuleProxyCommand) Run() error {
 
 	go func() {
 		if err := server.Start(); err != nil {
-			startErrCh <- xerrors.Errorf(": %w", err)
+			startErrCh <- xerrors.WithStack(err)
 		}
 	}()
 
@@ -156,11 +156,11 @@ func (c *goModuleProxyCommand) Run() error {
 	select {
 	case err, ok := <-startErrCh:
 		if ok {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	case err, ok := <-stopErrCh:
 		if ok {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 

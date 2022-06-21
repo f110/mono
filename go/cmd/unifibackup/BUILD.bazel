@@ -10,8 +10,8 @@ go_library(
         "//vendor/cloud.google.com/go/storage",
         "//vendor/github.com/fsnotify/fsnotify",
         "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
-        "//vendor/golang.org/x/xerrors",
         "//vendor/google.golang.org/api/option",
     ],
 )
