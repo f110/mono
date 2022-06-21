@@ -10,7 +10,7 @@ go_library(
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/golang.org/x/oauth2",
-        "//vendor/golang.org/x/xerrors",
     ],
 )

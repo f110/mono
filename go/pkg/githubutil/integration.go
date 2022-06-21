@@ -12,8 +12,8 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 )
 
 type GitHubClientFactory struct {
@@ -55,22 +55,22 @@ func (g *GitHubClientFactory) Init() error {
 
 	if g.requiredCredential {
 		if g.Token == "" && !(g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "") {
-			return xerrors.Errorf("any a credential for GitHub is mandatory. GitHub app or Personal access token is required")
+			return xerrors.New("any a credential for GitHub is mandatory. GitHub app or Personal access token is required")
 		}
 	}
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	rootCAs, err := x509.SystemCertPool()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if g.CACertFile != "" {
 		b, err := os.ReadFile(g.CACertFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if ok := rootCAs.AppendCertsFromPEM(b); !ok {
-			return xerrors.Errorf("failed to read a certificate")
+			return xerrors.New("failed to read a certificate")
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: rootCAs}
 	}
@@ -80,7 +80,7 @@ func (g *GitHubClientFactory) Init() error {
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
 		tr, err := ghinstallation.NewKeyFromFile(transport, g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		httpClient = &http.Client{Transport: tr}
 		appTransport = tr
@@ -99,7 +99,7 @@ func (g *GitHubClientFactory) Init() error {
 	if g.GitHubAPIEndpoint != "" {
 		u, err := url.Parse(g.GitHubAPIEndpoint)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		restClient.BaseURL = u
 	}
