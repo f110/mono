@@ -3,8 +3,8 @@ package logger
 import (
 	"bytes"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"k8s.io/klog/v2"
 )
 
@@ -20,7 +20,7 @@ func (w *levelWriter) Write(p []byte) (int, error) {
 
 func OverrideKlog() error {
 	if err := Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	l := Log.Named("klog").WithOptions(zap.AddCallerSkip(5))
