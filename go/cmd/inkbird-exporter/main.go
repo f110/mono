@@ -31,7 +31,7 @@ func inkbirdExporter(args []string) error {
 		return err
 	}
 	if len(ids) == 0 {
-		return errors.New("--id is required")
+		return xerrors.New("--id is required")
 	}
 	for i := range ids {
 		ids[i] = strings.ToLower(ids[i])

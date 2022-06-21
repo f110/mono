@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -56,13 +55,13 @@ func (g *githubTaskCommand) Execute() error {
 		g.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
 	if g.githubToken == "" && !(g.appId > 0 && g.installationId > 0 && g.privateKeyFile != "") {
-		return errors.New("personal access token or GitHub App is required")
+		return xerrors.New("personal access token or GitHub App is required")
 	}
 	if g.notionToken == "" && os.Getenv("NOTION_TOKEN") != "" {
 		g.notionToken = os.Getenv("NOTION_TOKEN")
 	}
 	if g.notionToken == "" {
-		return errors.New("--notion-token or NOTION_TOKEN is required")
+		return xerrors.New("--notion-token or NOTION_TOKEN is required")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

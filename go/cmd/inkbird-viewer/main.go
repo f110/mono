@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,7 +15,7 @@ import (
 
 func inkbirdViewer(args []string) error {
 	if len(args) < 2 {
-		return errors.New("Usage: inkbird-viewer id")
+		return xerrors.New("Usage: inkbird-viewer id")
 	}
 	id := args[1]
 

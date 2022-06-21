@@ -10,6 +10,7 @@ go_library(
         "//vendor/github.com/bazelbuild/buildtools/build",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
 

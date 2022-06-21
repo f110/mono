@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/types"
@@ -171,7 +170,7 @@ func (i *imageIndex) Image(hash v1.Hash) (v1.Image, error) {
 		}
 	}
 
-	return nil, errors.New("image not found")
+	return nil, xerrors.New("image not found")
 }
 
 func (i *imageIndex) ImageIndex(hash v1.Hash) (v1.ImageIndex, error) {

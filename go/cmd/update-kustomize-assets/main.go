@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,6 +19,7 @@ import (
 	"github.com/bazelbuild/buildtools/build"
 	"github.com/google/go-github/v32/github"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 )
 
 const (
@@ -81,7 +81,7 @@ func getRelease(ver string) (*release, error) {
 		}
 		filename := filepath.Base(u.Path)
 		if checksum, ok := checksums[filename]; !ok {
-			return nil, fmt.Errorf("unknown filename: %s", filename)
+			return nil, xerrors.Newf("unknown filename: %s", filename)
 		} else {
 			v.SHA256 = checksum
 		}
@@ -138,15 +138,15 @@ func updateKustomizeAssets(args []string) error {
 		return err
 	}
 	if len(f.Stmt) != 1 {
-		return errors.New("the file has to include dict assign only")
+		return xerrors.New("the file has to include dict assign only")
 	}
 	a, ok := f.Stmt[0].(*build.AssignExpr)
 	if !ok {
-		return fmt.Errorf("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String())
+		return xerrors.Newf("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String())
 	}
 	dict, ok := a.RHS.(*build.DictExpr)
 	if !ok {
-		return fmt.Errorf("RHS is not dict: %s", reflect.TypeOf(a.RHS).String())
+		return xerrors.Newf("RHS is not dict: %s", reflect.TypeOf(a.RHS).String())
 	}
 	exists := make(map[string]*build.KeyValueExpr)
 	for _, v := range dict.List {

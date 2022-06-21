@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -183,7 +182,7 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org strin
 			fmt.Fprintf(os.Stderr, "Found %d issues\n", query.Search.IssueCount)
 		}
 		if query.Search.IssueCount > 1000 {
-			return nil, errors.New("result over than 1000. GitHub API can not fetch results over than 1000")
+			return nil, xerrors.New("result over than 1000. GitHub API can not fetch results over than 1000")
 		}
 		tickets = append(tickets, query.Search.Nodes...)
 

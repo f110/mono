@@ -48,7 +48,7 @@ require (
 	go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
 	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
-	go.f110.dev/xerrors v0.0.0-20220615122804-4953369c72a6
+	go.f110.dev/xerrors v0.0.0-20220621111449-e3c0d0321ba1
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.org/x/mod v0.5.1

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -187,7 +186,7 @@ func (c *Cluster) Create(clusterVersion string, workerNum int) error {
 
 	imageHash, ok := KindNodeImageHash[clusterVersion]
 	if !ok {
-		return fmt.Errorf("not supported k8s version: %s", clusterVersion)
+		return xerrors.Newf("not supported k8s version: %s", clusterVersion)
 	}
 	image := fmt.Sprintf("kindest/node:%s@sha256:%s", clusterVersion, imageHash)
 
@@ -503,7 +502,7 @@ func Poll(ctx context.Context, interval, timeout time.Duration, fn func(ctx cont
 				return nil
 			}
 		case <-limit:
-			return errors.New("timed out")
+			return xerrors.New("timed out")
 		case <-ctx.Done():
 			return ctx.Err()
 		}

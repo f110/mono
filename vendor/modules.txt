@@ -905,7 +905,7 @@ go.f110.dev/protoc-ddl/internal/migrate
 go.f110.dev/protoc-ddl/internal/schema
 go.f110.dev/protoc-ddl/mock
 go.f110.dev/protoc-ddl/probe
-# go.f110.dev/xerrors v0.0.0-20220615122804-4953369c72a6
+# go.f110.dev/xerrors v0.0.0-20220621111449-e3c0d0321ba1
 ## explicit; go 1.18
 go.f110.dev/xerrors
 # go.opencensus.io v0.23.0

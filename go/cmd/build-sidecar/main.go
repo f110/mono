@@ -38,7 +38,7 @@ func buildSidecar(args []string) error {
 	case ActionClone:
 		return git.Clone(appId, installationId, privateKeyFile, workingDir, repo, commit)
 	default:
-		return fmt.Errorf("unknown action: %v", action)
+		return xerrors.Newf("unknown action: %v", action)
 	}
 }
 

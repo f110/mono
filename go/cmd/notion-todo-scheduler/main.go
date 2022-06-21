@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -46,7 +45,7 @@ func (s *toDoSchedulerCommand) Execute() error {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
 	if s.token == "" {
-		return errors.New("--token or NOTION_TOKEN is required")
+		return xerrors.New("--token or NOTION_TOKEN is required")
 	}
 
 	scheduler, err := notion.NewToDoScheduler(s.conf, s.token)
