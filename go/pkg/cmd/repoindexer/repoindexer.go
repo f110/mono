@@ -2,7 +2,6 @@ package repoindexer
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -123,12 +122,12 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 
 func (r *IndexerCommand) ValidateFlags() error {
 	if r.ConfigFile == "" {
-		return errors.New("--config is required")
+		return xerrors.New("--config is required")
 	}
 
 	if r.MinIOEndpoint != "" {
 		if r.MinIOName != "" || r.MinIONamespace != "" {
-			return errors.New("--minio-endpoint and --minio-name both specified")
+			return xerrors.New("--minio-endpoint and --minio-name both specified")
 		}
 	}
 
