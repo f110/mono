@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type Operator int
@@ -67,12 +67,12 @@ func ParseRegexpLiteral(v string) (*RegexpLiteral, error) {
 		}
 	}
 	if len(v)-1 != replaceEnd {
-		return nil, xerrors.Errorf("invalid regexp: %s", v)
+		return nil, xerrors.Newf("invalid regexp: %s", v)
 	}
 
 	matchRe, err := regexp.Compile(v[matchStart:matchEnd])
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	replace := strings.ReplaceAll(v[replaceStart:replaceEnd], "\\/", "/")
 

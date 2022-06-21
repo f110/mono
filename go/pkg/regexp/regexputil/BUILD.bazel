@@ -5,7 +5,7 @@ go_library(
     srcs = ["literal.go"],
     importpath = "go.f110.dev/mono/go/pkg/regexp/regexputil",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/golang.org/x/xerrors"],
+    deps = ["//vendor/go.f110.dev/xerrors"],
 )
 
 go_test(
