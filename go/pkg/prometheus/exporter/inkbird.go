@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/ble/inkbird"
 )
@@ -24,7 +24,7 @@ type InkBird struct {
 func NewInkBirdExporter(ctx context.Context, ids []string) (*InkBird, error) {
 	err := inkbird.DefaultThermometerDataProvider.Start(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	id := make(map[string]struct{})
