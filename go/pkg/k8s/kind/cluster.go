@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -351,7 +350,7 @@ func readImageManifest(image *ContainerImageFile) error {
 			return err
 		}
 		if len(manifests) == 0 {
-			return errors.New("manifest.json is empty")
+			return xerrors.New("manifest.json is empty")
 		}
 		image.repoTags = manifests[0].RepoTags[0]
 	}
@@ -373,7 +372,7 @@ func portForward(ctx context.Context, cfg *rest.Config, client kubernetes.Interf
 		}
 	}
 	if pod == nil {
-		return nil, errors.New("all pods are not running yet")
+		return nil, xerrors.New("all pods are not running yet")
 	}
 
 	req := client.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
@@ -399,7 +398,7 @@ func portForward(ctx context.Context, cfg *rest.Config, client kubernetes.Interf
 	select {
 	case <-readyCh:
 	case <-time.After(5 * time.Second):
-		return nil, errors.New("timed out")
+		return nil, xerrors.New("timed out")
 	}
 
 	return pf, nil
