@@ -18,11 +18,11 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/semver"
 	"golang.org/x/tools/go/vcs"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -89,12 +89,12 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 		logger.Log.Debug("Not found RepoRoot in cache", zap.String("importPath", importPath))
 		r, err := vcs.RepoRootForImportPath(importPath, false)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		repoRoot = r
 		if f.cache != nil {
 			if err := f.cache.SetRepoRoot(importPath, r.Root, r.Repo); err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 		}
 	}
@@ -116,10 +116,10 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 		dir := filepath.Join(f.baseDir, repoRoot.Root)
 		mr, err := NewModuleRoot(ctx, repoRoot.Root, vcsRepo, f.cache, dir)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if err := mr.SetCache(); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		moduleRoot = mr
@@ -139,11 +139,11 @@ func NewModuleRoot(ctx context.Context, rootPath string, vcsRepo *VCS, cache *Mo
 	}
 	modules, err := moduleRoot.findModules(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	moduleRoot.Modules = modules
 	if err := moduleRoot.findVersions(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return moduleRoot, nil
@@ -176,7 +176,7 @@ func (m *ModuleRoot) SetCache() error {
 	}
 
 	if err := m.cache.SetModuleRoot(m); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -195,7 +195,7 @@ func (m *ModuleRoot) FindModule(module string) *Module {
 func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
 	mod := m.FindModule(module)
 	if mod == nil {
-		return xerrors.Errorf("%s is not found", module)
+		return xerrors.Newf("%s is not found", module)
 	}
 	isTag := false
 	versionTag := ""
@@ -220,24 +220,24 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 				logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
 				return nil
 			} else if err != CacheMiss {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 
 		if err := m.vcs.Sync(ctx, m.dir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		tagRef, err := m.vcs.gitRepo.Tag(versionTag)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		tag, err := m.vcs.gitRepo.TagObject(tagRef.Hash())
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		tree, err := tag.Tree()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		buf := new(bytes.Buffer)
@@ -253,7 +253,7 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 				break
 			}
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			if te.Mode&filemode.Dir == filemode.Dir {
@@ -275,22 +275,22 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 			p := strings.TrimPrefix(name, filepath.Dir(mod.ModFilePath))
 			fileWriter, err := zipWriter.Create(filepath.Join(modDir, p))
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			blob, err := m.vcs.gitRepo.BlobObject(te.Hash)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			fileReader, err := blob.Reader()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			_, err = io.Copy(fileWriter, fileReader)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := fileReader.Close(); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 
@@ -308,37 +308,37 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 
 				fileWriter, err := zipWriter.Create(filepath.Join(modDir, "LICENSE"))
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				f, err := tree.File(filepath.Join(d, "LICENSE"))
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				fileReader, err := f.Reader()
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				_, err = io.Copy(fileWriter, fileReader)
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if err := fileReader.Close(); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				break
 			}
 		}
 
 		if err := zipWriter.Close(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		data := buf.Bytes()
 		if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if m.cache != nil {
 			if err := m.cache.SaveArchive(ctx, module, version, data); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 		return nil
@@ -349,20 +349,20 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 
 func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
 	if err := m.vcs.Sync(ctx, m.dir); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	ref, err := m.vcs.gitRepo.Head()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	commit, err := m.vcs.gitRepo.CommitObject(ref.Hash())
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	walker := object.NewTreeWalker(tree, true, make(map[plumbing.Hash]bool))
 	var mods []*Module
@@ -372,7 +372,7 @@ func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
 			break
 		}
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		// Skip directory
 		if te.Mode&filemode.Dir == filemode.Dir {
@@ -384,22 +384,22 @@ func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
 		}
 		blob, err := m.vcs.gitRepo.BlobObject(te.Hash)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		r, err := blob.Reader()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		buf, err := io.ReadAll(r)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if err := r.Close(); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		modFile, err := modfile.Parse(te.Name, buf, nil)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		mods = append(mods, &Module{
 			Path:        modFile.Module.Mod.Path,
@@ -421,7 +421,7 @@ func (m *ModuleRoot) findVersions() error {
 
 	tags, err := m.vcs.gitRepo.Tags()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	var versions []string
 	for {
@@ -483,19 +483,19 @@ func (m *Module) LatestVersion(ctx context.Context) (*ModuleVersion, error) {
 		return m.Versions[0], nil
 	}
 	if err := m.vcs.Sync(ctx, m.dir); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	defaultBranch, err := m.vcs.defaultBranch(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	ref, err := m.vcs.gitRepo.Reference(plumbing.NewBranchReferenceName(defaultBranch), true)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	commit, err := m.vcs.gitRepo.CommitObject(ref.Hash())
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return &ModuleVersion{
@@ -521,45 +521,45 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		}
 
 		if err := m.vcs.Sync(context.Background(), m.dir); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		tagRef, err := m.vcs.gitRepo.Tag(version)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		tag, err := m.vcs.gitRepo.TagObject(tagRef.Hash())
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		tree, err := tag.Tree()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		f, err := tree.File(m.ModFilePath)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		r, err := f.Reader()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		buf, err := io.ReadAll(r)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if err := r.Close(); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if m.cache != nil {
 			if err := m.cache.SetModFile(m.Path, version, buf); err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 		}
 
 		return buf, nil
 	}
 
-	return nil, xerrors.Errorf("%s is not found", version)
+	return nil, xerrors.Newf("%s is not found", version)
 }
 
 func (m *Module) setVersions(vers []*ModuleVersion) {
@@ -621,14 +621,14 @@ func (vcs *VCS) Sync(ctx context.Context, dir string) error {
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if err := vcs.Create(ctx, dir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else {
 		if err := vcs.Download(ctx, dir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -644,7 +644,7 @@ func (vcs *VCS) Create(ctx context.Context, dir string) error {
 		CABundle:   vcs.caBundle,
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	vcs.gitRepo = repo
 
@@ -653,7 +653,7 @@ func (vcs *VCS) Create(ctx context.Context, dir string) error {
 
 func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	if err := vcs.Open(dir); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{
 		RemoteName: "origin",
@@ -661,7 +661,7 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 		CABundle:   vcs.caBundle},
 	)
 	if err != nil && err != git.NoErrAlreadyUpToDate {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -682,7 +682,7 @@ func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
 func (vcs *VCS) Open(dir string) error {
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	vcs.gitRepo = repo
 
@@ -696,11 +696,11 @@ func (vcs *VCS) defaultBranch(ctx context.Context) (string, error) {
 
 	remote, err := vcs.gitRepo.Remote("origin")
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	refs, err := remote.ListContext(ctx, &git.ListOptions{})
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	var headRef *plumbing.Reference
 	for _, ref := range refs {

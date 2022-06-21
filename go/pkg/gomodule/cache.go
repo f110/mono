@@ -12,8 +12,8 @@ import (
 
 	"go.f110.dev/go-memcached/client"
 	merrors "go.f110.dev/go-memcached/errors"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
@@ -42,25 +42,25 @@ func (c *ModuleCache) Invalidate(module string) error {
 	if errors.Is(err, merrors.ItemNotFound) {
 		return nil
 	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	moduleRoot, err := c.GetModuleRoot(repoRoot, "", nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	key := fmt.Sprintf("moduleRoot/%s", moduleRoot.RootPath)
 	logger.Log.Debug("Delete cache", zap.String("key", key))
 	if err := c.cachePool.Delete(key); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := c.deleteCachedModuleRoot(moduleRoot.RootPath); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, mod := range moduleRoot.Modules {
 		cachedModFiles, err := c.CachedModFiles(mod.Path)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		for _, v := range cachedModFiles {
 			key = fmt.Sprintf("goModFile/%s/%s", mod.Path, v)
@@ -70,12 +70,12 @@ func (c *ModuleCache) Invalidate(module string) error {
 			}
 		}
 		if err := c.cachePool.Delete(fmt.Sprintf("goModFiles/%s", mod.Path)); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		cachedModInfos, err := c.CachedModInfos(mod.Path)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		for _, v := range cachedModInfos {
 			key = fmt.Sprintf("modInfo/%s/%s", mod.Path, v)
@@ -85,7 +85,7 @@ func (c *ModuleCache) Invalidate(module string) error {
 			}
 		}
 		if err := c.cachePool.Delete(fmt.Sprintf("goModInfos/%s", mod.Path)); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -94,7 +94,7 @@ func (c *ModuleCache) Invalidate(module string) error {
 
 func (c *ModuleCache) FlushAll() error {
 	if err := c.cachePool.Flush(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -108,11 +108,11 @@ type repoRootCache struct {
 func (c *ModuleCache) GetRepoRoot(importPath string) (repoRoot string, repoURL string, err error) {
 	item, err := c.cachePool.Get(fmt.Sprintf("repoRoot/%s", importPath))
 	if err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return "", "", xerrors.WithStack(err)
 	}
 	var root repoRootCache
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&root); err != nil {
-		return "", "", xerrors.Errorf(": %w", err)
+		return "", "", xerrors.WithStack(err)
 	}
 
 	return root.Root, root.RepoURL, nil
@@ -121,7 +121,7 @@ func (c *ModuleCache) GetRepoRoot(importPath string) (repoRoot string, repoURL s
 func (c *ModuleCache) SetRepoRoot(importPath, repoRoot, repoURL string) error {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(&repoRootCache{Root: repoRoot, RepoURL: repoURL}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	err := c.cachePool.Set(&client.Item{
 		Key:        fmt.Sprintf("repoRoot/%s", importPath),
@@ -129,7 +129,7 @@ func (c *ModuleCache) SetRepoRoot(importPath, repoRoot, repoURL string) error {
 		Expiration: 60 * 60 * 24 * 7, // 1 week
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -142,11 +142,11 @@ type moduleRootCache struct {
 func (c *ModuleCache) GetModuleRoot(repoRoot string, baseDir string, vcs *VCS) (*ModuleRoot, error) {
 	item, err := c.cachePool.Get(fmt.Sprintf("moduleRoot/%s", repoRoot))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	cachedItem := moduleRootCache{}
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedItem); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	moduleRoot := NewModuleRootFromCache(repoRoot, cachedItem.Modules, c, vcs, filepath.Join(baseDir, repoRoot))
@@ -159,7 +159,7 @@ func (c *ModuleCache) SetModuleRoot(moduleRoot *ModuleRoot) error {
 	}
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(item); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	err := c.cachePool.Set(&client.Item{
 		Key:        fmt.Sprintf("moduleRoot/%s", moduleRoot.RootPath),
@@ -167,10 +167,10 @@ func (c *ModuleCache) SetModuleRoot(moduleRoot *ModuleRoot) error {
 		Expiration: 60 * 60 * 24 * 7}, // 1 week
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := c.addCachedModuleRoot(moduleRoot.RootPath); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -179,7 +179,7 @@ func (c *ModuleCache) SetModuleRoot(moduleRoot *ModuleRoot) error {
 func (c *ModuleCache) GetModFile(module, version string) ([]byte, error) {
 	item, err := c.cachePool.Get(fmt.Sprintf("goModFile/%s/%s", module, version))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return item.Value, nil
@@ -192,10 +192,10 @@ func (c *ModuleCache) SetModFile(module, version string, modFile []byte) error {
 		Expiration: 60 * 60 * 24 * 7, // 1 week
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := c.addCachedModFile(module, version); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -208,12 +208,12 @@ func (c *ModuleCache) GetModInfo(module, sha string) (time.Time, error) {
 
 	item, err := c.cachePool.Get(fmt.Sprintf("modInfo/%s/%s", module, sha[:12]))
 	if err != nil {
-		return time.Time{}, xerrors.Errorf(": %w", err)
+		return time.Time{}, xerrors.WithStack(err)
 	}
 
 	t, err := time.Parse(time.RFC3339, string(item.Value))
 	if err != nil {
-		return time.Time{}, xerrors.Errorf(": %w", err)
+		return time.Time{}, xerrors.WithStack(err)
 	}
 
 	return t, nil
@@ -226,10 +226,10 @@ func (c *ModuleCache) SetModInfo(module, sha string, t time.Time) error {
 		Expiration: 60 * 60 * 24 * 3, // 3 days
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := c.addCachedModInfo(module, sha[:12]); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -240,12 +240,12 @@ func (c *ModuleCache) CachedModuleRoots() ([]*ModuleRoot, error) {
 	if err != nil && errors.Is(err, merrors.ItemNotFound) {
 		return nil, nil
 	} else if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var cachedModuleRoot []string
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModuleRoot); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var moduleRoots []*ModuleRoot
@@ -254,7 +254,7 @@ func (c *ModuleCache) CachedModuleRoots() ([]*ModuleRoot, error) {
 		if err != nil && errors.Is(err, merrors.ItemNotFound) {
 			continue
 		} else if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		moduleRoots = append(moduleRoots, moduleRoot)
 	}
@@ -267,12 +267,12 @@ func (c *ModuleCache) CachedModFiles(module string) ([]string, error) {
 	if errors.Is(err, merrors.ItemNotFound) {
 		return nil, nil
 	} else if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var cachedModFiles []string
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModFiles); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return cachedModFiles, nil
@@ -283,12 +283,12 @@ func (c *ModuleCache) CachedModInfos(module string) ([]string, error) {
 	if errors.Is(err, merrors.ItemNotFound) {
 		return nil, nil
 	} else if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var cachedModInfos []string
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModInfos); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return cachedModInfos, nil
@@ -324,7 +324,7 @@ func (c *ModuleCache) SaveArchive(ctx context.Context, module, version string, d
 
 	err := c.objectStorage.Put(ctx, fmt.Sprintf("%s@%s.zip", module, version), data)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -333,7 +333,7 @@ func (c *ModuleCache) SaveArchive(ctx context.Context, module, version string, d
 func (c *ModuleCache) getCachedModuleRoot() (*client.Item, error) {
 	item, err := c.cachePool.Get("cachedModuleRoot")
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return item, nil
@@ -342,13 +342,13 @@ func (c *ModuleCache) getCachedModuleRoot() (*client.Item, error) {
 func (c *ModuleCache) addCachedModuleRoot(repoRoot string) error {
 	item, err := c.getCachedModuleRoot()
 	if err != nil && !errors.Is(err, merrors.ItemNotFound) {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	var cachedModules []string
 	if item != nil {
 		if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModules); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		found := false
 		for _, v := range cachedModules {
@@ -371,11 +371,11 @@ func (c *ModuleCache) addCachedModuleRoot(repoRoot string) error {
 	cachedModules = append(cachedModules, repoRoot)
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(cachedModules); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	item.Value = buf.Bytes()
 	if err := c.cachePool.Set(item); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -384,7 +384,7 @@ func (c *ModuleCache) addCachedModuleRoot(repoRoot string) error {
 func (c *ModuleCache) deleteCachedModuleRoot(moduleRoot string) error {
 	item, err := c.getCachedModuleRoot()
 	if err != nil && !errors.Is(err, merrors.ItemNotFound) {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if item == nil {
 		return nil
@@ -392,7 +392,7 @@ func (c *ModuleCache) deleteCachedModuleRoot(moduleRoot string) error {
 
 	var cachedModules []string
 	if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModules); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	found := false
 	for i, v := range cachedModules {
@@ -409,11 +409,11 @@ func (c *ModuleCache) deleteCachedModuleRoot(moduleRoot string) error {
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(cachedModules); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	item.Value = buf.Bytes()
 	if err := c.cachePool.Set(item); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -422,7 +422,7 @@ func (c *ModuleCache) deleteCachedModuleRoot(moduleRoot string) error {
 func (c *ModuleCache) getCachedModFile(module string) (*client.Item, error) {
 	item, err := c.cachePool.Get(fmt.Sprintf("goModFiles/%s", module))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return item, nil
@@ -431,13 +431,13 @@ func (c *ModuleCache) getCachedModFile(module string) (*client.Item, error) {
 func (c *ModuleCache) addCachedModFile(module, version string) error {
 	item, err := c.getCachedModFile(module)
 	if err != nil && !errors.Is(err, merrors.ItemNotFound) {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	var cachedModFile []string
 	if item != nil {
 		if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModFile); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else {
 		item = &client.Item{
@@ -449,11 +449,11 @@ func (c *ModuleCache) addCachedModFile(module, version string) error {
 	cachedModFile = append(cachedModFile, version)
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(cachedModFile); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	item.Value = buf.Bytes()
 	if err := c.cachePool.Set(item); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -462,7 +462,7 @@ func (c *ModuleCache) addCachedModFile(module, version string) error {
 func (c *ModuleCache) getCachedModInfo(module string) (*client.Item, error) {
 	item, err := c.cachePool.Get(fmt.Sprintf("goModInfos/%s", module))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return item, nil
@@ -471,13 +471,13 @@ func (c *ModuleCache) getCachedModInfo(module string) (*client.Item, error) {
 func (c *ModuleCache) addCachedModInfo(module, version string) error {
 	item, err := c.getCachedModInfo(module)
 	if err != nil && !errors.Is(err, merrors.ItemNotFound) {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	var cachedModInfo []string
 	if item != nil {
 		if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModInfo); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else {
 		item = &client.Item{
@@ -489,11 +489,11 @@ func (c *ModuleCache) addCachedModInfo(module, version string) error {
 	cachedModInfo = append(cachedModInfo, version)
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(cachedModInfo); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	item.Value = buf.Bytes()
 	if err := c.cachePool.Set(item); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/google/go-github/v32/github"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/mod/module"
 	modzip "golang.org/x/mod/zip"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -88,11 +88,11 @@ type Info struct {
 func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, error) {
 	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return nil, xerrors.Errorf("%s is not found", module)
+		return nil, xerrors.Newf("%s is not found", module)
 	}
 
 	var versions []string
@@ -105,12 +105,12 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 func (m *ModuleProxy) GetInfo(ctx context.Context, moduleName, version string) (Info, error) {
 	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return Info{}, xerrors.Errorf("%s is not found", moduleName)
+		return Info{}, xerrors.Newf("%s is not found", moduleName)
 	}
 	for _, v := range mod.Versions {
 		if version == v.Semver {
@@ -122,34 +122,34 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, moduleName, version string) (
 		if module.IsPseudoVersion(version) {
 			pseudoVersion, err := ParsePseudoVersion(version)
 			if err != nil {
-				return Info{}, xerrors.Errorf(": %w", err)
+				return Info{}, xerrors.WithStack(err)
 			}
 			i, err := m.ghProxy.GetInfoRevision(ctx, moduleRoot, moduleName, pseudoVersion)
 			if err != nil {
-				return i, xerrors.Errorf(": %w", err)
+				return i, xerrors.WithStack(err)
 			}
 			return i, nil
 		} else {
 			i, err := m.ghProxy.GetInfo(ctx, moduleRoot, moduleName, version)
 			if err != nil {
-				return i, xerrors.Errorf(": %w", err)
+				return i, xerrors.WithStack(err)
 			}
 			return i, nil
 		}
 	}
 
-	return Info{}, xerrors.Errorf("%s is not found in %s", version, moduleName)
+	return Info{}, xerrors.Newf("%s is not found in %s", version, moduleName)
 }
 
 func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info, error) {
 	moduleRoot, err := m.fetcher.Get(ctx, module, m.GetConfig(module))
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return Info{}, xerrors.Errorf("%s is not found", module)
+		return Info{}, xerrors.Newf("%s is not found", module)
 	}
 	if len(mod.Versions) > 0 {
 		modVer := mod.Versions[len(mod.Versions)-1]
@@ -158,7 +158,7 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 
 	moduleVer, err := mod.LatestVersion(ctx)
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 	return Info{Version: moduleVer.Version, Time: moduleVer.Time}, nil
 }
@@ -166,12 +166,12 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) (string, error) {
 	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 
 	goMod := moduleRoot.FindModule(moduleName)
 	if goMod == nil {
-		return "", xerrors.Errorf("%s is not found", version)
+		return "", xerrors.Newf("%s is not found", version)
 	}
 
 	goModFile, err := goMod.ModuleFile(version)
@@ -182,29 +182,29 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) 
 		if module.IsPseudoVersion(version) {
 			pseudoVersion, err := ParsePseudoVersion(version)
 			if err != nil {
-				return "", xerrors.Errorf(": %w", err)
+				return "", xerrors.WithStack(err)
 			}
 			modFile, err := m.ghProxy.GetGoModRevision(ctx, moduleRoot, goMod, pseudoVersion)
 			if err != nil {
-				return "", xerrors.Errorf(": %w", err)
+				return "", xerrors.WithStack(err)
 			}
 			return modFile, nil
 		} else {
 			modFile, err := m.ghProxy.GetGoMod(ctx, moduleRoot, goMod, version)
 			if err != nil {
-				return "", xerrors.Errorf(": %w", err)
+				return "", xerrors.WithStack(err)
 			}
 			return modFile, nil
 		}
 	}
 
-	return "", xerrors.Errorf("%s is not found", version)
+	return "", xerrors.Newf("%s is not found", version)
 }
 
 func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, version string) error {
 	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	err = moduleRoot.Archive(ctx, w, moduleName, version)
@@ -214,23 +214,23 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, versi
 	if moduleRoot.IsGitHub {
 		if module.IsPseudoVersion(version) {
 			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		} else {
 			if err := m.ghProxy.Archive(ctx, w, moduleRoot, moduleName, version); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 		return nil
 	}
 
-	return xerrors.Errorf("%s is not found", version)
+	return xerrors.Newf("%s is not found", version)
 }
 
 func (m *ModuleProxy) CachedModuleRoots() ([]*ModuleRoot, error) {
 	moduleRoots, err := m.cache.CachedModuleRoots()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return moduleRoots, nil
@@ -238,7 +238,7 @@ func (m *ModuleProxy) CachedModuleRoots() ([]*ModuleRoot, error) {
 
 func (m *ModuleProxy) InvalidateCache(module string) error {
 	if err := m.cache.Invalidate(module); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -246,7 +246,7 @@ func (m *ModuleProxy) InvalidateCache(module string) error {
 
 func (m *ModuleProxy) FlushAllCache() error {
 	if err := m.cache.FlushAll(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -287,13 +287,13 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 	logger.Log.Debug("Get commit information from GitHub API", zap.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
 	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version)
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 
 	t := commit.Commit.Author.GetDate()
@@ -314,13 +314,13 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 	logger.Log.Debug("Get commit information of pseudo-version from GitHub API")
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
 	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
 	if err != nil {
-		return Info{}, xerrors.Errorf(": %w", err)
+		return Info{}, xerrors.WithStack(err)
 	}
 
 	t := commit.Commit.Committer.GetDate()
@@ -344,7 +344,7 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 	logger.Log.Debug("Get the module file from GitHub API", zap.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
@@ -358,14 +358,14 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 		},
 	)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	if contents == nil {
-		return "", xerrors.Errorf("%s is not found", version)
+		return "", xerrors.Newf("%s is not found", version)
 	}
 	buf, err := contents.GetContent()
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	if err := g.cache.SetModFile(module.Path, version, []byte(buf)); err != nil {
 		logger.Log.Warn("Failed set the module fie", zap.Error(err))
@@ -387,7 +387,7 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 	logger.Log.Debug("Get the module file of pseudo-version from GitHub API", zap.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
@@ -401,14 +401,14 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 		},
 	)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	if contents == nil {
-		return "", xerrors.Errorf("%s is not found", pseudoVersion)
+		return "", xerrors.Newf("%s is not found", pseudoVersion)
 	}
 	buf, err := contents.GetContent()
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 
 	if err := g.cache.SetModFile(module.Path, pseudoVersion.Revision, []byte(buf)); err != nil {
@@ -428,36 +428,36 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Errorf("%s module is not found", moduleName)
+		return xerrors.Newf("%s module is not found", moduleName)
 	}
 
 	logger.Log.Debug("Make the archive file through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
 	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, moduleName, version, commit)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
 	if err := archiver.Pack(ctx, buf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	data := buf.Bytes()
 	if err := g.cache.SaveArchive(ctx, moduleName, version, data); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -466,23 +466,23 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Errorf("%s module is not found", moduleName)
+		return xerrors.Newf("%s module is not found", moduleName)
 	}
 
 	logger.Log.Debug("Make the archive file for pseudo-version through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
 	pseudoVersion, err := ParsePseudoVersion(version)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
 	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := g.cache.Archive(ctx, moduleName, commit.GetSHA()[:12], w); err == nil {
 		logger.Log.Debug("An archive file of module was found in cache",
@@ -494,19 +494,19 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 
 	archiver, err := NewModuleArchiveFromGitHub(g.githubClient, moduleRoot, moduleName, version, commit)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
 	if err := archiver.Pack(ctx, buf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	data := buf.Bytes()
 	if err := g.cache.SaveArchive(ctx, moduleName, commit.GetSHA()[:12], data); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -524,7 +524,7 @@ type ModuleArchive struct {
 func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot, module, version string, commit *github.RepositoryCommit) (*ModuleArchive, error) {
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return nil, xerrors.Errorf("%s module is not found", module)
+		return nil, xerrors.Newf("%s module is not found", module)
 	}
 
 	return &ModuleArchive{ModuleRoot: moduleRoot, Module: mod, Version: version, Revision: commit.GetSHA(), ghClient: ghClient}, nil
@@ -534,7 +534,7 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 	logger.Log.Debug("Pack the archive file through GitHub API", zap.String("url", a.ModuleRoot.RepositoryURL))
 	u, err := url.Parse(a.ModuleRoot.RepositoryURL)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
@@ -549,34 +549,34 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 		true,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, archiveUrl.String(), nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	tmpFile, err := os.CreateTemp("", "")
 	if err != nil {
 		res.Body.Close()
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer os.Remove(tmpFile.Name())
 	_, err = io.Copy(tmpFile, res.Body)
 	res.Body.Close()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := tmpFile.Close(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	fr, err := zip.OpenReader(tmpFile.Name())
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	var files []modzip.File
@@ -587,7 +587,7 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 		files = append(files, newModFile(v))
 	}
 	if err := modzip.Create(w, module.Version{Path: a.Module.Path, Version: a.Version}, files); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -614,12 +614,12 @@ func ParsePseudoVersion(version string) (*PseudoVersion, error) {
 	}
 	_, err := time.Parse("20060102150405", ts)
 	if err != nil {
-		return nil, xerrors.Errorf("invalid timestamp in pseudo-version: %w", err)
+		return nil, xerrors.WithMessage(err, "invalid timestamp in pseudo-version")
 	}
 	if len(rev) < 12 {
-		return nil, xerrors.Errorf("invalid revision: revision is shorter")
+		return nil, xerrors.New("invalid revision: revision is shorter")
 	} else if len(rev) > 12 {
-		return nil, xerrors.Errorf("invalid revision: revision is longer")
+		return nil, xerrors.New("invalid revision: revision is longer")
 	}
 
 	return &PseudoVersion{BaseVersion: ver, Timestamp: ts, Revision: rev}, nil
