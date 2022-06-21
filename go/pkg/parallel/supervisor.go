@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -67,7 +67,7 @@ func (s *Supervisor) Shutdown(ctx context.Context) error {
 	s.mu.Lock()
 	if s.state != supervisorStateRunning {
 		s.mu.Unlock()
-		return xerrors.Errorf("parallel: Terminating or terminated")
+		return xerrors.New("parallel: Terminating or terminated")
 	}
 	s.state = supervisorStateShuttingDown
 	s.mu.Unlock()
