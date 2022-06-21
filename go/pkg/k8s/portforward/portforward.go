@@ -2,7 +2,6 @@ package portforward
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -83,7 +82,7 @@ func PortForward(
 	case err := <-errCh:
 		return nil, 0, xerrors.WithStack(err)
 	case <-time.After(5 * time.Second):
-		return nil, 0, errors.New("timed out")
+		return nil, 0, xerrors.New("timed out")
 	}
 
 	ports, err := pf.GetPorts()
