@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type fsmStateFunc struct {
@@ -37,7 +37,7 @@ func DotOutput(w io.Writer, dir string) error {
 	for _, pkg := range pkgs {
 		for _, f := range pkg.Files {
 			if err := d.walk(f); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	}
