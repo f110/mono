@@ -7,7 +7,7 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type Clipboard struct {
@@ -35,7 +35,7 @@ func New() (*Clipboard, error) {
 func (c *Clipboard) Set(v string) error {
 	ssoc := xproto.SetSelectionOwnerChecked(c.x, c.win, c.clipboardAtom, xproto.TimeCurrentTime)
 	if err := ssoc.Check(); err != nil {
-		return xerrors.Errorf("setting clipboard: %w", err)
+		return xerrors.WithMessage(err, "setting clipboard")
 	}
 	c.text = v
 
@@ -49,19 +49,19 @@ func new() (*Clipboard, error) {
 	}
 	x, err := xgb.NewConnDisplay(xServer)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	win, err := xproto.NewWindowId(x)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	setup := xproto.Setup(x)
 	s := setup.DefaultScreen(x)
 	err = xproto.CreateWindowChecked(x, s.RootDepth, win, s.Root, 100, 100, 1, 1, 0, xproto.WindowClassInputOutput, s.RootVisual, 0, []uint32{}).Check()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	clipboardAtom := internAtom(x, "CLIPBOARD")

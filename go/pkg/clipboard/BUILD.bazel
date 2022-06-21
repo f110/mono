@@ -8,6 +8,6 @@ go_library(
     deps = [
         "//vendor/github.com/BurntSushi/xgb",
         "//vendor/github.com/BurntSushi/xgb/xproto",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
