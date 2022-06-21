@@ -11,7 +11,7 @@ go_library(
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/pkg/storage",
         "//vendor/github.com/hashicorp/consul/api",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/k8s.io/apimachinery/pkg/api/errors",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/runtime",

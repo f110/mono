@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -96,12 +96,12 @@ func (b *BackupController) ObjectToKeys(obj interface{}) []string {
 func (b *BackupController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	backup, err := b.backupLister.Get(namespace, name)
 	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if apierrors.IsNotFound(err) {
 		return nil, nil
@@ -113,12 +113,12 @@ func (b *BackupController) GetObject(key string) (runtime.Object, error) {
 func (b *BackupController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	backup, ok := obj.(*consulv1alpha1.ConsulBackup)
 	if !ok {
-		return nil, xerrors.Errorf("unexpected object type: %T", obj)
+		return nil, xerrors.Newf("unexpected object type: %T", obj)
 	}
 
 	updatedBackup, err := b.client.UpdateConsulBackup(ctx, backup, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return updatedBackup, nil
@@ -143,22 +143,22 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 		},
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf, _, err := consulClient.Snapshot().Save(&api.QueryOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	history := &consulv1alpha1.ConsulBackupStatusHistory{
 		ExecuteTime: &now,
 	}
 	if err := b.storeBackupFile(ctx, backup, history, buf, 0, now); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := b.rotateBackupFiles(ctx, backup); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if history.Succeeded {
@@ -183,7 +183,7 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 	if !reflect.DeepEqual(backup.Status, updated.Status) {
 		_, err := b.client.UpdateStatusConsulBackup(ctx, updated, metav1.UpdateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -208,19 +208,19 @@ func (b *BackupController) storeBackupFile(
 
 		accessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.AccessKeyID.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		accessKey, ok := accessKeySecret.Data[spec.Credential.AccessKeyID.Key]
 		if !ok {
-			return xerrors.Errorf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Newf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		secretAccessKey, ok := secretAccessKeySecret.Data[spec.Credential.SecretAccessKey.Key]
 		if !ok {
-			return xerrors.Errorf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Newf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 
 		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
@@ -233,7 +233,7 @@ func (b *BackupController) storeBackupFile(
 		}
 		history.Path = filepath.Join(path, filename)
 		if err := mc.PutReader(ctx, filepath.Join(path, filename), data); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		history.Succeeded = true
@@ -242,18 +242,18 @@ func (b *BackupController) storeBackupFile(
 		spec := backup.Spec.Storage.GCS
 		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
+			return xerrors.Newf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
 		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
 		history.Path = filepath.Join(spec.Path, filename)
 		if err := gcsClient.PutReader(ctx, filepath.Join(spec.Path, filename), data); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		history.Succeeded = true
@@ -275,19 +275,19 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 
 		accessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.AccessKeyID.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		accessKey, ok := accessKeySecret.Data[spec.Credential.AccessKeyID.Key]
 		if !ok {
-			return xerrors.Errorf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Newf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		secretAccessKey, ok := secretAccessKeySecret.Data[spec.Credential.SecretAccessKey.Key]
 		if !ok {
-			return xerrors.Errorf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Newf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
 		}
 
 		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
@@ -296,7 +296,7 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 
 		files, err := mc.List(ctx, spec.Path)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if len(files) <= backup.Spec.MaxBackups {
 			return nil
@@ -310,24 +310,24 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		purgeTargets := filenames[backup.Spec.MaxBackups:]
 		for _, v := range purgeTargets {
 			if err := mc.Delete(ctx, v); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	case backup.Spec.Storage.GCS != nil:
 		spec := backup.Spec.Storage.GCS
 		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Errorf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
+			return xerrors.Newf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
 		}
 
 		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
 		files, err := gcsClient.List(ctx, spec.Path)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if len(files) <= backup.Spec.MaxBackups {
 			return nil
@@ -338,7 +338,7 @@ func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consul
 		purgeTargets := files[backup.Spec.MaxBackups:]
 		for _, v := range purgeTargets {
 			if err := gcsClient.Delete(ctx, v.Name); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	}
