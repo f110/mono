@@ -3,7 +3,6 @@ package harbor
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -73,7 +72,7 @@ func (h *Harbor) ListProjects() ([]Project, error) {
 	case http.StatusOK:
 		// Succeeded
 	case http.StatusUnauthorized:
-		return nil, errors.New("unauthorized")
+		return nil, xerrors.New("unauthorized")
 	default:
 		return nil, fmt.Errorf("harbor: list project. unknown status code: %d", res.StatusCode)
 	}
@@ -152,7 +151,7 @@ func (h *Harbor) DeleteProject(projectId int) error {
 	case http.StatusBadRequest:
 		return fmt.Errorf("invalid project id: %d", projectId)
 	case http.StatusNotFound:
-		return errors.New("project not found")
+		return xerrors.New("project not found")
 	default:
 		return fmt.Errorf("harbor: delete project. unknown status code: %d", res.StatusCode)
 	}
@@ -178,7 +177,7 @@ func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccount
 	case http.StatusCreated:
 	// Succeeded
 	case http.StatusUnauthorized:
-		return nil, errors.New("create robot account: not logged in")
+		return nil, xerrors.New("create robot account: not logged in")
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -210,7 +209,7 @@ func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 	case http.StatusOK:
 	// Succeeded
 	case http.StatusNotFound:
-		return errors.New("robot account is not found")
+		return xerrors.New("robot account is not found")
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -237,9 +236,9 @@ func (h *Harbor) GetRobotAccounts(projectId int) ([]*RobotAccount, error) {
 	case http.StatusOK:
 		// Succeeded
 	case http.StatusBadRequest, http.StatusNotFound:
-		return nil, errors.New("get robot accounts: project id is not found or invalid")
+		return nil, xerrors.New("get robot accounts: project id is not found or invalid")
 	case http.StatusUnauthorized:
-		return nil, errors.New("get robot accounts: not logged in")
+		return nil, xerrors.New("get robot accounts: not logged in")
 	default:
 		return nil, fmt.Errorf("get robot accounts: unknown status code: %d", res.StatusCode)
 	}
