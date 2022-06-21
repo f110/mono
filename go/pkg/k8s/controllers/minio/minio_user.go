@@ -2,7 +2,6 @@ package minio
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -156,7 +155,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 		return nil
 	}
 	if len(instances) > 1 {
-		return errors.New("found some instances")
+		return xerrors.New("found some instances")
 	}
 
 	for _, instance := range instances {
@@ -385,7 +384,7 @@ func (c *UserController) portForward(
 		}
 	}
 	if pod == nil {
-		return nil, errors.New("all pods are not running yet")
+		return nil, xerrors.New("all pods are not running yet")
 	}
 
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
@@ -421,7 +420,7 @@ func (c *UserController) portForward(
 	select {
 	case <-readyCh:
 	case <-time.After(5 * time.Second):
-		return nil, errors.New("timed out")
+		return nil, xerrors.New("timed out")
 	}
 
 	return pf, nil

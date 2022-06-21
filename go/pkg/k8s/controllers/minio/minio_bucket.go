@@ -3,7 +3,6 @@ package minio
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -324,7 +323,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 		return bucketStateUpdateStatus, nil
 	}
 	if len(instances) > 1 {
-		return fsm.Error(errors.New("found some instances"))
+		return fsm.Error(xerrors.New("found some instances"))
 	}
 	r.MinIOInstances = instances
 
@@ -518,7 +517,7 @@ func (r *BucketReconciler) portForward(
 		}
 	}
 	if pod == nil {
-		return nil, errors.New("all pods are not running yet")
+		return nil, xerrors.New("all pods are not running yet")
 	}
 
 	req := r.CoreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
@@ -554,7 +553,7 @@ func (r *BucketReconciler) portForward(
 	select {
 	case <-readyCh:
 	case <-time.After(5 * time.Second):
-		return nil, errors.New("timed out")
+		return nil, xerrors.New("timed out")
 	}
 
 	return pf, nil
