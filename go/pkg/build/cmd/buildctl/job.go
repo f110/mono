@@ -27,7 +27,7 @@ func triggerTask(endpoint string, jobId int, via string) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed trigger job: %s", res.Status)
+		return xerrors.Newf("failed trigger job: %s", res.Status)
 	}
 	return nil
 }
