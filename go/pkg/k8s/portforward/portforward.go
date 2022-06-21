@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -30,7 +30,7 @@ func PortForward(
 	var pods []*corev1.Pod
 	if podLister != nil {
 		if p, err := podLister.List(selector); err != nil {
-			return nil, 0, xerrors.Errorf(": %w", err)
+			return nil, 0, xerrors.WithStack(err)
 		} else {
 			pods = p
 		}
@@ -38,7 +38,7 @@ func PortForward(
 		selector := labels.SelectorFromSet(service.Spec.Selector)
 		p, err := client.CoreV1().Pods(service.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 		if err != nil {
-			return nil, 0, xerrors.Errorf(": %w", err)
+			return nil, 0, xerrors.WithStack(err)
 		}
 		pp := make([]*corev1.Pod, len(p.Items))
 		for i := range p.Items {
@@ -61,14 +61,14 @@ func PortForward(
 	req := client.CoreV1().RESTClient().Post().Resource("pods").Namespace(targetPod.Namespace).Name(targetPod.Name).SubResource("portforward")
 	transport, upgrader, err := spdy.RoundTripperFor(config)
 	if err != nil {
-		return nil, 0, xerrors.Errorf(": %w", err)
+		return nil, 0, xerrors.WithStack(err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
 	readyCh := make(chan struct{})
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
 	if err != nil {
-		return nil, 0, xerrors.Errorf(": %w", err)
+		return nil, 0, xerrors.WithStack(err)
 	}
 	errCh := make(chan error)
 	go func() {
@@ -81,14 +81,14 @@ func PortForward(
 	select {
 	case <-readyCh:
 	case err := <-errCh:
-		return nil, 0, xerrors.Errorf(": %w", err)
+		return nil, 0, xerrors.WithStack(err)
 	case <-time.After(5 * time.Second):
 		return nil, 0, errors.New("timed out")
 	}
 
 	ports, err := pf.GetPorts()
 	if err != nil {
-		return nil, 0, xerrors.Errorf(": %w", err)
+		return nil, 0, xerrors.WithStack(err)
 	}
 
 	return pf, ports[0].Local, nil
