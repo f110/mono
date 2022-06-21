@@ -5,13 +5,13 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 func ReadCACertificate(path string) (*x509.Certificate, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var data []byte
 	for {
@@ -26,12 +26,12 @@ func ReadCACertificate(path string) (*x509.Certificate, error) {
 		}
 	}
 	if data == nil {
-		return nil, xerrors.Errorf("internal: %s not contain certificate", path)
+		return nil, xerrors.Newf("internal: %s not contain certificate", path)
 	}
 
 	cer, err := x509.ParseCertificate(data)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return cer, nil
 }

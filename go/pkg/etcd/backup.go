@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/client/v3"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -25,7 +25,7 @@ type Backup struct {
 func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate, cert tls.Certificate) (*Backup, error) {
 	systemPool, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if caCert != nil {
 		systemPool.AddCert(caCert)
@@ -44,11 +44,11 @@ func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate
 	}
 	etcdClient, err := clientv3.New(cfg)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	data, err := etcdClient.Snapshot(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	logger.Log.Info("Succeeded snapshot")
@@ -66,13 +66,13 @@ func (b *Backup) Compressed() (io.Reader, error) {
 	w := zlib.NewWriter(writeBuffer)
 	buf, err := ioutil.ReadAll(b.data)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	b.data.Close()
 	b.data = nil
 
 	if n, err := w.Write(buf); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	} else if n != len(buf) {
 		return nil, io.ErrShortWrite
 	}

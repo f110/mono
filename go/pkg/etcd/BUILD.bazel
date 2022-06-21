@@ -11,6 +11,6 @@ go_library(
     deps = [
         "//go/pkg/logger",
         "//vendor/go.etcd.io/etcd/client/v3:client",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
