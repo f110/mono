@@ -48,7 +48,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/yuin/goldmark",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/codes",
         "//vendor/google.golang.org/grpc/status",
