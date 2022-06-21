@@ -1,10 +1,11 @@
 package fsm
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
+
+	"go.f110.dev/xerrors"
 )
 
 type State int
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	ErrUnrecognizedState = errors.New("unrecognized state")
+	ErrUnrecognizedState = xerrors.New("unrecognized state")
 )
 
 type FSM struct {
