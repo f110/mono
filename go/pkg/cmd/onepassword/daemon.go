@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
@@ -42,18 +42,18 @@ type vault struct {
 func NewVault() (*vault, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	confDir := filepath.Join(homeDir, ConfigDirName)
 	if _, err := os.Stat(confDir); os.IsNotExist(err) {
 		if err := os.Mkdir(confDir, 0700); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 	}
 
 	cb, err := clipboard.New()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	v := &vault{
@@ -61,7 +61,7 @@ func NewVault() (*vault, error) {
 		clipboard:      cb,
 	}
 	if err := v.readConfig(v.configFilePath); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if v.config.VaultPath != "" {
 		v.reader = opvault.NewReader(v.config.VaultPath)
@@ -69,7 +69,7 @@ func NewVault() (*vault, error) {
 
 	listener, err := net.Listen("unix", filepath.Join(confDir, socketFilename))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	v.server = grpc.NewServer()
 	RegisterOnePasswordServer(v.server, v)
@@ -91,7 +91,7 @@ func (v *vault) readConfig(path string) error {
 	}
 	conf := &vaultConfig{}
 	if err := yaml.Unmarshal(buf, conf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	v.config = conf
 
@@ -101,10 +101,10 @@ func (v *vault) readConfig(path string) error {
 func (v *vault) persistConfig() error {
 	buf, err := yaml.Marshal(v.config)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := ioutil.WriteFile(v.configFilePath, buf, 0644); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -206,7 +206,7 @@ func (v *vault) Get(_ context.Context, req *RequestGet) (*ResponseGet, error) {
 	}
 	k, ok := items[req.Uuid]
 	if !ok {
-		return nil, xerrors.Errorf("item not found: %s", req.Uuid)
+		return nil, xerrors.Newf("item not found: %s", req.Uuid)
 	}
 	item, err := toItem(k)
 	if err != nil {
@@ -231,7 +231,7 @@ func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*Resp
 	}
 	k, ok := items[req.Uuid]
 	if !ok {
-		return nil, xerrors.Errorf("item not found: %s", req.Uuid)
+		return nil, xerrors.Newf("item not found: %s", req.Uuid)
 	}
 
 	password := ""
@@ -250,11 +250,11 @@ func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*Resp
 func toItem(in *opvault.Item) (*Item, error) {
 	createdAt, err := ptypes.TimestampProto(in.Created)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	updatedAt, err := ptypes.TimestampProto(in.Updated)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	password := ""
 	if in.Detail != nil {
@@ -309,12 +309,12 @@ func NewDaemon() *daemon {
 func (d *daemon) init() (fsm.State, error) {
 	v, err := NewVault()
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	d.vault = v
 
 	if _, err := syscall.Setsid(); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 
 	return stateStart, nil

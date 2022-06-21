@@ -19,8 +19,8 @@ import (
 	"github.com/peco/peco"
 	"github.com/shirou/gopsutil/v3/process"
 	"github.com/spf13/cobra"
+	"go.f110.dev/xerrors"
 	"golang.org/x/term"
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/pkg/logger"
@@ -46,21 +46,21 @@ func Main() error {
 	if err != nil && err == ErrDaemonNotExist {
 		cmd := exec.Command(os.Args[0], "daemon")
 		if err := cmd.Run(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		time.Sleep(100 * time.Millisecond)
 		client, err = dial()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	info, err := client.Info(ctx, &RequestInfo{})
 	cancel()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if info.Locked {
 		cmd := exec.Command(os.Args[0], "unlock")
@@ -68,7 +68,7 @@ func Main() error {
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 		if err := cmd.Run(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -76,7 +76,7 @@ func Main() error {
 	list, err := client.List(ctx, &RequestList{})
 	cancel()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	sort.Slice(list.Items, func(i, j int) bool {
 		return list.Items[i].Title < list.Items[j].Title
@@ -94,7 +94,7 @@ func Main() error {
 
 	selected, err := selector.CurrentLineBuffer().LineAt(selector.Location().LineNumber())
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	s := strings.SplitN(selected.DisplayString(), " ", 2)
@@ -102,7 +102,7 @@ func Main() error {
 	_, err = client.SetClipboard(ctx, &RequestSetClipboard{Uuid: s[0]})
 	cancel()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -117,7 +117,7 @@ func Daemon(rootCmd *cobra.Command) {
 			if !foreground {
 				homeDir, err := os.UserHomeDir()
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				socketFile := filepath.Join(homeDir, ConfigDirName, socketFilename)
 				if _, err := os.Stat(socketFile); !os.IsNotExist(err) {
@@ -134,11 +134,11 @@ func Daemon(rootCmd *cobra.Command) {
 				if !daemonize {
 					cmd := exec.Command(os.Args[0], "daemon", "--daemonize")
 					if err := cmd.Start(); err != nil {
-						return xerrors.Errorf(": %w", err)
+						return xerrors.WithStack(err)
 					}
 					pid := cmd.Process.Pid
 					if err := ioutil.WriteFile(filepath.Join(homeDir, ConfigDirName, "1p.pid"), []byte(strconv.Itoa(pid)), 0644); err != nil {
-						return xerrors.Errorf(": %w", err)
+						return xerrors.WithStack(err)
 					}
 					return nil
 				}
@@ -164,7 +164,7 @@ func Shutdown(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			pidFile := filepath.Join(homeDir, ConfigDirName, "1p.pid")
 			if _, err := os.Stat(pidFile); os.IsNotExist(err) {
@@ -173,19 +173,19 @@ func Shutdown(rootCmd *cobra.Command) {
 
 			buf, err := ioutil.ReadFile(pidFile)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			pid, err := strconv.Atoi(string(buf))
 			if err != nil {
 				os.Remove(pidFile)
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if exists, err := process.PidExists(int32(pid)); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			} else if exists {
 				proc, err := os.FindProcess(pid)
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				proc.Signal(syscall.SIGTERM)
 			} else {
@@ -209,13 +209,13 @@ func UseVault(rootCmd *cobra.Command) {
 
 			client, err := dial()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			_, err = client.UseVault(ctx, &RequestUseVault{Path: path})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			return nil
@@ -232,13 +232,13 @@ func Info(rootCmd *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := dial()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			res, err := client.Info(ctx, &RequestInfo{})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			fmt.Fprintf(os.Stdout, "Current opvault is %s\n", res.Path)
 			if res.Locked {
@@ -260,13 +260,13 @@ func Unlock(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			client, err := dial()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			info, err := client.Info(ctx, &RequestInfo{})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if !info.Locked {
 				fmt.Fprintln(os.Stdout, "Already unlocked")
@@ -276,14 +276,14 @@ func Unlock(rootCmd *cobra.Command) {
 			fmt.Printf("Master passowrd: ")
 			masterPassword, err := term.ReadPassword(syscall.Stdin)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			fmt.Println()
 			ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
 			res, err := client.Unlock(ctx, &RequestUnlock{MasterPassword: masterPassword})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if !res.Success {
 				return xerrors.New("unlock failed.")
@@ -303,13 +303,13 @@ func List(rootCmd *cobra.Command) {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			client, err := dial()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			info, err := client.Info(ctx, &RequestInfo{})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if info.Locked {
 				return xerrors.New("Vault is locked")
@@ -319,7 +319,7 @@ func List(rootCmd *cobra.Command) {
 			list, err := client.List(ctx, &RequestList{})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			sort.Slice(list.Items, func(i, j int) bool {
 				return list.Items[i].Title < list.Items[j].Title
@@ -345,13 +345,13 @@ func Get(rootCmd *cobra.Command) {
 			}
 			client, err := dial()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			info, err := client.Info(ctx, &RequestInfo{})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if info.Locked {
 				return xerrors.New("Vault is locked")
@@ -361,7 +361,7 @@ func Get(rootCmd *cobra.Command) {
 			res, err := client.Get(ctx, &RequestGet{Uuid: args[0]})
 			cancel()
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			fmt.Printf("UUID: %s\n", res.Item.Uuid)
 			fmt.Printf("Title: %s\n", res.Item.Title)
@@ -379,12 +379,12 @@ var ErrDaemonNotExist = xerrors.New("daemon not exist")
 func dial() (OnePasswordClient, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	confDir := filepath.Join(homeDir, ConfigDirName)
 	if _, err := os.Stat(confDir); os.IsNotExist(err) {
 		if err := os.Mkdir(confDir, 0700); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 	}
 	pidFile := filepath.Join(homeDir, ConfigDirName, "1p.pid")
@@ -394,7 +394,7 @@ func dial() (OnePasswordClient, error) {
 
 	buf, err := ioutil.ReadFile(pidFile)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	pid, err := strconv.Atoi(string(buf))
 	if err != nil {
@@ -419,7 +419,7 @@ func dial() (OnePasswordClient, error) {
 	)
 	cancel()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return NewOnePasswordClient(conn), nil
 }

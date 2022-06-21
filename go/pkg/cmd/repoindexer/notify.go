@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/nats-io/nats.go"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -22,22 +22,22 @@ type Notify struct {
 func NewNotify(u, streamName, subject string) (*Notify, error) {
 	nc, err := nats.Connect(u, nats.RetryOnFailedConnect(true))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	js, err := nc.JetStream(nats.PublishAsyncMaxPending(256))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	n := &Notify{subject: fmt.Sprintf("%s.%s", streamName, subject), js: js}
 
 	_, err = js.StreamInfo(streamName)
 	if errors.Is(err, nats.ErrStreamNotFound) {
 		if err = n.setupStream(streamName); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 	}
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return n, nil
@@ -48,12 +48,12 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 	binary.LittleEndian.PutUint64(buf, manifest.ExecutionKey)
 	pubAck, err := n.js.PublishAsync(n.subject, buf)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	select {
 	case <-pubAck.Ok():
 	case err := <-pubAck.Err():
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -82,7 +82,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 		}
 	})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	subscription := &Subscription{ch: ch, done: make(chan struct{})}
 	go func() {
@@ -104,7 +104,7 @@ func (n *Notify) setupStream(streamName string) error {
 		Retention: nats.InterestPolicy,
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

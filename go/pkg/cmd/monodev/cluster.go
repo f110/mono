@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,27 +52,27 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 	kubeConfig = getKubeConfig(kubeConfig)
 	kindCluster, err := kind.NewCluster(kindPath, name, kubeConfig)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	exists, err := kindCluster.IsExist(context.Background(), name)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if !exists {
 		if err := kindCluster.Create(context.Background(), k8sVersion, workerNum); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else {
 		log.Print("Cluster is already exist. Only apply the manifest.")
 	}
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 3*time.Minute)
 	if err := kindCluster.WaitReady(ctx); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	cancelFunc()
 	if err := kindCluster.Apply(manifestFile, "monodev"); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -82,16 +82,16 @@ func deleteCluster(kindPath, name, kubeConfig string) error {
 	kubeConfig = getKubeConfig(kubeConfig)
 	kindCluster, err := kind.NewCluster(kindPath, name, kubeConfig)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if exists, err := kindCluster.IsExist(context.Background(), name); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	} else if !exists {
 		return nil
 	}
 
 	if err := kindCluster.Delete(context.Background()); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -100,10 +100,10 @@ func deleteCluster(kindPath, name, kubeConfig string) error {
 func runContainer(kindPath, name, manifestFile, namespace string, images []string) error {
 	kindCluster, err := kind.NewCluster(kindPath, name, "")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if exist, err := kindCluster.IsExist(context.Background(), name); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	} else if !exist {
 		return xerrors.New("Cluster does not exist. You create the cluster first.")
 	}
@@ -128,22 +128,22 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 			Repository: imageRepo,
 			Tag:        imageTag,
 		}); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
 	if err := kindCluster.Apply(manifestFile, "monodev"); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	client, err := kindCluster.Clientset()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	f, err := os.Open(manifestFile)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	d := yaml.NewYAMLOrJSONDecoder(f, 4096)
 	restartPods := make([]*corev1.Pod, 0)
@@ -153,7 +153,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 			if err == io.EOF {
 				break
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if len(ext.Raw) == 0 {
 			continue
@@ -161,7 +161,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 
 		obj, _, err := unstructured.UnstructuredJSONScheme.Decode(ext.Raw, nil, nil)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		v, ok := obj.(metav1.Type)
 		if !ok {
@@ -172,7 +172,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 			deploy := &appsv1.Deployment{}
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, deploy)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			ns := deploy.Namespace
@@ -181,19 +181,19 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 			}
 			deploy, err = client.AppsV1().Deployments(ns).Get(context.Background(), deploy.Name, metav1.GetOptions{})
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			childPods, err := childPodsOfDeployment(context.Background(), client, deploy)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			restartPods = append(restartPods, childPods...)
 		case "StatefulSet":
 			statefulSet := &appsv1.StatefulSet{}
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, statefulSet)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			ns := statefulSet.Namespace
@@ -202,12 +202,12 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 			}
 			statefulSet, err = client.AppsV1().StatefulSets(ns).Get(context.Background(), statefulSet.Name, metav1.GetOptions{})
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			childPods, err := childPodsOfStatefulSet(context.Background(), client, statefulSet)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			restartPods = append(restartPods, childPods...)
 		}
@@ -217,7 +217,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 		log.Printf("Delete Pod.%s", v.Name)
 		err := client.CoreV1().Pods(namespace).Delete(context.Background(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -227,11 +227,11 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 func childPodsOfDeployment(ctx context.Context, client kubernetes.Interface, deploy *appsv1.Deployment) ([]*corev1.Pod, error) {
 	replicaSets, err := client.AppsV1().ReplicaSets(deploy.Namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	pods, err := client.CoreV1().Pods(deploy.Namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	childPods := make(map[types.UID]*corev1.Pod)
@@ -258,7 +258,7 @@ func childPodsOfDeployment(ctx context.Context, client kubernetes.Interface, dep
 func childPodsOfStatefulSet(ctx context.Context, client kubernetes.Interface, stateful *appsv1.StatefulSet) ([]*corev1.Pod, error) {
 	pods, err := client.CoreV1().Pods(stateful.Namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	childPods := make([]*corev1.Pod, 0)

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/fsm"
 )
@@ -17,7 +17,7 @@ func init() {
 func graph(dir string) error {
 	buf := new(bytes.Buffer)
 	if err := fsm.DotOutput(buf, dir); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf.WriteTo(os.Stdout)
 	return nil

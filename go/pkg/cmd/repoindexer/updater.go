@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
@@ -94,7 +94,7 @@ func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 func (u *UpdaterCommand) Run() error {
 	s, err := u.newStorageClient()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	u.manifestManager = NewManifestManager(s)
 	u.indexManager = NewObjectStorageIndexManager(s, u.Bucket)
@@ -104,16 +104,16 @@ func (u *UpdaterCommand) Run() error {
 
 	if u.HTTPAddr != "" {
 		if err := u.webEndpoint(u.HTTPAddr, ch); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if u.Subscribe {
 		if err := u.subscribe(context.Background(), ch); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else {
 		if err := u.downloadLatest(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -174,20 +174,20 @@ func (u *UpdaterCommand) downloadLatest() error {
 	logger.Log.Debug("Download latest the manifest")
 	manifest, err := u.manifestManager.GetLatest(context.Background())
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Info("Found manifest", zap.Uint64("key", manifest.ExecutionKey))
 
 	if err := u.indexManager.Download(context.Background(), u.IndexDir, manifest); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	f, err := os.Create(filepath.Join(u.IndexDir, "manifest.json"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := json.NewEncoder(f).Encode(manifest); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -196,11 +196,11 @@ func (u *UpdaterCommand) downloadLatest() error {
 func (u *UpdaterCommand) subscribe(ctx context.Context, ch chan Manifest) error {
 	n, err := NewNotify(u.NATSURL, u.NATSStreamName, u.NATSSubject)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	sub, err := n.Subscribe(u.manifestManager)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	u.ready = true
@@ -228,16 +228,16 @@ func (u *UpdaterCommand) downloadIndex(m Manifest) error {
 		return nil
 	}
 	if err := u.indexManager.Download(context.Background(), u.IndexDir, m); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	u.latestKey = m.ExecutionKey
 
 	f, err := os.Create(filepath.Join(u.IndexDir, "manifest.json"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := json.NewEncoder(f).Encode(m); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	u.ready = true
@@ -250,7 +250,7 @@ func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
 		if u.MinIOName != "" && u.MinIONamespace != "" {
 			k8sClient, k8sConf, err := newK8sClient(u.Dev)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, u.MinIOSecretAccessKey, u.Dev)
 		} else if u.MinIOEndpoint != "" {

@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -27,7 +27,7 @@ func (g *IndexGC) GC(ctx context.Context) error {
 	manifestManager := NewManifestManager(g.backend)
 	manifests, err := manifestManager.GetAll(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	used := make([]string, 0)
@@ -35,7 +35,7 @@ func (g *IndexGC) GC(ctx context.Context) error {
 		for _, v := range m.Indexes {
 			u, err := url.Parse(v)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			used = append(used, u.Path[1:])
 		}
@@ -43,7 +43,7 @@ func (g *IndexGC) GC(ctx context.Context) error {
 
 	allFiles, err := g.backend.List(ctx, "")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	unusedFiles := make([]string, 0)
@@ -66,7 +66,7 @@ GC:
 	for _, v := range unusedFiles {
 		logger.Log.Debug("Delete file", zap.String("name", v))
 		if err := g.backend.Delete(ctx, v); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -48,11 +48,11 @@ func NewManifestManager(backend StorageClient) *ManifestManager {
 func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	err := m.backend.Put(ctx, manifest.filename, buf.Bytes())
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Info("Successfully upload the manifest", zap.String("name", manifest.filename))
 
@@ -63,7 +63,7 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 	manifest := Manifest{}
 	manifests, err := m.backend.List(ctx, "")
 	if err != nil {
-		return manifest, xerrors.Errorf(": %w", err)
+		return manifest, xerrors.WithStack(err)
 	}
 
 	latest := int64(0)
@@ -75,7 +75,7 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return manifest, xerrors.Errorf(": %w", err)
+			return manifest, xerrors.WithStack(err)
 		}
 		if ts > latest {
 			latest = ts
@@ -87,11 +87,11 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 
 	r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", latest))
 	if err != nil {
-		return manifest, xerrors.Errorf(": %w", err)
+		return manifest, xerrors.WithStack(err)
 	}
 	defer r.Close()
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
-		return manifest, xerrors.Errorf(": %w", err)
+		return manifest, xerrors.WithStack(err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 
@@ -103,11 +103,11 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 
 	r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", ts))
 	if err != nil {
-		return manifest, xerrors.Errorf(": %w", err)
+		return manifest, xerrors.WithStack(err)
 	}
 	defer r.Close()
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
-		return manifest, xerrors.Errorf(": %w", err)
+		return manifest, xerrors.WithStack(err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 
@@ -117,7 +117,7 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 	objects, err := m.backend.List(ctx, "")
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var timestamps []int64
@@ -129,7 +129,7 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		timestamps = append(timestamps, ts)
 	}
@@ -138,12 +138,12 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 	for _, v := range timestamps {
 		r, err := m.backend.Get(ctx, fmt.Sprintf("manifest_%d.json", v))
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		var manifest Manifest
 		if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 			r.Close()
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 		manifests = append(manifests, manifest)
@@ -156,7 +156,7 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest, error) {
 	manifests, err := m.backend.List(ctx, "")
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	timestamps := make([]int64, 0)
@@ -168,7 +168,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 		s := strings.TrimSuffix(strings.TrimPrefix(v.Name, "manifest_"), ".json")
 		ts, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		timestamps = append(timestamps, ts)
 	}
@@ -185,7 +185,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 	for _, v := range targets {
 		manifest, err := m.Get(ctx, uint64(v))
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		result = append(result, manifest)
 	}
@@ -196,7 +196,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 func (m *ManifestManager) Delete(ctx context.Context, manifest Manifest) error {
 	err := m.backend.Delete(ctx, manifest.filename)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

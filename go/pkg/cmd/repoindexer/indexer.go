@@ -26,8 +26,8 @@ import (
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
 	"github.com/shurcooL/githubv4"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -127,7 +127,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 		opt.SetDefaults()
 		builder, err := build.NewBuilder(opt)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		t3 := time.Now()
@@ -164,16 +164,16 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 			zap.Duration("indexing_elapsed", time.Since(t3)),
 		)
 		if err := builder.Finish(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		if err := v.cleanup(x.workDir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		index, err := NewRepositoryIndex(v.Name, indexDir)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		x.Indexes = append(x.Indexes, index)
 	}
@@ -203,17 +203,17 @@ func (x *Indexer) addDocument(builder *build.Builder, repo *Repository, f file, 
 	t := time.Now()
 	blob, err := repo.repo.BlobObject(f.hash)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
 	r, err := blob.Reader()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf.Grow(int(blob.Size))
 	_, err = buf.ReadFrom(r)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	r.Close()
 
@@ -223,7 +223,7 @@ func (x *Indexer) addDocument(builder *build.Builder, repo *Repository, f file, 
 		Content:  buf.Bytes(),
 		Branches: brs,
 	}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Debug("Add document",
 		zap.String("name", f.path),
@@ -238,7 +238,7 @@ func (x *Indexer) Cleanup(ctx context.Context) error {
 	indexDir := filepath.Join(x.workDir, ".index")
 	entry, err := os.ReadDir(indexDir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	files := make(map[string]struct{}, 0)
 	for _, v := range entry {
@@ -263,7 +263,7 @@ func (x *Indexer) Cleanup(ctx context.Context) error {
 	for f := range files {
 		logger.Log.Debug("Delete index", zap.String("filename", f))
 		if err := os.Remove(filepath.Join(indexDir, f)); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -352,7 +352,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 	if tokenProvider != nil {
 		token, err := tokenProvider.Token(ctx)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		auth = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
 	}
@@ -362,7 +362,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 	if _, err := os.Stat(bareDir); !os.IsNotExist(err) {
 		logger.Log.Info("Remove bare repository", zap.String("dir", bareDir))
 		if err := os.RemoveAll(bareDir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -371,7 +371,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 		logger.Log.Info("Remove old directory", zap.String("dir", dir))
 		// Old style directory If .git directory not exists.
 		if err := os.RemoveAll(dir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -383,7 +383,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 			CABundle:   x.CABundle,
 		})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if initRun {
@@ -392,7 +392,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 
 	r, err := git.PlainOpen(dir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Debug("Fetch", zap.String("name", x.Name))
 	err = r.FetchContext(ctx, &git.FetchOptions{
@@ -401,7 +401,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 		CABundle: x.CABundle,
 	})
 	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -411,32 +411,32 @@ func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (p
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	x.repo = repo
 	hash, err := x.resolveReference(refName)
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	branchRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(strings.TrimPrefix(refName.Short(), "origin/")), hash)
 	if ref, err := repo.Reference(branchRef.Name(), true); err == plumbing.ErrReferenceNotFound {
 		// Skip
 	} else if err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	} else {
 		logger.Log.Debug("Remove branch(reference)", zap.String("name", ref.Name().String()), zap.String("name", x.Name))
 		if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
-			return "", xerrors.Errorf(": %w", err)
+			return "", xerrors.WithStack(err)
 		}
 	}
 	logger.Log.Debug("Set reference", zap.String("ref", branchRef.Name().String()), zap.String("hash", branchRef.Hash().String()), zap.String("name", x.Name))
 	if err := repo.Storer.SetReference(branchRef); err != nil {
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 	logger.Log.Debug("Checkout", zap.String("branch", branchRef.Name().String()))
 	err = wt.Checkout(&git.CheckoutOptions{
@@ -447,7 +447,7 @@ func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (p
 		if err == nil {
 			fmt.Printf("%v\n", st)
 		}
-		return "", xerrors.Errorf(": %w", err)
+		return "", xerrors.WithStack(err)
 	}
 
 	return branchRef.Name(), nil
@@ -457,11 +457,11 @@ func (x *Repository) resolveReference(refName plumbing.ReferenceName) (plumbing.
 	hash := plumbing.ZeroHash
 	ref, err := x.repo.Reference(refName, false)
 	if err != nil {
-		return hash, xerrors.Errorf(": %w", err)
+		return hash, xerrors.WithStack(err)
 	}
 	obj, err := x.repo.Object(plumbing.AnyObject, ref.Hash())
 	if err != nil {
-		return hash, xerrors.Errorf(": %w", err)
+		return hash, xerrors.WithStack(err)
 	}
 	switch v := obj.(type) {
 	case *object.Tag:
@@ -485,15 +485,15 @@ func (f file) String() string {
 func (x *Repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Hash, error) {
 	ref, err := x.repo.Reference(refName, true)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	commit, err := x.repo.CommitObject(ref.Hash())
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	files := make(map[file]plumbing.Hash)
@@ -514,11 +514,11 @@ func (x *Repository) files(refName plumbing.ReferenceName) (map[file]plumbing.Ha
 func (x *Repository) newCommit() error {
 	wt, err := x.repo.Worktree()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	err = wt.AddWithOptions(&git.AddOptions{All: true})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if _, err := wt.Commit("new commit", &git.CommitOptions{
@@ -527,7 +527,7 @@ func (x *Repository) newCommit() error {
 			Email: "example@example.com",
 		},
 	}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -536,17 +536,17 @@ func (x *Repository) newCommit() error {
 func (x *Repository) cleanWorktree() error {
 	wt, err := x.repo.Worktree()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	ref, err := x.repo.Head()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := wt.Reset(&git.ResetOptions{Commit: ref.Hash(), Mode: git.HardReset}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := wt.Clean(&git.CleanOptions{Dir: true}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -556,11 +556,11 @@ func (x *Repository) cleanup(workDir string) error {
 	dir := filepath.Join(workDir, x.Name)
 	repo, err := git.PlainOpen(dir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	iter, err := repo.Branches()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for {
 		ref, err := iter.Next()
@@ -568,7 +568,7 @@ func (x *Repository) cleanup(workDir string) error {
 			break
 		}
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		logger.Log.Debug("Branch", zap.String("name", x.Name), zap.String("branch", ref.String()))
 	}
@@ -584,7 +584,7 @@ type RepositoryIndex struct {
 func NewRepositoryIndex(name, indexDir string) (*RepositoryIndex, error) {
 	entry, err := os.ReadDir(indexDir)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	n := url.QueryEscape(name)

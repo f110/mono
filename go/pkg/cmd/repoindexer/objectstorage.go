@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
@@ -54,16 +54,16 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 	for _, v := range files {
 		f, err := os.Open(v)
 		if err != nil {
-			return "", 0, xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.WithStack(err)
 		}
 		info, err := f.Stat()
 		if err != nil {
-			return "", 0, xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.WithStack(err)
 		}
 		objectPath := filepath.Join(name, fmt.Sprintf("%d", s.executionKey), filepath.Base(v))
 		err = s.backend.PutReader(ctx, objectPath, f)
 		if err != nil {
-			return "", 0, xerrors.Errorf(": %w", err)
+			return "", 0, xerrors.WithStack(err)
 		}
 		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket), zap.Int64("size", info.Size()))
 		s.uploadedFiles = append(s.uploadedFiles, objectPath)
@@ -79,34 +79,34 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 	if _, err := os.Stat(tmpDir); err == nil {
 		logger.Log.Debug("Remove tmp directory", zap.String("dir", tmpDir))
 		if err := os.RemoveAll(tmpDir); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if err := os.MkdirAll(tmpDir, 0755); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, v := range manifest.Indexes {
 		files, err := s.listFiles(ctx, v, s.stripPrefixSlash)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		for _, f := range files {
 			r, err := s.backend.Get(ctx, f.Name)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			buf, err := io.ReadAll(r)
 			if err != nil {
 				r.Close()
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			r.Close()
 
 			filePath := filepath.Join(tmpDir, filepath.Base(f.Name))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			logger.Log.Debug("Download file", zap.String("path", filePath))
 		}
@@ -114,7 +114,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 
 	entry, err := os.ReadDir(indexDir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Debug("Remove old index files", zap.Int("len", len(entry)-1))
 	for _, v := range entry {
@@ -122,12 +122,12 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			continue
 		}
 		if err := os.Remove(filepath.Join(indexDir, v.Name())); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	entry, err = os.ReadDir(tmpDir)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range entry {
 		logger.Log.Debug("Move index file",
@@ -135,11 +135,11 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			zap.String("to", filepath.Join(indexDir, v.Name())),
 		)
 		if err := os.Rename(filepath.Join(tmpDir, v.Name()), filepath.Join(indexDir, v.Name())); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if err := os.Remove(tmpDir); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -150,12 +150,12 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 		for _, index := range manifest.Indexes {
 			files, err := s.listFiles(ctx, index, s.stripPrefixSlash)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			for _, f := range files {
 				if err := s.backend.Delete(ctx, f.Name); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 		}
@@ -167,7 +167,7 @@ func (s *ObjectStorageIndexManager) Delete(ctx context.Context, manifests []Mani
 func (s *ObjectStorageIndexManager) CleanUploadedFiles(ctx context.Context) error {
 	for _, v := range s.uploadedFiles {
 		if err := s.backend.Delete(ctx, v); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -177,7 +177,7 @@ func (s *ObjectStorageIndexManager) CleanUploadedFiles(ctx context.Context) erro
 func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL string, stripPrefixSlash bool) ([]*storage.Object, error) {
 	u, err := url.Parse(indexDirURL)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	path := u.Path
 	if stripPrefixSlash && u.Path[0] == '/' {
@@ -185,7 +185,7 @@ func (s *ObjectStorageIndexManager) listFiles(ctx context.Context, indexDirURL s
 	}
 	files, err := s.backend.List(ctx, path)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return files, nil

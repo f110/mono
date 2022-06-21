@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -56,7 +56,7 @@ var AllChildControllers = ChildControllers{
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			gu, err := grafana.NewUserController(core, factory, p.coreClient, p.client)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return gu, nil
 		},
@@ -77,7 +77,7 @@ var AllChildControllers = ChildControllers{
 				p.dev,
 			)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return hpc, nil
 		},
@@ -97,7 +97,7 @@ var AllChildControllers = ChildControllers{
 				p.dev,
 			)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return hrac, nil
 		},
@@ -107,7 +107,7 @@ var AllChildControllers = ChildControllers{
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return mbc, nil
 		},
@@ -125,7 +125,7 @@ var AllChildControllers = ChildControllers{
 				p.dev,
 			)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return muc, nil
 		},
@@ -135,7 +135,7 @@ var AllChildControllers = ChildControllers{
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			b, err := consul.NewBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			return b, nil
 		},
@@ -156,7 +156,7 @@ func NewChildControllers(args []string) (ChildControllers, error) {
 	for _, v := range args {
 		cont, ok := c[v]
 		if !ok {
-			return nil, xerrors.Errorf("%s is unknown controller", v)
+			return nil, xerrors.Newf("%s is unknown controller", v)
 		}
 
 		childControllers = append(childControllers, cont)
@@ -266,10 +266,10 @@ func (p *Controllers) init() (fsm.State, error) {
 	goFlagSet := flag.NewFlagSet("", flag.ContinueOnError)
 	fs.AddGoFlagSet(goFlagSet)
 	if err := fs.Parse(p.args); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	if err := logger.OverrideKlog(); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.args = fs.Args()[1:]
 
@@ -277,24 +277,24 @@ func (p *Controllers) init() (fsm.State, error) {
 	if p.dev {
 		h, err := os.UserHomeDir()
 		if err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 		kubeconfigPath = filepath.Join(h, ".kube", "config")
 	}
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.config = cfg
 
 	coreClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.coreClient = coreClient
 	apiClientset, err := client.NewSet(cfg)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.client = apiClientset
 
@@ -303,14 +303,14 @@ func (p *Controllers) init() (fsm.State, error) {
 	if p.vaultAddr != "" {
 		vaultClient, err := api.NewClient(&api.Config{Address: p.vaultAddr})
 		if err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 		if p.vaultToken != "" {
 			vaultClient.SetToken(p.vaultToken)
 		} else if _, err := os.Stat(p.serviceAccountTokenFile); err == nil {
 			buf, err := os.ReadFile(p.serviceAccountTokenFile)
 			if err != nil {
-				return fsm.Error(xerrors.Errorf(": %w", err))
+				return fsm.Error(xerrors.WithStack(err))
 			}
 			saToken := strings.TrimSpace(string(buf))
 			data, err := vaultClient.Logical().Write(
@@ -321,7 +321,7 @@ func (p *Controllers) init() (fsm.State, error) {
 				},
 			)
 			if err != nil {
-				return fsm.Error(xerrors.Errorf(": %w", err))
+				return fsm.Error(xerrors.WithStack(err))
 			}
 			vaultClient.SetToken(data.Auth.ClientToken)
 		}
@@ -334,7 +334,7 @@ func (p *Controllers) init() (fsm.State, error) {
 func (p *Controllers) checkResources() (fsm.State, error) {
 	_, apiList, err := p.coreClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	found := false
 	for _, v := range apiList {
@@ -400,7 +400,7 @@ func (p *Controllers) leaderElection() (fsm.State, error) {
 		},
 	})
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	go e.Run(p.ctx)
 
@@ -418,12 +418,12 @@ func (p *Controllers) startWorkers() (fsm.State, error) {
 
 	child, err := NewChildControllers(p.args)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	for _, v := range child {
 		cont, err := v.New(p, coreSharedInformerFactory, factory)
 		if err != nil {
-			return fsm.Error(xerrors.Errorf("Failed create %s controller: %w", v.Name, err))
+			return fsm.Error(xerrors.WithMessagef(err, "Failed create %s controller", v.Name))
 		}
 		p.controllers = append(p.controllers, cont)
 	}

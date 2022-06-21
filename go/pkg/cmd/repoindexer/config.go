@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	"gopkg.in/yaml.v2"
 
 	"go.f110.dev/mono/go/pkg/regexp/regexputil"
@@ -32,13 +32,13 @@ type Rule struct {
 func ReadConfigFile(p string) (*Config, error) {
 	f, err := os.Open(p)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	defer f.Close()
 
 	config, err := ReadConfig(f)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return config, nil
@@ -47,7 +47,7 @@ func ReadConfigFile(p string) (*Config, error) {
 func ReadConfig(r io.Reader) (*Config, error) {
 	config := &Config{}
 	if err := yaml.NewDecoder(r).Decode(&config); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	for _, v := range config.Rules {
@@ -57,7 +57,7 @@ func ReadConfig(r io.Reader) (*Config, error) {
 
 		regexpLiteral, err := regexputil.ParseRegexpLiteral(v.URLReplace)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		v.urlReplaceRule = &replaceRule{re: regexpLiteral.Match, replace: regexpLiteral.Replace}
 	}

@@ -11,8 +11,8 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/k8s/volume"
@@ -137,19 +137,19 @@ func (r *IndexerCommand) ValidateFlags() error {
 
 func (r *IndexerCommand) Init() error {
 	if err := r.ValidateFlags(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if r.CABundleFile != "" {
 		b, err := os.ReadFile(r.CABundleFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		r.caBundle = b
 	}
 
 	if err := r.githubClientFactory.Init(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -158,7 +158,7 @@ func (r *IndexerCommand) Init() error {
 func (r *IndexerCommand) Run() error {
 	config, err := ReadConfigFile(r.ConfigFile)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	r.config = config
 
@@ -176,21 +176,21 @@ func (r *IndexerCommand) Run() error {
 	r.indexer = indexer
 	if r.HTTPAddr != "" {
 		if err := r.webEndpoint(r.HTTPAddr); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
 	if r.RunScheduler {
 		if err := r.scheduler(config.RefreshSchedule); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}
 	if err := r.run(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := r.gc(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -209,25 +209,25 @@ func (r *IndexerCommand) run() error {
 
 	if !r.WithoutFetch {
 		if err := r.indexer.Sync(ctx); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	if err := r.indexer.BuildIndex(ctx); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if r.enableUpload() {
 		manifest, err := r.uploadIndex(ctx, r.indexer, r.Bucket, r.DisableObjectStorageCleanup)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		if r.NATSURL != "" {
 			n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if err := n.Notify(ctx, manifest); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	} else {
@@ -235,7 +235,7 @@ func (r *IndexerCommand) run() error {
 	}
 	if !r.DisableCleanup {
 		if err := r.indexer.Cleanup(ctx); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -246,11 +246,11 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 	if volume.CanWatchVolume(r.ConfigFile) {
 		mountPath, err := volume.FindMountPath(r.ConfigFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		_, err = volume.NewWatcher(mountPath, r.reloadConfig)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		logger.Log.Debug("Watch config file changes")
 	}
@@ -267,7 +267,7 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 		}
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	r.entryId = e
 	logger.Log.Info("Start scheduler")
@@ -337,11 +337,11 @@ func (r *IndexerCommand) gc() error {
 
 	s, err := r.newStorageClient()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	gc := NewIndexGC(s, r.Bucket)
 	if err := gc.GC(context.Background()); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -365,7 +365,7 @@ func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
 		if r.MinIOName != "" && r.MinIONamespace != "" {
 			k8sClient, k8sConf, err := newK8sClient(r.Dev)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
 		} else if r.MinIOEndpoint != "" {
@@ -445,7 +445,7 @@ func (r *IndexerCommand) uploadIndex(
 ) (*Manifest, error) {
 	s, err := r.newStorageClient()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	manager := NewObjectStorageIndexManager(s, bucket)
 	uploadedPath := make(map[string]string, 0)
@@ -456,7 +456,7 @@ func (r *IndexerCommand) uploadIndex(
 			if err := manager.CleanUploadedFiles(ctx); err != nil {
 				logger.Log.Warn("Failed cleanup uploaded files", zap.Error(err))
 			}
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		uploadedPath[v.Name] = uploadDir
 		totalSize += size
@@ -468,20 +468,20 @@ func (r *IndexerCommand) uploadIndex(
 		if err := manager.CleanUploadedFiles(ctx); err != nil {
 			logger.Log.Warn("Failed cleanup loaded files", zap.Error(err))
 		}
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if !disableCleanup {
 		expired, err := mm.FindExpiredManifests(ctx)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		if err := manager.Delete(ctx, expired); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		for _, m := range expired {
 			if err := mm.Delete(ctx, m); err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 		}
 	}

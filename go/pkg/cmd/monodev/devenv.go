@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/parallel"
@@ -31,11 +31,11 @@ func goModuleProxy(cmd *cobra.Command) {
 
 			_, err := exec.LookPath("memcached")
 			if err != nil {
-				return xerrors.Errorf("memcached is not found")
+				return xerrors.New("memcached is not found")
 			}
 			_, err = exec.LookPath("minio")
 			if err != nil {
-				return xerrors.Errorf("minio is not found")
+				return xerrors.New("minio is not found")
 			}
 
 			supervisor := parallel.NewSupervisor(ctx)
@@ -78,7 +78,7 @@ func goModuleProxy(cmd *cobra.Command) {
 			ctx, cFunc := context.WithTimeout(cmd.Context(), 5*time.Second)
 			if err := supervisor.Shutdown(ctx); err != nil {
 				cFunc()
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			cFunc()
 			logger.Log.Info("All subprocesses finished")
