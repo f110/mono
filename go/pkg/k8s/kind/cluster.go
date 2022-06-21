@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	goyaml "gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -69,7 +69,7 @@ func (c *Cluster) IsExist(ctx context.Context, name string) (bool, error) {
 	cmd := exec.CommandContext(ctx, c.kind, "get", "clusters")
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, xerrors.Errorf(": %w", err)
+		return false, xerrors.WithStack(err)
 	}
 	s := bufio.NewScanner(bytes.NewReader(buf))
 	for s.Scan() {
@@ -85,13 +85,13 @@ func (c *Cluster) IsExist(ctx context.Context, name string) (bool, error) {
 func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum int) error {
 	kindConfFile, err := ioutil.TempFile("", "kind.config.yaml")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer os.Remove(kindConfFile.Name())
 
 	imageHash, ok := NodeImageHash[clusterVersion]
 	if !ok {
-		return xerrors.Errorf("Not supported k8s version: %s", clusterVersion)
+		return xerrors.Newf("not supported k8s version: %s", clusterVersion)
 	}
 	image := fmt.Sprintf("kindest/node:%s@sha256:%s", clusterVersion, imageHash)
 
@@ -109,10 +109,10 @@ func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum i
 			configv1alpha4.Node{Role: configv1alpha4.WorkerRole, Image: image})
 	}
 	if buf, err := goyaml.Marshal(clusterConf); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	} else {
 		if _, err := kindConfFile.Write(buf); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -147,7 +147,7 @@ func (c *Cluster) KubeConfig() string {
 func (c *Cluster) Delete(ctx context.Context) error {
 	found, err := c.IsExist(ctx, c.name)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if !found {
 		return nil
@@ -221,14 +221,14 @@ func (c *Cluster) LoadImageFiles(ctx context.Context, images ...*ContainerImageF
 
 func (c *Cluster) RESTConfig() (*rest.Config, error) {
 	if exist, err := c.IsExist(context.Background(), c.name); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	} else if !exist {
 		return nil, xerrors.New("The cluster is not created yet")
 	}
 	if c.kubeConfig == "" {
 		kubeConf, err := ioutil.TempFile("", "kubeconfig")
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		cmd := exec.CommandContext(
 			context.Background(),
@@ -237,7 +237,7 @@ func (c *Cluster) RESTConfig() (*rest.Config, error) {
 			"--name", c.name,
 		)
 		if err := cmd.Run(); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		c.kubeConfig = kubeConf.Name()
 		defer func() {
@@ -248,7 +248,7 @@ func (c *Cluster) RESTConfig() (*rest.Config, error) {
 
 	cfg, err := clientcmd.LoadFromFile(c.kubeConfig)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	clientConfig := clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{})
 	restCfg, err := clientConfig.ClientConfig()
@@ -266,7 +266,7 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 
 	restCfg, err := c.RESTConfig()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	cs, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
@@ -280,7 +280,7 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 func (c *Cluster) WaitReady(ctx context.Context) error {
 	client, err := c.Clientset()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return wait.PollImmediate(1*time.Second, 3*time.Minute, func() (done bool, err error) {
@@ -310,15 +310,15 @@ func (c *Cluster) WaitReady(ctx context.Context) error {
 func (c *Cluster) Apply(f, fieldManager string) error {
 	buf, err := ioutil.ReadFile(f)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	cfg, err := c.RESTConfig()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := applyManifestFromString(cfg, string(buf), fieldManager); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -420,7 +420,7 @@ func applyManifestFromString(cfg *rest.Config, manifest, fieldManager string) er
 			if err == io.EOF {
 				break
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if len(ext.Raw) == 0 {
 			continue
@@ -428,18 +428,18 @@ func applyManifestFromString(cfg *rest.Config, manifest, fieldManager string) er
 
 		obj, gvk, err := unstructured.UnstructuredJSONScheme.Decode(ext.Raw, nil, nil)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		objs = append(objs, object{Object: obj, GroupVersionKind: gvk, Raw: ext.Raw})
 	}
 
 	disClient, err := discovery.NewDiscoveryClientForConfig(cfg)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	_, apiResourcesList, err := disClient.ServerGroupsAndResources()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, obj := range objs {
@@ -455,7 +455,7 @@ func applyManifestFromString(cfg *rest.Config, manifest, fieldManager string) er
 		conf.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
 		client, err := rest.RESTClientFor(&conf)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		var apiResource *metav1.APIResource
@@ -517,7 +517,7 @@ func applyManifestFromString(cfg *rest.Config, manifest, fieldManager string) er
 			return true, nil
 		})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
