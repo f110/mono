@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type Watcher struct {
@@ -17,10 +17,10 @@ type Watcher struct {
 func NewWatcher(mountPath string, fn func()) (*Watcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, xerrors.Errorf(": %v", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if err := watcher.Add(filepath.Join(mountPath, ".")); err != nil {
-		return nil, xerrors.Errorf(": %v", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	w := &Watcher{watcher: watcher, mountPath: mountPath, fn: fn}
