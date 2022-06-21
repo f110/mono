@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -120,15 +120,15 @@ func (u *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 
 	sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	users, err := u.userLister.List(app.Namespace, sel)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := u.ensureUsers(app, users); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	newA := app.DeepCopy()
@@ -149,12 +149,12 @@ func (u *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 func (u *UserController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	obj, err := u.appLister.Get(namespace, name)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return obj, nil
 }
@@ -162,12 +162,12 @@ func (u *UserController) GetObject(key string) (runtime.Object, error) {
 func (u *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	app, ok := obj.(*grafanav1alpha1.Grafana)
 	if !ok {
-		return nil, xerrors.Errorf("unexpected object type: %v", obj)
+		return nil, xerrors.Newf("unexpected object type: %v", obj)
 	}
 
 	app, err := u.client.UpdateGrafana(ctx, app, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return app, nil
 }
@@ -176,15 +176,15 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 	u.Log().Debug("users", zap.Int("len", len(users)))
 	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	password, ok := secret.Data[app.Spec.AdminPasswordSecret.Key]
 	if !ok {
-		return xerrors.Errorf("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name)
+		return xerrors.Newf("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name)
 	}
 	svc, err := u.serviceLister.Services(app.Namespace).Get(app.Spec.Service.Name)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	grafanaClient := grafana.NewClient(
 		fmt.Sprintf("http://%s.%s.svc:%d", svc.Name, app.Namespace, 3000),
@@ -200,7 +200,7 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 
 	currentUsers, err := grafanaClient.Users()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	currentUsersMap := make(map[string]*grafana.User)
 	for _, v := range currentUsers {
@@ -244,7 +244,7 @@ func (u *UserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*graf
 
 	currentUsers, err = grafanaClient.Users()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range currentUsers {
 		grafanaUser, ok := allUsers[v.Email]
