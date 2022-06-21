@@ -14,7 +14,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v32/github"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -27,11 +27,11 @@ func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string
 	if _, err := os.Stat(privateKeyFile); !os.IsNotExist(err) {
 		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		token, err := t.Token(context.Background())
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		auth = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
 		rt = t
@@ -59,7 +59,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 	}
 	parsed, err := url.Parse(addr)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	s := strings.SplitN(parsed.Path, "/", 3)
 
@@ -75,17 +75,17 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 
 	req, err := http.NewRequest(http.MethodGet, archiveLink.String(), nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer res.Body.Close()
 
 	gzReader, err := gzip.NewReader(res.Body)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	tarReader := tar.NewReader(gzReader)
 	for {
@@ -94,7 +94,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 			break
 		}
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		d, f := filepath.Split(h.Name)
 		if d == "" {
@@ -106,28 +106,28 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 		switch h.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(filename, os.FileMode(h.Mode)); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			continue
 		case tar.TypeSymlink:
 			if err := os.Symlink(h.Linkname, filename); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			continue
 		}
 
 		b, err := ioutil.ReadAll(tarReader)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		dirname := filepath.Dir(filename)
 		if _, err := os.Stat(dirname); os.IsNotExist(err) {
 			if err := os.MkdirAll(dirname, 755); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 		if err := ioutil.WriteFile(filename, b, os.FileMode(h.Mode)); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -145,16 +145,16 @@ func cloneByGit(dir, repo, commit string, depth int, auth transport.AuthMethod) 
 		Auth:  auth,
 	})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if commit != "" {
 		tree, err := r.Worktree()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if err := tree.Checkout(&git.CheckoutOptions{Hash: plumbing.NewHash(commit)}); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
