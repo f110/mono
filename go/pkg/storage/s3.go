@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -56,12 +56,12 @@ func (s *S3Options) Client() (*s3.Client, error) {
 
 	cp, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if s.CACertFile != "" {
 		b, err := os.ReadFile(s.CACertFile)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		cp.AppendCertsFromPEM(b)
 	}
@@ -95,7 +95,7 @@ func (s *S3Options) Client() (*s3.Client, error) {
 func (s *S3Options) Uploader() (*manager.Uploader, error) {
 	c, err := s.Client()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	u := manager.NewUploader(c)
@@ -123,7 +123,7 @@ func (s *S3) Name() string {
 func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 	c, err := s.opt.Client()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	retryCount := 1
@@ -138,7 +138,7 @@ func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 				retryCount++
 				continue
 			}
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		return obj.Body, nil
@@ -148,7 +148,7 @@ func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 	c, err := s.opt.Client()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	paginator := s3.NewListObjectsV2Paginator(c, &s3.ListObjectsV2Input{
@@ -168,7 +168,7 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 					retryCount++
 					continue
 				}
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			page = p
 			break
@@ -193,7 +193,7 @@ func (s *S3) Put(ctx context.Context, name string, data []byte) error {
 func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 	uploader, err := s.opt.Uploader()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	retryCount := 1
 	for {
@@ -208,7 +208,7 @@ func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		return nil
@@ -218,7 +218,7 @@ func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 func (s *S3) Delete(ctx context.Context, name string) error {
 	c, err := s.opt.Client()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	retryCount := 1
@@ -233,7 +233,7 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		return nil

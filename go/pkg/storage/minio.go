@@ -11,8 +11,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -58,7 +58,7 @@ func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
 	if m.k8sClient != nil {
 		c, forwarder, err := m.newMinIOClientViaService(ctx)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		m.client = c
 		m.portForwarder = forwarder
@@ -67,7 +67,7 @@ func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
 		if strings.HasPrefix(m.Endpoint, "http") {
 			u, err := url.Parse(m.Endpoint)
 			if err != nil {
-				return nil, xerrors.Errorf(": %w", err)
+				return nil, xerrors.WithStack(err)
 			}
 			if u.Scheme == "https" {
 				secure = true
@@ -82,7 +82,7 @@ func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
 			Transport: m.Transport,
 		})
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		m.client = c
 	}
@@ -93,7 +93,7 @@ func (m *MinIOOptions) Client(ctx context.Context) (*minio.Client, error) {
 func (m *MinIOOptions) newMinIOClientViaService(ctx context.Context) (*minio.Client, *pf.PortForwarder, error) {
 	endpoint, forwarder, err := m.getMinIOEndpoint(ctx, m.Name, m.Namespace, m.Port)
 	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.WithStack(err)
 	}
 	creds := credentials.NewStaticV4(m.AccessKey, m.SecretAccessKey, "")
 	mc, err := minio.New(endpoint, &minio.Options{
@@ -102,7 +102,7 @@ func (m *MinIOOptions) newMinIOClientViaService(ctx context.Context) (*minio.Cli
 		Transport: m.Transport,
 	})
 	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.WithStack(err)
 	}
 
 	return mc, forwarder, nil
@@ -115,20 +115,20 @@ func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace str
 		var svc *corev1.Service
 		if m.ServiceLister != nil {
 			if s, err := m.ServiceLister.Services(namespace).Get(name); err != nil {
-				return "", nil, xerrors.Errorf(": %w", err)
+				return "", nil, xerrors.WithStack(err)
 			} else {
 				svc = s
 			}
 		} else {
 			s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
 			if err != nil {
-				return "", nil, xerrors.Errorf(": %w", err)
+				return "", nil, xerrors.WithStack(err)
 			}
 			svc = s
 		}
 		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.restConfig, m.k8sClient, m.PodLister)
 		if err != nil {
-			return "", nil, xerrors.Errorf(": %w", err)
+			return "", nil, xerrors.WithStack(err)
 		}
 		forwarder = f
 		endpoint = fmt.Sprintf("127.0.0.1:%d", port)
@@ -196,7 +196,7 @@ func (m *MinIO) Put(ctx context.Context, name string, data []byte) error {
 func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	retryCount := 1
@@ -208,7 +208,7 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}
@@ -221,7 +221,7 @@ func (m *MinIO) List(ctx context.Context, prefix string) ([]*Object, error) {
 
 	files, err := m.ListRecursive(ctx, prefix, true)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var objs []*Object
 	for _, v := range files {
@@ -237,7 +237,7 @@ func (m *MinIO) List(ctx context.Context, prefix string) ([]*Object, error) {
 func (m *MinIO) ListRecursive(ctx context.Context, prefix string, recursive bool) ([]minio.ObjectInfo, error) {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	if prefix[len(prefix)-1] != '/' {
@@ -255,7 +255,7 @@ ListObjects:
 					retryCount++
 					continue ListObjects
 				}
-				return nil, xerrors.Errorf(": %w", obj.Err)
+				return nil, xerrors.WithStack(obj.Err)
 			}
 			files = append(files, obj)
 		}
@@ -268,7 +268,7 @@ ListObjects:
 func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	retryCount := 1
@@ -280,7 +280,7 @@ func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 				retryCount++
 				continue
 			}
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		return obj, nil
@@ -290,7 +290,7 @@ func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 func (m *MinIO) Delete(ctx context.Context, name string) error {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	retryCount := 1
@@ -302,7 +302,7 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}

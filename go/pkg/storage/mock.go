@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type Mock struct {
@@ -181,7 +181,7 @@ func (m *Mock) Put(_ context.Context, name string, data []byte) error {
 func (m *Mock) PutReader(ctx context.Context, name string, data io.Reader) error {
 	buf, err := io.ReadAll(data)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return m.Put(ctx, name, buf)
 }

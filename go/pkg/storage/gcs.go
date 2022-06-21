@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"cloud.google.com/go/storage"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
@@ -41,7 +41,7 @@ func (g *Google) Put(ctx context.Context, name string, data []byte) error {
 func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) error {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	obj := client.Bucket(g.bucket).Object(name)
@@ -54,10 +54,10 @@ func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) err
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if err := w.Close(); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		logger.Log.Info("Succeeded upload", zap.String("object_name", obj.ObjectName()), zap.String("bucket", obj.BucketName()))
@@ -68,7 +68,7 @@ func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) err
 func (g *Google) List(ctx context.Context, prefix string) ([]*Object, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	iter := client.Bucket(g.bucket).Objects(ctx, &storage.Query{Prefix: prefix})
 	var files []*Object
@@ -78,7 +78,7 @@ func (g *Google) List(ctx context.Context, prefix string) ([]*Object, error) {
 			break
 		}
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		files = append(files, &Object{
 			Name:         objAttr.Name,
@@ -93,7 +93,7 @@ func (g *Google) List(ctx context.Context, prefix string) ([]*Object, error) {
 func (g *Google) Delete(ctx context.Context, key string) error {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	obj := client.Bucket(g.bucket).Object(key)
@@ -105,7 +105,7 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 				retryCount++
 				continue
 			}
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		return nil
@@ -115,7 +115,7 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 func (g *Google) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	obj := client.Bucket(g.bucket).Object(name)
@@ -128,7 +128,7 @@ func (g *Google) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 				retryCount++
 				continue
 			}
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		return r, nil
