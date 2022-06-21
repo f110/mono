@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -195,7 +194,7 @@ func (c *RobotAccountController) getProject(ctx context.Context, hra *harborv1al
 	project, err := c.hClient.GetHarborProject(ctx, hra.Spec.ProjectNamespace, hra.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
-		return nil, errors.New("project not found")
+		return nil, xerrors.New("project not found")
 	} else if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -305,7 +304,7 @@ func (c *RobotAccountController) portForward(ctx context.Context, svc *corev1.Se
 		}
 	}
 	if pod == nil {
-		return nil, errors.New("all pods are not running yet")
+		return nil, xerrors.New("all pods are not running yet")
 	}
 
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
@@ -334,7 +333,7 @@ func (c *RobotAccountController) portForward(ctx context.Context, svc *corev1.Se
 	select {
 	case <-readyCh:
 	case <-time.After(5 * time.Second):
-		return nil, errors.New("timed out")
+		return nil, xerrors.New("timed out")
 	}
 
 	return pf, nil

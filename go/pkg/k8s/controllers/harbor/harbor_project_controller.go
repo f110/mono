@@ -2,7 +2,6 @@ package harbor
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -210,7 +209,7 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 		}
 	}
 	if pod == nil {
-		return nil, errors.New("all pods are not running yet")
+		return nil, xerrors.New("all pods are not running yet")
 	}
 
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
@@ -239,7 +238,7 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	select {
 	case <-readyCh:
 	case <-time.After(5 * time.Second):
-		return nil, errors.New("timed out")
+		return nil, xerrors.New("timed out")
 	}
 
 	return pf, nil
