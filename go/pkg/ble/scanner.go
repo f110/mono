@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 var DefaultScanner = &Scanner{}
@@ -41,7 +41,7 @@ func (s *Scanner) Stop() error {
 	s.cancel = nil
 	err := s.stop()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return s.Error
 }

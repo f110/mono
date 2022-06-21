@@ -3,11 +3,12 @@ package inkbird
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"log"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/ble"
 	"go.f110.dev/mono/go/pkg/hash/crc16"
@@ -35,7 +36,7 @@ func (t *ThermometerDataProvider) Get(id string) *ThermometerData {
 
 func (t *ThermometerDataProvider) Start(ctx context.Context) error {
 	if err := ble.DefaultScanner.Start(ctx); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	go func() {
@@ -67,7 +68,7 @@ func readData(prph ble.Peripheral, buf []byte) (*ThermometerData, error) {
 	}
 	checksum := binary.LittleEndian.Uint16(buf[5:7])
 	if checksum != crc16.ChecksumModBus(buf[:5]) {
-		return nil, xerrors.Errorf("inkbird: Checksum mismatched")
+		return nil, errors.New("inkbird: Checksum mismatched")
 	}
 	battery := int8(buf[7])
 
@@ -91,7 +92,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 
 	scanCh, err := ble.Scan(sCtx)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	var peripheral ble.Peripheral
@@ -106,12 +107,12 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 		}
 	}
 	if buf == nil {
-		return nil, xerrors.Errorf("inkbird: sensor not found")
+		return nil, errors.New("inkbird: sensor not found")
 	}
 
 	data, err := readData(peripheral, buf)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return data, nil
 }
@@ -122,7 +123,7 @@ func Scan(ctx context.Context) error {
 
 	scanCh, err := ble.Scan(sCtx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for prph := range scanCh {
