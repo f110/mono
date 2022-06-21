@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"golang.org/x/crypto/pbkdf2"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -64,15 +64,15 @@ func (r *Reader) Items() map[string]*Item {
 	}
 
 	if err := r.ensureReadProfile(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 	if err := r.Profile.Decrypt(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 	if err := r.readItems(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 
@@ -81,15 +81,15 @@ func (r *Reader) Items() map[string]*Item {
 
 func (r *Reader) Folders() map[string]*Folder {
 	if err := r.ensureReadProfile(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 	if err := r.Profile.Decrypt(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 	if err := r.readFolders(); err != nil {
-		r.err = xerrors.Errorf(": %w", err)
+		r.err = xerrors.WithStack(err)
 		return nil
 	}
 
@@ -98,10 +98,10 @@ func (r *Reader) Folders() map[string]*Folder {
 
 func (r *Reader) Unlock(password string) error {
 	if err := r.ensureReadProfile(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if err := r.Profile.Unlock(password); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -116,7 +116,7 @@ func (r *Reader) Lock() {
 
 func (r *Reader) IsLocked() (bool, error) {
 	if err := r.ensureReadProfile(); err != nil {
-		return false, xerrors.Errorf(": %w", err)
+		return false, xerrors.WithStack(err)
 	}
 	return r.Profile.IsLocked(), nil
 }
@@ -134,10 +134,10 @@ func (r *Reader) ensureReadProfile() error {
 func (r *Reader) readProfile() error {
 	buf, err := ioutil.ReadFile(filepath.Join(r.dir, "default", "profile.js"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if !bytes.HasPrefix(buf, profilePrefix) {
-		return xerrors.Errorf(": %w", ErrInvalidFormat)
+		return xerrors.WithStack(ErrInvalidFormat)
 	}
 
 	// Trim prefix and suffix to valid JSON
@@ -145,7 +145,7 @@ func (r *Reader) readProfile() error {
 	buf = buf[:len(buf)-1]
 	p := &Profile{}
 	if err := json.Unmarshal(buf, p); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	p.CreatedAt = time.Unix(p.CreatedAtUnix, 0)
 	p.UpdatedAt = time.Unix(p.UpdatedAtUnix, 0)
@@ -157,12 +157,12 @@ func (r *Reader) readProfile() error {
 func (r *Reader) readItems() error {
 	bandFiles, err := filepath.Glob(filepath.Join(r.dir, "default", "band_*.js"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	attachments, err := filepath.Glob(filepath.Join(r.dir, "default", "*.attachment"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	attachmentItemUUID := make(map[string][]string)
 	for _, v := range attachments {
@@ -182,13 +182,13 @@ func (r *Reader) readItems() error {
 	for _, bandFile := range bandFiles {
 		item, err := r.readBand(bandFile)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		for k, v := range item {
 			if files, ok := attachmentItemUUID[k]; ok {
 				attachments, err := r.readAttachments(v, files)
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				v.HasAttachment = true
 				v.Attachments = attachments
@@ -196,14 +196,14 @@ func (r *Reader) readItems() error {
 			if len(v.detail) > 2 {
 				detail := &ItemDetail{}
 				if err := json.Unmarshal([]byte(v.detail), detail); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				v.Detail = detail
 			}
 			if len(v.overview) > 2 {
 				overview := &ItemOverview{}
 				if err := json.Unmarshal([]byte(v.overview), overview); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				v.Overview = overview
 			}
@@ -219,10 +219,10 @@ func (r *Reader) readItems() error {
 func (r *Reader) readBand(file string) (map[string]*Item, error) {
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if !bytes.HasPrefix(buf, bandPrefix) {
-		return nil, xerrors.Errorf(": %w", ErrInvalidFormat)
+		return nil, xerrors.WithStack(ErrInvalidFormat)
 	}
 
 	// Trim prefix and suffix to valid JSON
@@ -230,7 +230,7 @@ func (r *Reader) readBand(file string) (map[string]*Item, error) {
 	buf = buf[:len(buf)-2]
 	items := make(map[string]*Item)
 	if err := json.Unmarshal(buf, &items); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	for k, v := range items {
@@ -243,7 +243,7 @@ func (r *Reader) readBand(file string) (map[string]*Item, error) {
 			r.Profile.OverviewHMACKey,
 			r.Profile.OverviewEncryptionKey,
 		); err != nil {
-			return nil, xerrors.Errorf("opvault: failed decrypt item %s: %w", k, err)
+			return nil, xerrors.WithMessagef(err, "opvault: failed decrypt item %s", k)
 		}
 	}
 
@@ -255,7 +255,7 @@ func (r *Reader) readAttachments(item *Item, files []string) ([]*Attachment, err
 	for _, v := range files {
 		attachment, err := r.readAttachment(item, v)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		attachments = append(attachments, attachment)
 	}
@@ -266,21 +266,21 @@ func (r *Reader) readAttachments(item *Item, files []string) ([]*Attachment, err
 func (r *Reader) readAttachment(item *Item, file string) (*Attachment, error) {
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if !bytes.HasPrefix(buf, attachmentPrefix) {
-		return nil, xerrors.Errorf(": %w", ErrInvalidFormat)
+		return nil, xerrors.WithStack(ErrInvalidFormat)
 	}
 	metadataSize := binary.LittleEndian.Uint16(buf[8:10])
 	metadataBuf := buf[16 : 16+metadataSize]
 	metadata := &AttachmentMetadata{}
 	if err := json.Unmarshal(metadataBuf, metadata); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	decryptedOverview, err := decryptOpdata(metadata.OverviewRaw, r.Profile.OverviewHMACKey, r.Profile.OverviewEncryptionKey)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	metadata.Overview = string(decryptedOverview)
 	metadata.CreatedAt = time.Unix(metadata.CreatedAtUnix, 0)
@@ -299,10 +299,10 @@ func (r *Reader) readAttachment(item *Item, file string) (*Attachment, error) {
 func (r *Reader) readFolders() error {
 	buf, err := ioutil.ReadFile(filepath.Join(r.dir, "default", "folders.js"))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if !bytes.HasPrefix(buf, folderPrefix) {
-		return xerrors.Errorf(": %w", ErrInvalidFormat)
+		return xerrors.WithStack(ErrInvalidFormat)
 	}
 
 	// Trim prefix and suffix to valid JSON
@@ -310,12 +310,12 @@ func (r *Reader) readFolders() error {
 	buf = buf[:len(buf)-2]
 	folders := make(map[string]*Folder)
 	if err := json.Unmarshal(buf, &folders); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for k, v := range folders {
 		if err := v.Decrypt(r.Profile.OverviewHMACKey, r.Profile.OverviewEncryptionKey); err != nil {
-			return xerrors.Errorf("opvault: Failed decrypt folder %s: %w", k, err)
+			return xerrors.WithMessagef(err, "opvault: Failed decrypt folder %s", k)
 		}
 	}
 
@@ -415,7 +415,7 @@ type Folder struct {
 func (p *Profile) Unlock(password string) error {
 	s, err := base64.StdEncoding.DecodeString(p.SaltRaw)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	p.Salt = s
 
@@ -441,7 +441,7 @@ func (p *Profile) IsLocked() bool {
 
 func (p *Profile) Decrypt() error {
 	if p.hmacKey == nil || p.encryptionKey == nil {
-		return xerrors.Errorf(": %w", ErrLocked)
+		return xerrors.WithStack(ErrLocked)
 	}
 	if p.OverviewEncryptionKey != nil && p.MasterEncryptionKey != nil {
 		return nil
@@ -449,7 +449,7 @@ func (p *Profile) Decrypt() error {
 
 	decryptedOverviewKey, err := decryptOpdata(p.OverviewKeyRaw, p.hmacKey, p.encryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	h := sha512.New()
 	h.Write(decryptedOverviewKey)
@@ -459,7 +459,7 @@ func (p *Profile) Decrypt() error {
 
 	decryptedMasterKey, err := decryptOpdata(p.MasterKeyRaw, p.hmacKey, p.encryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	h = sha512.New()
 	h.Write(decryptedMasterKey)
@@ -473,18 +473,18 @@ func (p *Profile) Decrypt() error {
 func (i *Item) Decrypt(masterHMACKey, masterEncryptionKey, overviewHMACKey, overviewEncryptionKey []byte) error {
 	itemEncryptionKey, itemHMACKey, err := i.decryptKey(masterHMACKey, masterEncryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	decryptedDetail, err := decryptOpdata(i.DetailRaw, itemHMACKey, itemEncryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	i.detail = string(decryptedDetail)
 
 	decryptedOverview, err := decryptOpdata(i.OverviewRaw, overviewHMACKey, overviewEncryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	i.overview = string(decryptedOverview)
 
@@ -498,23 +498,23 @@ func (i *Item) decryptKey(hmacKey, encryptionKey []byte) (itemEncryptionKey []by
 
 	decoded, err := base64.StdEncoding.DecodeString(i.Key)
 	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.WithStack(err)
 	}
 	data := decoded[:len(decoded)-32]
 	mac := decoded[len(decoded)-32:]
 
 	h := hmac.New(sha256.New, hmacKey)
 	if _, err := h.Write(data); err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.WithStack(err)
 	}
 	calced := h.Sum(nil)
 	if !bytes.Equal(mac, calced) {
-		return nil, nil, xerrors.Errorf(": %w", ErrInvalidData)
+		return nil, nil, xerrors.WithStack(ErrInvalidData)
 	}
 
 	block, err := aes.NewCipher(encryptionKey)
 	if err != nil {
-		return nil, nil, xerrors.Errorf(": %w", err)
+		return nil, nil, xerrors.WithStack(err)
 	}
 	cbc := cipher.NewCBCDecrypter(block, data[:16])
 	keys := make([]byte, 64)
@@ -533,14 +533,14 @@ func (a *Attachment) Data() ([]byte, error) {
 
 	buf, err := ioutil.ReadFile(a.OriginalFile)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	metadataSize := binary.LittleEndian.Uint16(buf[8:10])
 	iconSize := binary.LittleEndian.Uint32(buf[12:16])
 	data, err := decryptData(buf[16+int(metadataSize)+int(iconSize):], a.hmacKey, a.encryptionKey)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return data, nil
@@ -549,7 +549,7 @@ func (a *Attachment) Data() ([]byte, error) {
 func (f *Folder) Decrypt(hmacKey, encryptionKey []byte) error {
 	data, err := decryptOpdata(f.OverviewRaw, hmacKey, encryptionKey)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	f.Overview = string(data)
 
@@ -559,10 +559,10 @@ func (f *Folder) Decrypt(hmacKey, encryptionKey []byte) error {
 func decryptOpdata(raw string, hmacKey, encryptionKey []byte) ([]byte, error) {
 	decoded, err := base64.StdEncoding.DecodeString(raw)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if !bytes.HasPrefix(decoded, opdataPrefix) {
-		return nil, xerrors.Errorf(": %w", ErrInvalidFormat)
+		return nil, xerrors.WithStack(ErrInvalidFormat)
 	}
 
 	return decryptData(decoded, hmacKey, encryptionKey)
@@ -574,11 +574,11 @@ func decryptData(decoded, hmacKey, encryptionKey []byte) ([]byte, error) {
 
 	h := hmac.New(sha256.New, hmacKey)
 	if _, err := h.Write(data); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	calced := h.Sum(nil)
 	if !bytes.Equal(mac, calced) {
-		return nil, xerrors.Errorf(": %w", ErrInvalidData)
+		return nil, xerrors.WithStack(ErrInvalidData)
 	}
 
 	length := binary.LittleEndian.Uint64(decoded[8:16])
@@ -586,7 +586,7 @@ func decryptData(decoded, hmacKey, encryptionKey []byte) ([]byte, error) {
 
 	block, err := aes.NewCipher(encryptionKey)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	cbc := cipher.NewCBCDecrypter(block, iv)
 	cbc.CryptBlocks(data, data)
