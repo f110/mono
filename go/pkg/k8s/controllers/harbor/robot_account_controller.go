@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,11 +62,11 @@ func NewRobotAccountController(
 ) (*RobotAccountController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(ctx, harborName, metav1.GetOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	informers := client.NewHarborV1alpha1Informer(factory.Cache(), apiClient.HarborV1alpha1, metav1.NamespaceAll, 30*time.Second)
@@ -109,12 +109,12 @@ func (c *RobotAccountController) ObjectToKeys(obj interface{}) []string {
 func (c *RobotAccountController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	hra, err := c.hraLister.Get(namespace, name)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return hra, nil
 }
@@ -124,7 +124,7 @@ func (c *RobotAccountController) UpdateObject(ctx context.Context, obj runtime.O
 
 	hra, err := c.hClient.UpdateHarborRobotAccount(ctx, hra, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return hra, nil
 }
@@ -148,12 +148,12 @@ func (c *RobotAccountController) Reconcile(ctx context.Context, obj runtime.Obje
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	accounts, err := harborClient.GetRobotAccounts(project.Status.ProjectId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	created := false
 	for _, v := range accounts {
@@ -165,13 +165,13 @@ func (c *RobotAccountController) Reconcile(ctx context.Context, obj runtime.Obje
 
 	if !created {
 		if err := c.createRobotAccount(ctx, harborClient, project, harborRobotAccount); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
 	accounts, err = harborClient.GetRobotAccounts(project.Status.ProjectId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range accounts {
 		if strings.HasSuffix(v.Name, "$"+harborRobotAccount.Name) {
@@ -184,7 +184,7 @@ func (c *RobotAccountController) Reconcile(ctx context.Context, obj runtime.Obje
 	if !reflect.DeepEqual(harborRobotAccount.Status, currentHRA.Status) {
 		_, err = c.hClient.UpdateStatusHarborRobotAccount(ctx, harborRobotAccount, metav1.UpdateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -197,7 +197,7 @@ func (c *RobotAccountController) getProject(ctx context.Context, hra *harborv1al
 		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
 		return nil, errors.New("project not found")
 	} else if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return project, nil
@@ -208,13 +208,13 @@ func (c *RobotAccountController) harborClient(ctx context.Context) (*harbor.Harb
 	if c.runOutsideCluster {
 		pf, err := c.portForward(ctx, c.harborService, 8080)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		defer pf.Close()
 
 		ports, err := pf.GetPorts()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
 	}
@@ -238,13 +238,13 @@ func (c *RobotAccountController) createRobotAccount(ctx context.Context, client 
 		},
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	dockerConfig := NewDockerConfig(project.Status.Registry, newAccount.Name, newAccount.Token)
 	configBuf := new(bytes.Buffer)
 	if err := json.NewEncoder(configBuf).Encode(dockerConfig); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	newSecret := &corev1.Secret{
@@ -260,7 +260,7 @@ func (c *RobotAccountController) createRobotAccount(ctx context.Context, client 
 	}
 	_, err = c.coreClient.CoreV1().Secrets(newSecret.Namespace).Create(ctx, newSecret, metav1.CreateOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -271,22 +271,22 @@ func (c *RobotAccountController) Finalize(ctx context.Context, obj runtime.Objec
 
 	project, err := c.getProject(ctx, hra)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := harborClient.DeleteRobotAccount(project.Status.ProjectId, hra.Status.RobotId); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	hra.Finalizers = removeString(hra.Finalizers, harborRobotAccountControllerFinalizerName)
 	_, err = c.hClient.UpdateHarborRobotAccount(ctx, hra, metav1.UpdateOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -295,7 +295,7 @@ func (c *RobotAccountController) portForward(ctx context.Context, svc *corev1.Se
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var pod *corev1.Pod
 	for i, v := range podList.Items {
@@ -311,14 +311,14 @@ func (c *RobotAccountController) portForward(ctx context.Context, svc *corev1.Se
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
 	transport, upgrader, err := spdy.RoundTripperFor(c.config)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
 	readyCh := make(chan struct{})
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	go func() {
 		err := pf.ForwardPorts()

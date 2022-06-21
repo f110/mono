@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,19 +63,19 @@ func NewProjectController(
 ) (*ProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(ctx, harborName, metav1.GetOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	cm, err := coreClient.CoreV1().ConfigMaps(harborNamespace).Get(ctx, coreConfigMapName, metav1.GetOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	registryUrl, err := url.Parse(cm.Data["EXT_ENDPOINT"])
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	informers := client.NewHarborV1alpha1Informer(factory.Cache(), apiClient.HarborV1alpha1, metav1.NamespaceAll, 30*time.Second)
@@ -109,20 +109,20 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if ok, err := harborClient.ExistProject(harborProject.Name); err == nil && !ok {
 		if err := c.createProject(harborProject, harborClient); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	} else if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	projects, err := harborClient.ListProjects()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range projects {
 		if v.Name == harborProject.Name {
@@ -137,7 +137,7 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 	if !reflect.DeepEqual(harborProject.Status, currentHP.Status) {
 		_, err = c.hpClient.UpdateStatusHarborProject(ctx, harborProject, metav1.UpdateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -149,13 +149,13 @@ func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, e
 	if c.runOutsideCluster {
 		pf, err := c.portForward(ctx, c.harborService, 8080)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		defer pf.Close()
 
 		ports, err := pf.GetPorts()
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		harborHost = fmt.Sprintf("http://127.0.0.1:%d", ports[0].Local)
 	}
@@ -173,7 +173,7 @@ func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProjec
 		newProject.Metadata.Public = "true"
 	}
 	if err := client.NewProject(newProject); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -184,23 +184,23 @@ func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) er
 
 	harborClient, err := c.harborClient(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	err = harborClient.DeleteProject(hp.Status.ProjectId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
 	_, err = c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})
-	return xerrors.Errorf(": %w", err)
+	return xerrors.WithStack(err)
 }
 
 func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var pod *corev1.Pod
 	for i, v := range podList.Items {
@@ -216,14 +216,14 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
 	transport, upgrader, err := spdy.RoundTripperFor(c.config)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
 	readyCh := make(chan struct{})
 	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	go func() {
 		err := pf.ForwardPorts()
@@ -261,12 +261,12 @@ func (c *ProjectController) ObjectToKeys(obj interface{}) []string {
 func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	hp, err := c.hpLister.Get(namespace, name)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return hp, nil
 }
@@ -276,7 +276,7 @@ func (c *ProjectController) UpdateObject(ctx context.Context, obj runtime.Object
 
 	hp, err := c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return hp, nil
 }
