@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/vault/api"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/minio/minio/pkg/madmin"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,12 +119,12 @@ func (c *UserController) ObjectToKeys(obj interface{}) []string {
 func (c *UserController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	user, err := c.muLister.Get(namespace, name)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return user, nil
 }
@@ -134,7 +134,7 @@ func (c *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (
 
 	user, err := c.mClient.UpdateMinIOUser(ctx, user, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return user, nil
 }
@@ -145,11 +145,11 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 
 	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	instances, err := c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if len(instances) == 0 {
 		c.Log().Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(&minioUser.Spec.Selector)))
@@ -162,12 +162,12 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	for _, instance := range instances {
 		creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if forwarder != nil {
 			defer forwarder.Close()
@@ -180,7 +180,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 			false,
 		)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if c.transport != nil {
 			adminClient.SetCustomTransport(c.transport)
@@ -188,24 +188,24 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 
 		secret, err := c.ensureUser(ctx, adminClient, minioUser)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		if minioUser.Spec.Path != "" && !minioUser.Status.Vault {
 			if err := c.saveAccessKeyToVault(minioUser, secret); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	}
 
 	if err := c.setStatus(minioUser); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if !reflect.DeepEqual(minioUser.Status, currentUser.Status) {
 		_, err = c.mClient.UpdateStatusMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -218,7 +218,7 @@ func (c *UserController) setStatus(user *miniov1alpha1.MinIOUser) error {
 		return nil
 	}
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	user.Status.Ready = true
 	user.Status.AccessKey = string(secret.Data["accesskey"])
@@ -232,7 +232,7 @@ func (c *UserController) setStatus(user *miniov1alpha1.MinIOUser) error {
 func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
 	secret, err := c.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
 	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	if err == nil {
 		return secret, nil
@@ -241,7 +241,7 @@ func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.Adm
 	accessKey := stringsutil.RandomString(accessKeyLength)
 	secretKey := stringsutil.RandomString(secretKeyLength)
 	if err := adminClient.AddUser(ctx, accessKey, secretKey); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	secret = &corev1.Secret{
@@ -257,7 +257,7 @@ func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.Adm
 	controllerutil.SetOwner(secret, user, client.Scheme)
 	secret, err = c.coreClient.CoreV1().Secrets(user.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return secret, nil
@@ -276,7 +276,7 @@ func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, sec
 		data,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -287,7 +287,7 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 
 	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	instances, err := c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
@@ -297,12 +297,12 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 	for _, instance := range instances {
 		creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if forwarder != nil {
 			defer forwarder.Close()
@@ -313,21 +313,21 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 			continue
 		}
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		adminClient, err := madmin.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		if err := adminClient.RemoveUser(ctx, string(secret.Data["accesskey"])); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		c.Log().Debug("Remove minio user", zap.String("name", minioUser.Name))
 
 		if err := c.coreClient.CoreV1().Secrets(secret.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -343,7 +343,7 @@ func (c *UserController) getMinIOInstanceEndpoint(
 ) (string, *portforward.PortForwarder, error) {
 	svc, err := c.serviceLister.Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name))
 	if err != nil {
-		return "", nil, xerrors.Errorf(": %w", err)
+		return "", nil, xerrors.WithStack(err)
 	}
 
 	var forwarder *portforward.PortForwarder

@@ -13,8 +13,8 @@ import (
 	"github.com/minio/minio-go/v6"
 	"github.com/minio/minio-go/v6/pkg/policy"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,12 +120,12 @@ func (c *BucketController) ObjectToKeys(obj interface{}) []string {
 func (c *BucketController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	bucket, err := c.mbLister.Get(namespace, name)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return bucket, nil
 }
@@ -135,7 +135,7 @@ func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object)
 
 	b, err := c.mClient.UpdateMinIOBucket(ctx, bucket, metav1.UpdateOptions{})
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return b, nil
@@ -255,27 +255,27 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 		// We are going to delete the finalizer only.
 		r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
 		_, err := r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	sel, err := metav1.LabelSelectorAsSelector(&r.Obj.Spec.Selector)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	instances, err := r.instanceLister.List(r.Obj.Namespace, sel)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	for _, instance := range instances {
 		creds, err := r.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		instanceEndpoint, forwarder, err := r.getMinIOInstanceEndpoint(ctx, instance)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if forwarder != nil {
 			defer forwarder.Close()
@@ -283,20 +283,20 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 
 		mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 
 		doneCh := make(chan struct{})
 		defer close(doneCh)
 		for v := range mc.ListObjectsV2(r.Obj.Name, "", true, doneCh) {
 			if err := mc.RemoveObject(r.Obj.Name, v.Key); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			r.logger.Info("Object removed", zap.String("name", r.Obj.Name))
 		}
 
 		if err := mc.RemoveBucket(r.Obj.Name); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		r.logger.Debug("Remove bucket", zap.String("name", r.Obj.Name))
 	}
@@ -305,7 +305,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 
 	_, err = r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -313,11 +313,11 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 func (r *BucketReconciler) init() (fsm.State, error) {
 	sel, err := metav1.LabelSelectorAsSelector(&r.Obj.Spec.Selector)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	instances, err := r.instanceLister.List(r.Obj.Namespace, sel)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	if len(instances) == 0 {
 		r.logger.Debug("MinIO instance is not found", zap.String("selector", metav1.FormatLabelSelector(&r.Obj.Spec.Selector)))
@@ -330,19 +330,19 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 
 	creds, err := r.secretLister.Secrets(instances[0].Namespace).Get(instances[0].Spec.CredsSecret.Name)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	r.Secret = creds
 
 	instanceEndpoint, forwarder, err := r.getMinIOInstanceEndpoint(r.ctx, instances[0])
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	r.PortForwarder = forwarder
 
 	mc, err := minio.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	if r.transport != nil {
 		mc.SetCustomTransport(r.transport)
@@ -354,7 +354,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 
 func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 	if exists, err := r.MinIOClient.BucketExistsWithContext(r.ctx, r.Obj.Name); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	} else if exists {
 		r.logger.Debug("Already exists", zap.String("name", r.Obj.Name))
 		return bucketStateEnsureBucketPolicy, nil
@@ -362,7 +362,7 @@ func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 	r.logger.Debug("Created", zap.String("name", r.Obj.Name))
 
 	if err := r.MinIOClient.MakeBucketWithContext(r.ctx, r.Obj.Name, ""); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 
 	return bucketStateEnsureBucketPolicy, nil
@@ -371,13 +371,13 @@ func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 	current, err := r.MinIOClient.GetBucketPolicy(r.Obj.Name)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	var currentPolicy *policy.BucketAccessPolicy
 	if current != "" {
 		cp := &policy.BucketAccessPolicy{}
 		if err := json.Unmarshal([]byte(current), cp); err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 		currentPolicy = cp
 	}
@@ -390,7 +390,7 @@ func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 		// If .Spec.Policy is an empty value, We must not change anything.
 		err := r.MinIOClient.SetBucketPolicyWithContext(r.ctx, r.Obj.Name, "")
 		if err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 	case miniov1alpha1.BucketPolicyPublic:
 		p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, r.Obj.Name, "*")
@@ -406,11 +406,11 @@ func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 
 	b, err := json.Marshal(p)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	r.logger.Debug("SetBucketPolicy", zap.String("name", r.Obj.Name), zap.String("policy", string(b)))
 	if err := r.MinIOClient.SetBucketPolicyWithContext(r.ctx, r.Obj.Name, string(b)); err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 
 	return bucketStateEnsureIndexFile, nil
@@ -425,11 +425,11 @@ func (r *BucketReconciler) ensureIndexFile() (fsm.State, error) {
 	if err != nil {
 		mErr, ok := err.(minio.ErrorResponse)
 		if !ok {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 
 		if mErr.Code != "NoSuchKey" {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 	}
 	if stat.Key != "" {
@@ -447,7 +447,7 @@ func (r *BucketReconciler) ensureIndexFile() (fsm.State, error) {
 		minio.PutObjectOptions{},
 	)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	return bucketStateUpdateStatus, nil
 }
@@ -458,7 +458,7 @@ func (r *BucketReconciler) updateStatus() (fsm.State, error) {
 	if !reflect.DeepEqual(r.Original.Status, r.Obj.Status) {
 		_, err := r.Client.UpdateStatusMinIOBucket(r.ctx, r.Obj, metav1.UpdateOptions{})
 		if err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 	}
 
@@ -479,7 +479,7 @@ func (r *BucketReconciler) getMinIOInstanceEndpoint(
 ) (string, *portforward.PortForwarder, error) {
 	svc, err := r.serviceLister.Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name))
 	if err != nil {
-		return "", nil, xerrors.Errorf(": %w", err)
+		return "", nil, xerrors.WithStack(err)
 	}
 
 	var forwarder *portforward.PortForwarder
@@ -487,12 +487,12 @@ func (r *BucketReconciler) getMinIOInstanceEndpoint(
 	if r.runOutsideCluster {
 		forwarder, err = r.portForward(ctx, svc, int(svc.Spec.Ports[0].Port))
 		if err != nil {
-			return "", nil, xerrors.Errorf(": %w", err)
+			return "", nil, xerrors.WithStack(err)
 		}
 
 		ports, err := forwarder.GetPorts()
 		if err != nil {
-			return "", nil, xerrors.Errorf(": %w", err)
+			return "", nil, xerrors.WithStack(err)
 		}
 		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", ports[0].Local)
 	}
@@ -508,7 +508,7 @@ func (r *BucketReconciler) portForward(
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := r.podLister.Pods(svc.Namespace).List(selector)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	var pod *corev1.Pod
 	for _, v := range podList {
@@ -524,7 +524,7 @@ func (r *BucketReconciler) portForward(
 	req := r.CoreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
 	transport, upgrader, err := spdy.RoundTripperFor(r.config)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
 
@@ -538,7 +538,7 @@ func (r *BucketReconciler) portForward(
 		nil,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	go func() {
 		err := pf.ForwardPorts()
