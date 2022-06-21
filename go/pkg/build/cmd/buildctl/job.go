@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 func triggerTask(endpoint string, jobId int, via string) error {
@@ -17,17 +17,17 @@ func triggerTask(endpoint string, jobId int, via string) error {
 	v.Add("via", via)
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/run", endpoint), strings.NewReader(v.Encode()))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Errorf("failed trigger job: %s", res.Status)
+		return fmt.Errorf("failed trigger job: %s", res.Status)
 	}
 	return nil
 }

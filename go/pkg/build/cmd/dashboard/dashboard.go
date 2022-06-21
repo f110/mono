@@ -11,8 +11,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -28,12 +28,12 @@ import (
 func dashboard(opt Options) error {
 	parsedDSN, err := mysql.ParseDSN(opt.DSN)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	parsedDSN.ParseTime = true
 	loc, err := time.LoadLocation("Local")
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	parsedDSN.Loc = loc
 	opt.DSN = parsedDSN.FormatDSN()
@@ -44,26 +44,26 @@ func dashboard(opt Options) error {
 	logger.Log.Debug("Open sql connection", zap.String("dsn", opt.DSN))
 	conn, err := sql.Open("mysql", opt.DSN)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	kubeConfigPath := ""
 	if opt.Dev {
 		h, err := os.UserHomeDir()
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 30*time.Second, kubeinformers.WithNamespace(opt.Namespace))

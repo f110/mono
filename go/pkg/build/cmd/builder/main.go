@@ -14,8 +14,8 @@ import (
 	"github.com/google/go-github/v32/github"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -122,7 +122,7 @@ func (p *process) init() (fsm.State, error) {
 	if p.opt.Dev {
 		h, err := os.UserHomeDir()
 		if err != nil {
-			return fsm.Error(xerrors.Errorf(": %w", err))
+			return fsm.Error(xerrors.WithStack(err))
 		}
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
@@ -134,19 +134,19 @@ func (p *process) init() (fsm.State, error) {
 		p.opt.GithubPrivateKeyFile,
 	)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.ghClient = github.NewClient(&http.Client{Transport: t})
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.restCfg = cfg
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.kubeClient = kubeClient
 	p.coreSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(
@@ -157,12 +157,12 @@ func (p *process) init() (fsm.State, error) {
 
 	parsedDSN, err := mysql.ParseDSN(p.opt.DSN)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	parsedDSN.ParseTime = true
 	loc, err := time.LoadLocation("Local")
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	parsedDSN.Loc = loc
 	p.opt.DSN = parsedDSN.FormatDSN()
@@ -170,7 +170,7 @@ func (p *process) init() (fsm.State, error) {
 	logger.Log.Debug("Open sql connection", zap.String("dsn", p.opt.DSN))
 	conn, err := sql.Open("mysql", p.opt.DSN)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.dao = dao.NewOptions(conn)
 
@@ -220,7 +220,7 @@ func (p *process) setup() (fsm.State, error) {
 	)
 	if err != nil {
 		logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.bazelBuilder = c
 
@@ -249,7 +249,7 @@ func (p *process) setup() (fsm.State, error) {
 func (p *process) startApiServer() (fsm.State, error) {
 	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.discover, p.dao, p.ghClient)
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.apiServer = apiServer
 
@@ -291,7 +291,7 @@ func (p *process) leaderElection() (fsm.State, error) {
 		},
 	})
 	if err != nil {
-		return fsm.Error(xerrors.Errorf(": %w", err))
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	go e.Run(p.ctx)
 

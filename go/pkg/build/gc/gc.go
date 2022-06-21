@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
@@ -82,13 +82,13 @@ func (g *GC) cleanTask(ctx context.Context, t *database.Task) error {
 	if t.LogFile != "" {
 		logger.Log.Info("Delete log file from object storage", zap.String("name", t.LogFile), zap.Int32("task_id", t.Id))
 		if err := g.minio.Delete(ctx, t.LogFile); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
 	logger.Log.Info("Delete task", zap.Int32("task_id", t.Id))
 	if err := g.dao.Task.Delete(ctx, t.Id); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }

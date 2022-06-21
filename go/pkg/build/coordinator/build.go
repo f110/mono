@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/google/go-github/v32/github"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -213,7 +213,7 @@ func NewBazelBuilder(
 	if kOpt.DefaultCPULimit != "" {
 		q, err := resource.ParseQuantity(kOpt.DefaultCPULimit)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		b.defaultTaskCPULimit = q
 	} else {
@@ -222,7 +222,7 @@ func NewBazelBuilder(
 	if kOpt.DefaultMemoryLimit != "" {
 		q, err := resource.ParseQuantity(kOpt.DefaultMemoryLimit)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		b.defaultTaskMemoryLimit = q
 	} else {
@@ -232,7 +232,7 @@ func NewBazelBuilder(
 
 	pendingTasks, err := b.dao.Task.ListPending(context.Background())
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	for _, v := range pendingTasks {
 		b.taskQueue.Enqueue(v.Job, v)
@@ -255,7 +255,7 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 			ConfigName: job.ConfigName,
 		})
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 		defer func() {
 			if task.IsChanged() {
@@ -273,7 +273,7 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 				return tasks, nil
 			}
 
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, xerrors.WithStack(err)
 		}
 
 		if job.GithubStatus {
@@ -301,18 +301,18 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Log.Info("Not found task", zap.String("task.id", taskId))
 			if err := b.teardownJob(ctx, job); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			return nil
 		}
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if task.FinishedAt != nil {
 		logger.Log.Debug("task is already finished", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		if job.DeletionTimestamp.IsZero() {
 			if err := b.teardownJob(ctx, job); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 		return nil
@@ -324,7 +324,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		now := time.Now()
 		task.FinishedAt = &now
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		return nil
 	}
@@ -340,7 +340,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		case batchv1.JobComplete:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(ctx, job, task, true); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 			task.Success = true
@@ -349,7 +349,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		case batchv1.JobFailed:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(ctx, job, task, false); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 			task.FinishedAt = &now
@@ -358,12 +358,12 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 	if task.FinishedAt != nil {
 		if err := b.teardownJob(ctx, job); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
 	if err := b.dao.Task.Update(context.Background(), task); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
@@ -382,15 +382,15 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 
 func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error {
 	if err := b.client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{}); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	pods, err := b.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range pods.Items {
 		if err := b.client.CoreV1().Pods(v.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{}); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -400,12 +400,12 @@ func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error 
 func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 	id, err := strconv.Atoi(taskId)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	task, err := b.dao.Task.Select(context.Background(), int32(id))
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	return task, nil
 }
@@ -413,14 +413,14 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 func (b *BazelBuilder) buildJob(ctx context.Context, job *database.Job, task *database.Task) error {
 	if job.Exclusive {
 		if b.isRunningJob(job) {
-			return xerrors.Errorf(": %w", ErrOtherTaskIsRunning)
+			return xerrors.WithStack(ErrOtherTaskIsRunning)
 		}
 	}
 
 	buildTemplate := b.buildJobTemplate(job, task, task.Platform)
 	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %v", err)
+		return xerrors.WithStack(err)
 	}
 	now := time.Now()
 	task.StartAt = &now
@@ -459,12 +459,12 @@ func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
 func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *database.Task, success bool) error {
 	j, err := b.dao.Job.Select(context.Background(), task.JobId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if len(podList.Items) != 1 {
 		return xerrors.New("Target pods not found or found more than 1")
@@ -474,7 +474,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
 	rawLog, err := logReq.DoRaw(ctx)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	buf.WriteString("----- pre-process -----\n")
 	buf.Write(rawLog)
@@ -486,22 +486,22 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 	buf.Write(rawLog)
 
 	if err := b.minio.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	task.LogFile = job.Name
 
 	s, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	pods, err := b.podLister.Pods(b.Namespace).List(s)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if len(pods) > 0 {
 		nodeList, err := b.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	NodeList:
 		for _, v := range nodeList.Items {
@@ -521,7 +521,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 			state = "failure"
 		}
 		if err := b.updateGithubStatus(context.Background(), j, task, state); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -535,7 +535,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 
 	u, err := url.Parse(job.Repository.Url)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if u.Hostname() != "github.com" {
 		logger.Log.Warn("Expect update a status of github. but repository url is not github.com", zap.String("url", job.Repository.Url))
@@ -562,7 +562,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 		},
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil

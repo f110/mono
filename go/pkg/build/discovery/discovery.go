@@ -13,8 +13,8 @@ import (
 	"text/template"
 
 	"github.com/google/go-github/v32/github"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -190,7 +190,7 @@ func NewDiscover(
 func (d *Discover) FindOut(repository *database.SourceRepository, revision string) error {
 	u, err := url.Parse(repository.Url)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
@@ -198,17 +198,17 @@ func (d *Discover) FindOut(repository *database.SourceRepository, revision strin
 	if revision == "" {
 		repoInfo, _, err := d.githubClient.Repositories.Get(context.TODO(), owner, repo)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		ref, _, err := d.githubClient.Git.GetRef(context.TODO(), owner, repo, fmt.Sprintf("heads/%s", repoInfo.GetDefaultBranch()))
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		treeSHA = ref.Object.GetSHA()
 	}
 	tree, _, err := d.githubClient.Git.GetTree(context.TODO(), owner, repo, treeSHA, false)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	bazelVersion := defaultBazelVersion
@@ -216,11 +216,11 @@ func (d *Discover) FindOut(repository *database.SourceRepository, revision strin
 		if v.GetPath() == ".bazelversion" {
 			blob, _, err := d.githubClient.Git.GetBlob(context.TODO(), owner, repo, v.GetSHA())
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			buf, err := base64.StdEncoding.DecodeString(blob.GetContent())
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			bazelVersion = strings.TrimRight(string(buf), "\n")
 			break
@@ -228,7 +228,7 @@ func (d *Discover) FindOut(repository *database.SourceRepository, revision strin
 	}
 
 	if err := d.buildJob(context.TODO(), repository, revision, bazelVersion); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	logger.Log.Info("Start discovery job", zap.String("repo", repository.Name), zap.String("revision", revision), zap.String("bazel_version", bazelVersion))
 
@@ -250,7 +250,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 	} else {
 		i, err := strconv.Atoi(v)
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		repoId = int32(i)
 	}
@@ -261,7 +261,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 		case batchv1.JobComplete:
 			success = true
 			if err := d.minio.Delete(ctx, job.Name); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		case batchv1.JobFailed:
 			pods, err := d.client.CoreV1().Pods(job.Namespace).List(
@@ -273,10 +273,10 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 				logReq := d.client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "main"})
 				rawLog, err := logReq.DoRaw(ctx)
 				if err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 				if err := d.minio.Put(ctx, job.Name, rawLog); err != nil {
-					return xerrors.Errorf(": %w", err)
+					return xerrors.WithStack(err)
 				}
 			}
 
@@ -286,11 +286,11 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 			}
 
 			if err := d.teardownJob(ctx, job); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			jobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			for _, v := range jobs {
 				v.Sync = false
@@ -307,7 +307,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	pods, err := d.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if len(pods.Items) != 1 {
 		return xerrors.New("Target pod not found or found more than 1")
@@ -316,17 +316,17 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 	res := logReq.Do(ctx)
 	rawLog, err := res.Raw()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	jobs, err := Discovery(rawLog)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	currentJobs, err := d.dao.Job.ListBySourceRepositoryId(context.Background(), repoId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	jobMap := make(map[string]*database.Job)
 	for _, v := range currentJobs {
@@ -343,7 +343,7 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	repo, err := d.dao.Repository.Select(ctx, repoId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	newJobs := make([]*database.Job, 0)
@@ -364,29 +364,29 @@ func (d *Discover) syncJob(job *batchv1.Job) error {
 
 	for _, v := range currentJobs {
 		if err := d.dao.Job.Update(context.Background(), v); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	for _, v := range newJobs {
 		if created, err := d.dao.Job.Create(context.Background(), v); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		} else {
 			v.Id = created.Id
 		}
 	}
 
 	if err := d.syncCronJob(ctx, append(currentJobs, newJobs...)); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if err := d.teardownJob(ctx, job); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	if rev, ok := job.ObjectMeta.Labels[labelKeyRevision]; ok && rev != "" {
 		// Trigger after task.
 		if err := d.triggerTask(ctx, job, rev); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -400,17 +400,17 @@ func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision s
 	}
 	id, err := strconv.Atoi(repoId)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	repo, err := d.dao.Repository.Select(ctx, int32(id))
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	jobs, err := d.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
 	if err != nil {
 		logger.Log.Warn("Could not get jobs", zap.Error(err))
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
@@ -423,7 +423,7 @@ func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision s
 
 		if _, err := d.builder.Build(ctx, v, revision, v.Command, v.Targets, v.Platforms, "push"); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -433,16 +433,16 @@ func (d *Discover) triggerTask(ctx context.Context, job *batchv1.Job, revision s
 func (d *Discover) teardownJob(ctx context.Context, job *batchv1.Job) error {
 	err := d.client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	pods, err := d.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range pods.Items {
 		if err := d.client.CoreV1().Pods(v.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{}); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -452,7 +452,7 @@ func (d *Discover) teardownJob(ctx context.Context, job *batchv1.Job) error {
 func (d *Discover) syncCronJob(ctx context.Context, jobs []*database.Job) error {
 	cronJobs, err := d.client.BatchV1().CronJobs(d.Namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	cronJobMap := make(map[string]*batchv1.CronJob)
 	deleteCronJobs := make([]*batchv1.CronJob, 0)
@@ -544,21 +544,21 @@ func (d *Discover) syncCronJob(ctx context.Context, jobs []*database.Job) error 
 		logger.Log.Debug("Delete CronJob", zap.String("name", v.Name))
 		err := d.client.BatchV1().CronJobs(d.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	for _, v := range newCronJobs {
 		logger.Log.Debug("Create CronJob", zap.String("name", v.Name))
 		_, err := d.client.BatchV1().CronJobs(d.Namespace).Create(ctx, v, metav1.CreateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 	for _, v := range updateCronJobs {
 		logger.Log.Debug("Update CronJob", zap.String("name", v.Name))
 		_, err := d.client.BatchV1().CronJobs(d.Namespace).Update(ctx, v, metav1.UpdateOptions{})
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -569,7 +569,7 @@ func (d *Discover) buildJob(ctx context.Context, repository *database.SourceRepo
 	j := d.newDiscoveryJob(repository, revision, bazelVersion)
 	_, err := d.client.BatchV1().Jobs(d.Namespace).Create(ctx, j, metav1.CreateOptions{})
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -671,7 +671,7 @@ func (d *Discover) newDiscoveryJob(repository *database.SourceRepository, revisi
 func Discovery(b []byte) ([]*job.Job, error) {
 	res := &BazelProto{}
 	if err := json.Unmarshal(b, res); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	seen := make(map[string]struct{})

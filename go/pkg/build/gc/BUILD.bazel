@@ -11,7 +11,7 @@ go_library(
         "//go/pkg/build/web",
         "//go/pkg/logger",
         "//go/pkg/storage",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
-        "//vendor/golang.org/x/xerrors",
     ],
 )

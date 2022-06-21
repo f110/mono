@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"sync"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 
 	"go.f110.dev/mono/go/pkg/build/watcher"
@@ -44,7 +44,7 @@ func (d *Viewer) syncJob(job *batchv1.Job) error {
 	repoId, err := strconv.ParseInt(rId, 10, 32)
 	if err != nil {
 		logger.Log.Info("Could not parse label", zap.String(labelKeyRepositoryId, rId))
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	d.mu.Lock()

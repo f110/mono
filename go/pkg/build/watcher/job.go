@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -87,7 +87,7 @@ func (j *JobWatcher) Run(ctx context.Context, workers int) error {
 func (j JobWatcher) dispatch(key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	job, err := j.jobLister.Jobs(namespace).Get(name)
@@ -95,7 +95,7 @@ func (j JobWatcher) dispatch(key string) error {
 		return nil
 	}
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	jobType, ok := job.Labels[TypeLabel]

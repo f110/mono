@@ -15,8 +15,8 @@ import (
 
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/protoc-ddl/probe"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"golang.org/x/xerrors"
 
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
@@ -232,7 +232,7 @@ func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
 
 func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) error {
 	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), job.TypeCommit, "push"); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -240,7 +240,7 @@ func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) err
 
 func (a *Api) buildByPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
 	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.PullRequest.Head.GetSHA(), job.TypeCommit, "pull_request"); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 
 	return nil
@@ -251,14 +251,14 @@ func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string
 	owner, repo := s[0], s[1]
 	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repo, number)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	if res.StatusCode != http.StatusOK {
 		return xerrors.New("could not get pr")
 	}
 
 	if err := a.build(ctx, repoUrl, pr.GetHead().GetSHA(), job.TypeCommit, "pr"); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	return nil
 }
@@ -277,7 +277,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string)
 	jobs, err := a.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
 	if err != nil {
 		logger.Log.Warn("Could not get jobs", zap.Error(err))
-		return xerrors.Errorf(": %w", err)
+		return xerrors.WithStack(err)
 	}
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
@@ -294,7 +294,7 @@ func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string)
 
 		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Targets, v.Platforms, via); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
@@ -307,7 +307,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 		if strings.Contains(event.Comment.GetBody(), AllowCommand) {
 			users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 			if len(users) != 1 {
 				return nil
@@ -323,7 +323,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				Number:     int32(event.Issue.GetNumber()),
 			})
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			body := "Understood. This pull request added to allow list.\n" +
@@ -336,11 +336,11 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				&github.IssueComment{Body: github.String(body)},
 			)
 			if err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 
 			if err := a.buildPullRequest(ctx, event.Repo.GetHTMLURL(), event.Repo.GetFullName(), event.Issue.GetNumber()); err != nil {
-				return xerrors.Errorf(": %w", err)
+				return xerrors.WithStack(err)
 			}
 		}
 	}
@@ -352,10 +352,10 @@ func (a *Api) githubRelease(ctx context.Context, event *github.ReleaseEvent) err
 	case "published":
 		ref, _, err := a.githubClient.Git.GetRef(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), fmt.Sprintf("tags/%s", event.Release.GetTagName()))
 		if err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 		if err := a.build(ctx, event.Repo.GetHTMLURL(), ref.Object.GetSHA(), job.TypeRelease, "release"); err != nil {
-			return xerrors.Errorf(": %w", err)
+			return xerrors.WithStack(err)
 		}
 	}
 
