@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 const (
@@ -36,22 +36,22 @@ func NewClient(host, user, password string, transport http.RoundTripper) *Client
 func (c *Client) Users() ([]*User, error) {
 	u, err := url.Parse(c.host)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	u.Path = "/api/users"
 
 	req, err := c.newRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 	res, err := c.client.Do(req)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	users := make([]*User, 0)
 	if err := json.NewDecoder(res.Body).Decode(&users); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, xerrors.WithStack(err)
 	}
 
 	return users, nil
@@ -78,7 +78,7 @@ func (c *Client) AddUser(user *User) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Errorf("failed create user: %s", res.Status)
+		return xerrors.Newf("failed create user: %s", res.Status)
 	}
 	res.Body.Close()
 
@@ -102,7 +102,7 @@ func (c *Client) DeleteUser(id int) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Errorf("failed delete user: %s", res.Status)
+		return xerrors.Newf("failed delete user: %s", res.Status)
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func (c *Client) ChangeUserPermission(id int, admin bool) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Errorf("failed update user permission: %s", res.Status)
+		return xerrors.Newf("failed update user permission: %s", res.Status)
 	}
 
 	return nil
