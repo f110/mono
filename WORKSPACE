@@ -61,21 +61,6 @@ http_archive(
     ],
 )
 
-http_archive(
-    name = "dev_f110_rules_k8s_controller",
-    sha256 = "ddc05d5941371c08ee9145b2984c77b6b28c3ca7ed2d80ef1be1f61986405a3e",
-    strip_prefix = "rules_k8s_controller-0.14.0",
-    urls = [
-        "https://github.com/f110/rules_k8s_controller/archive/v0.14.0.tar.gz",
-    ],
-)
-
-#git_repository(
-#    name = "dev_f110_rules_k8s_controller",
-#    commit = "5c3933b6f1509d4e86b3dd916ee7fb848048b199",
-#    remote = "https://github.com/f110/rules_k8s_controller",
-#)
-
 git_repository(
     name = "dev_f110_rules_extras",
     commit = "dd9d0fc35009dd3d3c852e94432e64ec4a2c27b1",
