@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/xerrors"
-
 	"go.f110.dev/mono/go/pkg/build/database"
 )
 
@@ -88,16 +86,18 @@ func NewSourceRepository(conn *sql.DB) *SourceRepository {
 func (d *SourceRepository) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := d.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if err := fn(tx); err != nil {
-		rErr := tx.Rollback()
-		return xerrors.Errorf("%v: %w", rErr, err)
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	return nil
 
@@ -108,7 +108,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 	v := &database.SourceRepository{}
 	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	v.ResetMark()
@@ -131,14 +131,14 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 		query,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
 		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -164,14 +164,14 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 		url,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
 		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -196,11 +196,11 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, time.Now(),
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	} else if n == 0 {
 		return nil, sql.ErrNoRows
 	}
@@ -208,7 +208,7 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 	sourceRepository = sourceRepository.Copy()
 	insertedId, err := res.LastInsertId()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	sourceRepository.Id = int32(insertedId)
 
@@ -228,11 +228,11 @@ func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...ExecOpti
 
 	res, err := conn.ExecContext(ctx, "DELETE FROM `source_repository` WHERE `id` = ?", id)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -271,10 +271,10 @@ func (d *SourceRepository) Update(ctx context.Context, sourceRepository *databas
 		append(values, sourceRepository.Id)...,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -312,16 +312,18 @@ func NewJob(conn *sql.DB) *Job {
 func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := d.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if err := fn(tx); err != nil {
-		rErr := tx.Rollback()
-		return xerrors.Errorf("%v: %w", rErr, err)
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	return nil
 
@@ -332,13 +334,13 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 
 	v := &database.Job{}
 	if err := row.Scan(&v.Id, &v.Name, &v.RepositoryId, &v.Command, &v.Target, &v.Targets, &v.Platforms, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.Sync, &v.ConfigName, &v.BazelVersion, &v.JobType, &v.Schedule, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	{
 		rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		v.Repository = rel
 	}
@@ -363,14 +365,14 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 		query,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
 		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Targets, &r.Platforms, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -380,7 +382,7 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 			{
 				rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, err
 				}
 				v.Repository = rel
 			}
@@ -408,14 +410,14 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 		repositoryId,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
 		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Targets, &r.Platforms, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -425,7 +427,7 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 			{
 				rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, err
 				}
 				v.Repository = rel
 			}
@@ -452,11 +454,11 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 		job.Name, job.RepositoryId, job.Command, job.Target, job.Targets, job.Platforms, job.Active, job.AllRevision, job.GithubStatus, job.CpuLimit, job.MemoryLimit, job.Exclusive, job.Sync, job.ConfigName, job.BazelVersion, job.JobType, job.Schedule, time.Now(),
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	} else if n == 0 {
 		return nil, sql.ErrNoRows
 	}
@@ -464,7 +466,7 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 	job = job.Copy()
 	insertedId, err := res.LastInsertId()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	job.Id = int32(insertedId)
 
@@ -484,11 +486,11 @@ func (d *Job) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 
 	res, err := conn.ExecContext(ctx, "DELETE FROM `job` WHERE `id` = ?", id)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -527,10 +529,10 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) 
 		append(values, job.Id)...,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -568,16 +570,18 @@ func NewTask(conn *sql.DB) *Task {
 func (d *Task) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := d.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if err := fn(tx); err != nil {
-		rErr := tx.Rollback()
-		return xerrors.Errorf("%v: %w", rErr, err)
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	return nil
 
@@ -588,13 +592,13 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 	v := &database.Task{}
 	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	{
 		rel, err := d.job.Select(ctx, v.JobId)
 		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		v.Job = rel
 	}
@@ -620,14 +624,14 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 		jobId,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
 		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -637,7 +641,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 			{
 				rel, err := d.job.Select(ctx, v.JobId)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, err
 				}
 				v.Job = rel
 			}
@@ -664,14 +668,14 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 		query,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
 		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -681,7 +685,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 			{
 				rel, err := d.job.Select(ctx, v.JobId)
 				if err != nil {
-					return nil, xerrors.Errorf(": %w", err)
+					return nil, err
 				}
 				v.Job = rel
 			}
@@ -708,11 +712,11 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 		task.JobId, task.Revision, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.StartAt, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	} else if n == 0 {
 		return nil, sql.ErrNoRows
 	}
@@ -720,7 +724,7 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 	task = task.Copy()
 	insertedId, err := res.LastInsertId()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	task.Id = int32(insertedId)
 
@@ -740,11 +744,11 @@ func (d *Task) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
 
 	res, err := conn.ExecContext(ctx, "DELETE FROM `task` WHERE `id` = ?", id)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -783,10 +787,10 @@ func (d *Task) Update(ctx context.Context, task *database.Task, opt ...ExecOptio
 		append(values, task.Id)...,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -821,16 +825,18 @@ func NewTrustedUser(conn *sql.DB) *TrustedUser {
 func (d *TrustedUser) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := d.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if err := fn(tx); err != nil {
-		rErr := tx.Rollback()
-		return xerrors.Errorf("%v: %w", rErr, err)
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	return nil
 
@@ -841,7 +847,7 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 
 	v := &database.TrustedUser{}
 	if err := row.Scan(&v.Id, &v.GithubId, &v.Username, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	v.ResetMark()
@@ -864,14 +870,14 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 		query,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.TrustedUser, 0)
 	for rows.Next() {
 		r := &database.TrustedUser{}
 		if err := rows.Scan(&r.Id, &r.GithubId, &r.Username, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -897,14 +903,14 @@ func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ..
 		githubId,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.TrustedUser, 0)
 	for rows.Next() {
 		r := &database.TrustedUser{}
 		if err := rows.Scan(&r.Id, &r.GithubId, &r.Username, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -929,11 +935,11 @@ func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedU
 		trustedUser.GithubId, trustedUser.Username, time.Now(),
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	} else if n == 0 {
 		return nil, sql.ErrNoRows
 	}
@@ -941,7 +947,7 @@ func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedU
 	trustedUser = trustedUser.Copy()
 	insertedId, err := res.LastInsertId()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	trustedUser.Id = int32(insertedId)
 
@@ -961,11 +967,11 @@ func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...ExecOption) e
 
 	res, err := conn.ExecContext(ctx, "DELETE FROM `trusted_user` WHERE `id` = ?", id)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -1004,10 +1010,10 @@ func (d *TrustedUser) Update(ctx context.Context, trustedUser *database.TrustedU
 		append(values, trustedUser.Id)...,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -1041,16 +1047,18 @@ func NewPermitPullRequest(conn *sql.DB) *PermitPullRequest {
 func (d *PermitPullRequest) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := d.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if err := fn(tx); err != nil {
-		rErr := tx.Rollback()
-		return xerrors.Errorf("%v: %w", rErr, err)
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	return nil
 
@@ -1061,7 +1069,7 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 
 	v := &database.PermitPullRequest{}
 	if err := row.Scan(&v.Id, &v.Repository, &v.Number, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	v.ResetMark()
@@ -1086,14 +1094,14 @@ func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repos
 		number,
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	res := make([]*database.PermitPullRequest, 0)
 	for rows.Next() {
 		r := &database.PermitPullRequest{}
 		if err := rows.Scan(&r.Id, &r.Repository, &r.Number, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, xerrors.Errorf(": %w", err)
+			return nil, err
 		}
 		r.ResetMark()
 		res = append(res, r)
@@ -1118,11 +1126,11 @@ func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *datab
 		permitPullRequest.Repository, permitPullRequest.Number, time.Now(),
 	)
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	} else if n == 0 {
 		return nil, sql.ErrNoRows
 	}
@@ -1130,7 +1138,7 @@ func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *datab
 	permitPullRequest = permitPullRequest.Copy()
 	insertedId, err := res.LastInsertId()
 	if err != nil {
-		return nil, xerrors.Errorf(": %w", err)
+		return nil, err
 	}
 	permitPullRequest.Id = int32(insertedId)
 
@@ -1150,11 +1158,11 @@ func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...ExecOpt
 
 	res, err := conn.ExecContext(ctx, "DELETE FROM `permit_pull_request` WHERE `id` = ?", id)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}
@@ -1193,10 +1201,10 @@ func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *datab
 		append(values, permitPullRequest.Id)...,
 	)
 	if err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	}
 	if n, err := res.RowsAffected(); err != nil {
-		return xerrors.Errorf(": %w", err)
+		return err
 	} else if n == 0 {
 		return sql.ErrNoRows
 	}

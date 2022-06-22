@@ -103,7 +103,7 @@ type Job struct {
 	Name         string
 	RepositoryId int32
 	Command      string
-	// Deprecated
+	// Deprecated.
 	Target       string
 	Targets      string
 	Platforms    string
@@ -270,7 +270,7 @@ type Task struct {
 	Success  bool
 	LogFile  string
 	Command  string
-	// Deprecated
+	// Deprecated.
 	Target     string
 	Targets    string
 	Platform   string
