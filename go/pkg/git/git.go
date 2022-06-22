@@ -13,12 +13,12 @@ import (
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/xerrors"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
-	gogitHttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
 
 func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string) error {

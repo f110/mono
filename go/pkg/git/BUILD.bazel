@@ -7,11 +7,11 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/bradleyfalzon/ghinstallation",
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/xerrors",
-        "//vendor/gopkg.in/src-d/go-git.v4:go-git_v4",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport",
-        "//vendor/gopkg.in/src-d/go-git.v4/plumbing/transport/http",
     ],
 )
