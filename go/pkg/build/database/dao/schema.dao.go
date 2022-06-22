@@ -655,7 +655,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at`"
+	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
