@@ -338,11 +338,9 @@ func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
 	}
 
 	{
-		rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
-		if err != nil {
-			return nil, err
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
 		}
-		v.Repository = rel
 	}
 
 	v.ResetMark()
@@ -380,11 +378,9 @@ func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, 
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
-				if err != nil {
-					return nil, err
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
 				}
-				v.Repository = rel
 			}
 
 		}
@@ -425,11 +421,9 @@ func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, 
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				rel, err := d.sourceRepository.Select(ctx, v.RepositoryId)
-				if err != nil {
-					return nil, err
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
 				}
-				v.Repository = rel
 			}
 
 		}
@@ -596,11 +590,9 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	}
 
 	{
-		rel, err := d.job.Select(ctx, v.JobId)
-		if err != nil {
-			return nil, err
+		if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
+			v.Job = rel
 		}
-		v.Job = rel
 	}
 
 	v.ResetMark()
@@ -639,11 +631,9 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				rel, err := d.job.Select(ctx, v.JobId)
-				if err != nil {
-					return nil, err
+				if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
+					v.Job = rel
 				}
-				v.Job = rel
 			}
 
 		}
@@ -683,11 +673,9 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				rel, err := d.job.Select(ctx, v.JobId)
-				if err != nil {
-					return nil, err
+				if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
+					v.Job = rel
 				}
-				v.Job = rel
 			}
 
 		}

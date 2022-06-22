@@ -8,10 +8,7 @@ go_library(
     ],
     importpath = "go.f110.dev/mono/go/pkg/build/database/dao",
     visibility = ["//visibility:public"],
-    deps = [
-        "//go/pkg/build/database",
-        "//vendor/golang.org/x/xerrors",
-    ],
+    deps = ["//go/pkg/build/database"],
 )
 
 load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
