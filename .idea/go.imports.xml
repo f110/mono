@@ -12,6 +12,7 @@
         <option value="golang.org/x/net/context" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/errors" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/os" />
+        <option value="gopkg.in/src-d/go-git.v4/storage" />
         <option value="gotest.tools/assert" />
         <option value="gotest.tools/v3/assert" />
         <option value="sigs.k8s.io/kind/pkg/errors" />

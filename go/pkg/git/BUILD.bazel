@@ -1,17 +1,41 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "git",
-    srcs = ["git.go"],
+    srcs = [
+        "git.go",
+        "objectstorage.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/git",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/collections/set",
+        "//go/pkg/storage",
         "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/config",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/index",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/format/objfile",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/storer",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
+        "//vendor/github.com/go-git/go-git/v5/storage",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/xerrors",
+    ],
+)
+
+go_test(
+    name = "git_test",
+    srcs = ["objectstorage_test.go"],
+    embed = [":git"],
+    deps = [
+        "//go/pkg/storage",
+        "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/go-git/go-git/v5/storage/filesystem",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
     ],
 )
