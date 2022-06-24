@@ -144,7 +144,7 @@ func (m *Mock) Get(_ context.Context, name string) (io.ReadCloser, error) {
 		return io.NopCloser(bytes.NewReader(n.Data)), nil
 	}
 
-	return nil, xerrors.New("storage: object not found")
+	return nil, xerrors.WithStack(ErrObjectNotFound)
 }
 
 func (m *Mock) List(_ context.Context, prefix string) ([]*Object, error) {

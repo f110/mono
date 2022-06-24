@@ -4,6 +4,12 @@ import (
 	"context"
 	"io"
 	"time"
+
+	"go.f110.dev/xerrors"
+)
+
+var (
+	ErrObjectNotFound = xerrors.New("storage: object not found")
 )
 
 // storageInterface defines common interface for the object storage.
