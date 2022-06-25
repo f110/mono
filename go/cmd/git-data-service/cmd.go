@@ -27,9 +27,16 @@ func (c *gitDataServiceCommand) Run(ctx context.Context) error {
 	}
 
 	logger.Log.Info("Start listen", zap.String("addr", c.listen))
-	if err := s.Serve(lis); err != nil {
-		return xerrors.WithStack(err)
-	}
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			logger.Log.Error("gRPC server returns error", zap.Error(err))
+		}
+	}()
+
+	<-ctx.Done()
+	logger.Log.Debug("Graceful stopping")
+	s.GracefulStop()
+	logger.Log.Info("Stop server")
 	return nil
 }
 
