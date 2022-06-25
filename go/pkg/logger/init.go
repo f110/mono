@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/spf13/pflag"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -66,7 +67,7 @@ func initLogger() error {
 
 	l, err := zapConf.Build()
 	if err != nil {
-		return err
+		return xerrors.WithStack(err)
 	}
 
 	Log = l

@@ -1,8 +1,10 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 
 go_library(
     name = "git",
     srcs = [
+        "data.pb.go",
         "git.go",
         "objectstorage.go",
     ],
@@ -23,6 +25,11 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/storage",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/xerrors",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
     ],
 )
 
@@ -38,4 +45,20 @@ go_test(
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
     ],
+)
+
+go_proto_library(
+    name = "git_data_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/pkg/git",
+    proto = "//proto/git:git_data",
+    visibility = ["//visibility:private"],
+)
+
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source")
+
+vendor_grpc_source(
+    name = "vendor_git_data_grpc_source",
+    src = ":git_data_go_proto",
+    visibility = ["//visibility:public"],
 )

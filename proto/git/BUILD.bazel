@@ -1,0 +1,7 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "git_data",
+    srcs = ["data.proto"],
+    visibility = ["//visibility:public"],
+)

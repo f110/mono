@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "git-data-service_lib",
+    srcs = [
+        "cmd.go",
+        "main.go",
+        "service.go",
+    ],
+    importpath = "go.f110.dev/mono/go/cmd/git-data-service",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/git",
+        "//go/pkg/logger",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+        "//vendor/google.golang.org/grpc",
+    ],
+)
+
+go_binary(
+    name = "git-data-service",
+    embed = [":git-data-service_lib"],
+    visibility = ["//visibility:public"],
+)
