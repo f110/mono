@@ -29,7 +29,7 @@ message Commit {
   Signature       committer = 3;
   string          tree      = 4;
   string          message   = 5;
-  repeated Commit parents   = 6;
+  repeated string parents   = 6;
 }
 
 message Signature {

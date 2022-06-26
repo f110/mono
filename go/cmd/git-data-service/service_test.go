@@ -61,6 +61,23 @@ func TestListReferences(t *testing.T) {
 	assert.Equal(t, "refs/heads/master", refs["HEAD"].Target)
 }
 
+func TestGetCommit(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	ref, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	commit, err := gitData.GetCommit(context.Background(), &git.RequestGetCommit{Repo: "test1", Sha: ref.Hash().String()})
+	require.NoError(t, err)
+	assert.Equal(t, ref.Hash().String(), commit.Commit.Sha)
+	assert.NotEmpty(t, commit.Commit.Tree)
+	assert.NotEmpty(t, commit.Commit.Message)
+	assert.NotNil(t, commit.Commit.Author)
+	assert.NotNil(t, commit.Commit.Committer)
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	var repositories []repository
 	for k, repo := range repos {

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	goGit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/git"
@@ -78,9 +79,45 @@ func (g *gitDataService) ListReferences(_ context.Context, req *git.RequestListR
 	return res, nil
 }
 
-func (g *gitDataService) GetCommit(ctx context.Context, commit *git.RequestGetCommit) (*git.ResponseGetCommit, error) {
-	//TODO implement me
-	panic("implement me")
+func (g *gitDataService) GetCommit(_ context.Context, req *git.RequestGetCommit) (*git.ResponseGetCommit, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	if req.Sha == "" {
+		return nil, errors.New("SHA field is required")
+	}
+
+	h := plumbing.NewHash(req.Sha)
+	commit, err := repo.CommitObject(h)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &git.ResponseGetCommit{
+		Commit: &git.Commit{
+			Sha:     commit.Hash.String(),
+			Message: commit.Message,
+			Committer: &git.Signature{
+				Name:  commit.Committer.Name,
+				Email: commit.Committer.Email,
+			},
+			Author: &git.Signature{
+				Name:  commit.Author.Name,
+				Email: commit.Author.Email,
+			},
+			Tree: commit.TreeHash.String(),
+		},
+	}
+	if len(commit.ParentHashes) > 0 {
+		parents := make([]string, len(commit.ParentHashes))
+		for i := 0; i < len(commit.ParentHashes); i++ {
+			parents[i] = commit.ParentHashes[i].String()
+		}
+		res.Commit.Parents = parents
+	}
+
+	return res, nil
 }
 
 func (g *gitDataService) GetTree(ctx context.Context, tree *git.RequestGetTree) (*git.ResponseGetTree, error) {
