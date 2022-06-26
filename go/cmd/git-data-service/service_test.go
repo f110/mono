@@ -13,6 +13,7 @@ import (
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -94,6 +95,40 @@ func TestGetTree(t *testing.T) {
 		files[v.Path] = v
 	}
 	assert.Contains(t, files, "README.md")
+}
+
+func TestGetBlob(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	ref, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	commit, err := repo.CommitObject(ref.Hash())
+	require.NoError(t, err)
+	tree, err := commit.Tree()
+	require.NoError(t, err)
+
+	var blobHash, expectContent string
+	err = tree.Files().ForEach(func(file *object.File) error {
+		if file.Name == "README.md" {
+			blobHash = file.Hash.String()
+			expectContent, err = file.Contents()
+			if err != nil {
+				return err
+			}
+			return storer.ErrStop
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, blobHash)
+
+	blob, err := gitData.GetBlob(context.Background(), &git.RequestGetBlob{Repo: "test1", Sha: blobHash})
+	require.NoError(t, err)
+	assert.Equal(t, blobHash, blob.Sha)
+	assert.Equal(t, string(blob.Content), expectContent)
 }
 
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {

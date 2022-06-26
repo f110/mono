@@ -156,7 +156,29 @@ func (g *gitDataService) GetTree(_ context.Context, req *git.RequestGetTree) (*g
 	return &git.ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil
 }
 
-func (g *gitDataService) GetBlob(ctx context.Context, blob *git.RequestGetBlob) (*git.ResponseGetBlob, error) {
-	//TODO implement me
-	panic("implement me")
+func (g *gitDataService) GetBlob(_ context.Context, req *git.RequestGetBlob) (*git.ResponseGetBlob, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	blob, err := repo.BlobObject(plumbing.NewHash(req.Sha))
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := blob.Reader()
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &git.ResponseGetBlob{
+		Sha:     req.Sha,
+		Size:    blob.Size,
+		Content: buf,
+	}, nil
 }
