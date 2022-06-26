@@ -428,7 +428,7 @@ func (b *ObjectStorageStorer) PackRefs() error {
 }
 
 func (b *ObjectStorageStorer) NewEncodedObject() plumbing.EncodedObject {
-	return &plumbing.MemoryObject{}
+	return &EncodedObject{}
 }
 
 func (b *ObjectStorageStorer) SetEncodedObject(e plumbing.EncodedObject) (plumbing.Hash, error) {
@@ -454,7 +454,7 @@ func (b *ObjectStorageStorer) SetEncodedObject(e plumbing.EncodedObject) (plumbi
 	}
 
 	hash := w.Hash().String()
-	err = b.backend.PutReader(context.Background(), path.Join(b.rootPath, "objects", hash[0:2], hash[2:40]), nil)
+	err = b.backend.PutReader(context.Background(), path.Join(b.rootPath, "objects", hash[0:2], hash[2:40]), r)
 	if err != nil {
 		return plumbing.ZeroHash, xerrors.WithStack(err)
 	}
@@ -477,7 +477,7 @@ func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbin
 		return nil, xerrors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
-	obj, err := b.readUnpackedEncodedObject(file)
+	obj, err := b.readUnpackedEncodedObject(file, h)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -485,8 +485,8 @@ func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbin
 	return obj, nil
 }
 
-func (b *ObjectStorageStorer) readUnpackedEncodedObject(f io.ReadCloser) (plumbing.EncodedObject, error) {
-	obj := b.NewEncodedObject()
+func (b *ObjectStorageStorer) readUnpackedEncodedObject(f io.ReadCloser, h plumbing.Hash) (plumbing.EncodedObject, error) {
+	obj := b.NewEncodedObject().(*EncodedObject)
 	r, err := objfile.NewReader(f)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -495,19 +495,11 @@ func (b *ObjectStorageStorer) readUnpackedEncodedObject(f io.ReadCloser) (plumbi
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
+	obj.hash = h
 	obj.SetType(typ)
 	obj.SetSize(size)
-	w, err := obj.Writer()
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	if _, err := io.Copy(w, r); err != nil {
-		return nil, xerrors.WithStack(err)
-	}
+	obj.SetReader(r)
 
-	if err := w.Close(); err != nil {
-		return nil, xerrors.WithStack(err)
-	}
 	if err := f.Close(); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -531,7 +523,7 @@ func (b *ObjectStorageStorer) IterEncodedObjects(objectType plumbing.ObjectType)
 			return nil, xerrors.WithStack(err)
 		}
 
-		obj, err := b.readUnpackedEncodedObject(file)
+		obj, err := b.readUnpackedEncodedObject(file, plumbing.NewHash(s[2]+s[3]))
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
@@ -551,4 +543,56 @@ func (b *ObjectStorageStorer) EncodedObjectSize(hash plumbing.Hash) (int64, erro
 		return -1, xerrors.WithStack(err)
 	}
 	return obj.Size(), nil
+}
+
+type EncodedObject struct {
+	hash plumbing.Hash
+	typ  plumbing.ObjectType
+	size int64
+	r    io.ReadCloser
+	w    io.WriteCloser
+}
+
+var _ plumbing.EncodedObject = &EncodedObject{}
+
+func (e *EncodedObject) Hash() plumbing.Hash {
+	return e.hash
+}
+
+func (e *EncodedObject) Type() plumbing.ObjectType {
+	return e.typ
+}
+
+func (e *EncodedObject) SetType(objectType plumbing.ObjectType) {
+	e.typ = objectType
+}
+
+func (e *EncodedObject) Size() int64 {
+	return e.size
+}
+
+func (e *EncodedObject) SetSize(i int64) {
+	e.size = i
+}
+
+func (e *EncodedObject) Reader() (io.ReadCloser, error) {
+	if e.r == nil {
+		return nil, xerrors.New("this object is not readable")
+	}
+	return e.r, nil
+}
+
+func (e *EncodedObject) Writer() (io.WriteCloser, error) {
+	if e.w == nil {
+		return nil, xerrors.New("this object is not writable")
+	}
+	return e.w, nil
+}
+
+func (e *EncodedObject) SetReader(r *objfile.Reader) {
+	e.r = r
+}
+
+func (e *EncodedObject) SetWriter(w *objfile.Writer) {
+	e.w = w
 }
