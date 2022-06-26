@@ -78,6 +78,24 @@ func TestGetCommit(t *testing.T) {
 	assert.NotNil(t, commit.Commit.Committer)
 }
 
+func TestGetTree(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	ref, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	tree, err := gitData.GetTree(context.Background(), &git.RequestGetTree{Repo: "test1", Sha: ref.Hash().String()})
+	require.NoError(t, err)
+	assert.Equal(t, ref.Hash().String(), tree.Sha)
+	files := make(map[string]*git.TreeEntry)
+	for _, v := range tree.Tree {
+		files[v.Path] = v
+	}
+	assert.Contains(t, files, "README.md")
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	var repositories []repository
 	for k, repo := range repos {

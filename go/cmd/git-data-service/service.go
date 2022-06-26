@@ -70,6 +70,9 @@ func (g *gitDataService) ListReferences(_ context.Context, req *git.RequestListR
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			return nil, err
+		}
 		res.Refs = append(res.Refs, &git.Reference{
 			Name:   ref.Name().String(),
 			Hash:   ref.Hash().String(),
@@ -120,9 +123,37 @@ func (g *gitDataService) GetCommit(_ context.Context, req *git.RequestGetCommit)
 	return res, nil
 }
 
-func (g *gitDataService) GetTree(ctx context.Context, tree *git.RequestGetTree) (*git.ResponseGetTree, error) {
-	//TODO implement me
-	panic("implement me")
+func (g *gitDataService) GetTree(_ context.Context, req *git.RequestGetTree) (*git.ResponseGetTree, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	commit, err := repo.CommitObject(plumbing.NewHash(req.Sha))
+	if err != nil {
+		return nil, err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, err
+	}
+
+	var treeEntry []*git.TreeEntry
+	iter := tree.Files()
+	for {
+		f, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		treeEntry = append(treeEntry, &git.TreeEntry{
+			Sha:  f.Hash.String(),
+			Path: f.Name,
+			Size: f.Size,
+		})
+	}
+	return &git.ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil
 }
 
 func (g *gitDataService) GetBlob(ctx context.Context, blob *git.RequestGetBlob) (*git.ResponseGetBlob, error) {

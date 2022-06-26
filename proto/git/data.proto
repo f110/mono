@@ -62,11 +62,11 @@ message ResponseGetCommit {
 
 message RequestGetTree {
   string repo = 1;
-  string sha  = 2;
+  // sha is a commit hash, not a tree hash.
+  string sha = 2;
 }
 
 message ResponseGetTree {
-  // sha is a commit hash, not a tree hash.
   string             sha  = 1;
   repeated TreeEntry tree = 2;
 }
