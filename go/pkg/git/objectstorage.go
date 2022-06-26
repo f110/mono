@@ -252,7 +252,7 @@ func (b *ObjectStorageStorer) readRefs() ([]*plumbing.Reference, error) {
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		ref, err := b.readReference(file, strings.TrimPrefix(v.Name, path.Join(b.rootPath, "refs")))
+		ref, err := b.readReference(file, strings.TrimPrefix(v.Name, b.rootPath+"/"))
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}

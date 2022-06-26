@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -42,7 +43,7 @@ func newService(s ObjectStorageInterface, repositories []repository) (*gitDataSe
 	return &gitDataService{repo: repo}, nil
 }
 
-func (g *gitDataService) ListRepositories(ctx context.Context, repositories *git.RequestListRepositories) (*git.ResponseListRepositories, error) {
+func (g *gitDataService) ListRepositories(_ context.Context, _ *git.RequestListRepositories) (*git.ResponseListRepositories, error) {
 	var list []string
 	for k := range g.repo {
 		list = append(list, k)
@@ -51,9 +52,30 @@ func (g *gitDataService) ListRepositories(ctx context.Context, repositories *git
 	return &git.ResponseListRepositories{Repositories: list}, nil
 }
 
-func (g *gitDataService) ListReferences(ctx context.Context, references *git.RequestListReferences) (*git.ResponseListReferences, error) {
-	//TODO implement me
-	panic("implement me")
+func (g *gitDataService) ListReferences(_ context.Context, req *git.RequestListReferences) (*git.ResponseListReferences, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+
+	refs, err := repo.References()
+	if err != nil {
+		return nil, err
+	}
+
+	res := &git.ResponseListReferences{}
+	for {
+		ref, err := refs.Next()
+		if err == io.EOF {
+			break
+		}
+		res.Refs = append(res.Refs, &git.Reference{
+			Name:   ref.Name().String(),
+			Hash:   ref.Hash().String(),
+			Target: ref.Target().String(),
+		})
+	}
+	return res, nil
 }
 
 func (g *gitDataService) GetCommit(ctx context.Context, commit *git.RequestGetCommit) (*git.ResponseGetCommit, error) {

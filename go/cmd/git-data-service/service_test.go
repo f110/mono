@@ -11,6 +11,7 @@ import (
 	"time"
 
 	goGit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +27,38 @@ import (
 func TestListRepositories(t *testing.T) {
 	mockStorage := storage.NewMock()
 	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": makeSourceRepository(t), "test/test2": makeSourceRepository(t)})
-
 	gitData := git.NewGitDataClient(conn)
+
 	res, err := gitData.ListRepositories(context.Background(), &git.RequestListRepositories{})
 	require.NoError(t, err)
 	assert.Len(t, res.Repositories, 2)
+}
+
+func TestListReferences(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	res, err := gitData.ListReferences(context.Background(), &git.RequestListReferences{Repo: "test1"})
+	require.NoError(t, err)
+	assert.Len(t, res.Refs, 2)
+
+	v, _ := repo.References()
+	var expectRefs []string
+	err = v.ForEach(func(ref *plumbing.Reference) error {
+		expectRefs = append(expectRefs, ref.Name().String())
+		return nil
+	})
+	require.NoError(t, err)
+	refs := make(map[string]*git.Reference)
+	for _, v := range res.Refs {
+		refs[v.Name] = v
+	}
+	for _, expectRef := range expectRefs {
+		assert.Contains(t, refs, expectRef)
+	}
+	assert.Equal(t, "refs/heads/master", refs["HEAD"].Target)
 }
 
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
