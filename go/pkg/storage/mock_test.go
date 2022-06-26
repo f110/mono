@@ -48,6 +48,7 @@ func TestMock_AddTree(t *testing.T) {
 
 	_, err = m.Get(context.Background(), "unknown")
 	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrObjectNotFound)
 
 	err = m.Put(context.Background(), "newfile", []byte("newfile"))
 	require.NoError(t, err)
@@ -60,5 +61,25 @@ func TestMock_AddTree(t *testing.T) {
 	err = m.Delete(context.Background(), "newfile")
 	require.NoError(t, err)
 	_, err = m.Get(context.Background(), "newfile")
-	assert.Errorf(t, err, "storage: object not found")
+	assert.ErrorIs(t, err, ErrObjectNotFound)
+
+	err = m.Put(context.Background(), "update", []byte("init"))
+	require.NoError(t, err)
+	err = m.Put(context.Background(), "update", []byte("2nd"))
+	require.NoError(t, err)
+	data, err = m.Get(context.Background(), "update")
+	require.NoError(t, err)
+	buf, err = io.ReadAll(data)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("2nd"), buf)
+
+	err = m.Put(context.Background(), "test/update", []byte("init"))
+	require.NoError(t, err)
+	err = m.Put(context.Background(), "test/update", []byte("2nd"))
+	require.NoError(t, err)
+	data, err = m.Get(context.Background(), "test/update")
+	require.NoError(t, err)
+	buf, err = io.ReadAll(data)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("2nd"), buf)
 }

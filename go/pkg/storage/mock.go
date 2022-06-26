@@ -55,6 +55,13 @@ func (m *Mock) addNode(name string, data []byte) {
 		return
 	}
 	if len(p) == 1 {
+		for _, v := range m.root.Children {
+			if v.Name == p[0] {
+				v.Data = data
+				return
+			}
+		}
+
 		m.root.Children = append(m.root.Children, &objectNode{
 			Name:   p[0],
 			Data:   data,
@@ -70,6 +77,9 @@ NextChild:
 		for _, v := range curr.Children {
 			if v.Name == nodeName {
 				if len(p) == 0 {
+					// This is end node.
+					// The node is already exists. So update data.
+					v.Data = data
 					break NextChild
 				}
 				curr = v
@@ -79,13 +89,16 @@ NextChild:
 			}
 		}
 
+		// Create new node. because nodeName is not found in children
 		newNode := &objectNode{Name: nodeName, parent: curr}
 		curr.Children = append(curr.Children, newNode)
 		curr = newNode
 		if len(p) > 0 {
+			// There is more nodes. Deep into depth.
 			nodeName = p[0]
 			p = p[1:]
 		} else {
+			// This is end node
 			newNode.Data = data
 			break
 		}
