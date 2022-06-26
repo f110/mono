@@ -20,6 +20,9 @@ func runCommand() error {
 			if err := logger.Init(); err != nil {
 				return err
 			}
+			if err := c.ValidateFlagValue(); err != nil {
+				return err
+			}
 			return c.Run(cmd.Context())
 		},
 	}
