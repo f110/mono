@@ -157,16 +157,19 @@ func (b *ObjectStorageStorer) SetReference(ref *plumbing.Reference) error {
 }
 
 func (b *ObjectStorageStorer) CheckAndSetReference(new, old *plumbing.Reference) error {
-	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, old.Name().String()))
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	oldRef, err := b.readReference(file, old.Name().String())
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	if oldRef.Hash() != old.Hash() {
-		return xerrors.New("reference has changed concurrently")
+	if old != nil {
+		file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, old.Name().String()))
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+
+		oldRef, err := b.readReference(file, old.Name().String())
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if oldRef.Hash() != old.Hash() {
+			return xerrors.New("reference has changed concurrently")
+		}
 	}
 
 	if err := b.SetReference(new); err != nil {
