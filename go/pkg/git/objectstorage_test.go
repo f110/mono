@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +42,25 @@ func TestObjectStorageStorer(t *testing.T) {
 		commits = append(commits, commit)
 	}
 	assert.Len(t, commits, 1)
+}
+
+func TestObjectStorageStorerWorkWithRemoteRepository(t *testing.T) {
+	originalRepo := makeSourceRepository(t)
+
+	mockStorage := storage.NewMock()
+	s := NewObjectStorageStorer(mockStorage, "test")
+	repo, err := git.Init(s, nil)
+	require.NoError(t, err)
+	_, err = repo.CreateRemote(&config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{originalRepo.Storer.(*filesystem.Storage).Filesystem().Root()},
+	})
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
+	cancel()
+	require.NoError(t, err)
 }
 
 func makeSourceRepository(t *testing.T) *git.Repository {

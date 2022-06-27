@@ -40,6 +40,7 @@ go_test(
     deps = [
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
+        "//vendor/github.com/go-git/go-git/v5/config",
         "//vendor/github.com/go-git/go-git/v5/plumbing/object",
         "//vendor/github.com/go-git/go-git/v5/storage/filesystem",
         "//vendor/github.com/stretchr/testify/assert",
