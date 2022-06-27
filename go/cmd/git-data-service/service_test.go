@@ -132,16 +132,16 @@ func TestGetBlob(t *testing.T) {
 }
 
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
-	var repositories []repository
-	for k, repo := range repos {
+	repo := make(map[string]*goGit.Repository)
+	for k, v := range repos {
 		_, name := filepath.Split(k)
-		registerToStorage(t, st, repo, k)
-		repositories = append(repositories, repository{Name: name, Prefix: k})
+		registerToStorage(t, st, v, k)
+		repo[name] = v
 	}
 
 	lis := bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
-	svc, err := newService(st, repositories)
+	svc, err := newService(repo)
 	require.NoError(t, err)
 	git.RegisterGitDataServer(s, svc)
 	go func() {

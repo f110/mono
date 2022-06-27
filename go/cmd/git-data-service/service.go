@@ -7,10 +7,8 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/git"
-	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type gitDataService struct {
@@ -19,28 +17,11 @@ type gitDataService struct {
 
 type repository struct {
 	Name   string
+	URL    string
 	Prefix string
 }
 
-type ObjectStorageInterface interface {
-	PutReader(ctx context.Context, name string, data io.Reader) error
-	Delete(ctx context.Context, name string) error
-	Get(ctx context.Context, name string) (io.ReadCloser, error)
-	List(ctx context.Context, prefix string) ([]*storage.Object, error)
-}
-
-func newService(s ObjectStorageInterface, repositories []repository) (*gitDataService, error) {
-	repo := make(map[string]*goGit.Repository)
-	for _, r := range repositories {
-		storer := git.NewObjectStorageStorer(s, r.Prefix)
-		gitRepo, err := goGit.Open(storer, nil)
-		if err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-
-		repo[r.Name] = gitRepo
-	}
-
+func newService(repo map[string]*goGit.Repository) (*gitDataService, error) {
 	return &gitDataService{repo: repo}, nil
 }
 

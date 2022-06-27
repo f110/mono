@@ -6,6 +6,7 @@ go_library(
         "cmd.go",
         "main.go",
         "service.go",
+        "updater.go",
     ],
     importpath = "go.f110.dev/mono/go/cmd/git-data-service",
     visibility = ["//visibility:private"],
