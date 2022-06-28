@@ -29,9 +29,6 @@ type gitDataServiceCommand struct {
 
 	MinIOEndpoint        string
 	MinIORegion          string
-	MinIOName            string
-	MinIONamespace       string
-	MinIOPort            int
 	MinIOAccessKey       string
 	MinIOSecretAccessKey string
 
@@ -76,7 +73,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	var repos []*goGit.Repository
 	for _, r := range c.repositories {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix)
-		
+
 		if !storer.Exist() {
 			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
@@ -151,9 +148,6 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8056", "Listen addr")
 	fs.StringVar(&c.MinIOEndpoint, "minio-endpoint", c.MinIOEndpoint, "The endpoint of MinIO")
 	fs.StringVar(&c.MinIORegion, "minio-region", c.MinIORegion, "The region name")
-	fs.StringVar(&c.MinIOName, "minio-name", c.MinIOName, "The name of MinIO")
-	fs.StringVar(&c.MinIONamespace, "minio-namespace", c.MinIONamespace, "The namespace of MinIO")
-	fs.IntVar(&c.MinIOPort, "minio-port", c.MinIOPort, "Port number of MinIO")
 	fs.StringVar(&c.Bucket, "minio-bucket", c.Bucket, "Deprecated. Use --bucket instead. The bucket name that will be used")
 	fs.StringVar(&c.MinIOAccessKey, "minio-access-key", c.MinIOAccessKey, "The access key for MinIO API")
 	fs.StringVar(&c.MinIOSecretAccessKey, "minio-secret-access-key", c.MinIOSecretAccessKey, "The secret access key for MinIO API")
