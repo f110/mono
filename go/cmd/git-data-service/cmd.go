@@ -13,13 +13,19 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type gitDataServiceCommand struct {
-	Listen string
+	*fsm.FSM
+	s        *grpc.Server
+	gitRepos []*goGit.Repository
+
+	Listen                string
+	RepositoryInitTimeout time.Duration
 
 	MinIOEndpoint        string
 	MinIORegion          string
@@ -39,7 +45,30 @@ type gitDataServiceCommand struct {
 	repositories []repository
 }
 
-func (c *gitDataServiceCommand) Run(ctx context.Context) error {
+const (
+	stateInit fsm.State = iota
+	stateStartUpdater
+	stateStartServer
+	stateShuttingDown
+)
+
+func newGitDataServiceCommand() *gitDataServiceCommand {
+	c := &gitDataServiceCommand{}
+	c.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateInit:         c.init,
+			stateStartUpdater: c.startUpdater,
+			stateStartServer:  c.startServer,
+			stateShuttingDown: c.shuttingDown,
+		},
+		stateInit,
+		stateShuttingDown,
+	)
+
+	return c
+}
+
+func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	opt := storage.NewMinIOOptionsViaEndpoint(c.MinIOEndpoint, c.MinIORegion, c.MinIOAccessKey, c.MinIOSecretAccessKey)
 	storageClient := storage.NewMinIOStorage(c.Bucket, opt)
 
@@ -47,46 +76,75 @@ func (c *gitDataServiceCommand) Run(ctx context.Context) error {
 	var repos []*goGit.Repository
 	for _, r := range c.repositories {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix)
+		
+		if !storer.Exist() {
+			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
+			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
+			if _, err := git.InitObjectStorageRepository(ctx, storageClient, r.URL, r.Prefix); err != nil {
+				cancel()
+				return fsm.Error(err)
+			}
+			cancel()
+		}
+
 		gitRepo, err := goGit.Open(storer, nil)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return fsm.Error(xerrors.WithStack(err))
 		}
 
 		repo[r.Name] = gitRepo
 		repos = append(repos, gitRepo)
 	}
-
-	if c.RefreshInterval > 0 {
-		updater, err := newRepositoryUpdater(repos, c.RefreshInterval, c.RefreshTimeout, c.RefreshWorkers)
-		if err != nil {
-			return err
-		}
-		go updater.Run(ctx)
-	}
+	c.gitRepos = repos
 
 	s := grpc.NewServer()
 	service, err := newService(repo)
 	if err != nil {
-		return err
+		return fsm.Error(err)
 	}
 	git.RegisterGitDataServer(s, service)
+	c.s = s
+
+	return fsm.Next(stateStartUpdater)
+}
+
+func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
+	if c.RefreshInterval == 0 {
+		return fsm.Next(stateStartServer)
+	}
+
+	updater, err := newRepositoryUpdater(c.gitRepos, c.RefreshInterval, c.RefreshTimeout, c.RefreshWorkers)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	logger.Log.Info("Start updater", zap.Duration("refresh_interval", c.RefreshInterval), zap.Int("workers", c.RefreshWorkers))
+	go updater.Run(c.Context())
+
+	return fsm.Next(stateStartServer)
+}
+
+func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return fsm.Error(xerrors.WithStack(err))
 	}
 
 	logger.Log.Info("Start listen", zap.String("addr", c.Listen))
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := c.s.Serve(lis); err != nil {
 			logger.Log.Error("gRPC server returns error", zap.Error(err))
 		}
 	}()
 
-	<-ctx.Done()
+	return fsm.Wait()
+}
+
+func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
 	logger.Log.Debug("Graceful stopping")
-	s.GracefulStop()
+	c.s.GracefulStop()
 	logger.Log.Info("Stop server")
-	return nil
+
+	return fsm.Finish()
 }
 
 func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
@@ -108,6 +166,8 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 		"If set zero, interval updating is disabled.")
 	fs.DurationVar(&c.RefreshTimeout, "refresh-timeout", 1*time.Minute, "The duration for timeout to updating repository")
 	fs.IntVar(&c.RefreshWorkers, "refresh-workers", 1, "The number of workers for updating repository")
+
+	fs.DurationVar(&c.RepositoryInitTimeout, "repository-init-timeout", 5*time.Minute, "The duration for timeout to initializing repository")
 }
 
 func (c *gitDataServiceCommand) ValidateFlagValue() error {

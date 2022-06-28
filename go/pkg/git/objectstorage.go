@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
@@ -29,6 +30,27 @@ type ObjectStorageInterface interface {
 	List(ctx context.Context, prefix string) ([]*storage.Object, error)
 }
 
+func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, url, prefix string) (*git.Repository, error) {
+	s := NewObjectStorageStorer(b, prefix)
+	repo, err := git.Init(s, nil)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	_, err = repo.CreateRemote(&config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{url},
+	})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return repo, nil
+}
+
 type ObjectStorageStorer struct {
 	backend  ObjectStorageInterface
 	rootPath string
@@ -38,6 +60,15 @@ var _ gitStorage.Storer = &ObjectStorageStorer{}
 
 func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string) *ObjectStorageStorer {
 	return &ObjectStorageStorer{backend: b, rootPath: rootPath}
+}
+
+func (b *ObjectStorageStorer) Exist() bool {
+	_, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "config"))
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {

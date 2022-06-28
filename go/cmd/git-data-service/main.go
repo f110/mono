@@ -13,7 +13,7 @@ import (
 )
 
 func runCommand() error {
-	c := &gitDataServiceCommand{}
+	c := newGitDataServiceCommand()
 	cmd := &cobra.Command{
 		Use: "git-data-service",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -23,7 +23,7 @@ func runCommand() error {
 			if err := c.ValidateFlagValue(); err != nil {
 				return err
 			}
-			return c.Run(cmd.Context())
+			return c.LoopContext(cmd.Context())
 		},
 	}
 	c.Flags(cmd.Flags())

@@ -11,6 +11,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/git-data-service",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/pkg/fsm",
         "//go/pkg/git",
         "//go/pkg/logger",
         "//go/pkg/storage",
