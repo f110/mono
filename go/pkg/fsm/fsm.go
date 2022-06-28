@@ -39,6 +39,10 @@ func NewFSM(funcs map[State]StateFunc, initState, closeState State) *FSM {
 	}
 }
 
+func Next(state State) (State, error) {
+	return state, nil
+}
+
 func Error(err error) (State, error) {
 	return UnknownState, err
 }
