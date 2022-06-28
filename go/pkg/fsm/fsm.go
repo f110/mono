@@ -1,6 +1,7 @@
 package fsm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -26,6 +27,7 @@ type FSM struct {
 	funcs      map[State]StateFunc
 	initState  State
 	closeState State
+	ctx        context.Context
 }
 
 func NewFSM(funcs map[State]StateFunc, initState, closeState State) *FSM {
@@ -43,6 +45,10 @@ func Error(err error) (State, error) {
 
 func Finish() (State, error) {
 	return CloseState, nil
+}
+
+func Wait() (State, error) {
+	return WaitState, nil
 }
 
 func (f *FSM) SignalHandling(signals ...os.Signal) {
@@ -63,6 +69,23 @@ func (f *FSM) SignalHandling(signals ...os.Signal) {
 
 func (f *FSM) Shutdown() {
 	f.nextState(f.closeState)
+}
+
+func (f *FSM) Context() context.Context {
+	return f.ctx
+}
+
+func (f *FSM) setContext(ctx context.Context) {
+	f.ctx = ctx
+	go func() {
+		<-ctx.Done()
+		f.nextState(f.closeState)
+	}()
+}
+
+func (f *FSM) LoopContext(ctx context.Context) error {
+	f.setContext(ctx)
+	return f.Loop()
 }
 
 func (f *FSM) Loop() error {
