@@ -15,6 +15,8 @@ type gitDataService struct {
 	repo map[string]*goGit.Repository
 }
 
+var _ git.GitDataServer = &gitDataService{}
+
 type repository struct {
 	Name   string
 	URL    string
@@ -162,4 +164,34 @@ func (g *gitDataService) GetBlob(_ context.Context, req *git.RequestGetBlob) (*g
 		Size:    blob.Size,
 		Content: buf,
 	}, nil
+}
+
+func (g *gitDataService) ListTag(_ context.Context, req *git.RequestListTag) (*git.ResponseListTag, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	iter, err := repo.Tags()
+	if err != nil {
+		return nil, err
+	}
+
+	res := &git.ResponseListTag{}
+	for {
+		ref, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		res.Tags = append(res.Tags, &git.Reference{
+			Name:   ref.Name().String(),
+			Target: ref.Target().String(),
+			Hash:   ref.Hash().String(),
+		})
+	}
+
+	return res, nil
 }

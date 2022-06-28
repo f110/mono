@@ -131,6 +131,26 @@ func TestGetBlob(t *testing.T) {
 	assert.Equal(t, string(blob.Content), expectContent)
 }
 
+func TestListTag(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	masterRef, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	_, err = repo.CreateTag("tag1", masterRef.Hash(), nil)
+	require.NoError(t, err)
+
+	tags, err := gitData.ListTag(context.Background(), &git.RequestListTag{Repo: "test1"})
+	require.NoError(t, err)
+	if assert.Len(t, tags.Tags, 1) {
+		tag := tags.Tags[0]
+		assert.Equal(t, "refs/tags/tag1", tag.Name)
+		assert.Equal(t, masterRef.Hash().String(), tag.Hash)
+	}
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	repo := make(map[string]*goGit.Repository)
 	for k, v := range repos {

@@ -8,6 +8,7 @@ service GitData {
   rpc GetCommit(RequestGetCommit) returns (ResponseGetCommit);
   rpc GetTree(RequestGetTree) returns (ResponseGetTree);
   rpc GetBlob(RequestGetBlob) returns (ResponseGetBlob);
+  rpc ListTag(RequestListTag) returns (ResponseListTag);
 }
 
 message Reference {
@@ -80,4 +81,12 @@ message ResponseGetBlob {
   string sha     = 1;
   int64  size    = 2;
   bytes  content = 3;
+}
+
+message RequestListTag {
+  string repo = 1;
+}
+
+message ResponseListTag {
+  repeated Reference tags = 1;
 }
