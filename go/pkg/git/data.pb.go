@@ -903,6 +903,100 @@ func (x *ResponseListTag) GetTags() []*Reference {
 	return nil
 }
 
+type RequestListBranch struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Repo string `protobuf:"bytes,1,opt,name=repo,proto3" json:"repo,omitempty"`
+}
+
+func (x *RequestListBranch) Reset() {
+	*x = RequestListBranch{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_git_data_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RequestListBranch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListBranch) ProtoMessage() {}
+
+func (x *RequestListBranch) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestListBranch.ProtoReflect.Descriptor instead.
+func (*RequestListBranch) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RequestListBranch) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+type ResponseListBranch struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Branches []*Reference `protobuf:"bytes,1,rep,name=branches,proto3" json:"branches,omitempty"`
+}
+
+func (x *ResponseListBranch) Reset() {
+	*x = ResponseListBranch{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_git_data_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ResponseListBranch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListBranch) ProtoMessage() {}
+
+func (x *ResponseListBranch) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResponseListBranch.ProtoReflect.Descriptor instead.
+func (*ResponseListBranch) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ResponseListBranch) GetBranches() []*Reference {
+	if x != nil {
+		return x.Branches
+	}
+	return nil
+}
+
 var File_proto_git_data_proto protoreflect.FileDescriptor
 
 var file_proto_git_data_proto_rawDesc = []byte{
@@ -977,7 +1071,14 @@ var file_proto_git_data_proto_rawDesc = []byte{
 	0x3a, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x54,
 	0x61, 0x67, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x61, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x66, 0x65,
-	0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x32, 0xbf, 0x03, 0x0a, 0x07,
+	0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x22, 0x27, 0x0a, 0x11, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68,
+	0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x72, 0x65, 0x70, 0x6f, 0x22, 0x45, 0x0a, 0x12, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x4c, 0x69, 0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x12, 0x2f, 0x0a, 0x08, 0x62, 0x72,
+	0x61, 0x6e, 0x63, 0x68, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d,
+	0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63,
+	0x65, 0x52, 0x08, 0x62, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x65, 0x73, 0x32, 0x88, 0x04, 0x0a, 0x07,
 	0x47, 0x69, 0x74, 0x44, 0x61, 0x74, 0x61, 0x12, 0x59, 0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x52,
 	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x21, 0x2e, 0x6d, 0x6f,
 	0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69,
@@ -1005,10 +1106,14 @@ var file_proto_git_data_proto_rawDesc = []byte{
 	0x07, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x12, 0x18, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e,
 	0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x54,
 	0x61, 0x67, 0x1a, 0x19, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x42, 0x1d, 0x5a,
-	0x1b, 0x67, 0x6f, 0x2e, 0x66, 0x31, 0x31, 0x30, 0x2e, 0x64, 0x65, 0x76, 0x2f, 0x6d, 0x6f, 0x6e,
-	0x6f, 0x2f, 0x67, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x67, 0x69, 0x74, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x12, 0x47, 0x0a,
+	0x0a, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x12, 0x1b, 0x2e, 0x6d, 0x6f,
+	0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69,
+	0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x1a, 0x1c, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e,
+	0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74,
+	0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x42, 0x1d, 0x5a, 0x1b, 0x67, 0x6f, 0x2e, 0x66, 0x31, 0x31,
+	0x30, 0x2e, 0x64, 0x65, 0x76, 0x2f, 0x6d, 0x6f, 0x6e, 0x6f, 0x2f, 0x67, 0x6f, 0x2f, 0x70, 0x6b,
+	0x67, 0x2f, 0x67, 0x69, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1023,7 +1128,7 @@ func file_proto_git_data_proto_rawDescGZIP() []byte {
 	return file_proto_git_data_proto_rawDescData
 }
 
-var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_git_data_proto_goTypes = []interface{}{
 	(*Reference)(nil),                // 0: mono.git.Reference
 	(*TreeEntry)(nil),                // 1: mono.git.TreeEntry
@@ -1041,6 +1146,8 @@ var file_proto_git_data_proto_goTypes = []interface{}{
 	(*ResponseGetBlob)(nil),          // 13: mono.git.ResponseGetBlob
 	(*RequestListTag)(nil),           // 14: mono.git.RequestListTag
 	(*ResponseListTag)(nil),          // 15: mono.git.ResponseListTag
+	(*RequestListBranch)(nil),        // 16: mono.git.RequestListBranch
+	(*ResponseListBranch)(nil),       // 17: mono.git.ResponseListBranch
 }
 var file_proto_git_data_proto_depIdxs = []int32{
 	3,  // 0: mono.git.Commit.author:type_name -> mono.git.Signature
@@ -1049,23 +1156,26 @@ var file_proto_git_data_proto_depIdxs = []int32{
 	2,  // 3: mono.git.ResponseGetCommit.commit:type_name -> mono.git.Commit
 	1,  // 4: mono.git.ResponseGetTree.tree:type_name -> mono.git.TreeEntry
 	0,  // 5: mono.git.ResponseListTag.tags:type_name -> mono.git.Reference
-	4,  // 6: mono.git.GitData.ListRepositories:input_type -> mono.git.RequestListRepositories
-	6,  // 7: mono.git.GitData.ListReferences:input_type -> mono.git.RequestListReferences
-	8,  // 8: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
-	10, // 9: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
-	12, // 10: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
-	14, // 11: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
-	5,  // 12: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
-	7,  // 13: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
-	9,  // 14: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
-	11, // 15: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
-	13, // 16: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
-	15, // 17: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
-	12, // [12:18] is the sub-list for method output_type
-	6,  // [6:12] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 6: mono.git.ResponseListBranch.branches:type_name -> mono.git.Reference
+	4,  // 7: mono.git.GitData.ListRepositories:input_type -> mono.git.RequestListRepositories
+	6,  // 8: mono.git.GitData.ListReferences:input_type -> mono.git.RequestListReferences
+	8,  // 9: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
+	10, // 10: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
+	12, // 11: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
+	14, // 12: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
+	16, // 13: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
+	5,  // 14: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
+	7,  // 15: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
+	9,  // 16: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
+	11, // 17: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
+	13, // 18: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
+	15, // 19: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
+	17, // 20: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
+	14, // [14:21] is the sub-list for method output_type
+	7,  // [7:14] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_git_data_proto_init() }
@@ -1266,6 +1376,30 @@ func file_proto_git_data_proto_init() {
 				return nil
 			}
 		}
+		file_proto_git_data_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RequestListBranch); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_git_data_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResponseListBranch); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1273,7 +1407,7 @@ func file_proto_git_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_git_data_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -1305,6 +1439,7 @@ type GitDataClient interface {
 	GetTree(ctx context.Context, in *RequestGetTree, opts ...grpc.CallOption) (*ResponseGetTree, error)
 	GetBlob(ctx context.Context, in *RequestGetBlob, opts ...grpc.CallOption) (*ResponseGetBlob, error)
 	ListTag(ctx context.Context, in *RequestListTag, opts ...grpc.CallOption) (*ResponseListTag, error)
+	ListBranch(ctx context.Context, in *RequestListBranch, opts ...grpc.CallOption) (*ResponseListBranch, error)
 }
 
 type gitDataClient struct {
@@ -1369,6 +1504,15 @@ func (c *gitDataClient) ListTag(ctx context.Context, in *RequestListTag, opts ..
 	return out, nil
 }
 
+func (c *gitDataClient) ListBranch(ctx context.Context, in *RequestListBranch, opts ...grpc.CallOption) (*ResponseListBranch, error) {
+	out := new(ResponseListBranch)
+	err := c.cc.Invoke(ctx, "/mono.git.GitData/ListBranch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GitDataServer is the server API for GitData service.
 type GitDataServer interface {
 	ListRepositories(context.Context, *RequestListRepositories) (*ResponseListRepositories, error)
@@ -1377,6 +1521,7 @@ type GitDataServer interface {
 	GetTree(context.Context, *RequestGetTree) (*ResponseGetTree, error)
 	GetBlob(context.Context, *RequestGetBlob) (*ResponseGetBlob, error)
 	ListTag(context.Context, *RequestListTag) (*ResponseListTag, error)
+	ListBranch(context.Context, *RequestListBranch) (*ResponseListBranch, error)
 }
 
 // UnimplementedGitDataServer can be embedded to have forward compatible implementations.
@@ -1400,6 +1545,9 @@ func (*UnimplementedGitDataServer) GetBlob(context.Context, *RequestGetBlob) (*R
 }
 func (*UnimplementedGitDataServer) ListTag(context.Context, *RequestListTag) (*ResponseListTag, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTag not implemented")
+}
+func (*UnimplementedGitDataServer) ListBranch(context.Context, *RequestListBranch) (*ResponseListBranch, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBranch not implemented")
 }
 
 func RegisterGitDataServer(s *grpc.Server, srv GitDataServer) {
@@ -1514,6 +1662,24 @@ func _GitData_ListTag_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitData_ListBranch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestListBranch)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitDataServer).ListBranch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mono.git.GitData/ListBranch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitDataServer).ListBranch(ctx, req.(*RequestListBranch))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _GitData_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "mono.git.GitData",
 	HandlerType: (*GitDataServer)(nil),
@@ -1541,6 +1707,10 @@ var _GitData_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTag",
 			Handler:    _GitData_ListTag_Handler,
+		},
+		{
+			MethodName: "ListBranch",
+			Handler:    _GitData_ListBranch_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

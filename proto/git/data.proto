@@ -9,6 +9,7 @@ service GitData {
   rpc GetTree(RequestGetTree) returns (ResponseGetTree);
   rpc GetBlob(RequestGetBlob) returns (ResponseGetBlob);
   rpc ListTag(RequestListTag) returns (ResponseListTag);
+  rpc ListBranch(RequestListBranch) returns (ResponseListBranch);
 }
 
 message Reference {
@@ -89,4 +90,12 @@ message RequestListTag {
 
 message ResponseListTag {
   repeated Reference tags = 1;
+}
+
+message RequestListBranch {
+  string repo = 1;
+}
+
+message ResponseListBranch {
+  repeated Reference branches = 1;
 }

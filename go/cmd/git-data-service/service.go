@@ -195,3 +195,33 @@ func (g *gitDataService) ListTag(_ context.Context, req *git.RequestListTag) (*g
 
 	return res, nil
 }
+
+func (g *gitDataService) ListBranch(_ context.Context, req *git.RequestListBranch) (*git.ResponseListBranch, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	iter, err := repo.Branches()
+	if err != nil {
+		return nil, err
+	}
+
+	res := &git.ResponseListBranch{}
+	for {
+		ref, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		res.Branches = append(res.Branches, &git.Reference{
+			Name:   ref.Name().String(),
+			Target: ref.Target().String(),
+			Hash:   ref.Hash().String(),
+		})
+	}
+
+	return res, nil
+}

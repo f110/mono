@@ -151,6 +151,31 @@ func TestListTag(t *testing.T) {
 	}
 }
 
+func TestListBranch(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	masterRef, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	err = repo.Storer.SetReference(plumbing.NewHashReference(plumbing.NewBranchReferenceName("foobar"), masterRef.Hash()))
+	require.NoError(t, err)
+
+	branches, err := gitData.ListBranch(context.Background(), &git.RequestListBranch{Repo: "test1"})
+	require.NoError(t, err)
+	if assert.Len(t, branches.Branches, 2) {
+		b := make(map[string]*git.Reference)
+		for _, v := range branches.Branches {
+			b[v.Name] = v
+		}
+
+		assert.Contains(t, b, "refs/heads/foobar")
+		assert.Contains(t, b, "refs/heads/master")
+		assert.Equal(t, b["refs/heads/master"].Hash, b["refs/heads/foobar"].Hash)
+	}
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	repo := make(map[string]*goGit.Repository)
 	for k, v := range repos {
