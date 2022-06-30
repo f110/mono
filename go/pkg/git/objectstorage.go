@@ -488,7 +488,7 @@ func (b *ObjectStorageStorer) SetEncodedObject(e plumbing.EncodedObject) (plumbi
 	}
 
 	hash := w.Hash().String()
-	err = b.backend.PutReader(context.Background(), path.Join(b.rootPath, "objects", hash[0:2], hash[2:40]), r)
+	err = b.backend.PutReader(context.Background(), path.Join(b.rootPath, "objects", hash[0:2], hash[2:40]), buf)
 	if err != nil {
 		return plumbing.ZeroHash, xerrors.WithStack(err)
 	}
@@ -497,18 +497,28 @@ func (b *ObjectStorageStorer) SetEncodedObject(e plumbing.EncodedObject) (plumbi
 }
 
 func (b *ObjectStorageStorer) EncodedObject(objectType plumbing.ObjectType, hash plumbing.Hash) (plumbing.EncodedObject, error) {
-	// TODO: Read object from pack file
 	obj, err := b.getUnpackedEncodedObject(hash)
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
+		obj, err = b.getEncodedObjectFromPackFile(hash)
+	}
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	return obj, nil
 }
 
+func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plumbing.EncodedObject, error) {
+	// TODO: Read object from pack file
+	return nil, plumbing.ErrObjectNotFound
+}
+
 func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbing.EncodedObject, error) {
 	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "objects", h.String()[0:2], h.String()[2:40]))
+	if err != nil && errors.Is(err, storage.ErrObjectNotFound) {
+		return nil, plumbing.ErrObjectNotFound
+	}
 	if err != nil {
-		return nil, xerrors.WithStack(plumbing.ErrObjectNotFound)
+		return nil, err
 	}
 
 	obj, err := b.readUnpackedEncodedObject(file, h)
@@ -523,7 +533,7 @@ func (b *ObjectStorageStorer) readUnpackedEncodedObject(f io.ReadCloser, h plumb
 	obj := b.NewEncodedObject().(*EncodedObject)
 	r, err := objfile.NewReader(f)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	typ, size, err := r.Header()
 	if err != nil {
