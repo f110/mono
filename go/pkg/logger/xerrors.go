@@ -6,6 +6,9 @@ import (
 )
 
 func Error(err error) zap.Field {
+	if err == nil {
+		return zap.Skip()
+	}
 	return zap.String("error", err.Error())
 }
 
