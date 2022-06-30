@@ -33,10 +33,14 @@ go_binary(
 
 go_test(
     name = "git-data-service_test",
-    srcs = ["service_test.go"],
+    srcs = [
+        "service_test.go",
+        "updater_test.go",
+    ],
     embed = [":git-data-service_lib"],
     deps = [
         "//go/pkg/git",
+        "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",

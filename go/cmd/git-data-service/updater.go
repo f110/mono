@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"io"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
@@ -37,14 +40,14 @@ func (u *repositoryUpdater) Run(ctx context.Context) {
 	for {
 		select {
 		case <-timer.C:
-			u.update()
+			u.update(ctx)
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func (u *repositoryUpdater) update() {
+func (u *repositoryUpdater) update(ctx context.Context) {
 	sem := make(chan struct{}, u.interval)
 	doneCh := make(chan struct{})
 	for _, v := range u.repo {
@@ -52,7 +55,7 @@ func (u *repositoryUpdater) update() {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			u.updateRepo(repo)
+			u.updateRepo(ctx, repo)
 
 			doneCh <- struct{}{}
 		}(v)
@@ -67,12 +70,49 @@ func (u *repositoryUpdater) update() {
 	}
 }
 
-func (u *repositoryUpdater) updateRepo(repo *git.Repository) {
-	ctx, stop := context.WithTimeout(context.Background(), u.timeout)
+func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository) {
+	ctx, stop := context.WithTimeout(ctx, u.timeout)
 	defer stop()
 
 	err := repo.FetchContext(ctx, &git.FetchOptions{RemoteName: upstreamRemoteName})
 	if err != nil {
 		logger.Log.Warn("Failed fetch repository", zap.Error(err))
+		return
+	}
+
+	// Make references
+	iter, err := repo.References()
+	if err != nil {
+		logger.Log.Warn("Failed get references", zap.Error(err))
+		return
+	}
+	branches := make([]*plumbing.Reference, 0)
+	for {
+		ref, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.Log.Warn("Failed get reference", zap.Error(err))
+			break
+		}
+		if ref.Name().IsRemote() {
+			branches = append(branches, ref)
+		}
+		if ref.Name().IsBranch() {
+			logger.Log.Debug("Remove reference", zap.String("ref", ref.Name().String()))
+			if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
+				logger.Log.Warn("Failed remove reference", zap.Error(err), zap.String("ref", ref.Name().String()))
+				break
+			}
+		}
+	}
+
+	for _, ref := range branches {
+		branchName := strings.TrimPrefix(ref.Name().String(), "refs/remotes/origin/")
+		newRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(branchName), ref.Hash())
+		if err := repo.Storer.SetReference(newRef); err != nil {
+			logger.Log.Warn("Failed create reference", zap.Error(err))
+		}
 	}
 }
