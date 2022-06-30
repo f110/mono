@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"log"
+
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -27,6 +29,10 @@ func Init() error {
 	}
 
 	return nil
+}
+
+func StandardLogger(name string) *log.Logger {
+	return zap.NewStdLog(Log.Named(name))
 }
 
 func initLogger() error {
