@@ -6,6 +6,8 @@ import (
 	"io"
 	"runtime"
 	"strings"
+
+	"go.uber.org/zap/zapcore"
 )
 
 type Error struct {
@@ -76,6 +78,8 @@ func WithMessagef(err error, format string, a ...any) error {
 
 type Frames []uintptr
 
+var _ zapcore.ArrayMarshaler = Frames{}
+
 func StackTrace(err error) Frames {
 	v, ok := err.(*Error)
 	if !ok {
@@ -118,6 +122,18 @@ func (f Frames) String() string {
 
 func (f Frames) Frame(i int) *Frame {
 	return newFrame(f[i])
+}
+
+func (f Frames) MarshalLogArray(e zapcore.ArrayEncoder) error {
+	frames := runtime.CallersFrames(f)
+	for {
+		frame, more := frames.Next()
+		e.AppendString(fmt.Sprintf("%s:%s:%d", frame.Function, frame.File, frame.Line))
+		if !more {
+			break
+		}
+	}
+	return nil
 }
 
 type Frame struct {

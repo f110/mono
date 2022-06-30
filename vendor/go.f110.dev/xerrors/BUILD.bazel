@@ -6,4 +6,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/go.f110.dev/xerrors",
     importpath = "go.f110.dev/xerrors",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/go.uber.org/zap/zapcore"],
 )

@@ -7,6 +7,7 @@ go_library(
         "k8s.go",
         "klog.go",
         "named.go",
+        "xerrors.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/logger",
     visibility = ["//visibility:public"],
