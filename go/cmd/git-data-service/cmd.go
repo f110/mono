@@ -129,7 +129,7 @@ func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
 	logger.Log.Info("Start listen", zap.String("addr", c.Listen))
 	go func() {
 		if err := c.s.Serve(lis); err != nil {
-			logger.Log.Error("gRPC server returns error", zap.Error(err))
+			logger.Log.Error("gRPC server returns error", logger.Error(err))
 		}
 	}()
 

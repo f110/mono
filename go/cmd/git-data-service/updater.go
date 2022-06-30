@@ -76,14 +76,14 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 
 	err := repo.FetchContext(ctx, &git.FetchOptions{RemoteName: upstreamRemoteName})
 	if err != nil {
-		logger.Log.Warn("Failed fetch repository", zap.Error(err))
+		logger.Log.Warn("Failed fetch repository", logger.Error(err))
 		return
 	}
 
 	// Make references
 	iter, err := repo.References()
 	if err != nil {
-		logger.Log.Warn("Failed get references", zap.Error(err))
+		logger.Log.Warn("Failed get references", logger.Error(err))
 		return
 	}
 	branches := make([]*plumbing.Reference, 0)
@@ -93,7 +93,7 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 			break
 		}
 		if err != nil {
-			logger.Log.Warn("Failed get reference", zap.Error(err))
+			logger.Log.Warn("Failed get reference", logger.Error(err))
 			break
 		}
 		if ref.Name().IsRemote() {
@@ -102,7 +102,7 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 		if ref.Name().IsBranch() {
 			logger.Log.Debug("Remove reference", zap.String("ref", ref.Name().String()))
 			if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
-				logger.Log.Warn("Failed remove reference", zap.Error(err), zap.String("ref", ref.Name().String()))
+				logger.Log.Warn("Failed remove reference", logger.Error(err), zap.String("ref", ref.Name().String()))
 				break
 			}
 		}
@@ -112,7 +112,7 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 		branchName := strings.TrimPrefix(ref.Name().String(), "refs/remotes/origin/")
 		newRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(branchName), ref.Hash())
 		if err := repo.Storer.SetReference(newRef); err != nil {
-			logger.Log.Warn("Failed create reference", zap.Error(err))
+			logger.Log.Warn("Failed create reference", logger.Error(err))
 		}
 	}
 }
