@@ -176,6 +176,17 @@ func TestListBranch(t *testing.T) {
 	}
 }
 
+func TestGetReference(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := git.NewGitDataClient(conn)
+
+	ref, err := gitData.GetReference(context.Background(), &git.RequestGetReference{Repo: "test1", Ref: plumbing.NewBranchReferenceName("master").String()})
+	require.NoError(t, err)
+	assert.Equal(t, "refs/heads/master", ref.Ref.Name)
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	repo := make(map[string]*goGit.Repository)
 	for k, v := range repos {

@@ -5,6 +5,7 @@ option  go_package = "go.f110.dev/mono/go/pkg/git";
 service GitData {
   rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
   rpc ListReferences(RequestListReferences) returns (ResponseListReferences);
+  rpc GetReference(RequestGetReference) returns (ResponseGetReference);
   rpc GetCommit(RequestGetCommit) returns (ResponseGetCommit);
   rpc GetTree(RequestGetTree) returns (ResponseGetTree);
   rpc GetBlob(RequestGetBlob) returns (ResponseGetBlob);
@@ -51,6 +52,15 @@ message RequestListReferences {
 
 message ResponseListReferences {
   repeated Reference refs = 1;
+}
+
+message RequestGetReference {
+  string repo = 1;
+  string ref  = 2;
+}
+
+message ResponseGetReference {
+  Reference ref = 1;
 }
 
 message RequestGetCommit {

@@ -65,6 +65,26 @@ func (g *gitDataService) ListReferences(_ context.Context, req *git.RequestListR
 	return res, nil
 }
 
+func (g *gitDataService) GetReference(_ context.Context, req *git.RequestGetReference) (*git.ResponseGetReference, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+
+	ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &git.ResponseGetReference{
+		Ref: &git.Reference{
+			Name:   ref.Name().String(),
+			Hash:   ref.Hash().String(),
+			Target: ref.Target().String(),
+		},
+	}, nil
+}
+
 func (g *gitDataService) GetCommit(_ context.Context, req *git.RequestGetCommit) (*git.ResponseGetCommit, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
