@@ -4,6 +4,7 @@ go_library(
     name = "monodev",
     srcs = [
         "cluster.go",
+        "component.go",
         "devenv.go",
         "graph.go",
         "manager.go",

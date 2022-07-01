@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
@@ -23,7 +26,10 @@ func monoDev() error {
 	if err := logger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
-	return rootCmd.Execute()
+	
+	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancelFunc()
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func main() {
