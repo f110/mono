@@ -68,7 +68,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	buf := new(bytes.Buffer)
 	switch filepath.Ext(blobPath) {
-	case "md":
+	case ".md":
 		if err := goldmark.Convert(blob.Content, buf); err != nil {
 			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
 			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
