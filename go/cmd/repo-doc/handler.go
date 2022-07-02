@@ -65,3 +65,13 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(blob.Content)
 }
+
+func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, filepath string) {
+	sep := strings.LastIndex(req.URL.Path, pathSeparator)
+	repoAndRef := req.URL.Path[1:sep]
+	filepath = req.URL.Path[sep+len(pathSeparator):]
+	sep = strings.Index(repoAndRef, "/")
+	repo, ref = repoAndRef[:sep], repoAndRef[sep+1:]
+
+	return repo, ref, filepath
+}
