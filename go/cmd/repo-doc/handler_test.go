@@ -59,7 +59,15 @@ func TestServeHTTP(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
 	h.ServeHTTP(recorder, req)
 
-	assert.Equal(t, "# Document title\nHello World!\n", recorder.Body.String())
+	assert.Equal(t, `
+<html>
+<head></head>
+<body>
+<h1>Document title</h1>
+<p>Hello World!</p>
+
+</body>
+</html>`, recorder.Body.String())
 	assert.Equal(t, http.StatusOK, recorder.Code)
 }
 

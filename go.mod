@@ -43,7 +43,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.2
-	github.com/yuin/goldmark v1.4.11
+	github.com/yuin/goldmark v1.4.12
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
 	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e

@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/http"
 	"regexp"
 	"strings"
 
+	"github.com/yuin/goldmark"
+
 	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 const (
@@ -59,7 +64,24 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Failed to get blob", http.StatusInternalServerError)
 		return
 	}
-	w.Write(blob.Content)
+
+	buf := new(bytes.Buffer)
+	if err := goldmark.Convert(blob.Content, buf); err != nil {
+		logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
+		http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
+		return
+	}
+
+	err = documentPage.Execute(w, struct {
+		Content template.HTML
+	}{
+		Content: template.HTML(buf.String()),
+	})
+	if err != nil {
+		logger.Log.Warn("Failed to render page", logger.Error(err))
+		http.Error(w, "Failed render page", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, filepath string) {
@@ -71,3 +93,11 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 
 	return repo, ref, filepath
 }
+
+var documentPage = template.Must(template.New("doc").Parse(`
+<html>
+<head></head>
+<body>
+{{ .Content }}
+</body>
+</html>`))

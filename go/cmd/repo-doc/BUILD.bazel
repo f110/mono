@@ -15,6 +15,7 @@ go_library(
         "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
+        "//vendor/github.com/yuin/goldmark",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
