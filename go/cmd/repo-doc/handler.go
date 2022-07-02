@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -33,7 +34,7 @@ func newHttpHandler(client git.GitDataClient) *httpHandler {
 }
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	repo, ref, filepath := h.parsePath(req)
+	repo, ref, blobPath := h.parsePath(req)
 
 	var commit string
 	if gitHash.MatchString(ref) {
@@ -54,7 +55,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	var blobHash string
 	for _, entry := range tree.Tree {
-		if entry.Path == filepath {
+		if entry.Path == blobPath {
 			blobHash = entry.Sha
 			break
 		}
@@ -66,10 +67,13 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	buf := new(bytes.Buffer)
-	if err := goldmark.Convert(blob.Content, buf); err != nil {
-		logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
-		http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
-		return
+	switch filepath.Ext(blobPath) {
+	case "md":
+		if err := goldmark.Convert(blob.Content, buf); err != nil {
+			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
+			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	err = documentPage.Execute(w, struct {
