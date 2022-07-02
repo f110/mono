@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+
+	"go.f110.dev/mono/go/pkg/git"
 )
 
-func TestHandler(t *testing.T) {
+func TestParsePath(t *testing.T) {
 	cases := []struct {
 		URL      string
 		Repo     string
@@ -45,4 +49,70 @@ func TestHandler(t *testing.T) {
 			assert.Equal(t, tc.FilePath, filepath)
 		})
 	}
+}
+
+func TestServeHTTP(t *testing.T) {
+	client := &stubGitDataClient{}
+	h := newHttpHandler(client)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
+	h.ServeHTTP(recorder, req)
+
+	assert.Equal(t, "# Document title\nHello World!\n", recorder.Body.String())
+	assert.Equal(t, http.StatusOK, recorder.Code)
+}
+
+type stubGitDataClient struct{}
+
+var _ git.GitDataClient = &stubGitDataClient{}
+
+func (s *stubGitDataClient) ListRepositories(ctx context.Context, in *git.RequestListRepositories, opts ...grpc.CallOption) (*git.ResponseListRepositories, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *stubGitDataClient) ListReferences(ctx context.Context, in *git.RequestListReferences, opts ...grpc.CallOption) (*git.ResponseListReferences, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *stubGitDataClient) GetReference(_ context.Context, in *git.RequestGetReference, opts ...grpc.CallOption) (*git.ResponseGetReference, error) {
+	return &git.ResponseGetReference{
+		Ref: &git.Reference{
+			Name: "master",
+			Hash: "012345",
+		},
+	}, nil
+}
+
+func (s *stubGitDataClient) GetCommit(ctx context.Context, in *git.RequestGetCommit, opts ...grpc.CallOption) (*git.ResponseGetCommit, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *stubGitDataClient) GetTree(_ context.Context, in *git.RequestGetTree, opts ...grpc.CallOption) (*git.ResponseGetTree, error) {
+	return &git.ResponseGetTree{
+		Tree: []*git.TreeEntry{
+			{Path: "README.md", Sha: "0123456789"},
+		},
+	}, nil
+}
+
+func (s *stubGitDataClient) GetBlob(_ context.Context, in *git.RequestGetBlob, opts ...grpc.CallOption) (*git.ResponseGetBlob, error) {
+	return &git.ResponseGetBlob{
+		Sha:     "0123456789",
+		Content: []byte("# Document title\nHello World!\n"),
+		Size:    30,
+	}, nil
+}
+
+func (s *stubGitDataClient) ListTag(ctx context.Context, in *git.RequestListTag, opts ...grpc.CallOption) (*git.ResponseListTag, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *stubGitDataClient) ListBranch(ctx context.Context, in *git.RequestListBranch, opts ...grpc.CallOption) (*git.ResponseListBranch, error) {
+	//TODO implement me
+	panic("implement me")
 }

@@ -28,11 +28,7 @@ func newHttpHandler(client git.GitDataClient) *httpHandler {
 }
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	sep := strings.LastIndex(req.URL.Path, pathSeparator)
-	repoAndRef := req.URL.Path[1:sep]
-	filepath := req.URL.Path[sep+len(pathSeparator):]
-	sep = strings.Index(repoAndRef, "/")
-	repo, ref := repoAndRef[:sep], repoAndRef[sep+1:]
+	repo, ref, filepath := h.parsePath(req)
 
 	var commit string
 	if gitHash.MatchString(ref) {
