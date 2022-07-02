@@ -7,6 +7,7 @@ go_library(
         "data.pb.go",
         "git.go",
         "objectstorage.go",
+        "service.go",
     ],
     importpath = "go.f110.dev/mono/go/pkg/git",
     visibility = ["//visibility:public"],
@@ -35,16 +36,24 @@ go_library(
 
 go_test(
     name = "git_test",
-    srcs = ["objectstorage_test.go"],
+    srcs = [
+        "objectstorage_test.go",
+        "service_test.go",
+    ],
     embed = [":git"],
     deps = [
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/config",
+        "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/object",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/storer",
         "//vendor/github.com/go-git/go-git/v5/storage/filesystem",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/credentials/insecure",
+        "//vendor/google.golang.org/grpc/test/bufconn",
     ],
 )
 

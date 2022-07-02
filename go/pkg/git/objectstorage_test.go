@@ -22,11 +22,10 @@ import (
 
 func TestObjectStorageStorer(t *testing.T) {
 	originalRepo := makeSourceRepository(t)
-	gitDir := originalRepo.Storer.(*filesystem.Storage).Filesystem().Root()
 
 	storagePrefix := "test"
 	mockStorage := storage.NewMock()
-	registerToStorage(t, mockStorage, gitDir, storagePrefix)
+	registerToStorage(t, mockStorage, originalRepo, storagePrefix)
 
 	s := NewObjectStorageStorer(mockStorage, storagePrefix)
 	repo, err := git.Open(s, nil)
@@ -83,7 +82,8 @@ func makeSourceRepository(t *testing.T) *git.Repository {
 	return repo
 }
 
-func registerToStorage(t *testing.T, s *storage.Mock, gitDir, prefix string) {
+func registerToStorage(t *testing.T, s *storage.Mock, repo *git.Repository, prefix string) {
+	gitDir := repo.Storer.(*filesystem.Storage).Filesystem().Root()
 	err := filepath.Walk(gitDir, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			t.Log(err)

@@ -39,7 +39,7 @@ type gitDataServiceCommand struct {
 	RefreshTimeout  time.Duration
 	RefreshWorkers  int
 
-	repositories []repository
+	repositories []git.Repository
 }
 
 const (
@@ -95,7 +95,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	c.gitRepos = repos
 
 	s := grpc.NewServer()
-	service, err := newService(repo)
+	service, err := git.NewDataService(repo)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -168,13 +168,13 @@ func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	if len(c.Repositories) == 0 {
 		return errors.New("--repository is mandatory")
 	}
-	var repositories []repository
+	var repositories []git.Repository
 	for _, v := range c.Repositories {
 		if strings.Index(v, "|") == -1 {
 			return xerrors.Newf("--repository=%s is invalid", v)
 		}
 		s := strings.Split(v, "|")
-		repositories = append(repositories, repository{Name: s[0], URL: s[1], Prefix: s[2]})
+		repositories = append(repositories, git.Repository{Name: s[0], URL: s[1], Prefix: s[2]})
 	}
 	c.repositories = repositories
 
