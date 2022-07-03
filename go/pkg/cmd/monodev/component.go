@@ -3,11 +3,14 @@ package monodev
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -55,4 +58,30 @@ func (c *minioComponent) Run(ctx context.Context) {
 		logger.Log.Info("Some error was occurred", zap.Error(err))
 	}
 	logger.Log.Info("Shutdown minio")
+}
+
+type gitDataServiceComponent struct{}
+
+func (c *gitDataServiceComponent) Command() string {
+	return ""
+}
+
+func (c *gitDataServiceComponent) Run(ctx context.Context) {
+	service, err := git.NewDataService(nil)
+	if err != nil {
+		return
+	}
+	s := grpc.NewServer()
+	git.RegisterGitDataServer(s, service)
+	lis, err := net.Listen("tcp", ":9010")
+	if err != nil {
+		logger.Log.Error("Failed to listen", logger.Error(err))
+		return
+	}
+
+	logger.Log.Info("Start gRPC server", zap.String("addr", ":9010"))
+	if err := s.Serve(lis); err != nil {
+		logger.Log.Warn("Serve gRPC", logger.Error(err))
+		return
+	}
 }

@@ -81,10 +81,11 @@ func goModuleProxy(cmd *cobra.Command) {
 func repoDoc(cmd *cobra.Command) {
 	repoDocCmd := &cobra.Command{
 		Use:   "repo-doc",
-		Short: "Start minio",
+		Short: "Start minio and git-data-service",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(&minioComponent{})
+			m.AddComponent(&gitDataServiceComponent{})
 
 			return m.Run(cmd.Context())
 		},
