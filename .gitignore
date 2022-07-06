@@ -1,3 +1,4 @@
 /bazel-*
 .kubeconfig
 /.minio_data
+/.example_git_data
