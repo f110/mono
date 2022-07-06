@@ -9,7 +9,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/yuin/goldmark"
+	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -34,14 +36,20 @@ func newHttpHandler(client git.GitDataClient) *httpHandler {
 }
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if strings.Index(req.URL.Path, pathSeparator) == -1 {
+		http.NotFound(w, req)
+		return
+	}
 	repo, ref, blobPath := h.parsePath(req)
 
 	var commit string
 	if gitHash.MatchString(ref) {
 		commit = ref
 	} else {
+		ref = plumbing.NewBranchReferenceName(ref).String()
 		ref, err := h.client.GetReference(req.Context(), &git.RequestGetReference{Repo: repo, Ref: ref})
 		if err != nil {
+			logger.Log.Error("Failed to get reference", logger.Error(err))
 			http.Error(w, fmt.Sprintf("Reference %s is not found", ref), http.StatusBadRequest)
 			return
 		}
@@ -50,6 +58,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	tree, err := h.client.GetTree(req.Context(), &git.RequestGetTree{Repo: repo, Sha: commit})
 	if err != nil {
+		logger.Log.Error("Failed to get tree", logger.Error(err))
 		http.Error(w, "Failed to get the tree", http.StatusInternalServerError)
 		return
 	}
@@ -60,8 +69,14 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
+	if blobHash == "" {
+		logger.Log.Info("Blob is not found in the tree", zap.String("path", blobPath))
+		http.NotFound(w, req)
+		return
+	}
 	blob, err := h.client.GetBlob(req.Context(), &git.RequestGetBlob{Repo: repo, Sha: blobHash})
 	if err != nil {
+		logger.Log.Error("Failed to get blob", logger.Error(err))
 		http.Error(w, "Failed to get blob", http.StatusInternalServerError)
 		return
 	}
