@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/format/objfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
@@ -508,9 +510,81 @@ func (b *ObjectStorageStorer) EncodedObject(objectType plumbing.ObjectType, hash
 }
 
 func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plumbing.EncodedObject, error) {
-	// TODO: Read object from pack file
+	packFiles, err := b.backend.List(context.Background(), path.Join(b.rootPath, "objects/pack"))
+	if err != nil {
+		return nil, err
+	}
+	var packs []plumbing.Hash
+	for _, f := range packFiles {
+		n := filepath.Base(f.Name)
+		if filepath.Ext(n) != ".pack" || !strings.HasPrefix(n, "pack-") {
+			continue
+		}
+		h := plumbing.NewHash(n[5 : len(n)-5])
+		if h.IsZero() {
+			continue
+		}
+		packs = append(packs, h)
+	}
+
+	var packIndex *idxfile.MemoryIndex
+	var packHash plumbing.Hash
+	// Find object in the index file
+	for _, v := range packs {
+		file, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
+		if err != nil {
+			return nil, err
+		}
+		idx := idxfile.NewMemoryIndex()
+		if err := idxfile.NewDecoder(file).Decode(idx); err != nil {
+			return nil, err
+		}
+		if err := file.Close(); err != nil {
+			return nil, err
+		}
+		if _, err := idx.FindOffset(h); err == nil {
+			packIndex = idx
+			packHash = v
+			break
+		}
+	}
+	if packIndex == nil {
+		return nil, plumbing.ErrObjectNotFound
+	}
+
+	// Fetch the object from packfile
+	file, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", packHash.String())))
+	if err != nil {
+		return nil, err
+	}
+	buf, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	if err := file.Close(); err != nil {
+		return nil, err
+	}
+	packfile, err := NewPackfile(packIndex, nopCloser(bytes.NewReader(buf)))
+	if err != nil {
+		return nil, err
+	}
+	obj, err := packfile.Get(h)
+	if err == nil {
+		return obj, nil
+	}
+
 	return nil, plumbing.ErrObjectNotFound
 }
+
+type nopSeekCloser struct {
+	io.ReadSeeker
+}
+
+func nopCloser(r io.ReadSeeker) io.ReadSeekCloser {
+	return nopSeekCloser{ReadSeeker: r}
+}
+
+func (nopSeekCloser) Close() error { return nil }
 
 func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbing.EncodedObject, error) {
 	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "objects", h.String()[0:2], h.String()[2:40]))
@@ -633,7 +707,7 @@ func (e *EncodedObject) Writer() (io.WriteCloser, error) {
 	return e.w, nil
 }
 
-func (e *EncodedObject) SetReader(r *objfile.Reader) {
+func (e *EncodedObject) SetReader(r io.ReadCloser) {
 	e.r = r
 }
 

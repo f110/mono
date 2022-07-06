@@ -18,15 +18,17 @@ func monoDev() error {
 	rootCmd := &cobra.Command{
 		Use:   "monodev",
 		Short: "Utilities for development",
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			if err := logger.Init(); err != nil {
+				return xerrors.WithStack(err)
+			}
+			return nil
+		},
 	}
+	logger.Flags(rootCmd.PersistentFlags())
 
 	monodev.CommandManager.Add(rootCmd)
 
-	logger.Flags(rootCmd.Flags())
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
-	
 	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelFunc()
 	return rootCmd.ExecuteContext(ctx)
