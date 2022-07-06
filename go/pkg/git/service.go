@@ -7,6 +7,7 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"go.f110.dev/xerrors"
 )
 
 type gitDataService struct {
@@ -131,7 +132,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 	}
 	commit, err := repo.CommitObject(plumbing.NewHash(req.Sha))
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Newf("commit object not found: %v", err)
 	}
 	tree, err := commit.Tree()
 	if err != nil {
