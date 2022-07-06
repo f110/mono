@@ -13,6 +13,8 @@
       <excludeFolder url="file://$MODULE_DIR$/bazel-out" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-testlogs" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-wing" />
+      <excludeFolder url="file://$MODULE_DIR$/.example_git_data" />
+      <excludeFolder url="file://$MODULE_DIR$/.minio_data" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
