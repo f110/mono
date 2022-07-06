@@ -9,6 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
@@ -22,6 +23,7 @@ type repoDocCommand struct {
 
 	Listen         string
 	GitDataService string
+	Insecure       bool
 }
 
 const (
@@ -45,11 +47,16 @@ func newRepoDocCommand() *repoDocCommand {
 
 func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8016", "Listen addr")
-	fs.StringVar(&c.GitDataService, "git-data-service", "", "The url of git-data-service")
+	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
+	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
 }
 
 func (c *repoDocCommand) init() (fsm.State, error) {
-	conn, err := grpc.Dial(c.GitDataService)
+	var opts []grpc.DialOption
+	if c.Insecure {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	conn, err := grpc.Dial(c.GitDataService, opts...)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
