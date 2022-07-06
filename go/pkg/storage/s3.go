@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -13,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
@@ -138,6 +141,14 @@ func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 				retryCount++
 				continue
 			}
+
+			var apiErr smithy.APIError
+			if errors.As(err, &apiErr) {
+				switch apiErr.(type) {
+				case *types.NoSuchKey:
+					return nil, ErrObjectNotFound
+				}
+			}
 			return nil, xerrors.WithStack(err)
 		}
 
@@ -238,4 +249,31 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 
 		return nil
 	}
+}
+
+func (s *S3) MakeBucket(ctx context.Context, name string) error {
+	c, err := s.opt.Client()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.CreateBucket(ctx, &s3.CreateBucketInput{Bucket: aws.String(name)})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (s *S3) ExistBucket(ctx context.Context, name string) bool {
+	c, err := s.opt.Client()
+	if err != nil {
+		return false
+	}
+
+	_, err = c.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(name)})
+	if err != nil {
+		return false
+	}
+	return true
 }
