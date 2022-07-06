@@ -17,6 +17,7 @@ import (
 // Ref: http://shafiul.github.io/gitbook/7_the_packfile.html
 type Packfile struct {
 	index           idxfile.Index
+	offsets         []uint64
 	file            io.ReadSeekCloser
 	version         uint32
 	numberOfObjects uint32
@@ -52,7 +53,23 @@ func NewPackfile(idx idxfile.Index, f io.ReadSeekCloser) (*Packfile, error) {
 		return nil, xerrors.New("invalid packfile format. mismatch the number of object count with the index")
 	}
 
-	return &Packfile{index: idx, file: f, version: version, numberOfObjects: numOfObj}, nil
+	iter, err := idx.EntriesByOffset()
+	if err != nil {
+		return nil, err
+	}
+	count, err := idx.Count()
+	if err != nil {
+		return nil, err
+	}
+	offsets := make([]uint64, 0, count)
+	for {
+		e, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		offsets = append(offsets, e.Offset)
+	}
+	return &Packfile{index: idx, offsets: offsets, file: f, version: version, numberOfObjects: numOfObj}, nil
 }
 
 func (p *Packfile) Get(hash plumbing.Hash) (plumbing.EncodedObject, error) {
@@ -96,10 +113,20 @@ func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.Encode
 
 		offsetReference = offset - no
 	}
-	_ = offsetReference
 
-	buf = make([]byte, length)
-	if _, err := io.ReadFull(p.file, buf); err != nil {
+	var bufSize int64
+	for i, v := range p.offsets {
+		if int64(v) == offset {
+			if len(p.offsets) == i+1 {
+				bufSize = length
+			} else {
+				bufSize = int64(p.offsets[i+1]) - offset
+			}
+			break
+		}
+	}
+	buf = make([]byte, bufSize)
+	if _, err := p.file.Read(buf); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 
