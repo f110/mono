@@ -7,6 +7,7 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.f110.dev/xerrors"
 )
 
@@ -140,9 +141,9 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 	}
 
 	var treeEntry []*TreeEntry
-	iter := tree.Files()
+	walker := object.NewTreeWalker(tree, true, nil)
 	for {
-		f, err := iter.Next()
+		_, e, err := walker.Next()
 		if err == io.EOF {
 			break
 		}
@@ -150,9 +151,8 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 			return nil, err
 		}
 		treeEntry = append(treeEntry, &TreeEntry{
-			Sha:  f.Hash.String(),
-			Path: f.Name,
-			Size: f.Size,
+			Sha:  e.Hash.String(),
+			Path: e.Name,
 		})
 	}
 	return &ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil
