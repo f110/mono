@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/git"
@@ -34,6 +36,14 @@ var _ http.Handler = &httpHandler{}
 func newHttpHandler(client git.GitDataClient) *httpHandler {
 	return &httpHandler{client: client}
 }
+
+var md = goldmark.New(
+	goldmark.WithExtensions(extension.GFM),
+	goldmark.WithParserOptions(
+		parser.WithAutoHeadingID(),
+	),
+	goldmark.WithRendererOptions(),
+)
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if strings.Index(req.URL.Path, pathSeparator) == -1 {
@@ -84,7 +94,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	buf := new(bytes.Buffer)
 	switch filepath.Ext(blobPath) {
 	case ".md":
-		if err := goldmark.Convert(blob.Content, buf); err != nil {
+		if err := md.Convert(blob.Content, buf); err != nil {
 			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
 			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
 			return

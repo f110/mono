@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "extension",
+    srcs = [
+        "definition_list.go",
+        "footnote.go",
+        "gfm.go",
+        "linkify.go",
+        "strikethrough.go",
+        "table.go",
+        "tasklist.go",
+        "typographer.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/yuin/goldmark/extension",
+    importpath = "github.com/yuin/goldmark/extension",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/yuin/goldmark",
+        "//vendor/github.com/yuin/goldmark/ast",
+        "//vendor/github.com/yuin/goldmark/extension/ast",
+        "//vendor/github.com/yuin/goldmark/parser",
+        "//vendor/github.com/yuin/goldmark/renderer",
+        "//vendor/github.com/yuin/goldmark/renderer/html",
+        "//vendor/github.com/yuin/goldmark/text",
+        "//vendor/github.com/yuin/goldmark/util",
+    ],
+)
