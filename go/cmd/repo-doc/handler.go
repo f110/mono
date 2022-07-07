@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"mime"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -53,49 +51,21 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	repo, ref, blobPath := h.parsePath(req)
 
-	var commit string
-	if gitHash.MatchString(ref) {
-		commit = ref
-	} else {
+	if !gitHash.MatchString(ref) {
 		ref = plumbing.NewBranchReferenceName(ref).String()
-		ref, err := h.client.GetReference(req.Context(), &git.RequestGetReference{Repo: repo, Ref: ref})
-		if err != nil {
-			logger.Log.Error("Failed to get reference", logger.Error(err))
-			http.Error(w, fmt.Sprintf("Reference %s is not found", ref), http.StatusBadRequest)
-			return
-		}
-		commit = ref.Ref.Hash
 	}
 
-	tree, err := h.client.GetTree(req.Context(), &git.RequestGetTree{Repo: repo, Sha: commit})
+	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: blobPath})
 	if err != nil {
-		logger.Log.Error("Failed to get tree", logger.Error(err))
-		http.Error(w, "Failed to get the tree", http.StatusInternalServerError)
-		return
-	}
-	var blobHash string
-	for _, entry := range tree.Tree {
-		if entry.Path == blobPath {
-			blobHash = entry.Sha
-			break
-		}
-	}
-	if blobHash == "" {
-		logger.Log.Info("Blob is not found in the tree", zap.String("path", blobPath))
-		http.NotFound(w, req)
-		return
-	}
-	blob, err := h.client.GetBlob(req.Context(), &git.RequestGetBlob{Repo: repo, Sha: blobHash})
-	if err != nil {
-		logger.Log.Error("Failed to get blob", logger.Error(err))
-		http.Error(w, "Failed to get blob", http.StatusInternalServerError)
+		logger.Log.Error("Failed to get file", logger.Error(err))
+		http.Error(w, "Failed to get file", http.StatusInternalServerError)
 		return
 	}
 
 	buf := new(bytes.Buffer)
 	switch filepath.Ext(blobPath) {
 	case ".md":
-		if err := md.Convert(blob.Content, buf); err != nil {
+		if err := md.Convert(file.Content, buf); err != nil {
 			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
 			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
 			return
@@ -115,7 +85,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if v := mime.TypeByExtension(filepath.Ext(blobPath)); v != "" {
 			w.Header().Set("Content-Type", v)
 		}
-		if _, err := w.Write(blob.Content); err != nil {
+		if _, err := w.Write(file.Content); err != nil {
 			logger.Log.Warn("Failed write content", logger.Error(err))
 			http.Error(w, "Failed write content", http.StatusInternalServerError)
 			return
