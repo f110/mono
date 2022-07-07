@@ -8,6 +8,7 @@ import (
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"go.f110.dev/xerrors"
 )
 
 type gitDataService struct {
@@ -178,6 +179,45 @@ func (g *gitDataService) GetBlob(_ context.Context, req *RequestGetBlob) (*Respo
 		Size:    blob.Size,
 		Content: buf,
 	}, nil
+}
+
+func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+	if err != nil {
+		return nil, errors.New("ref is not found")
+	}
+	commit, err := repo.CommitObject(ref.Hash())
+	if err != nil {
+		return nil, errors.New("commit is not found")
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, xerrors.Newf("failed to get tree: %v", err)
+	}
+	file, err := tree.File(req.Path)
+	if err != nil {
+		return nil, xerrors.Newf("failed to get file: %v", err)
+	}
+
+	blob, err := repo.BlobObject(file.Hash)
+	if err != nil {
+		return nil, xerrors.Newf("failed to get blob: %v", err)
+	}
+
+	r, err := blob.Reader()
+	if err != nil {
+		return nil, xerrors.Newf("failed to get file: %v", err)
+	}
+	defer r.Close()
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return nil, xerrors.Newf("failed to read file: %v", err)
+	}
+	return &ResponseGetFile{Content: buf}, nil
 }
 
 func (g *gitDataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {

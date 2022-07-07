@@ -9,6 +9,7 @@ service GitData {
   rpc GetCommit(RequestGetCommit) returns (ResponseGetCommit);
   rpc GetTree(RequestGetTree) returns (ResponseGetTree);
   rpc GetBlob(RequestGetBlob) returns (ResponseGetBlob);
+  rpc GetFile(RequestGetFile) returns (ResponseGetFile);
   rpc ListTag(RequestListTag) returns (ResponseListTag);
   rpc ListBranch(RequestListBranch) returns (ResponseListBranch);
 }
@@ -92,6 +93,16 @@ message ResponseGetBlob {
   string sha     = 1;
   int64  size    = 2;
   bytes  content = 3;
+}
+
+message RequestGetFile {
+  string repo = 1;
+  string ref  = 2;
+  string path = 3;
+}
+
+message ResponseGetFile {
+  bytes content = 1;
 }
 
 message RequestListTag {
