@@ -143,7 +143,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 	var treeEntry []*TreeEntry
 	walker := object.NewTreeWalker(tree, true, nil)
 	for {
-		_, e, err := walker.Next()
+		name, e, err := walker.Next()
 		if err == io.EOF {
 			break
 		}
@@ -152,7 +152,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 		}
 		treeEntry = append(treeEntry, &TreeEntry{
 			Sha:  e.Hash.String(),
-			Path: e.Name,
+			Path: name,
 		})
 	}
 	return &ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil

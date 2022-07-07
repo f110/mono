@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -99,17 +100,26 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
 			return
 		}
-	}
 
-	err = documentPage.Execute(w, struct {
-		Content template.HTML
-	}{
-		Content: template.HTML(buf.String()),
-	})
-	if err != nil {
-		logger.Log.Warn("Failed to render page", logger.Error(err))
-		http.Error(w, "Failed render page", http.StatusInternalServerError)
-		return
+		err = documentPage.Execute(w, struct {
+			Content template.HTML
+		}{
+			Content: template.HTML(buf.String()),
+		})
+		if err != nil {
+			logger.Log.Warn("Failed to render page", logger.Error(err))
+			http.Error(w, "Failed render page", http.StatusInternalServerError)
+			return
+		}
+	default:
+		if v := mime.TypeByExtension(filepath.Ext(blobPath)); v != "" {
+			w.Header().Set("Content-Type", v)
+		}
+		if _, err := w.Write(blob.Content); err != nil {
+			logger.Log.Warn("Failed write content", logger.Error(err))
+			http.Error(w, "Failed write content", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
