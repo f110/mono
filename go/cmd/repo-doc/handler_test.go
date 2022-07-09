@@ -53,21 +53,13 @@ func TestParsePath(t *testing.T) {
 
 func TestServeHTTP(t *testing.T) {
 	client := &stubGitDataClient{}
-	h := newHttpHandler(client, "", "", 0)
+	h := newHttpHandler(client, "repo-doc", "", 0)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
 	h.ServeHTTP(recorder, req)
 
-	assert.Equal(t, `
-<html>
-<head></head>
-<body>
-<h1>Document title</h1>
-<p>Hello World!</p>
-
-</body>
-</html>`, recorder.Body.String())
+	assert.Contains(t, recorder.Body.String(), "<title>repo-doc - Document title</title>")
 	assert.Equal(t, http.StatusOK, recorder.Code)
 }
 
