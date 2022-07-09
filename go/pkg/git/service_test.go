@@ -81,9 +81,11 @@ func TestGetTree(t *testing.T) {
 
 	ref, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
 	require.NoError(t, err)
-	tree, err := gitData.GetTree(context.Background(), &RequestGetTree{Repo: "test1", Sha: ref.Hash().String()})
+	commit, err := repo.CommitObject(ref.Hash())
 	require.NoError(t, err)
-	assert.Equal(t, ref.Hash().String(), tree.Sha)
+	tree, err := gitData.GetTree(context.Background(), &RequestGetTree{Repo: "test1", Sha: commit.TreeHash.String()})
+	require.NoError(t, err)
+	assert.Equal(t, commit.TreeHash.String(), tree.Sha)
 	files := make(map[string]*TreeEntry)
 	for _, v := range tree.Tree {
 		files[v.Path] = v
