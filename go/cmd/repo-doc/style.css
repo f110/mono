@@ -1,3 +1,8 @@
 .main.container {
     margin-top: 2em;
 }
+
+.ui.container.toc {
+    position: sticky;
+    top: 4.5em;
+}

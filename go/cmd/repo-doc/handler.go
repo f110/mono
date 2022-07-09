@@ -59,9 +59,10 @@ func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDep
 }
 
 type templateToC struct {
-	Title string
-	Down  bool
-	Up    bool
+	Title  string
+	Anchor string
+	Down   bool
+	Up     bool
 }
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -144,7 +145,9 @@ func makeTableOfContent(maxDepth int, in *tableOfContent) []*templateToC {
 	var res []*templateToC
 
 	if in.Title != "" {
-		res = append(res, &templateToC{Title: in.Title})
+		anchor := strings.ToLower(in.Title)
+		anchor = strings.Replace(anchor, " ", "-", -1)
+		res = append(res, &templateToC{Title: in.Title, Anchor: anchor})
 	}
 
 	if len(in.Child) > 0 && in.Level+1 <= maxDepth {

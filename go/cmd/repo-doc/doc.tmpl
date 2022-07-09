@@ -33,22 +33,24 @@
     </div>
 
     <div class="five wide column">
-      <h2>Table of Contents</h2>
-      <ol class="ui list">
-        {{ range .TableOfContent -}}
-        <li>{{ .Title }}
-        {{- if and (not .Up) (not .Down) -}}
-        </li>
-        {{ end -}}
-        {{ if .Down }}
-        <ol>
-        {{ end -}}
-        {{ if .Up -}}
-        </li>
+      <div class="ui container toc">
+        <h2>Table of Contents</h2>
+        <ol class="ui list">
+          {{ range .TableOfContent -}}
+          <li><a href="#{{ .Anchor }}">{{ .Title }}</a>
+          {{- if and (not .Up) (not .Down) -}}
+          </li>
+          {{ end -}}
+          {{ if .Down }}
+          <ol>
+          {{ end -}}
+          {{ if .Up -}}
+          </li>
+          </ol>
+          {{ end -}}
+          {{ end -}}
         </ol>
-        {{ end -}}
-        {{ end -}}
-      </ol>
+      </div>
     </div>
   </div>
 </div>
