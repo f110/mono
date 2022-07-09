@@ -6,6 +6,11 @@ go_library(
         "cmd.go",
         "handler.go",
         "main.go",
+        "parser.go",
+    ],
+    embedsrcs = [
+        "style.css",
+        "doc.tmpl",
     ],
     importpath = "go.f110.dev/mono/go/cmd/repo-doc",
     visibility = ["//visibility:private"],
@@ -17,9 +22,10 @@ go_library(
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/github.com/yuin/goldmark",
+        "//vendor/github.com/yuin/goldmark/ast",
         "//vendor/github.com/yuin/goldmark/extension",
         "//vendor/github.com/yuin/goldmark/parser",
-        "//vendor/github.com/yuin/goldmark/renderer/html",
+        "//vendor/github.com/yuin/goldmark/text",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
@@ -40,6 +46,8 @@ go_test(
     deps = [
         "//go/pkg/git",
         "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/yuin/goldmark/ast",
+        "//vendor/github.com/yuin/goldmark/text",
         "//vendor/google.golang.org/grpc",
     ],
 )

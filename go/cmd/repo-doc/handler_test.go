@@ -39,7 +39,7 @@ func TestParsePath(t *testing.T) {
 		},
 	}
 
-	h := newHttpHandler(nil)
+	h := newHttpHandler(nil, "", "", 0)
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.URL, nil)
@@ -53,7 +53,7 @@ func TestParsePath(t *testing.T) {
 
 func TestServeHTTP(t *testing.T) {
 	client := &stubGitDataClient{}
-	h := newHttpHandler(client)
+	h := newHttpHandler(client, "", "", 0)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
@@ -112,6 +112,12 @@ func (s *stubGitDataClient) GetBlob(_ context.Context, in *git.RequestGetBlob, o
 		Sha:     "0123456789",
 		Content: []byte("# Document title\nHello World!\n"),
 		Size:    30,
+	}, nil
+}
+
+func (s *stubGitDataClient) GetFile(_ context.Context, in *git.RequestGetFile, opts ...grpc.CallOption) (*git.ResponseGetFile, error) {
+	return &git.ResponseGetFile{
+		Content: []byte("# Document title\nHello World!\n"),
 	}, nil
 }
 

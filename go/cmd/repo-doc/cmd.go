@@ -21,9 +21,12 @@ type repoDocCommand struct {
 	gitData git.GitDataClient
 	s       *http.Server
 
-	Listen         string
-	GitDataService string
-	Insecure       bool
+	Listen          string
+	GitDataService  string
+	Insecure        bool
+	StaticDirectory string
+	GlobalTitle     string
+	ToCMaxDepth     int
 }
 
 const (
@@ -49,6 +52,9 @@ func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8016", "Listen addr")
 	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
+	fs.StringVar(&c.StaticDirectory, "static-dir", "", "Directory path that contains will be served as static file")
+	fs.StringVar(&c.GlobalTitle, "title", "repo-doc", "General title")
+	fs.IntVar(&c.ToCMaxDepth, "toc-max-depth", 2, "Maximum depth of table of content")
 }
 
 func (c *repoDocCommand) init() (fsm.State, error) {
@@ -63,7 +69,7 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 	c.gitData = git.NewGitDataClient(conn)
 
 	c.s = &http.Server{
-		Handler:  newHttpHandler(c.gitData),
+		Handler:  newHttpHandler(c.gitData, c.GlobalTitle, c.StaticDirectory, c.ToCMaxDepth),
 		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)
