@@ -6,3 +6,34 @@
     position: sticky;
     top: 5em;
 }
+
+body {
+    counter-reset: section;
+}
+
+.doc h2 {
+    counter-reset: subsection;
+}
+
+.doc h3 {
+    counter-reset: subsubsection;
+}
+
+.doc h4 {
+    counter-reset: subsubsubsection;
+}
+
+.doc h2:before {
+    counter-increment: section;
+    content: counter(section) ". ";
+}
+
+.doc h3:before {
+    counter-increment: subsection;
+    content: counter(section) "." counter(subsection) ". ";
+}
+
+.doc h4:before {
+    counter-increment: subsubsection;
+    content: counter(section) "." counter(subsection) "." counter(subsubsection) ". ";
+}
