@@ -13,10 +13,19 @@ body {
 
 .doc h2 {
     counter-reset: subsection;
+    padding-top: 3em;
+    margin-top: -3em;
 }
 
 .doc h3 {
     counter-reset: subsubsection;
+    padding-top: 3.5em;
+    margin-top: -3.5em;
+}
+
+.doc h4 {
+    padding-top: 4.5em;
+    margin-top: -4.5em;
 }
 
 .doc h4 {
