@@ -25,11 +25,15 @@
 <div class="ui grid main container">
   <div class="row">
     <div class="eleven wide column">
-      <div class="ui breadcrumb">
-        {{ range $i, $v := .Breadcrumb -}}
-        <a class="section">{{ $v }}</a>
-        {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end }}
-        {{ end -}}
+      <div class="ui borderless menu">
+        <div class="item">
+          <div class="ui breadcrumb">
+            {{ range $i, $v := .Breadcrumb -}}
+            <a class="section">{{ $v }}</a>
+            {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end }}
+            {{ end -}}
+          </div>
+        </div>
       </div>
     </div>
 
