@@ -30,7 +30,7 @@
           <div class="ui breadcrumb">
             {{ range $i, $v := .Breadcrumb -}}
             <a class="section">{{ $v }}</a>
-            {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end }}
+            {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end -}}
             {{ end -}}
           </div>
         </div>

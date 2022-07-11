@@ -8,7 +8,10 @@ import (
 	"github.com/yuin/goldmark/extension"
 	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
+	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 	"go.f110.dev/xerrors"
 )
 
@@ -30,13 +33,18 @@ type markdownParser struct {
 }
 
 func newMarkdownParser() *markdownParser {
+	htmlRender := html.NewRenderer().(*html.Renderer)
+
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
-		goldmark.WithRendererOptions(),
+		goldmark.WithRenderer(
+			renderer.NewRenderer(renderer.WithNodeRenderers(util.Prioritized(htmlRender, 1000))),
+		),
 	)
+	md.Renderer().AddOptions(renderer.WithNodeRenderers(util.Prioritized(newMarkdownExtendedRenderer(htmlRender), 1)))
 	return &markdownParser{rp: md}
 }
 
@@ -128,4 +136,48 @@ func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, 
 	}
 
 	return nil
+}
+
+type markdownExtendedRenderer struct {
+	htmlRenderer *html.Renderer
+}
+
+var _ renderer.NodeRenderer = &markdownExtendedRenderer{}
+
+func newMarkdownExtendedRenderer(r *html.Renderer) *markdownExtendedRenderer {
+	return &markdownExtendedRenderer{htmlRenderer: r}
+}
+
+func (r *markdownExtendedRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+	reg.Register(ast.KindImage, r.renderImage)
+}
+
+func (r *markdownExtendedRenderer) renderImage(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkContinue, nil
+	}
+	n := node.(*ast.Image)
+	_, _ = w.WriteString("<div class=\"imgbox\">")
+	_, _ = w.WriteString("<img src=\"")
+	if r.htmlRenderer.Unsafe || !html.IsDangerousURL(n.Destination) {
+		_, _ = w.Write(util.EscapeHTML(util.URLEscape(n.Destination, true)))
+	}
+	_, _ = w.WriteString(`" alt="`)
+	_, _ = w.Write(util.EscapeHTML(n.Text(source)))
+	_ = w.WriteByte('"')
+	if n.Title != nil {
+		_, _ = w.WriteString(` title="`)
+		r.htmlRenderer.Writer.Write(w, n.Title)
+		_ = w.WriteByte('"')
+	}
+	if n.Attributes() != nil {
+		html.RenderAttributes(w, n, html.ImageAttributeFilter)
+	}
+	if r.htmlRenderer.XHTML {
+		_, _ = w.WriteString(" />")
+	} else {
+		_, _ = w.WriteString(">")
+	}
+	_, _ = w.WriteString("</div>")
+	return ast.WalkSkipChildren, nil
 }
