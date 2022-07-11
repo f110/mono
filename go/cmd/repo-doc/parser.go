@@ -6,6 +6,7 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
+	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 	"go.f110.dev/xerrors"
@@ -41,6 +42,20 @@ func newMarkdownParser() *markdownParser {
 
 func (m *markdownParser) Parse(in []byte) (*document, error) {
 	node := m.rp.Parser().Parse(text.NewReader(in))
+
+	// Add class attr
+	err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			if n.Kind() == east.KindTable {
+				n.SetAttributeString("class", []byte("ui striped table"))
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
 	buf := new(bytes.Buffer)
 	if err := m.rp.Renderer().Render(buf, in, node); err != nil {
 		return nil, xerrors.WithStack(err)
@@ -61,7 +76,14 @@ func (m *markdownParser) Parse(in []byte) (*document, error) {
 		}
 	}
 
-	prevToC := doc.TableOfContents
+	if err := m.makeTableOfContent(node, doc.TableOfContents, in); err != nil {
+		return nil, err
+	}
+	return doc, nil
+}
+
+func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, in []byte) error {
+	prevToC := toc
 	currentLevel := 0
 	err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		heading, ok := n.(*ast.Heading)
@@ -102,7 +124,8 @@ func (m *markdownParser) Parse(in []byte) (*document, error) {
 		return ast.WalkContinue, nil
 	})
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return xerrors.WithStack(err)
 	}
-	return doc, nil
+
+	return nil
 }

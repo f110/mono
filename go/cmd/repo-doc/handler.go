@@ -119,7 +119,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Content:             template.HTML(doc.Content),
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
-		TableOfContent:      makeTableOfContent(h.toCMaxDepth, doc.TableOfContents),
+		TableOfContent:      toTempalteToC(h.toCMaxDepth, doc.TableOfContents),
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render page", logger.Error(err))
@@ -141,7 +141,7 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 	return repo, ref, filepath
 }
 
-func makeTableOfContent(maxDepth int, in *tableOfContent) []*templateToC {
+func toTempalteToC(maxDepth int, in *tableOfContent) []*templateToC {
 	var res []*templateToC
 
 	if in.Title != "" {
@@ -157,7 +157,7 @@ func makeTableOfContent(maxDepth int, in *tableOfContent) []*templateToC {
 
 		var child []*templateToC
 		for _, v := range in.Child {
-			child = append(child, makeTableOfContent(maxDepth, v)...)
+			child = append(child, toTempalteToC(maxDepth, v)...)
 		}
 		child[len(child)-1].Up = true
 

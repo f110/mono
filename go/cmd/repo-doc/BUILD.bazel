@@ -24,6 +24,7 @@ go_library(
         "//vendor/github.com/yuin/goldmark",
         "//vendor/github.com/yuin/goldmark/ast",
         "//vendor/github.com/yuin/goldmark/extension",
+        "//vendor/github.com/yuin/goldmark/extension/ast",
         "//vendor/github.com/yuin/goldmark/parser",
         "//vendor/github.com/yuin/goldmark/text",
         "//vendor/go.f110.dev/xerrors",
@@ -41,13 +42,15 @@ go_binary(
 
 go_test(
     name = "repo-doc_test",
-    srcs = ["handler_test.go"],
+    srcs = [
+        "handler_test.go",
+        "parser_test.go",
+    ],
     embed = [":repo-doc_lib"],
     deps = [
         "//go/pkg/git",
         "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/yuin/goldmark/ast",
-        "//vendor/github.com/yuin/goldmark/text",
+        "//vendor/github.com/stretchr/testify/require",
         "//vendor/google.golang.org/grpc",
     ],
 )
