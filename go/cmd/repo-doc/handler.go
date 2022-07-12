@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"mime"
 	"net/http"
@@ -65,16 +66,21 @@ type templateToC struct {
 	Up     bool
 }
 
+type breadcrumbNode struct {
+	Name string
+	Link string
+}
+
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if strings.Index(req.URL.Path, pathSeparator) == -1 {
 		h.static.ServeHTTP(w, req)
 		return
 	}
 
-	repo, ref, blobPath := h.parsePath(req)
-
-	if !gitHash.MatchString(ref) {
-		ref = plumbing.NewBranchReferenceName(ref).String()
+	repo, rawRef, blobPath := h.parsePath(req)
+	ref := rawRef
+	if !gitHash.MatchString(rawRef) {
+		ref = plumbing.NewBranchReferenceName(rawRef).String()
 	}
 
 	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: blobPath})
@@ -105,12 +111,19 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	breadcrumb := append([]string{repo}, strings.Split(blobPath, "/")...)
+	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, rawRef)}}
+	s := strings.Split(blobPath, "/")
+	for i, v := range s {
+		breadcrumb = append(breadcrumb, &breadcrumbNode{
+			Name: v,
+			Link: fmt.Sprintf("/%s/%s/-/%s", repo, rawRef, strings.Join(s[:i+1], "/")),
+		})
+	}
 	err = documentPage.Execute(w, struct {
 		Title               string
 		PageTitle           string
 		Content             template.HTML
-		Breadcrumb          []string
+		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
 		TableOfContent      []*templateToC
 	}{

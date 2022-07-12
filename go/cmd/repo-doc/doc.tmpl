@@ -29,7 +29,7 @@
         <div class="item">
           <div class="ui breadcrumb">
             {{ range $i, $v := .Breadcrumb -}}
-            <a class="section">{{ $v }}</a>
+            <a class="section" href="{{ $v.Link }}">{{ $v.Name }}</a>
             {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end -}}
             {{ end -}}
           </div>
