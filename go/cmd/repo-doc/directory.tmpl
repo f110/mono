@@ -39,7 +39,7 @@
   </div>
 
   <div class="row">
-    <div class="sixteen wide column doc">
+    <div class="sixteen wide column">
       <div class="ui list filelist">
       {{ range .Entry -}}
       <a class="item" href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Path }}"><i class="{{ if .IsDir }}folder{{ else }}file alternate outline{{ end }} icon"></i>{{ .Name }}</a>
@@ -47,6 +47,10 @@
       </div>
     </div>
   </div>
+  <div class="row">
+    <div class="eleven wide column doc">
+    {{ .Content }}
+    </div>
 </div>
 </body>
 </html>

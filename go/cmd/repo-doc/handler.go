@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 
@@ -120,10 +121,10 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	var doc *document
 	switch filepath.Ext(blobPath) {
 	case ".md":
-		d, err := h.markdown.Parse(file.Content)
+		d, err := h.makeDocument(file, blobPath)
 		if err != nil {
-			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
-			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
+			logger.Log.Error("Failed to convert document", logger.Error(err))
+			http.Error(w, "Failed to convert document", http.StatusInternalServerError)
 			return
 		}
 		doc = d
@@ -162,6 +163,19 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	}
 }
 
+func (h *httpHandler) makeDocument(file *git.ResponseGetFile, blobPath string) (*document, error) {
+	switch filepath.Ext(blobPath) {
+	case ".md":
+		d, err := h.markdown.Parse(file.Content)
+		if err != nil {
+			return nil, err
+		}
+		return d, nil
+	}
+
+	return nil, xerrors.New("not implemented")
+}
+
 type directoryEntry struct {
 	Name  string
 	Path  string
@@ -189,10 +203,15 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		return tree.Tree[i].Path < tree.Tree[j].Path
 	})
 	entry := make([]*directoryEntry, len(tree.Tree))
+	foundIndexFile := ""
 	for i, v := range tree.Tree {
 		rootDir := dirPath
 		if rootDir == "/" {
 			rootDir = ""
+		}
+		switch v.Path {
+		case "README.md":
+			foundIndexFile = v.Path
 		}
 		entry[i] = &directoryEntry{
 			Name:  v.Path,
@@ -200,12 +219,31 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			IsDir: v.Mode == filemode.Dir.String(),
 		}
 	}
+
+	content := ""
+	if foundIndexFile != "" {
+		indexFile, err := h.client.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: path.Join(dirPath, foundIndexFile)})
+		if err != nil {
+			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", path.Join(dirPath, foundIndexFile)))
+			http.Error(w, "Failed to get index file", http.StatusInternalServerError)
+			return
+		}
+		d, err := h.makeDocument(indexFile, path.Join(dirPath, foundIndexFile))
+		if err != nil {
+			logger.Log.Error("Failed to convert to document", logger.Error(err))
+			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
+			return
+		}
+		content = d.Content
+	}
+
 	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath)
 	err = directoryIndexPage.Execute(w, struct {
 		Title               string
 		PageTitle           string
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
+		Content             template.HTML
 		Repo                string
 		Ref                 string
 		Path                string
@@ -215,6 +253,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		PageTitle:           dirPath,
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
+		Content:             template.HTML(content),
 		Repo:                repo,
 		Ref:                 rawRef,
 		Path:                dirPath,
