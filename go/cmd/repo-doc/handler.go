@@ -222,9 +222,13 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 
 	content := ""
 	if foundIndexFile != "" {
-		indexFile, err := h.client.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: path.Join(dirPath, foundIndexFile)})
+		indexFilePath := path.Join(dirPath, foundIndexFile)
+		if dirPath == "/" {
+			indexFilePath = foundIndexFile
+		}
+		indexFile, err := h.client.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: indexFilePath})
 		if err != nil {
-			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", path.Join(dirPath, foundIndexFile)))
+			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", indexFilePath))
 			http.Error(w, "Failed to get index file", http.StatusInternalServerError)
 			return
 		}
