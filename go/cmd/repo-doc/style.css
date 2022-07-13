@@ -60,6 +60,10 @@ li {
     text-align: center;
 }
 
+.imgbox img {
+    width: 100%;
+}
+
 code {
     background-color: rgba(175,184,193,0.2);
     padding: 0.2em 0.4em;
