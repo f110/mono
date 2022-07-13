@@ -75,7 +75,11 @@ message ResponseGetCommit {
 
 message RequestGetTree {
   string repo = 1;
-  string sha  = 2;
+  // sha is a tree hash
+  string sha       = 2;
+  string ref       = 3;
+  string path      = 4;
+  bool   recursive = 5;
 }
 
 message ResponseGetTree {

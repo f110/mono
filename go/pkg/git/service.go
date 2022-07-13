@@ -7,8 +7,12 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"go.f110.dev/xerrors"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type gitDataService struct {
@@ -131,13 +135,40 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 	if !ok {
 		return nil, errors.New("repository not found")
 	}
-	tree, err := repo.TreeObject(plumbing.NewHash(req.Sha))
+
+	var tree *object.Tree
+	if req.Sha != "" {
+		t, err := repo.TreeObject(plumbing.NewHash(req.Sha))
+		if err != nil {
+			return nil, err
+		}
+		tree = t
+	}
+	if req.Ref != "" {
+		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+		if err != nil {
+			return nil, errors.New("ref is not found")
+		}
+		commit, err := repo.CommitObject(ref.Hash())
+		if err != nil {
+			return nil, errors.New("commit is not found")
+		}
+		t, err := commit.Tree()
+		if err != nil {
+			return nil, err
+		}
+		tree = t
+	}
+	pathTree, err := tree.Tree(req.Path)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("path is not found")
+	}
+	if pathTree == nil {
+		return nil, errors.New("tree object is not found")
 	}
 
 	var treeEntry []*TreeEntry
-	walker := object.NewTreeWalker(tree, true, nil)
+	walker := object.NewTreeWalker(pathTree, req.Recursive, nil)
 	for {
 		name, e, err := walker.Next()
 		if err == io.EOF {
@@ -149,6 +180,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 		treeEntry = append(treeEntry, &TreeEntry{
 			Sha:  e.Hash.String(),
 			Path: name,
+			Mode: e.Mode.String(),
 		})
 	}
 	return &ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil
@@ -198,26 +230,42 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 	if err != nil {
 		return nil, xerrors.Newf("failed to get tree: %v", err)
 	}
-	file, err := tree.File(req.Path)
+	treeEntry, err := tree.FindEntry(req.Path)
 	if err != nil {
-		return nil, xerrors.Newf("failed to get file: %v", err)
+		return nil, xerrors.Newf("failed to get tree entry: %v", err)
 	}
 
-	blob, err := repo.BlobObject(file.Hash)
-	if err != nil {
-		return nil, xerrors.Newf("failed to get blob: %v", err)
+	switch treeEntry.Mode {
+	case filemode.Regular, filemode.Executable:
+		blob, err := repo.BlobObject(treeEntry.Hash)
+		if err != nil {
+			return nil, xerrors.Newf("failed to get blob: %v", err)
+		}
+		r, err := blob.Reader()
+		if err != nil {
+			return nil, xerrors.Newf("failed to get file reader: %v", err)
+		}
+		defer r.Close()
+		buf, err := io.ReadAll(r)
+		if err != nil {
+			return nil, xerrors.Newf("failed to read file: %v", err)
+		}
+		return &ResponseGetFile{Content: buf}, nil
+	case filemode.Dir:
+		d := &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{Field: "path", Description: "path is directory"},
+			},
+		}
+		st := status.New(codes.InvalidArgument, "path is directory")
+		if rpcErr, err := st.WithDetails(d); err != nil {
+			return nil, status.Error(codes.Internal, "")
+		} else {
+			return nil, rpcErr.Err()
+		}
 	}
 
-	r, err := blob.Reader()
-	if err != nil {
-		return nil, xerrors.Newf("failed to get file: %v", err)
-	}
-	defer r.Close()
-	buf, err := io.ReadAll(r)
-	if err != nil {
-		return nil, xerrors.Newf("failed to read file: %v", err)
-	}
-	return &ResponseGetFile{Content: buf}, nil
+	return nil, xerrors.Newf("unsupported object: %s", treeEntry.Mode.String())
 }
 
 func (g *gitDataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {

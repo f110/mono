@@ -11,6 +11,7 @@ go_library(
     embedsrcs = [
         "style.css",
         "doc.tmpl",
+        "directory.tmpl",
     ],
     importpath = "go.f110.dev/mono/go/cmd/repo-doc",
     visibility = ["//visibility:private"],
@@ -19,6 +20,7 @@ go_library(
         "//go/pkg/git",
         "//go/pkg/logger",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/github.com/yuin/goldmark",
@@ -34,6 +36,7 @@ go_library(
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/credentials/insecure",
+        "//vendor/google.golang.org/grpc/status",
     ],
 )
 

@@ -79,3 +79,7 @@ pre code {
     font-size: 85%;
     font-family: ui-monospace,DejaVu Sans Mono,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
 }
+
+.filelist {
+    column-count: 3;
+}

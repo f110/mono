@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ .Title }} - {{ .PageTitle }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+</head>
+<body>
+
+<div class="ui fixed massive borderless menu">
+  <div class="ui container">
+    <p class="header item">{{ .Title }}</p>
+
+    <div class="right item">
+      <div class="ui icon input">
+        <input type="text" placeholder="Search" class="prompt">
+        <i class="search link icon"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ui grid main container">
+  <div class="row">
+    <div class="eleven wide column">
+      <div class="ui borderless menu">
+        <div class="item">
+          <div class="ui breadcrumb">
+            {{ range $i, $v := .Breadcrumb -}}
+            <a class="section" href="{{ $v.Link }}">{{ $v.Name }}</a>
+            {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end -}}
+            {{ end -}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="sixteen wide column doc">
+      <div class="ui list filelist">
+      {{ range .Entry -}}
+      <a class="item" href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ $.Path }}/{{ .Path }}"><i class="{{ if IsDir . }}folder{{ else }}file outline{{ end }} icon"></i>{{ .Path }}</a>
+      {{ end -}}
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

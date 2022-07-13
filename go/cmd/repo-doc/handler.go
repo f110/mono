@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"html/template"
@@ -8,9 +9,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -30,7 +34,17 @@ var staticContent embed.FS
 //go:embed doc.tmpl
 var docTemplate string
 
-var documentPage = template.Must(template.New("doc").Parse(docTemplate))
+//go:embed directory.tmpl
+var directoryIndexTemplate string
+
+var (
+	documentPage       = template.Must(template.New("doc").Parse(docTemplate))
+	directoryIndexPage = template.Must(template.New("index").Funcs(
+		map[string]any{
+			"IsDir": func(e *git.TreeEntry) bool { return e.Mode == filemode.Dir.String() },
+		},
+	).Parse(directoryIndexTemplate))
+)
 
 type httpHandler struct {
 	client   git.GitDataClient
@@ -85,20 +99,31 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: blobPath})
 	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && st.Message() == "path is directory" {
+			h.serveDirectoryIndex(req.Context(), w, repo, ref, rawRef, blobPath)
+			return
+		}
+
 		logger.Log.Error("Failed to get file", logger.Error(err))
 		http.Error(w, "Failed to get file", http.StatusInternalServerError)
 		return
 	}
 
+	h.serveDocumentFile(w, file, repo, rawRef, blobPath)
+}
+
+func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
 	var doc *document
 	switch filepath.Ext(blobPath) {
 	case ".md":
-		doc, err = h.markdown.Parse(file.Content)
+		d, err := h.markdown.Parse(file.Content)
 		if err != nil {
 			logger.Log.Warn("Failed to convert to markdown", logger.Error(err))
 			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
 			return
 		}
+		doc = d
 	default:
 		if v := mime.TypeByExtension(filepath.Ext(blobPath)); v != "" {
 			w.Header().Set("Content-Type", v)
@@ -111,15 +136,8 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, rawRef)}}
-	s := strings.Split(blobPath, "/")
-	for i, v := range s {
-		breadcrumb = append(breadcrumb, &breadcrumbNode{
-			Name: v,
-			Link: fmt.Sprintf("/%s/%s/-/%s", repo, rawRef, strings.Join(s[:i+1], "/")),
-		})
-	}
-	err = documentPage.Execute(w, struct {
+	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath)
+	err := documentPage.Execute(w, struct {
 		Title               string
 		PageTitle           string
 		Content             template.HTML
@@ -132,10 +150,56 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Content:             template.HTML(doc.Content),
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
-		TableOfContent:      toTempalteToC(h.toCMaxDepth, doc.TableOfContents),
+		TableOfContent:      toTemplateToC(h.toCMaxDepth, doc.TableOfContents),
 	})
 	if err != nil {
-		logger.Log.Warn("Failed to render page", logger.Error(err))
+		logger.Log.Error("Failed to render page", logger.Error(err))
+		http.Error(w, "Failed render page", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, repo, ref, rawRef, dirPath string) {
+	tree, err := h.client.GetTree(ctx, &git.RequestGetTree{
+		Repo:      repo,
+		Ref:       ref,
+		Recursive: false,
+		Path:      dirPath,
+	})
+	if err != nil {
+		logger.Log.Error("Failed to get tree", logger.Error(err))
+		http.Error(w, "Failed to get tree", http.StatusInternalServerError)
+		return
+	}
+
+	sort.Slice(tree.Tree, func(i, j int) bool {
+		if tree.Tree[i].Mode != tree.Tree[j].Mode {
+			return tree.Tree[i].Mode < tree.Tree[j].Mode
+		}
+		return tree.Tree[i].Path < tree.Tree[j].Path
+	})
+	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath)
+	err = directoryIndexPage.Execute(w, struct {
+		Title               string
+		PageTitle           string
+		Breadcrumb          []*breadcrumbNode
+		BreadcrumbLastIndex int
+		Repo                string
+		Ref                 string
+		Path                string
+		Entry               []*git.TreeEntry
+	}{
+		Title:               h.title,
+		PageTitle:           dirPath,
+		Breadcrumb:          breadcrumb,
+		BreadcrumbLastIndex: len(breadcrumb) - 1,
+		Repo:                repo,
+		Ref:                 rawRef,
+		Path:                dirPath,
+		Entry:               tree.Tree,
+	})
+	if err != nil {
+		logger.Log.Error("Failed to render page", logger.Error(err))
 		http.Error(w, "Failed render page", http.StatusInternalServerError)
 		return
 	}
@@ -154,7 +218,19 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 	return repo, ref, filepath
 }
 
-func toTempalteToC(maxDepth int, in *tableOfContent) []*templateToC {
+func makeBreadcrumb(repo, ref, blobPath string) []*breadcrumbNode {
+	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, ref)}}
+	s := strings.Split(blobPath, "/")
+	for i, v := range s {
+		breadcrumb = append(breadcrumb, &breadcrumbNode{
+			Name: v,
+			Link: fmt.Sprintf("/%s/%s/-/%s", repo, ref, strings.Join(s[:i+1], "/")),
+		})
+	}
+	return breadcrumb
+}
+
+func toTemplateToC(maxDepth int, in *tableOfContent) []*templateToC {
 	var res []*templateToC
 
 	if in.Title != "" {
@@ -170,7 +246,7 @@ func toTempalteToC(maxDepth int, in *tableOfContent) []*templateToC {
 
 		var child []*templateToC
 		for _, v := range in.Child {
-			child = append(child, toTempalteToC(maxDepth, v)...)
+			child = append(child, toTemplateToC(maxDepth, v)...)
 		}
 		child[len(child)-1].Up = true
 
