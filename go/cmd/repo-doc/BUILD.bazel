@@ -51,10 +51,12 @@ go_test(
     srcs = [
         "handler_test.go",
         "parser_test.go",
+        "util_test.go",
     ],
     embed = [":repo-doc_lib"],
     deps = [
         "//go/pkg/git",
+        "//go/pkg/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
         "//vendor/google.golang.org/grpc",
