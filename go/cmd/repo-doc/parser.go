@@ -157,7 +157,6 @@ func (r *markdownExtendedRenderer) renderImage(w util.BufWriter, source []byte, 
 		return ast.WalkContinue, nil
 	}
 	n := node.(*ast.Image)
-	_, _ = w.WriteString("<div class=\"imgbox\">")
 	_, _ = w.WriteString("<img src=\"")
 	if r.htmlRenderer.Unsafe || !html.IsDangerousURL(n.Destination) {
 		_, _ = w.Write(util.EscapeHTML(util.URLEscape(n.Destination, true)))
@@ -178,6 +177,5 @@ func (r *markdownExtendedRenderer) renderImage(w util.BufWriter, source []byte, 
 	} else {
 		_, _ = w.WriteString(">")
 	}
-	_, _ = w.WriteString("</div>")
 	return ast.WalkSkipChildren, nil
 }

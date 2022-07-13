@@ -56,12 +56,8 @@ li {
     content: counter(section) "." counter(subsection) "." counter(subsubsection) ". ";
 }
 
-.imgbox {
-    text-align: center;
-}
-
-.imgbox img {
-    width: 100%;
+p img {
+    max-width: 100%;
 }
 
 code {
