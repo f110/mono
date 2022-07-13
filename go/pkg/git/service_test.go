@@ -83,7 +83,7 @@ func TestGetTree(t *testing.T) {
 	require.NoError(t, err)
 	commit, err := repo.CommitObject(ref.Hash())
 	require.NoError(t, err)
-	tree, err := gitData.GetTree(context.Background(), &RequestGetTree{Repo: "test1", Sha: commit.TreeHash.String()})
+	tree, err := gitData.GetTree(context.Background(), &RequestGetTree{Repo: "test1", Sha: commit.TreeHash.String(), Path: "/"})
 	require.NoError(t, err)
 	assert.Equal(t, commit.TreeHash.String(), tree.Sha)
 	files := make(map[string]*TreeEntry)
