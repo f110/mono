@@ -114,14 +114,14 @@ func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, 
 		} else if currentLevel > heading.Level {
 			parent := prevToC.Parent
 			for {
-				if parent.Level == heading.Level-1 {
+				if parent.Level < heading.Level-1 {
 					break
 				}
 				parent = parent.Parent
 			}
 
-			n := &tableOfContent{Title: string(n.Text(in)), Parent: parent.Parent, Level: heading.Level - 1}
-			parent.Parent.Child = append(parent.Parent.Child, n)
+			n := &tableOfContent{Title: string(n.Text(in)), Parent: parent, Level: heading.Level - 1}
+			parent.Child = append(parent.Child, n)
 			prevToC = n
 			currentLevel = heading.Level
 		} else {
