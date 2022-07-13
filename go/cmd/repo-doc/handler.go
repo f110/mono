@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"mime"
 	"net/http"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/pkg/git"
@@ -39,11 +41,7 @@ var directoryIndexTemplate string
 
 var (
 	documentPage       = template.Must(template.New("doc").Parse(docTemplate))
-	directoryIndexPage = template.Must(template.New("index").Funcs(
-		map[string]any{
-			"IsDir": func(e *git.TreeEntry) bool { return e.Mode == filemode.Dir.String() },
-		},
-	).Parse(directoryIndexTemplate))
+	directoryIndexPage = template.Must(template.New("index").Parse(directoryIndexTemplate))
 )
 
 type httpHandler struct {
@@ -97,11 +95,16 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		ref = plumbing.NewBranchReferenceName(rawRef).String()
 	}
 
-	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: blobPath})
+	requestFilePath := blobPath
+	if requestFilePath == "" {
+		requestFilePath = "/"
+	}
+	logger.Log.Debug("GetFile", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", requestFilePath))
+	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: requestFilePath})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Message() == "path is directory" {
-			h.serveDirectoryIndex(req.Context(), w, repo, ref, rawRef, blobPath)
+			h.serveDirectoryIndex(req.Context(), w, repo, ref, rawRef, requestFilePath)
 			return
 		}
 
@@ -159,7 +162,14 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	}
 }
 
+type directoryEntry struct {
+	Name  string
+	Path  string
+	IsDir bool
+}
+
 func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, repo, ref, rawRef, dirPath string) {
+	logger.Log.Debug("GetTree", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", dirPath))
 	tree, err := h.client.GetTree(ctx, &git.RequestGetTree{
 		Repo:      repo,
 		Ref:       ref,
@@ -178,6 +188,18 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		}
 		return tree.Tree[i].Path < tree.Tree[j].Path
 	})
+	entry := make([]*directoryEntry, len(tree.Tree))
+	for i, v := range tree.Tree {
+		rootDir := dirPath
+		if rootDir == "/" {
+			rootDir = ""
+		}
+		entry[i] = &directoryEntry{
+			Name:  v.Path,
+			Path:  path.Join(rootDir, v.Path),
+			IsDir: v.Mode == filemode.Dir.String(),
+		}
+	}
 	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath)
 	err = directoryIndexPage.Execute(w, struct {
 		Title               string
@@ -187,7 +209,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		Repo                string
 		Ref                 string
 		Path                string
-		Entry               []*git.TreeEntry
+		Entry               []*directoryEntry
 	}{
 		Title:               h.title,
 		PageTitle:           dirPath,
@@ -196,7 +218,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		Repo:                repo,
 		Ref:                 rawRef,
 		Path:                dirPath,
-		Entry:               tree.Tree,
+		Entry:               entry,
 	})
 	if err != nil {
 		logger.Log.Error("Failed to render page", logger.Error(err))
@@ -220,6 +242,9 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 
 func makeBreadcrumb(repo, ref, blobPath string) []*breadcrumbNode {
 	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, ref)}}
+	if blobPath == "/" {
+		return breadcrumb
+	}
 	s := strings.Split(blobPath, "/")
 	for i, v := range s {
 		breadcrumb = append(breadcrumb, &breadcrumbNode{

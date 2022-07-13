@@ -42,7 +42,7 @@
     <div class="sixteen wide column doc">
       <div class="ui list filelist">
       {{ range .Entry -}}
-      <a class="item" href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ $.Path }}/{{ .Path }}"><i class="{{ if IsDir . }}folder{{ else }}file outline{{ end }} icon"></i>{{ .Path }}</a>
+      <a class="item" href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Path }}"><i class="{{ if .IsDir }}folder{{ else }}file outline{{ end }} icon"></i>{{ .Name }}</a>
       {{ end -}}
       </div>
     </div>

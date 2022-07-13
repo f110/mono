@@ -159,12 +159,18 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 		}
 		tree = t
 	}
-	pathTree, err := tree.Tree(req.Path)
-	if err != nil {
-		return nil, errors.New("path is not found")
-	}
-	if pathTree == nil {
-		return nil, errors.New("tree object is not found")
+	var pathTree *object.Tree
+	if req.Path != "/" {
+		t, err := tree.Tree(req.Path)
+		if err != nil {
+			return nil, errors.New("path is not found")
+		}
+		if t == nil {
+			return nil, errors.New("tree object is not found")
+		}
+		pathTree = t
+	} else {
+		pathTree = tree
 	}
 
 	var treeEntry []*TreeEntry
@@ -230,9 +236,26 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 	if err != nil {
 		return nil, xerrors.Newf("failed to get tree: %v", err)
 	}
-	treeEntry, err := tree.FindEntry(req.Path)
-	if err != nil {
-		return nil, xerrors.Newf("failed to get tree entry: %v", err)
+	var treeEntry *object.TreeEntry
+	if req.Path != "/" {
+		te, err := tree.FindEntry(req.Path)
+		if err != nil {
+			return nil, xerrors.Newf("failed to get tree entry: %v", err)
+		}
+		treeEntry = te
+	} else {
+		// "/" is root directory
+		d := &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{Field: "path", Description: "path is directory"},
+			},
+		}
+		st := status.New(codes.InvalidArgument, "path is directory")
+		if rpcErr, err := st.WithDetails(d); err != nil {
+			return nil, status.Error(codes.Internal, "")
+		} else {
+			return nil, rpcErr.Err()
+		}
 	}
 
 	switch treeEntry.Mode {
