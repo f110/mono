@@ -479,6 +479,116 @@ func (x *ResponseListReferences) GetRefs() []*Reference {
 	return nil
 }
 
+type RequestGetRepository struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Repo string `protobuf:"bytes,1,opt,name=repo,proto3" json:"repo,omitempty"`
+}
+
+func (x *RequestGetRepository) Reset() {
+	*x = RequestGetRepository{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_git_data_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RequestGetRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetRepository) ProtoMessage() {}
+
+func (x *RequestGetRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestGetRepository.ProtoReflect.Descriptor instead.
+func (*RequestGetRepository) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RequestGetRepository) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+type ResponseGetRepository struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name    string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Url     string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Hosting string `protobuf:"bytes,3,opt,name=hosting,proto3" json:"hosting,omitempty"`
+}
+
+func (x *ResponseGetRepository) Reset() {
+	*x = ResponseGetRepository{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_git_data_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ResponseGetRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetRepository) ProtoMessage() {}
+
+func (x *ResponseGetRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResponseGetRepository.ProtoReflect.Descriptor instead.
+func (*ResponseGetRepository) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ResponseGetRepository) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ResponseGetRepository) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ResponseGetRepository) GetHosting() string {
+	if x != nil {
+		return x.Hosting
+	}
+	return ""
+}
+
 type RequestGetReference struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -491,7 +601,7 @@ type RequestGetReference struct {
 func (x *RequestGetReference) Reset() {
 	*x = RequestGetReference{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[8]
+		mi := &file_proto_git_data_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -504,7 +614,7 @@ func (x *RequestGetReference) String() string {
 func (*RequestGetReference) ProtoMessage() {}
 
 func (x *RequestGetReference) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[8]
+	mi := &file_proto_git_data_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -517,7 +627,7 @@ func (x *RequestGetReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestGetReference.ProtoReflect.Descriptor instead.
 func (*RequestGetReference) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{8}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RequestGetReference) GetRepo() string {
@@ -545,7 +655,7 @@ type ResponseGetReference struct {
 func (x *ResponseGetReference) Reset() {
 	*x = ResponseGetReference{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[9]
+		mi := &file_proto_git_data_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -558,7 +668,7 @@ func (x *ResponseGetReference) String() string {
 func (*ResponseGetReference) ProtoMessage() {}
 
 func (x *ResponseGetReference) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[9]
+	mi := &file_proto_git_data_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +681,7 @@ func (x *ResponseGetReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseGetReference.ProtoReflect.Descriptor instead.
 func (*ResponseGetReference) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{9}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ResponseGetReference) GetRef() *Reference {
@@ -593,7 +703,7 @@ type RequestGetCommit struct {
 func (x *RequestGetCommit) Reset() {
 	*x = RequestGetCommit{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[10]
+		mi := &file_proto_git_data_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -606,7 +716,7 @@ func (x *RequestGetCommit) String() string {
 func (*RequestGetCommit) ProtoMessage() {}
 
 func (x *RequestGetCommit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[10]
+	mi := &file_proto_git_data_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -619,7 +729,7 @@ func (x *RequestGetCommit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestGetCommit.ProtoReflect.Descriptor instead.
 func (*RequestGetCommit) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{10}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RequestGetCommit) GetRepo() string {
@@ -647,7 +757,7 @@ type ResponseGetCommit struct {
 func (x *ResponseGetCommit) Reset() {
 	*x = ResponseGetCommit{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[11]
+		mi := &file_proto_git_data_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -660,7 +770,7 @@ func (x *ResponseGetCommit) String() string {
 func (*ResponseGetCommit) ProtoMessage() {}
 
 func (x *ResponseGetCommit) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[11]
+	mi := &file_proto_git_data_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -673,7 +783,7 @@ func (x *ResponseGetCommit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseGetCommit.ProtoReflect.Descriptor instead.
 func (*ResponseGetCommit) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{11}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ResponseGetCommit) GetCommit() *Commit {
@@ -698,7 +808,7 @@ type RequestGetTree struct {
 func (x *RequestGetTree) Reset() {
 	*x = RequestGetTree{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[12]
+		mi := &file_proto_git_data_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -711,7 +821,7 @@ func (x *RequestGetTree) String() string {
 func (*RequestGetTree) ProtoMessage() {}
 
 func (x *RequestGetTree) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[12]
+	mi := &file_proto_git_data_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +834,7 @@ func (x *RequestGetTree) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestGetTree.ProtoReflect.Descriptor instead.
 func (*RequestGetTree) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{12}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RequestGetTree) GetRepo() string {
@@ -774,7 +884,7 @@ type ResponseGetTree struct {
 func (x *ResponseGetTree) Reset() {
 	*x = ResponseGetTree{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[13]
+		mi := &file_proto_git_data_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -787,7 +897,7 @@ func (x *ResponseGetTree) String() string {
 func (*ResponseGetTree) ProtoMessage() {}
 
 func (x *ResponseGetTree) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[13]
+	mi := &file_proto_git_data_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -800,7 +910,7 @@ func (x *ResponseGetTree) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseGetTree.ProtoReflect.Descriptor instead.
 func (*ResponseGetTree) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{13}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ResponseGetTree) GetSha() string {
@@ -829,7 +939,7 @@ type RequestGetBlob struct {
 func (x *RequestGetBlob) Reset() {
 	*x = RequestGetBlob{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[14]
+		mi := &file_proto_git_data_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -842,7 +952,7 @@ func (x *RequestGetBlob) String() string {
 func (*RequestGetBlob) ProtoMessage() {}
 
 func (x *RequestGetBlob) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[14]
+	mi := &file_proto_git_data_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +965,7 @@ func (x *RequestGetBlob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestGetBlob.ProtoReflect.Descriptor instead.
 func (*RequestGetBlob) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{14}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RequestGetBlob) GetRepo() string {
@@ -885,7 +995,7 @@ type ResponseGetBlob struct {
 func (x *ResponseGetBlob) Reset() {
 	*x = ResponseGetBlob{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[15]
+		mi := &file_proto_git_data_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -898,7 +1008,7 @@ func (x *ResponseGetBlob) String() string {
 func (*ResponseGetBlob) ProtoMessage() {}
 
 func (x *ResponseGetBlob) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[15]
+	mi := &file_proto_git_data_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -911,7 +1021,7 @@ func (x *ResponseGetBlob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseGetBlob.ProtoReflect.Descriptor instead.
 func (*ResponseGetBlob) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{15}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ResponseGetBlob) GetSha() string {
@@ -948,7 +1058,7 @@ type RequestGetFile struct {
 func (x *RequestGetFile) Reset() {
 	*x = RequestGetFile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[16]
+		mi := &file_proto_git_data_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -961,7 +1071,7 @@ func (x *RequestGetFile) String() string {
 func (*RequestGetFile) ProtoMessage() {}
 
 func (x *RequestGetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[16]
+	mi := &file_proto_git_data_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -974,7 +1084,7 @@ func (x *RequestGetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestGetFile.ProtoReflect.Descriptor instead.
 func (*RequestGetFile) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{16}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RequestGetFile) GetRepo() string {
@@ -1004,12 +1114,13 @@ type ResponseGetFile struct {
 	unknownFields protoimpl.UnknownFields
 
 	Content []byte `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	RawUrl  string `protobuf:"bytes,2,opt,name=raw_url,json=rawUrl,proto3" json:"raw_url,omitempty"`
 }
 
 func (x *ResponseGetFile) Reset() {
 	*x = ResponseGetFile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[17]
+		mi := &file_proto_git_data_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1022,7 +1133,7 @@ func (x *ResponseGetFile) String() string {
 func (*ResponseGetFile) ProtoMessage() {}
 
 func (x *ResponseGetFile) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[17]
+	mi := &file_proto_git_data_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1035,7 +1146,7 @@ func (x *ResponseGetFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseGetFile.ProtoReflect.Descriptor instead.
 func (*ResponseGetFile) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{17}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ResponseGetFile) GetContent() []byte {
@@ -1043,6 +1154,13 @@ func (x *ResponseGetFile) GetContent() []byte {
 		return x.Content
 	}
 	return nil
+}
+
+func (x *ResponseGetFile) GetRawUrl() string {
+	if x != nil {
+		return x.RawUrl
+	}
+	return ""
 }
 
 type RequestListTag struct {
@@ -1056,7 +1174,7 @@ type RequestListTag struct {
 func (x *RequestListTag) Reset() {
 	*x = RequestListTag{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[18]
+		mi := &file_proto_git_data_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1069,7 +1187,7 @@ func (x *RequestListTag) String() string {
 func (*RequestListTag) ProtoMessage() {}
 
 func (x *RequestListTag) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[18]
+	mi := &file_proto_git_data_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1082,7 +1200,7 @@ func (x *RequestListTag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestListTag.ProtoReflect.Descriptor instead.
 func (*RequestListTag) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{18}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *RequestListTag) GetRepo() string {
@@ -1103,7 +1221,7 @@ type ResponseListTag struct {
 func (x *ResponseListTag) Reset() {
 	*x = ResponseListTag{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[19]
+		mi := &file_proto_git_data_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1116,7 +1234,7 @@ func (x *ResponseListTag) String() string {
 func (*ResponseListTag) ProtoMessage() {}
 
 func (x *ResponseListTag) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[19]
+	mi := &file_proto_git_data_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1129,7 +1247,7 @@ func (x *ResponseListTag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseListTag.ProtoReflect.Descriptor instead.
 func (*ResponseListTag) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{19}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResponseListTag) GetTags() []*Reference {
@@ -1150,7 +1268,7 @@ type RequestListBranch struct {
 func (x *RequestListBranch) Reset() {
 	*x = RequestListBranch{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[20]
+		mi := &file_proto_git_data_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1163,7 +1281,7 @@ func (x *RequestListBranch) String() string {
 func (*RequestListBranch) ProtoMessage() {}
 
 func (x *RequestListBranch) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[20]
+	mi := &file_proto_git_data_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1176,7 +1294,7 @@ func (x *RequestListBranch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestListBranch.ProtoReflect.Descriptor instead.
 func (*RequestListBranch) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{20}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *RequestListBranch) GetRepo() string {
@@ -1197,7 +1315,7 @@ type ResponseListBranch struct {
 func (x *ResponseListBranch) Reset() {
 	*x = ResponseListBranch{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_git_data_proto_msgTypes[21]
+		mi := &file_proto_git_data_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1210,7 +1328,7 @@ func (x *ResponseListBranch) String() string {
 func (*ResponseListBranch) ProtoMessage() {}
 
 func (x *ResponseListBranch) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_git_data_proto_msgTypes[21]
+	mi := &file_proto_git_data_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1223,7 +1341,7 @@ func (x *ResponseListBranch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseListBranch.ProtoReflect.Descriptor instead.
 func (*ResponseListBranch) Descriptor() ([]byte, []int) {
-	return file_proto_git_data_proto_rawDescGZIP(), []int{21}
+	return file_proto_git_data_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ResponseListBranch) GetBranches() []*Reference {
@@ -1277,75 +1395,90 @@ var file_proto_git_data_proto_rawDesc = []byte{
 	0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x12, 0x27, 0x0a, 0x04, 0x72, 0x65, 0x66, 0x73, 0x18, 0x01,
 	0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e,
 	0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x04, 0x72, 0x65, 0x66, 0x73, 0x22,
-	0x3b, 0x0a, 0x13, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x52, 0x65, 0x66,
-	0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x72, 0x65,
-	0x66, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x72, 0x65, 0x66, 0x22, 0x3d, 0x0a, 0x14,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72,
-	0x65, 0x6e, 0x63, 0x65, 0x12, 0x25, 0x0a, 0x03, 0x72, 0x65, 0x66, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x66,
-	0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x03, 0x72, 0x65, 0x66, 0x22, 0x38, 0x0a, 0x10, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x12,
-	0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72,
-	0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x73, 0x68, 0x61, 0x22, 0x3d, 0x0a, 0x11, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x47, 0x65, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x12, 0x28, 0x0a, 0x06, 0x63, 0x6f,
-	0x6d, 0x6d, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6d, 0x6f, 0x6e,
-	0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x52, 0x06, 0x63, 0x6f,
-	0x6d, 0x6d, 0x69, 0x74, 0x22, 0x7a, 0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47,
-	0x65, 0x74, 0x54, 0x72, 0x65, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68,
-	0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x12, 0x10, 0x0a, 0x03,
-	0x72, 0x65, 0x66, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x72, 0x65, 0x66, 0x12, 0x12,
-	0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x61,
-	0x74, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x75, 0x72, 0x73, 0x69, 0x76, 0x65, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x72, 0x65, 0x63, 0x75, 0x72, 0x73, 0x69, 0x76, 0x65,
-	0x22, 0x4c, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x54,
-	0x72, 0x65, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x73, 0x68, 0x61, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x72, 0x65, 0x65, 0x18, 0x02, 0x20,
-	0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x54,
-	0x72, 0x65, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x74, 0x72, 0x65, 0x65, 0x22, 0x36,
-	0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x62,
-	0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
-	0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x22, 0x51, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x62, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x12, 0x12, 0x0a, 0x04, 0x73,
-	0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c,
-	0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0x4a, 0x0a, 0x0e, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72,
+	0x2a, 0x0a, 0x14, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x52, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x22, 0x57, 0x0a, 0x15, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69,
+	0x74, 0x6f, 0x72, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75, 0x72, 0x6c, 0x12, 0x18, 0x0a, 0x07, 0x68, 0x6f,
+	0x73, 0x74, 0x69, 0x6e, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x68, 0x6f, 0x73,
+	0x74, 0x69, 0x6e, 0x67, 0x22, 0x3b, 0x0a, 0x13, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47,
+	0x65, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72,
 	0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12,
 	0x10, 0x0a, 0x03, 0x72, 0x65, 0x66, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x72, 0x65,
-	0x66, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x70, 0x61, 0x74, 0x68, 0x22, 0x2b, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74,
-	0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65,
-	0x6e, 0x74, 0x22, 0x24, 0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73,
-	0x74, 0x54, 0x61, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x22, 0x3a, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x12, 0x27, 0x0a, 0x04, 0x74,
-	0x61, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f,
-	0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x04,
-	0x74, 0x61, 0x67, 0x73, 0x22, 0x27, 0x0a, 0x11, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c,
-	0x69, 0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70,
-	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x22, 0x45, 0x0a,
-	0x12, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x72, 0x61,
-	0x6e, 0x63, 0x68, 0x12, 0x2f, 0x0a, 0x08, 0x62, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x65, 0x73, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74,
-	0x2e, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x08, 0x62, 0x72, 0x61, 0x6e,
-	0x63, 0x68, 0x65, 0x73, 0x32, 0x97, 0x05, 0x0a, 0x07, 0x47, 0x69, 0x74, 0x44, 0x61, 0x74, 0x61,
-	0x12, 0x59, 0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f,
-	0x72, 0x69, 0x65, 0x73, 0x12, 0x21, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x1a, 0x22, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67,
-	0x69, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x52,
-	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x53, 0x0a, 0x0e, 0x4c,
-	0x69, 0x73, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x12, 0x1f, 0x2e,
-	0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x1a, 0x20,
-	0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73,
+	0x66, 0x22, 0x3d, 0x0a, 0x14, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74,
+	0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x12, 0x25, 0x0a, 0x03, 0x72, 0x65, 0x66,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69,
+	0x74, 0x2e, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x03, 0x72, 0x65, 0x66,
+	0x22, 0x38, 0x0a, 0x10, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x43, 0x6f,
+	0x6d, 0x6d, 0x69, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x22, 0x3d, 0x0a, 0x11, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x12,
+	0x28, 0x0a, 0x06, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x10, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x43, 0x6f, 0x6d, 0x6d, 0x69,
+	0x74, 0x52, 0x06, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x22, 0x7a, 0x0a, 0x0e, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x54, 0x72, 0x65, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x72,
+	0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12,
+	0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68,
+	0x61, 0x12, 0x10, 0x0a, 0x03, 0x72, 0x65, 0x66, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
+	0x72, 0x65, 0x66, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x75, 0x72,
+	0x73, 0x69, 0x76, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x72, 0x65, 0x63, 0x75,
+	0x72, 0x73, 0x69, 0x76, 0x65, 0x22, 0x4c, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x47, 0x65, 0x74, 0x54, 0x72, 0x65, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x72,
+	0x65, 0x65, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e,
+	0x67, 0x69, 0x74, 0x2e, 0x54, 0x72, 0x65, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x74,
+	0x72, 0x65, 0x65, 0x22, 0x36, 0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65,
+	0x74, 0x42, 0x6c, 0x6f, 0x62, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x73, 0x68, 0x61,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61, 0x22, 0x51, 0x0a, 0x0f, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x62, 0x12, 0x10,
+	0x0a, 0x03, 0x73, 0x68, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x73, 0x68, 0x61,
+	0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04,
+	0x73, 0x69, 0x7a, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0x4a,
+	0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65,
+	0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x72, 0x65, 0x70, 0x6f, 0x12, 0x10, 0x0a, 0x03, 0x72, 0x65, 0x66, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x03, 0x72, 0x65, 0x66, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x22, 0x44, 0x0a, 0x0f, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6c, 0x65, 0x12, 0x18, 0x0a,
+	0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x72, 0x61, 0x77, 0x5f, 0x75,
+	0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x61, 0x77, 0x55, 0x72, 0x6c,
+	0x22, 0x24, 0x0a, 0x0e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x54,
+	0x61, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x22, 0x3a, 0x0a, 0x0f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x61, 0x67,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67,
+	0x69, 0x74, 0x2e, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x04, 0x74, 0x61,
+	0x67, 0x73, 0x22, 0x27, 0x0a, 0x11, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73,
+	0x74, 0x42, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x70, 0x6f, 0x22, 0x45, 0x0a, 0x12, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x42, 0x72, 0x61, 0x6e, 0x63,
+	0x68, 0x12, 0x2f, 0x0a, 0x08, 0x62, 0x72, 0x61, 0x6e, 0x63, 0x68, 0x65, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52,
+	0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x52, 0x08, 0x62, 0x72, 0x61, 0x6e, 0x63, 0x68,
+	0x65, 0x73, 0x32, 0xe9, 0x05, 0x0a, 0x07, 0x47, 0x69, 0x74, 0x44, 0x61, 0x74, 0x61, 0x12, 0x59,
+	0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69,
+	0x65, 0x73, 0x12, 0x21, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
+	0x6f, 0x72, 0x69, 0x65, 0x73, 0x1a, 0x22, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74,
+	0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x53, 0x0a, 0x0e, 0x4c, 0x69, 0x73,
+	0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x12, 0x1f, 0x2e, 0x6d, 0x6f,
+	0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x4c, 0x69,
+	0x73, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x1a, 0x20, 0x2e, 0x6d,
+	0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x73, 0x12, 0x50,
+	0x0a, 0x0d, 0x47, 0x65, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12,
+	0x1e, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x47, 0x65, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x1a,
+	0x1f, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x47, 0x65, 0x74, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79,
 	0x12, 0x4d, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65,
 	0x12, 0x1d, 0x2e, 0x6d, 0x6f, 0x6e, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x2e, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x47, 0x65, 0x74, 0x52, 0x65, 0x66, 0x65, 0x72, 0x65, 0x6e, 0x63, 0x65, 0x1a,
@@ -1393,7 +1526,7 @@ func file_proto_git_data_proto_rawDescGZIP() []byte {
 	return file_proto_git_data_proto_rawDescData
 }
 
-var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_proto_git_data_proto_goTypes = []interface{}{
 	(*Reference)(nil),                // 0: mono.git.Reference
 	(*TreeEntry)(nil),                // 1: mono.git.TreeEntry
@@ -1403,20 +1536,22 @@ var file_proto_git_data_proto_goTypes = []interface{}{
 	(*ResponseListRepositories)(nil), // 5: mono.git.ResponseListRepositories
 	(*RequestListReferences)(nil),    // 6: mono.git.RequestListReferences
 	(*ResponseListReferences)(nil),   // 7: mono.git.ResponseListReferences
-	(*RequestGetReference)(nil),      // 8: mono.git.RequestGetReference
-	(*ResponseGetReference)(nil),     // 9: mono.git.ResponseGetReference
-	(*RequestGetCommit)(nil),         // 10: mono.git.RequestGetCommit
-	(*ResponseGetCommit)(nil),        // 11: mono.git.ResponseGetCommit
-	(*RequestGetTree)(nil),           // 12: mono.git.RequestGetTree
-	(*ResponseGetTree)(nil),          // 13: mono.git.ResponseGetTree
-	(*RequestGetBlob)(nil),           // 14: mono.git.RequestGetBlob
-	(*ResponseGetBlob)(nil),          // 15: mono.git.ResponseGetBlob
-	(*RequestGetFile)(nil),           // 16: mono.git.RequestGetFile
-	(*ResponseGetFile)(nil),          // 17: mono.git.ResponseGetFile
-	(*RequestListTag)(nil),           // 18: mono.git.RequestListTag
-	(*ResponseListTag)(nil),          // 19: mono.git.ResponseListTag
-	(*RequestListBranch)(nil),        // 20: mono.git.RequestListBranch
-	(*ResponseListBranch)(nil),       // 21: mono.git.ResponseListBranch
+	(*RequestGetRepository)(nil),     // 8: mono.git.RequestGetRepository
+	(*ResponseGetRepository)(nil),    // 9: mono.git.ResponseGetRepository
+	(*RequestGetReference)(nil),      // 10: mono.git.RequestGetReference
+	(*ResponseGetReference)(nil),     // 11: mono.git.ResponseGetReference
+	(*RequestGetCommit)(nil),         // 12: mono.git.RequestGetCommit
+	(*ResponseGetCommit)(nil),        // 13: mono.git.ResponseGetCommit
+	(*RequestGetTree)(nil),           // 14: mono.git.RequestGetTree
+	(*ResponseGetTree)(nil),          // 15: mono.git.ResponseGetTree
+	(*RequestGetBlob)(nil),           // 16: mono.git.RequestGetBlob
+	(*ResponseGetBlob)(nil),          // 17: mono.git.ResponseGetBlob
+	(*RequestGetFile)(nil),           // 18: mono.git.RequestGetFile
+	(*ResponseGetFile)(nil),          // 19: mono.git.ResponseGetFile
+	(*RequestListTag)(nil),           // 20: mono.git.RequestListTag
+	(*ResponseListTag)(nil),          // 21: mono.git.ResponseListTag
+	(*RequestListBranch)(nil),        // 22: mono.git.RequestListBranch
+	(*ResponseListBranch)(nil),       // 23: mono.git.ResponseListBranch
 }
 var file_proto_git_data_proto_depIdxs = []int32{
 	3,  // 0: mono.git.Commit.author:type_name -> mono.git.Signature
@@ -1429,24 +1564,26 @@ var file_proto_git_data_proto_depIdxs = []int32{
 	0,  // 7: mono.git.ResponseListBranch.branches:type_name -> mono.git.Reference
 	4,  // 8: mono.git.GitData.ListRepositories:input_type -> mono.git.RequestListRepositories
 	6,  // 9: mono.git.GitData.ListReferences:input_type -> mono.git.RequestListReferences
-	8,  // 10: mono.git.GitData.GetReference:input_type -> mono.git.RequestGetReference
-	10, // 11: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
-	12, // 12: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
-	14, // 13: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
-	16, // 14: mono.git.GitData.GetFile:input_type -> mono.git.RequestGetFile
-	18, // 15: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
-	20, // 16: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
-	5,  // 17: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
-	7,  // 18: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
-	9,  // 19: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
-	11, // 20: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
-	13, // 21: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
-	15, // 22: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
-	17, // 23: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
-	19, // 24: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
-	21, // 25: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
-	17, // [17:26] is the sub-list for method output_type
-	8,  // [8:17] is the sub-list for method input_type
+	8,  // 10: mono.git.GitData.GetRepository:input_type -> mono.git.RequestGetRepository
+	10, // 11: mono.git.GitData.GetReference:input_type -> mono.git.RequestGetReference
+	12, // 12: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
+	14, // 13: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
+	16, // 14: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
+	18, // 15: mono.git.GitData.GetFile:input_type -> mono.git.RequestGetFile
+	20, // 16: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
+	22, // 17: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
+	5,  // 18: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
+	7,  // 19: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
+	9,  // 20: mono.git.GitData.GetRepository:output_type -> mono.git.ResponseGetRepository
+	11, // 21: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
+	13, // 22: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
+	15, // 23: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
+	17, // 24: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
+	19, // 25: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
+	21, // 26: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
+	23, // 27: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
+	18, // [18:28] is the sub-list for method output_type
+	8,  // [8:18] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -1555,7 +1692,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestGetReference); i {
+			switch v := v.(*RequestGetRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1567,7 +1704,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseGetReference); i {
+			switch v := v.(*ResponseGetRepository); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1579,7 +1716,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestGetCommit); i {
+			switch v := v.(*RequestGetReference); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1591,7 +1728,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseGetCommit); i {
+			switch v := v.(*ResponseGetReference); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1603,7 +1740,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestGetTree); i {
+			switch v := v.(*RequestGetCommit); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1615,7 +1752,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseGetTree); i {
+			switch v := v.(*ResponseGetCommit); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1627,7 +1764,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestGetBlob); i {
+			switch v := v.(*RequestGetTree); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1639,7 +1776,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseGetBlob); i {
+			switch v := v.(*ResponseGetTree); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1651,7 +1788,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestGetFile); i {
+			switch v := v.(*RequestGetBlob); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1663,7 +1800,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseGetFile); i {
+			switch v := v.(*ResponseGetBlob); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1675,7 +1812,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestListTag); i {
+			switch v := v.(*RequestGetFile); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1687,7 +1824,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResponseListTag); i {
+			switch v := v.(*ResponseGetFile); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1699,7 +1836,7 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestListBranch); i {
+			switch v := v.(*RequestListTag); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1711,6 +1848,30 @@ func file_proto_git_data_proto_init() {
 			}
 		}
 		file_proto_git_data_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResponseListTag); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_git_data_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RequestListBranch); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_git_data_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResponseListBranch); i {
 			case 0:
 				return &v.state
@@ -1729,7 +1890,7 @@ func file_proto_git_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_git_data_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -1757,6 +1918,7 @@ const _ = grpc.SupportPackageIsVersion6
 type GitDataClient interface {
 	ListRepositories(ctx context.Context, in *RequestListRepositories, opts ...grpc.CallOption) (*ResponseListRepositories, error)
 	ListReferences(ctx context.Context, in *RequestListReferences, opts ...grpc.CallOption) (*ResponseListReferences, error)
+	GetRepository(ctx context.Context, in *RequestGetRepository, opts ...grpc.CallOption) (*ResponseGetRepository, error)
 	GetReference(ctx context.Context, in *RequestGetReference, opts ...grpc.CallOption) (*ResponseGetReference, error)
 	GetCommit(ctx context.Context, in *RequestGetCommit, opts ...grpc.CallOption) (*ResponseGetCommit, error)
 	GetTree(ctx context.Context, in *RequestGetTree, opts ...grpc.CallOption) (*ResponseGetTree, error)
@@ -1786,6 +1948,15 @@ func (c *gitDataClient) ListRepositories(ctx context.Context, in *RequestListRep
 func (c *gitDataClient) ListReferences(ctx context.Context, in *RequestListReferences, opts ...grpc.CallOption) (*ResponseListReferences, error) {
 	out := new(ResponseListReferences)
 	err := c.cc.Invoke(ctx, "/mono.git.GitData/ListReferences", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gitDataClient) GetRepository(ctx context.Context, in *RequestGetRepository, opts ...grpc.CallOption) (*ResponseGetRepository, error) {
+	out := new(ResponseGetRepository)
+	err := c.cc.Invoke(ctx, "/mono.git.GitData/GetRepository", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1859,6 +2030,7 @@ func (c *gitDataClient) ListBranch(ctx context.Context, in *RequestListBranch, o
 type GitDataServer interface {
 	ListRepositories(context.Context, *RequestListRepositories) (*ResponseListRepositories, error)
 	ListReferences(context.Context, *RequestListReferences) (*ResponseListReferences, error)
+	GetRepository(context.Context, *RequestGetRepository) (*ResponseGetRepository, error)
 	GetReference(context.Context, *RequestGetReference) (*ResponseGetReference, error)
 	GetCommit(context.Context, *RequestGetCommit) (*ResponseGetCommit, error)
 	GetTree(context.Context, *RequestGetTree) (*ResponseGetTree, error)
@@ -1877,6 +2049,9 @@ func (*UnimplementedGitDataServer) ListRepositories(context.Context, *RequestLis
 }
 func (*UnimplementedGitDataServer) ListReferences(context.Context, *RequestListReferences) (*ResponseListReferences, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListReferences not implemented")
+}
+func (*UnimplementedGitDataServer) GetRepository(context.Context, *RequestGetRepository) (*ResponseGetRepository, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepository not implemented")
 }
 func (*UnimplementedGitDataServer) GetReference(context.Context, *RequestGetReference) (*ResponseGetReference, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetReference not implemented")
@@ -1936,6 +2111,24 @@ func _GitData_ListReferences_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GitDataServer).ListReferences(ctx, req.(*RequestListReferences))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GitData_GetRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestGetRepository)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitDataServer).GetRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mono.git.GitData/GetRepository",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitDataServer).GetRepository(ctx, req.(*RequestGetRepository))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2077,6 +2270,10 @@ var _GitData_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListReferences",
 			Handler:    _GitData_ListReferences_Handler,
+		},
+		{
+			MethodName: "GetRepository",
+			Handler:    _GitData_GetRepository_Handler,
 		},
 		{
 			MethodName: "GetReference",

@@ -3,7 +3,10 @@ package git
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
+	"net/url"
+	"strings"
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -67,6 +70,33 @@ func (g *gitDataService) ListReferences(_ context.Context, req *RequestListRefer
 		})
 	}
 	return res, nil
+}
+
+func (g *gitDataService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+
+	r, err := repo.Remote("origin")
+	if err != nil {
+		return nil, err
+	}
+	u, err := url.Parse(r.Config().URLs[0])
+	if err != nil {
+		return nil, err
+	}
+	var hosting string
+	switch u.Host {
+	case "github.com":
+		hosting = "github"
+	}
+
+	return &ResponseGetRepository{
+		Name:    req.Repo,
+		Url:     r.Config().URLs[0],
+		Hosting: hosting,
+	}, nil
 }
 
 func (g *gitDataService) GetReference(_ context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
@@ -287,7 +317,25 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 		if err != nil {
 			return nil, xerrors.Newf("failed to read file: %v", err)
 		}
-		return &ResponseGetFile{Content: buf}, nil
+
+		var rawURL string
+		remote, err := repo.Remote("origin")
+		if err != nil {
+			return nil, xerrors.Newf("failed to get remote: %v", err)
+		}
+		u, err := url.Parse(remote.Config().URLs[0])
+		if err != nil {
+			return nil, xerrors.Newf("invalid remote url %s: %v", remote.Config().URLs[0], err)
+		}
+		switch u.Host {
+		case "github.com":
+			s := strings.Split(u.Path, "/")
+			owner, repoName := s[1], s[2]
+			repoName = strings.TrimSuffix(repoName, ".git")
+			rawURL = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", owner, repoName, req.Ref, req.Path)
+		}
+
+		return &ResponseGetFile{Content: buf, RawUrl: rawURL}, nil
 	case filemode.Dir:
 		d := &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
