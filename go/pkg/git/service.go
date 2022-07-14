@@ -145,11 +145,17 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 		tree = t
 	}
 	if req.Ref != "" {
-		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
-		if err != nil {
-			return nil, errors.New("ref is not found")
+		var commitHash plumbing.Hash
+		if plumbing.IsHash(req.Ref) {
+			commitHash = plumbing.NewHash(req.Ref)
+		} else {
+			ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+			if err != nil {
+				return nil, errors.New("ref is not found")
+			}
+			commitHash = ref.Hash()
 		}
-		commit, err := repo.CommitObject(ref.Hash())
+		commit, err := repo.CommitObject(commitHash)
 		if err != nil {
 			return nil, errors.New("commit is not found")
 		}
@@ -224,11 +230,19 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 	if !ok {
 		return nil, errors.New("repository not found")
 	}
-	ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
-	if err != nil {
-		return nil, errors.New("ref is not found")
+
+	var commitHash plumbing.Hash
+	if plumbing.IsHash(req.Ref) {
+		commitHash = plumbing.NewHash(req.Ref)
+	} else {
+		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+		if err != nil {
+			return nil, errors.New("ref is not found")
+		}
+		commitHash = ref.Hash()
 	}
-	commit, err := repo.CommitObject(ref.Hash())
+
+	commit, err := repo.CommitObject(commitHash)
 	if err != nil {
 		return nil, errors.New("commit is not found")
 	}
