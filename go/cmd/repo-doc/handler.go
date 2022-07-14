@@ -97,6 +97,9 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	requestFilePath := blobPath
+	if len(requestFilePath) > 0 && requestFilePath[len(requestFilePath)-1] == '/' {
+		requestFilePath = requestFilePath[:len(requestFilePath)-1]
+	}
 	if requestFilePath == "" {
 		requestFilePath = "/"
 	}
@@ -105,7 +108,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Message() == "path is directory" {
-			h.serveDirectoryIndex(req.Context(), w, repo, ref, rawRef, requestFilePath)
+			h.serveDirectoryIndex(req.Context(), w, req, repo, ref, rawRef, requestFilePath)
 			return
 		}
 
@@ -140,7 +143,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 		return
 	}
 
-	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath)
+	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath, false)
 	err := documentPage.Execute(w, struct {
 		Title               string
 		PageTitle           string
@@ -182,7 +185,7 @@ type directoryEntry struct {
 	IsDir bool
 }
 
-func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, repo, ref, rawRef, dirPath string) {
+func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, req *http.Request, repo, ref, rawRef, dirPath string) {
 	logger.Log.Debug("GetTree", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", dirPath))
 	tree, err := h.client.GetTree(ctx, &git.RequestGetTree{
 		Repo:      repo,
@@ -241,7 +244,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		content = d.Content
 	}
 
-	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath)
+	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath, true)
 	err = directoryIndexPage.Execute(w, struct {
 		Title               string
 		PageTitle           string
@@ -283,16 +286,27 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 	return repo, ref, filepath
 }
 
-func makeBreadcrumb(repo, ref, blobPath string) []*breadcrumbNode {
+func makeBreadcrumb(repo, ref, blobPath string, isDir bool) []*breadcrumbNode {
 	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, ref)}}
 	if blobPath == "/" {
 		return breadcrumb
 	}
 	s := strings.Split(blobPath, "/")
-	for i, v := range s {
+	for i, v := range s[:len(s)-1] {
 		breadcrumb = append(breadcrumb, &breadcrumbNode{
 			Name: v,
-			Link: fmt.Sprintf("/%s/%s/-/%s", repo, ref, strings.Join(s[:i+1], "/")),
+			Link: fmt.Sprintf("/%s/%s/-/%s/", repo, ref, strings.Join(s[:i+1], "/")),
+		})
+	}
+	if isDir {
+		breadcrumb = append(breadcrumb, &breadcrumbNode{
+			Name: s[len(s)-1],
+			Link: fmt.Sprintf("/%s/%s/-/%s/", repo, ref, strings.Join(s, "/")),
+		})
+	} else {
+		breadcrumb = append(breadcrumb, &breadcrumbNode{
+			Name: s[len(s)-1],
+			Link: fmt.Sprintf("/%s/%s/-/%s", repo, ref, strings.Join(s, "/")),
 		})
 	}
 	return breadcrumb
