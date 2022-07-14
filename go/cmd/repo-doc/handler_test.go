@@ -77,6 +77,10 @@ func (s *stubGitDataClient) ListReferences(ctx context.Context, in *git.RequestL
 	panic("implement me")
 }
 
+func (s *stubGitDataClient) GetRepository(ctx context.Context, in *git.RequestGetRepository, opts ...grpc.CallOption) (*git.ResponseGetRepository, error) {
+	panic("implement me")
+}
+
 func (s *stubGitDataClient) GetReference(_ context.Context, in *git.RequestGetReference, opts ...grpc.CallOption) (*git.ResponseGetReference, error) {
 	return &git.ResponseGetReference{
 		Ref: &git.Reference{
