@@ -216,9 +216,13 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		case "README.md":
 			foundIndexFile = v.Path
 		}
+		p := path.Join(rootDir, v.Path)
+		if v.Mode == filemode.Dir.String() {
+			p += "/"
+		}
 		entry[i] = &directoryEntry{
 			Name:  v.Path,
-			Path:  path.Join(rootDir, v.Path),
+			Path:  p,
 			IsDir: v.Mode == filemode.Dir.String(),
 		}
 	}
