@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	east "github.com/yuin/goldmark/extension/ast"
@@ -36,7 +37,10 @@ func newMarkdownParser() *markdownParser {
 	htmlRender := html.NewRenderer().(*html.Renderer)
 
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(
+			extension.GFM,
+			highlighting.NewHighlighting(highlighting.WithStyle("monokai")),
+		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),

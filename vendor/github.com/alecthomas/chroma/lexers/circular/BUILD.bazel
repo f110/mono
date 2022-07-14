@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "circular",
+    srcs = [
+        "doc.go",
+        "php.go",
+        "phtml.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/circular",
+    importpath = "github.com/alecthomas/chroma/lexers/circular",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/lexers/h",
+        "//vendor/github.com/alecthomas/chroma/lexers/internal",
+    ],
+)

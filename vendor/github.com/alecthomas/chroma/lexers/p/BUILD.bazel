@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "p",
+    srcs = [
+        "pacman.go",
+        "perl.go",
+        "pig.go",
+        "pkgconfig.go",
+        "plaintext.go",
+        "plsql.go",
+        "plutus_core.go",
+        "pony.go",
+        "postgres.go",
+        "postscript.go",
+        "povray.go",
+        "powerquery.go",
+        "powershell.go",
+        "prolog.go",
+        "promql.go",
+        "protobuf.go",
+        "puppet.go",
+        "python.go",
+        "python2.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/p",
+    importpath = "github.com/alecthomas/chroma/lexers/p",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/lexers/internal",
+    ],
+)

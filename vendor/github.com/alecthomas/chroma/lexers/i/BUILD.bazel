@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "i",
+    srcs = [
+        "idris.go",
+        "igor.go",
+        "ini.go",
+        "io.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/i",
+    importpath = "github.com/alecthomas/chroma/lexers/i",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/lexers/internal",
+    ],
+)

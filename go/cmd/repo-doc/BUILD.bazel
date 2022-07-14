@@ -24,6 +24,7 @@ go_library(
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/github.com/yuin/goldmark",
+        "//vendor/github.com/yuin/goldmark-highlighting",
         "//vendor/github.com/yuin/goldmark/ast",
         "//vendor/github.com/yuin/goldmark/extension",
         "//vendor/github.com/yuin/goldmark/extension/ast",

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "goldmark-highlighting",
+    srcs = ["highlighting.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/yuin/goldmark-highlighting",
+    importpath = "github.com/yuin/goldmark-highlighting",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/formatters/html",
+        "//vendor/github.com/alecthomas/chroma/lexers",
+        "//vendor/github.com/alecthomas/chroma/styles",
+        "//vendor/github.com/yuin/goldmark",
+        "//vendor/github.com/yuin/goldmark/ast",
+        "//vendor/github.com/yuin/goldmark/parser",
+        "//vendor/github.com/yuin/goldmark/renderer",
+        "//vendor/github.com/yuin/goldmark/renderer/html",
+        "//vendor/github.com/yuin/goldmark/text",
+        "//vendor/github.com/yuin/goldmark/util",
+    ],
+)

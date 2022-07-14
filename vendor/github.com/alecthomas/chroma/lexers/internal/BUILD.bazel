@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["api.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/internal",
+    importpath = "github.com/alecthomas/chroma/lexers/internal",
+    visibility = ["//vendor/github.com/alecthomas/chroma/lexers:__subpackages__"],
+    deps = ["//vendor/github.com/alecthomas/chroma"],
+)

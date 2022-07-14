@@ -45,6 +45,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.2
 	github.com/yuin/goldmark v1.4.12
+	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.f110.dev/go-memcached v0.0.0-20211203152209-dd587b463a2a
 	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e
@@ -90,6 +91,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20220407094043-a94812496cf5 // indirect
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/alecthomas/chroma v0.10.0 // indirect
 	github.com/armon/go-metrics v0.3.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.4.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.4.0 // indirect
@@ -104,6 +106,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
+	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.4.2-0.20190924003213-a8608b5b67c7 // indirect

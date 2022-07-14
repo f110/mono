@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "h",
+    srcs = [
+        "handlebars.go",
+        "haskell.go",
+        "haxe.go",
+        "hcl.go",
+        "hexdump.go",
+        "hlb.go",
+        "html.go",
+        "http.go",
+        "hy.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/h",
+    importpath = "github.com/alecthomas/chroma/lexers/h",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/lexers/c",
+        "//vendor/github.com/alecthomas/chroma/lexers/internal",
+        "//vendor/github.com/alecthomas/chroma/lexers/j",
+    ],
+)

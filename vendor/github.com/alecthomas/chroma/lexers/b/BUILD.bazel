@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "b",
+    srcs = [
+        "ballerina.go",
+        "bash.go",
+        "bashsession.go",
+        "batch.go",
+        "bibtex.go",
+        "bicep.go",
+        "blitz.go",
+        "bnf.go",
+        "brainfuck.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/alecthomas/chroma/lexers/b",
+    importpath = "github.com/alecthomas/chroma/lexers/b",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/alecthomas/chroma",
+        "//vendor/github.com/alecthomas/chroma/lexers/internal",
+    ],
+)
