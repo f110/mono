@@ -152,6 +152,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 		BreadcrumbLastIndex int
 		TableOfContent      []*templateToC
 		RawURL              string
+		EditURL             string
 	}{
 		Title:               h.title,
 		PageTitle:           doc.Title,
@@ -160,6 +161,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
 		TableOfContent:      toTemplateToC(h.toCMaxDepth, doc.TableOfContents),
 		RawURL:              file.RawUrl,
+		EditURL:             file.EditUrl,
 	})
 	if err != nil {
 		logger.Log.Error("Failed to render page", logger.Error(err))

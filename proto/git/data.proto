@@ -117,8 +117,9 @@ message RequestGetFile {
 }
 
 message ResponseGetFile {
-  bytes  content = 1;
-  string raw_url = 2;
+  bytes  content  = 1;
+  string raw_url  = 2;
+  string edit_url = 3;
 }
 
 message RequestListTag {

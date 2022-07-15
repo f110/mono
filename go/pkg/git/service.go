@@ -318,7 +318,7 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 			return nil, xerrors.Newf("failed to read file: %v", err)
 		}
 
-		var rawURL string
+		var rawURL, editURL string
 		remote, err := repo.Remote("origin")
 		if err != nil {
 			return nil, xerrors.Newf("failed to get remote: %v", err)
@@ -333,9 +333,11 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 			owner, repoName := s[1], s[2]
 			repoName = strings.TrimSuffix(repoName, ".git")
 			rawURL = fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s", owner, repoName, req.Ref, req.Path)
+
+			editURL = fmt.Sprintf("https://github.com/%s/%s/edit/%s/%s", owner, repoName, req.Ref, req.Path)
 		}
 
-		return &ResponseGetFile{Content: buf, RawUrl: rawURL}, nil
+		return &ResponseGetFile{Content: buf, RawUrl: rawURL, EditUrl: editURL}, nil
 	case filemode.Dir:
 		d := &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{
