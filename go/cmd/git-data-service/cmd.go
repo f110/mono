@@ -39,7 +39,13 @@ type gitDataServiceCommand struct {
 	RefreshTimeout  time.Duration
 	RefreshWorkers  int
 
-	repositories []git.Repository
+	repositories []Repository
+}
+
+type Repository struct {
+	Name   string
+	URL    string
+	Prefix string
 }
 
 const (
@@ -168,13 +174,13 @@ func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	if len(c.Repositories) == 0 {
 		return errors.New("--repository is mandatory")
 	}
-	var repositories []git.Repository
+	var repositories []Repository
 	for _, v := range c.Repositories {
 		if strings.Index(v, "|") == -1 {
 			return xerrors.Newf("--repository=%s is invalid", v)
 		}
 		s := strings.Split(v, "|")
-		repositories = append(repositories, git.Repository{Name: s[0], URL: s[1], Prefix: s[2]})
+		repositories = append(repositories, Repository{Name: s[0], URL: s[1], Prefix: s[2]})
 	}
 	c.repositories = repositories
 

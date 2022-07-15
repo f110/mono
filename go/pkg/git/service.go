@@ -24,20 +24,29 @@ type gitDataService struct {
 
 var _ GitDataServer = &gitDataService{}
 
-type Repository struct {
-	Name   string
-	URL    string
-	Prefix string
-}
-
 func NewDataService(repo map[string]*goGit.Repository) (*gitDataService, error) {
 	return &gitDataService{repo: repo}, nil
 }
 
 func (g *gitDataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
-	var list []string
-	for k := range g.repo {
-		list = append(list, k)
+	var list []*Repository
+	for k, v := range g.repo {
+		r, err := v.Remote("origin")
+		if err != nil {
+			return nil, err
+		}
+		refs, err := r.List(&goGit.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		var defaultBranch string
+		for _, v := range refs {
+			if v.Name() == "HEAD" {
+				defaultBranch = v.Target().Short()
+				break
+			}
+		}
+		list = append(list, &Repository{Name: k, DefaultBranch: defaultBranch})
 	}
 
 	return &ResponseListRepositories{Repositories: list}, nil

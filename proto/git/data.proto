@@ -42,10 +42,15 @@ message Signature {
   string email = 2;
 }
 
+message Repository {
+  string name           = 1;
+  string default_branch = 2;
+}
+
 message RequestListRepositories {}
 
 message ResponseListRepositories {
-  repeated string repositories = 1;
+  repeated Repository repositories = 1;
 }
 
 message RequestListReferences {
