@@ -42,6 +42,7 @@
         {{ if .RawURL }}<a class="item pagemenu" data-content="Raw" href="{{ .RawURL }}"><i class="file outline icon"></i></a>{{ end }}
         {{ if .EditURL }}<a class="item pagemenu" data-content="Edit" href="{{ .EditURL }}"><i class="edit icon"></i></a>{{ end }}
         <a class="item pagemenu" data-content="Copy permalink" onclick="navigator.clipboard.writeText(window.location.href)"><i class="clipboard outline icon"></i></a>
+        <a class="item pagemenu" data-content="Toggle to show table of contents" onclick="toggle_toc()"><i class="list icon"></i></a>
       </div>
     </div>
   </div>
@@ -77,6 +78,16 @@
 $('.pagemenu')
   .popup()
 ;
+
+function toggle_toc() {
+  toc = $(".toc").toggle();
+  d = document.getElementsByClassName("doc")[0];
+  if (toc.is(":visible")) {
+    d.classList.replace("sixteen", "eleven");
+  } else {
+    d.classList.replace("eleven", "sixteen");
+  }
+}
 </script>
 </body>
 </html>
