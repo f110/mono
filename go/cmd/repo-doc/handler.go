@@ -34,15 +34,11 @@ var (
 //go:embed style.css
 var staticContent embed.FS
 
-//go:embed doc.tmpl
-var docTemplate string
-
-//go:embed directory.tmpl
-var directoryIndexTemplate string
+//go:embed doc.tmpl directory.tmpl index.tmpl
+var templateFiles embed.FS
 
 var (
-	documentPage       = template.Must(template.New("doc").Parse(docTemplate))
-	directoryIndexPage = template.Must(template.New("index").Parse(directoryIndexTemplate))
+	pageTemplate = template.Must(template.New("").ParseFS(templateFiles, "*.tmpl"))
 )
 
 type httpHandler struct {
@@ -86,6 +82,10 @@ type breadcrumbNode struct {
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if strings.Index(req.URL.Path, pathSeparator) == -1 {
+		if req.URL.Path == "/" {
+			h.serveRepositoryIndex(w, req)
+			return
+		}
 		h.static.ServeHTTP(w, req)
 		return
 	}
@@ -120,6 +120,28 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.serveDocumentFile(w, file, repo, rawRef, blobPath)
 }
 
+func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Request) {
+	repositories, err := h.client.ListRepositories(req.Context(), &git.RequestListRepositories{})
+	if err != nil {
+		logger.Log.Error("Failed to get repositories", logger.Error(err))
+		http.Error(w, "Failed to get repositories", http.StatusInternalServerError)
+		return
+	}
+
+	err = pageTemplate.ExecuteTemplate(w, "index.tmpl", struct {
+		Title        string
+		Repositories []*git.Repository
+	}{
+		Title:        h.title,
+		Repositories: repositories.Repositories,
+	})
+	if err != nil {
+		logger.Log.Error("Failed to render page", logger.Error(err))
+		http.Error(w, "Failed to render page", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
 	var doc *document
 	switch filepath.Ext(blobPath) {
@@ -144,7 +166,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	}
 
 	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath, false)
-	err := documentPage.Execute(w, struct {
+	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
 		Title               string
 		PageTitle           string
 		Content             template.HTML
@@ -253,7 +275,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 	}
 
 	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath, true)
-	err = directoryIndexPage.Execute(w, struct {
+	err = pageTemplate.ExecuteTemplate(w, "directory.tmpl", struct {
 		Title               string
 		PageTitle           string
 		Breadcrumb          []*breadcrumbNode

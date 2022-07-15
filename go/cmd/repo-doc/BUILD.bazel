@@ -12,6 +12,7 @@ go_library(
         "style.css",
         "doc.tmpl",
         "directory.tmpl",
+        "index.tmpl",
     ],
     importpath = "go.f110.dev/mono/go/cmd/repo-doc",
     visibility = ["//visibility:private"],
