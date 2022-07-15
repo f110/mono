@@ -20,6 +20,7 @@ go_library(
         "//go/pkg/fsm",
         "//go/pkg/git",
         "//go/pkg/logger",
+        "//vendor/github.com/abhinav/goldmark-mermaid",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
         "//vendor/github.com/spf13/cobra",

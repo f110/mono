@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/abhinav/goldmark-mermaid v0.1.1
 	github.com/aws/aws-sdk-go v1.35.20
 	github.com/aws/aws-sdk-go-v2 v1.10.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.5.0

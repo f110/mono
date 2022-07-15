@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 
+	"github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/ast"
@@ -40,6 +41,7 @@ func newMarkdownParser() *markdownParser {
 		goldmark.WithExtensions(
 			extension.GFM,
 			highlighting.NewHighlighting(highlighting.WithStyle("monokai")),
+			&mermaid.Extender{},
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
