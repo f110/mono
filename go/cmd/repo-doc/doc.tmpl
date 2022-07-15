@@ -39,8 +39,8 @@
 
     <div class="five wide column">
       <div class="ui icon compact menu">
-        <a class="item pagemenu" data-content="Raw" href="{{ .RawURL }}"><i class="file outline icon"></i></a>
-        <a class="item pagemenu" data-content="Edit" href="{{ .EditURL }}"><i class="edit icon"></i></a>
+        {{ if .RawURL }}<a class="item pagemenu" data-content="Raw" href="{{ .RawURL }}"><i class="file outline icon"></i></a>{{ end }}
+        {{ if .EditURL }}<a class="item pagemenu" data-content="Edit" href="{{ .EditURL }}"><i class="edit icon"></i></a>{{ end }}
         <a class="item pagemenu" data-content="Copy permalink" onclick="navigator.clipboard.writeText(window.location.href)"><i class="clipboard outline icon"></i></a>
       </div>
     </div>
