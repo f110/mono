@@ -20,30 +20,34 @@ import (
 
 type gitDataService struct {
 	repo map[string]*goGit.Repository
+
+	verbose bool
 }
 
 var _ GitDataServer = &gitDataService{}
 
 func NewDataService(repo map[string]*goGit.Repository) (*gitDataService, error) {
-	return &gitDataService{repo: repo}, nil
+	return &gitDataService{repo: repo, verbose: true}, nil
 }
 
 func (g *gitDataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	var list []*Repository
 	for k, v := range g.repo {
-		r, err := v.Remote("origin")
-		if err != nil {
-			return nil, err
-		}
-		refs, err := r.List(&goGit.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
 		var defaultBranch string
-		for _, v := range refs {
-			if v.Name() == "HEAD" {
-				defaultBranch = v.Target().Short()
-				break
+		if g.verbose {
+			r, err := v.Remote("origin")
+			if err != nil {
+				return nil, err
+			}
+			refs, err := r.List(&goGit.ListOptions{})
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range refs {
+				if v.Name() == "HEAD" {
+					defaultBranch = v.Target().Short()
+					break
+				}
 			}
 		}
 		list = append(list, &Repository{Name: k, DefaultBranch: defaultBranch})
