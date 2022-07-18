@@ -46,13 +46,14 @@ type httpHandler struct {
 	static   http.Handler
 	markdown *markdownParser
 
-	toCMaxDepth int
-	title       string
+	toCMaxDepth   int
+	title         string
+	enabledSearch bool
 }
 
 var _ http.Handler = &httpHandler{}
 
-func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDepth int) *httpHandler {
+func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDepth int, enabledSearch bool) *httpHandler {
 	var static http.Handler
 	if staticDir != "" {
 		static = http.FileServer(http.Dir(staticDir))
@@ -60,11 +61,12 @@ func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDep
 		static = http.FileServer(http.FS(staticContent))
 	}
 	return &httpHandler{
-		client:      client,
-		static:      static,
-		title:       title,
-		toCMaxDepth: toCMaxDepth,
-		markdown:    newMarkdownParser(),
+		client:        client,
+		static:        static,
+		title:         title,
+		toCMaxDepth:   toCMaxDepth,
+		enabledSearch: enabledSearch,
+		markdown:      newMarkdownParser(),
 	}
 }
 
@@ -129,11 +131,13 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 	}
 
 	err = pageTemplate.ExecuteTemplate(w, "index.tmpl", struct {
-		Title        string
-		Repositories []*git.Repository
+		Title         string
+		EnabledSearch bool
+		Repositories  []*git.Repository
 	}{
-		Title:        h.title,
-		Repositories: repositories.Repositories,
+		Title:         h.title,
+		EnabledSearch: h.enabledSearch,
+		Repositories:  repositories.Repositories,
 	})
 	if err != nil {
 		logger.Log.Error("Failed to render page", logger.Error(err))
@@ -169,6 +173,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
 		Title               string
 		PageTitle           string
+		EnabledSearch       bool
 		Content             template.HTML
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
@@ -178,6 +183,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	}{
 		Title:               h.title,
 		PageTitle:           doc.Title,
+		EnabledSearch:       h.enabledSearch,
 		Content:             template.HTML(doc.Content),
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
@@ -278,6 +284,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 	err = pageTemplate.ExecuteTemplate(w, "directory.tmpl", struct {
 		Title               string
 		PageTitle           string
+		EnabledSearch       bool
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
 		Content             template.HTML
@@ -288,6 +295,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 	}{
 		Title:               h.title,
 		PageTitle:           dirPath,
+		EnabledSearch:       h.enabledSearch,
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
 		Content:             template.HTML(content),

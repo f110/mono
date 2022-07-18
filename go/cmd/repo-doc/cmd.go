@@ -26,7 +26,8 @@ type repoDocCommand struct {
 	Insecure        bool
 	StaticDirectory string
 	GlobalTitle     string
-	ToCMaxDepth     int
+	MaxDepthToC     int
+	SearchService   string
 }
 
 const (
@@ -54,7 +55,8 @@ func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
 	fs.StringVar(&c.StaticDirectory, "static-dir", "", "Directory path that contains will be served as static file")
 	fs.StringVar(&c.GlobalTitle, "title", "repo-doc", "General title")
-	fs.IntVar(&c.ToCMaxDepth, "toc-max-depth", 2, "Maximum depth of table of content")
+	fs.IntVar(&c.MaxDepthToC, "max-depth-toc", 2, "Maximum depth of table of content")
+	fs.StringVar(&c.SearchService, "search-service", "", "The url of search-service")
 }
 
 func (c *repoDocCommand) init() (fsm.State, error) {
@@ -69,7 +71,7 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 	c.gitData = git.NewGitDataClient(conn)
 
 	c.s = &http.Server{
-		Handler:  newHttpHandler(c.gitData, c.GlobalTitle, c.StaticDirectory, c.ToCMaxDepth),
+		Handler:  newHttpHandler(c.gitData, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, c.SearchService != ""),
 		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)

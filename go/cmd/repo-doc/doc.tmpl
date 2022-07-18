@@ -13,12 +13,14 @@
   <div class="ui container">
     <a class="header item" href="/">{{ .Title }}</a>
 
+    {{ if .EnabledSearch -}}
     <div class="right item">
       <div class="ui icon input">
         <input type="text" placeholder="Search" class="prompt">
         <i class="search link icon"></i>
       </div>
     </div>
+    {{ end -}}
   </div>
 </div>
 
