@@ -39,7 +39,7 @@ func TestParsePath(t *testing.T) {
 		},
 	}
 
-	h := newHttpHandler(nil, "", "", 0)
+	h := newHttpHandler(nil, "", "", 0, false)
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.URL, nil)
@@ -53,7 +53,7 @@ func TestParsePath(t *testing.T) {
 
 func TestServeHTTP(t *testing.T) {
 	client := &stubGitDataClient{}
-	h := newHttpHandler(client, "repo-doc", "", 0)
+	h := newHttpHandler(client, "repo-doc", "", 0, false)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
