@@ -24,3 +24,12 @@ container_push(
     repository = "tools/git-data-service",
     tag = "latest",
 )
+
+container_push(
+    name = "push_quay",
+    format = "Docker",
+    image = ":image",
+    registry = "quay.io",
+    repository = "f110/git-data-service",
+    tag = "latest",
+)
