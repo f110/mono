@@ -157,21 +157,21 @@ rules_foreign_cc_dependencies()
 
 container_pull(
     name = "com_google_distroless_base",
-    digest = "sha256:7fa7445dfbebae4f4b7ab0e6ef99276e96075ae42584af6286ba080750d6dfe5",
+    digest = "sha256:e8f299757c8f8f2ebbebc4fd1826720a0a7a45fce0a4f9e7d210c5cc09d624a3",
     registry = "gcr.io",
     repository = "distroless/base",
 )
 
 container_pull(
     name = "com_google_distroless_base_debug",
-    digest = "sha256:e12ba6be36761fd29e7c3beae66fc4e3a4a28652d0076bb9964274569f8e8a26",
+    digest = "sha256:c532b9983712e1d9fadec8449908a9ac329909f37a47d491f2ad06ee6040fa4c",
     registry = "gcr.io",
     repository = "distroless/base",
 )
 
 container_pull(
     name = "com_google_distroless_base_arm64",
-    digest = "sha256:c60be29941a0be6f748c8cf2e42832f95e9b73276042d3c44212af7cf4a152c9",
+    digest = "sha256:bf4d6dc160bab223a0d377df083ad6b4ebacf5db2a313d8d7f3f07c9da967093",
     registry = "gcr.io",
     repository = "distroless/base",
 )
