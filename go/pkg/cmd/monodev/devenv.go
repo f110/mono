@@ -48,7 +48,8 @@ func (m *componentManager) Run(ctx context.Context) error {
 	// Wait for signals
 	<-ctx.Done()
 
-	ctx, cFunc := context.WithTimeout(ctx, 5*time.Second)
+	logger.Log.Debug("Shutting down")
+	ctx, cFunc := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := supervisor.Shutdown(ctx); err != nil {
 		cFunc()
 		return xerrors.WithStack(err)

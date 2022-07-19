@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -46,12 +47,14 @@ func (c *minioComponent) Command() string {
 }
 
 func (c *minioComponent) Run(ctx context.Context) {
+	workDir := os.Getenv("BUILD_WORKING_DIRECTORY")
+
 	minio := exec.CommandContext(ctx,
 		"minio",
 		"server",
 		"--address", "127.0.0.1:9000",
 		"--console-address", "127.0.0.1:50000",
-		".minio_data",
+		filepath.Join(workDir, ".minio_data"),
 	)
 	minio.Env = append(os.Environ(), []string{
 		fmt.Sprintf("MINIO_ROOT_USER=minioadmin"),
@@ -60,8 +63,16 @@ func (c *minioComponent) Run(ctx context.Context) {
 	//w := logger.NewNamedWriter(os.Stdout, "minio")
 	minio.Stdout = os.Stdout
 	minio.Stderr = os.Stdout
+
+	defer func() {
+		if minio.Process != nil && !minio.ProcessState.Exited() {
+			logger.Log.Info("Kill minio by SIGTERM")
+			minio.Process.Signal(syscall.SIGTERM)
+		}
+	}()
+
 	logger.Log.Info("Start minio", zap.Int("port", 9000), zap.String("user", "minioadmin"), zap.String("password", "minioadmin"))
-	if err := minio.Run(); err != nil {
+	if err := minio.Run(); err != nil && err.Error() != "signal: killed" {
 		logger.Log.Info("Some error was occurred", zap.Error(err))
 	}
 	logger.Log.Info("Shutdown minio")
@@ -97,17 +108,6 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		break
 	}
 
-	opt := storage.NewS3OptionToExternal("http://127.0.0.1:9000", "US", "minioadmin", "minioadmin")
-	opt.PathStyle = true
-	client := storage.NewS3("git-data-service", opt)
-	if !client.ExistBucket(ctx, "git-data-service") {
-		logger.Log.Info("git-data-service bucket is not found. make the bucket")
-		if err := client.MakeBucket(ctx, "git-data-service"); err != nil {
-			logger.Log.Error("Failed to make bucket", logger.Error(err))
-			return
-		}
-	}
-
 	if _, err := os.Stat(filepath.Join(workDir, ".example_git_data")); os.IsNotExist(err) {
 		logger.Log.Info("example data is not found. clone the repository")
 		_, err := goGit.PlainClone(filepath.Join(workDir, ".example_git_data"), false, &goGit.CloneOptions{
@@ -120,9 +120,21 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		if err != nil {
 			return
 		}
+	}
+
+	opt := storage.NewS3OptionToExternal("http://127.0.0.1:9000", "US", "minioadmin", "minioadmin")
+	opt.PathStyle = true
+	client := storage.NewS3("git-data-service", opt)
+
+	if !client.ExistBucket(ctx, "git-data-service") {
+		logger.Log.Info("git-data-service bucket is not found. make the bucket")
+		if err := client.MakeBucket(ctx, "git-data-service"); err != nil {
+			logger.Log.Error("Failed to make bucket", logger.Error(err))
+			return
+		}
 
 		logger.Log.Debug("Walk directory", zap.String("path", filepath.Join(workDir, ".example_git_data/.git")))
-		err = filepath.Walk(filepath.Join(workDir, ".example_git_data/.git"), func(p string, info fs.FileInfo, err error) error {
+		err := filepath.Walk(filepath.Join(workDir, ".example_git_data/.git"), func(p string, info fs.FileInfo, err error) error {
 			if info.IsDir() {
 				return nil
 			}
@@ -164,9 +176,17 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		return
 	}
 
+	go func() {
+		<-ctx.Done()
+
+		logger.Log.Debug("Graceful stop gRPC server")
+		s.GracefulStop()
+	}()
+
 	logger.Log.Info("Start gRPC server", zap.String("addr", ":9010"))
 	if err := s.Serve(lis); err != nil {
 		logger.Log.Warn("Serve gRPC", logger.Error(err))
 		return
 	}
+	logger.Log.Info("Stop gRPC server")
 }
