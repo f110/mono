@@ -1,6 +1,7 @@
 package monodev
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -189,4 +191,95 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		return
 	}
 	logger.Log.Info("Stop gRPC server")
+}
+
+type mysqlComponent struct{}
+
+func (c *mysqlComponent) Command() string {
+	return "mysqld"
+}
+
+func (c *mysqlComponent) Run(ctx context.Context) {
+	workDir := os.Getenv("BUILD_WORKING_DIRECTORY")
+	baseDir := filepath.Join(workDir, ".mysql")
+	dataDir := filepath.Join(baseDir, "data")
+	secureFileDir := filepath.Join(baseDir, "mysql8-files")
+
+	for _, v := range []string{baseDir, secureFileDir} {
+		if _, err := os.Stat(v); os.IsNotExist(err) {
+			if err := os.Mkdir(v, 0755); err != nil {
+				logger.Log.Error("Failed to make directory", logger.Error(err), zap.String("path", v))
+				return
+			}
+		}
+	}
+
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		logger.Log.Info("Initialize data directory")
+		cmd := exec.CommandContext(ctx,
+			"mysqld",
+			"--initialize-insecure",
+			"--user=mysql",
+			"--datadir="+dataDir,
+		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			logger.Log.Error("Failed to initialize data dir", logger.Error(err))
+		}
+	}
+
+	mysqldPath, err := exec.LookPath("mysqld")
+	if err != nil {
+		logger.Log.Error("Failed to get path of mysqld")
+		return
+	}
+
+	mysql := exec.CommandContext(context.Background(),
+		"mysqld_safe",
+		"--mysqld="+mysqldPath,
+		"--user=mysql",
+		"--basedir="+baseDir,
+		"--datadir="+dataDir,
+		"--socket="+filepath.Join(baseDir, "mysqld.sock"),
+		"--secure-file-priv="+secureFileDir,
+		"--bind-address=127.0.0.1",
+		"--port=3306",
+		"--skip-networking=0",
+	)
+	mysql.Stdout = os.Stdout
+	mysql.Stderr = os.Stderr
+
+	defer func() {
+		logger.Log.Info("Shutdown MySQL")
+
+		hostname, err := os.Hostname()
+		if err != nil {
+			logger.Log.Error("Failed to get hostname", logger.Error(err))
+			return
+		}
+		pidFile := filepath.Join(dataDir, hostname+".pid")
+		pidBuf, err := os.ReadFile(pidFile)
+		if err != nil {
+			logger.Log.Error("Failed to read pid file", logger.Error(err))
+			return
+		}
+		pidBuf = bytes.TrimSpace(pidBuf)
+		pid, err := strconv.Atoi(string(pidBuf))
+		if err != nil {
+			return
+		}
+		logger.Log.Info("Kill MySQL by SIGTERM", zap.Int("pid", pid))
+		if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+			logger.Log.Error("Failed to send signal", logger.Error(err))
+			return
+		}
+	}()
+
+	logger.Log.Info("Start MySQL")
+	if err := mysql.Start(); err != nil {
+		logger.Log.Info("Some error was occurred", logger.Error(err))
+		return
+	}
+	<-ctx.Done()
 }
