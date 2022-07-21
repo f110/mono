@@ -350,7 +350,7 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 			editURL = fmt.Sprintf("https://github.com/%s/%s/edit/%s/%s", owner, repoName, req.Ref, req.Path)
 		}
 
-		return &ResponseGetFile{Content: buf, RawUrl: rawURL, EditUrl: editURL}, nil
+		return &ResponseGetFile{Content: buf, RawUrl: rawURL, EditUrl: editURL, Sha: blob.Hash.String()}, nil
 	case filemode.Dir:
 		d := &errdetails.BadRequest{
 			FieldViolations: []*errdetails.BadRequest_FieldViolation{

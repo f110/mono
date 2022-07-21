@@ -79,6 +79,9 @@ func makeSourceRepository(t *testing.T) *git.Repository {
 	})
 	require.NoError(t, err)
 
+	_, err = repo.CreateRemote(&config.RemoteConfig{Name: "origin", URLs: []string{"https://github.com/f110/test-repo.git"}})
+	require.NoError(t, err)
+
 	return repo
 }
 

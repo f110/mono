@@ -183,6 +183,20 @@ func TestGetReference(t *testing.T) {
 	assert.Equal(t, "refs/heads/master", ref.Ref.Name)
 }
 
+func TestGetFile(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := NewGitDataClient(conn)
+
+	file, err := gitData.GetFile(context.Background(), &RequestGetFile{Repo: "test1", Ref: plumbing.NewBranchReferenceName("master").String(), Path: "README.md"})
+	require.NoError(t, err)
+	assert.NotEmpty(t, file.Content)
+	assert.Equal(t, "https://raw.githubusercontent.com/f110/test-repo/refs/heads/master/README.md", file.RawUrl)
+	assert.Equal(t, "https://github.com/f110/test-repo/edit/refs/heads/master/README.md", file.EditUrl)
+	assert.NotEmpty(t, file.Sha)
+}
+
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {
 	repo := make(map[string]*goGit.Repository)
 	for k, v := range repos {

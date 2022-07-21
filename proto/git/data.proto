@@ -125,6 +125,7 @@ message ResponseGetFile {
   bytes  content  = 1;
   string raw_url  = 2;
   string edit_url = 3;
+  string sha      = 4;
 }
 
 message RequestListTag {
