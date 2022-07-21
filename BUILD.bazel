@@ -39,6 +39,7 @@ job(
     command = "test",
     cpu_limit = "2000m",
     github_status = True,
+    memory_limit = "8Gi",
     platforms = [
         "@io_bazel_rules_go//go/toolchain:linux_amd64",
     ],
