@@ -67,6 +67,7 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 	if c.Insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+	opts = append(opts, grpcutil.WithLogging())
 	gitDataConn, err := grpc.Dial(c.GitDataService, opts...)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))

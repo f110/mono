@@ -23,6 +23,10 @@ func SetLogLevel(level string) {
 	logLevel = level
 }
 
+func Enabled() bool {
+	return Log != nil
+}
+
 func Init() error {
 	if err := initLogger(); err != nil {
 		return err

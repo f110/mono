@@ -114,7 +114,6 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if requestFilePath == "" {
 		requestFilePath = "/"
 	}
-	logger.Log.Debug("GetFile", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", requestFilePath))
 	file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: requestFilePath})
 	if err != nil {
 		st, ok := status.FromError(err)
@@ -157,7 +156,6 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 
 func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
 	if h.docSearch != nil {
-		logger.Log.Debug("PageLink", zap.String("repo", repo), zap.String("sha", blobPath))
 		pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
 		if err != nil {
 			logger.Log.Error("Failed to get page link", logger.Error(err))
@@ -238,7 +236,6 @@ type directoryEntry struct {
 }
 
 func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, req *http.Request, repo, ref, rawRef, dirPath string) {
-	logger.Log.Debug("GetTree", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", dirPath))
 	tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
 		Repo:      repo,
 		Ref:       ref,

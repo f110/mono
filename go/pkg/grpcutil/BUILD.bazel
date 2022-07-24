@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grpcutil",
+    srcs = ["interceptor.go"],
+    importpath = "go.f110.dev/mono/go/pkg/grpcutil",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/go.uber.org/zap",
+        "//vendor/google.golang.org/grpc",
+    ],
+)
