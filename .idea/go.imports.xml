@@ -9,6 +9,7 @@
         <option value="github.com/hashicorp/go.net/context" />
         <option value="github.com/labstack/gommon/log" />
         <option value="github.com/mitchellh/go-testing-interface" />
+        <option value="github.com/pingcap/errors" />
         <option value="golang.org/x/net/context" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/errors" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/os" />
@@ -16,6 +17,7 @@
         <option value="gopkg.in/src-d/go-git.v4/storage" />
         <option value="gotest.tools/assert" />
         <option value="gotest.tools/v3/assert" />
+        <option value="sigs.k8s.io/kind/pkg/errors" />
         <option value="sigs.k8s.io/kind/pkg/errors" />
       </array>
     </option>
