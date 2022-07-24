@@ -31,13 +31,31 @@ func NewDataService(repo map[string]*goGit.Repository) (*gitDataService, error) 
 func (g *gitDataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	var list []*Repository
 	for k, v := range g.repo {
-		var defaultBranch string
 		headRef, err := v.Head()
 		if err != nil {
 			return nil, err
 		}
-		defaultBranch = headRef.Name().Short()
-		list = append(list, &Repository{Name: k, DefaultBranch: defaultBranch})
+		remote, err := v.Remote("origin")
+		if err != nil {
+			return nil, err
+		}
+		remoteURL, err := url.Parse(remote.Config().URLs[0])
+		if err != nil {
+			return nil, err
+		}
+		var repoURL, gitURL string
+		switch remoteURL.Host {
+		case "github.com":
+			repoURL = strings.TrimSuffix(remoteURL.String(), ".git")
+			gitURL = remoteURL.String()
+		}
+
+		list = append(list, &Repository{
+			Name:          k,
+			DefaultBranch: headRef.Name().Short(),
+			Url:           repoURL,
+			GitUrl:        gitURL,
+		})
 	}
 
 	return &ResponseListRepositories{Repositories: list}, nil

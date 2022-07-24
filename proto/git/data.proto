@@ -45,6 +45,8 @@ message Signature {
 message Repository {
   string name           = 1;
   string default_branch = 2;
+  string url            = 3;
+  string git_url        = 4;
 }
 
 message RequestListRepositories {}
