@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 )
 
@@ -39,7 +40,7 @@ func TestParsePath(t *testing.T) {
 		},
 	}
 
-	h := newHttpHandler(nil, "", "", 0, false)
+	h := newHttpHandler(nil, nil, "", "", 0, false)
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.URL, nil)
@@ -52,8 +53,9 @@ func TestParsePath(t *testing.T) {
 }
 
 func TestServeHTTP(t *testing.T) {
-	client := &stubGitDataClient{}
-	h := newHttpHandler(client, "repo-doc", "", 0, false)
+	gitData := &stubGitDataClient{}
+	docSearch := &stubDocSearchClient{}
+	h := newHttpHandler(gitData, docSearch, "repo-doc", "", 0, false)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
@@ -123,6 +125,24 @@ func (s *stubGitDataClient) ListTag(ctx context.Context, in *git.RequestListTag,
 }
 
 func (s *stubGitDataClient) ListBranch(ctx context.Context, in *git.RequestListBranch, opts ...grpc.CallOption) (*git.ResponseListBranch, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+type stubDocSearchClient struct{}
+
+var _ docutil.DocSearchClient = &stubDocSearchClient{}
+
+func (s *stubDocSearchClient) AvailableFeatures(ctx context.Context, in *docutil.RequestAvailableFeatures, opts ...grpc.CallOption) (*docutil.ResponseAvailableFeatures, error) {
+	return &docutil.ResponseAvailableFeatures{PageLink: true}, nil
+}
+
+func (s *stubDocSearchClient) GetPage(ctx context.Context, in *docutil.RequestGetPage, opts ...grpc.CallOption) (*docutil.ResponseGetPage, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *stubDocSearchClient) PageLink(ctx context.Context, in *docutil.RequestPageLink, opts ...grpc.CallOption) (*docutil.ResponsePageLink, error) {
 	//TODO implement me
 	panic("implement me")
 }

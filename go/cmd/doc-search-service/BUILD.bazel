@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "doc-search-service_lib",
+    srcs = [
+        "cmd.go",
+        "main.go",
+    ],
+    importpath = "go.f110.dev/mono/go/cmd/doc-search-service",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/docutil",
+        "//go/pkg/fsm",
+        "//go/pkg/git",
+        "//go/pkg/logger",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/credentials/insecure",
+    ],
+)
+
+go_binary(
+    name = "doc-search-service",
+    embed = [":doc-search-service_lib"],
+    visibility = ["//visibility:public"],
+)

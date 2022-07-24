@@ -1,0 +1,47 @@
+syntax = "proto3";
+package mono.docutil;
+option  go_package = "go.f110.dev/mono/go/pkg/docutil";
+
+service DocSearch {
+  rpc AvailableFeatures(RequestAvailableFeatures) returns (ResponseAvailableFeatures);
+  rpc GetPage(RequestGetPage) returns (ResponseGetPage);
+  rpc PageLink(RequestPageLink) returns (ResponsePageLink);
+}
+
+message RequestAvailableFeatures {}
+
+message ResponseAvailableFeatures {
+  bool page_link        = 1;
+  bool full_text_search = 2;
+}
+
+message RequestGetPage {
+  string sha = 1;
+}
+
+message ResponseGetPage {
+  string title = 1;
+}
+
+enum LinkType {
+  LINK_TYPE_EXTERNAL            = 0;
+  LINK_TYPE_IN_REPOSITORY       = 1;
+  LINK_TYPE_NEIGHBOR_REPOSITORY = 2;
+}
+
+message PageLink {
+  LinkType type        = 1;
+  string   source      = 2;
+  string   destination = 3;
+  string   repository  = 4;
+}
+
+message RequestPageLink {
+  string repo = 1;
+  string sha  = 2;
+}
+
+message ResponsePageLink {
+  repeated PageLink in  = 1;
+  repeated PageLink out = 2;
+}

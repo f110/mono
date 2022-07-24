@@ -18,7 +18,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
@@ -282,4 +284,65 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 		return
 	}
 	<-ctx.Done()
+}
+
+type docSearchService struct{}
+
+func (c *docSearchService) Command() string {
+	return ""
+}
+
+func (c *docSearchService) Run(ctx context.Context) {
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		conn, err := net.DialTimeout("tcp", ":9010", 100*time.Millisecond)
+		if time.Now().After(deadline) {
+			logger.Log.Info("Deadline exceeded")
+			break
+		}
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		conn.Close()
+		break
+	}
+
+	grpcConn, err := grpc.Dial("127.0.0.1:9010", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logger.Log.Error("Failed to dial", logger.Error(err))
+		return
+	}
+	gitDataClient := git.NewGitDataClient(grpcConn)
+
+	service := docutil.NewDocSearchService(gitDataClient)
+	initCtx, stop := context.WithTimeout(ctx, 1*time.Minute)
+	if err := service.Initialize(initCtx); err != nil {
+		stop()
+		logger.Log.Error("Failed to initialize doc-search-service", logger.Error(err))
+		return
+	}
+	stop()
+	s := grpc.NewServer()
+	docutil.RegisterDocSearchServer(s, service)
+	lis, err := net.Listen("tcp", ":9011")
+	if err != nil {
+		logger.Log.Error("Failed to listen", logger.Error(err))
+		return
+	}
+
+	go func() {
+		<-ctx.Done()
+
+		logger.Log.Debug("Graceful stop doc-search-service")
+		s.GracefulStop()
+	}()
+
+	logger.Log.Info("Start doc-search-service", zap.String("addr", ":9011"))
+	if err := s.Serve(lis); err != nil {
+		logger.Log.Warn("Serve gRPC", logger.Error(err))
+		return
+	}
+	logger.Log.Info("Stop doc-search-service")
 }

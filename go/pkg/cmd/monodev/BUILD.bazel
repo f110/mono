@@ -12,6 +12,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/cmd/monodev",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/docutil",
         "//go/pkg/fsm",
         "//go/pkg/git",
         "//go/pkg/k8s/kind",
@@ -24,6 +25,7 @@ go_library(
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/credentials/insecure",
         "//vendor/k8s.io/api/apps/v1:apps",
         "//vendor/k8s.io/api/core/v1:core",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",

@@ -87,7 +87,7 @@ func repoDoc(cmd *cobra.Command) {
 			m := newComponentManager()
 			m.AddComponent(&minioComponent{})
 			m.AddComponent(&gitDataServiceComponent{})
-			m.AddComponent(&mysqlComponent{})
+			m.AddComponent(&docSearchService{})
 
 			return m.Run(cmd.Context())
 		},

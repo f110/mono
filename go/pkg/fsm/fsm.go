@@ -77,6 +77,9 @@ func (f *FSM) Shutdown() {
 }
 
 func (f *FSM) Context() context.Context {
+	if f.ctx == nil {
+		return context.Background()
+	}
 	return f.ctx
 }
 

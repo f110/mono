@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -19,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 
+	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -42,9 +44,10 @@ var (
 )
 
 type httpHandler struct {
-	client   git.GitDataClient
-	static   http.Handler
-	markdown *markdownParser
+	gitData   git.GitDataClient
+	docSearch docutil.DocSearchClient
+	static    http.Handler
+	markdown  *markdownParser
 
 	toCMaxDepth   int
 	title         string
@@ -53,7 +56,13 @@ type httpHandler struct {
 
 var _ http.Handler = &httpHandler{}
 
-func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDepth int, enabledSearch bool) *httpHandler {
+func newHttpHandler(
+	gitData git.GitDataClient,
+	docSearch docutil.DocSearchClient,
+	title, staticDir string,
+	toCMaxDepth int,
+	enabledSearch bool,
+) *httpHandler {
 	var static http.Handler
 	if staticDir != "" {
 		static = http.FileServer(http.Dir(staticDir))
@@ -61,7 +70,8 @@ func newHttpHandler(client git.GitDataClient, title, staticDir string, toCMaxDep
 		static = http.FileServer(http.FS(staticContent))
 	}
 	return &httpHandler{
-		client:        client,
+		gitData:       gitData,
+		docSearch:     docSearch,
 		static:        static,
 		title:         title,
 		toCMaxDepth:   toCMaxDepth,
@@ -106,7 +116,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		requestFilePath = "/"
 	}
 	logger.Log.Debug("GetFile", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", requestFilePath))
-	file, err := h.client.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: requestFilePath})
+	file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: requestFilePath})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Message() == "path is directory" {
@@ -119,11 +129,11 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h.serveDocumentFile(w, file, repo, rawRef, blobPath)
+	h.serveDocumentFile(req.Context(), w, file, repo, rawRef, blobPath)
 }
 
 func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Request) {
-	repositories, err := h.client.ListRepositories(req.Context(), &git.RequestListRepositories{})
+	repositories, err := h.gitData.ListRepositories(req.Context(), &git.RequestListRepositories{})
 	if err != nil {
 		logger.Log.Error("Failed to get repositories", logger.Error(err))
 		http.Error(w, "Failed to get repositories", http.StatusInternalServerError)
@@ -146,7 +156,12 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 	}
 }
 
-func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
+func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
+	logger.Log.Debug("PageLink", zap.String("repo", repo), zap.String("sha", blobPath))
+	pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
+	log.Print(pageLink)
+	log.Print(err)
+
 	var doc *document
 	switch filepath.Ext(blobPath) {
 	case ".md":
@@ -170,7 +185,7 @@ func (h *httpHandler) serveDocumentFile(w http.ResponseWriter, file *git.Respons
 	}
 
 	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath, false)
-	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
+	err = pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
 		Title               string
 		PageTitle           string
 		EnabledSearch       bool
@@ -219,7 +234,7 @@ type directoryEntry struct {
 
 func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, req *http.Request, repo, ref, rawRef, dirPath string) {
 	logger.Log.Debug("GetTree", zap.String("repo", repo), zap.String("ref", ref), zap.String("path", dirPath))
-	tree, err := h.client.GetTree(ctx, &git.RequestGetTree{
+	tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
 		Repo:      repo,
 		Ref:       ref,
 		Recursive: false,
@@ -265,7 +280,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		if dirPath == "/" {
 			indexFilePath = foundIndexFile
 		}
-		indexFile, err := h.client.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: indexFilePath})
+		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: indexFilePath})
 		if err != nil {
 			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", indexFilePath))
 			http.Error(w, "Failed to get index file", http.StatusInternalServerError)

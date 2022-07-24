@@ -1,0 +1,54 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+go_proto_library(
+    name = "doc_search_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/pkg/docutil",
+    proto = "//proto/docutil:doc_search",
+    visibility = ["//visibility:private"],
+)
+
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source")
+
+vendor_grpc_source(
+    name = "vendor_doc_search_grpc_source",
+    src = ":doc_search_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "docutil",
+    srcs = [
+        "search.pb.go",
+        "service.go",
+    ],
+    importpath = "go.f110.dev/mono/go/pkg/docutil",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/git",
+        "//vendor/github.com/yuin/goldmark",
+        "//vendor/github.com/yuin/goldmark/ast",
+        "//vendor/github.com/yuin/goldmark/extension",
+        "//vendor/github.com/yuin/goldmark/parser",
+        "//vendor/github.com/yuin/goldmark/text",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/gopkg.in/src-d/go-git.v4/plumbing",
+    ],
+)
+
+go_test(
+    name = "docutil_test",
+    srcs = ["service_test.go"],
+    embed = [":docutil"],
+    deps = [
+        "//go/pkg/git",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/google.golang.org/grpc",
+    ],
+)

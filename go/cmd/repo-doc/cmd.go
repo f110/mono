@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -18,8 +19,9 @@ import (
 
 type repoDocCommand struct {
 	*fsm.FSM
-	gitData git.GitDataClient
-	s       *http.Server
+	gitData   git.GitDataClient
+	docSearch docutil.DocSearchClient
+	s         *http.Server
 
 	Listen          string
 	GitDataService  string
@@ -51,7 +53,7 @@ func newRepoDocCommand() *repoDocCommand {
 
 func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8016", "Listen addr")
-	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
+	fs.StringVar(&c.GitDataService, "git-data-service", "", "The url of git-data-service")
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
 	fs.StringVar(&c.StaticDirectory, "static-dir", "", "Directory path that contains will be served as static file")
 	fs.StringVar(&c.GlobalTitle, "title", "repo-doc", "General title")
@@ -64,14 +66,24 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 	if c.Insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	conn, err := grpc.Dial(c.GitDataService, opts...)
+	gitDataConn, err := grpc.Dial(c.GitDataService, opts...)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	c.gitData = git.NewGitDataClient(conn)
+	c.gitData = git.NewGitDataClient(gitDataConn)
+	docSearchConn, err := grpc.Dial(c.SearchService, opts...)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	c.docSearch = docutil.NewDocSearchClient(docSearchConn)
+
+	docSearchFeatures, err := c.docSearch.AvailableFeatures(c.FSM.Context(), &docutil.RequestAvailableFeatures{})
+	if err != nil {
+		return fsm.Error(err)
+	}
 
 	c.s = &http.Server{
-		Handler:  newHttpHandler(c.gitData, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, c.SearchService != ""),
+		Handler:  newHttpHandler(c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, docSearchFeatures.FullTextSearch),
 		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)
