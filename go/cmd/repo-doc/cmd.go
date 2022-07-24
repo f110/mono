@@ -14,6 +14,7 @@ import (
 	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/pkg/grpcutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -71,19 +72,26 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	c.gitData = git.NewGitDataClient(gitDataConn)
-	docSearchConn, err := grpc.Dial(c.SearchService, opts...)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	c.docSearch = docutil.NewDocSearchClient(docSearchConn)
 
-	docSearchFeatures, err := c.docSearch.AvailableFeatures(c.FSM.Context(), &docutil.RequestAvailableFeatures{})
-	if err != nil {
-		return fsm.Error(err)
+	if c.SearchService != "" {
+		docSearchConn, err := grpc.Dial(c.SearchService, opts...)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		c.docSearch = docutil.NewDocSearchClient(docSearchConn)
+	}
+
+	var enabledFullTextSearch bool
+	if c.docSearch != nil {
+		docSearchFeatures, err := c.docSearch.AvailableFeatures(c.FSM.Context(), &docutil.RequestAvailableFeatures{})
+		if err != nil {
+			return fsm.Error(err)
+		}
+		enabledFullTextSearch = docSearchFeatures.FullTextSearch
 	}
 
 	c.s = &http.Server{
-		Handler:  newHttpHandler(c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, docSearchFeatures.FullTextSearch),
+		Handler:  newHttpHandler(c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, enabledFullTextSearch),
 		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)

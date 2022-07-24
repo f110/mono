@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -157,10 +156,16 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 }
 
 func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
-	logger.Log.Debug("PageLink", zap.String("repo", repo), zap.String("sha", blobPath))
-	pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
-	log.Print(pageLink)
-	log.Print(err)
+	if h.docSearch != nil {
+		logger.Log.Debug("PageLink", zap.String("repo", repo), zap.String("sha", blobPath))
+		pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
+		if err != nil {
+			logger.Log.Error("Failed to get page link", logger.Error(err))
+			http.Error(w, "Failed to get page link", http.StatusInternalServerError)
+			return
+		}
+		_ = pageLink
+	}
 
 	var doc *document
 	switch filepath.Ext(blobPath) {
@@ -185,7 +190,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 	}
 
 	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath, false)
-	err = pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
+	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
 		Title               string
 		PageTitle           string
 		EnabledSearch       bool
