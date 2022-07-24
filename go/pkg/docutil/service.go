@@ -175,17 +175,18 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 				return ast.WalkContinue, nil
 			}
 			if u.Scheme == "" {
+				destination := string(v.Destination)
+				if destination[0] == '#' {
+					return ast.WalkContinue, nil
+				}
 				linkOut = append(linkOut, &PageLink{
 					Type:        LinkType_LINK_TYPE_IN_REPOSITORY,
-					Destination: string(v.Destination),
+					Destination: destination,
 				})
 			} else {
 				destination := string(v.Destination)
 				linkType := LinkType_LINK_TYPE_EXTERNAL
 				repoName := ""
-				if destination[0] == '#' {
-					return ast.WalkContinue, nil
-				}
 
 				if strings.HasPrefix(destination, repo.Url) {
 					linkType = LinkType_LINK_TYPE_IN_REPOSITORY

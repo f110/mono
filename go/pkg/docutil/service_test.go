@@ -14,6 +14,7 @@ func TestParseMarkdown(t *testing.T) {
 	service := NewDocSearchService(&mockGitClient{})
 	err := service.scanRepository(context.Background(), &git.Repository{Name: "test", DefaultBranch: "master"})
 	require.NoError(t, err)
+	t.Log(service.pageLink["test"]["README.md"].LinkOut)
 }
 
 type mockGitClient struct{}
@@ -56,6 +57,8 @@ func (m *mockGitClient) GetBlob(ctx context.Context, in *git.RequestGetBlob, opt
 [Link](https://example.com)
 
 https://example.com/autolink
+
+[Anchor](#anchor)
 `)}, nil
 }
 
