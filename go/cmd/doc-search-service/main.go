@@ -23,6 +23,8 @@ func runCommand() error {
 			return c.LoopContext(cmd.Context())
 		},
 	}
+	c.Flags(cmd.Flags())
+	logger.Flags(cmd.Flags())
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
