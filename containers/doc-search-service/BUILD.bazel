@@ -1,0 +1,35 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "bin",
+    files = {
+        "//go/cmd/doc-search-service": "/usr/local/bin/doc-search-service",
+    },
+    mode = "0755",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = ["/usr/local/bin/doc-search-service"],
+    tars = [":bin"],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "tools/doc-search-service",
+    tag = "latest",
+)
+
+container_push(
+    name = "push_quay",
+    format = "Docker",
+    image = ":image",
+    registry = "quay.io",
+    repository = "f110/doc-search-service",
+    tag = "latest",
+)
