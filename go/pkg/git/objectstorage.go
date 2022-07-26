@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -33,23 +35,45 @@ type ObjectStorageInterface interface {
 }
 
 func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, url, prefix string) (*git.Repository, error) {
-	s := NewObjectStorageStorer(b, prefix)
-	repo, err := git.Init(s, nil)
-	if err != nil {
-		return nil, xerrors.WithMessage(err, "failed to initialize repository")
-	}
-	_, err = repo.CreateRemote(&config.RemoteConfig{
-		Name: "origin",
-		URLs: []string{url},
+	tmpDir := os.TempDir()
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+
+	_, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
+		URL:        url,
+		NoCheckout: true,
 	})
 	if err != nil {
-		return nil, xerrors.WithMessage(err, "could not create the remote")
+		return nil, xerrors.WithMessage(err, "failed to clone the repository")
+	}
+	err = filepath.Walk(filepath.Join(tmpDir, ".git"), func(p string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		name := strings.TrimPrefix(p, filepath.Join(tmpDir, ".git")+"/")
+		file, err := os.Open(p)
+		if err != nil {
+			return err
+		}
+		err = b.PutReader(ctx, prefix+"/"+name, file)
+		if err != nil {
+			return err
+		}
+		file.Close()
+		return nil
+	})
+	if err != nil {
+		return nil, xerrors.WithMessage(err, "failed to walk .git dir")
 	}
 
-	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
+	s := NewObjectStorageStorer(b, prefix)
+	repo, err := git.Open(s, nil)
 	if err != nil {
-		return nil, xerrors.WithMessage(err, "could not fetch objects from the remote")
+		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
+
 	return repo, nil
 }
 
