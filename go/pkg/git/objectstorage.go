@@ -36,19 +36,19 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	s := NewObjectStorageStorer(b, prefix)
 	repo, err := git.Init(s, nil)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, xerrors.WithMessage(err, "failed to initialize repository")
 	}
 	_, err = repo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
 		URLs: []string{url},
 	})
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, xerrors.WithMessage(err, "could not create the remote")
 	}
 
 	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, xerrors.WithMessage(err, "could not fetch objects from the remote")
 	}
 	return repo, nil
 }
@@ -64,13 +64,16 @@ func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string) *ObjectSt
 	return &ObjectStorageStorer{backend: b, rootPath: rootPath}
 }
 
-func (b *ObjectStorageStorer) Exist() bool {
+func (b *ObjectStorageStorer) Exist() (bool, error) {
 	_, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "config"))
-	if err != nil {
-		return false
+	if err != nil && errors.Is(err, storage.ErrObjectNotFound) {
+		if errors.Is(err, storage.ErrObjectNotFound) {
+			return false, nil
+		}
+		return false, err
 	}
 
-	return true
+	return true, nil
 }
 
 func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {
