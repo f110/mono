@@ -389,6 +389,9 @@ func (b *ObjectStorageStorer) RemoveReference(name plumbing.ReferenceName) error
 
 	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "packed-refs"))
 	if err != nil {
+		if errors.Is(err, storage.ErrObjectNotFound) {
+			return nil
+		}
 		return xerrors.WithStack(err)
 	}
 	s := bufio.NewScanner(file)
