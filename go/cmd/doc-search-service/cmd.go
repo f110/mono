@@ -88,9 +88,11 @@ func (c *docSearchService) startServer() (fsm.State, error) {
 }
 
 func (c *docSearchService) shutDown() (fsm.State, error) {
-	logger.Log.Debug("Graceful stopping")
-	c.s.GracefulStop()
-	logger.Log.Info("Stop server")
+	if c.s != nil {
+		logger.Log.Debug("Graceful stopping")
+		c.s.GracefulStop()
+		logger.Log.Info("Stop server")
+	}
 
 	return fsm.Finish()
 }
