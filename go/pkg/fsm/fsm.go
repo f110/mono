@@ -123,18 +123,24 @@ func (f *FSM) Loop() error {
 
 				// When the function for close state is returning an error, we should stop the main loop ASAP.
 				if s == f.closeState {
-					close(f.ch)
+					ch := f.ch
+					f.ch = nil
+					close(ch)
 					return
 				}
 				// When one of a function for close state is returning an error, we also should stop the main loop immediately.
 				if f.beClosing {
-					close(f.ch)
+					ch := f.ch
+					f.ch = nil
+					close(ch)
 					return
 				}
 
 				f.nextState(f.closeState)
 			} else if nxt == CloseState {
-				close(f.ch)
+				ch := f.ch
+				f.ch = nil
+				close(ch)
 			} else if nxt > 0 {
 				f.nextState(nxt)
 			}
@@ -143,5 +149,8 @@ func (f *FSM) Loop() error {
 }
 
 func (f *FSM) nextState(s State) {
-	f.ch <- s
+	ch := f.ch
+	if ch != nil {
+		ch <- s
+	}
 }
