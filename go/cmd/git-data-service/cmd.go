@@ -27,10 +27,10 @@ type gitDataServiceCommand struct {
 	Listen                string
 	RepositoryInitTimeout time.Duration
 
-	MinIOEndpoint        string
-	MinIORegion          string
-	MinIOAccessKey       string
-	MinIOSecretAccessKey string
+	StorageEndpoint        string
+	StorageRegion          string
+	StorageAccessKey       string
+	StorageSecretAccessKey string
 
 	Bucket string
 
@@ -72,15 +72,16 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 }
 
 func (c *gitDataServiceCommand) init() (fsm.State, error) {
-	opt := storage.NewMinIOOptionsViaEndpoint(c.MinIOEndpoint, c.MinIORegion, c.MinIOAccessKey, c.MinIOSecretAccessKey)
-	storageClient := storage.NewMinIOStorage(c.Bucket, opt)
+	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
+	opt.PathStyle = true
+	storageClient := storage.NewS3(c.Bucket, opt)
 
 	repo := make(map[string]*goGit.Repository)
 	var repos []*goGit.Repository
 	for _, r := range c.repositories {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix)
 
-		if !storer.Exist() {
+		if ok, err := storer.Exist(); !ok && err == nil {
 			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
 			if _, err := git.InitObjectStorageRepository(ctx, storageClient, r.URL, r.Prefix); err != nil {
@@ -88,6 +89,8 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 				return fsm.Error(err)
 			}
 			cancel()
+		} else if err != nil {
+			return fsm.Error(err)
 		}
 
 		gitRepo, err := goGit.Open(storer, nil)
@@ -143,20 +146,22 @@ func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
 }
 
 func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
-	logger.Log.Debug("Graceful stopping")
-	c.s.GracefulStop()
-	logger.Log.Info("Stop server")
+	if c.s != nil {
+		logger.Log.Debug("Graceful stopping")
+		c.s.GracefulStop()
+		logger.Log.Info("Stop server")
+	}
 
 	return fsm.Finish()
 }
 
 func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8056", "Listen addr")
-	fs.StringVar(&c.MinIOEndpoint, "minio-endpoint", c.MinIOEndpoint, "The endpoint of MinIO")
-	fs.StringVar(&c.MinIORegion, "minio-region", c.MinIORegion, "The region name")
-	fs.StringVar(&c.Bucket, "minio-bucket", c.Bucket, "Deprecated. Use --bucket instead. The bucket name that will be used")
-	fs.StringVar(&c.MinIOAccessKey, "minio-access-key", c.MinIOAccessKey, "The access key for MinIO API")
-	fs.StringVar(&c.MinIOSecretAccessKey, "minio-secret-access-key", c.MinIOSecretAccessKey, "The secret access key for MinIO API")
+	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
+	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
+	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
+	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
+	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
 
 	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
 		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
