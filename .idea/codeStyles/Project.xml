@@ -6,15 +6,6 @@
         <option name="TAB_SIZE" value="2" />
       </value>
     </option>
-    <GoCodeStyleSettings>
-      <option name="ADD_PARENTHESES_FOR_SINGLE_IMPORT" value="true" />
-      <option name="REMOVE_REDUNDANT_IMPORT_ALIASES" value="true" />
-      <option name="MOVE_ALL_IMPORTS_IN_ONE_DECLARATION" value="true" />
-      <option name="MOVE_ALL_STDLIB_IMPORTS_IN_ONE_GROUP" value="true" />
-      <option name="GROUP_STDLIB_IMPORTS" value="true" />
-      <option name="CREATE_LOCAL_GROUP" value="true" />
-      <option name="LOCAL_PACKAGE_PREFIXES" />
-    </GoCodeStyleSettings>
     <codeStyleSettings language="protobuf">
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />

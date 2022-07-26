@@ -35,12 +35,15 @@ type ObjectStorageInterface interface {
 }
 
 func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, url, prefix string) (*git.Repository, error) {
-	tmpDir := os.TempDir()
+	tmpDir, err := os.MkdirTemp("", "")
+	if err != nil {
+		return nil, err
+	}
 	defer func() {
 		os.RemoveAll(tmpDir)
 	}()
 
-	_, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
+	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
 		URL:        url,
 		NoCheckout: true,
 	})
