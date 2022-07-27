@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/fsm"
@@ -61,6 +63,8 @@ func (c *docSearchService) init() (fsm.State, error) {
 	s := grpc.NewServer()
 	service := docutil.NewDocSearchService(c.gitData)
 	docutil.RegisterDocSearchServer(s, service)
+	healthSvc := health.NewServer()
+	healthSvc.SetServingStatus("doc-search", healthpb.HealthCheckResponse_SERVING)
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
