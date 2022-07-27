@@ -12,6 +12,8 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
@@ -109,6 +111,9 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 		return fsm.Error(err)
 	}
 	git.RegisterGitDataServer(s, service)
+	healthSvc := health.NewServer()
+	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(s, healthSvc)
 	c.s = s
 
 	return fsm.Next(stateStartUpdater)
