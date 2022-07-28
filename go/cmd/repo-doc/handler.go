@@ -97,6 +97,10 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			h.serveRepositoryIndex(w, req)
 			return
 		}
+		if req.URL.Path == "/_/readiness" {
+			h.readiness(w, req)
+			return
+		}
 		h.static.ServeHTTP(w, req)
 		return
 	}
@@ -129,6 +133,8 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	h.serveDocumentFile(req.Context(), w, file, repo, rawRef, blobPath)
 }
+
+func (h *httpHandler) readiness(w http.ResponseWriter, req *http.Request) {}
 
 func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Request) {
 	repositories, err := h.gitData.ListRepositories(req.Context(), &git.RequestListRepositories{})
