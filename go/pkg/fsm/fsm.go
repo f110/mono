@@ -132,7 +132,9 @@ func (f *FSM) Loop() error {
 				if f.beClosing {
 					ch := f.ch
 					f.ch = nil
-					close(ch)
+					if ch != nil {
+						close(ch)
+					}
 					return
 				}
 
