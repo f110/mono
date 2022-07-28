@@ -183,6 +183,9 @@ func (b *ObjectStorageStorer) SetShallow(commits []plumbing.Hash) error {
 func (b *ObjectStorageStorer) Shallow() ([]plumbing.Hash, error) {
 	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "shallow"))
 	if err != nil {
+		if errors.Is(err, storage.ErrObjectNotFound) {
+			return nil, nil
+		}
 		return nil, xerrors.WithStack(err)
 	}
 
