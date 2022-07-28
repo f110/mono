@@ -76,7 +76,9 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 
 	err := repo.FetchContext(ctx, &git.FetchOptions{RemoteName: upstreamRemoteName})
 	if err != nil {
-		logger.Log.Warn("Failed fetch repository", logger.Error(err))
+		if err != git.NoErrAlreadyUpToDate {
+			logger.Log.Warn("Failed fetch repository", logger.Error(err))
+		}
 		return
 	}
 
