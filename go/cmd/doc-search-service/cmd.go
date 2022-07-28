@@ -65,6 +65,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	docutil.RegisterDocSearchServer(s, service)
 	healthSvc := health.NewServer()
 	healthSvc.SetServingStatus("doc-search", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(s, healthSvc)
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
