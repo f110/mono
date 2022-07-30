@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -21,6 +23,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/objfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	gitStorage "github.com/go-git/go-git/v5/storage"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/pkg/collections/set"
@@ -71,7 +74,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 		return nil, xerrors.WithMessage(err, "failed to walk .git dir")
 	}
 
-	s := NewObjectStorageStorer(b, prefix)
+	s := NewObjectStorageStorer(b, prefix, nil)
 	repo, err := git.Open(s, nil)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
@@ -81,14 +84,19 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 }
 
 type ObjectStorageStorer struct {
-	backend  ObjectStorageInterface
-	rootPath string
+	backend   ObjectStorageInterface
+	rootPath  string
+	cachePool *client.SinglePool
 }
 
 var _ gitStorage.Storer = &ObjectStorageStorer{}
 
-func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string) *ObjectStorageStorer {
-	return &ObjectStorageStorer{backend: b, rootPath: rootPath}
+func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string, cachePool *client.SinglePool) *ObjectStorageStorer {
+	return &ObjectStorageStorer{backend: b, rootPath: rootPath, cachePool: cachePool}
+}
+
+func (b *ObjectStorageStorer) EnabledCache() bool {
+	return b.cachePool != nil
 }
 
 func (b *ObjectStorageStorer) Exist() (bool, error) {
@@ -104,7 +112,7 @@ func (b *ObjectStorageStorer) Exist() (bool, error) {
 }
 
 func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {
-	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name)), nil
+	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name), b.cachePool), nil
 }
 
 func (b *ObjectStorageStorer) Config() (*config.Config, error) {
@@ -546,6 +554,16 @@ func (b *ObjectStorageStorer) EncodedObject(objectType plumbing.ObjectType, hash
 }
 
 func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plumbing.EncodedObject, error) {
+	if b.EnabledCache() {
+		item, err := b.cachePool.Get(fmt.Sprintf("objects/%s", h.String()))
+		if err == nil {
+			obj := b.NewEncodedObject()
+			if err := json.Unmarshal(item.Value, obj); err == nil {
+				return obj, nil
+			}
+		}
+	}
+
 	packFiles, err := b.backend.List(context.Background(), path.Join(b.rootPath, "objects/pack"))
 	if err != nil {
 		return nil, err
@@ -606,6 +624,15 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	}
 	obj, err := packfile.Get(h)
 	if err == nil {
+		if b.EnabledCache() {
+			buf, err := json.Marshal(obj)
+			if err == nil {
+				//log.Printf("objects/%s", h.String())
+				//log.Print(string(buf))
+				// No need to handle an error
+				_ = b.cachePool.Set(&client.Item{Key: fmt.Sprintf("objects/%s", h.String()), Value: buf})
+			}
+		}
 		return obj, nil
 	}
 
@@ -749,4 +776,54 @@ func (e *EncodedObject) SetReader(r io.ReadCloser) {
 
 func (e *EncodedObject) SetWriter(w *objfile.Writer) {
 	e.w = w
+}
+
+func (e *EncodedObject) MarshalJSON() ([]byte, error) {
+	var buf []byte
+	if e.r != nil {
+		b, err := io.ReadAll(e.r)
+		if err != nil {
+			return nil, err
+		}
+		e.r = io.NopCloser(bytes.NewReader(b))
+		buf = b
+	}
+
+	j := new(bytes.Buffer)
+	j.WriteRune('{')
+	j.WriteString(`"type":`)
+	fmt.Fprintf(j, "%q", e.typ.String())
+	j.WriteRune(',')
+	j.WriteString(`"hash":`)
+	fmt.Fprintf(j, "%q", e.hash.String())
+	if buf != nil {
+		j.WriteRune(',')
+		j.WriteString(`"content":`)
+		fmt.Fprintf(j, "%q", base64.StdEncoding.EncodeToString(buf))
+	}
+	j.WriteRune('}')
+
+	return j.Bytes(), nil
+}
+
+func (e *EncodedObject) UnmarshalJSON(b []byte) error {
+	m := make(map[string]string)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	e.hash = plumbing.NewHash(m["hash"])
+	if v, err := plumbing.ParseObjectType(m["type"]); err != nil {
+		return err
+	} else {
+		e.typ = v
+	}
+	if encoded, ok := m["content"]; ok {
+		buf, err := base64.StdEncoding.DecodeString(encoded)
+		if err != nil {
+			return err
+		}
+		e.r = io.NopCloser(bytes.NewReader(buf))
+		e.size = int64(len(buf))
+	}
+	return nil
 }

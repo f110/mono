@@ -81,7 +81,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	repo := make(map[string]*goGit.Repository)
 	var repos []*goGit.Repository
 	for _, r := range c.repositories {
-		storer := git.NewObjectStorageStorer(storageClient, r.Prefix)
+		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, nil)
 
 		if ok, err := storer.Exist(); !ok && err == nil {
 			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)

@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"io/fs"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +29,7 @@ func TestObjectStorageStorer(t *testing.T) {
 	mockStorage := storage.NewMock()
 	registerToStorage(t, mockStorage, originalRepo, storagePrefix)
 
-	s := NewObjectStorageStorer(mockStorage, storagePrefix)
+	s := NewObjectStorageStorer(mockStorage, storagePrefix, nil)
 	repo, err := git.Open(s, nil)
 	require.NoError(t, err)
 	commitIter, err := repo.Log(&git.LogOptions{All: true})
@@ -47,7 +49,7 @@ func TestObjectStorageStorerWorkWithRemoteRepository(t *testing.T) {
 	originalRepo := makeSourceRepository(t)
 
 	mockStorage := storage.NewMock()
-	s := NewObjectStorageStorer(mockStorage, "test")
+	s := NewObjectStorageStorer(mockStorage, "test", nil)
 	repo, err := git.Init(s, nil)
 	require.NoError(t, err)
 	_, err = repo.CreateRemote(&config.RemoteConfig{
@@ -60,6 +62,27 @@ func TestObjectStorageStorerWorkWithRemoteRepository(t *testing.T) {
 	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
 	cancel()
 	require.NoError(t, err)
+}
+
+func TestEncodedObjectJSON(t *testing.T) {
+	obj := &EncodedObject{
+		hash: plumbing.NewHash("51f74bc12156490c6a51a5f53b7bc2fb4aa1b310"),
+		typ:  plumbing.BlobObject,
+		r:    io.NopCloser(strings.NewReader("foobar blob object")),
+	}
+	buf, err := json.Marshal(obj)
+	require.NoError(t, err)
+
+	newObj := &EncodedObject{}
+	err = json.Unmarshal(buf, newObj)
+	require.NoError(t, err)
+	assert.Equal(t, "51f74bc12156490c6a51a5f53b7bc2fb4aa1b310", newObj.Hash().String())
+	assert.Equal(t, plumbing.BlobObject, newObj.Type())
+	r, err := newObj.Reader()
+	require.NoError(t, err)
+	content, err := io.ReadAll(r)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("foobar blob object"), content)
 }
 
 func makeSourceRepository(t *testing.T) *git.Repository {

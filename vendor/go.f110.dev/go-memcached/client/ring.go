@@ -68,6 +68,9 @@ Search:
 			lower = idx + 1
 		}
 	}
+	if upper < 0 {
+		upper = 0
+	}
 
 	return r.nodes[upper].Server
 }

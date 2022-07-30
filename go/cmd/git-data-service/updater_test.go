@@ -41,7 +41,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	_, err = sourceRepo.CreateTag("baz", masterRef.Hash(), nil)
 	require.NoError(t, err)
 
-	s := git.NewObjectStorageStorer(mockStorage, "test")
+	s := git.NewObjectStorageStorer(mockStorage, "test", nil)
 	repo, err := goGit.Open(s, nil)
 	require.NoError(t, err)
 
