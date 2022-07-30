@@ -627,10 +627,12 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 		if b.EnabledCache() {
 			buf, err := json.Marshal(obj)
 			if err == nil {
-				//log.Printf("objects/%s", h.String())
-				//log.Print(string(buf))
 				// No need to handle an error
-				_ = b.cachePool.Set(&client.Item{Key: fmt.Sprintf("objects/%s", h.String()), Value: buf})
+				_ = b.cachePool.Set(&client.Item{
+					Key:        fmt.Sprintf("objects/%s", h.String()),
+					Value:      buf,
+					Expiration: 60 * 60 * 24, // 1 day
+				})
 			}
 		}
 		return obj, nil
