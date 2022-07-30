@@ -16,6 +16,7 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"go.f110.dev/go-memcached/client"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -101,7 +102,21 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		conn, err := net.DialTimeout("tcp", ":9000", 100*time.Millisecond)
 		if time.Now().After(deadline) {
 			logger.Log.Info("Deadline exceeded")
-			break
+			return
+		}
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		conn.Close()
+		break
+	}
+	for {
+		conn, err := net.DialTimeout("tcp", ":11212", 100*time.Millisecond)
+		if time.Now().After(deadline) {
+			logger.Log.Info("Deadline exceeded")
+			return
 		}
 		if err != nil {
 			time.Sleep(100 * time.Millisecond)
@@ -128,11 +143,11 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 
 	opt := storage.NewS3OptionToExternal("http://127.0.0.1:9000", "US", "minioadmin", "minioadmin")
 	opt.PathStyle = true
-	client := storage.NewS3("git-data-service", opt)
+	storageClient := storage.NewS3("git-data-service", opt)
 
-	if !client.ExistBucket(ctx, "git-data-service") {
+	if !storageClient.ExistBucket(ctx, "git-data-service") {
 		logger.Log.Info("git-data-service bucket is not found. make the bucket")
-		if err := client.MakeBucket(ctx, "git-data-service"); err != nil {
+		if err := storageClient.MakeBucket(ctx, "git-data-service"); err != nil {
 			logger.Log.Error("Failed to make bucket", logger.Error(err))
 			return
 		}
@@ -149,7 +164,7 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 				return err
 			}
 			logger.Log.Debug("Put object", zap.String("name", repositoryName+"/"+name))
-			err = client.PutReader(context.Background(), repositoryName+"/"+name, file)
+			err = storageClient.PutReader(context.Background(), repositoryName+"/"+name, file)
 			if err != nil {
 				return err
 			}
@@ -162,7 +177,18 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		}
 	}
 
-	storer := git.NewObjectStorageStorer(client, repositoryName)
+	memcachedServer, err := client.NewServerWithMetaProtocol(context.Background(), "local", "tcp", "127.0.0.1:11212")
+	if err != nil {
+		logger.Log.Error("Failed to create Server", logger.Error(err))
+		return
+	}
+	cachePool, err := client.NewSinglePool(memcachedServer)
+	if err != nil {
+		logger.Log.Error("Failed to create cache pool", logger.Error(err))
+		return
+	}
+	_ = cachePool
+	storer := git.NewObjectStorageStorer(storageClient, repositoryName, cachePool)
 	repo, err := goGit.Open(storer, nil)
 	if err != nil {
 		logger.Log.Error("Failed to open the repository", logger.Error(err))
