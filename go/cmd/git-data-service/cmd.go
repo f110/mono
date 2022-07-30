@@ -9,6 +9,7 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/spf13/pflag"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -33,6 +34,7 @@ type gitDataServiceCommand struct {
 	StorageRegion          string
 	StorageAccessKey       string
 	StorageSecretAccessKey string
+	MemcachedEndpoint      string
 
 	Bucket string
 
@@ -78,10 +80,22 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	opt.PathStyle = true
 	storageClient := storage.NewS3(c.Bucket, opt)
 
+	var cachePool *client.SinglePool
+	if c.MemcachedEndpoint != "" {
+		cacheServer, err := client.NewServerWithMetaProtocol(c.Context(), "cache-1", "tcp", c.MemcachedEndpoint)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		cachePool, err = client.NewSinglePool(cacheServer)
+		if err != nil {
+			return fsm.Error(err)
+		}
+	}
+
 	repo := make(map[string]*goGit.Repository)
 	var repos []*goGit.Repository
 	for _, r := range c.repositories {
-		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, nil)
+		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, cachePool)
 
 		if ok, err := storer.Exist(); !ok && err == nil {
 			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
@@ -167,6 +181,7 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
+	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
 
 	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
 		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
