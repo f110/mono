@@ -12,7 +12,7 @@ import (
 
 func TestParseMarkdown(t *testing.T) {
 	service := NewDocSearchService(&mockGitClient{})
-	err := service.scanRepository(context.Background(), &git.Repository{Name: "test", DefaultBranch: "master"})
+	err := service.scanRepository(context.Background(), &git.Repository{Name: "test", DefaultBranch: "master"}, 1)
 	require.NoError(t, err)
 	t.Log(service.pageLink["test"]["README.md"].LinkOut)
 }
