@@ -23,6 +23,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/pkg/grpcutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -335,7 +336,10 @@ func (c *docSearchService) Run(ctx context.Context) {
 		break
 	}
 
-	grpcConn, err := grpc.Dial("127.0.0.1:9010", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.Dial("127.0.0.1:9010",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithLogging(),
+	)
 	if err != nil {
 		logger.Log.Error("Failed to dial", logger.Error(err))
 		return
@@ -344,7 +348,7 @@ func (c *docSearchService) Run(ctx context.Context) {
 
 	service := docutil.NewDocSearchService(gitDataClient)
 	initCtx, stop := context.WithTimeout(ctx, 1*time.Minute)
-	if err := service.Initialize(initCtx); err != nil {
+	if err := service.Initialize(initCtx, 1); err != nil {
 		stop()
 		logger.Log.Error("Failed to initialize doc-search-service", logger.Error(err))
 		return

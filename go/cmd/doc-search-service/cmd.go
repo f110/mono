@@ -24,6 +24,7 @@ type docSearchService struct {
 	Listen         string
 	GitDataService string
 	Insecure       bool
+	Workers        int
 
 	gitData git.GitDataClient
 }
@@ -69,7 +70,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
-	if err := service.Initialize(c.Context()); err != nil {
+	if err := service.Initialize(c.Context(), 1); err != nil {
 		return fsm.Error(err)
 	}
 
@@ -105,6 +106,7 @@ func (c *docSearchService) shutDown() (fsm.State, error) {
 func (c *docSearchService) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8057", "Listen addr")
 	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
+	fs.IntVar(&c.Workers, "workers", 1, "The number of workers to indexing of the repository")
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
 
 }
