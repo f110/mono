@@ -2,6 +2,7 @@ package grpcutil
 
 import (
 	"context"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -21,6 +22,7 @@ func WithLogging() grpc.DialOption {
 }
 
 func Logging(l *zap.Logger, ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	l.Debug(method, zap.Any("req", req))
+	t1 := time.Now()
+	defer l.Debug(method, zap.Any("req", req), zap.Duration("elapsed", time.Since(t1)))
 	return invoker(ctx, method, req, reply, cc, opts...)
 }

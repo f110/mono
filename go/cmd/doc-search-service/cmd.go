@@ -14,6 +14,7 @@ import (
 	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/pkg/grpcutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -51,7 +52,7 @@ func newDocSearchService() *docSearchService {
 }
 
 func (c *docSearchService) init() (fsm.State, error) {
-	var opts []grpc.DialOption
+	var opts = []grpc.DialOption{grpcutil.WithLogging()}
 	if c.Insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
