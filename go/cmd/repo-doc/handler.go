@@ -161,14 +161,19 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 }
 
 func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
-	if h.docSearch != nil {
-		pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
-		if err != nil {
-			logger.Log.Error("Failed to get page link", logger.Error(err))
-			http.Error(w, "Failed to get page link", http.StatusInternalServerError)
-			return
+	var references, cited []*docutil.PageLink
+	switch filepath.Ext(blobPath) {
+	case ".md":
+		if h.docSearch != nil {
+			pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
+			if err != nil {
+				logger.Log.Error("Failed to get page link", logger.Error(err))
+				http.Error(w, "Failed to get page link", http.StatusInternalServerError)
+				return
+			}
+			references = pageLink.Out
+			cited = pageLink.In
 		}
-		_ = pageLink
 	}
 
 	var doc *document
@@ -198,22 +203,30 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		Title               string
 		PageTitle           string
 		EnabledSearch       bool
+		Repo                string
+		Ref                 string
 		Content             template.HTML
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
 		TableOfContent      []*templateToC
 		RawURL              string
 		EditURL             string
+		References          []*docutil.PageLink
+		Cited               []*docutil.PageLink
 	}{
 		Title:               h.title,
 		PageTitle:           doc.Title,
 		EnabledSearch:       h.enabledSearch,
+		Repo:                repo,
+		Ref:                 rawRef,
 		Content:             template.HTML(doc.Content),
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
 		TableOfContent:      toTemplateToC(h.toCMaxDepth, doc.TableOfContents),
 		RawURL:              file.RawUrl,
 		EditURL:             file.EditUrl,
+		References:          references,
+		Cited:               cited,
 	})
 	if err != nil {
 		logger.Log.Error("Failed to render page", logger.Error(err))

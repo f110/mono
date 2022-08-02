@@ -72,9 +72,49 @@
           {{ end -}}
           {{ end -}}
         </ol>
+        {{ if .References -}}
+        <h4><a href="#page-links">Links</a></h4>
+        {{ end -}}
+        {{ if .Cited -}}
+        <h4><a href="#page-cited">Cited by {{ len .Cited }}</a></h4>
+        {{ end -}}
       </div>
     </div>
   </div>
+
+  {{ if or .References .Cited -}}
+  <div class="row">
+    <div class="eleven wide column">
+    {{ if .References -}}
+    <h2 id="page-links">Links</h2>
+    <ul class="ui list">
+      {{ range .References -}}
+      <li>
+      {{ if eq .Type.String "LINK_TYPE_EXTERNAL" -}}
+      <a href="{{ .Destination }}" target="_blank">{{ .Destination }}</a>
+      {{ end -}}
+      {{ if eq .Type.String "LINK_TYPE_IN_REPOSITORY" -}}
+      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Destination }}">{{ .Destination }}</a>
+      {{ end -}}
+      </li>
+      {{ end -}}
+    </ul>
+    {{ end -}}
+    {{ if .Cited -}}
+    <h2 id="page-cited">Cited</h2>
+    <ul class="ui list">
+      {{ range .Cited -}}
+      <li>
+      {{ if eq .Type.String "LINK_TYPE_IN_REPOSITORY" -}}
+      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Source }}">{{ .Source }}</a>
+      {{ end -}}
+      </li>
+      {{ end -}}
+    </ul>
+    {{ end -}}
+    </div>
+  </div>
+  {{ end -}}
 </div>
 <script>
 $('.pagemenu')

@@ -3,8 +3,8 @@ package docutil
 import (
 	"context"
 	"errors"
-	"log"
 	"net/url"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -90,16 +90,22 @@ func (d *DocSearchService) interpolateLinks() {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY:
 					if _, ok := pageLinks[link.Destination]; !ok {
-						log.Print(link.Destination)
+						//log.Print(link.Destination)
 					} else {
-						pageLinks[link.Destination].LinkIn = append(pageLinks[link.Destination].LinkIn, &PageLink{
+						dest := link.Destination
+						if dest[0] == '/' {
+							dest = dest[1:]
+						} else {
+							dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
+						}
+						pageLinks[dest].LinkIn = append(pageLinks[dest].LinkIn, &PageLink{
 							Type:   LinkType_LINK_TYPE_IN_REPOSITORY,
 							Source: sourcePath,
 						})
 					}
 				case LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
 					if _, ok := d.pageLink[link.Repository][link.Destination]; !ok {
-						log.Print(link.Destination)
+						//log.Print(link.Destination)
 					} else {
 						destPage := d.pageLink[link.Repository][link.Destination]
 						destPage.LinkIn = append(destPage.LinkIn, &PageLink{
