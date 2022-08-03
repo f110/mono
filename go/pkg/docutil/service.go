@@ -230,6 +230,7 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 	page := &page{}
 
 	var linkOut []*PageLink
+	seen := make(map[seenKey]struct{})
 	err := ast.Walk(rootNode, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -246,10 +247,14 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 				if destination[0] == '#' {
 					return ast.WalkContinue, nil
 				}
-				linkOut = append(linkOut, &PageLink{
-					Type:        LinkType_LINK_TYPE_IN_REPOSITORY,
-					Destination: destination,
-				})
+
+				if _, ok := seen[seenKey{LinkType_LINK_TYPE_IN_REPOSITORY, destination, ""}]; !ok {
+					seen[seenKey{LinkType_LINK_TYPE_IN_REPOSITORY, destination, ""}] = struct{}{}
+					linkOut = append(linkOut, &PageLink{
+						Type:        LinkType_LINK_TYPE_IN_REPOSITORY,
+						Destination: destination,
+					})
+				}
 			} else {
 				destination := string(v.Destination)
 				linkType := LinkType_LINK_TYPE_EXTERNAL
@@ -268,11 +273,14 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 					}
 				}
 
-				linkOut = append(linkOut, &PageLink{
-					Type:        linkType,
-					Destination: destination,
-					Repository:  repoName,
-				})
+				if _, ok := seen[seenKey{linkType, destination, repoName}]; !ok {
+					seen[seenKey{linkType, destination, repoName}] = struct{}{}
+					linkOut = append(linkOut, &PageLink{
+						Type:        linkType,
+						Destination: destination,
+						Repository:  repoName,
+					})
+				}
 			}
 		case *ast.AutoLink:
 			destination := string(v.URL(raw))
@@ -286,25 +294,21 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 				}
 			}
 
-			linkOut = append(linkOut, &PageLink{
-				Type:        linkType,
-				Destination: destination,
-				Repository:  repoName,
-			})
+			if _, ok := seen[seenKey{linkType, destination, repoName}]; !ok {
+				seen[seenKey{linkType, destination, repoName}] = struct{}{}
+				linkOut = append(linkOut, &PageLink{
+					Type:        linkType,
+					Destination: destination,
+					Repository:  repoName,
+				})
+			}
 		}
 		return ast.WalkContinue, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	seen := make(map[seenKey]struct{})
-	for _, v := range linkOut {
-		seen[seenKey{v.Type, v.Destination, v.Repository}] = struct{}{}
-	}
-	for v := range seen {
-		page.LinkOut = append(page.LinkOut, &PageLink{Type: v.Type, Destination: v.Destination, Repository: v.Repository})
-	}
+	page.LinkOut = linkOut
 
 	// Find document title
 	child := rootNode.FirstChild()
