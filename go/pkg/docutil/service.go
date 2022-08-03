@@ -23,11 +23,12 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
-// repositoryPageLinks represents links that had the page.
+// pages represents links that had the page.
 // The key of map is a file path.
-type repositoryPageLinks map[string]*page
+type pages map[string]*page
 
 type page struct {
+	Title   string
 	LinkIn  []*PageLink
 	LinkOut []*PageLink
 }
@@ -37,8 +38,8 @@ type DocSearchService struct {
 	markdownParser parser.Parser
 
 	repositories []*git.Repository
-	// pageLink is a cache data. The key of map is a name of repository.
-	pageLink map[string]repositoryPageLinks
+	// data is a cache data. The key of map is a name of the repository.
+	data map[string]pages
 }
 
 func NewDocSearchService(client git.GitDataClient) *DocSearchService {
@@ -48,7 +49,7 @@ func NewDocSearchService(client git.GitDataClient) *DocSearchService {
 		),
 	)
 	markdownParser := g.Parser()
-	return &DocSearchService{client: client, markdownParser: markdownParser, pageLink: make(map[string]repositoryPageLinks)}
+	return &DocSearchService{client: client, markdownParser: markdownParser, data: make(map[string]pages)}
 }
 
 var _ DocSearchServer = &DocSearchService{}
@@ -63,7 +64,7 @@ func (d *DocSearchService) GetPage(ctx context.Context, req *RequestGetPage) (*R
 }
 
 func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*ResponsePageLink, error) {
-	links, ok := d.pageLink[req.Repo]
+	links, ok := d.data[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
 	}
@@ -84,12 +85,12 @@ func (d *DocSearchService) Initialize(ctx context.Context, workers int) error {
 }
 
 func (d *DocSearchService) interpolateLinks() {
-	for sourceRepoName, pageLinks := range d.pageLink {
-		for sourcePath, page := range pageLinks {
-			for _, link := range page.LinkOut {
+	for sourceRepoName, pages := range d.data {
+		for sourcePath, sourcePage := range pages {
+			for _, link := range sourcePage.LinkOut {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY:
-					if _, ok := pageLinks[link.Destination]; !ok {
+					if _, ok := pages[link.Destination]; !ok {
 						//log.Print(link.Destination)
 					} else {
 						dest := link.Destination
@@ -98,20 +99,22 @@ func (d *DocSearchService) interpolateLinks() {
 						} else {
 							dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
 						}
-						pageLinks[dest].LinkIn = append(pageLinks[dest].LinkIn, &PageLink{
+						pages[dest].LinkIn = append(pages[dest].LinkIn, &PageLink{
 							Type:   LinkType_LINK_TYPE_IN_REPOSITORY,
 							Source: sourcePath,
+							Title:  sourcePage.Title,
 						})
 					}
 				case LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
-					if _, ok := d.pageLink[link.Repository][link.Destination]; !ok {
+					if _, ok := d.data[link.Repository][link.Destination]; !ok {
 						//log.Print(link.Destination)
 					} else {
-						destPage := d.pageLink[link.Repository][link.Destination]
+						destPage := d.data[link.Repository][link.Destination]
 						destPage.LinkIn = append(destPage.LinkIn, &PageLink{
 							Type:       LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY,
 							Source:     sourcePath,
 							Repository: sourceRepoName,
+							Title:      sourcePage.Title,
 						})
 					}
 				}
@@ -142,8 +145,8 @@ func (d *DocSearchService) scanRepositories(ctx context.Context, workers int) er
 
 func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Repository, workers int) error {
 	var mu sync.Mutex
-	pageLinks := make(repositoryPageLinks)
-	d.pageLink[repo.Name] = pageLinks
+	pageLinks := make(pages)
+	d.data[repo.Name] = pageLinks
 
 	ch := make(chan *git.TreeEntry, workers)
 	var wg sync.WaitGroup
@@ -301,6 +304,20 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 	}
 	for v := range seen {
 		page.LinkOut = append(page.LinkOut, &PageLink{Type: v.Type, Destination: v.Destination, Repository: v.Repository})
+	}
+
+	// Find document title
+	child := rootNode.FirstChild()
+	for child != nil {
+		if v, ok := child.(*ast.Heading); !ok {
+			child = child.NextSibling()
+			continue
+		} else {
+			if v.Level == 1 {
+				page.Title = string(v.Text(raw))
+			}
+			break
+		}
 	}
 	return page, nil
 }

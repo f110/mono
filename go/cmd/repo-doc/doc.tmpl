@@ -91,10 +91,10 @@
       {{ range .References -}}
       <li>
       {{ if eq .Type.String "LINK_TYPE_EXTERNAL" -}}
-      <a href="{{ .Destination }}" target="_blank">{{ .Destination }}</a>
+      <a href="{{ .Destination }}" target="_blank">{{ if .Title }}{{ .Title }}{{ else }}{{ .Destination }}{{ end }}</a>
       {{ end -}}
       {{ if eq .Type.String "LINK_TYPE_IN_REPOSITORY" -}}
-      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Destination }}">{{ .Destination }}</a>
+      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Destination }}">{{ if .Title }}{{ .Title }}{{ else }}{{ .Destination }}{{ end }}</a>
       {{ end -}}
       </li>
       {{ end -}}
@@ -106,7 +106,7 @@
       {{ range .Cited -}}
       <li>
       {{ if eq .Type.String "LINK_TYPE_IN_REPOSITORY" -}}
-      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Source }}">{{ .Source }}</a>
+      <a href="/{{ $.Repo }}/{{ $.Ref }}/-/{{ .Source }}">{{ if .Title }}{{ .Title }}{{ else }}{{ .Source }}{{ end }}</a>
       {{ end -}}
       </li>
       {{ end -}}

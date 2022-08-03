@@ -34,6 +34,7 @@ message PageLink {
   string   source      = 2;
   string   destination = 3;
   string   repository  = 4;
+  string   title       = 5;
 }
 
 message RequestPageLink {
