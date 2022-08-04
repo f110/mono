@@ -80,11 +80,12 @@ func (d *DocSearchService) Initialize(ctx context.Context, workers int) error {
 		return err
 	}
 
-	d.interpolateLinks()
+	d.interpolateCitedLinks()
+	d.interpolateLinkTitle()
 	return nil
 }
 
-func (d *DocSearchService) interpolateLinks() {
+func (d *DocSearchService) interpolateCitedLinks() {
 	for sourceRepoName, pages := range d.data {
 		for sourcePath, sourcePage := range pages {
 			for _, link := range sourcePage.LinkOut {
@@ -116,6 +117,41 @@ func (d *DocSearchService) interpolateLinks() {
 							Repository: sourceRepoName,
 							Title:      sourcePage.Title,
 						})
+					}
+				}
+			}
+		}
+	}
+}
+
+func (d *DocSearchService) interpolateLinkTitle() {
+	for sourceRepoName, pages := range d.data {
+		for sourcePath, sourcePage := range pages {
+			for _, link := range sourcePage.LinkOut {
+				switch link.Type {
+				case LinkType_LINK_TYPE_IN_REPOSITORY, LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
+				default:
+					continue
+				}
+
+				repoName := sourceRepoName
+				if link.Type == LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY {
+					repoName = link.Repository
+				}
+
+				dest := link.Destination
+				if strings.ContainsRune(dest, '#') {
+					dest = dest[:strings.IndexRune(dest, '#')]
+				}
+				if dest[0] == '/' {
+					dest = dest[1:]
+				} else {
+					dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
+				}
+				if v, ok := d.data[repoName][dest]; ok {
+					link.Title = v.Title
+					if strings.ContainsRune(link.Destination, '#') {
+						link.Title += link.Destination[strings.IndexRune(link.Destination, '#'):]
 					}
 				}
 			}
