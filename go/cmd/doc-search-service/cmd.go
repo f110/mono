@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/spf13/pflag"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -22,10 +23,11 @@ type docSearchService struct {
 	*fsm.FSM
 	s *grpc.Server
 
-	Listen         string
-	GitDataService string
-	Insecure       bool
-	Workers        int
+	Listen            string
+	GitDataService    string
+	Insecure          bool
+	Workers           int
+	MemcachedEndpoint string
 
 	gitData git.GitDataClient
 }
@@ -62,8 +64,20 @@ func (c *docSearchService) init() (fsm.State, error) {
 	}
 	c.gitData = git.NewGitDataClient(conn)
 
+	var cachePool *client.SinglePool
+	if c.MemcachedEndpoint != "" {
+		cacheServer, err := client.NewServerWithMetaProtocol(c.Context(), "cache-1", "tcp", c.MemcachedEndpoint)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		cachePool, err = client.NewSinglePool(cacheServer)
+		if err != nil {
+			return fsm.Error(err)
+		}
+	}
+
 	s := grpc.NewServer()
-	service := docutil.NewDocSearchService(c.gitData)
+	service := docutil.NewDocSearchService(c.gitData, cachePool)
 	docutil.RegisterDocSearchServer(s, service)
 	healthSvc := health.NewServer()
 	healthSvc.SetServingStatus("doc-search", healthpb.HealthCheckResponse_SERVING)
@@ -109,5 +123,5 @@ func (c *docSearchService) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
 	fs.IntVar(&c.Workers, "workers", 1, "The number of workers to indexing of the repository")
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
-
+	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
 }

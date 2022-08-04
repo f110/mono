@@ -1,8 +1,11 @@
 package docutil
 
 import (
+	"container/list"
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -10,14 +13,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"gopkg.in/src-d/go-git.v4/plumbing"
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -36,20 +42,26 @@ type page struct {
 type DocSearchService struct {
 	client         git.GitDataClient
 	markdownParser parser.Parser
+	cachePool      *client.SinglePool
 
 	repositories []*git.Repository
 	// data is a cache data. The key of map is a name of the repository.
 	data map[string]pages
 }
 
-func NewDocSearchService(client git.GitDataClient) *DocSearchService {
+func NewDocSearchService(client git.GitDataClient, cachePool *client.SinglePool) *DocSearchService {
 	g := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
 		),
 	)
 	markdownParser := g.Parser()
-	return &DocSearchService{client: client, markdownParser: markdownParser, data: make(map[string]pages)}
+	return &DocSearchService{
+		client:         client,
+		markdownParser: markdownParser,
+		cachePool:      cachePool,
+		data:           make(map[string]pages),
+	}
 }
 
 var _ DocSearchServer = &DocSearchService{}
@@ -81,7 +93,7 @@ func (d *DocSearchService) Initialize(ctx context.Context, workers int) error {
 	}
 
 	d.interpolateCitedLinks()
-	d.interpolateLinkTitle()
+	d.interpolateLinkTitle(ctx)
 	return nil
 }
 
@@ -124,38 +136,54 @@ func (d *DocSearchService) interpolateCitedLinks() {
 	}
 }
 
-func (d *DocSearchService) interpolateLinkTitle() {
+func (d *DocSearchService) interpolateLinkTitle(ctx context.Context) {
 	for sourceRepoName, pages := range d.data {
 		for sourcePath, sourcePage := range pages {
 			for _, link := range sourcePage.LinkOut {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY, LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
+					d.interpolateLinkTitleUnderRepository(sourceRepoName, link, sourcePath)
+				case LinkType_LINK_TYPE_EXTERNAL:
+					d.interpolateExternalLinkTitle(ctx, link)
 				default:
 					continue
 				}
-
-				repoName := sourceRepoName
-				if link.Type == LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY {
-					repoName = link.Repository
-				}
-
-				dest := link.Destination
-				if strings.ContainsRune(dest, '#') {
-					dest = dest[:strings.IndexRune(dest, '#')]
-				}
-				if dest[0] == '/' {
-					dest = dest[1:]
-				} else {
-					dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
-				}
-				if v, ok := d.data[repoName][dest]; ok {
-					link.Title = v.Title
-					if strings.ContainsRune(link.Destination, '#') {
-						link.Title += link.Destination[strings.IndexRune(link.Destination, '#'):]
-					}
-				}
 			}
 		}
+	}
+}
+
+func (d *DocSearchService) interpolateLinkTitleUnderRepository(repoName string, link *PageLink, sourcePath string) {
+	if link.Type == LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY {
+		repoName = link.Repository
+	}
+
+	dest := link.Destination
+	if strings.ContainsRune(dest, '#') {
+		dest = dest[:strings.IndexRune(dest, '#')]
+	}
+	if dest[0] == '/' {
+		dest = dest[1:]
+	} else {
+		dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
+	}
+	if v, ok := d.data[repoName][dest]; ok {
+		link.Title = v.Title
+		if strings.ContainsRune(link.Destination, '#') {
+			link.Title += link.Destination[strings.IndexRune(link.Destination, '#'):]
+		}
+	}
+}
+
+func (d *DocSearchService) interpolateExternalLinkTitle(ctx context.Context, link *PageLink) {
+	if link.Type != LinkType_LINK_TYPE_EXTERNAL {
+		return
+	}
+	title, err := d.fetchExternalPageTitle(ctx, link.Destination)
+	if err == nil {
+		link.Title = title
+	} else {
+		logger.Log.Info("Failed to fetch page title", logger.Error(err), zap.String("url", link.Destination))
 	}
 }
 
@@ -366,4 +394,81 @@ type seenKey struct {
 	Type        LinkType
 	Destination string
 	Repository  string
+}
+
+func (d *DocSearchService) EnabledCache() bool {
+	return d.cachePool != nil
+}
+
+func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string) (string, error) {
+	if !d.EnabledCache() {
+		// When do not use the cache, fetching remote page title is disable because it bothers the remote host.
+		return "", nil
+	}
+
+	if i := strings.IndexRune(u, '#'); i > 0 {
+		u = u[:i]
+	}
+
+	cacheItem, err := d.cachePool.Get(fmt.Sprintf("title/%s", u))
+	if err == nil {
+		if string(cacheItem.Value) == "" {
+			return "", errors.New("title is not found")
+		}
+		return string(cacheItem.Value), nil
+	}
+
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, u, nil)
+	if err != nil {
+		cancel()
+		return "", xerrors.WithMessage(err, "failed to create request")
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		cancel()
+		return "", xerrors.WithMessage(err, "failed to send request")
+	}
+
+	node, err := html.Parse(res.Body)
+	if err != nil {
+		cancel()
+		return "", xerrors.WithMessage(err, "failed to parse response body")
+	}
+	// We must cancel the context after reading response body.
+	cancel()
+
+	// Find title
+	var title string
+	stack := list.New()
+	stack.PushBack(node)
+	for stack.Len() != 0 {
+		e := stack.Back()
+		stack.Remove(e)
+
+		node := e.Value.(*html.Node)
+		if node.DataAtom == atom.Title {
+			title = node.FirstChild.Data
+			break
+		}
+
+		for c := node.FirstChild; c != nil; c = c.NextSibling {
+			stack.PushBack(c)
+		}
+	}
+	logger.Log.Debug("Fetch page title", zap.String("title", title), zap.String("url", u))
+	// Negative cache
+	err = d.cachePool.Set(&client.Item{
+		Key:        fmt.Sprintf("title/%s", u),
+		Value:      []byte(title),
+		Expiration: 7 * 24 * 60 * 60, // 1 week
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if title == "" {
+		return "", errors.New("title is not found")
+	}
+	return title, nil
 }

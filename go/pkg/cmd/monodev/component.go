@@ -188,7 +188,6 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		logger.Log.Error("Failed to create cache pool", logger.Error(err))
 		return
 	}
-	_ = cachePool
 	storer := git.NewObjectStorageStorer(storageClient, repositoryName, cachePool)
 	repo, err := goGit.Open(storer, nil)
 	if err != nil {
@@ -335,6 +334,20 @@ func (c *docSearchService) Run(ctx context.Context) {
 		conn.Close()
 		break
 	}
+	for {
+		conn, err := net.DialTimeout("tcp", ":11212", 100*time.Millisecond)
+		if time.Now().After(deadline) {
+			logger.Log.Info("Deadline exceeded")
+			return
+		}
+		if err != nil {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		conn.Close()
+		break
+	}
 
 	grpcConn, err := grpc.Dial("127.0.0.1:9010",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -346,7 +359,17 @@ func (c *docSearchService) Run(ctx context.Context) {
 	}
 	gitDataClient := git.NewGitDataClient(grpcConn)
 
-	service := docutil.NewDocSearchService(gitDataClient)
+	memcachedServer, err := client.NewServerWithMetaProtocol(context.Background(), "local", "tcp", "127.0.0.1:11212")
+	if err != nil {
+		logger.Log.Error("Failed to create Server", logger.Error(err))
+		return
+	}
+	cachePool, err := client.NewSinglePool(memcachedServer)
+	if err != nil {
+		logger.Log.Error("Failed to create cache pool", logger.Error(err))
+		return
+	}
+	service := docutil.NewDocSearchService(gitDataClient, cachePool)
 	initCtx, stop := context.WithTimeout(ctx, 1*time.Minute)
 	if err := service.Initialize(initCtx, 1); err != nil {
 		stop()
