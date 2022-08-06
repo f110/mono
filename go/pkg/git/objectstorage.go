@@ -22,6 +22,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/format/objfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	gitStorage "github.com/go-git/go-git/v5/storage"
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
@@ -37,7 +38,7 @@ type ObjectStorageInterface interface {
 	List(ctx context.Context, prefix string) ([]*storage.Object, error)
 }
 
-func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, url, prefix string) (*git.Repository, error) {
+func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, url, prefix string, auth *http.BasicAuth) (*git.Repository, error) {
 	tmpDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return nil, err
@@ -49,6 +50,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
 		URL:        url,
 		NoCheckout: true,
+		Auth:       auth,
 	})
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to clone the repository")

@@ -22,10 +22,12 @@ type GitHubClientFactory struct {
 	GraphQL       *githubv4.Client
 	TokenProvider *TokenProvider
 
-	Name                  string
-	AppID                 int64
-	InstallationID        int64
-	PrivateKeyFile        string
+	Name           string
+	AppID          int64
+	InstallationID int64
+	PrivateKeyFile string
+	// Token is the personal access token. Not an app token or an access token.
+	// An access token will provided via TokenProvider.
 	Token                 string
 	GitHubAPIEndpoint     string
 	GitHubGraphQLEndpoint string

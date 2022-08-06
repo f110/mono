@@ -12,10 +12,12 @@ go_library(
     deps = [
         "//go/pkg/fsm",
         "//go/pkg/git",
+        "//go/pkg/githubutil",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
+        "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/go-memcached/client",

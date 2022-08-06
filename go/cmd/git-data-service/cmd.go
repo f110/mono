@@ -8,6 +8,7 @@ import (
 	"time"
 
 	goGit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
@@ -18,6 +19,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -29,6 +31,7 @@ type gitDataServiceCommand struct {
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
+	GitHubClient          *githubutil.GitHubClientFactory
 
 	StorageEndpoint        string
 	StorageRegion          string
@@ -60,7 +63,7 @@ const (
 )
 
 func newGitDataServiceCommand() *gitDataServiceCommand {
-	c := &gitDataServiceCommand{}
+	c := &gitDataServiceCommand{GitHubClient: githubutil.NewGitHubClientFactory("", false)}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:         c.init,
@@ -76,6 +79,10 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 }
 
 func (c *gitDataServiceCommand) init() (fsm.State, error) {
+	if err := c.GitHubClient.Init(); err != nil {
+		return fsm.Error(err)
+	}
+
 	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
 	opt.PathStyle = true
 	storageClient := storage.NewS3(c.Bucket, opt)
@@ -99,8 +106,16 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 
 		if ok, err := storer.Exist(); !ok && err == nil {
 			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
+
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
-			if _, err := git.InitObjectStorageRepository(ctx, storageClient, r.URL, r.Prefix); err != nil {
+			var auth *http.BasicAuth
+			if v, err := c.GitHubClient.TokenProvider.Token(ctx); err == nil {
+				auth = &http.BasicAuth{
+					Username: "octocat",
+					Password: v,
+				}
+			}
+			if _, err := git.InitObjectStorageRepository(ctx, storageClient, r.URL, r.Prefix, auth); err != nil {
 				cancel()
 				return fsm.Error(err)
 			}
