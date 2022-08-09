@@ -27,7 +27,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	sourceRepo := makeSourceRepository(t)
 	mockStorage := storage.NewMock()
 	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
-	_, err := git.InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test")
+	_, err := git.InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
 	require.NoError(t, err)
 
 	updater, err := newRepositoryUpdater(nil, 2*time.Minute, time.Minute, 1)
