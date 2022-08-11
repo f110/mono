@@ -243,7 +243,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 			Mode: e.Mode.String(),
 		})
 	}
-	return &ResponseGetTree{Sha: req.Sha, Tree: treeEntry}, nil
+	return &ResponseGetTree{Sha: tree.Hash.String(), Tree: treeEntry}, nil
 }
 
 func (g *gitDataService) GetBlob(_ context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
