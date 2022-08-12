@@ -277,10 +277,17 @@ func (d *DocSearchService) getExternalLinkTitleWorker(ctx context.Context, ch ch
 			titleCache.Set(u, title)
 			remote++
 		} else {
+			switch err.Error() {
+			case "page not found", "title is not found":
+				titleCache.Set(u, "")
+				remote++
+			default:
+				failed++
+			}
+
 			if !errors.Is(err, context.Canceled) {
 				logger.Log.Info("Failed to fetch page title", logger.Error(err), zap.String("url", link.Destination))
 			}
-			failed++
 		}
 	}
 	logger.Log.Debug("Fetched external link title",
@@ -535,7 +542,12 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 		cancel()
 		return "", xerrors.WithMessage(err, "failed to send request")
 	}
-	if res.StatusCode != http.StatusOK {
+	switch res.StatusCode {
+	case http.StatusOK:
+	case http.StatusNotFound:
+		cancel()
+		return "", xerrors.New("page not found")
+	default:
 		cancel()
 		logger.Log.Warn("The web page doesn't returns status 200", zap.Int("status", res.StatusCode), zap.String("url", u))
 		return "", xerrors.New("failed to fetch the url")
