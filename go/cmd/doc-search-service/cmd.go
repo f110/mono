@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/spf13/pflag"
-	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -17,17 +16,23 @@ import (
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/grpcutil"
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/storage"
 )
 
 type docSearchService struct {
 	*fsm.FSM
 	s *grpc.Server
 
-	Listen            string
-	GitDataService    string
-	Insecure          bool
-	Workers           int
-	MemcachedEndpoint string
+	Listen                 string
+	GitDataService         string
+	Insecure               bool
+	Workers                int
+	MaxConns               int
+	Bucket                 string
+	StorageEndpoint        string
+	StorageRegion          string
+	StorageAccessKey       string
+	StorageSecretAccessKey string
 
 	gitData git.GitDataClient
 }
@@ -63,21 +68,12 @@ func (c *docSearchService) init() (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	c.gitData = git.NewGitDataClient(conn)
-
-	var cachePool *client.SinglePool
-	if c.MemcachedEndpoint != "" {
-		cacheServer, err := client.NewServerWithMetaProtocol(c.Context(), "cache-1", "tcp", c.MemcachedEndpoint)
-		if err != nil {
-			return fsm.Error(err)
-		}
-		cachePool, err = client.NewSinglePool(cacheServer)
-		if err != nil {
-			return fsm.Error(err)
-		}
-	}
+	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
+	opt.PathStyle = true
+	storageClient := storage.NewS3(c.Bucket, opt)
 
 	s := grpc.NewServer()
-	service := docutil.NewDocSearchService(c.gitData, cachePool)
+	service := docutil.NewDocSearchService(c.gitData, storageClient)
 	docutil.RegisterDocSearchServer(s, service)
 	healthSvc := health.NewServer()
 	healthSvc.SetServingStatus("doc-search", healthpb.HealthCheckResponse_SERVING)
@@ -85,7 +81,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
-	if err := service.Initialize(c.Context(), c.Workers); err != nil {
+	if err := service.Initialize(c.Context(), c.Workers, c.MaxConns); err != nil {
 		return fsm.Error(err)
 	}
 
@@ -122,6 +118,11 @@ func (c *docSearchService) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Listen, "listen", ":8057", "Listen addr")
 	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
 	fs.IntVar(&c.Workers, "workers", 1, "The number of workers to fetching page title")
+	fs.IntVar(&c.MaxConns, "max-conns", 1, "The total number of connections to fetch the external page title")
 	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
-	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
+	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
+	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
+	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
+	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
+	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
 }

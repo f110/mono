@@ -1,10 +1,13 @@
 package docutil
 
 import (
+	"bytes"
 	"container/list"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -19,7 +22,6 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
-	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/net/html"
@@ -27,11 +29,25 @@ import (
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/storage"
 )
+
+type ObjectStorageInterface interface {
+	PutReader(ctx context.Context, name string, data io.Reader) error
+	Delete(ctx context.Context, name string) error
+	Get(ctx context.Context, name string) (io.ReadCloser, error)
+	List(ctx context.Context, prefix string) ([]*storage.Object, error)
+}
 
 // pages represents links that had the page.
 // The key of map is a file path.
 type pages map[string]*page
+
+type docSet struct {
+	Pages      pages
+	Repository *git.Repository
+	Ref        plumbing.Hash
+}
 
 type page struct {
 	Title   string
@@ -41,26 +57,31 @@ type page struct {
 
 type DocSearchService struct {
 	client         git.GitDataClient
+	storage        ObjectStorageInterface
 	markdownParser parser.Parser
-	cachePool      *client.SinglePool
+	httpClient     *http.Client
 
 	repositories []*git.Repository
 	// data is a cache data. The key of map is a name of the repository.
-	data map[string]pages
+	data map[string]*docSet
 }
 
-func NewDocSearchService(client git.GitDataClient, cachePool *client.SinglePool) *DocSearchService {
+func NewDocSearchService(client git.GitDataClient, b ObjectStorageInterface) *DocSearchService {
 	g := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
 		),
 	)
 	markdownParser := g.Parser()
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.MaxConnsPerHost = 100
+
 	return &DocSearchService{
 		client:         client,
+		storage:        b,
 		markdownParser: markdownParser,
-		cachePool:      cachePool,
-		data:           make(map[string]pages),
+		data:           make(map[string]*docSet),
+		httpClient:     &http.Client{Transport: transport},
 	}
 }
 
@@ -76,34 +97,34 @@ func (d *DocSearchService) GetPage(ctx context.Context, req *RequestGetPage) (*R
 }
 
 func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*ResponsePageLink, error) {
-	links, ok := d.data[req.Repo]
+	docs, ok := d.data[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
 	}
-	page, ok := links[req.Sha]
+	page, ok := docs.Pages[req.Sha]
 	if !ok {
 		return nil, errors.New("path is not found")
 	}
 	return &ResponsePageLink{In: page.LinkIn, Out: page.LinkOut}, nil
 }
 
-func (d *DocSearchService) Initialize(ctx context.Context, workers int) error {
+func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int) error {
 	if err := d.scanRepositories(ctx, workers); err != nil {
 		return err
 	}
 
 	d.interpolateCitedLinks()
-	d.interpolateLinkTitle(ctx)
+	d.interpolateLinkTitle(ctx, maxConns)
 	return nil
 }
 
 func (d *DocSearchService) interpolateCitedLinks() {
-	for sourceRepoName, pages := range d.data {
-		for sourcePath, sourcePage := range pages {
+	for sourceRepoName, docs := range d.data {
+		for sourcePath, sourcePage := range docs.Pages {
 			for _, link := range sourcePage.LinkOut {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY:
-					if _, ok := pages[link.Destination]; !ok {
+					if _, ok := docs.Pages[link.Destination]; !ok {
 						//log.Print(link.Destination)
 					} else {
 						dest := link.Destination
@@ -112,17 +133,17 @@ func (d *DocSearchService) interpolateCitedLinks() {
 						} else {
 							dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
 						}
-						pages[dest].LinkIn = append(pages[dest].LinkIn, &PageLink{
+						docs.Pages[dest].LinkIn = append(docs.Pages[dest].LinkIn, &PageLink{
 							Type:   LinkType_LINK_TYPE_IN_REPOSITORY,
 							Source: sourcePath,
 							Title:  sourcePage.Title,
 						})
 					}
 				case LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
-					if _, ok := d.data[link.Repository][link.Destination]; !ok {
+					if _, ok := d.data[link.Repository].Pages[link.Destination]; !ok {
 						//log.Print(link.Destination)
 					} else {
-						destPage := d.data[link.Repository][link.Destination]
+						destPage := d.data[link.Repository].Pages[link.Destination]
 						destPage.LinkIn = append(destPage.LinkIn, &PageLink{
 							Type:       LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY,
 							Source:     sourcePath,
@@ -136,21 +157,138 @@ func (d *DocSearchService) interpolateCitedLinks() {
 	}
 }
 
-func (d *DocSearchService) interpolateLinkTitle(ctx context.Context) {
-	for sourceRepoName, pages := range d.data {
-		for sourcePath, sourcePage := range pages {
+type titleCache struct {
+	cache map[string]string
+	mu    sync.Mutex
+
+	docs    *docSet
+	storage ObjectStorageInterface
+}
+
+func newTitleCache(ctx context.Context, storage ObjectStorageInterface, docs *docSet) *titleCache {
+	externalLinkTitleCache := make(map[string]string)
+	buf, err := storage.Get(
+		ctx,
+		fmt.Sprintf("external_links/%s/%s.json", docs.Repository.Name, docs.Ref.String()),
+	)
+	if err == nil {
+		if err := json.NewDecoder(buf).Decode(&externalLinkTitleCache); err != nil {
+			logger.Log.Error("Failed to decode external link cache file", logger.Error(err))
+		}
+		if err := buf.Close(); err != nil {
+			logger.Log.Error("Failed to close buffer", logger.Error(err))
+		}
+	}
+
+	return &titleCache{cache: externalLinkTitleCache, storage: storage, docs: docs}
+}
+
+func (c *titleCache) Set(u, title string) {
+	c.mu.Lock()
+	c.cache[u] = title
+	c.mu.Unlock()
+}
+
+func (c *titleCache) Get(u string) (string, bool) {
+	c.mu.Lock()
+	t, ok := c.cache[u]
+	c.mu.Unlock()
+	return t, ok
+}
+
+func (c *titleCache) Close() {
+	cacheBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(cacheBuf).Encode(c.cache); err == nil {
+		// We must create the new context because the context may be closed.
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if err := c.storage.PutReader(
+			ctx,
+			fmt.Sprintf("external_links/%s/%s.json", c.docs.Repository.Name, c.docs.Ref.String()),
+			cacheBuf,
+		); err != nil {
+			logger.Log.Error("Failed to put external link cache file", logger.Error(err))
+		}
+		cancel()
+	}
+}
+
+func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, maxConns int) {
+	for sourceRepoName, docs := range d.data {
+		externalLinkTitleCache := newTitleCache(ctx, d.storage, docs)
+
+		externalLinkCh := make(chan *PageLink)
+		var wg sync.WaitGroup
+		for i := 0; i < maxConns; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				d.getExternalLinkTitleWorker(ctx, externalLinkCh, externalLinkTitleCache)
+			}()
+		}
+
+		for sourcePath, sourcePage := range docs.Pages {
 			for _, link := range sourcePage.LinkOut {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY, LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
 					d.interpolateLinkTitleUnderRepository(sourceRepoName, link, sourcePath)
 				case LinkType_LINK_TYPE_EXTERNAL:
-					d.interpolateExternalLinkTitle(ctx, link)
+					externalLinkCh <- link
 				default:
 					continue
 				}
 			}
 		}
+		close(externalLinkCh)
+
+		// Wait for all workers are terminated
+		wg.Wait()
+		externalLinkTitleCache.Close()
 	}
+}
+
+func (d *DocSearchService) getExternalLinkTitleWorker(ctx context.Context, ch chan *PageLink, titleCache *titleCache) {
+	var cached, remote, failed, skipped int
+	for {
+		link, ok := <-ch
+		if !ok {
+			break
+		}
+		u := link.Destination
+		if i := strings.IndexRune(u, '#'); i > 0 {
+			u = u[:i]
+		}
+
+		if !strings.HasPrefix(u, "http") {
+			// The url is not a web page
+			skipped++
+			continue
+		}
+
+		if t, ok := titleCache.Get(u); ok {
+			link.Title = t
+			cached++
+			continue
+		}
+
+		title, err := d.fetchExternalPageTitle(ctx, u)
+		if err == nil {
+			title = strings.TrimSpace(title)
+			link.Title = title
+			titleCache.Set(u, title)
+			remote++
+		} else {
+			if !errors.Is(err, context.Canceled) {
+				logger.Log.Info("Failed to fetch page title", logger.Error(err), zap.String("url", link.Destination))
+			}
+			failed++
+		}
+	}
+	logger.Log.Debug("Fetched external link title",
+		zap.Int("cached", cached),
+		zap.Int("remote", remote),
+		zap.Int("failed", failed),
+		zap.Int("skipped", skipped),
+	)
 }
 
 func (d *DocSearchService) interpolateLinkTitleUnderRepository(repoName string, link *PageLink, sourcePath string) {
@@ -167,23 +305,11 @@ func (d *DocSearchService) interpolateLinkTitleUnderRepository(repoName string, 
 	} else {
 		dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
 	}
-	if v, ok := d.data[repoName][dest]; ok {
+	if v, ok := d.data[repoName].Pages[dest]; ok {
 		link.Title = v.Title
 		if strings.ContainsRune(link.Destination, '#') {
 			link.Title += link.Destination[strings.IndexRune(link.Destination, '#'):]
 		}
-	}
-}
-
-func (d *DocSearchService) interpolateExternalLinkTitle(ctx context.Context, link *PageLink) {
-	if link.Type != LinkType_LINK_TYPE_EXTERNAL {
-		return
-	}
-	title, err := d.fetchExternalPageTitle(ctx, link.Destination)
-	if err == nil {
-		link.Title = title
-	} else {
-		logger.Log.Info("Failed to fetch page title", logger.Error(err), zap.String("url", link.Destination))
 	}
 }
 
@@ -209,8 +335,8 @@ func (d *DocSearchService) scanRepositories(ctx context.Context, workers int) er
 
 func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Repository, workers int) error {
 	var mu sync.Mutex
-	pageLinks := make(pages)
-	d.data[repo.Name] = pageLinks
+	docs := &docSet{Pages: make(pages), Repository: repo}
+	d.data[repo.Name] = docs
 
 	ch := make(chan *git.TreeEntry, workers)
 	var wg sync.WaitGroup
@@ -229,7 +355,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 					logger.Log.Error("Failed to make page", logger.Error(err))
 				} else {
 					mu.Lock()
-					pageLinks[entry.Path] = page
+					docs.Pages[entry.Path] = page
 					mu.Unlock()
 				}
 			}
@@ -245,6 +371,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
+	docs.Ref = plumbing.NewHash(tree.Sha)
 
 	for _, v := range tree.Tree {
 		switch filepath.Ext(v.Path) {
@@ -396,38 +523,22 @@ type seenKey struct {
 	Repository  string
 }
 
-func (d *DocSearchService) EnabledCache() bool {
-	return d.cachePool != nil
-}
-
 func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string) (string, error) {
-	if !d.EnabledCache() {
-		// When do not use the cache, fetching remote page title is disable because it bothers the remote host.
-		return "", nil
-	}
-
-	if i := strings.IndexRune(u, '#'); i > 0 {
-		u = u[:i]
-	}
-
-	cacheItem, err := d.cachePool.Get(fmt.Sprintf("title/%s", u))
-	if err == nil {
-		if string(cacheItem.Value) == "" {
-			return "", errors.New("title is not found")
-		}
-		return string(cacheItem.Value), nil
-	}
-
 	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, u, nil)
 	if err != nil {
 		cancel()
 		return "", xerrors.WithMessage(err, "failed to create request")
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := d.httpClient.Do(req)
 	if err != nil {
 		cancel()
 		return "", xerrors.WithMessage(err, "failed to send request")
+	}
+	if res.StatusCode != http.StatusOK {
+		cancel()
+		logger.Log.Warn("The web page doesn't returns status 200", zap.Int("status", res.StatusCode), zap.String("url", u))
+		return "", xerrors.New("failed to fetch the url")
 	}
 
 	node, err := html.Parse(res.Body)
@@ -448,7 +559,9 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 
 		node := e.Value.(*html.Node)
 		if node.DataAtom == atom.Title {
-			title = node.FirstChild.Data
+			if node.FirstChild != nil {
+				title = node.FirstChild.Data
+			}
 			break
 		}
 
@@ -457,15 +570,6 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 		}
 	}
 	logger.Log.Debug("Fetch page title", zap.String("title", title), zap.String("url", u))
-	// Negative cache
-	err = d.cachePool.Set(&client.Item{
-		Key:        fmt.Sprintf("title/%s", u),
-		Value:      []byte(title),
-		Expiration: 7 * 24 * 60 * 60, // 1 week
-	})
-	if err != nil {
-		return "", err
-	}
 
 	if title == "" {
 		return "", errors.New("title is not found")
