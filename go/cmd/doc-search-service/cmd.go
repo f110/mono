@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"net"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
@@ -81,7 +83,9 @@ func (c *docSearchService) init() (fsm.State, error) {
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
-	if err := service.Initialize(c.Context(), c.Workers, c.MaxConns); err != nil {
+	ctx, cancel := context.WithTimeout(c.Context(), 3*time.Minute)
+	defer cancel()
+	if err := service.Initialize(ctx, c.Workers, c.MaxConns); err != nil {
 		return fsm.Error(err)
 	}
 
