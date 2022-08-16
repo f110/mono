@@ -3,10 +3,10 @@ set -e
 
 source "script/lib/bazel.sh"
 
-VERSION="0.9.0"
-SOURCE_URL="https://github.com/bazelbuild/rules_python/archive/refs/tags/${VERSION}.tar.gz"
+VERSION="v0.17.0"
+SOURCE_URL="https://github.com/bazelbuild/rules_docker/releases/download/${VERSION}/rules_docker-${VERSION}.tar.gz"
 BUCKET=mirror
-PATH_PREFIX=github.com/bazelbuild/rules_python/archive/refs/tags
+PATH_PREFIX=github.com/bazelbuild/rules_docker/releases/download/${VERSION}
 
 should_run_under_bazel
 
