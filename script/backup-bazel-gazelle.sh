@@ -3,10 +3,10 @@ set -e
 
 source "script/lib/bazel.sh"
 
-VERSION="v0.34.0"
-SOURCE_URL="https://github.com/bazelbuild/rules_go/releases/download/${VERSION}/rules_go-${VERSION}.zip"
+VERSION="v0.25.0"
+SOURCE_URL="https://github.com/bazelbuild/bazel-gazelle/releases/download/${VERSION}/bazel-gazelle-${VERSION}.tar.gz"
 BUCKET=mirror
-PATH_PREFIX=github.com/bazelbuild/rules_go/releases/download/${VERSION}
+PATH_PREFIX=github.com/bazelbuild/bazel-gazelle/releases/download/${VERSION}
 
 should_run_under_bazel
 

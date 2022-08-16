@@ -33,3 +33,9 @@ sh_binary(
     srcs = ["backup-rules-go.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_bazel_gazelle",
+    srcs = ["backup-bazel-gazelle.sh"],
+    deps = ["//script/lib"],
+)
