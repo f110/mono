@@ -3,7 +3,7 @@ set -e
 
 source "script/lib/bazel.sh"
 
-VERSION="v0.25.0"
+VERSION="v0.26.0"
 SOURCE_URL="https://github.com/bazelbuild/bazel-gazelle/releases/download/${VERSION}/bazel-gazelle-${VERSION}.tar.gz"
 BUCKET=mirror
 PATH_PREFIX=github.com/bazelbuild/bazel-gazelle/releases/download/${VERSION}
