@@ -39,3 +39,9 @@ sh_binary(
     srcs = ["backup-bazel-gazelle.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_rules_python",
+    srcs = ["backup-rules-python.sh"],
+    deps = ["//script/lib"],
+)
