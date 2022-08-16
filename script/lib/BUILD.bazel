@@ -1,5 +1,5 @@
 sh_library(
     name = "lib",
-    srcs = ["vendor.sh"],
+    srcs = ["vendor.sh", "bazel.sh"],
     visibility = ["//visibility:public"],
 )

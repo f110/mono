@@ -27,3 +27,9 @@ sh_binary(
     srcs = ["vendor-universal-ctags.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_rules_go",
+    srcs = ["backup-rules-go.sh"],
+    deps = ["//script/lib"],
+)
