@@ -51,3 +51,9 @@ sh_binary(
     srcs = ["backup-rules-docker.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_rules_pkg",
+    srcs = ["backup-rules-pkg.sh"],
+    deps = ["//script/lib"],
+)
