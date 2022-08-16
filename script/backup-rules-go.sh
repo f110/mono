@@ -6,7 +6,7 @@ source "script/lib/bazel.sh"
 VERSION="v0.34.0"
 SOURCE_URL="https://github.com/bazelbuild/rules_go/releases/download/${VERSION}/rules_go-${VERSION}.zip"
 BUCKET=mirror
-PATH_PREFIX=github.com/bazel/rules_go/releases/download/${VERSION}/rules_go-$VERSION.zip
+PATH_PREFIX=github.com/bazelbuild/rules_go/releases/download/${VERSION}
 
 should_run_under_bazel
 
