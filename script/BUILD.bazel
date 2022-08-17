@@ -57,3 +57,9 @@ sh_binary(
     srcs = ["backup-rules-pkg.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_rules_foreign_cc",
+    srcs = ["backup-rules-foreign-cc.sh"],
+    deps = ["//script/lib"],
+)
