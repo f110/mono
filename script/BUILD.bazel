@@ -29,24 +29,6 @@ sh_binary(
 )
 
 sh_binary(
-    name = "backup_rules_python",
-    srcs = ["backup-rules-python.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
-    name = "backup_rules_foreign_cc",
-    srcs = ["backup-rules-foreign-cc.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
-    name = "backup_protobuf",
-    srcs = ["backup-protobuf.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
     name = "backup_dependent_archives",
     srcs = ["backup-dependent-archives.sh"],
     deps = ["//script/lib"],

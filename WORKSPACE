@@ -59,7 +59,7 @@ http_archive(
     strip_prefix = "rules_foreign_cc-0.5.1",
     urls = [
         "https://github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
-        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.5.1.tar.gz",
     ],
 )
 
