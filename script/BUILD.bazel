@@ -29,32 +29,8 @@ sh_binary(
 )
 
 sh_binary(
-    name = "backup_rules_go",
-    srcs = ["backup-rules-go.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
-    name = "backup_bazel_gazelle",
-    srcs = ["backup-bazel-gazelle.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
     name = "backup_rules_python",
     srcs = ["backup-rules-python.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
-    name = "backup_rules_docker",
-    srcs = ["backup-rules-docker.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
-    name = "backup_rules_pkg",
-    srcs = ["backup-rules-pkg.sh"],
     deps = ["//script/lib"],
 )
 
@@ -71,7 +47,7 @@ sh_binary(
 )
 
 sh_binary(
-    name = "backup_migrate",
-    srcs = ["backup-migrate.sh"],
+    name = "backup_dependent_archives",
+    srcs = ["backup-dependent-archives.sh"],
     deps = ["//script/lib"],
 )
