@@ -14,6 +14,12 @@
       <option name="CREATE_LOCAL_GROUP" value="true" />
       <option name="LOCAL_PACKAGE_PREFIXES" />
     </GoCodeStyleSettings>
+    <codeStyleSettings language="Shell Script">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="4" />
+        <option name="TAB_SIZE" value="4" />
+      </indentOptions>
+    </codeStyleSettings>
     <codeStyleSettings language="protobuf">
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />
