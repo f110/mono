@@ -69,3 +69,9 @@ sh_binary(
     srcs = ["backup-protobuf.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "backup_migrate",
+    srcs = ["backup-migrate.sh"],
+    deps = ["//script/lib"],
+)
