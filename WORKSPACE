@@ -9,6 +9,7 @@ http_archive(
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip",
         "https://github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip"
     ],
 )
 
@@ -18,6 +19,7 @@ http_archive(
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
         "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
     ],
 )
 
@@ -25,14 +27,20 @@ http_archive(
     name = "rules_python",
     sha256 = "5fa3c738d33acca3b97622a13a741129f67ef43f5fdfcec63b29374cc0574c29",
     strip_prefix = "rules_python-0.9.0",
-    url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.9.0.tar.gz",
+    urls = [
+        "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.9.0.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_python/archive/refs/tags/0.9.0.tar.gz",
+    ],
 )
 
 http_archive(
     name = "io_bazel_rules_docker",
     sha256 = "59d5b42ac315e7eadffa944e86e90c2990110a1c8075f1cd145f487e999d22b3",
     strip_prefix = "rules_docker-0.17.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz"],
+    urls = [
+        "https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz",
+    ],
 )
 
 http_archive(
@@ -41,6 +49,7 @@ http_archive(
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
         "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
     ],
 )
 
@@ -48,7 +57,10 @@ http_archive(
     name = "rules_foreign_cc",
     sha256 = "33a5690733c5cc2ede39cb62ebf89e751f2448e27f20c8b2fbbc7d136b166804",
     strip_prefix = "rules_foreign_cc-0.5.1",
-    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
+    urls = [
+        "https://github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_foreign_cc/archive/0.5.1.tar.gz",
+    ],
 )
 
 http_archive(
@@ -58,6 +70,7 @@ http_archive(
     urls = [
         "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v3.21.1.tar.gz",
         "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.21.1.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/protocolbuffers/protobuf/archive/refs/tags/v3.21.1.tar.gz",
     ],
 )
 
@@ -180,7 +193,10 @@ http_archive(
     name = "com_github_migrate_migrate",
     build_file_content = "filegroup(name = \"bin\", srcs = [\"migrate.linux-amd64\"], visibility = [\"//visibility:public\"])",
     sha256 = "9b39a0fe0e4dd1d6d3f0705f938a89c9d98c31152e0f097bb2e1556f9030387c",
-    urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz"],
+    urls = [
+        "https://github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/golang-migrate/migrate/releases/download/v4.11.0/migrate.linux-amd64.tar.gz",
+    ],
 )
 
 load("//build/rules/kustomize:def.bzl", "kustomize_binary")
