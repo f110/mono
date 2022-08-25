@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"os"
@@ -28,179 +29,233 @@ import (
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
-type memcachedComponent struct{}
-
-func (c *memcachedComponent) Command() string {
-	return "memcached"
+var memcached = &commandComponent{
+	Name:          "memcached",
+	Args:          []string{"-p", "11212"},
+	VerboseOutput: true,
+	Ports:         ports{{Name: "memcached", Number: 11212}},
 }
 
-func (c *memcachedComponent) Run(ctx context.Context) {
-	memcached := exec.CommandContext(ctx, "memcached", "-p", "11212")
-	w := logger.NewNamedWriter(os.Stdout, "memcached")
-	memcached.Stdout = w
-	memcached.Stderr = w
-	logger.Log.Info("Start memcached", zap.Int("port", 11212))
-	if err := memcached.Run(); err != nil {
-		logger.Log.Info("Some error was occurred", zap.Error(err))
-	}
-	logger.Log.Info("Shutdown memcached")
-}
-
-type minioComponent struct{}
-
-func (c *minioComponent) Command() string {
-	return "minio"
-}
-
-func (c *minioComponent) Run(ctx context.Context) {
-	workDir := os.Getenv("BUILD_WORKING_DIRECTORY")
-
-	minio := exec.CommandContext(ctx,
-		"minio",
-		"server",
+var minio = &commandComponent{
+	Name: "minio",
+	Args: []string{"server",
 		"--address", "127.0.0.1:9000",
 		"--console-address", "127.0.0.1:50000",
-		filepath.Join(workDir, ".minio_data"),
-	)
-	minio.Env = append(os.Environ(), []string{
-		fmt.Sprintf("MINIO_ROOT_USER=minioadmin"),
-		fmt.Sprintf("MINIO_ROOT_PASSWORD=minioadmin"),
-	}...)
-	//w := logger.NewNamedWriter(os.Stdout, "minio")
-	minio.Stdout = os.Stdout
-	minio.Stderr = os.Stdout
+		filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), ".minio_data"),
+	},
+	EnvVar: []string{
+		"MINIO_ROOT_USER=minioadmin",
+		"MINIO_ROOT_PASSWORD=minioadmin",
+	},
+	Ports:            ports{{Name: "minio", Number: 9000}, {Name: "console", Number: 50000}},
+	VerboseOutput:    true,
+	WithoutLogPrefix: true,
+}
+
+var gitDataService = &grpcServerComponent{
+	Name:   "git-data-service",
+	Listen: 9010,
+	Deps:   []component{minio, memcached, gitDataServiceBucket},
+	Register: func(ctx context.Context, s *grpc.Server) {
+		const (
+			repositoryName = "kep"
+		)
+
+		opt := storage.NewS3OptionToExternal(
+			fmt.Sprintf("http://127.0.0.1:%d", minio.Ports.GetNumber("minio")),
+			"US",
+			"minioadmin",
+			"minioadmin",
+		)
+		opt.PathStyle = true
+		storageClient := storage.NewS3("git-data-service", opt)
+
+		memcachedServer, err := client.NewServerWithMetaProtocol(
+			ctx,
+			"local",
+			"tcp",
+			fmt.Sprintf("127.0.0.1:%d", memcached.Ports.GetNumber("memcached")),
+		)
+		if err != nil {
+			logger.Log.Error("Failed to create Server", logger.Error(err))
+			return
+		}
+		cachePool, err := client.NewSinglePool(memcachedServer)
+		if err != nil {
+			logger.Log.Error("Failed to create cache pool", logger.Error(err))
+			return
+		}
+		storer := git.NewObjectStorageStorer(storageClient, repositoryName, cachePool)
+		repo, err := goGit.Open(storer, nil)
+		if err != nil {
+			logger.Log.Error("Failed to open the repository", logger.Error(err))
+			return
+		}
+		service, err := git.NewDataService(map[string]*goGit.Repository{repositoryName: repo})
+		if err != nil {
+			return
+		}
+		git.RegisterGitDataServer(s, service)
+	},
+}
+
+var docSearchService = &grpcServerComponent{
+	Name:   "doc-search-service",
+	Listen: 9011,
+	Deps:   []component{minio, gitDataService},
+	Register: func(ctx context.Context, s *grpc.Server) {
+		opt := storage.NewS3OptionToExternal(
+			fmt.Sprintf("http://127.0.0.1:%d", minio.Ports.GetNumber("minio")),
+			"US",
+			"minioadmin",
+			"minioadmin",
+		)
+		opt.PathStyle = true
+		storageClient := storage.NewS3("git-data-service", opt)
+
+		grpcConn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", gitDataService.Listen),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpcutil.WithLogging(),
+		)
+		if err != nil {
+			logger.Log.Error("Failed to dial", logger.Error(err))
+			return
+		}
+		gitDataClient := git.NewGitDataClient(grpcConn)
+
+		service := docutil.NewDocSearchService(gitDataClient, storageClient)
+		initCtx, stop := context.WithTimeout(ctx, 10*time.Minute)
+		if err := service.Initialize(initCtx, 8, 2); err != nil {
+			stop()
+			logger.Log.Error("Failed to initialize doc-search-service", logger.Error(err))
+			return
+		}
+		stop()
+		docutil.RegisterDocSearchServer(s, service)
+	},
+}
+
+var kepRepository = &gitDataDirectory{
+	Name:   "kep",
+	URL:    "https://github.com/kubernetes/enhancements.git",
+	Dir:    ".example_git_data",
+	Branch: "master",
+}
+
+var gitDataServiceBucket = &minioBucket{
+	Name:     "git-data-service",
+	Prefix:   "kep",
+	Instance: minio,
+	Data:     kepRepository,
+}
+
+type commandComponent struct {
+	Name             string
+	Type             componentType
+	Args             []string
+	EnvVar           []string
+	Ports            ports
+	VerboseOutput    bool
+	WithoutLogPrefix bool
+}
+
+var _ component = &commandComponent{}
+
+type port struct {
+	Name   string
+	Number int
+}
+
+type ports []port
+
+func (p ports) GetNumber(name string) int {
+	for _, v := range p {
+		if v.Name == name {
+			return v.Number
+		}
+	}
+
+	return -1
+}
+
+func (c *commandComponent) GetName() string {
+	return c.Name
+}
+
+func (c *commandComponent) GetType() componentType {
+	return c.Type
+}
+
+func (c *commandComponent) GetDeps() []component {
+	return nil
+}
+
+func (c *commandComponent) Run(ctx context.Context) {
+	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
+	if c.VerboseOutput {
+		var out, err io.Writer
+		if c.WithoutLogPrefix {
+			out = os.Stdout
+			err = os.Stderr
+		} else {
+			w := logger.NewNamedWriter(os.Stdout, c.Name)
+			out = w
+			err = w
+		}
+		cmd.Stdout = out
+		cmd.Stderr = err
+	}
+	cmd.Env = append(os.Environ(), c.EnvVar...)
 
 	defer func() {
-		if minio.Process != nil && !minio.ProcessState.Exited() {
-			logger.Log.Info("Kill minio by SIGTERM")
-			minio.Process.Signal(syscall.SIGTERM)
+		if cmd.Process != nil && !cmd.ProcessState.Exited() {
+			logger.Log.Info("Kill " + c.Name + " by SIGTERM")
+			cmd.Process.Signal(syscall.SIGTERM)
 		}
 	}()
-
-	logger.Log.Info("Start minio", zap.Int("port", 9000), zap.String("user", "minioadmin"), zap.String("password", "minioadmin"))
-	if err := minio.Run(); err != nil && err.Error() != "signal: killed" {
+	logger.Log.Info("Start " + c.Name)
+	if err := cmd.Run(); err != nil {
 		logger.Log.Info("Some error was occurred", zap.Error(err))
 	}
-	logger.Log.Info("Shutdown minio")
+	logger.Log.Info("Shutdown " + c.Name)
 }
 
-type gitDataServiceComponent struct{}
-
-func (c *gitDataServiceComponent) Command() string {
-	return ""
-}
-
-func (c *gitDataServiceComponent) Run(ctx context.Context) {
-	const (
-		repositoryURL  = "https://github.com/kubernetes/enhancements.git"
-		repositoryName = "kep"
-	)
-
-	workDir := os.Getenv("BUILD_WORKING_DIRECTORY")
-
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		conn, err := net.DialTimeout("tcp", ":9000", 100*time.Millisecond)
-		if time.Now().After(deadline) {
-			logger.Log.Info("Deadline exceeded")
-			return
-		}
+func (c *commandComponent) Ready() bool {
+	for _, v := range c.Ports {
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf(":%d", v.Number), 100*time.Millisecond)
 		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
+			return false
 		}
 
 		conn.Close()
-		break
-	}
-	for {
-		conn, err := net.DialTimeout("tcp", ":11212", 100*time.Millisecond)
-		if time.Now().After(deadline) {
-			logger.Log.Info("Deadline exceeded")
-			return
-		}
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		conn.Close()
-		break
+		return true
 	}
 
-	if _, err := os.Stat(filepath.Join(workDir, ".example_git_data")); os.IsNotExist(err) {
-		logger.Log.Info("example data is not found. clone the repository")
-		_, err := goGit.PlainClone(filepath.Join(workDir, ".example_git_data"), false, &goGit.CloneOptions{
-			URL:           repositoryURL,
-			Depth:         1,
-			ReferenceName: plumbing.NewBranchReferenceName("master"),
-			SingleBranch:  true,
-			NoCheckout:    true,
-		})
-		if err != nil {
-			return
-		}
-	}
+	return true
+}
 
-	opt := storage.NewS3OptionToExternal("http://127.0.0.1:9000", "US", "minioadmin", "minioadmin")
-	opt.PathStyle = true
-	storageClient := storage.NewS3("git-data-service", opt)
+type grpcServerComponent struct {
+	Name     string
+	Deps     []component
+	Listen   int
+	Register func(context.Context, *grpc.Server)
+}
 
-	if !storageClient.ExistBucket(ctx, "git-data-service") {
-		logger.Log.Info("git-data-service bucket is not found. make the bucket")
-		if err := storageClient.MakeBucket(ctx, "git-data-service"); err != nil {
-			logger.Log.Error("Failed to make bucket", logger.Error(err))
-			return
-		}
+var _ component = &grpcServerComponent{}
 
-		logger.Log.Debug("Walk directory", zap.String("path", filepath.Join(workDir, ".example_git_data/.git")))
-		err := filepath.Walk(filepath.Join(workDir, ".example_git_data/.git"), func(p string, info fs.FileInfo, err error) error {
-			if info.IsDir() {
-				return nil
-			}
+func (c *grpcServerComponent) GetName() string {
+	return c.Name
+}
 
-			name := strings.TrimPrefix(p, filepath.Join(workDir, ".example_git_data/.git")+"/")
-			file, err := os.Open(p)
-			if err != nil {
-				return err
-			}
-			logger.Log.Debug("Put object", zap.String("name", repositoryName+"/"+name))
-			err = storageClient.PutReader(context.Background(), repositoryName+"/"+name, file)
-			if err != nil {
-				return err
-			}
-			file.Close()
-			return nil
-		})
-		if err != nil {
-			logger.Log.Error("Failed to put git data", logger.Error(err))
-			return
-		}
-	}
+func (c *grpcServerComponent) GetType() componentType {
+	return componentTypeService
+}
 
-	memcachedServer, err := client.NewServerWithMetaProtocol(context.Background(), "local", "tcp", "127.0.0.1:11212")
-	if err != nil {
-		logger.Log.Error("Failed to create Server", logger.Error(err))
-		return
-	}
-	cachePool, err := client.NewSinglePool(memcachedServer)
-	if err != nil {
-		logger.Log.Error("Failed to create cache pool", logger.Error(err))
-		return
-	}
-	storer := git.NewObjectStorageStorer(storageClient, repositoryName, cachePool)
-	repo, err := goGit.Open(storer, nil)
-	if err != nil {
-		logger.Log.Error("Failed to open the repository", logger.Error(err))
-		return
-	}
-	service, err := git.NewDataService(map[string]*goGit.Repository{repositoryName: repo})
-	if err != nil {
-		return
-	}
+func (c *grpcServerComponent) Run(ctx context.Context) {
 	s := grpc.NewServer()
-	git.RegisterGitDataServer(s, service)
-	lis, err := net.Listen("tcp", ":9010")
+	c.Register(ctx, s)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.Listen))
 	if err != nil {
 		logger.Log.Error("Failed to listen", logger.Error(err))
 		return
@@ -213,7 +268,7 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 		s.GracefulStop()
 	}()
 
-	logger.Log.Info("Start gRPC server", zap.String("addr", ":9010"))
+	logger.Log.Info("Start gRPC server", zap.Int("listen", c.Listen))
 	if err := s.Serve(lis); err != nil {
 		logger.Log.Warn("Serve gRPC", logger.Error(err))
 		return
@@ -221,9 +276,138 @@ func (c *gitDataServiceComponent) Run(ctx context.Context) {
 	logger.Log.Info("Stop gRPC server")
 }
 
+func (c *grpcServerComponent) GetDeps() []component {
+	return c.Deps
+}
+
+type gitDataDirectory struct {
+	Name   string
+	Dir    string
+	URL    string
+	Branch string
+}
+
+var _ component = &gitDataDirectory{}
+
+func (c *gitDataDirectory) GetName() string {
+	return c.Name
+}
+
+func (c *gitDataDirectory) GetType() componentType {
+	return componentTypeOneshot
+}
+
+func (c *gitDataDirectory) Run(ctx context.Context) {
+	logger.Log.Info("example data is not found. clone the repository")
+	_, err := goGit.PlainClone(filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), c.Dir), false, &goGit.CloneOptions{
+		URL:           c.URL,
+		Depth:         1,
+		ReferenceName: plumbing.NewBranchReferenceName(c.Branch),
+		SingleBranch:  true,
+		NoCheckout:    true,
+	})
+	if err != nil {
+		return
+	}
+}
+
+func (c *gitDataDirectory) GetDeps() []component {
+	return nil
+}
+
+func (c *gitDataDirectory) OutputDir() string {
+	return filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), c.Dir, ".git")
+}
+
+type minioBucket struct {
+	Name     string
+	Instance component
+	Data     component
+	Prefix   string
+}
+
+var _ component = &minioBucket{}
+
+func (c *minioBucket) GetName() string {
+	return c.Name
+}
+
+func (c *minioBucket) GetType() componentType {
+	return componentTypeOneshot
+}
+
+func (c *minioBucket) Run(ctx context.Context) {
+	if c.Instance.GetName() != "minio" {
+		logger.Log.Error("instance is not MinIO")
+		return
+	}
+
+	port := c.Instance.(*commandComponent).Ports.GetNumber("minio")
+	opt := storage.NewS3OptionToExternal(
+		fmt.Sprintf("http://127.0.0.1:%d", port),
+		"US",
+		"minioadmin",
+		"minioadmin",
+	)
+	opt.PathStyle = true
+	storageClient := storage.NewS3(c.Name, opt)
+
+	if storageClient.ExistBucket(ctx, c.Name) {
+		logger.Log.Info("the bucket is found")
+		return
+	}
+
+	logger.Log.Info("the bucket is not found. make the bucket")
+	if err := storageClient.MakeBucket(ctx, c.Name); err != nil {
+		logger.Log.Error("Failed to make bucket", logger.Error(err))
+		return
+	}
+
+	if c.Data == nil {
+		return
+	}
+
+	var dir string
+	if x, ok := c.Data.(interface{ OutputDir() string }); ok {
+		dir = x.OutputDir()
+	}
+	if dir == "" {
+		logger.Log.Error("the component, specified by Data, is not support OutputDir")
+		return
+	}
+
+	logger.Log.Debug("Walk directory", zap.String("path", dir))
+	err := filepath.Walk(dir, func(p string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+
+		name := strings.TrimPrefix(p, dir+"/")
+		file, err := os.Open(p)
+		if err != nil {
+			return err
+		}
+		logger.Log.Debug("Put object", zap.String("name", c.Prefix+"/"+name))
+		err = storageClient.PutReader(context.Background(), c.Prefix+"/"+name, file)
+		if err != nil {
+			return err
+		}
+		file.Close()
+		return nil
+	})
+	if err != nil {
+		logger.Log.Error("Failed to put git data", logger.Error(err))
+		return
+	}
+}
+
+func (c *minioBucket) GetDeps() []component {
+	return []component{c.Instance, c.Data}
+}
+
 type mysqlComponent struct{}
 
-func (c *mysqlComponent) Command() string {
+func (c *mysqlComponent) GetName() string {
 	return "mysqld"
 }
 
@@ -310,72 +494,4 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 		return
 	}
 	<-ctx.Done()
-}
-
-type docSearchService struct{}
-
-func (c *docSearchService) Command() string {
-	return ""
-}
-
-func (c *docSearchService) Run(ctx context.Context) {
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		conn, err := net.DialTimeout("tcp", ":9010", 100*time.Millisecond)
-		if time.Now().After(deadline) {
-			logger.Log.Info("Deadline exceeded")
-			break
-		}
-		if err != nil {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-
-		conn.Close()
-		break
-	}
-
-	opt := storage.NewS3OptionToExternal("http://127.0.0.1:9000", "US", "minioadmin", "minioadmin")
-	opt.PathStyle = true
-	storageClient := storage.NewS3("git-data-service", opt)
-
-	grpcConn, err := grpc.Dial("127.0.0.1:9010",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithLogging(),
-	)
-	if err != nil {
-		logger.Log.Error("Failed to dial", logger.Error(err))
-		return
-	}
-	gitDataClient := git.NewGitDataClient(grpcConn)
-
-	service := docutil.NewDocSearchService(gitDataClient, storageClient)
-	initCtx, stop := context.WithTimeout(ctx, 10*time.Minute)
-	if err := service.Initialize(initCtx, 8, 2); err != nil {
-		stop()
-		logger.Log.Error("Failed to initialize doc-search-service", logger.Error(err))
-		return
-	}
-	stop()
-	s := grpc.NewServer()
-	docutil.RegisterDocSearchServer(s, service)
-	lis, err := net.Listen("tcp", ":9011")
-	if err != nil {
-		logger.Log.Error("Failed to listen", logger.Error(err))
-		return
-	}
-
-	go func() {
-		<-ctx.Done()
-
-		logger.Log.Debug("Graceful stop doc-search-service")
-		s.GracefulStop()
-	}()
-
-	logger.Log.Info("Start doc-search-service", zap.String("addr", ":9011"))
-	if err := s.Serve(lis); err != nil {
-		logger.Log.Warn("Serve gRPC", logger.Error(err))
-		return
-	}
-	logger.Log.Info("Stop doc-search-service")
 }
