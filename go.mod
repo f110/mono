@@ -52,6 +52,7 @@ require (
 	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.f110.dev/xerrors v0.0.0-20220622152715-f80541f0b902
+	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.org/x/mod v0.5.1
@@ -219,7 +220,7 @@ require (
 	go.uber.org/automaxprocs v1.5.1 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220502124256-b6088ccd6cba // indirect
+	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
