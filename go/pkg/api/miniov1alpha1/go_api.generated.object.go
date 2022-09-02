@@ -177,12 +177,14 @@ type MinIOBucketSpec struct {
 	// selector is a selector of MinIOInstance.
 	Selector metav1.LabelSelector `json:"selector"`
 	// bucket_finalize_policy is a policy when deleted CR Object.
-	//  If bucket_finalize_policy is an empty string, then it is the same as "keep".
+	//
+	//	If bucket_finalize_policy is an empty string, then it is the same as "keep".
 	BucketFinalizePolicy BucketFinalizePolicy `json:"bucketFinalizePolicy"`
 	// policy is the policy of the bucket. One of public, readOnly, private.
-	//  If you don't want to give public access, set private or an empty value.
-	//  If it is an empty value, The bucket will not have any policy.
-	//  Currently, MinIOBucket can't use prefix based policy.
+	//
+	//	If you don't want to give public access, set private or an empty value.
+	//	If it is an empty value, The bucket will not have any policy.
+	//	Currently, MinIOBucket can't use prefix based policy.
 	Policy BucketPolicy `json:"policy"`
 	// create_index_file is a flag that creates index.html on top of bucket.
 	CreateIndexFile bool `json:"createIndexFile"`

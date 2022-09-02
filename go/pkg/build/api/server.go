@@ -1,15 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
-	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -18,44 +17,41 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/pkg/build/config"
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
-	"go.f110.dev/mono/go/pkg/build/discovery"
-	"go.f110.dev/mono/go/pkg/build/job"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
 const (
-	AllowCommand = "/allow-build"
-	SkipCI       = "[skip ci]"
+	AllowCommand           = "/allow-build"
+	SkipCI                 = "[skip ci]"
+	BuildConfigurationFile = "build.star"
+	BazelVersionFile       = ".bazelversion"
 )
 
 type Builder interface {
-	Build(ctx context.Context, job *database.Job, revision, command, target, platforms, via string) ([]*database.Task, error)
+	Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error)
 }
 
 type Api struct {
 	*http.Server
 
 	builder      Builder
-	discovery    *discovery.Discover
 	dao          dao.Options
 	githubClient *github.Client
 }
 
-func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao.Options, ghClient *github.Client) (*Api, error) {
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client) (*Api, error) {
 	api := &Api{
 		builder:      builder,
-		discovery:    discovery,
 		dao:          dao,
 		githubClient: ghClient,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/favicon.ico", http.NotFoundHandler())
-	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/liveness", api.handleLiveness)
 	mux.HandleFunc("/readiness", api.handleReadiness)
-	mux.HandleFunc("/discovery", api.handleDiscovery)
 	mux.HandleFunc("/redo", api.handleRedo)
 	mux.HandleFunc("/webhook", api.handleWebHook)
 	s := &http.Server{
@@ -69,7 +65,7 @@ func NewApi(addr string, builder Builder, discovery *discovery.Discover, dao dao
 
 func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	// Skip validate payload. Because validating body was done by the upstream proxy.
-	payload, err := ioutil.ReadAll(req.Body)
+	payload, err := io.ReadAll(req.Body)
 	if err != nil {
 		logger.Log.Warn("Failed read body", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -86,42 +82,20 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		if modifiedRuleFile(event) {
-			repos, err := a.dao.Repository.ListByUrl(req.Context(), event.Repo.GetHTMLURL())
-			if err != nil {
-				logger.Log.Warn("Could not find repository", zap.Error(err))
-				return
-			}
-			if len(repos) != 1 {
-				logger.Log.Warn("Can not decide the repository by url", zap.String("url", event.Repo.GetHTMLURL()))
-				return
-			}
-			repo := repos[0]
-
-			// If push event is on main branch, Set a revision to discovery job.
-			// This is intended to rebuild all jobs after discovering.
-			rev := ""
-			if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
-				rev = event.GetAfter()
-			}
-			if err := a.discovery.FindOut(repo, rev); err != nil {
-				logger.Log.Warn("Could not start discovery job", zap.Error(err))
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+		repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 
 		if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
 			if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
 				logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.String("commit", event.GetHead()))
 				return
 			}
-			if err := a.buildByPushEvent(req.Context(), event); err != nil {
+			if err := a.buildByPushEvent(req.Context(), repo, event, true); err != nil {
+				logger.Log.Warn("Failed to build", zap.String("repo", repo.Name), logger.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
+		// Currently, we don't need to build other branch when got PushEvent.
 	case *github.PullRequestEvent:
 		switch event.GetAction() {
 		case "opened":
@@ -149,7 +123,8 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					return
 				}
-				if err := a.buildByPullRequest(req.Context(), event); err != nil {
+				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
+				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
 					logger.Log.Warn("Failed build the pull request", zap.Error(err))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
@@ -161,7 +136,8 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					return
 				}
-				if err := a.buildByPullRequest(req.Context(), event); err != nil {
+				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
+				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
 					logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
@@ -191,6 +167,19 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+}
+
+func (a *Api) findRepository(ctx context.Context, repoURL string) *database.SourceRepository {
+	repos, err := a.dao.Repository.ListByUrl(ctx, repoURL)
+	if err != nil {
+		logger.Log.Warn("Could not find repository", zap.Error(err))
+		return nil
+	}
+	if len(repos) != 1 {
+		logger.Log.Warn("Can not decide the repository by url", zap.String("url", repoURL))
+		return nil
+	}
+	return repos[0]
 }
 
 func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEvent) (bool, error) {
@@ -230,26 +219,24 @@ func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
 	return false, nil
 }
 
-func (a *Api) buildByPushEvent(ctx context.Context, event *github.PushEvent) error {
-	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.GetAfter(), job.TypeCommit, "push"); err != nil {
+func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceRepository, event *github.PushEvent, isMainBranch bool) error {
+	if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, event.HeadCommit.GetID(), "push", isMainBranch); err != nil {
 		return xerrors.WithStack(err)
 	}
 
 	return nil
 }
 
-func (a *Api) buildByPullRequest(ctx context.Context, event *github.PullRequestEvent) error {
-	if err := a.build(ctx, event.Repo.GetHTMLURL(), event.PullRequest.Head.GetSHA(), job.TypeCommit, "pull_request"); err != nil {
+func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepository, event *github.PullRequestEvent) error {
+	if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, event.PullRequest.Head.GetSHA(), "pull_request", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 
 	return nil
 }
 
-func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string, number int) error {
-	s := strings.Split(ownerAndRepo, "/")
-	owner, repo := s[0], s[1]
-	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repo, number)
+func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceRepository, owner, repoName string, number int) error {
+	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repoName, number)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -257,47 +244,89 @@ func (a *Api) buildPullRequest(ctx context.Context, repoUrl, ownerAndRepo string
 		return xerrors.New("could not get pr")
 	}
 
-	if err := a.build(ctx, repoUrl, pr.GetHead().GetSHA(), job.TypeCommit, "pr"); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, pr.GetHead().GetSHA(), "pr", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, repoUrl, revision, jobType, via string) error {
-	repos, err := a.dao.Repository.ListByUrl(ctx, repoUrl)
+func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, revision, via string, isMainBranch bool) error {
+	// Find the configuration file
+	var commitSHA string
+	if isMainBranch {
+		// Read configuration file of the revision
+		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, revision)
+		if err != nil {
+			return xerrors.WithMessagef(err, "failed to get the commit: %s", revision)
+		}
+		commitSHA = commit.GetSHA()
+	} else {
+		// If the revision doesn't belong to the main branch, the build configuration will be read from the main branch.
+		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, "HEAD")
+		if err != nil {
+			return xerrors.WithMessage(err, "failed to get HEAD commit")
+		}
+		commitSHA = commit.GetSHA()
+	}
+	tree, _, err := a.githubClient.Git.GetTree(ctx, owner, repoName, commitSHA, false)
 	if err != nil {
-		logger.Log.Info("Repository not found or could not get", zap.Error(err))
+		return xerrors.WithMessagef(err, "failed to get the tree: %s", commitSHA)
+	}
+	var blobSHA, versionBlobSHA string
+	for _, e := range tree.Entries {
+		switch e.GetPath() {
+		case BuildConfigurationFile:
+			blobSHA = e.GetSHA()
+		case BazelVersionFile:
+			versionBlobSHA = e.GetSHA()
+		}
+	}
+	if blobSHA == "" {
+		logger.Log.Debug("build configuration file is not found", zap.String("repo", repo.Name), zap.String("revision", commitSHA))
 		return nil
 	}
-	if len(repos) != 1 {
+	buildConfFileBlob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, blobSHA)
+	if err != nil {
+		logger.Log.Info("Skip build", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
 		return nil
 	}
-	repo := repos[0]
+	var bazelVersion string
+	if versionBlobSHA != "" {
+		if blob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, versionBlobSHA); err == nil {
+			bazelVersion = strings.TrimRight(string(blob), "\n")
+		} else {
+			logger.Log.Info("Failed to get the blob of .bazelversion", zap.Error(err))
+		}
+	}
 
-	jobs, err := a.dao.Job.ListBySourceRepositoryId(ctx, repo.Id)
+	// Parse the configuration file
+	conf, err := config.Read(bytes.NewReader(buildConfFileBlob), owner, repoName)
 	if err != nil {
-		logger.Log.Warn("Could not get jobs", zap.Error(err))
-		return xerrors.WithStack(err)
+		return err
 	}
+	if len(conf.Jobs) == 0 {
+		logger.Log.Info("Skip build because there is no job", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil
+	}
+	jobs := conf.Jobs
+
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.
 		switch v.Command {
 		case "build", "test":
 		default:
+			logger.Log.Debug("Skip creating job", zap.String("command", v.Command))
 			continue
 		}
 
-		if v.JobType != "" && v.JobType != jobType {
-			continue
-		}
-
-		if _, err := a.builder.Build(ctx, v, revision, v.Command, v.Targets, v.Platforms, via); err != nil {
-			logger.Log.Warn("Failed start job", zap.Error(err), zap.Int32("job.id", v.Id))
+		if _, err := a.builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via); err != nil {
+			logger.Log.Warn("Failed start job", zap.Error(err), zap.String("owner", owner), zap.String("repo", repoName))
 			return xerrors.WithStack(err)
 		}
 	}
 
+	logger.Log.Debug("Successfully create build task", zap.String("repo", repo.Name), zap.String("revision", revision))
 	return nil
 }
 
@@ -339,7 +368,8 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				return xerrors.WithStack(err)
 			}
 
-			if err := a.buildPullRequest(ctx, event.Repo.GetHTMLURL(), event.Repo.GetFullName(), event.Issue.GetNumber()); err != nil {
+			repo := a.findRepository(ctx, event.Repo.GetHTMLURL())
+			if err := a.buildPullRequest(ctx, repo, event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.Issue.GetNumber()); err != nil {
 				return xerrors.WithStack(err)
 			}
 		}
@@ -354,108 +384,13 @@ func (a *Api) githubRelease(ctx context.Context, event *github.ReleaseEvent) err
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
-		if err := a.build(ctx, event.Repo.GetHTMLURL(), ref.Object.GetSHA(), job.TypeRelease, "release"); err != nil {
+		repo := a.findRepository(ctx, event.Repo.GetHTMLURL())
+		if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, ref.Object.GetSHA(), "release", false); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
 
 	return nil
-}
-
-func (a *Api) handleDiscovery(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := req.ParseForm(); err != nil {
-		logger.Log.Info("Failed parse form", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	repoId, err := strconv.Atoi(req.FormValue("repository_id"))
-	if err != nil {
-		logger.Log.Info("Failed parse repository_id", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	repo, err := a.dao.Repository.Select(req.Context(), int32(repoId))
-	if err != nil {
-		logger.Log.Info("repository not found", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err := a.discovery.FindOut(repo, ""); err != nil {
-		logger.Log.Warn("Failed start discovery", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := req.ParseForm(); err != nil {
-		logger.Log.Info("Failed parse form", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	jobId, err := strconv.Atoi(req.FormValue("job_id"))
-	if err != nil {
-		logger.Log.Info("Failed parse job id", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	j, err := a.dao.Job.Select(req.Context(), int32(jobId))
-	if err != nil {
-		logger.Log.Info("job not found", zap.Int("job_id", jobId), zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	rev := req.FormValue("revision")
-	if rev == "" {
-		u, err := url.Parse(j.Repository.Url)
-		if err != nil {
-			logger.Log.Info("Could not parse repository url", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		s := strings.Split(u.Path, "/")
-		owner, repo := s[1], s[2]
-		r, _, err := a.githubClient.Repositories.GetCommitSHA1(req.Context(), owner, repo, "master", "")
-		if err != nil {
-			logger.Log.Info("Could not get revision of master", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		rev = r
-	}
-
-	via := req.FormValue("via")
-	if via == "" {
-		via = "api"
-	}
-
-	tasks, err := a.builder.Build(req.Context(), j, rev, j.Command, j.Targets, j.Platforms, via)
-	if err != nil {
-		logger.Log.Warn("Failed build job", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	logger.Log.Info("Success enqueue job", zap.Int("job_id", jobId))
-	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: tasks[len(tasks)-1].Id}); err != nil {
-		logger.Log.Warn("Failed encode response", zap.Error(err))
-	}
 }
 
 type RunResponse struct {
@@ -488,7 +423,21 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	newTasks, err := a.builder.Build(req.Context(), task.Job, task.Revision, task.Command, task.Targets, task.Platform, "api")
+	jobConfiguration := &config.Job{}
+	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConfiguration); err != nil {
+		return
+	}
+	newTasks, err := a.builder.Build(
+		req.Context(),
+		task.Repository,
+		jobConfiguration,
+		task.Revision,
+		task.BazelVersion,
+		task.Command,
+		jobConfiguration.Targets,
+		jobConfiguration.Platforms,
+		"api",
+	)
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -519,22 +468,4 @@ func isMainBranch(ref, masterBranch string) bool {
 	branch := b[2]
 
 	return branch == masterBranch
-}
-
-func modifiedRuleFile(e *github.PushEvent) bool {
-	for _, v := range e.Commits {
-		files := append(v.Added, v.Removed...)
-		files = append(files, v.Modified...)
-		for _, f := range files {
-			b := filepath.Base(f)
-			switch b {
-			case "BUILD", "BUILD.bazel":
-				return true
-			case ".bazelversion":
-				return true
-			}
-		}
-	}
-
-	return false
 }

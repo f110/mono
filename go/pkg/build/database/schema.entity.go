@@ -98,178 +98,16 @@ func (e *SourceRepository) Copy() *SourceRepository {
 	return n
 }
 
-type Job struct {
-	Id           int32
-	Name         string
-	RepositoryId int32
-	Command      string
-	// Deprecated.
-	Target       string
-	Targets      string
-	Platforms    string
-	Active       bool
-	AllRevision  bool
-	GithubStatus bool
-	CpuLimit     string
-	MemoryLimit  string
-	Exclusive    bool
-	Sync         bool
-	ConfigName   string
-	BazelVersion string
-	JobType      string
-	Schedule     string
-	CreatedAt    time.Time
-	UpdatedAt    *time.Time
-
-	Repository *SourceRepository
-
-	mu   sync.Mutex
-	mark *Job
-}
-
-func (e *Job) ResetMark() {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	e.mark = e.Copy()
-}
-
-func (e *Job) IsChanged() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	return e.Name != e.mark.Name ||
-		e.RepositoryId != e.mark.RepositoryId ||
-		e.Command != e.mark.Command ||
-		e.Target != e.mark.Target ||
-		e.Targets != e.mark.Targets ||
-		e.Platforms != e.mark.Platforms ||
-		e.Active != e.mark.Active ||
-		e.AllRevision != e.mark.AllRevision ||
-		e.GithubStatus != e.mark.GithubStatus ||
-		e.CpuLimit != e.mark.CpuLimit ||
-		e.MemoryLimit != e.mark.MemoryLimit ||
-		e.Exclusive != e.mark.Exclusive ||
-		e.Sync != e.mark.Sync ||
-		e.ConfigName != e.mark.ConfigName ||
-		e.BazelVersion != e.mark.BazelVersion ||
-		e.JobType != e.mark.JobType ||
-		e.Schedule != e.mark.Schedule ||
-		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
-		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
-}
-
-func (e *Job) ChangedColumn() []ddl.Column {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	res := make([]ddl.Column, 0)
-	if e.Name != e.mark.Name {
-		res = append(res, ddl.Column{Name: "name", Value: e.Name})
-	}
-	if e.RepositoryId != e.mark.RepositoryId {
-		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
-	}
-	if e.Command != e.mark.Command {
-		res = append(res, ddl.Column{Name: "command", Value: e.Command})
-	}
-	if e.Target != e.mark.Target {
-		res = append(res, ddl.Column{Name: "target", Value: e.Target})
-	}
-	if e.Targets != e.mark.Targets {
-		res = append(res, ddl.Column{Name: "targets", Value: e.Targets})
-	}
-	if e.Platforms != e.mark.Platforms {
-		res = append(res, ddl.Column{Name: "platforms", Value: e.Platforms})
-	}
-	if e.Active != e.mark.Active {
-		res = append(res, ddl.Column{Name: "active", Value: e.Active})
-	}
-	if e.AllRevision != e.mark.AllRevision {
-		res = append(res, ddl.Column{Name: "all_revision", Value: e.AllRevision})
-	}
-	if e.GithubStatus != e.mark.GithubStatus {
-		res = append(res, ddl.Column{Name: "github_status", Value: e.GithubStatus})
-	}
-	if e.CpuLimit != e.mark.CpuLimit {
-		res = append(res, ddl.Column{Name: "cpu_limit", Value: e.CpuLimit})
-	}
-	if e.MemoryLimit != e.mark.MemoryLimit {
-		res = append(res, ddl.Column{Name: "memory_limit", Value: e.MemoryLimit})
-	}
-	if e.Exclusive != e.mark.Exclusive {
-		res = append(res, ddl.Column{Name: "exclusive", Value: e.Exclusive})
-	}
-	if e.Sync != e.mark.Sync {
-		res = append(res, ddl.Column{Name: "sync", Value: e.Sync})
-	}
-	if e.ConfigName != e.mark.ConfigName {
-		res = append(res, ddl.Column{Name: "config_name", Value: e.ConfigName})
-	}
-	if e.BazelVersion != e.mark.BazelVersion {
-		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
-	}
-	if e.JobType != e.mark.JobType {
-		res = append(res, ddl.Column{Name: "job_type", Value: e.JobType})
-	}
-	if e.Schedule != e.mark.Schedule {
-		res = append(res, ddl.Column{Name: "schedule", Value: e.Schedule})
-	}
-	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
-		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
-	}
-	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
-		if e.UpdatedAt != nil {
-			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
-		} else {
-			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
-		}
-	}
-
-	return res
-}
-
-func (e *Job) Copy() *Job {
-	n := &Job{
-		Id:           e.Id,
-		Name:         e.Name,
-		RepositoryId: e.RepositoryId,
-		Command:      e.Command,
-		Target:       e.Target,
-		Targets:      e.Targets,
-		Platforms:    e.Platforms,
-		Active:       e.Active,
-		AllRevision:  e.AllRevision,
-		GithubStatus: e.GithubStatus,
-		CpuLimit:     e.CpuLimit,
-		MemoryLimit:  e.MemoryLimit,
-		Exclusive:    e.Exclusive,
-		Sync:         e.Sync,
-		ConfigName:   e.ConfigName,
-		BazelVersion: e.BazelVersion,
-		JobType:      e.JobType,
-		Schedule:     e.Schedule,
-		CreatedAt:    e.CreatedAt,
-	}
-	if e.UpdatedAt != nil {
-		v := *e.UpdatedAt
-		n.UpdatedAt = &v
-	}
-
-	if e.Repository != nil {
-		n.Repository = e.Repository.Copy()
-	}
-
-	return n
-}
-
 type Task struct {
-	Id       int32
-	JobId    int32
-	Revision string
-	Success  bool
-	LogFile  string
-	Command  string
+	Id               int32
+	RepositoryId     int32
+	JobName          string
+	JobConfiguration string
+	Revision         string
+	BazelVersion     string
+	Success          bool
+	LogFile          string
+	Command          string
 	// Deprecated.
 	Target     string
 	Targets    string
@@ -282,7 +120,7 @@ type Task struct {
 	CreatedAt  time.Time
 	UpdatedAt  *time.Time
 
-	Job *Job
+	Repository *SourceRepository
 
 	mu   sync.Mutex
 	mark *Task
@@ -299,8 +137,11 @@ func (e *Task) IsChanged() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.JobId != e.mark.JobId ||
+	return e.RepositoryId != e.mark.RepositoryId ||
+		e.JobName != e.mark.JobName ||
+		e.JobConfiguration != e.mark.JobConfiguration ||
 		e.Revision != e.mark.Revision ||
+		e.BazelVersion != e.mark.BazelVersion ||
 		e.Success != e.mark.Success ||
 		e.LogFile != e.mark.LogFile ||
 		e.Command != e.mark.Command ||
@@ -321,11 +162,20 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	defer e.mu.Unlock()
 
 	res := make([]ddl.Column, 0)
-	if e.JobId != e.mark.JobId {
-		res = append(res, ddl.Column{Name: "job_id", Value: e.JobId})
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.JobName != e.mark.JobName {
+		res = append(res, ddl.Column{Name: "job_name", Value: e.JobName})
+	}
+	if e.JobConfiguration != e.mark.JobConfiguration {
+		res = append(res, ddl.Column{Name: "job_configuration", Value: e.JobConfiguration})
 	}
 	if e.Revision != e.mark.Revision {
 		res = append(res, ddl.Column{Name: "revision", Value: e.Revision})
+	}
+	if e.BazelVersion != e.mark.BazelVersion {
+		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
 	}
 	if e.Success != e.mark.Success {
 		res = append(res, ddl.Column{Name: "success", Value: e.Success})
@@ -384,19 +234,22 @@ func (e *Task) ChangedColumn() []ddl.Column {
 
 func (e *Task) Copy() *Task {
 	n := &Task{
-		Id:         e.Id,
-		JobId:      e.JobId,
-		Revision:   e.Revision,
-		Success:    e.Success,
-		LogFile:    e.LogFile,
-		Command:    e.Command,
-		Target:     e.Target,
-		Targets:    e.Targets,
-		Platform:   e.Platform,
-		Via:        e.Via,
-		ConfigName: e.ConfigName,
-		Node:       e.Node,
-		CreatedAt:  e.CreatedAt,
+		Id:               e.Id,
+		RepositoryId:     e.RepositoryId,
+		JobName:          e.JobName,
+		JobConfiguration: e.JobConfiguration,
+		Revision:         e.Revision,
+		BazelVersion:     e.BazelVersion,
+		Success:          e.Success,
+		LogFile:          e.LogFile,
+		Command:          e.Command,
+		Target:           e.Target,
+		Targets:          e.Targets,
+		Platform:         e.Platform,
+		Via:              e.Via,
+		ConfigName:       e.ConfigName,
+		Node:             e.Node,
+		CreatedAt:        e.CreatedAt,
 	}
 	if e.StartAt != nil {
 		v := *e.StartAt
@@ -411,8 +264,8 @@ func (e *Task) Copy() *Task {
 		n.UpdatedAt = &v
 	}
 
-	if e.Job != nil {
-		n.Job = e.Job.Copy()
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
 	}
 
 	return n

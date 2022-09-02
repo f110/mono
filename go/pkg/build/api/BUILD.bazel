@@ -6,10 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/build/api",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/build/config",
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
-        "//go/pkg/build/discovery",
-        "//go/pkg/build/job",
         "//go/pkg/logger",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",
@@ -24,6 +23,7 @@ go_test(
     data = glob(["testdata/**"]),
     embed = [":api"],
     deps = [
+        "//go/pkg/build/config",
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
         "//go/pkg/build/database/dao/daotest",

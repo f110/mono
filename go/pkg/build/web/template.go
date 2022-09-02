@@ -54,17 +54,6 @@ const indexTemplate = `<html>
   </div>
 
   <div class="ui item dropdown simple">
-    Job<i class="dropdown icon"></i>
-    <div class="menu">
-      {{- range .RepoAndJobs }}
-      {{- range .Jobs }}
-      <a class="item">{{ .Command }} {{ .Repository.Name }}{{ .Target }}</a>
-      {{- end }}
-      {{- end }}
-    </div>
-  </div>
-
-  <div class="ui item dropdown simple">
     Trusted User<i class="dropdown icon"></i>
     <div class="menu">
       {{- range .TrustedUsers }}
@@ -142,33 +131,21 @@ const indexTemplate = `<html>
 <!-- end of modal -->
 
 <div class="ui container">
-  {{- range .RepoAndJobs }}
+  {{- range .RepoAndTasks }}
   <h2 class="ui block header">
     <div class="ui grid">
       <div class="two column row">
-        <div class="left floated column">{{ if .IsDiscovering }}<i class="spinner loading icon">{{ end }}</i>{{ .Repo.Name }}</div>
-        <div class="right aligned floated column">
-          {{ if .LogFile }}<a href="/logs/{{ .LogFile }}"><i class="file alternate outline icon"></i></a>{{ end }}
-          <a href="#" onclick="syncDiscover({{ .Repo.Id }})"><i class="amber refresh icon"></i></a>
-        </div>
+        <div class="left floated column">{{ .Repo.Name }}</div>
       </div>
     </div>
   </h2>
-  {{- range .Jobs }}
-  <h3 class="ui header">
-    <div class="ui grid">
-      <div class="two column row">
-        <div class="left floated column">{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ .Command }} {{ .Repository.Name }}{{ .Target }}{{ if not .Exclusive }}&nbsp;<i class="random icon"></i>{{ end }}</div>
-        <div class="right aligned floated column"><a href="#" onclick="runTask({{ .Id }})"><i class="green play icon"></i></a></div>
-      </div>
-    </div>
-  </h3>
 
   <div class="ui container">
     <table class="ui selectable striped table">
       <thead>
         <tr>
           <th>#</th>
+          <th>Job</th>
           <th>OK</th>
           <th>Log</th>
           <th>Rev</th>
@@ -183,6 +160,7 @@ const indexTemplate = `<html>
 		{{- range .Tasks }}
         <tr>
           <td>{{ .Id }}</td>
+          <td>{{ .JobName }}</td>
           <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
           <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
           <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
@@ -195,7 +173,6 @@ const indexTemplate = `<html>
         {{- end }}
       </tbody>
     </table>
-    {{- end }}
     {{- end }}
   </div>
 </div>
@@ -253,21 +230,6 @@ function deleteRepository(id, name) {
   }).modal('show');
 }
 
-function runTask(id) {
-  var params = new URLSearchParams();
-  params.append("job_id", id);
-  fetch(apiHost+"/run", {
-    mode: 'cors',
-    method: 'POST',
-    credentials: 'include',
-    body: params,
-  }).then(response => {
-    if (response.ok) {
-      window.location.reload(false);
-    }
-  });
-}
-
 function redoTask(id) {
   var params = new URLSearchParams();
   params.append("task_id", id);
@@ -283,20 +245,6 @@ function redoTask(id) {
   });
 }
 
-function syncDiscover(id) {
-  var params = new URLSearchParams();
-  params.append("repository_id", id);
-  fetch(apiHost+"/discovery", {
-    mode: 'cors',
-    method: 'POST',
-    credentials: 'include',
-    body: params,
-  }).then(response => {
-    if (response.ok) {
-      window.location.reload(false);
-    }
-  });
-}
 </script>
 </body>
 </html>`

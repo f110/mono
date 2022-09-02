@@ -11,9 +11,9 @@ import (
 	"go.f110.dev/xerrors"
 )
 
-func triggerTask(endpoint string, jobId int, via string) error {
+func redoTask(endpoint string, taskId int, via string) error {
 	v := &url.Values{}
-	v.Add("job_id", strconv.Itoa(jobId))
+	v.Add("job_id", strconv.Itoa(taskId))
 	v.Add("via", via)
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/run", endpoint), strings.NewReader(v.Encode()))
 	if err != nil {
@@ -40,16 +40,16 @@ func Job(rootCmd *cobra.Command) {
 	endpoint := ""
 	jobId := 0
 	via := ""
-	trigger := &cobra.Command{
-		Use: "trigger",
+	redo := &cobra.Command{
+		Use: "redo",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			return triggerTask(endpoint, jobId, via)
+			return redoTask(endpoint, jobId, via)
 		},
 	}
-	trigger.Flags().StringVar(&endpoint, "endpoint", "", "API Endpoint")
-	trigger.Flags().IntVar(&jobId, "job-id", 0, "Trigger job id")
-	trigger.Flags().StringVar(&via, "via", "", "Via")
-	job.AddCommand(trigger)
+	redo.Flags().StringVar(&endpoint, "endpoint", "", "API Endpoint")
+	redo.Flags().IntVar(&jobId, "job-id", 0, "Trigger task id")
+	redo.Flags().StringVar(&via, "via", "", "Via")
+	job.AddCommand(redo)
 
 	rootCmd.AddCommand(job)
 }

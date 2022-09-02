@@ -27,7 +27,6 @@ import (
 	"go.f110.dev/mono/go/pkg/build/api"
 	"go.f110.dev/mono/go/pkg/build/coordinator"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
-	"go.f110.dev/mono/go/pkg/build/discovery"
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/fsm"
@@ -93,7 +92,6 @@ type process struct {
 	minioOpt                  storage.MinIOOptions
 
 	bazelBuilder *coordinator.BazelBuilder
-	discover     *discovery.Discover
 	apiServer    *api.Api
 }
 
@@ -224,30 +222,11 @@ func (p *process) setup() (fsm.State, error) {
 	}
 	p.bazelBuilder = c
 
-	p.discover = discovery.NewDiscover(
-		p.coreSharedInformerFactory.Batch().V1().Jobs(),
-		p.kubeClient,
-		p.opt.Namespace,
-		p.dao,
-		c,
-		p.opt.BazelImage,
-		p.opt.SidecarImage,
-		p.opt.CLIImage,
-		p.opt.BuilderApiUrl,
-		p.ghClient,
-		p.opt.MinIOBucket,
-		minioOpt,
-		p.opt.GithubAppId,
-		p.opt.GithubInstallationId,
-		p.opt.GithubAppSecretName,
-		p.opt.Debug,
-	)
-
 	return stateStartApiServer, nil
 }
 
 func (p *process) startApiServer() (fsm.State, error) {
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.discover, p.dao, p.ghClient)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}

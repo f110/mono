@@ -11,25 +11,44 @@ import (
 )
 
 type Config struct {
-	Jobs []*Job
+	Jobs            []*Job
+	RepositoryOwner string
+	RepositoryName  string
 }
 
 type Job struct {
-	Name         string   `attr:"name"`
-	AllRevision  bool     `attr:"all_revision"`
-	Command      string   `attr:"command"`
-	CPULimit     string   `attr:"cpu_limit"`
+	// Name is a job name
+	Name string `attr:"name"`
+	// If true, build at each revision
+	AllRevision bool   `attr:"all_revision"`
+	Command     string `attr:"command"`
+	// Limit of CPU
+	CPULimit string `attr:"cpu_limit"`
+	// Limit of memory
 	MemoryLimit  string   `attr:"memory_limit"`
 	GitHubStatus bool     `attr:"github_status"`
 	Platforms    []string `attr:"platforms"`
 	Targets      []string `attr:"targets"`
+	// Do not allow parallelized build in this job
+	Exclusive bool `attr:"exclusive"`
+	// The name of config
+	ConfigName string `attr:"config_name"`
+	// Job schedule
+	Schedule string `attr:"schedule"`
+
+	RepositoryOwner string
+	RepositoryName  string
 }
 
-func Read(r io.Reader) (*Config, error) {
-	config := &Config{}
+func (j *Job) Identification() string {
+	return fmt.Sprintf("%s-%s-%s", j.RepositoryOwner, j.RepositoryName, j.Name)
+}
+
+func Read(r io.Reader, owner, repo string) (*Config, error) {
+	config := &Config{RepositoryOwner: owner, RepositoryName: repo}
 	predeclared := starlark.StringDict{
 		"job": starlark.NewBuiltin("job", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-			job := &Job{}
+			job := &Job{RepositoryOwner: owner, RepositoryName: repo}
 
 			for _, v := range kwargs {
 				name := v.Index(0)

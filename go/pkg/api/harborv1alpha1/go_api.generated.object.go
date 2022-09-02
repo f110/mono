@@ -160,7 +160,8 @@ func (in *HarborRobotAccountList) DeepCopyObject() runtime.Object {
 
 type HarborProjectSpec struct {
 	// public is an access level of the project.
-	//  If public sets true, then anyone can read.
+	//
+	//	If public sets true, then anyone can read.
 	Public bool `json:"public"`
 }
 

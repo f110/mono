@@ -15,36 +15,14 @@ CREATE TABLE `source_repository` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
-DROP TABLE IF EXISTS `job`;
-CREATE TABLE `job` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT,
-	`name` VARCHAR(255) NOT NULL,
-	`repository_id` INTEGER NOT NULL,
-	`command` VARCHAR(20) NOT NULL,
-	`target` VARCHAR(255) NOT NULL,
-	`targets` TEXT NOT NULL,
-	`platforms` TEXT NOT NULL,
-	`active` TINYINT(1) NOT NULL,
-	`all_revision` TINYINT(1) NOT NULL,
-	`github_status` TINYINT(1) NOT NULL,
-	`cpu_limit` VARCHAR(255) NOT NULL,
-	`memory_limit` VARCHAR(255) NOT NULL,
-	`exclusive` TINYINT(1) NOT NULL,
-	`sync` TINYINT(1) NOT NULL,
-	`config_name` VARCHAR(255) NOT NULL,
-	`bazel_version` VARCHAR(255) NOT NULL,
-	`job_type` VARCHAR(255) NOT NULL,
-	`schedule` VARCHAR(255) NOT NULL,
-	`created_at` DATETIME NOT NULL,
-	`updated_at` DATETIME NULL,
-	PRIMARY KEY(`id`)
-) Engine=InnoDB;
-
 DROP TABLE IF EXISTS `task`;
 CREATE TABLE `task` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,
-	`job_id` INTEGER NOT NULL,
+	`repository_id` INTEGER NOT NULL,
+	`job_name` VARCHAR(255) NOT NULL,
+	`job_configuration` TEXT NOT NULL,
 	`revision` VARCHAR(255) NOT NULL,
+	`bazel_version` VARCHAR(255) NOT NULL,
 	`success` TINYINT(1) NOT NULL,
 	`log_file` VARCHAR(255) NOT NULL,
 	`command` VARCHAR(255) NOT NULL,

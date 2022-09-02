@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -27,6 +28,7 @@ import (
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
 
+	"go.f110.dev/mono/go/pkg/build/config"
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/watcher"
@@ -42,6 +44,7 @@ const (
 	defaultCPULimit    = "1000m"
 	defaultMemoryLimit = "4096Mi"
 
+	labelKeyRepoId = "build.f110.dev/repo-id"
 	labelKeyJobId  = "build.f110.dev/job-id"
 	labelKeyTaskId = "build.f110.dev/task-id"
 	labelKeyCtrlBy = "build.f110.dev/control-by"
@@ -106,25 +109,33 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 
 type taskQueue struct {
 	mu     sync.Mutex
-	queues map[int32][]*database.Task
+	queues map[string][]*database.Task
 }
 
 func newTaskQueue() *taskQueue {
-	return &taskQueue{queues: make(map[int32][]*database.Task)}
+	return &taskQueue{queues: make(map[string][]*database.Task)}
 }
 
-func (tq *taskQueue) Enqueue(job *database.Job, task *database.Task) {
+func (tq *taskQueue) Enqueue(job *config.Job, task *database.Task) {
+	tq.EnqueueById(job.Identification(), task)
+}
+
+func (tq *taskQueue) EnqueueById(id string, task *database.Task) {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
 
-	tq.queues[job.Id] = append(tq.queues[job.Id], task)
+	tq.queues[id] = append(tq.queues[id], task)
 }
 
-func (tq *taskQueue) Dequeue(job *database.Job) *database.Task {
+func (tq *taskQueue) Dequeue(job *config.Job) *database.Task {
+	return tq.DequeueById(job.Identification())
+}
+
+func (tq *taskQueue) DequeueById(id string) *database.Task {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
 
-	q, ok := tq.queues[job.Id]
+	q, ok := tq.queues[id]
 	if !ok {
 		return nil
 	}
@@ -133,10 +144,10 @@ func (tq *taskQueue) Dequeue(job *database.Job) *database.Task {
 	case 0:
 		return nil
 	case 1:
-		tq.queues[job.Id] = nil
+		tq.queues[id] = nil
 		return q[0]
 	default:
-		tq.queues[job.Id] = q[1:]
+		tq.queues[id] = q[1:]
 		return q[0]
 	}
 }
@@ -235,24 +246,33 @@ func NewBazelBuilder(
 		return nil, xerrors.WithStack(err)
 	}
 	for _, v := range pendingTasks {
-		b.taskQueue.Enqueue(v.Job, v)
+		b.taskQueue.EnqueueById(v.JobName, v)
 	}
 
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, command, targets, platforms, via string) ([]*database.Task, error) {
+func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error) {
 	var tasks []*database.Task
 
-	for _, platform := range strings.Split(platforms, "\n") {
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(job); err != nil {
+		return nil, err
+	}
+	jobConfiguration := buf.String()
+	t := strings.Join(targets, "\n")
+	for _, platform := range platforms {
 		task, err := b.dao.Task.Create(ctx, &database.Task{
-			JobId:      job.Id,
-			Revision:   revision,
-			Command:    command,
-			Targets:    targets,
-			Platform:   platform,
-			Via:        via,
-			ConfigName: job.ConfigName,
+			RepositoryId:     repo.Id,
+			JobName:          job.Name,
+			JobConfiguration: jobConfiguration,
+			Revision:         revision,
+			BazelVersion:     bazelVersion,
+			Command:          command,
+			Targets:          t,
+			Platform:         platform,
+			Via:              via,
+			ConfigName:       job.ConfigName,
 		})
 		if err != nil {
 			return nil, xerrors.WithStack(err)
@@ -266,7 +286,7 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 		}()
 		tasks = append(tasks, task)
 
-		if err := b.buildJob(ctx, job, task); err != nil {
+		if err := b.buildJob(ctx, repo, job, task); err != nil {
 			if errors.Is(err, ErrOtherTaskIsRunning) {
 				logger.Log.Info("Enqueue the task", zap.Int32("task.id", task.Id))
 				b.taskQueue.Enqueue(job, task)
@@ -276,8 +296,8 @@ func (b *BazelBuilder) Build(ctx context.Context, job *database.Job, revision, c
 			return nil, xerrors.WithStack(err)
 		}
 
-		if job.GithubStatus {
-			if err := b.updateGithubStatus(ctx, job, task, "pending"); err != nil {
+		if job.GitHubStatus {
+			if err := b.updateGithubStatus(ctx, repo, job, task, "pending"); err != nil {
 				logger.Log.Warn("Failure update the status of github", zap.Error(err), zap.Int32("task.id", task.Id))
 			}
 		}
@@ -295,6 +315,15 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
+	repoId, err := strconv.Atoi(job.Labels[labelKeyRepoId])
+	if err != nil {
+		return err
+	}
+	repo, err := b.dao.Repository.Select(ctx, int32(repoId))
+	if err != nil {
+		return err
+	}
+
 	taskId := job.Labels[labelKeyTaskId]
 	task, err := b.getTask(taskId)
 	if err != nil {
@@ -306,6 +335,10 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			return nil
 		}
 		return xerrors.WithStack(err)
+	}
+	jobConfiguration := &config.Job{}
+	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConfiguration); err != nil {
+		return nil
 	}
 
 	if task.FinishedAt != nil {
@@ -339,7 +372,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		switch v.Type {
 		case batchv1.JobComplete:
 			if task.FinishedAt == nil {
-				if err := b.postProcess(ctx, job, task, true); err != nil {
+				if err := b.postProcess(ctx, job, repo, jobConfiguration, task, true); err != nil {
 					return xerrors.WithStack(err)
 				}
 			}
@@ -348,7 +381,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			logger.Log.Info("Job was finished successfully", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		case batchv1.JobFailed:
 			if task.FinishedAt == nil {
-				if err := b.postProcess(ctx, job, task, false); err != nil {
+				if err := b.postProcess(ctx, job, repo, jobConfiguration, task, false); err != nil {
 					return xerrors.WithStack(err)
 				}
 			}
@@ -366,10 +399,10 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return xerrors.WithStack(err)
 	}
 
-	if followTask := b.taskQueue.Dequeue(task.Job); followTask != nil {
+	if followTask := b.taskQueue.DequeueById(task.JobName); followTask != nil {
 		logger.Log.Info("Dequeue the task", zap.Int32("task.id", followTask.Id))
-		if err := b.buildJob(ctx, task.Job, followTask); err != nil {
-			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.Int32("job.id", task.JobId), zap.Int32("task.id", task.Id))
+		if err := b.buildJob(ctx, repo, jobConfiguration, followTask); err != nil {
+			logger.Log.Warn("Failed starting follow task. You have to start a task manually", zap.Error(err), zap.String("job.name", task.JobName), zap.Int32("task.id", task.Id))
 			return nil
 		}
 		if err := b.dao.Task.Update(context.Background(), followTask); err != nil {
@@ -410,14 +443,12 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 	return task, nil
 }
 
-func (b *BazelBuilder) buildJob(ctx context.Context, job *database.Job, task *database.Task) error {
-	if job.Exclusive {
-		if b.isRunningJob(job) {
-			return xerrors.WithStack(ErrOtherTaskIsRunning)
-		}
+func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task) error {
+	if job.Exclusive && b.isRunningJob(job) {
+		return xerrors.WithStack(ErrOtherTaskIsRunning)
 	}
 
-	buildTemplate := b.buildJobTemplate(job, task, task.Platform)
+	buildTemplate := b.buildJobTemplate(repo, job, task, task.Platform)
 	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -428,7 +459,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, job *database.Job, task *da
 	return nil
 }
 
-func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
+func (b *BazelBuilder) isRunningJob(job *config.Job) bool {
 	jobs, err := b.jobLister.List(labels.Everything())
 	if err != nil {
 		logger.Log.Warn("Could not get a job's list from kube-apiserver.", zap.Error(err))
@@ -438,15 +469,11 @@ func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
 	}
 
 	for _, v := range jobs {
-		jobIdString, ok := v.Labels[labelKeyJobId]
+		jobId, ok := v.Labels[labelKeyJobId]
 		if !ok {
 			continue
 		}
-		jobId, err := strconv.Atoi(jobIdString)
-		if err != nil {
-			continue
-		}
-		if job.Id == int32(jobId) {
+		if job.Identification() == jobId {
 			if v.Status.CompletionTime.IsZero() && !v.Status.StartTime.IsZero() {
 				return true
 			}
@@ -456,12 +483,7 @@ func (b *BazelBuilder) isRunningJob(job *database.Job) bool {
 	return false
 }
 
-func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *database.Task, success bool) error {
-	j, err := b.dao.Job.Select(context.Background(), task.JobId)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-
+func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *database.SourceRepository, jobConfiguration *config.Job, task *database.Task, success bool) error {
 	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -515,12 +537,12 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 		}
 	}
 
-	if j.GithubStatus {
+	if jobConfiguration.GitHubStatus {
 		state := "success"
 		if !success {
 			state = "failure"
 		}
-		if err := b.updateGithubStatus(context.Background(), j, task, state); err != nil {
+		if err := b.updateGithubStatus(context.Background(), repo, jobConfiguration, task, state); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
@@ -528,22 +550,22 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, task *
 	return nil
 }
 
-func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job, task *database.Task, state string) error {
+func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task, state string) error {
 	if task.Revision == "" {
 		return nil
 	}
 
-	u, err := url.Parse(job.Repository.Url)
+	u, err := url.Parse(repo.Url)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	if u.Hostname() != "github.com" {
-		logger.Log.Warn("Expect update a status of github. but repository url is not github.com", zap.String("url", job.Repository.Url))
+		logger.Log.Warn("Expect update a status of github. but repository url is not github.com", zap.String("url", repo.Url))
 		return nil
 	}
 	// u.Path is /owner/repo if URL is github.com.
 	s := strings.Split(u.Path, "/")
-	owner, repo := s[1], s[2]
+	owner, repoName := s[1], s[2]
 
 	targetUrl := ""
 	if state == "success" || state == "failure" {
@@ -553,11 +575,11 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 	_, _, err = b.githubClient.Repositories.CreateStatus(
 		ctx,
 		owner,
-		repo,
+		repoName,
 		task.Revision,
 		&github.RepoStatus{
 			State:     github.String(state),
-			Context:   github.String(fmt.Sprintf("%s %s", job.Command, job.Name)),
+			Context:   github.String(fmt.Sprintf("%s %s", task.Command, job.Name)),
 			TargetURL: github.String(targetUrl),
 		},
 	)
@@ -568,14 +590,14 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, job *database.Job
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, platform string) *batchv1.Job {
+func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) *batchv1.Job {
 	bazelVersion := b.defaultBazelVersion
-	if job.BazelVersion != "" {
-		bazelVersion = job.BazelVersion
+	if task.BazelVersion != "" {
+		bazelVersion = task.BazelVersion
 	}
 	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, bazelVersion)
+	repoIdString := fmt.Sprintf("%d", repo.Id)
 	taskIdString := strconv.Itoa(int(task.Id))
-	jobIdString := strconv.Itoa(int(job.Id))
 
 	volumes := []corev1.Volume{
 		{
@@ -591,7 +613,7 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, 
 	sidecarVolumeMounts := []corev1.VolumeMount{
 		{Name: "workdir", MountPath: "/work"},
 	}
-	if job.Repository.Private {
+	if repo.Private {
 		volumes = append(volumes, corev1.Volume{
 			Name: "github-secret",
 			VolumeSource: corev1.VolumeSource{
@@ -607,11 +629,11 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, 
 		})
 	}
 
-	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", job.Repository.CloneUrl)}
+	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", repo.CloneUrl)}
 	if task.Revision != "" {
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
-	if job.Repository.Private {
+	if repo.Private {
 		preProcessArgs = append(preProcessArgs,
 			fmt.Sprintf("--github-app-id=%d", b.githubAppId),
 			fmt.Sprintf("--github-installation-id=%d", b.githubInstallationId),
@@ -620,8 +642,8 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, 
 	}
 
 	cpuLimit := b.defaultTaskCPULimit
-	if job.CpuLimit != "" {
-		q, err := resource.ParseQuantity(job.CpuLimit)
+	if job.CPULimit != "" {
+		q, err := resource.ParseQuantity(job.CPULimit)
 		if err != nil {
 			return nil
 		}
@@ -660,10 +682,11 @@ func (b *BazelBuilder) buildJobTemplate(job *database.Job, task *database.Task, 
 	var backoffLimit int32 = 0
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%d%s", job.Repository.Name, task.Id, platformName),
+			Name:      fmt.Sprintf("%s-%d%s", job.RepositoryName, task.Id, platformName),
 			Namespace: b.Namespace,
 			Labels: map[string]string{
-				labelKeyJobId:     jobIdString,
+				labelKeyRepoId:    repoIdString,
+				labelKeyJobId:     job.Identification(),
 				labelKeyTaskId:    taskIdString,
 				labelKeyCtrlBy:    "bazel-build",
 				watcher.TypeLabel: jobType,

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.f110.dev/mono/go/pkg/build/config"
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/database/dao/daotest"
@@ -23,11 +24,13 @@ import (
 )
 
 type MockBuilder struct {
-	jobs   []*database.Job
+	jobs   []*config.Job
 	called bool
 }
 
-func (m *MockBuilder) Build(_ context.Context, job *database.Job, revision, command, target, platforms, via string) ([]*database.Task, error) {
+var _ Builder = &MockBuilder{}
+
+func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error) {
 	m.jobs = append(m.jobs, job)
 	m.called = true
 	return []*database.Task{}, nil
@@ -53,7 +56,6 @@ func (m *MockTransport) RequestBody() ([]byte, error) {
 
 type mockDAO struct {
 	Repository        *daotest.SourceRepository
-	Job               *daotest.Job
 	Task              *daotest.Task
 	TrustedUser       *daotest.TrustedUser
 	PermitPullRequest *daotest.PermitPullRequest
@@ -62,7 +64,6 @@ type mockDAO struct {
 func newMock() *mockDAO {
 	return &mockDAO{
 		Repository:        daotest.NewSourceRepository(),
-		Job:               daotest.NewJob(),
 		Task:              daotest.NewTask(),
 		TrustedUser:       daotest.NewTrustedUser(),
 		PermitPullRequest: daotest.NewPermitPullRequest(),
@@ -97,40 +98,6 @@ func TestGithubWebHook(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: nil,
 	}
-	testJob := &database.Job{
-		Id:           1,
-		RepositoryId: opsRepository.Id,
-		Repository:   opsRepository,
-		Command:      "test",
-		Target:       "//...",
-		Active:       true,
-		AllRevision:  true,
-		GithubStatus: false,
-		CpuLimit:     "300m",
-		MemoryLimit:  "512Mi",
-		Exclusive:    true,
-		Sync:         true,
-		ConfigName:   "test",
-		BazelVersion: "3.5.0",
-		CreatedAt:    time.Now(),
-	}
-	sandboxJob := &database.Job{
-		Id:           2,
-		RepositoryId: sandboxRepository.Id,
-		Repository:   sandboxRepository,
-		Command:      "test",
-		Target:       "//...",
-		Active:       true,
-		AllRevision:  true,
-		GithubStatus: false,
-		CpuLimit:     "300m",
-		MemoryLimit:  "512Mi",
-		Exclusive:    true,
-		Sync:         true,
-		ConfigName:   "test",
-		BazelVersion: "3.5.0",
-		CreatedAt:    time.Now(),
-	}
 
 	t.Run("OpenedPullRequest", func(t *testing.T) {
 		t.Parallel()
@@ -140,13 +107,12 @@ func TestGithubWebHook(t *testing.T) {
 			d := newMock()
 			daos := dao.Options{
 				Repository:        d.Repository,
-				Job:               d.Job,
 				Task:              d.Task,
 				TrustedUser:       d.TrustedUser,
 				PermitPullRequest: d.PermitPullRequest,
 			}
 
-			s, err := NewApi("", builder, nil, daos, nil)
+			s, err := NewApi("", builder, daos, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -206,11 +172,6 @@ func TestGithubWebHook(t *testing.T) {
 				[]*database.SourceRepository{opsRepository},
 				nil,
 			)
-			mock.Job.RegisterListBySourceRepositoryId(
-				opsRepository.Id,
-				[]*database.Job{testJob},
-				nil,
-			)
 
 			s.handleWebHook(w, req)
 
@@ -239,11 +200,6 @@ func TestGithubWebHook(t *testing.T) {
 				[]*database.SourceRepository{opsRepository},
 				nil,
 			)
-			mock.Job.RegisterListBySourceRepositoryId(
-				opsRepository.Id,
-				[]*database.Job{testJob},
-				nil,
-			)
 
 			s.handleWebHook(w, req)
 
@@ -258,7 +214,6 @@ func TestGithubWebHook(t *testing.T) {
 		mock := newMock()
 		daos := dao.Options{
 			Repository:        mock.Repository,
-			Job:               mock.Job,
 			Task:              mock.Task,
 			TrustedUser:       mock.TrustedUser,
 			PermitPullRequest: mock.PermitPullRequest,
@@ -274,15 +229,10 @@ func TestGithubWebHook(t *testing.T) {
 			[]*database.SourceRepository{opsRepository},
 			nil,
 		)
-		mock.Job.RegisterListBySourceRepositoryId(
-			opsRepository.Id,
-			[]*database.Job{testJob},
-			nil,
-		)
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, nil, daos, nil)
+		s, err := NewApi("", builder, daos, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -305,7 +255,6 @@ func TestGithubWebHook(t *testing.T) {
 		mock := newMock()
 		daos := dao.Options{
 			Repository:        mock.Repository,
-			Job:               mock.Job,
 			Task:              mock.Task,
 			TrustedUser:       mock.TrustedUser,
 			PermitPullRequest: mock.PermitPullRequest,
@@ -319,7 +268,7 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, nil, daos, nil)
+		s, err := NewApi("", builder, daos, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -344,7 +293,6 @@ func TestGithubWebHook(t *testing.T) {
 		mock := newMock()
 		daos := dao.Options{
 			Repository:        mock.Repository,
-			Job:               mock.Job,
 			Task:              mock.Task,
 			TrustedUser:       mock.TrustedUser,
 			PermitPullRequest: mock.PermitPullRequest,
@@ -356,11 +304,6 @@ func TestGithubWebHook(t *testing.T) {
 			[]*database.SourceRepository{opsRepository},
 			nil,
 		)
-		mock.Job.RegisterListBySourceRepositoryId(
-			opsRepository.Id,
-			[]*database.Job{testJob},
-			nil,
-		)
 
 		builder := &MockBuilder{}
 
@@ -369,7 +312,7 @@ func TestGithubWebHook(t *testing.T) {
 			Body:       ioutil.NopCloser(strings.NewReader("{}")),
 		}}
 
-		s, err := NewApi("", builder, nil, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -395,7 +338,6 @@ func TestGithubWebHook(t *testing.T) {
 		mock := newMock()
 		daos := dao.Options{
 			Repository:        mock.Repository,
-			Job:               mock.Job,
 			Task:              mock.Task,
 			TrustedUser:       mock.TrustedUser,
 			PermitPullRequest: mock.PermitPullRequest,
@@ -406,11 +348,6 @@ func TestGithubWebHook(t *testing.T) {
 			[]*database.SourceRepository{sandboxRepository},
 			nil,
 		)
-		mock.Job.RegisterListBySourceRepositoryId(
-			sandboxRepository.Id,
-			[]*database.Job{sandboxJob},
-			nil,
-		)
 
 		builder := &MockBuilder{}
 
@@ -419,7 +356,7 @@ func TestGithubWebHook(t *testing.T) {
 			Body:       ioutil.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
 		}}
 
-		s, err := NewApi("", builder, nil, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
 		if err != nil {
 			t.Fatal(err)
 		}

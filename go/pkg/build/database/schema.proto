@@ -29,25 +29,24 @@ message SourceRepository {
   };
 }
 
-message Job {
-  int32            id            = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  string           name          = 2;
-  SourceRepository repository    = 3;
-  string           command       = 4 [(dev.f110.ddl.column) = { size: 20 }];
-  string           target        = 5 [(dev.f110.ddl.column) = { size: 255 }, deprecated = true];
-  string           targets       = 6 [(dev.f110.ddl.column) = { type: "text" }];
-  string           platforms     = 7 [(dev.f110.ddl.column) = { type: "text" }];
-  bool             active        = 8;
-  bool             all_revision  = 9;
-  bool             github_status = 10;
-  string           cpu_limit     = 11;
-  string           memory_limit  = 12;
-  bool             exclusive     = 13;
-  bool             sync          = 14;
-  string           config_name   = 15;
-  string           bazel_version = 16;
-  string           job_type      = 17;
-  string           schedule      = 18;
+message Task {
+  int32                      id                = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository           repository        = 2;
+  string                     job_name          = 3;
+  string                     job_configuration = 4 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     revision          = 5;
+  string                     bazel_version     = 6;
+  bool                       success           = 7;
+  string                     log_file          = 8;
+  string                     command           = 9;
+  string                     target            = 10 [deprecated = true];
+  string                     targets           = 11 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     platform          = 12 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via               = 13;
+  string                     config_name       = 14;
+  string                     node              = 15;
+  .google.protobuf.Timestamp start_at          = 16 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at       = 17 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
@@ -57,44 +56,15 @@ message Job {
   option (dev.f110.ddl.dao) = {
     queries: {
       name: "All"
-      query: "SELECT * FROM `job`"
+      query: "SELECT * FROM `:table_name:`"
     }
     queries: {
-      name: "BySourceRepositoryId"
-      query: "SELECT * FROM `job` WHERE `repository_id` = ?"
-    };
-};
-}
-
-message Task {
-  int32                      id          = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  Job                        job         = 2;
-  string                     revision    = 3;
-  bool                       success     = 4;
-  string                     log_file    = 5;
-  string                     command     = 6;
-  string                     target      = 7 [deprecated = true];
-  string                     targets     = 8 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     platform    = 9 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     via         = 10;
-  string                     config_name = 11;
-  string                     node        = 12;
-  .google.protobuf.Timestamp start_at    = 13 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at = 14 [(dev.f110.ddl.column) = { null: true }];
-
-  option (dev.f110.ddl.table) = {
-    primary_key: "id"
-    with_timestamp: true
-  };
-
-  option (dev.f110.ddl.dao) = {
-    queries: {
-      name: "ByJobId"
-      query: "SELECT * FROM `task` WHERE `job_id` = ?"
+      name: "ByRepositoryId"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
     }
     queries: {
       name: "Pending"
-      query: "SELECT * FROM `task` WHERE `start_at` IS NULL"
+      query: "SELECT * FROM `:table_name:` WHERE `start_at` IS NULL"
     }
   };
 }
@@ -135,6 +105,6 @@ message PermitPullRequest {
     queries: {
       name: "ByRepositoryAndNumber"
       query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
-    };
-};
+    }
+  };
 }

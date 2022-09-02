@@ -26,9 +26,11 @@ func TestReadConfig(t *testing.T) {
         "-//containers/zoekt-indexer/...",
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
+	exclusive = True,
+	config_name = "ci",
 )`
 
-	conf, err := Read(strings.NewReader(data))
+	conf, err := Read(strings.NewReader(data), "", "")
 	require.NoError(t, err)
 
 	assert.Equal(t, "test_all", conf.Jobs[0].Name)
@@ -37,6 +39,8 @@ func TestReadConfig(t *testing.T) {
 	assert.Equal(t, "test", conf.Jobs[0].Command)
 	assert.Equal(t, "2000m", conf.Jobs[0].CPULimit)
 	assert.Equal(t, "8Gi", conf.Jobs[0].MemoryLimit)
+	assert.Equal(t, "ci", conf.Jobs[0].ConfigName)
+	assert.True(t, conf.Jobs[0].Exclusive)
 	if assert.Len(t, conf.Jobs[0].Platforms, 1) {
 		assert.Equal(t, "@io_bazel_rules_go//go/toolchain:linux_amd64", conf.Jobs[0].Platforms[0])
 	}

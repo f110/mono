@@ -32,14 +32,6 @@
   </div>
 
   <div class="ui item dropdown simple">
-    Job<i class="dropdown icon"></i>
-    <div class="menu">
-      <a class="item">mono.git/tools/unissh:pkg</a>
-      <a class="item">ops.git/dns:dnscontrol</a>
-    </div>
-  </div>
-
-  <div class="ui item dropdown simple">
     Trusted User<i class="dropdown icon"></i>
     <div class="menu">
       <a class="item">f110</a>
@@ -116,28 +108,17 @@
   <h2 class="ui block header">
     <div class="ui grid">
       <div class="two column row">
-        <div class="left floated column"><i class="spinner loading icon"></i>mono.git</div>
-        <div class="right aligned floated column">
-          <a href="#"><i class="file alternate outline icon"></i></a>
-          <a href=""><i class="amber refresh icon"></i></a>
-        </div>
+        <div class="left floated column">mono.git</div>
       </div>
     </div>
   </h2>
-  <h3 class="ui header">
-    <div class="ui grid">
-      <div class="two column row">
-        <div class="left floated column"><i class="green check icon"></i>mono.git/tools/unissh:pkg</div>
-        <div class="right aligned floated column"><a onclick="runTask(5)"><i class="green play icon"></i></a></div>
-      </div>
-    </div>
-  </h3>
 
   <div class="ui container">
     <table class="ui selectable striped table">
       <thead>
         <tr>
           <th>#</th>
+          <th>Job</th>
           <th>OK</th>
           <th>Log</th>
           <th>Rev</th>
@@ -151,34 +132,37 @@
       <tbody>
         <tr>
           <td>3</td>
+          <td>pkg</td>
           <td><i class="green check icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">604e577</a></td>
           <td>API</td>
           <td>2020/06/01 07:00:00</td>
-          <td>2020/06/01 07:01:00</td>
+          <td>1m</td>
           <td>Node1</td>
           <td><i class="amber redo icon"></i></td>
         </tr>
         <tr>
           <td>2</td>
+          <td>pkg</td>
           <td><i class="red attention icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">dc48cd9</a></td>
           <td>API</td>
           <td>2020/05/15 08:00:00</td>
-          <td>2020/05/15 08:01:00</td>
+          <td>1m</td>
           <td>Node2</td>
           <td><i class="amber redo icon"></i></td>
         </tr>
         <tr>
           <td>1</td>
+          <td>pkg</td>
           <td><i class="green check icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">00c4e93</a></td>
           <td>API</td>
           <td>2020/05/14 08:00:00</td>
-          <td>2020/05/14 08:01:00</td>
+          <td>1m</td>
           <td>Node2</td>
           <td><i class="amber redo icon"></i></td>
         </tr>
@@ -188,11 +172,7 @@
     <h3 class="ui block header">
       <div class="ui grid">
         <div class="two column row">
-          <div class="left floated column"><i class="red attention icon"></i>ops.git/dns:dnscontrol<i class="random icon"></i></div>
-          <div class="right aligned floated column">
-            <a href="#"><i class="file alternate outline icon"></i></a>
-            <a href=""><i class="green play icon"></i></a>
-          </div>
+          <div class="left floated column">ops.git</div>
         </div>
       </div>
     </h3>
@@ -202,6 +182,7 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>Job</th>
             <th>OK</th>
             <th>Log</th>
             <th>Rev</th>
@@ -215,6 +196,7 @@
         <tbody>
         <tr>
           <td>4</td>
+          <td>dnscontrol</td>
           <td><i class="sync amber icon"></i></td>
           <td></td>
           <td><a href="">00c4e93</a></td>
@@ -226,12 +208,13 @@
         </tr>
         <tr>
           <td>1</td>
+          <td>dnscontrol</td>
           <td><i class="red attention icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">00c4e93</a></td>
           <td>push</td>
           <td>2020/05/14 08:00:00</td>
-          <td>2020/05/14 08:01:00</td>
+          <td>10m</td>
           <td>Node1</td>
           <td><i class="amber redo icon"></i></td>
         </tr>

@@ -11,7 +11,6 @@ go_library(
     deps = [
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
-        "//go/pkg/build/discovery",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/google/go-github/v32/github",

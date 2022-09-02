@@ -46,30 +46,20 @@ func (g *GC) Start() {
 }
 
 func (g *GC) sweep(ctx context.Context) {
-	jobs, err := g.dao.Job.ListAll(ctx)
+	tasks, err := g.dao.Task.ListAll(ctx)
 	if err != nil {
-		logger.Log.Warn("Failed get job's list", zap.Error(err))
+		logger.Log.Warn("Failed to get all tasks", zap.Error(err))
 		return
 	}
 
-	for _, v := range jobs {
-		tasks, err := g.dao.Task.ListByJobId(ctx, v.Id)
-		if err != nil {
-			logger.Log.Info("Failed get task's list", zap.Error(err), zap.Int32("job_id", v.Id))
-			continue
-		}
-		if len(tasks) < web.NumberOfTaskPerJob {
-			continue
-		}
-		sort.Slice(tasks, func(i, j int) bool {
-			return tasks[i].Id > tasks[j].Id
-		})
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].Id > tasks[j].Id
+	})
 
-		garbageTasks := tasks[web.NumberOfTaskPerJob:]
-		for _, t := range garbageTasks {
-			if err := g.cleanTask(ctx, t); err != nil {
-				logger.Log.Info("Failed cleanup task", zap.Error(err), zap.Int32("task_id", t.Id))
-			}
+	garbageTasks := tasks[web.NumberOfTaskPerJob:]
+	for _, t := range garbageTasks {
+		if err := g.cleanTask(ctx, t); err != nil {
+			logger.Log.Info("Failed to cleanup task", zap.Error(err), zap.Int32("task_id", t.Id))
 		}
 	}
 }

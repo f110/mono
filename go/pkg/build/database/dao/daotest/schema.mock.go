@@ -73,67 +73,6 @@ func (d *SourceRepository) Update(ctx context.Context, sourceRepository *databas
 
 }
 
-type Job struct {
-	*mock.Mock
-}
-
-func NewJob() *Job {
-	return &Job{Mock: mock.New()}
-}
-
-func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
-	return nil
-
-}
-
-func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
-	v, err := d.Call("Select", map[string]interface{}{"id": id})
-	return v.(*database.Job), err
-
-}
-
-func (d *Job) RegisterSelect(id int32, value *database.Job) {
-	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
-}
-
-func (d *Job) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.Job, error) {
-	v, err := d.Call("ListAll", map[string]interface{}{})
-	return v.([]*database.Job), err
-
-}
-
-func (d *Job) RegisterListAll(value []*database.Job, err error) {
-	d.Register("ListAll", map[string]interface{}{}, value, err)
-}
-
-func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Job, error) {
-	v, err := d.Call("ListBySourceRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
-	return v.([]*database.Job), err
-
-}
-
-func (d *Job) RegisterListBySourceRepositoryId(repositoryId int32, value []*database.Job, err error) {
-	d.Register("ListBySourceRepositoryId", map[string]interface{}{"repositoryId": repositoryId}, value, err)
-}
-
-func (d *Job) Create(ctx context.Context, job *database.Job, opt ...dao.ExecOption) (*database.Job, error) {
-	_, _ = d.Call("Create", map[string]interface{}{"job": job})
-	return job, nil
-
-}
-
-func (d *Job) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
-	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
-	return nil
-
-}
-
-func (d *Job) Update(ctx context.Context, job *database.Job, opt ...dao.ExecOption) error {
-	_, _ = d.Call("Update", map[string]interface{}{"job": job})
-	return nil
-
-}
-
 type Task struct {
 	*mock.Mock
 }
@@ -157,14 +96,24 @@ func (d *Task) RegisterSelect(id int32, value *database.Task) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
-func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...dao.ListOption) ([]*database.Task, error) {
-	v, err := d.Call("ListByJobId", map[string]interface{}{"jobId": jobId})
+func (d *Task) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.Task, error) {
+	v, err := d.Call("ListAll", map[string]interface{}{})
 	return v.([]*database.Task), err
 
 }
 
-func (d *Task) RegisterListByJobId(jobId int32, value []*database.Task, err error) {
-	d.Register("ListByJobId", map[string]interface{}{"jobId": jobId}, value, err)
+func (d *Task) RegisterListAll(value []*database.Task, err error) {
+	d.Register("ListAll", map[string]interface{}{}, value, err)
+}
+
+func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Task, error) {
+	v, err := d.Call("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
+	return v.([]*database.Task), err
+
+}
+
+func (d *Task) RegisterListByRepositoryId(repositoryId int32, value []*database.Task, err error) {
+	d.Register("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId}, value, err)
 }
 
 func (d *Task) ListPending(ctx context.Context, opt ...dao.ListOption) ([]*database.Task, error) {

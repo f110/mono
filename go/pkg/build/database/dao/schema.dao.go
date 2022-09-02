@@ -284,268 +284,17 @@ func (d *SourceRepository) Update(ctx context.Context, sourceRepository *databas
 
 }
 
-type Job struct {
+type Task struct {
 	conn *sql.DB
 
 	sourceRepository *SourceRepository
 }
 
-type JobInterface interface {
-	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
-	Select(ctx context.Context, id int32) (*database.Job, error)
-	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error)
-	ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error)
-	Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error)
-	Update(ctx context.Context, job *database.Job, opt ...ExecOption) error
-	Delete(ctx context.Context, id int32, opt ...ExecOption) error
-}
-
-var _ JobInterface = &Job{}
-
-func NewJob(conn *sql.DB) *Job {
-	return &Job{
-		conn:             conn,
-		sourceRepository: NewSourceRepository(conn),
-	}
-}
-
-func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
-	tx, err := d.conn.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	if err := fn(tx); err != nil {
-		if rErr := tx.Rollback(); rErr != nil {
-			return rErr
-		}
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-	return nil
-
-}
-
-func (d *Job) Select(ctx context.Context, id int32) (*database.Job, error) {
-	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `id` = ?", id)
-
-	v := &database.Job{}
-	if err := row.Scan(&v.Id, &v.Name, &v.RepositoryId, &v.Command, &v.Target, &v.Targets, &v.Platforms, &v.Active, &v.AllRevision, &v.GithubStatus, &v.CpuLimit, &v.MemoryLimit, &v.Exclusive, &v.Sync, &v.ConfigName, &v.BazelVersion, &v.JobType, &v.Schedule, &v.CreatedAt, &v.UpdatedAt); err != nil {
-		return nil, err
-	}
-
-	{
-		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
-			v.Repository = rel
-		}
-	}
-
-	v.ResetMark()
-	return v, nil
-
-}
-
-func (d *Job) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Job, error) {
-	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `name`, `repository_id`, `command`, `target`, `targets`, `platforms`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`, `updated_at` FROM `job`"
-	if listOpts.limit > 0 {
-		order := "ASC"
-		if listOpts.desc {
-			order = "DESC"
-		}
-		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
-	}
-	rows, err := d.conn.QueryContext(
-		ctx,
-		query,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*database.Job, 0)
-	for rows.Next() {
-		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Targets, &r.Platforms, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, err
-		}
-		r.ResetMark()
-		res = append(res, r)
-	}
-	if len(res) > 0 {
-		for _, v := range res {
-			{
-				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
-					v.Repository = rel
-				}
-			}
-
-		}
-	}
-
-	return res, nil
-
-}
-
-func (d *Job) ListBySourceRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
-	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `name`, `repository_id`, `command`, `target`, `targets`, `platforms`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`, `updated_at` FROM `job` WHERE `repository_id` = ?"
-	if listOpts.limit > 0 {
-		order := "ASC"
-		if listOpts.desc {
-			order = "DESC"
-		}
-		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
-	}
-	rows, err := d.conn.QueryContext(
-		ctx,
-		query,
-		repositoryId,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*database.Job, 0)
-	for rows.Next() {
-		r := &database.Job{}
-		if err := rows.Scan(&r.Id, &r.Name, &r.RepositoryId, &r.Command, &r.Target, &r.Targets, &r.Platforms, &r.Active, &r.AllRevision, &r.GithubStatus, &r.CpuLimit, &r.MemoryLimit, &r.Exclusive, &r.Sync, &r.ConfigName, &r.BazelVersion, &r.JobType, &r.Schedule, &r.CreatedAt, &r.UpdatedAt); err != nil {
-			return nil, err
-		}
-		r.ResetMark()
-		res = append(res, r)
-	}
-	if len(res) > 0 {
-		for _, v := range res {
-			{
-				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
-					v.Repository = rel
-				}
-			}
-
-		}
-	}
-
-	return res, nil
-
-}
-
-func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error) {
-	execOpts := newExecOpt(opt...)
-	var conn execConn
-	if execOpts.tx != nil {
-		conn = execOpts.tx
-	} else {
-		conn = d.conn
-	}
-
-	res, err := conn.ExecContext(
-		ctx,
-		"INSERT INTO `job` (`name`, `repository_id`, `command`, `target`, `targets`, `platforms`, `active`, `all_revision`, `github_status`, `cpu_limit`, `memory_limit`, `exclusive`, `sync`, `config_name`, `bazel_version`, `job_type`, `schedule`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		job.Name, job.RepositoryId, job.Command, job.Target, job.Targets, job.Platforms, job.Active, job.AllRevision, job.GithubStatus, job.CpuLimit, job.MemoryLimit, job.Exclusive, job.Sync, job.ConfigName, job.BazelVersion, job.JobType, job.Schedule, time.Now(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if n, err := res.RowsAffected(); err != nil {
-		return nil, err
-	} else if n == 0 {
-		return nil, sql.ErrNoRows
-	}
-
-	job = job.Copy()
-	insertedId, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	job.Id = int32(insertedId)
-
-	job.ResetMark()
-	return job, nil
-
-}
-
-func (d *Job) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
-	execOpts := newExecOpt(opt...)
-	var conn execConn
-	if execOpts.tx != nil {
-		conn = execOpts.tx
-	} else {
-		conn = d.conn
-	}
-
-	res, err := conn.ExecContext(ctx, "DELETE FROM `job` WHERE `id` = ?", id)
-	if err != nil {
-		return err
-	}
-
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return sql.ErrNoRows
-	}
-
-	return nil
-
-}
-
-func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) error {
-	if !job.IsChanged() {
-		return nil
-	}
-
-	execOpts := newExecOpt(opt...)
-	var conn execConn
-	if execOpts.tx != nil {
-		conn = execOpts.tx
-	} else {
-		conn = d.conn
-	}
-
-	changedColumn := job.ChangedColumn()
-	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
-	for i := range changedColumn {
-		cols[i] = "`" + changedColumn[i].Name + "` = ?"
-		values[i] = changedColumn[i].Value
-	}
-	cols[len(cols)-1] = "`updated_at` = ?"
-	values[len(values)-1] = time.Now()
-
-	query := fmt.Sprintf("UPDATE `job` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
-	res, err := conn.ExecContext(
-		ctx,
-		query,
-		append(values, job.Id)...,
-	)
-	if err != nil {
-		return err
-	}
-	if n, err := res.RowsAffected(); err != nil {
-		return err
-	} else if n == 0 {
-		return sql.ErrNoRows
-	}
-
-	job.ResetMark()
-	return nil
-
-}
-
-type Task struct {
-	conn *sql.DB
-
-	job *Job
-}
-
 type TaskInterface interface {
 	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.Task, error)
-	ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error)
+	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
+	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
 	ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
 	Create(ctx context.Context, task *database.Task, opt ...ExecOption) (*database.Task, error)
 	Update(ctx context.Context, task *database.Task, opt ...ExecOption) error
@@ -556,8 +305,8 @@ var _ TaskInterface = &Task{}
 
 func NewTask(conn *sql.DB) *Task {
 	return &Task{
-		conn: conn,
-		job:  NewJob(conn),
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
 	}
 }
 
@@ -585,13 +334,13 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `task` WHERE `id` = ?", id)
 
 	v := &database.Task{}
-	if err := row.Scan(&v.Id, &v.JobId, &v.Revision, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.JobConfiguration, &v.Revision, &v.BazelVersion, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
 	{
-		if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
-			v.Job = rel
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
 		}
 	}
 
@@ -600,9 +349,9 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 }
 
-func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) ([]*database.Task, error) {
+func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `job_id` = ?"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -613,7 +362,6 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	rows, err := d.conn.QueryContext(
 		ctx,
 		query,
-		jobId,
 	)
 	if err != nil {
 		return nil, err
@@ -622,7 +370,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -631,8 +379,51 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
-					v.Job = rel
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
+				}
+			}
+
+		}
+	}
+
+	return res, nil
+
+}
+
+func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
+	if listOpts.limit > 0 {
+		order := "ASC"
+		if listOpts.desc {
+			order = "DESC"
+		}
+		query = query + fmt.Sprintf(" ORDER BY `id` %s LIMIT %d", order, listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.Task, 0)
+	for rows.Next() {
+		r := &database.Task{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		for _, v := range res {
+			{
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
 				}
 			}
 
@@ -645,7 +436,7 @@ func (d *Task) ListByJobId(ctx context.Context, jobId int32, opt ...ListOption) 
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `job_id`, `revision`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
 	if listOpts.limit > 0 {
 		order := "ASC"
 		if listOpts.desc {
@@ -664,7 +455,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.JobId, &r.Revision, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -673,8 +464,8 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	if len(res) > 0 {
 		for _, v := range res {
 			{
-				if rel, _ := d.job.Select(ctx, v.JobId); rel != nil {
-					v.Job = rel
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
 				}
 			}
 
@@ -696,8 +487,8 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`job_id`, `revision`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		task.JobId, task.Revision, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.StartAt, task.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		task.RepositoryId, task.JobName, task.JobConfiguration, task.Revision, task.BazelVersion, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.StartAt, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, err
