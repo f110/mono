@@ -52,3 +52,26 @@ func TestReadConfig(t *testing.T) {
 		assert.Equal(t, "-//vendor/github.com/go-enry/go-oniguruma/...", conf.Jobs[0].Targets[4])
 	}
 }
+
+func TestRead_AllRequiredFieldsAreNotPresent(t *testing.T) {
+	data := `job(
+    name = "test_all",
+    all_revision = True,
+    command = "test",
+    cpu_limit = "2000m",
+    github_status = True,
+    memory_limit = "8Gi",
+    targets = [
+        "//...",
+        "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
+        "-//third_party/universal-ctags/ctags:ctags",
+        "-//containers/zoekt-indexer/...",
+        "-//vendor/github.com/go-enry/go-oniguruma/...",
+    ],
+	exclusive = True,
+	config_name = "ci",
+)`
+
+	_, err := Read(strings.NewReader(data), "", "")
+	require.Error(t, err)
+}

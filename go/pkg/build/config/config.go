@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"reflect"
+	"strings"
 
 	"go.f110.dev/xerrors"
 	"go.starlark.net/starlark"
@@ -20,21 +21,21 @@ type Job struct {
 	// Name is a job name
 	Name string `attr:"name"`
 	// If true, build at each revision
-	AllRevision bool   `attr:"all_revision"`
+	AllRevision bool   `attr:"all_revision,allowempty"`
 	Command     string `attr:"command"`
 	// Limit of CPU
-	CPULimit string `attr:"cpu_limit"`
+	CPULimit string `attr:"cpu_limit,allowempty"`
 	// Limit of memory
-	MemoryLimit  string   `attr:"memory_limit"`
-	GitHubStatus bool     `attr:"github_status"`
+	MemoryLimit  string   `attr:"memory_limit,allowempty"`
+	GitHubStatus bool     `attr:"github_status,allowempty"`
 	Platforms    []string `attr:"platforms"`
 	Targets      []string `attr:"targets"`
 	// Do not allow parallelized build in this job
-	Exclusive bool `attr:"exclusive"`
+	Exclusive bool `attr:"exclusive,allowempty"`
 	// The name of config
-	ConfigName string `attr:"config_name"`
+	ConfigName string `attr:"config_name,allowempty"`
 	// Job schedule
-	Schedule string `attr:"schedule"`
+	Schedule string `attr:"schedule,allowempty"`
 
 	RepositoryOwner string
 	RepositoryName  string
@@ -50,9 +51,12 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 		"job": starlark.NewBuiltin("job", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 			job := &Job{RepositoryOwner: owner, RepositoryName: repo}
 
+			var keys []string
 			for _, v := range kwargs {
 				name := v.Index(0)
 				value := v.Index(1)
+				keys = append(keys, name.(starlark.String).GoString())
+
 				switch name.Type() {
 				case "string":
 					s := name.(starlark.String)
@@ -61,15 +65,41 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 					val := reflect.ValueOf(job).Elem()
 					for i := 0; i < typ.NumField(); i++ {
 						ft := typ.Field(i)
-						if ft.Tag.Get("attr") == s.GoString() {
-							fv := val.Field(i)
-							if err := setValue(ft.Type, fv, value); err != nil {
-								log.Println(err)
+						if v := ft.Tag.Get("attr"); v != "" {
+							t := strings.Split(v, ",")
+							if t[0] == s.GoString() {
+								fv := val.Field(i)
+								if err := setValue(ft.Type, fv, value); err != nil {
+									log.Println(err)
+								}
+								break
 							}
-							break
 						}
 					}
 				}
+			}
+
+			requiredField := make(map[string]struct{})
+			typ := reflect.TypeOf(job).Elem()
+			for i := 0; i < typ.NumField(); i++ {
+				ft := typ.Field(i)
+				if v := ft.Tag.Get("attr"); v != "" {
+					t := strings.Split(v, ",")
+					if len(t) == 2 && t[1] == "allowempty" {
+						continue
+					}
+					requiredField[t[0]] = struct{}{}
+				}
+			}
+			for _, v := range keys {
+				delete(requiredField, v)
+			}
+			if len(requiredField) > 0 {
+				k := make([]string, 0, len(requiredField))
+				for v := range requiredField {
+					k = append(k, v)
+				}
+				return nil, xerrors.Newf("all mandatory fields are not set: %s", strings.Join(k, ","))
 			}
 
 			config.Jobs = append(config.Jobs, job)
