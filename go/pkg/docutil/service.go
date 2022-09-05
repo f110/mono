@@ -29,6 +29,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/queue"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
@@ -64,6 +65,9 @@ type DocSearchService struct {
 	repositories []*git.Repository
 	// data is a cache data. The key of map is a name of the repository.
 	data map[string]*docSet
+
+	mu          sync.Mutex
+	titleCaches map[string]*titleCache
 }
 
 func NewDocSearchService(client git.GitDataClient, b ObjectStorageInterface) *DocSearchService {
@@ -82,6 +86,7 @@ func NewDocSearchService(client git.GitDataClient, b ObjectStorageInterface) *Do
 		markdownParser: markdownParser,
 		data:           make(map[string]*docSet),
 		httpClient:     &http.Client{Transport: transport},
+		titleCaches:    make(map[string]*titleCache),
 	}
 }
 
@@ -109,12 +114,22 @@ func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*R
 }
 
 func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int) error {
+	q := queue.NewSimple()
+
+	for i := 0; i < maxConns; i++ {
+		logger.Log.Debug("Start fetching page title worker", zap.Int("thread", i+1))
+		go func() {
+			d.gettingExternalLinkTitleWorker(ctx, q)
+		}()
+	}
+	go d.updateTitleCacheOnPeriodically()
+
 	if err := d.scanRepositories(ctx, workers); err != nil {
 		return err
 	}
 
 	d.interpolateCitedLinks()
-	d.interpolateLinkTitle(ctx, maxConns)
+	d.interpolateLinkTitle(ctx, q)
 	return nil
 }
 
@@ -157,74 +172,9 @@ func (d *DocSearchService) interpolateCitedLinks() {
 	}
 }
 
-type titleCache struct {
-	cache map[string]string
-	mu    sync.Mutex
-
-	docs    *docSet
-	storage ObjectStorageInterface
-}
-
-func newTitleCache(ctx context.Context, storage ObjectStorageInterface, docs *docSet) *titleCache {
-	externalLinkTitleCache := make(map[string]string)
-	buf, err := storage.Get(
-		ctx,
-		fmt.Sprintf("external_links/%s/%s.json", docs.Repository.Name, docs.Ref.String()),
-	)
-	if err == nil {
-		if err := json.NewDecoder(buf).Decode(&externalLinkTitleCache); err != nil {
-			logger.Log.Error("Failed to decode external link cache file", logger.Error(err))
-		}
-		if err := buf.Close(); err != nil {
-			logger.Log.Error("Failed to close buffer", logger.Error(err))
-		}
-	}
-
-	return &titleCache{cache: externalLinkTitleCache, storage: storage, docs: docs}
-}
-
-func (c *titleCache) Set(u, title string) {
-	c.mu.Lock()
-	c.cache[u] = title
-	c.mu.Unlock()
-}
-
-func (c *titleCache) Get(u string) (string, bool) {
-	c.mu.Lock()
-	t, ok := c.cache[u]
-	c.mu.Unlock()
-	return t, ok
-}
-
-func (c *titleCache) Close() {
-	cacheBuf := new(bytes.Buffer)
-	if err := json.NewEncoder(cacheBuf).Encode(c.cache); err == nil {
-		// We must create the new context because the context may be closed.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		if err := c.storage.PutReader(
-			ctx,
-			fmt.Sprintf("external_links/%s/%s.json", c.docs.Repository.Name, c.docs.Ref.String()),
-			cacheBuf,
-		); err != nil {
-			logger.Log.Error("Failed to put external link cache file", logger.Error(err))
-		}
-		cancel()
-	}
-}
-
-func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, maxConns int) {
+func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, q *queue.Simple) {
 	for sourceRepoName, docs := range d.data {
 		externalLinkTitleCache := newTitleCache(ctx, d.storage, docs)
-
-		externalLinkCh := make(chan *PageLink)
-		var wg sync.WaitGroup
-		for i := 0; i < maxConns; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				d.getExternalLinkTitleWorker(ctx, externalLinkCh, externalLinkTitleCache)
-			}()
-		}
 
 		for sourcePath, sourcePage := range docs.Pages {
 			for _, link := range sourcePage.LinkOut {
@@ -232,27 +182,59 @@ func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, maxConns in
 				case LinkType_LINK_TYPE_IN_REPOSITORY, LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY:
 					d.interpolateLinkTitleUnderRepository(sourceRepoName, link, sourcePath)
 				case LinkType_LINK_TYPE_EXTERNAL:
-					externalLinkCh <- link
+					u := link.Destination
+					if i := strings.IndexRune(u, '#'); i > 0 {
+						u = u[:i]
+					}
+
+					if !strings.HasPrefix(u, "http") {
+						// The url is not a web page
+						continue
+					}
+					if t, ok := externalLinkTitleCache.Get(u); ok {
+						link.Title = t
+						continue
+					}
+					q.Enqueue(&pageLinkItem{PageLink: link, docs: docs})
 				default:
 					continue
 				}
 			}
 		}
-		close(externalLinkCh)
-
-		// Wait for all workers are terminated
-		wg.Wait()
-		externalLinkTitleCache.Close()
 	}
 }
 
-func (d *DocSearchService) getExternalLinkTitleWorker(ctx context.Context, ch chan *PageLink, titleCache *titleCache) {
+func (d *DocSearchService) getOrNewTitleCache(ctx context.Context, docs *docSet) *titleCache {
+	key := fmt.Sprintf("%s%s", docs.Ref.String(), docs.Repository.Name)
+
+	d.mu.Lock()
+	c, ok := d.titleCaches[key]
+	if ok {
+		d.mu.Unlock()
+		return c
+	}
+
+	c = newTitleCache(ctx, d.storage, docs)
+	d.titleCaches[key] = c
+	d.mu.Unlock()
+
+	return c
+}
+
+type pageLinkItem struct {
+	*PageLink
+	docs *docSet
+}
+
+func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q *queue.Simple) {
 	var cached, remote, failed, skipped int
 	for {
-		link, ok := <-ch
-		if !ok {
+		v := q.Dequeue()
+		if v == nil {
 			break
 		}
+
+		link := v.(*pageLinkItem)
 		u := link.Destination
 		if i := strings.IndexRune(u, '#'); i > 0 {
 			u = u[:i]
@@ -264,6 +246,7 @@ func (d *DocSearchService) getExternalLinkTitleWorker(ctx context.Context, ch ch
 			continue
 		}
 
+		titleCache := d.getOrNewTitleCache(ctx, link.docs)
 		if t, ok := titleCache.Get(u); ok {
 			link.Title = t
 			cached++
@@ -296,6 +279,24 @@ func (d *DocSearchService) getExternalLinkTitleWorker(ctx context.Context, ch ch
 		zap.Int("failed", failed),
 		zap.Int("skipped", skipped),
 	)
+}
+
+func (d *DocSearchService) updateTitleCacheOnPeriodically() {
+	logger.Log.Debug("Start updating title cache file on periodically")
+
+	t := time.NewTicker(1 * time.Minute)
+	for {
+		select {
+		case <-t.C:
+			d.mu.Lock()
+			for _, c := range d.titleCaches {
+				if err := c.Save(); err != nil {
+					logger.Log.Warn("Failed to save title cache", logger.Error(err), zap.String("repo", c.docs.Repository.Name))
+				}
+			}
+			d.mu.Unlock()
+		}
+	}
 }
 
 func (d *DocSearchService) interpolateLinkTitleUnderRepository(repoName string, link *PageLink, sourcePath string) {
@@ -587,4 +588,78 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 		return "", errors.New("title is not found")
 	}
 	return title, nil
+}
+
+type titleCache struct {
+	cache   map[string]string
+	mu      sync.Mutex
+	changed bool
+
+	docs    *docSet
+	storage ObjectStorageInterface
+}
+
+func newTitleCache(ctx context.Context, storage ObjectStorageInterface, docs *docSet) *titleCache {
+	externalLinkTitleCache := make(map[string]string)
+	buf, err := storage.Get(
+		ctx,
+		fmt.Sprintf("external_links/%s/%s.json", docs.Repository.Name, docs.Ref.String()),
+	)
+	if err == nil {
+		if err := json.NewDecoder(buf).Decode(&externalLinkTitleCache); err != nil {
+			logger.Log.Error("Failed to decode external link cache file", logger.Error(err))
+		}
+		if err := buf.Close(); err != nil {
+			logger.Log.Error("Failed to close buffer", logger.Error(err))
+		}
+	}
+
+	return &titleCache{cache: externalLinkTitleCache, storage: storage, docs: docs}
+}
+
+func (c *titleCache) Set(u, title string) {
+	c.mu.Lock()
+	c.cache[u] = title
+	c.changed = true
+	c.mu.Unlock()
+}
+
+func (c *titleCache) Get(u string) (string, bool) {
+	c.mu.Lock()
+	t, ok := c.cache[u]
+	c.mu.Unlock()
+	return t, ok
+}
+
+func (c *titleCache) Close() {
+	if err := c.Save(); err != nil {
+		logger.Log.Error("Failed to put external link cache file", logger.Error(err))
+	}
+}
+
+func (c *titleCache) Save() error {
+	c.mu.Lock()
+	if !c.changed {
+		c.mu.Unlock()
+		return nil
+	}
+	data := make(map[string]string)
+	for k, v := range c.cache {
+		data[k] = v
+	}
+	c.mu.Unlock()
+
+	cacheBuf := new(bytes.Buffer)
+	if err := json.NewEncoder(cacheBuf).Encode(data); err == nil {
+		// We must create the new context because the context may be closed.
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		key := fmt.Sprintf("external_links/%s/%s.json", c.docs.Repository.Name, c.docs.Ref.String())
+		logger.Log.Debug("Update title cache file", zap.String("key", key))
+		if err := c.storage.PutReader(ctx, key, cacheBuf); err != nil {
+			return err
+		}
+	}
+	return nil
 }

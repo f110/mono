@@ -125,13 +125,10 @@ var docSearchService = &grpcServerComponent{
 		gitDataClient := git.NewGitDataClient(grpcConn)
 
 		service := docutil.NewDocSearchService(gitDataClient, storageClient)
-		initCtx, stop := context.WithTimeout(ctx, 10*time.Minute)
-		if err := service.Initialize(initCtx, 8, 2); err != nil {
-			stop()
+		if err := service.Initialize(ctx, 8, 1); err != nil {
 			logger.Log.Error("Failed to initialize doc-search-service", logger.Error(err))
 			return
 		}
-		stop()
 		docutil.RegisterDocSearchServer(s, service)
 	},
 }

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "queue",
+    srcs = ["queue.go"],
+    importpath = "go.f110.dev/mono/go/pkg/queue",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "queue_test",
+    srcs = ["queue_test.go"],
+    embed = [":queue"],
+    deps = ["//vendor/github.com/stretchr/testify/assert"],
+)

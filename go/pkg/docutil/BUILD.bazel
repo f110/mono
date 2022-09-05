@@ -28,6 +28,7 @@ go_library(
     deps = [
         "//go/pkg/git",
         "//go/pkg/logger",
+        "//go/pkg/queue",
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/yuin/goldmark",
