@@ -282,7 +282,7 @@ func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q
 }
 
 func (d *DocSearchService) updateTitleCacheOnPeriodically() {
-	logger.Log.Debug("Start updating title cache file on periodically")
+	logger.Log.Debug("Updating title cache file on periodically")
 
 	t := time.NewTicker(1 * time.Minute)
 	for {
@@ -647,6 +647,7 @@ func (c *titleCache) Save() error {
 	for k, v := range c.cache {
 		data[k] = v
 	}
+	c.changed = false
 	c.mu.Unlock()
 
 	cacheBuf := new(bytes.Buffer)
