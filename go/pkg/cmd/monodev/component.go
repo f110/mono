@@ -3,6 +3,7 @@ package monodev
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -228,7 +229,6 @@ func (c *commandComponent) Ready() bool {
 		}
 
 		conn.Close()
-		return true
 	}
 
 	return true
@@ -280,6 +280,16 @@ func (c *grpcServerComponent) GetDeps() []component {
 	return c.Deps
 }
 
+func (c *grpcServerComponent) Ready() bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf(":%d", c.Listen), 100*time.Millisecond)
+	if err != nil {
+		return false
+	}
+
+	conn.Close()
+	return true
+}
+
 type gitDataDirectory struct {
 	Name   string
 	Dir    string
@@ -298,17 +308,20 @@ func (c *gitDataDirectory) GetType() componentType {
 }
 
 func (c *gitDataDirectory) Run(ctx context.Context) {
-	logger.Log.Info("example data is not found. clone the repository")
-	_, err := goGit.PlainClone(filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), c.Dir), false, &goGit.CloneOptions{
+	dir := filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), c.Dir)
+	logger.Log.Info("example data is not found. clone the repository", zap.String("dir", dir))
+	_, err := goGit.PlainCloneContext(ctx, dir, false, &goGit.CloneOptions{
 		URL:           c.URL,
 		Depth:         1,
 		ReferenceName: plumbing.NewBranchReferenceName(c.Branch),
 		SingleBranch:  true,
 		NoCheckout:    true,
 	})
-	if err != nil {
+	if err != nil && !errors.Is(err, goGit.ErrRepositoryAlreadyExists) {
+		logger.Log.Info("failed to clone the repository", zap.Error(err))
 		return
 	}
+	logger.Log.Info("Finished cloning the repository")
 }
 
 func (c *gitDataDirectory) GetDeps() []component {

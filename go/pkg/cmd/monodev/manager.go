@@ -131,12 +131,6 @@ func (m *componentManager) execute(ctx context.Context, inFlight *int32, sigCh c
 		m.supervisor.Add(n.component.Run)
 
 		go func(n *componentNode) {
-			r, ok := n.component.(interface{ Ready() bool })
-			if !ok {
-				n.status = nodeStatusRunning
-				return
-			}
-
 			defer func() {
 				select {
 				case sigCh <- struct{}{}:
@@ -144,10 +138,18 @@ func (m *componentManager) execute(ctx context.Context, inFlight *int32, sigCh c
 				}
 			}()
 
+			r, ok := n.component.(interface{ Ready() bool })
+			if !ok {
+				n.status = nodeStatusRunning
+				logger.Log.Info("The service is ready (without readiness probe)", zap.String("name", n.component.GetName()))
+				return
+			}
+
 			deadline := time.Now().Add(30 * time.Second)
 			for {
 				if r.Ready() {
 					n.status = nodeStatusRunning
+					logger.Log.Info("The service is ready", zap.String("name", n.component.GetName()))
 					break
 				}
 				if time.Now().After(deadline) {

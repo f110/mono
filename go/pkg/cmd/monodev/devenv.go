@@ -31,7 +31,6 @@ func repoDoc(cmd *cobra.Command) {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(docSearchService)
-			m.AddComponent(gitDataService)
 
 			return m.Run(cmd.Context())
 		},
