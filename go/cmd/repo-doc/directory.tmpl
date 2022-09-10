@@ -53,7 +53,9 @@
     <div class="eleven wide column doc">
     {{ .Content }}
     </div>
+  </div>
 </div>
+
 <script>
 $('.pagemenu')
   .popup({
@@ -65,9 +67,10 @@ $('.commit')
     hoverable: true,
     variation: "very wide",
     position: "bottom left",
-    html: "commit "+{{ .Commit.Sha }}+"<br/>" +
+    html: "<pre>commit "+{{ .Commit.Sha }}+"<br/>" +
 "Author: "+{{ .Commit.Author.Name }}+"&nbsp&lt;"+{{ .Commit.Author.Email }}+"&gt;<br/>" +
-"Date:   "+{{ .Commit.Author.When.AsTime.Format "Mon Jan 02 15:04:05 2006" }},
+"Date:   "+{{ .Commit.Author.When.AsTime.Format "Mon Jan 02 15:04:05 2006" }} +
+"</pre>",
   })
 ;
 </script>
