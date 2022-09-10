@@ -16,6 +16,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type gitDataService struct {
@@ -159,10 +160,12 @@ func (g *gitDataService) GetCommit(_ context.Context, req *RequestGetCommit) (*R
 			Committer: &Signature{
 				Name:  commit.Committer.Name,
 				Email: commit.Committer.Email,
+				When:  timestamppb.New(commit.Committer.When),
 			},
 			Author: &Signature{
 				Name:  commit.Author.Name,
 				Email: commit.Author.Email,
+				When:  timestamppb.New(commit.Author.When),
 			},
 			Tree: commit.TreeHash.String(),
 		},

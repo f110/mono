@@ -4,4 +4,7 @@ proto_library(
     name = "git_data",
     srcs = ["data.proto"],
     visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_protobuf//:timestamp_proto",
+    ],
 )

@@ -2,6 +2,8 @@ syntax = "proto3";
 package mono.git;
 option  go_package = "go.f110.dev/mono/go/pkg/git";
 
+import "google/protobuf/timestamp.proto";
+
 service GitData {
   rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
   rpc ListReferences(RequestListReferences) returns (ResponseListReferences);
@@ -38,8 +40,9 @@ message Commit {
 }
 
 message Signature {
-  string name  = 1;
-  string email = 2;
+  string                    name  = 1;
+  string                    email = 2;
+  google.protobuf.Timestamp when  = 3;
 }
 
 message Repository {
@@ -93,7 +96,7 @@ message ResponseGetCommit {
 
 message RequestGetTree {
   string repo = 1;
-  // sha is a tree hash
+  // sha is a tree hash. not a commit hash.
   string sha       = 2;
   string ref       = 3;
   string path      = 4;
@@ -101,6 +104,7 @@ message RequestGetTree {
 }
 
 message ResponseGetTree {
+  // sha is a tree hash.
   string             sha  = 1;
   repeated TreeEntry tree = 2;
 }
