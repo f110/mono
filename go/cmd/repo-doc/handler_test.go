@@ -93,8 +93,11 @@ func (s *stubGitDataClient) GetReference(_ context.Context, in *git.RequestGetRe
 }
 
 func (s *stubGitDataClient) GetCommit(ctx context.Context, in *git.RequestGetCommit, opts ...grpc.CallOption) (*git.ResponseGetCommit, error) {
-	//TODO implement me
-	panic("implement me")
+	return &git.ResponseGetCommit{
+		Commit: &git.Commit{
+			Author: &git.Signature{},
+		},
+	}, nil
 }
 
 func (s *stubGitDataClient) GetTree(_ context.Context, in *git.RequestGetTree, opts ...grpc.CallOption) (*git.ResponseGetTree, error) {
