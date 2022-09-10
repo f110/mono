@@ -287,7 +287,7 @@ func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.
 	}
 	buildConfFileBlob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, blobSHA)
 	if err != nil {
-		logger.Log.Info("Skip build", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
 		return nil
 	}
 	var bazelVersion string

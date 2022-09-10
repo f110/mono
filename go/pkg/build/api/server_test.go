@@ -5,9 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -37,21 +39,19 @@ func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, 
 }
 
 type MockTransport struct {
-	req *http.Request
-	res *http.Response
+	req   []*http.Request
+	res   []*http.Response
+	index int
 }
 
 func (m *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	m.req = req
-	return m.res, nil
-}
-
-func (m *MockTransport) RequestBody() ([]byte, error) {
-	reqBody, err := ioutil.ReadAll(m.req.Body)
-	if err != nil {
-		return nil, err
+	if len(m.res) <= m.index {
+		return nil, nil
 	}
-	return reqBody, nil
+	m.req = append(m.req, req)
+	res := m.res[m.index]
+	m.index++
+	return res, nil
 }
 
 type mockDAO struct {
@@ -71,7 +71,7 @@ func newMock() *mockDAO {
 }
 
 func TestGithubWebHook(t *testing.T) {
-	logger.SetLogLevel("warn")
+	logger.SetLogLevel("debug")
 	logger.Init()
 
 	trustedUser := &database.TrustedUser{
@@ -113,13 +113,9 @@ func TestGithubWebHook(t *testing.T) {
 			}
 
 			s, err := NewApi("", builder, daos, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			body, err := ioutil.ReadFile("testdata/pull_request_opened.json")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
+			body, err := os.ReadFile("testdata/pull_request_opened.json")
+			require.NoError(t, err)
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
@@ -133,9 +129,11 @@ func TestGithubWebHook(t *testing.T) {
 
 			mock, s, builder, w, req := setup(t)
 
-			mockTransport := &MockTransport{res: &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader("{}")),
+			mockTransport := &MockTransport{res: []*http.Response{
+				{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader("{}")),
+				},
 			}}
 			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
 
@@ -145,14 +143,11 @@ func TestGithubWebHook(t *testing.T) {
 			s.handleWebHook(w, req)
 
 			assert.False(t, builder.called)
-			reqBody, err := mockTransport.RequestBody()
-			if err != nil {
-				t.Fatal(err)
-			}
+			reqBody, err := io.ReadAll(mockTransport.req[0].Body)
+			require.NoError(t, err)
 			apiReq := &github.IssueComment{}
-			if err := json.Unmarshal(reqBody, apiReq); err != nil {
-				t.Fatal(err)
-			}
+			err = json.Unmarshal(reqBody, apiReq)
+			require.NoError(t, err)
 			assert.Greater(t, len(apiReq.GetBody()), 10)
 			assert.Contains(t, apiReq.GetBody(), AllowCommand)
 		})
@@ -173,6 +168,27 @@ func TestGithubWebHook(t *testing.T) {
 				nil,
 			)
 
+			mockTransport := &MockTransport{res: []*http.Response{
+				{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+				},
+				{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+				},
+				{
+					StatusCode: http.StatusOK,
+					Body: io.NopCloser(strings.NewReader(`job(
+	name = "foo",
+	command = "test",
+	targets = ["//..."],
+	platforms = ["linux_amd64"],
+)`)),
+				},
+			}}
+			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
+
 			s.handleWebHook(w, req)
 
 			assert.True(t, builder.called)
@@ -184,9 +200,24 @@ func TestGithubWebHook(t *testing.T) {
 
 			mock, s, builder, w, req := setup(t)
 
-			mockTransport := &MockTransport{res: &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(strings.NewReader("{}")),
+			mockTransport := &MockTransport{res: []*http.Response{
+				{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+				},
+				{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+				},
+				{
+					StatusCode: http.StatusOK,
+					Body: io.NopCloser(strings.NewReader(`job(
+	name = "foo",
+	command = "test",
+	targets = ["//..."],
+	platforms = ["linux_amd64"],
+)`)),
+				},
 			}}
 			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
 
@@ -232,14 +263,30 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, daos, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		body, err := ioutil.ReadFile("testdata/pull_request_synchronize.json")
-		if err != nil {
-			t.Fatal(err)
-		}
+		mockTransport := &MockTransport{res: []*http.Response{
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body: io.NopCloser(strings.NewReader(`job(
+	name = "foo",
+	command = "test",
+	targets = ["//..."],
+	platforms = ["linux_amd64"],
+)`)),
+			},
+		}}
+
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		require.NoError(t, err)
+		body, err := os.ReadFile("testdata/pull_request_synchronize.json")
+		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
@@ -269,13 +316,9 @@ func TestGithubWebHook(t *testing.T) {
 		builder := &MockBuilder{}
 
 		s, err := NewApi("", builder, daos, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		body, err := ioutil.ReadFile("testdata/pull_request_closed.json")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
+		body, err := os.ReadFile("testdata/pull_request_closed.json")
+		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
@@ -307,19 +350,38 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		mockTransport := &MockTransport{res: &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(strings.NewReader("{}")),
+		mockTransport := &MockTransport{res: []*http.Response{
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"head":{"sha":"9697650793febd8884fe38a84365067624efacab"}}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body: io.NopCloser(strings.NewReader(`job(
+	name = "foo",
+	command = "test",
+	targets = ["//..."],
+	platforms = ["linux_amd64"],
+)`)),
+			},
 		}}
 
 		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		body, err := ioutil.ReadFile("testdata/issue_comment.json")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
@@ -351,19 +413,34 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		mockTransport := &MockTransport{res: &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
+		mockTransport := &MockTransport{res: []*http.Response{
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+			},
+			{
+				StatusCode: http.StatusOK,
+				Body: io.NopCloser(strings.NewReader(`job(
+	name = "foo",
+	command = "test",
+	targets = ["//..."],
+	platforms = ["linux_amd64"],
+)`)),
+			},
 		}}
 
 		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
-		if err != nil {
-			t.Fatal(err)
-		}
-		body, err := ioutil.ReadFile("testdata/release_published.json")
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
+		body, err := os.ReadFile("testdata/release_published.json")
+		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))

@@ -99,7 +99,7 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 				for v := range requiredField {
 					k = append(k, v)
 				}
-				return nil, xerrors.Newf("all mandatory fields are not set: %s", strings.Join(k, ","))
+				return nil, xerrors.Newf("all mandatory fields are not set: %s", strings.Join(k, ", "))
 			}
 
 			config.Jobs = append(config.Jobs, job)
