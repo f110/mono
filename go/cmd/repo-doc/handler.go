@@ -111,6 +111,21 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		ref = plumbing.NewBranchReferenceName(rawRef).String()
 	}
 
+	commitHash := rawRef
+	var commit *git.Commit
+	if ref != "" {
+		r, err := h.gitData.GetReference(req.Context(), &git.RequestGetReference{Repo: repo, Ref: ref})
+		if err != nil {
+			return
+		}
+		commitHash = r.Ref.Hash
+	}
+	if v, err := h.gitData.GetCommit(req.Context(), &git.RequestGetCommit{Repo: repo, Sha: commitHash}); err != nil {
+		return
+	} else {
+		commit = v.Commit
+	}
+
 	requestFilePath := blobPath
 	if len(requestFilePath) > 0 && requestFilePath[len(requestFilePath)-1] == '/' {
 		requestFilePath = requestFilePath[:len(requestFilePath)-1]
@@ -122,7 +137,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Message() == "path is directory" {
-			h.serveDirectoryIndex(req.Context(), w, req, repo, ref, rawRef, requestFilePath)
+			h.serveDirectoryIndex(req.Context(), w, req, repo, ref, rawRef, commit, requestFilePath)
 			return
 		}
 
@@ -131,7 +146,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h.serveDocumentFile(req.Context(), w, file, repo, rawRef, blobPath)
+	h.serveDocumentFile(req.Context(), w, file, repo, rawRef, commit, blobPath)
 }
 
 func (h *httpHandler) readiness(w http.ResponseWriter, req *http.Request) {}
@@ -160,7 +175,7 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 	}
 }
 
-func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef, blobPath string) {
+func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef string, commit *git.Commit, blobPath string) {
 	var references, cited []*docutil.PageLink
 	switch filepath.Ext(blobPath) {
 	case ".md":
@@ -205,6 +220,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		EnabledSearch       bool
 		Repo                string
 		Ref                 string
+		Commit              *git.Commit
 		Content             template.HTML
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
@@ -219,6 +235,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		EnabledSearch:       h.enabledSearch,
 		Repo:                repo,
 		Ref:                 rawRef,
+		Commit:              commit,
 		Content:             template.HTML(doc.Content),
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
@@ -254,7 +271,7 @@ type directoryEntry struct {
 	IsDir bool
 }
 
-func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, req *http.Request, repo, ref, rawRef, dirPath string) {
+func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, _ *http.Request, repo, ref, rawRef string, commit *git.Commit, dirPath string) {
 	tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
 		Repo:      repo,
 		Ref:       ref,
@@ -323,6 +340,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		EnabledSearch       bool
 		Breadcrumb          []*breadcrumbNode
 		BreadcrumbLastIndex int
+		Commit              *git.Commit
 		Content             template.HTML
 		Repo                string
 		Ref                 string
@@ -334,6 +352,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		EnabledSearch:       h.enabledSearch,
 		Breadcrumb:          breadcrumb,
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
+		Commit:              commit,
 		Content:             template.HTML(content),
 		Repo:                repo,
 		Ref:                 rawRef,

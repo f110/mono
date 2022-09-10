@@ -31,7 +31,7 @@
         <div class="item">
           <div class="ui breadcrumb">
             {{ range $i, $v := .Breadcrumb -}}
-            <a class="section" href="{{ $v.Link }}">{{ $v.Name }}</a>
+            <a class="section{{ if eq $i 0 }} commit{{ end }}" href="{{ $v.Link }}">{{ $v.Name }}</a>
             {{ if ne $i $.BreadcrumbLastIndex }}<div class="divider"> / </div>{{ end -}}
             {{ end -}}
           </div>
@@ -54,5 +54,22 @@
     {{ .Content }}
     </div>
 </div>
+<script>
+$('.pagemenu')
+  .popup({
+  })
+;
+
+$('.commit')
+  .popup({
+    hoverable: true,
+    variation: "very wide",
+    position: "bottom left",
+    html: "commit "+{{ .Commit.Sha }}+"<br/>" +
+"Author: "+{{ .Commit.Author.Name }}+"&nbsp&lt;"+{{ .Commit.Author.Email }}+"&gt;<br/>" +
+"Date:   "+{{ .Commit.Author.When.AsTime.Format "Mon Jan 02 15:04:05 2006" }},
+  })
+;
+</script>
 </body>
 </html>
