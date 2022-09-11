@@ -26,8 +26,8 @@ import (
 
 type gitDataServiceCommand struct {
 	*fsm.FSM
-	s        *grpc.Server
-	gitRepos []*goGit.Repository
+	s       *grpc.Server
+	updater *repositoryUpdater
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
@@ -38,6 +38,7 @@ type gitDataServiceCommand struct {
 	StorageAccessKey       string
 	StorageSecretAccessKey string
 	MemcachedEndpoint      string
+	ListenWebhookReceiver  string
 
 	Bucket string
 
@@ -46,18 +47,21 @@ type gitDataServiceCommand struct {
 	RefreshTimeout  time.Duration
 	RefreshWorkers  int
 
-	repositories []Repository
+	repositories []*Repository
 }
 
 type Repository struct {
 	Name   string
 	URL    string
 	Prefix string
+
+	GoGit *goGit.Repository
 }
 
 const (
 	stateInit fsm.State = iota
 	stateStartUpdater
+	stateStartWebhookReceiver
 	stateStartServer
 	stateShuttingDown
 )
@@ -66,10 +70,11 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 	c := &gitDataServiceCommand{GitHubClient: githubutil.NewGitHubClientFactory("", false)}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:         c.init,
-			stateStartUpdater: c.startUpdater,
-			stateStartServer:  c.startServer,
-			stateShuttingDown: c.shuttingDown,
+			stateInit:                 c.init,
+			stateStartUpdater:         c.startUpdater,
+			stateStartWebhookReceiver: c.startWebhookReceiver,
+			stateStartServer:          c.startServer,
+			stateShuttingDown:         c.shuttingDown,
 		},
 		stateInit,
 		stateShuttingDown,
@@ -100,7 +105,6 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	}
 
 	repo := make(map[string]*goGit.Repository)
-	var repos []*goGit.Repository
 	for _, r := range c.repositories {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, cachePool)
 
@@ -130,9 +134,8 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 		}
 
 		repo[r.Name] = gitRepo
-		repos = append(repos, gitRepo)
+		r.GoGit = gitRepo
 	}
-	c.gitRepos = repos
 
 	s := grpc.NewServer()
 	service, err := git.NewDataService(repo)
@@ -150,16 +153,26 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 
 func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
 	if c.RefreshInterval == 0 {
-		return fsm.Next(stateStartServer)
+		return fsm.Next(stateStartWebhookReceiver)
 	}
 
-	updater, err := newRepositoryUpdater(c.gitRepos, c.RefreshInterval, c.RefreshTimeout, c.RefreshWorkers)
+	updater, err := newRepositoryUpdater(c.repositories, c.RefreshInterval, c.RefreshTimeout, c.RefreshWorkers)
 	if err != nil {
 		return fsm.Error(err)
 	}
 	logger.Log.Info("Start updater", zap.Duration("refresh_interval", c.RefreshInterval), zap.Int("workers", c.RefreshWorkers))
 	go updater.Run(c.Context())
 
+	c.updater = updater
+	return fsm.Next(stateStartWebhookReceiver)
+}
+
+func (c *gitDataServiceCommand) startWebhookReceiver() (fsm.State, error) {
+	if c.ListenWebhookReceiver == "" {
+		return fsm.Next(stateStartServer)
+	}
+
+	go c.updater.ListenWebhookReceiver(c.ListenWebhookReceiver)
 	return fsm.Next(stateStartServer)
 }
 
@@ -181,9 +194,14 @@ func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
 
 func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
 	if c.s != nil {
-		logger.Log.Debug("Graceful stopping")
+		logger.Log.Debug("Graceful stopping gRPC server")
 		c.s.GracefulStop()
-		logger.Log.Info("Stop server")
+		logger.Log.Info("Stop gRPC server")
+	}
+	if c.updater != nil {
+		logger.Log.Debug("Stopping updater")
+		c.updater.Stop(c.Context())
+
 	}
 
 	return fsm.Finish()
@@ -197,6 +215,7 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
 	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
+	fs.StringVar(&c.ListenWebhookReceiver, "listen-webhook-receiver", "", "Listen addr of webhook receiver.")
 
 	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
 		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
@@ -214,13 +233,13 @@ func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	if len(c.Repositories) == 0 {
 		return errors.New("--repository is mandatory")
 	}
-	var repositories []Repository
+	var repositories []*Repository
 	for _, v := range c.Repositories {
 		if strings.Index(v, "|") == -1 {
 			return xerrors.Newf("--repository=%s is invalid", v)
 		}
 		s := strings.Split(v, "|")
-		repositories = append(repositories, Repository{Name: s[0], URL: s[1], Prefix: s[2]})
+		repositories = append(repositories, &Repository{Name: s[0], URL: s[1], Prefix: s[2]})
 	}
 	c.repositories = repositories
 

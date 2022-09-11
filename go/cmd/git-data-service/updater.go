@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/google/go-github/v32/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
@@ -19,13 +22,15 @@ const (
 )
 
 type repositoryUpdater struct {
-	repo     []*git.Repository
+	repo     []*Repository
 	interval time.Duration
 	timeout  time.Duration
 	parallel int
+
+	s *http.Server
 }
 
-func newRepositoryUpdater(repo []*git.Repository, interval, timeout time.Duration, parallel int) (*repositoryUpdater, error) {
+func newRepositoryUpdater(repo []*Repository, interval, timeout time.Duration, parallel int) (*repositoryUpdater, error) {
 	if parallel == 0 {
 		parallel = 1
 	}
@@ -47,6 +52,50 @@ func (u *repositoryUpdater) Run(ctx context.Context) {
 	}
 }
 
+func (u *repositoryUpdater) ListenWebhookReceiver(addr string) {
+	logger.Log.Info("Start webhook receiver", zap.String("addr", addr))
+	u.s = &http.Server{
+		Addr:    addr,
+		Handler: http.HandlerFunc(u.handleWebhook),
+	}
+
+	if err := u.s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Log.Info("Stop webhook receiver", logger.Error(err))
+	}
+}
+
+func (u *repositoryUpdater) Stop(ctx context.Context) {
+	if u.s != nil {
+		u.s.Shutdown(ctx)
+	}
+}
+
+func (u *repositoryUpdater) handleWebhook(w http.ResponseWriter, req *http.Request) {
+	payload, err := io.ReadAll(req.Body)
+	if err != nil {
+		logger.Log.Warn("Failed to read request body", logger.Error(err))
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	e, err := github.ParseWebHook(github.WebHookType(req), payload)
+	if err != nil {
+		logger.Log.Warn("Failed to parse request", logger.Error(err))
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+
+	switch event := e.(type) {
+	case *github.PushEvent:
+		for _, v := range u.repo {
+			if v.URL == event.Repo.GetGitURL() || v.URL == event.Repo.GetCloneURL() {
+				logger.Log.Info("Update repository triggered by webhook", zap.String("repo", v.Name))
+				go u.updateRepo(context.Background(), v.GoGit)
+				break
+			}
+		}
+	}
+}
+
 func (u *repositoryUpdater) update(ctx context.Context) {
 	sem := make(chan struct{}, u.interval)
 	doneCh := make(chan struct{})
@@ -58,7 +107,7 @@ func (u *repositoryUpdater) update(ctx context.Context) {
 			u.updateRepo(ctx, repo)
 
 			doneCh <- struct{}{}
-		}(v)
+		}(v.GoGit)
 	}
 
 	done := 0
