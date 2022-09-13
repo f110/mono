@@ -35,6 +35,7 @@ type docSearchService struct {
 	StorageRegion          string
 	StorageAccessKey       string
 	StorageSecretAccessKey string
+	StorageCAFile          string
 
 	gitData git.GitDataClient
 }
@@ -72,6 +73,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	c.gitData = git.NewGitDataClient(conn)
 	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
 	opt.PathStyle = true
+	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
 
 	s := grpc.NewServer()
@@ -129,4 +131,5 @@ func (c *docSearchService) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
+	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
 }
