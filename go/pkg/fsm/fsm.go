@@ -29,6 +29,7 @@ type FSM struct {
 	closeState State
 	ctx        context.Context
 	beClosing  bool
+	lastErr    error
 }
 
 func NewFSM(funcs map[State]StateFunc, initState, closeState State) *FSM {
@@ -104,7 +105,7 @@ func (f *FSM) Loop() error {
 	for {
 		s, open := <-f.ch
 		if !open {
-			return nil
+			return f.lastErr
 		}
 		if s == f.closeState {
 			f.beClosing = true
@@ -120,6 +121,7 @@ func (f *FSM) Loop() error {
 		go func() {
 			if nxt, err := fn(); err != nil {
 				fmt.Fprintf(os.Stderr, "%+v\n", err)
+				f.lastErr = err
 
 				// When the function for close state is returning an error, we should stop the main loop ASAP.
 				if s == f.closeState {
