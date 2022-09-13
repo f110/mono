@@ -37,6 +37,7 @@ type gitDataServiceCommand struct {
 	StorageRegion          string
 	StorageAccessKey       string
 	StorageSecretAccessKey string
+	StorageCAFile          string
 	MemcachedEndpoint      string
 	ListenWebhookReceiver  string
 
@@ -90,6 +91,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 
 	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
 	opt.PathStyle = true
+	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
 
 	var cachePool *client.SinglePool
@@ -214,6 +216,7 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
 	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
 	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
+	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
 	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
 	fs.StringVar(&c.ListenWebhookReceiver, "listen-webhook-receiver", "", "Listen addr of webhook receiver.")
 
