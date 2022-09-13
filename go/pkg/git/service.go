@@ -305,7 +305,7 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 	if req.Path != "/" {
 		te, err := tree.FindEntry(req.Path)
 		if err != nil {
-			return nil, xerrors.Newf("failed to get tree entry: %v", err)
+			return nil, xerrors.Newf("could not find the tree entry %s in %s: %v", req.Path, tree.Hash.String(), err)
 		}
 		treeEntry = te
 	} else {
