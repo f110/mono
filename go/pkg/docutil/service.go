@@ -52,6 +52,7 @@ type docSet struct {
 
 type page struct {
 	Title   string
+	Path    string
 	LinkIn  []*PageLink
 	LinkOut []*PageLink
 }
@@ -139,15 +140,14 @@ func (d *DocSearchService) interpolateCitedLinks() {
 			for _, link := range sourcePage.LinkOut {
 				switch link.Type {
 				case LinkType_LINK_TYPE_IN_REPOSITORY:
-					if _, ok := docs.Pages[link.Destination]; !ok {
+					dest := link.Destination
+					if dest[0] == '/' {
+						dest = dest[1:]
+					}
+
+					if _, ok := docs.Pages[dest]; !ok {
 						//log.Print(link.Destination)
 					} else {
-						dest := link.Destination
-						if dest[0] == '/' {
-							dest = dest[1:]
-						} else {
-							dest = path.Clean(path.Join(path.Dir(sourcePath), dest))
-						}
 						docs.Pages[dest].LinkIn = append(docs.Pages[dest].LinkIn, &PageLink{
 							Type:   LinkType_LINK_TYPE_IN_REPOSITORY,
 							Source: sourcePath,
@@ -358,7 +358,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 				if !ok {
 					break
 				}
-				page, err := d.makePage(ctx, repo, entry.Sha)
+				page, err := d.makePage(ctx, repo, entry.Path, entry.Sha)
 				if err != nil {
 					logger.Log.Error("Failed to make page", logger.Error(err))
 				} else {
@@ -410,14 +410,14 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 	}
 }
 
-func (d *DocSearchService) makePage(ctx context.Context, repo *git.Repository, sha string) (*page, error) {
+func (d *DocSearchService) makePage(ctx context.Context, repo *git.Repository, path, sha string) (*page, error) {
 	blob, err := d.client.GetBlob(ctx, &git.RequestGetBlob{Repo: repo.Name, Sha: sha})
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "Failed to get blob")
 	}
 
 	rootNode := d.markdownParser.Parse(text.NewReader(blob.Content))
-	page, err := d.makePageFromMarkdownAST(rootNode, repo, blob.Content)
+	page, err := d.makePageFromMarkdownAST(rootNode, repo, path, blob.Content)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "Failed to parse markdown")
 	}
@@ -425,8 +425,8 @@ func (d *DocSearchService) makePage(ctx context.Context, repo *git.Repository, s
 	return page, nil
 }
 
-func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.Repository, raw []byte) (*page, error) {
-	page := &page{}
+func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.Repository, pagePath string, raw []byte) (*page, error) {
+	page := &page{Path: pagePath}
 
 	var linkOut []*PageLink
 	seen := make(map[seenKey]struct{})
@@ -444,7 +444,13 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 			if u.Scheme == "" {
 				destination := string(v.Destination)
 				if destination[0] == '#' {
+					// This case is in page link.
 					return ast.WalkContinue, nil
+				}
+
+				if destination[0] != '/' {
+					// Relative link
+					destination = path.Join(filepath.Dir(pagePath), destination)
 				}
 
 				if _, ok := seen[seenKey{LinkType_LINK_TYPE_IN_REPOSITORY, destination, ""}]; !ok {
@@ -459,16 +465,11 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 				linkType := LinkType_LINK_TYPE_EXTERNAL
 				repoName := ""
 
-				if strings.HasPrefix(destination, repo.Url) {
-					linkType = LinkType_LINK_TYPE_IN_REPOSITORY
-					destination = strings.TrimPrefix(destination, repo.Url+"/")
-				} else {
-					for _, repo := range d.repositories {
-						if strings.HasPrefix(destination, repo.Url) {
-							linkType = LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY
-							repoName = repo.Name
-							break
-						}
+				for _, repo := range d.repositories {
+					if strings.HasPrefix(destination, repo.Url) {
+						linkType = LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY
+						repoName = repo.Name
+						break
 					}
 				}
 

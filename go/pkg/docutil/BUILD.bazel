@@ -50,13 +50,16 @@ go_library(
 
 go_test(
     name = "docutil_test",
-    srcs = ["service_test.go"],
+    srcs = [
+        "main_test.go",
+        "service_test.go",
+    ],
     embed = [":docutil"],
     deps = [
         "//go/pkg/git",
+        "//go/pkg/logger",
+        "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
-        "//vendor/golang.org/x/net/html",
-        "//vendor/golang.org/x/net/html/atom",
         "//vendor/google.golang.org/grpc",
     ],
 )

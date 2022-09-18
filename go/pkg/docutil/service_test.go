@@ -1,95 +1,70 @@
 package docutil
 
 import (
-	"container/list"
 	"context"
-	"strings"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/html"
-	"golang.org/x/net/html/atom"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/pkg/git"
 )
 
-func Test(t *testing.T) {
-	r := strings.NewReader(`<!DOCTYPE html>
-	<html lang="en" data-layout="responsive">
-	 <head>
-	
-	   <script>
-	     window.addEventListener('error', window.__err=function f(e){f.p=f.p||[];f.p.push(e)});
-	   </script>
-	   <script>
-	     (function() {
-	       const theme = document.cookie.match(/prefers-color-scheme=(light|dark|auto)/)?.[1]
-	       if (theme) {
-	         document.querySelector('html').setAttribute('data-theme', theme);
-	       }
-	     }())
-	   </script>
-	   <meta charset="utf-8">
-	   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-	   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	   <meta name="Description" content="Package html implements an HTML5-compliant tokenizer and parser.">
-	
-	   <meta class="js-gtmID" data-gtmid="GTM-W8MVQXG">
-	   <link rel="shortcut icon" href="/static/shared/icon/favicon.ico">
-	
-	 <link rel="canonical" href="https://pkg.go.dev/golang.org/x/net/html">
-	
-	   <link href="/static/frontend/frontend.min.css?version=prod-frontend-00043-nan" rel="stylesheet">
-	
-	 <title>html package - golang.org/x/net/html - Go Packages</title>
-	
-	
-	 <link href="/static/frontend/unit/unit.min.css?version=prod-frontend-00043-nan" rel="stylesheet">
-	
-	 <link href="/static/frontend/unit/main/main.min.css?version=prod-frontend-00043-nan" rel="stylesheet">
-	
-	
-	 </head>
-	 <body>
-	 <ul>
-	     <li><a href="https://example.com/foo">foo</a></li>
-	     <li><a href="https://example.com/bar">bar</a></li>
-	     <li><a href="https://example.com/baz">baz</a></li>
-	 </ul>
-	</body>
-	</html>`)
+func TestDocSearchService(t *testing.T) {
+	doc := `# Test document
+[Link](https://example.com)
 
-	node, err := html.Parse(r)
-	if err != nil {
-		t.Fatal(err)
-	}
+https://example.com/autolink
 
-	stack := list.New()
-	stack.PushBack(node)
-	for stack.Len() != 0 {
-		e := stack.Back()
-		stack.Remove(e)
-
-		node := e.Value.(*html.Node)
-		if node.DataAtom == atom.Title {
-			t.Log(node.FirstChild.Data)
-			break
-		}
-
-		for c := node.FirstChild; c != nil; c = c.NextSibling {
-			stack.PushBack(c)
-		}
-	}
-}
-
-func TestParseMarkdown(t *testing.T) {
-	service := NewDocSearchService(&mockGitClient{}, nil)
+[Anchor](#anchor)
+`
+	service := NewDocSearchService(&mockGitClient{Blobs: map[string]string{"README.md": doc}}, nil)
 	err := service.scanRepository(context.Background(), &git.Repository{Name: "test", DefaultBranch: "master"}, 1)
 	require.NoError(t, err)
 }
 
-type mockGitClient struct{}
+func TestCitedLink(t *testing.T) {
+	blobs := map[string]string{
+		"docs/README.md": `# README
+- [Page 1](page1.md)
+- [Issue 1](https://github.com/f110/mono/issues/1)
+`,
+		"docs/page1.md": "# Page 1",
+		"README.md": `# Top README
+- [docs](./docs/README.md)`,
+	}
+	service := NewDocSearchService(&mockGitClient{Blobs: blobs}, nil)
+	err := service.scanRepository(
+		context.Background(),
+		&git.Repository{
+			Name:          "mono",
+			DefaultBranch: "master",
+			Url:           "https://github.com/f110/mono",
+		},
+		1,
+	)
+	require.NoError(t, err)
+	service.interpolateCitedLinks()
+
+	if assert.Len(t, service.data["mono"].Pages["docs/README.md"].LinkOut, 2) {
+		out := service.data["mono"].Pages["docs/README.md"].LinkOut
+		assert.Equal(t, "docs/page1.md", out[0].Destination)
+		assert.Equal(t, "https://github.com/f110/mono/issues/1", out[1].Destination)
+	}
+	assert.Len(t, service.data["mono"].Pages["docs/README.md"].LinkIn, 1)
+	assert.Len(t, service.data["mono"].Pages["docs/page1.md"].LinkIn, 1)
+}
+
+type mockGitClient struct {
+	Blobs map[string]string
+
+	treeEntry []*git.TreeEntry
+}
 
 func (m *mockGitClient) ListRepositories(ctx context.Context, in *git.RequestListRepositories, opts ...grpc.CallOption) (*git.ResponseListRepositories, error) {
 	//TODO implement me
@@ -117,21 +92,33 @@ func (m *mockGitClient) GetCommit(ctx context.Context, in *git.RequestGetCommit,
 }
 
 func (m *mockGitClient) GetTree(ctx context.Context, in *git.RequestGetTree, opts ...grpc.CallOption) (*git.ResponseGetTree, error) {
+	if m.treeEntry != nil {
+		return &git.ResponseGetTree{Tree: m.treeEntry}, nil
+	}
+
+	buf := make([]byte, 512)
+	var entries []*git.TreeEntry
+	for k := range m.Blobs {
+		_, err := rand.Read(buf)
+		if err != nil {
+			return nil, err
+		}
+		h := sha256.Sum256(buf)
+		entries = append(entries, &git.TreeEntry{Path: k, Sha: hex.EncodeToString(h[:])})
+	}
+	m.treeEntry = entries
 	return &git.ResponseGetTree{
-		Tree: []*git.TreeEntry{
-			{Path: "README.md"},
-		},
+		Tree: entries,
 	}, nil
 }
 
 func (m *mockGitClient) GetBlob(ctx context.Context, in *git.RequestGetBlob, opts ...grpc.CallOption) (*git.ResponseGetBlob, error) {
-	return &git.ResponseGetBlob{Content: []byte(`# Test document
-[Link](https://example.com)
-
-https://example.com/autolink
-
-[Anchor](#anchor)
-`)}, nil
+	for _, v := range m.treeEntry {
+		if v.Sha == in.Sha {
+			return &git.ResponseGetBlob{Content: []byte(m.Blobs[v.Path])}, nil
+		}
+	}
+	return nil, errors.New("not found")
 }
 
 func (m *mockGitClient) GetFile(ctx context.Context, in *git.RequestGetFile, opts ...grpc.CallOption) (*git.ResponseGetFile, error) {
