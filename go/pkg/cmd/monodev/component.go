@@ -58,11 +58,9 @@ var minio = &commandComponent{
 var gitDataService = &grpcServerComponent{
 	Name:   "git-data-service",
 	Listen: 9010,
-	Deps:   []component{minio, memcached, gitDataServiceBucket},
+	Deps:   []component{minio, memcached, gitDataServiceBucket, kepData},
 	Register: func(ctx context.Context, s *grpc.Server) {
-		const (
-			repositoryName = "kep"
-		)
+		repositories := []*bucketData{kepData}
 
 		opt := storage.NewS3OptionToExternal(
 			fmt.Sprintf("http://127.0.0.1:%d", minio.Ports.GetNumber("minio")),
@@ -88,13 +86,17 @@ var gitDataService = &grpcServerComponent{
 			logger.Log.Error("Failed to create cache pool", logger.Error(err))
 			return
 		}
-		storer := git.NewObjectStorageStorer(storageClient, repositoryName, cachePool)
-		repo, err := goGit.Open(storer, nil)
-		if err != nil {
-			logger.Log.Error("Failed to open the repository", logger.Error(err))
-			return
+		repo := make(map[string]*goGit.Repository)
+		for _, v := range repositories {
+			storer := git.NewObjectStorageStorer(storageClient, v.Prefix, cachePool)
+			r, err := goGit.Open(storer, nil)
+			if err != nil {
+				logger.Log.Error("Failed to open the repository", logger.Error(err))
+				return
+			}
+			repo[v.Name] = r
 		}
-		service, err := git.NewDataService(map[string]*goGit.Repository{repositoryName: repo})
+		service, err := git.NewDataService(repo)
 		if err != nil {
 			return
 		}
@@ -144,6 +146,12 @@ var kepRepository = &gitDataDirectory{
 
 var gitDataServiceBucket = &minioBucket{
 	Name:     "git-data-service",
+	Bucket:   "git-data-service",
+	Instance: minio,
+}
+
+var kepData = &bucketData{
+	Name:     "kep",
 	Prefix:   "kep",
 	Instance: minio,
 	Data:     kepRepository,
@@ -267,7 +275,7 @@ func (c *grpcServerComponent) Run(ctx context.Context) {
 		s.GracefulStop()
 	}()
 
-	logger.Log.Info("Start gRPC server", zap.Int("listen", c.Listen))
+	logger.Log.Info(fmt.Sprintf("Start %s server", c.Name), zap.Int("listen", c.Listen))
 	if err := s.Serve(lis); err != nil {
 		logger.Log.Warn("Serve gRPC", logger.Error(err))
 		return
@@ -338,9 +346,8 @@ func (c *gitDataDirectory) OutputDir() string {
 
 type minioBucket struct {
 	Name     string
+	Bucket   string
 	Instance component
-	Data     component
-	Prefix   string
 }
 
 var _ component = &minioBucket{}
@@ -367,22 +374,59 @@ func (c *minioBucket) Run(ctx context.Context) {
 		"minioadmin",
 	)
 	opt.PathStyle = true
-	storageClient := storage.NewS3(c.Name, opt)
+	storageClient := storage.NewS3(c.Bucket, opt)
 
-	if storageClient.ExistBucket(ctx, c.Name) {
+	if storageClient.ExistBucket(ctx, c.Bucket) {
 		logger.Log.Info("the bucket is found")
+	} else {
+		logger.Log.Info("the bucket is not found. make the bucket")
+		if err := storageClient.MakeBucket(ctx, c.Bucket); err != nil {
+			logger.Log.Error("Failed to make bucket", logger.Error(err))
+			return
+		}
+	}
+}
+
+func (c *minioBucket) GetDeps() []component {
+	return []component{c.Instance}
+}
+
+type bucketData struct {
+	Name     string
+	Prefix   string
+	Data     component
+	Instance component
+}
+
+var _ component = &bucketData{}
+
+func (c *bucketData) GetName() string {
+	return c.Name
+}
+
+func (c *bucketData) GetType() componentType {
+	return componentTypeOneshot
+}
+
+func (c *bucketData) GetDeps() []component {
+	return []component{c.Data, c.Instance}
+}
+
+func (c *bucketData) Run(ctx context.Context) {
+	if c.Instance.GetName() != "minio" {
+		logger.Log.Error("instance is not MinIO")
 		return
 	}
 
-	logger.Log.Info("the bucket is not found. make the bucket")
-	if err := storageClient.MakeBucket(ctx, c.Name); err != nil {
-		logger.Log.Error("Failed to make bucket", logger.Error(err))
-		return
-	}
-
-	if c.Data == nil {
-		return
-	}
+	port := c.Instance.(*commandComponent).Ports.GetNumber("minio")
+	opt := storage.NewS3OptionToExternal(
+		fmt.Sprintf("http://127.0.0.1:%d", port),
+		"US",
+		"minioadmin",
+		"minioadmin",
+	)
+	opt.PathStyle = true
+	storageClient := storage.NewS3(c.Name, opt)
 
 	var dir string
 	if x, ok := c.Data.(interface{ OutputDir() string }); ok {
@@ -405,7 +449,7 @@ func (c *minioBucket) Run(ctx context.Context) {
 			return err
 		}
 		logger.Log.Debug("Put object", zap.String("name", c.Prefix+"/"+name))
-		err = storageClient.PutReader(context.Background(), c.Prefix+"/"+name, file)
+		err = storageClient.PutReader(ctx, c.Prefix+"/"+name, file)
 		if err != nil {
 			return err
 		}
@@ -416,10 +460,6 @@ func (c *minioBucket) Run(ctx context.Context) {
 		logger.Log.Error("Failed to put git data", logger.Error(err))
 		return
 	}
-}
-
-func (c *minioBucket) GetDeps() []component {
-	return []component{c.Instance, c.Data}
 }
 
 type mysqlComponent struct{}
