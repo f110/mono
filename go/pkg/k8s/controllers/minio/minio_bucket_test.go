@@ -51,7 +51,14 @@ func TestBucketController(t *testing.T) {
 		mockTransport.RegisterRegexpResponder(
 			http.MethodPut,
 			regexp.MustCompile(".*/bucket1/$"),
-			httpmock.NewStringResponder(http.StatusOK, ""),
+			func(req *http.Request) (*http.Response, error) {
+				return httpmock.NewStringResponse(http.StatusOK, ""), nil
+			},
+		)
+		mockTransport.RegisterRegexpResponder(
+			http.MethodPut,
+			regexp.MustCompile(".*/bucket1/\\?policy=$"),
+			httpmock.NewStringResponder(http.StatusNoContent, ""),
 		)
 		mockTransport.RegisterRegexpResponder(
 			http.MethodDelete,
