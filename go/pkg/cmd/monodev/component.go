@@ -18,6 +18,8 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	gitTransport "github.com/go-git/go-git/v5/plumbing/transport"
+	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.f110.dev/go-memcached/client"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -306,13 +308,18 @@ func (c *gitDataDirectory) GetType() componentType {
 
 func (c *gitDataDirectory) Run(ctx context.Context) {
 	dir := filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), c.Dir)
-	logger.Log.Info("example data is not found. clone the repository", zap.String("dir", dir))
+	var auth gitTransport.AuthMethod
+	if v := os.Getenv("GITHUB_TOKEN"); v != "" {
+		auth = &gitHttp.BasicAuth{Username: "octocat", Password: v}
+	}
+	logger.Log.Info("git directory is not found. clone the repository", zap.String("dir", dir))
 	_, err := goGit.PlainCloneContext(ctx, dir, false, &goGit.CloneOptions{
 		URL:           c.URL,
 		Depth:         1,
 		ReferenceName: plumbing.NewBranchReferenceName(c.Branch),
 		SingleBranch:  true,
 		NoCheckout:    true,
+		Auth:          auth,
 	})
 	if err != nil && !errors.Is(err, goGit.ErrRepositoryAlreadyExists) {
 		logger.Log.Info("failed to clone the repository", zap.Error(err))
