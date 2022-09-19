@@ -30,7 +30,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	_, err := git.InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
 	require.NoError(t, err)
 
-	updater, err := newRepositoryUpdater(nil, 2*time.Minute, time.Minute, 1)
+	updater, err := newRepositoryUpdater(nil, nil, 2*time.Minute, time.Minute, "", 1)
 	require.NoError(t, err)
 
 	// Mutate local repository
