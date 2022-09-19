@@ -277,3 +277,19 @@ func (s *S3) ExistBucket(ctx context.Context, name string) bool {
 	}
 	return true
 }
+
+func (s *S3) ExistObject(ctx context.Context, key string) bool {
+	c, err := s.opt.Client()
+	if err != nil {
+		return false
+	}
+	
+	_, err = c.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return false
+	}
+	return true
+}

@@ -26,8 +26,9 @@ import (
 
 type gitDataServiceCommand struct {
 	*fsm.FSM
-	s       *grpc.Server
-	updater *repositoryUpdater
+	s             *grpc.Server
+	updater       *repositoryUpdater
+	storageClient *storage.S3
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
@@ -44,6 +45,7 @@ type gitDataServiceCommand struct {
 	Bucket string
 
 	Repositories    []string
+	LockFilePath    string
 	RefreshInterval time.Duration
 	RefreshTimeout  time.Duration
 	RefreshWorkers  int
@@ -93,6 +95,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	opt.PathStyle = true
 	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
+	c.storageClient = storageClient
 
 	var cachePool *client.SinglePool
 	if c.MemcachedEndpoint != "" {
@@ -158,7 +161,13 @@ func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
 		return fsm.Next(stateStartWebhookReceiver)
 	}
 
-	updater, err := newRepositoryUpdater(c.repositories, c.RefreshInterval, c.RefreshTimeout, c.RefreshWorkers)
+	updater, err := newRepositoryUpdater(
+		c.storageClient,
+		c.repositories,
+		c.RefreshInterval,
+		c.RefreshTimeout,
+		c.LockFilePath,
+		c.RefreshWorkers)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -224,6 +233,7 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
 		"The second element is a url for the repository. "+
 		"The third element is a prefix in an object storage. (e.g. go|https://github.com/golang/go.git|golang/go)")
+	fs.StringVar(&c.LockFilePath, "lock-file-path", "", "The path of the lock file.  If not set the value, don't get the lock")
 	fs.DurationVar(&c.RefreshInterval, "refresh-interval", 0, "The interval time for updating the repository"+
 		"If set zero, interval updating is disabled.")
 	fs.DurationVar(&c.RefreshTimeout, "refresh-timeout", 1*time.Minute, "The duration for timeout to updating repository")

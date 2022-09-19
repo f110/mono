@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -15,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/pkg/storage"
 )
 
 const (
@@ -27,20 +31,40 @@ type repositoryUpdater struct {
 	timeout  time.Duration
 	parallel int
 
-	s *http.Server
+	id            string
+	storageClient *storage.S3
+	lockFilePath  string
+	s             *http.Server
 }
 
-func newRepositoryUpdater(repo []*Repository, interval, timeout time.Duration, parallel int) (*repositoryUpdater, error) {
+func newRepositoryUpdater(storageClient *storage.S3, repo []*Repository, interval, timeout time.Duration, lockFilePath string, parallel int) (*repositoryUpdater, error) {
 	if parallel == 0 {
 		parallel = 1
 	}
 	if timeout > interval {
 		return nil, xerrors.New("timeout is longer than interval")
 	}
-	return &repositoryUpdater{repo: repo, interval: interval, timeout: timeout, parallel: parallel}, nil
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &repositoryUpdater{
+		id:            hex.EncodeToString(buf),
+		storageClient: storageClient,
+		repo:          repo,
+		interval:      interval,
+		timeout:       timeout,
+		lockFilePath:  lockFilePath,
+		parallel:      parallel,
+	}, nil
 }
 
 func (u *repositoryUpdater) Run(ctx context.Context) {
+	if err := u.acquireLock(ctx); err != nil {
+		logger.Log.Error("Failed to get the lock", logger.Error(err))
+		return
+	}
+
 	timer := time.NewTicker(u.interval)
 	for {
 		select {
@@ -50,6 +74,91 @@ func (u *repositoryUpdater) Run(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (u *repositoryUpdater) acquireLock(ctx context.Context) error {
+	if u.lockFilePath == "" {
+		return nil
+	}
+
+	logger.Log.Info("Acquiring the lock...", zap.String("id", u.id))
+	lock, err := u.getLock(ctx)
+	if errors.Is(err, storage.ErrObjectNotFound) {
+		if err := u.setLock(ctx); err != nil {
+			return err
+		}
+		return nil
+	}
+	if time.Now().After(lock.Expire) {
+		if err := u.setLock(ctx); err != nil {
+			return err
+		}
+	}
+	logger.Log.Debug("Other process is running", zap.String("id", u.id), zap.Time("expire", lock.Expire))
+
+	t := time.NewTicker(9 * time.Minute)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-t.C:
+			lock, err := u.getLock(ctx)
+			if err != nil {
+				continue
+			}
+			if time.Now().After(lock.Expire) {
+				if err := u.setLock(ctx); err != nil {
+					return err
+				}
+			}
+		}
+	}
+}
+
+type updaterLock struct {
+	Id     string
+	Expire time.Time
+}
+
+func (u *repositoryUpdater) getLock(ctx context.Context) (*updaterLock, error) {
+	lock := &updaterLock{}
+	lockFileReader, err := u.storageClient.Get(ctx, u.lockFilePath)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.NewDecoder(lockFileReader).Decode(&lock); err != nil {
+		return nil, err
+	}
+
+	return lock, nil
+}
+
+func (u *repositoryUpdater) setLock(ctx context.Context) error {
+	lock := updaterLock{Id: u.id, Expire: time.Now().Add(10 * time.Minute)}
+	buf, err := json.Marshal(lock)
+	if err != nil {
+		return err
+	}
+	if err := u.storageClient.Put(ctx, u.lockFilePath, buf); err != nil {
+		return err
+	}
+	logger.Log.Info("Got lock", zap.String("id", u.id))
+
+	// To update the lock thread
+	go func() {
+		t := time.NewTicker(9 * time.Minute)
+		defer t.Stop()
+
+		select {
+		case <-t.C:
+			if err := u.setLock(ctx); err != nil {
+				return
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (u *repositoryUpdater) ListenWebhookReceiver(addr string) {

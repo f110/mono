@@ -19,17 +19,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type gitDataService struct {
+type DataService struct {
 	repo map[string]*goGit.Repository
 }
 
-var _ GitDataServer = &gitDataService{}
+var _ GitDataServer = &DataService{}
 
-func NewDataService(repo map[string]*goGit.Repository) (*gitDataService, error) {
-	return &gitDataService{repo: repo}, nil
+func NewDataService(repo map[string]*goGit.Repository) (*DataService, error) {
+	return &DataService{repo: repo}, nil
 }
 
-func (g *gitDataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
+func (g *DataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	var list []*Repository
 	for k, v := range g.repo {
 		headRef, err := v.Head()
@@ -62,7 +62,7 @@ func (g *gitDataService) ListRepositories(_ context.Context, _ *RequestListRepos
 	return &ResponseListRepositories{Repositories: list}, nil
 }
 
-func (g *gitDataService) ListReferences(_ context.Context, req *RequestListReferences) (*ResponseListReferences, error) {
+func (g *DataService) ListReferences(_ context.Context, req *RequestListReferences) (*ResponseListReferences, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -91,7 +91,7 @@ func (g *gitDataService) ListReferences(_ context.Context, req *RequestListRefer
 	return res, nil
 }
 
-func (g *gitDataService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
+func (g *DataService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -118,7 +118,7 @@ func (g *gitDataService) GetRepository(_ context.Context, req *RequestGetReposit
 	}, nil
 }
 
-func (g *gitDataService) GetReference(_ context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
+func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -138,7 +138,7 @@ func (g *gitDataService) GetReference(_ context.Context, req *RequestGetReferenc
 	}, nil
 }
 
-func (g *gitDataService) GetCommit(_ context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
+func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -181,7 +181,7 @@ func (g *gitDataService) GetCommit(_ context.Context, req *RequestGetCommit) (*R
 	return res, nil
 }
 
-func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
+func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -249,7 +249,7 @@ func (g *gitDataService) GetTree(_ context.Context, req *RequestGetTree) (*Respo
 	return &ResponseGetTree{Sha: tree.Hash.String(), Tree: treeEntry}, nil
 }
 
-func (g *gitDataService) GetBlob(_ context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
+func (g *DataService) GetBlob(_ context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -276,7 +276,7 @@ func (g *gitDataService) GetBlob(_ context.Context, req *RequestGetBlob) (*Respo
 	}, nil
 }
 
-func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
+func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -376,7 +376,7 @@ func (g *gitDataService) GetFile(_ context.Context, req *RequestGetFile) (*Respo
 	return nil, xerrors.Newf("unsupported object: %s", treeEntry.Mode.String())
 }
 
-func (g *gitDataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
+func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
@@ -406,7 +406,7 @@ func (g *gitDataService) ListTag(_ context.Context, req *RequestListTag) (*Respo
 	return res, nil
 }
 
-func (g *gitDataService) ListBranch(_ context.Context, req *RequestListBranch) (*ResponseListBranch, error) {
+func (g *DataService) ListBranch(_ context.Context, req *RequestListBranch) (*ResponseListBranch, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
