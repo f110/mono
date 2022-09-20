@@ -181,6 +181,7 @@ func TestGithubWebHook(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body: io.NopCloser(strings.NewReader(`job(
 	name = "foo",
+    event = ["pull_request"],
 	command = "test",
 	targets = ["//..."],
 	platforms = ["linux_amd64"],
@@ -213,6 +214,7 @@ func TestGithubWebHook(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body: io.NopCloser(strings.NewReader(`job(
 	name = "foo",
+	event = ["pull_request"],
 	command = "test",
 	targets = ["//..."],
 	platforms = ["linux_amd64"],
@@ -276,6 +278,7 @@ func TestGithubWebHook(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Body: io.NopCloser(strings.NewReader(`job(
 	name = "foo",
+    event = ["pull_request"],
 	command = "test",
 	targets = ["//..."],
 	platforms = ["linux_amd64"],
@@ -371,6 +374,7 @@ func TestGithubWebHook(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Body: io.NopCloser(strings.NewReader(`job(
 	name = "foo",
+	event = ["pull_request"],
 	command = "test",
 	targets = ["//..."],
 	platforms = ["linux_amd64"],
@@ -430,6 +434,7 @@ func TestGithubWebHook(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Body: io.NopCloser(strings.NewReader(`job(
 	name = "foo",
+	event = ["release"],
 	command = "test",
 	targets = ["//..."],
 	platforms = ["linux_amd64"],

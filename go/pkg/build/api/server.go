@@ -163,10 +163,80 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	case *github.ReleaseEvent:
-		if err := a.githubRelease(req.Context(), event); err != nil {
-			return
+		switch event.GetAction() {
+		case "published":
+			repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
+
+			if err := a.buildByRelease(req.Context(), repo, event); err != nil {
+				logger.Log.Warn("Failed to build", zap.String("repo", repo.Name), logger.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 		}
 	}
+}
+
+func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision string, isMainBranch bool) (*config.Config, string, error) {
+	// Find the configuration file
+	var commitSHA string
+	if isMainBranch {
+		// Read configuration file of the revision
+		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, revision)
+		if err != nil {
+			return nil, "", xerrors.WithMessagef(err, "failed to get the commit: %s", revision)
+		}
+		commitSHA = commit.GetSHA()
+	} else {
+		// If the revision doesn't belong to the main branch, the build configuration will be read from the main branch.
+		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, "HEAD")
+		if err != nil {
+			return nil, "", xerrors.WithMessage(err, "failed to get HEAD commit")
+		}
+		commitSHA = commit.GetSHA()
+	}
+	tree, _, err := a.githubClient.Git.GetTree(ctx, owner, repoName, commitSHA, false)
+	if err != nil {
+		return nil, "", xerrors.WithMessagef(err, "failed to get the tree: %s", commitSHA)
+	}
+	var blobSHA, versionBlobSHA string
+	for _, e := range tree.Entries {
+		switch e.GetPath() {
+		case BuildConfigurationFile:
+			blobSHA = e.GetSHA()
+		case BazelVersionFile:
+			versionBlobSHA = e.GetSHA()
+		}
+	}
+	if blobSHA == "" {
+		logger.Log.Debug("build configuration file is not found", zap.String("repo", repoName), zap.String("revision", commitSHA))
+		return nil, "", nil
+	}
+	buildConfFileBlob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, blobSHA)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil, "", nil
+	}
+	var bazelVersion string
+	if versionBlobSHA != "" {
+		if blob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, versionBlobSHA); err == nil {
+			bazelVersion = strings.TrimRight(string(blob), "\n")
+		} else {
+			logger.Log.Info("Failed to get the blob of .bazelversion", zap.Error(err))
+		}
+	}
+
+	// Parse the configuration file
+	conf, err := config.Read(bytes.NewReader(buildConfFileBlob), owner, repoName)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(conf.Jobs) == 0 {
+		logger.Log.Info("Skip build because there is no job", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil, "", nil
+	}
+
+	return conf, bazelVersion, nil
 }
 
 func (a *Api) findRepository(ctx context.Context, repoURL string) *database.SourceRepository {
@@ -220,7 +290,19 @@ func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
 }
 
 func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceRepository, event *github.PushEvent, isMainBranch bool) error {
-	if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, event.HeadCommit.GetID(), "push", isMainBranch); err != nil {
+	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.HeadCommit.GetID()
+	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, isMainBranch)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil
+	}
+	if conf == nil {
+		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		return nil
+	}
+	jobs := conf.Job("push")
+
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push", isMainBranch); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -228,10 +310,46 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceReposit
 }
 
 func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepository, event *github.PullRequestEvent) error {
-	if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, event.PullRequest.Head.GetSHA(), "pull_request", false); err != nil {
+	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.PullRequest.Head.GetSHA()
+	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil
+	}
+	if conf == nil {
+		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		return nil
+	}
+	jobs := conf.Job("pull_request")
+
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 
+	return nil
+}
+
+func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepository, event *github.ReleaseEvent) error {
+	ref, _, err := a.githubClient.Git.GetRef(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), fmt.Sprintf("tags/%s", event.Release.GetTagName()))
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), ref.Object.GetSHA()
+	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil
+	}
+	if conf == nil {
+		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		return nil
+	}
+	jobs := conf.Job("release")
+
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release", false); err != nil {
+		return xerrors.WithStack(err)
+	}
 	return nil
 }
 
@@ -243,73 +361,25 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	if res.StatusCode != http.StatusOK {
 		return xerrors.New("could not get pr")
 	}
+	revision := pr.GetHead().GetSHA()
+	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		return nil
+	}
+	if conf == nil {
+		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		return nil
+	}
+	jobs := conf.Job("pull_request")
 
-	if err := a.build(ctx, owner, repoName, repo, pr.GetHead().GetSHA(), "pr", false); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, revision, via string, isMainBranch bool) error {
-	// Find the configuration file
-	var commitSHA string
-	if isMainBranch {
-		// Read configuration file of the revision
-		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, revision)
-		if err != nil {
-			return xerrors.WithMessagef(err, "failed to get the commit: %s", revision)
-		}
-		commitSHA = commit.GetSHA()
-	} else {
-		// If the revision doesn't belong to the main branch, the build configuration will be read from the main branch.
-		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, "HEAD")
-		if err != nil {
-			return xerrors.WithMessage(err, "failed to get HEAD commit")
-		}
-		commitSHA = commit.GetSHA()
-	}
-	tree, _, err := a.githubClient.Git.GetTree(ctx, owner, repoName, commitSHA, false)
-	if err != nil {
-		return xerrors.WithMessagef(err, "failed to get the tree: %s", commitSHA)
-	}
-	var blobSHA, versionBlobSHA string
-	for _, e := range tree.Entries {
-		switch e.GetPath() {
-		case BuildConfigurationFile:
-			blobSHA = e.GetSHA()
-		case BazelVersionFile:
-			versionBlobSHA = e.GetSHA()
-		}
-	}
-	if blobSHA == "" {
-		logger.Log.Debug("build configuration file is not found", zap.String("repo", repo.Name), zap.String("revision", commitSHA))
-		return nil
-	}
-	buildConfFileBlob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, blobSHA)
-	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
-		return nil
-	}
-	var bazelVersion string
-	if versionBlobSHA != "" {
-		if blob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, versionBlobSHA); err == nil {
-			bazelVersion = strings.TrimRight(string(blob), "\n")
-		} else {
-			logger.Log.Info("Failed to get the blob of .bazelversion", zap.Error(err))
-		}
-	}
-
-	// Parse the configuration file
-	conf, err := config.Read(bytes.NewReader(buildConfFileBlob), owner, repoName)
-	if err != nil {
-		return err
-	}
-	if len(conf.Jobs) == 0 {
-		logger.Log.Info("Skip build because there is no job", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
-		return nil
-	}
-	jobs := conf.Jobs
-
+func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string, isMainBranch bool) error {
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.
@@ -374,22 +444,6 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 			}
 		}
 	}
-	return nil
-}
-
-func (a *Api) githubRelease(ctx context.Context, event *github.ReleaseEvent) error {
-	switch event.GetAction() {
-	case "published":
-		ref, _, err := a.githubClient.Git.GetRef(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), fmt.Sprintf("tags/%s", event.Release.GetTagName()))
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		repo := a.findRepository(ctx, event.Repo.GetHTMLURL())
-		if err := a.build(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), repo, ref.Object.GetSHA(), "release", false); err != nil {
-			return xerrors.WithStack(err)
-		}
-	}
-
 	return nil
 }
 

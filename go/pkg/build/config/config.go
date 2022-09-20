@@ -17,9 +17,24 @@ type Config struct {
 	RepositoryName  string
 }
 
+func (c *Config) Job(event string) []*Job {
+	var jobs []*Job
+	for _, job := range c.Jobs {
+		for _, e := range job.Event {
+			if e == event {
+				jobs = append(jobs, job)
+				break
+			}
+		}
+	}
+
+	return jobs
+}
+
 type Job struct {
 	// Name is a job name
-	Name string `attr:"name"`
+	Name  string   `attr:"name"`
+	Event []string `attr:"event"`
 	// If true, build at each revision
 	AllRevision bool   `attr:"all_revision,allowempty"`
 	Command     string `attr:"command"`
