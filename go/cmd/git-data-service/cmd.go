@@ -164,15 +164,16 @@ func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
 	updater, err := newRepositoryUpdater(
 		c.storageClient,
 		c.repositories,
-		c.RefreshInterval,
 		c.RefreshTimeout,
 		c.LockFilePath,
-		c.RefreshWorkers)
+		c.GitHubClient.TokenProvider,
+		c.RefreshWorkers,
+	)
 	if err != nil {
 		return fsm.Error(err)
 	}
 	logger.Log.Info("Start updater", zap.Duration("refresh_interval", c.RefreshInterval), zap.Int("workers", c.RefreshWorkers))
-	go updater.Run(c.Context())
+	go updater.Run(c.Context(), c.RefreshInterval)
 
 	c.updater = updater
 	return fsm.Next(stateStartWebhookReceiver)

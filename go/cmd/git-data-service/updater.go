@@ -13,10 +13,12 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -27,7 +29,6 @@ const (
 
 type repositoryUpdater struct {
 	repo     []*Repository
-	interval time.Duration
 	timeout  time.Duration
 	parallel int
 
@@ -35,14 +36,12 @@ type repositoryUpdater struct {
 	storageClient *storage.S3
 	lockFilePath  string
 	s             *http.Server
+	tokenProvider *githubutil.TokenProvider
 }
 
-func newRepositoryUpdater(storageClient *storage.S3, repo []*Repository, interval, timeout time.Duration, lockFilePath string, parallel int) (*repositoryUpdater, error) {
+func newRepositoryUpdater(storageClient *storage.S3, repo []*Repository, timeout time.Duration, lockFilePath string, tokenProvider *githubutil.TokenProvider, parallel int) (*repositoryUpdater, error) {
 	if parallel == 0 {
 		parallel = 1
-	}
-	if timeout > interval {
-		return nil, xerrors.New("timeout is longer than interval")
 	}
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
@@ -52,20 +51,20 @@ func newRepositoryUpdater(storageClient *storage.S3, repo []*Repository, interva
 		id:            hex.EncodeToString(buf),
 		storageClient: storageClient,
 		repo:          repo,
-		interval:      interval,
 		timeout:       timeout,
 		lockFilePath:  lockFilePath,
 		parallel:      parallel,
+		tokenProvider: tokenProvider,
 	}, nil
 }
 
-func (u *repositoryUpdater) Run(ctx context.Context) {
+func (u *repositoryUpdater) Run(ctx context.Context, interval time.Duration) {
 	if err := u.acquireLock(ctx); err != nil {
 		logger.Log.Error("Failed to get the lock", logger.Error(err))
 		return
 	}
 
-	timer := time.NewTicker(u.interval)
+	timer := time.NewTicker(interval)
 	for {
 		select {
 		case <-timer.C:
@@ -206,7 +205,7 @@ func (u *repositoryUpdater) handleWebhook(w http.ResponseWriter, req *http.Reque
 }
 
 func (u *repositoryUpdater) update(ctx context.Context) {
-	sem := make(chan struct{}, u.interval)
+	sem := make(chan struct{}, u.parallel)
 	doneCh := make(chan struct{})
 	for _, v := range u.repo {
 		go func(repo *git.Repository) {
@@ -229,10 +228,22 @@ func (u *repositoryUpdater) update(ctx context.Context) {
 }
 
 func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository) {
-	ctx, stop := context.WithTimeout(ctx, u.timeout)
+	timeoutCtx, stop := context.WithTimeout(ctx, u.timeout)
 	defer stop()
 
-	err := repo.FetchContext(ctx, &git.FetchOptions{RemoteName: upstreamRemoteName})
+	var auth *gitHttp.BasicAuth
+	if u.tokenProvider != nil {
+		if v, err := u.tokenProvider.Token(timeoutCtx); err == nil {
+			auth = &gitHttp.BasicAuth{
+				Username: "octocat",
+				Password: v,
+			}
+		}
+	}
+	err := repo.FetchContext(timeoutCtx, &git.FetchOptions{
+		Auth:       auth,
+		RemoteName: upstreamRemoteName,
+	})
 	if err != nil {
 		if err != git.NoErrAlreadyUpToDate {
 			logger.Log.Warn("Failed fetch repository", logger.Error(err))
