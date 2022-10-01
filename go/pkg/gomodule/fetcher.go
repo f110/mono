@@ -672,7 +672,7 @@ func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
 		return nil
 	}
 
-	token, err := vcs.tokenProvider.Token(context.Background())
+	token, err := vcs.tokenProvider.Token()
 	if err != nil {
 		return nil
 	}

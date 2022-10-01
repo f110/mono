@@ -2,15 +2,17 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "githubutil",
-    srcs = ["integration.go"],
+    srcs = [
+        "integration.go",
+        "token.go",
+    ],
     importpath = "go.f110.dev/mono/go/pkg/githubutil",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/bradleyfalzon/ghinstallation",
+        "//vendor/github.com/golang-jwt/jwt/v4:jwt",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
-        "//vendor/golang.org/x/oauth2",
     ],
 )

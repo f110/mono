@@ -1,19 +1,16 @@
 package githubutil
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net/http"
 	"net/url"
 	"os"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v32/github"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
-	"golang.org/x/oauth2"
 )
 
 type GitHubClientFactory struct {
@@ -78,22 +75,19 @@ func (g *GitHubClientFactory) Init() error {
 	}
 
 	var httpClient *http.Client
-	var appTransport *ghinstallation.Transport
+	var app *App
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
-		tr, err := ghinstallation.NewKeyFromFile(transport, g.AppID, g.InstallationID, g.PrivateKeyFile)
+		app, err = NewApp(g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
-		httpClient = &http.Client{Transport: tr}
-		appTransport = tr
 	}
-	if g.Token != "" {
-		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: g.Token})
-		c := oauth2.NewClient(context.Background(), ts)
-		c.Transport.(*oauth2.Transport).Base = transport
-		httpClient = c
+	if g.Token != "" || app != nil {
+		g.TokenProvider = &TokenProvider{pat: g.Token, app: app}
+		httpClient = &http.Client{Transport: NewTransport(transport, g.TokenProvider)}
 	}
 	if httpClient == nil {
+		// If not provided any credential, We make the bare client.
 		httpClient = &http.Client{Transport: transport}
 	}
 
@@ -113,25 +107,6 @@ func (g *GitHubClientFactory) Init() error {
 		g.GraphQL = githubv4.NewClient(httpClient)
 	}
 
-	if g.Token != "" || appTransport != nil {
-		g.TokenProvider = &TokenProvider{pat: g.Token, appProvider: appTransport}
-	}
 	g.Initialized = true
 	return nil
-}
-
-type TokenProvider struct {
-	pat         string
-	appProvider *ghinstallation.Transport
-}
-
-func (p *TokenProvider) Token(ctx context.Context) (string, error) {
-	if p.pat != "" {
-		return p.pat, nil
-	}
-	if p.appProvider != nil {
-		return p.appProvider.Token(ctx)
-	}
-
-	return "", xerrors.New("does not configure with any credential")
 }
