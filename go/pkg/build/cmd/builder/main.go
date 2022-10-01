@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v32/github"
 	"github.com/google/uuid"
@@ -30,6 +29,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -125,16 +125,11 @@ func (p *process) init() (fsm.State, error) {
 		kubeConfigPath = filepath.Join(h, ".kube", "config")
 	}
 
-	t, err := ghinstallation.NewKeyFromFile(
-		http.DefaultTransport,
-		p.opt.GithubAppId,
-		p.opt.GithubInstallationId,
-		p.opt.GithubPrivateKeyFile,
-	)
+	app, err := githubutil.NewApp(p.opt.GithubAppId, p.opt.GithubInstallationId, p.opt.GithubPrivateKeyFile)
 	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
+		return fsm.Error(err)
 	}
-	p.ghClient = github.NewClient(&http.Client{Transport: t})
+	p.ghClient = github.NewClient(&http.Client{Transport: githubutil.NewTransportWithApp(http.DefaultTransport, app)})
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {

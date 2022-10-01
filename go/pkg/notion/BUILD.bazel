@@ -10,9 +10,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/notion",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/pkg/githubutil",
         "//go/pkg/k8s/volume",
         "//go/pkg/logger",
-        "//vendor/github.com/bradleyfalzon/ghinstallation",
         "//vendor/github.com/robfig/cron/v3:cron",
         "//vendor/github.com/shurcooL/githubv4",
         "//vendor/go.f110.dev/notion-api/v3:notion-api",

@@ -72,6 +72,10 @@ func NewTransport(tr http.RoundTripper, tokenProvider *TokenProvider) *Transport
 	return &Transport{RoundTripper: tr, tokenProvider: tokenProvider}
 }
 
+func NewTransportWithApp(tr http.RoundTripper, app *App) *Transport {
+	return &Transport{RoundTripper: tr, tokenProvider: &TokenProvider{app: app}}
+}
+
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req = req.Clone(req.Context())
 

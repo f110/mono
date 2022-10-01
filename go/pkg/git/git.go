@@ -12,29 +12,30 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/pkg/githubutil"
 )
 
 func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string) error {
 	var auth *gogitHttp.BasicAuth
 	rt := http.DefaultTransport
 	if _, err := os.Stat(privateKeyFile); !os.IsNotExist(err) {
-		t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
+		app, err := githubutil.NewApp(appId, installationId, privateKeyFile)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
-		token, err := t.Token(context.Background())
+		token, err := app.Token()
 		if err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
 		auth = &gogitHttp.BasicAuth{Username: "octocat", Password: token}
-		rt = t
+		rt = githubutil.NewTransportWithApp(http.DefaultTransport, app)
 	}
 
 	archiveDownloadable := false

@@ -7,7 +7,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/robfig/cron/v3"
 	"github.com/shurcooL/githubv4"
 	"go.f110.dev/notion-api/v3"
@@ -16,6 +15,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 
+	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/k8s/volume"
 	"go.f110.dev/mono/go/pkg/logger"
 )
@@ -43,11 +43,12 @@ type GitHubTask struct {
 }
 
 func NewGitHubTask(appId, installationId int64, privateKeyFile, notionToken, configFile string) (*GitHubTask, error) {
-	t, err := ghinstallation.NewKeyFromFile(http.DefaultTransport, appId, installationId, privateKeyFile)
+	app, err := githubutil.NewApp(appId, installationId, privateKeyFile)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
-	ghClient := githubv4.NewClient(&http.Client{Transport: t})
+	tr := githubutil.NewTransportWithApp(http.DefaultTransport, app)
+	ghClient := githubv4.NewClient(&http.Client{Transport: tr})
 
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: notionToken})
 	tc := oauth2.NewClient(context.Background(), ts)
