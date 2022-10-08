@@ -87,6 +87,7 @@ func (m *markdownParser) Parse(in []byte) (*document, error) {
 				doc.Title = string(v.Text(in))
 				break
 			}
+			child = child.NextSibling()
 		}
 	}
 
