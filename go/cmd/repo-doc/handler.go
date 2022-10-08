@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
@@ -272,11 +271,10 @@ type directoryEntry struct {
 }
 
 func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, _ *http.Request, repo, ref, rawRef string, commit *git.Commit, dirPath string) {
-	tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
-		Repo:      repo,
-		Ref:       ref,
-		Recursive: false,
-		Path:      dirPath,
+	tree, err := h.docSearch.GetDirectory(ctx, &docutil.RequestGetDirectory{
+		Repo: repo,
+		Ref:  ref,
+		Path: dirPath,
 	})
 	if err != nil {
 		logger.Log.Error("Failed to get tree", logger.Error(err))
@@ -284,43 +282,45 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		return
 	}
 
-	sort.Slice(tree.Tree, func(i, j int) bool {
-		if tree.Tree[i].Mode != tree.Tree[j].Mode {
-			return tree.Tree[i].Mode < tree.Tree[j].Mode
-		}
-		return tree.Tree[i].Path < tree.Tree[j].Path
+	sort.Slice(tree.Entries, func(i, j int) bool {
+		return tree.Entries[i].Path < tree.Entries[j].Path
 	})
-	entry := make([]*directoryEntry, len(tree.Tree))
+	entry := make([]*directoryEntry, 0, len(tree.Entries))
 	foundIndexFile := ""
-	for i, v := range tree.Tree {
-		rootDir := dirPath
-		if rootDir == "/" {
-			rootDir = ""
+	rootDir := dirPath
+	if rootDir == "/" {
+		rootDir = ""
+	}
+	for _, v := range tree.Entries {
+		if !v.IsDir {
+			continue
 		}
-		switch v.Path {
+		entry = append(entry, &directoryEntry{
+			Name:  v.Name,
+			Path:  v.Path + "/",
+			IsDir: true,
+		})
+	}
+	for _, v := range tree.Entries {
+		if v.IsDir {
+			continue
+		}
+		switch v.Name {
 		case "README.md":
 			foundIndexFile = v.Path
 		}
-		p := path.Join(rootDir, v.Path)
-		if v.Mode == filemode.Dir.String() {
-			p += "/"
-		}
-		entry[i] = &directoryEntry{
-			Name:  v.Path,
-			Path:  p,
-			IsDir: v.Mode == filemode.Dir.String(),
-		}
+		entry = append(entry, &directoryEntry{
+			Name:  v.Name,
+			Path:  v.Path,
+			IsDir: v.IsDir,
+		})
 	}
 
 	content := ""
 	if foundIndexFile != "" {
-		indexFilePath := path.Join(dirPath, foundIndexFile)
-		if dirPath == "/" {
-			indexFilePath = foundIndexFile
-		}
-		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: indexFilePath})
+		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: foundIndexFile})
 		if err != nil {
-			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", indexFilePath))
+			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", foundIndexFile))
 			http.Error(w, "Failed to get index file", http.StatusInternalServerError)
 			return
 		}

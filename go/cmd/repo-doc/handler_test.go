@@ -148,3 +148,7 @@ func (s *stubDocSearchClient) GetPage(ctx context.Context, in *docutil.RequestGe
 func (s *stubDocSearchClient) PageLink(ctx context.Context, in *docutil.RequestPageLink, opts ...grpc.CallOption) (*docutil.ResponsePageLink, error) {
 	return &docutil.ResponsePageLink{}, nil
 }
+
+func (s *stubDocSearchClient) GetDirectory(ctx context.Context, in *docutil.RequestGetDirectory, opts ...grpc.CallOption) (*docutil.ResponseGetDirectory, error) {
+	return &docutil.ResponseGetDirectory{}, nil
+}
