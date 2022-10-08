@@ -114,6 +114,51 @@ func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*R
 	return &ResponsePageLink{In: page.LinkIn, Out: page.LinkOut}, nil
 }
 
+func (d *DocSearchService) GetDirectory(_ context.Context, req *RequestGetDirectory) (*ResponseGetDirectory, error) {
+	docs, ok := d.data[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	prefix := req.Path
+	if prefix == "/" {
+		prefix = ""
+	}
+	m := make(map[string]*DirectoryEntry)
+	for p, _ := range docs.Pages {
+		if !strings.HasPrefix(p, prefix) {
+			continue
+		}
+		tail := strings.TrimPrefix(p, prefix+"/")
+		var name string
+		if index := strings.IndexRune(tail, '/'); index == -1 {
+			name = tail
+		} else {
+			name = tail[:index]
+		}
+		isDir := tail != name
+		if isDir && prefix != "" {
+			p = prefix + "/" + name
+		} else if isDir {
+			p = name
+		}
+
+		if _, ok := m[name]; ok {
+			continue
+		}
+		m[name] = &DirectoryEntry{
+			Path:  p,
+			Name:  name,
+			IsDir: isDir,
+		}
+	}
+
+	var entries []*DirectoryEntry
+	for _, v := range m {
+		entries = append(entries, v)
+	}
+	return &ResponseGetDirectory{Entries: entries}, nil
+}
+
 func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int) error {
 	q := queue.NewSimple()
 

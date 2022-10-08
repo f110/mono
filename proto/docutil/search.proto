@@ -6,6 +6,7 @@ service DocSearch {
   rpc AvailableFeatures(RequestAvailableFeatures) returns (ResponseAvailableFeatures);
   rpc GetPage(RequestGetPage) returns (ResponseGetPage);
   rpc PageLink(RequestPageLink) returns (ResponsePageLink);
+  rpc GetDirectory(RequestGetDirectory) returns (ResponseGetDirectory);
 }
 
 message RequestAvailableFeatures {}
@@ -16,7 +17,8 @@ message ResponseAvailableFeatures {
 }
 
 message RequestGetPage {
-  string sha = 1;
+  string repo = 1;
+  string sha  = 2;
 }
 
 message ResponseGetPage {
@@ -45,4 +47,20 @@ message RequestPageLink {
 message ResponsePageLink {
   repeated PageLink in  = 1;
   repeated PageLink out = 2;
+}
+
+message RequestGetDirectory {
+  string repo = 1;
+  string ref  = 2;
+  string path = 3;
+}
+
+message ResponseGetDirectory {
+  repeated DirectoryEntry entries = 1;
+}
+
+message DirectoryEntry {
+  string name   = 1;
+  string path   = 2;
+  bool   is_dir = 3;
 }
