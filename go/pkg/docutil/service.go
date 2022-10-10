@@ -97,6 +97,32 @@ func (d *DocSearchService) AvailableFeatures(_ context.Context, _ *RequestAvaila
 	return &ResponseAvailableFeatures{PageLink: true}, nil
 }
 
+func (d *DocSearchService) ListRepository(_ context.Context, req *RequestListRepository) (*ResponseListRepository, error) {
+	repositories := make([]*Repository, 0, len(d.data))
+	for name, docs := range d.data {
+		repositories = append(repositories, &Repository{
+			Name:          name,
+			DefaultBranch: docs.Repository.DefaultBranch,
+		})
+	}
+
+	return &ResponseListRepository{Repositories: repositories}, nil
+}
+
+func (d *DocSearchService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
+	docs, ok := d.data[req.Repo]
+	if !ok {
+		return nil, errors.New("repository is not found")
+	}
+
+	return &ResponseGetRepository{
+		Repository: &Repository{
+			Name:          docs.Repository.Name,
+			DefaultBranch: docs.Repository.DefaultBranch,
+		},
+	}, nil
+}
+
 func (d *DocSearchService) GetPage(ctx context.Context, req *RequestGetPage) (*ResponseGetPage, error) {
 	//TODO implement me
 	panic("implement me")

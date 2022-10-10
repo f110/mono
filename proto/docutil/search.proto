@@ -4,6 +4,8 @@ option  go_package = "go.f110.dev/mono/go/pkg/docutil";
 
 service DocSearch {
   rpc AvailableFeatures(RequestAvailableFeatures) returns (ResponseAvailableFeatures);
+  rpc ListRepository(RequestListRepository) returns (ResponseListRepository);
+  rpc GetRepository(RequestGetRepository) returns (ResponseGetRepository);
   rpc GetPage(RequestGetPage) returns (ResponseGetPage);
   rpc PageLink(RequestPageLink) returns (ResponsePageLink);
   rpc GetDirectory(RequestGetDirectory) returns (ResponseGetDirectory);
@@ -14,6 +16,25 @@ message RequestAvailableFeatures {}
 message ResponseAvailableFeatures {
   bool page_link        = 1;
   bool full_text_search = 2;
+}
+
+message RequestListRepository {}
+
+message ResponseListRepository {
+  repeated Repository repositories = 1;
+}
+
+message RequestGetRepository {
+  string repo = 1;
+}
+
+message ResponseGetRepository {
+  Repository repository = 1;
+}
+
+message Repository {
+  string name           = 1;
+  string default_branch = 2;
 }
 
 message RequestGetPage {
