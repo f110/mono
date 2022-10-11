@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
@@ -104,22 +105,28 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	repo, rawRef, blobPath := h.parsePath(req)
+	repoName, rawRef, blobPath := h.parsePath(req)
 	ref := rawRef
 	if !gitHash.MatchString(rawRef) {
 		ref = plumbing.NewBranchReferenceName(rawRef).String()
 	}
+	repoRes, err := h.docSearch.GetRepository(req.Context(), &docutil.RequestGetRepository{Repo: repoName})
+	if err != nil {
+		http.Error(w, "Failed to get repository", http.StatusBadRequest)
+		return
+	}
+	repo := repoRes.Repository
 
 	commitHash := rawRef
 	var commit *git.Commit
 	if ref != "" {
-		r, err := h.gitData.GetReference(req.Context(), &git.RequestGetReference{Repo: repo, Ref: ref})
+		r, err := h.gitData.GetReference(req.Context(), &git.RequestGetReference{Repo: repoName, Ref: ref})
 		if err != nil {
 			return
 		}
 		commitHash = r.Ref.Hash
 	}
-	if v, err := h.gitData.GetCommit(req.Context(), &git.RequestGetCommit{Repo: repo, Sha: commitHash}); err != nil {
+	if v, err := h.gitData.GetCommit(req.Context(), &git.RequestGetCommit{Repo: repoName, Sha: commitHash}); err != nil {
 		return
 	} else {
 		commit = v.Commit
@@ -132,11 +139,11 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if requestFilePath == "" {
 		requestFilePath = "/"
 	}
-	file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repo, Ref: ref, Path: requestFilePath})
+	file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repoName, Ref: ref, Path: requestFilePath})
 	if err != nil {
 		st, ok := status.FromError(err)
 		if ok && st.Message() == "path is directory" {
-			h.serveDirectoryIndex(req.Context(), w, req, repo, ref, rawRef, commit, requestFilePath)
+			h.serveDirectoryIndex(req.Context(), w, req, repo, repoName, ref, rawRef, commit, requestFilePath)
 			return
 		}
 
@@ -145,7 +152,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	h.serveDocumentFile(req.Context(), w, file, repo, rawRef, commit, blobPath)
+	h.serveDocumentFile(req.Context(), w, file, repo, repoName, rawRef, commit, blobPath)
 }
 
 func (h *httpHandler) readiness(w http.ResponseWriter, req *http.Request) {}
@@ -174,12 +181,12 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 	}
 }
 
-func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo, rawRef string, commit *git.Commit, blobPath string) {
+func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo *docutil.Repository, repoName, rawRef string, commit *git.Commit, blobPath string) {
 	var references, cited []*docutil.PageLink
 	switch filepath.Ext(blobPath) {
 	case ".md":
-		if h.docSearch != nil {
-			pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo, Sha: blobPath})
+		if h.docSearch != nil && repo.DefaultBranch == rawRef {
+			pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repoName, Sha: blobPath})
 			if err != nil {
 				logger.Log.Error("Failed to get page link", logger.Error(err))
 				http.Error(w, "Failed to get page link", http.StatusInternalServerError)
@@ -212,7 +219,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		return
 	}
 
-	breadcrumb := makeBreadcrumb(repo, rawRef, blobPath, false)
+	breadcrumb := makeBreadcrumb(repoName, rawRef, blobPath, false)
 	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
 		Title               string
 		PageTitle           string
@@ -232,7 +239,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		Title:               h.title,
 		PageTitle:           doc.Title,
 		EnabledSearch:       h.enabledSearch,
-		Repo:                repo,
+		Repo:                repoName,
 		Ref:                 rawRef,
 		Commit:              commit,
 		Content:             template.HTML(doc.Content),
@@ -270,55 +277,104 @@ type directoryEntry struct {
 	IsDir bool
 }
 
-func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, _ *http.Request, repo, ref, rawRef string, commit *git.Commit, dirPath string) {
-	tree, err := h.docSearch.GetDirectory(ctx, &docutil.RequestGetDirectory{
-		Repo: repo,
-		Ref:  ref,
-		Path: dirPath,
-	})
-	if err != nil {
-		logger.Log.Error("Failed to get tree", logger.Error(err))
-		http.Error(w, "Failed to get tree", http.StatusInternalServerError)
-		return
-	}
+func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, _ *http.Request, repo *docutil.Repository, repoName, ref, rawRef string, commit *git.Commit, dirPath string) {
+	var entry []*directoryEntry
+	var foundIndexFile string
+	if ref == repo.DefaultBranch {
+		tree, err := h.docSearch.GetDirectory(ctx, &docutil.RequestGetDirectory{
+			Repo: repoName,
+			Ref:  ref,
+			Path: dirPath,
+		})
+		if err != nil {
+			logger.Log.Error("Failed to get tree", logger.Error(err))
+			http.Error(w, "Failed to get tree", http.StatusInternalServerError)
+			return
+		}
 
-	sort.Slice(tree.Entries, func(i, j int) bool {
-		return tree.Entries[i].Path < tree.Entries[j].Path
-	})
-	entry := make([]*directoryEntry, 0, len(tree.Entries))
-	foundIndexFile := ""
-	rootDir := dirPath
-	if rootDir == "/" {
-		rootDir = ""
-	}
-	for _, v := range tree.Entries {
-		if !v.IsDir {
-			continue
-		}
-		entry = append(entry, &directoryEntry{
-			Name:  v.Name,
-			Path:  v.Path + "/",
-			IsDir: true,
+		sort.Slice(tree.Entries, func(i, j int) bool {
+			return tree.Entries[i].Path < tree.Entries[j].Path
 		})
-	}
-	for _, v := range tree.Entries {
-		if v.IsDir {
-			continue
+
+		entry := make([]*directoryEntry, 0, len(tree.Entries))
+		rootDir := dirPath
+		if rootDir == "/" {
+			rootDir = ""
 		}
-		switch v.Name {
-		case "README.md":
-			foundIndexFile = v.Path
+		for _, v := range tree.Entries {
+			if !v.IsDir {
+				continue
+			}
+			entry = append(entry, &directoryEntry{
+				Name:  v.Name,
+				Path:  v.Path + "/",
+				IsDir: true,
+			})
 		}
-		entry = append(entry, &directoryEntry{
-			Name:  v.Name,
-			Path:  v.Path,
-			IsDir: v.IsDir,
+		for _, v := range tree.Entries {
+			if v.IsDir {
+				continue
+			}
+			switch v.Name {
+			case "README.md":
+				foundIndexFile = v.Path
+			}
+			entry = append(entry, &directoryEntry{
+				Name:  v.Name,
+				Path:  v.Path,
+				IsDir: v.IsDir,
+			})
+		}
+	} else {
+		tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
+			Repo:      repoName,
+			Ref:       ref,
+			Recursive: false,
+			Path:      dirPath,
 		})
+		if err != nil {
+			logger.Log.Error("Failed to get tree", logger.Error(err))
+			http.Error(w, "Failed to get tree", http.StatusInternalServerError)
+			return
+		}
+
+		sort.Slice(tree.Tree, func(i, j int) bool {
+			if tree.Tree[i].Mode != tree.Tree[j].Mode {
+				return tree.Tree[i].Mode < tree.Tree[j].Mode
+			}
+			return tree.Tree[i].Path < tree.Tree[j].Path
+		})
+
+		for i, v := range tree.Tree {
+			rootDir := dirPath
+			if rootDir == "/" {
+				rootDir = ""
+			}
+			switch v.Path {
+			case "README.md":
+				foundIndexFile = v.Path
+			}
+			p := path.Join(rootDir, v.Path)
+			if v.Mode == filemode.Dir.String() {
+				p += "/"
+			}
+			entry[i] = &directoryEntry{
+				Name:  v.Path,
+				Path:  p,
+				IsDir: v.Mode == filemode.Dir.String(),
+			}
+		}
+
+		if foundIndexFile != "" {
+			if dirPath != "/" {
+				foundIndexFile = path.Join(dirPath, foundIndexFile)
+			}
+		}
 	}
 
 	content := ""
 	if foundIndexFile != "" {
-		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repo, Ref: ref, Path: foundIndexFile})
+		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repoName, Ref: ref, Path: foundIndexFile})
 		if err != nil {
 			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", foundIndexFile))
 			http.Error(w, "Failed to get index file", http.StatusInternalServerError)
@@ -333,8 +389,8 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		content = d.Content
 	}
 
-	breadcrumb := makeBreadcrumb(repo, rawRef, dirPath, true)
-	err = pageTemplate.ExecuteTemplate(w, "directory.tmpl", struct {
+	breadcrumb := makeBreadcrumb(repoName, rawRef, dirPath, true)
+	err := pageTemplate.ExecuteTemplate(w, "directory.tmpl", struct {
 		Title               string
 		PageTitle           string
 		EnabledSearch       bool
@@ -354,7 +410,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		BreadcrumbLastIndex: len(breadcrumb) - 1,
 		Commit:              commit,
 		Content:             template.HTML(content),
-		Repo:                repo,
+		Repo:                repoName,
 		Ref:                 rawRef,
 		Path:                dirPath,
 		Entry:               entry,

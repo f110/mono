@@ -140,6 +140,14 @@ func (s *stubDocSearchClient) AvailableFeatures(ctx context.Context, in *docutil
 	return &docutil.ResponseAvailableFeatures{PageLink: true}, nil
 }
 
+func (s *stubDocSearchClient) ListRepository(ctx context.Context, in *docutil.RequestListRepository, opts ...grpc.CallOption) (*docutil.ResponseListRepository, error) {
+	return &docutil.ResponseListRepository{}, nil
+}
+
+func (s *stubDocSearchClient) GetRepository(ctx context.Context, in *docutil.RequestGetRepository, opts ...grpc.CallOption) (*docutil.ResponseGetRepository, error) {
+	return &docutil.ResponseGetRepository{}, nil
+}
+
 func (s *stubDocSearchClient) GetPage(ctx context.Context, in *docutil.RequestGetPage, opts ...grpc.CallOption) (*docutil.ResponseGetPage, error) {
 	//TODO implement me
 	panic("implement me")
