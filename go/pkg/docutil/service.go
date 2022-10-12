@@ -52,6 +52,7 @@ type docSet struct {
 
 type page struct {
 	Title   string
+	Doc     string
 	Path    string
 	LinkIn  []*PageLink
 	LinkOut []*PageLink
@@ -123,9 +124,17 @@ func (d *DocSearchService) GetRepository(_ context.Context, req *RequestGetRepos
 	}, nil
 }
 
-func (d *DocSearchService) GetPage(ctx context.Context, req *RequestGetPage) (*ResponseGetPage, error) {
-	//TODO implement me
-	panic("implement me")
+func (d *DocSearchService) GetPage(_ context.Context, req *RequestGetPage) (*ResponseGetPage, error) {
+	docs, ok := d.data[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+	page, ok := docs.Pages[req.Path]
+	if !ok {
+		return nil, errors.New("path is not found")
+	}
+
+	return &ResponseGetPage{Title: page.Title, In: page.LinkIn, Out: page.LinkOut}, nil
 }
 
 func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*ResponsePageLink, error) {
@@ -497,7 +506,7 @@ func (d *DocSearchService) makePage(ctx context.Context, repo *git.Repository, p
 }
 
 func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.Repository, pagePath string, raw []byte) (*page, error) {
-	page := &page{Path: pagePath}
+	page := &page{Path: pagePath, Doc: string(raw)}
 
 	var linkOut []*PageLink
 	seen := make(map[seenKey]struct{})

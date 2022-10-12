@@ -39,11 +39,14 @@ message Repository {
 
 message RequestGetPage {
   string repo = 1;
-  string sha  = 2;
+  string path = 2;
 }
 
 message ResponseGetPage {
-  string title = 1;
+  string            title = 1;
+  string            doc   = 2;
+  repeated PageLink in    = 3;
+  repeated PageLink out   = 4;
 }
 
 enum LinkType {
