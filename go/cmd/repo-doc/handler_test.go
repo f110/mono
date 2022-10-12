@@ -145,7 +145,9 @@ func (s *stubDocSearchClient) ListRepository(ctx context.Context, in *docutil.Re
 }
 
 func (s *stubDocSearchClient) GetRepository(ctx context.Context, in *docutil.RequestGetRepository, opts ...grpc.CallOption) (*docutil.ResponseGetRepository, error) {
-	return &docutil.ResponseGetRepository{}, nil
+	return &docutil.ResponseGetRepository{
+		Repository: &docutil.Repository{Name: "test"},
+	}, nil
 }
 
 func (s *stubDocSearchClient) GetPage(ctx context.Context, in *docutil.RequestGetPage, opts ...grpc.CallOption) (*docutil.ResponseGetPage, error) {
