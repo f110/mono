@@ -376,6 +376,39 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 	return nil, xerrors.Newf("unsupported object: %s", treeEntry.Mode.String())
 }
 
+func (g *DataService) Stat(ctx context.Context, req *RequestStat) (*ResponseStat, error) {
+	repo, ok := g.repo[req.Repo]
+	if !ok {
+		return nil, errors.New("repository not found")
+	}
+
+	var commitHash plumbing.Hash
+	if plumbing.IsHash(req.Ref) {
+		commitHash = plumbing.NewHash(req.Ref)
+	} else {
+		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+		if err != nil {
+			return nil, errors.New("ref is not found")
+		}
+		commitHash = ref.Hash()
+	}
+
+	commit, err := repo.CommitObject(commitHash)
+	if err != nil {
+		return nil, errors.New("commit is not found")
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, xerrors.Newf("failed to get tree: %v", err)
+	}
+	treeEntry, err := tree.FindEntry(req.Path)
+	if err != nil {
+		return nil, xerrors.Newf("could not find the tree entry %s in %s: %v", req.Path, tree.Hash.String(), err)
+	}
+
+	return &ResponseStat{Name: treeEntry.Name, Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
+}
+
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {

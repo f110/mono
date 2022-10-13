@@ -13,6 +13,7 @@ service GitData {
   rpc GetTree(RequestGetTree) returns (ResponseGetTree);
   rpc GetBlob(RequestGetBlob) returns (ResponseGetBlob);
   rpc GetFile(RequestGetFile) returns (ResponseGetFile);
+  rpc Stat(RequestStat) returns (ResponseStat);
   rpc ListTag(RequestListTag) returns (ResponseListTag);
   rpc ListBranch(RequestListBranch) returns (ResponseListBranch);
 }
@@ -132,6 +133,18 @@ message ResponseGetFile {
   string raw_url  = 2;
   string edit_url = 3;
   string sha      = 4;
+}
+
+message RequestStat {
+  string repo = 1;
+  string ref  = 2;
+  string path = 3;
+}
+
+message ResponseStat {
+  string name = 1;
+  string hash = 2;
+  uint32 mode = 3;
 }
 
 message RequestListTag {

@@ -122,6 +122,10 @@ func (s *stubGitDataClient) GetFile(_ context.Context, in *git.RequestGetFile, o
 	}, nil
 }
 
+func (s *stubGitDataClient) Stat(_ context.Context, in *git.RequestStat, opts ...grpc.CallOption) (*git.ResponseStat, error) {
+	return &git.ResponseStat{}, nil
+}
+
 func (s *stubGitDataClient) ListTag(ctx context.Context, in *git.RequestListTag, opts ...grpc.CallOption) (*git.ResponseListTag, error) {
 	//TODO implement me
 	panic("implement me")
