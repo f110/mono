@@ -135,3 +135,8 @@ func (m *mockGitClient) ListBranch(ctx context.Context, in *git.RequestListBranc
 	//TODO implement me
 	panic("implement me")
 }
+
+func (m *mockGitClient) Stat(ctx context.Context, in *git.RequestStat, opts ...grpc.CallOption) (*git.ResponseStat, error) {
+	// TODO: implement me
+	panic("implement me")
+}
