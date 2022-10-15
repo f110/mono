@@ -40,6 +40,7 @@ go_library(
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/net/html",
         "//vendor/golang.org/x/net/html/atom",
+        "//vendor/google.golang.org/genproto/googleapis/rpc/errdetails",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/codes",
         "//vendor/google.golang.org/grpc/status",

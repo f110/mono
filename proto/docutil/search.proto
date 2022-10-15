@@ -14,8 +14,9 @@ service DocSearch {
 message RequestAvailableFeatures {}
 
 message ResponseAvailableFeatures {
-  bool page_link        = 1;
-  bool full_text_search = 2;
+  bool            page_link                = 1;
+  bool            full_text_search         = 2;
+  repeated string supported_file_extension = 3;
 }
 
 message RequestListRepository {}
@@ -43,10 +44,12 @@ message RequestGetPage {
 }
 
 message ResponseGetPage {
-  string            title = 1;
-  string            doc   = 2;
-  repeated PageLink in    = 3;
-  repeated PageLink out   = 4;
+  string            title    = 1;
+  string            doc      = 2;
+  repeated PageLink in       = 3;
+  repeated PageLink out      = 4;
+  string            raw_url  = 5;
+  string            edit_url = 6;
 }
 
 enum LinkType {

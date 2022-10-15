@@ -26,6 +26,9 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
@@ -57,6 +60,8 @@ type page struct {
 	LinkIn  []*PageLink
 	LinkOut []*PageLink
 }
+
+var docSearchServiceSupportFileExtensions = []string{"md"}
 
 type DocSearchService struct {
 	client         git.GitDataClient
@@ -95,7 +100,10 @@ func NewDocSearchService(client git.GitDataClient, b ObjectStorageInterface) *Do
 var _ DocSearchServer = &DocSearchService{}
 
 func (d *DocSearchService) AvailableFeatures(_ context.Context, _ *RequestAvailableFeatures) (*ResponseAvailableFeatures, error) {
-	return &ResponseAvailableFeatures{PageLink: true}, nil
+	return &ResponseAvailableFeatures{
+		PageLink:               true,
+		SupportedFileExtension: docSearchServiceSupportFileExtensions,
+	}, nil
 }
 
 func (d *DocSearchService) ListRepository(_ context.Context, req *RequestListRepository) (*ResponseListRepository, error) {
@@ -131,7 +139,17 @@ func (d *DocSearchService) GetPage(_ context.Context, req *RequestGetPage) (*Res
 	}
 	page, ok := docs.Pages[req.Path]
 	if !ok {
-		return nil, errors.New("path is not found")
+		detail := &errdetails.BadRequest{
+			FieldViolations: []*errdetails.BadRequest_FieldViolation{
+				{Field: "path", Description: "path is not found"},
+			},
+		}
+		st := status.New(codes.InvalidArgument, "path is directory")
+		if rpcErr, err := st.WithDetails(detail); err != nil {
+			return nil, status.Error(codes.Internal, "")
+		} else {
+			return nil, rpcErr.Err()
+		}
 	}
 
 	return &ResponseGetPage{Title: page.Title, In: page.LinkIn, Out: page.LinkOut}, nil
