@@ -59,6 +59,8 @@ type page struct {
 	Path    string
 	LinkIn  []*PageLink
 	LinkOut []*PageLink
+	RawURL  string
+	EditURL string
 }
 
 var docSearchServiceSupportFileExtensions = []string{"md"}
@@ -152,7 +154,12 @@ func (d *DocSearchService) GetPage(_ context.Context, req *RequestGetPage) (*Res
 		}
 	}
 
-	return &ResponseGetPage{Title: page.Title, In: page.LinkIn, Out: page.LinkOut}, nil
+	return &ResponseGetPage{
+		Title: page.Title,
+		In:    page.LinkIn,
+		Out:   page.LinkOut,
+		Doc:   page.Doc,
+	}, nil
 }
 
 func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*ResponsePageLink, error) {
