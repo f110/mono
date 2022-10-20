@@ -19,6 +19,7 @@ import (
 
 type document struct {
 	Title           string
+	Path            string
 	Content         string
 	TableOfContents *tableOfContent
 }

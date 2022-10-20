@@ -7,6 +7,7 @@ go_library(
         "handler.go",
         "main.go",
         "parser.go",
+        "renderer.go",
     ],
     embedsrcs = [
         "style.css",
@@ -41,7 +42,6 @@ go_library(
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/credentials/insecure",
-        "//vendor/google.golang.org/grpc/status",
     ],
 )
 

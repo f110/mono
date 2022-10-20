@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/pkg/docutil"
@@ -40,7 +41,8 @@ func TestParsePath(t *testing.T) {
 		},
 	}
 
-	h := newHttpHandler(nil, nil, "", "", 0, false)
+	h, err := newHttpHandler(context.Background(), nil, nil, "", "", 0)
+	require.NoError(t, err)
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.URL, nil)
@@ -55,7 +57,8 @@ func TestParsePath(t *testing.T) {
 func TestServeHTTP(t *testing.T) {
 	gitData := &stubGitDataClient{}
 	docSearch := &stubDocSearchClient{}
-	h := newHttpHandler(gitData, docSearch, "repo-doc", "", 0, false)
+	h, err := newHttpHandler(context.Background(), gitData, docSearch, "repo-doc", "", 0)
+	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)

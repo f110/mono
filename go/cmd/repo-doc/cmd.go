@@ -82,17 +82,13 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 		c.docSearch = docutil.NewDocSearchClient(docSearchConn)
 	}
 
-	var enabledFullTextSearch bool
-	if c.docSearch != nil {
-		docSearchFeatures, err := c.docSearch.AvailableFeatures(c.FSM.Context(), &docutil.RequestAvailableFeatures{})
-		if err != nil {
-			return fsm.Error(err)
-		}
-		enabledFullTextSearch = docSearchFeatures.FullTextSearch
+	handler, err := newHttpHandler(c.Context(), c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC)
+	if err != nil {
+		return fsm.Error(err)
 	}
 
 	c.s = &http.Server{
-		Handler:  newHttpHandler(c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC, enabledFullTextSearch),
+		Handler:  handler,
 		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)

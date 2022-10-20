@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
-	"html/template"
 	"mime"
 	"net/http"
 	"path"
@@ -17,7 +15,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/pkg/docutil"
 	"go.f110.dev/mono/go/pkg/git"
@@ -35,60 +32,52 @@ var (
 //go:embed style.css
 var staticContent embed.FS
 
-//go:embed doc.tmpl directory.tmpl index.tmpl
-var templateFiles embed.FS
-
-var (
-	pageTemplate = template.Must(template.New("").ParseFS(templateFiles, "*.tmpl"))
-)
-
 type httpHandler struct {
 	gitData   git.GitDataClient
 	docSearch docutil.DocSearchClient
 	static    http.Handler
 	markdown  *markdownParser
+	renderer  *Renderer
 
-	toCMaxDepth   int
-	title         string
-	enabledSearch bool
+	metadataAvailableFileExtensions map[string]struct{}
 }
 
 var _ http.Handler = &httpHandler{}
 
 func newHttpHandler(
+	ctx context.Context,
 	gitData git.GitDataClient,
 	docSearch docutil.DocSearchClient,
 	title, staticDir string,
 	toCMaxDepth int,
-	enabledSearch bool,
-) *httpHandler {
+) (*httpHandler, error) {
 	var static http.Handler
 	if staticDir != "" {
 		static = http.FileServer(http.Dir(staticDir))
 	} else {
 		static = http.FileServer(http.FS(staticContent))
 	}
-	return &httpHandler{
-		gitData:       gitData,
-		docSearch:     docSearch,
-		static:        static,
-		title:         title,
-		toCMaxDepth:   toCMaxDepth,
-		enabledSearch: enabledSearch,
-		markdown:      newMarkdownParser(),
+	availableFeatures, err := docSearch.AvailableFeatures(ctx, &docutil.RequestAvailableFeatures{})
+	if err != nil {
+		return nil, err
 	}
-}
+	renderer := NewRenderer(docSearch, title, toCMaxDepth, availableFeatures)
+	extensions := make(map[string]struct{})
+	for _, v := range availableFeatures.SupportedFileExtension {
+		if v[0] != '.' {
+			v = "." + v
+		}
+		extensions[v] = struct{}{}
+	}
 
-type templateToC struct {
-	Title  string
-	Anchor string
-	Down   bool
-	Up     bool
-}
-
-type breadcrumbNode struct {
-	Name string
-	Link string
+	return &httpHandler{
+		gitData:                         gitData,
+		docSearch:                       docSearch,
+		static:                          static,
+		markdown:                        newMarkdownParser(),
+		renderer:                        renderer,
+		metadataAvailableFileExtensions: extensions,
+	}, nil
 }
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -139,20 +128,49 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if requestFilePath == "" {
 		requestFilePath = "/"
 	}
-	file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repoName, Ref: ref, Path: requestFilePath})
-	if err != nil {
-		st, ok := status.FromError(err)
-		if ok && st.Message() == "path is directory" {
-			h.serveDirectoryIndex(req.Context(), w, req, repo, repoName, ref, rawRef, commit, requestFilePath)
-			return
-		}
 
-		logger.Log.Error("Failed to get file", logger.Error(err))
-		http.Error(w, "Failed to get file", http.StatusInternalServerError)
+	pathStat, err := h.gitData.Stat(req.Context(), &git.RequestStat{Repo: repoName, Ref: ref, Path: requestFilePath})
+	if err != nil {
+		logger.Log.Error("Failed to get stat", logger.Error(err))
+		http.Error(w, "Failed to get stat", http.StatusInternalServerError)
 		return
 	}
 
-	h.serveDocumentFile(req.Context(), w, file, repo, repoName, rawRef, commit, blobPath)
+	if filemode.FileMode(pathStat.Mode)&filemode.Dir == filemode.Dir {
+		h.serveDirectoryIndex(req.Context(), w, req, repo, repoName, ref, rawRef, commit, requestFilePath)
+		return
+	}
+
+	if ref == repo.DefaultBranch && h.docSearch != nil {
+		if _, ok := h.metadataAvailableFileExtensions[filepath.Ext(requestFilePath)]; !ok {
+			file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repoName, Ref: ref, Path: requestFilePath})
+			if err != nil {
+				logger.Log.Error("Failed to get file", logger.Error(err))
+				http.Error(w, "Failed to get file", http.StatusInternalServerError)
+				return
+			}
+			if v := mime.TypeByExtension(filepath.Ext(blobPath)); v != "" {
+				w.Header().Set("Content-Type", v)
+			}
+			if _, err := w.Write(file.Content); err != nil {
+				logger.Log.Warn("Failed write content", logger.Error(err))
+				http.Error(w, "Failed write content", http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+
+		h.serveDocumentPage(req.Context(), w, repo, rawRef, requestFilePath, commit)
+	} else {
+		file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repoName, Ref: ref, Path: requestFilePath})
+		if err != nil {
+			logger.Log.Error("Failed to get file", logger.Error(err))
+			http.Error(w, "Failed to get file", http.StatusInternalServerError)
+			return
+		}
+
+		h.serveDocumentFile(req.Context(), w, file, repo, repoName, rawRef, commit, blobPath)
+	}
 }
 
 func (h *httpHandler) readiness(w http.ResponseWriter, req *http.Request) {}
@@ -165,38 +183,10 @@ func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	err = pageTemplate.ExecuteTemplate(w, "index.tmpl", struct {
-		Title         string
-		EnabledSearch bool
-		Repositories  []*git.Repository
-	}{
-		Title:         h.title,
-		EnabledSearch: h.enabledSearch,
-		Repositories:  repositories.Repositories,
-	})
-	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
-		http.Error(w, "Failed to render page", http.StatusInternalServerError)
-		return
-	}
+	h.renderer.RenderRepositories(w, repositories.Repositories)
 }
 
 func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWriter, file *git.ResponseGetFile, repo *docutil.Repository, repoName, rawRef string, commit *git.Commit, blobPath string) {
-	var references, cited []*docutil.PageLink
-	switch filepath.Ext(blobPath) {
-	case ".md":
-		if h.docSearch != nil && repo.DefaultBranch == rawRef {
-			pageLink, err := h.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repoName, Sha: blobPath})
-			if err != nil {
-				logger.Log.Error("Failed to get page link", logger.Error(err))
-				http.Error(w, "Failed to get page link", http.StatusInternalServerError)
-				return
-			}
-			references = pageLink.Out
-			cited = pageLink.In
-		}
-	}
-
 	var doc *document
 	switch filepath.Ext(blobPath) {
 	case ".md":
@@ -219,43 +209,35 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 		return
 	}
 
-	breadcrumb := makeBreadcrumb(repoName, rawRef, blobPath, false)
-	err := pageTemplate.ExecuteTemplate(w, "doc.tmpl", struct {
-		Title               string
-		PageTitle           string
-		EnabledSearch       bool
-		Repo                string
-		Ref                 string
-		Commit              *git.Commit
-		Content             template.HTML
-		Breadcrumb          []*breadcrumbNode
-		BreadcrumbLastIndex int
-		TableOfContent      []*templateToC
-		RawURL              string
-		EditURL             string
-		References          []*docutil.PageLink
-		Cited               []*docutil.PageLink
-	}{
-		Title:               h.title,
-		PageTitle:           doc.Title,
-		EnabledSearch:       h.enabledSearch,
-		Repo:                repoName,
-		Ref:                 rawRef,
-		Commit:              commit,
-		Content:             template.HTML(doc.Content),
-		Breadcrumb:          breadcrumb,
-		BreadcrumbLastIndex: len(breadcrumb) - 1,
-		TableOfContent:      toTemplateToC(h.toCMaxDepth, doc.TableOfContents),
-		RawURL:              file.RawUrl,
-		EditURL:             file.EditUrl,
-		References:          references,
-		Cited:               cited,
-	})
-	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
-		http.Error(w, "Failed render page", http.StatusInternalServerError)
-		return
+	h.renderer.RenderFile(ctx, w, repo, file, doc, rawRef, commit)
+}
+
+func (h *httpHandler) serveDocumentPage(ctx context.Context, w http.ResponseWriter, repo *docutil.Repository, rawRef, requestFilePath string, commit *git.Commit) {
+	var page *docutil.ResponseGetPage
+	if _, ok := h.metadataAvailableFileExtensions[filepath.Ext(requestFilePath)]; ok {
+		p, err := h.docSearch.GetPage(ctx, &docutil.RequestGetPage{Repo: repo.Name, Path: requestFilePath})
+		if err != nil {
+			logger.Log.Error("Failed to get page from service", logger.Error(err))
+			http.Error(w, "Failed to get page", http.StatusInternalServerError)
+			return
+		}
+		page = p
 	}
+
+	var doc *document
+	switch filepath.Ext(requestFilePath) {
+	case ".md":
+		d, err := h.markdown.Parse([]byte(page.Doc))
+		if err != nil {
+			logger.Log.Error("Failed to convert document body", logger.Error(err))
+			http.Error(w, "Failed to convert document body", http.StatusInternalServerError)
+			return
+		}
+		d.Path = requestFilePath
+		doc = d
+	}
+
+	h.renderer.RenderPage(w, repo, page, doc, rawRef, commit)
 }
 
 func (h *httpHandler) makeDocument(file *git.ResponseGetFile, blobPath string) (*document, error) {
@@ -265,6 +247,7 @@ func (h *httpHandler) makeDocument(file *git.ResponseGetFile, blobPath string) (
 		if err != nil {
 			return nil, err
 		}
+		d.Path = blobPath
 		return d, nil
 	}
 
@@ -279,6 +262,7 @@ type directoryEntry struct {
 
 func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWriter, _ *http.Request, repo *docutil.Repository, repoName, ref, rawRef string, commit *git.Commit, dirPath string) {
 	var entry []*directoryEntry
+	var content string
 	var foundIndexFile string
 	if ref == repo.DefaultBranch {
 		tree, err := h.docSearch.GetDirectory(ctx, &docutil.RequestGetDirectory{
@@ -325,6 +309,19 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 				IsDir: v.IsDir,
 			})
 		}
+
+		if foundIndexFile != "" {
+			page, err := h.docSearch.GetPage(ctx, &docutil.RequestGetPage{
+				Repo: repoName,
+				Path: foundIndexFile,
+			})
+			if err != nil {
+				logger.Log.Error("Failed to get index content", logger.Error(err))
+				http.Error(w, "Failed to get index content", http.StatusInternalServerError)
+				return
+			}
+			content = page.Doc
+		}
 	} else {
 		tree, err := h.gitData.GetTree(ctx, &git.RequestGetTree{
 			Repo:      repoName,
@@ -365,15 +362,10 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			}
 		}
 
-		if foundIndexFile != "" {
-			if dirPath != "/" {
-				foundIndexFile = path.Join(dirPath, foundIndexFile)
-			}
+		if foundIndexFile != "" && dirPath != "/" {
+			foundIndexFile = path.Join(dirPath, foundIndexFile)
 		}
-	}
 
-	content := ""
-	if foundIndexFile != "" {
 		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repoName, Ref: ref, Path: foundIndexFile})
 		if err != nil {
 			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", foundIndexFile))
@@ -389,37 +381,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		content = d.Content
 	}
 
-	breadcrumb := makeBreadcrumb(repoName, rawRef, dirPath, true)
-	err := pageTemplate.ExecuteTemplate(w, "directory.tmpl", struct {
-		Title               string
-		PageTitle           string
-		EnabledSearch       bool
-		Breadcrumb          []*breadcrumbNode
-		BreadcrumbLastIndex int
-		Commit              *git.Commit
-		Content             template.HTML
-		Repo                string
-		Ref                 string
-		Path                string
-		Entry               []*directoryEntry
-	}{
-		Title:               h.title,
-		PageTitle:           dirPath,
-		EnabledSearch:       h.enabledSearch,
-		Breadcrumb:          breadcrumb,
-		BreadcrumbLastIndex: len(breadcrumb) - 1,
-		Commit:              commit,
-		Content:             template.HTML(content),
-		Repo:                repoName,
-		Ref:                 rawRef,
-		Path:                dirPath,
-		Entry:               entry,
-	})
-	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
-		http.Error(w, "Failed render page", http.StatusInternalServerError)
-		return
-	}
+	h.renderer.RenderDirectoryIndex(w, repo, rawRef, dirPath, commit, entry, content)
 }
 
 func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, filepath string) {
@@ -433,56 +395,4 @@ func (h *httpHandler) parsePath(req *http.Request) (repo string, ref string, fil
 	repo, ref = repoAndRef[:sep], repoAndRef[sep+1:]
 
 	return repo, ref, filepath
-}
-
-func makeBreadcrumb(repo, ref, blobPath string, isDir bool) []*breadcrumbNode {
-	breadcrumb := []*breadcrumbNode{{Name: repo, Link: fmt.Sprintf("/%s/%s/-/", repo, ref)}}
-	if blobPath == "/" {
-		return breadcrumb
-	}
-	s := strings.Split(blobPath, "/")
-	for i, v := range s[:len(s)-1] {
-		breadcrumb = append(breadcrumb, &breadcrumbNode{
-			Name: v,
-			Link: fmt.Sprintf("/%s/%s/-/%s/", repo, ref, strings.Join(s[:i+1], "/")),
-		})
-	}
-	if isDir {
-		breadcrumb = append(breadcrumb, &breadcrumbNode{
-			Name: s[len(s)-1],
-			Link: fmt.Sprintf("/%s/%s/-/%s/", repo, ref, strings.Join(s, "/")),
-		})
-	} else {
-		breadcrumb = append(breadcrumb, &breadcrumbNode{
-			Name: s[len(s)-1],
-			Link: fmt.Sprintf("/%s/%s/-/%s", repo, ref, strings.Join(s, "/")),
-		})
-	}
-	return breadcrumb
-}
-
-func toTemplateToC(maxDepth int, in *tableOfContent) []*templateToC {
-	var res []*templateToC
-
-	if in.Title != "" {
-		anchor := strings.ToLower(in.Title)
-		anchor = strings.Replace(anchor, " ", "-", -1)
-		res = append(res, &templateToC{Title: in.Title, Anchor: anchor})
-	}
-
-	if len(in.Child) > 0 && in.Level+1 <= maxDepth {
-		if len(res) > 0 {
-			res[len(res)-1].Down = true
-		}
-
-		var child []*templateToC
-		for _, v := range in.Child {
-			child = append(child, toTemplateToC(maxDepth, v)...)
-		}
-		child[len(child)-1].Up = true
-
-		res = append(res, child...)
-	}
-
-	return res
 }
