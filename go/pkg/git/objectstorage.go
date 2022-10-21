@@ -658,6 +658,16 @@ func nopCloser(r io.ReadSeeker) io.ReadSeekCloser {
 func (nopSeekCloser) Close() error { return nil }
 
 func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbing.EncodedObject, error) {
+	if b.EnabledCache() {
+		item, err := b.cachePool.Get(fmt.Sprintf("objects/%s", h.String()))
+		if err == nil {
+			obj := b.NewEncodedObject()
+			if err := json.Unmarshal(item.Value, obj); err == nil {
+				return obj, nil
+			}
+		}
+	}
+
 	file, err := b.backend.Get(context.Background(), path.Join(b.rootPath, "objects", h.String()[0:2], h.String()[2:40]))
 	if err != nil && errors.Is(err, storage.ErrObjectNotFound) {
 		return nil, plumbing.ErrObjectNotFound
@@ -671,6 +681,20 @@ func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbin
 		return nil, xerrors.WithStack(err)
 	}
 
+	if b.EnabledCache() &&
+		(obj.Type() == plumbing.TreeObject ||
+			obj.Type() == plumbing.CommitObject ||
+			obj.Type() == plumbing.OFSDeltaObject ||
+			obj.Type() == plumbing.REFDeltaObject) {
+		buf, err := json.Marshal(obj)
+		if err == nil {
+			_ = b.cachePool.Set(&client.Item{
+				Key:        fmt.Sprintf("objects/%s", h.String()),
+				Value:      buf,
+				Expiration: 60 * 60 * 24, // 1 day
+			})
+		}
+	}
 	return obj, nil
 }
 
