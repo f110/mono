@@ -41,7 +41,7 @@ func TestParsePath(t *testing.T) {
 		},
 	}
 
-	h, err := newHttpHandler(context.Background(), nil, nil, "", "", 0)
+	h, err := newHttpHandler(context.Background(), nil, &stubDocSearchClient{}, "", "", 0)
 	require.NoError(t, err)
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
