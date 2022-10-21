@@ -626,7 +626,11 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	}
 	obj, err := packfile.Get(h)
 	if err == nil {
-		if b.EnabledCache() {
+		if b.EnabledCache() &&
+			(obj.Type() == plumbing.TreeObject ||
+				obj.Type() == plumbing.CommitObject ||
+				obj.Type() == plumbing.OFSDeltaObject ||
+				obj.Type() == plumbing.REFDeltaObject) {
 			buf, err := json.Marshal(obj)
 			if err == nil {
 				// No need to handle an error
