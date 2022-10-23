@@ -19,6 +19,7 @@ type Packfile struct {
 	index           idxfile.Index
 	offsets         []uint64
 	file            io.ReadSeekCloser
+	fileLen         int64
 	version         uint32
 	numberOfObjects uint32
 }
@@ -69,7 +70,8 @@ func NewPackfile(idx idxfile.Index, f io.ReadSeekCloser) (*Packfile, error) {
 		}
 		offsets = append(offsets, e.Offset)
 	}
-	return &Packfile{index: idx, offsets: offsets, file: f, version: version, numberOfObjects: numOfObj}, nil
+	fileLen, _ := f.Seek(0, io.SeekEnd)
+	return &Packfile{index: idx, offsets: offsets, file: f, fileLen: fileLen, version: version, numberOfObjects: numOfObj}, nil
 }
 
 func (p *Packfile) Get(hash plumbing.Hash) (plumbing.EncodedObject, error) {
@@ -78,6 +80,30 @@ func (p *Packfile) Get(hash plumbing.Hash) (plumbing.EncodedObject, error) {
 		return nil, xerrors.WithStack(err)
 	}
 	return p.readObject(offset, hash)
+}
+
+func (p *Packfile) All() ([]plumbing.EncodedObject, error) {
+	iter, err := p.index.Entries()
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var objs []plumbing.EncodedObject
+	for {
+		e, err := iter.Next()
+		if err == io.EOF {
+			break
+		}
+		obj, err := p.readObject(int64(e.Offset), e.Hash)
+		if err != nil {
+			return nil, err
+		}
+		objs = append(objs, obj)
+	}
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+
+	return objs, nil
 }
 
 func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.EncodedObject, error) {
@@ -118,7 +144,7 @@ func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.Encode
 	for i, v := range p.offsets {
 		if int64(v) == offset {
 			if len(p.offsets) == i+1 {
-				bufSize = length
+				bufSize = p.fileLen - offset
 			} else {
 				bufSize = int64(p.offsets[i+1]) - offset
 			}

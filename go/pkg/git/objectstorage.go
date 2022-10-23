@@ -81,6 +81,9 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
+	if err := s.InflatePackFile(ctx); err != nil {
+		return nil, xerrors.WithMessage(err, "failed to inflate pack file")
+	}
 
 	return repo, nil
 }
@@ -115,6 +118,70 @@ func (b *ObjectStorageStorer) Exist() (bool, error) {
 
 func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {
 	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name), b.cachePool), nil
+}
+
+func (b *ObjectStorageStorer) InflatePackFile(ctx context.Context) error {
+	packFiles, err := b.backend.List(ctx, path.Join(b.rootPath, "objects/pack"))
+	if err != nil {
+		return err
+	}
+	var packs []plumbing.Hash
+	for _, v := range packFiles {
+		n := filepath.Base(v.Name)
+		if filepath.Ext(n) == ".pack" {
+			packs = append(packs, plumbing.NewHash(n[5:len(n)-5]))
+		}
+	}
+
+	for _, v := range packs {
+		file, err := b.backend.Get(ctx, filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
+		if err != nil {
+			return err
+		}
+		idx := idxfile.NewMemoryIndex()
+		if err := idxfile.NewDecoder(file).Decode(idx); err != nil {
+			return err
+		}
+		if err := file.Close(); err != nil {
+			return err
+		}
+
+		file, err = b.backend.Get(ctx, filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String())))
+		if err != nil {
+			return err
+		}
+		buf, err := io.ReadAll(file)
+		if err != nil {
+			return err
+		}
+		if err := file.Close(); err != nil {
+			return err
+		}
+		packfile, err := NewPackfile(idx, nopCloser(bytes.NewReader(buf)))
+		if err != nil {
+			return err
+		}
+
+		objs, err := packfile.All()
+		if err != nil {
+			return err
+		}
+
+		for _, obj := range objs {
+			if _, err := b.SetEncodedObject(obj); err != nil {
+				return err
+			}
+		}
+
+		if err := b.backend.Delete(ctx, path.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
+			return err
+		}
+		if err := b.backend.Delete(ctx, path.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (b *ObjectStorageStorer) Config() (*config.Config, error) {
