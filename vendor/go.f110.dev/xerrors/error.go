@@ -46,9 +46,14 @@ func (e *Error) Format(s fmt.State, verb rune) {
 		}
 		if s.Flag('+') {
 			io.WriteString(s, "\n")
-			io.WriteString(s, e.stackTrace.String())
+			io.WriteString(s, e.StackTrace().String())
 		}
 	}
+}
+
+// StackTrace returns Frames that is most deeply frames in the error chain.
+func (e *Error) StackTrace() Frames {
+	return StackTrace(e)
 }
 
 func New(msg string) error {
@@ -81,8 +86,7 @@ type Frames []uintptr
 var _ zapcore.ArrayMarshaler = Frames{}
 
 func StackTrace(err error) Frames {
-	v, ok := err.(*Error)
-	if !ok {
+	if _, ok := err.(*Error); !ok {
 		return nil
 	}
 
@@ -99,7 +103,7 @@ func StackTrace(err error) Frames {
 		}
 	}
 
-	return v.stackTrace
+	return frames
 }
 
 func (f Frames) String() string {

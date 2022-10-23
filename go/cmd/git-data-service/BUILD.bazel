@@ -50,5 +50,6 @@ go_test(
         "//vendor/github.com/go-git/go-git/v5/storage/filesystem",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
