@@ -44,11 +44,12 @@ type gitDataServiceCommand struct {
 
 	Bucket string
 
-	Repositories    []string
-	LockFilePath    string
-	RefreshInterval time.Duration
-	RefreshTimeout  time.Duration
-	RefreshWorkers  int
+	Repositories           []string
+	LockFilePath           string
+	RefreshInterval        time.Duration
+	RefreshTimeout         time.Duration
+	RefreshWorkers         int
+	DisableInflatePackFile bool
 
 	repositories []*Repository
 }
@@ -84,6 +85,48 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 	)
 
 	return c
+}
+
+func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.Listen, "listen", ":8056", "Listen addr")
+	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
+	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
+	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
+	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
+	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
+	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
+	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
+	fs.StringVar(&c.ListenWebhookReceiver, "listen-webhook-receiver", "", "Listen addr of webhook receiver.")
+
+	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
+		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
+		"The second element is a url for the repository. "+
+		"The third element is a prefix in an object storage. (e.g. go|https://github.com/golang/go.git|golang/go)")
+	fs.StringVar(&c.LockFilePath, "lock-file-path", "", "The path of the lock file.  If not set the value, don't get the lock")
+	fs.DurationVar(&c.RefreshInterval, "refresh-interval", 0, "The interval time for updating the repository"+
+		"If set zero, interval updating is disabled.")
+	fs.DurationVar(&c.RefreshTimeout, "refresh-timeout", 1*time.Minute, "The duration for timeout to updating repository")
+	fs.IntVar(&c.RefreshWorkers, "refresh-workers", 1, "The number of workers for updating repository")
+	fs.BoolVar(&c.DisableInflatePackFile, "disable-inflate-packfile", false, "Disable inflating packfile")
+
+	fs.DurationVar(&c.RepositoryInitTimeout, "repository-init-timeout", 5*time.Minute, "The duration for timeout to initializing repository")
+}
+
+func (c *gitDataServiceCommand) ValidateFlagValue() error {
+	if len(c.Repositories) == 0 {
+		return errors.New("--repository is mandatory")
+	}
+	var repositories []*Repository
+	for _, v := range c.Repositories {
+		if strings.Index(v, "|") == -1 {
+			return xerrors.Newf("--repository=%s is invalid", v)
+		}
+		s := strings.Split(v, "|")
+		repositories = append(repositories, &Repository{Name: s[0], URL: s[1], Prefix: s[2]})
+	}
+	c.repositories = repositories
+
+	return nil
 }
 
 func (c *gitDataServiceCommand) init() (fsm.State, error) {
@@ -131,6 +174,12 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 			cancel()
 		} else if err != nil {
 			return fsm.Error(err)
+		}
+		if !c.DisableInflatePackFile && storer.IncludePackFile(c.Context()) {
+			logger.Log.Info("Inflate packfile", zap.String("name", r.Name))
+			if err := storer.InflatePackFile(c.Context()); err != nil {
+				return fsm.Error(err)
+			}
 		}
 
 		gitRepo, err := goGit.Open(storer, nil)
@@ -217,45 +266,4 @@ func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
 	}
 
 	return fsm.Finish()
-}
-
-func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Listen, "listen", ":8056", "Listen addr")
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
-	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
-	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
-	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
-	fs.StringVar(&c.ListenWebhookReceiver, "listen-webhook-receiver", "", "Listen addr of webhook receiver.")
-
-	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
-		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
-		"The second element is a url for the repository. "+
-		"The third element is a prefix in an object storage. (e.g. go|https://github.com/golang/go.git|golang/go)")
-	fs.StringVar(&c.LockFilePath, "lock-file-path", "", "The path of the lock file.  If not set the value, don't get the lock")
-	fs.DurationVar(&c.RefreshInterval, "refresh-interval", 0, "The interval time for updating the repository"+
-		"If set zero, interval updating is disabled.")
-	fs.DurationVar(&c.RefreshTimeout, "refresh-timeout", 1*time.Minute, "The duration for timeout to updating repository")
-	fs.IntVar(&c.RefreshWorkers, "refresh-workers", 1, "The number of workers for updating repository")
-
-	fs.DurationVar(&c.RepositoryInitTimeout, "repository-init-timeout", 5*time.Minute, "The duration for timeout to initializing repository")
-}
-
-func (c *gitDataServiceCommand) ValidateFlagValue() error {
-	if len(c.Repositories) == 0 {
-		return errors.New("--repository is mandatory")
-	}
-	var repositories []*Repository
-	for _, v := range c.Repositories {
-		if strings.Index(v, "|") == -1 {
-			return xerrors.Newf("--repository=%s is invalid", v)
-		}
-		s := strings.Split(v, "|")
-		repositories = append(repositories, &Repository{Name: s[0], URL: s[1], Prefix: s[2]})
-	}
-	c.repositories = repositories
-
-	return nil
 }

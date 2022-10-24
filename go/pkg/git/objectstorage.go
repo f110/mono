@@ -120,6 +120,18 @@ func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {
 	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name), b.cachePool), nil
 }
 
+func (b *ObjectStorageStorer) IncludePackFile(ctx context.Context) bool {
+	packFiles, err := b.backend.List(ctx, path.Join(b.rootPath, "objects/pack-"))
+	if err != nil {
+		return false
+	}
+
+	if len(packFiles) > 0 {
+		return true
+	}
+	return false
+}
+
 func (b *ObjectStorageStorer) InflatePackFile(ctx context.Context) error {
 	packFiles, err := b.backend.List(ctx, path.Join(b.rootPath, "objects/pack"))
 	if err != nil {
