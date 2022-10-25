@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path"
 	"strings"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -397,16 +398,25 @@ func (g *DataService) Stat(ctx context.Context, req *RequestStat) (*ResponseStat
 	if err != nil {
 		return nil, errors.New("commit is not found")
 	}
+	if req.Path == "" || req.Path == "/" {
+		return &ResponseStat{Hash: commit.TreeHash.String(), Mode: uint32(filemode.Dir)}, nil
+	}
 	tree, err := commit.Tree()
 	if err != nil {
 		return nil, xerrors.Newf("failed to get tree: %v", err)
+	}
+	if req.Path[0] == '/' {
+		req.Path = req.Path[1:]
+	}
+	if req.Path[len(req.Path)-1] == '/' {
+		req.Path = req.Path[:len(req.Path)-1]
 	}
 	treeEntry, err := tree.FindEntry(req.Path)
 	if err != nil {
 		return nil, xerrors.Newf("could not find the tree entry %s in %s: %v", req.Path, tree.Hash.String(), err)
 	}
 
-	return &ResponseStat{Name: treeEntry.Name, Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
+	return &ResponseStat{Name: path.Join(path.Dir(req.Path), treeEntry.Name), Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
 }
 
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {

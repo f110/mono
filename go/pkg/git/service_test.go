@@ -8,6 +8,7 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/stretchr/testify/assert"
@@ -195,6 +196,69 @@ func TestGetFile(t *testing.T) {
 	assert.Equal(t, "https://raw.githubusercontent.com/f110/test-repo/refs/heads/master/README.md", file.RawUrl)
 	assert.Equal(t, "https://github.com/f110/test-repo/edit/refs/heads/master/README.md", file.EditUrl)
 	assert.NotEmpty(t, file.Sha)
+}
+
+func TestStat(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := NewGitDataClient(conn)
+
+	cases := []struct {
+		Path string
+		Name string
+		Mode filemode.FileMode
+	}{
+		{
+			Path: "",
+			Name: "",
+			Mode: filemode.Dir,
+		},
+		{
+			Path: "/",
+			Name: "",
+			Mode: filemode.Dir,
+		},
+		{
+			Path: "README.md",
+			Name: "README.md",
+			Mode: filemode.Regular,
+		},
+		{
+			Path: "/README.md",
+			Name: "README.md",
+			Mode: filemode.Regular,
+		},
+		{
+			Path: "docs",
+			Name: "docs",
+			Mode: filemode.Dir,
+		},
+		{
+			Path: "docs/",
+			Name: "docs",
+			Mode: filemode.Dir,
+		},
+		{
+			Path: "docs/README.md",
+			Name: "docs/README.md",
+			Mode: filemode.Regular,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Path, func(t *testing.T) {
+			stat, err := gitData.Stat(context.Background(), &RequestStat{
+				Repo: "test1",
+				Ref:  plumbing.NewBranchReferenceName("master").String(),
+				Path: tc.Path,
+			})
+			require.NoError(t, err)
+			assert.Equal(t, tc.Name, stat.Name)
+			assert.Equal(t, uint32(tc.Mode), stat.Mode)
+			assert.NotEmpty(t, stat.Hash)
+		})
+	}
 }
 
 func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Repository) *grpc.ClientConn {

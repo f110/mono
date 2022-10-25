@@ -92,10 +92,26 @@ func makeSourceRepository(t *testing.T) *git.Repository {
 	require.NoError(t, err)
 	wt, err := repo.Worktree()
 	require.NoError(t, err)
+
 	err = os.WriteFile(filepath.Join(repoDir, "README.md"), []byte("Hello"), 0644)
 	require.NoError(t, err)
 	_, err = wt.Add("README.md")
 	require.NoError(t, err)
+
+	err = os.Mkdir(filepath.Join(repoDir, "docs"), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(repoDir, "docs/README.md"), []byte("docs"), 0644)
+	require.NoError(t, err)
+	_, err = wt.Add("docs/README.md")
+	require.NoError(t, err)
+
+	err = os.Mkdir(filepath.Join(repoDir, "docs/design"), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(repoDir, "docs/design/README.md"), []byte("design"), 0644)
+	require.NoError(t, err)
+	_, err = wt.Add("docs/design/README.md")
+	require.NoError(t, err)
+
 	_, err = wt.Commit("Init", &git.CommitOptions{
 		Author:    &object.Signature{Name: t.Name(), When: time.Now(), Email: "test@localhost"},
 		Committer: &object.Signature{Name: t.Name(), When: time.Now(), Email: "test@localhost"},
