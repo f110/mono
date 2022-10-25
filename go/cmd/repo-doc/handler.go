@@ -366,19 +366,22 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			foundIndexFile = path.Join(dirPath, foundIndexFile)
 		}
 
-		indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repoName, Ref: ref, Path: foundIndexFile})
-		if err != nil {
-			logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", foundIndexFile))
-			http.Error(w, "Failed to get index file", http.StatusInternalServerError)
-			return
+		if foundIndexFile != "" {
+			indexFile, err := h.gitData.GetFile(ctx, &git.RequestGetFile{Repo: repoName, Ref: ref, Path: foundIndexFile})
+			if err != nil {
+				logger.Log.Error("Failed to get index file", zap.Error(err), zap.String("path", foundIndexFile))
+				http.Error(w, "Failed to get index file", http.StatusInternalServerError)
+				return
+			}
+			d, err := h.makeDocument(indexFile, path.Join(dirPath, foundIndexFile))
+			if err != nil {
+				logger.Log.Error("Failed to convert to document", logger.Error(err))
+				http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
+				return
+			}
+
+			content = d.Content
 		}
-		d, err := h.makeDocument(indexFile, path.Join(dirPath, foundIndexFile))
-		if err != nil {
-			logger.Log.Error("Failed to convert to document", logger.Error(err))
-			http.Error(w, "Failed to convert to markdown", http.StatusInternalServerError)
-			return
-		}
-		content = d.Content
 	}
 
 	h.renderer.RenderDirectoryIndex(w, repo, rawRef, dirPath, commit, entry, content)
