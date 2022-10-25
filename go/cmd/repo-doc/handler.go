@@ -342,7 +342,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			return tree.Tree[i].Path < tree.Tree[j].Path
 		})
 
-		for i, v := range tree.Tree {
+		for _, v := range tree.Tree {
 			rootDir := dirPath
 			if rootDir == "/" {
 				rootDir = ""
@@ -355,11 +355,11 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			if v.Mode == filemode.Dir.String() {
 				p += "/"
 			}
-			entry[i] = &directoryEntry{
+			entry = append(entry, &directoryEntry{
 				Name:  v.Path,
 				Path:  p,
 				IsDir: v.Mode == filemode.Dir.String(),
-			}
+			})
 		}
 
 		if foundIndexFile != "" && dirPath != "/" {
