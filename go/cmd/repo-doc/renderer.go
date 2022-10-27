@@ -222,9 +222,7 @@ func toTemplateToC(maxDepth int, in *tableOfContent) []*templateToC {
 	var res []*templateToC
 
 	if in.Title != "" {
-		anchor := strings.ToLower(in.Title)
-		anchor = strings.Replace(anchor, " ", "-", -1)
-		res = append(res, &templateToC{Title: in.Title, Anchor: anchor})
+		res = append(res, &templateToC{Title: in.Title, Anchor: in.Anchor})
 	}
 
 	if len(in.Child) > 0 && in.Level+1 <= maxDepth {

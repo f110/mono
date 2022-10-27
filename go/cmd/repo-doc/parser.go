@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"container/list"
+	"fmt"
 
 	"github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
@@ -26,6 +28,7 @@ type document struct {
 
 type tableOfContent struct {
 	Title  string
+	Anchor string
 	Level  int
 	Child  []*tableOfContent
 	Parent *tableOfContent
@@ -44,13 +47,12 @@ func newMarkdownParser() *markdownParser {
 			highlighting.NewHighlighting(highlighting.WithStyle("monokai")),
 			&mermaid.Extender{},
 		),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
+		goldmark.WithParserOptions(),
 		goldmark.WithRenderer(
 			renderer.NewRenderer(renderer.WithNodeRenderers(util.Prioritized(htmlRender, 1000))),
 		),
 	)
+	md.Parser().AddOptions(parser.WithASTTransformers(util.Prioritized(newMarkdownAutoHeadingIDTransformer(), 1)))
 	md.Renderer().AddOptions(renderer.WithNodeRenderers(util.Prioritized(newMarkdownExtendedRenderer(htmlRender), 1)))
 	return &markdownParser{rp: md}
 }
@@ -114,8 +116,12 @@ func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, 
 			return ast.WalkContinue, nil
 		}
 
+		var anchor string
+		if v, ok := n.Attribute([]byte("id")); ok {
+			anchor = string(v.([]uint8))
+		}
 		if currentLevel < heading.Level {
-			n := &tableOfContent{Title: string(n.Text(in)), Parent: prevToC, Level: heading.Level - 1}
+			n := &tableOfContent{Title: string(n.Text(in)), Anchor: anchor, Parent: prevToC, Level: heading.Level - 1}
 			prevToC.Child = append(prevToC.Child, n)
 			prevToC = n
 			currentLevel = heading.Level
@@ -128,12 +134,12 @@ func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, 
 				parent = parent.Parent
 			}
 
-			n := &tableOfContent{Title: string(n.Text(in)), Parent: parent, Level: heading.Level - 1}
+			n := &tableOfContent{Title: string(n.Text(in)), Anchor: anchor, Parent: parent, Level: heading.Level - 1}
 			parent.Child = append(parent.Child, n)
 			prevToC = n
 			currentLevel = heading.Level
 		} else {
-			n := &tableOfContent{Title: string(n.Text(in)), Parent: prevToC.Parent, Level: heading.Level - 1}
+			n := &tableOfContent{Title: string(n.Text(in)), Anchor: anchor, Parent: prevToC.Parent, Level: heading.Level - 1}
 			prevToC.Parent.Child = append(prevToC.Parent.Child, n)
 			prevToC = n
 		}
@@ -144,6 +150,47 @@ func (m *markdownParser) makeTableOfContent(node ast.Node, toc *tableOfContent, 
 	}
 
 	return nil
+}
+
+type markdownAutoHeadingIDTransformer struct{}
+
+var _ parser.ASTTransformer = &markdownAutoHeadingIDTransformer{}
+
+func newMarkdownAutoHeadingIDTransformer() *markdownAutoHeadingIDTransformer {
+	return &markdownAutoHeadingIDTransformer{}
+}
+
+func (m *markdownAutoHeadingIDTransformer) Transform(node *ast.Document, reader text.Reader, pc parser.Context) {
+	q := list.New()
+	marked := make(map[ast.Node]struct{})
+	marked[node] = struct{}{}
+	q.PushBack(ast.Node(node))
+	for q.Len() > 0 {
+		e := q.Front()
+		q.Remove(e)
+		n := e.Value.(ast.Node)
+
+		if n.Kind() == ast.KindHeading {
+			heading := n.(*ast.Heading)
+			if heading.Level > 1 {
+				_, ok := n.AttributeString("id")
+				if !ok {
+					t := n.Text(reader.Source())
+					t = bytes.Replace(t, []byte(" "), []byte("-"), -1)
+					n.SetAttribute([]byte("id"), []byte(fmt.Sprintf("user-content-%s", t)))
+				}
+			}
+		}
+
+		next := n.FirstChild()
+		for next != nil {
+			if _, ok := marked[next]; !ok {
+				marked[next] = struct{}{}
+				q.PushBack(next)
+			}
+			next = next.NextSibling()
+		}
+	}
 }
 
 type markdownExtendedRenderer struct {
