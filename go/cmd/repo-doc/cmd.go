@@ -106,8 +106,10 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 }
 
 func (c *repoDocCommand) shuttingDown() (fsm.State, error) {
-	if err := c.s.Shutdown(c.FSM.Context()); err != nil {
-		return fsm.Error(err)
+	if c.s != nil {
+		if err := c.s.Shutdown(c.FSM.Context()); err != nil {
+			return fsm.Error(err)
+		}
 	}
 	return fsm.Finish()
 }
