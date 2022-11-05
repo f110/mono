@@ -570,10 +570,10 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 				linkType := LinkType_LINK_TYPE_EXTERNAL
 				repoName := ""
 
-				for _, repo := range d.repositories {
-					if strings.HasPrefix(destination, repo.Url) {
+				for _, v := range d.repositories {
+					if v != repo && strings.HasPrefix(destination, v.Url) {
 						linkType = LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY
-						repoName = repo.Name
+						repoName = v.Name
 						break
 					}
 				}
@@ -591,10 +591,10 @@ func (d *DocSearchService) makePageFromMarkdownAST(rootNode ast.Node, repo *git.
 			destination := string(v.URL(raw))
 			linkType := LinkType_LINK_TYPE_EXTERNAL
 			repoName := ""
-			for _, repo := range d.repositories {
-				if strings.HasPrefix(destination, repo.Url) {
+			for _, v := range d.repositories {
+				if v != repo && strings.HasPrefix(destination, v.Url) {
 					linkType = LinkType_LINK_TYPE_NEIGHBOR_REPOSITORY
-					repoName = repo.Name
+					repoName = v.Name
 					break
 				}
 			}
