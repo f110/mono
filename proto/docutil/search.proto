@@ -2,6 +2,10 @@ syntax = "proto3";
 package mono.docutil;
 option  go_package = "go.f110.dev/mono/go/pkg/docutil";
 
+enum FileType {
+  FILE_TYPE_MARKDOWN = 0;
+}
+
 service DocSearch {
   rpc AvailableFeatures(RequestAvailableFeatures) returns (ResponseAvailableFeatures);
   rpc ListRepository(RequestListRepository) returns (ResponseListRepository);
@@ -14,9 +18,9 @@ service DocSearch {
 message RequestAvailableFeatures {}
 
 message ResponseAvailableFeatures {
-  bool            page_link                = 1;
-  bool            full_text_search         = 2;
-  repeated string supported_file_extension = 3;
+  bool              page_link           = 1;
+  bool              full_text_search    = 2;
+  repeated FileType supported_file_type = 3;
 }
 
 message RequestListRepository {}

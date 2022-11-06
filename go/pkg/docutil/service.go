@@ -63,7 +63,7 @@ type page struct {
 	EditURL string
 }
 
-var docSearchServiceSupportFileExtensions = []string{"md"}
+var docSearchServiceSupportFileTypes = []FileType{FileType_FILE_TYPE_MARKDOWN}
 
 type DocSearchService struct {
 	client         git.GitDataClient
@@ -103,8 +103,8 @@ var _ DocSearchServer = &DocSearchService{}
 
 func (d *DocSearchService) AvailableFeatures(_ context.Context, _ *RequestAvailableFeatures) (*ResponseAvailableFeatures, error) {
 	return &ResponseAvailableFeatures{
-		PageLink:               true,
-		SupportedFileExtension: docSearchServiceSupportFileExtensions,
+		PageLink:          true,
+		SupportedFileType: docSearchServiceSupportFileTypes,
 	}, nil
 }
 

@@ -18,25 +18,21 @@ func TestParsePath(t *testing.T) {
 	cases := []struct {
 		URL      string
 		Repo     string
-		Ref      string
 		FilePath string
 	}{
 		{
-			URL:      "http://example.com/test1/master/-/docs/README.md",
+			URL:      "http://example.com/test1/_/docs/README.md",
 			Repo:     "test1",
-			Ref:      "master",
 			FilePath: "docs/README.md",
 		},
 		{
-			URL:      "http://example.com/test1/feature/update-doc/-/docs/README.md",
+			URL:      "http://example.com/test1/_/docs/README.md",
 			Repo:     "test1",
-			Ref:      "feature/update-doc",
 			FilePath: "docs/README.md",
 		},
 		{
-			URL:      "http://example.com/test1/8e6e2933140691846d824231bde4af011200cf5a/-/docs/README.md",
+			URL:      "http://example.com/test1/_/docs/README.md",
 			Repo:     "test1",
-			Ref:      "8e6e2933140691846d824231bde4af011200cf5a",
 			FilePath: "docs/README.md",
 		},
 	}
@@ -46,9 +42,8 @@ func TestParsePath(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.URL, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.URL, nil)
-			repo, ref, filepath := h.parsePath(req)
+			repo, filepath := h.parsePath(req)
 			assert.Equal(t, tc.Repo, repo)
-			assert.Equal(t, tc.Ref, ref)
 			assert.Equal(t, tc.FilePath, filepath)
 		})
 	}
@@ -61,7 +56,7 @@ func TestServeHTTP(t *testing.T) {
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/master/-/README.md", nil)
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/test/_/README.md", nil)
 	h.ServeHTTP(recorder, req)
 
 	assert.Contains(t, recorder.Body.String(), "<title>repo-doc - Document title</title>")
@@ -144,7 +139,7 @@ type stubDocSearchClient struct{}
 var _ docutil.DocSearchClient = &stubDocSearchClient{}
 
 func (s *stubDocSearchClient) AvailableFeatures(ctx context.Context, in *docutil.RequestAvailableFeatures, opts ...grpc.CallOption) (*docutil.ResponseAvailableFeatures, error) {
-	return &docutil.ResponseAvailableFeatures{PageLink: true}, nil
+	return &docutil.ResponseAvailableFeatures{PageLink: true, SupportedFileType: []docutil.FileType{docutil.FileType_FILE_TYPE_MARKDOWN}}, nil
 }
 
 func (s *stubDocSearchClient) ListRepository(ctx context.Context, in *docutil.RequestListRepository, opts ...grpc.CallOption) (*docutil.ResponseListRepository, error) {
@@ -158,8 +153,9 @@ func (s *stubDocSearchClient) GetRepository(ctx context.Context, in *docutil.Req
 }
 
 func (s *stubDocSearchClient) GetPage(ctx context.Context, in *docutil.RequestGetPage, opts ...grpc.CallOption) (*docutil.ResponseGetPage, error) {
-	//TODO implement me
-	panic("implement me")
+	return &docutil.ResponseGetPage{
+		Doc: "# Document title\nHello World!\n",
+	}, nil
 }
 
 func (s *stubDocSearchClient) PageLink(ctx context.Context, in *docutil.RequestPageLink, opts ...grpc.CallOption) (*docutil.ResponsePageLink, error) {
