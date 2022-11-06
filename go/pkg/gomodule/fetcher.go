@@ -94,7 +94,7 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 		repoRoot = r
 		if f.cache != nil {
 			if err := f.cache.SetRepoRoot(importPath, r.Root, r.Repo); err != nil {
-				return nil, xerrors.WithStack(err)
+				return nil, err
 			}
 		}
 	}

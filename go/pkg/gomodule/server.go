@@ -63,6 +63,10 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxySe
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/invalidate").HandlerFunc(s.handle(s.invalidate))
 	s.r.Methods(http.MethodPost).Path("/flush_all").HandlerFunc(s.flushAll) // This endpoint is hidden.
 
+	// Probes
+	s.r.Methods(http.MethodGet).Path("/_/liveness").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {})
+	s.r.Methods(http.MethodGet).Path("/_/readiness").HandlerFunc(s.readiness)
+
 	s.r.Use(middlewareAccessLog)
 	s.r.Use(middlewareDebugInfo)
 
@@ -199,6 +203,13 @@ func (s *ProxyServer) latest(w http.ResponseWriter, req *http.Request, module, _
 	}
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		logger.Log.Info("Failed to encode to json", zap.Error(err))
+		return
+	}
+}
+
+func (s *ProxyServer) readiness(w http.ResponseWriter, req *http.Request) {
+	if !s.proxy.Ready() {
+		http.Error(w, "Proxy is not ready", http.StatusServiceUnavailable)
 		return
 	}
 }

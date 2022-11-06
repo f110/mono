@@ -330,6 +330,15 @@ func (c *ModuleCache) SaveArchive(ctx context.Context, module, version string, d
 	return nil
 }
 
+func (c *ModuleCache) Ping() error {
+	_, err := c.cachePool.Version()
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	return nil
+}
+
 func (c *ModuleCache) getCachedModuleRoot() (*client.Item, error) {
 	item, err := c.cachePool.Get("cachedModuleRoot")
 	if err != nil {

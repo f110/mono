@@ -204,7 +204,7 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) 
 func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, version string) error {
 	moduleRoot, err := m.fetcher.Get(ctx, moduleName, m.GetConfig(moduleName))
 	if err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 
 	err = moduleRoot.Archive(ctx, w, moduleName, version)
@@ -214,11 +214,11 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, versi
 	if moduleRoot.IsGitHub {
 		if module.IsPseudoVersion(version) {
 			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version); err != nil {
-				return xerrors.WithStack(err)
+				return err
 			}
 		} else {
 			if err := m.ghProxy.Archive(ctx, w, moduleRoot, moduleName, version); err != nil {
-				return xerrors.WithStack(err)
+				return err
 			}
 		}
 		return nil
@@ -250,6 +250,15 @@ func (m *ModuleProxy) FlushAllCache() error {
 	}
 
 	return nil
+}
+
+func (m *ModuleProxy) Ready() bool {
+	if err := m.cache.Ping(); err != nil {
+		logger.Log.Warn("ModuleCache is not ready", logger.Error(err))
+		return false
+	}
+
+	return true
 }
 
 type httpTransport struct {
