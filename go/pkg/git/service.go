@@ -144,11 +144,20 @@ func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*Resp
 	if !ok {
 		return nil, errors.New("repository not found")
 	}
-	if req.Sha == "" {
-		return nil, errors.New("SHA field is required")
+	if req.Sha == "" && req.Ref == "" {
+		return nil, errors.New("SHA or ref field is required")
 	}
 
-	h := plumbing.NewHash(req.Sha)
+	var h plumbing.Hash
+	if req.Ref != "" {
+		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
+		if err != nil {
+			return nil, err
+		}
+		h = ref.Hash()
+	} else {
+		h = plumbing.NewHash(req.Sha)
+	}
 	commit, err := repo.CommitObject(h)
 	if err != nil {
 		return nil, err
@@ -377,7 +386,7 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 	return nil, xerrors.Newf("unsupported object: %s", treeEntry.Mode.String())
 }
 
-func (g *DataService) Stat(ctx context.Context, req *RequestStat) (*ResponseStat, error) {
+func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
 		return nil, errors.New("repository not found")
