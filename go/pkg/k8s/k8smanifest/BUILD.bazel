@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "k8sencoder",
+    name = "k8smanifest",
     srcs = ["encoder.go"],
     importpath = "go.f110.dev/mono/go/pkg/k8s/k8smanifest",
     visibility = ["//visibility:public"],
