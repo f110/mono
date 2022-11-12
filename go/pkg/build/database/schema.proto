@@ -45,8 +45,9 @@ message Task {
   string                     via               = 13;
   string                     config_name       = 14;
   string                     node              = 15;
-  .google.protobuf.Timestamp start_at          = 16 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at       = 17 [(dev.f110.ddl.column) = { null: true }];
+  string                     manifest          = 16 [(dev.f110.ddl.column) = { type: "text" }];
+  .google.protobuf.Timestamp start_at          = 17 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at       = 18 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"

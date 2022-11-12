@@ -32,6 +32,7 @@ CREATE TABLE `task` (
 	`via` VARCHAR(255) NOT NULL,
 	`config_name` VARCHAR(255) NOT NULL,
 	`node` VARCHAR(255) NOT NULL,
+	`manifest` TEXT NOT NULL,
 	`start_at` DATETIME NULL,
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,

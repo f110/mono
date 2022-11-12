@@ -41,6 +41,7 @@ func NewDashboard(addr string, daoOpt dao.Options, apiHost string, bucket string
 	mux.HandleFunc("/liveness", d.handleLiveness)
 	mux.HandleFunc("/readiness", d.handleReadiness)
 	mux.HandleFunc("/logs/", d.handleLogs)
+	mux.HandleFunc("/manifest/", d.handleManifest)
 	mux.HandleFunc("/new_repo", d.handleNewRepository)
 	mux.HandleFunc("/delete_repo", d.handleDeleteRepository)
 	mux.HandleFunc("/add_trusted_user", d.handleAddTrustedUser)
@@ -146,6 +147,31 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, req *http.Request) {
 	}
 	defer r.Close()
 	io.Copy(w, r)
+}
+
+func (d *Dashboard) handleManifest(w http.ResponseWriter, req *http.Request) {
+	s := strings.Split(req.URL.Path, "/")
+	if len(s) < 2 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(s[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	task, err := d.dao.Task.Select(req.Context(), int32(id))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if task.Manifest == "" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	io.WriteString(w, task.Manifest)
 }
 
 func (d *Dashboard) handleNewRepository(w http.ResponseWriter, req *http.Request) {

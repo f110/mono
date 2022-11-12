@@ -167,7 +167,7 @@ const indexTemplate = `<html>
           <td>{{ .Via }}</td>
           <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
           <td>{{ Duration .StartAt .FinishedAt }}</td>
-          <td>{{ .Node }}</td>
+          <td><a href="/manifest/{{ .Id }}>"{{ .Node }}</a></td>
           <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
         {{- end }}

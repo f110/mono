@@ -32,6 +32,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/watcher"
+	"go.f110.dev/mono/go/pkg/k8s/k8smanifest"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -455,6 +456,12 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	}
 	now := time.Now()
 	task.StartAt = &now
+
+	var buf bytes.Buffer
+	if err := k8smanifest.NewEncoder(&buf).Encode(buildTemplate); err != nil {
+		return err
+	}
+	task.Manifest = buf.String()
 
 	return nil
 }

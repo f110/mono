@@ -10,6 +10,7 @@ go_library(
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
         "//go/pkg/build/watcher",
+        "//go/pkg/k8s/k8smanifest",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/google/go-github/v32/github",
