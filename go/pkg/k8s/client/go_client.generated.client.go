@@ -28,7 +28,16 @@ var (
 	Scheme         = runtime.NewScheme()
 	ParameterCodec = runtime.NewParameterCodec(Scheme)
 	Codecs         = serializer.NewCodecFactory(Scheme)
+	AddToScheme    = localSchemeBuilder.AddToScheme
 )
+
+var localSchemeBuilder = runtime.SchemeBuilder{
+	consulv1alpha1.AddToScheme,
+	grafanav1alpha1.AddToScheme,
+	harborv1alpha1.AddToScheme,
+	miniov1alpha1.AddToScheme,
+	v1beta1.AddToScheme,
+}
 
 func init() {
 	for _, v := range []func(*runtime.Scheme) error{

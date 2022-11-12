@@ -9,7 +9,7 @@ http_archive(
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip",
         "https://github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip",
-        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip"
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_go/releases/download/v0.34.0/rules_go-v0.34.0.zip",
     ],
 )
 
@@ -88,7 +88,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_kubeproto",
-    commit = "678759d03164b9bf15d1765b588a00a3ea26cecb",
+    commit = "90d00e364ad040d388c54b32c9ac3d85604bc6ec",
     remote = "https://github.com/f110/kubeproto",
 )
 
