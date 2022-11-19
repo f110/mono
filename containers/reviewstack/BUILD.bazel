@@ -1,0 +1,33 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+
+pkg_tar(
+    name = "bin",
+    files = {
+        "//go/cmd/static-web": "/usr/local/bin/static-web",
+    },
+    mode = "0755",
+)
+
+container_image(
+    name = "image",
+    base = "@com_google_distroless_base//image",
+    entrypoint = [
+        "/usr/local/bin/static-web",
+        "--document-root",
+        "/reviewstack",
+    ],
+    tars = [
+        ":bin",
+        "//third_party/reviewstack",
+    ],
+)
+
+container_push(
+    name = "push",
+    format = "Docker",
+    image = ":image",
+    registry = "registry.f110.dev",
+    repository = "tools/reviewstack",
+    tag = "latest",
+)
