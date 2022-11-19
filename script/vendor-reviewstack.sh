@@ -28,4 +28,6 @@ yarn codegen
 cd "${WORK_DIR}/addons/reviewstack.dev"
 yarn build
 cp -r "${WORK_DIR}/addons/reviewstack.dev/build" "${TARGET_DIR}"
-cp "${BUILD_WORKSPACE_DIRECTORY}/script/BUILD.reviewstack.bazel "${TARGET_DIR}/BUILD.bazel"
+cp "${BUILD_WORKSPACE_DIRECTORY}/script/BUILD.reviewstack.bazel" "${TARGET_DIR}/BUILD.bazel"
+cp "${BUILD_WORKSPACE_DIRECTORY}/script/BUILD.reviewstack.generated.bazel" "${TARGET_DIR}/generated/BUILD.bazel"
+cp "${BUILD_WORKSPACE_DIRECTORY}/script/BUILD.reviewstack.static.bazel" "${TARGET_DIR}/static/BUILD.bazel"

@@ -1,0 +1,22 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "css",
+    srcs = glob(["css/*"]),
+    package_dir = "/reviewstack/static/css",
+)
+
+pkg_tar(
+    name = "js",
+    srcs = glob(["js/*"]),
+    package_dir = "/reviewstack/static/js",
+)
+
+pkg_tar(
+    name = "static",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":css",
+        ":js",
+    ],
+)
