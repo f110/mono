@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "static-web_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/static-web",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "static-web",
+    embed = [":static-web_lib"],
+    visibility = ["//visibility:public"],
+)
