@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/pkg/http/httpserver"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -23,7 +24,8 @@ func staticWeb() error {
 			return logger.Init()
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			http.Handle("/", http.FileServer(http.Dir(documentRoot)))
+			http.Handle("/favicon.ico", http.NotFoundHandler())
+			http.Handle("/", http.FileServer(httpserver.SinglePageApplicationFileSystem(documentRoot)))
 
 			s := &http.Server{
 				Addr:    listenAddr,
