@@ -16,6 +16,8 @@ container_image(
         "/usr/local/bin/static-web",
         "--document-root",
         "/reviewstack",
+        "--mode",
+        "spa",
     ],
     tars = [
         ":bin",
