@@ -15,8 +15,15 @@ import (
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
+type Mode string
+
+const (
+	ModeSPA    Mode = "spa"
+	ModeSimple Mode = "simple"
+)
+
 func staticWeb() error {
-	var documentRoot, listenAddr string
+	var documentRoot, listenAddr, mode string
 	cmd := &cobra.Command{
 		Use:   "static-web",
 		Short: "Serve static files",
@@ -25,7 +32,12 @@ func staticWeb() error {
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			http.Handle("/favicon.ico", http.NotFoundHandler())
-			http.Handle("/", http.FileServer(httpserver.SinglePageApplicationFileSystem(documentRoot)))
+			switch Mode(mode) {
+			case ModeSPA:
+				http.Handle("/", http.FileServer(httpserver.SinglePageApplicationFileSystem(documentRoot)))
+			case ModeSimple, "":
+				http.Handle("/", http.FileServer(http.Dir(documentRoot)))
+			}
 
 			s := &http.Server{
 				Addr:    listenAddr,
@@ -49,6 +61,7 @@ func staticWeb() error {
 	logger.Flags(cmd.Flags())
 	cmd.Flags().StringVar(&documentRoot, "document-root", "", "The document root")
 	cmd.Flags().StringVar(&listenAddr, "listen-addr", ":8050", "Listen address")
+	cmd.Flags().StringVar(&mode, "mode", string(ModeSimple), "")
 
 	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelFunc()
