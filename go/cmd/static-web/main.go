@@ -34,7 +34,7 @@ func staticWeb() error {
 			http.Handle("/favicon.ico", http.NotFoundHandler())
 			switch Mode(mode) {
 			case ModeSPA:
-				http.Handle("/", http.FileServer(httpserver.SinglePageApplicationFileSystem(documentRoot)))
+				http.Handle("/", httpserver.SinglePageApplication(documentRoot))
 			case ModeSimple, "":
 				http.Handle("/", http.FileServer(http.Dir(documentRoot)))
 			}
@@ -49,7 +49,7 @@ func staticWeb() error {
 				logger.Log.Info("Shutdown")
 				s.Shutdown(context.Background())
 			}()
-			logger.Log.Info("Start server", zap.String("addr", listenAddr), zap.String("root", documentRoot))
+			logger.Log.Info("Start server", zap.String("addr", listenAddr), zap.String("root", documentRoot), zap.String("mode", mode))
 			if err := s.ListenAndServe(); err == http.ErrServerClosed {
 				return nil
 			} else if err != nil {
