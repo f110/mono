@@ -128,7 +128,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository`"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -165,7 +165,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -371,7 +371,7 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -418,7 +418,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -466,7 +466,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -671,7 +671,7 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `github_id`, `username`, `created_at`, `updated_at` FROM `trusted_user`"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -708,7 +708,7 @@ func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ..
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `github_id`, `username`, `created_at`, `updated_at` FROM `trusted_user` WHERE `github_id` = ?"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
@@ -903,7 +903,7 @@ func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repos
 	listOpts := newListOpt(opt...)
 	query := "SELECT `id`, `repository`, `number`, `created_at`, `updated_at` FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
 	orderCol := "`" + listOpts.sort + "`"
-	if orderCol == "" {
+	if listOpts.sort == "" {
 		orderCol = "`id`"
 	}
 	orderDi := "ASC"
