@@ -30,7 +30,7 @@ func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string
 		if err != nil {
 			return err
 		}
-		token, err := app.Token()
+		token, err := app.JWT()
 		if err != nil {
 			return err
 		}
@@ -65,7 +65,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 	s := strings.SplitN(parsed.Path, "/", 3)
 
 	ghClient := github.NewClient(&http.Client{Transport: rt})
-	archiveLink, _, _ := ghClient.Repositories.GetArchiveLink(
+	archiveLink, _, err := ghClient.Repositories.GetArchiveLink(
 		context.Background(),
 		s[1], // owner
 		s[2], // repo
@@ -73,6 +73,9 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 		&github.RepositoryContentGetOptions{Ref: commit},
 		true,
 	)
+	if err != nil {
+		return err
+	}
 
 	req, err := http.NewRequest(http.MethodGet, archiveLink.String(), nil)
 	if err != nil {

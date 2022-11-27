@@ -350,7 +350,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *githubutil.TokenProvider, initRun bool) error {
 	var auth transport.AuthMethod
 	if tokenProvider != nil {
-		token, err := tokenProvider.Token()
+		token, err := tokenProvider.Token(ctx)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}

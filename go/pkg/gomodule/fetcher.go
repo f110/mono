@@ -640,7 +640,7 @@ func (vcs *VCS) Create(ctx context.Context, dir string) error {
 	repo, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 		URL:        vcs.CloneURL,
 		NoCheckout: true,
-		Auth:       vcs.getAuthMethod(),
+		Auth:       vcs.getAuthMethod(ctx),
 		CABundle:   vcs.caBundle,
 	})
 	if err != nil {
@@ -657,7 +657,7 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	}
 	err := vcs.gitRepo.FetchContext(ctx, &git.FetchOptions{
 		RemoteName: "origin",
-		Auth:       vcs.getAuthMethod(),
+		Auth:       vcs.getAuthMethod(ctx),
 		CABundle:   vcs.caBundle},
 	)
 	if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -667,12 +667,12 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 	return nil
 }
 
-func (vcs *VCS) getAuthMethod() *gogitHttp.BasicAuth {
+func (vcs *VCS) getAuthMethod(ctx context.Context) *gogitHttp.BasicAuth {
 	if vcs.tokenProvider == nil {
 		return nil
 	}
 
-	token, err := vcs.tokenProvider.Token()
+	token, err := vcs.tokenProvider.Token(ctx)
 	if err != nil {
 		return nil
 	}

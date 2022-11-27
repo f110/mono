@@ -161,7 +161,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
 			var auth *http.BasicAuth
-			if v, err := c.GitHubClient.TokenProvider.Token(); err == nil {
+			if v, err := c.GitHubClient.TokenProvider.Token(c.Context()); err == nil {
 				auth = &http.BasicAuth{
 					Username: "octocat",
 					Password: v,

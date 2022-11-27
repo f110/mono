@@ -233,7 +233,7 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 
 	var auth *gitHttp.BasicAuth
 	if u.tokenProvider != nil {
-		if v, err := u.tokenProvider.Token(); err == nil {
+		if v, err := u.tokenProvider.Token(ctx); err == nil {
 			auth = &gitHttp.BasicAuth{
 				Username: "octocat",
 				Password: v,
