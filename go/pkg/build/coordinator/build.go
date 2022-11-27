@@ -712,10 +712,11 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 					RestartPolicy: corev1.RestartPolicyNever,
 					InitContainers: []corev1.Container{
 						{
-							Name:         "pre-process",
-							Image:        b.sidecarImage,
-							Args:         preProcessArgs,
-							VolumeMounts: sidecarVolumeMounts,
+							Name:            "pre-process",
+							Image:           b.sidecarImage,
+							ImagePullPolicy: corev1.PullAlways,
+							Args:            preProcessArgs,
+							VolumeMounts:    sidecarVolumeMounts,
 						},
 					},
 					Containers: []corev1.Container{
