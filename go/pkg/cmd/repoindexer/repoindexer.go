@@ -303,6 +303,13 @@ func (r *IndexerCommand) webEndpoint(addr string) error {
 			}
 		}()
 	})
+	mux.HandleFunc("/gc", func(w http.ResponseWriter, req *http.Request) {
+		go func() {
+			if err := r.gc(); err != nil {
+				logger.Log.Info("Failed to garbage collection", logger.Error(err), logger.StackTrace(err))
+			}
+		}()
+	})
 	mux.HandleFunc("/readiness", func(w http.ResponseWriter, req *http.Request) {
 		r.readyMu.Lock()
 		ready := r.ready
@@ -336,11 +343,11 @@ func (r *IndexerCommand) gc() error {
 
 	s, err := r.newStorageClient()
 	if err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	gc := NewIndexGC(s, r.Bucket)
 	if err := gc.GC(context.Background()); err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	return nil
 }
