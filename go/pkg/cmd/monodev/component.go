@@ -32,14 +32,14 @@ import (
 	"go.f110.dev/mono/go/pkg/storage"
 )
 
-var memcached = &commandComponent{
+var memcached = &simpleCommandComponent{
 	Name:          "memcached",
 	Args:          []string{"-p", "11212"},
 	VerboseOutput: true,
 	Ports:         ports{{Name: "memcached", Number: 11212}},
 }
 
-var minio = &commandComponent{
+var minio = &simpleCommandComponent{
 	Name: "minio",
 	Args: []string{"server",
 		"--address", "127.0.0.1:9000",
@@ -157,7 +157,9 @@ var kepData = &bucketData{
 	Data:     kepRepository,
 }
 
-type commandComponent struct {
+var mysql = &mysqlComponent{}
+
+type simpleCommandComponent struct {
 	Name             string
 	Type             componentType
 	Args             []string
@@ -167,7 +169,7 @@ type commandComponent struct {
 	WithoutLogPrefix bool
 }
 
-var _ component = &commandComponent{}
+var _ component = &simpleCommandComponent{}
 
 type port struct {
 	Name   string
@@ -186,19 +188,19 @@ func (p ports) GetNumber(name string) int {
 	return -1
 }
 
-func (c *commandComponent) GetName() string {
+func (c *simpleCommandComponent) GetName() string {
 	return c.Name
 }
 
-func (c *commandComponent) GetType() componentType {
+func (c *simpleCommandComponent) GetType() componentType {
 	return c.Type
 }
 
-func (c *commandComponent) GetDeps() []component {
+func (c *simpleCommandComponent) GetDeps() []component {
 	return nil
 }
 
-func (c *commandComponent) Run(ctx context.Context) {
+func (c *simpleCommandComponent) Run(ctx context.Context) {
 	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
 	if c.VerboseOutput {
 		var out, err io.Writer
@@ -228,7 +230,7 @@ func (c *commandComponent) Run(ctx context.Context) {
 	logger.Log.Info("Shutdown " + c.Name)
 }
 
-func (c *commandComponent) Ready() bool {
+func (c *simpleCommandComponent) Ready() bool {
 	for _, v := range c.Ports {
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf(":%d", v.Number), 100*time.Millisecond)
 		if err != nil {
@@ -271,7 +273,7 @@ func (c *grpcServerComponent) Run(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
 
-		logger.Log.Debug("Graceful stop gRPC server")
+		logger.Log.Debug(fmt.Sprintf("Graceful stop %s server", c.Name))
 		s.GracefulStop()
 	}()
 
@@ -366,7 +368,7 @@ func (c *minioBucket) Run(ctx context.Context) {
 		return
 	}
 
-	port := c.Instance.(*commandComponent).Ports.GetNumber("minio")
+	port := c.Instance.(*simpleCommandComponent).Ports.GetNumber("minio")
 	opt := storage.NewS3OptionToExternal(
 		fmt.Sprintf("http://127.0.0.1:%d", port),
 		"US",
@@ -418,7 +420,7 @@ func (c *bucketData) Run(ctx context.Context) {
 		return
 	}
 
-	port := c.Instance.(*commandComponent).Ports.GetNumber("minio")
+	port := c.Instance.(*simpleCommandComponent).Ports.GetNumber("minio")
 	opt := storage.NewS3OptionToExternal(
 		fmt.Sprintf("http://127.0.0.1:%d", port),
 		"US",
@@ -462,10 +464,24 @@ func (c *bucketData) Run(ctx context.Context) {
 	}
 }
 
-type mysqlComponent struct{}
+type mysqlComponent struct {
+	Port port
+
+	cmd *exec.Cmd
+}
+
+var _ component = &mysqlComponent{}
 
 func (c *mysqlComponent) GetName() string {
 	return "mysqld"
+}
+
+func (c *mysqlComponent) GetType() componentType {
+	return componentTypeService
+}
+
+func (c *mysqlComponent) GetDeps() []component {
+	return nil
 }
 
 func (c *mysqlComponent) Run(ctx context.Context) {
@@ -513,42 +529,64 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 		"--socket="+filepath.Join(baseDir, "mysqld.sock"),
 		"--secure-file-priv="+secureFileDir,
 		"--bind-address=127.0.0.1",
-		"--port=3306",
+		fmt.Sprintf("--port=%d", c.Port.Number),
 		"--skip-networking=0",
+		fmt.Sprintf("--lc-messages-dir=%s", filepath.Clean(filepath.Join(filepath.Dir(mysqldPath), "../share/mysql8"))),
 	)
 	mysql.Stdout = os.Stdout
 	mysql.Stderr = os.Stderr
-
-	defer func() {
-		logger.Log.Info("Shutdown MySQL")
-
-		hostname, err := os.Hostname()
-		if err != nil {
-			logger.Log.Error("Failed to get hostname", logger.Error(err))
-			return
-		}
-		pidFile := filepath.Join(dataDir, hostname+".pid")
-		pidBuf, err := os.ReadFile(pidFile)
-		if err != nil {
-			logger.Log.Error("Failed to read pid file", logger.Error(err))
-			return
-		}
-		pidBuf = bytes.TrimSpace(pidBuf)
-		pid, err := strconv.Atoi(string(pidBuf))
-		if err != nil {
-			return
-		}
-		logger.Log.Info("Kill MySQL by SIGTERM", zap.Int("pid", pid))
-		if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
-			logger.Log.Error("Failed to send signal", logger.Error(err))
-			return
-		}
+	go func() {
+		<-ctx.Done()
+		c.shutdown(dataDir)
 	}()
 
+	defer c.shutdown(dataDir)
+
 	logger.Log.Info("Start MySQL")
-	if err := mysql.Start(); err != nil {
+	c.cmd = mysql
+	if err := mysql.Run(); err != nil {
 		logger.Log.Info("Some error was occurred", logger.Error(err))
 		return
 	}
-	<-ctx.Done()
+}
+
+func (c *mysqlComponent) Ready() bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf(":%d", c.Port.Number), 100*time.Millisecond)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	logger.Log.Info("Started MySQL", zap.Int("pid", c.cmd.Process.Pid))
+
+	return true
+}
+
+func (c *mysqlComponent) shutdown(dataDir string) {
+	logger.Log.Info("Shutdown MySQL")
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		logger.Log.Error("Failed to get hostname", logger.Error(err))
+		return
+	}
+	pidFile := filepath.Join(dataDir, hostname+".pid")
+	if _, err := os.Stat(pidFile); os.IsNotExist(err) {
+		logger.Log.Info("Pid file is not found. Probably mysqld already exited.")
+		return
+	}
+	pidBuf, err := os.ReadFile(pidFile)
+	if err != nil {
+		logger.Log.Error("Failed to read pid file", logger.Error(err))
+		return
+	}
+	pidBuf = bytes.TrimSpace(pidBuf)
+	pid, err := strconv.Atoi(string(pidBuf))
+	if err != nil {
+		return
+	}
+	logger.Log.Info("Kill MySQL by SIGTERM", zap.Int("pid", pid))
+	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+		logger.Log.Error("Failed to send signal", logger.Error(err))
+		return
+	}
 }

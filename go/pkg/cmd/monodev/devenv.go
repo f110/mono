@@ -39,14 +39,34 @@ func repoDoc(cmd *cobra.Command) {
 	cmd.AddCommand(repoDocCmd)
 }
 
+func build(cmd *cobra.Command) {
+	buildCmd := &cobra.Command{
+		Use:   "build",
+		Short: "Start MySQL",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			m := newComponentManager()
+			m.AddComponent(mysql)
+
+			return m.Run(cmd.Context())
+		},
+	}
+
+	cmd.AddCommand(buildCmd)
+}
+
 func DevEnv() *cobra.Command {
 	devEnvCmd := &cobra.Command{
 		Use:   "dev-env",
 		Short: "Start some middlewares for development",
 	}
 
-	goModuleProxy(devEnvCmd)
-	repoDoc(devEnvCmd)
+	for _, v := range []func(*cobra.Command){
+		goModuleProxy,
+		repoDoc,
+		build,
+	} {
+		v(devEnvCmd)
+	}
 
 	return devEnvCmd
 }
