@@ -3,6 +3,7 @@ package monodev
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	gitTransport "github.com/go-git/go-git/v5/plumbing/transport"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	_ "github.com/go-sql-driver/mysql"
 	"go.f110.dev/go-memcached/client"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -157,7 +159,14 @@ var kepData = &bucketData{
 	Data:     kepRepository,
 }
 
-var mysql = &mysqlComponent{}
+var mysql = &mysqlComponent{
+	Port: port{Name: "mysql", Number: 13306},
+}
+
+var buildDatabase = &mysqlDatabase{
+	Name:  "build",
+	MySQL: mysql,
+}
 
 type simpleCommandComponent struct {
 	Name             string
@@ -589,4 +598,43 @@ func (c *mysqlComponent) shutdown(dataDir string) {
 		logger.Log.Error("Failed to send signal", logger.Error(err))
 		return
 	}
+}
+
+type mysqlDatabase struct {
+	Name  string
+	MySQL component
+}
+
+var _ component = &mysqlComponent{}
+
+func (c *mysqlDatabase) GetName() string {
+	return c.Name
+}
+
+func (c *mysqlDatabase) GetType() componentType {
+	return componentTypeOneshot
+}
+
+func (c *mysqlDatabase) GetDeps() []component {
+	return []component{c.MySQL}
+}
+
+func (c *mysqlDatabase) Run(ctx context.Context) {
+	if c.MySQL.GetName() != "mysqld" {
+		logger.Log.Error("MySQL is not mysqld")
+		return
+	}
+
+	port := c.MySQL.(*mysqlComponent).Port.Number
+	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/", port))
+	if err != nil {
+		logger.Log.Error("Failed to connect to mysql", logger.Error(err))
+		return
+	}
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", c.Name))
+	if err != nil {
+		logger.Log.Error("Failed to create database", logger.Error(err))
+		return
+	}
+	logger.Log.Info("Created database", zap.String("name", c.Name))
 }

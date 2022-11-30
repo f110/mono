@@ -45,7 +45,7 @@ func build(cmd *cobra.Command) {
 		Short: "Start MySQL",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			m := newComponentManager()
-			m.AddComponent(mysql)
+			m.AddComponent(buildDatabase)
 
 			return m.Run(cmd.Context())
 		},

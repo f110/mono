@@ -24,6 +24,7 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
+        "//vendor/github.com/go-sql-driver/mysql",
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/go-memcached/client",
         "//vendor/go.f110.dev/xerrors",
