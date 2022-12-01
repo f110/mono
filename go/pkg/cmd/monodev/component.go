@@ -57,6 +57,13 @@ var minio = &simpleCommandComponent{
 	WithoutLogPrefix: true,
 }
 
+var etcd = &simpleCommandComponent{
+	Name:          "etcd",
+	Args:          []string{"--data-dir", filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), ".etcd_data")},
+	Ports:         ports{{Name: "", Number: 2379}},
+	VerboseOutput: true,
+}
+
 var gitDataService = &grpcServerComponent{
 	Name:   "git-data-service",
 	Listen: 9010,
@@ -210,7 +217,7 @@ func (c *simpleCommandComponent) GetDeps() []component {
 }
 
 func (c *simpleCommandComponent) Run(ctx context.Context) {
-	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
+	cmd := exec.CommandContext(context.Background(), c.Name, c.Args...)
 	if c.VerboseOutput {
 		var out, err io.Writer
 		if c.WithoutLogPrefix {
@@ -225,6 +232,13 @@ func (c *simpleCommandComponent) Run(ctx context.Context) {
 		cmd.Stderr = err
 	}
 	cmd.Env = append(os.Environ(), c.EnvVar...)
+
+	go func() {
+		<-ctx.Done()
+		if cmd.Process != nil && cmd.Process.Pid > 0 {
+			cmd.Process.Signal(syscall.SIGTERM)
+		}
+	}()
 
 	defer func() {
 		if cmd.Process != nil && !cmd.ProcessState.Exited() {

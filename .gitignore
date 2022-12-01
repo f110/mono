@@ -3,3 +3,4 @@
 /.minio_data
 /.example_git_data
 /.mysql
+/.etcd_data
