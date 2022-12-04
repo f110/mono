@@ -1,0 +1,5 @@
+filegroup(name = "bin", srcs = ["etcd"], visibility = ["//visibility:public"])
+
+filegroup(name = "bin_ctl", srcs = ["etcdctl"], visibility = ["//visibility:public"])
+
+filegroup(name = "bin_utl", srcs = ["etcdutl"], visibility = ["//visibility:public"])

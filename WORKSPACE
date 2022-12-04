@@ -213,6 +213,13 @@ kind_binary(
     version = "0.14.0",
 )
 
+load("//build/rules/etcd:def.bzl", "etcd_binary")
+
+etcd_binary(
+    name = "etcd",
+    version = "3.5.6",
+)
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 http_file(
