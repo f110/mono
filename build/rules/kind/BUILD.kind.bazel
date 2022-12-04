@@ -1,0 +1,3 @@
+filegroup(name = "file", srcs = ["kind"], visibility = ["//visibility:public"])
+
+sh_binary(name = "bin", srcs = [":file"], visibility = ["//visibility:public"])

@@ -1,41 +1,14 @@
 load("//build/rules/kustomize:assets.bzl", "KUSTOMIZE_ASSETS")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//build/private/util:semver.bzl", "semver")
+load("//build/private/assets:assets.bzl", "multi_platform_download_and_extract")
 
 Kustomization = provider()
 
 def _kustomize_binary_impl(ctx):
-    os = ""
-    if ctx.os.name == "linux":
-        os = "linux"
-    elif ctx.os.name == "mac os x":
-        os = "darwin"
-    else:
-        fail("%s is not supported" % ctx.os.name)
-    arch = ctx.execute(["uname", "-m"]).stdout.strip()
-
-    # On Linux, uname returns x86_64 as CPU architecture.
-    if arch == "x86_64":
-        arch = "amd64"
-
     if not ctx.attr.version in KUSTOMIZE_ASSETS:
         fail("%s is not supported version" % ctx.attr.version)
-
-    url, checksum = KUSTOMIZE_ASSETS[ctx.attr.version][os][arch]
-    ctx.download_and_extract(
-        url = url,
-        sha256 = checksum,
-        type = "tar.gz",
-    )
-
-    ctx.template(
-        "BUILD.bazel",
-        Label("//build/rules/kustomize:BUILD.kustomize.bazel"),
-        executable = False,
-        substitutions = {
-            "{version}": ctx.attr.version,
-        },
-    )
+    multi_platform_download_and_extract(ctx, KUSTOMIZE_ASSETS, Label("//build/rules/kustomize:BUILD.kustomize.bazel"))
 
 kustomize_binary = repository_rule(
     implementation = _kustomize_binary_impl,

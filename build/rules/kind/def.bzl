@@ -1,36 +1,10 @@
 load("//build/rules/kind:assets.bzl", "KIND_ASSETS")
-
-BUILD_FILE = """filegroup(name = "file", srcs = [\"{file}\"], visibility = [\"//visibility:public\"])
-sh_binary(name = "bin", srcs = [":file"], visibility = ["//visibility:public"])
-"""
+load("//build/private/assets:assets.bzl", "multi_platform_download")
 
 def _kind_binary_impl(ctx):
-    os = ""
-    if ctx.os.name == "linux":
-        os = "linux"
-    elif ctx.os.name == "mac os x":
-        os = "darwin"
-    else:
-        fail("%s is not supported" % ctx.os.name)
-
-    arch = ctx.execute(["uname", "-m"]).stdout.strip()
-    if arch == "x86_64":
-        arch = "amd64"
-
     if not ctx.attr.version in KIND_ASSETS:
         fail("%s is not supported version" % ctx.attr.version)
-
-    download_path = ctx.path("kind")
-    url, checksum = KIND_ASSETS[ctx.attr.version][os][arch]
-    ctx.download(
-        url = url,
-        output = download_path,
-        sha256 = checksum,
-        executable = True,
-    )
-
-    ctx.file("WORKSPACE", "workspace(name = \"{name}\")".format(name = ctx.name))
-    ctx.file("BUILD", BUILD_FILE.format(file = "kind"))
+    multi_platform_download(ctx, KIND_ASSETS[ctx.attr.version], Label("//build/rules/kind:BUILD.kind.bazel"))
 
 kind_binary = repository_rule(
     implementation = _kind_binary_impl,
