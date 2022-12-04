@@ -6,8 +6,10 @@ def register_development_environments():
             "dev-env",
             "build",
             "--etcd=$(location @etcd//:bin)",
+            "--minio=$(location @minio//:file)",
         ],
         data = [
             "@etcd//:bin",
+            "@minio//:file",
         ],
     )

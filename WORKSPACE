@@ -220,6 +220,13 @@ etcd_binary(
     version = "3.5.6",
 )
 
+load("//build/rules/minio:def.bzl", "minio_binary")
+
+minio_binary(
+    name = "minio",
+    version = "RELEASE.2022-12-02T19-19-22Z",
+)
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 http_file(

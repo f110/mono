@@ -1,0 +1,1 @@
+filegroup(name = "file", srcs = ["minio"], visibility = ["//visibility:public"])
