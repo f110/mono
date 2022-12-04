@@ -22,6 +22,7 @@ import (
 	gitTransport "github.com/go-git/go-git/v5/plumbing/transport"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -176,13 +177,14 @@ var buildDatabase = &mysqlDatabase{
 }
 
 type simpleCommandComponent struct {
-	Name             string
-	Type             componentType
-	Args             []string
-	EnvVar           []string
-	Ports            ports
-	VerboseOutput    bool
-	WithoutLogPrefix bool
+	Name               string
+	Type               componentType
+	ExecutableFilePath string
+	Args               []string
+	EnvVar             []string
+	Ports              ports
+	VerboseOutput      bool
+	WithoutLogPrefix   bool
 }
 
 var _ component = &simpleCommandComponent{}
@@ -217,7 +219,7 @@ func (c *simpleCommandComponent) GetDeps() []component {
 }
 
 func (c *simpleCommandComponent) Run(ctx context.Context) {
-	cmd := exec.CommandContext(context.Background(), c.Name, c.Args...)
+	cmd := exec.CommandContext(context.Background(), c.ExecutableFilePath, c.Args...)
 	if c.VerboseOutput {
 		var out, err io.Writer
 		if c.WithoutLogPrefix {
@@ -246,7 +248,7 @@ func (c *simpleCommandComponent) Run(ctx context.Context) {
 			cmd.Process.Signal(syscall.SIGTERM)
 		}
 	}()
-	logger.Log.Info("Start " + c.Name)
+	logger.Log.Info("Start " + c.ExecutableFilePath)
 	if err := cmd.Run(); err != nil {
 		logger.Log.Info("Some error was occurred", zap.Error(err))
 	}
@@ -264,6 +266,10 @@ func (c *simpleCommandComponent) Ready() bool {
 	}
 
 	return true
+}
+
+func (c *simpleCommandComponent) Flags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.ExecutableFilePath, c.Name, c.Name, "Executable file path")
 }
 
 type grpcServerComponent struct {

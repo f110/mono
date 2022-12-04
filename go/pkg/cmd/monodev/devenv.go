@@ -52,6 +52,7 @@ func build(cmd *cobra.Command) {
 			return m.Run(cmd.Context())
 		},
 	}
+	etcd.Flags(buildCmd.Flags())
 
 	cmd.AddCommand(buildCmd)
 }

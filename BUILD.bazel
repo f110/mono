@@ -50,3 +50,7 @@ alias(
     name = "monodev",
     actual = "//go/cmd/monodev",
 )
+
+load(":development_environments.bzl", "register_development_environments")
+
+register_development_environments()
