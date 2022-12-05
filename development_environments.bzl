@@ -1,9 +1,9 @@
 def register_development_environments():
     native.sh_binary(
-        name = "dev_env_build",
+        name = "env_build",
         srcs = ["//go/cmd/monodev"],
         args = [
-            "dev-env",
+            "env",
             "build",
             "--etcd=$(location @etcd//:bin)",
             "--minio=$(location @minio//:file)",

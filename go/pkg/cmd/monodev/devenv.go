@@ -60,8 +60,9 @@ func build(cmd *cobra.Command) {
 
 func DevEnv() *cobra.Command {
 	devEnvCmd := &cobra.Command{
-		Use:   "dev-env",
-		Short: "Start some middlewares for development",
+		Use:     "env",
+		Aliases: []string{"dev-env"},
+		Short:   "Start some middlewares for development",
 	}
 
 	for _, v := range []func(*cobra.Command){
