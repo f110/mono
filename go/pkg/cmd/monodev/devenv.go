@@ -53,6 +53,7 @@ func build(cmd *cobra.Command) {
 		},
 	}
 	etcd.Flags(buildCmd.Flags())
+	minio.Flags(buildCmd.Flags())
 
 	cmd.AddCommand(buildCmd)
 }
