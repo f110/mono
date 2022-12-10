@@ -46,8 +46,8 @@ func build(cmd *cobra.Command) {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(buildDatabase)
+			m.AddComponent(buildMySQLUSER)
 			m.AddComponent(minio)
-			m.AddComponent(etcd)
 
 			return m.Run(cmd.Context())
 		},

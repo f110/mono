@@ -176,6 +176,12 @@ var buildDatabase = &mysqlDatabase{
 	MySQL: mysql,
 }
 
+var buildMySQLUSER = &mysqlUser{
+	Name:     "build",
+	Password: "build",
+	MySQL:    mysql,
+}
+
 type simpleCommandComponent struct {
 	Name               string
 	Type               componentType
@@ -657,4 +663,44 @@ func (c *mysqlDatabase) Run(ctx context.Context) {
 		return
 	}
 	logger.Log.Info("Created database", zap.String("name", c.Name))
+}
+
+type mysqlUser struct {
+	Name     string
+	Password string
+	MySQL    component
+}
+
+var _ component = &mysqlUser{}
+
+func (c *mysqlUser) GetName() string {
+	return c.Name
+}
+
+func (c *mysqlUser) GetType() componentType {
+	return componentTypeOneshot
+}
+
+func (c *mysqlUser) GetDeps() []component {
+	return []component{c.MySQL}
+}
+
+func (c *mysqlUser) Run(ctx context.Context) {
+	if c.MySQL.GetName() != "mysqld" {
+		logger.Log.Error("Mysql is not mysqld")
+		return
+	}
+
+	port := c.MySQL.(*mysqlComponent).Port.Number
+	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/", port))
+	if err != nil {
+		logger.Log.Error("Failed to connecto mysql", logger.Error(err))
+		return
+	}
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'*' IDENTIFIED BY '%s'", c.Name, c.Password))
+	if err != nil {
+		logger.Log.Error("Failed to create user", logger.Error(err))
+		return
+	}
+	logger.Log.Info("Created user", zap.String("name", c.Name))
 }
