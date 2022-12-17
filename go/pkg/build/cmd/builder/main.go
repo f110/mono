@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -340,6 +341,27 @@ func AddCommand(rootCmd *cobra.Command) {
 
 	cmd := &cobra.Command{
 		Use: "builder",
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			if v := os.Getenv("GITHUB_APP_ID"); v != "" {
+				appId, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					return err
+				}
+				opt.GithubAppId = appId
+			}
+			if v := os.Getenv("GITHUB_INSTALLATION_ID"); v != "" {
+				installationId, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					return err
+				}
+				opt.GithubInstallationId = installationId
+			}
+			if v := os.Getenv("GITHUB_PRIVATEKEY_FILE"); v != "" {
+				opt.GithubPrivateKeyFile = v
+			}
+
+			return nil
+		},
 		RunE: func(_ *cobra.Command, _ []string) error {
 			return builder(opt)
 		},
