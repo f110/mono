@@ -180,6 +180,7 @@ var buildMySQLUSER = &mysqlUser{
 	Name:     "build",
 	Password: "build",
 	MySQL:    mysql,
+	Database: buildDatabase,
 }
 
 type simpleCommandComponent struct {
@@ -669,6 +670,7 @@ type mysqlUser struct {
 	Name     string
 	Password string
 	MySQL    component
+	Database component
 }
 
 var _ component = &mysqlUser{}
@@ -682,7 +684,7 @@ func (c *mysqlUser) GetType() componentType {
 }
 
 func (c *mysqlUser) GetDeps() []component {
-	return []component{c.MySQL}
+	return []component{c.MySQL, c.Database}
 }
 
 func (c *mysqlUser) Run(ctx context.Context) {
@@ -697,10 +699,25 @@ func (c *mysqlUser) Run(ctx context.Context) {
 		logger.Log.Error("Failed to connecto mysql", logger.Error(err))
 		return
 	}
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'*' IDENTIFIED BY '%s'", c.Name, c.Password))
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", c.Name, c.Password))
 	if err != nil {
 		logger.Log.Error("Failed to create user", logger.Error(err))
 		return
 	}
 	logger.Log.Info("Created user", zap.String("name", c.Name))
+
+	if c.Database != nil {
+		d, ok := c.Database.(*mysqlDatabase)
+		if !ok {
+			logger.Log.Error("Database field is not Database", logger.Error(err))
+			return
+		}
+		fmt.Printf("GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'", d.Name, c.Name, c.Password)
+		_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON %s.* TO '%s'", d.Name, c.Name))
+		if err != nil {
+			logger.Log.Error("Failed to permit privileges", logger.Error(err))
+			return
+		}
+		logger.Log.Info("Grant all privileges", zap.String("name", c.Name), zap.String("database", d.Name))
+	}
 }
