@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -45,6 +44,7 @@ type Options struct {
 	GithubInstallationId int64
 	GithubPrivateKeyFile string
 	GithubAppSecretName  string
+	MinIOEndpoint        string
 	MinIOName            string
 	MinIONamespace       string
 	MinIOPort            int
@@ -116,37 +116,32 @@ func newProcess(opt Options) *process {
 }
 
 func (p *process) init() (fsm.State, error) {
-	kubeConfigPath := ""
-	if p.opt.Dev {
-		h, err := os.UserHomeDir()
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		kubeConfigPath = filepath.Join(h, ".kube", "config")
-	}
-
 	app, err := githubutil.NewApp(p.opt.GithubAppId, p.opt.GithubInstallationId, p.opt.GithubPrivateKeyFile)
 	if err != nil {
 		return fsm.Error(err)
 	}
 	p.ghClient = github.NewClient(&http.Client{Transport: githubutil.NewTransportWithApp(http.DefaultTransport, app)})
 
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	p.restCfg = cfg
+	if p.opt.Dev {
+		logger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
+	} else {
+		cfg, err := clientcmd.BuildConfigFromFlags("", "")
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.restCfg = cfg
 
-	kubeClient, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
+		kubeClient, err := kubernetes.NewForConfig(cfg)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.kubeClient = kubeClient
+		p.coreSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(
+			kubeClient,
+			30*time.Second,
+			kubeinformers.WithNamespace(p.opt.Namespace),
+		)
 	}
-	p.kubeClient = kubeClient
-	p.coreSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(
-		kubeClient,
-		30*time.Second,
-		kubeinformers.WithNamespace(p.opt.Namespace),
-	)
 
 	parsedDSN, err := mysql.ParseDSN(p.opt.DSN)
 	if err != nil {
@@ -167,29 +162,38 @@ func (p *process) init() (fsm.State, error) {
 	}
 	p.dao = dao.NewOptions(conn)
 
-	return stateSetup, nil
+	return fsm.Next(stateSetup)
 }
 
 func (p *process) setup() (fsm.State, error) {
-	minioOpt := storage.NewMinIOOptionsViaService(
-		p.kubeClient,
-		p.restCfg,
-		p.opt.MinIOName,
-		p.opt.MinIONamespace,
-		p.opt.MinIOPort,
-		p.opt.MinIOAccessKey,
-		p.opt.MinIOSecretAccessKey,
-		p.opt.Dev,
-	)
+	var minioOpt storage.MinIOOptions
+	if p.opt.MinIOEndpoint != "" {
+		minioOpt = storage.NewMinIOOptionsViaEndpoint(p.opt.MinIOEndpoint, "", p.opt.MinIOAccessKey, p.opt.MinIOSecretAccessKey)
+	} else {
+		minioOpt = storage.NewMinIOOptionsViaService(
+			p.kubeClient,
+			p.restCfg,
+			p.opt.MinIOName,
+			p.opt.MinIONamespace,
+			p.opt.MinIOPort,
+			p.opt.MinIOAccessKey,
+			p.opt.MinIOSecretAccessKey,
+			p.opt.Dev,
+		)
+	}
 	p.minioOpt = minioOpt
-	kubernetesOpt := coordinator.NewKubernetesOptions(
-		p.coreSharedInformerFactory.Batch().V1().Jobs(),
-		p.coreSharedInformerFactory.Core().V1().Pods(),
-		p.kubeClient,
-		p.restCfg,
-		p.opt.TaskCPULimit,
-		p.opt.TaskMemoryLimit,
-	)
+
+	var kubernetesOpt coordinator.KubernetesOptions
+	if p.coreSharedInformerFactory != nil && p.kubeClient != nil {
+		kubernetesOpt = coordinator.NewKubernetesOptions(
+			p.coreSharedInformerFactory.Batch().V1().Jobs(),
+			p.coreSharedInformerFactory.Core().V1().Pods(),
+			p.kubeClient,
+			p.restCfg,
+			p.opt.TaskCPULimit,
+			p.opt.TaskMemoryLimit,
+		)
+	}
 	bazelOpt := coordinator.NewBazelOptions(
 		p.opt.RemoteCache,
 		p.opt.RemoteAssetApi,
@@ -217,7 +221,7 @@ func (p *process) setup() (fsm.State, error) {
 	}
 	p.bazelBuilder = c
 
-	return stateStartApiServer, nil
+	return fsm.Next(stateStartApiServer)
 }
 
 func (p *process) startApiServer() (fsm.State, error) {
@@ -235,7 +239,14 @@ func (p *process) startApiServer() (fsm.State, error) {
 	return stateLeaderElection, nil
 }
 
+// leaderElection will get the lock.
+// Next state: stateStartWorker
 func (p *process) leaderElection() (fsm.State, error) {
+	if p.kubeClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
+		logger.Log.Info("Skip leader election")
+		return fsm.Next(stateStartWorker)
+	}
+
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      p.opt.LeaseLockName,
@@ -272,24 +283,26 @@ func (p *process) leaderElection() (fsm.State, error) {
 	select {
 	case <-elected:
 	case <-p.ctx.Done():
-		return fsm.UnknownState, nil
+		return fsm.Error(p.ctx.Err())
 	}
 
-	return stateStartWorker, nil
+	return fsm.Next(stateStartWorker)
 }
 
 func (p *process) startWorker() (fsm.State, error) {
-	jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
+	if p.coreSharedInformerFactory != nil {
+		jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
 
-	p.coreSharedInformerFactory.Start(p.ctx.Done())
+		p.coreSharedInformerFactory.Start(p.ctx.Done())
 
-	go func() {
-		logger.Log.Info("Start JobWatcher")
-		if err := jobWatcher.Run(p.ctx, 1); err != nil {
-			logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
-			return
-		}
-	}()
+		go func() {
+			logger.Log.Info("Start JobWatcher")
+			if err := jobWatcher.Run(p.ctx, 1); err != nil {
+				logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
+				return
+			}
+		}()
+	}
 
 	if p.opt.WithGC {
 		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.minioOpt)
@@ -299,15 +312,17 @@ func (p *process) startWorker() (fsm.State, error) {
 		}()
 	}
 
-	return fsm.WaitState, nil
+	return fsm.Wait()
 }
 
 func (p *process) shutdown() (fsm.State, error) {
+	logger.Log.Info("Shutting down")
 	if p.apiServer != nil {
 		p.apiServer.Shutdown(context.Background())
 		logger.Log.Info("Shutdown API Server")
 	}
-	return fsm.CloseState, nil
+
+	return fsm.Finish()
 }
 
 func builder(opt Options) error {
@@ -355,6 +370,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.DashboardUrl, "dashboard", "http://localhost", "URL of dashboard")
 	fs.StringVar(&opt.BuilderApiUrl, "builder-api", "http://localhost", "URL of the api of builder")
 	fs.BoolVar(&opt.Dev, "dev", opt.Dev, "development mode")
+	fs.StringVar(&opt.MinIOEndpoint, "minio-endpoint", "", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
 	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
 	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
 	fs.IntVar(&opt.MinIOPort, "minio-port", 8080, "Port number of MinIO")

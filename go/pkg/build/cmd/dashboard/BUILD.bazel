@@ -7,7 +7,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/build/database/dao",
-        "//go/pkg/build/watcher",
         "//go/pkg/build/web",
         "//go/pkg/logger",
         "//go/pkg/signals",
@@ -16,7 +15,6 @@ go_library(
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
-        "//vendor/k8s.io/client-go/informers",
         "//vendor/k8s.io/client-go/kubernetes",
         "//vendor/k8s.io/client-go/tools/clientcmd",
     ],

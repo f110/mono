@@ -11,13 +11,22 @@ import (
 	"go.starlark.net/starlark"
 )
 
+type EventType string
+
+const (
+	EventPush        EventType = "push"
+	EventPullRequest EventType = "pull_request"
+	EventRelease     EventType = "release"
+	EventManual      EventType = "manual"
+)
+
 type Config struct {
 	Jobs            []*Job
 	RepositoryOwner string
 	RepositoryName  string
 }
 
-func (c *Config) Job(event string) []*Job {
+func (c *Config) Job(event EventType) []*Job {
 	var jobs []*Job
 	for _, job := range c.Jobs {
 		for _, e := range job.Event {
@@ -33,8 +42,8 @@ func (c *Config) Job(event string) []*Job {
 
 type Job struct {
 	// Name is a job name
-	Name  string   `attr:"name"`
-	Event []string `attr:"event"`
+	Name  string      `attr:"name"`
+	Event []EventType `attr:"event"`
 	// If true, build at each revision
 	AllRevision bool   `attr:"all_revision,allowempty"`
 	Command     string `attr:"command"`
@@ -93,6 +102,9 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 					}
 				}
 			}
+			if job.Name == "" {
+				return nil, xerrors.New("name is required")
+			}
 
 			requiredField := make(map[string]struct{})
 			typ := reflect.TypeOf(job).Elem()
@@ -114,7 +126,7 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 				for v := range requiredField {
 					k = append(k, v)
 				}
-				return nil, xerrors.Newf("all mandatory fields are not set: %s", strings.Join(k, ", "))
+				return nil, xerrors.Newf("all mandatory fields are not set at %s: %s", job.Name, strings.Join(k, ", "))
 			}
 
 			config.Jobs = append(config.Jobs, job)

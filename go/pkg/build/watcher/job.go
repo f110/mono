@@ -84,7 +84,7 @@ func (j *JobWatcher) Run(ctx context.Context, workers int) error {
 	return nil
 }
 
-func (j JobWatcher) dispatch(key string) error {
+func (j *JobWatcher) dispatch(key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return xerrors.WithStack(err)

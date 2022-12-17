@@ -197,8 +197,6 @@ func NewBazelBuilder(
 		dashboardUrl:         dashboardUrl,
 		config:               kOpt.RESTConfig,
 		client:               kOpt.Client,
-		jobLister:            kOpt.JobInformer.Lister(),
-		podLister:            kOpt.PodInformer.Lister(),
 		dao:                  daoOpt,
 		githubClient:         ghClient,
 		minio:                storage.NewMinIOStorage(bucket, minIOOpt),
@@ -212,6 +210,12 @@ func NewBazelBuilder(
 		githubAppSecretName:  bazelOpt.GithubAppSecretName,
 		dev:                  dev,
 		taskQueue:            newTaskQueue(),
+	}
+	if kOpt.JobInformer != nil {
+		b.jobLister = kOpt.JobInformer.Lister()
+	}
+	if kOpt.PodInformer != nil {
+		b.podLister = kOpt.PodInformer.Lister()
 	}
 	if b.sidecarImage == "" {
 		b.sidecarImage = sidecarImage
@@ -240,7 +244,9 @@ func NewBazelBuilder(
 	} else {
 		b.defaultTaskMemoryLimit = resource.MustParse(defaultMemoryLimit)
 	}
-	watcher.Router.Add(jobType, b.syncJob)
+	if !b.IsStub() {
+		watcher.Router.Add(jobType, b.syncJob)
+	}
 
 	pendingTasks, err := b.dao.Task.ListPending(context.Background())
 	if err != nil {
@@ -307,6 +313,12 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 	return tasks, nil
 }
 
+func (b *BazelBuilder) IsStub() bool {
+	return b.client == nil || b.jobLister == nil || b.podLister == nil || b.nodeLister == nil
+}
+
+// syncJob is the reconcile function.
+// If BazelBuilder is running stub mode, syncJob is never triggered.
 func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	if !job.DeletionTimestamp.IsZero() {
 		logger.Log.Debug("Job has been deleted", zap.String("job.name", job.Name))
@@ -450,9 +462,13 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	}
 
 	buildTemplate := b.buildJobTemplate(repo, job, task, task.Platform)
-	_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
-	if err != nil {
-		return xerrors.WithStack(err)
+	if b.IsStub() {
+		logger.Log.Info("Create Job", zap.String("name", job.Name))
+	} else {
+		_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
 	}
 	now := time.Now()
 	task.StartAt = &now
@@ -467,6 +483,10 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 }
 
 func (b *BazelBuilder) isRunningJob(job *config.Job) bool {
+	if b.IsStub() {
+		return false
+	}
+
 	jobs, err := b.jobLister.List(labels.Everything())
 	if err != nil {
 		logger.Log.Warn("Could not get a job's list from kube-apiserver.", zap.Error(err))

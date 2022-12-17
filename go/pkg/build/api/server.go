@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/config"
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
+	"go.f110.dev/mono/go/pkg/enumerable"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -53,6 +55,7 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/liveness", api.handleLiveness)
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.HandleFunc("/redo", api.handleRedo)
+	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/webhook", api.handleWebHook)
 	s := &http.Server{
 		Addr:    addr,
@@ -300,7 +303,7 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceReposit
 		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
 		return nil
 	}
-	jobs := conf.Job("push")
+	jobs := conf.Job(config.EventPush)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push", isMainBranch); err != nil {
 		return xerrors.WithStack(err)
@@ -320,7 +323,7 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
 		return nil
 	}
-	jobs := conf.Job("pull_request")
+	jobs := conf.Job(config.EventPullRequest)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request", false); err != nil {
 		return xerrors.WithStack(err)
@@ -345,7 +348,7 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
 		return nil
 	}
-	jobs := conf.Job("release")
+	jobs := conf.Job(config.EventRelease)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release", false); err != nil {
 		return xerrors.WithStack(err)
@@ -371,7 +374,7 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
 		return nil
 	}
-	jobs := conf.Job("pull_request")
+	jobs := conf.Job(config.EventPullRequest)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr", false); err != nil {
 		return xerrors.WithStack(err)
@@ -502,6 +505,101 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
 		logger.Log.Warn("Failed encode response", zap.Error(err))
 	}
+}
+
+func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := req.ParseForm(); err != nil {
+		logger.Log.Info("Failed to parse form", logger.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	repositoryId, err := strconv.Atoi(req.FormValue("repository_id"))
+	if err != nil {
+		logger.Log.Info("Failed to parse repository id", logger.Error(err), zap.String("repository_id", req.FormValue("repository_id")))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	repo, err := a.dao.Repository.Select(req.Context(), int32(repositoryId))
+	if err != nil {
+		logger.Log.Info("Failed to get the repository", logger.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	u, err := url.Parse(repo.Url)
+	if err != nil {
+		logger.Log.Info("Failed to parse repository URL", logger.Error(err), zap.String("url", repo.Url))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if u.Hostname() != "github.com" {
+		logger.Log.Info("The repository is not hosted github.com")
+		return
+	}
+	// u.Path is /owner/repo if URL is github.com.
+	s := strings.Split(u.Path, "/")
+	owner, repoName := s[1], s[2]
+	githubRepo, _, err := a.githubClient.Repositories.Get(req.Context(), owner, repoName)
+	if err != nil {
+		logger.Log.Info("Failed to get the information of repository from github", logger.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch())
+	if err != nil {
+		logger.Log.Info("Failed to branch", logger.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	conf, bazelVersion, err := a.fetchBuildConfig(req.Context(), owner, repoName, branch.Commit.GetSHA(), true)
+	if err != nil {
+		logger.Log.Info("Skip build", logger.Error(err))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var job *config.Job
+	for _, v := range conf.Jobs {
+		if v.Name == req.FormValue("job_name") {
+			job = v
+			break
+		}
+	}
+	if job == nil {
+		logger.Log.Info("The job is not found", zap.String("job_name", req.FormValue("job_name")))
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if !enumerable.IsInclude(job.Event, "manual") {
+		logger.Log.Info("The job is not intended to trigger manually", zap.String("job_name", job.Name))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	newTasks, err := a.builder.Build(
+		req.Context(),
+		repo,
+		job,
+		githubRepo.GetDefaultBranch(),
+		bazelVersion,
+		job.Command,
+		job.Targets,
+		job.Platforms,
+		"manual",
+	)
+	if err != nil {
+		logger.Log.Warn("Failed to start building job", logger.Error(err))
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
+		logger.Log.Warn("Failed to encode the response", logger.Error(err))
+	}
+
 }
 
 func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {

@@ -3,8 +3,8 @@ package dashboard
 import (
 	"context"
 	"database/sql"
-	"os"
-	"path/filepath"
+	"errors"
+	"net/http"
 	"sync"
 	"time"
 
@@ -13,12 +13,10 @@ import (
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"go.f110.dev/mono/go/pkg/build/database/dao"
-	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/build/web"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/signals"
@@ -47,31 +45,22 @@ func dashboard(opt Options) error {
 		return xerrors.WithStack(err)
 	}
 
-	kubeConfigPath := ""
-	if opt.Dev {
-		h, err := os.UserHomeDir()
+	var minioOpt storage.MinIOOptions
+	if opt.MinIOEndpoint != "" {
+		storage.NewMinIOOptionsViaEndpoint(opt.MinIOEndpoint, "", opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
+	} else {
+		cfg, err := clientcmd.BuildConfigFromFlags("", "")
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
-		kubeConfigPath = filepath.Join(h, ".kube", "config")
+
+		kubeClient, err := kubernetes.NewForConfig(cfg)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		minioOpt = storage.NewMinIOOptionsViaService(kubeClient, cfg, opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOAccessKey, opt.MinIOSecretAccessKey, opt.Dev)
 	}
 
-	cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	kubeClient, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 30*time.Second, kubeinformers.WithNamespace(opt.Namespace))
-	jobWatcher := watcher.NewJobWatcher(coreSharedInformerFactory.Batch().V1().Jobs())
-
-	coreSharedInformerFactory.Start(ctx.Done())
-
-	minioOpt := storage.NewMinIOOptionsViaService(kubeClient, cfg, opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOAccessKey, opt.MinIOSecretAccessKey, opt.Dev)
 	d := web.NewDashboard(opt.Addr, dao.NewOptions(conn), opt.ApiHost, opt.MinIOBucket, minioOpt)
 
 	go func() {
@@ -85,18 +74,7 @@ func dashboard(opt Options) error {
 		defer wg.Done()
 
 		logger.Log.Info("Listen", zap.String("addr", opt.Addr))
-		if err := d.Start(); err != nil {
-			logger.Log.Info("Error", zap.Error(err))
-			return
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		logger.Log.Debug("Start job watcher")
-		if err := jobWatcher.Run(ctx, 1); err != nil {
+		if err := d.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Log.Info("Error", zap.Error(err))
 			return
 		}
@@ -111,8 +89,8 @@ type Options struct {
 	Addr                 string
 	DSN                  string
 	ApiHost              string
-	Namespace            string
 	Dev                  bool
+	MinIOEndpoint        string
 	MinIOName            string
 	MinIONamespace       string
 	MinIOPort            int
@@ -134,8 +112,8 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.Addr, "addr", "", "Listen address")
 	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
 	fs.StringVar(&opt.ApiHost, "api", "", "API Host which user's browser can access")
-	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
 	fs.BoolVar(&opt.Dev, "dev", false, "development mode")
+	fs.StringVar(&opt.MinIOEndpoint, "minio-endpoint", "", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
 	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
 	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
 	fs.IntVar(&opt.MinIOPort, "minio-port", 8080, "Port number of MinIO")

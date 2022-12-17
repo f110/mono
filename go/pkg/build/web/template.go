@@ -63,6 +63,15 @@ const indexTemplate = `<html>
       <a class="item" onclick="$('.ui.addUser.modal').modal({centered:false}).modal('show');">Add...</a>
     </div>
   </div>
+
+  <div class="ui item dropdown simple">
+    Run task<i class="dropdown icon"></i>
+    <div class="menu">
+      {{- range .Repositories }}
+      <a class="item" onclick="startRunTask({{ .Id }}, '{{ .Name }}')">{{ .Name }}</a>
+      {{- end }}
+    </div>
+  </div>
 </div>
 
 <!-- modal -->
@@ -125,6 +134,27 @@ const indexTemplate = `<html>
         <input type="text" name="username" placeholder="octocat">
       </div>
       <button class="ui button" type="button" onclick="addTrustedUser()">Add</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui runTask modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Run task
+  </div>
+  <div class="content">
+    <form class="ui form runTask" name="runTask">
+      <input type="hidden" name="repository_id">
+      <div class="field">
+        <label>Repository</label>
+        <span class="repoName"></span>
+      </div>
+      <div class="field">
+        <label>Task name</label>
+        <input type="text" name="job_name">
+      </div>
+      <button class="ui button positive" type="button" onclick="runJob()">Run</button>
     </form>
   </div>
 </div>
@@ -234,6 +264,33 @@ function redoTask(id) {
   var params = new URLSearchParams();
   params.append("task_id", id);
   fetch(apiHost+"/redo",{
+    mode: 'cors',
+    method: 'POST',
+    credentials: 'include',
+    body: params,
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload(false);
+    }
+  });
+}
+
+function startRunTask(id, name) {
+  var elms = document.querySelectorAll('span.repoName');
+  elms.forEach(function (e) {
+    e.textContent = name;
+  });
+  var e = document.querySelector('input[name=repository_id]');
+  e.value = id;
+  $('.ui.runTask.modal').modal({centered:false}).modal('show');
+}
+
+function runJob() {
+  var f = document.querySelector('.ui.form.runTask');
+  var params = new URLSearchParams();
+  params.append("repository_id", f.repository_id.value);
+  params.append("job_name", f.job_name.value);
+  fetch(apiHost+'/run', {
     mode: 'cors',
     method: 'POST',
     credentials: 'include',
