@@ -18,3 +18,56 @@ go_binary(
     embed = [":build_lib"],
     visibility = ["//visibility:public"],
 )
+
+database_host = "localhost"
+
+database_user = "build"
+
+database_password = "build"
+
+database_name = "build"
+
+dev_dsn = "{user}:{password}@tcp(127.0.0.1:13306)/{name}".format(
+    name = database_name,
+    password = database_password,
+    user = database_user,
+)
+
+minio_args = [
+    "--minio-endpoint",
+    "http://127.0.0.1:9000",
+    "--minio-bucket",
+    "logs",
+]
+
+sh_binary(
+    name = "run_dashboard",
+    srcs = [":build"],
+    args = [
+        "dashboard",
+        "--addr",
+        "127.0.0.1:8080",
+        "--dsn",
+        dev_dsn,
+        "--log-level",
+        "debug",
+        "--api",
+        "http://127.0.0.1:8081",
+        "--dev",
+    ] + minio_args,
+)
+
+sh_binary(
+    name = "run_api",
+    srcs = ["//go/cmd/build"],
+    args = [
+        "builder",
+        "--addr",
+        "127.0.0.1:8081",
+        "--dsn",
+        dev_dsn,
+        "--log-level",
+        "debug",
+        "--dev",
+    ] + minio_args,
+)
