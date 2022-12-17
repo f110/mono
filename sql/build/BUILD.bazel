@@ -14,7 +14,7 @@ sh_binary(
     args = [
         "--schema=$(location //sql/build:schema.sql)",
         "--driver=mysql",
-        "--dsn=build:build@tcp(127.0.0.1:3306)/build",
+        "--dsn=build:build@tcp(127.0.0.1:13306)/build",
         "--execute",
     ],
     data = [
