@@ -35,7 +35,7 @@ func TestReadConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "test_all", conf.Jobs[0].Name)
-	assert.Equal(t, []string{"push"}, conf.Jobs[0].Event)
+	assert.Equal(t, []EventType{EventPush}, conf.Jobs[0].Event)
 	assert.True(t, conf.Jobs[0].AllRevision)
 	assert.True(t, conf.Jobs[0].GitHubStatus)
 	assert.Equal(t, "test", conf.Jobs[0].Command)
