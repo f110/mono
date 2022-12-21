@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -60,7 +59,7 @@ func copyFile(from, to string) error {
 }
 
 func copyDirectory(from, to string) error {
-	log.Printf("Copy directory: %s -> %s", from, to)
+	logger.Log.Info("Copy directory", zap.String("from", from), zap.String("to", to))
 	entries, err := os.ReadDir(from)
 	if err != nil {
 		return xerrors.WithStack(err)

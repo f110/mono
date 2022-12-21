@@ -1,111 +1,70 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"syscall"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"go.f110.dev/mono/go/pkg/logger"
 )
 
 func checkFile(t *testing.T, from, to string) {
 	fs, err := os.Stat(from)
-	if os.IsNotExist(err) {
-		t.Fatalf("Probably test BUG. from path is not exist: %v", from)
-	}
+	require.NoError(t, err, "Probably test BUG")
 	ts, err := os.Stat(to)
-	if os.IsNotExist(err) {
-		t.Fatalf("%s (destination path) is not exist", to)
-	}
+	require.NoErrorf(t, err, "%s (destination path) is not exist", to)
 
-	if fs.Size() != ts.Size() {
-		t.Errorf("each file size is not equal.")
-	}
-	if fs.Mode() != ts.Mode() {
-		t.Errorf("FileMode is mismatch")
-	}
+	assert.Equal(t, fs.Size(), ts.Size())
+	assert.Equal(t, fs.Mode(), ts.Mode())
 
 	ft, ok := fs.Sys().(*syscall.Stat_t)
-	if !ok {
-		t.Fatal("could not covert to syscall.Stat_t")
-	}
+	require.True(t, ok, "could not covert to syscall.Stat_t")
 	tt, ok := fs.Sys().(*syscall.Stat_t)
-	if !ok {
-		t.Fatal("could not convert to syscall.Stat_t")
-	}
-	if ft.Uid != tt.Uid {
-		t.Errorf("UID is mismatch")
-	}
-	if ft.Gid != tt.Gid {
-		t.Errorf("GID is mismatch")
-	}
+	require.True(t, ok, "could not covert to syscall.Stat_t")
+
+	assert.Equal(t, ft.Uid, tt.Uid)
+	assert.Equal(t, ft.Gid, tt.Gid)
 }
 
 func checkDir(t *testing.T, src, dst string) {
 	fs, err := os.Stat(src)
-	if os.IsNotExist(err) {
-		t.Fatalf("Probably test BUG. from path is not exist: %v", src)
-	}
+	require.NoError(t, err, "Probably test BUG")
 	ts, err := os.Stat(dst)
-	if os.IsNotExist(err) {
-		t.Fatalf("%s (destination path) is not exist", dst)
-	}
+	require.NoErrorf(t, err, "%s (destination path) is not exist", dst)
 
-	if fs.Mode() != ts.Mode() {
-		t.Errorf("FileMode is mismatch")
-	}
+	assert.Equal(t, fs.Mode(), ts.Mode())
 
 	ft, ok := fs.Sys().(*syscall.Stat_t)
-	if !ok {
-		t.Fatal("could not covert to syscall.Stat_t")
-	}
+	require.True(t, ok, "could not covert to syscall.Stat_t")
 	tt, ok := fs.Sys().(*syscall.Stat_t)
-	if !ok {
-		t.Fatal("could not convert to syscall.Stat_t")
-	}
-	if ft.Uid != tt.Uid {
-		t.Errorf("UID is mismatch")
-	}
-	if ft.Gid != tt.Gid {
-		t.Errorf("GID is mismatch")
-	}
+	require.True(t, ok, "could not covert to syscall.Stat_t")
+
+	assert.Equal(t, ft.Uid, tt.Uid)
+	assert.Equal(t, ft.Gid, tt.Gid)
 }
 
 func TestMigrateDirectory(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpDir)
-	err = ioutil.WriteFile(filepath.Join(tmpDir, "regular"), []byte("regular"), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
+	logger.Init()
+
+	tmpDir := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(tmpDir, "regular"), []byte("regular"), 0644)
+	require.NoError(t, err)
 	err = os.MkdirAll(filepath.Join(tmpDir, "dir1"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = os.MkdirAll(filepath.Join(tmpDir, "dir1", "dir2"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = ioutil.WriteFile(filepath.Join(tmpDir, "dir1", "dir2", "regular"), []byte("regular"), 0600)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(tmpDir, "dir1", "dir2", "regular"), []byte("regular"), 0600)
+	require.NoError(t, err)
 
-	dest, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal()
-	}
-	defer os.RemoveAll(dest)
-
-	if err := migrateDirectory(tmpDir, dest); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := os.Stat(filepath.Join(dest, lockFilename)); os.IsNotExist(err) {
-		t.Fatal("Expect create lock file")
-	}
+	dest := t.TempDir()
+	err = migrateDirectory(tmpDir, dest)
+	require.NoError(t, err)
+	require.FileExists(t, filepath.Join(dest, lockFilename))
 
 	checkFile(t, filepath.Join(tmpDir, "regular"), filepath.Join(dest, "regular"))
 	checkDir(t, filepath.Join(tmpDir, "dir1"), filepath.Join(dest, "dir1"))
