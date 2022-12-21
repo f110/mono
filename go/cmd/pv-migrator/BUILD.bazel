@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "pv-migrator_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/pv-migrator",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "pv-migrator",
+    embed = [":pv-migrator_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "pv-migrator_test",
+    srcs = ["main_test.go"],
+    embed = [":pv-migrator_lib"],
+)
