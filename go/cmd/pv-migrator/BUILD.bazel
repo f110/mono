@@ -23,4 +23,9 @@ go_test(
     name = "pv-migrator_test",
     srcs = ["main_test.go"],
     embed = [":pv-migrator_lib"],
+    deps = [
+        "//go/pkg/logger",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
 )
