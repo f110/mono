@@ -13,7 +13,7 @@ go_library(
         "gauge.go",
         "go_collector.go",
         "go_collector_go116.go",
-        "go_collector_go117.go",
+        "go_collector_latest.go",
         "histogram.go",
         "labels.go",
         "metric.go",

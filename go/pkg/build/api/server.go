@@ -305,7 +305,7 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceReposit
 	}
 	jobs := conf.Job(config.EventPush)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push", isMainBranch); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push"); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -325,7 +325,7 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 	}
 	jobs := conf.Job(config.EventPullRequest)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request", false); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request"); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -350,7 +350,7 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 	}
 	jobs := conf.Job(config.EventRelease)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release", false); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release"); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
@@ -376,13 +376,13 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	}
 	jobs := conf.Job(config.EventPullRequest)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr", false); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr"); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string, isMainBranch bool) error {
+func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string) error {
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.

@@ -12,6 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v32/github"
 	"github.com/google/uuid"
+	vault "github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
 
 	"go.f110.dev/mono/go/pkg/build/api"
 	"go.f110.dev/mono/go/pkg/build/coordinator"
@@ -52,6 +54,8 @@ type Options struct {
 	MinIOBucket          string
 	MinIOAccessKey       string
 	MinIOSecretAccessKey string
+	VaultAddr            string
+	VaultTokenFile       string
 
 	Addr                string
 	DashboardUrl        string // URL of dashboard that can access people via browser
@@ -87,10 +91,12 @@ type process struct {
 
 	ghClient                  *github.Client
 	kubeClient                *kubernetes.Clientset
+	secretStoreClient         *secretstoreclient.Clientset
 	restCfg                   *rest.Config
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory
 	dao                       dao.Options
 	minioOpt                  storage.MinIOOptions
+	vaultClient               *vault.Client
 
 	bazelBuilder *coordinator.BazelBuilder
 	apiServer    *api.Api
@@ -142,6 +148,12 @@ func (p *process) init() (fsm.State, error) {
 			30*time.Second,
 			kubeinformers.WithNamespace(p.opt.Namespace),
 		)
+
+		ssClient, err := secretstoreclient.NewForConfig(cfg)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.secretStoreClient = ssClient
 	}
 
 	parsedDSN, err := mysql.ParseDSN(p.opt.DSN)
@@ -162,6 +174,22 @@ func (p *process) init() (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.dao = dao.NewOptions(conn)
+
+	if p.opt.VaultAddr != "" && p.opt.VaultTokenFile != "" {
+		token, err := os.ReadFile(p.opt.VaultTokenFile)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+
+		vaultClient, err := vault.NewClient(&vault.Config{
+			Address: p.opt.VaultAddr,
+		})
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		vaultClient.SetToken(string(token))
+		p.vaultClient = vaultClient
+	}
 
 	return fsm.Next(stateSetup)
 }
@@ -190,6 +218,7 @@ func (p *process) setup() (fsm.State, error) {
 			p.coreSharedInformerFactory.Batch().V1().Jobs(),
 			p.coreSharedInformerFactory.Core().V1().Pods(),
 			p.kubeClient,
+			p.secretStoreClient,
 			p.restCfg,
 			p.opt.TaskCPULimit,
 			p.opt.TaskMemoryLimit,
@@ -214,6 +243,7 @@ func (p *process) setup() (fsm.State, error) {
 		p.opt.MinIOBucket,
 		minioOpt,
 		bazelOpt,
+		p.vaultClient,
 		p.opt.Dev,
 	)
 	if err != nil {
@@ -399,6 +429,8 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
 	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
+	fs.StringVar(&opt.VaultAddr, "vault-addr", "", "The vault URL")
+	fs.StringVar(&opt.VaultTokenFile, "vault-token-file", "", "The token for Vault")
 	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
 	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
 	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")

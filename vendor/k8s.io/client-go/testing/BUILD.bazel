@@ -6,6 +6,7 @@ go_library(
         "actions.go",
         "fake.go",
         "fixture.go",
+        "interface.go",
     ],
     importmap = "go.f110.dev/mono/vendor/k8s.io/client-go/testing",
     importpath = "k8s.io/client-go/testing",

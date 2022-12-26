@@ -1,7 +1,10 @@
 package config
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"log"
 	"reflect"
@@ -40,6 +43,37 @@ func (c *Config) Job(event EventType) []*Job {
 	return jobs
 }
 
+type Secret struct {
+	EnvVarName string `attr:"env_name,allowempty"`
+	MountPath  string `attr:"mount_path,allowempty"`
+	VaultPath  string `attr:"vault_path"`
+	VaultKey   string `attr:"vault_key"`
+}
+
+var _ starlark.Value = &Secret{}
+
+func (s *Secret) String() string {
+	return s.EnvVarName
+}
+
+func (s *Secret) Type() string {
+	return "secret"
+}
+
+func (s *Secret) Freeze() {}
+
+func (s *Secret) Truth() starlark.Bool {
+	return true
+}
+
+func (s *Secret) Hash() (uint32, error) {
+	buf := new(bytes.Buffer)
+	if err := gob.NewEncoder(buf).Encode(s); err != nil {
+		return 0, err
+	}
+	return crc32.ChecksumIEEE(buf.Bytes()), nil
+}
+
 type Job struct {
 	// Name is a job name
 	Name  string      `attr:"name"`
@@ -59,7 +93,8 @@ type Job struct {
 	// The name of config
 	ConfigName string `attr:"config_name,allowempty"`
 	// Job schedule
-	Schedule string `attr:"schedule,allowempty"`
+	Schedule string    `attr:"schedule,allowempty"`
+	Secrets  []*Secret `attr:"secrets,allowempty"`
 
 	RepositoryOwner string
 	RepositoryName  string
@@ -132,6 +167,14 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 			config.Jobs = append(config.Jobs, job)
 			return starlark.String(""), nil
 		}),
+		"secret": starlark.NewBuiltin("secret", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			s := &Secret{}
+			err := starlark.UnpackArgs(fn.Name(), args, kwargs, argPairs(s)...)
+			if err != nil {
+				return nil, err
+			}
+			return s, nil
+		}),
 	}
 
 	thread := &starlark.Thread{
@@ -167,18 +210,59 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 		if !ok {
 			return xerrors.Newf("expect *starlark.List field: %T", val)
 		}
+		if v.Len() == 0 {
+			return nil
+		}
 
 		iter := v.Iterate()
 		var item starlark.Value
 		for iter.Next(&item) {
-			newValue := reflect.New(ft.Elem()).Elem()
-			if err := setValue(ft.Elem(), newValue, item); err != nil {
-				return err
+			switch ft.Elem().Kind() {
+			case reflect.String, reflect.Bool:
+				newValue := reflect.New(ft.Elem()).Elem()
+				if err := setValue(ft.Elem(), newValue, item); err != nil {
+					return err
+				}
+				fv.Set(reflect.Append(fv, newValue))
+			default:
+				fv.Set(reflect.Append(fv, reflect.ValueOf(item)))
 			}
-			fv.Set(reflect.Append(fv, newValue))
 		}
 		return nil
 	}
 
 	return xerrors.Newf("unsupported field type: %s", ft.Kind())
+}
+
+func argPairs(obj any) []any {
+	var pairs []any
+	st := reflect.TypeOf(obj).Elem()
+	sv := reflect.ValueOf(obj).Elem()
+	for i := 0; i < st.NumField(); i++ {
+		ft := st.Field(i)
+		starTag := ft.Tag.Get("attr")
+		if starTag == "" {
+			continue
+		}
+
+		keyName := starTag
+		var optional bool
+		if strings.IndexRune(keyName, ',') > 0 {
+			s := strings.Split(starTag, ",")
+			keyName = s[0]
+			for _, v := range s[1:] {
+				if v == "allowempty" {
+					optional = true
+				}
+			}
+		}
+		if optional {
+			keyName = keyName + "?"
+		}
+
+		fv := sv.Field(i)
+		pairs = append(pairs, keyName, fv.Addr().Interface())
+	}
+
+	return pairs
 }

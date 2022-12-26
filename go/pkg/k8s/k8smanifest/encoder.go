@@ -1,6 +1,7 @@
 package k8smanifest
 
 import (
+	"bytes"
 	"io"
 
 	"go.f110.dev/xerrors"
@@ -46,4 +47,12 @@ func (e *Encoder) Encode(obj runtime.Object) error {
 	}
 
 	return nil
+}
+
+func Marshal(obj runtime.Object) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := NewEncoder(buf).Encode(obj); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

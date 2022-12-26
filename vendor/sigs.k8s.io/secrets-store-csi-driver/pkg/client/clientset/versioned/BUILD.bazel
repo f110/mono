@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "versioned",
+    srcs = [
+        "clientset.go",
+        "doc.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned",
+    importpath = "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/k8s.io/client-go/discovery",
+        "//vendor/k8s.io/client-go/rest",
+        "//vendor/k8s.io/client-go/util/flowcontrol",
+        "//vendor/sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1:apis",
+        "//vendor/sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1alpha1",
+    ],
+)

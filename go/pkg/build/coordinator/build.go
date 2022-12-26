@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v32/github"
+	vault "github.com/hashicorp/vault/api"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
@@ -21,12 +22,15 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	corev1informers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
+	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
+	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
 
 	"go.f110.dev/mono/go/pkg/build/config"
 	"go.f110.dev/mono/go/pkg/build/database"
@@ -62,6 +66,7 @@ type KubernetesOptions struct {
 	JobInformer        batchv1informers.JobInformer
 	PodInformer        corev1informers.PodInformer
 	Client             kubernetes.Interface
+	SecretStoreClient  secretstoreclient.Interface
 	RESTConfig         *rest.Config
 	DefaultCPULimit    string
 	DefaultMemoryLimit string
@@ -71,6 +76,7 @@ func NewKubernetesOptions(
 	jInformer batchv1informers.JobInformer,
 	podI corev1informers.PodInformer,
 	c kubernetes.Interface,
+	ssc secretstoreclient.Interface,
 	cfg *rest.Config,
 	cpuLimit, memoryLimit string,
 ) KubernetesOptions {
@@ -78,6 +84,7 @@ func NewKubernetesOptions(
 		JobInformer:        jInformer,
 		PodInformer:        podI,
 		Client:             c,
+		SecretStoreClient:  ssc,
 		RESTConfig:         cfg,
 		DefaultCPULimit:    cpuLimit,
 		DefaultMemoryLimit: memoryLimit,
@@ -157,15 +164,18 @@ type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
 
-	client     kubernetes.Interface
-	jobLister  batchv1listers.JobLister
-	podLister  corev1listers.PodLister
-	nodeLister corev1listers.NodeLister
-	config     *rest.Config
+	client            kubernetes.Interface
+	secretStoreClient secretstoreclient.Interface
+	jobLister         batchv1listers.JobLister
+	podLister         corev1listers.PodLister
+	nodeLister        corev1listers.NodeLister
+	config            *rest.Config
+	vaultClient       *vault.Client
 
 	dao                    dao.Options
 	githubClient           *github.Client
 	minio                  *storage.MinIO
+	vaultAddr              string
 	remoteCache            string
 	remoteAssetApi         bool
 	sidecarImage           string
@@ -190,6 +200,7 @@ func NewBazelBuilder(
 	bucket string,
 	minIOOpt storage.MinIOOptions,
 	bazelOpt BazelOptions,
+	vaultClient *vault.Client,
 	dev bool,
 ) (*BazelBuilder, error) {
 	b := &BazelBuilder{
@@ -200,6 +211,8 @@ func NewBazelBuilder(
 		dao:                  daoOpt,
 		githubClient:         ghClient,
 		minio:                storage.NewMinIOStorage(bucket, minIOOpt),
+		vaultAddr:            vaultClient.Address(),
+		vaultClient:          vaultClient,
 		remoteCache:          bazelOpt.RemoteCache,
 		remoteAssetApi:       bazelOpt.EnableRemoteAssetApi,
 		sidecarImage:         bazelOpt.SidecarImage,
@@ -261,6 +274,15 @@ func NewBazelBuilder(
 
 func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error) {
 	var tasks []*database.Task
+	defer func() {
+		for _, task := range tasks {
+			if task.IsChanged() {
+				if err := b.dao.Task.Update(ctx, task); err != nil {
+					logger.Log.Warn("Failed update task", zap.Error(err))
+				}
+			}
+		}
+	}()
 
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(job); err != nil {
@@ -284,13 +306,6 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		defer func() {
-			if task.IsChanged() {
-				if err := b.dao.Task.Update(ctx, task); err != nil {
-					logger.Log.Warn("Failed update task", zap.Error(err))
-				}
-			}
-		}()
 		tasks = append(tasks, task)
 
 		if err := b.buildJob(ctx, repo, job, task); err != nil {
@@ -440,6 +455,32 @@ func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error 
 		}
 	}
 
+	for _, v := range job.Spec.Template.Spec.Volumes {
+		if v.CSI == nil {
+			continue
+		}
+		if v.CSI.Driver != "secrets-store.csi.k8s.io" {
+			continue
+		}
+		err = b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(job.Namespace).Delete(ctx, v.CSI.VolumeAttributes["secretProviderClass"], metav1.DeleteOptions{})
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	for _, v := range job.Spec.Template.Spec.Containers[0].EnvFrom {
+		if v.SecretRef == nil {
+			continue
+		}
+		if v.SecretRef.Name != job.Name {
+			continue
+		}
+		err = b.client.CoreV1().Secrets(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
 	return nil
 }
 
@@ -461,21 +502,54 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		return xerrors.WithStack(ErrOtherTaskIsRunning)
 	}
 
-	buildTemplate := b.buildJobTemplate(repo, job, task, task.Platform)
-	if b.IsStub() {
-		logger.Log.Info("Create Job", zap.String("name", job.Name))
-	} else {
-		_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, buildTemplate, metav1.CreateOptions{})
-		if err != nil {
-			return xerrors.WithStack(err)
+	builtObjects := b.buildJobTemplate(repo, job, task, task.Platform)
+	for _, v := range builtObjects {
+		switch obj := v.(type) {
+		case *batchv1.Job:
+			if b.IsStub() {
+				m, _ := k8smanifest.Marshal(obj)
+				logger.Log.Info("Create Job", zap.String("manifest", string(m)))
+			} else {
+				_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				if err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
+		case *corev1.Secret:
+			if b.IsStub() {
+				m, _ := k8smanifest.Marshal(obj)
+				logger.Log.Info("Create Secret", zap.String("manifest", string(m)))
+			} else {
+				_, err := b.client.CoreV1().Secrets(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				if err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
+		case *secretsstorev1.SecretProviderClass:
+			if b.IsStub() {
+				m, _ := k8smanifest.Marshal(obj)
+				logger.Log.Info("Create SecretProviderClass", zap.String("manifest", string(m)))
+			} else {
+				_, err := b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				if err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
 		}
 	}
 	now := time.Now()
 	task.StartAt = &now
 
 	var buf bytes.Buffer
-	if err := k8smanifest.NewEncoder(&buf).Encode(buildTemplate); err != nil {
-		return err
+	for _, v := range builtObjects {
+		if _, ok := v.(*batchv1.Job); !ok {
+			continue
+		}
+
+		if err := k8smanifest.NewEncoder(&buf).Encode(v); err != nil {
+			return err
+		}
+		break
 	}
 	task.Manifest = buf.String()
 
@@ -617,7 +691,8 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) *batchv1.Job {
+func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) []runtime.Object {
+	var builtObjects []runtime.Object
 	bazelVersion := b.defaultBazelVersion
 	if task.BazelVersion != "" {
 		bazelVersion = task.BazelVersion
@@ -706,8 +781,96 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	args = append(args, "--")
 	targets := strings.Split(task.Targets, "\n")
 	args = append(args, targets...)
+
+	var envFroms []corev1.EnvFromSource
+	if len(job.Secrets) > 0 && b.vaultClient == nil {
+		logger.Log.Warn("Secret injection is not supported", zap.String("repo", repo.Name), zap.String("job", job.Name))
+	} else {
+		secretProviderClasses := make(map[string]*secretsstorev1.SecretProviderClass)
+		var secretObject *corev1.Secret
+		for _, secret := range job.Secrets {
+			if secret.MountPath != "" {
+				name := fmt.Sprintf("%s-%d%s-%s", job.Name, task.Id, platformName, strings.Replace(secret.MountPath[1:], "/", "-", -1))
+				if c, ok := secretProviderClasses[secret.MountPath]; !ok {
+					secretProviderClasses[secret.MountPath] = &secretsstorev1.SecretProviderClass{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      name,
+							Namespace: b.Namespace,
+							Labels: map[string]string{
+								labelKeyJobId:  job.Identification(),
+								labelKeyCtrlBy: "bazel-build",
+							},
+						},
+						Spec: secretsstorev1.SecretProviderClassSpec{
+							Provider: "vault",
+							Parameters: map[string]string{
+								"vaultAddress": b.vaultAddr,
+								"objects":      fmt.Sprintf("- objectName: %q\n  secretPath: %q\n  secretKey: %q\n", secret.VaultKey, secret.VaultPath, secret.VaultKey),
+							},
+						},
+					}
+				} else {
+					c.Spec.Parameters["objects"] += fmt.Sprintf("- objectName: %q\n  secretPath: %q\n  secretKey: %q\n", secret.VaultKey, secret.VaultPath, secret.VaultKey)
+				}
+			}
+			if secret.EnvVarName != "" {
+				s, err := b.vaultClient.Logical().Read(secret.VaultPath)
+				if err != nil {
+					return nil
+				}
+				if _, ok := s.Data[secret.VaultKey]; !ok {
+					logger.Log.Warn("Vault key is not found", zap.String("path", secret.VaultPath), zap.String("key", secret.VaultKey))
+					continue
+				}
+				if secretObject == nil {
+					name := fmt.Sprintf("%s-%d%s", job.Name, task.Id, platformName)
+					secretObject = &corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      name,
+							Namespace: b.Namespace,
+						},
+						StringData: map[string]string{
+							secret.EnvVarName: s.Data[secret.VaultKey].(string),
+						},
+					}
+					envFroms = append(envFroms, corev1.EnvFromSource{
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: name,
+							},
+						},
+					})
+				} else {
+					secretObject.StringData[secret.EnvVarName] = s.Data[secret.VaultKey].(string)
+				}
+			}
+		}
+		if len(secretProviderClasses) > 0 {
+			readOnly := true
+			for mountPath, class := range secretProviderClasses {
+				volumeMounts = append(volumeMounts, corev1.VolumeMount{Name: class.Name, MountPath: mountPath, ReadOnly: true})
+				volumes = append(volumes, corev1.Volume{
+					Name: class.Name,
+					VolumeSource: corev1.VolumeSource{
+						CSI: &corev1.CSIVolumeSource{
+							Driver:   "secrets-store.csi.k8s.io",
+							ReadOnly: &readOnly,
+							VolumeAttributes: map[string]string{
+								"secretProviderClass": class.Name,
+							},
+						},
+					},
+				})
+				builtObjects = append(builtObjects, class)
+			}
+		}
+		if secretObject != nil {
+			builtObjects = append(builtObjects, secretObject)
+		}
+	}
+
 	var backoffLimit int32 = 0
-	return &batchv1.Job{
+	builtObjects = append(builtObjects, &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%d%s", job.RepositoryName, task.Id, platformName),
 			Namespace: b.Namespace,
@@ -746,6 +909,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args:            args,
 							WorkingDir:      "/work",
+							EnvFrom:         envFroms,
 							VolumeMounts:    volumeMounts,
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
@@ -759,5 +923,6 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 				},
 			},
 		},
-	}
+	})
+	return builtObjects
 }
