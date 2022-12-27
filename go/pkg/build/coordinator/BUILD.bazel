@@ -14,6 +14,7 @@ go_library(
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/github.com/hashicorp/vault/api",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/api/batch/v1:batch",
