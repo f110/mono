@@ -88,6 +88,7 @@ type Job struct {
 	GitHubStatus bool     `attr:"github_status,allowempty"`
 	Platforms    []string `attr:"platforms"`
 	Targets      []string `attr:"targets"`
+	Args         []string `attr:"args,allowempty"`
 	// Do not allow parallelized build in this job
 	Exclusive bool `attr:"exclusive,allowempty"`
 	// The name of config
@@ -102,6 +103,56 @@ type Job struct {
 
 func (j *Job) Identification() string {
 	return fmt.Sprintf("%s-%s-%s", j.RepositoryOwner, j.RepositoryName, j.Name)
+}
+
+func (j *Job) IsValid() error {
+	if j.Name == "" {
+		return xerrors.New("name is required")
+	}
+
+	var keys []string
+	requiredField := make(map[string]struct{})
+	typ := reflect.TypeOf(j).Elem()
+	val := reflect.ValueOf(j).Elem()
+	for i := 0; i < typ.NumField(); i++ {
+		ft := typ.Field(i)
+		if v := ft.Tag.Get("attr"); v != "" {
+			t := strings.Split(v, ",")
+			if len(t) == 2 && t[1] == "allowempty" {
+				continue
+			}
+			requiredField[t[0]] = struct{}{}
+
+			if !val.Field(i).IsZero() {
+				keys = append(keys, t[0])
+			}
+		}
+	}
+	for _, v := range keys {
+		delete(requiredField, v)
+	}
+	if len(requiredField) > 0 {
+		k := make([]string, 0, len(requiredField))
+		for v := range requiredField {
+			k = append(k, v)
+		}
+		return xerrors.Newf("all mandatory fields are not set at %s: %s", j.Name, strings.Join(k, ", "))
+	}
+
+	switch j.Command {
+	case "test":
+	case "run":
+		if len(j.Targets) != 1 {
+			return xerrors.New("can't specify multiple targets if the command is run")
+		}
+	default:
+		return xerrors.Newf("%s is not supported command", j.Command)
+	}
+
+	if j.Args != nil && j.Command != "run" {
+		return xerrors.Newf("specifying argument is not allowed in %s command", j.Command)
+	}
+	return nil
 }
 
 func Read(r io.Reader, owner, repo string) (*Config, error) {
@@ -137,31 +188,8 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 					}
 				}
 			}
-			if job.Name == "" {
-				return nil, xerrors.New("name is required")
-			}
-
-			requiredField := make(map[string]struct{})
-			typ := reflect.TypeOf(job).Elem()
-			for i := 0; i < typ.NumField(); i++ {
-				ft := typ.Field(i)
-				if v := ft.Tag.Get("attr"); v != "" {
-					t := strings.Split(v, ",")
-					if len(t) == 2 && t[1] == "allowempty" {
-						continue
-					}
-					requiredField[t[0]] = struct{}{}
-				}
-			}
-			for _, v := range keys {
-				delete(requiredField, v)
-			}
-			if len(requiredField) > 0 {
-				k := make([]string, 0, len(requiredField))
-				for v := range requiredField {
-					k = append(k, v)
-				}
-				return nil, xerrors.Newf("all mandatory fields are not set at %s: %s", job.Name, strings.Join(k, ", "))
+			if err := job.IsValid(); err != nil {
+				return nil, err
 			}
 
 			config.Jobs = append(config.Jobs, job)

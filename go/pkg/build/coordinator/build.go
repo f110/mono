@@ -778,9 +778,18 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			platformName = "-" + strings.Replace(s[1], "_", "-", -1)
 		}
 	}
-	args = append(args, "--")
-	targets := strings.Split(task.Targets, "\n")
-	args = append(args, targets...)
+	switch job.Command {
+	case "test":
+		args = append(args, "--")
+		targets := strings.Split(task.Targets, "\n")
+		args = append(args, targets...)
+	case "run":
+		args = append(args, job.Targets[0])
+		if job.Args != nil {
+			args = append(args, "--")
+			args = append(args, job.Args...)
+		}
+	}
 
 	var envFroms []corev1.EnvFromSource
 	if len(job.Secrets) > 0 && b.vaultClient == nil {

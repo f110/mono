@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -27,6 +29,7 @@ func TestReadConfig(t *testing.T) {
         "-//containers/zoekt-indexer/...",
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
+    args = ["--verbose"],
 	exclusive = True,
 	config_name = "ci",
     secrets = [
@@ -94,4 +97,40 @@ func TestRead_AllRequiredFieldsAreNotPresent(t *testing.T) {
 
 	_, err := Read(strings.NewReader(data), "", "")
 	require.Error(t, err)
+}
+
+func TestJob(t *testing.T) {
+	valid := &Job{
+		Name:      t.Name(),
+		Event:     []EventType{EventPush},
+		Command:   "test",
+		Platforms: []string{"@io_bazel_rules_go//go/toolchain:linux_amd64"},
+		Targets:   []string{"//:test"},
+	}
+
+	cases := []struct {
+		Job func(*Job)
+	}{
+		{Job: func(j *Job) { j.Name = "" }},
+		{Job: func(j *Job) { j.Event = nil }},
+		{Job: func(j *Job) { j.Command = "" }},
+		{Job: func(j *Job) { j.Command = "get" }},
+		{Job: func(j *Job) { j.Platforms = nil }},
+		{Job: func(j *Job) { j.Targets = nil }},
+		{Job: func(j *Job) { j.Command = "test"; j.Args = []string{"--verbose"} }},
+		{Job: func(j *Job) { j.Command = "run"; j.Targets = []string{"//:test", "//:run"} }},
+	}
+
+	require.Nil(t, valid.IsValid())
+	buf, err := json.Marshal(valid)
+	require.NoError(t, err)
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			var j Job
+			err = json.Unmarshal(buf, &j)
+			require.NoError(t, err)
+			tc.Job(&j)
+			assert.NotNil(t, j.IsValid())
+		})
+	}
 }
