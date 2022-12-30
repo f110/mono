@@ -878,6 +878,11 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		}
 	}
 
+	var env []corev1.EnvVar
+	for k, v := range job.Env {
+		env = append(env, corev1.EnvVar{Name: k, Value: v})
+	}
+
 	var backoffLimit int32 = 0
 	builtObjects = append(builtObjects, &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -918,6 +923,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Args:            args,
 							WorkingDir:      "/work",
+							Env:             env,
 							EnvFrom:         envFroms,
 							VolumeMounts:    volumeMounts,
 							Resources: corev1.ResourceRequirements{

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "config",
     srcs = ["config.go"],
+    embedsrcs = ["config.star"],
     importpath = "go.f110.dev/mono/go/pkg/build/config",
     visibility = ["//visibility:public"],
     deps = [

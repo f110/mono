@@ -29,7 +29,6 @@ func TestReadConfig(t *testing.T) {
         "-//containers/zoekt-indexer/...",
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
-    args = ["--verbose"],
 	exclusive = True,
 	config_name = "ci",
     secrets = [
@@ -37,6 +36,10 @@ func TestReadConfig(t *testing.T) {
         secret(env_name = "ACCESS_KEY", vault_path = "/secrets/provider", vault_key = "access_key"),
         secret(mount_path = "/var/vault/provider", vault_path = "/secrets/provider", vault_key = "secret_key"),
     ],
+	env = {
+        "FOOBAR": "env var",
+        "BAZ": 1,
+    },
 )`
 
 	conf, err := Read(strings.NewReader(data), "", "")
@@ -63,6 +66,8 @@ func TestReadConfig(t *testing.T) {
 		},
 		conf.Jobs[0].Targets,
 	)
+	assert.Contains(t, conf.Jobs[0].Env, "FOOBAR")
+	assert.Contains(t, conf.Jobs[0].Env, "BAZ")
 
 	require.Len(t, conf.Jobs[0].Secrets, 3)
 	assert.Equal(t, conf.Jobs[0].Secrets[0].EnvVarName, "GITHUB_API")

@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
@@ -13,6 +14,9 @@ import (
 	"go.f110.dev/xerrors"
 	"go.starlark.net/starlark"
 )
+
+//go:embed config.star
+var configModule string
 
 type EventType string
 
@@ -94,8 +98,9 @@ type Job struct {
 	// The name of config
 	ConfigName string `attr:"config_name,allowempty"`
 	// Job schedule
-	Schedule string    `attr:"schedule,allowempty"`
-	Secrets  []*Secret `attr:"secrets,allowempty"`
+	Schedule string            `attr:"schedule,allowempty"`
+	Secrets  []*Secret         `attr:"secrets,allowempty"`
+	Env      map[string]string `attr:"env,allowempty"`
 
 	RepositoryOwner string
 	RepositoryName  string
@@ -157,62 +162,65 @@ func (j *Job) IsValid() error {
 
 func Read(r io.Reader, owner, repo string) (*Config, error) {
 	config := &Config{RepositoryOwner: owner, RepositoryName: repo}
-	predeclared := starlark.StringDict{
-		"job": starlark.NewBuiltin("job", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-			job := &Job{RepositoryOwner: owner, RepositoryName: repo}
-
-			var keys []string
-			for _, v := range kwargs {
-				name := v.Index(0)
-				value := v.Index(1)
-				keys = append(keys, name.(starlark.String).GoString())
-
-				switch name.Type() {
-				case "string":
-					s := name.(starlark.String)
-
-					typ := reflect.TypeOf(job).Elem()
-					val := reflect.ValueOf(job).Elem()
-					for i := 0; i < typ.NumField(); i++ {
-						ft := typ.Field(i)
-						if v := ft.Tag.Get("attr"); v != "" {
-							t := strings.Split(v, ",")
-							if t[0] == s.GoString() {
-								fv := val.Field(i)
-								if err := setValue(ft.Type, fv, value); err != nil {
-									log.Println(err)
-								}
-								break
-							}
-						}
-					}
-				}
-			}
-			if err := job.IsValid(); err != nil {
-				return nil, err
-			}
-
-			config.Jobs = append(config.Jobs, job)
-			return starlark.String(""), nil
-		}),
-		"secret": starlark.NewBuiltin("secret", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-			s := &Secret{}
-			err := starlark.UnpackArgs(fn.Name(), args, kwargs, argPairs(s)...)
-			if err != nil {
-				return nil, err
-			}
-			return s, nil
-		}),
-	}
 
 	thread := &starlark.Thread{
 		Name:  "example",
 		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
 	}
 
-	_, err := starlark.ExecFile(thread, "", r, predeclared)
+	mod, err := starlark.ExecFile(thread, "", strings.NewReader(configModule), nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.WithStack(err)
+	}
+	mod["job"] = starlark.NewBuiltin("job", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		job := &Job{RepositoryOwner: owner, RepositoryName: repo}
+
+		var keys []string
+		for _, v := range kwargs {
+			name := v.Index(0)
+			value := v.Index(1)
+			keys = append(keys, name.(starlark.String).GoString())
+
+			switch name.Type() {
+			case "string":
+				s := name.(starlark.String)
+
+				typ := reflect.TypeOf(job).Elem()
+				val := reflect.ValueOf(job).Elem()
+				for i := 0; i < typ.NumField(); i++ {
+					ft := typ.Field(i)
+					if v := ft.Tag.Get("attr"); v != "" {
+						t := strings.Split(v, ",")
+						if t[0] == s.GoString() {
+							fv := val.Field(i)
+							if err := setValue(ft.Type, fv, value); err != nil {
+								log.Println(err)
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+		if err := job.IsValid(); err != nil {
+			return nil, err
+		}
+
+		config.Jobs = append(config.Jobs, job)
+		return starlark.String(""), nil
+	})
+	mod["secret"] = starlark.NewBuiltin("secret", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		s := &Secret{}
+		err := starlark.UnpackArgs(fn.Name(), args, kwargs, argPairs(s)...)
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
+	})
+
+	_, err = starlark.ExecFile(thread, "", r, mod)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
 	}
 	return config, nil
 }
@@ -256,6 +264,29 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 				fv.Set(reflect.Append(fv, reflect.ValueOf(item)))
 			}
 		}
+		return nil
+	case reflect.Map:
+		v, ok := val.(*starlark.Dict)
+		if !ok {
+			return xerrors.Newf("expect *starlark.Dict field: %T", val)
+		}
+		m := make(map[string]string)
+		for _, t := range v.Items() {
+			k, ok := t.Index(0).(starlark.String)
+			if !ok {
+				return xerrors.Newf("the type of the key is not string: %T", t.Index(0))
+			}
+			key := k.GoString()
+
+			switch v := t.Index(1).(type) {
+			case starlark.String:
+				m[key] = v.GoString()
+			case starlark.Int:
+				m[key] = v.String()
+			}
+			m[t.Index(0).(starlark.String).GoString()] = t.Index(1).String()
+		}
+		fv.Set(reflect.ValueOf(m))
 		return nil
 	}
 
