@@ -98,9 +98,9 @@ type Job struct {
 	// The name of config
 	ConfigName string `attr:"config_name,allowempty"`
 	// Job schedule
-	Schedule string            `attr:"schedule,allowempty"`
-	Secrets  []*Secret         `attr:"secrets,allowempty"`
-	Env      map[string]string `attr:"env,allowempty"`
+	Schedule string         `attr:"schedule,allowempty"`
+	Secrets  []*Secret      `attr:"secrets,allowempty"`
+	Env      map[string]any `attr:"env,allowempty"`
 
 	RepositoryOwner string
 	RepositoryName  string
@@ -270,7 +270,7 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 		if !ok {
 			return xerrors.Newf("expect *starlark.Dict field: %T", val)
 		}
-		m := make(map[string]string)
+		m := make(map[string]any)
 		for _, t := range v.Items() {
 			k, ok := t.Index(0).(starlark.String)
 			if !ok {
@@ -283,6 +283,8 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 				m[key] = v.GoString()
 			case starlark.Int:
 				m[key] = v.String()
+			case *Secret:
+				m[key] = v
 			}
 			m[t.Index(0).(starlark.String).GoString()] = t.Index(1).String()
 		}

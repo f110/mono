@@ -39,6 +39,7 @@ func TestReadConfig(t *testing.T) {
 	env = {
         "FOOBAR": "env var",
         "BAZ": 1,
+        "BAR": secret(vault_path = "/secrets/foo", vault_key = "bar")
     },
 )`
 

@@ -502,7 +502,10 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		return xerrors.WithStack(ErrOtherTaskIsRunning)
 	}
 
-	builtObjects := b.buildJobTemplate(repo, job, task, task.Platform)
+	builtObjects, err := b.buildJobTemplate(repo, job, task, task.Platform)
+	if err != nil {
+		return err
+	}
 	for _, v := range builtObjects {
 		switch obj := v.(type) {
 		case *batchv1.Job:
@@ -691,7 +694,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) []runtime.Object {
+func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) ([]runtime.Object, error) {
 	var builtObjects []runtime.Object
 	bazelVersion := b.defaultBazelVersion
 	if task.BazelVersion != "" {
@@ -747,7 +750,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	if job.CPULimit != "" {
 		q, err := resource.ParseQuantity(job.CPULimit)
 		if err != nil {
-			return nil
+			return nil, xerrors.WithStack(err)
 		}
 		cpuLimit = q
 	}
@@ -755,7 +758,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	if job.MemoryLimit != "" {
 		q, err := resource.ParseQuantity(job.MemoryLimit)
 		if err != nil {
-			return nil
+			return nil, xerrors.WithStack(err)
 		}
 		memoryLimit = q
 	}
@@ -825,7 +828,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			if secret.EnvVarName != "" {
 				s, err := b.vaultClient.Logical().Read(secret.VaultPath)
 				if err != nil {
-					return nil
+					return nil, xerrors.WithStack(err)
 				}
 				if _, ok := s.Data[secret.VaultKey]; !ok {
 					logger.Log.Warn("Vault key is not found", zap.String("path", secret.VaultPath), zap.String("key", secret.VaultKey))
@@ -879,8 +882,51 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	}
 
 	var env []corev1.EnvVar
+	var envSecret *corev1.Secret
 	for k, v := range job.Env {
-		env = append(env, corev1.EnvVar{Name: k, Value: v})
+		switch val := v.(type) {
+		case string:
+			env = append(env, corev1.EnvVar{Name: k, Value: val})
+		case *config.Secret:
+			s, err := b.vaultClient.Logical().Read(val.VaultPath)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			if _, ok := s.Data[val.VaultKey]; !ok {
+				logger.Log.Warn("Vault key is not found", zap.String("path", val.VaultPath), zap.String("key", val.VaultKey))
+				continue
+			}
+
+			secretName := fmt.Sprintf("%s-%d%s-env", job.Name, task.Id, platformName)
+			if envSecret == nil {
+				envSecret = &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secretName,
+						Namespace: b.Namespace,
+					},
+					StringData: map[string]string{
+						k: "",
+					},
+				}
+			} else {
+				envSecret.StringData[k] = ""
+			}
+
+			env = append(env, corev1.EnvVar{
+				Name: k,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: secretName,
+						},
+						Key: k,
+					},
+				},
+			})
+		}
+	}
+	if envSecret != nil {
+		builtObjects = append(builtObjects, envSecret)
 	}
 
 	var backoffLimit int32 = 0
@@ -939,5 +985,5 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			},
 		},
 	})
-	return builtObjects
+	return builtObjects, nil
 }
