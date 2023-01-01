@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/codesearch"
+	"go.f110.dev/mono/go/codesearch"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

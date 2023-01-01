@@ -14,7 +14,7 @@ go_library(
         "repoindexer.go",
         "updater.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/codesearch",
+    importpath = "go.f110.dev/mono/go/codesearch",
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",
