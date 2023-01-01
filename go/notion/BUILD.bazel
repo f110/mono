@@ -7,7 +7,7 @@ go_library(
         "github-task.go",
         "todo-scheduler.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/notion",
+    importpath = "go.f110.dev/mono/go/notion",
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",

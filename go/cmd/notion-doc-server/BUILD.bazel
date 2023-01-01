@@ -13,7 +13,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/logger",
-        "//go/pkg/notion",
+        "//go/notion",
         "//go/signals",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",

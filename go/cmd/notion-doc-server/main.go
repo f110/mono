@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/notion"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/notion"
 	"go.f110.dev/mono/go/signals"
 )
 
