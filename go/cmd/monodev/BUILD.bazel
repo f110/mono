@@ -16,7 +16,7 @@ go_library(
         "//go/docutil",
         "//go/fsm",
         "//go/git",
-        "//go/pkg/grpcutil",
+        "//go/grpcutil",
         "//go/pkg/k8s/kind",
         "//go/pkg/logger",
         "//go/pkg/parallel",

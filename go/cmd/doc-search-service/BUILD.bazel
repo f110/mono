@@ -12,7 +12,7 @@ go_library(
         "//go/docutil",
         "//go/fsm",
         "//go/git",
-        "//go/pkg/grpcutil",
+        "//go/grpcutil",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/spf13/cobra",

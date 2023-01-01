@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "grpcutil",
     srcs = ["interceptor.go"],
-    importpath = "go.f110.dev/mono/go/pkg/grpcutil",
+    importpath = "go.f110.dev/mono/go/grpcutil",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/logger",
