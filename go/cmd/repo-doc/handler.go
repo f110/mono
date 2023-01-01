@@ -13,7 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/docutil"
+	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 )

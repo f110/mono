@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.f110.dev/mono/go/pkg/docutil"
+	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/logger"
 )

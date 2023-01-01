@@ -4,7 +4,7 @@
 # gazelle:exclude third_party/universal-ctags/ctags
 # gazelle:resolve go go.f110.dev/mono/go/pkg/text/converter //go/pkg/text/converter
 # gazelle:resolve go go.f110.dev/mono/go/pkg/git //go/pkg/git
-# gazelle:resolve go go.f110.dev/mono/go/pkg/docutil //go/pkg/docutil
+# gazelle:resolve go go.f110.dev/mono/go/docutil //go/docutil
 
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 

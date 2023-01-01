@@ -1,6 +1,6 @@
 syntax = "proto3";
 package mono.docutil;
-option  go_package = "go.f110.dev/mono/go/pkg/docutil";
+option  go_package = "go.f110.dev/mono/go/docutil";
 
 enum FileType {
   FILE_TYPE_MARKDOWN = 0;

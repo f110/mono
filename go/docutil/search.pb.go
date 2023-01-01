@@ -8,13 +8,14 @@ package docutil
 
 import (
 	context "context"
+	reflect "reflect"
+	sync "sync"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -598,8 +599,8 @@ type PageLink struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type        LinkType `protobuf:"varint,1,opt,name=type,proto3,enum=mono.docutil.LinkType" json:"type,omitempty"`
-	Source      string   `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	Type   LinkType `protobuf:"varint,1,opt,name=type,proto3,enum=mono.docutil.LinkType" json:"type,omitempty"`
+	Source string   `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	Destination string   `protobuf:"bytes,3,opt,name=destination,proto3" json:"destination,omitempty"`
 	Repository  string   `protobuf:"bytes,4,opt,name=repository,proto3" json:"repository,omitempty"`
 	Title       string   `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`

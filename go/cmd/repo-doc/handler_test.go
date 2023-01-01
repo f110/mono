@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"go.f110.dev/mono/go/pkg/docutil"
+	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/pkg/git"
 )
 

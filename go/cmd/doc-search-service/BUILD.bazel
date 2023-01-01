@@ -9,7 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/doc-search-service",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/docutil",
+        "//go/docutil",
         "//go/pkg/fsm",
         "//go/pkg/git",
         "//go/pkg/grpcutil",

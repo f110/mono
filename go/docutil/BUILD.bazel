@@ -4,7 +4,7 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 go_proto_library(
     name = "doc_search_go_proto",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "go.f110.dev/mono/go/pkg/docutil",
+    importpath = "go.f110.dev/mono/go/docutil",
     proto = "//proto/docutil:doc_search",
     visibility = ["//visibility:private"],
 )
@@ -23,7 +23,7 @@ go_library(
         "search.pb.go",
         "service.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/docutil",
+    importpath = "go.f110.dev/mono/go/docutil",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/git",

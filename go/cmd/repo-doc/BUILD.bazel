@@ -18,7 +18,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/repo-doc",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/docutil",
+        "//go/docutil",
         "//go/pkg/fsm",
         "//go/pkg/git",
         "//go/pkg/grpcutil",
@@ -60,7 +60,7 @@ go_test(
     ],
     embed = [":repo-doc_lib"],
     deps = [
-        "//go/pkg/docutil",
+        "//go/docutil",
         "//go/pkg/git",
         "//go/pkg/logger",
         "//vendor/github.com/stretchr/testify/assert",

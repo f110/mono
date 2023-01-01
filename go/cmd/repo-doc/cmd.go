@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.f110.dev/mono/go/pkg/docutil"
+	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/grpcutil"
