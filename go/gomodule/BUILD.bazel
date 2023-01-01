@@ -14,8 +14,8 @@ go_library(
     deps = [
         "//go/githubutil",
         "//go/pkg/logger",
-        "//go/pkg/regexp/regexputil",
         "//go/pkg/storage",
+        "//go/regexp/regexputil",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",

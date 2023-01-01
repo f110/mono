@@ -6,10 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/build/api",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/enumerable",
         "//go/pkg/build/config",
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
-        "//go/enumerable",
         "//go/pkg/logger",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",

@@ -7,7 +7,7 @@ import (
 	"go.f110.dev/xerrors"
 	"gopkg.in/yaml.v2"
 
-	"go.f110.dev/mono/go/pkg/regexp/regexputil"
+	"go.f110.dev/mono/go/regexp/regexputil"
 )
 
 type Config struct {
