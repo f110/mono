@@ -4,7 +4,7 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 go_proto_library(
     name = "common_go_proto",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    importpath = "go.f110.dev/mono/go/text/converter",
     proto = "//proto/text/converter:common_proto",
     visibility = ["//visibility:private"],
 )
@@ -12,7 +12,7 @@ go_proto_library(
 go_proto_library(
     name = "converter_go_proto",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    importpath = "go.f110.dev/mono/go/text/converter",
     protos = [
         "//proto/text/converter:common_proto",
         "//proto/text/converter:md_converter_proto",
@@ -44,7 +44,7 @@ go_library(
         "rst.pb.go",
         "service.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/text/converter",
+    importpath = "go.f110.dev/mono/go/text/converter",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/yuin/goldmark",

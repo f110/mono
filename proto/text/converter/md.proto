@@ -1,6 +1,6 @@
 syntax = "proto3";
 package mono.text.converter;
-option go_package = "go.f110.dev/mono/go/pkg/text/converter";
+option  go_package = "go.f110.dev/mono/go/text/converter";
 
 import "proto/text/converter/common.proto";
 

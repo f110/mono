@@ -1,13 +1,13 @@
 syntax = "proto3";
 package mono.text.converter;
-option go_package = "go.f110.dev/mono/go/pkg/text/converter";
+option  go_package = "go.f110.dev/mono/go/text/converter";
 
 enum Format {
   HTML = 0;
 }
 
 message RequestConvert {
-  string in = 1;
+  string in     = 1;
   Format format = 2;
 }
 

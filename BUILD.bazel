@@ -2,7 +2,7 @@
 # gazelle:proto disable_global
 # gazelle:exclude containers/zoekt-webserver
 # gazelle:exclude third_party/universal-ctags/ctags
-# gazelle:resolve go go.f110.dev/mono/go/pkg/text/converter //go/pkg/text/converter
+# gazelle:resolve go go.f110.dev/mono/go/text/converter //go/text/converter
 # gazelle:resolve go go.f110.dev/mono/go/git //go/git
 # gazelle:resolve go go.f110.dev/mono/go/docutil //go/docutil
 

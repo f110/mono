@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/text/converter"
+	"go.f110.dev/mono/go/text/converter"
 )
 
 func docConverterService(args []string) error {
