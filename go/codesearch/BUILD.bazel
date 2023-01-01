@@ -19,7 +19,7 @@ go_library(
     deps = [
         "//go/githubutil",
         "//go/logger",
-        "//go/pkg/k8s/volume",
+        "//go/k8s/volume",
         "//go/regexp/regexputil",
         "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",

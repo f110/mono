@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "volume",
     srcs = ["watcher.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/volume",
+    importpath = "go.f110.dev/mono/go/k8s/volume",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/fsnotify/fsnotify",

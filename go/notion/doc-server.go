@@ -14,8 +14,8 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 
+	"go.f110.dev/mono/go/k8s/volume"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/pkg/k8s/volume"
 )
 
 type databaseDocServerConfig struct {
