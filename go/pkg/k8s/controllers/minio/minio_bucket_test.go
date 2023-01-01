@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
 func TestBucketController(t *testing.T) {

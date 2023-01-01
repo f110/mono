@@ -47,7 +47,7 @@ go_test(
     embed = [":minio"],
     deps = [
         "//go/api/miniov1alpha1",
-        "//go/pkg/k8s/controllers/controllertest",
+        "//go/k8s/controllers/controllertest",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/minio/minio-go/v6:minio-go",

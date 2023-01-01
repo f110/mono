@@ -14,7 +14,7 @@ import (
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/harbor"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
 func TestProjectController(t *testing.T) {

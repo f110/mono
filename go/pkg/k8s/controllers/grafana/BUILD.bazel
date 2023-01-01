@@ -30,7 +30,7 @@ go_test(
     deps = [
         "//go/api/grafanav1alpha1",
         "//go/grafana",
-        "//go/pkg/k8s/controllers/controllertest",
+        "//go/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

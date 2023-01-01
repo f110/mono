@@ -41,7 +41,7 @@ go_test(
         "//go/api/harborv1alpha1",
         "//go/harbor",
         "//go/http/mockutil",
-        "//go/pkg/k8s/controllers/controllertest",
+        "//go/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/stretchr/testify/require",
         "//vendor/k8s.io/api/core/v1:core",

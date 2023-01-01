@@ -29,7 +29,7 @@ go_test(
     embed = [":consul"],
     deps = [
         "//go/api/consulv1alpha1",
-        "//go/pkg/k8s/controllers/controllertest",
+        "//go/k8s/controllers/controllertest",
         "//go/storage/storagetest",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/minio/minio-go/v7:minio-go",

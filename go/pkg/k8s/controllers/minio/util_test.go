@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
 func newRunner() *controllertest.TestRunner {

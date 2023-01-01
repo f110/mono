@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "controllertest",
     srcs = ["runner.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllertest",
+    importpath = "go.f110.dev/mono/go/k8s/controllers/controllertest",
     visibility = ["//visibility:public"],
     deps = [
         "//go/k8s/client",
