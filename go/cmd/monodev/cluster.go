@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 
-	"go.f110.dev/mono/go/pkg/k8s/kind"
+	"go.f110.dev/mono/go/k8s/kind"
 )
 
 const (

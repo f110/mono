@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "kind",
     srcs = ["cluster.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/kind",
+    importpath = "go.f110.dev/mono/go/k8s/kind",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/go.f110.dev/xerrors",

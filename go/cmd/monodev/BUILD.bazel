@@ -19,7 +19,7 @@ go_library(
         "//go/grpcutil",
         "//go/logger",
         "//go/parallel",
-        "//go/pkg/k8s/kind",
+        "//go/k8s/kind",
         "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
