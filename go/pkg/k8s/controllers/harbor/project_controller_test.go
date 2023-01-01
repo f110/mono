@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
-	"go.f110.dev/mono/go/pkg/harbor"
+	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 )
 

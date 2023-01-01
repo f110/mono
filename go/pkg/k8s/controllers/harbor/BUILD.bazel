@@ -11,7 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/harborv1alpha1",
-        "//go/pkg/harbor",
+        "//go/harbor",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/pkg/logger",
@@ -39,7 +39,7 @@ go_test(
     embed = [":harbor"],
     deps = [
         "//go/api/harborv1alpha1",
-        "//go/pkg/harbor",
+        "//go/harbor",
         "//go/pkg/http/mockutil",
         "//go/pkg/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",
