@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/collections/set"
+	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/pkg/storage"
 )
 

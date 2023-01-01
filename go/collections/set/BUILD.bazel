@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "set",
     srcs = ["map.go"],
-    importpath = "go.f110.dev/mono/go/pkg/collections/set",
+    importpath = "go.f110.dev/mono/go/collections/set",
     visibility = ["//visibility:public"],
 )
 
