@@ -25,12 +25,12 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
 
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/pkg/build/api"
 	"go.f110.dev/mono/go/pkg/build/coordinator"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
-	"go.f110.dev/mono/go/pkg/fsm"
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"

@@ -14,7 +14,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/docutil",
-        "//go/pkg/fsm",
+        "//go/fsm",
         "//go/pkg/git",
         "//go/pkg/grpcutil",
         "//go/pkg/k8s/kind",

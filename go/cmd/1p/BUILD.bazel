@@ -37,7 +37,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/clipboard",
-        "//go/pkg/fsm",
+        "//go/fsm",
         "//go/pkg/logger",
         "//go/pkg/opvault",
         "//vendor/github.com/golang/protobuf/ptypes",

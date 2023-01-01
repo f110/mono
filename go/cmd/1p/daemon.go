@@ -17,7 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/clipboard"
-	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/opvault"
 )

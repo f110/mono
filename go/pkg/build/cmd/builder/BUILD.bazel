@@ -11,7 +11,7 @@ go_library(
         "//go/pkg/build/database/dao",
         "//go/pkg/build/gc",
         "//go/pkg/build/watcher",
-        "//go/pkg/fsm",
+        "//go/fsm",
         "//go/pkg/githubutil",
         "//go/pkg/logger",
         "//go/pkg/storage",

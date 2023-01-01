@@ -28,7 +28,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
-	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/pkg/logger"

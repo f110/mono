@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/miniov1alpha1",
-        "//go/pkg/fsm",
+        "//go/fsm",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/pkg/logger",

@@ -6,7 +6,7 @@ go_library(
         "debug.go",
         "fsm.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/fsm",
+    importpath = "go.f110.dev/mono/go/fsm",
     visibility = ["//visibility:public"],
     deps = ["//vendor/go.f110.dev/xerrors"],
 )

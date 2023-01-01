@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/pkg/git"
 	"go.f110.dev/mono/go/pkg/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"

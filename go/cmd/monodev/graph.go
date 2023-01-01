@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/fsm"
 )
 
 func init() {

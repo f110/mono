@@ -24,7 +24,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/component-base/metrics/legacyregistry"
 
-	"go.f110.dev/mono/go/pkg/fsm"
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/consul"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/grafana"
