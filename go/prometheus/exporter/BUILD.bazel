@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "exporter",
     srcs = ["inkbird.go"],
-    importpath = "go.f110.dev/mono/go/pkg/prometheus/exporter",
+    importpath = "go.f110.dev/mono/go/prometheus/exporter",
     visibility = ["//visibility:public"],
     deps = [
         "//go/ble/inkbird",

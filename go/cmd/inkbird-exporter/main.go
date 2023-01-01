@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/prometheus/exporter"
+	"go.f110.dev/mono/go/prometheus/exporter"
 )
 
 func inkbirdExporter(args []string) error {
