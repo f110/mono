@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "macports",
     srcs = ["parser.go"],
-    importpath = "go.f110.dev/mono/go/pkg/macports",
+    importpath = "go.f110.dev/mono/go/macports",
     visibility = ["//visibility:public"],
 )
 
