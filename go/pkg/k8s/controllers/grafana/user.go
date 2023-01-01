@@ -21,7 +21,7 @@ import (
 
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/collections/set"
-	"go.f110.dev/mono/go/pkg/grafana"
+	"go.f110.dev/mono/go/grafana"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 )

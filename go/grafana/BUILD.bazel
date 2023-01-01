@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "grafana",
     srcs = ["client.go"],
-    importpath = "go.f110.dev/mono/go/pkg/grafana",
+    importpath = "go.f110.dev/mono/go/grafana",
     visibility = ["//visibility:public"],
     deps = ["//vendor/go.f110.dev/xerrors"],
 )

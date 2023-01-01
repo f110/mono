@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/api/grafanav1alpha1",
         "//go/collections/set",
-        "//go/pkg/grafana",
+        "//go/grafana",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//vendor/go.f110.dev/xerrors",
@@ -29,7 +29,7 @@ go_test(
     embed = [":grafana"],
     deps = [
         "//go/api/grafanav1alpha1",
-        "//go/pkg/grafana",
+        "//go/grafana",
         "//go/pkg/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/stretchr/testify/assert",
