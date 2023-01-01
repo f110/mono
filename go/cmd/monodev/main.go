@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/cmd/monodev"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -27,7 +26,7 @@ func monoDev() error {
 	}
 	logger.Flags(rootCmd.PersistentFlags())
 
-	monodev.CommandManager.Add(rootCmd)
+	CommandManager.Add(rootCmd)
 
 	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancelFunc()

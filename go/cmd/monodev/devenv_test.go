@@ -1,4 +1,4 @@
-package monodev
+package main
 
 import (
 	"testing"
