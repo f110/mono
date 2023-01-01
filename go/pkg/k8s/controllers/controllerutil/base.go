@@ -15,9 +15,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
+	"go.f110.dev/mono/go/parallel"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 type Controller interface {

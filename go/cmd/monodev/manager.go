@@ -10,8 +10,8 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/parallel"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/parallel"
 )
 
 type Manager []*cobra.Command
