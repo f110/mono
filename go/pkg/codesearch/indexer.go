@@ -29,7 +29,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

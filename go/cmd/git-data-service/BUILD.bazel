@@ -12,7 +12,7 @@ go_library(
     deps = [
         "//go/fsm",
         "//go/git",
-        "//go/pkg/githubutil",
+        "//go/githubutil",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",

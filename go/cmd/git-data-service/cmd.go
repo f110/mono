@@ -19,7 +19,7 @@ import (
 
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )

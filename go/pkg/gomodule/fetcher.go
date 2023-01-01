@@ -24,7 +24,7 @@ import (
 	"golang.org/x/mod/semver"
 	"golang.org/x/tools/go/vcs"
 
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

@@ -15,7 +15,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/pkg/k8s/volume"
 	"go.f110.dev/mono/go/pkg/logger"
 )

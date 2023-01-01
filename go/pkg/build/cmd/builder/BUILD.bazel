@@ -12,7 +12,7 @@ go_library(
         "//go/pkg/build/gc",
         "//go/pkg/build/watcher",
         "//go/fsm",
-        "//go/pkg/githubutil",
+        "//go/githubutil",
         "//go/pkg/logger",
         "//go/pkg/storage",
         "//vendor/github.com/go-sql-driver/mysql",

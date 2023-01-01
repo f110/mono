@@ -9,7 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/gomodule-proxy",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/githubutil",
+        "//go/githubutil",
         "//go/pkg/gomodule",
         "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",

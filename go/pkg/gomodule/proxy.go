@@ -19,7 +19,7 @@ import (
 	"golang.org/x/mod/module"
 	modzip "golang.org/x/mod/zip"
 
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

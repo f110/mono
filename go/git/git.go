@@ -19,7 +19,7 @@ import (
 	"github.com/google/go-github/v32/github"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/githubutil"
+	"go.f110.dev/mono/go/githubutil"
 )
 
 func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string) error {

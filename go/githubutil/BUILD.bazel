@@ -6,7 +6,7 @@ go_library(
         "integration.go",
         "token.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/githubutil",
+    importpath = "go.f110.dev/mono/go/githubutil",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/golang-jwt/jwt/v4:jwt",
