@@ -23,8 +23,8 @@ import (
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/opvault"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/opvault"
 )
 
 const (
