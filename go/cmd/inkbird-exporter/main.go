@@ -16,7 +16,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 )
 

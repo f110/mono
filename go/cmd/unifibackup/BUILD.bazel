@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/unifibackup",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/cloud.google.com/go/storage",
         "//vendor/github.com/fsnotify/fsnotify",
         "//vendor/github.com/spf13/pflag",

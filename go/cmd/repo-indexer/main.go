@@ -8,7 +8,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/codesearch"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func repoIndexer(args []string) error {

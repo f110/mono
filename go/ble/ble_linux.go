@@ -8,7 +8,7 @@ import (
 	"github.com/go-ble/ble/linux"
 	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func scan(ctx context.Context) (<-chan Peripheral, error) {

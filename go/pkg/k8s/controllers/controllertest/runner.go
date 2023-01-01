@@ -20,10 +20,10 @@ import (
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/client/testingclient"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/pkg/logger"
 )
 
 type TestRunner struct {

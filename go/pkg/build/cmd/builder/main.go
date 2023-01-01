@@ -27,12 +27,12 @@ import (
 
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/build/api"
 	"go.f110.dev/mono/go/pkg/build/coordinator"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
-	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/storage"
 )
 

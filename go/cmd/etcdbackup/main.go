@@ -14,7 +14,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	etcd2 "go.f110.dev/mono/go/etcd"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 

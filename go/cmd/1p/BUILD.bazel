@@ -38,8 +38,8 @@ go_library(
     deps = [
         "//go/clipboard",
         "//go/fsm",
+        "//go/logger",
         "//go/opvault",
-        "//go/pkg/logger",
         "//vendor/github.com/golang/protobuf/ptypes",
         "//vendor/github.com/peco/peco",
         "//vendor/github.com/shirou/gopsutil/v3/process",

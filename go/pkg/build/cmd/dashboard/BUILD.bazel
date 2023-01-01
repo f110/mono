@@ -6,11 +6,11 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/build/cmd/dashboard",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//go/pkg/build/database/dao",
         "//go/pkg/build/web",
-        "//go/pkg/logger",
-        "//go/storage",
         "//go/signals",
+        "//go/storage",
         "//vendor/github.com/go-sql-driver/mysql",
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",

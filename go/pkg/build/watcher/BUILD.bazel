@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/build/watcher",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/api/batch/v1:batch",

@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/notion-todo-scheduler",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/logger",
+        "//go/logger",
         "//go/notion",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",

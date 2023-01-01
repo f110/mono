@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (

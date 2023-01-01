@@ -9,7 +9,7 @@ go_library(
         "named.go",
         "xerrors.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/logger",
+    importpath = "go.f110.dev/mono/go/logger",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/spf13/pflag",

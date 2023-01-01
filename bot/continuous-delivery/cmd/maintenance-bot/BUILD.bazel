@@ -9,7 +9,7 @@ go_library(
         "//bot/continuous-delivery/pkg/config",
         "//bot/continuous-delivery/pkg/consumer",
         "//bot/continuous-delivery/pkg/webhook",
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/xerrors",

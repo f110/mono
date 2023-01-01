@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/http/httpserver"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Mode string

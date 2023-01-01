@@ -12,9 +12,9 @@ go_library(
     deps = [
         "//go/api/harborv1alpha1",
         "//go/harbor",
+        "//go/logger",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
-        "//go/pkg/logger",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/api/core/v1:core",

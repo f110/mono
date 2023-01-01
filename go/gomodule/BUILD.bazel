@@ -13,9 +13,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",
-        "//go/pkg/logger",
-        "//go/storage",
+        "//go/logger",
         "//go/regexp/regexputil",
+        "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",

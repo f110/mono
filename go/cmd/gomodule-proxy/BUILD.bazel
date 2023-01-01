@@ -11,7 +11,7 @@ go_library(
     deps = [
         "//go/githubutil",
         "//go/gomodule",
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/go-memcached/client",

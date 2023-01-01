@@ -13,7 +13,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/grpcutil",
-        "//go/pkg/logger",
+        "//go/logger",
         "//go/storage",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",

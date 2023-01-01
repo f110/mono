@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var maxProcessingTime = 1 * time.Minute

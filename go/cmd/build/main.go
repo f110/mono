@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/build/cmd/builder"
 	"go.f110.dev/mono/go/pkg/build/cmd/dashboard"
-	"go.f110.dev/mono/go/pkg/logger"
 )
 
 func main() {

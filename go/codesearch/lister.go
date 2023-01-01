@@ -12,7 +12,7 @@ import (
 	"github.com/shurcooL/githubv4"
 	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Repository struct {

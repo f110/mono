@@ -12,7 +12,7 @@ import (
 	"go.f110.dev/mono/bot/continuous-delivery/pkg/config"
 	"go.f110.dev/mono/bot/continuous-delivery/pkg/consumer"
 	"go.f110.dev/mono/bot/continuous-delivery/pkg/webhook"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func producer(args []string) error {

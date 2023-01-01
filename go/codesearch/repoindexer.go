@@ -14,8 +14,8 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/k8s/volume"
-	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/storage"
 )
 

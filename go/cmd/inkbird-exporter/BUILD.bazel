@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/inkbird-exporter",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/logger",
+        "//go/logger",
         "//go/prometheus/exporter",
         "//vendor/github.com/prometheus/client_golang/prometheus",
         "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",

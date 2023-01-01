@@ -11,9 +11,9 @@ import (
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/build/database"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
-	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/storage"
 )
 

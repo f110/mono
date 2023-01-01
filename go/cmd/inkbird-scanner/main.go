@@ -9,7 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/ble/inkbird"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func inkbirdScanner() error {

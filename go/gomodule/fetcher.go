@@ -25,7 +25,7 @@ import (
 	"golang.org/x/tools/go/vcs"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type ModuleRoot struct {

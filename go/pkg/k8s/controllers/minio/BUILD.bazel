@@ -11,9 +11,9 @@ go_library(
     deps = [
         "//go/api/miniov1alpha1",
         "//go/fsm",
+        "//go/logger",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
-        "//go/pkg/logger",
         "//go/stringsutil",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/minio/minio-go/v6:minio-go",

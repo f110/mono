@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type backupMeta struct {

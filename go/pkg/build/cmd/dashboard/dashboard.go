@@ -16,9 +16,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/pkg/build/database/dao"
 	"go.f110.dev/mono/go/pkg/build/web"
-	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/signals"
 	"go.f110.dev/mono/go/storage"
 )

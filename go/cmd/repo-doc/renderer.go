@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 //go:embed doc.tmpl directory.tmpl index.tmpl

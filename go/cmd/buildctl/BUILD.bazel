@@ -6,8 +6,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/buildctl",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/logger",
         "//go/pkg/build/cmd/buildctl",
-        "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",
     ],
 )

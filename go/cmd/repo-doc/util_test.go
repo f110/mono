@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func TestMain(m *testing.M) {

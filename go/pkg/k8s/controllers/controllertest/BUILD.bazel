@@ -6,10 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllertest",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/client/testingclient",
         "//go/pkg/k8s/controllers/controllerutil",
-        "//go/pkg/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",

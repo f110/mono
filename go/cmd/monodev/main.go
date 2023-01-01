@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func monoDev() error {

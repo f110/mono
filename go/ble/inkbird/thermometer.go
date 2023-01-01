@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/mono/go/ble"
 	"go.f110.dev/mono/go/hash/crc16"
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type ThermometerData struct {

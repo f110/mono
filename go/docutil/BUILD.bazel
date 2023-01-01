@@ -27,9 +27,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/git",
-        "//go/pkg/logger",
-        "//go/storage",
+        "//go/logger",
         "//go/queue",
+        "//go/storage",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/yuin/goldmark",
         "//vendor/github.com/yuin/goldmark/ast",
@@ -58,7 +58,7 @@ go_test(
     embed = [":docutil"],
     deps = [
         "//go/git",
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
         "//vendor/google.golang.org/grpc",

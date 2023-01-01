@@ -12,7 +12,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//bot/continuous-delivery/pkg/config",
-        "//go/pkg/logger",
+        "//go/logger",
         "//vendor/github.com/aws/aws-sdk-go/aws",
         "//vendor/github.com/aws/aws-sdk-go/aws/credentials",
         "//vendor/github.com/aws/aws-sdk-go/aws/session",

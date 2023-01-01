@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"go.f110.dev/mono/go/pkg/logger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func runCommand() error {

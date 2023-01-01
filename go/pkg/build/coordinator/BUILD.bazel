@@ -6,12 +6,12 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/build/coordinator",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//go/pkg/build/config",
         "//go/pkg/build/database",
         "//go/pkg/build/database/dao",
         "//go/pkg/build/watcher",
         "//go/pkg/k8s/k8smanifest",
-        "//go/pkg/logger",
         "//go/storage",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/hashicorp/vault/api",

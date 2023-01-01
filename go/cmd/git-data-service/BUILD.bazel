@@ -13,7 +13,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/githubutil",
-        "//go/pkg/logger",
+        "//go/logger",
         "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
@@ -42,7 +42,7 @@ go_test(
     embed = [":git-data-service_lib"],
     deps = [
         "//go/git",
-        "//go/pkg/logger",
+        "//go/logger",
         "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
