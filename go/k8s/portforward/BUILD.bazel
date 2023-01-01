@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "portforward",
     srcs = ["portforward.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/portforward",
+    importpath = "go.f110.dev/mono/go/k8s/portforward",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/go.f110.dev/xerrors",
