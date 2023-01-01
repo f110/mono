@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/consul",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/consulv1alpha1",
+        "//go/api/consulv1alpha1",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/pkg/storage",
@@ -28,7 +28,7 @@ go_test(
     srcs = ["backup_test.go"],
     embed = [":consul"],
     deps = [
-        "//go/pkg/api/consulv1alpha1",
+        "//go/api/consulv1alpha1",
         "//go/pkg/k8s/controllers/controllertest",
         "//go/pkg/storage/storagetest",
         "//vendor/github.com/jarcoal/httpmock",

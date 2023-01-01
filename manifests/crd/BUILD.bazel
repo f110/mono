@@ -14,10 +14,10 @@ kustomization(
 crd_proto_manifest(
     name = "proto",
     srcs = [
-        "//go/pkg/api/consulv1alpha1:consul_proto",
-        "//go/pkg/api/grafanav1alpha1:grafana_proto",
-        "//go/pkg/api/harborv1alpha1:harbor_proto",
-        "//go/pkg/api/miniov1alpha1:minio_proto",
+        "//go/api/consulv1alpha1:consul_proto",
+        "//go/api/grafanav1alpha1:grafana_proto",
+        "//go/api/harborv1alpha1:harbor_proto",
+        "//go/api/miniov1alpha1:minio_proto",
     ],
     visibility = ["//visibility:public"],
 )

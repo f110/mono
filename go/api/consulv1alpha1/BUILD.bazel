@@ -3,8 +3,8 @@ load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
 
 proto_library(
-    name = "grafana_proto",
-    srcs = ["grafana.proto"],
+    name = "consul_proto",
+    srcs = ["consul.proto"],
     visibility = ["//visibility:public"],
     deps = [
         "@dev_f110_kubeproto//:k8s_proto",
@@ -14,8 +14,8 @@ proto_library(
 
 kubeproto_go_api(
     name = "go_api",
-    srcs = [":grafana_proto"],
-    importpath = "go.f110.dev/mono/go/pkg/api/grafanav1alpha1",
+    srcs = [":consul_proto"],
+    importpath = "go.f110.dev/mono/go/api/consulv1alpha1",
 )
 
 load("//build/rules:vendor.bzl", "vendor_kubeproto")
@@ -26,9 +26,9 @@ vendor_kubeproto(
 )
 
 go_library(
-    name = "grafanav1alpha1",
+    name = "consulv1alpha1",
     srcs = ["go_api.generated.object.go"],
-    importpath = "go.f110.dev/mono/go/pkg/api/grafanav1alpha1",
+    importpath = "go.f110.dev/mono/go/api/consulv1alpha1",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/k8s.io/api/core/v1:core",

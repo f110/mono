@@ -29,7 +29,7 @@ import (
 	"context"
 	time "time"
 
-	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
+	miniov1alpha1 "go.f110.dev/mono/go/api/minio/v1alpha1"
 	versioned "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
 	v1alpha1 "go.f110.dev/mono/go/pkg/k8s/listers/minio/v1alpha1"

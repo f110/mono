@@ -1,6 +1,6 @@
 syntax = "proto3";
 package mono.api.grafanav1alpha1;
-option  go_package              = "go.f110.dev/mono/go/pkg/api/grafanav1alpha1";
+option  go_package              = "go.f110.dev/mono/go/api/grafanav1alpha1";
 option (dev.f110.kubeproto.k8s) = {
   domain: "f110.dev",
   sub_group: "grafana",

@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/grafana",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/grafanav1alpha1",
+        "//go/api/grafanav1alpha1",
         "//go/pkg/collections/set",
         "//go/pkg/grafana",
         "//go/pkg/k8s/client",
@@ -28,7 +28,7 @@ go_test(
     srcs = ["user_test.go"],
     embed = [":grafana"],
     deps = [
-        "//go/pkg/api/grafanav1alpha1",
+        "//go/api/grafanav1alpha1",
         "//go/pkg/grafana",
         "//go/pkg/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",

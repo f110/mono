@@ -29,7 +29,7 @@ import (
 	"context"
 	time "time"
 
-	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	grafanav1alpha1 "go.f110.dev/mono/go/api/grafana/v1alpha1"
 	versioned "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
 	v1alpha1 "go.f110.dev/mono/go/pkg/k8s/listers/grafana/v1alpha1"

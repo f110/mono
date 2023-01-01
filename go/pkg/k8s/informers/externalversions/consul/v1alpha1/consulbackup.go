@@ -29,7 +29,7 @@ import (
 	"context"
 	time "time"
 
-	consulv1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
+	consulv1alpha1 "go.f110.dev/mono/go/api/consul/v1alpha1"
 	versioned "go.f110.dev/mono/go/pkg/k8s/client/versioned"
 	internalinterfaces "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/internalinterfaces"
 	v1alpha1 "go.f110.dev/mono/go/pkg/k8s/listers/consul/v1alpha1"

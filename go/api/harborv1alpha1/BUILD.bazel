@@ -14,7 +14,7 @@ proto_library(
 kubeproto_go_api(
     name = "go_api",
     srcs = [":harbor_proto"],
-    importpath = "go.f110.dev/mono/go/pkg/api/harborv1alpha1",
+    importpath = "go.f110.dev/mono/go/api/harborv1alpha1",
 )
 
 load("//build/rules:vendor.bzl", "vendor_kubeproto")
@@ -27,7 +27,7 @@ vendor_kubeproto(
 go_library(
     name = "harborv1alpha1",
     srcs = ["go_api.generated.object.go"],
-    importpath = "go.f110.dev/mono/go/pkg/api/harborv1alpha1",
+    importpath = "go.f110.dev/mono/go/api/harborv1alpha1",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",

@@ -9,7 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/minio",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/miniov1alpha1",
+        "//go/api/miniov1alpha1",
         "//go/pkg/fsm",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
@@ -46,7 +46,7 @@ go_test(
     ],
     embed = [":minio"],
     deps = [
-        "//go/pkg/api/miniov1alpha1",
+        "//go/api/miniov1alpha1",
         "//go/pkg/k8s/controllers/controllertest",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/jarcoal/httpmock",

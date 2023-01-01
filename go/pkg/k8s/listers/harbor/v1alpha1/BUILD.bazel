@@ -10,7 +10,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/listers/harbor/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/harbor/v1alpha1",
+        "//go/api/harbor/v1alpha1",
         "//vendor/k8s.io/apimachinery/pkg/api/errors",
         "//vendor/k8s.io/apimachinery/pkg/labels",
         "//vendor/k8s.io/client-go/tools/cache",

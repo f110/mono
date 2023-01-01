@@ -29,7 +29,7 @@ go_test(
     srcs = ["runner_test.go"],
     embed = [":controllertest"],
     deps = [
-        "//go/pkg/api/grafanav1alpha1",
+        "//go/api/grafanav1alpha1",
         "//go/pkg/k8s/client",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

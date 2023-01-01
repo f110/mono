@@ -10,7 +10,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/consul/v1alpha1/fake",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/consul/v1alpha1",
+        "//go/api/consul/v1alpha1",
         "//go/pkg/k8s/client/versioned/typed/consul/v1alpha1",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/labels",

@@ -29,7 +29,7 @@ import (
 	"context"
 	"time"
 
-	v1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	v1alpha1 "go.f110.dev/mono/go/api/grafana/v1alpha1"
 	scheme "go.f110.dev/mono/go/pkg/k8s/client/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"

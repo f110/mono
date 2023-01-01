@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"go.f110.dev/mono/go/pkg/api/miniov1alpha1"
+	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 )
 

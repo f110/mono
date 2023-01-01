@@ -18,10 +18,10 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"go.f110.dev/mono/go/pkg/api/consulv1alpha1"
-	"go.f110.dev/mono/go/pkg/api/grafanav1alpha1"
-	"go.f110.dev/mono/go/pkg/api/harborv1alpha1"
-	"go.f110.dev/mono/go/pkg/api/miniov1alpha1"
+	"go.f110.dev/mono/go/api/consulv1alpha1"
+	"go.f110.dev/mono/go/api/grafanav1alpha1"
+	"go.f110.dev/mono/go/api/harborv1alpha1"
+	"go.f110.dev/mono/go/api/miniov1alpha1"
 )
 
 var (

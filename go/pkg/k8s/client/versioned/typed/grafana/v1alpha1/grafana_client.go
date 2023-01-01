@@ -26,7 +26,7 @@ SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
+	v1alpha1 "go.f110.dev/mono/go/api/grafana/v1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/client/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )

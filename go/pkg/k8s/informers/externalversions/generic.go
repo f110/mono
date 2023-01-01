@@ -29,10 +29,10 @@ import (
 	"fmt"
 
 	v1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	v1alpha1 "go.f110.dev/mono/go/pkg/api/consul/v1alpha1"
-	grafanav1alpha1 "go.f110.dev/mono/go/pkg/api/grafana/v1alpha1"
-	harborv1alpha1 "go.f110.dev/mono/go/pkg/api/harbor/v1alpha1"
-	miniov1alpha1 "go.f110.dev/mono/go/pkg/api/minio/v1alpha1"
+	v1alpha1 "go.f110.dev/mono/go/api/consul/v1alpha1"
+	grafanav1alpha1 "go.f110.dev/mono/go/api/grafana/v1alpha1"
+	harborv1alpha1 "go.f110.dev/mono/go/api/harbor/v1alpha1"
+	miniov1alpha1 "go.f110.dev/mono/go/api/minio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )

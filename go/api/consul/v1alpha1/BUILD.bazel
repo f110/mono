@@ -8,7 +8,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/api/consul/v1alpha1",
+    importpath = "go.f110.dev/mono/go/api/consul/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/k8s.io/api/core/v1:core",

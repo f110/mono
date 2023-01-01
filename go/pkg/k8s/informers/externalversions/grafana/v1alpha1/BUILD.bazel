@@ -10,7 +10,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/informers/externalversions/grafana/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/grafana/v1alpha1",
+        "//go/api/grafana/v1alpha1",
         "//go/pkg/k8s/client/versioned",
         "//go/pkg/k8s/informers/externalversions/internalinterfaces",
         "//go/pkg/k8s/listers/grafana/v1alpha1",

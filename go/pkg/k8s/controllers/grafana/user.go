@@ -19,7 +19,7 @@ import (
 	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
-	"go.f110.dev/mono/go/pkg/api/grafanav1alpha1"
+	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/pkg/collections/set"
 	"go.f110.dev/mono/go/pkg/grafana"
 	"go.f110.dev/mono/go/pkg/k8s/client"

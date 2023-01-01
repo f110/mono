@@ -12,7 +12,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/client/versioned/typed/minio/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/api/minio/v1alpha1",
+        "//go/api/minio/v1alpha1",
         "//go/pkg/k8s/client/versioned/scheme",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/types",

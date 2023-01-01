@@ -26,7 +26,7 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 
-	"go.f110.dev/mono/go/pkg/api/miniov1alpha1"
+	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/pkg/stringsutil"
