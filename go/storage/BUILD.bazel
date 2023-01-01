@@ -12,8 +12,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/storage",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger",
         "//go/k8s/portforward",
+        "//go/logger",
         "//vendor/cloud.google.com/go/storage",
         "//vendor/github.com/aws/aws-sdk-go-v2/aws",
         "//vendor/github.com/aws/aws-sdk-go-v2/credentials",

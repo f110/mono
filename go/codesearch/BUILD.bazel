@@ -18,8 +18,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",
-        "//go/logger",
         "//go/k8s/volume",
+        "//go/logger",
         "//go/regexp/regexputil",
         "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
