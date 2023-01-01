@@ -36,7 +36,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/1p",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/clipboard",
+        "//go/clipboard",
         "//go/pkg/fsm",
         "//go/pkg/logger",
         "//go/pkg/opvault",
