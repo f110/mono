@@ -40,7 +40,7 @@ go_test(
     deps = [
         "//go/api/harborv1alpha1",
         "//go/harbor",
-        "//go/pkg/http/mockutil",
+        "//go/http/mockutil",
         "//go/pkg/k8s/controllers/controllertest",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/stretchr/testify/require",

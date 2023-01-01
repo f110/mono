@@ -14,7 +14,7 @@ import (
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/harbor"
-	"go.f110.dev/mono/go/pkg/http/mockutil"
+	"go.f110.dev/mono/go/http/mockutil"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
 )
 
