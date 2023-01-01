@@ -20,7 +20,7 @@ go_library(
         "//go/githubutil",
         "//go/pkg/k8s/volume",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//go/regexp/regexputil",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
@@ -55,7 +55,7 @@ go_test(
     embed = [":codesearch"],
     deps = [
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//go/regexp/regexputil",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

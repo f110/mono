@@ -15,7 +15,7 @@ import (
 
 	etcd2 "go.f110.dev/mono/go/etcd"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 func etcdBackup(args []string) error {

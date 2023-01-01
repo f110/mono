@@ -14,7 +14,7 @@ go_library(
         "//go/pkg/build/gc",
         "//go/pkg/build/watcher",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/go-sql-driver/mysql",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/google/uuid",

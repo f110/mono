@@ -9,7 +9,7 @@ go_library(
         "//go/api/consulv1alpha1",
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/hashicorp/consul/api",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/k8s.io/apimachinery/pkg/api/errors",

@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 func TestListRepositories(t *testing.T) {

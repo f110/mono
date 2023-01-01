@@ -10,7 +10,7 @@ go_library(
         "//go/pkg/build/database/dao",
         "//go/pkg/build/web",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
     ],

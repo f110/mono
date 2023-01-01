@@ -28,7 +28,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/collections/set"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 type ObjectStorageInterface interface {

@@ -33,7 +33,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/gc"
 	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 type Options struct {
@@ -94,9 +94,9 @@ type process struct {
 	secretStoreClient         *secretstoreclient.Clientset
 	restCfg                   *rest.Config
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory
-	dao                       dao.Options
-	minioOpt                  storage.MinIOOptions
-	vaultClient               *vault.Client
+	dao         dao.Options
+	minioOpt    storage.MinIOOptions
+	vaultClient *vault.Client
 
 	bazelBuilder *coordinator.BazelBuilder
 	apiServer    *api.Api

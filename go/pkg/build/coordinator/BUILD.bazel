@@ -12,7 +12,7 @@ go_library(
         "//go/pkg/build/watcher",
         "//go/pkg/k8s/k8smanifest",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/google/go-github/v32/github",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/go.f110.dev/xerrors",

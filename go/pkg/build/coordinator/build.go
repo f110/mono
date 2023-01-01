@@ -38,7 +38,7 @@ import (
 	"go.f110.dev/mono/go/pkg/build/watcher"
 	"go.f110.dev/mono/go/pkg/k8s/k8smanifest"
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 const (

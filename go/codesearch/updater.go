@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/pkg/logger"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 type UpdaterCommand struct {

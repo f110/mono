@@ -20,8 +20,8 @@ type GCSOptions struct {
 
 type Google struct {
 	credentialJSON []byte
-	bucket         string
-	opt            GCSOptions
+	bucket string
+	opt    GCSOptions
 }
 
 var _ storageInterface = &Google{}

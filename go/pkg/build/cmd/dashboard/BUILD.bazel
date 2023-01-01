@@ -9,7 +9,7 @@ go_library(
         "//go/pkg/build/database/dao",
         "//go/pkg/build/web",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//go/signals",
         "//vendor/github.com/go-sql-driver/mysql",
         "//vendor/github.com/spf13/cobra",

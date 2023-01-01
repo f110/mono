@@ -20,7 +20,7 @@ go_library(
         "//go/parallel",
         "//go/pkg/k8s/kind",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",

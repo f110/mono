@@ -9,7 +9,7 @@ go_library(
         "mock.go",
         "s3.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/storage",
+    importpath = "go.f110.dev/mono/go/storage",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/k8s/portforward",

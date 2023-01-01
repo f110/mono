@@ -15,7 +15,7 @@ go_library(
     deps = [
         "//go/collections/set",
         "//go/githubutil",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/config",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
@@ -50,7 +50,7 @@ go_test(
     ],
     embed = [":git"],
     deps = [
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/go-git/go-git/v5:go-git",
         "//vendor/github.com/go-git/go-git/v5/config",
         "//vendor/github.com/go-git/go-git/v5/plumbing",

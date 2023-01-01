@@ -14,7 +14,7 @@ go_library(
         "//go/git",
         "//go/grpcutil",
         "//go/pkg/logger",
-        "//go/pkg/storage",
+        "//go/storage",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",

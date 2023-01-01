@@ -24,7 +24,7 @@ import (
 	"go.f110.dev/mono/go/api/consulv1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/pkg/storage"
+	"go.f110.dev/mono/go/storage"
 )
 
 type BackupController struct {
