@@ -14,7 +14,7 @@ go_library(
     deps = [
         "//go/pkg/logger",
         "//go/pkg/notion",
-        "//go/pkg/signals",
+        "//go/signals",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",

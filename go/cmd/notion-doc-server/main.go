@@ -12,7 +12,7 @@ import (
 
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/notion"
-	"go.f110.dev/mono/go/pkg/signals"
+	"go.f110.dev/mono/go/signals"
 )
 
 type docServerCommand struct {
