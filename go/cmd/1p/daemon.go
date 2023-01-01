@@ -1,4 +1,4 @@
-package onepassword
+package main
 
 import (
 	"context"
