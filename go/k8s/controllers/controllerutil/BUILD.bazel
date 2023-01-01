@@ -8,7 +8,7 @@ go_library(
         "queue.go",
         "util.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil",
+    importpath = "go.f110.dev/mono/go/k8s/controllers/controllerutil",
     visibility = ["//visibility:public"],
     deps = [
         "//go/k8s/client",

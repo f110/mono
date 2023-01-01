@@ -9,7 +9,7 @@ go_library(
         "//go/k8s/client",
         "//go/k8s/client/testingclient",
         "//go/logger",
-        "//go/pkg/k8s/controllers/controllerutil",
+        "//go/k8s/controllers/controllerutil",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",

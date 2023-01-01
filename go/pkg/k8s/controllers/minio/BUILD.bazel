@@ -13,7 +13,7 @@ go_library(
         "//go/fsm",
         "//go/k8s/client",
         "//go/logger",
-        "//go/pkg/k8s/controllers/controllerutil",
+        "//go/k8s/controllers/controllerutil",
         "//go/stringsutil",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/minio/minio-go/v6:minio-go",

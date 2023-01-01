@@ -22,8 +22,8 @@ import (
 
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/client/testingclient"
+	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 )
 
 type TestRunner struct {

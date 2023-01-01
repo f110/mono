@@ -23,7 +23,7 @@ import (
 	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/grafana"
 	"go.f110.dev/mono/go/k8s/client"
-	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
+	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 )
 
 const (

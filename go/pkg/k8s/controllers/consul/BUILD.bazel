@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/api/consulv1alpha1",
         "//go/k8s/client",
-        "//go/pkg/k8s/controllers/controllerutil",
+        "//go/k8s/controllers/controllerutil",
         "//go/storage",
         "//vendor/github.com/hashicorp/consul/api",
         "//vendor/go.f110.dev/xerrors",
