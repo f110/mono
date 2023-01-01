@@ -17,7 +17,7 @@ import (
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllertest"
-	"go.f110.dev/mono/go/pkg/storage/storagetest"
+	"go.f110.dev/mono/go/storage/storagetest"
 )
 
 func TestBackupController_Reconcile(t *testing.T) {
