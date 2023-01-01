@@ -11,8 +11,8 @@ go_testing_client(
         "//go/api/miniov1alpha1:minio_proto",
         "//proto/minio-operator/v1beta1:minio_proto",
     ],
-    client = "//go/pkg/k8s/client:go_client",
-    importpath = "go.f110.dev/mono/go/pkg/k8s/client/testingclient",
+    client = "//go/k8s/client:go_client",
+    importpath = "go.f110.dev/mono/go/k8s/client/testingclient",
     visibility = ["//visibility:public"],
 )
 
@@ -24,10 +24,10 @@ vendor_kubeproto(
 go_library(
     name = "testingclient",
     srcs = ["kubeproto_testingclient.generated.testingclient.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/client/testingclient",
+    importpath = "go.f110.dev/mono/go/k8s/client/testingclient",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/k8s/client",
+        "//go/k8s/client",
         "//vendor/k8s.io/apimachinery/pkg/api/meta",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/labels",

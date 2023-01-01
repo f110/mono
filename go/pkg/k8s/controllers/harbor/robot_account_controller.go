@@ -25,8 +25,8 @@ import (
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/harbor"
+	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 )
 

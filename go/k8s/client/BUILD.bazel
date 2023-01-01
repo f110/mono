@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "client",
     srcs = ["go_client.generated.client.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/client",
+    importpath = "go.f110.dev/mono/go/k8s/client",
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/consulv1alpha1",
@@ -35,7 +35,7 @@ go_client(
         "//go/api/miniov1alpha1:minio_proto",
         "//proto/minio-operator/v1beta1:minio_proto",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/client",
+    importpath = "go.f110.dev/mono/go/k8s/client",
     visibility = ["//visibility:public"],
 )
 

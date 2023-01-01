@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	k8stesting "k8s.io/client-go/testing"
 
-	"go.f110.dev/mono/go/pkg/k8s/client"
+	"go.f110.dev/mono/go/k8s/client"
 )
 
 var (

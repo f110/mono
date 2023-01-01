@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
-	"go.f110.dev/mono/go/pkg/k8s/client"
+	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/storage"
 )

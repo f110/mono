@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/consulv1alpha1",
-        "//go/pkg/k8s/client",
+        "//go/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/storage",
         "//vendor/github.com/hashicorp/consul/api",

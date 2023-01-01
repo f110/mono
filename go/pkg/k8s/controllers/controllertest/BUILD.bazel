@@ -6,9 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/controllertest",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/k8s/client",
+        "//go/k8s/client/testingclient",
         "//go/logger",
-        "//go/pkg/k8s/client",
-        "//go/pkg/k8s/client/testingclient",
         "//go/pkg/k8s/controllers/controllerutil",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/go.uber.org/zap",
@@ -30,7 +30,7 @@ go_test(
     embed = [":controllertest"],
     deps = [
         "//go/api/grafanav1alpha1",
-        "//go/pkg/k8s/client",
+        "//go/k8s/client",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
         "//vendor/k8s.io/api/apps/v1:apps",

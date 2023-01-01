@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
-	"go.f110.dev/mono/go/pkg/k8s/client"
+	"go.f110.dev/mono/go/k8s/client"
 )
 
 func TestResourceName(t *testing.T) {

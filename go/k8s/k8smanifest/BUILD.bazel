@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/k8s/k8smanifest",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/k8s/client",
+        "//go/k8s/client",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/k8s.io/apimachinery/pkg/runtime",
         "//vendor/k8s.io/apimachinery/pkg/runtime/serializer/json",

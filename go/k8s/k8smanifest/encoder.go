@@ -9,7 +9,7 @@ import (
 	k8sserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/kubernetes/scheme"
 
-	k8sclient "go.f110.dev/mono/go/pkg/k8s/client"
+	k8sclient "go.f110.dev/mono/go/k8s/client"
 )
 
 var sc = runtime.NewScheme()

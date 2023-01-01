@@ -9,7 +9,7 @@ go_library(
         "//go/api/grafanav1alpha1",
         "//go/collections/set",
         "//go/grafana",
-        "//go/pkg/k8s/client",
+        "//go/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
