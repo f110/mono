@@ -3,6 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "probe",
     srcs = ["probe.go"],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/probe",
+    importpath = "go.f110.dev/mono/go/k8s/probe",
     visibility = ["//visibility:public"],
 )

@@ -22,7 +22,7 @@ go_library(
         "//go/pkg/k8s/controllers/grafana",
         "//go/pkg/k8s/controllers/harbor",
         "//go/pkg/k8s/controllers/minio",
-        "//go/pkg/k8s/probe",
+        "//go/k8s/probe",
         "//vendor/github.com/google/uuid",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/spf13/pflag",
