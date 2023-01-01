@@ -3,6 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "stringsutil",
     srcs = ["random.go"],
-    importpath = "go.f110.dev/mono/go/pkg/stringsutil",
+    importpath = "go.f110.dev/mono/go/stringsutil",
     visibility = ["//visibility:public"],
 )

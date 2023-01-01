@@ -29,7 +29,7 @@ import (
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/pkg/k8s/client"
 	"go.f110.dev/mono/go/pkg/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/pkg/stringsutil"
+	"go.f110.dev/mono/go/stringsutil"
 )
 
 const (

@@ -14,7 +14,7 @@ go_library(
         "//go/pkg/k8s/client",
         "//go/pkg/k8s/controllers/controllerutil",
         "//go/pkg/logger",
-        "//go/pkg/stringsutil",
+        "//go/stringsutil",
         "//vendor/github.com/hashicorp/vault/api",
         "//vendor/github.com/minio/minio-go/v6:minio-go",
         "//vendor/github.com/minio/minio-go/v6/pkg/policy",
