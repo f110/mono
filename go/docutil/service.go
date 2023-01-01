@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/queue"
 	"go.f110.dev/mono/go/pkg/storage"

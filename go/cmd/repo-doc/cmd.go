@@ -13,7 +13,7 @@ import (
 
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/pkg/grpcutil"
 	"go.f110.dev/mono/go/pkg/logger"
 )

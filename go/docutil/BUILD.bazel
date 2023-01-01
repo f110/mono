@@ -26,7 +26,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/docutil",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/git",
+        "//go/git",
         "//go/pkg/logger",
         "//go/pkg/queue",
         "//go/pkg/storage",
@@ -57,7 +57,7 @@ go_test(
     ],
     embed = [":docutil"],
     deps = [
-        "//go/pkg/git",
+        "//go/git",
         "//go/pkg/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

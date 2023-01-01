@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/docutil"
-	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/git"
 )
 
 func TestParsePath(t *testing.T) {

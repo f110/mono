@@ -15,7 +15,7 @@ go_library(
     deps = [
         "//go/docutil",
         "//go/fsm",
-        "//go/pkg/git",
+        "//go/git",
         "//go/pkg/grpcutil",
         "//go/pkg/k8s/kind",
         "//go/pkg/logger",

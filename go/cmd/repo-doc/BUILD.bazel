@@ -20,7 +20,7 @@ go_library(
     deps = [
         "//go/docutil",
         "//go/fsm",
-        "//go/pkg/git",
+        "//go/git",
         "//go/pkg/grpcutil",
         "//go/pkg/logger",
         "//vendor/github.com/abhinav/goldmark-mermaid",
@@ -61,7 +61,7 @@ go_test(
     embed = [":repo-doc_lib"],
     deps = [
         "//go/docutil",
-        "//go/pkg/git",
+        "//go/git",
         "//go/pkg/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

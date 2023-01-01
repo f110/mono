@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/git"
 )
 
 func TestDocSearchService(t *testing.T) {

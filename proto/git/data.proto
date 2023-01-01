@@ -1,6 +1,6 @@
 syntax = "proto3";
 package mono.git;
-option  go_package = "go.f110.dev/mono/go/pkg/git";
+option  go_package = "go.f110.dev/mono/go/git";
 
 import "google/protobuf/timestamp.proto";
 

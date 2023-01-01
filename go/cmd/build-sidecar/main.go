@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/git"
+	"go.f110.dev/mono/go/git"
 )
 
 const (
