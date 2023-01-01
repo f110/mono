@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/pkg/http/httpserver"
+	"go.f110.dev/mono/go/http/httpserver"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
