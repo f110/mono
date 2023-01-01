@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/repo-indexer",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/cmd/repoindexer",
+        "//go/pkg/codesearch",
         "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",

@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"go.f110.dev/mono/go/pkg/cmd/onepassword"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
@@ -18,11 +17,11 @@ func onep() error {
 			logger.Init()
 		},
 		RunE: func(_ *cobra.Command, args []string) error {
-			return onepassword.Main()
+			return Main()
 		},
 	}
 
-	onepassword.AddCommand(rootCmd)
+	AddCommand(rootCmd)
 
 	return rootCmd.Execute()
 }

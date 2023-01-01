@@ -7,12 +7,12 @@ import (
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/cmd/repoindexer"
+	"go.f110.dev/mono/go/pkg/codesearch"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 
 func repoIndexer(args []string) error {
-	indexer := repoindexer.NewIndexerCommand()
+	indexer := codesearch.NewIndexerCommand()
 
 	cmd := &cobra.Command{
 		Use: "repo-indexer",

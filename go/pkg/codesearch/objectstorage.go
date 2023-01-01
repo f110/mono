@@ -1,4 +1,4 @@
-package repoindexer
+package codesearch
 
 import (
 	"context"

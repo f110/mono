@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "repoindexer",
+    name = "codesearch",
     srcs = [
         "config.go",
         "gc.go",
@@ -14,7 +14,7 @@ go_library(
         "repoindexer.go",
         "updater.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/cmd/repoindexer",
+    importpath = "go.f110.dev/mono/go/pkg/codesearch",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/githubutil",
@@ -46,13 +46,13 @@ go_library(
 )
 
 go_test(
-    name = "repoindexer_test",
+    name = "codesearch_test",
     srcs = [
         "config_test.go",
         "gc_test.go",
         "lister_test.go",
     ],
-    embed = [":repoindexer"],
+    embed = [":codesearch"],
     deps = [
         "//go/pkg/logger",
         "//go/pkg/regexp/regexputil",

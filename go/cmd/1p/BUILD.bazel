@@ -37,7 +37,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/pkg/clipboard",
-        "//go/pkg/cmd/onepassword",
         "//go/pkg/fsm",
         "//go/pkg/logger",
         "//go/pkg/opvault",
