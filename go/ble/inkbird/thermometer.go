@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/ble"
-	"go.f110.dev/mono/go/pkg/hash/crc16"
+	"go.f110.dev/mono/go/hash/crc16"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

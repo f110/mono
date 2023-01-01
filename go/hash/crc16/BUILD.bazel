@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "crc16",
     srcs = ["crc16.go"],
-    importpath = "go.f110.dev/mono/go/pkg/hash/crc16",
+    importpath = "go.f110.dev/mono/go/hash/crc16",
     visibility = ["//visibility:public"],
 )
 

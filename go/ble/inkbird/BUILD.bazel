@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/ble",
-        "//go/pkg/hash/crc16",
+        "//go/hash/crc16",
         "//go/pkg/logger",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
