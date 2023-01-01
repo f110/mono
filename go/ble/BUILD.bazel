@@ -10,7 +10,7 @@ go_library(
         "scanner_darwin.go",
         "scanner_linux.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/ble",
+    importpath = "go.f110.dev/mono/go/ble",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/go.f110.dev/xerrors",

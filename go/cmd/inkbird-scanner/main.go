@@ -8,7 +8,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/ble/inkbird"
+	"go.f110.dev/mono/go/ble/inkbird"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

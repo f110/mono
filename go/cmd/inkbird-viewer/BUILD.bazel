@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/inkbird-viewer",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/pkg/ble/inkbird",
+        "//go/ble/inkbird",
         "//vendor/go.f110.dev/xerrors",
     ],
 )

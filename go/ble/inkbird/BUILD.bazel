@@ -3,10 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "inkbird",
     srcs = ["thermometer.go"],
-    importpath = "go.f110.dev/mono/go/pkg/ble/inkbird",
+    importpath = "go.f110.dev/mono/go/ble/inkbird",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/pkg/ble",
+        "//go/ble",
         "//go/pkg/hash/crc16",
         "//go/pkg/logger",
         "//vendor/go.f110.dev/xerrors",

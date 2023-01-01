@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/ble/inkbird"
+	"go.f110.dev/mono/go/ble/inkbird"
 )
 
 const inkbirdNamespace = "inkbird"
