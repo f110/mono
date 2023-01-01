@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/pkg/etcd"
+	etcd2 "go.f110.dev/mono/go/etcd"
 	"go.f110.dev/mono/go/pkg/logger"
 	"go.f110.dev/mono/go/pkg/storage"
 )
@@ -51,7 +51,7 @@ func etcdBackup(args []string) error {
 
 	var caCert *x509.Certificate
 	if caCertPath != "" {
-		c, err := etcd.ReadCACertificate(caCertPath)
+		c, err := etcd2.ReadCACertificate(caCertPath)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -71,7 +71,7 @@ func etcdBackup(args []string) error {
 		return xerrors.WithStack(err)
 	}
 
-	bu, err := etcd.NewBackup(context.Background(), endpoints, caCert, clientCert)
+	bu, err := etcd2.NewBackup(context.Background(), endpoints, caCert, clientCert)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

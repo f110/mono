@@ -6,7 +6,7 @@ go_library(
         "backup.go",
         "cert.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/etcd",
+    importpath = "go.f110.dev/mono/go/etcd",
     visibility = ["//visibility:public"],
     deps = [
         "//go/pkg/logger",
