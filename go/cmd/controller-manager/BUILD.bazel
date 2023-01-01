@@ -8,10 +8,34 @@ go_binary(
 
 go_library(
     name = "controller-manager_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "controllers.go",
+        "main.go",
+    ],
     importpath = "go.f110.dev/mono/go/cmd/controller-manager",
     visibility = ["//visibility:private"],
-    deps = ["//go/pkg/cmd/controllers"],
+    deps = [
+        "//go/pkg/fsm",
+        "//go/pkg/k8s/client",
+        "//go/pkg/k8s/controllers/consul",
+        "//go/pkg/k8s/controllers/grafana",
+        "//go/pkg/k8s/controllers/harbor",
+        "//go/pkg/k8s/controllers/minio",
+        "//go/pkg/k8s/probe",
+        "//go/pkg/logger",
+        "//vendor/github.com/google/uuid",
+        "//vendor/github.com/hashicorp/vault/api",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/client-go/informers",
+        "//vendor/k8s.io/client-go/kubernetes",
+        "//vendor/k8s.io/client-go/rest",
+        "//vendor/k8s.io/client-go/tools/clientcmd",
+        "//vendor/k8s.io/client-go/tools/leaderelection",
+        "//vendor/k8s.io/client-go/tools/leaderelection/resourcelock",
+        "//vendor/k8s.io/component-base/metrics/legacyregistry",
+    ],
 )
 
 sh_binary(

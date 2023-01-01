@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"go.f110.dev/mono/go/pkg/cmd/controllers"
 )
 
 func controllerManager(args []string) error {
-	c := controllers.New(args)
+	c := New(args)
 
 	return c.Loop()
 }
