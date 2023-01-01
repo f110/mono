@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/githubutil",
-        "//go/pkg/gomodule",
+        "//go/gomodule",
         "//go/pkg/logger",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",

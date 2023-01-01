@@ -15,7 +15,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/pkg/gomodule"
+	"go.f110.dev/mono/go/gomodule"
 	"go.f110.dev/mono/go/pkg/logger"
 )
 

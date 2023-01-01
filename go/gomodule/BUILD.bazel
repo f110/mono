@@ -9,7 +9,7 @@ go_library(
         "proxy.go",
         "server.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/gomodule",
+    importpath = "go.f110.dev/mono/go/gomodule",
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",
