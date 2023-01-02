@@ -20,7 +20,7 @@ go_library(
         "//go/k8s/probe",
         "//go/logger",
         "//go/k8s/controllers/consul",
-        "//go/pkg/k8s/controllers/grafana",
+        "//go/k8s/controllers/grafana",
         "//go/pkg/k8s/controllers/harbor",
         "//go/pkg/k8s/controllers/minio",
         "//vendor/github.com/google/uuid",
