@@ -12,7 +12,7 @@ proto_library(
 go_proto_library(
     name = "onepassword_go_proto",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "go.f110.dev/mono/go/pkg/cmd/onepassword/proto",
+    importpath = "go.f110.dev/mono/go/cmd/1p/proto",
     proto = ":onepassword_proto",
     visibility = ["//visibility:private"],
 )
