@@ -6,10 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/build/gc",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger",
         "//go/build/database",
         "//go/build/database/dao",
         "//go/build/web",
+        "//go/logger",
         "//go/storage",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
