@@ -6,7 +6,7 @@ go_library(
         "minio_bucket.go",
         "minio_user.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/minio",
+    importpath = "go.f110.dev/mono/go/k8s/controllers/minio",
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/miniov1alpha1",
