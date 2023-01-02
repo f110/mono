@@ -43,4 +43,4 @@ run-api:
 
 .PHONY: run-migrate
 run-migrate:
-	bazel run @dev_f110_protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/pkg/build/database/schema.sql --driver mysql --dsn "$(DSN)" --execute
+	bazel run @dev_f110_protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/build/database/schema.sql --driver mysql --dsn "$(DSN)" --execute

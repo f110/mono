@@ -13,7 +13,7 @@ pkg_tar(
 
 pkg_tar(
     name = "schema_files",
-    srcs = ["//go/pkg/build/database:schema_txt"],
+    srcs = ["//go/build/database:schema_txt"],
     mode = "0644",
     package_dir = "/schema",
 )

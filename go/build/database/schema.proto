@@ -1,0 +1,111 @@
+syntax = "proto3";
+package build.schema;
+option  go_package = "go.f110.dev/mono/go/build/database;database";
+
+import "ddl.proto";
+import "google/protobuf/timestamp.proto";
+
+message SourceRepository {
+  int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string url       = 2;
+  string clone_url = 3;
+  string name      = 4 [(dev.f110.ddl.column) = { size: 100 }];
+  bool private     = 5;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `source_repository`"
+    }
+    queries: {
+      name: "ByUrl"
+      query: "SELECT * FROM `source_repository` WHERE `url` = ?"
+    }
+  };
+}
+
+message Task {
+  int32                      id                = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository           repository        = 2;
+  string                     job_name          = 3;
+  string                     job_configuration = 4 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     revision          = 5;
+  string                     bazel_version     = 6;
+  bool                       success           = 7;
+  string                     log_file          = 8;
+  string                     command           = 9;
+  string                     target            = 10 [deprecated = true];
+  string                     targets           = 11 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     platform          = 12 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via               = 13;
+  string                     config_name       = 14;
+  string                     node              = 15;
+  string                     manifest          = 16 [(dev.f110.ddl.column) = { type: "text" }];
+  .google.protobuf.Timestamp start_at          = 17 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at       = 18 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+    queries: {
+      name: "ByRepositoryId"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+    queries: {
+      name: "Pending"
+      query: "SELECT * FROM `:table_name:` WHERE `start_at` IS NULL"
+    }
+  };
+}
+
+message TrustedUser {
+  int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  int64  github_id = 2;
+  string username  = 3;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `trusted_user`"
+    }
+    queries: {
+      name: "ByGithubId"
+      query: "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+    }
+  };
+}
+
+message PermitPullRequest {
+  int32  id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string repository = 2;
+  int32  number     = 3;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepositoryAndNumber"
+      query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
+    }
+  };
+}

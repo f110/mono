@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "api",
+    srcs = ["server.go"],
+    importpath = "go.f110.dev/mono/go/build/api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/enumerable",
+        "//go/logger",
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/database/dao",
+        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/go.f110.dev/protoc-ddl/probe",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_test(
+    name = "api_test",
+    srcs = ["server_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":api"],
+    deps = [
+        "//go/logger",
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/database/dao",
+        "//go/build/database/dao/daotest",
+        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

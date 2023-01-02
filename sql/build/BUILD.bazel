@@ -3,7 +3,7 @@ load("@dev_f110_protoc_ddl//rules:def.bzl", "vendor_ddl")
 
 vendor_ddl(
     name = "vendor",
-    src = "//go/pkg/build/database:schema",
+    src = "//go/build/database:schema",
 )
 
 sh_binary(
