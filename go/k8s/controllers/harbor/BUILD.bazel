@@ -7,7 +7,7 @@ go_library(
         "harbor_project_controller.go",
         "robot_account_controller.go",
     ],
-    importpath = "go.f110.dev/mono/go/pkg/k8s/controllers/harbor",
+    importpath = "go.f110.dev/mono/go/k8s/controllers/harbor",
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/harborv1alpha1",

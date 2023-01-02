@@ -21,7 +21,7 @@ go_library(
         "//go/logger",
         "//go/k8s/controllers/consul",
         "//go/k8s/controllers/grafana",
-        "//go/pkg/k8s/controllers/harbor",
+        "//go/k8s/controllers/harbor",
         "//go/pkg/k8s/controllers/minio",
         "//vendor/github.com/google/uuid",
         "//vendor/github.com/hashicorp/vault/api",
