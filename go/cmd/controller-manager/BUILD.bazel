@@ -19,7 +19,7 @@ go_library(
         "//go/k8s/client",
         "//go/k8s/probe",
         "//go/logger",
-        "//go/pkg/k8s/controllers/consul",
+        "//go/k8s/controllers/consul",
         "//go/pkg/k8s/controllers/grafana",
         "//go/pkg/k8s/controllers/harbor",
         "//go/pkg/k8s/controllers/minio",
