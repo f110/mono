@@ -96,3 +96,12 @@ func Pod(p *corev1.Pod) Trait {
 		}
 	}
 }
+
+func BackoffLimit(limit int32) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *batchv1.Job:
+			obj.Spec.BackoffLimit = &limit
+		}
+	}
+}

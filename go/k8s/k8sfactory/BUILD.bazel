@@ -15,6 +15,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/k8s/k8sfactory",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/varptr",
         "//vendor/k8s.io/api/apps/v1:apps",
         "//vendor/k8s.io/api/batch/v1:batch",
         "//vendor/k8s.io/api/batch/v1beta1",
@@ -22,6 +23,7 @@ go_library(
         "//vendor/k8s.io/api/networking/v1:networking",
         "//vendor/k8s.io/api/policy/v1:policy",
         "//vendor/k8s.io/api/rbac/v1:rbac",
+        "//vendor/k8s.io/apimachinery/pkg/api/resource",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/runtime",
         "//vendor/k8s.io/apimachinery/pkg/util/intstr",

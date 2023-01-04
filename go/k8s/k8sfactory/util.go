@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
+
+	"go.f110.dev/mono/go/varptr"
 )
 
 type Trait func(object any)
@@ -42,6 +44,7 @@ func NewSecretVolumeSource(name, path string, source *corev1.Secret, items ...co
 		Mount: corev1.VolumeMount{
 			Name:      name,
 			MountPath: path,
+			ReadOnly:  true,
 		},
 		Source: corev1.Volume{
 			Name: name,
@@ -81,6 +84,28 @@ func NewPersistentVolumeClaimVolumeSource(name, path, pvcName string) *VolumeSou
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
+				},
+			},
+		},
+	}
+}
+
+func NewSecretStoreVolumeSource(name, path string) *VolumeSource {
+	return &VolumeSource{
+		Mount: corev1.VolumeMount{
+			Name:      name,
+			MountPath: path,
+			ReadOnly:  true,
+		},
+		Source: corev1.Volume{
+			Name: name,
+			VolumeSource: corev1.VolumeSource{
+				CSI: &corev1.CSIVolumeSource{
+					Driver:   "secrets-store.csi.k8s.io",
+					ReadOnly: varptr.Ptr(true),
+					VolumeAttributes: map[string]string{
+						"secretProviderClass": name,
+					},
 				},
 			},
 		},

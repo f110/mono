@@ -2,10 +2,13 @@ package k8sfactory
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
+
+	"go.f110.dev/mono/go/varptr"
 )
 
 func PodFactory(base *corev1.Pod, traits ...Trait) *corev1.Pod {
@@ -73,7 +76,7 @@ func NotReady(v any) {
 			Name:    v.Name,
 			Image:   v.Image,
 			Ready:   false,
-			Started: pointer.BoolPtr(true),
+			Started: varptr.Ptr(true),
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
@@ -206,6 +209,15 @@ func Args(args ...string) Trait {
 	}
 }
 
+func WorkDir(dir string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Container:
+			obj.WorkingDir = dir
+		}
+	}
+}
+
 func PullPolicy(p corev1.PullPolicy) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
@@ -228,6 +240,21 @@ func EnvVar(k, v string) Trait {
 	}
 }
 
+func EnvFrom(name string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Container:
+			obj.EnvFrom = append(obj.EnvFrom, corev1.EnvFromSource{
+				SecretRef: &corev1.SecretEnvSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: name,
+					},
+				},
+			})
+		}
+	}
+}
+
 func EnvFromField(k, v string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
@@ -237,6 +264,25 @@ func EnvFromField(k, v string) Trait {
 				ValueFrom: &corev1.EnvVarSource{
 					FieldRef: &corev1.ObjectFieldSelector{
 						FieldPath: v,
+					},
+				},
+			})
+		}
+	}
+}
+
+func EnvFromSecret(k, name, secretKey string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Container:
+			obj.Env = append(obj.Env, corev1.EnvVar{
+				Name: k,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: name,
+						},
+						Key: secretKey,
 					},
 				},
 			})
@@ -302,6 +348,26 @@ func Volume(vol *VolumeSource) Trait {
 			obj.VolumeMounts = append(obj.VolumeMounts, vol.Mount)
 		case *corev1.Pod:
 			obj.Spec.Volumes = append(obj.Spec.Volumes, vol.Source)
+		}
+	}
+}
+
+func ResourceLimit(cpu, mem resource.Quantity) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Container:
+			obj.Resources.Limits[corev1.ResourceCPU] = cpu
+			obj.Resources.Limits[corev1.ResourceMemory] = mem
+		}
+	}
+}
+
+func ResourceRequest(cpu, mem resource.Quantity) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Container:
+			obj.Resources.Requests[corev1.ResourceCPU] = cpu
+			obj.Resources.Requests[corev1.ResourceMemory] = mem
 		}
 	}
 }
