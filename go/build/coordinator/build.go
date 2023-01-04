@@ -36,6 +36,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/watcher"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -696,43 +697,34 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 
 func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) ([]runtime.Object, error) {
 	var builtObjects []runtime.Object
+	repoIdString := fmt.Sprintf("%d", repo.Id)
+	taskIdString := strconv.Itoa(int(task.Id))
+
+	workDir := k8sfactory.NewEmptyDirVolumeSource("workdir", "/work")
+	buildPod := k8sfactory.PodFactory(nil,
+		k8sfactory.Labels(map[string]string{
+			labelKeyTaskId: taskIdString,
+			labelKeyCtrlBy: "bazel-build",
+		}),
+		k8sfactory.RestartPolicy(corev1.RestartPolicyNever),
+	)
+	preProcessContainer := k8sfactory.ContainerFactory(nil,
+		k8sfactory.Name("pre-process"),
+		k8sfactory.Image(b.sidecarImage, nil),
+		k8sfactory.PullPolicy(corev1.PullAlways),
+		k8sfactory.Volume(workDir),
+	)
+	mainContainer := k8sfactory.ContainerFactory(nil,
+		k8sfactory.Name("main"),
+		k8sfactory.PullPolicy(corev1.PullIfNotPresent),
+		k8sfactory.WorkDir(workDir.Mount.MountPath),
+		k8sfactory.Volume(workDir),
+	)
 	bazelVersion := b.defaultBazelVersion
 	if task.BazelVersion != "" {
 		bazelVersion = task.BazelVersion
 	}
-	mainImage := fmt.Sprintf("%s:%s", b.bazelImage, bazelVersion)
-	repoIdString := fmt.Sprintf("%d", repo.Id)
-	taskIdString := strconv.Itoa(int(task.Id))
-
-	volumes := []corev1.Volume{
-		{
-			Name: "workdir",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		},
-	}
-	volumeMounts := []corev1.VolumeMount{
-		{Name: "workdir", MountPath: "/work"},
-	}
-	sidecarVolumeMounts := []corev1.VolumeMount{
-		{Name: "workdir", MountPath: "/work"},
-	}
-	if repo.Private {
-		volumes = append(volumes, corev1.Volume{
-			Name: "github-secret",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: b.githubAppSecretName,
-				},
-			},
-		})
-		sidecarVolumeMounts = append(sidecarVolumeMounts, corev1.VolumeMount{
-			Name:      "github-secret",
-			MountPath: "/etc/github",
-			ReadOnly:  true,
-		})
-	}
+	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Image(fmt.Sprintf("%s:%s", b.bazelImage, bazelVersion), nil))
 
 	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", repo.CloneUrl)}
 	if task.Revision != "" {
@@ -744,7 +736,15 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			fmt.Sprintf("--github-installation-id=%d", b.githubInstallationId),
 			"--private-key-file=/etc/github/privatekey.pem",
 		)
+		githubSecretVolume := k8sfactory.NewSecretVolumeSource(
+			"github-secret",
+			"/etc/github",
+			k8sfactory.SecretFactory(nil, k8sfactory.Name(b.githubAppSecretName)),
+		)
+		preProcessContainer = k8sfactory.ContainerFactory(preProcessContainer, k8sfactory.Volume(githubSecretVolume))
+		buildPod = k8sfactory.PodFactory(buildPod, k8sfactory.Volume(githubSecretVolume))
 	}
+	preProcessContainer = k8sfactory.ContainerFactory(preProcessContainer, k8sfactory.Args(preProcessArgs...))
 
 	cpuLimit := b.defaultTaskCPULimit
 	if job.CPULimit != "" {
@@ -762,6 +762,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		}
 		memoryLimit = q
 	}
+	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.ResourceLimit(cpuLimit, memoryLimit))
 
 	args := []string{task.Command}
 	if b.remoteCache != "" {
@@ -793,8 +794,8 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			args = append(args, job.Args...)
 		}
 	}
+	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Args(args...))
 
-	var envFroms []corev1.EnvFromSource
 	if len(job.Secrets) > 0 && b.vaultClient == nil {
 		logger.Log.Warn("Secret injection is not supported", zap.String("repo", repo.Name), zap.String("job", job.Name))
 	} else {
@@ -825,6 +826,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 					c.Spec.Parameters["objects"] += fmt.Sprintf("- objectName: %q\n  secretPath: %q\n  secretKey: %q\n", secret.VaultKey, secret.VaultPath, secret.VaultKey)
 				}
 			}
+
 			if secret.EnvVarName != "" {
 				s, err := b.vaultClient.Logical().Read(secret.VaultPath)
 				if err != nil {
@@ -836,43 +838,20 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 				}
 				if secretObject == nil {
 					name := fmt.Sprintf("%s-%d%s", job.Name, task.Id, platformName)
-					secretObject = &corev1.Secret{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      name,
-							Namespace: b.Namespace,
-						},
-						StringData: map[string]string{
-							secret.EnvVarName: s.Data[secret.VaultKey].(string),
-						},
-					}
-					envFroms = append(envFroms, corev1.EnvFromSource{
-						SecretRef: &corev1.SecretEnvSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: name,
-							},
-						},
-					})
-				} else {
-					secretObject.StringData[secret.EnvVarName] = s.Data[secret.VaultKey].(string)
+					secretObject = k8sfactory.SecretFactory(nil,
+						k8sfactory.Name(name),
+						k8sfactory.Namespace(b.Namespace),
+					)
+					mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvFrom(name))
 				}
+				secretObject = k8sfactory.SecretFactory(secretObject, k8sfactory.Data(secret.EnvVarName, s.Data[secret.VaultKey].([]byte)))
 			}
 		}
 		if len(secretProviderClasses) > 0 {
-			readOnly := true
 			for mountPath, class := range secretProviderClasses {
-				volumeMounts = append(volumeMounts, corev1.VolumeMount{Name: class.Name, MountPath: mountPath, ReadOnly: true})
-				volumes = append(volumes, corev1.Volume{
-					Name: class.Name,
-					VolumeSource: corev1.VolumeSource{
-						CSI: &corev1.CSIVolumeSource{
-							Driver:   "secrets-store.csi.k8s.io",
-							ReadOnly: &readOnly,
-							VolumeAttributes: map[string]string{
-								"secretProviderClass": class.Name,
-							},
-						},
-					},
-				})
+				envVolume := k8sfactory.NewSecretStoreVolumeSource(class.Name, mountPath)
+				mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Volume(envVolume))
+				buildPod = k8sfactory.PodFactory(buildPod, k8sfactory.Volume(envVolume))
 				builtObjects = append(builtObjects, class)
 			}
 		}
@@ -881,12 +860,11 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		}
 	}
 
-	var env []corev1.EnvVar
 	var envSecret *corev1.Secret
 	for k, v := range job.Env {
 		switch val := v.(type) {
 		case string:
-			env = append(env, corev1.EnvVar{Name: k, Value: val})
+			mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvVar(k, val))
 		case *config.Secret:
 			s, err := b.vaultClient.Logical().Read(val.VaultPath)
 			if err != nil {
@@ -899,91 +877,37 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 
 			secretName := fmt.Sprintf("%s-%d%s-env", job.Name, task.Id, platformName)
 			if envSecret == nil {
-				envSecret = &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      secretName,
-						Namespace: b.Namespace,
-					},
-					StringData: map[string]string{
-						k: "",
-					},
-				}
-			} else {
-				envSecret.StringData[k] = ""
+				envSecret = k8sfactory.SecretFactory(nil,
+					k8sfactory.Name(secretName),
+					k8sfactory.Namespace(b.Namespace),
+				)
 			}
 
-			env = append(env, corev1.EnvVar{
-				Name: k,
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: secretName,
-						},
-						Key: k,
-					},
-				},
-			})
+			envSecret = k8sfactory.SecretFactory(envSecret, k8sfactory.Data(k, s.Data[val.VaultKey].([]byte)))
+			mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvFromSecret(k, secretName, k))
 		}
 	}
 	if envSecret != nil {
 		builtObjects = append(builtObjects, envSecret)
 	}
 
-	var backoffLimit int32 = 0
-	builtObjects = append(builtObjects, &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%d%s", job.RepositoryName, task.Id, platformName),
-			Namespace: b.Namespace,
-			Labels: map[string]string{
-				labelKeyRepoId:    repoIdString,
-				labelKeyJobId:     job.Identification(),
-				labelKeyTaskId:    taskIdString,
-				labelKeyCtrlBy:    "bazel-build",
-				watcher.TypeLabel: jobType,
-			},
-		},
-		Spec: batchv1.JobSpec{
-			BackoffLimit: &backoffLimit,
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						labelKeyTaskId: taskIdString,
-						labelKeyCtrlBy: "bazel-build",
-					},
-				},
-				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyNever,
-					InitContainers: []corev1.Container{
-						{
-							Name:            "pre-process",
-							Image:           b.sidecarImage,
-							ImagePullPolicy: corev1.PullAlways,
-							Args:            preProcessArgs,
-							VolumeMounts:    sidecarVolumeMounts,
-						},
-					},
-					Containers: []corev1.Container{
-						{
-							Name:            "main",
-							Image:           mainImage,
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args:            args,
-							WorkingDir:      "/work",
-							Env:             env,
-							EnvFrom:         envFroms,
-							VolumeMounts:    volumeMounts,
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    cpuLimit,
-									corev1.ResourceMemory: memoryLimit,
-								},
-							},
-						},
-					},
-					Volumes: volumes,
-				},
-			},
-		},
-	})
+	builtObjects = append(builtObjects, k8sfactory.JobFactory(nil,
+		k8sfactory.Namef("%s-%d%s", job.RepositoryName, task.Id, platformName),
+		k8sfactory.Namespace(b.Namespace),
+		k8sfactory.Labels(map[string]string{
+			labelKeyRepoId:    repoIdString,
+			labelKeyJobId:     job.Identification(),
+			labelKeyTaskId:    taskIdString,
+			labelKeyCtrlBy:    "bazel-build",
+			watcher.TypeLabel: jobType,
+		}),
+		k8sfactory.BackoffLimit(0),
+		k8sfactory.Pod(
+			k8sfactory.PodFactory(buildPod,
+				k8sfactory.InitContainer(preProcessContainer),
+				k8sfactory.Container(mainContainer),
+			),
+		),
+	))
 	return builtObjects, nil
 }
