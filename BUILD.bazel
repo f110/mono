@@ -25,27 +25,6 @@ cluster(
     worker_num = 3,
 )
 
-load("//build:job.bzl", "job")
-
-job(
-    name = "test_all",
-    all_revision = True,
-    command = "test",
-    cpu_limit = "2000m",
-    github_status = True,
-    memory_limit = "8Gi",
-    platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
-    ],
-    targets = [
-        "//...",
-        "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
-        "-//third_party/universal-ctags/ctags:ctags",
-        "-//containers/zoekt-indexer/...",
-        "-//vendor/github.com/go-enry/go-oniguruma/...",
-    ],
-)
-
 alias(
     name = "monodev",
     actual = "//go/cmd/monodev",
