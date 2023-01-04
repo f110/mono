@@ -31,7 +31,7 @@ func CronJobFactory(base *batchv1.CronJob, traits ...Trait) *batchv1.CronJob {
 }
 
 func Schedule(v string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		switch obj := object.(type) {
 		case *batchv1beta1.CronJob:
 			obj.Spec.Schedule = v
@@ -42,7 +42,7 @@ func Schedule(v string) Trait {
 }
 
 func Job(j *batchv1.Job) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		switch obj := object.(type) {
 		case *batchv1beta1.CronJob:
 			obj.Spec.JobTemplate = batchv1beta1.JobTemplateSpec{
@@ -81,7 +81,7 @@ func JobFactory(base *batchv1.Job, traits ...Trait) *batchv1.Job {
 }
 
 func Pod(p *corev1.Pod) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		switch obj := object.(type) {
 		case *batchv1.Job:
 			obj.Spec.Template = corev1.PodTemplateSpec{

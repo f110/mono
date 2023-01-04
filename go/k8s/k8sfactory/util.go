@@ -7,7 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type Trait func(object interface{})
+type Trait func(object any)
 
 type VolumeSource struct {
 	Mount  corev1.VolumeMount

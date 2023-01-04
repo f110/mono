@@ -13,7 +13,7 @@ import (
 )
 
 func Name(v string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(interface {
 			SetName(string)
 		})
@@ -34,7 +34,7 @@ func Namef(format string, a ...interface{}) Trait {
 }
 
 func Namespace(v string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			m.SetNamespace(v)
@@ -44,7 +44,7 @@ func Namespace(v string) Trait {
 }
 
 func UID() Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			m.SetUID(uuid.NewUUID())
@@ -52,7 +52,7 @@ func UID() Trait {
 	}
 }
 
-func Created(object interface{}) {
+func Created(object any) {
 	m, ok := object.(metav1.Object)
 	if ok {
 		m.SetCreationTimestamp(metav1.Now())
@@ -64,7 +64,7 @@ func Created(object interface{}) {
 }
 
 func CreatedAt(now time.Time) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		Created(object)
 		m, ok := object.(metav1.Object)
 		if ok {
@@ -73,7 +73,7 @@ func CreatedAt(now time.Time) Trait {
 	}
 }
 
-func Delete(object interface{}) {
+func Delete(object any) {
 	m, ok := object.(metav1.Object)
 	if ok {
 		n := metav1.Now()
@@ -82,7 +82,7 @@ func Delete(object interface{}) {
 }
 
 func Annotation(k, v string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			a := m.GetAnnotations()
@@ -101,7 +101,7 @@ func Annotation(k, v string) Trait {
 }
 
 func Annotations(annotations map[string]string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			a := m.GetAnnotations()
@@ -119,7 +119,7 @@ func Annotations(annotations map[string]string) Trait {
 }
 
 func Label(v ...string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			a := m.GetLabels()
@@ -136,7 +136,7 @@ func Label(v ...string) Trait {
 }
 
 func Labels(label map[string]string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			a := m.GetLabels()
@@ -154,7 +154,7 @@ func Labels(label map[string]string) Trait {
 }
 
 func ControlledBy(v runtime.Object, s *runtime.Scheme) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		owner, ok := v.(metav1.Object)
 		if !ok {
 			return
@@ -184,7 +184,7 @@ func ControlledBy(v runtime.Object, s *runtime.Scheme) Trait {
 	}
 }
 
-func ClearOwnerReference(object interface{}) {
+func ClearOwnerReference(object any) {
 	objMeta, ok := object.(metav1.Object)
 	if !ok {
 		return
@@ -218,7 +218,7 @@ func MatchLabelSelector(label map[string]string) Trait {
 }
 
 func Finalizer(v string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
 			found := false
