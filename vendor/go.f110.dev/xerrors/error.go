@@ -57,11 +57,11 @@ func (e *Error) StackTrace() Frames {
 }
 
 func New(msg string) error {
-	return &Error{msg: msg, stackTrace: caller()}
+	return &Error{msg: msg}
 }
 
 func Newf(format string, a ...any) error {
-	return &Error{msg: fmt.Sprintf(format, a...), stackTrace: caller()}
+	return &Error{msg: fmt.Sprintf(format, a...)}
 }
 
 // WithStack annotates err with a stack trace.
