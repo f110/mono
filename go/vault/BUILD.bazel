@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "vault",
+    srcs = [
+        "client.go",
+        "manager.go",
+    ],
+    importpath = "go.f110.dev/mono/go/vault",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/netutil",
+        "//go/stringsutil",
+        "//vendor/go.f110.dev/xerrors",
+    ],
+)
+
+go_test(
+    name = "vault_test",
+    srcs = ["client_test.go"],
+    args = [
+        "-test.vault-bin",
+        "../../$(rootpath @vault//:bin)",
+    ],
+    data = [
+        "@vault//:bin",
+    ],
+    embed = [":vault"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
