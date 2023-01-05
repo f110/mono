@@ -250,3 +250,10 @@ pip_install(
 load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 
 register_unittest_toolchains()
+
+load("//build/rules/vault:def.bzl", "vault_binary")
+
+vault_binary(
+    name = "vault",
+    version = "1.11.4",
+)
