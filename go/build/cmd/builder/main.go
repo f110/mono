@@ -12,7 +12,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v32/github"
 	"github.com/google/uuid"
-	vault "github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -34,6 +33,7 @@ import (
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/vault"
 )
 
 type Options struct {
@@ -181,13 +181,10 @@ func (p *process) init() (fsm.State, error) {
 			return fsm.Error(xerrors.WithStack(err))
 		}
 
-		vaultClient, err := vault.NewClient(&vault.Config{
-			Address: p.opt.VaultAddr,
-		})
+		vaultClient, err := vault.NewClient(p.opt.VaultAddr, string(token))
 		if err != nil {
 			return fsm.Error(xerrors.WithStack(err))
 		}
-		vaultClient.SetToken(string(token))
 		p.vaultClient = vaultClient
 	}
 

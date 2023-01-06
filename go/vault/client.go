@@ -46,6 +46,10 @@ func NewClient(addr, token string) (*Client, error) {
 	return &Client{addr: u, token: token, httpClient: &http.Client{}}, nil
 }
 
+func (c *Client) Addr() string {
+	return c.addr.String()
+}
+
 // Get is a function that retrieve a secret from K/V version2 engine.
 func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts ...ClientOpt) (string, error) {
 	opt := &opOpt{}

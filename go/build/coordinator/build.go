@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/google/go-github/v32/github"
-	vault "github.com/hashicorp/vault/api"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
@@ -40,6 +39,7 @@ import (
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/vault"
 )
 
 const (
@@ -212,7 +212,7 @@ func NewBazelBuilder(
 		dao:                  daoOpt,
 		githubClient:         ghClient,
 		minio:                storage.NewMinIOStorage(bucket, minIOOpt),
-		vaultAddr:            vaultClient.Address(),
+		vaultAddr:            vaultClient.Addr(),
 		vaultClient:          vaultClient,
 		remoteCache:          bazelOpt.RemoteCache,
 		remoteAssetApi:       bazelOpt.EnableRemoteAssetApi,
@@ -503,7 +503,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		return xerrors.WithStack(ErrOtherTaskIsRunning)
 	}
 
-	builtObjects, err := b.buildJobTemplate(repo, job, task, task.Platform)
+	builtObjects, err := b.buildJobTemplate(ctx, repo, job, task, task.Platform)
 	if err != nil {
 		return err
 	}
@@ -695,7 +695,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) ([]runtime.Object, error) {
+func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) ([]runtime.Object, error) {
 	var builtObjects []runtime.Object
 	repoIdString := fmt.Sprintf("%d", repo.Id)
 	taskIdString := strconv.Itoa(int(task.Id))
@@ -796,6 +796,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	}
 	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Args(args...))
 
+	readCtx := vault.NewCache(ctx)
 	if len(job.Secrets) > 0 && b.vaultClient == nil {
 		logger.Log.Warn("Secret injection is not supported", zap.String("repo", repo.Name), zap.String("job", job.Name))
 	} else {
@@ -828,14 +829,14 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			}
 
 			if secret.EnvVarName != "" {
-				s, err := b.vaultClient.Logical().Read(secret.VaultPath)
-				if err != nil {
-					return nil, xerrors.WithStack(err)
-				}
-				if _, ok := s.Data[secret.VaultKey]; !ok {
+				s, err := b.vaultClient.Get(readCtx, secret.MountPath, secret.VaultPath, secret.VaultKey)
+				if errors.Is(err, vault.ErrDataNotFound) {
 					logger.Log.Warn("Vault key is not found", zap.String("path", secret.VaultPath), zap.String("key", secret.VaultKey))
 					continue
+				} else if err != nil {
+					return nil, err
 				}
+
 				if secretObject == nil {
 					name := fmt.Sprintf("%s-%d%s", job.Name, task.Id, platformName)
 					secretObject = k8sfactory.SecretFactory(nil,
@@ -844,7 +845,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 					)
 					mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvFrom(name))
 				}
-				secretObject = k8sfactory.SecretFactory(secretObject, k8sfactory.Data(secret.EnvVarName, s.Data[secret.VaultKey].([]byte)))
+				secretObject = k8sfactory.SecretFactory(secretObject, k8sfactory.Data(secret.EnvVarName, []byte(s)))
 			}
 		}
 		if len(secretProviderClasses) > 0 {
@@ -866,13 +867,12 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		case string:
 			mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvVar(k, val))
 		case *config.Secret:
-			s, err := b.vaultClient.Logical().Read(val.VaultPath)
-			if err != nil {
-				return nil, xerrors.WithStack(err)
-			}
-			if _, ok := s.Data[val.VaultKey]; !ok {
+			s, err := b.vaultClient.Get(readCtx, val.MountPath, val.VaultPath, val.VaultKey)
+			if errors.Is(err, vault.ErrDataNotFound) {
 				logger.Log.Warn("Vault key is not found", zap.String("path", val.VaultPath), zap.String("key", val.VaultKey))
 				continue
+			} else if err != nil {
+				return nil, err
 			}
 
 			secretName := fmt.Sprintf("%s-%d%s-env", job.Name, task.Id, platformName)
@@ -883,7 +883,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 				)
 			}
 
-			envSecret = k8sfactory.SecretFactory(envSecret, k8sfactory.Data(k, s.Data[val.VaultKey].([]byte)))
+			envSecret = k8sfactory.SecretFactory(envSecret, k8sfactory.Data(k, []byte(s)))
 			mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvFromSecret(k, secretName, k))
 		}
 	}
