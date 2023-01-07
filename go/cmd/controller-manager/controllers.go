@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/vault/api"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +30,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/minio"
 	"go.f110.dev/mono/go/k8s/probe"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/vault"
 )
 
 const (
@@ -209,7 +208,7 @@ type Controllers struct {
 	config      *rest.Config
 	coreClient  *kubernetes.Clientset
 	client      *client.Set
-	vaultClient *api.Client
+	vaultClient *vault.Client
 }
 
 func New(args []string) *Controllers {
@@ -301,34 +300,27 @@ func (p *Controllers) init() (fsm.State, error) {
 	p.probe = probe.NewProbe(p.metricsAddr)
 
 	if p.vaultAddr != "" {
-		vaultClient, err := api.NewClient(&api.Config{Address: p.vaultAddr})
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
 		if p.vaultToken != "" {
-			vaultClient.SetToken(p.vaultToken)
+			vc, err := vault.NewClient(p.vaultAddr, p.vaultToken)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			p.vaultClient = vc
 		} else if _, err := os.Stat(p.serviceAccountTokenFile); err == nil {
 			buf, err := os.ReadFile(p.serviceAccountTokenFile)
 			if err != nil {
 				return fsm.Error(xerrors.WithStack(err))
 			}
 			saToken := strings.TrimSpace(string(buf))
-			data, err := vaultClient.Logical().Write(
-				fmt.Sprintf("%s/login", p.vaultK8sAuthPath),
-				map[string]interface{}{
-					"jwt":  saToken,
-					"role": p.vaultK8sAuthRole,
-				},
-			)
+			vc, err := vault.NewClientAsK8SServiceAccount(p.FSM.Context(), p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
 			if err != nil {
-				return fsm.Error(xerrors.WithStack(err))
+				return fsm.Error(err)
 			}
-			vaultClient.SetToken(data.Auth.ClientToken)
+			p.vaultClient = vc
 		}
-		p.vaultClient = vaultClient
 	}
 
-	return stateCheckResources, nil
+	return fsm.Next(stateCheckResources)
 }
 
 func (p *Controllers) checkResources() (fsm.State, error) {

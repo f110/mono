@@ -29,7 +29,7 @@ func TestUserController(t *testing.T) {
 			),
 		)
 		mockTransport.RegisterResponder(
-			http.MethodPut,
+			http.MethodPost,
 			"/v1/secret/data/test",
 			httpmock.NewStringResponder(
 				http.StatusOK,

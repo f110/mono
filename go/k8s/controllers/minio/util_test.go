@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hashicorp/vault/api"
 	"github.com/jarcoal/httpmock"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/vault"
 )
 
 func newRunner() *controllertest.TestRunner {
@@ -36,11 +36,7 @@ func newBucketController(t *testing.T, runner *controllertest.TestRunner) *Bucke
 
 func newUserController(t *testing.T, runner *controllertest.TestRunner) (*UserController, *httpmock.MockTransport) {
 	tr := httpmock.NewMockTransport()
-	vaultClient, err := api.NewClient(&api.Config{
-		HttpClient: &http.Client{
-			Transport: tr,
-		},
-	})
+	vaultClient, err := vault.NewClient("http://localhost:8300", "", vault.HttpClient(&http.Client{Transport: tr}))
 	require.NoError(t, err)
 
 	controller, err := NewUserController(

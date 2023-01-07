@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"path"
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/vault/api"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/minio/minio/pkg/madmin"
 	"go.f110.dev/xerrors"
@@ -30,6 +28,7 @@ import (
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/stringsutil"
+	"go.f110.dev/mono/go/vault"
 )
 
 const (
@@ -43,7 +42,7 @@ type UserController struct {
 
 	config      *rest.Config
 	coreClient  kubernetes.Interface
-	vaultClient *api.Client
+	vaultClient *vault.Client
 	mClient     *client.MinioV1alpha1
 	muLister    *client.MinioV1alpha1MinIOUserLister
 
@@ -65,7 +64,7 @@ func NewUserController(
 	cfg *rest.Config,
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	factory *client.InformerFactory,
-	vaultClient *api.Client,
+	vaultClient *vault.Client,
 	runOutsideCluster bool,
 ) (*UserController, error) {
 	minioInformers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
@@ -263,19 +262,14 @@ func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.Adm
 }
 
 func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, secret *corev1.Secret) error {
-	data := map[string]interface{}{
-		"data": map[string]string{
-			"accesskey": string(secret.Data["accesskey"]),
-			"secretkey": string(secret.Data["secretkey"]),
-		},
+	data := map[string]string{
+		"accesskey": string(secret.Data["accesskey"]),
+		"secretkey": string(secret.Data["secretkey"]),
 	}
 
-	_, err := c.vaultClient.Logical().Write(
-		"/"+path.Join(user.Spec.MountPath, "data", user.Spec.Path),
-		data,
-	)
+	err := c.vaultClient.Set(context.Background(), user.Spec.MountPath, user.Spec.Path, data)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 
 	return nil

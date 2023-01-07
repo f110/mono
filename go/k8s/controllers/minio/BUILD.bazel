@@ -15,7 +15,7 @@ go_library(
         "//go/k8s/controllers/controllerutil",
         "//go/logger",
         "//go/stringsutil",
-        "//vendor/github.com/hashicorp/vault/api",
+        "//go/vault",
         "//vendor/github.com/minio/minio-go/v6:minio-go",
         "//vendor/github.com/minio/minio-go/v6/pkg/policy",
         "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
@@ -48,7 +48,7 @@ go_test(
     deps = [
         "//go/api/miniov1alpha1",
         "//go/k8s/controllers/controllertest",
-        "//vendor/github.com/hashicorp/vault/api",
+        "//go/vault",
         "//vendor/github.com/jarcoal/httpmock",
         "//vendor/github.com/minio/minio-go/v6:minio-go",
         "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
