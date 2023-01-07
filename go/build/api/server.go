@@ -256,6 +256,11 @@ func (a *Api) findRepository(ctx context.Context, repoURL string) *database2.Sou
 }
 
 func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEvent) (bool, error) {
+	if event.Repo.Owner.GetLogin() == event.Sender.GetLogin() {
+		logger.Log.Info("The sender of PushRequestEvent is the repository owner", zap.String("owner", event.Repo.Owner.GetLogin()), zap.String("sender", event.Sender.GetLogin()))
+		return true, nil
+	}
+
 	users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		logger.Log.Warn("Could not get trusted user", zap.Error(err), zap.Int64("sender.id", event.Sender.GetID()))
