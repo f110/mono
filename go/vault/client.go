@@ -21,9 +21,21 @@ var (
 	ErrLoginFailed           = xerrors.New("login failed")
 )
 
-type ClientOpt func(*opOpt)
+type ClientOpt func(*clientOpt)
 
-func Version(v int) ClientOpt {
+type clientOpt struct {
+	HttpClient *http.Client
+}
+
+func HttpClient(c *http.Client) ClientOpt {
+	return func(opt *clientOpt) {
+		opt.HttpClient = c
+	}
+}
+
+type OpOpt func(*opOpt)
+
+func Version(v int) OpOpt {
 	return func(opt *opOpt) {
 		opt.Version = v
 	}
@@ -40,17 +52,26 @@ type Client struct {
 }
 
 // NewClient makes a client for Vault with a static token.
-func NewClient(addr, token string) (*Client, error) {
+func NewClient(addr, token string, opts ...ClientOpt) (*Client, error) {
+	opt := &clientOpt{}
+	for _, v := range opts {
+		v(opt)
+	}
+
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	return &Client{addr: u, token: token, httpClient: &http.Client{}}, nil
+	httpClient := opt.HttpClient
+	if httpClient == nil {
+		httpClient = &http.Client{}
+	}
+	return &Client{addr: u, token: token, httpClient: httpClient}, nil
 }
 
 // NewClientAsK8SServiceAccount makes a client for Vault as a service account of Kubernetes.
-func NewClientAsK8SServiceAccount(ctx context.Context, addr, enginePath, role, token string) (*Client, error) {
-	c, err := NewClient(addr, "")
+func NewClientAsK8SServiceAccount(ctx context.Context, addr, enginePath, role, token string, opts ...ClientOpt) (*Client, error) {
+	c, err := NewClient(addr, "", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +87,7 @@ func (c *Client) Addr() string {
 }
 
 // Get is a function that retrieves a secret from K/V version2 engine.
-func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts ...ClientOpt) (string, error) {
+func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts ...OpOpt) (string, error) {
 	opt := &opOpt{}
 	for _, v := range opts {
 		v(opt)
