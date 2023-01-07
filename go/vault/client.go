@@ -18,6 +18,7 @@ import (
 var (
 	ErrDataNotFound          = xerrors.New("the path is not found")
 	ErrOperationNotPermitted = xerrors.New("operation not permitted")
+	ErrLoginFailed           = xerrors.New("login failed")
 )
 
 type ClientOpt func(*opOpt)
@@ -38,6 +39,7 @@ type Client struct {
 	httpClient *http.Client
 }
 
+// NewClient makes a client for Vault with a static token.
 func NewClient(addr, token string) (*Client, error) {
 	u, err := url.Parse(addr)
 	if err != nil {
@@ -46,11 +48,24 @@ func NewClient(addr, token string) (*Client, error) {
 	return &Client{addr: u, token: token, httpClient: &http.Client{}}, nil
 }
 
+// NewClientAsK8SServiceAccount makes a client for Vault as a service account of Kubernetes.
+func NewClientAsK8SServiceAccount(ctx context.Context, addr, enginePath, role, token string) (*Client, error) {
+	c, err := NewClient(addr, "")
+	if err != nil {
+		return nil, err
+	}
+	if err := c.LoginAsK8SServiceAccount(ctx, enginePath, role, token); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// Addr returns Vault server address.
 func (c *Client) Addr() string {
 	return c.addr.String()
 }
 
-// Get is a function that retrieve a secret from K/V version2 engine.
+// Get is a function that retrieves a secret from K/V version2 engine.
 func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts ...ClientOpt) (string, error) {
 	opt := &opOpt{}
 	for _, v := range opts {
@@ -103,6 +118,8 @@ func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts 
 	return val, nil
 }
 
+// Set creates or updates a secret with data.
+// If a secret path already exists, it will be replaced.
 func (c *Client) Set(ctx context.Context, mountPath, dataPath string, data map[string]string) error {
 	apiPath := path.Join("v1", mountPath, "data", dataPath)
 
@@ -133,6 +150,44 @@ func (c *Client) Set(ctx context.Context, mountPath, dataPath string, data map[s
 		return xerrors.WithStack(ErrOperationNotPermitted)
 	}
 
+	return nil
+}
+
+func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role, token string) error {
+	payload := map[string]string{
+		"role": role,
+		"jwt":  token,
+	}
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(payload); err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	u := &url.URL{}
+	*u = *c.addr
+	u.Path = path.Join(enginePath, "login")
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), buf)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+	default:
+		return xerrors.WithStack(ErrLoginFailed)
+	}
+
+	login := &Login{}
+	if err := json.NewDecoder(res.Body).Decode(login); err != nil {
+		return xerrors.WithStack(err)
+	}
+	c.token = login.Auth.ClientToken
 	return nil
 }
 
@@ -195,4 +250,21 @@ type KVData struct {
 		CAS int `json:"cas"`
 	} `json:"options"`
 	Data map[string]string `json:"data"`
+}
+
+type Login struct {
+	Auth struct {
+		ClientToken string   `json:"client_token"`
+		Accessor    string   `json:"accessor"`
+		Policies    []string `json:"policies"`
+		Metadata    struct {
+			Role                     string `json:"role"`
+			ServiceAccountName       string `json:"service_account_name"`
+			ServiceAccountNamespace  string `json:"service_account_namespace"`
+			ServiceAccountSecretName string `json:"service_account_secret_name"`
+			ServiceAccountUID        string `json:"service_account_uid"`
+		} `json:"metadata"`
+		LeaseDuration int  `json:"lease_duration"`
+		Renewable     bool `json:"renewable"`
+	} `json:"auth"`
 }
