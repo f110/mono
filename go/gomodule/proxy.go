@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v49/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/mod/module"
@@ -300,7 +300,7 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
-	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version)
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version, &github.ListOptions{})
 	if err != nil {
 		return Info{}, xerrors.WithStack(err)
 	}
@@ -327,7 +327,7 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
-	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision, &github.ListOptions{})
 	if err != nil {
 		return Info{}, xerrors.WithStack(err)
 	}
@@ -447,7 +447,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
-	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version)
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, version, &github.ListOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -489,7 +489,7 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 	}
 	s := strings.Split(u.Path, "/")
 	owner, repo := s[1], s[2]
-	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision)
+	commit, _, err := g.githubClient.Repositories.GetCommit(ctx, owner, repo, pseudoVersion.Revision, &github.ListOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

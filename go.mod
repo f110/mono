@@ -25,7 +25,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-containerregistry v0.4.0
 	github.com/google/go-github/v29 v29.0.3
-	github.com/google/go-github/v32 v32.0.0
+	github.com/google/go-github/v49 v49.0.0
 	github.com/google/uuid v1.3.0
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
 	github.com/gorilla/mux v1.8.0
@@ -137,7 +137,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20220412212628-83db2b799d1f // indirect

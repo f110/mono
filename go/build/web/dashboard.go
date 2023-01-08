@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v49/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
 

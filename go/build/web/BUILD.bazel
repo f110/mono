@@ -13,7 +13,7 @@ go_library(
         "//go/build/database/dao",
         "//go/logger",
         "//go/storage",
-        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",
         "//vendor/go.uber.org/zap",
     ],

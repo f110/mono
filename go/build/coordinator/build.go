@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v49/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"

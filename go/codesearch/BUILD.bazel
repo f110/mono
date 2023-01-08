@@ -27,7 +27,7 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/plumbing/object",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
-        "//vendor/github.com/google/go-github/v32/github",
+        "//vendor/github.com/google/go-github/v49/github",
         "//vendor/github.com/google/zoekt",
         "//vendor/github.com/google/zoekt/build",
         "//vendor/github.com/nats-io/nats.go:nats_go",

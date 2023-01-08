@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v49/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -555,7 +555,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch())
+	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch(), false)
 	if err != nil {
 		logger.Log.Info("Failed to branch", logger.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)

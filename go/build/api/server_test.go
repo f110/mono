@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v49/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
