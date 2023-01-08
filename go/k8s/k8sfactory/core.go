@@ -6,7 +6,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
 
 	"go.f110.dev/mono/go/varptr"
 )
@@ -40,7 +39,7 @@ func Ready(v any) {
 			Name:    v.Name,
 			Ready:   true,
 			Image:   v.Image,
-			Started: pointer.BoolPtr(true),
+			Started: varptr.Ptr(true),
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
