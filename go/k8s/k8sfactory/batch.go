@@ -16,12 +16,7 @@ func CronJobFactory(base *batchv1.CronJob, traits ...Trait) *batchv1.CronJob {
 		cj = base.DeepCopy()
 	}
 
-	if cj.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(cj)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			cj.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(cj, scheme.Scheme)
 
 	for _, v := range traits {
 		v(cj)
@@ -66,12 +61,7 @@ func JobFactory(base *batchv1.Job, traits ...Trait) *batchv1.Job {
 		j = base.DeepCopy()
 	}
 
-	if j.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(j)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			j.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(j, scheme.Scheme)
 
 	for _, v := range traits {
 		v(j)

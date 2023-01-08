@@ -15,12 +15,7 @@ func RoleFactory(base *rbacv1.Role, traits ...Trait) *rbacv1.Role {
 		r = base.DeepCopy()
 	}
 
-	if r.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(r)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			r.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(r, scheme.Scheme)
 
 	for _, v := range traits {
 		v(r)
@@ -52,12 +47,7 @@ func RoleBindingFactory(base *rbacv1.RoleBinding, traits ...Trait) *rbacv1.RoleB
 		rb = base.DeepCopy()
 	}
 
-	if rb.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(rb)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			rb.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(rb, scheme.Scheme)
 
 	for _, v := range traits {
 		v(rb)

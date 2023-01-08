@@ -14,12 +14,7 @@ func PodDisruptionBudgetFactory(base *policyv1.PodDisruptionBudget, traits ...Tr
 		p = base.DeepCopy()
 	}
 
-	if p.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(p)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			p.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(p, scheme.Scheme)
 
 	for _, v := range traits {
 		v(p)

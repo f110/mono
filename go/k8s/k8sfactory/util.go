@@ -1,10 +1,10 @@
 package k8sfactory
 
 import (
-	"math/rand"
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/varptr"
 )
@@ -112,13 +112,11 @@ func NewSecretStoreVolumeSource(name, path string) *VolumeSource {
 	}
 }
 
-var charset = []byte("abcdefghijklmnopqrstuvwxyz0123456789")
-
-func randomString(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
+func setGVK(in runtime.Object, scheme *runtime.Scheme) {
+	if in.GetObjectKind().GroupVersionKind().Kind == "" {
+		gvks, unversioned, err := scheme.ObjectKinds(in)
+		if err == nil && !unversioned && len(gvks) > 0 {
+			in.GetObjectKind().SetGroupVersionKind(gvks[0])
+		}
 	}
-
-	return string(b)
 }

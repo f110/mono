@@ -10,6 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
+
+	"go.f110.dev/mono/go/stringsutil"
 )
 
 func Name(v string) Trait {
@@ -58,7 +60,7 @@ func Created(object any) {
 		m.SetCreationTimestamp(metav1.Now())
 		m.SetUID(uuid.NewUUID())
 		if m.GetGenerateName() != "" && m.GetName() == "" {
-			m.SetName(m.GetGenerateName() + randomString(5))
+			m.SetName(m.GetGenerateName() + stringsutil.RandomString(5))
 		}
 	}
 }

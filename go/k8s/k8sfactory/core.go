@@ -19,12 +19,7 @@ func PodFactory(base *corev1.Pod, traits ...Trait) *corev1.Pod {
 		p = base.DeepCopy()
 	}
 
-	if p.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(p)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			p.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(p, scheme.Scheme)
 
 	for _, v := range traits {
 		v(p)
@@ -380,12 +375,7 @@ func ServiceAccountFactory(base *corev1.ServiceAccount, traits ...Trait) *corev1
 		sa = base.DeepCopy()
 	}
 
-	if sa.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(sa)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			sa.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(sa, scheme.Scheme)
 
 	for _, v := range traits {
 		v(sa)
@@ -402,12 +392,7 @@ func ServiceFactory(base *corev1.Service, traits ...Trait) *corev1.Service {
 		s = base.DeepCopy()
 	}
 
-	if s.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(s)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			s.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(s, scheme.Scheme)
 
 	for _, v := range traits {
 		v(s)
@@ -507,12 +492,7 @@ func SecretFactory(base *corev1.Secret, traits ...Trait) *corev1.Secret {
 		s = base.DeepCopy()
 	}
 
-	if s.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(s)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			s.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(s, scheme.Scheme)
 
 	for _, v := range traits {
 		v(s)
@@ -546,12 +526,7 @@ func ConfigMapFactory(base *corev1.ConfigMap, traits ...Trait) *corev1.ConfigMap
 		cm = base.DeepCopy()
 	}
 
-	if cm.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(cm)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			cm.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(cm, scheme.Scheme)
 
 	for _, v := range traits {
 		v(cm)
@@ -586,12 +561,7 @@ func EventFactory(base *corev1.Event, traits ...Trait) *corev1.Event {
 		e = base.DeepCopy()
 	}
 
-	if e.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(e)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			e.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(e, scheme.Scheme)
 
 	for _, v := range traits {
 		v(e)

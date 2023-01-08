@@ -14,12 +14,7 @@ func IngressClassFactory(base *networkingv1.IngressClass, traits ...Trait) *netw
 		ic = base.DeepCopy()
 	}
 
-	if ic.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(ic)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			ic.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(ic, scheme.Scheme)
 
 	for _, v := range traits {
 		v(ic)
@@ -45,12 +40,7 @@ func IngressFactory(base *networkingv1.Ingress, traits ...Trait) *networkingv1.I
 		ing = base.DeepCopy()
 	}
 
-	if ing.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(ing)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			ing.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(ing, scheme.Scheme)
 
 	for _, v := range traits {
 		v(ing)

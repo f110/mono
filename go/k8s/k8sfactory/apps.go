@@ -13,12 +13,7 @@ func DeploymentFactory(base *appsv1.Deployment, traits ...Trait) *appsv1.Deploym
 		d = base.DeepCopy()
 	}
 
-	if d.GetObjectKind().GroupVersionKind().Kind == "" {
-		gvks, unversioned, err := scheme.Scheme.ObjectKinds(d)
-		if err == nil && !unversioned && len(gvks) > 0 {
-			d.GetObjectKind().SetGroupVersionKind(gvks[0])
-		}
-	}
+	setGVK(d, scheme.Scheme)
 
 	for _, v := range traits {
 		v(d)
