@@ -286,6 +286,11 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 		dir := filepath.Join(workDir, m.repo.Name)
 		if branchRef, err := m.repo.checkout(workDir, refName); err != nil {
 			logger.Log.Info("Failed checkout repository", zap.Error(err), zap.String("name", m.repo.Name))
+			if err := m.repo.cleanWorktree(); err != nil {
+				logger.Log.Error("Failed to clean worktree", zap.Error(err), zap.String("name", m.repo.Name), zap.String("dir", dir))
+			} else {
+				logger.Log.Info("Clean worktree", zap.String("name", m.repo.Name), zap.String("ref", refName.String()))
+			}
 			continue
 		} else {
 			branchRefs = append(branchRefs, branchRef)
@@ -327,6 +332,11 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 			})
 			if err != nil {
 				logger.Log.Info("Failed go vendoring", zap.String("name", m.repo.Name), zap.Error(err))
+				if err := m.repo.cleanWorktree(); err != nil {
+					logger.Log.Error("Failed to clean worktree", zap.Error(err), zap.String("name", m.repo.Name), zap.String("dir", dir))
+				} else {
+					logger.Log.Info("Clean worktree", zap.String("name", m.repo.Name), zap.String("ref", refName.String()))
+				}
 				continue
 			}
 		}
@@ -334,6 +344,11 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 		logger.Log.Debug("Commit", zap.String("name", m.repo.Name), zap.String("ref", refName.Short()))
 		if err := m.repo.newCommit(); err != nil {
 			logger.Log.Info("Failed create commit", zap.String("name", m.repo.Name), zap.Error(err))
+			if err := m.repo.cleanWorktree(); err != nil {
+				logger.Log.Error("Failed to clean worktree", zap.Error(err), zap.String("name", m.repo.Name), zap.String("dir", dir))
+			} else {
+				logger.Log.Info("Clean worktree", zap.String("name", m.repo.Name), zap.String("ref", refName.String()))
+			}
 			continue
 		}
 
@@ -443,11 +458,12 @@ func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (p
 		Branch: branchRef.Name(),
 	})
 	if err != nil {
+		cErr := err
 		st, err := wt.Status()
 		if err == nil {
 			fmt.Printf("%v\n", st)
 		}
-		return "", xerrors.WithStack(err)
+		return "", xerrors.WithStack(cErr)
 	}
 
 	return branchRef.Name(), nil
