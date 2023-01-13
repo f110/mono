@@ -1,4 +1,4 @@
-package minio
+package controllers
 
 import (
 	"log"

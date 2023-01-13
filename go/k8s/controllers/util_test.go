@@ -1,4 +1,4 @@
-package minio
+package controllers
 
 import (
 	"net/http"
@@ -34,12 +34,12 @@ func newBucketController(t *testing.T, runner *controllertest.TestRunner) *Bucke
 	return controller
 }
 
-func newUserController(t *testing.T, runner *controllertest.TestRunner) (*UserController, *httpmock.MockTransport) {
+func newUserController(t *testing.T, runner *controllertest.TestRunner) (*MinIOUserController, *httpmock.MockTransport) {
 	tr := httpmock.NewMockTransport()
 	vaultClient, err := vault.NewClient("http://localhost:8300", "", vault.HttpClient(&http.Client{Transport: tr}))
 	require.NoError(t, err)
 
-	controller, err := NewUserController(
+	controller, err := NewMinIOUserController(
 		runner.CoreClient,
 		&runner.Client.Set,
 		nil,

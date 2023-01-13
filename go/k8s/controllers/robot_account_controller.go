@@ -1,4 +1,4 @@
-package harbor
+package controllers
 
 import (
 	"bytes"
@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
@@ -282,7 +283,7 @@ func (c *RobotAccountController) Finalize(ctx context.Context, obj runtime.Objec
 		return xerrors.WithStack(err)
 	}
 
-	hra.Finalizers = removeString(hra.Finalizers, harborRobotAccountControllerFinalizerName)
+	hra.Finalizers = enumerable.Delete(hra.Finalizers, harborRobotAccountControllerFinalizerName)
 	_, err = c.hClient.UpdateHarborRobotAccount(ctx, hra, metav1.UpdateOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)

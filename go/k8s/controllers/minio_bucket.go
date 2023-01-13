@@ -1,4 +1,4 @@
-package minio
+package controllers
 
 import (
 	"context"
@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
@@ -252,7 +253,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 	if r.Obj.Spec.BucketFinalizePolicy == "" || r.Obj.Spec.BucketFinalizePolicy == miniov1alpha1.BucketFinalizePolicyKeep {
 		// If Spec.BucketFinalizePolicy is Keep, then we shouldn't delete the bucket.
 		// We are going to delete the finalizer only.
-		r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
+		r.Obj.Finalizers = enumerable.Delete(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
 		_, err := r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
 		return xerrors.WithStack(err)
 	}
@@ -300,7 +301,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 		r.logger.Debug("Remove bucket", zap.String("name", r.Obj.Name))
 	}
 
-	r.Obj.Finalizers = removeString(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
+	r.Obj.Finalizers = enumerable.Delete(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
 
 	_, err = r.Client.UpdateMinIOBucket(ctx, r.Obj, metav1.UpdateOptions{})
 	if err != nil {
@@ -557,17 +558,4 @@ func (r *BucketReconciler) portForward(
 	}
 
 	return pf, nil
-}
-
-func removeString(v []string, s string) []string {
-	result := make([]string, 0, len(v))
-	for _, item := range v {
-		if item == s {
-			continue
-		}
-
-		result = append(result, item)
-	}
-
-	return result
 }

@@ -24,10 +24,7 @@ import (
 
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
-	"go.f110.dev/mono/go/k8s/controllers/consul"
-	"go.f110.dev/mono/go/k8s/controllers/grafana"
-	"go.f110.dev/mono/go/k8s/controllers/harbor"
-	"go.f110.dev/mono/go/k8s/controllers/minio"
+	"go.f110.dev/mono/go/k8s/controllers"
 	"go.f110.dev/mono/go/k8s/probe"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/vault"
@@ -53,7 +50,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerGrafanaUser,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			gu, err := grafana.NewUserController(core, factory, p.coreClient, p.client)
+			gu, err := controllers.NewGrafanaUserController(core, factory, p.coreClient, p.client)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
@@ -63,7 +60,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerHarborProject,
 		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			hpc, err := harbor.NewProjectController(
+			hpc, err := controllers.NewProjectController(
 				p.ctx,
 				p.coreClient,
 				p.client,
@@ -84,7 +81,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerHarborRobotAccount,
 		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			hrac, err := harbor.NewRobotAccountController(
+			hrac, err := controllers.NewRobotAccountController(
 				p.ctx,
 				p.coreClient,
 				p.client,
@@ -104,7 +101,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerMinIOBucket,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			mbc, err := minio.NewBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
+			mbc, err := controllers.NewBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
@@ -114,7 +111,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerMinIOUser,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			muc, err := minio.NewUserController(
+			muc, err := controllers.NewMinIOUserController(
 				p.coreClient,
 				p.client,
 				p.config,
@@ -132,7 +129,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerConsulBackup,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			b, err := consul.NewBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
+			b, err := controllers.NewBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}

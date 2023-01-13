@@ -17,10 +17,7 @@ go_library(
     deps = [
         "//go/fsm",
         "//go/k8s/client",
-        "//go/k8s/controllers/consul",
-        "//go/k8s/controllers/grafana",
-        "//go/k8s/controllers/harbor",
-        "//go/k8s/controllers/minio",
+        "//go/k8s/controllers",
         "//go/k8s/probe",
         "//go/logger",
         "//go/vault",

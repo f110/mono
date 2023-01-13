@@ -1,4 +1,4 @@
-package minio
+package controllers
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
-func TestUserController(t *testing.T) {
+func TestMinIOUserController(t *testing.T) {
 	t.Run("CreateSecret", func(t *testing.T) {
 		runner := newRunner()
 		controller, mockTransport := newUserController(t, runner)

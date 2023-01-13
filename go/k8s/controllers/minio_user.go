@@ -1,4 +1,4 @@
-package minio
+package controllers
 
 import (
 	"context"
@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/stringsutil"
@@ -37,7 +38,7 @@ const (
 	secretKeyLength                  = 24
 )
 
-type UserController struct {
+type MinIOUserController struct {
 	*controllerutil.ControllerBase
 
 	config      *rest.Config
@@ -56,9 +57,9 @@ type UserController struct {
 	runOutsideCluster bool
 }
 
-var _ controllerutil.Controller = &UserController{}
+var _ controllerutil.Controller = &MinIOUserController{}
 
-func NewUserController(
+func NewMinIOUserController(
 	coreClient kubernetes.Interface,
 	apiClient *client.Set,
 	cfg *rest.Config,
@@ -66,7 +67,7 @@ func NewUserController(
 	factory *client.InformerFactory,
 	vaultClient *vault.Client,
 	runOutsideCluster bool,
-) (*UserController, error) {
+) (*MinIOUserController, error) {
 	minioInformers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	minioUserInformer := minioInformers.MinIOUserInformer()
 	minioUserLister := minioInformers.MinIOUserLister()
@@ -78,7 +79,7 @@ func NewUserController(
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 
-	c := &UserController{
+	c := &MinIOUserController{
 		config:            cfg,
 		coreClient:        coreClient,
 		vaultClient:       vaultClient,
@@ -101,7 +102,7 @@ func NewUserController(
 	return c, nil
 }
 
-func (c *UserController) ObjectToKeys(obj interface{}) []string {
+func (c *MinIOUserController) ObjectToKeys(obj interface{}) []string {
 	user, ok := obj.(*miniov1alpha1.MinIOUser)
 	if !ok {
 		return nil
@@ -114,7 +115,7 @@ func (c *UserController) ObjectToKeys(obj interface{}) []string {
 	return []string{key}
 }
 
-func (c *UserController) GetObject(key string) (runtime.Object, error) {
+func (c *MinIOUserController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -127,7 +128,7 @@ func (c *UserController) GetObject(key string) (runtime.Object, error) {
 	return user, nil
 }
 
-func (c *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+func (c *MinIOUserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	user := obj.(*miniov1alpha1.MinIOUser)
 
 	user, err := c.mClient.UpdateMinIOUser(ctx, user, metav1.UpdateOptions{})
@@ -137,7 +138,7 @@ func (c *UserController) UpdateObject(ctx context.Context, obj runtime.Object) (
 	return user, nil
 }
 
-func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) error {
+func (c *MinIOUserController) Reconcile(ctx context.Context, obj runtime.Object) error {
 	currentUser := obj.(*miniov1alpha1.MinIOUser)
 	minioUser := currentUser.DeepCopy()
 
@@ -210,7 +211,7 @@ func (c *UserController) Reconcile(ctx context.Context, obj runtime.Object) erro
 	return nil
 }
 
-func (c *UserController) setStatus(user *miniov1alpha1.MinIOUser) error {
+func (c *MinIOUserController) setStatus(user *miniov1alpha1.MinIOUser) error {
 	secret, err := c.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
 	if apierrors.IsNotFound(err) {
 		return nil
@@ -227,7 +228,7 @@ func (c *UserController) setStatus(user *miniov1alpha1.MinIOUser) error {
 	return nil
 }
 
-func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
+func (c *MinIOUserController) ensureUser(ctx context.Context, adminClient *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
 	secret, err := c.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, xerrors.WithStack(err)
@@ -261,7 +262,7 @@ func (c *UserController) ensureUser(ctx context.Context, adminClient *madmin.Adm
 	return secret, nil
 }
 
-func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, secret *corev1.Secret) error {
+func (c *MinIOUserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, secret *corev1.Secret) error {
 	data := map[string]string{
 		"accesskey": string(secret.Data["accesskey"]),
 		"secretkey": string(secret.Data["secretkey"]),
@@ -275,7 +276,7 @@ func (c *UserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser, sec
 	return nil
 }
 
-func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error {
+func (c *MinIOUserController) Finalize(ctx context.Context, obj runtime.Object) error {
 	minioUser := obj.(*miniov1alpha1.MinIOUser)
 
 	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
@@ -324,13 +325,13 @@ func (c *UserController) Finalize(ctx context.Context, obj runtime.Object) error
 		}
 	}
 
-	minioUser.Finalizers = removeString(minioUser.Finalizers, minIOUserControllerFinalizerName)
+	minioUser.Finalizers = enumerable.Delete(minioUser.Finalizers, minIOUserControllerFinalizerName)
 
 	_, err = c.mClient.UpdateMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 	return err
 }
 
-func (c *UserController) getMinIOInstanceEndpoint(
+func (c *MinIOUserController) getMinIOInstanceEndpoint(
 	ctx context.Context,
 	instance *miniocontrollerv1beta1.MinIOInstance,
 ) (string, *portforward.PortForwarder, error) {
@@ -357,7 +358,7 @@ func (c *UserController) getMinIOInstanceEndpoint(
 	return instanceEndpoint, forwarder, nil
 }
 
-func (c *UserController) portForward(
+func (c *MinIOUserController) portForward(
 	ctx context.Context,
 	svc *corev1.Service,
 	port int,

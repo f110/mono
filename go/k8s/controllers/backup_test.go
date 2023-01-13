@@ -1,4 +1,4 @@
-package consul
+package controllers
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 
 func TestBackupController_Reconcile(t *testing.T) {
 	t.Run("Normal", func(t *testing.T) {
-		runner, controller := newController(t)
+		runner, controller := newBackupController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
 		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds+1) * time.Second)
@@ -57,7 +57,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 	})
 
 	t.Run("WithInInterval", func(t *testing.T) {
-		runner, controller := newController(t)
+		runner, controller := newBackupController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
 		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds-1) * time.Second)
@@ -69,7 +69,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 	})
 
 	t.Run("RotateHistory", func(t *testing.T) {
-		runner, controller := newController(t)
+		runner, controller := newBackupController(t)
 		target, fixtures := fixture()
 		runner.RegisterFixture(fixtures...)
 		target.Status.BackupStatusHistory = append(target.Status.BackupStatusHistory,
@@ -112,7 +112,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 }
 
 func TestBackupController_ObjectToKeys(t *testing.T) {
-	_, controller := newController(t)
+	_, controller := newBackupController(t)
 
 	keys := controller.ObjectToKeys(&consulv1alpha1.ConsulBackup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -182,7 +182,7 @@ func fixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
 	return target, []runtime.Object{secret, service}
 }
 
-func newController(t *testing.T) (*controllertest.TestRunner, *BackupController) {
+func newBackupController(t *testing.T) (*controllertest.TestRunner, *BackupController) {
 	runner := controllertest.NewTestRunner()
 	controller, err := NewBackupController(
 		runner.CoreSharedInformerFactory,

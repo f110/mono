@@ -1,4 +1,4 @@
-package grafana
+package controllers
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestUserController_ObjectToKeys(t *testing.T) {
-	runner, controller := newController(t)
+	runner, controller := newGrafanaUserController(t)
 
 	keys := controller.ObjectToKeys(&grafanav1alpha1.Grafana{
 		ObjectMeta: metav1.ObjectMeta{
@@ -59,7 +59,7 @@ func TestUserController_ObjectToKeys(t *testing.T) {
 }
 
 func TestUserController_GetObject(t *testing.T) {
-	runner, controller := newController(t)
+	runner, controller := newGrafanaUserController(t)
 
 	_, err := controller.GetObject("")
 	require.Error(t, err)
@@ -78,7 +78,7 @@ func TestUserController_GetObject(t *testing.T) {
 }
 
 func TestUserController_UpdateObject(t *testing.T) {
-	runner, controller := newController(t)
+	runner, controller := newGrafanaUserController(t)
 
 	_, err := controller.UpdateObject(context.Background(), &corev1.Service{})
 	require.Error(t, err)
@@ -104,7 +104,7 @@ func TestUserController_UpdateObject(t *testing.T) {
 }
 
 func TestUserController(t *testing.T) {
-	runner, controller := newController(t)
+	runner, controller := newGrafanaUserController(t)
 	target, fixtures := grafanaFixture()
 
 	mockTransport := httpmock.NewMockTransport()
@@ -158,9 +158,9 @@ func TestUserController(t *testing.T) {
 	runner.AssertNoUnexpectedAction(t)
 }
 
-func newController(t *testing.T) (*controllertest.TestRunner, *UserController) {
+func newGrafanaUserController(t *testing.T) (*controllertest.TestRunner, *GrafanaUserController) {
 	runner := controllertest.NewTestRunner()
-	controller, err := NewUserController(
+	controller, err := NewGrafanaUserController(
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
 		runner.CoreClient,

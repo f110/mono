@@ -1,4 +1,4 @@
-package consul
+package controllers
 
 import (
 	"context"

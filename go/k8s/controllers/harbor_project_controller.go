@@ -1,4 +1,4 @@
-package harbor
+package controllers
 
 import (
 	"context"
@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
@@ -190,7 +191,7 @@ func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) er
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	hp.Finalizers = removeString(hp.Finalizers, harborProjectControllerFinalizerName)
+	hp.Finalizers = enumerable.Delete(hp.Finalizers, harborProjectControllerFinalizerName)
 	_, err = c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})
 	return xerrors.WithStack(err)
 }
@@ -278,17 +279,4 @@ func (c *ProjectController) UpdateObject(ctx context.Context, obj runtime.Object
 		return nil, xerrors.WithStack(err)
 	}
 	return hp, nil
-}
-
-func removeString(v []string, s string) []string {
-	result := make([]string, 0, len(v))
-	for _, item := range v {
-		if item == s {
-			continue
-		}
-
-		result = append(result, item)
-	}
-
-	return result
 }
