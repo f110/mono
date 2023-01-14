@@ -8,6 +8,7 @@ import (
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
+	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/client"
 )
@@ -272,4 +273,21 @@ func AdminPasswordSecret(v *corev1.SecretKeySelector) Trait {
 			obj.Spec.AdminPasswordSecret = v
 		}
 	}
+}
+
+func HarborProjectFactory(base *harborv1alpha1.HarborProject, traits ...Trait) *harborv1alpha1.HarborProject {
+	var s *harborv1alpha1.HarborProject
+	if base == nil {
+		s = &harborv1alpha1.HarborProject{}
+	} else {
+		s = base.DeepCopy()
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
 }

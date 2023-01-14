@@ -19,6 +19,7 @@ go_library(
     deps = [
         "//go/api/consulv1alpha1",
         "//go/api/grafanav1alpha1",
+        "//go/api/harborv1alpha1",
         "//go/api/miniov1alpha1",
         "//go/k8s/client",
         "//go/stringsutil",
