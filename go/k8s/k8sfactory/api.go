@@ -189,6 +189,8 @@ func MinIOSelector(sel metav1.LabelSelector) Trait {
 		switch obj := object.(type) {
 		case *miniov1alpha1.MinIOBucket:
 			obj.Spec.Selector = sel
+		case *miniov1alpha1.MinIOUser:
+			obj.Spec.Selector = sel
 		}
 	}
 }
@@ -204,5 +206,32 @@ func DisableCreatingIndexFile(object any) {
 	switch obj := object.(type) {
 	case *miniov1alpha1.MinIOBucket:
 		obj.Spec.CreateIndexFile = false
+	}
+}
+
+func MinIOUserFactory(base *miniov1alpha1.MinIOUser, traits ...Trait) *miniov1alpha1.MinIOUser {
+	var s *miniov1alpha1.MinIOUser
+	if base == nil {
+		s = &miniov1alpha1.MinIOUser{}
+	} else {
+		s = base
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func VaultPath(mountPath, path string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *miniov1alpha1.MinIOUser:
+			obj.Spec.MountPath = mountPath
+			obj.Spec.Path = path
+		}
 	}
 }
