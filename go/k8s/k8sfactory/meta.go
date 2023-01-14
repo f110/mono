@@ -49,6 +49,15 @@ func Namespace(v string) Trait {
 	}
 }
 
+func Generation(v int64) Trait {
+	return func(object any) {
+		m, ok := object.(metav1.Object)
+		if ok {
+			m.SetGeneration(v)
+		}
+	}
+}
+
 func UID() Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)

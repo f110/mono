@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
+	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/client"
 )
@@ -16,6 +17,8 @@ func ServiceReference(v corev1.LocalObjectReference) Trait {
 		switch obj := object.(type) {
 		case *consulv1alpha1.ConsulBackup:
 			obj.Spec.Service = v
+		case *grafanav1alpha1.Grafana:
+			obj.Spec.Service = &v
 		}
 	}
 }
@@ -232,6 +235,41 @@ func VaultPath(mountPath, path string) Trait {
 		case *miniov1alpha1.MinIOUser:
 			obj.Spec.MountPath = mountPath
 			obj.Spec.Path = path
+		}
+	}
+}
+
+func GrafanaFactory(base *grafanav1alpha1.Grafana, traits ...Trait) *grafanav1alpha1.Grafana {
+	var s *grafanav1alpha1.Grafana
+	if base == nil {
+		s = &grafanav1alpha1.Grafana{}
+	} else {
+		s = base
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func UserSelector(v metav1.LabelSelector) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *grafanav1alpha1.Grafana:
+			obj.Spec.UserSelector = v
+		}
+	}
+}
+
+func AdminPasswordSecret(v *corev1.SecretKeySelector) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *grafanav1alpha1.Grafana:
+			obj.Spec.AdminPasswordSecret = v
 		}
 	}
 }
