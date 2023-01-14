@@ -577,3 +577,12 @@ func Reason(v string) Trait {
 		}
 	}
 }
+
+func SecretKeySelector(secret *corev1.Secret, key string) *corev1.SecretKeySelector {
+	return &corev1.SecretKeySelector{
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: secret.Name,
+		},
+		Key: key,
+	}
+}

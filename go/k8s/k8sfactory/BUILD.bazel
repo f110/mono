@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "k8sfactory",
     srcs = [
+        "api.go",
         "apps.go",
         "batch.go",
         "core.go",
@@ -15,8 +16,11 @@ go_library(
     importpath = "go.f110.dev/mono/go/k8s/k8sfactory",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/api/consulv1alpha1",
+        "//go/k8s/client",
         "//go/stringsutil",
         "//go/varptr",
+        "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
         "//vendor/k8s.io/api/apps/v1:apps",
         "//vendor/k8s.io/api/batch/v1:batch",
         "//vendor/k8s.io/api/batch/v1beta1",

@@ -35,6 +35,10 @@ func Namef(format string, a ...interface{}) Trait {
 	return Name(fmt.Sprintf(format, a...))
 }
 
+func DefaultNamespace(object any) {
+	Namespace(metav1.NamespaceDefault)(object)
+}
+
 func Namespace(v string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
