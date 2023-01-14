@@ -586,3 +586,7 @@ func SecretKeySelector(secret *corev1.Secret, key string) *corev1.SecretKeySelec
 		Key: key,
 	}
 }
+
+func LocalObjectReference(obj metav1.Object) corev1.LocalObjectReference {
+	return corev1.LocalObjectReference{Name: obj.GetName()}
+}

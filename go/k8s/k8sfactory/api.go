@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
+	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/client"
 )
 
@@ -164,4 +165,44 @@ func SecretAccessKey(ref *corev1.SecretKeySelector) Trait {
 
 func ObjectReference(obj metav1.Object) *consulv1alpha1.ObjectReference {
 	return &consulv1alpha1.ObjectReference{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+}
+
+func MinIOBucketFactory(base *miniov1alpha1.MinIOBucket, traits ...Trait) *miniov1alpha1.MinIOBucket {
+	var s *miniov1alpha1.MinIOBucket
+	if base == nil {
+		s = &miniov1alpha1.MinIOBucket{}
+	} else {
+		s = base
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func MinIOSelector(sel metav1.LabelSelector) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *miniov1alpha1.MinIOBucket:
+			obj.Spec.Selector = sel
+		}
+	}
+}
+
+func EnableCreatingIndexFile(object any) {
+	switch obj := object.(type) {
+	case *miniov1alpha1.MinIOBucket:
+		obj.Spec.CreateIndexFile = true
+	}
+}
+
+func DisableCreatingIndexFile(object any) {
+	switch obj := object.(type) {
+	case *miniov1alpha1.MinIOBucket:
+		obj.Spec.CreateIndexFile = false
+	}
 }

@@ -8,6 +8,7 @@ go_library(
         "batch.go",
         "core.go",
         "meta.go",
+        "minio.go",
         "networking.go",
         "policy.go",
         "rbac.go",
@@ -17,6 +18,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/api/consulv1alpha1",
+        "//go/api/miniov1alpha1",
         "//go/k8s/client",
         "//go/stringsutil",
         "//go/varptr",

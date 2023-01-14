@@ -198,8 +198,8 @@ func ClearOwnerReference(object any) {
 	objMeta.SetOwnerReferences(make([]metav1.OwnerReference, 0))
 }
 
-func MatchLabel(v map[string]string) *metav1.LabelSelector {
-	return &metav1.LabelSelector{
+func MatchLabel(v map[string]string) metav1.LabelSelector {
+	return metav1.LabelSelector{
 		MatchLabels: v,
 	}
 }
