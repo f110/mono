@@ -39,7 +39,7 @@ const (
 	minIOBucketControllerFinalizerName = "minio-bucket-controller.minio.f110.dev/finalizer"
 )
 
-type BucketController struct {
+type MinIOBucketController struct {
 	*controllerutil.ControllerBase
 
 	config         *rest.Config
@@ -57,16 +57,16 @@ type BucketController struct {
 	runOutsideCluster bool
 }
 
-var _ controllerutil.Controller = &BucketController{}
+var _ controllerutil.Controller = &MinIOBucketController{}
 
-func NewBucketController(
+func NewMinIOBucketController(
 	coreClient kubernetes.Interface,
 	apiClient *client.Set,
 	cfg *rest.Config,
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	factory *client.InformerFactory,
 	runOutsideCluster bool,
-) (*BucketController, error) {
+) (*MinIOBucketController, error) {
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 	podInformer := coreSharedInformerFactory.Core().V1().Pods()
@@ -76,7 +76,7 @@ func NewBucketController(
 	minioControllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceNone, 30*time.Second)
 	miInformer := minioControllerInformers.MinIOInstanceInformer()
 
-	c := &BucketController{
+	c := &MinIOBucketController{
 		config:            cfg,
 		coreClient:        coreClient,
 		mClient:           apiClient.MinioV1alpha1,
@@ -104,7 +104,7 @@ func NewBucketController(
 	return c, nil
 }
 
-func (c *BucketController) ObjectToKeys(obj interface{}) []string {
+func (c *MinIOBucketController) ObjectToKeys(obj interface{}) []string {
 	bucket, ok := obj.(*miniov1alpha1.MinIOBucket)
 	if !ok {
 		return nil
@@ -117,7 +117,7 @@ func (c *BucketController) ObjectToKeys(obj interface{}) []string {
 	return []string{key}
 }
 
-func (c *BucketController) GetObject(key string) (runtime.Object, error) {
+func (c *MinIOBucketController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -130,7 +130,7 @@ func (c *BucketController) GetObject(key string) (runtime.Object, error) {
 	return bucket, nil
 }
 
-func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+func (c *MinIOBucketController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	bucket := obj.(*miniov1alpha1.MinIOBucket)
 
 	b, err := c.mClient.UpdateMinIOBucket(ctx, bucket, metav1.UpdateOptions{})
@@ -141,7 +141,7 @@ func (c *BucketController) UpdateObject(ctx context.Context, obj runtime.Object)
 	return b, nil
 }
 
-func (c *BucketController) NewReconciler(log *zap.Logger) controllerutil.Reconciler {
+func (c *MinIOBucketController) NewReconciler(log *zap.Logger) controllerutil.Reconciler {
 	return NewBucketReconciler(
 		c.coreClient,
 		c.mClient,
@@ -156,11 +156,11 @@ func (c *BucketController) NewReconciler(log *zap.Logger) controllerutil.Reconci
 	)
 }
 
-func (c *BucketController) Reconcile(ctx context.Context, obj runtime.Object) error {
+func (c *MinIOBucketController) Reconcile(ctx context.Context, obj runtime.Object) error {
 	panic("Unreachable")
 }
 
-func (c *BucketController) Finalize(ctx context.Context, obj runtime.Object) error {
+func (c *MinIOBucketController) Finalize(ctx context.Context, obj runtime.Object) error {
 	panic("Unreachable")
 }
 

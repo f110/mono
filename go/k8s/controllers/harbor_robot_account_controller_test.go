@@ -18,9 +18,9 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
-func TestRobotAccountController(t *testing.T) {
-	runner, controller := newRobotAccountController(t)
-	target, fixtures := newRobotAccountFixtures()
+func TestHarborRobotAccountController(t *testing.T) {
+	runner, controller := newHarborRobotAccountController(t)
+	target, fixtures := newHarborRobotAccountFixtures()
 	runner.RegisterFixture(fixtures...)
 
 	mockTransport := httpmock.NewMockTransport()
@@ -64,7 +64,7 @@ func TestRobotAccountController(t *testing.T) {
 	runner.AssertNoUnexpectedAction(t)
 }
 
-func newRobotAccountController(t *testing.T) (*controllertest.TestRunner, *RobotAccountController) {
+func newHarborRobotAccountController(t *testing.T) (*controllertest.TestRunner, *HarborRobotAccountController) {
 	runner := controllertest.NewTestRunner()
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -82,7 +82,7 @@ func newRobotAccountController(t *testing.T) (*controllertest.TestRunner, *Robot
 		},
 	}
 	runner.RegisterFixture(secret, service)
-	controller, err := NewRobotAccountController(
+	controller, err := NewHarborRobotAccountController(
 		context.Background(),
 		runner.CoreClient,
 		&runner.Client.Set,
@@ -98,7 +98,7 @@ func newRobotAccountController(t *testing.T) (*controllertest.TestRunner, *Robot
 	return runner, controller
 }
 
-func newRobotAccountFixtures() (*harborv1alpha1.HarborRobotAccount, []runtime.Object) {
+func newHarborRobotAccountFixtures() (*harborv1alpha1.HarborRobotAccount, []runtime.Object) {
 	project := &harborv1alpha1.HarborProject{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tool",

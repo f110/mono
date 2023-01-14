@@ -18,10 +18,10 @@ import (
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
-func TestBucketController(t *testing.T) {
+func TestMinIOBucketController(t *testing.T) {
 	t.Run("CreateBucket", func(t *testing.T) {
 		runner := newRunner()
-		controller := newBucketController(t, runner)
+		controller := newMinIOBucketController(t, runner)
 		target, fixtures := minioFixture()
 		runner.RegisterFixture(fixtures...)
 

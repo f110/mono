@@ -32,7 +32,7 @@ const (
 	harborProjectControllerFinalizerName = "harbor-project-controller.harbor.f110.dev/finalizer"
 )
 
-type ProjectController struct {
+type HarborProjectController struct {
 	*controllerutil.ControllerBase
 
 	config     *rest.Config
@@ -47,9 +47,9 @@ type ProjectController struct {
 	runOutsideCluster bool
 }
 
-var _ controllerutil.Controller = &ProjectController{}
+var _ controllerutil.Controller = &HarborProjectController{}
 
-func NewProjectController(
+func NewHarborProjectController(
 	ctx context.Context,
 	coreClient kubernetes.Interface,
 	apiClient *client.Set,
@@ -60,7 +60,7 @@ func NewProjectController(
 	adminSecretName,
 	coreConfigMapName string,
 	runOutsideCluster bool,
-) (*ProjectController, error) {
+) (*HarborProjectController, error) {
 	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -81,7 +81,7 @@ func NewProjectController(
 	informers := client.NewHarborV1alpha1Informer(factory.Cache(), apiClient.HarborV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	hpInformer := informers.HarborProjectInformer()
 
-	c := &ProjectController{
+	c := &HarborProjectController{
 		config:            cfg,
 		coreClient:        coreClient,
 		hpClient:          apiClient.HarborV1alpha1,
@@ -103,7 +103,7 @@ func NewProjectController(
 	return c, nil
 }
 
-func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) error {
+func (c *HarborProjectController) Reconcile(ctx context.Context, obj runtime.Object) error {
 	currentHP := obj.(*harborv1alpha1.HarborProject)
 	harborProject := currentHP.DeepCopy()
 
@@ -144,7 +144,7 @@ func (c *ProjectController) Reconcile(ctx context.Context, obj runtime.Object) e
 	return nil
 }
 
-func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, error) {
+func (c *HarborProjectController) harborClient(ctx context.Context) (*harbor.Harbor, error) {
 	harborHost := fmt.Sprintf("http://%s.%s.svc", c.harborService.Name, c.harborService.Namespace)
 	if c.runOutsideCluster {
 		pf, err := c.portForward(ctx, c.harborService, 8080)
@@ -167,7 +167,7 @@ func (c *ProjectController) harborClient(ctx context.Context) (*harbor.Harbor, e
 	return harborClient, nil
 }
 
-func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
+func (c *HarborProjectController) createProject(currentHP *harborv1alpha1.HarborProject, client *harbor.Harbor) error {
 	newProject := &harbor.NewProjectRequest{ProjectName: currentHP.Name}
 	if currentHP.Spec.Public {
 		newProject.Metadata.Public = "true"
@@ -179,7 +179,7 @@ func (c *ProjectController) createProject(currentHP *harborv1alpha1.HarborProjec
 	return nil
 }
 
-func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) error {
+func (c *HarborProjectController) Finalize(ctx context.Context, obj runtime.Object) error {
 	hp := obj.(*harborv1alpha1.HarborProject)
 
 	harborClient, err := c.harborClient(ctx)
@@ -196,7 +196,7 @@ func (c *ProjectController) Finalize(ctx context.Context, obj runtime.Object) er
 	return xerrors.WithStack(err)
 }
 
-func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
 	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
@@ -245,7 +245,7 @@ func (c *ProjectController) portForward(ctx context.Context, svc *corev1.Service
 	return pf, nil
 }
 
-func (c *ProjectController) ObjectToKeys(obj interface{}) []string {
+func (c *HarborProjectController) ObjectToKeys(obj interface{}) []string {
 	hp, ok := obj.(*harborv1alpha1.HarborProject)
 	if !ok {
 		return nil
@@ -258,7 +258,7 @@ func (c *ProjectController) ObjectToKeys(obj interface{}) []string {
 	return []string{key}
 }
 
-func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
+func (c *HarborProjectController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -271,7 +271,7 @@ func (c *ProjectController) GetObject(key string) (runtime.Object, error) {
 	return hp, nil
 }
 
-func (c *ProjectController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+func (c *HarborProjectController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	hp := obj.(*harborv1alpha1.HarborProject)
 
 	hp, err := c.hpClient.UpdateHarborProject(ctx, hp, metav1.UpdateOptions{})

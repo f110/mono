@@ -17,7 +17,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
-func TestUserController_ObjectToKeys(t *testing.T) {
+func TestGrafanaUserController_ObjectToKeys(t *testing.T) {
 	runner, controller := newGrafanaUserController(t)
 
 	keys := controller.ObjectToKeys(&grafanav1alpha1.Grafana{
@@ -58,7 +58,7 @@ func TestUserController_ObjectToKeys(t *testing.T) {
 	require.Len(t, keys, 0)
 }
 
-func TestUserController_GetObject(t *testing.T) {
+func TestGrafanaUserController_GetObject(t *testing.T) {
 	runner, controller := newGrafanaUserController(t)
 
 	_, err := controller.GetObject("")
@@ -77,7 +77,7 @@ func TestUserController_GetObject(t *testing.T) {
 	assert.Equal(t, "test1", app.Name)
 }
 
-func TestUserController_UpdateObject(t *testing.T) {
+func TestGrafanaUserController_UpdateObject(t *testing.T) {
 	runner, controller := newGrafanaUserController(t)
 
 	_, err := controller.UpdateObject(context.Background(), &corev1.Service{})
@@ -103,7 +103,7 @@ func TestUserController_UpdateObject(t *testing.T) {
 	assert.Equal(t, target, app)
 }
 
-func TestUserController(t *testing.T) {
+func TestGrafanaUserController(t *testing.T) {
 	runner, controller := newGrafanaUserController(t)
 	target, fixtures := grafanaFixture()
 

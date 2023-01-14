@@ -3,13 +3,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "controllers",
     srcs = [
-        "backup.go",
+        "consul_backup.go",
         "docker.go",
+        "grafana_user.go",
         "harbor_project_controller.go",
+        "harbor_robot_account_controller.go",
         "minio_bucket.go",
         "minio_user.go",
-        "robot_account_controller.go",
-        "user.go",
     ],
     importpath = "go.f110.dev/mono/go/k8s/controllers",
     visibility = ["//visibility:public"],
@@ -54,12 +54,12 @@ go_library(
 go_test(
     name = "controllers_test",
     srcs = [
-        "backup_test.go",
+        "consul_backup_test.go",
+        "grafana_user_test.go",
+        "harbor_project_controller_test.go",
+        "harbor_robot_account_controller_test.go",
         "minio_bucket_test.go",
         "minio_user_test.go",
-        "project_controller_test.go",
-        "robot_account_controller_test.go",
-        "user_test.go",
         "util_test.go",
     ],
     embed = [":controllers"],

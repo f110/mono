@@ -21,10 +21,10 @@ import (
 	"go.f110.dev/mono/go/storage/storagetest"
 )
 
-func TestBackupController_Reconcile(t *testing.T) {
+func TestConsulBackupController_Reconcile(t *testing.T) {
 	t.Run("Normal", func(t *testing.T) {
-		runner, controller := newBackupController(t)
-		target, fixtures := backupControllerFixture()
+		runner, controller := newConsulBackupController(t)
+		target, fixtures := consulBackupControllerFixture()
 		runner.RegisterFixture(fixtures...)
 		target = k8sfactory.ConsulBackupFactory(target,
 			k8sfactory.BackupSucceeded(time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds+1)*time.Second)),
@@ -58,8 +58,8 @@ func TestBackupController_Reconcile(t *testing.T) {
 	})
 
 	t.Run("WithInInterval", func(t *testing.T) {
-		runner, controller := newBackupController(t)
-		target, fixtures := backupControllerFixture()
+		runner, controller := newConsulBackupController(t)
+		target, fixtures := consulBackupControllerFixture()
 		runner.RegisterFixture(fixtures...)
 		target = k8sfactory.ConsulBackupFactory(target,
 			k8sfactory.BackupSucceeded(time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds-1)*time.Second)),
@@ -70,8 +70,8 @@ func TestBackupController_Reconcile(t *testing.T) {
 	})
 
 	t.Run("RotateHistory", func(t *testing.T) {
-		runner, controller := newBackupController(t)
-		target, fixtures := backupControllerFixture()
+		runner, controller := newConsulBackupController(t)
+		target, fixtures := consulBackupControllerFixture()
 		runner.RegisterFixture(fixtures...)
 		target.Status.BackupStatusHistory = append(target.Status.BackupStatusHistory,
 			consulv1alpha1.ConsulBackupStatusHistory{Path: "/test_1", Succeeded: true},
@@ -112,8 +112,8 @@ func TestBackupController_Reconcile(t *testing.T) {
 	})
 }
 
-func TestBackupController_ObjectToKeys(t *testing.T) {
-	_, controller := newBackupController(t)
+func TestConsulBackupController_ObjectToKeys(t *testing.T) {
+	_, controller := newConsulBackupController(t)
 
 	keys := controller.ObjectToKeys(&consulv1alpha1.ConsulBackup{
 		ObjectMeta: metav1.ObjectMeta{
@@ -125,7 +125,7 @@ func TestBackupController_ObjectToKeys(t *testing.T) {
 	assert.Equal(t, "default/test", keys[0])
 }
 
-func backupControllerFixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
+func consulBackupControllerFixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
 	secret := k8sfactory.SecretFactory(nil,
 		k8sfactory.Name("access"),
 		k8sfactory.DefaultNamespace,
@@ -160,9 +160,9 @@ func backupControllerFixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) 
 	return target, []runtime.Object{secret, service}
 }
 
-func newBackupController(t *testing.T) (*controllertest.TestRunner, *BackupController) {
+func newConsulBackupController(t *testing.T) (*controllertest.TestRunner, *ConsulBackupController) {
 	runner := controllertest.NewTestRunner()
-	controller, err := NewBackupController(
+	controller, err := NewConsulBackupController(
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
 		runner.CoreClient,

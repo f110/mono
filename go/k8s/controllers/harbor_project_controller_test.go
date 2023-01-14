@@ -17,9 +17,9 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 )
 
-func TestProjectController(t *testing.T) {
-	runner, controller := newProjectController(t)
-	target, fixtures := newProjectFixture()
+func TestHarborProjectController(t *testing.T) {
+	runner, controller := newHarborProjectController(t)
+	target, fixtures := newHarborProjectFixture()
 	runner.RegisterFixture(fixtures...)
 
 	mockTransport := httpmock.NewMockTransport()
@@ -57,7 +57,7 @@ func TestProjectController(t *testing.T) {
 	runner.AssertNoUnexpectedAction(t)
 }
 
-func newProjectController(t *testing.T) (*controllertest.TestRunner, *ProjectController) {
+func newHarborProjectController(t *testing.T) (*controllertest.TestRunner, *HarborProjectController) {
 	runner := controllertest.NewTestRunner()
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -84,7 +84,7 @@ func newProjectController(t *testing.T) (*controllertest.TestRunner, *ProjectCon
 		},
 	}
 	runner.RegisterFixture(secret, service, configMap)
-	controller, err := NewProjectController(
+	controller, err := NewHarborProjectController(
 		context.Background(),
 		runner.CoreClient,
 		&runner.Client.Set,
@@ -101,7 +101,7 @@ func newProjectController(t *testing.T) (*controllertest.TestRunner, *ProjectCon
 	return runner, controller
 }
 
-func newProjectFixture() (*harborv1alpha1.HarborProject, []runtime.Object) {
+func newHarborProjectFixture() (*harborv1alpha1.HarborProject, []runtime.Object) {
 	target := &harborv1alpha1.HarborProject{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test1",

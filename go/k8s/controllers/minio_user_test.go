@@ -19,7 +19,7 @@ import (
 func TestMinIOUserController(t *testing.T) {
 	t.Run("CreateSecret", func(t *testing.T) {
 		runner := newRunner()
-		controller, mockTransport := newUserController(t, runner)
+		controller, mockTransport := newMinIOUserController(t, runner)
 		mockTransport.RegisterResponder(
 			http.MethodPut,
 			"/minio/admin/v3/add-user",

@@ -27,14 +27,14 @@ func newRunner() *controllertest.TestRunner {
 	return runner
 }
 
-func newBucketController(t *testing.T, runner *controllertest.TestRunner) *BucketController {
-	controller, err := NewBucketController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, false)
+func newMinIOBucketController(t *testing.T, runner *controllertest.TestRunner) *MinIOBucketController {
+	controller, err := NewMinIOBucketController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, false)
 	require.NoError(t, err)
 
 	return controller
 }
 
-func newUserController(t *testing.T, runner *controllertest.TestRunner) (*MinIOUserController, *httpmock.MockTransport) {
+func newMinIOUserController(t *testing.T, runner *controllertest.TestRunner) (*MinIOUserController, *httpmock.MockTransport) {
 	tr := httpmock.NewMockTransport()
 	vaultClient, err := vault.NewClient("http://localhost:8300", "", vault.HttpClient(&http.Client{Transport: tr}))
 	require.NoError(t, err)

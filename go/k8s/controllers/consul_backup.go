@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/mono/go/storage"
 )
 
-type BackupController struct {
+type ConsulBackupController struct {
 	*controllerutil.ControllerBase
 
 	client            *client.ConsulV1alpha1
@@ -43,23 +43,23 @@ type BackupController struct {
 	transport http.RoundTripper
 }
 
-var _ controllerutil.Controller = &BackupController{}
+var _ controllerutil.Controller = &ConsulBackupController{}
 
-func NewBackupController(
+func NewConsulBackupController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	factory *client.InformerFactory,
 	coreClient kubernetes.Interface,
 	apiClient *client.Set,
 	config *rest.Config,
 	runOutsideCluster bool,
-) (*BackupController, error) {
+) (*ConsulBackupController, error) {
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 
 	informers := client.NewConsulV1alpha1Informer(factory.Cache(), apiClient.ConsulV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	backupInformer := informers.ConsulBackupInformer()
 
-	b := &BackupController{
+	b := &ConsulBackupController{
 		client:            apiClient.ConsulV1alpha1,
 		coreClient:        coreClient,
 		config:            config,
@@ -80,7 +80,7 @@ func NewBackupController(
 	return b, nil
 }
 
-func (b *BackupController) ObjectToKeys(obj interface{}) []string {
+func (b *ConsulBackupController) ObjectToKeys(obj interface{}) []string {
 	switch v := obj.(type) {
 	case *consulv1alpha1.ConsulBackup:
 		key, err := cache.MetaNamespaceKeyFunc(v)
@@ -93,7 +93,7 @@ func (b *BackupController) ObjectToKeys(obj interface{}) []string {
 	}
 }
 
-func (b *BackupController) GetObject(key string) (runtime.Object, error) {
+func (b *ConsulBackupController) GetObject(key string) (runtime.Object, error) {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -110,7 +110,7 @@ func (b *BackupController) GetObject(key string) (runtime.Object, error) {
 	return backup, nil
 }
 
-func (b *BackupController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
+func (b *ConsulBackupController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	backup, ok := obj.(*consulv1alpha1.ConsulBackup)
 	if !ok {
 		return nil, xerrors.Newf("unexpected object type: %T", obj)
@@ -124,7 +124,7 @@ func (b *BackupController) UpdateObject(ctx context.Context, obj runtime.Object)
 	return updatedBackup, nil
 }
 
-func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) error {
+func (b *ConsulBackupController) Reconcile(ctx context.Context, obj runtime.Object) error {
 	backup := obj.(*consulv1alpha1.ConsulBackup)
 	updated := backup.DeepCopy()
 	now := metav1.Now()
@@ -190,11 +190,11 @@ func (b *BackupController) Reconcile(ctx context.Context, obj runtime.Object) er
 	return nil
 }
 
-func (b *BackupController) Finalize(ctx context.Context, obj runtime.Object) error {
+func (b *ConsulBackupController) Finalize(ctx context.Context, obj runtime.Object) error {
 	panic("implement me")
 }
 
-func (b *BackupController) storeBackupFile(
+func (b *ConsulBackupController) storeBackupFile(
 	ctx context.Context,
 	backup *consulv1alpha1.ConsulBackup,
 	history *consulv1alpha1.ConsulBackupStatusHistory,
@@ -263,7 +263,7 @@ func (b *BackupController) storeBackupFile(
 	}
 }
 
-func (b *BackupController) rotateBackupFiles(ctx context.Context, backup *consulv1alpha1.ConsulBackup) error {
+func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *consulv1alpha1.ConsulBackup) error {
 	if backup.Spec.MaxBackups == 0 {
 		// In this case, we don't have to rotate a backup file.
 		return nil

@@ -60,7 +60,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerHarborProject,
 		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			hpc, err := controllers.NewProjectController(
+			hpc, err := controllers.NewHarborProjectController(
 				p.ctx,
 				p.coreClient,
 				p.client,
@@ -81,7 +81,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerHarborRobotAccount,
 		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			hrac, err := controllers.NewRobotAccountController(
+			hrac, err := controllers.NewHarborRobotAccountController(
 				p.ctx,
 				p.coreClient,
 				p.client,
@@ -101,7 +101,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerMinIOBucket,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			mbc, err := controllers.NewBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
+			mbc, err := controllers.NewMinIOBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
@@ -129,7 +129,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerConsulBackup,
 		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			b, err := controllers.NewBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
+			b, err := controllers.NewConsulBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
