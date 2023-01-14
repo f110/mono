@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/jarcoal/httpmock"
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +13,7 @@ import (
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestMinIOUserController(t *testing.T) {
@@ -56,57 +56,29 @@ func TestMinIOUserController(t *testing.T) {
 }
 
 func minIOUserFixture() (*miniov1alpha1.MinIOUser, []runtime.Object) {
-	user := &miniov1alpha1.MinIOUser{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: miniov1alpha1.MinIOUserSpec{
-			Path:      "/test",
-			MountPath: "/secret",
-			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "minio",
-				},
-			},
-		},
-	}
-
-	instance := &miniocontrollerv1beta1.MinIOInstance{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: metav1.NamespaceDefault,
-			Labels: map[string]string{
-				"app": "minio",
-			},
-		},
-		Spec: miniocontrollerv1beta1.MinIOInstanceSpec{
-			CredsSecret: &corev1.LocalObjectReference{
-				Name: "root-accesskey",
-			},
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-hl-svc",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{Port: 9000},
-			},
-		},
-	}
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "root-accesskey",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"accesskey": []byte("rootaccesskey"),
-			"secretkey": []byte("rootsecretkey"),
-		},
-	}
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("root-accesskey"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("accesskey", []byte("rootaccesskey")),
+		k8sfactory.Data("secretkey", []byte("rootsecretkey")),
+	)
+	instance := k8sfactory.MinIOInstanceFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Labels(map[string]string{"app": "minio"}),
+		k8sfactory.MinIOCredential(k8sfactory.LocalObjectReference(secret)),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Namef("%s-hl-svc", instance.Name),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Port("", corev1.ProtocolTCP, 9000),
+	)
+	user := k8sfactory.MinIOUserFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.VaultPath("/secret", "/test"),
+		k8sfactory.MinIOSelector(k8sfactory.MatchLabel(instance.ObjectMeta.Labels)),
+	)
 
 	return user, []runtime.Object{instance, service, secret}
 }
