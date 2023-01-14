@@ -9,14 +9,13 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/minio/minio-go/v6"
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestBucketController(t *testing.T) {
@@ -90,54 +89,30 @@ func TestBucketController(t *testing.T) {
 }
 
 func minioFixture() (*miniov1alpha1.MinIOBucket, []runtime.Object) {
-	instance := &miniocontrollerv1beta1.MinIOInstance{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "instance",
-			Namespace: metav1.NamespaceDefault,
-			Labels: map[string]string{
-				"app": "test",
-			},
-		},
-		Spec: miniocontrollerv1beta1.MinIOInstanceSpec{
-			CredsSecret: &corev1.LocalObjectReference{
-				Name: "creds",
-			},
-		},
-	}
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "creds",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"accesskey": []byte("foo"),
-			"secretkey": []byte("bar"),
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-hl-svc",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{Port: 9000},
-			},
-		},
-	}
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("creds"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("accesskey", []byte("foo")),
+		k8sfactory.Data("secretkey", []byte("bar")),
+	)
+	instance := k8sfactory.MinIOInstanceFactory(nil,
+		k8sfactory.Name("instance"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Labels(map[string]string{"app": "test"}),
+		k8sfactory.MinIOCredential(k8sfactory.LocalObjectReference(secret)),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Namef("%s-hl-svc", instance.Name),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Port("", corev1.ProtocolTCP, 9000),
+	)
 
-	target := &miniov1alpha1.MinIOBucket{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "bucket1",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: miniov1alpha1.MinIOBucketSpec{
-			Selector: metav1.LabelSelector{
-				MatchLabels: instance.ObjectMeta.Labels,
-			},
-			CreateIndexFile: false,
-		},
-	}
+	target := k8sfactory.MinIOBucketFactory(nil,
+		k8sfactory.Name("bucket1"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.MinIOSelector(k8sfactory.MatchLabel(instance.ObjectMeta.Labels)),
+		k8sfactory.DisableCreatingIndexFile,
+	)
 
 	return target, []runtime.Object{instance, secret, service}
 }
