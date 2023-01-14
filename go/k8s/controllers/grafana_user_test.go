@@ -15,6 +15,7 @@ import (
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/grafana"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestGrafanaUserController_ObjectToKeys(t *testing.T) {
@@ -172,44 +173,23 @@ func newGrafanaUserController(t *testing.T) (*controllertest.TestRunner, *Grafan
 }
 
 func grafanaFixture() (*grafanav1alpha1.Grafana, []runtime.Object) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "admin",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"password": []byte("foobar"),
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "grafana",
-			Namespace: metav1.NamespaceDefault,
-		},
-	}
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("admin"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("password", []byte("foobar")),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Name("grafana"),
+		k8sfactory.DefaultNamespace,
+	)
 
-	target := &grafanav1alpha1.Grafana{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test",
-			Namespace:  metav1.NamespaceDefault,
-			Generation: 2,
-		},
-		Spec: grafanav1alpha1.GrafanaSpec{
-			UserSelector: metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "test",
-				},
-			},
-			Service: &corev1.LocalObjectReference{
-				Name: service.Name,
-			},
-			AdminPasswordSecret: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: secret.Name,
-				},
-				Key: "password",
-			},
-		},
-	}
+	target := k8sfactory.GrafanaFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Generation(2),
+		k8sfactory.UserSelector(k8sfactory.MatchLabel(map[string]string{"app": "test"})),
+		k8sfactory.ServiceReference(k8sfactory.LocalObjectReference(service)),
+		k8sfactory.AdminPasswordSecret(k8sfactory.SecretKeySelector(secret, "password")),
+	)
 	return target, []runtime.Object{secret, service}
 }
