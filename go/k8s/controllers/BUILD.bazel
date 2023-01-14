@@ -72,6 +72,7 @@ go_test(
         "//go/harbor",
         "//go/http/mockutil",
         "//go/k8s/controllers/controllertest",
+        "//go/k8s/k8sfactory",
         "//go/storage/storagetest",
         "//go/vault",
         "//vendor/github.com/jarcoal/httpmock",

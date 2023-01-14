@@ -17,17 +17,18 @@ import (
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/storage/storagetest"
 )
 
 func TestBackupController_Reconcile(t *testing.T) {
 	t.Run("Normal", func(t *testing.T) {
 		runner, controller := newBackupController(t)
-		target, fixtures := fixture()
+		target, fixtures := backupControllerFixture()
 		runner.RegisterFixture(fixtures...)
-		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds+1) * time.Second)
-		target.Status.Succeeded = true
-		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
+		target = k8sfactory.ConsulBackupFactory(target,
+			k8sfactory.BackupSucceeded(time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds+1)*time.Second)),
+		)
 
 		mockTransport := httpmock.NewMockTransport()
 		controller.transport = mockTransport
@@ -58,11 +59,11 @@ func TestBackupController_Reconcile(t *testing.T) {
 
 	t.Run("WithInInterval", func(t *testing.T) {
 		runner, controller := newBackupController(t)
-		target, fixtures := fixture()
+		target, fixtures := backupControllerFixture()
 		runner.RegisterFixture(fixtures...)
-		lastSucceededTime := time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds-1) * time.Second)
-		target.Status.Succeeded = true
-		target.Status.LastSucceededTime = &metav1.Time{Time: lastSucceededTime}
+		target = k8sfactory.ConsulBackupFactory(target,
+			k8sfactory.BackupSucceeded(time.Now().Add(-time.Duration(target.Spec.IntervalInSeconds-1)*time.Second)),
+		)
 
 		err := runner.Reconcile(controller, target)
 		require.NoError(t, err)
@@ -70,7 +71,7 @@ func TestBackupController_Reconcile(t *testing.T) {
 
 	t.Run("RotateHistory", func(t *testing.T) {
 		runner, controller := newBackupController(t)
-		target, fixtures := fixture()
+		target, fixtures := backupControllerFixture()
 		runner.RegisterFixture(fixtures...)
 		target.Status.BackupStatusHistory = append(target.Status.BackupStatusHistory,
 			consulv1alpha1.ConsulBackupStatusHistory{Path: "/test_1", Succeeded: true},
@@ -124,60 +125,37 @@ func TestBackupController_ObjectToKeys(t *testing.T) {
 	assert.Equal(t, "default/test", keys[0])
 }
 
-func fixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "access",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"accesskey": []byte("test-accesskey"),
-			"secret":    []byte("test-secret-access-key"),
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "minio",
-			Namespace: metav1.NamespaceDefault,
-		},
-	}
-	target := &consulv1alpha1.ConsulBackup{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: consulv1alpha1.ConsulBackupSpec{
-			MaxBackups:        5,
-			IntervalInSeconds: 600,
-			Service: corev1.LocalObjectReference{
-				Name: "consul-server",
-			},
-			Storage: consulv1alpha1.ConsulBackupStorageSpec{
-				MinIO: &consulv1alpha1.BackupStorageMinIOSpec{
-					Bucket: "backup",
-					Path:   "/",
-					Service: &consulv1alpha1.ObjectReference{
-						Name:      service.Name,
-						Namespace: service.Namespace,
-					},
-					Credential: consulv1alpha1.AWSCredential{
-						AccessKeyID: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: secret.Name,
-							},
-							Key: "accesskey",
-						},
-						SecretAccessKey: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: secret.Name,
-							},
-							Key: "secret",
-						},
-					},
-				},
-			},
-		},
-	}
+func backupControllerFixture() (*consulv1alpha1.ConsulBackup, []runtime.Object) {
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("access"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("accesskey", []byte("test-accesskey")),
+		k8sfactory.Data("secret", []byte("test-secret-access-key")),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Name("minio"),
+		k8sfactory.DefaultNamespace,
+	)
+	target := k8sfactory.ConsulBackupFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.MaxBackup(5),
+		k8sfactory.BackupInterval(600),
+		k8sfactory.ServiceReference(corev1.LocalObjectReference{Name: "consul-server"}),
+		k8sfactory.BackupStorage(
+			k8sfactory.BackupMinIOStorageFactory(nil,
+				k8sfactory.Bucket("backup"),
+				k8sfactory.StoragePath("/"),
+				k8sfactory.BackupService(k8sfactory.ObjectReference(service)),
+				k8sfactory.AWSCredential(
+					k8sfactory.AWSCredentialFactory(nil,
+						k8sfactory.AccessKey(k8sfactory.SecretKeySelector(secret, "accesskey")),
+						k8sfactory.SecretAccessKey(k8sfactory.SecretKeySelector(secret, "secret")),
+					),
+				),
+			),
+		),
+	)
 
 	return target, []runtime.Object{secret, service}
 }
