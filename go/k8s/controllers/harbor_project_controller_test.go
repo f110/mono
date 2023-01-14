@@ -8,13 +8,13 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestHarborProjectController(t *testing.T) {
@@ -59,30 +59,20 @@ func TestHarborProjectController(t *testing.T) {
 
 func newHarborProjectController(t *testing.T) (*controllertest.TestRunner, *HarborProjectController) {
 	runner := controllertest.NewTestRunner()
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "admin",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"HARBOR_ADMIN_PASSWORD": []byte("password"),
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: metav1.NamespaceDefault,
-		},
-	}
-	configMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "config",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string]string{
-			"EXT_ENDPOINT": "http://test-registry.f110.dev",
-		},
-	}
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("admin"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("HARBOR_ADMIN_PASSWORD", []byte("password")),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+	)
+	configMap := k8sfactory.ConfigMapFactory(nil,
+		k8sfactory.Name("config"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("EXT_ENDPOINT", []byte("http://test-registry.f110.dev")),
+	)
 	runner.RegisterFixture(secret, service, configMap)
 	controller, err := NewHarborProjectController(
 		context.Background(),
@@ -102,13 +92,10 @@ func newHarborProjectController(t *testing.T) (*controllertest.TestRunner, *Harb
 }
 
 func newHarborProjectFixture() (*harborv1alpha1.HarborProject, []runtime.Object) {
-	target := &harborv1alpha1.HarborProject{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test1",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: harborv1alpha1.HarborProjectSpec{},
-	}
+	target := k8sfactory.HarborProjectFactory(nil,
+		k8sfactory.Name("test1"),
+		k8sfactory.DefaultNamespace,
+	)
 
 	return target, []runtime.Object{}
 }
