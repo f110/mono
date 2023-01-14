@@ -175,7 +175,7 @@ func MinIOBucketFactory(base *miniov1alpha1.MinIOBucket, traits ...Trait) *minio
 	if base == nil {
 		s = &miniov1alpha1.MinIOBucket{}
 	} else {
-		s = base
+		s = base.DeepCopy()
 	}
 
 	setGVK(s, client.Scheme)
@@ -217,7 +217,7 @@ func MinIOUserFactory(base *miniov1alpha1.MinIOUser, traits ...Trait) *miniov1al
 	if base == nil {
 		s = &miniov1alpha1.MinIOUser{}
 	} else {
-		s = base
+		s = base.DeepCopy()
 	}
 
 	setGVK(s, client.Scheme)
@@ -244,7 +244,7 @@ func GrafanaFactory(base *grafanav1alpha1.Grafana, traits ...Trait) *grafanav1al
 	if base == nil {
 		s = &grafanav1alpha1.Grafana{}
 	} else {
-		s = base
+		s = base.DeepCopy()
 	}
 
 	setGVK(s, client.Scheme)
