@@ -112,6 +112,40 @@ func (r *TestRunner) editActions() []*Action {
 	return actions
 }
 
+func (r *TestRunner) AssertCreateAction(t *testing.T, obj runtime.Object) bool {
+	t.Helper()
+
+	return r.AssertAction(t, Action{
+		Verb:   ActionCreate,
+		Object: obj,
+	})
+}
+
+func (r *TestRunner) AssertUpdateAction(t *testing.T, subresource string, obj runtime.Object) bool {
+	t.Helper()
+
+	return r.AssertAction(t, Action{
+		Verb:        ActionUpdate,
+		Subresource: subresource,
+		Object:      obj,
+	})
+}
+
+func (r *TestRunner) AssertDeleteAction(t *testing.T, obj runtime.Object) bool {
+	t.Helper()
+
+	m, ok := obj.(metav1.Object)
+	if !ok {
+		assert.Failf(t, "Failed type assertion", "%T is not metav1.Object", obj)
+	}
+	return r.AssertAction(t, Action{
+		Verb:      ActionDelete,
+		Object:    obj,
+		Name:      m.GetName(),
+		Namespace: m.GetNamespace(),
+	})
+}
+
 func (r *TestRunner) AssertAction(t *testing.T, e Action) bool {
 	t.Helper()
 
@@ -246,6 +280,7 @@ type ActionVerb string
 const (
 	ActionUpdate ActionVerb = "update"
 	ActionCreate ActionVerb = "create"
+	ActionDelete ActionVerb = "delete"
 )
 
 func (a ActionVerb) String() string {
@@ -256,6 +291,8 @@ type Action struct {
 	Verb        ActionVerb
 	Subresource string
 	Object      runtime.Object
+	Name        string
+	Namespace   string
 	Visited     bool
 }
 
