@@ -16,6 +16,7 @@ import (
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/http/mockutil"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestHarborRobotAccountController(t *testing.T) {
@@ -66,21 +67,15 @@ func TestHarborRobotAccountController(t *testing.T) {
 
 func newHarborRobotAccountController(t *testing.T) (*controllertest.TestRunner, *HarborRobotAccountController) {
 	runner := controllertest.NewTestRunner()
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "admin",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Data: map[string][]byte{
-			"HARBOR_ADMIN_PASSWORD": []byte("password"),
-		},
-	}
-	service := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: metav1.NamespaceDefault,
-		},
-	}
+	secret := k8sfactory.SecretFactory(nil,
+		k8sfactory.Name("admin"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Data("HARBOR_ADMIN_PASSWORD", []byte("password")),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+	)
 	runner.RegisterFixture(secret, service)
 	controller, err := NewHarborRobotAccountController(
 		context.Background(),
@@ -99,28 +94,17 @@ func newHarborRobotAccountController(t *testing.T) (*controllertest.TestRunner, 
 }
 
 func newHarborRobotAccountFixtures() (*harborv1alpha1.HarborRobotAccount, []runtime.Object) {
-	project := &harborv1alpha1.HarborProject{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tool",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Status: harborv1alpha1.HarborProjectStatus{
-			Ready:     true,
-			ProjectId: 1,
-		},
-	}
+	project := k8sfactory.HarborProjectFactory(nil,
+		k8sfactory.Name("tool"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.ReadyProject(1),
+	)
 
-	target := &harborv1alpha1.HarborRobotAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "robot1",
-			Namespace: metav1.NamespaceDefault,
-		},
-		Spec: harborv1alpha1.HarborRobotAccountSpec{
-			SecretName:       "robot1-account",
-			ProjectName:      project.Name,
-			ProjectNamespace: project.Namespace,
-		},
-	}
-
+	target := k8sfactory.HarborRobotAccountFactory(nil,
+		k8sfactory.Name("robot1"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.ProjectReference(project),
+		k8sfactory.DockerSecret(k8sfactory.SecretFactory(nil, k8sfactory.Name("robot1-account"))),
+	)
 	return target, []runtime.Object{project}
 }
