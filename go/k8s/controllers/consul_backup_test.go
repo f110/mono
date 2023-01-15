@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
-	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/storage/storagetest"
 )
@@ -46,11 +45,7 @@ func TestConsulBackupController_Reconcile(t *testing.T) {
 
 		expect, err := runner.Client.ConsulV1alpha1.GetConsulBackup(context.Background(), target.Namespace, target.Name, metav1.GetOptions{})
 		require.NoError(t, err)
-		runner.AssertAction(t, controllertest.Action{
-			Verb:        controllertest.ActionUpdate,
-			Subresource: "status",
-			Object:      expect,
-		})
+		runner.AssertUpdateAction(t, "status", expect)
 		runner.AssertNoUnexpectedAction(t)
 		assert.True(t, expect.Status.Succeeded)
 		assert.Equal(t, expect.Status.LastSucceededTime, expect.Status.BackupStatusHistory[0].ExecuteTime)
@@ -158,19 +153,4 @@ func consulBackupControllerFixture() (*consulv1alpha1.ConsulBackup, []runtime.Ob
 	)
 
 	return target, []runtime.Object{secret, service}
-}
-
-func newConsulBackupController(t *testing.T) (*controllertest.TestRunner, *ConsulBackupController) {
-	runner := controllertest.NewTestRunner()
-	controller, err := NewConsulBackupController(
-		runner.CoreSharedInformerFactory,
-		runner.Factory,
-		runner.CoreClient,
-		&runner.Client.Set,
-		nil,
-		false,
-	)
-	require.NoError(t, err)
-
-	return runner, controller
 }

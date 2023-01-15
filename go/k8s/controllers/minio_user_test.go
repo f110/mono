@@ -1,18 +1,15 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
-	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
@@ -42,15 +39,10 @@ func TestMinIOUserController(t *testing.T) {
 		err := runner.Reconcile(controller, target)
 		require.NoError(t, err)
 
-		runner.AssertAction(t, controllertest.Action{
-			Verb: controllertest.ActionCreate,
-			Object: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      fmt.Sprintf("%s-accesskey", target.Name),
-					Namespace: target.Namespace,
-				},
-			},
-		})
+		runner.AssertCreateAction(t, k8sfactory.SecretFactory(nil,
+			k8sfactory.Namef("%s-accesskey", target.Name),
+			k8sfactory.Namespace(target.Namespace),
+		))
 		runner.AssertNoUnexpectedAction(t)
 	})
 }

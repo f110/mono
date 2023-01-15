@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
-	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
@@ -79,11 +78,7 @@ func TestMinIOBucketController(t *testing.T) {
 
 		updated := target.DeepCopy()
 		updated.Status.Ready = true
-		runner.AssertAction(t, controllertest.Action{
-			Verb:        controllertest.ActionUpdate,
-			Subresource: "status",
-			Object:      updated,
-		})
+		runner.AssertUpdateAction(t, "status", updated)
 		runner.AssertNoUnexpectedAction(t)
 	})
 }

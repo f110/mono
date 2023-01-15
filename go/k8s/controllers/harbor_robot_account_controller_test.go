@@ -1,21 +1,17 @@
 package controllers
 
 import (
-	"context"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/http/mockutil"
-	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
@@ -48,49 +44,9 @@ func TestHarborRobotAccountController(t *testing.T) {
 	expect := target.DeepCopy()
 	expect.Status.Ready = true
 	expect.Status.RobotId = 10
-	runner.AssertAction(t, controllertest.Action{
-		Verb:        controllertest.ActionUpdate,
-		Subresource: "status",
-		Object:      expect,
-	})
-	runner.AssertAction(t, controllertest.Action{
-		Verb: controllertest.ActionCreate,
-		Object: &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      target.Spec.SecretName,
-				Namespace: target.Namespace,
-			},
-		},
-	})
+	runner.AssertUpdateAction(t, "status", expect)
+	runner.AssertCreateAction(t, k8sfactory.SecretFactory(nil, k8sfactory.Name(target.Spec.SecretName), k8sfactory.Namespace(target.Namespace)))
 	runner.AssertNoUnexpectedAction(t)
-}
-
-func newHarborRobotAccountController(t *testing.T) (*controllertest.TestRunner, *HarborRobotAccountController) {
-	runner := controllertest.NewTestRunner()
-	secret := k8sfactory.SecretFactory(nil,
-		k8sfactory.Name("admin"),
-		k8sfactory.DefaultNamespace,
-		k8sfactory.Data("HARBOR_ADMIN_PASSWORD", []byte("password")),
-	)
-	service := k8sfactory.ServiceFactory(nil,
-		k8sfactory.Name("test"),
-		k8sfactory.DefaultNamespace,
-	)
-	runner.RegisterFixture(secret, service)
-	controller, err := NewHarborRobotAccountController(
-		context.Background(),
-		runner.CoreClient,
-		&runner.Client.Set,
-		nil,
-		runner.Factory,
-		metav1.NamespaceDefault,
-		service.Name,
-		secret.Name,
-		false,
-	)
-	require.NoError(t, err)
-
-	return runner, controller
 }
 
 func newHarborRobotAccountFixtures() (*harborv1alpha1.HarborRobotAccount, []runtime.Object) {

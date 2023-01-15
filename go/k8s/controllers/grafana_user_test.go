@@ -14,7 +14,6 @@ import (
 
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/grafana"
-	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
@@ -97,10 +96,7 @@ func TestGrafanaUserController_UpdateObject(t *testing.T) {
 
 	app, err := controller.UpdateObject(context.Background(), target)
 	require.NoError(t, err)
-	runner.AssertAction(t, controllertest.Action{
-		Verb:   controllertest.ActionUpdate,
-		Object: target,
-	})
+	runner.AssertUpdateAction(t, "", target)
 	assert.Equal(t, target, app)
 }
 
@@ -131,16 +127,12 @@ func TestGrafanaUserController(t *testing.T) {
 		httpmock.NewStringResponder(http.StatusOK, ""),
 	)
 
-	user := &grafanav1alpha1.GrafanaUser{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "user1",
-			Namespace: metav1.NamespaceDefault,
-			Labels:    target.Spec.UserSelector.MatchLabels,
-		},
-		Spec: grafanav1alpha1.GrafanaUserSpec{
-			Email: "user1@example.com",
-		},
-	}
+	user := k8sfactory.GrafanaUserFactory(nil,
+		k8sfactory.Name("user1"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Labels(target.Spec.UserSelector.MatchLabels),
+		k8sfactory.UserEmail("user1@example.com"),
+	)
 	runner.RegisterFixture(user)
 	runner.RegisterFixture(fixtures...)
 
@@ -149,27 +141,8 @@ func TestGrafanaUserController(t *testing.T) {
 
 	expect := target.DeepCopy()
 	expect.Status.ObservedGeneration = 2
-	runner.AssertAction(
-		t, controllertest.Action{
-			Verb:        controllertest.ActionUpdate,
-			Subresource: "status",
-			Object:      expect,
-		},
-	)
+	runner.AssertUpdateAction(t, "status", expect)
 	runner.AssertNoUnexpectedAction(t)
-}
-
-func newGrafanaUserController(t *testing.T) (*controllertest.TestRunner, *GrafanaUserController) {
-	runner := controllertest.NewTestRunner()
-	controller, err := NewGrafanaUserController(
-		runner.CoreSharedInformerFactory,
-		runner.Factory,
-		runner.CoreClient,
-		&runner.Client.Set,
-	)
-	require.NoError(t, err)
-
-	return runner, controller
 }
 
 func grafanaFixture() (*grafanav1alpha1.Grafana, []runtime.Object) {
