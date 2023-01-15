@@ -278,9 +278,9 @@ func AdminPasswordSecret(v *corev1.SecretKeySelector) Trait {
 func GrafanaUserFactory(base *grafanav1alpha1.GrafanaUser, traits ...Trait) *grafanav1alpha1.GrafanaUser {
 	var s *grafanav1alpha1.GrafanaUser
 	if base == nil {
-		base = &grafanav1alpha1.GrafanaUser{}
+		s = &grafanav1alpha1.GrafanaUser{}
 	} else {
-		base = s
+		s = base.DeepCopy()
 	}
 
 	setGVK(s, client.Scheme)
@@ -333,7 +333,7 @@ func HarborRobotAccountFactory(base *harborv1alpha1.HarborRobotAccount, traits .
 	if base == nil {
 		s = &harborv1alpha1.HarborRobotAccount{}
 	} else {
-		s = base
+		s = base.DeepCopy()
 	}
 
 	setGVK(s, client.Scheme)
