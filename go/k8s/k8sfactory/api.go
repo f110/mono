@@ -291,3 +291,49 @@ func HarborProjectFactory(base *harborv1alpha1.HarborProject, traits ...Trait) *
 
 	return s
 }
+
+func ReadyProject(id int) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *harborv1alpha1.HarborProject:
+			obj.Status.Ready = true
+			obj.Status.ProjectId = id
+		}
+	}
+}
+
+func HarborRobotAccountFactory(base *harborv1alpha1.HarborRobotAccount, traits ...Trait) *harborv1alpha1.HarborRobotAccount {
+	var s *harborv1alpha1.HarborRobotAccount
+	if base == nil {
+		s = &harborv1alpha1.HarborRobotAccount{}
+	} else {
+		s = base
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func ProjectReference(p *harborv1alpha1.HarborProject) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *harborv1alpha1.HarborRobotAccount:
+			obj.Spec.ProjectName = p.Name
+			obj.Spec.ProjectNamespace = p.Namespace
+		}
+	}
+}
+
+func DockerSecret(s *corev1.Secret) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *harborv1alpha1.HarborRobotAccount:
+			obj.Spec.SecretName = s.Name
+		}
+	}
+}
