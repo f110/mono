@@ -275,6 +275,32 @@ func AdminPasswordSecret(v *corev1.SecretKeySelector) Trait {
 	}
 }
 
+func GrafanaUserFactory(base *grafanav1alpha1.GrafanaUser, traits ...Trait) *grafanav1alpha1.GrafanaUser {
+	var s *grafanav1alpha1.GrafanaUser
+	if base == nil {
+		base = &grafanav1alpha1.GrafanaUser{}
+	} else {
+		base = s
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func UserEmail(v string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *grafanav1alpha1.GrafanaUser:
+			obj.Spec.Email = v
+		}
+	}
+}
+
 func HarborProjectFactory(base *harborv1alpha1.HarborProject, traits ...Trait) *harborv1alpha1.HarborProject {
 	var s *harborv1alpha1.HarborProject
 	if base == nil {
