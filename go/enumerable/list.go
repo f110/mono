@@ -20,3 +20,11 @@ func Delete[T comparable](ary []T, val T) []T {
 	}
 	return n
 }
+
+func Sum[T any](ary []T, m func(T) int64) int64 {
+	var t int64
+	for _, v := range ary {
+		t += m(v)
+	}
+	return t
+}
