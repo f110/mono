@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "fifo-object-gc_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/fifo-object-gc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/enumerable",
+        "//go/fsm",
+        "//go/logger",
+        "//go/storage",
+        "//vendor/github.com/prometheus/client_model/go",
+        "//vendor/github.com/prometheus/common/expfmt",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "fifo-object-gc",
+    embed = [":fifo-object-gc_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -27,7 +27,7 @@ type S3Options struct {
 	AccessKey       string
 	SecretAccessKey string
 	Endpoint        string
-	PathStyle       bool
+	PathStyle       bool // This is important option if you want to use with MinIO.
 	CACertFile      string
 	PartSize        uint64
 	Retries         int
@@ -121,6 +121,10 @@ func NewS3(bucket string, opt S3Options) *S3 {
 
 func (s *S3) Name() string {
 	return "s3"
+}
+
+func (s *S3) Endpoint() string {
+	return s.opt.Endpoint
 }
 
 func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
@@ -283,7 +287,7 @@ func (s *S3) ExistObject(ctx context.Context, key string) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	_, err = c.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
