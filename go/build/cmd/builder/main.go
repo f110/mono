@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -37,25 +38,28 @@ import (
 )
 
 type Options struct {
-	Id                   string // Identity name. This name used to leader election.
-	DSN                  string // DataSourceName.
-	Namespace            string
-	EnableLeaderElection bool
-	LeaseLockName        string
-	LeaseLockNamespace   string
-	GithubAppId          int64
-	GithubInstallationId int64
-	GithubPrivateKeyFile string
-	GithubAppSecretName  string
-	MinIOEndpoint        string
-	MinIOName            string
-	MinIONamespace       string
-	MinIOPort            int
-	MinIOBucket          string
-	MinIOAccessKey       string
-	MinIOSecretAccessKey string
-	VaultAddr            string
-	VaultTokenFile       string
+	Id                      string // Identity name. This name used to leader election.
+	DSN                     string // DataSourceName.
+	Namespace               string
+	EnableLeaderElection    bool
+	LeaseLockName           string
+	LeaseLockNamespace      string
+	GithubAppId             int64
+	GithubInstallationId    int64
+	GithubPrivateKeyFile    string
+	GithubAppSecretName     string
+	MinIOEndpoint           string
+	MinIOName               string
+	MinIONamespace          string
+	MinIOPort               int
+	MinIOBucket             string
+	MinIOAccessKey          string
+	MinIOSecretAccessKey    string
+	ServiceAccountTokenFile string
+	VaultAddr               string
+	VaultTokenFile          string
+	VaultK8sAuthPath        string
+	VaultK8sAuthRole        string
 
 	Addr                string
 	DashboardUrl        string // URL of dashboard that can access people via browser
@@ -186,6 +190,30 @@ func (p *process) init() (fsm.State, error) {
 			return fsm.Error(xerrors.WithStack(err))
 		}
 		p.vaultClient = vaultClient
+	}
+	if p.opt.VaultAddr != "" {
+		if p.opt.VaultTokenFile != "" {
+			token, err := os.ReadFile(p.opt.VaultTokenFile)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			vc, err := vault.NewClient(p.opt.VaultAddr, string(token))
+			if err != nil {
+				return fsm.Error(err)
+			}
+			p.vaultClient = vc
+		} else if _, err := os.Stat(p.opt.ServiceAccountTokenFile); err == nil {
+			buf, err := os.ReadFile(p.opt.ServiceAccountTokenFile)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			saToken := strings.TrimSpace(string(buf))
+			vc, err := vault.NewClientAsK8SServiceAccount(p.FSM.Context(), p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, saToken)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			p.vaultClient = vc
+		}
 	}
 
 	return fsm.Next(stateSetup)
@@ -426,8 +454,11 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
 	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
 	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
+	fs.StringVar(&opt.ServiceAccountTokenFile, "service-account-token-file", "/var/run/secrets/kubernetes.io/serviceaccount/token", "A file path that contains JWT token")
 	fs.StringVar(&opt.VaultAddr, "vault-addr", "", "The vault URL")
 	fs.StringVar(&opt.VaultTokenFile, "vault-token-file", "", "The token for Vault")
+	fs.StringVar(&opt.VaultK8sAuthPath, "vault-k8s-auth-path", "auth/kubernetes", "The mount path of kubernetes auth method")
+	fs.StringVar(&opt.VaultK8sAuthRole, "vault-k8s-auth-role", "", "Role name for k8s auth method")
 	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
 	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
 	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
