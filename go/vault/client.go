@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,9 +17,9 @@ import (
 )
 
 var (
-	ErrDataNotFound          = xerrors.New("the path is not found")
-	ErrOperationNotPermitted = xerrors.New("operation not permitted")
-	ErrLoginFailed           = xerrors.New("login failed")
+	ErrDataNotFound          = Error{Message: "path is not found"}
+	ErrOperationNotPermitted = Error{Message: "operation not permitted"}
+	ErrLoginFailed           = Error{Message: "login failed"}
 )
 
 type ClientOpt func(*clientOpt)
@@ -186,7 +187,7 @@ func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role,
 
 	u := &url.URL{}
 	*u = *c.addr
-	u.Path = path.Join(enginePath, "login")
+	u.Path = path.Join("v1", enginePath, "login")
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), buf)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -201,7 +202,9 @@ func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role,
 	switch res.StatusCode {
 	case http.StatusOK:
 	default:
-		return xerrors.WithStack(ErrLoginFailed)
+		var msgs ErrMessage
+		_ = json.NewDecoder(res.Body).Decode(&msgs)
+		return xerrors.WithStack(Error{Message: ErrLoginFailed.Message, StatusCode: res.StatusCode, VerboseMessage: strings.Join(msgs.Errors, ", ")})
 	}
 
 	login := &Login{}
@@ -288,4 +291,25 @@ type Login struct {
 		LeaseDuration int  `json:"lease_duration"`
 		Renewable     bool `json:"renewable"`
 	} `json:"auth"`
+}
+
+type ErrMessage struct {
+	Errors []string
+}
+
+type Error struct {
+	Message        string
+	StatusCode     int
+	VerboseMessage string
+}
+
+func (e Error) Error() string {
+	return e.Message
+}
+
+func (e Error) Verbose() string {
+	if e.VerboseMessage == "" {
+		return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
+	}
+	return fmt.Sprintf("%d: %s", e.StatusCode, e.VerboseMessage)
 }
