@@ -179,18 +179,6 @@ func (p *process) init() (fsm.State, error) {
 	}
 	p.dao = dao.NewOptions(conn)
 
-	if p.opt.VaultAddr != "" && p.opt.VaultTokenFile != "" {
-		token, err := os.ReadFile(p.opt.VaultTokenFile)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-
-		vaultClient, err := vault.NewClient(p.opt.VaultAddr, string(token))
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		p.vaultClient = vaultClient
-	}
 	if p.opt.VaultAddr != "" {
 		if p.opt.VaultTokenFile != "" {
 			token, err := os.ReadFile(p.opt.VaultTokenFile)
@@ -210,6 +198,7 @@ func (p *process) init() (fsm.State, error) {
 			saToken := strings.TrimSpace(string(buf))
 			vc, err := vault.NewClientAsK8SServiceAccount(p.FSM.Context(), p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, saToken)
 			if err != nil {
+				logger.Log.Debug("Can not log in", logger.Verbose(err))
 				return fsm.Error(err)
 			}
 			p.vaultClient = vc
