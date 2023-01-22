@@ -350,6 +350,9 @@ func ResourceLimit(cpu, mem resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
+			if obj.Resources.Limits == nil {
+				obj.Resources.Limits = make(corev1.ResourceList)
+			}
 			obj.Resources.Limits[corev1.ResourceCPU] = cpu
 			obj.Resources.Limits[corev1.ResourceMemory] = mem
 		}
@@ -360,6 +363,9 @@ func ResourceRequest(cpu, mem resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
+			if obj.Resources.Requests == nil {
+				obj.Resources.Requests = make(corev1.ResourceList)
+			}
 			obj.Resources.Requests[corev1.ResourceCPU] = cpu
 			obj.Resources.Requests[corev1.ResourceMemory] = mem
 		}
