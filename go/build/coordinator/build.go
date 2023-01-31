@@ -169,7 +169,6 @@ type BazelBuilder struct {
 	secretStoreClient secretstoreclient.Interface
 	jobLister         batchv1listers.JobLister
 	podLister         corev1listers.PodLister
-	nodeLister        corev1listers.NodeLister
 	config            *rest.Config
 	vaultClient       *vault.Client
 
@@ -209,6 +208,7 @@ func NewBazelBuilder(
 		dashboardUrl:         dashboardUrl,
 		config:               kOpt.RESTConfig,
 		client:               kOpt.Client,
+		secretStoreClient:    kOpt.SecretStoreClient,
 		dao:                  daoOpt,
 		githubClient:         ghClient,
 		minio:                storage.NewMinIOStorage(bucket, minIOOpt),
@@ -330,7 +330,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 }
 
 func (b *BazelBuilder) IsStub() bool {
-	return b.client == nil || b.jobLister == nil || b.podLister == nil || b.nodeLister == nil
+	return b.client == nil || b.jobLister == nil || b.podLister == nil
 }
 
 // syncJob is the reconcile function.
@@ -707,6 +707,7 @@ func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.Sour
 			labelKeyCtrlBy: "bazel-build",
 		}),
 		k8sfactory.RestartPolicy(corev1.RestartPolicyNever),
+		k8sfactory.Volume(workDir),
 	)
 	preProcessContainer := k8sfactory.ContainerFactory(nil,
 		k8sfactory.Name("pre-process"),
