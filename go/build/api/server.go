@@ -180,10 +180,10 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision string, isMainBranch bool) (*config.Config, string, error) {
+func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision string, useCommittedConfig bool) (*config.Config, string, error) {
 	// Find the configuration file
 	var commitSHA string
-	if isMainBranch {
+	if useCommittedConfig {
 		// Read configuration file of the revision
 		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, revision)
 		if err != nil {
@@ -344,7 +344,7 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database2.SourceReposito
 	}
 
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), ref.Object.GetSHA()
-	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
+	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true)
 	if err != nil {
 		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
 		return nil
@@ -392,9 +392,9 @@ func (a *Api) build(ctx context.Context, owner, repoName string, repo *database2
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.
 		switch v.Command {
-		case "build", "test":
+		case "build", "test", "run":
 		default:
-			logger.Log.Debug("Skip creating job", zap.String("command", v.Command))
+			logger.Log.Warn("Skip creating job", zap.String("command", v.Command))
 			continue
 		}
 
