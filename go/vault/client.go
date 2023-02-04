@@ -135,7 +135,7 @@ func (c *Client) Get(ctx context.Context, mountPath, dataPath, key string, opts 
 	val := kv.Data.Data[key]
 
 	if cache != nil {
-		cache.(*Cache).Set(dataPath, key, val)
+		cache.(*Cache).Set(apiPath, key, val)
 	}
 	return val, nil
 }
