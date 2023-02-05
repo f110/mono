@@ -422,7 +422,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	)
 	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
 	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
-	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created  the job")
+	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created the job")
 	fs.StringVar(
 		&opt.GithubAppSecretName,
 		"github-app-secret-name",

@@ -286,7 +286,6 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 			case *Secret:
 				m[key] = v
 			}
-			m[t.Index(0).(starlark.String).GoString()] = t.Index(1).String()
 		}
 		fv.Set(reflect.ValueOf(m))
 		return nil
