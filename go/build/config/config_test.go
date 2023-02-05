@@ -32,14 +32,13 @@ func TestReadConfig(t *testing.T) {
 	exclusive = True,
 	config_name = "ci",
     secrets = [
-        secret(env_name = "GITHUB_API", vault_path = "/secrets/github", vault_key = "token"),
-        secret(env_name = "ACCESS_KEY", vault_path = "/secrets/provider", vault_key = "access_key"),
-        secret(mount_path = "/var/vault/provider", vault_path = "/secrets/provider", vault_key = "secret_key"),
+        secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "github", vault_key = "token"),
+        secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "provider", vault_key = "access_key"),
+        secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "provider", vault_key = "secret_key"),
     ],
 	env = {
         "FOOBAR": "env var",
         "BAZ": 1,
-        "BAR": secret(vault_path = "/secrets/foo", vault_key = "bar")
     },
 )`
 
@@ -68,17 +67,19 @@ func TestReadConfig(t *testing.T) {
 		conf.Jobs[0].Targets,
 	)
 	assert.Contains(t, conf.Jobs[0].Env, "FOOBAR")
+	assert.Equal(t, "env var", conf.Jobs[0].Env["FOOBAR"])
 	assert.Contains(t, conf.Jobs[0].Env, "BAZ")
 
 	require.Len(t, conf.Jobs[0].Secrets, 3)
-	assert.Equal(t, conf.Jobs[0].Secrets[0].EnvVarName, "GITHUB_API")
-	assert.Equal(t, conf.Jobs[0].Secrets[0].VaultPath, "/secrets/github")
+	assert.Equal(t, conf.Jobs[0].Secrets[0].VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[0].VaultPath, "github")
 	assert.Equal(t, conf.Jobs[0].Secrets[0].VaultKey, "token")
-	assert.Equal(t, conf.Jobs[0].Secrets[1].EnvVarName, "ACCESS_KEY")
-	assert.Equal(t, conf.Jobs[0].Secrets[1].VaultPath, "/secrets/provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[1].VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[1].VaultPath, "provider")
 	assert.Equal(t, conf.Jobs[0].Secrets[1].VaultKey, "access_key")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].MountPath, "/var/vault/provider")
-	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultPath, "/secrets/provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultPath, "provider")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultKey, "secret_key")
 }
 

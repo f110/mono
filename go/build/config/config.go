@@ -48,8 +48,8 @@ func (c *Config) Job(event EventType) []*Job {
 }
 
 type Secret struct {
-	EnvVarName string `attr:"env_name,allowempty"`
-	MountPath  string `attr:"mount_path,allowempty"`
+	MountPath  string `attr:"mount_path"`
+	VaultMount string `attr:"vault_mount"`
 	VaultPath  string `attr:"vault_path"`
 	VaultKey   string `attr:"vault_key"`
 }
@@ -57,7 +57,7 @@ type Secret struct {
 var _ starlark.Value = &Secret{}
 
 func (s *Secret) String() string {
-	return s.EnvVarName
+	return fmt.Sprintf("%s/%s:%s", s.VaultMount, s.VaultPath, s.VaultKey)
 }
 
 func (s *Secret) Type() string {
