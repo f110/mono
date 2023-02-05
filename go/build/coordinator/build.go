@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -529,6 +530,18 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 					return xerrors.WithStack(err)
 				}
 			}
+		case *corev1.ServiceAccount:
+			if b.IsStub() {
+				m, _ := k8smanifest.Marshal(obj)
+				logger.Log.Info("Create ServiceAccount", zap.String("manifest", string(m)))
+			} else {
+				_, err := b.client.CoreV1().ServiceAccounts(b.Namespace).Get(ctx, obj.Name, metav1.GetOptions{})
+				if kerrors.IsNotFound(err) {
+					if _, err := b.client.CoreV1().ServiceAccounts(b.Namespace).Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+						return xerrors.WithStack(err)
+					}
+				}
+			}
 		case *secretsstorev1.SecretProviderClass:
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
@@ -700,6 +713,11 @@ func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.Sour
 	repoIdString := fmt.Sprintf("%d", repo.Id)
 	taskIdString := strconv.Itoa(int(task.Id))
 
+	sa := k8sfactory.ServiceAccountFactory(nil,
+		k8sfactory.Namef("build-%s", job.RepositoryName),
+		k8sfactory.Namespace(b.Namespace),
+	)
+	builtObjects = append(builtObjects, sa)
 	workDir := k8sfactory.NewEmptyDirVolumeSource("workdir", "/work")
 	buildPod := k8sfactory.PodFactory(nil,
 		k8sfactory.Labels(map[string]string{
@@ -708,6 +726,7 @@ func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.Sour
 		}),
 		k8sfactory.RestartPolicy(corev1.RestartPolicyNever),
 		k8sfactory.Volume(workDir),
+		k8sfactory.ServiceAccount(fmt.Sprintf("build-%s", job.RepositoryName)),
 	)
 	preProcessContainer := k8sfactory.ContainerFactory(nil,
 		k8sfactory.Name("pre-process"),
@@ -819,6 +838,7 @@ func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.Sour
 						Spec: secretsstorev1.SecretProviderClassSpec{
 							Provider: "vault",
 							Parameters: map[string]string{
+								"roleName":     fmt.Sprintf("build-%s", job.RepositoryName),
 								"vaultAddress": b.vaultAddr,
 								"objects":      fmt.Sprintf("- objectName: %q\n  secretPath: %q\n  secretKey: %q\n", secret.VaultKey, secret.VaultPath, secret.VaultKey),
 							},
