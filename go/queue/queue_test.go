@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 )
 
 func TestSimple(t *testing.T) {
+	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(4))
 	q := NewSimple()
 	q.Enqueue("foo")
 	q.Enqueue("bar")
