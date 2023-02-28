@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//container:container.bzl", "container_image", "cont
 pkg_tar(
     name = "plugins",
     files = {
-        "@argocd_vault_plugin//file": "/plugins/argocd-vault-plugin",
+        "@argocd_vault_plugin//file": "/usr/local/bin/argocd-vault-plugin",
     },
     mode = "0755",
 )
