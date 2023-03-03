@@ -98,6 +98,22 @@ type Server interface {
 	Touch(key string, expiration int) error
 	Flush() error
 	Version() (string, error)
+	Reconnect() error
+}
+
+type ServerOpt func(*ServerOption)
+
+type ServerOption struct {
+	HeartbeatInterval   time.Duration
+	EnableAutoReconnect bool
+}
+
+func EnableHeartbeat(opt *ServerOption) {
+	opt.HeartbeatInterval = 1 * time.Second
+}
+
+func EnableAutoReconnect(opt *ServerOption) {
+	opt.EnableAutoReconnect = true
 }
 
 type ServerWithTextProtocol struct {
@@ -105,28 +121,42 @@ type ServerWithTextProtocol struct {
 	Network string
 	Addr    string
 	Type    ServerOperationType
+	Timeout time.Duration
 
-	conn *bufio.ReadWriter
-	raw  net.Conn
-	mu   sync.Mutex
+	conn    *bufio.ReadWriter
+	closeCh chan struct{}
+	raw     net.Conn
+	mu      sync.Mutex
 }
 
 var _ Server = &ServerWithTextProtocol{}
 
-func NewServerWithTextProtocol(ctx context.Context, name, network, addr string) (*ServerWithTextProtocol, error) {
+func NewServerWithTextProtocol(ctx context.Context, name, network, addr string, opts ...ServerOpt) (*ServerWithTextProtocol, error) {
 	d := &net.Dialer{}
 	conn, err := d.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ServerWithTextProtocol{
+	opt := &ServerOption{}
+	for _, f := range opts {
+		f(opt)
+	}
+
+	server := &ServerWithTextProtocol{
 		name:    name,
 		Network: network,
 		Addr:    addr,
+		closeCh: make(chan struct{}),
 		conn:    bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
 		raw:     conn,
-	}, nil
+	}
+
+	if opt.HeartbeatInterval > 0 {
+		go heartbeat(server, opt.HeartbeatInterval, opt.EnableAutoReconnect, server.closeCh)
+	}
+
+	return server, nil
 }
 
 func (s *ServerWithTextProtocol) Name() string {
@@ -134,12 +164,49 @@ func (s *ServerWithTextProtocol) Name() string {
 }
 
 func (s *ServerWithTextProtocol) Close() error {
-	return s.raw.Close()
+	if s.closeCh == nil {
+		return errors.New("memcached: already closed")
+	}
+
+	err := s.raw.Close()
+	s.raw = nil
+	close(s.closeCh)
+	s.closeCh = nil
+	return err
+}
+
+func (s *ServerWithTextProtocol) Reconnect() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.raw != nil {
+		if err := s.raw.Close(); err != nil {
+			return err
+		}
+	}
+
+	d := &net.Dialer{}
+	conn, err := d.DialContext(context.TODO(), s.Network, s.Addr)
+	if err != nil {
+		return err
+	}
+	s.raw = conn
+	s.conn = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	return nil
 }
 
 func (s *ServerWithTextProtocol) Get(key string) (*Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.raw == nil {
+		return nil, errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	if _, err := fmt.Fprintf(s.conn, "gets %s\r\n", key); err != nil {
 		return nil, err
@@ -193,6 +260,15 @@ func (s *ServerWithTextProtocol) Get(key string) (*Item, error) {
 func (s *ServerWithTextProtocol) GetMulti(keys ...string) ([]*Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.raw == nil {
+		return nil, errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	items := make([]*Item, 0, len(keys))
 	if _, err := fmt.Fprintf(s.conn, "gets %s\r\n", strings.Join(keys, " ")); err != nil {
@@ -264,6 +340,15 @@ func (s *ServerWithTextProtocol) Delete(key string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprintf(s.conn, "delete %s\r\n", key); err != nil {
 		return err
 	}
@@ -296,6 +381,15 @@ func (s *ServerWithTextProtocol) incrOrDecr(op, key string, delta int) (int64, e
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.raw == nil {
+		return 0, errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprintf(s.conn, "%s %s %d\r\n", op, key, delta); err != nil {
 		return 0, err
 	}
@@ -323,6 +417,15 @@ func (s *ServerWithTextProtocol) Touch(key string, expiration int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprintf(s.conn, "touch %s %d\r\n", key, expiration); err != nil {
 		return err
 	}
@@ -347,6 +450,15 @@ func (s *ServerWithTextProtocol) Touch(key string, expiration int) error {
 func (s *ServerWithTextProtocol) Set(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	flags := uint32(0)
 	if len(item.Flags) == 4 {
@@ -386,6 +498,15 @@ func (s *ServerWithTextProtocol) Add(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	flags := uint32(0)
 	if len(item.Flags) == 4 {
 		flags = binary.BigEndian.Uint32(item.Flags)
@@ -413,6 +534,15 @@ func (s *ServerWithTextProtocol) Add(item *Item) error {
 func (s *ServerWithTextProtocol) Replace(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	flags := uint32(0)
 	if len(item.Flags) == 4 {
@@ -442,6 +572,15 @@ func (s *ServerWithTextProtocol) Flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.raw == nil {
+		return errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprint(s.conn, "flush_all\r\n"); err != nil {
 		return err
 	}
@@ -464,6 +603,15 @@ func (s *ServerWithTextProtocol) Flush() error {
 func (s *ServerWithTextProtocol) Version() (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.raw == nil {
+		return "", errors.New("memcached: closed")
+	}
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	if _, err := s.conn.WriteString("version\r\n"); err != nil {
 		return "", err
@@ -488,37 +636,76 @@ type ServerWithMetaProtocol struct {
 	Network string
 	Addr    string
 	Type    ServerOperationType
+	Timeout time.Duration
 
-	conn *bufio.ReadWriter
-	raw  net.Conn
-	mu   sync.Mutex
+	closeCh chan struct{}
+	conn    *bufio.ReadWriter
+	raw     net.Conn
+	mu      sync.Mutex
 }
 
 var _ Server = &ServerWithMetaProtocol{}
 
-func NewServerWithMetaProtocol(ctx context.Context, name, network, addr string) (*ServerWithMetaProtocol, error) {
+func NewServerWithMetaProtocol(ctx context.Context, name, network, addr string, opts ...ServerOpt) (*ServerWithMetaProtocol, error) {
 	d := &net.Dialer{}
 	conn, err := d.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ServerWithMetaProtocol{
+	opt := &ServerOption{}
+	for _, f := range opts {
+		f(opt)
+	}
+
+	server := &ServerWithMetaProtocol{
 		name:    name,
 		Network: network,
 		Addr:    addr,
+		closeCh: make(chan struct{}),
 		conn:    bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
 		raw:     conn,
-	}, nil
+	}
+
+	if opt.HeartbeatInterval > 0 {
+		go heartbeat(server, opt.HeartbeatInterval, opt.EnableAutoReconnect, server.closeCh)
+	}
+
+	return server, nil
 }
 
 func (s *ServerWithMetaProtocol) Name() string {
 	return s.name
 }
 
+func (s *ServerWithMetaProtocol) Reconnect() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.raw != nil {
+		if err := s.raw.Close(); err != nil {
+			return err
+		}
+	}
+
+	d := &net.Dialer{}
+	conn, err := d.DialContext(context.TODO(), s.Network, s.Addr)
+	if err != nil {
+		return err
+	}
+	s.raw = conn
+	s.conn = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	return nil
+}
+
 func (s *ServerWithMetaProtocol) Get(key string) (*Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	if _, err := fmt.Fprintf(s.conn, "mg %s v f c t\r\n", key); err != nil {
 		return nil, err
@@ -538,6 +725,11 @@ func (s *ServerWithMetaProtocol) Get(key string) (*Item, error) {
 func (s *ServerWithMetaProtocol) GetMulti(keys ...string) ([]*Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	items := make([]*Item, 0)
 	for _, key := range keys {
@@ -666,6 +858,11 @@ func (s *ServerWithMetaProtocol) Set(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	format := "%s %d T%d" // ms <key> <datalen> TTL
 	values := []interface{}{item.Key, len(item.Value), item.Expiration}
 	if item.Cas > 0 {
@@ -708,6 +905,11 @@ func (s *ServerWithMetaProtocol) Add(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	// FIXME: should use new text protocol
 	flags := uint32(0)
 	if len(item.Flags) == 4 {
@@ -737,6 +939,11 @@ func (s *ServerWithMetaProtocol) Replace(item *Item) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	// FIXME: should use new text protocol
 	flags := uint32(0)
 	if len(item.Flags) == 4 {
@@ -765,6 +972,11 @@ func (s *ServerWithMetaProtocol) Replace(item *Item) error {
 func (s *ServerWithMetaProtocol) Delete(key string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	if _, err := fmt.Fprintf(s.conn, "md %s\r\n", key); err != nil {
 		return err
@@ -805,6 +1017,11 @@ func (s *ServerWithMetaProtocol) incrOrDecr(op, key string, delta int) (int64, e
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprintf(s.conn, "%s %s %d\r\n", op, key, delta); err != nil {
 		return 0, err
 	}
@@ -832,6 +1049,11 @@ func (s *ServerWithMetaProtocol) Touch(key string, expiration int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprintf(s.conn, "md %s I T%d\r\n", key, expiration); err != nil {
 		return err
 	}
@@ -856,6 +1078,11 @@ func (s *ServerWithMetaProtocol) Flush() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if s.Timeout != 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
+
 	if _, err := fmt.Fprint(s.conn, "flush_all\r\n"); err != nil {
 		return err
 	}
@@ -878,6 +1105,11 @@ func (s *ServerWithMetaProtocol) Flush() error {
 func (s *ServerWithMetaProtocol) Version() (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.Timeout > 0 {
+		s.raw.SetWriteDeadline(time.Now().Add(s.Timeout))
+		s.raw.SetReadDeadline(time.Now().Add(s.Timeout))
+	}
 
 	if _, err := s.conn.WriteString("version\r\n"); err != nil {
 		return "", err
@@ -908,9 +1140,10 @@ type ServerWithBinaryProtocol struct {
 	Type    ServerOperationType
 	Timeout time.Duration
 
-	mu   sync.Mutex
-	conn *bufio.ReadWriter
-	raw  net.Conn
+	closeCh chan struct{}
+	mu      sync.Mutex
+	conn    *bufio.ReadWriter
+	raw     net.Conn
 
 	reqHeaderPool *sync.Pool
 	resHeaderPool *sync.Pool
@@ -918,17 +1151,23 @@ type ServerWithBinaryProtocol struct {
 
 var _ Server = &ServerWithBinaryProtocol{}
 
-func NewServerWithBinaryProtocol(ctx context.Context, name, network, addr string) (*ServerWithBinaryProtocol, error) {
+func NewServerWithBinaryProtocol(ctx context.Context, name, network, addr string, opts ...ServerOpt) (*ServerWithBinaryProtocol, error) {
 	d := &net.Dialer{}
 	conn, err := d.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ServerWithBinaryProtocol{
+	opt := &ServerOption{}
+	for _, f := range opts {
+		f(opt)
+	}
+
+	server := &ServerWithBinaryProtocol{
 		name:    name,
 		Network: network,
 		Addr:    addr,
+		closeCh: make(chan struct{}),
 		conn:    bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
 		raw:     conn,
 		reqHeaderPool: &sync.Pool{New: func() interface{} {
@@ -937,11 +1176,37 @@ func NewServerWithBinaryProtocol(ctx context.Context, name, network, addr string
 		resHeaderPool: &sync.Pool{New: func() interface{} {
 			return newBinaryResponseHeader()
 		}},
-	}, nil
+	}
+
+	if opt.HeartbeatInterval > 0 {
+		go heartbeat(server, opt.HeartbeatInterval, opt.EnableAutoReconnect, server.closeCh)
+	}
+
+	return server, nil
 }
 
 func (s *ServerWithBinaryProtocol) Name() string {
 	return s.name
+}
+
+func (s *ServerWithBinaryProtocol) Reconnect() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.raw != nil {
+		if err := s.raw.Close(); err != nil {
+			return err
+		}
+	}
+
+	d := &net.Dialer{}
+	conn, err := d.DialContext(context.TODO(), s.Network, s.Addr)
+	if err != nil {
+		return err
+	}
+	s.raw = conn
+	s.conn = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+	return nil
 }
 
 func (s *ServerWithBinaryProtocol) Get(key string) (*Item, error) {
@@ -1565,4 +1830,25 @@ func (h *binaryResponseHeader) Read(r io.Reader) error {
 	h.CAS = binary.BigEndian.Uint64(h.buf[16:24])
 
 	return nil
+}
+
+func heartbeat(s Server, interval time.Duration, reconnect bool, closeCh <-chan struct{}) {
+	ticker := time.NewTimer(interval)
+	for {
+		select {
+		case <-closeCh:
+			return
+		case <-ticker.C:
+			_, err := s.Version()
+			if err != nil {
+				if reconnect {
+					if err := s.Reconnect(); err != nil {
+						return
+					}
+				} else {
+					s.Close()
+				}
+			}
+		}
+	}
 }

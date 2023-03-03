@@ -102,7 +102,7 @@ func (c *goModuleProxyCommand) Init() error {
 		var servers []client.Server
 		for _, v := range c.MemcachedServers {
 			s := strings.SplitN(v, "=", 2)
-			server, err := client.NewServerWithMetaProtocol(context.Background(), s[0], "tcp", s[1])
+			server, err := client.NewServerWithMetaProtocol(context.Background(), s[0], "tcp", s[1], client.EnableHeartbeat, client.EnableAutoReconnect)
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
