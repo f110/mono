@@ -190,7 +190,7 @@ const indexTemplate = `<html>
 		{{- range .Tasks }}
         <tr>
           <td>{{ .Id }}</td>
-          <td>{{ .JobName }}</td>
+          <td class="buildinfo" data-content="Bazel version: {{ .BazelVersion }}">{{ .JobName }}</td>
           <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
           <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
           <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
@@ -212,6 +212,10 @@ const apiHost = {{ .APIHost }};
 
 $('.ui.checkbox')
   .checkbox()
+;
+
+$('.buildinfo')
+  .popup({})
 ;
 
 function newRepository() {

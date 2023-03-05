@@ -160,7 +160,7 @@
       <tbody>
         <tr>
           <td>3</td>
-          <td>pkg</td>
+          <td class="buildinfo" data-content="Bazel version: 5.3.0">pkg</td>
           <td><i class="green check icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">604e577</a></td>
@@ -172,7 +172,7 @@
         </tr>
         <tr>
           <td>2</td>
-          <td>pkg</td>
+          <td class="buildinfo" data-content="Bazel version: 5.2.1">pkg</td>
           <td><i class="red attention icon"></i></td>
           <td><a href="./log.txt">text</a></td>
           <td><a href="">dc48cd9</a></td>
@@ -255,6 +255,10 @@
 <script>
 $('.ui.checkbox')
   .checkbox()
+;
+
+$('.buildinfo')
+  .popup({})
 ;
 
 function createRepository() {
