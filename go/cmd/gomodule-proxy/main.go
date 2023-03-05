@@ -1,27 +1,27 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
 	"go.f110.dev/mono/go/logger"
 )
 
-func goModuleProxy(args []string) error {
+func goModuleProxy() error {
 	proxy := newGoModuleProxyCommand()
 
 	cmd := &cobra.Command{
 		Use: "gomodule-proxy",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if err := logger.Init(); err != nil {
 				return err
 			}
-			if err := proxy.Init(); err != nil {
-				return err
-			}
-			return proxy.Run()
+			return proxy.LoopContext(cmd.Context())
 		},
 	}
 	logger.Flags(cmd.Flags())
@@ -32,17 +32,14 @@ func goModuleProxy(args []string) error {
 		}
 	}
 
-	cmd.SetArgs(args)
-	return cmd.Execute()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return cmd.ExecuteContext(ctx)
 }
 
 func main() {
-	if err := goModuleProxy(os.Args); err != nil {
-		format := "%v\n"
-		if os.Getenv("DEBUG") != "" {
-			format = "%+v\n"
-		}
-		fmt.Fprintf(os.Stderr, format, err)
+	if err := goModuleProxy(); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 }

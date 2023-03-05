@@ -2,24 +2,24 @@ package main
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
-	"time"
-
-	"go.f110.dev/go-memcached/client"
 
 	"github.com/spf13/pflag"
-	"go.f110.dev/xerrors"
+	"go.f110.dev/go-memcached/client"
 
+	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/gomodule"
 	"go.f110.dev/mono/go/logger"
 )
 
 type goModuleProxyCommand struct {
+	*fsm.FSM
+
 	ConfigPath   string
 	ModuleDir    string
 	Addr         string
@@ -39,16 +39,33 @@ type goModuleProxyCommand struct {
 	config   gomodule.Config
 	cache    *gomodule.ModuleCache
 	caBundle []byte
+	server   *gomodule.ProxyServer
 
 	githubClientFactory *githubutil.GitHubClientFactory
 }
 
+const (
+	stateInit fsm.State = iota
+	stateStartServer
+	stateShuttingDown
+)
+
 func newGoModuleProxyCommand() *goModuleProxyCommand {
-	return &goModuleProxyCommand{
+	c := &goModuleProxyCommand{
 		Addr:                ":7589",
 		UpstreamURL:         "https://proxy.golang.org",
 		githubClientFactory: githubutil.NewGitHubClientFactory("gomodule-proxy", false),
 	}
+	c.FSM = fsm.NewFSM(
+		map[fsm.State]fsm.StateFunc{
+			stateInit:         c.init,
+			stateStartServer:  c.startServer,
+			stateShuttingDown: c.shuttingDown,
+		},
+		stateInit,
+		stateShuttingDown,
+	)
+	return c
 }
 
 func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
@@ -72,27 +89,27 @@ func (c *goModuleProxyCommand) RequiredFlags() []string {
 	return []string{"config"}
 }
 
-func (c *goModuleProxyCommand) Init() error {
+func (c *goModuleProxyCommand) init() (fsm.State, error) {
 	if err := c.githubClientFactory.Init(); err != nil {
-		return xerrors.WithStack(err)
+		return fsm.Error(err)
 	}
 
 	conf, err := gomodule.ReadConfig(c.ConfigPath)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return fsm.Error(err)
 	}
 	c.config = conf
 
 	uu, err := url.Parse(c.UpstreamURL)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return fsm.Error(err)
 	}
 	c.upstream = uu
 
 	if c.CABundleFile != "" {
 		b, err := os.ReadFile(c.CABundleFile)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return fsm.Error(err)
 		}
 		c.caBundle = b
 	}
@@ -104,65 +121,42 @@ func (c *goModuleProxyCommand) Init() error {
 			s := strings.SplitN(v, "=", 2)
 			server, err := client.NewServerWithMetaProtocol(context.Background(), s[0], "tcp", s[1], client.EnableHeartbeat, client.EnableAutoReconnect)
 			if err != nil {
-				return xerrors.WithStack(err)
+				return fsm.Error(err)
 			}
 			servers = append(servers, server)
 		}
 		cachePool, err := client.NewSinglePool(servers...)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return fsm.Error(err)
 		}
 		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey, c.StorageCACertFile)
 	} else {
 		logger.Log.Debug("Disable cache")
 	}
 
-	return nil
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle)
+	c.server = gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
+
+	return fsm.Next(stateStartServer)
 }
 
-func (c *goModuleProxyCommand) Run() error {
-	stopErrCh := make(chan error, 1)
-	startErrCh := make(chan error, 1)
-
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle)
-	server := gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+func (c *goModuleProxyCommand) startServer() (fsm.State, error) {
 	go func() {
-		defer cancel()
-
-		select {
-		case <-ctx.Done():
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			logger.Log.Info("Shutting down the server")
-			if err := server.Stop(ctx); err != nil {
-				stopErrCh <- xerrors.WithStack(err)
-			}
-			cancel()
-			logger.Log.Info("Server shutdown successfully")
-			close(stopErrCh)
-		case <-stopErrCh:
-			return
+		if err := c.server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Log.Warn("Server returns error", logger.Error(err))
 		}
 	}()
 
-	go func() {
-		if err := server.Start(); err != nil {
-			startErrCh <- xerrors.WithStack(err)
-		}
-	}()
+	return fsm.Wait()
+}
 
-	// Wait for stopping a server
-	select {
-	case err, ok := <-startErrCh:
-		if ok {
-			return xerrors.WithStack(err)
-		}
-	case err, ok := <-stopErrCh:
-		if ok {
-			return xerrors.WithStack(err)
+func (c *goModuleProxyCommand) shuttingDown() (fsm.State, error) {
+	if c.server != nil {
+		logger.Log.Info("Shutting down proxy")
+		if err := c.server.Stop(c.FSM.Context()); err != nil {
+			return fsm.Error(err)
 		}
 	}
 
-	return nil
+	return fsm.Finish()
 }

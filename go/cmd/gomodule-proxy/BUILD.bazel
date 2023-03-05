@@ -9,13 +9,13 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/gomodule-proxy",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/fsm",
         "//go/githubutil",
         "//go/gomodule",
         "//go/logger",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/go-memcached/client",
-        "//vendor/go.f110.dev/xerrors",
     ],
 )
 
