@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"syscall"
@@ -121,12 +122,14 @@ func newProcess(opt Options) *process {
 		stateInit,
 		stateShutdown,
 	)
-	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
+	p.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
+		return context.WithTimeout(context.Background(), 10*time.Second)
+	}
 
 	return p
 }
 
-func (p *process) init() (fsm.State, error) {
+func (p *process) init(ctx context.Context) (fsm.State, error) {
 	app, err := githubutil.NewApp(p.opt.GithubAppId, p.opt.GithubInstallationId, p.opt.GithubPrivateKeyFile)
 	if err != nil {
 		return fsm.Error(err)
@@ -196,7 +199,7 @@ func (p *process) init() (fsm.State, error) {
 				return fsm.Error(err)
 			}
 			saToken := strings.TrimSpace(string(buf))
-			vc, err := vault.NewClientAsK8SServiceAccount(p.FSM.Context(), p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, saToken)
+			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, saToken)
 			if err != nil {
 				logger.Log.Debug("Can not log in", logger.Verbose(err))
 				return fsm.Error(err)
@@ -208,7 +211,7 @@ func (p *process) init() (fsm.State, error) {
 	return fsm.Next(stateSetup)
 }
 
-func (p *process) setup() (fsm.State, error) {
+func (p *process) setup(_ context.Context) (fsm.State, error) {
 	var minioOpt storage.MinIOOptions
 	if p.opt.MinIOEndpoint != "" {
 		minioOpt = storage.NewMinIOOptionsViaEndpoint(p.opt.MinIOEndpoint, "", p.opt.MinIOAccessKey, p.opt.MinIOSecretAccessKey)
@@ -269,7 +272,7 @@ func (p *process) setup() (fsm.State, error) {
 	return fsm.Next(stateStartApiServer)
 }
 
-func (p *process) startApiServer() (fsm.State, error) {
+func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -286,7 +289,7 @@ func (p *process) startApiServer() (fsm.State, error) {
 
 // leaderElection will get the lock.
 // Next state: stateStartWorker
-func (p *process) leaderElection() (fsm.State, error) {
+func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 	if p.kubeClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
 		logger.Log.Info("Skip leader election")
 		return fsm.Next(stateStartWorker)
@@ -334,7 +337,7 @@ func (p *process) leaderElection() (fsm.State, error) {
 	return fsm.Next(stateStartWorker)
 }
 
-func (p *process) startWorker() (fsm.State, error) {
+func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	if p.coreSharedInformerFactory != nil {
 		jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
 
@@ -360,10 +363,10 @@ func (p *process) startWorker() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (p *process) shutdown() (fsm.State, error) {
+func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	logger.Log.Info("Shutting down")
 	if p.apiServer != nil {
-		p.apiServer.Shutdown(context.Background())
+		p.apiServer.Shutdown(ctx)
 		logger.Log.Info("Shutdown API Server")
 	}
 
@@ -373,7 +376,9 @@ func (p *process) shutdown() (fsm.State, error) {
 func builder(opt Options) error {
 	p := newProcess(opt)
 
-	if err := p.FSM.Loop(); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := p.FSM.LoopContext(ctx); err != nil {
 		return err
 	}
 

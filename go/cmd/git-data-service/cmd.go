@@ -83,6 +83,9 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 		stateInit,
 		stateShuttingDown,
 	)
+	c.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
+		return context.WithTimeout(context.Background(), 5*time.Second)
+	}
 
 	return c
 }
@@ -129,7 +132,7 @@ func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	return nil
 }
 
-func (c *gitDataServiceCommand) init() (fsm.State, error) {
+func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 	if err := c.GitHubClient.Init(); err != nil {
 		return fsm.Error(err)
 	}
@@ -142,7 +145,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 
 	var cachePool *client.SinglePool
 	if c.MemcachedEndpoint != "" {
-		cacheServer, err := client.NewServerWithMetaProtocol(c.Context(), "cache-1", "tcp", c.MemcachedEndpoint)
+		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", c.MemcachedEndpoint)
 		if err != nil {
 			return fsm.Error(err)
 		}
@@ -157,11 +160,11 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, cachePool)
 
 		if ok, err := storer.Exist(); !ok && err == nil {
-			ctx, cancel := context.WithTimeout(c.Context(), c.RepositoryInitTimeout)
+			ctx, cancel := context.WithTimeout(ctx, c.RepositoryInitTimeout)
 
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
 			var auth *http.BasicAuth
-			if v, err := c.GitHubClient.TokenProvider.Token(c.Context()); err == nil {
+			if v, err := c.GitHubClient.TokenProvider.Token(ctx); err == nil {
 				auth = &http.BasicAuth{
 					Username: "octocat",
 					Password: v,
@@ -175,9 +178,9 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 		} else if err != nil {
 			return fsm.Error(err)
 		}
-		if !c.DisableInflatePackFile && storer.IncludePackFile(c.Context()) {
+		if !c.DisableInflatePackFile && storer.IncludePackFile(ctx) {
 			logger.Log.Info("Inflate packfile", zap.String("name", r.Name))
-			if err := storer.InflatePackFile(c.Context()); err != nil {
+			if err := storer.InflatePackFile(ctx); err != nil {
 				return fsm.Error(err)
 			}
 		}
@@ -205,7 +208,7 @@ func (c *gitDataServiceCommand) init() (fsm.State, error) {
 	return fsm.Next(stateStartUpdater)
 }
 
-func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
+func (c *gitDataServiceCommand) startUpdater(ctx context.Context) (fsm.State, error) {
 	if c.RefreshInterval == 0 {
 		return fsm.Next(stateStartWebhookReceiver)
 	}
@@ -222,13 +225,13 @@ func (c *gitDataServiceCommand) startUpdater() (fsm.State, error) {
 		return fsm.Error(err)
 	}
 	logger.Log.Info("Start updater", zap.Duration("refresh_interval", c.RefreshInterval), zap.Int("workers", c.RefreshWorkers))
-	go updater.Run(c.Context(), c.RefreshInterval)
+	go updater.Run(ctx, c.RefreshInterval)
 
 	c.updater = updater
 	return fsm.Next(stateStartWebhookReceiver)
 }
 
-func (c *gitDataServiceCommand) startWebhookReceiver() (fsm.State, error) {
+func (c *gitDataServiceCommand) startWebhookReceiver(_ context.Context) (fsm.State, error) {
 	if c.ListenWebhookReceiver == "" {
 		return fsm.Next(stateStartServer)
 	}
@@ -237,7 +240,7 @@ func (c *gitDataServiceCommand) startWebhookReceiver() (fsm.State, error) {
 	return fsm.Next(stateStartServer)
 }
 
-func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
+func (c *gitDataServiceCommand) startServer(_ context.Context) (fsm.State, error) {
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -253,7 +256,7 @@ func (c *gitDataServiceCommand) startServer() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
+func (c *gitDataServiceCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.s != nil {
 		logger.Log.Debug("Graceful stopping gRPC server")
 		c.s.GracefulStop()
@@ -261,7 +264,7 @@ func (c *gitDataServiceCommand) shuttingDown() (fsm.State, error) {
 	}
 	if c.updater != nil {
 		logger.Log.Debug("Stopping updater")
-		c.updater.Stop(c.Context())
+		c.updater.Stop(ctx)
 
 	}
 

@@ -310,7 +310,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 	return nil
 }
 
-func (r *BucketReconciler) init() (fsm.State, error) {
+func (r *BucketReconciler) init(_ context.Context) (fsm.State, error) {
 	sel, err := metav1.LabelSelectorAsSelector(&r.Obj.Spec.Selector)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -352,7 +352,7 @@ func (r *BucketReconciler) init() (fsm.State, error) {
 	return bucketStateEnsureBucket, nil
 }
 
-func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
+func (r *BucketReconciler) ensureBucket(_ context.Context) (fsm.State, error) {
 	if exists, err := r.MinIOClient.BucketExistsWithContext(r.ctx, r.Obj.Name); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	} else if exists {
@@ -368,7 +368,7 @@ func (r *BucketReconciler) ensureBucket() (fsm.State, error) {
 	return bucketStateEnsureBucketPolicy, nil
 }
 
-func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
+func (r *BucketReconciler) ensureBucketPolicy(_ context.Context) (fsm.State, error) {
 	current, err := r.MinIOClient.GetBucketPolicy(r.Obj.Name)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -416,7 +416,7 @@ func (r *BucketReconciler) ensureBucketPolicy() (fsm.State, error) {
 	return bucketStateEnsureIndexFile, nil
 }
 
-func (r *BucketReconciler) ensureIndexFile() (fsm.State, error) {
+func (r *BucketReconciler) ensureIndexFile(_ context.Context) (fsm.State, error) {
 	if !r.Obj.Spec.CreateIndexFile {
 		return bucketStateUpdateStatus, nil
 	}
@@ -452,7 +452,7 @@ func (r *BucketReconciler) ensureIndexFile() (fsm.State, error) {
 	return bucketStateUpdateStatus, nil
 }
 
-func (r *BucketReconciler) updateStatus() (fsm.State, error) {
+func (r *BucketReconciler) updateStatus(_ context.Context) (fsm.State, error) {
 	r.Obj.Status.Ready = true
 
 	if !reflect.DeepEqual(r.Original.Status, r.Obj.Status) {
@@ -465,7 +465,7 @@ func (r *BucketReconciler) updateStatus() (fsm.State, error) {
 	return bucketStateCleanup, nil
 }
 
-func (r *BucketReconciler) cleanup() (fsm.State, error) {
+func (r *BucketReconciler) cleanup(_ context.Context) (fsm.State, error) {
 	if r.PortForwarder != nil {
 		r.PortForwarder.Close()
 	}

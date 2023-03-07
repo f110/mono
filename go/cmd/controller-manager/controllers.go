@@ -256,7 +256,7 @@ func (p *Controllers) Flags(fs *pflag.FlagSet) {
 	logger.Flags(fs)
 }
 
-func (p *Controllers) init() (fsm.State, error) {
+func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 	fs := pflag.NewFlagSet("controller-manager", pflag.ExitOnError)
 	p.Flags(fs)
 	goFlagSet := flag.NewFlagSet("", flag.ContinueOnError)
@@ -309,7 +309,7 @@ func (p *Controllers) init() (fsm.State, error) {
 				return fsm.Error(xerrors.WithStack(err))
 			}
 			saToken := strings.TrimSpace(string(buf))
-			vc, err := vault.NewClientAsK8SServiceAccount(p.FSM.Context(), p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
+			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
 			if err != nil {
 				return fsm.Error(err)
 			}
@@ -320,7 +320,7 @@ func (p *Controllers) init() (fsm.State, error) {
 	return fsm.Next(stateCheckResources)
 }
 
-func (p *Controllers) checkResources() (fsm.State, error) {
+func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 	_, apiList, err := p.coreClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -343,7 +343,7 @@ func (p *Controllers) checkResources() (fsm.State, error) {
 	return stateStartMetricsServer, nil
 }
 
-func (p *Controllers) startMetricsServer() (fsm.State, error) {
+func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
 	http.Handle("/metrics", legacyregistry.HandlerWithReset())
 	go http.ListenAndServe(":9300", nil)
 
@@ -359,7 +359,7 @@ func (p *Controllers) startMetricsServer() (fsm.State, error) {
 	return stateLeaderElection, nil
 }
 
-func (p *Controllers) leaderElection() (fsm.State, error) {
+func (p *Controllers) leaderElection(_ context.Context) (fsm.State, error) {
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      p.leaseLockName,
@@ -401,7 +401,7 @@ func (p *Controllers) leaderElection() (fsm.State, error) {
 	return stateStartWorkers, nil
 }
 
-func (p *Controllers) startWorkers() (fsm.State, error) {
+func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
 	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 
@@ -423,15 +423,15 @@ func (p *Controllers) startWorkers() (fsm.State, error) {
 	for _, v := range p.controllers {
 		v.StartWorkers(p.ctx, p.workers)
 	}
-	return fsm.WaitState, nil
+	return fsm.Wait()
 }
 
-func (p *Controllers) shutdown() (fsm.State, error) {
+func (p *Controllers) shutdown(_ context.Context) (fsm.State, error) {
 	p.cancel()
 
 	for _, v := range p.controllers {
 		v.Shutdown()
 	}
 
-	return fsm.CloseState, nil
+	return fsm.Finish()
 }

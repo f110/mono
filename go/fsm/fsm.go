@@ -10,7 +10,7 @@ import (
 )
 
 type State int
-type StateFunc func() (State, error)
+type StateFunc func(context.Context) (State, error)
 
 const (
 	UnknownState State = -255
@@ -23,11 +23,16 @@ var (
 )
 
 type FSM struct {
+	// CloseContext allows to specify the context when entering the close state.
+	// If not specify CloseContext, then entering the close state will be used same context.
+	CloseContext func() (context.Context, context.CancelFunc)
+
 	ch         chan State
 	funcs      map[State]StateFunc
 	initState  State
 	closeState State
 	ctx        context.Context
+	cancel     context.CancelFunc
 	beClosing  bool
 	lastErr    error
 }
@@ -57,6 +62,8 @@ func Wait() (State, error) {
 	return WaitState, nil
 }
 
+// SignalHandling handles specifying signal
+// Deprecated.
 func (f *FSM) SignalHandling(signals ...os.Signal) {
 	signalCh := make(chan os.Signal)
 	signal.Notify(signalCh, signals...)
@@ -77,7 +84,7 @@ func (f *FSM) Shutdown() {
 	f.nextState(f.closeState)
 }
 
-func (f *FSM) Context() context.Context {
+func (f *FSM) context() context.Context {
 	if f.ctx == nil {
 		return context.Background()
 	}
@@ -101,6 +108,11 @@ func (f *FSM) Loop() error {
 	go func() {
 		f.nextState(f.initState)
 	}()
+	defer func() {
+		if f.cancel != nil {
+			f.cancel()
+		}
+	}()
 
 	for {
 		s, open := <-f.ch
@@ -109,6 +121,11 @@ func (f *FSM) Loop() error {
 		}
 		if s == f.closeState {
 			f.beClosing = true
+			if f.CloseContext != nil {
+				c, cancel := f.CloseContext()
+				f.ctx = c
+				f.cancel = cancel
+			}
 		}
 
 		var fn StateFunc
@@ -119,7 +136,7 @@ func (f *FSM) Loop() error {
 		}
 
 		go func() {
-			if nxt, err := fn(); err != nil {
+			if nxt, err := fn(f.context()); err != nil {
 				fmt.Fprintf(os.Stderr, "%+v\n", err)
 				f.lastErr = err
 

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
@@ -48,6 +50,9 @@ func newRepoDocCommand() *repoDocCommand {
 		stateInit,
 		stateShuttingDown,
 	)
+	c.CloseContext = func() (context.Context, context.CancelFunc) {
+		return context.WithTimeout(context.Background(), 5*time.Second)
+	}
 
 	return c
 }
@@ -62,7 +67,7 @@ func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.SearchService, "search-service", "", "The url of search-service")
 }
 
-func (c *repoDocCommand) init() (fsm.State, error) {
+func (c *repoDocCommand) init(ctx context.Context) (fsm.State, error) {
 	var opts []grpc.DialOption
 	if c.Insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -82,7 +87,7 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 		c.docSearch = docutil.NewDocSearchClient(docSearchConn)
 	}
 
-	handler, err := newHttpHandler(c.Context(), c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC)
+	handler, err := newHttpHandler(ctx, c.gitData, c.docSearch, c.GlobalTitle, c.StaticDirectory, c.MaxDepthToC)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -105,9 +110,9 @@ func (c *repoDocCommand) init() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (c *repoDocCommand) shuttingDown() (fsm.State, error) {
+func (c *repoDocCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.s != nil {
-		if err := c.s.Shutdown(c.FSM.Context()); err != nil {
+		if err := c.s.Shutdown(ctx); err != nil {
 			return fsm.Error(err)
 		}
 	}

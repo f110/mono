@@ -207,12 +207,12 @@ func (c *fifoObjectGarbageCollectorCommand) Flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.DryRun, "dry-run", false, "Dry run mode")
 }
 
-func (c *fifoObjectGarbageCollectorCommand) init() (fsm.State, error) {
+func (c *fifoObjectGarbageCollectorCommand) init(ctx context.Context) (fsm.State, error) {
 	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
 	opt.PathStyle = true
 	s3Client := storage.NewS3(c.Bucket, opt)
 	c.client = s3Client
-	gc, err := newFIFOObjectGarbageCollector(c.FSM.Context(), c.client, c.Prefix, c.Interval, c.MaxUsedPercent, c.PurgePercent)
+	gc, err := newFIFOObjectGarbageCollector(ctx, c.client, c.Prefix, c.Interval, c.MaxUsedPercent, c.PurgePercent)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -221,16 +221,16 @@ func (c *fifoObjectGarbageCollectorCommand) init() (fsm.State, error) {
 	return fsm.Next(stateStartGC)
 }
 
-func (c *fifoObjectGarbageCollectorCommand) startGC() (fsm.State, error) {
+func (c *fifoObjectGarbageCollectorCommand) startGC(ctx context.Context) (fsm.State, error) {
 	if !c.OneShot {
 		go func() {
-			if err := c.gc.Run(c.FSM.Context(), !c.DryRun); err != nil {
+			if err := c.gc.Run(ctx, !c.DryRun); err != nil {
 				logger.Log.Error("GC error", logger.Error(err))
 				c.FSM.Shutdown()
 			}
 		}()
 	} else {
-		if err := c.gc.gc(c.FSM.Context(), !c.DryRun); err != nil {
+		if err := c.gc.gc(ctx, !c.DryRun); err != nil {
 			return fsm.Error(err)
 		}
 		c.FSM.Shutdown()
@@ -238,7 +238,7 @@ func (c *fifoObjectGarbageCollectorCommand) startGC() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (c *fifoObjectGarbageCollectorCommand) shuttingDown() (fsm.State, error) {
+func (c *fifoObjectGarbageCollectorCommand) shuttingDown(_ context.Context) (fsm.State, error) {
 	c.gc.Shutdown()
 	return fsm.Finish()
 }

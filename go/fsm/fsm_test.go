@@ -17,10 +17,10 @@ func TestFSM(t *testing.T) {
 
 	t.Run("Normal", func(t *testing.T) {
 		l := NewFSM(map[State]StateFunc{
-			initState: func() (State, error) {
+			initState: func(_ context.Context) (State, error) {
 				return Next(shuttingDownState)
 			},
-			shuttingDownState: func() (State, error) {
+			shuttingDownState: func(_ context.Context) (State, error) {
 				return Finish()
 			},
 		}, initState, shuttingDownState)
@@ -33,11 +33,11 @@ func TestFSM(t *testing.T) {
 		shutDown := false
 
 		l := NewFSM(map[State]StateFunc{
-			initState: func() (State, error) {
+			initState: func(_ context.Context) (State, error) {
 				defer func() { close(ch) }()
 				return Wait()
 			},
-			shuttingDownState: func() (State, error) {
+			shuttingDownState: func(_ context.Context) (State, error) {
 				shutDown = true
 				return Finish()
 			},
@@ -57,10 +57,10 @@ func TestFSM(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		l := NewFSM(map[State]StateFunc{
-			initState: func() (State, error) {
+			initState: func(_ context.Context) (State, error) {
 				return Error(errors.New("init error"))
 			},
-			shuttingDownState: func() (State, error) {
+			shuttingDownState: func(_ context.Context) (State, error) {
 				t.Log("shutting down")
 				return Finish()
 			},
@@ -72,10 +72,10 @@ func TestFSM(t *testing.T) {
 
 	t.Run("ErrorAtCloseState", func(t *testing.T) {
 		l := NewFSM(map[State]StateFunc{
-			initState: func() (State, error) {
+			initState: func(_ context.Context) (State, error) {
 				return Error(errors.New("init error"))
 			},
-			shuttingDownState: func() (State, error) {
+			shuttingDownState: func(_ context.Context) (State, error) {
 				return Error(errors.New("shutting down error"))
 			},
 		}, initState, shuttingDownState)
@@ -83,5 +83,31 @@ func TestFSM(t *testing.T) {
 		err := l.Loop()
 		require.Error(t, err)
 		assert.EqualError(t, err, "shutting down error")
+	})
+
+	t.Run("ContextAtCloseState", func(t *testing.T) {
+		ch := make(chan struct{})
+
+		l := NewFSM(map[State]StateFunc{
+			initState: func(_ context.Context) (State, error) {
+				defer func() { close(ch) }()
+				return Wait()
+			},
+			shuttingDownState: func(ctx context.Context) (State, error) {
+				assert.NoError(t, ctx.Err())
+				return Finish()
+			},
+		}, initState, shuttingDownState)
+		l.CloseContext = func() (context.Context, context.CancelFunc) { return context.Background(), nil }
+
+		ctx, cancel := context.WithCancel(context.Background())
+		go func() {
+			select {
+			case <-ch:
+				cancel()
+			}
+		}()
+		err := l.LoopContext(ctx)
+		require.NoError(t, err)
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
@@ -65,6 +66,9 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 		stateInit,
 		stateShuttingDown,
 	)
+	c.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
+		return context.WithTimeout(context.Background(), 5*time.Second)
+	}
 	return c
 }
 
@@ -89,7 +93,7 @@ func (c *goModuleProxyCommand) RequiredFlags() []string {
 	return []string{"config"}
 }
 
-func (c *goModuleProxyCommand) init() (fsm.State, error) {
+func (c *goModuleProxyCommand) init(_ context.Context) (fsm.State, error) {
 	if err := c.githubClientFactory.Init(); err != nil {
 		return fsm.Error(err)
 	}
@@ -140,7 +144,7 @@ func (c *goModuleProxyCommand) init() (fsm.State, error) {
 	return fsm.Next(stateStartServer)
 }
 
-func (c *goModuleProxyCommand) startServer() (fsm.State, error) {
+func (c *goModuleProxyCommand) startServer(_ context.Context) (fsm.State, error) {
 	go func() {
 		if err := c.server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Log.Warn("Server returns error", logger.Error(err))
@@ -150,10 +154,10 @@ func (c *goModuleProxyCommand) startServer() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (c *goModuleProxyCommand) shuttingDown() (fsm.State, error) {
+func (c *goModuleProxyCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.server != nil {
 		logger.Log.Info("Shutting down proxy")
-		if err := c.server.Stop(c.FSM.Context()); err != nil {
+		if err := c.server.Stop(ctx); err != nil {
 			return fsm.Error(err)
 		}
 	}

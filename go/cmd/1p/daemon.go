@@ -306,7 +306,7 @@ func NewDaemon() *daemon {
 	return d
 }
 
-func (d *daemon) init() (fsm.State, error) {
+func (d *daemon) init(_ context.Context) (fsm.State, error) {
 	v, err := NewVault()
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -320,7 +320,7 @@ func (d *daemon) init() (fsm.State, error) {
 	return stateStart, nil
 }
 
-func (d *daemon) start() (fsm.State, error) {
+func (d *daemon) start(_ context.Context) (fsm.State, error) {
 	go func() {
 		<-time.After(3 * time.Hour)
 		d.Shutdown()
@@ -329,7 +329,7 @@ func (d *daemon) start() (fsm.State, error) {
 	return fsm.WaitState, nil
 }
 
-func (d *daemon) shutdown() (fsm.State, error) {
+func (d *daemon) shutdown(_ context.Context) (fsm.State, error) {
 	d.vault.Shutdown()
 	return fsm.CloseState, nil
 }

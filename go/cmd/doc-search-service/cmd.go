@@ -61,7 +61,7 @@ func newDocSearchService() *docSearchService {
 	return c
 }
 
-func (c *docSearchService) init() (fsm.State, error) {
+func (c *docSearchService) init(ctx context.Context) (fsm.State, error) {
 	var opts = []grpc.DialOption{grpcutil.WithLogging()}
 	if c.Insecure {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -85,7 +85,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
-	ctx, cancel := context.WithTimeout(c.Context(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	if err := service.Initialize(ctx, c.Workers, c.MaxConns); err != nil {
 		return fsm.Error(err)
@@ -94,7 +94,7 @@ func (c *docSearchService) init() (fsm.State, error) {
 	return fsm.Next(stateStartServer)
 }
 
-func (c *docSearchService) startServer() (fsm.State, error) {
+func (c *docSearchService) startServer(_ context.Context) (fsm.State, error) {
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -110,7 +110,7 @@ func (c *docSearchService) startServer() (fsm.State, error) {
 	return fsm.Wait()
 }
 
-func (c *docSearchService) shutDown() (fsm.State, error) {
+func (c *docSearchService) shutDown(_ context.Context) (fsm.State, error) {
 	if c.s != nil {
 		logger.Log.Debug("Graceful stopping")
 		c.s.GracefulStop()
