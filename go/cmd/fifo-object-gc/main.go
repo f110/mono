@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -84,9 +85,16 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 }
 
 func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) error {
+	defer logger.Log.Info("Finish garbage collector")
 	t := time.NewTicker(gc.interval)
 	defer t.Stop()
 
+	go func() {
+		if err := gc.startInvokeServer(execute); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Log.Error("Something happen", zap.Error(err))
+		}
+	}()
+	logger.Log.Info("Start garbage collector")
 	for {
 		select {
 		case <-t.C:
@@ -99,6 +107,22 @@ func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) err
 			return nil
 		}
 	}
+}
+
+func (gc *fifoObjectGarbageCollector) startInvokeServer(execute bool) error {
+	s := &http.Server{
+		Addr: ":8080",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			go func() {
+				if err := gc.gc(context.Background(), execute); err != nil {
+					logger.Log.Error("Failed garbage collecting", zap.Error(err))
+				}
+			}()
+		}),
+	}
+
+	logger.Log.Info("Start invoke server", zap.String("addr", s.Addr))
+	return s.ListenAndServe()
 }
 
 func (gc *fifoObjectGarbageCollector) Shutdown() {
