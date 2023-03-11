@@ -24,3 +24,11 @@ go_binary(
     embed = [":fifo-object-gc_lib"],
     visibility = ["//visibility:public"],
 )
+
+go_binary(
+    name = "linux_amd64",
+    embed = [":fifo-object-gc_lib"],
+    goarch = "amd64",
+    goos = "linux",
+    visibility = ["//visibility:public"],
+)
