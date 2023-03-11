@@ -192,7 +192,7 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 		commitSHA = commit.GetSHA()
 	} else {
 		// If the revision doesn't belong to the main branch, the build configuration will be read from the main branch.
-		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, "HEAD")
+		commit, _, err := a.githubClient.Repositories.GetCommit(ctx, owner, repoName, "HEAD", nil)
 		if err != nil {
 			return nil, "", xerrors.WithMessage(err, "failed to get HEAD commit")
 		}
