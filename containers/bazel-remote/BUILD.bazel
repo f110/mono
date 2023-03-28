@@ -1,5 +1,5 @@
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 
 pkg_tar(
     name = "bin",
@@ -10,9 +10,9 @@ pkg_tar(
     package_dir = "/usr/local/bin",
 )
 
-container_image(
+oci_image(
     name = "image",
-    base = "@com_google_distroless_base//image",
+    base = "@oci_com_google_distroless_base",
     cmd = ["--max_size=5"],
     entrypoint = ["/usr/local/bin/bazel-remote"],
     tars = [
@@ -20,11 +20,9 @@ container_image(
     ],
 )
 
-container_push(
+oci_push(
     name = "push",
-    format = "Docker",
     image = ":image",
-    registry = "registry.f110.dev",
-    repository = "bazel-remote/bazel-remote-cache",
-    tag = "latest",
+    repository = "registry.f110.dev/bazel-remote/bazel-remote-cache",
+    repotags = ["latest"],
 )
