@@ -1,5 +1,5 @@
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push", "oci_tarball")
 
 pkg_tar(
     name = "plugins",
@@ -9,18 +9,17 @@ pkg_tar(
     mode = "0755",
 )
 
-container_image(
+oci_image(
     name = "image",
-    tars = [
-        ":plugins",
-    ],
+    architecture = "amd64",
+    os = "linux",
+    tars = [":plugins"],
+    visibility = ["//visibility:public"],
 )
 
-container_push(
+oci_push(
     name = "push",
-    format = "Docker",
     image = ":image",
-    registry = "registry.f110.dev",
-    repository = "tools/argocd-plugins",
-    tag = "latest",
+    repository = "registry.f110.dev/tools/argocd-plugins",
+    repotags = ["latest"],
 )

@@ -44,6 +44,13 @@ http_archive(
 )
 
 http_archive(
+    name = "rules_oci",
+    sha256 = "4a738bdbeacb0e1df070209dddfa7b55fed9bbc553b905cf3d2dd25115e0b598",
+    strip_prefix = "rules_oci-0.3.8",
+    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v0.3.8/rules_oci-v0.3.8.tar.gz",
+)
+
+http_archive(
     name = "rules_pkg",
     sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
     urls = [
@@ -164,9 +171,40 @@ container_deps()
 
 container_repositories()
 
+load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
+
+rules_oci_dependencies()
+
+load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "LATEST_ZOT_VERSION", "oci_register_toolchains")
+
+oci_register_toolchains(
+    name = "oci",
+    crane_version = LATEST_CRANE_VERSION,
+)
+
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
 rules_foreign_cc_dependencies()
+
+load("@rules_oci//oci:pull.bzl", "oci_pull")
+
+oci_pull(
+    name = "oci_com_google_distroless_base",
+    digest = "sha256:e8f299757c8f8f2ebbebc4fd1826720a0a7a45fce0a4f9e7d210c5cc09d624a3",
+    image = "gcr.io/distroless/base",
+)
+
+oci_pull(
+    name = "oci_com_google_distroless_base_debug",
+    digest = "sha256:c532b9983712e1d9fadec8449908a9ac329909f37a47d491f2ad06ee6040fa4c",
+    image = "gcr.io/distroless/base",
+)
+
+oci_pull(
+    name = "oci_com_google_distroless_base_arm64",
+    digest = "sha256:bf4d6dc160bab223a0d377df083ad6b4ebacf5db2a313d8d7f3f07c9da967093",
+    image = "gcr.io/distroless/base",
+)
 
 container_pull(
     name = "com_google_distroless_base",
