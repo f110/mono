@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"net"
@@ -14,11 +14,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/cache/s3proxy"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/cache/azblobproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/s3proxy"
 
 	"github.com/urfave/cli/v2"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // GoogleCloudStorageConfig stores the configuration of a GCS proxy backend.
@@ -41,12 +42,14 @@ type Config struct {
 	Dir                         string                    `yaml:"dir"`
 	MaxSize                     int                       `yaml:"max_size"`
 	StorageMode                 string                    `yaml:"storage_mode"`
+	ZstdImplementation          string                    `yaml:"zstd_implementation"`
 	HtpasswdFile                string                    `yaml:"htpasswd_file"`
 	TLSCaFile                   string                    `yaml:"tls_ca_file"`
 	TLSCertFile                 string                    `yaml:"tls_cert_file"`
 	TLSKeyFile                  string                    `yaml:"tls_key_file"`
 	AllowUnauthenticatedReads   bool                      `yaml:"allow_unauthenticated_reads"`
 	S3CloudStorage              *S3CloudStorageConfig     `yaml:"s3_proxy,omitempty"`
+	AzBlobConfig                *AzBlobStorageConfig      `yaml:"azblob_proxy,omitempty"`
 	GoogleCloudStorage          *GoogleCloudStorageConfig `yaml:"gcs_proxy,omitempty"`
 	HTTPBackend                 *HTTPBackendConfig        `yaml:"http_proxy,omitempty"`
 	NumUploaders                int                       `yaml:"num_uploaders"`
@@ -61,6 +64,7 @@ type Config struct {
 	HTTPReadTimeout             time.Duration             `yaml:"http_read_timeout"`
 	HTTPWriteTimeout            time.Duration             `yaml:"http_write_timeout"`
 	AccessLogLevel              string                    `yaml:"access_log_level"`
+	LogTimezone                 string                    `yaml:"log_timezone"`
 	MaxBlobSize                 int64                     `yaml:"max_blob_size"`
 	MaxProxyBlobSize            int64                     `yaml:"max_proxy_blob_size"`
 
@@ -91,7 +95,7 @@ var defaultDurationBuckets = []float64{.5, 1, 2.5, 5, 10, 20, 40, 80, 160, 320}
 
 // newFromArgs returns a validated Config with the specified values, and
 // an error if there were any problems with the validation.
-func newFromArgs(dir string, maxSize int, storageMode string,
+func newFromArgs(dir string, maxSize int, storageMode string, zstdImplementation string,
 	httpAddress string, grpcAddress string,
 	profileAddress string,
 	htpasswdFile string,
@@ -105,6 +109,7 @@ func newFromArgs(dir string, maxSize int, storageMode string,
 	hc *HTTPBackendConfig,
 	gcs *GoogleCloudStorageConfig,
 	s3 *S3CloudStorageConfig,
+	azblob *AzBlobStorageConfig,
 	disableHTTPACValidation bool,
 	disableGRPCACDepsCheck bool,
 	enableACKeyInstanceMangling bool,
@@ -113,6 +118,7 @@ func newFromArgs(dir string, maxSize int, storageMode string,
 	httpReadTimeout time.Duration,
 	httpWriteTimeout time.Duration,
 	accessLogLevel string,
+	logTimezone string,
 	maxBlobSize int64,
 	maxProxyBlobSize int64) (*Config, error) {
 
@@ -123,6 +129,7 @@ func newFromArgs(dir string, maxSize int, storageMode string,
 		Dir:                         dir,
 		MaxSize:                     maxSize,
 		StorageMode:                 storageMode,
+		ZstdImplementation:          zstdImplementation,
 		HtpasswdFile:                htpasswdFile,
 		MaxQueuedUploads:            maxQueuedUploads,
 		NumUploaders:                numUploaders,
@@ -131,6 +138,7 @@ func newFromArgs(dir string, maxSize int, storageMode string,
 		TLSKeyFile:                  tlsKeyFile,
 		AllowUnauthenticatedReads:   allowUnauthenticatedReads,
 		S3CloudStorage:              s3,
+		AzBlobConfig:                azblob,
 		GoogleCloudStorage:          gcs,
 		HTTPBackend:                 hc,
 		IdleTimeout:                 idleTimeout,
@@ -143,6 +151,7 @@ func newFromArgs(dir string, maxSize int, storageMode string,
 		HTTPReadTimeout:             httpReadTimeout,
 		HTTPWriteTimeout:            httpWriteTimeout,
 		AccessLogLevel:              accessLogLevel,
+		LogTimezone:                 logTimezone,
 		MaxBlobSize:                 maxBlobSize,
 		MaxProxyBlobSize:            maxProxyBlobSize,
 	}
@@ -164,7 +173,7 @@ func newFromYamlFile(path string) (*Config, error) {
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read config file '%s': %v", path, err)
 	}
@@ -176,12 +185,14 @@ func newFromYaml(data []byte) (*Config, error) {
 	yc := YamlConfig{
 		Config: Config{
 			StorageMode:            "zstd",
+			ZstdImplementation:     "go",
 			NumUploaders:           100,
 			MaxQueuedUploads:       1000000,
 			MaxBlobSize:            math.MaxInt64,
 			MaxProxyBlobSize:       math.MaxInt64,
 			MetricsDurationBuckets: defaultDurationBuckets,
 			AccessLogLevel:         "all",
+			LogTimezone:            "UTC",
 		},
 	}
 
@@ -227,6 +238,9 @@ func validateConfig(c *Config) error {
 	if c.StorageMode != "zstd" && c.StorageMode != "uncompressed" {
 		return errors.New("storage_mode must be set to either \"zstd\" or \"uncompressed\"")
 	}
+	if c.ZstdImplementation != "go" && c.ZstdImplementation != "cgo" {
+		return errors.New("zstd_implementation must be set to either \"go\" or \"cgo\", got: " + c.ZstdImplementation)
+	}
 
 	proxyCount := 0
 	if c.S3CloudStorage != nil {
@@ -236,6 +250,9 @@ func validateConfig(c *Config) error {
 		proxyCount++
 	}
 	if c.GoogleCloudStorage != nil {
+		proxyCount++
+	}
+	if c.AzBlobConfig != nil {
 		proxyCount++
 	}
 
@@ -334,6 +351,20 @@ func validateConfig(c *Config) error {
 		}
 	}
 
+	if c.AzBlobConfig != nil {
+		if c.AzBlobConfig.StorageAccount == "" {
+			return errors.New("The 'storage_account' field is required for 'azblob_proxy'")
+		}
+
+		if c.AzBlobConfig.ContainerName == "" {
+			return errors.New("The 'container_name' field is required for 'azblob_proxy'")
+		}
+
+		if !azblobproxy.IsValidAuthMethod(c.AzBlobConfig.AuthMethod) {
+			return fmt.Errorf("Invalid azblob.auth_method: %s", c.AzBlobConfig.AuthMethod)
+		}
+	}
+
 	if c.MetricsDurationBuckets != nil {
 		duplicates := make(map[float64]bool)
 		for _, bucket := range c.MetricsDurationBuckets {
@@ -349,6 +380,12 @@ func validateConfig(c *Config) error {
 	case "none", "all":
 	default:
 		return errors.New("'access_log_level' must be set to either \"none\" or \"all\"")
+	}
+
+	switch c.LogTimezone {
+	case "UTC", "local", "none":
+	default:
+		return errors.New("'log_timezone' must be set to either \"UTC\", \"local\" or \"none\"")
 	}
 
 	return nil
@@ -415,6 +452,7 @@ func get(ctx *cli.Context) (*Config, error) {
 			AccessKeyID:              ctx.String("s3.access_key_id"),
 			SecretAccessKey:          ctx.String("s3.secret_access_key"),
 			DisableSSL:               ctx.Bool("s3.disable_ssl"),
+			UpdateTimestamps:         ctx.Bool("s3.update_timestamps"),
 			IAMRoleEndpoint:          ctx.String("s3.iam_role_endpoint"),
 			Region:                   ctx.String("s3.region"),
 			AWSProfile:               ctx.String("s3.aws_profile"),
@@ -438,10 +476,27 @@ func get(ctx *cli.Context) (*Config, error) {
 		}
 	}
 
+	var azblob *AzBlobStorageConfig
+	if ctx.String("azblob.tenant_id") != "" {
+		azblob = &AzBlobStorageConfig{
+			TenantID:         ctx.String("azblob.tenant_id"),
+			StorageAccount:   ctx.String("azblob.storage_account"),
+			ContainerName:    ctx.String("azblob.container_name"),
+			Prefix:           ctx.String("azblob.prefix"),
+			AuthMethod:       ctx.String("azblob.auth_method"),
+			ClientID:         ctx.String("azblob.client_id"),
+			ClientSecret:     ctx.String("azblob.client_secret"),
+			CertPath:         ctx.String("azblob.cert_path"),
+			SharedKey:        ctx.String("azblob.shared_key"),
+			UpdateTimestamps: ctx.Bool("azblob.update_timestamps"),
+		}
+	}
+
 	return newFromArgs(
 		ctx.String("dir"),
 		ctx.Int("max_size"),
 		ctx.String("storage_mode"),
+		ctx.String("zstd_implementation"),
 		httpAddress,
 		grpcAddress,
 		profileAddress,
@@ -456,6 +511,7 @@ func get(ctx *cli.Context) (*Config, error) {
 		hc,
 		gcs,
 		s3,
+		azblob,
 		ctx.Bool("disable_http_ac_validation"),
 		ctx.Bool("disable_grpc_ac_deps_check"),
 		ctx.Bool("enable_ac_key_instance_mangling"),
@@ -464,6 +520,7 @@ func get(ctx *cli.Context) (*Config, error) {
 		ctx.Duration("http_read_timeout"),
 		ctx.Duration("http_write_timeout"),
 		ctx.String("access_log_level"),
+		ctx.String("log_timezone"),
 		ctx.Int64("max_blob_size"),
 		ctx.Int64("max_proxy_blob_size"),
 	)

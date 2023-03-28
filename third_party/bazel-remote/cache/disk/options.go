@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/cache/disk/casblob"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/cache/disk/casblob"
+	"github.com/buchgr/bazel-remote/v2/cache/disk/zstdimpl"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,6 +29,14 @@ func WithStorageMode(mode string) Option {
 		} else {
 			return fmt.Errorf("Unsupported storage mode: " + mode)
 		}
+	}
+}
+
+func WithZstdImplementation(impl string) Option {
+	return func(c *CacheConfig) error {
+		var err error
+		c.diskCache.zstd, err = zstdimpl.Get(impl)
+		return err
 	}
 }
 

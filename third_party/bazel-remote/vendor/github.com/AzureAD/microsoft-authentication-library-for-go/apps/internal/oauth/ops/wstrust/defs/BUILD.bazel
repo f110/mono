@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "defs",
+    srcs = [
+        "endpointtype_string.go",
+        "mex_document_definitions.go",
+        "saml_assertion_definitions.go",
+        "version_string.go",
+        "wstrust_endpoint.go",
+        "wstrust_mex_document.go",
+    ],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/wstrust/defs",
+    importpath = "github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/wstrust/defs",
+    visibility = ["//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps:__subpackages__"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/authority",
+        "//third_party/bazel-remote/vendor/github.com/google/uuid",
+    ],
+)

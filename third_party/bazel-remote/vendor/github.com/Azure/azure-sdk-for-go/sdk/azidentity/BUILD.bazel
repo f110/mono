@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "azidentity",
+    srcs = [
+        "azidentity.go",
+        "azure_cli_credential.go",
+        "chained_token_credential.go",
+        "client_certificate_credential.go",
+        "client_secret_credential.go",
+        "default_azure_credential.go",
+        "device_code_credential.go",
+        "environment_credential.go",
+        "errors.go",
+        "interactive_browser_credential.go",
+        "logging.go",
+        "managed_identity_client.go",
+        "managed_identity_credential.go",
+        "username_password_credential.go",
+        "version.go",
+    ],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azidentity",
+    importpath = "github.com/Azure/azure-sdk-for-go/sdk/azidentity",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/policy",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/internal/log",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/public",
+        "//third_party/bazel-remote/vendor/golang.org/x/crypto/pkcs12",
+    ],
+)

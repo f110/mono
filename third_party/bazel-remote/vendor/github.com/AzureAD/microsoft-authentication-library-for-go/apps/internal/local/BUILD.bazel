@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "local",
+    srcs = ["server.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/local",
+    importpath = "github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/local",
+    visibility = ["//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps:__subpackages__"],
+)

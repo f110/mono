@@ -19,4 +19,13 @@ go_library(
     importmap = "github.com/buchgr/bazel-remote/vendor/github.com/klauspost/cpuid/v2",
     importpath = "github.com/klauspost/cpuid/v2",
     visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+            "//third_party/bazel-remote/vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_arm64": [
+            "//third_party/bazel-remote/vendor/golang.org/x/sys/unix",
+        ],
+        "//conditions:default": [],
+    }),
 )

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/minio/minio-go/v7/pkg/s3utils"
 )
@@ -31,11 +32,10 @@ import (
 // This call requires explicit authentication, no anonymous requests are
 // allowed for listing buckets.
 //
-//   api := client.New(....)
-//   for message := range api.ListBuckets(context.Background()) {
-//       fmt.Println(message)
-//   }
-//
+//	api := client.New(....)
+//	for message := range api.ListBuckets(context.Background()) {
+//	    fmt.Println(message)
+//	}
 func (c *Client) ListBuckets(ctx context.Context) ([]BucketInfo, error) {
 	// Execute GET on service.
 	resp, err := c.executeMethod(ctx, http.MethodGet, requestMetadata{contentSHA256Hex: emptySHA256Hex})
@@ -239,6 +239,7 @@ func (c *Client) listObjectsV2Query(ctx context.Context, bucketName, objectPrefi
 		if err != nil {
 			return listBucketResult, err
 		}
+		listBucketResult.Contents[i].LastModified = listBucketResult.Contents[i].LastModified.Truncate(time.Millisecond)
 	}
 
 	for i, obj := range listBucketResult.CommonPrefixes {
@@ -384,7 +385,7 @@ func (c *Client) listObjectVersions(ctx context.Context, bucketName string, opts
 				info := ObjectInfo{
 					ETag:           trimEtag(version.ETag),
 					Key:            version.Key,
-					LastModified:   version.LastModified,
+					LastModified:   version.LastModified.Truncate(time.Millisecond),
 					Size:           version.Size,
 					Owner:          version.Owner,
 					StorageClass:   version.StorageClass,
@@ -600,6 +601,7 @@ func (c *Client) listObjectsQuery(ctx context.Context, bucketName, objectPrefix,
 		if err != nil {
 			return listBucketResult, err
 		}
+		listBucketResult.Contents[i].LastModified = listBucketResult.Contents[i].LastModified.Truncate(time.Millisecond)
 	}
 
 	for i, obj := range listBucketResult.CommonPrefixes {
@@ -656,11 +658,10 @@ func (o *ListObjectsOptions) Set(key, value string) {
 
 // ListObjects returns objects list after evaluating the passed options.
 //
-//   api := client.New(....)
-//   for object := range api.ListObjects(ctx, "mytestbucket", minio.ListObjectsOptions{Prefix: "starthere", Recursive:true}) {
-//       fmt.Println(object)
-//   }
-//
+//	api := client.New(....)
+//	for object := range api.ListObjects(ctx, "mytestbucket", minio.ListObjectsOptions{Prefix: "starthere", Recursive:true}) {
+//	    fmt.Println(object)
+//	}
 func (c *Client) ListObjects(ctx context.Context, bucketName string, opts ListObjectsOptions) <-chan ObjectInfo {
 	if opts.WithVersions {
 		return c.listObjectVersions(ctx, bucketName, opts)
@@ -691,12 +692,12 @@ func (c *Client) ListObjects(ctx context.Context, bucketName string, opts ListOb
 // If you enable recursive as 'true' this function will return back all
 // the multipart objects in a given bucket name.
 //
-//   api := client.New(....)
-//   // Recurively list all objects in 'mytestbucket'
-//   recursive := true
-//   for message := range api.ListIncompleteUploads(context.Background(), "mytestbucket", "starthere", recursive) {
-//       fmt.Println(message)
-//   }
+//	api := client.New(....)
+//	// Recurively list all objects in 'mytestbucket'
+//	recursive := true
+//	for message := range api.ListIncompleteUploads(context.Background(), "mytestbucket", "starthere", recursive) {
+//	    fmt.Println(message)
+//	}
 func (c *Client) ListIncompleteUploads(ctx context.Context, bucketName, objectPrefix string, recursive bool) <-chan ObjectMultipartInfo {
 	return c.listIncompleteUploads(ctx, bucketName, objectPrefix, recursive)
 }
@@ -774,7 +775,6 @@ func (c *Client) listIncompleteUploads(ctx context.Context, bucketName, objectPr
 	}(objectMultipartStatCh)
 	// return.
 	return objectMultipartStatCh
-
 }
 
 // listMultipartUploadsQuery - (List Multipart Uploads).
@@ -914,7 +914,7 @@ func (c *Client) findUploadIDs(ctx context.Context, bucketName, objectName strin
 }
 
 // listObjectPartsQuery (List Parts query)
-//     - lists some or all (up to 1000) parts that have been uploaded
+//   - lists some or all (up to 1000) parts that have been uploaded
 //     for a specific multipart upload
 //
 // You can use the request parameters as selection criteria to return

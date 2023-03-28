@@ -6,9 +6,9 @@ go_library(
     importpath = "github.com/buchgr/bazel-remote/cache/gcsproxy",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/bazel-remote/cache",
-        "//third_party/bazel-remote/cache/httpproxy",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2",
         "//third_party/bazel-remote/vendor/golang.org/x/oauth2/google",
+        "@com_github_buchgr_bazel_remote_v2//cache:go_default_library",
+        "@com_github_buchgr_bazel_remote_v2//cache/httpproxy:go_default_library",
     ],
 )

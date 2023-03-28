@@ -14,11 +14,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
-	pb "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2"
+	pb "github.com/buchgr/bazel-remote/v2/genproto/build/bazel/remote/execution/v2"
 	"github.com/google/uuid"
 
 	"google.golang.org/genproto/googleapis/bytestream"
@@ -124,7 +123,7 @@ func dial(serverAddr string, caCertFile string, clientCertFile string, clientKey
 	} else {
 		fmt.Println("reading", caCertFile)
 
-		caCertData, err := ioutil.ReadFile(caCertFile)
+		caCertData, err := os.ReadFile(caCertFile)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read CA cert file %q: %w",
 				caCertFile, err), nil, nil
@@ -254,6 +253,13 @@ func checkCacheReadOps(conn *grpc.ClientConn, shouldWork bool) error {
 		return err
 	}
 
+	healthClient := grpc_health_v1.NewHealthClient(conn)
+
+	err = checkHealth(healthClient) // This should always work.
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -281,11 +287,11 @@ func checkBatchReadBlobs(casClient pb.ContentAddressableStorageClient, shouldWor
 	}
 
 	if brResp.Responses[0] == nil {
-		return fmt.Errorf("Error: found nil reponse")
+		return fmt.Errorf("Error: found nil response")
 	}
 
 	if brResp.Responses[0].Status.Code != int32(codes.OK) {
-		return fmt.Errorf("Error: unexpected reponse: %s",
+		return fmt.Errorf("Error: unexpected response: %s",
 			brResp.Responses[0].Status.GetMessage())
 	}
 
@@ -445,13 +451,6 @@ func checkCacheWriteOps(conn *grpc.ClientConn, shouldWork bool) error {
 		return err
 	}
 
-	healthClient := grpc_health_v1.NewHealthClient(conn)
-
-	err = checkHealth(healthClient) // This should always work.
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -515,15 +514,15 @@ func checkBatchUpdateBlobs(casClient pb.ContentAddressableStorageClient, shouldW
 
 	rs := resp.GetResponses()
 	if len(rs) != 1 {
-		return fmt.Errorf("Expected BatchUpdateBlobs to have 1 reponse, found %d", len(rs))
+		return fmt.Errorf("Expected BatchUpdateBlobs to have 1 response, found %d", len(rs))
 	}
 
 	if rs[0].Digest.Hash != ur.Digest.Hash {
-		return fmt.Errorf("Unexpected digest in reponse")
+		return fmt.Errorf("Unexpected digest in response")
 	}
 
 	if rs[0].Digest.SizeBytes != ur.Digest.SizeBytes {
-		return fmt.Errorf("Unexpected digest in reponse")
+		return fmt.Errorf("Unexpected digest in response")
 	}
 
 	if rs[0].Status != nil && rs[0].Status.Code != int32(codes.OK) {
@@ -613,6 +612,7 @@ func checkHealth(healthClient grpc_health_v1.HealthClient) error {
 	if resp.Status != grpc_health_v1.HealthCheckResponse_SERVING {
 		return fmt.Errorf("Expected health check to return SERVING status, got: %s", resp.Status.String())
 	}
+	fmt.Println("Health check succeeded, as expected")
 
 	return nil
 }

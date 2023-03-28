@@ -9,7 +9,14 @@ execution service.
 
 The cache contents are stored in a directory on disk with a maximum cache size,
 and bazel-remote will automatically enforce this limit as needed, by deleting
-the least recently used files. S3 and GCS proxy backends are also supported.
+the least recently used files. S3, GCS and experimental Azure blob storage
+proxy backends are also supported.
+
+Note that while bazel-remote is consumable as a go module, we provide no
+guarantees on the stability or backwards compatibility of the APIs. We do
+attempt to keep the standalone executable backwards-compatible between
+releases however, and cache directory format changes are only allowed in
+major version upgrades.
 
 **Project status**: bazel-remote has been serving TBs of cache artifacts per day since April 2018, both on
 commodity hardware and AWS servers. Outgoing bandwidth can exceed 15 Gbit/s on the right AWS instance type.
@@ -125,6 +132,9 @@ line flags and environment variables are ignored. Otherwise, the flags and
 environment variables listed in the help text below can be specified (flags
 override the corresponding environment variables).
 
+See [examples/bazel-remote.service](examples/bazel-remote.service) for an
+example (systemd) linux setup.
+
 ### Command line flags
 
 ```
@@ -141,11 +151,14 @@ OPTIONS:
    --dir value Directory path where to store the cache contents. This flag is
       required. [$BAZEL_REMOTE_DIR]
 
-   --max_size value The maximum size of the remote cache in GiB. This flag is
-      required. (default: -1) [$BAZEL_REMOTE_MAX_SIZE]
+   --max_size value The maximum size of bazel-remote's disk cache in GiB.
+      This flag is required. (default: -1) [$BAZEL_REMOTE_MAX_SIZE]
 
    --storage_mode value Which format to store CAS blobs in. Must be one of
       "zstd" or "uncompressed". (default: "zstd") [$BAZEL_REMOTE_STORAGE_MODE]
+
+   --zstd_implementation value ZSTD implementation to use. Must be one of
+      "go" or "cgo". (default: "go") [$BAZEL_REMOTE_ZSTD_IMPLEMENTATION]
 
    --http_address value Address specification for the HTTP server listener,
       formatted either as [host]:port for TCP or unix://path.sock for Unix
@@ -221,9 +234,9 @@ OPTIONS:
       preexisting blobs in the cache. (default: 9223372036854775807)
       [$BAZEL_REMOTE_MAX_BLOB_SIZE]
 
-   --max_proxy_blob_size value The maximum logical/uncompressed blob size that will
-      be downloaded from proxies. Note that this limit is not applied to
-      preexisting blobs in the cache. (default: 9223372036854775807)
+   --max_proxy_blob_size value The maximum logical/uncompressed blob size
+      that will be downloaded from proxies. Note that this limit is not applied
+      to preexisting blobs in the cache. (default: 9223372036854775807)
       [$BAZEL_REMOTE_MAX_PROXY_BLOB_SIZE]
 
    --num_uploaders value When using proxy backends, sets the number of
@@ -280,6 +293,9 @@ OPTIONS:
       backend. (default: false, ie enable TLS/SSL)
       [$BAZEL_REMOTE_S3_DISABLE_SSL]
 
+   --s3.update_timestamps Whether to update timestamps of object on cache
+      hit. (default: false) [$BAZEL_REMOTE_S3_UPDATE_TIMESTAMPS]
+
    --s3.iam_role_endpoint value Endpoint for using IAM security credentials.
       By default it will look for credentials in the standard locations for the
       AWS platform. Applies to s3 auth method(s): iam_role.
@@ -291,6 +307,46 @@ OPTIONS:
    --s3.key_version value DEPRECATED. Key version 2 now is the only supported
       value. This flag will be removed. (default: 2)
       [$BAZEL_REMOTE_S3_KEY_VERSION]
+
+   --azblob.tenant_id value The Azure blob storage tenant id to use when
+      using azblob proxy backend. [$BAZEL_REMOTE_AZBLOB_TENANT_ID,
+      $AZURE_TENANT_ID]
+
+   --azblob.storage_account value The Azure blob storage storage account to
+      use when using azblob proxy backend.
+      [$BAZEL_REMOTE_AZBLOB_STORAGE_ACCOUNT]
+
+   --azblob.container_name value The Azure blob storage container name to use
+      when using azblob proxy backend. [$BAZEL_REMOTE_AZBLOB_CONTAINER_NAME]
+
+   --azblob.prefix value The Azure blob storage object prefix to use when
+      using azblob proxy backend. [$BAZEL_REMOTE_AZBLOB_PREFIX]
+
+   --azblob.update_timestamps Whether to update timestamps of object on cache
+      hit. (default: false) [$BAZEL_REMOTE_AZBLOB_UPDATE_TIMESTAMPS]
+
+   --azblob.auth_method value The Azure blob storage authentication method.
+      This argument is required when an azblob proxy backend is used. Allowed
+      values: client_certificate, client_secret, environment_credential,
+      shared_key, default. [$BAZEL_REMOTE_AZBLOB_AUTH_METHOD]
+
+   --azblob.shared_key value The Azure blob storage account access key to use
+      when using azblob proxy backend. Applies to AzBlob auth method(s):
+      shared_key. [$BAZEL_REMOTE_AZBLOB_SHARED_KEY, $AZURE_STORAGE_ACCOUNT_KEY]
+
+   --azblob.client_id value The Azure blob storage client id to use when
+      using azblob proxy backend. Applies to AzBlob auth method(s):
+      client_secret, client_certificate. [$BAZEL_REMOTE_AZBLOB_CLIENT_ID,
+      $AZURE_CLIENT_ID]
+
+   --azblob.client_secret value The Azure blob storage client secret key to
+      use when using azblob proxy backend. Applies to AzBlob auth method(s):
+      client_secret. [$BAZEL_REMOTE_AZBLOB_SECRET_CLIENT_SECRET,
+      $AZURE_CLIENT_SECRET]
+
+   --azblob.cert_path value Path to the certificates file. Applies to AzBlob
+      auth method(s): client_certificate. [$BAZEL_REMOTE_AZBLOB_CERT_PATH,
+      $AZURE_CLIENT_CERTIFICATE_PATH]
 
    --disable_http_ac_validation Whether to disable ActionResult validation
       for HTTP requests. (default: false, ie enable validation)
@@ -316,6 +372,10 @@ OPTIONS:
       must be one of "none" or "all". (default: all, ie enable full access
       logging) [$BAZEL_REMOTE_ACCESS_LOG_LEVEL]
 
+   --log_timezone value The timezone to use for log timestamps. If supplied,
+      must be one of "UTC", "local" or "none" for no timestamps. (default: UTC,
+      ie use UTC timezone) [$BAZEL_REMOTE_LOG_TIMEZONE]
+
    --help, -h  show help (default: false)
 ```
 
@@ -334,11 +394,11 @@ max_size: 100
 # be either a hostname or IP address. For Unix domain socket listeners,
 # use unix:///path/to/socket.sock, where /path/to/socket.sock can be
 # either an absolute or relative path to a socket path.
-http_address: localhost:8080
+http_address: 0.0.0.0:8080
 
 # The server listener address for gRPC (unix sockets are also supported
 # as described above):
-#grpc_address: localhost:9092
+#grpc_address: 0.0.0.0:9092
 
 # If profile_address (or the deprecated profile_port and/or profile_host)
 # is specified, then serve /debug/pprof/* URLs here (unix sockets are also
@@ -422,7 +482,33 @@ http_address: localhost:8080
 #
 #http_proxy:
 #  url: https://remote-cache.com:8080/cache
-
+#
+#azblob_proxy:
+#  tenant_id: TENANT_ID
+#  storage_account: STORAGE_ACCOUNT
+#  container_name: CONTAINER_NAME
+#
+# Provide exactly one auth_method (client_certificate, client_secret, environment_credential,
+#￼shared_key, default) and accompanying configuration.
+#
+# Storage account shared key.
+#  auth_method: shared_key
+#  shared_key: APP_SHARED_KEY
+#
+# Client secret credentials.
+#  auth_method: client_secret
+#  client_id: APP_ID
+#  client_secret: APP_SECRET
+#
+# Client certificate credentials.
+#  auth_method: client_certificate
+#  cert_path: path/to/cert_file
+#
+# Default and environment methods don't have any additional parameters.
+#  auth_method: environment_credential
+#
+#  auth_method: default
+  
 # If set to a valid port number, then serve /debug/pprof/* URLs here:
 #profile_port: 7070
 # IP address to use, if profiling is enabled:
@@ -433,6 +519,9 @@ http_address: localhost:8080
 
 # If supplied, controls the verbosity of the access logger ("none" or "all"):
 #access_log_level: none
+
+# If supplied, controls the timezone of the access logger ("UTC", "local" or "none"):
+#log_timezone: local
 ```
 
 ## Docker
@@ -565,6 +654,10 @@ $ docker run -u 1000:1000 -v /path/to/cache/dir:/data -v $HOME/.aws:/aws-config 
    --s3.bucket=my-bucket --s3.endpoint=s3.us-east-1.amazonaws.com \
    --max_size=5
 ```
+
+Note that if you use the `--s3.auth_method=iam_role` flag with docker, then in
+order to make the S3 host instance metadata service (located at 169.254.169.254)
+reachable, then you may need to use the docker flag `--network=host`.
 
 ### Profiling
 

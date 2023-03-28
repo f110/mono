@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "config",
     srcs = [
+        "azblob.go",
         "config.go",
         "logger.go",
         "proxy.go",
@@ -12,12 +13,15 @@ go_library(
     importpath = "github.com/buchgr/bazel-remote/config",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/bazel-remote/cache",
-        "//third_party/bazel-remote/cache/gcsproxy",
-        "//third_party/bazel-remote/cache/httpproxy",
-        "//third_party/bazel-remote/cache/s3proxy",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore",
+        "//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azidentity",
         "//third_party/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/credentials",
         "//third_party/bazel-remote/vendor/github.com/urfave/cli/v2:cli",
-        "//third_party/bazel-remote/vendor/gopkg.in/yaml.v2:yaml_v2",
+        "//third_party/bazel-remote/vendor/gopkg.in/yaml.v3:yaml_v3",
+        "@com_github_buchgr_bazel_remote_v2//cache:go_default_library",
+        "@com_github_buchgr_bazel_remote_v2//cache/azblobproxy:go_default_library",
+        "@com_github_buchgr_bazel_remote_v2//cache/gcsproxy:go_default_library",
+        "@com_github_buchgr_bazel_remote_v2//cache/httpproxy:go_default_library",
+        "@com_github_buchgr_bazel_remote_v2//cache/s3proxy:go_default_library",
     ],
 )

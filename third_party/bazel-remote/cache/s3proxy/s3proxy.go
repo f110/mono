@@ -8,30 +8,26 @@ import (
 	"log"
 	"path"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/cache/disk/casblob"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/cache/disk/casblob"
+	"github.com/buchgr/bazel-remote/v2/utils/backendproxy"
+
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type uploadReq struct {
-	hash string
-	size int64
-	kind cache.EntryKind
-	rc   io.ReadCloser
-}
-
 type s3Cache struct {
-	mcore        *minio.Core
-	prefix       string
-	bucket       string
-	uploadQueue  chan<- uploadReq
-	accessLogger cache.Logger
-	errorLogger  cache.Logger
-	v2mode       bool
-	objectKey    func(hash string, kind cache.EntryKind) string
+	mcore            *minio.Core
+	prefix           string
+	bucket           string
+	uploadQueue      chan<- backendproxy.UploadReq
+	accessLogger     cache.Logger
+	errorLogger      cache.Logger
+	v2mode           bool
+	updateTimestamps bool
+	objectKey        func(hash string, kind cache.EntryKind) string
 }
 
 var (
@@ -56,6 +52,7 @@ func New(
 	Prefix string,
 	Credentials *credentials.Credentials,
 	DisableSSL bool,
+	UpdateTimestamps bool,
 	Region string,
 
 	storageMode string, accessLogger cache.Logger,
@@ -88,12 +85,13 @@ func New(
 	}
 
 	c := &s3Cache{
-		mcore:        minioCore,
-		prefix:       Prefix,
-		bucket:       Bucket,
-		accessLogger: accessLogger,
-		errorLogger:  errorLogger,
-		v2mode:       storageMode == "zstd",
+		mcore:            minioCore,
+		prefix:           Prefix,
+		bucket:           Bucket,
+		accessLogger:     accessLogger,
+		errorLogger:      errorLogger,
+		v2mode:           storageMode == "zstd",
+		updateTimestamps: UpdateTimestamps,
 	}
 
 	if c.v2mode {
@@ -106,18 +104,7 @@ func New(
 		}
 	}
 
-	if maxQueuedUploads > 0 && numUploaders > 0 {
-		uploadQueue := make(chan uploadReq, maxQueuedUploads)
-		for uploader := 0; uploader < numUploaders; uploader++ {
-			go func() {
-				for item := range uploadQueue {
-					c.uploadFile(item)
-				}
-			}()
-		}
-
-		c.uploadQueue = uploadQueue
-	}
+	c.uploadQueue = backendproxy.StartUploaders(c, numUploaders, maxQueuedUploads)
 
 	return c
 }
@@ -156,13 +143,13 @@ func logResponse(log cache.Logger, method, bucket, key string, err error) {
 	log.Printf("S3 %s %s %s %s", method, bucket, key, status)
 }
 
-func (c *s3Cache) uploadFile(item uploadReq) {
+func (c *s3Cache) UploadFile(item backendproxy.UploadReq) {
 	_, err := c.mcore.PutObject(
 		context.Background(),
 		c.bucket,                          // bucketName
-		c.objectKey(item.hash, item.kind), // objectName
-		item.rc,                           // reader
-		item.size,                         // objectSize
+		c.objectKey(item.Hash, item.Kind), // objectName
+		item.Rc,                           // reader
+		item.SizeOnDisk,                   // objectSize
 		"",                                // md5base64
 		"",                                // sha256
 		minio.PutObjectOptions{
@@ -172,28 +159,46 @@ func (c *s3Cache) uploadFile(item uploadReq) {
 		}, // metadata
 	)
 
-	logResponse(c.accessLogger, "UPLOAD", c.bucket, c.objectKey(item.hash, item.kind), err)
+	logResponse(c.accessLogger, "UPLOAD", c.bucket, c.objectKey(item.Hash, item.Kind), err)
 
-	item.rc.Close()
+	item.Rc.Close()
 }
 
-func (c *s3Cache) Put(ctx context.Context, kind cache.EntryKind, hash string, size int64, rc io.ReadCloser) {
+func (c *s3Cache) Put(ctx context.Context, kind cache.EntryKind, hash string, logicalSize int64, sizeOnDisk int64, rc io.ReadCloser) {
 	if c.uploadQueue == nil {
 		rc.Close()
 		return
 	}
 
 	select {
-	case c.uploadQueue <- uploadReq{
-		hash: hash,
-		size: size,
-		kind: kind,
-		rc:   rc,
+	case c.uploadQueue <- backendproxy.UploadReq{
+		Hash:        hash,
+		LogicalSize: logicalSize,
+		SizeOnDisk:  sizeOnDisk,
+		Kind:        kind,
+		Rc:          rc,
 	}:
 	default:
 		c.errorLogger.Printf("too many uploads queued\n")
 		rc.Close()
 	}
+}
+
+func (c *s3Cache) UpdateModificationTimestamp(ctx context.Context, bucket string, object string) {
+	src := minio.CopySrcOptions{
+		Bucket: bucket,
+		Object: object,
+	}
+
+	dst := minio.CopyDestOptions{
+		Bucket:          bucket,
+		Object:          object,
+		ReplaceMetadata: true,
+	}
+
+	_, err := c.mcore.ComposeObject(context.Background(), dst, src)
+
+	logResponse(c.accessLogger, "COMPOSE", bucket, object, err)
 }
 
 func (c *s3Cache) Get(ctx context.Context, kind cache.EntryKind, hash string) (io.ReadCloser, int64, error) {
@@ -215,6 +220,10 @@ func (c *s3Cache) Get(ctx context.Context, kind cache.EntryKind, hash string) (i
 		return nil, -1, err
 	}
 	cacheHits.Inc()
+
+	if c.updateTimestamps {
+		c.UpdateModificationTimestamp(ctx, c.bucket, c.objectKey(hash, kind))
+	}
 
 	logResponse(c.accessLogger, "DOWNLOAD", c.bucket, c.objectKey(hash, kind), nil)
 

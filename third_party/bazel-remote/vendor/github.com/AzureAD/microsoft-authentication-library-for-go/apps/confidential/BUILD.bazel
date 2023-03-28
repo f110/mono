@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "confidential",
+    srcs = ["confidential.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential",
+    importpath = "github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/cache",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/base",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/accesstokens",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/authority",
+        "//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/shared",
+    ],
+)

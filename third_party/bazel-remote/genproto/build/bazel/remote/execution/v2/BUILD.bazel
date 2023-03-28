@@ -6,7 +6,6 @@ go_library(
     importpath = "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2",
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/bazel-remote/genproto/build/bazel/semver",
         "//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto",
         "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/any",
         "//third_party/bazel-remote/vendor/github.com/golang/protobuf/ptypes/duration",
@@ -20,5 +19,6 @@ go_library(
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/status",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//third_party/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "@com_github_buchgr_bazel_remote_v2//genproto/build/bazel/semver:go_default_library",
     ],
 )

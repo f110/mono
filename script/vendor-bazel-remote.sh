@@ -6,7 +6,7 @@ source "script/lib/vendor.sh"
 OWNER="buchgr"
 REPO="bazel-remote"
 IMPORTPATH="github.com/buchgr/bazel-remote"
-COMMIT="f774f6dc82c22540511241a3db58462898edc2be"
+COMMIT="c5bf6e13938aa89923c637b5a4f01c2203a3c9f8" # v2.4.1
 
 if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then
     echo "Please execute via bazel"

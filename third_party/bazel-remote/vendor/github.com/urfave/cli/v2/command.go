@@ -38,7 +38,8 @@ type Command struct {
 	// List of child commands
 	Subcommands []*Command
 	// List of flags to parse
-	Flags []Flag
+	Flags          []Flag
+	flagCategories FlagCategories
 	// Treat all flags as normal arguments if true
 	SkipFlagParsing bool
 	// Boolean to hide built-in help command and help flag
@@ -105,39 +106,48 @@ func (c *Command) Run(ctx *Context) (err error) {
 
 	set, err := c.parseFlags(ctx.Args(), ctx.shellComplete)
 
-	context := NewContext(ctx.App, set, ctx)
-	context.Command = c
-	if checkCommandCompletions(context, c.Name) {
+	cCtx := NewContext(ctx.App, set, ctx)
+	cCtx.Command = c
+	if checkCommandCompletions(cCtx, c.Name) {
 		return nil
 	}
 
 	if err != nil {
 		if c.OnUsageError != nil {
-			err = c.OnUsageError(context, err, false)
-			context.App.handleExitCoder(context, err)
+			err = c.OnUsageError(cCtx, err, false)
+			cCtx.App.handleExitCoder(cCtx, err)
 			return err
 		}
-		_, _ = fmt.Fprintln(context.App.Writer, "Incorrect Usage:", err.Error())
-		_, _ = fmt.Fprintln(context.App.Writer)
-		_ = ShowCommandHelp(context, c.Name)
+		_, _ = fmt.Fprintln(cCtx.App.Writer, "Incorrect Usage:", err.Error())
+		_, _ = fmt.Fprintln(cCtx.App.Writer)
+		if ctx.App.Suggest {
+			if suggestion, err := ctx.App.suggestFlagFromError(err, c.Name); err == nil {
+				fmt.Fprintf(cCtx.App.Writer, suggestion)
+			}
+		}
+		if !c.HideHelp {
+			_ = ShowCommandHelp(cCtx, c.Name)
+		}
 		return err
 	}
 
-	if checkCommandHelp(context, c.Name) {
+	if checkCommandHelp(cCtx, c.Name) {
 		return nil
 	}
 
-	cerr := checkRequiredFlags(c.Flags, context)
+	cerr := cCtx.checkRequiredFlags(c.Flags)
 	if cerr != nil {
-		_ = ShowCommandHelp(context, c.Name)
+		if !c.HideHelp {
+			_ = ShowCommandHelp(cCtx, c.Name)
+		}
 		return cerr
 	}
 
 	if c.After != nil {
 		defer func() {
-			afterErr := c.After(context)
+			afterErr := c.After(cCtx)
 			if afterErr != nil {
-				context.App.handleExitCoder(context, err)
+				cCtx.App.handleExitCoder(cCtx, err)
 				if err != nil {
 					err = newMultiError(err, afterErr)
 				} else {
@@ -148,22 +158,26 @@ func (c *Command) Run(ctx *Context) (err error) {
 	}
 
 	if c.Before != nil {
-		err = c.Before(context)
+		err = c.Before(cCtx)
 		if err != nil {
-			context.App.handleExitCoder(context, err)
+			cCtx.App.handleExitCoder(cCtx, err)
 			return err
 		}
 	}
 
-	if c.Action == nil {
-		c.Action = helpSubcommand.Action
+	if err = runFlagActions(cCtx, c.Flags); err != nil {
+		return err
 	}
 
-	context.Command = c
-	err = c.Action(context)
+	if c.Action == nil {
+		c.Action = helpCommand.Action
+	}
+
+	cCtx.Command = c
+	err = c.Action(cCtx)
 
 	if err != nil {
-		context.App.handleExitCoder(context, err)
+		cCtx.App.handleExitCoder(cCtx, err)
 	}
 	return err
 }
@@ -227,6 +241,7 @@ func (c *Command) startApp(ctx *Context) error {
 	}
 
 	app.Usage = c.Usage
+	app.UsageText = c.UsageText
 	app.Description = c.Description
 	app.ArgsUsage = c.ArgsUsage
 
@@ -243,10 +258,12 @@ func (c *Command) startApp(ctx *Context) error {
 	app.Version = ctx.App.Version
 	app.HideVersion = true
 	app.Compiled = ctx.App.Compiled
+	app.Reader = ctx.App.Reader
 	app.Writer = ctx.App.Writer
 	app.ErrWriter = ctx.App.ErrWriter
 	app.ExitErrHandler = ctx.App.ExitErrHandler
 	app.UseShortOptionHandling = ctx.App.UseShortOptionHandling
+	app.Suggest = ctx.App.Suggest
 
 	app.categories = newCommandCategories()
 	for _, command := range c.Subcommands {
@@ -267,7 +284,7 @@ func (c *Command) startApp(ctx *Context) error {
 	if c.Action != nil {
 		app.Action = c.Action
 	} else {
-		app.Action = helpSubcommand.Action
+		app.Action = helpCommand.Action
 	}
 	app.OnUsageError = c.OnUsageError
 
@@ -276,6 +293,19 @@ func (c *Command) startApp(ctx *Context) error {
 	}
 
 	return app.RunAsSubcommand(ctx)
+}
+
+// VisibleFlagCategories returns a slice containing all the visible flag categories with the flags they contain
+func (c *Command) VisibleFlagCategories() []VisibleFlagCategory {
+	if c.flagCategories == nil {
+		c.flagCategories = newFlagCategories()
+		for _, fl := range c.Flags {
+			if cf, ok := fl.(CategorizableFlag); ok {
+				c.flagCategories.AddFlag(cf.GetCategory(), cf)
+			}
+		}
+	}
+	return c.flagCategories.VisibleCategories()
 }
 
 // VisibleFlags returns a slice of the Flags with Hidden=false

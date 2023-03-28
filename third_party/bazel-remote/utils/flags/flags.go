@@ -6,12 +6,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/buchgr/bazel-remote/cache/s3proxy"
+	"github.com/buchgr/bazel-remote/v2/cache/azblobproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/s3proxy"
+
 	"github.com/urfave/cli/v2"
 )
 
 func s3AuthMsg(authMethods ...string) string {
 	return fmt.Sprintf("Applies to s3 auth method(s): %s.", strings.Join(authMethods, ", "))
+}
+
+func azBlobAuthMsg(authMethods ...string) string {
+	return fmt.Sprintf("Applies to AzBlob auth method(s): %s.", strings.Join(authMethods, ", "))
 }
 
 // GetCliFlags returns a slice of cli.Flag's that bazel-remote accepts.
@@ -33,7 +39,7 @@ func GetCliFlags() []cli.Flag {
 		&cli.Int64Flag{
 			Name:    "max_size",
 			Value:   -1,
-			Usage:   "The maximum size of the remote cache in GiB. This flag is required.",
+			Usage:   "The maximum size of bazel-remote's disk cache in GiB. This flag is required.",
 			EnvVars: []string{"BAZEL_REMOTE_MAX_SIZE"},
 		},
 		&cli.StringFlag{
@@ -41,6 +47,12 @@ func GetCliFlags() []cli.Flag {
 			Value:   "zstd",
 			Usage:   "Which format to store CAS blobs in. Must be one of \"zstd\" or \"uncompressed\".",
 			EnvVars: []string{"BAZEL_REMOTE_STORAGE_MODE"},
+		},
+		&cli.StringFlag{
+			Name:    "zstd_implementation",
+			Value:   "go",
+			Usage:   "ZSTD implementation to use. Must be one of \"go\" or \"cgo\".",
+			EnvVars: []string{"BAZEL_REMOTE_ZSTD_IMPLEMENTATION"},
 		},
 		&cli.StringFlag{
 			Name:    "http_address",
@@ -249,6 +261,12 @@ func GetCliFlags() []cli.Flag {
 			DefaultText: "false, ie enable TLS/SSL",
 			EnvVars:     []string{"BAZEL_REMOTE_S3_DISABLE_SSL"},
 		},
+		&cli.BoolFlag{
+			Name:        "s3.update_timestamps",
+			Usage:       "Whether to update timestamps of object on cache hit.",
+			DefaultText: "false",
+			EnvVars:     []string{"BAZEL_REMOTE_S3_UPDATE_TIMESTAMPS"},
+		},
 		&cli.StringFlag{
 			Name:    "s3.iam_role_endpoint",
 			Value:   "",
@@ -267,6 +285,66 @@ func GetCliFlags() []cli.Flag {
 			Value:       2,
 			DefaultText: "2",
 			EnvVars:     []string{"BAZEL_REMOTE_S3_KEY_VERSION"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.tenant_id",
+			Value:   "",
+			Usage:   "The Azure blob storage tenant id to use when using azblob proxy backend.",
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_TENANT_ID", "AZURE_TENANT_ID"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.storage_account",
+			Value:   "",
+			Usage:   "The Azure blob storage storage account to use when using azblob proxy backend.",
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_STORAGE_ACCOUNT"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.container_name",
+			Value:   "",
+			Usage:   "The Azure blob storage container name to use when using azblob proxy backend.",
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_CONTAINER_NAME"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.prefix",
+			Value:   "",
+			Usage:   "The Azure blob storage object prefix to use when using azblob proxy backend.",
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_PREFIX"},
+		},
+		&cli.BoolFlag{
+			Name:        "azblob.update_timestamps",
+			Usage:       "Whether to update timestamps of object on cache hit.",
+			DefaultText: "false",
+			EnvVars:     []string{"BAZEL_REMOTE_AZBLOB_UPDATE_TIMESTAMPS"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.auth_method",
+			Value:   "",
+			Usage:   fmt.Sprintf("The Azure blob storage authentication method. This argument is required when an azblob proxy backend is used. Allowed values: %s.", strings.Join(azblobproxy.GetAuthMethods(), ", ")),
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_AUTH_METHOD"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.shared_key",
+			Value:   "",
+			Usage:   "The Azure blob storage account access key to use when using azblob proxy backend. " + azBlobAuthMsg(azblobproxy.AuthMethodSharedKey),
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_SHARED_KEY", "AZURE_STORAGE_ACCOUNT_KEY"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.client_id",
+			Value:   "",
+			Usage:   "The Azure blob storage client id to use when using azblob proxy backend. " + azBlobAuthMsg(azblobproxy.AuthMethodClientSecret, azblobproxy.AuthMethodClientCertificate),
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_CLIENT_ID", "AZURE_CLIENT_ID"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.client_secret",
+			Value:   "",
+			Usage:   "The Azure blob storage client secret key to use when using azblob proxy backend. " + azBlobAuthMsg(azblobproxy.AuthMethodClientSecret),
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_SECRET_CLIENT_SECRET", "AZURE_CLIENT_SECRET"},
+		},
+		&cli.StringFlag{
+			Name:    "azblob.cert_path",
+			Value:   "",
+			Usage:   "Path to the certificates file. " + azBlobAuthMsg(azblobproxy.AuthMethodClientCertificate),
+			EnvVars: []string{"BAZEL_REMOTE_AZBLOB_CERT_PATH", "AZURE_CLIENT_CERTIFICATE_PATH"},
 		},
 		&cli.BoolFlag{
 			Name:        "disable_http_ac_validation",
@@ -304,6 +382,13 @@ func GetCliFlags() []cli.Flag {
 			Value:       "all",
 			DefaultText: "all, ie enable full access logging",
 			EnvVars:     []string{"BAZEL_REMOTE_ACCESS_LOG_LEVEL"},
+		},
+		&cli.StringFlag{
+			Name:        "log_timezone",
+			Usage:       "The timezone to use for log timestamps. If supplied, must be one of \"UTC\", \"local\" or \"none\" for no timestamps.",
+			Value:       "UTC",
+			DefaultText: "UTC, ie use UTC timezone",
+			EnvVars:     []string{"BAZEL_REMOTE_LOG_TIMEZONE"},
 		},
 	}
 }

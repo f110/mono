@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["zc_shared.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/internal",
+    importpath = "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/internal",
+    visibility = ["//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob:__subpackages__"],
+)

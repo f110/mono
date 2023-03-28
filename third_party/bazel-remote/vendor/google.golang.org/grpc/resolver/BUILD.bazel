@@ -12,6 +12,7 @@ go_library(
     deps = [
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/attributes",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/credentials",
+        "//third_party/bazel-remote/vendor/google.golang.org/grpc/internal/pretty",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/serviceconfig",
     ],
 )

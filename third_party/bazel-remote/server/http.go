@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"regexp"
@@ -15,11 +14,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/cache/disk"
-	"github.com/buchgr/bazel-remote/utils/validate"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/cache/disk"
+	"github.com/buchgr/bazel-remote/v2/utils/validate"
 
-	pb "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2"
+	pb "github.com/buchgr/bazel-remote/v2/genproto/build/bazel/remote/execution/v2"
 
 	"github.com/klauspost/compress/zstd"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -36,6 +35,7 @@ var decoder, _ = zstd.NewReader(nil) // TODO: raise WithDecoderConcurrency ?
 type HTTPCache interface {
 	CacheHandler(w http.ResponseWriter, r *http.Request)
 	StatusPageHandler(w http.ResponseWriter, r *http.Request)
+	VerifyClientCertHandler(wrapMe http.Handler) http.Handler
 }
 
 type httpCache struct {
@@ -45,6 +45,7 @@ type httpCache struct {
 	validateAC               bool
 	mangleACKeys             bool
 	gitCommit                string
+	checkClientCertForReads  bool
 	checkClientCertForWrites bool
 }
 
@@ -63,7 +64,7 @@ type statusPageData struct {
 // accessLogger will print one line for each HTTP request to stdout.
 // errorLogger will print unexpected server errors. Inexistent files and malformed URLs will not
 // be reported.
-func NewHTTPCache(cache disk.Cache, accessLogger cache.Logger, errorLogger cache.Logger, validateAC bool, mangleACKeys bool, checkClientCertForWrites bool, commit string) HTTPCache {
+func NewHTTPCache(cache disk.Cache, accessLogger cache.Logger, errorLogger cache.Logger, validateAC bool, mangleACKeys bool, checkClientCertForReads bool, checkClientCertForWrites bool, commit string) HTTPCache {
 
 	_, _, numItems, _ := cache.Stats()
 
@@ -75,6 +76,7 @@ func NewHTTPCache(cache disk.Cache, accessLogger cache.Logger, errorLogger cache
 		errorLogger:              errorLogger,
 		validateAC:               validateAC,
 		mangleACKeys:             mangleACKeys,
+		checkClientCertForReads:  checkClientCertForReads,
 		checkClientCertForWrites: checkClientCertForWrites,
 	}
 
@@ -216,6 +218,11 @@ func (h *httpCache) CacheHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch m := r.Method; m {
 	case http.MethodGet:
+		if h.checkClientCertForReads && !h.hasValidClientCert(w, r) {
+			http.Error(w, "Authentication required for access", http.StatusUnauthorized)
+			h.logResponse(http.StatusUnauthorized, r)
+			return
+		}
 
 		if h.validateAC && kind == cache.AC {
 			h.handleGetValidAC(w, r, hash)
@@ -325,7 +332,7 @@ func (h *httpCache) CacheHandler(w http.ResponseWriter, r *http.Request) {
 		if h.validateAC && kind == cache.AC {
 			// verify that this is a valid ActionResult
 
-			data, err := ioutil.ReadAll(rdr)
+			data, err := io.ReadAll(rdr)
 			if err != nil {
 				msg := "failed to read request body"
 				http.Error(w, msg, http.StatusInternalServerError)
@@ -418,6 +425,11 @@ func (h *httpCache) CacheHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case http.MethodHead:
+		if h.checkClientCertForReads && !h.hasValidClientCert(w, r) {
+			http.Error(w, "Authentication required for access", http.StatusUnauthorized)
+			h.logResponse(http.StatusUnauthorized, r)
+			return
+		}
 
 		if h.validateAC && kind == cache.AC {
 			h.handleContainsValidAC(w, r, hash)
@@ -530,4 +542,17 @@ func (h *httpCache) hasValidClientCert(w http.ResponseWriter, r *http.Request) b
 	}
 
 	return true
+}
+
+// VerifyClientCertHandler returns a http.Handler which wraps another Handler,
+// but only calls the inner Handler if the request has a valid client cert.
+// This is only used when mutual TLS authentication is enabled.
+func (h *httpCache) VerifyClientCertHandler(wrapMe http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !h.hasValidClientCert(w, r) {
+			return
+		}
+
+		wrapMe.ServeHTTP(w, r)
+	})
 }

@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/buchgr/bazel-remote/cache/gcsproxy"
-	"github.com/buchgr/bazel-remote/cache/httpproxy"
-	"github.com/buchgr/bazel-remote/cache/s3proxy"
+	"github.com/buchgr/bazel-remote/v2/cache/azblobproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/gcsproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/httpproxy"
+	"github.com/buchgr/bazel-remote/v2/cache/s3proxy"
 )
 
 func (c *Config) setProxy() error {
@@ -51,8 +52,27 @@ func (c *Config) setProxy() error {
 			c.S3CloudStorage.Prefix,
 			creds,
 			c.S3CloudStorage.DisableSSL,
+			c.S3CloudStorage.UpdateTimestamps,
 			c.S3CloudStorage.Region,
 			c.StorageMode, c.AccessLogger, c.ErrorLogger, c.NumUploaders, c.MaxQueuedUploads)
+		return nil
+	}
+
+	if c.AzBlobConfig != nil {
+		creds, err := c.AzBlobConfig.GetCredentials()
+		if err != nil {
+			return err
+		}
+
+		c.ProxyBackend = azblobproxy.New(
+			c.AzBlobConfig.StorageAccount,
+			c.AzBlobConfig.ContainerName,
+			c.AzBlobConfig.Prefix,
+			creds,
+			c.AzBlobConfig.SharedKey,
+			c.AzBlobConfig.UpdateTimestamps,
+			c.StorageMode, c.AccessLogger, c.ErrorLogger, c.NumUploaders, c.MaxQueuedUploads,
+		)
 		return nil
 	}
 

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grant",
+    srcs = ["grant.go"],
+    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/internal/grant",
+    importpath = "github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/oauth/ops/internal/grant",
+    visibility = ["//third_party/bazel-remote/vendor/github.com/AzureAD/microsoft-authentication-library-for-go/apps:__subpackages__"],
+)

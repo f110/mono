@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/buchgr/bazel-remote/cache/s3proxy"
+	"github.com/buchgr/bazel-remote/v2/cache/s3proxy"
+
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
@@ -17,6 +18,7 @@ type S3CloudStorageConfig struct {
 	AccessKeyID              string `yaml:"access_key_id"`
 	SecretAccessKey          string `yaml:"secret_access_key"`
 	DisableSSL               bool   `yaml:"disable_ssl"`
+	UpdateTimestamps         bool   `yaml:"update_timestamps"`
 	IAMRoleEndpoint          string `yaml:"iam_role_endpoint"`
 	Region                   string `yaml:"region"`
 	KeyVersion               *int   `yaml:"key_version"`

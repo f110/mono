@@ -1,23 +1,30 @@
 package config
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 )
 
-const (
-	logFlags = log.Ldate | log.Ltime | log.LUTC
-)
-
 func (c *Config) setLogger() error {
+
+	var logFlags int
+	switch c.LogTimezone {
+	case "UTC":
+		logFlags = log.Ldate | log.Ltime | log.LUTC
+	case "local":
+		logFlags = log.Ldate | log.Ltime
+	case "none":
+		logFlags = 0
+	}
+
 	log.SetFlags(logFlags)
 
 	c.AccessLogger = log.New(os.Stdout, "", logFlags)
 	c.ErrorLogger = log.New(os.Stderr, "", logFlags)
 
 	if c.AccessLogLevel == "none" {
-		c.AccessLogger.SetOutput(ioutil.Discard)
+		c.AccessLogger.SetOutput(io.Discard)
 	}
 
 	return nil

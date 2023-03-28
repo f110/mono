@@ -16,13 +16,13 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	asset "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/asset/v1"
-	pb "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2"
-	"github.com/buchgr/bazel-remote/genproto/build/bazel/semver"
+	asset "github.com/buchgr/bazel-remote/v2/genproto/build/bazel/remote/asset/v1"
+	pb "github.com/buchgr/bazel-remote/v2/genproto/build/bazel/remote/execution/v2"
+	"github.com/buchgr/bazel-remote/v2/genproto/build/bazel/semver"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/cache/disk"
-	"github.com/buchgr/bazel-remote/utils/validate"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/cache/disk"
+	"github.com/buchgr/bazel-remote/v2/utils/validate"
 
 	_ "github.com/mostynb/go-grpc-compression/snappy" // Register snappy
 	_ "github.com/mostynb/go-grpc-compression/zstd"   // and zstd support.
@@ -56,7 +56,8 @@ var readOnlyMethods = map[string]struct{}{
 // address. This function either returns an error quickly, or triggers a
 // blocking call to https://godoc.org/google.golang.org/grpc#Server.Serve
 func ListenAndServeGRPC(
-	network string, addr string, opts []grpc.ServerOption,
+	srv *grpc.Server,
+	network string, addr string,
 	validateACDeps bool,
 	mangleACKeys bool,
 	enableRemoteAssetAPI bool,
@@ -67,16 +68,15 @@ func ListenAndServeGRPC(
 		return err
 	}
 
-	return serveGRPC(listener, opts, validateACDeps, mangleACKeys, enableRemoteAssetAPI, c, a, e)
+	return serveGRPC(listener, srv, validateACDeps, mangleACKeys, enableRemoteAssetAPI, c, a, e)
 }
 
-func serveGRPC(l net.Listener, opts []grpc.ServerOption,
+func serveGRPC(l net.Listener, srv *grpc.Server,
 	validateACDepsCheck bool,
 	mangleACKeys bool,
 	enableRemoteAssetAPI bool,
 	c disk.Cache, a cache.Logger, e cache.Logger) error {
 
-	srv := grpc.NewServer(opts...)
 	s := &grpcServer{
 		cache: c, accessLogger: a, errorLogger: e,
 		depsCheck:    validateACDepsCheck,
@@ -124,7 +124,7 @@ func (s *grpcServer) GetCapabilities(ctx context.Context,
 			SupportedBatchUpdateCompressors: []pb.Compressor_Value{pb.Compressor_ZSTD},
 		},
 		LowApiVersion:  &semver.SemVer{Major: int32(2)},
-		HighApiVersion: &semver.SemVer{Major: int32(2), Minor: int32(1)},
+		HighApiVersion: &semver.SemVer{Major: int32(2), Minor: int32(3)},
 	}
 
 	s.accessLogger.Printf("GRPC GETCAPABILITIES")
@@ -211,10 +211,7 @@ func GRPCmTLSUnaryServerInterceptor(allowUnauthenticatedReads bool) grpc.UnarySe
 }
 
 // Return a non-nil grpc error if a valid client certificate can't be
-// extracted from ctx.
-//
-// This is only used when mutual TLS authentication and unauthenticated
-// reads are enabled.
+// extracted from ctx. This is only used with mTLS authentication.
 func checkGRPCClientCert(ctx context.Context) error {
 
 	p, ok := peer.FromContext(ctx)

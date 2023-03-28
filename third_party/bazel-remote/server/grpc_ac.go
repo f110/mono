@@ -7,14 +7,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"strings"
 
-	"github.com/buchgr/bazel-remote/cache"
-	"github.com/buchgr/bazel-remote/utils/validate"
+	"github.com/buchgr/bazel-remote/v2/cache"
+	"github.com/buchgr/bazel-remote/v2/utils/validate"
 
-	pb "github.com/buchgr/bazel-remote/genproto/build/bazel/remote/execution/v2"
+	pb "github.com/buchgr/bazel-remote/v2/genproto/build/bazel/remote/execution/v2"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -27,6 +26,13 @@ var (
 	// we modify incoming ActionResults to make them non-zero.
 	errEmptyActionResult = status.Error(codes.Internal,
 		"rejecting empty ActionResult")
+
+	errNilActionDigest = status.Error(codes.InvalidArgument,
+		"expected a non-nil ActionDigest")
+	errNilGetActionResultRequest = status.Error(codes.InvalidArgument,
+		"expected a non-nil GetActionResultRequest")
+	errNilUpdateActionResultRequest = status.Error(codes.InvalidArgument,
+		"expected a non-nil UpdateActionResultRequest")
 )
 
 const (
@@ -42,6 +48,14 @@ func (s *grpcServer) GetActionResult(ctx context.Context,
 	req *pb.GetActionResultRequest) (*pb.ActionResult, error) {
 
 	logPrefix := "GRPC AC GET"
+
+	if req == nil {
+		return nil, errNilGetActionResultRequest
+	}
+
+	if req.ActionDigest == nil {
+		return nil, errNilActionDigest
+	}
 
 	if s.mangleACKeys {
 		req.ActionDigest.Hash = cache.TransformActionCacheKey(req.ActionDigest.Hash, req.InstanceName, s.accessLogger)
@@ -71,7 +85,7 @@ func (s *grpcServer) GetActionResult(ctx context.Context,
 		}
 		defer rdr.Close()
 
-		acdata, err := ioutil.ReadAll(rdr)
+		acdata, err := io.ReadAll(rdr)
 		if err != nil {
 			s.accessLogger.Printf("%s %s %s", logPrefix, req.ActionDigest.Hash, err)
 			return nil, status.Error(codes.Unknown, err.Error())
@@ -205,6 +219,19 @@ func (s *grpcServer) UpdateActionResult(ctx context.Context,
 	req *pb.UpdateActionResultRequest) (*pb.ActionResult, error) {
 
 	logPrefix := "GRPC AC PUT"
+
+	if req == nil {
+		return nil, errNilUpdateActionResultRequest
+	}
+
+	if req.ActionDigest == nil {
+		return nil, errNilActionDigest
+	}
+
+	if s.mangleACKeys {
+		req.ActionDigest.Hash = cache.TransformActionCacheKey(req.ActionDigest.Hash, req.InstanceName, s.accessLogger)
+	}
+
 	err := s.validateHash(req.ActionDigest.Hash, req.ActionDigest.SizeBytes, logPrefix)
 	if err != nil {
 		return nil, err

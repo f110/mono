@@ -11,8 +11,5 @@ go_library(
     importmap = "github.com/buchgr/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/signer",
     importpath = "github.com/minio/minio-go/v7/pkg/signer",
     visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/s3utils",
-        "//third_party/bazel-remote/vendor/github.com/minio/sha256-simd",
-    ],
+    deps = ["//third_party/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/s3utils"],
 )
