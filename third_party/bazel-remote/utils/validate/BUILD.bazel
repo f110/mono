@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "validate",
-    srcs = ["action_result.go"],
-    importpath = "github.com/buchgr/bazel-remote/v2/utils/validate",
-    visibility = ["//visibility:public"],
-    deps = ["//third_party/bazel-remote/genproto/build/bazel/remote/execution/v2:execution"],
-)

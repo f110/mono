@@ -50,6 +50,11 @@ def repository_dependencies():
         version = versions["minio"],
     )
 
+    vault_binary(
+        name = "vault",
+        version = versions["vault"],
+    )
+
     http_file(
         name = "argocd_vault_plugin",
         sha256 = "957001f4bcd5db9aca468fbea9afa19d5088c06708fbcf97b07ba8e369447932",
@@ -63,9 +68,10 @@ def repository_dependencies():
         urls = ["https://golang.org/dl/go1.17.linux-amd64.tar.gz"],
     )
 
-    vault_binary(
-        name = "vault",
-        version = versions["vault"],
+    http_file(
+        name = "bazel_remote",
+        sha256 = "5e4b248262a56e389e9ee4212ffd0498746347fb5bf155785c9410ba2abc7b07",
+        urls = ["https://github.com/buchgr/bazel-remote/releases/download/v2.4.1/bazel-remote-2.4.1-linux-x86_64"],
     )
 
 def container_dependencies():

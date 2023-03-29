@@ -3,11 +3,10 @@ load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 
 pkg_tar(
     name = "bin",
-    srcs = [
-        "//third_party/bazel-remote",
-    ],
+    files = {
+        "@bazel_remote//file": "/usr/local/bin/bazel-remote",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 oci_image(
