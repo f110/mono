@@ -165,7 +165,6 @@ rules_pkg_dependencies()
 
 load("@io_bazel_rules_docker//repositories:repositories.bzl", container_repositories = "repositories")
 load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
-load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
 
 container_deps()
 
@@ -186,98 +185,6 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 
 rules_foreign_cc_dependencies()
 
-load("@rules_oci//oci:pull.bzl", "oci_pull")
-
-oci_pull(
-    name = "oci_com_google_distroless_base",
-    digest = "sha256:e8f299757c8f8f2ebbebc4fd1826720a0a7a45fce0a4f9e7d210c5cc09d624a3",
-    image = "gcr.io/distroless/base",
-)
-
-oci_pull(
-    name = "oci_com_google_distroless_base_debug",
-    digest = "sha256:c532b9983712e1d9fadec8449908a9ac329909f37a47d491f2ad06ee6040fa4c",
-    image = "gcr.io/distroless/base",
-)
-
-oci_pull(
-    name = "oci_com_google_distroless_base_arm64",
-    digest = "sha256:bf4d6dc160bab223a0d377df083ad6b4ebacf5db2a313d8d7f3f07c9da967093",
-    image = "gcr.io/distroless/base",
-)
-
-container_pull(
-    name = "com_google_distroless_base",
-    digest = "sha256:e8f299757c8f8f2ebbebc4fd1826720a0a7a45fce0a4f9e7d210c5cc09d624a3",
-    registry = "gcr.io",
-    repository = "distroless/base",
-)
-
-container_pull(
-    name = "com_google_distroless_base_debug",
-    digest = "sha256:c532b9983712e1d9fadec8449908a9ac329909f37a47d491f2ad06ee6040fa4c",
-    registry = "gcr.io",
-    repository = "distroless/base",
-)
-
-container_pull(
-    name = "com_google_distroless_base_arm64",
-    digest = "sha256:bf4d6dc160bab223a0d377df083ad6b4ebacf5db2a313d8d7f3f07c9da967093",
-    registry = "gcr.io",
-    repository = "distroless/base",
-)
-
-load("//build/rules/kustomize:def.bzl", "kustomize_binary")
-
-kustomize_binary(
-    name = "kustomize",
-    version = "v4.5.4",
-)
-
-load("//build/rules/kind:def.bzl", "kind_binary")
-
-kind_binary(
-    name = "kind",
-    version = "0.14.0",
-)
-
-load("//build/rules/etcd:def.bzl", "etcd_binary")
-
-etcd_binary(
-    name = "etcd",
-    version = "3.5.6",
-)
-
-load("//build/rules/minio:def.bzl", "minio_binary")
-
-minio_binary(
-    name = "minio",
-    version = "RELEASE.2022-12-02T19-19-22Z",
-)
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-
-http_file(
-    name = "argocd_vault_plugin",
-    sha256 = "957001f4bcd5db9aca468fbea9afa19d5088c06708fbcf97b07ba8e369447932",
-    urls = ["https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.13.1/argocd-vault-plugin_1.13.1_linux_amd64"],
-)
-
-golang_tarball_build_file = """
-filegroup(
-    name = "srcs",
-    srcs = glob(["go/src/**", "go/bin/**", "go/pkg/**"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-http_archive(
-    name = "golang_1.17",
-    build_file_content = golang_tarball_build_file,
-    sha256 = "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d",
-    urls = ["https://golang.org/dl/go1.17.linux-amd64.tar.gz"],
-)
-
 load("@rules_python//python:pip.bzl", "pip_install")
 
 pip_install(
@@ -289,9 +196,8 @@ load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 
 register_unittest_toolchains()
 
-load("//build/rules/vault:def.bzl", "vault_binary")
+load("//:dependencies.bzl", "container_dependencies", "repository_dependencies")
 
-vault_binary(
-    name = "vault",
-    version = "1.11.4",
-)
+repository_dependencies()
+
+container_dependencies()
