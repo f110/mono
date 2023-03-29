@@ -6,7 +6,7 @@ go_library(
         "base64.go",
         "bcrypt.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/crypto/bcrypt",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/crypto/bcrypt",
     importpath = "golang.org/x/crypto/bcrypt",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/golang.org/x/crypto/blowfish"],

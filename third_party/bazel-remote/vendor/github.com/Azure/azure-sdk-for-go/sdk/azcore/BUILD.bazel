@@ -8,7 +8,7 @@ go_library(
         "errors.go",
         "etag.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore",
     visibility = ["//visibility:public"],
     deps = [

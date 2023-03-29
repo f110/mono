@@ -12,7 +12,7 @@ go_library(
         "browser_unsupported.go",
         "browser_windows.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/pkg/browser",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/pkg/browser",
     importpath = "github.com/pkg/browser",
     visibility = ["//visibility:public"],
     deps = select({

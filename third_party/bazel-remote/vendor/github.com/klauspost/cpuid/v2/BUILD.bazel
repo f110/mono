@@ -16,7 +16,7 @@ go_library(
         "os_other_arm64.go",
         "os_unsafe_linux_arm64.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/klauspost/cpuid/v2",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/klauspost/cpuid/v2",
     importpath = "github.com/klauspost/cpuid/v2",
     visibility = ["//visibility:public"],
     deps = select({

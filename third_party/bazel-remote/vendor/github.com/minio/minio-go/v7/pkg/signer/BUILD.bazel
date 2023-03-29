@@ -8,7 +8,7 @@ go_library(
         "request-signature-v4.go",
         "utils.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/signer",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/minio/minio-go/v7/pkg/signer",
     importpath = "github.com/minio/minio-go/v7/pkg/signer",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/minio/minio-go/v7/pkg/s3utils"],

@@ -32,7 +32,7 @@ go_library(
         "vec.go",
         "wrap.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/prometheus/client_golang/prometheus",
     importpath = "github.com/prometheus/client_golang/prometheus",
     visibility = ["//visibility:public"],
     deps = [

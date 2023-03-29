@@ -17,7 +17,7 @@ go_library(
         "transform.go",
         "trie.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/text/unicode/norm",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/text/unicode/norm",
     importpath = "golang.org/x/text/unicode/norm",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/golang.org/x/text/transform"],

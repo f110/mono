@@ -6,7 +6,7 @@ go_library(
         "guts.go",
         "httplex.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/net/http/httpguts",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/net/http/httpguts",
     importpath = "golang.org/x/net/http/httpguts",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/golang.org/x/net/idna"],

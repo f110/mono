@@ -9,7 +9,7 @@ go_library(
         "encode_other.go",
         "snappy.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/klauspost/compress/internal/snapref",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/klauspost/compress/internal/snapref",
     importpath = "github.com/klauspost/compress/internal/snapref",
     visibility = ["//third_party/bazel-remote/vendor/github.com/klauspost/compress:__subpackages__"],
 )

@@ -3,9 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "grpcreadclient_lib",
     srcs = ["grpcreadclient.go"],
-    importpath = "github.com/buchgr/bazel-remote/utils/grpcreadclient",
+    importpath = "github.com/buchgr/bazel-remote/v2/utils/grpcreadclient",
     visibility = ["//visibility:private"],
     deps = [
+        "//third_party/bazel-remote/genproto/build/bazel/remote/execution/v2:execution",
         "//third_party/bazel-remote/vendor/github.com/google/uuid",
         "//third_party/bazel-remote/vendor/google.golang.org/genproto/googleapis/bytestream",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc",
@@ -14,7 +15,6 @@ go_library(
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/credentials/insecure",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/health/grpc_health_v1",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/status",
-        "@com_github_buchgr_bazel_remote_v2//genproto/build/bazel/remote/execution/v2:go_default_library",
     ],
 )
 

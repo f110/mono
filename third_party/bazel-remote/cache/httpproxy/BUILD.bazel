@@ -3,13 +3,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "httpproxy",
     srcs = ["httpproxy.go"],
-    importpath = "github.com/buchgr/bazel-remote/cache/httpproxy",
+    importpath = "github.com/buchgr/bazel-remote/v2/cache/httpproxy",
     visibility = ["//visibility:public"],
     deps = [
+        "//third_party/bazel-remote/cache",
+        "//third_party/bazel-remote/cache/disk/casblob",
+        "//third_party/bazel-remote/utils/backendproxy",
         "//third_party/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus",
         "//third_party/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus/promauto",
-        "@com_github_buchgr_bazel_remote_v2//cache:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//cache/disk/casblob:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//utils/backendproxy:go_default_library",
     ],
 )

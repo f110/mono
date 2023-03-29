@@ -14,7 +14,7 @@ go_library(
         "sha256block_arm64.s",
         "sha256block_other.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/minio/sha256-simd",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/minio/sha256-simd",
     importpath = "github.com/minio/sha256-simd",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/klauspost/cpuid/v2:cpuid"],

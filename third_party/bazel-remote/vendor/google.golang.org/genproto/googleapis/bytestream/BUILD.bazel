@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "bytestream",
     srcs = ["bytestream.pb.go"],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/genproto/googleapis/bytestream",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/genproto/googleapis/bytestream",
     importpath = "google.golang.org/genproto/googleapis/bytestream",
     visibility = ["//visibility:public"],
     deps = [

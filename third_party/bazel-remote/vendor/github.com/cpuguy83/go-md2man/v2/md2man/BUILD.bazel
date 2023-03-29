@@ -6,7 +6,7 @@ go_library(
         "md2man.go",
         "roff.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/cpuguy83/go-md2man/v2/md2man",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/cpuguy83/go-md2man/v2/md2man",
     importpath = "github.com/cpuguy83/go-md2man/v2/md2man",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/russross/blackfriday/v2:blackfriday"],

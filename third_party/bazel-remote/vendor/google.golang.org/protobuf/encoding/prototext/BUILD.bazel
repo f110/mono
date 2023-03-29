@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "encode.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/protobuf/encoding/prototext",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/protobuf/encoding/prototext",
     importpath = "google.golang.org/protobuf/encoding/prototext",
     visibility = ["//visibility:public"],
     deps = [

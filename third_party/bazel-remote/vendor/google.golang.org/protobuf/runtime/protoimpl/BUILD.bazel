@@ -6,7 +6,7 @@ go_library(
         "impl.go",
         "version.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoimpl",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/protobuf/runtime/protoimpl",
     importpath = "google.golang.org/protobuf/runtime/protoimpl",
     visibility = ["//visibility:public"],
     deps = [

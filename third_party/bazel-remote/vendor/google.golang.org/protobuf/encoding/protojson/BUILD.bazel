@@ -8,7 +8,7 @@ go_library(
         "encode.go",
         "well_known_types.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/protobuf/encoding/protojson",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/protobuf/encoding/protojson",
     importpath = "google.golang.org/protobuf/encoding/protojson",
     visibility = ["//visibility:public"],
     deps = [

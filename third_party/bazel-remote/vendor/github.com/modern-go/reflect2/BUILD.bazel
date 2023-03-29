@@ -34,7 +34,7 @@ go_library(
         "unsafe_struct.go",
         "unsafe_type.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/modern-go/reflect2",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/modern-go/reflect2",
     importpath = "github.com/modern-go/reflect2",
     visibility = ["//visibility:public"],
 )

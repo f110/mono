@@ -19,7 +19,7 @@ go_library(
         "username_password_credential.go",
         "version.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azidentity",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azidentity",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azidentity",
     visibility = ["//visibility:public"],
     deps = [

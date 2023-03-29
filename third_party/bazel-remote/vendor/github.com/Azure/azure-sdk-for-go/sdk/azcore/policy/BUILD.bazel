@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "policy.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/policy",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/policy",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/policy",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,7 +6,7 @@ go_library(
         "syscall_linux.go",
         "syscall_nonlinux.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/internal/syscall",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/internal/syscall",
     importpath = "google.golang.org/grpc/internal/syscall",
     visibility = ["//third_party/bazel-remote/vendor/google.golang.org/grpc:__subpackages__"],
     deps = select({

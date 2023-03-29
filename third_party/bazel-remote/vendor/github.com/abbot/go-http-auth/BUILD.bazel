@@ -10,7 +10,7 @@ go_library(
         "misc.go",
         "users.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/abbot/go-http-auth",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/abbot/go-http-auth",
     importpath = "github.com/abbot/go-http-auth",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/golang.org/x/crypto/bcrypt"],

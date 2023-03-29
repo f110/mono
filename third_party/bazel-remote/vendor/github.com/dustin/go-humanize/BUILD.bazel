@@ -15,7 +15,7 @@ go_library(
         "si.go",
         "times.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/dustin/go-humanize",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/dustin/go-humanize",
     importpath = "github.com/dustin/go-humanize",
     visibility = ["//visibility:public"],
 )

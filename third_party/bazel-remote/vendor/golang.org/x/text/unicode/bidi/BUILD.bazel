@@ -14,7 +14,7 @@ go_library(
         "tables9.0.0.go",
         "trieval.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/text/unicode/bidi",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/text/unicode/bidi",
     importpath = "golang.org/x/text/unicode/bidi",
     visibility = ["//visibility:public"],
 )

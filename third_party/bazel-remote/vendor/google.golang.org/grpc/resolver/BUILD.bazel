@@ -6,7 +6,7 @@ go_library(
         "map.go",
         "resolver.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/resolver",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/resolver",
     importpath = "google.golang.org/grpc/resolver",
     visibility = ["//visibility:public"],
     deps = [

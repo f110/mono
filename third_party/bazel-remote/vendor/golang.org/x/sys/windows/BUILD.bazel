@@ -26,7 +26,7 @@ go_library(
         "zknownfolderids_windows.go",
         "zsyscall_windows.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/sys/windows",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/sys/windows",
     importpath = "golang.org/x/sys/windows",
     visibility = ["//visibility:public"],
     deps = select({

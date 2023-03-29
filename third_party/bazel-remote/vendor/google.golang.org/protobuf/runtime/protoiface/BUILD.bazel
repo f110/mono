@@ -6,7 +6,7 @@ go_library(
         "legacy.go",
         "methods.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/protobuf/runtime/protoiface",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/protobuf/runtime/protoiface",
     importpath = "google.golang.org/protobuf/runtime/protoiface",
     visibility = ["//visibility:public"],
     deps = [

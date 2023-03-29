@@ -23,7 +23,7 @@ go_library(
         "text_formatter.go",
         "writer.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/sirupsen/logrus",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/sirupsen/logrus",
     importpath = "github.com/sirupsen/logrus",
     visibility = ["//visibility:public"],
     deps = select({

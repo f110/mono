@@ -40,7 +40,7 @@ go_library(
         "zip.go",
         "zstd.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/klauspost/compress/zstd",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/klauspost/compress/zstd",
     importpath = "github.com/klauspost/compress/zstd",
     visibility = ["//visibility:public"],
     deps = [

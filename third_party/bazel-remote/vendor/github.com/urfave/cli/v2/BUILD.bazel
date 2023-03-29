@@ -40,7 +40,7 @@ go_library(
         "template.go",
         "zz_generated.flags.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/urfave/cli/v2",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/urfave/cli/v2",
     importpath = "github.com/urfave/cli/v2",
     visibility = ["//visibility:public"],
     deps = [

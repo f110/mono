@@ -10,7 +10,7 @@ go_library(
         "namespace.go",
         "timeout.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/appengine",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/appengine",
     importpath = "google.golang.org/appengine",
     visibility = ["//visibility:public"],
     deps = [

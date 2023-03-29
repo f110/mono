@@ -8,7 +8,7 @@ go_library(
         "request.go",
         "response_error.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/exported",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/exported",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/exported",
     visibility = ["//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore:__subpackages__"],
     deps = [

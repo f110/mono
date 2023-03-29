@@ -18,7 +18,7 @@ go_library(
         "signing_method.go",
         "token.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/golang-jwt/jwt",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/golang-jwt/jwt",
     importpath = "github.com/golang-jwt/jwt",
     visibility = ["//visibility:public"],
 )

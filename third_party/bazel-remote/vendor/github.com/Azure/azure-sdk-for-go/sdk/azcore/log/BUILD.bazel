@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "log.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/log",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/log",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/log",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/internal/log"],

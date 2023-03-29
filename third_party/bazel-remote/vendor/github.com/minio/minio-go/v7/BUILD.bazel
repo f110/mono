@@ -49,7 +49,7 @@ go_library(
         "transport.go",
         "utils.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/minio/minio-go/v7",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/minio/minio-go/v7",
     importpath = "github.com/minio/minio-go/v7",
     visibility = ["//visibility:public"],
     deps = [

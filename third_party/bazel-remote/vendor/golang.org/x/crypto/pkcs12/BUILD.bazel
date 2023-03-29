@@ -11,7 +11,7 @@ go_library(
         "pkcs12.go",
         "safebags.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/crypto/pkcs12",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/crypto/pkcs12",
     importpath = "golang.org/x/crypto/pkcs12",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/golang.org/x/crypto/pkcs12/internal/rc2"],

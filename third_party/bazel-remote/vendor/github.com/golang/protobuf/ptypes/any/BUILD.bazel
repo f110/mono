@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "any",
     srcs = ["any.pb.go"],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/golang/protobuf/ptypes/any",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/golang/protobuf/ptypes/any",
     importpath = "github.com/golang/protobuf/ptypes/any",
     visibility = ["//visibility:public"],
     deps = [

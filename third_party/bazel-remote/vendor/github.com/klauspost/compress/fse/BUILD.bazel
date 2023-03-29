@@ -10,7 +10,7 @@ go_library(
         "decompress.go",
         "fse.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/klauspost/compress/fse",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/klauspost/compress/fse",
     importpath = "github.com/klauspost/compress/fse",
     visibility = ["//visibility:public"],
 )

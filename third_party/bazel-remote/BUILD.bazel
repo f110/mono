@@ -1,16 +1,22 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
 
-# gazelle:prefix github.com/buchgr/bazel-remote
+# gazelle:prefix github.com/buchgr/bazel-remote/v2
 
 go_vendor(name = "vendor")
 
 go_library(
     name = "bazel-remote_lib",
     srcs = ["main.go"],
-    importpath = "github.com/buchgr/bazel-remote",
+    importpath = "github.com/buchgr/bazel-remote/v2",
     visibility = ["//visibility:private"],
     deps = [
+        "//third_party/bazel-remote/cache/disk",
+        "//third_party/bazel-remote/config",
+        "//third_party/bazel-remote/server",
+        "//third_party/bazel-remote/utils/flags",
+        "//third_party/bazel-remote/utils/idle",
+        "//third_party/bazel-remote/utils/rlimit",
         "//third_party/bazel-remote/vendor/github.com/abbot/go-http-auth",
         "//third_party/bazel-remote/vendor/github.com/grpc-ecosystem/go-grpc-prometheus",
         "//third_party/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
@@ -22,12 +28,6 @@ go_library(
         "//third_party/bazel-remote/vendor/golang.org/x/sync/semaphore",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc",
         "//third_party/bazel-remote/vendor/google.golang.org/grpc/credentials",
-        "@com_github_buchgr_bazel_remote_v2//cache/disk:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//config:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//server:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//utils/flags:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//utils/idle:go_default_library",
-        "@com_github_buchgr_bazel_remote_v2//utils/rlimit:go_default_library",
     ],
 )
 

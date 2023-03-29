@@ -15,7 +15,7 @@ go_library(
         "encode_other.go",
         "snappy.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/golang/snappy",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/golang/snappy",
     importpath = "github.com/golang/snappy",
     visibility = ["//visibility:public"],
 )

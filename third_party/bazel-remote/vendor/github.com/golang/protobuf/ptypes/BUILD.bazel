@@ -8,7 +8,7 @@ go_library(
         "duration.go",
         "timestamp.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/golang/protobuf/ptypes",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/golang/protobuf/ptypes",
     importpath = "github.com/golang/protobuf/ptypes",
     visibility = ["//visibility:public"],
     deps = [

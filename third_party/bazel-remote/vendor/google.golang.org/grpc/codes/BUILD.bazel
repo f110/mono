@@ -6,7 +6,7 @@ go_library(
         "code_string.go",
         "codes.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/codes",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/codes",
     importpath = "google.golang.org/grpc/codes",
     visibility = ["//visibility:public"],
 )

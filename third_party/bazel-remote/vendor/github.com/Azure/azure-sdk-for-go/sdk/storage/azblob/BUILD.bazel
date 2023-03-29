@@ -57,7 +57,7 @@ go_library(
         "zz_generated_time_rfc3339.go",
         "zz_generated_xml_helper.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob",
     visibility = ["//visibility:public"],
     deps = [

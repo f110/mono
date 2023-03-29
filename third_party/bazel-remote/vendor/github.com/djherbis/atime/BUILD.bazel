@@ -16,7 +16,7 @@ go_library(
         "atime_windows.go",
         "stat.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/djherbis/atime",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/djherbis/atime",
     importpath = "github.com/djherbis/atime",
     visibility = ["//visibility:public"],
 )

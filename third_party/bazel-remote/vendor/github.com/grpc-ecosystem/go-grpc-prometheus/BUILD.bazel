@@ -12,7 +12,7 @@ go_library(
         "server_reporter.go",
         "util.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/grpc-ecosystem/go-grpc-prometheus",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/grpc-ecosystem/go-grpc-prometheus",
     importpath = "github.com/grpc-ecosystem/go-grpc-prometheus",
     visibility = ["//visibility:public"],
     deps = [

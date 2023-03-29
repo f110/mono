@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "status",
     srcs = ["status.go"],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/status",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/status",
     importpath = "google.golang.org/grpc/status",
     visibility = ["//visibility:public"],
     deps = [

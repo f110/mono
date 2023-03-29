@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "balancerload",
     srcs = ["load.go"],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/internal/balancerload",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/internal/balancerload",
     importpath = "google.golang.org/grpc/internal/balancerload",
     visibility = ["//third_party/bazel-remote/vendor/google.golang.org/grpc:__subpackages__"],
     deps = ["//third_party/bazel-remote/vendor/google.golang.org/grpc/metadata"],

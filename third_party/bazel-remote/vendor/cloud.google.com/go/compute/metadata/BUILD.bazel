@@ -7,7 +7,7 @@ go_library(
         "retry.go",
         "retry_linux.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/cloud.google.com/go/compute/metadata",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/cloud.google.com/go/compute/metadata",
     importpath = "cloud.google.com/go/compute/metadata",
     visibility = ["//visibility:public"],
 )

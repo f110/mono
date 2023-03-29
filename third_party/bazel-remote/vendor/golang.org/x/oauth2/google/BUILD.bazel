@@ -12,7 +12,7 @@ go_library(
         "jwt.go",
         "sdk.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/oauth2/google",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/oauth2/google",
     importpath = "golang.org/x/oauth2/google",
     visibility = ["//visibility:public"],
     deps = [

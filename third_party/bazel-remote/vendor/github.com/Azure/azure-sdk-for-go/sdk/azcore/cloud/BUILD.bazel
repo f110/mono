@@ -6,7 +6,7 @@ go_library(
         "cloud.go",
         "doc.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud",
     visibility = ["//visibility:public"],
 )

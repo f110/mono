@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "progress.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/exported"],

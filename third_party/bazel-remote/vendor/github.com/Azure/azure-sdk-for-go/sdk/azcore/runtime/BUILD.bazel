@@ -20,7 +20,7 @@ go_library(
         "response.go",
         "transport_default_http_client.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime",
     importpath = "github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime",
     visibility = ["//visibility:public"],
     deps = [

@@ -7,7 +7,7 @@ go_library(
         "logging.go",
         "server.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/health",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/health",
     importpath = "google.golang.org/grpc/health",
     visibility = ["//visibility:public"],
     deps = [

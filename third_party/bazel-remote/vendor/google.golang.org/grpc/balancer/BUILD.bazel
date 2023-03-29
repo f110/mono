@@ -6,7 +6,7 @@ go_library(
         "balancer.go",
         "conn_state_evaluator.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/balancer",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/balancer",
     importpath = "google.golang.org/grpc/balancer",
     visibility = ["//visibility:public"],
     deps = [

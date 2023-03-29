@@ -7,12 +7,12 @@ go_library(
         "gozstd.go",
         "zstdimpl.go",
     ],
-    importpath = "github.com/buchgr/bazel-remote/cache/disk/zstdimpl",
+    importpath = "github.com/buchgr/bazel-remote/v2/cache/disk/zstdimpl",
     visibility = ["//visibility:public"],
     deps = [
+        "//third_party/bazel-remote/utils/zstdpool",
         "//third_party/bazel-remote/vendor/github.com/klauspost/compress/zstd",
         "//third_party/bazel-remote/vendor/github.com/mostynb/zstdpool-syncpool",
         "//third_party/bazel-remote/vendor/github.com/valyala/gozstd",
-        "@com_github_buchgr_bazel_remote_v2//utils/zstdpool:go_default_library",
     ],
 )

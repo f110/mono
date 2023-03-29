@@ -9,7 +9,7 @@ go_library(
         "instrument_server.go",
         "option.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/prometheus/client_golang/prometheus/promhttp",
     importpath = "github.com/prometheus/client_golang/prometheus/promhttp",
     visibility = ["//visibility:public"],
     deps = [

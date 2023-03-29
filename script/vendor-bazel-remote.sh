@@ -5,7 +5,7 @@ source "script/lib/vendor.sh"
 
 OWNER="buchgr"
 REPO="bazel-remote"
-IMPORTPATH="github.com/buchgr/bazel-remote"
+IMPORTPATH="github.com/buchgr/bazel-remote/v2"
 COMMIT="c5bf6e13938aa89923c637b5a4f01c2203a3c9f8" # v2.4.1
 
 if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then

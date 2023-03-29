@@ -45,7 +45,7 @@ go_library(
         "runtime_auxv_go121.go",
         "syscall_aix_ppc64_gc.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/golang.org/x/sys/cpu",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/golang.org/x/sys/cpu",
     importpath = "golang.org/x/sys/cpu",
     visibility = ["//visibility:public"],
 )

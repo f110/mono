@@ -6,7 +6,7 @@ go_library(
         "balancer.go",
         "base.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/google.golang.org/grpc/balancer/base",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/google.golang.org/grpc/balancer/base",
     importpath = "google.golang.org/grpc/balancer/base",
     visibility = ["//visibility:public"],
     deps = [

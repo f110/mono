@@ -17,7 +17,7 @@ go_library(
         "yamlh.go",
         "yamlprivateh.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/gopkg.in/yaml.v3",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/gopkg.in/yaml.v3",
     importpath = "gopkg.in/yaml.v3",
     visibility = ["//visibility:public"],
 )

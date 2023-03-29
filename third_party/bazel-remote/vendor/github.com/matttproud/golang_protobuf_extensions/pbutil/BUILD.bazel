@@ -7,7 +7,7 @@ go_library(
         "doc.go",
         "encode.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/matttproud/golang_protobuf_extensions/pbutil",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/matttproud/golang_protobuf_extensions/pbutil",
     importpath = "github.com/matttproud/golang_protobuf_extensions/pbutil",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/golang/protobuf/proto"],

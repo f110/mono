@@ -61,7 +61,7 @@ go_library(
         "//conditions:default": [],
     }),
     copts = ["-O3"],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/valyala/gozstd",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/valyala/gozstd",
     importpath = "github.com/valyala/gozstd",
     visibility = ["//visibility:public"],
 )

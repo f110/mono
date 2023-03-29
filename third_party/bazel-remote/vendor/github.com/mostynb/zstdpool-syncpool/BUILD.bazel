@@ -6,7 +6,7 @@ go_library(
         "decoderpool.go",
         "encoderpool.go",
     ],
-    importmap = "github.com/buchgr/bazel-remote/vendor/github.com/mostynb/zstdpool-syncpool",
+    importmap = "github.com/buchgr/bazel-remote/v2/vendor/github.com/mostynb/zstdpool-syncpool",
     importpath = "github.com/mostynb/zstdpool-syncpool",
     visibility = ["//visibility:public"],
     deps = ["//third_party/bazel-remote/vendor/github.com/klauspost/compress/zstd"],
