@@ -1,5 +1,6 @@
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
+load("//build/rules/container:def.bzl", "container_image")
+load("@rules_oci//oci:defs.bzl", "oci_push")
 
 pkg_tar(
     name = "bin",
@@ -14,16 +15,14 @@ pkg_tar(
 
 container_image(
     name = "image",
-    base = "@com_google_distroless_base//image",
+    base = "@oci_com_google_distroless_base",
     cmd = ["/usr/local/bin/dnscontrol"],
     tars = [":bin"],
 )
 
-container_push(
+oci_push(
     name = "push",
-    format = "Docker",
     image = ":image",
-    registry = "registry.f110.dev",
-    repository = "dnscontrol/dnscontrol",
-    tag = "latest",
+    repository = "registry.f110.dev/dnscontrol/dnscontrol",
+    repotags = ["latest"],
 )
