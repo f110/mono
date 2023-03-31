@@ -1,4 +1,4 @@
-load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 
 def container_image(name, annotations = {}, architecture = "", base = None, cmd = [], entrypoint = [], env = {}, labels = {}, os = "", tars = [], user = "", variant = "", workdir = ""):
     oci_image(
@@ -15,6 +15,13 @@ def container_image(name, annotations = {}, architecture = "", base = None, cmd 
         user = user,
         variant = variant,
         workdir = workdir,
+        visibility = ["//visibility:public"],
+    )
+
+    oci_tarball(
+        name = "%s.tar" % name,
+        image = ":%s" % name,
+        repotags = ["image"],
         visibility = ["//visibility:public"],
     )
 
