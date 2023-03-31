@@ -10,7 +10,7 @@ TAG="v3.9.0"
 
 if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then
     echo "Please execute via bazel"
-    echo "bazel run //script:vendor-bazel-remote"
+    echo "bazel run //script:vendor_dnscontrol"
     exit 1
 fi
 cd "$BUILD_WORKSPACE_DIRECTORY"

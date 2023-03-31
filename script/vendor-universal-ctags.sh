@@ -9,7 +9,7 @@ COMMIT="40603a68c1f3b14dc1db4671111096733f6d2485"
 
 if [ -z "$BUILD_WORKSPACE_DIRECTORY" ]; then
     echo "Please execute via bazel"
-    echo "bazel run //script:vendor_zoekt"
+    echo "bazel run //script:vendor_universal_ctags"
     exit 1
 fi
 cd "$BUILD_WORKSPACE_DIRECTORY"
