@@ -17,7 +17,7 @@ container_image(
     tars = [":bin"],
 )
 
-container_push(
+oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/tools/notion-todo-scheduler",
