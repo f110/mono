@@ -5,7 +5,6 @@ load("//build/rules/etcd:def.bzl", "etcd_binary")
 load("//build/rules/kind:def.bzl", "kind_binary")
 load("//build/rules/kustomize:def.bzl", "kustomize_binary")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
-load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
 
 versions = {
     "kustomize": "v4.5.4",
@@ -83,11 +82,4 @@ def container_dependencies():
             name = "oci_%s" % k,
             digest = digest,
             image = image,
-        )
-
-        container_pull(
-            name = k,
-            digest = digest,
-            registry = registry,
-            repository = repository,
         )
