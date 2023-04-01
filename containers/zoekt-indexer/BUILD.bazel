@@ -29,7 +29,7 @@ pkg_tar(
 
 container_image(
     name = "go_container",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     tars = [":go"],
 )
 

@@ -20,7 +20,7 @@ pkg_tar(
 
 oci_image(
     name = "build_image",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     tars = [
         ":build_bin",
         ":schema_files",
@@ -44,7 +44,7 @@ pkg_tar(
 
 oci_image(
     name = "sidecar_image",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     entrypoint = ["/usr/local/bin/sidecar"],
     tars = [":sidecar_bin"],
 )
@@ -67,7 +67,7 @@ pkg_tar(
 
 oci_image(
     name = "ctl_image",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     entrypoint = ["/usr/local/bin/buildctl"],
     tars = [":ctl_bin"],
 )

@@ -79,7 +79,7 @@ def container_dependencies():
         registry, repository = image.split("/", 1)
 
         oci_pull(
-            name = "oci_%s" % k,
+            name = k,
             digest = digest,
             image = image,
         )

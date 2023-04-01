@@ -12,7 +12,7 @@ pkg_tar(
 
 container_image(
     name = "image",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     entrypoint = [
         "/usr/local/bin/static-web",
         "--document-root",

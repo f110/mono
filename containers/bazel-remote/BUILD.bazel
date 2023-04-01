@@ -11,7 +11,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@oci_com_google_distroless_base",
+    base = "@com_google_distroless_base",
     cmd = ["--max_size=5"],
     entrypoint = ["/usr/local/bin/bazel-remote"],
     tars = [
