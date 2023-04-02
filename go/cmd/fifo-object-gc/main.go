@@ -98,9 +98,12 @@ func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) err
 	for {
 		select {
 		case <-t.C:
-			if err := gc.gc(ctx, execute); err != nil {
+			c, cancel := context.WithTimeout(ctx, gc.interval/2)
+			if err := gc.gc(c, execute); err != nil {
+				cancel()
 				return err
 			}
+			cancel()
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-gc.shutdown:
@@ -114,7 +117,9 @@ func (gc *fifoObjectGarbageCollector) startInvokeServer(execute bool) error {
 		Addr: ":8080",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			go func() {
-				if err := gc.gc(context.Background(), execute); err != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), gc.interval/2)
+				defer cancel()
+				if err := gc.gc(ctx, execute); err != nil {
 					logger.Log.Error("Failed garbage collecting", zap.Error(err))
 				}
 			}()
@@ -134,6 +139,7 @@ func (gc *fifoObjectGarbageCollector) Shutdown() {
 
 func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) error {
 	logger.Log.Debug("Run GC")
+	defer logger.Log.Debug("Finish GC")
 	objects, err := gc.client.List(ctx, gc.prefix)
 	if err != nil {
 		return err
@@ -246,18 +252,18 @@ func (c *fifoObjectGarbageCollectorCommand) init(ctx context.Context) (fsm.State
 }
 
 func (c *fifoObjectGarbageCollectorCommand) startGC(ctx context.Context) (fsm.State, error) {
-	if !c.OneShot {
+	if c.OneShot {
+		if err := c.gc.gc(ctx, !c.DryRun); err != nil {
+			return fsm.Error(err)
+		}
+		c.FSM.Shutdown()
+	} else {
 		go func() {
 			if err := c.gc.Run(ctx, !c.DryRun); err != nil {
 				logger.Log.Error("GC error", logger.Error(err))
 				c.FSM.Shutdown()
 			}
 		}()
-	} else {
-		if err := c.gc.gc(ctx, !c.DryRun); err != nil {
-			return fsm.Error(err)
-		}
-		c.FSM.Shutdown()
 	}
 	return fsm.Wait()
 }
