@@ -15,9 +15,9 @@ versions = {
 }
 
 containers = {
-    "com_google_distroless_base": "gcr.io/distroless/base@sha256:e8f299757c8f8f2ebbebc4fd1826720a0a7a45fce0a4f9e7d210c5cc09d624a3",
-    "com_google_distroless_base_debug": "gcr.io/distroless/base@sha256:c532b9983712e1d9fadec8449908a9ac329909f37a47d491f2ad06ee6040fa4c",
-    "com_google_distroless_base_arm64": "gcr.io/distroless/base@sha256:bf4d6dc160bab223a0d377df083ad6b4ebacf5db2a313d8d7f3f07c9da967093",
+    "com_google_distroless_base": "gcr.io/distroless/base@sha256:8267a5d9fa15a538227a8850e81cf6c548a78de73458e99a67e8799bbffb1ba0",
+    "com_google_distroless_base_debug": "gcr.io/distroless/base@sha256:c59a1e5509d1b2586e28b899667774e599b79d7289a6bb893766a0cbbce7384b",
+    "com_google_distroless_base_arm64": "gcr.io/distroless/base@sha256:f19b05270bbd5c38e12c5610f23c1dfe4441858d959102a83074cf17ec074b50",
 }
 
 golang_tarball_build_file = """
