@@ -42,6 +42,7 @@ func NewDashboard(addr string, daoOpt dao.Options, apiHost string, bucket string
 	mux.HandleFunc("/readiness", d.handleReadiness)
 	mux.HandleFunc("/logs/", d.handleLogs)
 	mux.HandleFunc("/manifest/", d.handleManifest)
+	mux.HandleFunc("/task/", d.handleTask)
 	mux.HandleFunc("/new_repo", d.handleNewRepository)
 	mux.HandleFunc("/delete_repo", d.handleDeleteRepository)
 	mux.HandleFunc("/add_trusted_user", d.handleAddTrustedUser)
@@ -115,7 +116,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 			Tasks: repoTaskMap[repo.Id].Tasks,
 		})
 	}
-	err = Template.Execute(w, struct {
+	err = IndexTemplate.Execute(w, struct {
 		Repositories []*database.SourceRepository
 		RepoAndTasks []*RepositoryAndTasks
 		TrustedUsers []*database.TrustedUser
@@ -125,6 +126,41 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		RepoAndTasks: repoAndTasks,
 		TrustedUsers: trustedUsers,
 		APIHost:      template.JSStr(d.apiHost),
+	})
+	if err != nil {
+		logger.Log.Warn("Failed to render template", zap.Error(err))
+	}
+}
+
+func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
+	s := strings.Split(req.URL.Path, "/")
+	if len(s) < 2 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.Atoi(s[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	task, err := d.dao.Task.Select(req.Context(), int32(id))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	revUrl := ""
+	if strings.Contains(task.Repository.Url, "https://github.com") {
+		revUrl = task.Repository.Url + "/commit/" + task.Revision
+	}
+	err = DetailTemplate.Execute(w, struct {
+		Task *Task
+	}{
+		Task: &Task{
+			Task:        task,
+			RevisionUrl: revUrl,
+		},
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))

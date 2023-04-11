@@ -678,7 +678,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 		return xerrors.WithStack(err)
 	}
 	if u.Hostname() != "github.com" {
-		logger.Log.Warn("Expect update a status of github. but repository url is not github.com", zap.String("url", repo.Url))
+		logger.Log.Warn("Expect to update a status of github. but repository url is not github.com", zap.String("url", repo.Url))
 		return nil
 	}
 	// u.Path is /owner/repo if URL is github.com.
@@ -687,7 +687,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 
 	targetUrl := ""
 	if state == "success" || state == "failure" {
-		targetUrl = fmt.Sprintf("%s/logs/%s", b.dashboardUrl, task.LogFile)
+		targetUrl = fmt.Sprintf("%s/task/%d", b.dashboardUrl, task.Id)
 	}
 
 	_, _, err = b.githubClient.Repositories.CreateStatus(

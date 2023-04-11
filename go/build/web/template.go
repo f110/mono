@@ -5,17 +5,23 @@ import (
 	"time"
 )
 
-var Template *template.Template
+var (
+	IndexTemplate  *template.Template
+	DetailTemplate *template.Template
+)
 
 func init() {
-	Template = template.Must(template.New("").Funcs(map[string]interface{}{
+	funcs := map[string]interface{}{
 		"Duration": func(start *time.Time, end *time.Time) string {
 			if end == nil || start == nil {
 				return ""
 			}
 			return end.Sub(*start).String()
 		},
-	}).Parse(indexTemplate))
+	}
+
+	IndexTemplate = template.Must(template.New("").Funcs(funcs).Parse(indexTemplate))
+	DetailTemplate = template.Must(template.New("").Funcs(funcs).Parse(detailTemplate))
 }
 
 const indexTemplate = `<html>
@@ -182,14 +188,13 @@ const indexTemplate = `<html>
           <th>Trigger</th>
           <th>Start at</th>
           <th>Duration</th>
-          <th>Node</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
 		{{- range .Tasks }}
         <tr>
-          <td>{{ .Id }}</td>
+          <td><a href="/task/{{ .Id }}">{{ .Id }}</a></td>
           <td class="buildinfo" data-content="Bazel version: {{ .BazelVersion }}">{{ .JobName }}</td>
           <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
           <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
@@ -197,7 +202,6 @@ const indexTemplate = `<html>
           <td>{{ .Via }}</td>
           <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
           <td>{{ Duration .StartAt .FinishedAt }}</td>
-          <td><a href="/manifest/{{ .Id }}">{{ .Node }}</a></td>
           <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
         </tr>
         {{- end }}
@@ -309,3 +313,107 @@ function runJob() {
 </script>
 </body>
 </html>`
+
+const detailTemplate = `<html>
+<head>
+  <title>Build dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+  <style>
+    i.amber.icon {color: #FFA000;}
+    .ui.amber.table {border-top: 0.2em solid #FFA000;}
+    .ui.amber.button {background-color: #FFA000; color: #FFFFFF;}
+  </style>
+</head>
+<body>
+
+<div class="ui menu inverted huge">
+  <div class="header item">
+    Dashboard
+  </div>
+  <div class="ui item simple">
+    {{ .Task.Repository.Name }}
+  </div>
+</div>
+
+<div class="ui container">
+  <table class="ui {{ if .Task.FinishedAt }}{{ if .Task.Success }}green{{ else }}red{{ end }}{{ else }}amber{{ end }} table definition">
+    <tbody>
+    <tr>
+      <td>id</td>
+      <td>{{ .Task.Id }}</td>
+    </tr>
+    <tr>
+      <td>Status</td>
+      <td>{{ if .Task.FinishedAt }}{{ if .Task.Success }}<i class="green check icon"></i>Success{{ else }}<i class="red attention icon"></i>Failure{{ end }}{{ else }}<i class="amber sync alternate icon"></i>Running{{ end }}</td>
+    </tr>
+    <tr>
+      <td>Job</td>
+      <td>{{ .Task.JobName }}</td>
+    </tr>
+    <tr>
+      <td>Revision</td>
+      <td><a href="{{ .Task.RevisionUrl }}">{{ if .Task.Revision }}{{ slice .Task.Revision 0 6 }}{{ end }}</a></td>
+    </tr>
+    <tr>
+      <td>Started at</td>
+      <td>{{ if .Task.StartAt }}{{ .Task.StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
+    </tr>
+    <tr>
+      <td>Duration</td>
+      <td>{{ Duration .Task.StartAt .Task.FinishedAt }}</td>
+    </tr>
+    <tr>
+      <td>Node</td>
+      <td>{{ .Task.Node }}</td>
+    </tr>
+    <tr>
+      <td>Trigger</td>
+      <td>{{ .Task.Via }}</td>
+    </tr>
+    <tr>
+      <td>Bazel version</td>
+      <td>{{ .Task.BazelVersion }}</td>
+    </tr>
+    <tr>
+      <td>Container</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>CPU / Memory Limit</td>
+      <td>- / -</td>
+    </tr>
+    <tr>
+      <td>Log</td>
+      <td>{{ if .Task.LogFile }}<a href="/logs/{{ .Task.LogFile }}">text</a>{{ end }}</td>
+    </tr>
+    <tr>
+      <td>Job manifest</td>
+      <td><a href="/manifest/{{ .Task.Id }}">yaml</a></td>
+    </tr>
+    </tbody>
+  </table>
+
+  {{ if .Task.FinishedAt }}<a class="ui button amber" href="#" onclick="redoTask({{ .Task.Id }})">Restart</a>{{ end }}
+</div>
+
+<script>
+function redoTask(id) {
+  var params = new URLSearchParams();
+  params.append("task_id", id);
+  fetch(apiHost+"/redo",{
+    mode: 'cors',
+    method: 'POST',
+    credentials: 'include',
+    body: params,
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload(false);
+    }
+  });
+}
+</script>
+</body>
+</html>
+`

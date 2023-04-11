@@ -712,7 +712,6 @@ func (c *mysqlUser) Run(ctx context.Context) {
 			logger.Log.Error("Database field is not Database", logger.Error(err))
 			return
 		}
-		fmt.Printf("GRANT ALL PRIVILEGES ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'", d.Name, c.Name, c.Password)
 		_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON %s.* TO '%s'", d.Name, c.Name))
 		if err != nil {
 			logger.Log.Error("Failed to permit privileges", logger.Error(err))

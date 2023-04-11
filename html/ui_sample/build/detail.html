@@ -1,0 +1,86 @@
+<html>
+<head>
+  <title>Build dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+  <style>
+    .ui.amber.button {background-color: #FFA000; color: #FFFFFF;}
+  </style>
+</head>
+<body>
+
+<div class="ui menu inverted huge">
+  <div class="header item">
+    Dashboard
+  </div>
+  <div class="ui item simple">
+    mono.git
+  </div>
+</div>
+
+<div class="ui container">
+  <table class="ui green table definition">
+    <tbody>
+    <tr>
+      <td>id</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>Status</td>
+      <td><i class="green check icon"></i>Success</td>
+    </tr>
+    <tr>
+      <td>Job</td>
+      <td>test_all</td>
+    </tr>
+    <tr>
+      <td>Revision</td>
+      <td><a href="#">34a537</a></td>
+    </tr>
+    <tr>
+      <td>Started at</td>
+      <td>2020/06/01 07:00:00</td>
+    </tr>
+    <tr>
+      <td>Duration</td>
+      <td>21m30s</td>
+    </tr>
+    <tr>
+      <td>Node</td>
+      <td>whale1</td>
+    </tr>
+    <tr>
+      <td>Trigger</td>
+      <td>api</td>
+    </tr>
+    <tr>
+      <td>Bazel version</td>
+      <td>5.3.0</td>
+    </tr>
+    <tr>
+      <td>Container</td>
+      <td>ghcr.io/f110/bazel-container:5.3.0</td>
+    </tr>
+    <tr>
+      <td>CPU / Memory Limit</td>
+      <td>4000m / 4096Gi</td>
+    </tr>
+    <tr>
+      <td>Log</td>
+      <td><a href="#">text</a></td>
+    </tr>
+    <tr>
+      <td>Job manifest</td>
+      <td><a href="#">yaml</a></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <a class="ui button amber">Restart</a>
+</div>
+
+<script>
+</script>
+</body>
+</html>
