@@ -20,7 +20,6 @@ const (
 )
 
 func copyFile(from, to string) error {
-	logger.Log.Info("Copy file", zap.String("from", from), zap.String("to", to))
 	f, err := os.Open(from)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -54,6 +53,7 @@ func copyFile(from, to string) error {
 	if err := os.Chown(to, int(st.Uid), int(st.Gid)); err != nil {
 		return xerrors.WithStack(err)
 	}
+	logger.Log.Info("Copy file", zap.String("from", from), zap.String("to", to), zap.Uint32("mode", uint32(s.Mode())), zap.Int("uid", int(st.Uid)), zap.Int("gid", int(st.Gid)))
 
 	return nil
 }

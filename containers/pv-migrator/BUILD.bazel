@@ -23,3 +23,10 @@ oci_push(
     repository = "registry.f110.dev/tools/pv-migrator",
     repotags = ["latest"],
 )
+
+oci_push(
+    name = "push_gcr",
+    image = ":image",
+    repository = "asia.gcr.io/fighting-falcon/pv-migrator",
+    repotags = ["latest"],
+)
