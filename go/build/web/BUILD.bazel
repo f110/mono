@@ -9,6 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/build/web",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/build/config",
         "//go/build/database",
         "//go/build/database/dao",
         "//go/logger",
