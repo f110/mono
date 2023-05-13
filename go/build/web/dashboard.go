@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/protoc-ddl/probe"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/logger"
@@ -150,17 +151,31 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	jobConf, err := config.Read(strings.NewReader(task.JobConfiguration), "", "")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	var job *config.Job
+	for _, v := range jobConf.Jobs {
+		if v.Name == task.JobName {
+			job = v
+			break
+		}
+	}
 	revUrl := ""
 	if strings.Contains(task.Repository.Url, "https://github.com") {
 		revUrl = task.Repository.Url + "/commit/" + task.Revision
 	}
 	err = DetailTemplate.Execute(w, struct {
 		Task *Task
+		Job  *config.Job
 	}{
 		Task: &Task{
 			Task:        task,
 			RevisionUrl: revUrl,
 		},
+		Job: job,
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))

@@ -382,7 +382,7 @@ const detailTemplate = `<html>
     </tr>
     <tr>
       <td>CPU / Memory Limit</td>
-      <td>- / -</td>
+      <td>{{ .Job.CPULimit }} / {{ .Job.MemoryLimit }}</td>
     </tr>
     <tr>
       <td>Log</td>
