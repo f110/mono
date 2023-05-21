@@ -31,7 +31,7 @@ oci_push(
     name = "push_build",
     image = ":build_image",
     repository = "registry.f110.dev/build/build",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )
 
 pkg_tar(
@@ -53,7 +53,7 @@ oci_push(
     name = "push_sidecar",
     image = ":sidecar_image",
     repository = "registry.f110.dev/build/sidecar",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )
 
 pkg_tar(
@@ -76,5 +76,5 @@ oci_push(
     name = "push_ctl",
     image = ":ctl_image",
     repository = "registry.f110.dev/build/buildctl",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

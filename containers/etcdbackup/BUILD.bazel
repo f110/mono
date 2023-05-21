@@ -26,5 +26,5 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "quay.io/f110/etcdbackup",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

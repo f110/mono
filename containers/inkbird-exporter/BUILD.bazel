@@ -25,5 +25,5 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/tools/inkbird-exporter",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

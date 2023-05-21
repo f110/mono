@@ -22,12 +22,12 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/tools/gomodule-proxy",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )
 
 oci_push(
     name = "push_quay",
     image = ":image",
     repository = "quay.io/f110/gomodule-proxy",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

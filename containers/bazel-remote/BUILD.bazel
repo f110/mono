@@ -23,5 +23,5 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/bazel-remote/bazel-remote-cache",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

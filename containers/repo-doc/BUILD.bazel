@@ -21,12 +21,12 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/tools/repo-doc",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )
 
 oci_push(
     name = "push_quay",
     image = ":image",
     repository = "quay.io/f110/repo-doc",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )

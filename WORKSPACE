@@ -35,9 +35,9 @@ http_archive(
 
 http_archive(
     name = "rules_oci",
-    sha256 = "f6125c9a123a2ac58fb6b13b4b8d4631827db9cfac025f434bbbefbd97953f7c",
-    strip_prefix = "rules_oci-0.3.9",
-    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v0.3.9/rules_oci-v0.3.9.tar.gz",
+    sha256 = "7824dcb6c9f9f87786d65592da006d9f1e2bea826d7560d96745e54cdecb5d47",
+    strip_prefix = "rules_oci-1.0.0-rc1",
+    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v1.0.0-rc1/rules_oci-v1.0.0-rc1.tar.gz",
 )
 
 http_archive(

@@ -21,7 +21,7 @@ def container_image(name, annotations = {}, architecture = "", base = None, cmd 
     oci_tarball(
         name = "%s.tar" % name,
         image = ":%s" % name,
-        repotags = ["image"],
+        repo_tags = ["image"],
         visibility = ["//visibility:public"],
     )
 

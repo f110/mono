@@ -30,5 +30,5 @@ oci_push(
     name = "push",
     image = ":image",
     repository = "registry.f110.dev/tools/reviewstack",
-    repotags = ["latest"],
+    remote_tags = ["latest"],
 )
