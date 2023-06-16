@@ -5,7 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_push")
 pkg_tar(
     name = "bin",
     files = {
-        "//go/cmd/notion-github-task": "/usr/local/bin/notion-github-task",
+        "//go/cmd/notion-github-task:linux_amd64": "/usr/local/bin/notion-github-task",
     },
     mode = "0755",
 )
@@ -20,6 +20,6 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/notion-github-task",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/notion-github-task",
 )
