@@ -5,7 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_push")
 pkg_tar(
     name = "bin",
     files = {
-        "//go/cmd/controller-manager": "/usr/local/bin/controller-manager",
+        "//go/cmd/controller-manager:linux_amd64": "/usr/local/bin/controller-manager",
     },
     mode = "0755",
 )

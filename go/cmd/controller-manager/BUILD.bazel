@@ -1,8 +1,15 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
 
 go_binary(
     name = "controller-manager",
     embed = [":controller-manager_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_cross_binary(
+    name = "linux_amd64",
+    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    target = ":controller-manager",
     visibility = ["//visibility:public"],
 )
 
