@@ -4,11 +4,10 @@ load("@rules_oci//oci:defs.bzl", "oci_push")
 
 pkg_tar(
     name = "bin",
-    srcs = [
-        "//go/cmd/gomodule-proxy",
-    ],
+    files = {
+        "//go/cmd/gomodule-proxy:linux_amd64": "/usr/local/bin/gomodule-proxy",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 container_image(
@@ -21,13 +20,13 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/gomodule-proxy",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/gomodule-proxy",
 )
 
 oci_push(
     name = "push_quay",
     image = ":image",
-    repository = "quay.io/f110/gomodule-proxy",
     remote_tags = ["latest"],
+    repository = "quay.io/f110/gomodule-proxy",
 )
