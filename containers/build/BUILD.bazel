@@ -3,12 +3,11 @@ load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 
 pkg_tar(
     name = "build_bin",
-    srcs = [
-        "//go/cmd/build",
-        "@dev_f110_protoc_ddl//cmd/migrate",
-    ],
+    files = {
+        "//go/cmd/build:linux_amd64": "/usr/local/bin/build",
+        "@dev_f110_protoc_ddl//cmd/migrate": "/usr/local/bin/migrate",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 pkg_tar(
@@ -30,14 +29,14 @@ oci_image(
 oci_push(
     name = "push_build",
     image = ":build_image",
-    repository = "registry.f110.dev/build/build",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/build/build",
 )
 
 pkg_tar(
     name = "sidecar_bin",
     files = {
-        "//go/cmd/build-sidecar": "/usr/local/bin/sidecar",
+        "//go/cmd/build-sidecar:linux_amd64": "/usr/local/bin/sidecar",
     },
     mode = "0755",
 )
@@ -52,17 +51,16 @@ oci_image(
 oci_push(
     name = "push_sidecar",
     image = ":sidecar_image",
-    repository = "registry.f110.dev/build/sidecar",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/build/sidecar",
 )
 
 pkg_tar(
     name = "ctl_bin",
-    srcs = [
-        "//go/cmd/buildctl",
-    ],
+    files = {
+        "//go/cmd/buildctl:linux_amd64": "/usr/local/bin/buildctl",
+    },
     mode = "0755",
-    package_dir = "/usr/local/bin",
 )
 
 oci_image(
@@ -75,6 +73,6 @@ oci_image(
 oci_push(
     name = "push_ctl",
     image = ":ctl_image",
-    repository = "registry.f110.dev/build/buildctl",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/build/buildctl",
 )
