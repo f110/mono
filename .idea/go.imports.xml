@@ -6,6 +6,7 @@
         <option value="github.com/bmizerany/assert" />
         <option value="github.com/docker/cli/kubernetes/client/clientset" />
         <option value="github.com/emicklei/go-restful/log" />
+        <option value="github.com/emicklei/go-restful/v3/log" />
         <option value="github.com/hashicorp/go.net/context" />
         <option value="github.com/labstack/gommon/log" />
         <option value="github.com/mitchellh/go-testing-interface" />

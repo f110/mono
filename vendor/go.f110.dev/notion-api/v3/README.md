@@ -12,7 +12,7 @@ Currently under active development. All APIs will be changed possibly.
 First, import from your code.
 
 ```go
-import "go.f110.dev/notion-api"
+import "go.f110.dev/notion-api/v3"
 ```
 
 and you also need `golang.org/x/oauth2` module for *http.Client.
@@ -33,27 +33,35 @@ And example code exists under [example directory](./example)
 
 # Supported methods
 
-* [x] [Retrieve a database](https://developers.notion.com/reference/get-database)
-* [x] [Query a database](https://developers.notion.com/reference/post-database-query)
-* [x] [List databases](https://developers.notion.com/reference/get-databases)
-* [x] [Retrieve a user](https://developers.notion.com/reference/get-user)
-* [x] [List all users](https://developers.notion.com/reference/get-users)
-* [x] [Retrieve a page](https://developers.notion.com/reference/get-page)
-* [x] [Create a page](https://developers.notion.com/reference/post-page)
-* [x] [Update page properties](https://developers.notion.com/reference/patch-page)
-* [x] [Retrieve block children](https://developers.notion.com/reference/get-block-children)
-* [x] [Append block children](https://developers.notion.com/reference/patch-block-children)
-* [x] [Search](https://developers.notion.com/reference/post-search)
-* [x] [Create a database](https://developers.notion.com/reference/create-a-database)
-* [x] [Retrieve a block](https://developers.notion.com/reference/retrieve-a-block)
-* [x] [Update a block](https://developers.notion.com/reference/update-a-block)
-* [x] [Update a database](https://developers.notion.com/reference/update-a-database)
-* [x] [Delete a block](https://developers.notion.com/reference/delete-a-block)
-* [x] [Retrieve a page property](https://developers.notion.com/reference/retrieve-a-page-property)
+* Database
+    * [x] [Retrieve a database](https://developers.notion.com/reference/get-database)
+    * [x] [Query a database](https://developers.notion.com/reference/post-database-query)
+    * [x] [Create a database](https://developers.notion.com/reference/create-a-database)
+    * [x] [Update a database](https://developers.notion.com/reference/update-a-database)
+* User
+    * [x] [Retrieve a user](https://developers.notion.com/reference/get-user)
+    * [x] [List all users](https://developers.notion.com/reference/get-users)
+    * [ ] [Retrieve your token's bot user](https://developers.notion.com/reference/update-property-schema-object) 
+* Page
+    * [x] [Retrieve a page](https://developers.notion.com/reference/get-page)
+    * [x] [Create a page](https://developers.notion.com/reference/post-page)
+    * [x] [Update page properties](https://developers.notion.com/reference/patch-page)
+    * [x] [Retrieve a page property item](https://developers.notion.com/reference/retrieve-a-page-property)
+* Block
+    * [x] [Retrieve block children](https://developers.notion.com/reference/get-block-children)
+    * [x] [Append block children](https://developers.notion.com/reference/patch-block-children)
+    * [x] [Retrieve a block](https://developers.notion.com/reference/retrieve-a-block)
+    * [x] [Delete a block](https://developers.notion.com/reference/delete-a-block)
+    * [x] [Update a block](https://developers.notion.com/reference/update-a-block)
+* Search
+    * [x] [Search by title](https://developers.notion.com/reference/post-search)
+* Comment
+    * [ ] [Create comment](https://developers.notion.com/reference/create-a-comment)
+    * [ ] [Retrieve Comments](https://developers.notion.com/reference/retrieve-a-comment)
 
 # Implemented version
 
-Implemented [Notion API version](https://developers.notion.com/reference/versioning) is **2021-08-16** .
+Implemented [Notion API version](https://developers.notion.com/reference/versioning) is **2022-06-28** .
 
 # Author
 

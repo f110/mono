@@ -47,6 +47,9 @@ func (s *toDoSchedulerCommand) Execute() error {
 	if s.token == "" {
 		return xerrors.New("--token or NOTION_TOKEN is required")
 	}
+	if s.conf == "" {
+		return xerrors.New("--conf is required")
+	}
 
 	scheduler, err := notion.NewToDoScheduler(s.conf, s.token)
 	if err != nil {

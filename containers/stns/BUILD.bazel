@@ -24,6 +24,6 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "quay.io/f110/stns",
     remote_tags = ["latest"],
+    repository = "quay.io/f110/stns",
 )

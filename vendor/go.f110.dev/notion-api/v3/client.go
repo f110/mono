@@ -15,7 +15,7 @@ const (
 	BaseURL   = "https://api.notion.com/v1"
 	UserAgent = "go.f110.dev/notion-api v3"
 
-	notionVersion = "2021-08-16"
+	notionVersion = "2022-06-28"
 )
 
 type Client struct {
@@ -102,53 +102,6 @@ func (c *Client) ListAllUsers(ctx context.Context) ([]*User, error) {
 	}
 
 	return users, nil
-}
-
-// ListDatabases can get all databases.
-// ref: https://developers.notion.com/reference/get-databases
-func (c *Client) ListDatabases(ctx context.Context) ([]*Database, error) {
-	params := &url.Values{}
-	params.Set("page_size", "100")
-
-	databases := make([]*Database, 0)
-	for {
-		req, err := c.newRequest(ctx, http.MethodGet, "/databases", params, nil)
-		if err != nil {
-			return nil, err
-		}
-		res, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-
-		switch res.StatusCode {
-		case http.StatusOK:
-		default:
-			//goland:noinspection GoDeferInLoop
-			defer res.Body.Close()
-			return nil, c.decodeError(res)
-		}
-
-		obj := &DatabaseList{}
-		if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
-			res.Body.Close()
-			return nil, fmt.Errorf("failed parse a response: %v", err)
-		}
-		for _, v := range obj.Results {
-			if err := v.decode(); err != nil {
-				return nil, err
-			}
-		}
-		databases = append(databases, obj.Results...)
-		res.Body.Close()
-
-		if !obj.HasMore {
-			break
-		}
-		params.Set("start_cursor", obj.NextCursor)
-	}
-
-	return databases, nil
 }
 
 // GetDatabase can get a database.

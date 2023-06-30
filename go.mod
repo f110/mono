@@ -26,7 +26,7 @@ require (
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.8.1
-	github.com/jarcoal/httpmock v1.0.8
+	github.com/jarcoal/httpmock v1.3.0
 	github.com/minio/minio v0.0.0-20210407225602-2899cc92b45f
 	github.com/minio/minio-go/v6 v6.0.50
 	github.com/minio/minio-go/v7 v7.0.11-0.20210302210017-6ae69c73ce78
@@ -41,12 +41,12 @@ require (
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.4
 	github.com/yuin/goldmark v1.4.13
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.f110.dev/go-memcached v0.0.0-20230303100239-9d06b98d5678
-	go.f110.dev/notion-api/v3 v3.0.0-20220126164500-9ff175c2024e
+	go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1
 	go.f110.dev/protoc-ddl v0.0.0-20201210124226-127db5500265
 	go.f110.dev/xerrors v0.0.0-20230104081126-9d09074f0bb4
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12

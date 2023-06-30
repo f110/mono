@@ -14,10 +14,12 @@ type Object interface{}
 type ObjectType string
 
 const (
-	ObjectTypeDatabase ObjectType = "database"
-	ObjectTypePage     ObjectType = "page"
-	ObjectTypeBlock    ObjectType = "block"
-	ObjectTypeList     ObjectType = "list"
+	ObjectTypeDatabase   ObjectType = "database"
+	ObjectTypeDatabaseID ObjectType = "database_id"
+	ObjectTypePage       ObjectType = "page"
+	ObjectTypeBlock      ObjectType = "block"
+	ObjectTypeList       ObjectType = "list"
+	ObjectTypeUser       ObjectType = "user"
 )
 
 type Meta struct {
@@ -100,6 +102,10 @@ func (u *User) String() string {
 	return b.String()
 }
 
+type PartialUser struct {
+	*Meta
+}
+
 type Date struct {
 	time.Time
 }
@@ -122,7 +128,22 @@ type Person struct {
 	Email string `json:"email"`
 }
 
-type Bot struct{}
+type Bot struct {
+	Owner         *Owner `json:"owner"`
+	WorkspaceName string `json:"workspace_name"`
+}
+
+type OwnerType string
+
+const (
+	OwnerTypeWorkspace OwnerType = "workspace"
+	OwnerTypeUser      OwnerType = "user"
+)
+
+type Owner struct {
+	Type      OwnerType `json:"type"`
+	Workspace bool      `json:"workspace"`
+}
 
 type UserList struct {
 	*ListMeta
@@ -194,10 +215,16 @@ type Database struct {
 
 	Parent         *PageParent                  `json:"parent,omitempty"`
 	CreatedTime    Time                         `json:"created_time,omitempty"`
+	CreatedBy      *PartialUser                 `json:"created_by,omitempty"`
 	LastEditedTime Time                         `json:"last_edited_time,omitempty"`
+	LastEditedBy   *PartialUser                 `json:"last_edited_by,omitempty"`
 	Title          []*RichTextObject            `json:"title"`
 	Properties     map[string]*PropertyMetadata `json:"properties"`
 	URL            string                       `json:"url,omitempty"`
+	Description    []*RichTextObject            `json:"description,omitempty"`
+	IsInline       bool                         `json:"is_inline,omitempty"`
+	PublicURL      string                       `json:"public_url,omitempty"`
+	Archived       bool                         `json:"archived,omitempty"`
 }
 
 func (d *Database) decode() error {
@@ -407,6 +434,7 @@ const (
 	PropertyTypeCreatedBy      PropertyType = "created_by"
 	PropertyTypeLastEditedTime PropertyType = "last_edited_time"
 	PropertyTypeLastEditedBy   PropertyType = "last_edited_by"
+	PropertyTypeUniqueID       PropertyType = "unique_id"
 )
 
 type PropertyData struct {
@@ -433,6 +461,7 @@ type PropertyData struct {
 	CreatedBy      *User             `json:"created_by,omitempty"`
 	LastEditedTime *Time             `json:"last_edited_time,omitempty"`
 	LastEditedBy   *User             `json:"last_edited_by,omitempty"`
+	UniqueID       *UniqueID         `json:"unique_id,omitempty"`
 }
 
 // TODO: Support formula, relation and rollup
@@ -527,6 +556,11 @@ type File struct {
 	Name string `json:"name"`
 }
 
+type UniqueID struct {
+	Prefix string `json:"prefix,omitempty"`
+	Number int    `json:"number"`
+}
+
 type Filter struct {
 	// Compound filter
 	Or  []*Filter `json:"or,omitempty"`
@@ -534,7 +568,7 @@ type Filter struct {
 
 	// Database property filter
 	Property    string             `json:"property,omitempty"`
-	Text        *TextFilter        `json:"text,omitempty"`
+	RichText    *RichTextFilter    `json:"rich_text,omitempty"`
 	Number      *NumberFilter      `json:"number,omitempty"`
 	Checkbox    *CheckboxFilter    `json:"checkbox,omitempty"`
 	Select      *SelectFilter      `json:"select,omitempty"`
@@ -544,28 +578,31 @@ type Filter struct {
 	Files       *FilesFilter       `json:"files,omitempty"`
 	Relation    *RelationFilter    `json:"relation,omitempty"`
 	Formula     *FormulaFilter     `json:"formula,omitempty"`
+	PhoneNumber *PhoneNumberFilter `json:"phone_number,omitempty"`
+	Status      *StatusFilter      `json:"status,omitempty"`
+	Timestamp   *TimestampFilter   `json:"timestamp,omitempty"`
 }
 
-type TextFilter struct {
-	Equals         string `json:"equals,omitempty"`
-	DoesNotEqual   string `json:"does_not_equal,omitempty"`
+type RichTextFilter struct {
 	Contains       string `json:"contains,omitempty"`
 	DoesNotContain string `json:"does_not_contain,omitempty"`
-	StartsWith     string `json:"starts_with,omitempty"`
+	DoesNotEqual   string `json:"does_not_equal,omitempty"`
 	EndsWith       string `json:"ends_with,omitempty"`
+	Equals         string `json:"equals,omitempty"`
 	IsEmpty        bool   `json:"is_empty,omitempty"`
 	IsNotEmpty     bool   `json:"is_not_empty,omitempty"`
+	StartsWith     string `json:"starts_with,omitempty"`
 }
 
 type NumberFilter struct {
-	Equals               int  `json:"equals,omitempty"`
 	DoesNotEqual         int  `json:"does_not_equal,omitempty"`
+	Equals               int  `json:"equals,omitempty"`
 	GreaterThan          int  `json:"greater_than,omitempty"`
-	LessThan             int  `json:"less_than,omitempty"`
 	GreaterThanOrEqualTo int  `json:"greater_than_or_equal_to,omitempty"`
-	LessThanOrEqualTo    int  `json:"less_than_or_equal_to,omitempty"`
 	IsEmpty              bool `json:"is_empty,omitempty"`
 	IsNotEmpty           bool `json:"is_not_empty,omitempty"`
+	LessThan             int  `json:"less_than,omitempty"`
+	LessThanOrEqualTo    int  `json:"less_than_or_equal_to,omitempty"`
 }
 
 type CheckboxFilter struct {
@@ -588,19 +625,20 @@ type MultiSelectFilter struct {
 }
 
 type DateFilter struct {
-	Equals     *Time     `json:"equals,omitempty"`
-	Before     *Time     `json:"before,omitempty"`
 	After      *Time     `json:"after,omitempty"`
-	OnOrBefore *Time     `json:"on_or_before,omitempty"`
-	OnOrAfter  *Time     `json:"on_or_after,omitempty"`
+	Before     *Time     `json:"before,omitempty"`
+	Equals     *Time     `json:"equals,omitempty"`
 	IsEmpty    bool      `json:"is_empty,omitempty"`
 	IsNotEmpty bool      `json:"is_not_empty,omitempty"`
-	PastWeek   *struct{} `json:"past_week,omitempty"`
-	PastMonth  *struct{} `json:"past_month,omitempty"`
-	PastYear   *struct{} `json:"past_year,omitempty"`
-	NextWeek   *struct{} `json:"next_week,omitempty"`
 	NextMonth  *struct{} `json:"next_month,omitempty"`
+	NextWeek   *struct{} `json:"next_week,omitempty"`
 	NextYear   *struct{} `json:"next_year,omitempty"`
+	OnOrAfter  *Time     `json:"on_or_after,omitempty"`
+	OnOrBefore *Time     `json:"on_or_before,omitempty"`
+	PastMonth  *struct{} `json:"past_month,omitempty"`
+	PastWeek   *struct{} `json:"past_week,omitempty"`
+	PastYear   *struct{} `json:"past_year,omitempty"`
+	ThisWeek   *struct{} `json:"this_week,omitempty"`
 }
 
 type PeopleFilter struct {
@@ -623,10 +661,34 @@ type RelationFilter struct {
 }
 
 type FormulaFilter struct {
-	Text     *TextFilter     `json:"text,omitempty"`
 	Checkbox *CheckboxFilter `json:"checkbox,omitempty"`
-	Number   *NumberFilter   `json:"number,omitempty"`
 	Date     *DateFilter     `json:"date,omitempty"`
+	Number   *NumberFilter   `json:"number,omitempty"`
+	String   *RichTextFilter `json:"string,omitempty"`
+}
+
+type PhoneNumberFilter struct {
+	// TODO: This is not documented
+}
+
+type StatusFilter struct {
+	Equals       string `json:"equals,omitempty"`
+	DoesNotEqual string `json:"does_not_equal,omitempty"`
+	IsEmpty      bool   `json:"is_empty,omitempty"`
+	IsNotEmpty   bool   `json:"is_not_empty,omitempty"`
+}
+
+type TimestampType string
+
+const (
+	TimestampTypeCreatedTime    TimestampType = "created_time"
+	TimestampTypeLastEditedTime TimestampType = "last_edited_time"
+)
+
+type TimestampFilter struct {
+	Timestamp      TimestampType `json:"timestamp,omitempty"`
+	CreatedTime    *DateFilter   `json:"created_time,omitempty"`
+	LastEditedTime *DateFilter   `json:"last_edited_time,omitempty"`
 }
 
 type Sort struct {

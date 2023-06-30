@@ -143,6 +143,10 @@ func (p *Page) New() *Page {
 					delete(newPage.Properties, k)
 				}
 			}
+		case PropertyTypeUniqueID:
+			if v.UniqueID != nil {
+				delete(newPage.Properties, k)
+			}
 		}
 	}
 

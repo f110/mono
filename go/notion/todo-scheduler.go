@@ -20,8 +20,11 @@ import (
 var maxProcessingTime = 1 * time.Minute
 
 type todoSchedulerConfig struct {
-	DatabaseID     string `yaml:"database_id"`
-	ScheduleColumn string `yaml:"schedule_column"`
+	DatabaseID     string   `yaml:"database_id"`
+	ScheduleColumn string   `yaml:"schedule_column"`
+	ForceCreateID  []string `yaml:"force_create_id"`
+
+	forceCreate map[string]struct{} `yaml:"-"`
 }
 
 type ToDoScheduler struct {
@@ -38,6 +41,12 @@ func NewToDoScheduler(configPath, token string) (*ToDoScheduler, error) {
 	var conf []*todoSchedulerConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
 		return nil, xerrors.WithStack(err)
+	}
+	for _, c := range conf {
+		c.forceCreate = make(map[string]struct{})
+		for _, v := range c.ForceCreateID {
+			c.forceCreate[v] = struct{}{}
+		}
 	}
 
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
@@ -61,7 +70,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			config.DatabaseID,
 			&notion.Filter{
 				Property: config.ScheduleColumn,
-				Text: &notion.TextFilter{
+				RichText: &notion.RichTextFilter{
 					IsNotEmpty: true,
 				},
 			},
@@ -90,24 +99,26 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			e.ID = page.ID
 			e.Title = page.Properties["Name"].Title[0].PlainText
 			schedules = append(schedules, e)
-			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)), zap.String("id", e.ID))
+			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)), zap.String("id", e.ID), zap.String("title", e.Title))
 			pageMap[page.ID] = page
 		}
 
 		for _, spec := range schedules {
-			switch spec.Interval {
-			case intervalWeekly:
-				if time.Now().Weekday() != spec.Weekday {
-					continue
-				}
-			case intervalMonthly:
-				if time.Now().Day() != spec.Day {
-					logger.Log.Debug("Skip because the day is mismatch",
-						zap.Int("now", time.Now().Day()),
-						zap.Int("spec", spec.Day),
-						zap.String("id", spec.ID),
-					)
-					continue
+			if _, ok := config.forceCreate[spec.ID]; !ok {
+				switch spec.Interval {
+				case intervalWeekly:
+					if time.Now().Weekday() != spec.Weekday {
+						continue
+					}
+				case intervalMonthly:
+					if time.Now().Day() != spec.Day {
+						logger.Log.Debug("Skip because the day is mismatch",
+							zap.Int("now", time.Now().Day()),
+							zap.Int("spec", spec.Day),
+							zap.String("id", spec.ID),
+						)
+						continue
+					}
 				}
 			}
 
@@ -141,13 +152,13 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				Type: "rich_text",
 				RichText: []*notion.RichTextObject{
 					{
-						Type: "text",
+						Type: notion.RichTextObjectTypeText,
 						Text: &notion.Text{Content: "Made by "},
 					},
 					{
-						Type: "mention",
+						Type: notion.RichTextObjectTypeMention,
 						Mention: &notion.Mention{
-							Type: "page",
+							Type: notion.MentionTypePage,
 							Page: &notion.Meta{ID: spec.ID},
 						},
 					},

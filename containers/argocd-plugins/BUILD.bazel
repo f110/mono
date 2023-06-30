@@ -20,6 +20,6 @@ oci_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/argocd-plugins",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/argocd-plugins",
 )

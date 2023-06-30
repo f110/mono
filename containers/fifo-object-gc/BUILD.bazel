@@ -20,6 +20,6 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/fifo-object-gc",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/fifo-object-gc",
 )

@@ -20,13 +20,13 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/pv-migrator",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/pv-migrator",
 )
 
 oci_push(
     name = "push_gcr",
     image = ":image",
-    repository = "asia.gcr.io/fighting-falcon/pv-migrator",
     remote_tags = ["latest"],
+    repository = "asia.gcr.io/fighting-falcon/pv-migrator",
 )

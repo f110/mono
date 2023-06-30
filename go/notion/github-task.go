@@ -157,7 +157,7 @@ func (g *GitHubTask) Execute() error {
 			g.config.DatabaseID,
 			&notion.Filter{
 				Property: g.config.URLProperty,
-				Text: &notion.TextFilter{
+				RichText: &notion.RichTextFilter{
 					IsNotEmpty: true,
 				},
 			},
