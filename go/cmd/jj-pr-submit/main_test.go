@@ -10,7 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/logger"
 )
+
+func TestMain(m *testing.M) {
+	logger.Init()
+	m.Run()
+}
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
 	t.Run("StateCreatePR", func(t *testing.T) {
