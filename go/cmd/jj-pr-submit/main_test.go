@@ -1,0 +1,127 @@
+package main
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	"github.com/google/go-github/v49/github"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"go.f110.dev/mono/go/githubutil"
+)
+
+func TestJujutsuPRSubmitCommand(t *testing.T) {
+	t.Run("StateCreatePR", func(t *testing.T) {
+		ghMock := githubutil.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.RegisteredTransport()})
+
+		c := newCommand()
+		c.ghClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.stack = []*commit{
+			{
+				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Branch: "push-ylsnsuvootnp",
+				Description: `util: Fix
+
+This PR fixes the bug.`,
+			},
+			{
+				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Branch: "push-ulplmwrqqxyx",
+				Description: `math: Add
+
+This PR improves math package.`,
+			},
+			{
+				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Branch: "push-wlkxotovqzqn",
+				Description: `crypto: Fix security issue
+
+This PR contains fixing some security issues.`,
+			},
+		}
+
+		nextState, err := c.createPR(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, stateUpdatePR, nextState)
+		if pr := repo.AssertPullRequest(t, 1); pr != nil {
+			assert.Equal(t, "push-wlkxotovqzqn", pr.Head.GetRef())
+			assert.Equal(t, "master", pr.Base.GetRef())
+			assert.Equal(t, "crypto: Fix security issue", pr.GetTitle())
+		}
+		if pr := repo.AssertPullRequest(t, 2); pr != nil {
+			assert.Equal(t, "push-ulplmwrqqxyx", pr.Head.GetRef())
+			assert.Equal(t, "push-wlkxotovqzqn", pr.Base.GetRef())
+			assert.Equal(t, "math: Add", pr.GetTitle())
+		}
+		if pr := repo.AssertPullRequest(t, 3); pr != nil {
+			assert.Equal(t, "push-ylsnsuvootnp", pr.Head.GetRef())
+			assert.Equal(t, "push-ulplmwrqqxyx", pr.Base.GetRef())
+			assert.Equal(t, "util: Fix", pr.GetTitle())
+		}
+	})
+
+	t.Run("StateUpdatePR", func(t *testing.T) {
+		ghMock := githubutil.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.RegisteredTransport()})
+		repo.PullRequests = []*github.PullRequest{
+			{
+				Number: github.Int(1),
+				Base:   &github.PullRequestBranch{Ref: github.String("master")},
+				Head:   &github.PullRequestBranch{Ref: github.String("push-wlkxotovqzqn")},
+				Title:  github.String("crypto: Fix security issue"),
+				Body:   github.String("This PR contains fixing some security issues."),
+			},
+			{
+				Number: github.Int(2),
+				Base:   &github.PullRequestBranch{Ref: github.String("push-wlkxotovqzqn")},
+				Head:   &github.PullRequestBranch{Ref: github.String("push-ulplmwrqqxyx")},
+				Title:  github.String("math: Add"),
+				Body:   github.String("This PR improves math package."),
+			},
+			{
+				Number: github.Int(3),
+				Base:   &github.PullRequestBranch{Ref: github.String("push-ulplmwrqqxyx")},
+				Head:   &github.PullRequestBranch{Ref: github.String("push-ylsnsuvootnp")},
+				Title:  github.String("util: Fix"),
+				Body:   github.String("This PR fixes the bug."),
+			},
+		}
+
+		c := newCommand()
+		c.ghClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.stack = []*commit{
+			{
+				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Branch: "push-ylsnsuvootnp",
+				Description: `util: Fix
+
+This PR fixes the bug.`,
+				PullRequest: newPullRequest(repo.PullRequests[2]),
+			},
+			{
+				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Branch: "push-ulplmwrqqxyx",
+				Description: `math: Add
+
+This PR improves math package.`,
+				PullRequest: newPullRequest(repo.PullRequests[1]),
+			},
+			{
+				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Branch: "push-wlkxotovqzqn",
+				Description: `crypto: Fix security issue
+
+This PR contains fixing some security issues.`,
+				PullRequest: newPullRequest(repo.PullRequests[0]),
+			},
+		}
+
+		nextState, err := c.updatePR(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, stateClose, nextState)
+		t.Log(repo.PullRequests[0].GetBody())
+	})
+}
