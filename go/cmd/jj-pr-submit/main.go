@@ -255,7 +255,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
 	const logTemplate = `change_id ++ "," ++ commit_id ++ "," ++ branches ++ ",\"" ++ description ++ "\"\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf("%s..@ ~ empty()", c.DefaultBranch), "--no-graph", "--template", logTemplate)
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "(latest(present(main) | present(master)) & remote_branches())..@ ~ empty()", "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
