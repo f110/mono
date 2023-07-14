@@ -26,6 +26,8 @@ type FSM struct {
 	// CloseContext allows to specify the context when entering the close state.
 	// If not specify CloseContext, then entering the close state will be used same context.
 	CloseContext func() (context.Context, context.CancelFunc)
+	// DisableErrorOutput allows to disable writing the error to stderr.
+	DisableErrorOutput bool
 
 	ch         chan State
 	funcs      map[State]StateFunc
@@ -137,7 +139,9 @@ func (f *FSM) Loop() error {
 
 		go func() {
 			if nxt, err := fn(f.context()); err != nil {
-				fmt.Fprintf(os.Stderr, "%+v\n", err)
+				if !f.DisableErrorOutput {
+					fmt.Fprintf(os.Stderr, "%+v\n", err)
+				}
 				f.lastErr = err
 
 				// When the function for close state is returning an error, we should stop the main loop ASAP.
