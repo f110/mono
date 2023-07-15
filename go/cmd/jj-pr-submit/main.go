@@ -186,11 +186,12 @@ type commit struct {
 }
 
 type pullRequest struct {
-	ID    int
-	Title string
-	Body  string
-	Head  string
-	Base  string
+	ID      int
+	Title   string
+	Body    string
+	Head    string
+	HeadSHA string
+	Base    string
 }
 
 type stackedCommit []*commit
@@ -205,6 +206,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 	// Push all commits of current branch
 	var pushArgs []string
+	var changedPR []*commit
 	for _, v := range c.stack {
 		if v.Branch == "" {
 			logger.Log.Debug("Will create branch", zap.String("change_id", v.ChangeID))
@@ -224,6 +226,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 			if strings.HasPrefix(h.ChangeID, shortChangeID) && commitID != h.CommitID {
 				logger.Log.Debug("Will update branch", zap.String("change_id", h.ChangeID))
 				pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", h.ChangeID))
+				changedPR = append(changedPR, h)
 				break
 			}
 		}
@@ -248,6 +251,18 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 			return fsm.Error(err)
 		}
 		c.stack = stack
+
+		// Comment PR
+		if !c.DryRun {
+			for _, pr := range changedPR {
+				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
+				logger.Log.Debug("Make a new comment", zap.Int("number", pr.PullRequest.ID))
+				_, _, err = c.ghClient.PullRequests.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.PullRequestComment{Body: &body})
+				if err != nil {
+					return fsm.Error(xerrors.WithStack(err))
+				}
+			}
+		}
 	}
 
 	return fsm.Next(stateCreatePR)
@@ -284,20 +299,21 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		commits = append(commits, cm)
 		logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
 	}
+	if len(c.pullRequests) > 0 {
+		for _, v := range c.stack {
+			for _, pr := range c.pullRequests {
+				if v.Branch == pr.Head.GetRef() {
+					v.PullRequest = newPullRequest(pr)
+					break
+				}
+			}
+		}
+	}
 
 	return commits, nil
 }
 
 func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error) {
-	for _, v := range c.stack {
-		for _, pr := range c.pullRequests {
-			if v.Branch == pr.Head.GetRef() {
-				v.PullRequest = newPullRequest(pr)
-				break
-			}
-		}
-	}
-
 	// Create pull requests
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
@@ -436,11 +452,12 @@ func findRepositoryOwnerName(ctx context.Context, dir string) (string, string, e
 
 func newPullRequest(pr *github.PullRequest) *pullRequest {
 	return &pullRequest{
-		ID:    pr.GetNumber(),
-		Title: pr.GetTitle(),
-		Body:  pr.GetBody(),
-		Head:  pr.GetHead().GetRef(),
-		Base:  pr.GetBase().GetRef(),
+		ID:      pr.GetNumber(),
+		Title:   pr.GetTitle(),
+		Body:    pr.GetBody(),
+		Head:    pr.GetHead().GetRef(),
+		HeadSHA: pr.GetHead().GetSHA(),
+		Base:    pr.GetBase().GetRef(),
 	}
 }
 
