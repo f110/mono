@@ -22,7 +22,7 @@ type Mock struct {
 
 type Repository struct {
 	mu           sync.Mutex
-	PullRequests []*github.PullRequest
+	pullRequests []*PullRequest
 }
 
 func NewMock() *Mock {
@@ -48,6 +48,10 @@ func (m *Mock) RegisteredTransport() *httpmock.MockTransport {
 	return tr
 }
 
+func (m *Mock) Client() *github.Client {
+	return github.NewClient(&http.Client{Transport: m.RegisteredTransport()})
+}
+
 func (m *Mock) RegisterResponder(tr *httpmock.MockTransport) {
 	m.registerPullRequestService(tr)
 }
@@ -55,7 +59,7 @@ func (m *Mock) RegisterResponder(tr *httpmock.MockTransport) {
 func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
 	// Create a pull request
 	// POST /repos/octocat/example/pulls
-	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls`), func(req *http.Request) (*http.Response, error) {
+	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls$`), func(req *http.Request) (*http.Response, error) {
 		r := m.findRepository(req.URL.Path)
 		if r == nil {
 			return newNotFoundResponse(req)
@@ -65,7 +69,7 @@ func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
 			return newErrResponse(req, http.StatusBadRequest, err.Error())
 		}
 
-		newNumber := r.nextIndex()
+		newNumber := r.NextIndex()
 		pr := &github.PullRequest{
 			Number: &newNumber,
 			Title:  reqPR.Title,
@@ -77,13 +81,13 @@ func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
 				Ref: reqPR.Base,
 			},
 		}
-		r.addPullRequest(pr)
+		r.PullRequests(pr)
 		return newMockJSONResponse(req, http.StatusOK, pr)
 	})
 
 	// Update a pull request
 	// PATCH /repos/octocat/example/pulls/1
-	tr.RegisterRegexpResponder(http.MethodPatch, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls/\d+`), func(req *http.Request) (*http.Response, error) {
+	tr.RegisterRegexpResponder(http.MethodPatch, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls/\d+$`), func(req *http.Request) (*http.Response, error) {
 		r := m.findRepository(req.URL.Path)
 		if r == nil {
 			return newNotFoundResponse(req)
@@ -129,6 +133,31 @@ func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
 
 		return newMockJSONResponse(req, http.StatusOK, pr)
 	})
+
+	// Create a new comment
+	// POST /repos/octocat/example/pulls/1/comments
+	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls/\d+/comments`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		num, err := strconv.Atoi(s[5])
+		if err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+		pr := r.GetPullRequest(num)
+		if pr == nil {
+			return newNotFoundResponse(req)
+		}
+		var comment github.PullRequestComment
+		if err := json.NewDecoder(req.Body).Decode(&comment); err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+
+		pr.Comments = append(pr.Comments, &comment)
+		return newMockJSONResponse(req, http.StatusOK, comment)
+	})
 }
 
 func (m *Mock) findRepository(p string) *Repository {
@@ -141,9 +170,9 @@ func (m *Mock) findRepository(p string) *Repository {
 	return nil
 }
 
-func (r *Repository) AssertPullRequest(t *testing.T, number int) *github.PullRequest {
+func (r *Repository) AssertPullRequest(t *testing.T, number int) *PullRequest {
 	t.Helper()
-	for _, v := range r.PullRequests {
+	for _, v := range r.pullRequests {
 		if v.GetNumber() == number {
 			return v
 		}
@@ -153,12 +182,16 @@ func (r *Repository) AssertPullRequest(t *testing.T, number int) *github.PullReq
 	return nil
 }
 
-func (r *Repository) nextIndex() int {
+func (r *Repository) NextIndex() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	return r.nextIndex()
+}
+
+func (r *Repository) nextIndex() int {
 	var lastIndex int
-	for _, v := range r.PullRequests {
+	for _, v := range r.pullRequests {
 		if v.GetNumber() > lastIndex {
 			lastIndex = v.GetNumber()
 		}
@@ -167,21 +200,34 @@ func (r *Repository) nextIndex() int {
 	return lastIndex + 1
 }
 
-func (r *Repository) addPullRequest(pr *github.PullRequest) {
+func (r *Repository) PullRequests(pullRequests ...*github.PullRequest) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.PullRequests = append(r.PullRequests, pr)
+	for _, v := range pullRequests {
+		r.pullRequests = append(r.pullRequests, &PullRequest{
+			PullRequest: *v,
+		})
+		if v.GetNumber() == 0 {
+			r.pullRequests[len(r.pullRequests)-1].Number = github.Int(r.nextIndex())
+		}
+	}
 }
 
-func (r *Repository) GetPullRequest(num int) *github.PullRequest {
+func (r *Repository) GetPullRequest(num int) *PullRequest {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for _, v := range r.PullRequests {
+	for _, v := range r.pullRequests {
 		if v.GetNumber() == num {
 			return v
 		}
 	}
 	return nil
+}
+
+type PullRequest struct {
+	github.PullRequest
+
+	Comments []*github.PullRequestComment
 }
 
 func newNotFoundResponse(req *http.Request) (*http.Response, error) {
