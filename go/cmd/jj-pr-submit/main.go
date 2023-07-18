@@ -211,8 +211,20 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		if v.Branch == "" {
 			logger.Log.Debug("Will create branch", zap.String("change_id", v.ChangeID))
 			pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", v.ChangeID))
+		} else {
+			var found bool
+			for _, r := range c.remoteBranches {
+				if r.GetName() == v.Branch {
+					found = true
+					break
+				}
+			}
+			if !found {
+				pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", v.ChangeID))
+			}
 		}
 	}
+	// Check remote branches to update PR
 	for _, v := range c.remoteBranches {
 		if v.GetName() == "" {
 			continue
