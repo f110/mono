@@ -192,6 +192,7 @@ type pullRequest struct {
 	Head    string
 	HeadSHA string
 	Base    string
+	URL     string
 }
 
 type stackedCommit []*commit
@@ -407,7 +408,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 
 		if needUpdateBaseBranch || needUpdateTitle || needUpdateBody {
 			// Update the pull request
-			fmt.Printf("Update pull request for %s\n", v.ChangeID)
+			fmt.Printf("Update pull request: %s\n", v.PullRequest.URL)
 			logger.Log.Debug("Update pull request reason", zap.Bool("base_branch", needUpdateBaseBranch), zap.Bool("title", needUpdateTitle), zap.Bool("body", needUpdateBody))
 			if !c.DryRun {
 				pr, _, err := c.ghClient.PullRequests.Edit(ctx, c.repositoryOwner, c.repositoryName, v.PullRequest.ID, &updatedPR)
@@ -470,6 +471,7 @@ func newPullRequest(pr *github.PullRequest) *pullRequest {
 		Head:    pr.GetHead().GetRef(),
 		HeadSHA: pr.GetHead().GetSHA(),
 		Base:    pr.GetBase().GetRef(),
+		URL:     pr.GetHTMLURL(),
 	}
 }
 
