@@ -27,7 +27,7 @@ type ObjectStorageIndexManager struct {
 
 type StorageClient interface {
 	Name() string
-	Get(context.Context, string) (io.ReadCloser, error)
+	Get(context.Context, string) (*storage.Object, error)
 	Delete(context.Context, string) error
 	Put(context.Context, string, []byte) error
 	PutReader(context.Context, string, io.Reader) error
@@ -97,12 +97,12 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			buf, err := io.ReadAll(r)
+			buf, err := io.ReadAll(r.Body)
 			if err != nil {
-				r.Close()
+				r.Body.Close()
 				return xerrors.WithStack(err)
 			}
-			r.Close()
+			r.Body.Close()
 
 			filePath := filepath.Join(tmpDir, filepath.Base(f.Name))
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {

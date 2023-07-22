@@ -196,8 +196,8 @@ func (d *Dashboard) handleLogs(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	defer r.Close()
-	io.Copy(w, r)
+	defer r.Body.Close()
+	io.Copy(w, r.Body)
 }
 
 func (d *Dashboard) handleManifest(w http.ResponseWriter, req *http.Request) {

@@ -306,8 +306,8 @@ func (c *ModuleCache) Archive(ctx context.Context, module, version string, w io.
 	if err != nil {
 		return CacheMiss
 	}
-	defer r.Close()
-	if _, err := io.Copy(w, r); err != nil {
+	defer r.Body.Close()
+	if _, err := io.Copy(w, r.Body); err != nil {
 		return err
 	}
 

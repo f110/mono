@@ -26,13 +26,13 @@ func TestMock_AddTree(t *testing.T) {
 	data, err := m.Get(context.Background(), "test/foobar")
 	require.NoError(t, err)
 	assert.NotNil(t, data)
-	buf, err := io.ReadAll(data)
+	buf, err := io.ReadAll(data.Body)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("foobar"), buf)
 
 	data, err = m.Get(context.Background(), "good")
 	require.NoError(t, err)
-	buf, err = io.ReadAll(data)
+	buf, err = io.ReadAll(data.Body)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("good"), buf)
 
@@ -54,7 +54,7 @@ func TestMock_AddTree(t *testing.T) {
 	require.NoError(t, err)
 	data, err = m.Get(context.Background(), "newfile")
 	require.NoError(t, err)
-	buf, err = io.ReadAll(data)
+	buf, err = io.ReadAll(data.Body)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("newfile"), buf)
 
@@ -69,7 +69,7 @@ func TestMock_AddTree(t *testing.T) {
 	require.NoError(t, err)
 	data, err = m.Get(context.Background(), "update")
 	require.NoError(t, err)
-	buf, err = io.ReadAll(data)
+	buf, err = io.ReadAll(data.Body)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("2nd"), buf)
 
@@ -79,7 +79,7 @@ func TestMock_AddTree(t *testing.T) {
 	require.NoError(t, err)
 	data, err = m.Get(context.Background(), "test/update")
 	require.NoError(t, err)
-	buf, err = io.ReadAll(data)
+	buf, err = io.ReadAll(data.Body)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("2nd"), buf)
 }

@@ -89,8 +89,8 @@ func (m *ManifestManager) GetLatest(ctx context.Context) (Manifest, error) {
 	if err != nil {
 		return manifest, xerrors.WithStack(err)
 	}
-	defer r.Close()
-	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&manifest); err != nil {
 		return manifest, xerrors.WithStack(err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
@@ -105,8 +105,8 @@ func (m *ManifestManager) Get(ctx context.Context, ts uint64) (Manifest, error) 
 	if err != nil {
 		return manifest, xerrors.WithStack(err)
 	}
-	defer r.Close()
-	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&manifest); err != nil {
 		return manifest, xerrors.WithStack(err)
 	}
 	manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
@@ -141,13 +141,13 @@ func (m *ManifestManager) GetAll(ctx context.Context) ([]Manifest, error) {
 			return nil, xerrors.WithStack(err)
 		}
 		var manifest Manifest
-		if err := json.NewDecoder(r).Decode(&manifest); err != nil {
-			r.Close()
+		if err := json.NewDecoder(r.Body).Decode(&manifest); err != nil {
+			r.Body.Close()
 			return nil, xerrors.WithStack(err)
 		}
 		manifest.filename = fmt.Sprintf("manifest_%d.json", manifest.ExecutionKey)
 		manifests = append(manifests, manifest)
-		r.Close()
+		r.Body.Close()
 	}
 
 	return manifests, nil

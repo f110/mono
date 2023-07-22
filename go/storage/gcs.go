@@ -20,8 +20,8 @@ type GCSOptions struct {
 
 type Google struct {
 	credentialJSON []byte
-	bucket string
-	opt    GCSOptions
+	bucket         string
+	opt            GCSOptions
 }
 
 var _ storageInterface = &Google{}
@@ -112,13 +112,17 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 	}
 }
 
-func (g *Google) Get(ctx context.Context, name string) (io.ReadCloser, error) {
+func (g *Google) Get(ctx context.Context, name string) (*Object, error) {
 	client, err := storage.NewClient(ctx, option.WithCredentialsJSON(g.credentialJSON))
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 
 	obj := client.Bucket(g.bucket).Object(name)
+	attrs, err := obj.Attrs(ctx)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
 	retryCount := 1
 	for {
 		r, err := obj.NewReader(ctx)
@@ -131,6 +135,11 @@ func (g *Google) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 			return nil, xerrors.WithStack(err)
 		}
 
-		return r, nil
+		return &Object{
+			Name:         obj.ObjectName(),
+			Size:         attrs.Size,
+			LastModified: attrs.Updated,
+			Body:         r,
+		}, nil
 	}
 }

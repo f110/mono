@@ -126,7 +126,7 @@ func (u *repositoryUpdater) getLock(ctx context.Context) (*updaterLock, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := json.NewDecoder(lockFileReader).Decode(&lock); err != nil {
+	if err := json.NewDecoder(lockFileReader.Body).Decode(&lock); err != nil {
 		return nil, err
 	}
 

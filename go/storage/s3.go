@@ -127,7 +127,7 @@ func (s *S3) Endpoint() string {
 	return s.opt.Endpoint
 }
 
-func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
+func (s *S3) Get(ctx context.Context, name string) (*Object, error) {
 	c, err := s.opt.Client()
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -156,7 +156,12 @@ func (s *S3) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 			return nil, xerrors.WithStack(err)
 		}
 
-		return obj.Body, nil
+		return &Object{
+			Name:         name,
+			Size:         obj.ContentLength,
+			LastModified: *obj.LastModified,
+			Body:         obj.Body,
+		}, nil
 	}
 }
 

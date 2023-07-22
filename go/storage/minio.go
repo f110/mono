@@ -268,7 +268,7 @@ ListObjects:
 	return files, nil
 }
 
-func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
+func (m *MinIO) Get(ctx context.Context, name string) (*Object, error) {
 	mc, err := m.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -286,7 +286,16 @@ func (m *MinIO) Get(ctx context.Context, name string) (io.ReadCloser, error) {
 			return nil, xerrors.WithStack(err)
 		}
 
-		return obj, nil
+		info, err := obj.Stat()
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		return &Object{
+			Name:         name,
+			Size:         info.Size,
+			LastModified: info.LastModified,
+			Body:         obj,
+		}, nil
 	}
 }
 

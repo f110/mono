@@ -34,7 +34,7 @@ import (
 type ObjectStorageInterface interface {
 	PutReader(ctx context.Context, name string, data io.Reader) error
 	Delete(ctx context.Context, name string) error
-	Get(ctx context.Context, name string) (io.ReadCloser, error)
+	Get(ctx context.Context, name string) (*storage.Object, error)
 	List(ctx context.Context, prefix string) ([]*storage.Object, error)
 }
 
@@ -151,10 +151,10 @@ func (b *ObjectStorageStorer) InflatePackFile(ctx context.Context) error {
 			return err
 		}
 		idx := idxfile.NewMemoryIndex()
-		if err := idxfile.NewDecoder(file).Decode(idx); err != nil {
+		if err := idxfile.NewDecoder(file.Body).Decode(idx); err != nil {
 			return err
 		}
-		if err := file.Close(); err != nil {
+		if err := file.Body.Close(); err != nil {
 			return err
 		}
 
@@ -162,11 +162,11 @@ func (b *ObjectStorageStorer) InflatePackFile(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		buf, err := io.ReadAll(file)
+		buf, err := io.ReadAll(file.Body)
 		if err != nil {
 			return err
 		}
-		if err := file.Close(); err != nil {
+		if err := file.Body.Close(); err != nil {
 			return err
 		}
 		packfile, err := NewPackfile(idx, nopCloser(bytes.NewReader(buf)))
@@ -205,11 +205,11 @@ func (b *ObjectStorageStorer) Config() (*config.Config, error) {
 		return nil, xerrors.WithStack(err)
 	}
 
-	conf, err := config.ReadConfig(file)
+	conf, err := config.ReadConfig(file.Body)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	return conf, nil
@@ -246,10 +246,10 @@ func (b *ObjectStorageStorer) Index() (*index.Index, error) {
 	}
 
 	idx := &index.Index{Version: 2}
-	if err := index.NewDecoder(file).Decode(idx); err != nil {
+	if err := index.NewDecoder(file.Body).Decode(idx); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	return idx, nil
@@ -279,11 +279,11 @@ func (b *ObjectStorageStorer) Shallow() ([]plumbing.Hash, error) {
 	}
 
 	var hash []plumbing.Hash
-	s := bufio.NewScanner(file)
+	s := bufio.NewScanner(file.Body)
 	for s.Scan() {
 		hash = append(hash, plumbing.NewHash(s.Text()))
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	if err := s.Err(); err != nil {
@@ -318,7 +318,7 @@ func (b *ObjectStorageStorer) CheckAndSetReference(new, old *plumbing.Reference)
 			return xerrors.WithStack(err)
 		}
 
-		oldRef, err := b.readReference(file, old.Name().String())
+		oldRef, err := b.readReference(file.Body, old.Name().String())
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -341,7 +341,7 @@ func (b *ObjectStorageStorer) Reference(name plumbing.ReferenceName) (*plumbing.
 		}
 		return nil, xerrors.WithStack(err)
 	}
-	ref, err := b.readReference(file, name.String())
+	ref, err := b.readReference(file.Body, name.String())
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -410,7 +410,7 @@ func (b *ObjectStorageStorer) readRefs() ([]*plumbing.Reference, error) {
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		ref, err := b.readReference(file, strings.TrimPrefix(v.Name, b.rootPath+"/"))
+		ref, err := b.readReference(file.Body, strings.TrimPrefix(v.Name, b.rootPath+"/"))
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
@@ -430,7 +430,7 @@ func (b *ObjectStorageStorer) readPackedRefs() ([]*plumbing.Reference, error) {
 		}
 		return nil, xerrors.WithStack(err)
 	}
-	s := bufio.NewScanner(file)
+	s := bufio.NewScanner(file.Body)
 	for s.Scan() {
 		ref, err := b.parsePackedRefsLine(s.Text())
 		if err != nil {
@@ -440,7 +440,7 @@ func (b *ObjectStorageStorer) readPackedRefs() ([]*plumbing.Reference, error) {
 			refs = append(refs, ref)
 		}
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 
@@ -466,7 +466,7 @@ func (b *ObjectStorageStorer) readHEAD() (*plumbing.Reference, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	ref, err := b.readReference(file, "HEAD")
+	ref, err := b.readReference(file.Body, "HEAD")
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -486,7 +486,7 @@ func (b *ObjectStorageStorer) RemoveReference(name plumbing.ReferenceName) error
 		}
 		return xerrors.WithStack(err)
 	}
-	s := bufio.NewScanner(file)
+	s := bufio.NewScanner(file.Body)
 	found := false
 	newPackedRefs := new(bytes.Buffer)
 	for s.Scan() {
@@ -505,7 +505,7 @@ func (b *ObjectStorageStorer) RemoveReference(name plumbing.ReferenceName) error
 			return xerrors.WithStack(err)
 		}
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -529,7 +529,7 @@ func (b *ObjectStorageStorer) CountLooseRefs() (int, error) {
 		if err != nil {
 			return -1, xerrors.WithStack(err)
 		}
-		ref, err := b.readReference(file, strings.TrimPrefix(v.Name, path.Join(b.rootPath, "refs")))
+		ref, err := b.readReference(file.Body, strings.TrimPrefix(v.Name, path.Join(b.rootPath, "refs")))
 		if err != nil {
 			return -1, xerrors.WithStack(err)
 		}
@@ -671,10 +671,10 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 			return nil, err
 		}
 		idx := idxfile.NewMemoryIndex()
-		if err := idxfile.NewDecoder(file).Decode(idx); err != nil {
+		if err := idxfile.NewDecoder(file.Body).Decode(idx); err != nil {
 			return nil, err
 		}
-		if err := file.Close(); err != nil {
+		if err := file.Body.Close(); err != nil {
 			return nil, err
 		}
 		if _, err := idx.FindOffset(h); err == nil {
@@ -692,11 +692,11 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	if err != nil {
 		return nil, err
 	}
-	buf, err := io.ReadAll(file)
+	buf, err := io.ReadAll(file.Body)
 	if err != nil {
 		return nil, err
 	}
-	if err := file.Close(); err != nil {
+	if err := file.Body.Close(); err != nil {
 		return nil, err
 	}
 	packfile, err := NewPackfile(packIndex, nopCloser(bytes.NewReader(buf)))
@@ -755,7 +755,7 @@ func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbin
 		return nil, err
 	}
 
-	obj, err := b.readUnpackedEncodedObject(file, h)
+	obj, err := b.readUnpackedEncodedObject(file.Body, h)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -815,7 +815,7 @@ func (b *ObjectStorageStorer) IterEncodedObjects(objectType plumbing.ObjectType)
 			return nil, xerrors.WithStack(err)
 		}
 
-		obj, err := b.readUnpackedEncodedObject(file, plumbing.NewHash(s[2]+s[3]))
+		obj, err := b.readUnpackedEncodedObject(file.Body, plumbing.NewHash(s[2]+s[3]))
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}

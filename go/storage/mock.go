@@ -151,10 +151,14 @@ func (m *Mock) deleteNode(name string) {
 	}
 }
 
-func (m *Mock) Get(_ context.Context, name string) (io.ReadCloser, error) {
+func (m *Mock) Get(_ context.Context, name string) (*Object, error) {
 	n := m.findNode(name)
 	if n != nil {
-		return io.NopCloser(bytes.NewReader(n.Data)), nil
+		return &Object{
+			Name: name,
+			Size: int64(len(n.Data)),
+			Body: io.NopCloser(bytes.NewReader(n.Data)),
+		}, nil
 	}
 
 	return nil, xerrors.WithStack(ErrObjectNotFound)

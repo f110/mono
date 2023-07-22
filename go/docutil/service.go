@@ -39,7 +39,7 @@ import (
 type ObjectStorageInterface interface {
 	PutReader(ctx context.Context, name string, data io.Reader) error
 	Delete(ctx context.Context, name string) error
-	Get(ctx context.Context, name string) (io.ReadCloser, error)
+	Get(ctx context.Context, name string) (*storage.Object, error)
 	List(ctx context.Context, prefix string) ([]*storage.Object, error)
 }
 
@@ -712,10 +712,10 @@ func newTitleCache(ctx context.Context, storage ObjectStorageInterface, docs *do
 		fmt.Sprintf("external_links/%s/%s.json", docs.Repository.Name, docs.Ref.String()),
 	)
 	if err == nil {
-		if err := json.NewDecoder(buf).Decode(&externalLinkTitleCache); err != nil {
+		if err := json.NewDecoder(buf.Body).Decode(&externalLinkTitleCache); err != nil {
 			logger.Log.Error("Failed to decode external link cache file", logger.Error(err))
 		}
-		if err := buf.Close(); err != nil {
+		if err := buf.Body.Close(); err != nil {
 			logger.Log.Error("Failed to close buffer", logger.Error(err))
 		}
 	}

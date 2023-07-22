@@ -13,6 +13,7 @@ var (
 	Log *zap.Logger
 
 	logLevel string
+	output   = "stdout"
 )
 
 func Flags(fs *pflag.FlagSet) {
@@ -21,6 +22,10 @@ func Flags(fs *pflag.FlagSet) {
 
 func SetLogLevel(level string) {
 	logLevel = level
+}
+
+func OutputStderr() {
+	output = "stderr"
 }
 
 func Enabled() bool {
@@ -71,7 +76,7 @@ func initLogger() error {
 		Sampling:         nil, // disable sampling
 		Encoding:         encoding,
 		EncoderConfig:    encoderConf,
-		OutputPaths:      []string{"stdout"},
+		OutputPaths:      []string{output},
 		ErrorOutputPaths: []string{"stderr"},
 	}
 
