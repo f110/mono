@@ -39,7 +39,7 @@ VAULT_ASSETS = {
             ),
             "arm64": (
                 "https://releases.hashicorp.com/vault/1.11.4/vault_1.11.4_darwin_arm64.zip",
-                "e4ecc1bd182d9d50ff8607ad9e4588b5f85daf028c13d365c947714233a5683c",
+                "5e01d9b4fca779403b318918adcf6500c0aa718b60471030a364b2d05da17a57",
             ),
         },
     },
@@ -85,7 +85,7 @@ VAULT_ASSETS = {
                 "https://releases.hashicorp.com/vault/1.9.10/vault_1.9.10_darwin_arm64.zip",
                 "92f4aa2f9e667063134116fb831cdd33e25f5227bef613cc4c44ebead5f89148",
             ),
-        }
+        },
     },
     "1.8.12": {
         "linux": {
