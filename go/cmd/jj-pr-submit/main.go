@@ -281,9 +281,10 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	return fsm.Next(stateCreatePR)
 }
 
+// getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
 	const logTemplate = `change_id ++ "," ++ commit_id ++ "," ++ branches ++ ",\"" ++ description ++ "\"\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "(latest(present(main) | present(master)) & remote_branches())..@ ~ empty()", "--no-graph", "--template", logTemplate)
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "(latest(present(main@origin) | present(master@origin)) & remote_branches())..@ ~ empty()", "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
@@ -328,6 +329,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 
 func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error) {
 	// Create pull requests
+	// Scan reverse order to create PR for older commit first.
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
 		if v.PullRequest != nil {
@@ -386,7 +388,8 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		body := v.PullRequest.Body
 		if len(c.stack) > 1 {
 			stackNav := "\n---\n\nPull request chain:\n\n"
-			for _, c := range c.stack {
+			for i := len(c.stack); i >= 0; i-- {
+				c := c.stack[i]
 				var arrow string
 				if v == c {
 					arrow = " 👉"
