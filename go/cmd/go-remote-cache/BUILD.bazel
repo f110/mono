@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go-remote-cache_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/go-remote-cache",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/fsm",
+        "//go/logger",
+        "//go/storage",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "go-remote-cache",
+    embed = [":go-remote-cache_lib"],
+    visibility = ["//visibility:public"],
+)

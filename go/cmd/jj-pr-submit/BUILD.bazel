@@ -29,6 +29,7 @@ go_test(
     embed = [":jj-pr-submit_lib"],
     deps = [
         "//go/githubutil",
+        "//go/logger",
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",

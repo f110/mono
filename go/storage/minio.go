@@ -179,7 +179,7 @@ type MinIO struct {
 var _ storageInterface = &MinIO{}
 
 // NewMinIOStorage returns the client for MinIO
-// Deprecated: Use the client for S3.
+// Deprecated: Use the client for S3 instead.
 // The SDK of MinIO is not good quality.
 func NewMinIOStorage(bucket string, opt MinIOOptions) *MinIO {
 	return &MinIO{
