@@ -391,7 +391,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				if v == c {
 					arrow = " 👉"
 				}
-				stackNav += fmt.Sprintf("-%s #%d\n", arrow, c.PullRequest.ID)
+				stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
 			}
 			if i := strings.LastIndex(v.PullRequest.Body, "\n---\n\nPull request chain:\n\n-"); i >= 0 {
 				body = v.PullRequest.Body[:i]
