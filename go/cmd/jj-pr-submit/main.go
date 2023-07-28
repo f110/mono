@@ -33,6 +33,7 @@ type jujutsuPRSubmitCommand struct {
 	Repository    string
 	DefaultBranch string
 	DryRun        bool
+	Force         bool
 
 	repositoryOwner string
 	repositoryName  string
@@ -78,6 +79,7 @@ func (c *jujutsuPRSubmitCommand) flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Repository, "repository", "", "Repository name. If not specified, try to get from remote url")
 	fs.StringVar(&c.DefaultBranch, "default-branch", "", "Default branch name. If not specified, get from API")
 	fs.BoolVar(&c.DryRun, "dry-run", false, "Not impact on remote")
+	fs.BoolVar(&c.Force, "force", false, "Push commits when there are more than 10 commits in the stack.")
 }
 
 func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
@@ -312,6 +314,9 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		}
 		commits = append(commits, cm)
 		logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
+	}
+	if len(commits) > 9 && !c.Force {
+		return nil, xerrors.Newf("there are %d commits in the stack.", len(commits))
 	}
 	if len(c.pullRequests) > 0 {
 		for _, v := range c.stack {
