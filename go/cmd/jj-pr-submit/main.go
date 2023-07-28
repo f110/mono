@@ -26,6 +26,10 @@ import (
 	"go.f110.dev/mono/go/logger"
 )
 
+const (
+	stackRevsets = "(latest(present(main@origin) | present(master@origin)) & remote_branches())..@ ~ empty()"
+)
+
 type jujutsuPRSubmitCommand struct {
 	*fsm.FSM
 
@@ -34,6 +38,7 @@ type jujutsuPRSubmitCommand struct {
 	DefaultBranch string
 	DryRun        bool
 	Force         bool
+	DisplayStack  bool
 
 	repositoryOwner string
 	repositoryName  string
@@ -47,6 +52,7 @@ type jujutsuPRSubmitCommand struct {
 
 const (
 	stateInit fsm.State = iota
+	stateDisplayStack
 	stateGetToken
 	stateGetMetadata
 	statePushCommit
@@ -59,13 +65,14 @@ func newCommand() *jujutsuPRSubmitCommand {
 	c := &jujutsuPRSubmitCommand{}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:        c.init,
-			stateGetToken:    c.getToken,
-			stateGetMetadata: c.getMetadata,
-			statePushCommit:  c.pushCommit,
-			stateCreatePR:    c.createPR,
-			stateUpdatePR:    c.updatePR,
-			stateClose:       c.close,
+			stateInit:         c.init,
+			stateDisplayStack: c.displayStack,
+			stateGetToken:     c.getToken,
+			stateGetMetadata:  c.getMetadata,
+			statePushCommit:   c.pushCommit,
+			stateCreatePR:     c.createPR,
+			stateUpdatePR:     c.updatePR,
+			stateClose:        c.close,
 		},
 		stateInit,
 		stateClose,
@@ -79,7 +86,8 @@ func (c *jujutsuPRSubmitCommand) flags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Repository, "repository", "", "Repository name. If not specified, try to get from remote url")
 	fs.StringVar(&c.DefaultBranch, "default-branch", "", "Default branch name. If not specified, get from API")
 	fs.BoolVar(&c.DryRun, "dry-run", false, "Not impact on remote")
-	fs.BoolVar(&c.Force, "force", false, "Push commits when there are more than 10 commits in the stack.")
+	fs.BoolVar(&c.Force, "force", false, "Push commits when there are more than 10 commits in the stack")
+	fs.BoolVar(&c.DisplayStack, "display-stack", false, "Only display the stack")
 }
 
 func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
@@ -107,8 +115,28 @@ func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
 			return fsm.Error(err)
 		}
 	}
+	if c.DisplayStack {
+		return fsm.Next(stateDisplayStack)
+	}
 
 	return fsm.Next(stateGetToken)
+}
+
+func (c *jujutsuPRSubmitCommand) displayStack(ctx context.Context) (fsm.State, error) {
+	commits, err := c.getStack(ctx)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	for i, v := range commits {
+		var title string
+		if i := strings.Index(v.Description, "\n"); i > 0 {
+			title = v.Description[:i]
+		} else {
+			title = v.Description
+		}
+		fmt.Printf("%d. %s: %s\n", i+1, v.ChangeID[:12], title)
+	}
+	return fsm.Finish()
 }
 
 func (c *jujutsuPRSubmitCommand) getToken(ctx context.Context) (fsm.State, error) {
@@ -286,7 +314,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 // getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
 	const logTemplate = `change_id ++ "," ++ commit_id ++ "," ++ branches ++ ",\"" ++ description ++ "\"\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "(latest(present(main@origin) | present(master@origin)) & remote_branches())..@ ~ empty()", "--no-graph", "--template", logTemplate)
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", stackRevsets, "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
