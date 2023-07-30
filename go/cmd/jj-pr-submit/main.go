@@ -7,10 +7,13 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -361,6 +364,47 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 }
 
 func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error) {
+	// Find pull request template
+	cmd := exec.CommandContext(ctx, "jj", "workspace", "root")
+	cmd.Dir = c.Dir
+	buf, err := cmd.CombinedOutput()
+	if err != nil {
+		return fsm.Error(err)
+	}
+	repoRoot := strings.TrimSpace(string(buf))
+	templates, err := c.findPullRequestTemplate(repoRoot)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	var templateFile string
+	if len(templates) > 0 {
+		fmt.Println("Found multiple templates. Please pick the template.")
+		for i, v := range templates {
+			fmt.Printf("%d: %s\n", i+1, strings.TrimPrefix(v, repoRoot))
+		}
+		fmt.Printf("%d: Don't use\n", len(templates)+1)
+		fmt.Printf("Which template do you want to use?) ")
+		num := -1
+		n, _ := fmt.Scanf("%d", &num)
+		if n != 1 {
+			return fsm.Error(xerrors.New("please pick the template"))
+		}
+		if num == len(templates)+1 {
+			templateFile = ""
+		}
+		if 0 < num && num <= len(templates) {
+			templateFile = templates[num-1]
+		}
+	}
+	var template string
+	if templateFile != "" {
+		buf, err := os.ReadFile(templateFile)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		template = string(buf)
+	}
+
 	// Create pull requests
 	// Scan reverse order to create PR for older commit first.
 	for i := len(c.stack) - 1; i >= 0; i-- {
@@ -381,7 +425,9 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			if i := strings.Index(v.Description, "\n"); i > 0 {
 				title = v.Description[:i]
 				if len(v.Description) > i+2 {
-					description = v.Description[i+2:]
+					description = v.Description[i+2:] + "\n" + template
+				} else {
+					description = template
 				}
 			}
 
@@ -400,6 +446,41 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	}
 
 	return fsm.Next(stateUpdatePR)
+}
+
+func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, error) {
+	var templates []string
+	err := filepath.Walk(filepath.Join(root, ".github"), func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if path == filepath.Join(root, ".github") {
+			return nil
+		}
+		if info.Mode().IsDir() && info.Name() != "PULL_REQUEST_TEMPLATE" {
+			return filepath.SkipDir
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		filename := filepath.Base(path)
+		if strings.ToLower(filename) == "pull_request_template.md" {
+			templates = append(templates, path)
+		}
+		if strings.Contains(path, ".github/PULL_REQUEST_TEMPLATE/") {
+			templates = append(templates, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	if _, err := os.Lstat(filepath.Join(root, "docs/pull_request_template.md")); err == nil {
+		templates = append(templates, filepath.Join(root, "docs/pull_request_template.md"))
+	}
+
+	sort.Strings(templates)
+	return templates, nil
 }
 
 func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error) {

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-github/v49/github"
@@ -129,4 +131,19 @@ This PR contains fixing some security issues.`,
 		require.NoError(t, err)
 		assert.Equal(t, stateClose, nextState)
 	})
+}
+
+func TestFindPullRequestTemplate(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, ".github/PULL_REQUEST_TEMPLATE"), 0755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "docs"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".github/PULL_REQUEST_TEMPLATE.md"), nil, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".github/PULL_REQUEST_TEMPLATE/change.md"), nil, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, ".github/CODEOWNERS"), nil, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "docs/pull_request_template.md"), nil, 0644))
+
+	c := newCommand()
+	templates, err := c.findPullRequestTemplate(dir)
+	require.NoError(t, err)
+	assert.Len(t, templates, 3)
 }
