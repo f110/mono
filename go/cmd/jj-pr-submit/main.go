@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	stackRevsets = "(latest(present(main@origin) | present(master@origin)) & remote_branches())..@ ~ empty()"
+	stackRevsets = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
 )
 
 type jujutsuPRSubmitCommand struct {
@@ -52,9 +52,9 @@ type jujutsuPRSubmitCommand struct {
 
 const (
 	stateInit fsm.State = iota
-	stateDisplayStack
 	stateGetToken
 	stateGetMetadata
+	stateDisplayStack
 	statePushCommit
 	stateCreatePR
 	stateUpdatePR
@@ -66,9 +66,9 @@ func newCommand() *jujutsuPRSubmitCommand {
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:         c.init,
-			stateDisplayStack: c.displayStack,
 			stateGetToken:     c.getToken,
 			stateGetMetadata:  c.getMetadata,
+			stateDisplayStack: c.displayStack,
 			statePushCommit:   c.pushCommit,
 			stateCreatePR:     c.createPR,
 			stateUpdatePR:     c.updatePR,
@@ -114,9 +114,6 @@ func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
 		if err != nil {
 			return fsm.Error(err)
 		}
-	}
-	if c.DisplayStack {
-		return fsm.Next(stateDisplayStack)
 	}
 
 	return fsm.Next(stateGetToken)
@@ -201,6 +198,9 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 
 	if gotError {
 		return fsm.Error(xerrors.New(""))
+	}
+	if c.DisplayStack {
+		return fsm.Next(stateDisplayStack)
 	}
 	return fsm.Next(statePushCommit)
 }
@@ -314,7 +314,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 // getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
 	const logTemplate = `change_id ++ "," ++ commit_id ++ "," ++ branches ++ ",\"" ++ description ++ "\"\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", stackRevsets, "--no-graph", "--template", logTemplate)
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
