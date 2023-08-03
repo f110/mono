@@ -449,6 +449,10 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 }
 
 func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, error) {
+	if _, err := os.Lstat(filepath.Join(root, ".github")); os.IsNotExist(err) {
+		return nil, nil
+	}
+
 	var templates []string
 	err := filepath.Walk(filepath.Join(root, ".github"), func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
