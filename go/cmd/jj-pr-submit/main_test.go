@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -21,6 +22,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
+	if _, err := exec.LookPath("jj"); err == nil {
+		t.Skipf("Skip %s because jj is not found", t.Name())
+	}
+
 	t.Run("StateCreatePR", func(t *testing.T) {
 		ghMock := githubutil.NewMock()
 		repo := ghMock.Repository("f110/mono")
