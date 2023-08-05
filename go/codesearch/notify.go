@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"go.f110.dev/xerrors"
@@ -20,7 +21,7 @@ type Notify struct {
 }
 
 func NewNotify(u, streamName, subject string) (*Notify, error) {
-	nc, err := nats.Connect(u, nats.RetryOnFailedConnect(true))
+	nc, err := nats.Connect(u, nats.RetryOnFailedConnect(true), nats.PingInterval(30*time.Second))
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
