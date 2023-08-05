@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
-	if _, err := exec.LookPath("jj"); err == nil {
+	if _, err := exec.LookPath("jj"); err != nil {
 		t.Skipf("Skip %s because jj is not found", t.Name())
 	}
 
