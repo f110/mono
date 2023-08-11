@@ -13,6 +13,7 @@ go_library(
         "//vendor/github.com/google/nixery/config",
         "//vendor/github.com/google/nixery/layers",
         "//vendor/github.com/google/nixery/manifest",
+        "//vendor/github.com/google/nixery/storage",
         "//vendor/github.com/im7mortal/kmutex",
         "//vendor/github.com/spf13/cobra",
         "//vendor/github.com/spf13/pflag",
