@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "builder",
+    srcs = [
+        "archive.go",
+        "builder.go",
+        "cache.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/nixery/builder",
+    importpath = "github.com/google/nixery/builder",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/google/nixery/config",
+        "//vendor/github.com/google/nixery/layers",
+        "//vendor/github.com/google/nixery/manifest",
+        "//vendor/github.com/google/nixery/storage",
+        "//vendor/github.com/im7mortal/kmutex",
+        "//vendor/github.com/sirupsen/logrus",
+    ],
+)

@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "storage",
+    srcs = [
+        "filesystem.go",
+        "gcs.go",
+        "storage.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/nixery/storage",
+    importpath = "github.com/google/nixery/storage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/cloud.google.com/go/storage",
+        "//vendor/github.com/pkg/xattr",
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/golang.org/x/oauth2/google",
+    ],
+)

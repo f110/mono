@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cblas128",
+    srcs = [
+        "cblas128.go",
+        "conv.go",
+        "conv_hermitian.go",
+        "conv_symmetric.go",
+        "doc.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gonum.org/v1/gonum/blas/cblas128",
+    importpath = "gonum.org/v1/gonum/blas/cblas128",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/gonum.org/v1/gonum/blas",
+        "//vendor/gonum.org/v1/gonum/blas/gonum",
+    ],
+)

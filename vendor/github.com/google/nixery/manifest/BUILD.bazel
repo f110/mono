@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "manifest",
+    srcs = ["manifest.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/nixery/manifest",
+    importpath = "github.com/google/nixery/manifest",
+    visibility = ["//visibility:public"],
+)

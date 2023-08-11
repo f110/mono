@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "layers",
+    srcs = ["layers.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/google/nixery/layers",
+    importpath = "github.com/google/nixery/layers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/sirupsen/logrus",
+        "//vendor/gonum.org/v1/gonum/graph/flow",
+        "//vendor/gonum.org/v1/gonum/graph/simple",
+    ],
+)

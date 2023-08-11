@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "lapack64",
+    srcs = [
+        "doc.go",
+        "lapack64.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gonum.org/v1/gonum/lapack/lapack64",
+    importpath = "gonum.org/v1/gonum/lapack/lapack64",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/gonum.org/v1/gonum/blas",
+        "//vendor/gonum.org/v1/gonum/blas/blas64",
+        "//vendor/gonum.org/v1/gonum/lapack",
+        "//vendor/gonum.org/v1/gonum/lapack/gonum",
+    ],
+)

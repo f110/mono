@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "flow",
+    srcs = [
+        "control_flow_lt.go",
+        "control_flow_slt.go",
+        "doc.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gonum.org/v1/gonum/graph/flow",
+    importpath = "gonum.org/v1/gonum/graph/flow",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/gonum.org/v1/gonum/graph"],
+)

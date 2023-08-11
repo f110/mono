@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "uid",
+    srcs = ["uid.go"],
+    importmap = "go.f110.dev/mono/vendor/gonum.org/v1/gonum/graph/set/uid",
+    importpath = "gonum.org/v1/gonum/graph/set/uid",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/gonum.org/v1/gonum/graph/internal/set"],
+)
