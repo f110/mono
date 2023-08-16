@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+exec nix-build \
+  --show-trace \
+  --no-out-link "$@" \
+  --argstr loadPkgs load-pkgs.nix \
+  prepare-image.nix
