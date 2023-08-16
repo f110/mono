@@ -442,6 +442,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 				return fsm.Error(xerrors.WithStack(err))
 			}
 			v.PullRequest = newPullRequest(pr)
+			fmt.Printf("Created: %s\n", pr.GetHTMLURL())
 		}
 	}
 
