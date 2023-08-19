@@ -307,7 +307,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				}
 				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
 				logger.Log.Debug("Make a new comment", zap.Int("number", pr.PullRequest.ID))
-				_, _, err = c.ghClient.PullRequests.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.PullRequestComment{Body: &body})
+				_, _, err = c.ghClient.Issues.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.IssueComment{Body: &body})
 				if err != nil {
 					return fsm.Error(xerrors.WithStack(err))
 				}
@@ -344,7 +344,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		cm := &commit{
 			ChangeID:    line[0],
 			CommitID:    line[1],
-			Branch:      line[2],
+			Branch:      strings.TrimSuffix(line[2], "*"),
 			Description: line[3],
 		}
 		commits = append(commits, cm)
@@ -354,7 +354,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		return nil, xerrors.Newf("there are %d commits in the stack.", len(commits))
 	}
 	if len(c.pullRequests) > 0 {
-		for _, v := range c.stack {
+		for _, v := range commits {
 			for _, pr := range c.pullRequests {
 				if v.Branch == pr.Head.GetRef() {
 					v.PullRequest = newPullRequest(pr)
