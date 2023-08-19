@@ -189,6 +189,7 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		logger.Log.Debug("Retrieve pull requests")
 		pullRequests, _, err := c.ghClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{})
 		if err != nil {
 			logger.Log.Error("Could not get pull requests", logger.Error(err))
@@ -301,6 +302,9 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		// Comment PR
 		if !c.DryRun {
 			for _, pr := range changedPR {
+				if pr.PullRequest == nil {
+					continue
+				}
 				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
 				logger.Log.Debug("Make a new comment", zap.Int("number", pr.PullRequest.ID))
 				_, _, err = c.ghClient.PullRequests.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.PullRequestComment{Body: &body})
@@ -507,7 +511,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		body := v.PullRequest.Body
 		if len(c.stack) > 1 {
 			stackNav := "\n---\n\nPull request chain:\n\n"
-			for i := len(c.stack); i >= 0; i-- {
+			for i := len(c.stack) - 1; i >= 0; i-- {
 				c := c.stack[i]
 				var arrow string
 				if v == c {
