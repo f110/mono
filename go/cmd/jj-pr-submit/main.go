@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	stackRevsets = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
+	stackRevsets         = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
+	stackNavigatorHeader = "\n---\n\nPull request chain:\n\n"
 )
 
 type jujutsuPRSubmitCommand struct {
@@ -519,6 +520,13 @@ func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, e
 func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error) {
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
+		if v.PullRequest == nil {
+			if !c.DryRun {
+				logger.Log.Error("BUG: The pull request must update. but we can't find the pull request.")
+			}
+			logger.Log.Info("Skip to update the pull request")
+			continue
+		}
 		var updatedPR github.PullRequest
 
 		var needUpdateBaseBranch, needUpdateTitle, needUpdateBody bool
@@ -534,7 +542,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		}
 		body := v.PullRequest.Body
 		if len(c.stack) > 1 {
-			stackNav := "\n---\n\nPull request chain:\n\n"
+			stackNav := stackNavigatorHeader
 			for i := len(c.stack) - 1; i >= 0; i-- {
 				c := c.stack[i]
 				var arrow string
@@ -543,7 +551,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				}
 				stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
 			}
-			if i := strings.LastIndex(v.PullRequest.Body, "\n---\n\nPull request chain:\n\n1."); i >= 0 {
+			if i := strings.LastIndex(v.PullRequest.Body, stackNavigatorHeader+"1."); i >= 0 {
 				body = v.PullRequest.Body[:i]
 			}
 			body += stackNav
