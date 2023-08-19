@@ -228,6 +228,7 @@ type pullRequest struct {
 	HeadSHA string
 	Base    string
 	URL     string
+	Draft   bool
 }
 
 type stackedCommit []*commit
@@ -306,6 +307,11 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				if pr.PullRequest == nil {
 					continue
 				}
+				// If the state of the pull request is draft, we don't need to make the comment.
+				if pr.PullRequest.Draft {
+					continue
+				}
+
 				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
 				logger.Log.Debug("Make a new comment", zap.Int("number", pr.PullRequest.ID))
 				_, _, err = c.ghClient.Issues.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.IssueComment{Body: &body})
@@ -616,6 +622,7 @@ func newPullRequest(pr *github.PullRequest) *pullRequest {
 		HeadSHA: pr.GetHead().GetSHA(),
 		Base:    pr.GetBase().GetRef(),
 		URL:     pr.GetHTMLURL(),
+		Draft:   pr.GetDraft(),
 	}
 }
 
