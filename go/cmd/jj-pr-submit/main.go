@@ -51,6 +51,7 @@ type jujutsuPRSubmitCommand struct {
 	stack          stackedCommit
 	remoteBranches []*github.Branch
 	pullRequests   []*github.PullRequest
+	prTemplate     string
 }
 
 const (
@@ -380,41 +381,20 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	if err != nil {
 		return fsm.Error(err)
 	}
-	var templateFile string
-	if len(templates) > 0 {
-		fmt.Println("Found multiple templates. Please pick the template.")
-		for i, v := range templates {
-			fmt.Printf("%d: %s\n", i+1, strings.TrimPrefix(v, repoRoot))
-		}
-		fmt.Printf("%d: Don't use\n", len(templates)+1)
-		fmt.Printf("Which template do you want to use?) ")
-		num := -1
-		n, _ := fmt.Scanf("%d", &num)
-		if n != 1 {
-			return fsm.Error(xerrors.New("please pick the template"))
-		}
-		if num == len(templates)+1 {
-			templateFile = ""
-		}
-		if 0 < num && num <= len(templates) {
-			templateFile = templates[num-1]
-		}
-	}
-	var template string
-	if templateFile != "" {
-		buf, err := os.ReadFile(templateFile)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		template = string(buf)
-	}
 
+	var template string
 	// Create pull requests
 	// Scan reverse order to create PR for older commit first.
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
 		if v.PullRequest != nil {
 			continue
+		}
+		if template == "" && len(templates) > 0 {
+			template, err = c.pickTemplate(templates, repoRoot)
+			if err != nil {
+				return fsm.Error(err)
+			}
 		}
 
 		// There is no pull request for the commit.
@@ -451,6 +431,44 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	}
 
 	return fsm.Next(stateUpdatePR)
+}
+
+func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot string) (string, error) {
+	if c.prTemplate != "" {
+		return c.prTemplate, nil
+	}
+
+	var templateFile string
+	if len(templates) > 0 {
+		fmt.Println("Found multiple templates. Please pick the template.")
+		for i, v := range templates {
+			fmt.Printf("%d: %s\n", i+1, strings.TrimPrefix(v, repoRoot))
+		}
+		fmt.Printf("%d: Don't use\n", len(templates)+1)
+		fmt.Printf("Which template do you want to use?) ")
+		num := -1
+		n, _ := fmt.Scanf("%d", &num)
+		if n != 1 {
+			return "", xerrors.New("please pick the template")
+		}
+		if num == len(templates)+1 {
+			templateFile = ""
+		}
+		if 0 < num && num <= len(templates) {
+			templateFile = templates[num-1]
+		}
+	}
+	var template string
+	if templateFile != "" {
+		buf, err := os.ReadFile(templateFile)
+		if err != nil {
+			return "", xerrors.WithStack(err)
+		}
+		template = string(buf)
+	}
+
+	c.prTemplate = template
+	return template, nil
 }
 
 func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, error) {
@@ -519,7 +537,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				}
 				stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
 			}
-			if i := strings.LastIndex(v.PullRequest.Body, "\n---\n\nPull request chain:\n\n-"); i >= 0 {
+			if i := strings.LastIndex(v.PullRequest.Body, "\n---\n\nPull request chain:\n\n1."); i >= 0 {
 				body = v.PullRequest.Body[:i]
 			}
 			body += stackNav
