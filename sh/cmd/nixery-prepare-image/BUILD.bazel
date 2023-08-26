@@ -1,0 +1,9 @@
+filegroup(
+    name = "bin",
+    srcs = [
+        "load-pkgs.nix",
+        "nixery-prepare-image",
+        "prepare-image.nix",
+    ],
+    visibility = ["//visibility:public"],
+)

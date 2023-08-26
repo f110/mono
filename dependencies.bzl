@@ -18,6 +18,7 @@ containers = {
     "com_google_distroless_base": "gcr.io/distroless/base@sha256:8267a5d9fa15a538227a8850e81cf6c548a78de73458e99a67e8799bbffb1ba0",
     "com_google_distroless_base_debug": "gcr.io/distroless/base@sha256:c59a1e5509d1b2586e28b899667774e599b79d7289a6bb893766a0cbbce7384b",
     "com_google_distroless_base_arm64": "gcr.io/distroless/base@sha256:f19b05270bbd5c38e12c5610f23c1dfe4441858d959102a83074cf17ec074b50",
+    "nix_amd64": "docker.io/nixos/nix@sha256:52498160e7a93d9b6b881200690b7e5c446baa314dbf06c0a8015389afd0e58f",  # 2.15.2-amd64
 }
 
 golang_tarball_build_file = """
