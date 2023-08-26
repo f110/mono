@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "mirror-releases_lib",
+    srcs = [
+        "main.go",
+        "mirror.go",
+    ],
+    importpath = "go.f110.dev/mono/cmd/mirror-releases",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/logger",
+        "//go/storage",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/packet",
+        "//vendor/github.com/spf13/cobra",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "mirror-releases",
+    embed = [":mirror-releases_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "mirror-releases_test",
+    srcs = [
+        "main_test.go",
+        "mirror_test.go",
+    ],
+    embed = [":mirror-releases_lib"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

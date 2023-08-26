@@ -4,6 +4,7 @@ go_library(
     name = "openpgp",
     srcs = [
         "canonical_text.go",
+        "hash.go",
         "key_generation.go",
         "keys.go",
         "keys_test_data.go",
@@ -17,10 +18,12 @@ go_library(
     deps = [
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/armor",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/ecdh",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/ecdsa",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/eddsa",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/errors",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/internal/algorithm",
+        "//vendor/github.com/ProtonMail/go-crypto/openpgp/internal/ecc",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/packet",
-        "//vendor/github.com/ProtonMail/go-crypto/openpgp/s2k",
-        "//vendor/golang.org/x/crypto/ed25519",
+        "//vendor/golang.org/x/crypto/sha3",
     ],
 )
