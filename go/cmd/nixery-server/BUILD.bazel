@@ -25,6 +25,7 @@ go_library(
 go_binary(
     name = "nixery-server",
     embed = [":nixery-server_lib"],
+    pure = "on",
     visibility = ["//visibility:public"],
 )
 
