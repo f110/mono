@@ -23,6 +23,7 @@ go_library(
 go_binary(
     name = "mirror-releases",
     embed = [":mirror-releases_lib"],
+    pure = "on",
     visibility = ["//visibility:public"],
 )
 
@@ -33,6 +34,7 @@ go_test(
         "mirror_test.go",
     ],
     embed = [":mirror-releases_lib"],
+    pure = "on",
     deps = [
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
