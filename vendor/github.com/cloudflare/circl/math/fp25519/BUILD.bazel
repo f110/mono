@@ -10,6 +10,7 @@ go_library(
         "fp_generic.go",
         "fp_noasm.go",
     ],
+    cgo = True,
     importmap = "go.f110.dev/mono/vendor/github.com/cloudflare/circl/math/fp25519",
     importpath = "github.com/cloudflare/circl/math/fp25519",
     visibility = ["//visibility:public"],
