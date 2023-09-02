@@ -13,6 +13,8 @@ go_library(
         "key.go",
         "table.go",
     ],
+    cdeps = ["//vendor/github.com/cloudflare/circl/math/fp448:header"],
+    cgo = True,
     importmap = "go.f110.dev/mono/vendor/github.com/cloudflare/circl/dh/x448",
     importpath = "github.com/cloudflare/circl/dh/x448",
     visibility = ["//visibility:public"],

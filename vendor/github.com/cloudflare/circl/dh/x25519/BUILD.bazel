@@ -14,7 +14,7 @@ go_library(
         "table.go",
     ],
     cgo = True,
-    cdeps = ["//math/fp25519:header"],
+    cdeps = ["//vendor/github.com/cloudflare/circl/math/fp25519:header"],
     importmap = "go.f110.dev/mono/vendor/github.com/cloudflare/circl/dh/x25519",
     importpath = "github.com/cloudflare/circl/dh/x25519",
     visibility = ["//visibility:public"],
