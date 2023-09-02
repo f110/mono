@@ -22,3 +22,9 @@ go_library(
         "//conditions:default": [],
     }),
 )
+
+cc_library(
+    name = "header",
+    hdrs = ["fp_amd64.h"],
+    visibility = ["//:__subpackages__"],
+)
