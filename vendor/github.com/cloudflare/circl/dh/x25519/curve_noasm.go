@@ -1,6 +1,3 @@
-//go:build !amd64 || purego
-// +build !amd64 purego
-
 package x25519
 
 import fp "github.com/cloudflare/circl/math/fp25519"

@@ -1,6 +1,3 @@
-//go:build !amd64 || purego
-// +build !amd64 purego
-
 package x448
 
 import fp "github.com/cloudflare/circl/math/fp448"
