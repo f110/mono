@@ -13,6 +13,7 @@ go_vendor(
     patches = [
         "patch/fix-minio-operator-group-name.patch",
         "patch/fix-minio-operator-schemagroupversion.patch",
+        "patch/cloudflare-circl-remove-assembly-codes.patch",
     ],
 )
 

@@ -13,12 +13,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/cloudflare/circl/dh/x448",
     importpath = "github.com/cloudflare/circl/dh/x448",
     visibility = ["//visibility:public"],
-    deps = [
-        "//vendor/github.com/cloudflare/circl/math/fp448",
-    ] + select({
-        "@io_bazel_rules_go//go/platform:amd64": [
-            "//vendor/golang.org/x/sys/cpu",
-        ],
-        "//conditions:default": [],
-    }),
+    deps = ["//vendor/github.com/cloudflare/circl/math/fp448"],
 )
