@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -61,13 +62,22 @@ type Backend interface {
 	UpdateStatus(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
 	Delete(ctx context.Context, gvr schema.GroupVersionResource, namespace, name string, opts metav1.DeleteOptions) error
 	Watch(ctx context.Context, gvr schema.GroupVersionResource, namespace string, opts metav1.ListOptions) (watch.Interface, error)
+	GetClusterScoped(ctx context.Context, resourceName, kindName, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error)
+	ListClusterScoped(ctx context.Context, resourceName, kindName string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error)
+	CreateClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
+	UpdateClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	UpdateStatusClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error
+	WatchClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, opts metav1.ListOptions) (watch.Interface, error)
 }
+
 type Set struct {
 	ConsulV1alpha1         *ConsulV1alpha1
 	GrafanaV1alpha1        *GrafanaV1alpha1
 	HarborV1alpha1         *HarborV1alpha1
 	MinioV1alpha1          *MinioV1alpha1
 	MiniocontrollerV1beta1 *MiniocontrollerV1beta1
+	RESTClient             *rest.RESTClient
 }
 
 func NewSet(cfg *rest.Config) (*Set, error) {
@@ -127,6 +137,14 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 		}
 		s.MiniocontrollerV1beta1 = NewMiniocontrollerV1beta1Client(&restBackend{client: c})
 	}
+	{
+		conf := *cfg
+		c, err := rest.RESTClientFor(&conf)
+		if err != nil {
+			return nil, err
+		}
+		s.RESTClient = c
+	}
 
 	return s, nil
 }
@@ -147,8 +165,8 @@ func (r *restBackend) Get(ctx context.Context, resourceName, kindName, namespace
 
 func (r *restBackend) List(ctx context.Context, resourceName, kindName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
 	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
 	}
 	return result, r.client.Get().
 		Namespace(namespace).
@@ -216,12 +234,94 @@ func (r *restBackend) Delete(ctx context.Context, gvr schema.GroupVersionResourc
 
 func (r *restBackend) Watch(ctx context.Context, gvr schema.GroupVersionResource, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
 	}
 	opts.Watch = true
 	return r.client.Get().
 		Namespace(namespace).
+		Resource(gvr.Resource).
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
+}
+
+func (r *restBackend) GetClusterScoped(ctx context.Context, resourceName, kindName, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error) {
+	return result, r.client.Get().
+		Resource(resourceName).
+		Name(name).
+		VersionedParams(&opts, ParameterCodec).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) ListClusterScoped(ctx context.Context, resourceName, kindName string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
+	}
+	return result, r.client.Get().
+		Resource(resourceName).
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) CreateClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error) {
+	return result, r.client.Post().
+		Resource(resourceName).
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) UpdateClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	return result, r.client.Put().
+		Resource(resourceName).
+		Name(m.GetName()).
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) UpdateStatusClusterScoped(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	return result, r.client.Put().
+		Resource(resourceName).
+		Name(m.GetName()).
+		SubResource("status").
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error {
+	return r.client.Delete().
+		Resource(gvr.Resource).
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
+}
+
+func (r *restBackend) WatchClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return r.client.Get().
 		Resource(gvr.Resource).
 		VersionedParams(&opts, ParameterCodec).
 		Timeout(timeout).
@@ -813,10 +913,10 @@ func (f *ConsulV1alpha1Informer) ConsulBackupInformer() cache.SharedIndexInforme
 	return f.cache.Write(&consulv1alpha1.ConsulBackup{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -853,10 +953,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaInformer() cache.SharedIndexInformer {
 	return f.cache.Write(&grafanav1alpha1.Grafana{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -875,10 +975,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaUserInformer() cache.SharedIndexInforme
 	return f.cache.Write(&grafanav1alpha1.GrafanaUser{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -915,10 +1015,10 @@ func (f *HarborV1alpha1Informer) HarborProjectInformer() cache.SharedIndexInform
 	return f.cache.Write(&harborv1alpha1.HarborProject{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -937,10 +1037,10 @@ func (f *HarborV1alpha1Informer) HarborRobotAccountInformer() cache.SharedIndexI
 	return f.cache.Write(&harborv1alpha1.HarborRobotAccount{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -977,10 +1077,10 @@ func (f *MinioV1alpha1Informer) MinIOBucketInformer() cache.SharedIndexInformer 
 	return f.cache.Write(&miniov1alpha1.MinIOBucket{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -999,10 +1099,10 @@ func (f *MinioV1alpha1Informer) MinIOUserInformer() cache.SharedIndexInformer {
 	return f.cache.Write(&miniov1alpha1.MinIOUser{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1039,10 +1139,10 @@ func (f *MiniocontrollerV1beta1Informer) MinIOInstanceInformer() cache.SharedInd
 	return f.cache.Write(&v1beta1.MinIOInstance{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1061,10 +1161,10 @@ func (f *MiniocontrollerV1beta1Informer) MirrorInformer() cache.SharedIndexInfor
 	return f.cache.Write(&v1beta1.Mirror{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMirror(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMirror(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},

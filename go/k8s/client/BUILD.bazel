@@ -11,6 +11,7 @@ go_library(
         "//go/api/harborv1alpha1",
         "//go/api/miniov1alpha1",
         "//vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1",
+        "//vendor/go.f110.dev/kubeproto/go/apis/metav1",
         "//vendor/k8s.io/apimachinery/pkg/api/errors",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/labels",
