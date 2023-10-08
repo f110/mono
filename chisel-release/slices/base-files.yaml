@@ -1,0 +1,74 @@
+package: base-files
+
+slices:
+  base:
+    essential:
+      - base-files_etc
+      - base-files_usr
+      - base-files_var
+      - base-files_home
+      - base-files_root
+      - base-files_lib
+      - base-files_release-info
+      - base-files_license
+
+  etc:
+    contents:
+      /etc/:
+  usr:
+    contents:
+      /usr/lib/:
+      /usr/share/:
+      /usr/include/:
+      /usr/bin/:
+      /usr/src/:
+      /usr/sbin/:
+  var:
+    contents:
+      /var/lib/:
+      /var/cache/:
+      /var/local/:
+      /var/lock/:
+      /var/log/:
+      /var/run/:
+      /var/spool/:
+      /var/tmp/:
+      /var/backups/:
+  home:
+    contents:
+      /home/:
+  root:
+    contents:
+      /root/:
+  lib:
+    contents:
+      /lib/systemd/:
+  release-info:
+    essential:
+      - base-files_etc
+      - base-files_usr
+    contents:
+      /etc/os-release:
+      /etc/lsb-release:
+      /usr/lib/os-release:
+  license:
+    essential:
+      - base-files_usr
+    contents:
+      /usr/share/common-licenses/Apache-2.0:
+      /usr/share/common-licenses/Artistic:
+      /usr/share/common-licenses/BSD:
+      /usr/share/common-licenses/CC0-1.0:
+      /usr/share/common-licenses/GFDL-1.2:
+      /usr/share/common-licenses/GFDL-1.3:
+      /usr/share/common-licenses/GFDL: {symlink: /usr/share/common-licenses/GFDL-1.3}
+      /usr/share/common-licenses/GPL: {symlink: /usr/share/common-licenses/GPL-3}
+      /usr/share/common-licenses/GPL-1:
+      /usr/share/common-licenses/GPL-2:
+      /usr/share/common-licenses/GPL-3:
+      /usr/share/common-licenses/LGPL: {symlink: /usr/share/common-licenses/LGPL-3}
+      /usr/share/common-licenses/LGPL-2:
+      /usr/share/common-licenses/LGPL-2.1:
+      /usr/share/common-licenses/LGPL-3:
+      /usr/share/common-licenses/MPL-1.1:
+      /usr/share/common-licenses/MPL-2.0:

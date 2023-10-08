@@ -1,0 +1,64 @@
+package: libc6-dev
+
+slices:
+  devel:
+    essential:
+      - libc6-dev_includes
+      - libc6-dev_libs
+
+  includes:
+    contents:
+      /usr/include/*-linux-*/*.h:
+      /usr/include/*-linux-*/bits/*.h:
+      /usr/include/*-linux-*/bits/types/*.h:
+      /usr/include/*-linux-*/gnu/*.h:
+      /usr/include/*-linux-*/sys/*.h:
+      /usr/include/*.h:
+      /usr/include/arpa/*.h:
+      /usr/include/finclude/math-vector-fortran.h:
+      /usr/include/net/*.h:
+      /usr/include/netash/ash.h:
+      /usr/include/netatalk/at.h:
+      /usr/include/netax25/ax25.h:
+      /usr/include/neteconet/ec.h:
+      /usr/include/netinet/*.h:
+      /usr/include/netipx/ipx.h:
+      /usr/include/netiucv/iucv.h:
+      /usr/include/netpacket/packet.h:
+      /usr/include/netrom/netrom.h:
+      /usr/include/netrose/rose.h:
+      /usr/include/nfs/nfs.h:
+      /usr/include/protocols/*.h:
+      /usr/include/rpc/netdb.h:
+
+  libs:
+    contents:
+      /usr/lib/*-linux-*/Mcrt1.o:
+      /usr/lib/*-linux-*/Scrt1.o:
+      /usr/lib/*-linux-*/crt1.o:
+      /usr/lib/*-linux-*/crti.o:
+      /usr/lib/*-linux-*/crtn.o:
+      /usr/lib/*-linux-*/gcrt1.o:
+      /usr/lib/*-linux-*/grcrt1.o:
+      /usr/lib/*-linux-*/rcrt1.o:
+      /usr/lib/*-linux-*/libanl.a:
+      /usr/lib/*-linux-*/libc.a:
+      /usr/lib/*-linux-*/libBrokenLocale.a:
+      /usr/lib/*-linux-*/libc_nonshared.a:
+      /usr/lib/*-linux-*/libdl.a:
+      /usr/lib/*-linux-*/libg.a:
+      /usr/lib/*-linux-*/libm.a:
+      /usr/lib/*-linux-*/libmcheck.a:
+      /usr/lib/*-linux-*/libpthread.a:
+      /usr/lib/*-linux-*/libresolv.a:
+      /usr/lib/*-linux-*/librt.a:
+      /usr/lib/*-linux-*/libutil.a:
+      /usr/lib/*-linux-*/libc.so:
+      /usr/lib/*-linux-*/libBrokenLocale.so:
+      /usr/lib/*-linux-*/libanl.so:
+      /usr/lib/*-linux-*/libc_malloc_debug.so:
+      /usr/lib/*-linux-*/libm.so:
+      /usr/lib/*-linux-*/libnss_compat.so:
+      /usr/lib/*-linux-*/libnss_hesiod.so:
+      /usr/lib/*-linux-*/libresolv.so:
+      /usr/lib/*-linux-*/libthread_db.so:

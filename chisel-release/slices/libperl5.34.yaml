@@ -1,0 +1,15 @@
+package: libperl5.34
+
+slices:
+  libs:
+    essential:
+      - libbz2-1.0_libs
+      - libc6_libs
+      - libcrypt1_libs
+      - libdb5.3_libs
+      - libgdbm-compat4_libs
+      - libgdbm6_libs
+      - zlib1g_libs
+      - perl-modules-5.34_modules
+    contents:
+      /usr/lib/*-linux-*/perl/5.34.0/*:

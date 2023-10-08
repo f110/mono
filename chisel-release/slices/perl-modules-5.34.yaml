@@ -1,0 +1,9 @@
+package: perl-modules-5.34
+
+slices:
+  modules:
+    essential:
+      - perl-base_base
+    contents:
+      /usr/share/perl/5.34.0/*:
+      /usr/share/perl/5.34:

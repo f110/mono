@@ -1,0 +1,6 @@
+package: zip
+
+slices:
+  bin:
+    contents:
+      /usr/bin/zip:

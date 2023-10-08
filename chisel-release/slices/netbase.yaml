@@ -1,0 +1,9 @@
+package: netbase
+
+slices:
+  etc:
+    contents:
+      /etc/ethertypes:
+      /etc/protocols:
+      /etc/rpc:
+      /etc/services:

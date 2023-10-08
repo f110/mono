@@ -1,0 +1,11 @@
+package: perl-base
+
+slices:
+  base:
+    essential:
+      - libc6_libs
+      - libcrypt1_libs
+    contents:
+      /usr/bin/perl:
+      /usr/bin/perl5.34.0:
+      /usr/lib/*-linux-*/perl-base/*:

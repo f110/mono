@@ -1,0 +1,22 @@
+package: libstdc++-11-dev
+
+slices:
+  devel:
+    essential:
+      - libgcc-11-dev_devel
+      - libstdc++6_libs
+      - libc6-dev_devel
+      - libstdc++-11-dev_includes
+      - libstdc++-11-dev_libs
+
+  includes:
+    contents:
+      /usr/include/c++/11/*:
+      /usr/include/*-linux-*/c++/11/bits/*:
+      /usr/include/*-linux-*/c++/11/ext/*:
+
+  libs:
+    contents:
+      /usr/lib/gcc/*-linux-*/11/libstdc++.a:
+      /usr/lib/gcc/*-linux-*/11/libstdc++fs.a:
+      /usr/lib/gcc/*-linux-*/11/libsupc++.a:

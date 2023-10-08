@@ -1,0 +1,6 @@
+package: python3-lib2to3
+
+slices:
+  libs:
+    contents:
+      /usr/lib/python3.10/lib2to3/*:

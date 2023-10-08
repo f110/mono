@@ -1,0 +1,15 @@
+package: gcc
+
+slices:
+  bin:
+    essential:
+      - cpp_bin
+      - gcc-11_bin
+    contents:
+      /usr/bin/gcc:
+      /usr/bin/gcc-ar:
+      /usr/bin/gcc-nm:
+      /usr/bin/gcc-ranlib:
+      /usr/bin/gcov:
+      /usr/bin/gcov-dump:
+      /usr/bin/gcov-tool:

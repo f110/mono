@@ -1,0 +1,9 @@
+package: python3-distutils
+
+slices:
+  libs:
+    essential:
+      - python3.10-minimal_bin
+      - python3-lib2to3_libs
+    contents:
+      /usr/lib/python3.10/distutils/*:
