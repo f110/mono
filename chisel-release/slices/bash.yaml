@@ -1,0 +1,10 @@
+package: bash
+
+slices:
+  bin:
+    essential:
+      - libc6_libs
+      - libtinfo6_libs
+    contents:
+      /bin/bash:
+      /usr/bin/clear_console:

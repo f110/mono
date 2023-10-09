@@ -19,6 +19,9 @@ PACKAGES=(
     git_bin
     python3.10-minimal_bin
     python3-distutils_libs
+
+    # For debug
+    bash_bin
 )
 CONTAINER_NAME=new-container
 
