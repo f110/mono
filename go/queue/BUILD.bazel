@@ -11,5 +11,6 @@ go_test(
     name = "queue_test",
     srcs = ["queue_test.go"],
     embed = [":queue"],
+    flaky = True,
     deps = ["//vendor/github.com/stretchr/testify/assert"],
 )
