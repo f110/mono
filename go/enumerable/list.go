@@ -28,3 +28,21 @@ func Sum[T any](ary []T, m func(T) int64) int64 {
 	}
 	return t
 }
+
+func Uniq[T, K comparable](ary []T, f func(T) K) []T {
+	m := make(map[K]struct{})
+	for _, v := range ary {
+		key := f(v)
+		m[key] = struct{}{}
+	}
+
+	n := make([]T, 0, len(m))
+	for _, v := range ary {
+		key := f(v)
+		if _, ok := m[key]; ok {
+			n = append(n, v)
+			delete(m, key)
+		}
+	}
+	return n
+}

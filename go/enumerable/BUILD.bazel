@@ -1,8 +1,15 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "enumerable",
     srcs = ["list.go"],
     importpath = "go.f110.dev/mono/go/enumerable",
     visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "enumerable_test",
+    srcs = ["list_test.go"],
+    embed = [":enumerable"],
+    deps = ["//vendor/github.com/stretchr/testify/assert"],
 )
