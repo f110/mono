@@ -549,7 +549,10 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				if v == c {
 					arrow = " 👉"
 				}
-				stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
+				// Sometimes, PullRequest is nil when dry-run is enabled.
+				if c.PullRequest != nil {
+					stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
+				}
 			}
 			if i := strings.LastIndex(v.PullRequest.Body, stackNavigatorHeader+"1."); i >= 0 {
 				body = v.PullRequest.Body[:i]
