@@ -2,6 +2,7 @@ package queue
 
 import (
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,9 +34,13 @@ func TestSimple(t *testing.T) {
 	}()
 
 	var got []string
+	var mu sync.Mutex
 	for i := 0; i < 3; i++ {
 		go func() {
-			got = append(got, q.Dequeue().(string))
+			v := q.Dequeue().(string)
+			mu.Lock()
+			got = append(got, v)
+			mu.Unlock()
 		}()
 	}
 
