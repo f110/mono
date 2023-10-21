@@ -14,6 +14,7 @@ PACKAGES=(
     g++_bin
     zip_bin
     unzip_bin
+    tar_bin
 
     curl_bin
     git_bin
