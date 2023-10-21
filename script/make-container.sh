@@ -16,6 +16,7 @@ PACKAGES=(
     unzip_bin
     tar_bin
     gzip_bin
+    patch_bin
 
     curl_bin
     git_bin

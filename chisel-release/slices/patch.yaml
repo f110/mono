@@ -1,0 +1,8 @@
+package: patch
+
+slices:
+  bin:
+    essential:
+      - libc6_libs
+    contents:
+      /usr/bin/patch:
