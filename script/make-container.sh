@@ -22,6 +22,7 @@ PACKAGES=(
 
     # For debug
     bash_bin
+    coreutils_bin
 )
 CONTAINER_NAME=new-container
 
