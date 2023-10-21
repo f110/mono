@@ -10,3 +10,9 @@ slices:
       - zlib1g_libs
       - perl_bin
       - liberror-perl_libs
+    contents:
+      /usr/bin/git:
+      /usr/bin/git-shell:
+      /usr/lib/git-core/*:
+      /usr/lib/git-core/mergetools/*:
+      /usr/share/git-core/templates/*:
