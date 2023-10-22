@@ -1,0 +1,46 @@
+package: linux-libc-dev
+
+slices:
+  devel:
+    essential:
+      - linux-libc-dev_includes
+
+  includes:
+    contents:
+      /usr/include/*-linux-*/asm/*:
+      /usr/include/asm-generic/*:
+      /usr/include/drm/*:
+      /usr/include/linux/*:
+      /usr/include/linux/byteorder/*:
+      /usr/include/linux/caif/*:
+      /usr/include/linux/can/*:
+      /usr/include/linux/cifs/*:
+      /usr/include/linux/dvb/*:
+      /usr/include/linux/genwqe/*:
+      /usr/include/linux/hdlc/*:
+      /usr/include/linux/hsi/*:
+      /usr/include/linux/iio/*:
+      /usr/include/linux/isdn/*:
+      /usr/include/linux/mmc/*:
+      /usr/include/linux/netfilter/*:
+      /usr/include/linux/netfilter/ipset/*:
+      /usr/include/linux/netfilter_arp/*:
+      /usr/include/linux/netfilter_bridge/*:
+      /usr/include/linux/netfilter_ipv4/*:
+      /usr/include/linux/netfilter_ipv6/*:
+      /usr/include/linux/nfsd/*:
+      /usr/include/linux/raid/*:
+      /usr/include/linux/sched/*:
+      /usr/include/linux/spi/*:
+      /usr/include/linux/sunrpc/*:
+      /usr/include/linux/surface_aggregator/*:
+      /usr/include/linux/tc_act/*:
+      /usr/include/linux/tc_ematch/*:
+      /usr/include/linux/usb/*:
+      /usr/include/misc/*:
+      /usr/include/mtd/*:
+      /usr/include/rdma/*:
+      /usr/include/scsi/*:
+      /usr/include/sound/*:
+      /usr/include/video/*:
+      /usr/include/xen/*:

@@ -17,6 +17,7 @@ PACKAGES=(
     tar_bin
     gzip_bin
     patch_bin
+    linux-libc-dev_devel
 
     curl_bin
     git_bin
