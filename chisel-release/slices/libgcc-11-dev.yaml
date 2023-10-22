@@ -37,6 +37,12 @@ slices:
       /usr/lib/gcc/*-linux-*/11/liblsan.so:
       /usr/lib/gcc/*-linux-*/11/libtsan.so:
       /usr/lib/gcc/*-linux-*/11/libubsan.so:
+      /usr/lib/gcc/*-linux-*/11/crtbegin.o:
+      /usr/lib/gcc/*-linux-*/11/crtbeginS.o:
+      /usr/lib/gcc/*-linux-*/11/crtbeginT.o:
+      /usr/lib/gcc/*-linux-*/11/crtend.o:
+      /usr/lib/gcc/*-linux-*/11/crtendS.o:
+      /usr/lib/gcc/*-linux-*/11/crtfastmath.o:
 
   includes:
     contents:
