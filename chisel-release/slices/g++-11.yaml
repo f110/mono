@@ -15,3 +15,5 @@ slices:
     contents:
       /usr/bin/g++-11:
       /usr/bin/x86_64-linux-gnu-g++-11: {arch: amd64}
+      /usr/lib/gcc/*-linux-*/11/cc1plus:
+      /usr/lib/gcc/*-linux-*/11/g++-mapper-server:
