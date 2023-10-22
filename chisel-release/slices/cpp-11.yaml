@@ -13,3 +13,4 @@ slices:
     contents:
       /usr/bin/cpp-11:
       /usr/bin/x86_64-linux-gnu-cpp-11: {arch: amd64}
+      /usr/lib/gcc/*-linux-*/11/cc1:
