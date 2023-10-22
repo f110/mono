@@ -7,3 +7,12 @@ slices:
       - libssl3_libs
     contents:
       /usr/lib/python3.10/*:
+      /usr/lib/python3.10/collections/*:
+      /usr/lib/python3.10/email/*:
+      /usr/lib/python3.10/email/mime/*:
+      /usr/lib/python3.10/encodings/*:
+      /usr/lib/python3.10/importlib/*:
+      /usr/lib/python3.10/importlib/metadata/*:
+      /usr/lib/python3.10/lib-dynload/*:
+      /usr/lib/python3.10/logging/*:
+      /usr/lib/python3.10/urllib/*:
