@@ -2,6 +2,13 @@ package: binutils-x86-64-linux-gnu
 
 slices:
   bin:
+    essential:
+      - libbinutils_libs
+      - libc6_libs
+      - libctf-nobfd0_libs
+      - libctf0_libs
+      - libgcc-s1_libs
+      - zlib1g_libs
     contents:
       /usr/bin/x86_64-linux-gnu-addr2line: {arch: amd64}
       /usr/bin/x86_64-linux-gnu-ar: {arch: amd64}

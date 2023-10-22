@@ -1,0 +1,9 @@
+package: libctf-nobfd0
+
+slices:
+  libs:
+    essential:
+      - libc6_libs
+      - zlib1g_libs
+    contents:
+      /usr/lib/*-linux-*/libctf-nobfd.so.0*:

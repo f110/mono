@@ -1,0 +1,10 @@
+package: libbinutils
+
+slices:
+  libs:
+    essential:
+      - libc6_libs
+      - zlib1g_libs
+    contents:
+      /usr/lib/*-linux-*/libbfd-2.38-system.so:
+      /usr/lib/*-linux-*/libopcodes-2.38-system.so:
