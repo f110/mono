@@ -10,6 +10,7 @@ slices:
       /usr/bin/savelog:
       /usr/bin/tempfile:
       /usr/bin/which.debianutils:
+      /usr/bin/which: {symlink: /usr/bin/which.debianutils}
       /usr/sbin/add-shell:
       /usr/sbin/installkernel:
       /usr/sbin/remove-shell:
