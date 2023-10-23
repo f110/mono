@@ -8,3 +8,6 @@ slices:
     contents:
       /bin/bash:
       /usr/bin/clear_console:
+  posix:
+    contents:
+      /bin/sh: {symlink: /bin/bash}

@@ -26,7 +26,9 @@ PACKAGES=(
 
     # For debug
     bash_bin
+    bash_posix
     coreutils_bin
+    strace_bin
 )
 CONTAINER_NAME=new-container
 

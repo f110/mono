@@ -1,0 +1,9 @@
+package: strace
+
+slices:
+  bin:
+    essential:
+      - libc6_libs
+      - libunwind8_libs
+    contents:
+      /usr/bin/strace:

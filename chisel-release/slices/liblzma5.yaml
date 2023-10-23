@@ -1,0 +1,8 @@
+package: liblzma5
+
+slices:
+  libs:
+    essential:
+      - libc6_libs
+    contents:
+      /lib/*-linux-*/liblzma.so.5*:
