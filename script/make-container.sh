@@ -9,6 +9,9 @@ PACKAGES=(
     netbase_etc
     libc6_libs
     libssl3_libs
+    debianutils_bin
+    grep_bin
+    sed_bin
 
     # Basic bazel dependency package
     g++_bin

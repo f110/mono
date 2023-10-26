@@ -1,0 +1,10 @@
+package: sed
+
+slices:
+  bin:
+    essential:
+      - libacl1_libs
+      - libc6_libs
+      - libselinux1_libs
+    contents:
+      /bin/sed:
