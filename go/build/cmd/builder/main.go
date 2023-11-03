@@ -68,7 +68,9 @@ type Options struct {
 	RemoteCache         string // If not empty, This value will passed to Bazel through --remote_cache argument.
 	RemoteAssetApi      bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
 	BazelImage          string
+	UseBazelisk         bool
 	DefaultBazelVersion string
+	BazelMirrorURL      string
 	SidecarImage        string
 	CLIImage            string
 	TaskCPULimit        string
@@ -246,7 +248,9 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.RemoteAssetApi,
 		p.opt.SidecarImage,
 		p.opt.BazelImage,
+		p.opt.UseBazelisk,
 		p.opt.DefaultBazelVersion,
+		p.opt.BazelMirrorURL,
 		p.opt.GithubAppId,
 		p.opt.GithubInstallationId,
 		p.opt.GithubAppSecretName,
@@ -455,8 +459,10 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.VaultK8sAuthRole, "vault-k8s-auth-role", "", "Role name for k8s auth method")
 	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
 	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
-	fs.StringVar(&opt.BazelImage, "bazel-image", "l.gcr.io/google/bazel", "Bazel container image")
+	fs.StringVar(&opt.BazelImage, "bazel-image", "ghcr.io/f110/bazel-container", "Bazel container image")
+	fs.BoolVar(&opt.UseBazelisk, "use-bazelisk", false, "Use bazelisk")
 	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
+	fs.StringVar(&opt.BazelMirrorURL, "bazel-mirror-url", "", "The URL of bazel")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
 	fs.StringVar(

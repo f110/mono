@@ -98,19 +98,23 @@ type BazelOptions struct {
 	EnableRemoteAssetApi bool
 	SidecarImage         string
 	BazelImage           string
+	UseBazelisk          bool
 	DefaultVersion       string
+	BazelMirrorURL       string
 	GithubAppId          int64
 	GithubInstallationId int64
 	GithubAppSecretName  string
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage, defaultVersion string, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL string, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
 	return BazelOptions{
 		RemoteCache:          remoteCache,
 		EnableRemoteAssetApi: enableRemoteAssetApi,
 		SidecarImage:         sidecarImage,
 		BazelImage:           bazelImage,
+		UseBazelisk:          useBazelisk,
 		DefaultVersion:       defaultVersion,
+		BazelMirrorURL:       bazelMirrorURL,
 		GithubAppId:          githubAppId,
 		GithubInstallationId: githubInstallationId,
 		GithubAppSecretName:  githubAppSecretName,
@@ -181,7 +185,9 @@ type BazelBuilder struct {
 	remoteAssetApi         bool
 	sidecarImage           string
 	bazelImage             string
+	useBazelisk            bool
 	defaultBazelVersion    string
+	bazelMirrorURL         string
 	defaultTaskCPULimit    resource.Quantity
 	defaultTaskMemoryLimit resource.Quantity
 	githubAppId            int64
@@ -219,7 +225,9 @@ func NewBazelBuilder(
 		remoteAssetApi:       bazelOpt.EnableRemoteAssetApi,
 		sidecarImage:         bazelOpt.SidecarImage,
 		bazelImage:           bazelOpt.BazelImage,
+		useBazelisk:          bazelOpt.UseBazelisk,
 		defaultBazelVersion:  bazelOpt.DefaultVersion,
+		bazelMirrorURL:       bazelOpt.BazelMirrorURL,
 		githubAppId:          bazelOpt.GithubAppId,
 		githubInstallationId: bazelOpt.GithubInstallationId,
 		githubAppSecretName:  bazelOpt.GithubAppSecretName,
@@ -740,11 +748,16 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		k8sfactory.WorkDir(workDir.Mount.MountPath),
 		k8sfactory.Volume(workDir),
 	)
-	bazelVersion := b.defaultBazelVersion
-	if task.BazelVersion != "" {
-		bazelVersion = task.BazelVersion
+	imageTag := b.defaultBazelVersion
+	if b.useBazelisk {
+		imageTag = "bazelisk"
+	} else if task.BazelVersion != "" {
+		imageTag = task.BazelVersion
 	}
-	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Image(fmt.Sprintf("%s:%s", b.bazelImage, bazelVersion), nil))
+	mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.Image(fmt.Sprintf("%s:%s", b.bazelImage, imageTag), nil))
+	if b.useBazelisk && b.bazelMirrorURL != "" {
+		mainContainer = k8sfactory.ContainerFactory(mainContainer, k8sfactory.EnvVar("BAZELISK_FORMAT_URL", b.bazelMirrorURL+"/bazel-%v-%o-%m%e"))
+	}
 
 	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", repo.CloneUrl)}
 	if task.Revision != "" {
