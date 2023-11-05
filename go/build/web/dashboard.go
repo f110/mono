@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"html/template"
 	"io"
 	"net/http"
@@ -147,21 +148,16 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 
 	task, err := d.dao.Task.Select(req.Context(), int32(id))
 	if err != nil {
+		logger.Log.Info("not found task", zap.Int("id", id))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	jobConf, err := config.Read(strings.NewReader(task.JobConfiguration), "", "")
-	if err != nil {
+	jobConf := &config.Job{}
+	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConf); err != nil {
+		logger.Log.Warn("Failed to parse job configuration", logger.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-	var job *config.Job
-	for _, v := range jobConf.Jobs {
-		if v.Name == task.JobName {
-			job = v
-			break
-		}
 	}
 	revUrl := ""
 	if strings.Contains(task.Repository.Url, "https://github.com") {
@@ -175,7 +171,7 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 			Task:        task,
 			RevisionUrl: revUrl,
 		},
-		Job: job,
+		Job: jobConf,
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))
