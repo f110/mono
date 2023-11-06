@@ -73,6 +73,7 @@ type Options struct {
 	BazelMirrorURL      string
 	SidecarImage        string
 	CLIImage            string
+	PullAlways          bool
 	TaskCPULimit        string
 	TaskMemoryLimit     string
 	WithGC              bool
@@ -251,6 +252,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.UseBazelisk,
 		p.opt.DefaultBazelVersion,
 		p.opt.BazelMirrorURL,
+		p.opt.PullAlways,
 		p.opt.GithubAppId,
 		p.opt.GithubInstallationId,
 		p.opt.GithubAppSecretName,
@@ -465,6 +467,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.BazelMirrorURL, "bazel-mirror-url", "", "The URL of bazel")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
+	fs.BoolVar(&opt.PullAlways, "pull-always", false, "Pull always")
 	fs.StringVar(
 		&opt.TaskCPULimit,
 		"task-cpu-limit",
