@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -50,7 +51,7 @@ func staticWeb() error {
 				s.Shutdown(context.Background())
 			}()
 			logger.Log.Info("Start server", zap.String("addr", listenAddr), zap.String("root", documentRoot), zap.String("mode", mode))
-			if err := s.ListenAndServe(); err == http.ErrServerClosed {
+			if err := s.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
 				return nil
 			} else if err != nil {
 				return err
