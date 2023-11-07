@@ -51,6 +51,7 @@ go_library(
         "variant_date_386.go",
         "variant_date_amd64.go",
         "variant_date_arm.go",
+        "variant_date_arm64.go",
         "variant_ppc64le.go",
         "variant_s390x.go",
         "vt_string.go",

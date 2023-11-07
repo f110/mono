@@ -76,6 +76,9 @@ go_library(
         "@io_bazel_rules_go//go/platform:windows_arm": [
             "//vendor/golang.org/x/sys/windows",
         ],
+        "@io_bazel_rules_go//go/platform:windows_arm64": [
+            "//vendor/golang.org/x/sys/windows",
+        ],
         "//conditions:default": [],
     }),
 )
