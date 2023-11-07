@@ -5,21 +5,21 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "dd926a88a564a9246713a9c00b35315f54cbd46b31a26d5d8fb264c07045f05d",
+    sha256 = "91585017debb61982f7054c9688857a2ad1fd823fc3f9cb05048b0025c47d023",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.38.1/rules_go-v0.38.1.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.38.1/rules_go-v0.38.1.zip",
-        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_go/releases/download/v0.38.1/rules_go-v0.38.1.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.42.0/rules_go-v0.42.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.42.0/rules_go-v0.42.0.zip",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/rules_go/releases/download/v0.42.0/rules_go-v0.42.0.zip",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "501deb3d5695ab658e82f6f6f549ba681ea3ca2a5fb7911154b5aa45596183fa",
+    sha256 = "d3fa66a39028e97d76f9e2db8f1b0c11c099e8e01bf363a923074784e451f809",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
-        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/bazel-gazelle/releases/download/v0.26.0/bazel-gazelle-v0.26.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.33.0/bazel-gazelle-v0.33.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.33.0/bazel-gazelle-v0.33.0.tar.gz",
+        "https://mirror.bucket.x.f110.dev/github.com/bazelbuild/bazel-gazelle/releases/download/v0.33.0/bazel-gazelle-v0.33.0.tar.gz",
     ],
 )
 
@@ -88,48 +88,6 @@ git_repository(
     commit = "90d00e364ad040d388c54b32c9ac3d85604bc6ec",
     remote = "https://github.com/f110/kubeproto",
 )
-
-# This is workaround for dependency problem.
-# Ref: https://github.com/bazelbuild/bazel-gazelle/issues/1217
-
-load("@bazel_gazelle//:deps.bzl", "go_repository")
-
-go_repository(
-    name = "org_golang_x_mod",
-    build_external = "external",
-    importpath = "golang.org/x/mod",
-    sum = "h1:kQgndtyPBW/JIYERgdxfwMYh3AVStj88WQTlNDi2a+o=",
-    version = "v0.6.0-dev.0.20220106191415-9b9b3d81d5e3",
-)
-
-go_repository(
-    name = "org_golang_x_net",
-    generator_function = "gazelle_dependencies",
-    generator_name = "org_golang_x_net",
-    importpath = "golang.org/x/net",
-    sum = "h1:20cMwl2fHAzkJMEA+8J4JgqBQcQGzbisXo31MIeenXI=",
-    version = "v0.0.0-20210805182204-aaa1db679c0d",
-)
-
-go_repository(
-    name = "org_golang_x_text",
-    generator_function = "gazelle_dependencies",
-    generator_name = "org_golang_x_text",
-    importpath = "golang.org/x/text",
-    sum = "h1:aRYxNxv6iGQlyVaZmk6ZgYEDa+Jg18DxebPSrd6bg1M=",
-    version = "v0.3.6",
-)
-
-go_repository(
-    name = "org_golang_google_grpc",
-    build_external = "external",
-    build_file_proto_mode = "disable",
-    importpath = "google.golang.org/grpc",
-    sum = "h1:oCjezcn6g6A75TGoKYBPgKmVBLexhYLM6MebdrPApP8=",
-    version = "v1.46.0",
-)
-
-# End of workaround
 
 load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
 
