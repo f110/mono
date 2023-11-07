@@ -102,9 +102,9 @@ github.com/nmcclain/asn1-ber
 # github.com/nmcclain/ldap v0.0.0-20191021200707-3b3b69a7e9e3
 ## explicit
 github.com/nmcclain/ldap
-# github.com/onsi/ginkgo v1.16.4
+# github.com/onsi/ginkgo v1.16.5
 ## explicit
-# github.com/onsi/gomega v1.13.0
+# github.com/onsi/gomega v1.29.0
 ## explicit
 # github.com/phuslu/iploc v1.0.20200807
 github.com/phuslu/iploc
@@ -128,15 +128,14 @@ github.com/urfave/cli
 github.com/valyala/bytebufferpool
 # github.com/valyala/fasttemplate v1.0.1
 github.com/valyala/fasttemplate
-# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+# golang.org/x/crypto v0.14.0
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
-# golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+# golang.org/x/net v0.17.0
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20210423082822-04245dca01da
-golang.org/x/sys/internal/unsafeheader
+# golang.org/x/sys v0.13.0
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.6
+# golang.org/x/text v0.13.0
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi

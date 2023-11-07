@@ -1,6 +1,7 @@
 exports_files(
     [
         "copy.bash",
+        "vendor.bash",
     ],
     visibility = ["//visibility:public"],
 )

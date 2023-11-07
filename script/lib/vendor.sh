@@ -115,7 +115,7 @@ function generate_build_file() {
 
     cd "${target_dir}"
     cat <<EOS > BUILD.bazel
-load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
+load("//build/rules:vendor.bzl", "go_vendor")
 
 # gazelle:prefix ${importpath}
 

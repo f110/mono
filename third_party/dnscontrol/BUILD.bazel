@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@dev_f110_rules_extras//go:vendor.bzl", "go_vendor")
+load("//build/rules:vendor.bzl", "go_vendor")
 
 # gazelle:prefix github.com/StackExchange/dnscontrol/v3
 

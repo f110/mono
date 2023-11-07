@@ -18,8 +18,8 @@ require (
 	github.com/lestrrat/go-server-starter v0.0.0-20180220115249-6ac0b358431b
 	github.com/nmcclain/asn1-ber v0.0.0-20170104154839-2661553a0484 // indirect
 	github.com/nmcclain/ldap v0.0.0-20191021200707-3b3b69a7e9e3
-	github.com/onsi/ginkgo v1.16.4 // indirect
-	github.com/onsi/gomega v1.13.0 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.29.0 // indirect
 	github.com/tredoe/osutil v1.0.5
 	github.com/urfave/cli v1.22.4
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
