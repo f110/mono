@@ -557,7 +557,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 			if i := strings.LastIndex(v.PullRequest.Body, stackNavigatorHeader+"1."); i >= 0 {
 				body = v.PullRequest.Body[:i]
 			}
-			if body[len(body)-1] != '\n' {
+			if len(body) > 0 && body[len(body)-1] != '\n' {
 				body += "\n"
 			}
 			body += stackNav
