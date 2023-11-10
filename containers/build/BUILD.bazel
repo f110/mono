@@ -5,7 +5,7 @@ pkg_tar(
     name = "build_bin",
     files = {
         "//go/cmd/build:linux_amd64": "/usr/local/bin/build",
-        "@dev_f110_protoc_ddl//cmd/migrate": "/usr/local/bin/migrate",
+        "@dev_f110_protoc_ddl//cmd/migrate:linux_amd64": "/usr/local/bin/migrate",
     },
     mode = "0755",
 )
