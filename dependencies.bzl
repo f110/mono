@@ -4,6 +4,7 @@ load("//build/rules/minio:def.bzl", "minio_binary")
 load("//build/rules/etcd:def.bzl", "etcd_binary")
 load("//build/rules/kind:def.bzl", "kind_binary")
 load("//build/rules/kustomize:def.bzl", "kustomize_binary")
+load("//build/rules/go:def.bzl", "go_download_tarball")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 versions = {
@@ -20,14 +21,6 @@ containers = {
     "com_google_distroless_base_arm64": "gcr.io/distroless/base@sha256:f19b05270bbd5c38e12c5610f23c1dfe4441858d959102a83074cf17ec074b50",
     "nix_amd64": "docker.io/nixos/nix@sha256:52498160e7a93d9b6b881200690b7e5c446baa314dbf06c0a8015389afd0e58f",  # 2.15.2-amd64
 }
-
-golang_tarball_build_file = """
-filegroup(
-    name = "srcs",
-    srcs = glob(["go/src/**", "go/bin/**", "go/pkg/**"]),
-    visibility = ["//visibility:public"],
-)
-"""
 
 def repository_dependencies():
     kustomize_binary(
@@ -61,17 +54,16 @@ def repository_dependencies():
         urls = ["https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.13.1/argocd-vault-plugin_1.13.1_linux_amd64"],
     )
 
-    http_archive(
-        name = "golang_1.17",
-        build_file_content = golang_tarball_build_file,
-        sha256 = "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d",
-        urls = ["https://golang.org/dl/go1.17.linux-amd64.tar.gz"],
-    )
-
     http_file(
         name = "bazel_remote",
         sha256 = "5e4b248262a56e389e9ee4212ffd0498746347fb5bf155785c9410ba2abc7b07",
         urls = ["https://github.com/buchgr/bazel-remote/releases/download/v2.4.1/bazel-remote-2.4.1-linux-x86_64"],
+    )
+
+    go_download_tarball(
+        name = "golang_1.21",
+        sha256 = "73cac0215254d0c7d1241fa40837851f3b9a8a742d0b54714cbdfb3feaf8f0af",
+        urls = ["https://golang.org/dl/go1.21.4.linux-amd64.tar.gz"],
     )
 
 def container_dependencies():

@@ -19,12 +19,12 @@ pkg_tar(
 
 pkg_tar(
     name = "go",
-    srcs = ["@golang_1.17//:srcs"],
+    srcs = ["@golang_1.21//:srcs"],
     modes = {
         "bin/go": "0755",
     },
     package_dir = "/usr/local/go",
-    strip_prefix = "/external/golang_1.17/go",
+    strip_prefix = "/external/golang_1.21",
 )
 
 container_image(
