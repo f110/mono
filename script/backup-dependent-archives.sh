@@ -4,7 +4,7 @@ set -e
 source "script/lib/bazel.sh"
 source "script/lib/backup.sh"
 
-GAZELLE_VERSION="v0.33.0"
+GAZELLE_VERSION="v0.34.0"
 MIGRATE_VERSION="v4.11.0"
 PROTOBUF_VERSION="v3.21.1"
 RULES_GO_VERSION="v0.42.0"
