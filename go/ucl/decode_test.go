@@ -1,12 +1,62 @@
 package ucl
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestToJSON(t *testing.T) {
+	cases := []struct {
+		In   string
+		JSON any
+	}{
+		{
+			In:   `port = 80;`,
+			JSON: map[string]int{"port": 80},
+		},
+		{
+			In:   `port = -80`,
+			JSON: map[string]int{"port": -80},
+		},
+		{
+			In:   `port = 80-80`,
+			JSON: map[string]string{"port": "80-80"},
+		},
+		{
+			In: `port = 80;
+name = foo`,
+			JSON: map[string]any{"port": 80, "name": "foo"},
+		},
+		{
+			In: `foo {
+  bar = baz;
+}`,
+			JSON: map[string]any{"foo": map[string]string{"bar": "baz"}},
+		},
+		{
+			In: `foo bar {
+  baz = cuz;
+}`,
+			JSON: map[string]any{"foo": map[string]any{"bar": map[string]string{"baz": "cuz"}}},
+		},
+	}
+
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			j, err := NewDecoder(strings.NewReader(tc.In)).ToJSON(nil)
+			require.NoError(t, err)
+			b, err := json.Marshal(tc.JSON)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(b), string(j))
+			t.Log(string(j))
+		})
+	}
+}
 
 func TestTokenize(t *testing.T) {
 	cases := []struct {
@@ -20,6 +70,15 @@ func TestTokenize(t *testing.T) {
 				{Pos: 5, Type: tokenTypeEqual, Value: "="},
 				{Pos: 7, Value: "80"},
 				{Pos: 9, Type: tokenTypeSemiColon, Value: ";"},
+			},
+		},
+		{
+			In: `port = -80;`,
+			Tokens: []token{
+				{Pos: 0, Value: "port"},
+				{Pos: 5, Type: tokenTypeEqual, Value: "="},
+				{Pos: 7, Value: "-80"},
+				{Pos: 10, Type: tokenTypeSemiColon, Value: ";"},
 			},
 		},
 		{
@@ -208,7 +267,8 @@ EOD`,
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			d := NewDecoder(strings.NewReader(tc.In))
-			tokens := d.tokenize()
+			tokens, err := d.tokenize()
+			require.NoError(t, err)
 			assert.Equal(t, len(tc.Tokens), len(tokens))
 			for i, v := range tokens {
 				assert.Equal(t, tc.Tokens[i], *v)

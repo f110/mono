@@ -2,12 +2,17 @@ package ucl
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"reflect"
+	"strconv"
 )
 
-func Unmarshal(b []byte, v any) error {
-	return nil
+func Unmarshal(b []byte, vars map[string]any, v any) error {
+	return NewDecoder(bytes.NewReader(b)).Decode(vars, v)
 }
 
 type Decoder struct {
@@ -16,6 +21,27 @@ type Decoder struct {
 
 func NewDecoder(in io.Reader) *Decoder {
 	return &Decoder{r: bufio.NewReader(in)}
+}
+
+func (d *Decoder) Decode(vars map[string]any, v any) error {
+	tokens, err := d.tokenize()
+	if err != nil {
+		return err
+	}
+	c := decodeCtx{tokens: tokens, vars: vars}
+	return c.unmarshal(v)
+}
+
+func (d *Decoder) ToJSON(vars map[string]any) ([]byte, error) {
+	var j any
+	if err := d.Decode(vars, &j); err != nil {
+		return nil, err
+	}
+	return json.Marshal(j)
+}
+
+func (d *Decoder) unmarshalObject() error {
+	return nil
 }
 
 type token struct {
@@ -41,18 +67,38 @@ const (
 	tokenTypeColon
 )
 
-func (d *Decoder) tokenize() []*token {
+func (v tokenType) String() string {
+	switch v {
+	case tokenTypeLiteral:
+		return "literal"
+	case tokenTypeEqual:
+		return "equal"
+	case tokenTypeLeftCurly:
+		return "left curly bracket"
+	case tokenTypeRightCurly:
+		return "right curly bracket"
+	case tokenTypeNewline:
+		return "new-line"
+	case tokenTypeSemiColon:
+		return "semicolon"
+	case tokenTypeColon:
+		return "colon"
+	}
+
+	return fmt.Sprintf("%d", v)
+}
+
+func (d *Decoder) tokenize() ([]*token, error) {
 	var tokens []*token
 
 	lexCtx := &lexerCtx{r: d.r, next: &token{}}
-	count := 0
-	for ; ; count++ {
+	for {
 		b, err := lexCtx.nextByte()
 		if errors.Is(err, io.EOF) {
 			if lexCtx.peekOffset > 1 {
 				t, err := lexCtx.nextToken(false)
 				if err != nil {
-					return nil
+					return nil, err
 				}
 				tokens = append(tokens, t...)
 			}
@@ -65,7 +111,7 @@ func (d *Decoder) tokenize() []*token {
 				if lexCtx.peekOffset != 1 {
 					t, err := lexCtx.nextToken(false)
 					if err != nil {
-						return nil
+						return nil, err
 					}
 					tokens = append(tokens, t...)
 				}
@@ -75,7 +121,7 @@ func (d *Decoder) tokenize() []*token {
 			if lexCtx.state == lexStateNormal {
 				t, err := lexCtx.nextToken(false)
 				if err != nil {
-					return nil
+					return nil, err
 				}
 				tokens = append(tokens, t...)
 			}
@@ -85,7 +131,7 @@ func (d *Decoder) tokenize() []*token {
 			} else if lexCtx.state == lexStateQuote {
 				t, err := lexCtx.nextToken(true)
 				if err != nil {
-					return nil
+					return nil, err
 				}
 				tokens = append(tokens, t...)
 				lexCtx.state = lexStateNormal
@@ -94,7 +140,7 @@ func (d *Decoder) tokenize() []*token {
 			if lexCtx.state == lexStateNormal {
 				t, err := lexCtx.nextTokenTillEndOfLine()
 				if err != nil {
-					return nil
+					return nil, err
 				}
 				t.Type = tokenTypeComment
 				tokens = append(tokens, t)
@@ -102,14 +148,14 @@ func (d *Decoder) tokenize() []*token {
 		case '/':
 			n, err := lexCtx.peek(1)
 			if err != nil {
-				return nil
+				return nil, err
 			}
 			if n == '*' { // /* is multiline comments
 				lexCtx.state = lexStateComment
 				if lexCtx.depth == 0 {
 					t, err := lexCtx.nextToken(true)
 					if err != nil {
-						return nil
+						return nil, err
 					}
 					tokens = append(tokens, t...)
 				}
@@ -118,14 +164,14 @@ func (d *Decoder) tokenize() []*token {
 		case '*':
 			n, err := lexCtx.peek(1)
 			if err != nil {
-				return nil
+				return nil, err
 			}
 			if n == '/' { // */ is end of multiline comments
 				if lexCtx.depth == 1 {
 					lexCtx.state = lexStateNormal
 					t, err := lexCtx.nextToken(true)
 					if err != nil {
-						return nil
+						return nil, err
 					}
 					tokens = append(tokens, t...)
 				}
@@ -134,19 +180,19 @@ func (d *Decoder) tokenize() []*token {
 		case '<':
 			n, err := lexCtx.peek(1)
 			if err != nil {
-				return nil
+				return nil, err
 			}
 			if n == '<' { // << is starting multiline strings
 				t, err := lexCtx.nextToken(true)
 				if err != nil {
-					return nil
+					return nil, err
 				}
 				tokens = append(tokens, t...)
 			}
 		case '\n':
 			t, err := lexCtx.nextToken(false)
 			if err != nil {
-				return nil
+				return nil, err
 			}
 			tokens = append(tokens, t...)
 		case '\t':
@@ -154,7 +200,130 @@ func (d *Decoder) tokenize() []*token {
 		}
 	}
 
-	return tokens
+	return tokens, nil
+}
+
+type decodeCtx struct {
+	tokens []*token
+	vars   map[string]any
+	pos    int
+}
+
+func (d *decodeCtx) unmarshal(v any) error {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Pointer {
+		rv = rv.Elem()
+	}
+	if rv.Kind() == reflect.Interface && rv.NumMethod() == 0 {
+		root := make(map[string]any)
+		err := d.unmarshalObject2(root)
+		if err != nil {
+			return err
+		}
+		rv.Set(reflect.ValueOf(root))
+	} else {
+		return errors.New("unmarshal only supports any object")
+	}
+	return nil
+}
+
+func (d *decodeCtx) unmarshalObject2(parent map[string]any) error {
+	key := ""
+	for ; d.pos < len(d.tokens); d.pos++ {
+		t := d.tokens[d.pos]
+		switch t.Type {
+		case tokenTypeLiteral:
+			if key == "" {
+				key = t.Value
+			} else {
+				child := make(map[string]any)
+				err := d.unmarshalObject2(child)
+				if err != nil {
+					return err
+				}
+				parent[key] = child
+				key = ""
+			}
+		case tokenTypeEqual:
+			parent[key] = d.parseValue(d.tokens[d.pos+1].Value)
+			key = ""
+			d.pos++
+		case tokenTypeLeftCurly:
+			d.pos++
+			child := make(map[string]any)
+			err := d.unmarshalObject2(child)
+			if err != nil {
+				return err
+			}
+			parent[key] = child
+			key = ""
+		case tokenTypeRightCurly:
+			return nil
+		}
+	}
+	return nil
+}
+
+func (d *decodeCtx) unmarshalObject(v reflect.Value) error {
+	m := make(map[string]any)
+	for ; d.pos < len(d.tokens); d.pos++ {
+		t := d.tokens[d.pos]
+		switch t.Type {
+		case tokenTypeLiteral:
+			switch d.tokens[d.pos+1].Type {
+			case tokenTypeEqual, tokenTypeColon:
+				n, val := d.readValue(d.tokens[d.pos+2:])
+				m[t.Value] = val
+				d.pos += n + 1
+			case tokenTypeLeftCurly:
+				n, val := d.readSection(d.tokens[d.pos+2:])
+				m[t.Value] = val
+				d.pos += n + 1
+			}
+		}
+	}
+	v.Set(reflect.ValueOf(m))
+	return nil
+}
+
+func (d *decodeCtx) readValue(tokens []*token) (int, any) {
+	switch tokens[0].Type {
+	case tokenTypeLiteral:
+		return 1, d.parseValue(tokens[0].Value)
+	}
+
+	return 0, nil
+}
+
+func (d *decodeCtx) readSection(tokens []*token) (int, any) {
+	depth := 0
+	for pos := 0; pos < len(tokens); pos++ {
+		switch tokens[pos].Type {
+		case tokenTypeLeftCurly:
+			depth++
+		case tokenTypeRightCurly:
+			if depth == 0 {
+				return pos + 1, nil
+			}
+			depth--
+		}
+	}
+	return 0, nil
+}
+
+func (*decodeCtx) parseValue(in string) any {
+	isInteger := true
+	for i, v := range in {
+		if (v < '0' || v > '9') && !(i == 0 && v == '-') { // integer
+			isInteger = false
+		}
+	}
+	if isInteger {
+		v, err := strconv.ParseInt(in, 10, 64)
+		_ = err
+		return v
+	}
+	return in
 }
 
 type lexerCtx struct {
@@ -171,7 +340,6 @@ const (
 	lexStateNormal = iota
 	lexStateQuote
 	lexStateComment
-	lexStateMultilineStrings
 )
 
 func (c *lexerCtx) nextToken(includeCurrent bool) ([]*token, error) {
@@ -259,25 +427,6 @@ func (c *lexerCtx) nextToken(includeCurrent bool) ([]*token, error) {
 		c.discard()
 	default:
 		next = nil
-		//default:
-		//	offset := 1
-		//	if includeCurrent {
-		//		offset = 0
-		//	}
-		//	buf := make([]byte, c.peekOffset-offset)
-		//	n, err := c.r.Read(buf)
-		//	if errors.Is(err, io.EOF) {
-		//		next = nil
-		//		break
-		//	}
-		//	if err != nil {
-		//		return nil, err
-		//	}
-		//	if n != len(buf) {
-		//		return nil, errors.New("short buffer")
-		//	}
-		//	next.Value = string(buf)
-		//	c.pos += len(buf)
 	}
 
 	c.next = &token{}

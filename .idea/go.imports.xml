@@ -10,8 +10,12 @@
         <option value="github.com/grafana/regexp" />
         <option value="github.com/hashicorp/go.net/context" />
         <option value="github.com/labstack/gommon/log" />
+        <option value="github.com/mgutz/logxi/v1 as log" />
         <option value="github.com/mitchellh/go-testing-interface" />
+        <option value="github.com/opentracing/opentracing-go/log" />
         <option value="github.com/pingcap/errors" />
+        <option value="github.com/pingcap/log" />
+        <option value="github.com/uber/jaeger-client-go/log" />
         <option value="golang.org/x/net/context" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/errors" />
         <option value="golang.org/x/tools/go/ssa/interp/testdata/src/os" />
