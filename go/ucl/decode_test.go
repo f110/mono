@@ -44,6 +44,66 @@ name = foo`,
 }`,
 			JSON: map[string]any{"foo": map[string]any{"bar": map[string]string{"baz": "cuz"}}},
 		},
+		{
+			In: `port = 80;
+port = 443;`,
+			JSON: map[string]any{"port": []any{80, 443}},
+		},
+		{
+			In: `port = 80;
+port = https;`,
+			JSON: map[string]any{"port": []any{80, "https"}},
+		},
+		{
+			In:   `port = "80";`,
+			JSON: map[string]any{"port": "80"},
+		},
+		{
+			In: `port = 1k;
+port2 = 1K;`,
+			JSON: map[string]any{"port": 1000, "port2": 1000},
+		},
+		{
+			In: `port = 1m;
+port2 = 1M;`,
+			JSON: map[string]any{"port": 1000_000, "port2": 1000_000},
+		},
+		{
+			In: `port = 1g;
+port2 = 1G;`,
+			JSON: map[string]any{"port": 1000_000_000, "port2": 1000_000_000},
+		},
+		{
+			In: `port = 1kb;
+port2 = 1Kb;`,
+			JSON: map[string]any{"port": 1 << 10, "port2": 1 << 10},
+		},
+		{
+			In: `port = 1mb;
+port2 = 1Mb;`,
+			JSON: map[string]any{"port": 1 << 20, "port2": 1 << 20},
+		},
+		{
+			In: `port = 1gb;
+port2 = 1Gb;`,
+			JSON: map[string]any{"port": 1 << 30, "port2": 1 << 30},
+		},
+		{
+			In: `flag = true;
+flag2 = yes;
+flag3 = on;`,
+			JSON: map[string]any{"flag": true, "flag2": true, "flag3": true},
+		},
+		{
+			In: `flag = false;
+flag2 = no;
+flag3 = off;`,
+			JSON: map[string]any{"flag": false, "flag2": false, "flag3": false},
+		},
+		{
+			In:   `v1 = "80"; v2 = "1k"; v3 = "1kb"; v4 = "true"; v5 = "false"`,
+			JSON: map[string]any{"v1": "80", "v2": "1k", "v3": "1kb", "v4": "true", "v5": "false"},
+		},
 	}
 
 	for i, tc := range cases {

@@ -216,7 +216,7 @@ func (d *decodeCtx) unmarshal(v any) error {
 	}
 	if rv.Kind() == reflect.Interface && rv.NumMethod() == 0 {
 		root := make(map[string]any)
-		err := d.unmarshalObject2(root)
+		err := d.unmarshalObject(root)
 		if err != nil {
 			return err
 		}
@@ -227,7 +227,7 @@ func (d *decodeCtx) unmarshal(v any) error {
 	return nil
 }
 
-func (d *decodeCtx) unmarshalObject2(parent map[string]any) error {
+func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 	key := ""
 	for ; d.pos < len(d.tokens); d.pos++ {
 		t := d.tokens[d.pos]
@@ -237,25 +237,25 @@ func (d *decodeCtx) unmarshalObject2(parent map[string]any) error {
 				key = t.Value
 			} else {
 				child := make(map[string]any)
-				err := d.unmarshalObject2(child)
+				err := d.unmarshalObject(child)
 				if err != nil {
 					return err
 				}
-				parent[key] = child
+				d.setObjectValue(parent, key, child)
 				key = ""
 			}
 		case tokenTypeEqual:
-			parent[key] = d.parseValue(d.tokens[d.pos+1].Value)
+			d.setObjectValue(parent, key, d.parseValue(d.tokens[d.pos+1].Value))
 			key = ""
 			d.pos++
 		case tokenTypeLeftCurly:
 			d.pos++
 			child := make(map[string]any)
-			err := d.unmarshalObject2(child)
+			err := d.unmarshalObject(child)
 			if err != nil {
 				return err
 			}
-			parent[key] = child
+			d.setObjectValue(parent, key, child)
 			key = ""
 		case tokenTypeRightCurly:
 			return nil
@@ -264,66 +264,80 @@ func (d *decodeCtx) unmarshalObject2(parent map[string]any) error {
 	return nil
 }
 
-func (d *decodeCtx) unmarshalObject(v reflect.Value) error {
-	m := make(map[string]any)
-	for ; d.pos < len(d.tokens); d.pos++ {
-		t := d.tokens[d.pos]
-		switch t.Type {
-		case tokenTypeLiteral:
-			switch d.tokens[d.pos+1].Type {
-			case tokenTypeEqual, tokenTypeColon:
-				n, val := d.readValue(d.tokens[d.pos+2:])
-				m[t.Value] = val
-				d.pos += n + 1
-			case tokenTypeLeftCurly:
-				n, val := d.readSection(d.tokens[d.pos+2:])
-				m[t.Value] = val
-				d.pos += n + 1
-			}
+func (*decodeCtx) setObjectValue(obj map[string]any, key string, value any) {
+	if v, ok := obj[key]; ok {
+		switch t := v.(type) {
+		case []any:
+			obj[key] = append(t, value)
+		default:
+			obj[key] = []any{v, value}
 		}
+	} else {
+		obj[key] = value
 	}
-	v.Set(reflect.ValueOf(m))
-	return nil
-}
-
-func (d *decodeCtx) readValue(tokens []*token) (int, any) {
-	switch tokens[0].Type {
-	case tokenTypeLiteral:
-		return 1, d.parseValue(tokens[0].Value)
-	}
-
-	return 0, nil
-}
-
-func (d *decodeCtx) readSection(tokens []*token) (int, any) {
-	depth := 0
-	for pos := 0; pos < len(tokens); pos++ {
-		switch tokens[pos].Type {
-		case tokenTypeLeftCurly:
-			depth++
-		case tokenTypeRightCurly:
-			if depth == 0 {
-				return pos + 1, nil
-			}
-			depth--
-		}
-	}
-	return 0, nil
 }
 
 func (*decodeCtx) parseValue(in string) any {
+	// Double quoted
+	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
+		return in[1 : len(in)-1]
+	}
+
+	switch in {
+	case "true", "yes", "on":
+		return true
+	case "false", "no", "off":
+		return false
+	}
+
+	// Prefix (10 base multipliers)
+	if len(in) >= 2 && isIntegerValue(in[:len(in)-1]) {
+		prefix := int64(1)
+		switch in[len(in)-1] {
+		case 'k', 'K':
+			prefix = 1000
+		case 'm', 'M':
+			prefix = 1000_000
+		case 'g', 'G':
+			prefix = 1000_000_000
+		}
+		if prefix != 1 {
+			v, _ := strconv.ParseInt(in[:len(in)-1], 10, 64)
+			return v * prefix
+		}
+	}
+	// 2 power multipliers
+	if len(in) >= 3 && in[len(in)-1] == 'b' && isIntegerValue(in[:len(in)-2]) {
+		shift := int64(0)
+		switch in[len(in)-2] {
+		case 'k', 'K':
+			shift = 10
+		case 'm', 'M':
+			shift = 20
+		case 'g', 'G':
+			shift = 30
+		}
+		if shift != 0 {
+			v, _ := strconv.ParseInt(in[:len(in)-2], 10, 64)
+			return v << shift
+		}
+	}
+
+	if isIntegerValue(in) {
+		v, _ := strconv.ParseInt(in, 10, 64)
+		return v
+	}
+	return in
+}
+
+func isIntegerValue(in string) bool {
 	isInteger := true
 	for i, v := range in {
 		if (v < '0' || v > '9') && !(i == 0 && v == '-') { // integer
 			isInteger = false
 		}
 	}
-	if isInteger {
-		v, err := strconv.ParseInt(in, 10, 64)
-		_ = err
-		return v
-	}
-	return in
+	return isInteger
 }
 
 type lexerCtx struct {
