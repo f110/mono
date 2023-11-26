@@ -40,10 +40,6 @@ func (d *Decoder) ToJSON(vars map[string]any) ([]byte, error) {
 	return json.Marshal(j)
 }
 
-func (d *Decoder) unmarshalObject() error {
-	return nil
-}
-
 type token struct {
 	Type  tokenType
 	Pos   int
@@ -229,13 +225,27 @@ func (d *decodeCtx) unmarshal(v any) error {
 
 func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 	key := ""
+	symbol := 0
 	for ; d.pos < len(d.tokens); d.pos++ {
 		t := d.tokens[d.pos]
 		switch t.Type {
 		case tokenTypeLiteral:
 			if key == "" {
 				key = t.Value
-			} else {
+				continue
+			}
+			if symbol != 0 && d.tokens[symbol].Value == t.Value {
+				val := ""
+				for _, v := range d.tokens[symbol+2 : d.pos-1] {
+					val += v.Value
+				}
+				d.setObjectValue(parent, key, val)
+				key = ""
+				symbol = 0
+				continue
+			}
+
+			if symbol == 0 {
 				child := make(map[string]any)
 				err := d.unmarshalObject(child)
 				if err != nil {
@@ -244,10 +254,12 @@ func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 				d.setObjectValue(parent, key, child)
 				key = ""
 			}
-		case tokenTypeEqual:
-			d.setObjectValue(parent, key, d.parseValue(d.tokens[d.pos+1].Value))
-			key = ""
-			d.pos++
+		case tokenTypeEqual, tokenTypeColon:
+			if d.tokens[d.pos+1].Type == tokenTypeLiteral {
+				d.setObjectValue(parent, key, d.parseValue(d.tokens[d.pos+1].Value))
+				key = ""
+				d.pos++
+			}
 		case tokenTypeLeftCurly:
 			d.pos++
 			child := make(map[string]any)
@@ -259,6 +271,11 @@ func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 			key = ""
 		case tokenTypeRightCurly:
 			return nil
+		case tokenTypeSymbol:
+			if symbol == 0 && d.tokens[d.pos+1].Type == tokenTypeLiteral {
+				symbol = d.pos + 1
+				d.pos++
+			}
 		}
 	}
 	return nil
@@ -408,6 +425,7 @@ func (c *lexerCtx) nextToken(includeCurrent bool) ([]*token, error) {
 		c.discard()
 	case '\n':
 		next.Type = tokenTypeNewline
+		next.Value = "\n"
 		c.discard()
 	case '/':
 		n, err := c.peek(1)

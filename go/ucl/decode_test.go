@@ -20,6 +20,10 @@ func TestToJSON(t *testing.T) {
 			JSON: map[string]int{"port": 80},
 		},
 		{
+			In:   `port: 80`,
+			JSON: map[string]int{"port": 80},
+		},
+		{
 			In:   `port = -80`,
 			JSON: map[string]int{"port": -80},
 		},
@@ -39,10 +43,19 @@ name = foo`,
 			JSON: map[string]any{"foo": map[string]string{"bar": "baz"}},
 		},
 		{
-			In: `foo bar {
-  baz = cuz;
+			In: `foo {
+  bar = baz;
+}
+baz {
+  qux = alice;
 }`,
-			JSON: map[string]any{"foo": map[string]any{"bar": map[string]string{"baz": "cuz"}}},
+			JSON: map[string]any{"foo": map[string]string{"bar": "baz"}, "baz": map[string]string{"qux": "alice"}},
+		},
+		{
+			In: `foo bar {
+  baz = qux;
+}`,
+			JSON: map[string]any{"foo": map[string]any{"bar": map[string]string{"baz": "qux"}}},
 		},
 		{
 			In: `port = 80;
@@ -104,6 +117,13 @@ flag3 = off;`,
 			In:   `v1 = "80"; v2 = "1k"; v3 = "1kb"; v4 = "true"; v5 = "false"`,
 			JSON: map[string]any{"v1": "80", "v2": "1k", "v3": "1kb", "v4": "true", "v5": "false"},
 		},
+		{
+			In: `desc = <<EOD
+foo
+bar
+EOD`,
+			JSON: map[string]any{"desc": "foo\nbar"},
+		},
 	}
 
 	for i, tc := range cases {
@@ -161,7 +181,7 @@ func TestTokenize(t *testing.T) {
 			In: `
 port = 80`,
 			Tokens: []token{
-				{Pos: 0, Type: tokenTypeNewline},
+				{Pos: 0, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 1, Value: "port"},
 				{Pos: 6, Type: tokenTypeEqual, Value: "="},
 				{Pos: 8, Value: "80"},
@@ -185,32 +205,32 @@ foo {
 				{Pos: 5, Type: tokenTypeEqual, Value: "="},
 				{Pos: 7, Value: "80"},
 				{Pos: 9, Type: tokenTypeSemiColon, Value: ";"},
-				{Pos: 10, Type: tokenTypeNewline},
+				{Pos: 10, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 11, Value: "foo"},
 				{Pos: 15, Type: tokenTypeLeftCurly, Value: "{"},
-				{Pos: 16, Type: tokenTypeNewline},
+				{Pos: 16, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 18, Value: "name"},
 				{Pos: 23, Type: tokenTypeEqual, Value: "="},
 				{Pos: 25, Value: "bar"},
 				{Pos: 28, Type: tokenTypeSemiColon, Value: ";"},
-				{Pos: 29, Type: tokenTypeNewline},
+				{Pos: 29, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 30, Type: tokenTypeRightCurly, Value: "}"},
 			},
 		},
 		{ // named section
 			In: `foo bar {
-	baz = cuz;
+	baz = qux;
 }`,
 			Tokens: []token{
 				{Pos: 0, Value: "foo"},
 				{Pos: 4, Value: "bar"},
 				{Pos: 8, Type: tokenTypeLeftCurly, Value: "{"},
-				{Pos: 9, Type: tokenTypeNewline},
+				{Pos: 9, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 11, Value: "baz"},
 				{Pos: 15, Type: tokenTypeEqual, Value: "="},
-				{Pos: 17, Value: "cuz"},
+				{Pos: 17, Value: "qux"},
 				{Pos: 20, Type: tokenTypeSemiColon, Value: ";"},
-				{Pos: 21, Type: tokenTypeNewline},
+				{Pos: 21, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 22, Type: tokenTypeRightCurly, Value: "}"},
 			},
 		},
@@ -227,7 +247,7 @@ foo {
 port = 80;`,
 			Tokens: []token{
 				{Pos: 0, Type: tokenTypeComment, Value: "# simple"},
-				{Pos: 8, Type: tokenTypeNewline},
+				{Pos: 8, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 9, Value: "port"},
 				{Pos: 14, Type: tokenTypeEqual, Value: "="},
 				{Pos: 16, Value: "80"},
@@ -241,11 +261,11 @@ port = 80;`,
 port = 80;`,
 			Tokens: []token{
 				{Pos: 0, Type: tokenTypeComment, Value: "/*"},
-				{Pos: 2, Type: tokenTypeNewline},
+				{Pos: 2, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 3, Value: "  foo"},
-				{Pos: 8, Type: tokenTypeNewline},
+				{Pos: 8, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 9, Type: tokenTypeComment, Value: "*/"},
-				{Pos: 11, Type: tokenTypeNewline},
+				{Pos: 11, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 12, Value: "port"},
 				{Pos: 17, Type: tokenTypeEqual, Value: "="},
 				{Pos: 19, Value: "80"},
@@ -260,13 +280,13 @@ port = 80;`,
 port = 80`,
 			Tokens: []token{
 				{Pos: 0, Type: tokenTypeComment, Value: "/*"},
-				{Pos: 2, Type: tokenTypeNewline},
+				{Pos: 2, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 3, Value: "  foo"},
-				{Pos: 8, Type: tokenTypeNewline},
+				{Pos: 8, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 9, Value: "  /* bar */"},
-				{Pos: 20, Type: tokenTypeNewline},
+				{Pos: 20, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 21, Type: tokenTypeComment, Value: "*/"},
-				{Pos: 23, Type: tokenTypeNewline},
+				{Pos: 23, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 24, Value: "port"},
 				{Pos: 29, Type: tokenTypeEqual, Value: "="},
 				{Pos: 31, Value: "80"},
@@ -282,11 +302,11 @@ EOD`,
 				{Pos: 4, Type: tokenTypeEqual, Value: "="},
 				{Pos: 6, Type: tokenTypeSymbol, Value: "<<"},
 				{Pos: 8, Value: `EOD`},
-				{Pos: 11, Type: tokenTypeNewline},
+				{Pos: 11, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 12, Value: "foo"},
-				{Pos: 15, Type: tokenTypeNewline},
+				{Pos: 15, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 16, Value: "bar"},
-				{Pos: 19, Type: tokenTypeNewline},
+				{Pos: 19, Type: tokenTypeNewline, Value: "\n"},
 				{Pos: 20, Value: "EOD"},
 			},
 		},
