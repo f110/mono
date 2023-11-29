@@ -124,11 +124,35 @@ bar
 EOD`,
 			JSON: map[string]any{"desc": "foo\nbar"},
 		},
+		{
+			In:   `port = $http_port`,
+			JSON: map[string]any{"port": "80"},
+		},
+		{
+			In:   `port = "$http_port"`,
+			JSON: map[string]any{"port": "80"},
+		},
+		{
+			In:   `port = "${http_port}"`,
+			JSON: map[string]any{"port": "80"},
+		},
+		{
+			In:   `port = "$$http_port"`,
+			JSON: map[string]any{"port": "$http_port"},
+		},
+		{
+			In:   `port = "foo$$http_port"`,
+			JSON: map[string]any{"port": "foo$http_port"},
+		},
+		{
+			In:   `port = "$http_port $http_port"`,
+			JSON: map[string]any{"port": "80 80"},
+		},
 	}
 
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			j, err := NewDecoder(strings.NewReader(tc.In)).ToJSON(nil)
+			j, err := NewDecoder(strings.NewReader(tc.In)).ToJSON(map[string]string{"http_port": "80"})
 			require.NoError(t, err)
 			b, err := json.Marshal(tc.JSON)
 			require.NoError(t, err)

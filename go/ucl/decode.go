@@ -9,9 +9,10 @@ import (
 	"io"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
-func Unmarshal(b []byte, vars map[string]any, v any) error {
+func Unmarshal(b []byte, vars map[string]string, v any) error {
 	return NewDecoder(bytes.NewReader(b)).Decode(vars, v)
 }
 
@@ -23,7 +24,7 @@ func NewDecoder(in io.Reader) *Decoder {
 	return &Decoder{r: bufio.NewReader(in)}
 }
 
-func (d *Decoder) Decode(vars map[string]any, v any) error {
+func (d *Decoder) Decode(vars map[string]string, v any) error {
 	tokens, err := d.tokenize()
 	if err != nil {
 		return err
@@ -32,7 +33,7 @@ func (d *Decoder) Decode(vars map[string]any, v any) error {
 	return c.unmarshal(v)
 }
 
-func (d *Decoder) ToJSON(vars map[string]any) ([]byte, error) {
+func (d *Decoder) ToJSON(vars map[string]string) ([]byte, error) {
 	var j any
 	if err := d.Decode(vars, &j); err != nil {
 		return nil, err
@@ -201,7 +202,7 @@ func (d *Decoder) tokenize() ([]*token, error) {
 
 type decodeCtx struct {
 	tokens []*token
-	vars   map[string]any
+	vars   map[string]string
 	pos    int
 }
 
@@ -294,10 +295,10 @@ func (*decodeCtx) setObjectValue(obj map[string]any, key string, value any) {
 	}
 }
 
-func (*decodeCtx) parseValue(in string) any {
+func (d *decodeCtx) parseValue(in string) any {
 	// Double quoted
 	if len(in) >= 2 && in[0] == '"' && in[len(in)-1] == '"' {
-		return in[1 : len(in)-1]
+		return d.assignVars(in[1 : len(in)-1])
 	}
 
 	switch in {
@@ -344,7 +345,57 @@ func (*decodeCtx) parseValue(in string) any {
 		v, _ := strconv.ParseInt(in, 10, 64)
 		return v
 	}
-	return in
+	return d.assignVars(in)
+}
+
+func (d *decodeCtx) assignVars(in string) string {
+	if !strings.Contains(in, "$") {
+		return in
+	}
+
+	var b strings.Builder
+	b.Grow(len(in))
+	startPos := -1
+	for i, v := range in {
+		if v == '$' {
+			if i > 0 && in[i-1] != '$' && len(in) > i+1 && in[i+1] != '$' {
+				startPos = i + 1
+				continue
+			}
+			if i == 0 && len(in) > 1 && in[i+1] != '$' {
+				startPos = 1
+				continue
+			}
+			if len(in) > i+1 && in[i+1] == '$' {
+				continue
+			}
+		}
+
+		if i > 0 && v == '{' && in[i-1] == '$' {
+			startPos = i
+			continue
+		}
+		if startPos > 0 {
+			if v == '}' {
+				key := in[startPos+1 : i]
+				startPos = -1
+				b.WriteString(d.vars[key])
+			} else if (v < '0' || '9' < v) && (v < 'A' || 'Z' < v) && (v < 'a' || 'z' < v) && v != '_' {
+				key := in[startPos:i]
+				startPos = -1
+				b.WriteString(d.vars[key])
+				b.WriteRune(v)
+			}
+		} else {
+			b.WriteRune(v)
+		}
+	}
+
+	if startPos > 0 {
+		key := in[startPos:]
+		b.WriteString(d.vars[key])
+	}
+	return b.String()
 }
 
 func isIntegerValue(in string) bool {
