@@ -328,7 +328,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
-	const logTemplate = `change_id ++ "," ++ commit_id ++ "," ++ branches ++ ",\"" ++ description ++ "\"\n"`
+	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ branches ++ "]\\" ++ description ++ "\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
@@ -336,6 +336,8 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		return nil, xerrors.WithStack(err)
 	}
 	r := csv.NewReader(bytes.NewReader(buf))
+	r.Comma = '\\'
+	r.LazyQuotes = true
 	var commits stackedCommit
 	for {
 		line, err := r.Read()
@@ -352,7 +354,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		cm := &commit{
 			ChangeID:    line[0],
 			CommitID:    line[1],
-			Branch:      strings.TrimSuffix(line[2], "*"),
+			Branch:      strings.TrimSuffix(line[2][1:len(line[2])-1], "*"),
 			Description: line[3],
 		}
 		commits = append(commits, cm)
