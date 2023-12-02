@@ -448,7 +448,10 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 	}
 
 	var templateFile string
-	if len(templates) > 0 {
+	if len(templates) == 1 {
+		fmt.Println("Found one template. will use it.")
+		templateFile = templates[0]
+	} else if len(templates) > 0 {
 		fmt.Println("Found multiple templates. Please pick the template.")
 		for i, v := range templates {
 			fmt.Printf("%d: %s\n", i+1, strings.TrimPrefix(v, repoRoot))
