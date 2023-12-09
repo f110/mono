@@ -24,11 +24,3 @@ def container_image(name, annotations = {}, architecture = "", base = None, cmd 
         repo_tags = ["image"],
         visibility = ["//visibility:public"],
     )
-
-    native.genrule(
-        name = "%s.gen_digest" % name,
-        srcs = [":%s" % name],
-        outs = ["%s.digest" % name],
-        cmd = "$(JQ_BIN) -r '.manifests[0].digest' $(location :%s)/index.json > $@" % name,
-        toolchains = ["@jq_toolchains//:resolved_toolchain"],
-    )
