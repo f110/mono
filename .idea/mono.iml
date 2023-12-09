@@ -6,7 +6,8 @@
     </facet>
   </component>
   <component name="Go" enabled="true" />
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/bazel-bin" />
       <excludeFolder url="file://$MODULE_DIR$/bazel-mono" />
@@ -17,6 +18,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.minio_data" />
       <excludeFolder url="file://$MODULE_DIR$/.mysql" />
       <excludeFolder url="file://$MODULE_DIR$/.etcd_data" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
