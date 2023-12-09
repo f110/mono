@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ucl",
+    srcs = ["decode.go"],
+    importpath = "go.f110.dev/mono/go/ucl",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "ucl_test",
+    srcs = ["decode_test.go"],
+    embed = [":ucl"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
