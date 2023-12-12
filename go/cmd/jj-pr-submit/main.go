@@ -43,6 +43,7 @@ type jujutsuPRSubmitCommand struct {
 	DryRun        bool
 	Force         bool
 	DisplayStack  bool
+	SinglePR      bool
 
 	repositoryOwner string
 	repositoryName  string
@@ -63,6 +64,7 @@ const (
 	statePushCommit
 	stateCreatePR
 	stateUpdatePR
+	stateUpdateSinglePR
 	stateClose
 )
 
@@ -70,14 +72,15 @@ func newCommand() *jujutsuPRSubmitCommand {
 	c := &jujutsuPRSubmitCommand{}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:         c.init,
-			stateGetToken:     c.getToken,
-			stateGetMetadata:  c.getMetadata,
-			stateDisplayStack: c.displayStack,
-			statePushCommit:   c.pushCommit,
-			stateCreatePR:     c.createPR,
-			stateUpdatePR:     c.updatePR,
-			stateClose:        c.close,
+			stateInit:           c.init,
+			stateGetToken:       c.getToken,
+			stateGetMetadata:    c.getMetadata,
+			stateDisplayStack:   c.displayStack,
+			statePushCommit:     c.pushCommit,
+			stateCreatePR:       c.createPR,
+			stateUpdatePR:       c.updatePR,
+			stateUpdateSinglePR: c.updateSinglePR,
+			stateClose:          c.close,
 		},
 		stateInit,
 		stateClose,
@@ -93,6 +96,7 @@ func (c *jujutsuPRSubmitCommand) flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.DryRun, "dry-run", false, "Not impact on remote")
 	fs.BoolVar(&c.Force, "force", false, "Push commits when there are more than 10 commits in the stack")
 	fs.BoolVar(&c.DisplayStack, "display-stack", false, "Only display the stack")
+	fs.BoolVar(&c.SinglePR, "single-pr", false, "Make the PR in multiple commits")
 }
 
 func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
@@ -393,6 +397,47 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 
 	var template string
 	// Create pull requests
+	if c.SinglePR {
+		if c.stack[0].PullRequest != nil {
+			return fsm.Next(stateUpdateSinglePR)
+		}
+
+		if template == "" && len(templates) > 0 {
+			template, err = c.pickTemplate(templates, repoRoot)
+			if err != nil {
+				return fsm.Error(err)
+			}
+		}
+
+		fmt.Println("Create pull request")
+		if !c.DryRun {
+			var title, description string
+			if i := strings.Index(c.stack[0].Description, "\n"); i > 0 {
+				title = c.stack[0].Description[:i]
+				if len(c.stack[0].Description) > i+2 {
+					description = c.stack[0].Description[i+2:] + "\n" + template
+				} else {
+					description = template
+				}
+			} else {
+				title = c.stack[0].Description
+			}
+			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
+				Title: github.String(title),
+				Body:  github.String(description),
+				Head:  github.String(c.stack[0].Branch),
+				Base:  github.String(c.DefaultBranch),
+				Draft: github.Bool(true),
+			})
+			if err != nil {
+				return fsm.Error(xerrors.WithStack(err))
+			}
+			c.stack[0].PullRequest = newPullRequest(pr)
+			fmt.Printf("Created: %s\n", pr.GetHTMLURL())
+		}
+
+		return fsm.Next(stateUpdateSinglePR)
+	}
 	// Scan reverse order to create PR for older commit first.
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
@@ -589,6 +634,16 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		}
 	}
 
+	return fsm.Next(stateClose)
+}
+
+func (c *jujutsuPRSubmitCommand) updateSinglePR(_ context.Context) (fsm.State, error) {
+	if c.stack[0].PullRequest == nil {
+		if !c.DryRun {
+			logger.Log.Error("BUG: Couldn't find the pull request.")
+		}
+		return fsm.Next(stateClose)
+	}
 	return fsm.Next(stateClose)
 }
 
