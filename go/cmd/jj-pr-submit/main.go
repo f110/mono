@@ -467,6 +467,8 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 				} else {
 					description = template
 				}
+			} else {
+				title = v.Description
 			}
 
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
