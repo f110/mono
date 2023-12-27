@@ -10,6 +10,7 @@ go_library(
 go_test(
     name = "ucl_test",
     srcs = ["decode_test.go"],
+    data = glob(["testdata/**"]),
     embed = [":ucl"],
     deps = [
         "//vendor/github.com/stretchr/testify/assert",
