@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,16 +18,48 @@ func Unmarshal(b []byte, vars map[string]string, v any) error {
 	return NewDecoder(bytes.NewReader(b)).Decode(vars, v)
 }
 
+func UnmarshalFile(f string, vars map[string]string, v any) error {
+	d, err := NewFileDecoder(f)
+	if err != nil {
+		return err
+	}
+	return d.Decode(vars, v)
+}
+
 type Decoder struct {
-	r *bufio.Reader
+	r     *bufio.Reader
+	funcs map[string]any
 }
 
 func NewDecoder(in io.Reader) *Decoder {
-	return &Decoder{r: bufio.NewReader(in)}
+	d := &Decoder{r: bufio.NewReader(in), funcs: make(map[string]any)}
+	wd, _ := os.Getwd()
+	return d.Funcs(map[string]any{"include": macroInclude(wd), "try_include": macroTryInclude(wd)})
+}
+
+func NewFileDecoder(f string) (*Decoder, error) {
+	file, err := os.Open(f)
+	if err != nil {
+		return nil, err
+	}
+	d := &Decoder{r: bufio.NewReader(file), funcs: make(map[string]any)}
+	wd := filepath.Dir(f)
+	return d.Funcs(map[string]any{"include": macroInclude(wd), "try_include": macroTryInclude(wd)}), nil
+}
+
+func (d *Decoder) Funcs(funcs map[string]any) *Decoder {
+	for k, v := range funcs {
+		d.funcs[k] = v
+	}
+	return d
 }
 
 func (d *Decoder) Decode(vars map[string]string, v any) error {
 	tokens, err := d.tokenize()
+	if err != nil {
+		return err
+	}
+	tokens, err = d.preProcess(tokens)
 	if err != nil {
 		return err
 	}
@@ -39,6 +73,72 @@ func (d *Decoder) ToJSON(vars map[string]string) ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(j)
+}
+
+func (d *Decoder) preProcess(tokens []*token) ([]*token, error) {
+	for pos := 0; pos < len(tokens); pos++ {
+		switch tokens[pos].Type {
+		case tokenTypeDot:
+			name := tokens[pos+1].Value
+			f, ok := d.funcs[name]
+			if !ok {
+				return nil, fmt.Errorf("macro %s is not found", name)
+			}
+			var args string
+			endPos := pos
+		FindEnd:
+			for ; endPos < len(tokens); endPos++ {
+				switch tokens[endPos].Type {
+				case tokenTypeLiteral:
+					args = tokens[endPos].Value
+				case tokenTypeSemiColon:
+					break FindEnd
+				case tokenTypeNewline:
+					endPos--
+					break FindEnd
+				}
+			}
+			if args[0] == '"' && args[len(args)-1] == '"' {
+				args = args[1 : len(args)-1]
+			}
+
+			switch fn := f.(type) {
+			case func(any, map[string]any) (string, error):
+				raw, err := fn(args, nil)
+				if err != nil {
+					return nil, err
+				}
+				addTokens, err := NewDecoder(strings.NewReader(raw)).tokenize()
+				if err != nil {
+					return nil, err
+				}
+				tokens = append(tokens[:pos], append(addTokens, tokens[endPos+1:]...)...)
+			}
+		}
+	}
+
+	return tokens, nil
+}
+
+func macroInclude(workDir string) func(any, map[string]any) (string, error) {
+	return func(args any, kwargs map[string]any) (string, error) {
+		buf, err := os.ReadFile(filepath.Join(workDir, args.(string)))
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+}
+
+func macroTryInclude(workDir string) func(any, map[string]any) string {
+	f := macroInclude(workDir)
+	return func(args any, kwargs map[string]any) string {
+		b, err := f(args, kwargs)
+		if err != nil {
+			return ""
+		}
+		return b
+	}
 }
 
 type token struct {
@@ -74,6 +174,10 @@ func (v tokenType) String() string {
 		return "left curly bracket"
 	case tokenTypeRightCurly:
 		return "right curly bracket"
+	case tokenTypeDot:
+		return "dot"
+	case tokenTypeComment:
+		return "comment"
 	case tokenTypeNewline:
 		return "new-line"
 	case tokenTypeSemiColon:

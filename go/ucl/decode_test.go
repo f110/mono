@@ -3,6 +3,9 @@ package ucl
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -157,7 +160,52 @@ EOD`,
 			b, err := json.Marshal(tc.JSON)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(b), string(j))
-			t.Log(string(j))
+		})
+	}
+}
+
+func TestDecoder(t *testing.T) {
+	entries, err := os.ReadDir("testdata")
+	require.NoError(t, err)
+	for _, v := range entries {
+		if !strings.HasSuffix(v.Name(), ".conf") {
+			continue
+		}
+
+		t.Run(v.Name(), func(t *testing.T) {
+			f, err := os.Open(filepath.Join("testdata", v.Name()))
+			require.NoError(t, err)
+			j, err := NewDecoder(f).ToJSON(nil)
+			require.NoError(t, err)
+
+			r, err := os.Open(filepath.Join("testdata", strings.TrimSuffix(v.Name(), ".conf")+".out"))
+			require.NoError(t, err)
+			res, err := io.ReadAll(r)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(res), string(j))
+		})
+	}
+}
+
+func TestFileDecoder(t *testing.T) {
+	entries, err := os.ReadDir("testdata")
+	require.NoError(t, err)
+	for _, v := range entries {
+		if !strings.HasSuffix(v.Name(), ".conf.file") {
+			continue
+		}
+
+		t.Run(v.Name(), func(t *testing.T) {
+			d, err := NewFileDecoder(filepath.Join("testdata", v.Name()))
+			require.NoError(t, err)
+			j, err := d.ToJSON(nil)
+			require.NoError(t, err)
+
+			r, err := os.Open(filepath.Join("testdata", strings.TrimSuffix(v.Name(), ".conf.file")+".out"))
+			require.NoError(t, err)
+			res, err := io.ReadAll(r)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(res), string(j))
 		})
 	}
 }
