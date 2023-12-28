@@ -1,8 +1,0 @@
-package: cpp
-
-slices:
-  bin:
-    essential:
-      - cpp-11_bin
-    contents:
-      /usr/bin/cpp:

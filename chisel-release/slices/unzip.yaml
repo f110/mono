@@ -1,6 +1,0 @@
-package: unzip
-
-slices:
-  bin:
-    contents:
-      /usr/bin/unzip:

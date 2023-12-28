@@ -1,6 +1,0 @@
-package: liberror-perl
-
-slices:
-  libs:
-    contents:
-      /usr/share/perl5/Error*:

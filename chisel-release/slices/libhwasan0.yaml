@@ -1,9 +1,0 @@
-package: libhwasan0
-
-slices:
-  libs:
-    essential:
-      - libc6_libs
-      - libgcc-s1_libs
-    contents:
-      /usr/lib/*-linux-*/libhwasan.so.0*:

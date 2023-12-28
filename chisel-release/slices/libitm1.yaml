@@ -1,8 +1,0 @@
-package: libitm1
-
-slices:
-  libs:
-    essential:
-      - libc6_libs
-    contents:
-      /usr/lib/*-linux-*/libitm.so.1*:
