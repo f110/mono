@@ -30,6 +30,7 @@ require (
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/im7mortal/kmutex v1.0.1
 	github.com/jarcoal/httpmock v1.3.0
+	github.com/mattn/go-shellwords v1.0.12
 	github.com/minio/minio v0.0.0-20210407225602-2899cc92b45f
 	github.com/minio/minio-go/v6 v6.0.50
 	github.com/minio/minio-go/v7 v7.0.11-0.20210302210017-6ae69c73ce78
@@ -61,6 +62,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 	golang.org/x/term v0.6.0
 	golang.org/x/tools v0.6.0
+	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
 	google.golang.org/api v0.77.0
 	google.golang.org/genproto v0.0.0-20220518221133-4f43b3371335
 	google.golang.org/grpc v1.47.0
@@ -219,7 +221,6 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
-	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	gonum.org/v1/gonum v0.11.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1 // indirect

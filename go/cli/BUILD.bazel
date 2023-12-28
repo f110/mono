@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cli",
+    srcs = [
+        "command.go",
+        "flagset.go",
+    ],
+    importpath = "go.f110.dev/mono/go/cli",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/mattn/go-shellwords",
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/golang.org/x/xerrors",
+    ],
+)
+
+go_test(
+    name = "cli_test",
+    srcs = [
+        "command_test.go",
+        "flagset_test.go",
+    ],
+    embed = [":cli"],
+    deps = [
+        "//vendor/github.com/spf13/pflag",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
