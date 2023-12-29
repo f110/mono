@@ -98,7 +98,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 	}
 	help := false
 	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
-	if err := fs.Parse(args); err != nil {
+	if err := fs.Parse(args); err != nil && !help {
 		return err
 	}
 	if help {
