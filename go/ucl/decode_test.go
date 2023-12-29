@@ -151,6 +151,25 @@ EOD`,
 			In:   `port = "$http_port $http_port"`,
 			JSON: map[string]any{"port": "80 80"},
 		},
+		{
+			In: `port {
+	listen = 80;
+};
+port {
+	listen = 443;
+}
+`,
+			JSON: map[string]any{"port": []any{map[string]any{"listen": 80}, map[string]any{"listen": 443}}},
+		},
+		{
+			In: `server {
+	listen = ":8081";
+	path "/" {
+		proxy = "127.0.0.1";
+	}
+}`,
+			JSON: map[string]any{"server": map[string]any{"listen": ":8081", "path": map[string]any{"/": map[string]any{"proxy": "127.0.0.1"}}}},
+		},
 	}
 
 	for i, tc := range cases {

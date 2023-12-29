@@ -323,7 +323,7 @@ func (d *decodeCtx) unmarshal(v any) error {
 		}
 		rv.Set(reflect.ValueOf(root))
 	} else {
-		return errors.New("unmarshal only supports any object")
+		return errors.New("unmarshal only supports \"any\" object")
 	}
 	return nil
 }
@@ -336,7 +336,11 @@ func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 		switch t.Type {
 		case tokenTypeLiteral:
 			if key == "" {
-				key = t.Value
+				if t.Value[0] == '"' && t.Value[len(t.Value)-1] == '"' {
+					key = t.Value[1 : len(t.Value)-1]
+				} else {
+					key = t.Value
+				}
 				continue
 			}
 			if symbol != 0 && d.tokens[symbol].Value == t.Value {
