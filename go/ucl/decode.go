@@ -78,6 +78,29 @@ func (d *Decoder) ToJSON(vars map[string]string) ([]byte, error) {
 func (d *Decoder) preProcess(tokens []*token) ([]*token, error) {
 	for pos := 0; pos < len(tokens); pos++ {
 		switch tokens[pos].Type {
+		case tokenTypeLiteral:
+			if pos != len(tokens)-1 && tokens[pos+1].Type == tokenTypeLiteral {
+				endPos := pos
+				depth := 0
+			FindEndCurly:
+				for ; endPos < len(tokens); endPos++ {
+					switch tokens[endPos].Type {
+					case tokenTypeLeftCurly:
+						depth++
+					case tokenTypeRightCurly:
+						if depth == 1 {
+							break FindEndCurly
+						}
+						depth--
+					}
+				}
+				if endPos != pos {
+					newTokens := append(tokens[:pos+1], append([]*token{{Type: tokenTypeLeftCurly, Value: "{"}}, tokens[pos+1:endPos]...)...)
+					newTokens = append(newTokens, &token{Type: tokenTypeRightCurly, Value: "}"})
+					newTokens = append(newTokens, tokens[endPos:]...)
+					tokens = newTokens
+				}
+			}
 		case tokenTypeDot:
 			name := tokens[pos+1].Value
 			f, ok := d.funcs[name]
