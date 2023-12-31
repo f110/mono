@@ -270,20 +270,22 @@ func (d *Decoder) tokenize() ([]*token, error) {
 				tokens = append(tokens, t)
 			}
 		case '/':
-			n, err := lexCtx.peek(1)
-			if err != nil {
-				return nil, err
-			}
-			if n == '*' { // /* is multiline comments
-				lexCtx.state = lexStateComment
-				if lexCtx.depth == 0 {
-					t, err := lexCtx.nextToken(true)
-					if err != nil {
-						return nil, err
-					}
-					tokens = append(tokens, t...)
+			if lexCtx.state == lexStateNormal {
+				n, err := lexCtx.peek(1)
+				if err != nil {
+					return nil, err
 				}
-				lexCtx.depth += 1
+				if n == '*' { // /* is multiline comments
+					lexCtx.state = lexStateComment
+					if lexCtx.depth == 0 {
+						t, err := lexCtx.nextToken(true)
+						if err != nil {
+							return nil, err
+						}
+						tokens = append(tokens, t...)
+					}
+					lexCtx.depth += 1
+				}
 			}
 		case '*':
 			n, err := lexCtx.peek(1)

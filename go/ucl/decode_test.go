@@ -170,6 +170,14 @@ port {
 }`,
 			JSON: map[string]any{"server": map[string]any{"listen": ":8081", "path": map[string]any{"/": map[string]any{"proxy": "127.0.0.1"}}}},
 		},
+		{
+			In: `server {
+	path "/*" {
+		root = "/static"
+	}
+}`,
+			JSON: map[string]any{"server": map[string]any{"path": map[string]any{"/*": map[string]any{"root": "/static"}}}},
+		},
 	}
 
 	for i, tc := range cases {
