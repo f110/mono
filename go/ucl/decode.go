@@ -270,7 +270,7 @@ func (d *Decoder) tokenize() ([]*token, error) {
 				tokens = append(tokens, t)
 			}
 		case '/':
-			if lexCtx.state == lexStateNormal {
+			if lexCtx.state != lexStateQuote {
 				n, err := lexCtx.peek(1)
 				if err != nil {
 					return nil, err
