@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "bon",
+    srcs = [
+        "bon.go",
+        "context.go",
+        "fs.go",
+        "group.go",
+        "mux.go",
+        "route.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/nissy/bon",
+    importpath = "github.com/nissy/bon",
+    visibility = ["//visibility:public"],
+)

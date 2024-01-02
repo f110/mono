@@ -9,9 +9,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/cli",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//vendor/github.com/mattn/go-shellwords",
         "//vendor/github.com/spf13/pflag",
-        "//vendor/golang.org/x/xerrors",
+        "//vendor/go.f110.dev/xerrors",
     ],
 )
 

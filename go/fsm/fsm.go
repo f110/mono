@@ -64,7 +64,7 @@ func Wait() (State, error) {
 	return WaitState, nil
 }
 
-// SignalHandling handles specifying signal
+// SignalHandling handles specifying signal.
 // Deprecated.
 func (f *FSM) SignalHandling(signals ...os.Signal) {
 	signalCh := make(chan os.Signal)

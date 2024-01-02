@@ -13,7 +13,9 @@ import (
 
 	"github.com/mattn/go-shellwords"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/logger"
 )
 
 type Command struct {
@@ -77,6 +79,9 @@ func (c *Command) Usage() string {
 func (c *Command) Execute(args []string) error {
 	if c.executed {
 		return xerrors.New("already executed")
+	}
+	if err := logger.Init(); err != nil {
+		return err
 	}
 
 	c.executed = true
