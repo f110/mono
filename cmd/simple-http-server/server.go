@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/nissy/bon"
@@ -87,17 +89,21 @@ func (s *SimpleHTTPServer) readConfig() error {
 				if !ok {
 					continue
 				}
-				var proxy, root string
+				var proxy, root, accessLog string
 				if v, ok := val["proxy"]; ok {
 					proxy = v.(string)
 				}
 				if v, ok := val["root"]; ok {
 					root = v.(string)
 				}
+				if v, ok := val["access_log"]; ok {
+					accessLog = v.(string)
+				}
 				v.path = append(v.path, &PathConfig{
-					Path:  p,
-					Proxy: proxy,
-					Root:  root,
+					Path:      p,
+					Proxy:     proxy,
+					Root:      root,
+					AccessLog: accessLog,
 				})
 			}
 		case []any:
@@ -108,17 +114,21 @@ func (s *SimpleHTTPServer) readConfig() error {
 				}
 				for p, va := range entry {
 					val := va.(map[string]any)
-					var proxy, root string
+					var proxy, root, accessLog string
 					if v, ok := val["proxy"]; ok {
 						proxy = v.(string)
 					}
 					if v, ok := val["root"]; ok {
 						root = v.(string)
 					}
+					if v, ok := val["access_log"]; ok {
+						accessLog = v.(string)
+					}
 					v.path = append(v.path, &PathConfig{
-						Path:  p,
-						Proxy: proxy,
-						Root:  root,
+						Path:      p,
+						Proxy:     proxy,
+						Root:      root,
+						AccessLog: accessLog,
 					})
 				}
 			}
@@ -140,11 +150,25 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 	if len(s.config.Server) == 0 {
 		return fsm.Error(errors.New("there is no server"))
 	}
+	accessLogger := make(map[string]bon.Middleware)
 	for _, v := range s.config.Server {
 		router := bon.NewRouter()
 		server := &http.Server{
 			Addr:    v.Listen,
 			Handler: router,
+		}
+		var middle bon.Middleware
+		if v.AccessLog != "" {
+			l, ok := accessLogger[v.AccessLog]
+			if !ok {
+				newLogger, err := NewMiddlewareAccessLog(v.AccessLog)
+				if err != nil {
+					return fsm.Error(err)
+				}
+				l = newLogger
+				accessLogger[v.AccessLog] = l
+			}
+			middle = l
 		}
 
 		for _, p := range v.path {
@@ -159,9 +183,25 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 				}
 				handler = httputil.NewSingleHostReverseProxy(u)
 			}
+			var middlewares []bon.Middleware
+			if p.AccessLog != "" {
+				l, ok := accessLogger[p.AccessLog]
+				if !ok {
+					newLogger, err := NewMiddlewareAccessLog(p.AccessLog)
+					if err != nil {
+						return fsm.Error(err)
+					}
+					l = newLogger
+					accessLogger[p.AccessLog] = newLogger
+				}
+				middlewares = append(middlewares, l)
+			}
+			if middle != nil && p.AccessLog == "" {
+				middlewares = append(middlewares, middle)
+			}
 
 			for _, m := range allMethods {
-				router.Handle(m, p.Path, handler)
+				router.Handle(m, p.Path, handler, middlewares...)
 			}
 		}
 		go func() {
@@ -182,4 +222,19 @@ func (s *SimpleHTTPServer) shutdown(ctx context.Context) (fsm.State, error) {
 		}
 	}
 	return fsm.Finish()
+}
+
+func NewMiddlewareAccessLog(p string) (bon.Middleware, error) {
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(next http.Handler) http.Handler {
+		fn := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			fmt.Fprintf(f, "%s [%s] \"%s %s %s\"\n", req.RemoteAddr, time.Now().Format(time.RFC3339), req.Method, req.URL.Path, req.Proto)
+			next.ServeHTTP(w, req)
+		})
+		return fn
+	}, nil
 }
