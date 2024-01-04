@@ -62,8 +62,8 @@ def repository_dependencies():
 
     go_download_tarball(
         name = "golang_1.21",
-        sha256 = "73cac0215254d0c7d1241fa40837851f3b9a8a742d0b54714cbdfb3feaf8f0af",
-        urls = ["https://golang.org/dl/go1.21.4.linux-amd64.tar.gz"],
+        sha256 = "e2bc0b3e4b64111ec117295c088bde5f00eeed1567999ff77bc859d7df70078e",
+        urls = ["https://golang.org/dl/go1.21.5.linux-amd64.tar.gz"],
     )
 
 def container_dependencies():
