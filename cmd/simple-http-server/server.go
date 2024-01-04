@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/nissy/bon"
@@ -224,6 +225,19 @@ func (s *SimpleHTTPServer) shutdown(ctx context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
+type loggedResponseWriter struct {
+	http.ResponseWriter
+	http.Hijacker
+	http.Flusher
+
+	status int
+}
+
+func (w *loggedResponseWriter) WriteHeader(statusCode int) {
+	w.status = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
 func NewMiddlewareAccessLog(p string) (bon.Middleware, error) {
 	f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
@@ -232,8 +246,22 @@ func NewMiddlewareAccessLog(p string) (bon.Middleware, error) {
 
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			fmt.Fprintf(f, "%s [%s] \"%s %s %s\"\n", req.RemoteAddr, time.Now().Format(time.RFC3339), req.Method, req.URL.Path, req.Proto)
-			next.ServeHTTP(w, req)
+			writer := &loggedResponseWriter{ResponseWriter: w}
+			if h, ok := w.(http.Hijacker); ok {
+				writer.Hijacker = h
+			}
+			if f, ok := w.(http.Flusher); ok {
+				writer.Flusher = f
+			}
+
+			next.ServeHTTP(writer, req)
+
+			contentLength := w.Header().Get("Content-Length")
+			var size int
+			if contentLength != "" {
+				size, _ = strconv.Atoi(contentLength)
+			}
+			fmt.Fprintf(f, "%s [%s] \"%s %s %s\" %d %d\n", req.RemoteAddr, time.Now().Format(time.RFC3339), req.Method, req.URL.Path, req.Proto, writer.status, size)
 		})
 		return fn
 	}, nil
