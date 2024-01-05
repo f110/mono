@@ -71,15 +71,15 @@ func TestSimpleHTTPServer(t *testing.T) {
 
 	conf := `
 server {
-	listen = "127.0.0.1:%d";
+	listen: "127.0.0.1:%d"
 
 	path "/*" {
-		proxy = "http://%s";
+		proxy: "http://%s"
 	}
 }
 
 server {
-	listen = "127.0.0.1:%d";
+	listen = "127.0.0.1:%d"
 
 	path "/*" {
 		root = "%s";
