@@ -30,8 +30,9 @@ import (
 )
 
 const (
-	stackRevsets         = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
-	stackNavigatorHeader = "\n---\n\nPull request chain:\n\n"
+	stackRevsets           = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
+	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
+	lastPickedTemplateFile = ".last_template_file"
 )
 
 type jujutsuPRSubmitCommand struct {
@@ -524,6 +525,13 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 			return "", xerrors.WithStack(err)
 		}
 		template = string(buf)
+		if _, err := os.Lstat(filepath.Join(repoRoot, ".jj", lastPickedTemplateFile)); os.IsNotExist(err) {
+			shortPath := strings.TrimPrefix(templateFile, repoRoot)
+			err = os.WriteFile(filepath.Join(repoRoot, ".jj", lastPickedTemplateFile), []byte(shortPath), 0644)
+			if err != nil {
+				return "", xerrors.WithStack(err)
+			}
+		}
 	}
 
 	c.prTemplate = template
@@ -533,6 +541,16 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, error) {
 	if _, err := os.Lstat(filepath.Join(root, ".github")); os.IsNotExist(err) {
 		return nil, nil
+	}
+
+	if _, err := os.Lstat(filepath.Join(root, ".jj", lastPickedTemplateFile)); err == nil {
+		buf, err := os.ReadFile(filepath.Join(root, ".jj", lastPickedTemplateFile))
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		if _, err := os.Lstat(filepath.Join(root, string(buf))); err == nil {
+			return []string{filepath.Join(root, string(buf))}, nil
+		}
 	}
 
 	var templates []string
