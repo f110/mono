@@ -12,7 +12,7 @@ pkg_tar(
 
 container_image(
     name = "image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_debian12",
     entrypoint = ["/usr/local/bin/simple-http-server"],
     tars = [":bin"],
 )
