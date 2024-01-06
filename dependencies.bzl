@@ -7,7 +7,7 @@ load("//build/rules/kustomize:def.bzl", "kustomize_binary")
 load("//build/rules/go:def.bzl", "go_download_tarball")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
-versions = {
+binaries = {
     "kustomize": "v4.5.4",
     "kind": "0.14.0",
     "etcd": "3.5.6",
@@ -27,27 +27,27 @@ containers = {
 def repository_dependencies():
     kustomize_binary(
         name = "kustomize",
-        version = versions["kustomize"],
+        version = binaries["kustomize"],
     )
 
     kind_binary(
         name = "kind",
-        version = versions["kind"],
+        version = binaries["kind"],
     )
 
     etcd_binary(
         name = "etcd",
-        version = versions["etcd"],
+        version = binaries["etcd"],
     )
 
     minio_binary(
         name = "minio",
-        version = versions["minio"],
+        version = binaries["minio"],
     )
 
     vault_binary(
         name = "vault",
-        version = versions["vault"],
+        version = binaries["vault"],
     )
 
     http_file(
