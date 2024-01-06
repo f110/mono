@@ -621,6 +621,13 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	if len(podList.Items) != 1 {
 		return xerrors.New("Target pods not found or found more than 1")
 	}
+	if len(podList.Items[0].Status.ContainerStatuses) > 0 {
+		image := podList.Items[0].Status.ContainerStatuses[0].Image
+		if i := strings.Index(podList.Items[0].Status.ContainerStatuses[0].ImageID, "@"); i > 0 {
+			image += podList.Items[0].Status.ContainerStatuses[0].ImageID[i:]
+		}
+		task.Container = image
+	}
 
 	buf := new(bytes.Buffer)
 	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})

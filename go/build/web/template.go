@@ -378,7 +378,7 @@ const detailTemplate = `<html>
     </tr>
     <tr>
       <td>Container</td>
-      <td>-</td>
+      <td>{{ .Task.Container }}</td>
     </tr>
     <tr>
       <td>CPU / Memory Limit</td>

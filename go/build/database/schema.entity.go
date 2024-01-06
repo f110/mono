@@ -116,6 +116,7 @@ type Task struct {
 	ConfigName string
 	Node       string
 	Manifest   string
+	Container  string
 	StartAt    *time.Time
 	FinishedAt *time.Time
 	CreatedAt  time.Time
@@ -153,6 +154,7 @@ func (e *Task) IsChanged() bool {
 		e.ConfigName != e.mark.ConfigName ||
 		e.Node != e.mark.Node ||
 		e.Manifest != e.mark.Manifest ||
+		e.Container != e.mark.Container ||
 		((e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil)) ||
 		((e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil)) ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
@@ -209,6 +211,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	if e.Manifest != e.mark.Manifest {
 		res = append(res, ddl.Column{Name: "manifest", Value: e.Manifest})
 	}
+	if e.Container != e.mark.Container {
+		res = append(res, ddl.Column{Name: "container", Value: e.Container})
+	}
 	if (e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil) {
 		if e.StartAt != nil {
 			res = append(res, ddl.Column{Name: "start_at", Value: *e.StartAt})
@@ -255,6 +260,7 @@ func (e *Task) Copy() *Task {
 		ConfigName:       e.ConfigName,
 		Node:             e.Node,
 		Manifest:         e.Manifest,
+		Container:        e.Container,
 		CreatedAt:        e.CreatedAt,
 	}
 	if e.StartAt != nil {
