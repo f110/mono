@@ -8,7 +8,7 @@ rules = {
     "rules_pkg": rule_on_github("rules_pkg", "bazelbuild/rules_pkg", "0.9.1", "8f9ee2dc10c1ae514ee599a8b42ed99fa262b757058f65ad3c384289ff70c4b8"),
     "rules_python": rule_on_github("rules_python", "bazelbuild/rules_python", "0.26.0", "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b", strip_prefix = "rules_python-0.26.0", type = "tag"),
     "rules_foreign_cc": rule_on_github("rules_foreign_cc", "bazelbuild/rules_foreign_cc", "0.5.1", "33a5690733c5cc2ede39cb62ebf89e751f2448e27f20c8b2fbbc7d136b166804", strip_prefix = "rules_foreign_cc-0.5.1", type = "tag"),
-    "com_google_protobuf": rule_on_github("com_google_protobuf", "protocolbuffers/protobuf", "v3.21.1", "a295dd3b9551d3e2749a9969583dea110c6cdcc39d02088f7c7bb1100077e081", strip_prefix = "protobuf-3.21.1"),
+    "com_google_protobuf": rule_on_github("com_google_protobuf", "protocolbuffers/protobuf", "v3.21.1", "a295dd3b9551d3e2749a9969583dea110c6cdcc39d02088f7c7bb1100077e081", strip_prefix = "protobuf-3.21.1", type = "tag"),
 }
 
 def rules_dependencies():
