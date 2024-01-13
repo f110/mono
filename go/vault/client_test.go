@@ -18,6 +18,11 @@ func TestClient(t *testing.T) {
 	s := NewServerManager(t, *vaultBinaryPath)
 	client, err := NewClient(s.Addr(), s.Token())
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		if t.Failed() {
+			t.Log(string(s.Logs()))
+		}
+	})
 
 	err = client.Set(context.Background(), "/secret", "simple", map[string]string{"foo": "bar"})
 	require.NoError(t, err)

@@ -1,7 +1,9 @@
 package vault
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
@@ -17,6 +19,7 @@ type ServerManager struct {
 	port      int
 	rootToken string
 	cmd       *exec.Cmd
+	buf       *bytes.Buffer
 }
 
 func NewServerManager(t *testing.T, binPath string) *ServerManager {
@@ -24,7 +27,7 @@ func NewServerManager(t *testing.T, binPath string) *ServerManager {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := &ServerManager{bin: binPath, port: port, rootToken: stringsutil.RandomString(32)}
+	m := &ServerManager{bin: binPath, port: port, rootToken: stringsutil.RandomString(32), buf: new(bytes.Buffer)}
 	m.start(t)
 	t.Cleanup(func() {
 		m.Stop()
@@ -51,8 +54,8 @@ func (m *ServerManager) start(t *testing.T) {
 		"-dev-no-store-token",
 	)
 	if testing.Verbose() {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = io.MultiWriter(os.Stdout, m.buf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, m.buf)
 	}
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("Failed to start vault server: %v", err)
@@ -68,4 +71,8 @@ func (m *ServerManager) Stop() {
 	if m.cmd != nil {
 		m.cmd.Process.Signal(syscall.SIGTERM)
 	}
+}
+
+func (m *ServerManager) Logs() []byte {
+	return m.buf.Bytes()
 }
