@@ -30,7 +30,7 @@ func TestFlagSet(t *testing.T) {
 		fs.String("baz", "Usage baz")
 		err = fs.Parse([]string{"cmd"})
 		require.Error(t, err)
-		assert.EqualError(t, err, "required flags \"foo, bar\" not set")
+		assert.EqualError(t, err, "required flags \"foo, bar\" aren't set")
 	})
 
 	t.Run("Int", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestFlagSet(t *testing.T) {
 		fs.Int("bar", "Usage bar").Required()
 		err = fs.Parse([]string{"cmd"})
 		require.Error(t, err)
-		assert.EqualError(t, err, "required flags \"foo, bar\" not set")
+		assert.EqualError(t, err, "required flags \"foo, bar\" aren't set")
 	})
 
 	t.Run("Float32", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestFlagSet(t *testing.T) {
 		fs.Float32("bar", "Usage bar").Shorthand("b").Required()
 		err = fs.Parse([]string{"cmd"})
 		require.Error(t, err)
-		assert.EqualError(t, err, "required flags \"foo, bar\" not set")
+		assert.EqualError(t, err, "required flags \"foo, bar\" aren't set")
 	})
 
 	t.Run("Bool", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestFlagSet(t *testing.T) {
 		fs.Duration("bar", "Usage bar").Required()
 		err = fs.Parse([]string{"cmd"})
 		require.Error(t, err)
-		assert.EqualError(t, err, "required flags \"foo, bar\" not set")
+		assert.EqualError(t, err, "required flags \"foo, bar\" aren't set")
 	})
 
 	t.Run("StringArray", func(t *testing.T) {

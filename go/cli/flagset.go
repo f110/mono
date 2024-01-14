@@ -2,12 +2,25 @@ package cli
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
 )
+
+type missingRequiredFlagsError struct {
+	Flags []string
+}
+
+func (e *missingRequiredFlagsError) Error() string {
+	return fmt.Sprintf("required flags %q aren't set", strings.Join(e.Flags, ", "))
+}
+
+func (e *missingRequiredFlagsError) Is(err error) bool {
+	return reflect.TypeOf(err) == reflect.TypeOf(e)
+}
 
 type flagTypes interface {
 	int | int64 | uint | bool | string | []string | float32 | time.Duration
@@ -62,11 +75,11 @@ func (fs *FlagSet) Parse(args []string) error {
 		}
 
 		if !flag.Flag().Changed {
-			missingFlags = append(missingFlags, flag.Flag().Name)
+			missingFlags = append(missingFlags, fmt.Sprintf("--%s", flag.Flag().Name))
 		}
 	}
 	if len(missingFlags) > 0 {
-		return fmt.Errorf("required flags %q not set", strings.Join(missingFlags, ", "))
+		return &missingRequiredFlagsError{Flags: missingFlags}
 	}
 
 	return nil
