@@ -5,7 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_push")
 pkg_tar(
     name = "bin",
     files = {
-        "//cmd/simple-http-server": "/usr/local/bin/simple-http-server",
+        "//cmd/simple-http-server:linux_amd64": "/usr/local/bin/simple-http-server",
     },
     mode = "0755",
 )
