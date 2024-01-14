@@ -8,20 +8,20 @@ import (
 	"go.f110.dev/mono/go/cli"
 )
 
-func simpleHTTPServer(args []string) error {
-	s := NewSimpleHTTPServer()
+func rotaryPress(args []string) error {
+	r := NewRotaryPress()
 	c := &cli.Command{
-		Use: "simple-http-server",
+		Use: "rotarypress",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			return s.LoopContext(ctx)
+			return r.LoopContext(ctx)
 		},
 	}
-	s.SetFlags(c.Flags())
+	r.SetFlags(c.Flags())
 	return c.Execute(args)
 }
 
 func main() {
-	if err := simpleHTTPServer(os.Args[1:]); err != nil {
+	if err := rotaryPress(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

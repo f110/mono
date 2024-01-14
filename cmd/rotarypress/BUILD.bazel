@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "rotarypress_lib",
+    srcs = [
+        "main.go",
+        "rotarypress.go",
+    ],
+    importpath = "go.f110.dev/mono/cmd/rotarypress",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//go/fsm",
+        "//go/logger",
+        "//go/storage",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.starlark.net/syntax",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "rotarypress",
+    embed = [":rotarypress_lib"],
+    visibility = ["//visibility:public"],
+)
