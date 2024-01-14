@@ -108,9 +108,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 	if err := fs.Parse(args); err != nil && !help {
 		var missingErr *missingRequiredFlagsError
 		if errors.As(err, &missingErr) {
-			_, _ = fmt.Fprintf(os.Stderr, "Missing %s flags\n\n", strings.Join(missingErr.Flags, ", "))
-		} else {
-			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "Required flags %s are missing\n\n", strings.Join(missingErr.Flags, ", "))
 		}
 		c.printUsage()
 		return err
