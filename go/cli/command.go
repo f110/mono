@@ -104,12 +104,15 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 	}
 	help := false
 	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
+	logger.Flags(fs.flagSet)
 	if err := fs.Parse(args); err != nil && !help {
 		var missingErr *missingRequiredFlagsError
 		if errors.As(err, &missingErr) {
 			_, _ = fmt.Fprintf(os.Stderr, "Missing %s flags\n\n", strings.Join(missingErr.Flags, ", "))
-			c.printUsage()
+		} else {
+			_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 		}
+		c.printUsage()
 		return err
 	}
 	if help {
