@@ -470,6 +470,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 				}
 			} else {
 				title = v.Description
+				description = template
 			}
 
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
@@ -520,6 +521,7 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 	}
 	var template string
 	if templateFile != "" {
+		logger.Log.Debug("Read template", zap.String("path", templateFile))
 		buf, err := os.ReadFile(templateFile)
 		if err != nil {
 			return "", xerrors.WithStack(err)
@@ -569,9 +571,11 @@ func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, e
 		}
 		filename := filepath.Base(path)
 		if strings.ToLower(filename) == "pull_request_template.md" {
+			logger.Log.Debug("Template found", zap.String("path", path))
 			templates = append(templates, path)
 		}
 		if strings.Contains(path, ".github/PULL_REQUEST_TEMPLATE/") {
+			logger.Log.Debug("Template found", zap.String("path", path))
 			templates = append(templates, path)
 		}
 		return nil
