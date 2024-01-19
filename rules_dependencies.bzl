@@ -2,7 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("//build/rules/bazel:def.bzl", "rule_on_github")
 
 rules = {
-    "io_bazel_rules_go": rule_on_github("rules_go", "bazelbuild/rules_go", "v0.45.0", "de7974538c31f76658e0d333086c69efdf6679dbc6a466ac29e65434bf47076d", archive = "zip"),
+    "io_bazel_rules_go": rule_on_github("rules_go", "bazelbuild/rules_go", "v0.45.1", "6734a719993b1ba4ebe9806e853864395a8d3968ad27f9dd759c196b3eb3abe8", archive = "zip"),
     "bazel_gazelle": rule_on_github("bazel-gazelle", "bazelbuild/bazel-gazelle", "v0.35.0", "32938bda16e6700063035479063d9d24c60eda8d79fd4739563f50d331cb3209"),
     "rules_oci": rule_on_github("rules_oci", "bazel-contrib/rules_oci", "v1.5.1", "686f871f9697e08877b85ea6c16c8d48f911bf466c3aeaf108ca0ab2603c7306", strip_prefix = "rules_oci-1.5.1"),
     "rules_pkg": rule_on_github("rules_pkg", "bazelbuild/rules_pkg", "0.9.1", "8f9ee2dc10c1ae514ee599a8b42ed99fa262b757058f65ad3c384289ff70c4b8"),
