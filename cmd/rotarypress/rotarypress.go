@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -249,16 +251,24 @@ func (r *ruleOnGithub) Fetch(ctx context.Context, client *http.Client) (*os.File
 		return nil, xerrors.Newf("got status: %d", res.StatusCode)
 	}
 
+	h := sha256.New()
+	reader := io.TeeReader(res.Body, h)
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	r.downloadedFile = f
-	if _, err := io.Copy(f, res.Body); err != nil {
+	if _, err := io.Copy(f, reader); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		return nil, xerrors.WithStack(err)
+	}
+	calculatedHash := hex.EncodeToString(h.Sum(nil)[:])
+	if r.SHA256 != "" && r.SHA256 != calculatedHash {
+		os.Remove(f.Name())
+		r.downloadedFile = nil
+		return nil, xerrors.New("file hash is mismatched")
 	}
 
 	return f, nil
