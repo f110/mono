@@ -644,7 +644,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 			needUpdateBody = true
 		}
 
-		if needUpdateBaseBranch || needUpdateTitle || needUpdateBody {
+		if !v.PullRequest.Draft && needUpdateBaseBranch || needUpdateTitle || needUpdateBody {
 			// Update the pull request
 			fmt.Printf("Update pull request: %s\n", v.PullRequest.URL)
 			logger.Log.Debug("Update pull request reason", zap.Bool("base_branch", needUpdateBaseBranch), zap.Bool("title", needUpdateTitle), zap.Bool("body", needUpdateBody))
