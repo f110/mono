@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sidecar",
+    srcs = ["clone.go"],
+    importpath = "go.f110.dev/mono/go/build/cmd/sidecar",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/cli",
+        "//go/git",
+    ],
+)

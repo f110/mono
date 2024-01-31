@@ -6,8 +6,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/build-sidecar",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/build/cmd/sidecar",
         "//go/cli",
-        "//go/git",
     ],
 )
 
