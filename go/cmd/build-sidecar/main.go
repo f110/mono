@@ -1,45 +1,56 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/spf13/pflag"
-	"go.f110.dev/xerrors"
-
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/git"
 )
 
-const (
-	ActionClone = "clone"
-)
+type cloneCommand struct {
+	WorkDir        string
+	AppId          int64
+	InstallationId int64
+	PrivateKeyFile string
+	Repo           string
+	Commit         string
+}
+
+func newCloneCommand() *cloneCommand {
+	return &cloneCommand{}
+}
+
+func (c *cloneCommand) SetFlags(fs *cli.FlagSet) {
+	fs.String("work-dir", "Working directory").Shorthand("w").Var(&c.WorkDir)
+	fs.Int64("github-app-id", "GitHub App Id").Var(&c.AppId)
+	fs.Int64("github-installation-id", "GitHub Installation Id").Var(&c.InstallationId)
+	fs.String("private-key-file", "GitHub app private key file").Var(&c.PrivateKeyFile)
+	fs.String("url", "Repository url (e.g. git@github.com:octocat/example.git)").Var(&c.Repo)
+	fs.String("commit", "Specify commit").Shorthand("b").Var(&c.Commit)
+}
+
+func (c *cloneCommand) Run(_ context.Context) error {
+	return git.Clone(c.AppId, c.InstallationId, c.PrivateKeyFile, c.WorkDir, c.Repo, c.Commit)
+}
 
 func buildSidecar(args []string) error {
-	action := ""
-	repo := ""
-	appId := int64(0)
-	installationId := int64(0)
-	privateKeyFile := ""
-	commit := ""
-	workingDir := ""
-	fs := pflag.NewFlagSet("build-sidecar", pflag.ContinueOnError)
-	fs.StringVarP(&action, "action", "a", action, "Action")
-	fs.StringVarP(&workingDir, "work-dir", "w", workingDir, "Working directory")
-	fs.Int64Var(&appId, "github-app-id", appId, "GitHub App Id")
-	fs.Int64Var(&installationId, "github-installation-id", installationId, "GitHub Installation Id")
-	fs.StringVar(&privateKeyFile, "private-key-file", privateKeyFile, "GitHub app private key file")
-	fs.StringVar(&repo, "url", repo, "Repository url (e.g. git@github.com:octocat/example.git)")
-	fs.StringVarP(&commit, "commit", "b", "", "Specify commit")
-	if err := fs.Parse(args); err != nil {
-		return xerrors.WithStack(err)
+	root := &cli.Command{
+		Use: "build-sidecar",
 	}
 
-	switch action {
-	case ActionClone:
-		return git.Clone(appId, installationId, privateKeyFile, workingDir, repo, commit)
-	default:
-		return xerrors.Newf("unknown action: %v", action)
+	clone := newCloneCommand()
+	cloneCmd := &cli.Command{
+		Use: "clone",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return clone.Run(ctx)
+		},
 	}
+	clone.SetFlags(cloneCmd.Flags())
+	root.AddCommand(cloneCmd)
+
+	return root.Execute(args)
 }
 
 func main() {
