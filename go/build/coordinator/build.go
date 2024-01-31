@@ -774,7 +774,7 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		preProcessContainer = k8sfactory.ContainerFactory(preProcessContainer, k8sfactory.PullPolicy(corev1.PullAlways))
 	}
 
-	preProcessArgs := []string{"--action=clone", "--work-dir=work", fmt.Sprintf("--url=%s", repo.CloneUrl)}
+	preProcessArgs := []string{"clone", "--work-dir=work", fmt.Sprintf("--url=%s", repo.CloneUrl)}
 	if task.Revision != "" {
 		preProcessArgs = append(preProcessArgs, "--commit="+task.Revision)
 	}
