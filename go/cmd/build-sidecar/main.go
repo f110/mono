@@ -31,8 +31,8 @@ func (c *cloneCommand) SetFlags(fs *cli.FlagSet) {
 	fs.String("commit", "Specify commit").Shorthand("b").Var(&c.Commit)
 }
 
-func (c *cloneCommand) Run(_ context.Context) error {
-	return git.Clone(c.AppId, c.InstallationId, c.PrivateKeyFile, c.WorkDir, c.Repo, c.Commit)
+func (c *cloneCommand) Run(ctx context.Context) error {
+	return git.Clone(ctx, c.AppId, c.InstallationId, c.PrivateKeyFile, c.WorkDir, c.Repo, c.Commit)
 }
 
 func buildSidecar(args []string) error {

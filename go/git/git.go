@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/githubutil"
 )
 
-func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string) error {
+func Clone(ctx context.Context, appId, installationId int64, privateKeyFile, dir, repo, commit string) error {
 	var auth *gogitHttp.BasicAuth
 	rt := http.DefaultTransport
 	if _, err := os.Stat(privateKeyFile); !os.IsNotExist(err) {
@@ -47,13 +46,13 @@ func Clone(appId, installationId int64, privateKeyFile, dir, repo, commit string
 	}
 
 	if commit != "" && archiveDownloadable {
-		return checkoutCommit(dir, repo, commit, rt)
+		return checkoutCommit(ctx, dir, repo, commit, rt)
 	} else {
-		return cloneByGit(dir, repo, commit, 1, auth)
+		return cloneByGit(ctx, dir, repo, commit, 1, auth)
 	}
 }
 
-func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
+func checkoutCommit(ctx context.Context, dir, u, commit string, rt http.RoundTripper) error {
 	addr := u
 	if strings.HasSuffix(u, ".git") {
 		addr = strings.TrimSuffix(u, ".git")
@@ -66,7 +65,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 
 	ghClient := github.NewClient(&http.Client{Transport: rt})
 	archiveLink, _, err := ghClient.Repositories.GetArchiveLink(
-		context.Background(),
+		ctx,
 		s[1], // owner
 		s[2], // repo
 		github.Tarball,
@@ -77,7 +76,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, archiveLink.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, archiveLink.String(), nil)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -120,7 +119,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 			continue
 		}
 
-		b, err := ioutil.ReadAll(tarReader)
+		b, err := io.ReadAll(tarReader)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -130,7 +129,7 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 				return xerrors.WithStack(err)
 			}
 		}
-		if err := ioutil.WriteFile(filename, b, os.FileMode(h.Mode)); err != nil {
+		if err := os.WriteFile(filename, b, os.FileMode(h.Mode)); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
@@ -138,12 +137,12 @@ func checkoutCommit(dir, u, commit string, rt http.RoundTripper) error {
 	return nil
 }
 
-func cloneByGit(dir, repo, commit string, depth int, auth transport.AuthMethod) error {
+func cloneByGit(ctx context.Context, dir, repo, commit string, depth int, auth transport.AuthMethod) error {
 	if commit != "" {
 		depth = 0
 	}
 
-	r, err := git.PlainClone(dir, false, &git.CloneOptions{
+	r, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 		URL:   repo,
 		Depth: depth,
 		Auth:  auth,
