@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "file",
+    srcs = ["tail.go"],
+    importpath = "go.f110.dev/mono/go/file",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/go.f110.dev/xerrors",
+    ],
+)
+
+go_test(
+    name = "file_test",
+    srcs = ["tail_test.go"],
+    embed = [":file"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
