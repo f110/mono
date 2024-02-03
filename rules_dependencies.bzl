@@ -4,7 +4,7 @@ load("//build/rules/bazel:def.bzl", "rule_on_github")
 rules = {
     "io_bazel_rules_go": rule_on_github("rules_go", "bazelbuild/rules_go", "v0.45.1", "6734a719993b1ba4ebe9806e853864395a8d3968ad27f9dd759c196b3eb3abe8", archive = "zip"),
     "bazel_gazelle": rule_on_github("bazel-gazelle", "bazelbuild/bazel-gazelle", "v0.35.0", "32938bda16e6700063035479063d9d24c60eda8d79fd4739563f50d331cb3209"),
-    "rules_oci": rule_on_github("rules_oci", "bazel-contrib/rules_oci", "v1.5.1", "686f871f9697e08877b85ea6c16c8d48f911bf466c3aeaf108ca0ab2603c7306", strip_prefix = "rules_oci-1.5.1"),
+    "rules_oci": rule_on_github("rules_oci", "bazel-contrib/rules_oci", "v1.7.0", "6ae66ccc6261d3d297fef1d830a9bb852ddedd3920bbd131021193ea5cb5af77", strip_prefix = "rules_oci-1.7.0"),
     "rules_pkg": rule_on_github("rules_pkg", "bazelbuild/rules_pkg", "0.9.1", "8f9ee2dc10c1ae514ee599a8b42ed99fa262b757058f65ad3c384289ff70c4b8"),
     "rules_python": rule_on_github("rules_python", "bazelbuild/rules_python", "0.26.0", "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b", strip_prefix = "rules_python-0.26.0", type = "tag"),
     "rules_foreign_cc": rule_on_github("rules_foreign_cc", "bazelbuild/rules_foreign_cc", "0.5.1", "33a5690733c5cc2ede39cb62ebf89e751f2448e27f20c8b2fbbc7d136b166804", strip_prefix = "rules_foreign_cc-0.5.1", type = "tag"),
