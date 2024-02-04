@@ -16,6 +16,10 @@ type TailReader struct {
 	ch chan struct{}
 }
 
+var _ io.Reader = (*TailReader)(nil)
+var _ io.ByteReader = (*TailReader)(nil)
+var _ io.Closer = (*TailReader)(nil)
+
 func NewTailReader(f *os.File) (*TailReader, error) {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -71,6 +75,30 @@ func (t *TailReader) Read(b []byte) (int, error) {
 	}
 
 	return n, nil
+}
+
+func (t *TailReader) ReadByte() (byte, error) {
+	b, err := t.r.ReadByte()
+	if errors.Is(err, io.EOF) {
+		for {
+			_, ok := <-t.ch
+			if !ok {
+				return 0, io.EOF
+			}
+			b, err = t.r.ReadByte()
+			if errors.Is(err, io.EOF) {
+				continue
+			}
+			if err != nil {
+				return 0, xerrors.WithStack(err)
+			}
+			return b, nil
+		}
+	}
+	if err != nil {
+		return 0, xerrors.WithStack(err)
+	}
+	return b, nil
 }
 
 func (t *TailReader) Close() error {
