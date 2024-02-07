@@ -2,11 +2,19 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "sidecar",
-    srcs = ["clone.go"],
+    srcs = [
+        "clone.go",
+        "report.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/cmd/sidecar",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/bazel/buildeventstream",
         "//go/cli",
+        "//go/file",
         "//go/git",
+        "//vendor/github.com/fsnotify/fsnotify",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/google.golang.org/protobuf/encoding/protodelim",
     ],
 )

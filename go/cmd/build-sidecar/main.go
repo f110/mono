@@ -7,9 +7,11 @@ import (
 
 	"go.f110.dev/mono/go/build/cmd/sidecar"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/logger"
 )
 
 func buildSidecar(args []string) error {
+	logger.SetLogLevel("debug")
 	root := &cli.Command{
 		Use: "build-sidecar",
 	}
@@ -23,6 +25,16 @@ func buildSidecar(args []string) error {
 	}
 	clone.SetFlags(cloneCmd.Flags())
 	root.AddCommand(cloneCmd)
+
+	report := sidecar.NewTestReportCommand()
+	reportCmd := &cli.Command{
+		Use: report.Name(),
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return report.Run(ctx)
+		},
+	}
+	report.SetFlags(reportCmd.Flags())
+	root.AddCommand(reportCmd)
 
 	return root.Execute(args)
 }

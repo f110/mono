@@ -9,6 +9,7 @@ type Options struct {
 	Task              TaskInterface
 	TrustedUser       TrustedUserInterface
 	PermitPullRequest PermitPullRequestInterface
+	TestReport        TestReportInterface
 
 	RawConnection *sql.DB
 }
@@ -19,6 +20,7 @@ func NewOptions(conn *sql.DB) Options {
 		Task:              NewTask(conn),
 		TrustedUser:       NewTrustedUser(conn),
 		PermitPullRequest: NewPermitPullRequest(conn),
+		TestReport:        NewTestReport(conn),
 		RawConnection:     conn,
 	}
 }

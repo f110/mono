@@ -1,6 +1,8 @@
 package k8sfactory
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,6 +106,10 @@ func RestartPolicy(policy corev1.RestartPolicy) Trait {
 
 func Container(c *corev1.Container) Trait {
 	return func(object any) {
+		if c == nil {
+			return
+		}
+
 		p, ok := object.(*corev1.Pod)
 		if !ok {
 			return
@@ -595,4 +601,21 @@ func SecretKeySelector(secret *corev1.Secret, key string) *corev1.SecretKeySelec
 
 func LocalObjectReference(obj metav1.Object) corev1.LocalObjectReference {
 	return corev1.LocalObjectReference{Name: obj.GetName()}
+}
+
+func Pod(p *corev1.Pod) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *batchv1.Job:
+			obj.Spec.Template = corev1.PodTemplateSpec{
+				ObjectMeta: p.ObjectMeta,
+				Spec:       p.Spec,
+			}
+		case *appsv1.Deployment:
+			obj.Spec.Template = corev1.PodTemplateSpec{
+				ObjectMeta: p.ObjectMeta,
+				Spec:       p.Spec,
+			}
+		}
+	}
 }

@@ -1,0 +1,52 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "package_load_metrics",
+    srcs = ["package_load_metrics.proto"],
+    import_prefix = "src/main/java/com/google/devtools/build/lib/packages/metrics",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+    deps = ["@com_google_protobuf//:duration_proto"],
+)
+
+proto_library(
+    name = "action_cache",
+    srcs = ["action_cache.proto"],
+    import_prefix = "src/main/protobuf",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "command_line",
+    srcs = ["command_line.proto"],
+    import_prefix = "src/main/protobuf",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+    deps = [":option_filters"],
+)
+
+proto_library(
+    name = "failure_details",
+    srcs = ["failure_details.proto"],
+    import_prefix = "src/main/protobuf",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+    deps = ["@com_google_protobuf//:descriptor_proto"],
+)
+
+proto_library(
+    name = "invocation_policy",
+    srcs = ["invocation_policy.proto"],
+    import_prefix = "src/main/protobuf",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "option_filters",
+    srcs = ["option_filters.proto"],
+    import_prefix = "src/main/protobuf",
+    strip_import_prefix = "/proto/bazel",
+    visibility = ["//visibility:public"],
+)

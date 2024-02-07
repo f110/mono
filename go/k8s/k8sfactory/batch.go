@@ -1,10 +1,8 @@
 package k8sfactory
 
 import (
-	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -70,19 +68,14 @@ func JobFactory(base *batchv1.Job, traits ...Trait) *batchv1.Job {
 	return j
 }
 
-func Pod(p *corev1.Pod) Trait {
+func PodFailurePolicy(v batchv1.PodFailurePolicyRule) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *batchv1.Job:
-			obj.Spec.Template = corev1.PodTemplateSpec{
-				ObjectMeta: p.ObjectMeta,
-				Spec:       p.Spec,
+			if obj.Spec.PodFailurePolicy == nil {
+				obj.Spec.PodFailurePolicy = &batchv1.PodFailurePolicy{}
 			}
-		case *appsv1.Deployment:
-			obj.Spec.Template = corev1.PodTemplateSpec{
-				ObjectMeta: p.ObjectMeta,
-				Spec:       p.Spec,
-			}
+			obj.Spec.PodFailurePolicy.Rules = append(obj.Spec.PodFailurePolicy.Rules, v)
 		}
 	}
 }

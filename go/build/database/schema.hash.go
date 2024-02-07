@@ -1,3 +1,3 @@
 package database
 
-const SchemaHash = "c9fbb8b9562aaa9be53646dcd69c2fad64e02817f6264846cfac1dacf6fd4387"
+const SchemaHash = "e7cdc20cabf66477a2795ea05688d4a86bf4ecf12ec9c4e4263b53616ee3d8bf"

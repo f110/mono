@@ -104,6 +104,7 @@ type Task struct {
 	JobName          string
 	JobConfiguration string
 	Revision         string
+	IsTrunk          bool
 	BazelVersion     string
 	Success          bool
 	LogFile          string
@@ -143,6 +144,7 @@ func (e *Task) IsChanged() bool {
 		e.JobName != e.mark.JobName ||
 		e.JobConfiguration != e.mark.JobConfiguration ||
 		e.Revision != e.mark.Revision ||
+		e.IsTrunk != e.mark.IsTrunk ||
 		e.BazelVersion != e.mark.BazelVersion ||
 		e.Success != e.mark.Success ||
 		e.LogFile != e.mark.LogFile ||
@@ -177,6 +179,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	}
 	if e.Revision != e.mark.Revision {
 		res = append(res, ddl.Column{Name: "revision", Value: e.Revision})
+	}
+	if e.IsTrunk != e.mark.IsTrunk {
+		res = append(res, ddl.Column{Name: "is_trunk", Value: e.IsTrunk})
 	}
 	if e.BazelVersion != e.mark.BazelVersion {
 		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
@@ -249,6 +254,7 @@ func (e *Task) Copy() *Task {
 		JobName:          e.JobName,
 		JobConfiguration: e.JobConfiguration,
 		Revision:         e.Revision,
+		IsTrunk:          e.IsTrunk,
 		BazelVersion:     e.BazelVersion,
 		Success:          e.Success,
 		LogFile:          e.LogFile,
@@ -414,6 +420,74 @@ func (e *PermitPullRequest) Copy() *PermitPullRequest {
 	if e.UpdatedAt != nil {
 		v := *e.UpdatedAt
 		n.UpdatedAt = &v
+	}
+
+	return n
+}
+
+type TestReport struct {
+	Id           int32
+	RepositoryId int32
+	Label        string
+	// TestStatus                 status     = 4;
+	Duration int64
+	StartAt  time.Time
+
+	Repository *SourceRepository
+
+	mu   sync.Mutex
+	mark *TestReport
+}
+
+func (e *TestReport) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *TestReport) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.RepositoryId != e.mark.RepositoryId ||
+		e.Label != e.mark.Label ||
+		e.Duration != e.mark.Duration ||
+		!e.StartAt.Equal(e.mark.StartAt)
+}
+
+func (e *TestReport) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.Label != e.mark.Label {
+		res = append(res, ddl.Column{Name: "label", Value: e.Label})
+	}
+	if e.Duration != e.mark.Duration {
+		res = append(res, ddl.Column{Name: "duration", Value: e.Duration})
+	}
+	if !e.StartAt.Equal(e.mark.StartAt) {
+		res = append(res, ddl.Column{Name: "start_at", Value: e.StartAt})
+	}
+
+	return res
+}
+
+func (e *TestReport) Copy() *TestReport {
+	n := &TestReport{
+		Id:           e.Id,
+		RepositoryId: e.RepositoryId,
+		Label:        e.Label,
+		Duration:     e.Duration,
+		StartAt:      e.StartAt,
+	}
+
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
 	}
 
 	return n

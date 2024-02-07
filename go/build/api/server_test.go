@@ -32,7 +32,7 @@ type MockBuilder struct {
 
 var _ Builder = &MockBuilder{}
 
-func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error) {
+func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
 	m.jobs = append(m.jobs, job)
 	m.called = true
 	return []*database.Task{}, nil

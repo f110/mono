@@ -352,7 +352,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `task` WHERE `id` = ?", id)
 
 	v := &database.Task{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.JobConfiguration, &v.Revision, &v.BazelVersion, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.Manifest, &v.Container, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.JobConfiguration, &v.Revision, &v.IsTrunk, &v.BazelVersion, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.Manifest, &v.Container, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -369,7 +369,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -393,7 +393,7 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -416,7 +416,7 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 
 func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -441,7 +441,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -464,7 +464,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -488,7 +488,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -520,8 +520,8 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `revision`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		task.RepositoryId, task.JobName, task.JobConfiguration, task.Revision, task.BazelVersion, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.Manifest, task.Container, task.StartAt, task.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		task.RepositoryId, task.JobName, task.JobConfiguration, task.Revision, task.IsTrunk, task.BazelVersion, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.Manifest, task.Container, task.StartAt, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -1037,6 +1037,169 @@ func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *datab
 	}
 
 	permitPullRequest.ResetMark()
+	return nil
+
+}
+
+type TestReport struct {
+	conn *sql.DB
+
+	sourceRepository *SourceRepository
+}
+
+type TestReportInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.TestReport, error)
+	Create(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) (*database.TestReport, error)
+	Update(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ TestReportInterface = &TestReport{}
+
+func NewTestReport(conn *sql.DB) *TestReport {
+	return &TestReport{
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
+	}
+}
+
+func (d *TestReport) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `test_report` WHERE `id` = ?", id)
+
+	v := &database.TestReport{}
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Label, &v.Duration, &v.StartAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+
+}
+
+func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) (*database.TestReport, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `test_report` (`repository_id`, `label`, `duration`, `start_at`) VALUES (?, ?, ?, ?)",
+		testReport.RepositoryId, testReport.Label, testReport.Duration, testReport.StartAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	testReport = testReport.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	testReport.Id = int32(insertedId)
+
+	testReport.ResetMark()
+	return testReport, nil
+
+}
+
+func (d *TestReport) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `test_report` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+
+}
+
+func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) error {
+	if !testReport.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := testReport.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]interface{}, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+
+	query := fmt.Sprintf("UPDATE `test_report` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, testReport.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	testReport.ResetMark()
 	return nil
 
 }

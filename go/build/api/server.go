@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/build/config"
-	database2 "go.f110.dev/mono/go/build/database"
+	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
@@ -33,7 +33,7 @@ const (
 )
 
 type Builder interface {
-	Build(ctx context.Context, repo *database2.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database2.Task, error)
+	Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error)
 }
 
 type Api struct {
@@ -242,7 +242,7 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 	return conf, bazelVersion, nil
 }
 
-func (a *Api) findRepository(ctx context.Context, repoURL string) *database2.SourceRepository {
+func (a *Api) findRepository(ctx context.Context, repoURL string) *database.SourceRepository {
 	repos, err := a.dao.Repository.ListByUrl(ctx, repoURL)
 	if err != nil {
 		logger.Log.Warn("Could not find repository", zap.Error(err))
@@ -297,7 +297,7 @@ func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
 	return false, nil
 }
 
-func (a *Api) buildByPushEvent(ctx context.Context, repo *database2.SourceRepository, event *github.PushEvent, isMainBranch bool) error {
+func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceRepository, event *github.PushEvent, isMainBranch bool) error {
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.HeadCommit.GetID()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, isMainBranch)
 	if err != nil {
@@ -310,14 +310,14 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database2.SourceReposi
 	}
 	jobs := conf.Job(config.EventPush)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push"); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push", isMainBranch); err != nil {
 		return xerrors.WithStack(err)
 	}
 
 	return nil
 }
 
-func (a *Api) buildByPullRequest(ctx context.Context, repo *database2.SourceRepository, event *github.PullRequestEvent) error {
+func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepository, event *github.PullRequestEvent) error {
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.PullRequest.Head.GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
 	if err != nil {
@@ -330,14 +330,14 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database2.SourceRepo
 	}
 	jobs := conf.Job(config.EventPullRequest)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request"); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pull_request", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 
 	return nil
 }
 
-func (a *Api) buildByRelease(ctx context.Context, repo *database2.SourceRepository, event *github.ReleaseEvent) error {
+func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepository, event *github.ReleaseEvent) error {
 	ref, _, err := a.githubClient.Git.GetRef(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), fmt.Sprintf("tags/%s", event.Release.GetTagName()))
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -355,13 +355,13 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database2.SourceReposito
 	}
 	jobs := conf.Job(config.EventRelease)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release"); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "release", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
-func (a *Api) buildPullRequest(ctx context.Context, repo *database2.SourceRepository, owner, repoName string, number int) error {
+func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceRepository, owner, repoName string, number int) error {
 	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repoName, number)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -381,13 +381,13 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database2.SourceReposi
 	}
 	jobs := conf.Job(config.EventPullRequest)
 
-	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr"); err != nil {
+	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr", false); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, owner, repoName string, repo *database2.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string) error {
+func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string, isMainBranch bool) error {
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.
@@ -398,7 +398,7 @@ func (a *Api) build(ctx context.Context, owner, repoName string, repo *database2
 			continue
 		}
 
-		if _, err := a.builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via); err != nil {
+		if _, err := a.builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via, isMainBranch); err != nil {
 			logger.Log.Warn("Failed start job", zap.Error(err), zap.String("owner", owner), zap.String("repo", repoName))
 			return xerrors.WithStack(err)
 		}
@@ -425,7 +425,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				return nil
 			}
 
-			_, err = a.dao.PermitPullRequest.Create(ctx, &database2.PermitPullRequest{
+			_, err = a.dao.PermitPullRequest.Create(ctx, &database.PermitPullRequest{
 				Repository: event.Repo.GetFullName(),
 				Number:     int32(event.Issue.GetNumber()),
 			})
@@ -499,6 +499,7 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		jobConfiguration.Targets,
 		jobConfiguration.Platforms,
 		"api",
+		false,
 	)
 	if err != nil {
 		logger.Log.Warn("Failed build job", zap.Error(err))
@@ -595,6 +596,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		job.Targets,
 		job.Platforms,
 		"manual",
+		false,
 	)
 	if err != nil {
 		logger.Log.Warn("Failed to start building job", logger.Error(err))
@@ -609,7 +611,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 
 func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 	p := probe.NewProbe(a.dao.RawConnection)
-	if !p.Ready(req.Context(), database2.SchemaHash) {
+	if !p.Ready(req.Context(), database.SchemaHash) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

@@ -32,6 +32,7 @@ import (
 	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
 	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
 
+	"go.f110.dev/mono/go/build/cmd/sidecar"
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
@@ -40,6 +41,7 @@ import (
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/varptr"
 	"go.f110.dev/mono/go/vault"
 )
 
@@ -198,7 +200,10 @@ type BazelBuilder struct {
 	githubAppSecretName    string
 	dev                    bool
 
-	taskQueue *taskQueue
+	taskQueue               *taskQueue
+	preProcessContainerName string
+	buildContainerName      string
+	reportContainerName     string
 }
 
 func NewBazelBuilder(
@@ -214,29 +219,32 @@ func NewBazelBuilder(
 	dev bool,
 ) (*BazelBuilder, error) {
 	b := &BazelBuilder{
-		Namespace:            namespace,
-		dashboardUrl:         dashboardUrl,
-		config:               kOpt.RESTConfig,
-		client:               kOpt.Client,
-		secretStoreClient:    kOpt.SecretStoreClient,
-		dao:                  daoOpt,
-		githubClient:         ghClient,
-		minio:                storage.NewMinIOStorage(bucket, minIOOpt),
-		vaultAddr:            vaultClient.Addr(),
-		vaultClient:          vaultClient,
-		remoteCache:          bazelOpt.RemoteCache,
-		remoteAssetApi:       bazelOpt.EnableRemoteAssetApi,
-		sidecarImage:         bazelOpt.SidecarImage,
-		bazelImage:           bazelOpt.BazelImage,
-		useBazelisk:          bazelOpt.UseBazelisk,
-		defaultBazelVersion:  bazelOpt.DefaultVersion,
-		pullAlways:           bazelOpt.PullAlways,
-		bazelMirrorURL:       bazelOpt.BazelMirrorURL,
-		githubAppId:          bazelOpt.GithubAppId,
-		githubInstallationId: bazelOpt.GithubInstallationId,
-		githubAppSecretName:  bazelOpt.GithubAppSecretName,
-		dev:                  dev,
-		taskQueue:            newTaskQueue(),
+		Namespace:               namespace,
+		dashboardUrl:            dashboardUrl,
+		config:                  kOpt.RESTConfig,
+		client:                  kOpt.Client,
+		secretStoreClient:       kOpt.SecretStoreClient,
+		dao:                     daoOpt,
+		githubClient:            ghClient,
+		minio:                   storage.NewMinIOStorage(bucket, minIOOpt),
+		vaultAddr:               vaultClient.Addr(),
+		vaultClient:             vaultClient,
+		remoteCache:             bazelOpt.RemoteCache,
+		remoteAssetApi:          bazelOpt.EnableRemoteAssetApi,
+		sidecarImage:            bazelOpt.SidecarImage,
+		bazelImage:              bazelOpt.BazelImage,
+		useBazelisk:             bazelOpt.UseBazelisk,
+		defaultBazelVersion:     bazelOpt.DefaultVersion,
+		pullAlways:              bazelOpt.PullAlways,
+		bazelMirrorURL:          bazelOpt.BazelMirrorURL,
+		githubAppId:             bazelOpt.GithubAppId,
+		githubInstallationId:    bazelOpt.GithubInstallationId,
+		githubAppSecretName:     bazelOpt.GithubAppSecretName,
+		dev:                     dev,
+		taskQueue:               newTaskQueue(),
+		preProcessContainerName: "pre-process",
+		buildContainerName:      "main",
+		reportContainerName:     "report",
 	}
 	if kOpt.JobInformer != nil {
 		b.jobLister = kOpt.JobInformer.Lister()
@@ -286,7 +294,7 @@ func NewBazelBuilder(
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string) ([]*database.Task, error) {
+func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
 	var tasks []*database.Task
 	defer func() {
 		for _, task := range tasks {
@@ -310,6 +318,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 			JobName:          job.Name,
 			JobConfiguration: jobConfiguration,
 			Revision:         revision,
+			IsTrunk:          isMainBranch,
 			BazelVersion:     bazelVersion,
 			Command:          command,
 			Targets:          t,
@@ -628,9 +637,10 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 		}
 		task.Container = image
 	}
+	buildPod := podList.Items[0]
 
 	buf := new(bytes.Buffer)
-	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{Container: "pre-process"})
+	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.preProcessContainerName})
 	rawLog, err := logReq.DoRaw(ctx)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -638,11 +648,24 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	buf.WriteString("----- pre-process -----\n")
 	buf.Write(rawLog)
 
-	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(podList.Items[0].Name, &corev1.PodLogOptions{})
+	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.buildContainerName})
 	rawLog, err = logReq.DoRaw(ctx)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
 	buf.WriteString("\n")
 	buf.WriteString("----- main -----\n")
 	buf.Write(rawLog)
+
+	var testReport []byte
+	if jobConfiguration.Command == "test" {
+		logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.reportContainerName})
+		rawLog, err = logReq.DoRaw(ctx)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		testReport = rawLog
+	}
 
 	if err := b.minio.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
 		return xerrors.WithStack(err)
@@ -674,12 +697,43 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 		}
 	}
 
+	if len(testReport) > 0 {
+		if err := b.updateTestReport(ctx, testReport, repo); err != nil {
+			logger.Log.Warn("Failed to parse the report json", logger.Error(err))
+		}
+	}
+
 	if jobConfiguration.GitHubStatus {
 		state := "success"
 		if !success {
 			state = "failure"
 		}
 		if err := b.updateGithubStatus(context.Background(), repo, jobConfiguration, task, state); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, repo *database.SourceRepository) error {
+	var report sidecar.TestReport
+	if err := json.Unmarshal(reportJSON, &report); err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	for _, s := range report.Tests {
+		if s.Status == sidecar.TestStatusFailed {
+			continue
+		}
+
+		_, err := b.dao.TestReport.Create(ctx, &database.TestReport{
+			RepositoryId: repo.Id,
+			Label:        s.Label,
+			Duration:     s.Duration,
+			StartAt:      s.StartAt,
+		})
+		if err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
@@ -738,6 +792,10 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	)
 	builtObjects = append(builtObjects, sa)
 	workDir := k8sfactory.NewEmptyDirVolumeSource("workdir", "/work")
+	var commDir *k8sfactory.VolumeSource
+	if job.Command == "test" && task.IsTrunk {
+		commDir = k8sfactory.NewEmptyDirVolumeSource("comm", "/comm")
+	}
 	buildPod := k8sfactory.PodFactory(nil,
 		k8sfactory.Labels(map[string]string{
 			labelKeyTaskId: taskIdString,
@@ -745,20 +803,32 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 		}),
 		k8sfactory.RestartPolicy(corev1.RestartPolicyNever),
 		k8sfactory.Volume(workDir),
+		k8sfactory.Volume(commDir),
 		k8sfactory.ServiceAccount(fmt.Sprintf("build-%s", job.RepositoryName)),
 	)
 	preProcessContainer := k8sfactory.ContainerFactory(nil,
-		k8sfactory.Name("pre-process"),
+		k8sfactory.Name(b.preProcessContainerName),
 		k8sfactory.Image(b.sidecarImage, nil),
 		k8sfactory.PullPolicy(corev1.PullIfNotPresent),
 		k8sfactory.Volume(workDir),
 	)
 	mainContainer := k8sfactory.ContainerFactory(nil,
-		k8sfactory.Name("main"),
+		k8sfactory.Name(b.buildContainerName),
 		k8sfactory.PullPolicy(corev1.PullIfNotPresent),
 		k8sfactory.WorkDir(workDir.Mount.MountPath),
 		k8sfactory.Volume(workDir),
+		k8sfactory.Volume(commDir),
 	)
+	var reportContainer *corev1.Container
+	if job.Command == "test" && task.IsTrunk {
+		reportContainer = k8sfactory.ContainerFactory(nil,
+			k8sfactory.Name(b.reportContainerName),
+			k8sfactory.Image(b.sidecarImage, nil),
+			k8sfactory.PullPolicy(corev1.PullIfNotPresent),
+			k8sfactory.Volume(commDir),
+			k8sfactory.Args("report", fmt.Sprintf("--event-binary-file=%s/bep", commDir.Mount.MountPath), "--startup-timeout=10m"),
+		)
+	}
 	imageTag := b.defaultBazelVersion
 	if b.useBazelisk {
 		imageTag = "bazelisk"
@@ -832,6 +902,9 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	}
 	switch job.Command {
 	case "test":
+		if task.IsTrunk {
+			args = append(args, fmt.Sprintf("--build_event_binary_file=%s/bep", commDir.Mount.MountPath))
+		}
 		args = append(args, "--")
 		targets := strings.Split(task.Targets, "\n")
 		args = append(args, targets...)
@@ -919,10 +992,19 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 			watcher.TypeLabel: jobType,
 		}),
 		k8sfactory.BackoffLimit(0),
+		k8sfactory.PodFailurePolicy(batchv1.PodFailurePolicyRule{
+			Action: batchv1.PodFailurePolicyActionFailJob,
+			OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{
+				ContainerName: varptr.Ptr(b.buildContainerName),
+				Operator:      batchv1.PodFailurePolicyOnExitCodesOpNotIn,
+				Values:        []int32{0},
+			},
+		}),
 		k8sfactory.Pod(
 			k8sfactory.PodFactory(buildPod,
 				k8sfactory.InitContainer(preProcessContainer),
 				k8sfactory.Container(mainContainer),
+				k8sfactory.Container(reportContainer),
 			),
 		),
 	))

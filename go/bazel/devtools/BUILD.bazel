@@ -1,0 +1,45 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+go_proto_library(
+    name = "devtools_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/bazel/devtools",
+    protos = [
+        "//proto/bazel:action_cache",
+        "//proto/bazel:command_line",
+        "//proto/bazel:failure_details",
+        "//proto/bazel:invocation_policy",
+        "//proto/bazel:option_filters",
+        "//proto/bazel:package_load_metrics",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source")
+
+vendor_grpc_source(
+    name = "vendor_devtools_go_proto",
+    src = ":devtools_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "devtools",
+    srcs = [
+        "action_cache.pb.go",
+        "command_line.pb.go",
+        "failure_details.pb.go",
+        "invocation_policy.pb.go",
+        "option_filters.pb.go",
+        "package_load_metrics.pb.go",
+    ],
+    importpath = "go.f110.dev/mono/go/bazel/devtools",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/descriptorpb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+    ],
+)

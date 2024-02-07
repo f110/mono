@@ -255,3 +255,44 @@ func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *datab
 	return nil
 
 }
+
+type TestReport struct {
+	*mock.Mock
+}
+
+func NewTestReport() *TestReport {
+	return &TestReport{Mock: mock.New()}
+}
+
+func (d *TestReport) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+
+}
+
+func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport, error) {
+	v, err := d.Call("Select", map[string]interface{}{"id": id})
+	return v.(*database.TestReport), err
+
+}
+
+func (d *TestReport) RegisterSelect(id int32, value *database.TestReport) {
+	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport, opt ...dao.ExecOption) (*database.TestReport, error) {
+	_, _ = d.Call("Create", map[string]interface{}{"testReport": testReport})
+	return testReport, nil
+
+}
+
+func (d *TestReport) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
+	return nil
+
+}
+
+func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]interface{}{"testReport": testReport})
+	return nil
+
+}

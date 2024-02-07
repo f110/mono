@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+go_proto_library(
+    name = "buildeventstream_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "go.f110.dev/mono/go/bazel/buildeventstream",
+    proto = "//proto/bazel/buildeventstream",
+    visibility = ["//visibility:private"],
+    deps = ["//go/bazel/devtools:devtools_go_proto"],
+)
+
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source")
+
+vendor_grpc_source(
+    name = "vendor_buildeventstream_grpc_source",
+    src = ":buildeventstream_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "buildeventstream",
+    srcs = ["build_event_stream.pb.go"],
+    importpath = "go.f110.dev/mono/go/bazel/buildeventstream",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/bazel/devtools",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

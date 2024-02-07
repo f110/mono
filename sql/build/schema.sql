@@ -22,6 +22,7 @@ CREATE TABLE `task` (
 	`job_name` VARCHAR(255) NOT NULL,
 	`job_configuration` TEXT NOT NULL,
 	`revision` VARCHAR(255) NOT NULL,
+	`is_trunk` TINYINT(1) NOT NULL,
 	`bazel_version` VARCHAR(255) NOT NULL,
 	`success` TINYINT(1) NOT NULL,
 	`log_file` VARCHAR(255) NOT NULL,
@@ -58,6 +59,17 @@ CREATE TABLE `permit_pull_request` (
 	`number` INTEGER NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `test_report`;
+CREATE TABLE `test_report` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`repository_id` INTEGER NOT NULL,
+	`label` VARCHAR(255) NOT NULL,
+	`duration` BIGINT NOT NULL,
+	`start_at` DATETIME NOT NULL,
+	INDEX `idx_label` (`label`),
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 

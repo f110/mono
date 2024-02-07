@@ -1,0 +1,17 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "buildeventstream",
+    srcs = ["build_event_stream.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/bazel:action_cache",
+        "//proto/bazel:command_line",
+        "//proto/bazel:failure_details",
+        "//proto/bazel:invocation_policy",
+        "//proto/bazel:package_load_metrics",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)

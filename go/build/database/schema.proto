@@ -5,6 +5,12 @@ option  go_package = "go.f110.dev/mono/go/build/database;database";
 import "ddl.proto";
 import "google/protobuf/timestamp.proto";
 
+enum TestStatus {
+  TEST_STATUS_PASSED = 0;
+  TEST_STATUS_FLAKY  = 1;
+  TEST_STATUS_FAILED = 2;
+}
+
 message SourceRepository {
   int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
   string url       = 2;
@@ -20,11 +26,11 @@ message SourceRepository {
   option (dev.f110.ddl.dao) = {
     queries: {
       name: "All"
-      query: "SELECT * FROM `source_repository`"
+      query: "SELECT * FROM `:table_name:`"
     }
     queries: {
       name: "ByUrl"
-      query: "SELECT * FROM `source_repository` WHERE `url` = ?"
+      query: "SELECT * FROM `:table_name:` WHERE `url` = ?"
     }
   };
 }
@@ -35,20 +41,21 @@ message Task {
   string                     job_name          = 3;
   string                     job_configuration = 4 [(dev.f110.ddl.column) = { type: "text" }];
   string                     revision          = 5;
-  string                     bazel_version     = 6;
-  bool                       success           = 7;
-  string                     log_file          = 8;
-  string                     command           = 9;
-  string                     target            = 10 [deprecated = true];
-  string                     targets           = 11 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     platform          = 12 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     via               = 13;
-  string                     config_name       = 14;
-  string                     node              = 15;
-  string                     manifest          = 16 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     container         = 17;
-  .google.protobuf.Timestamp start_at          = 18 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at       = 19 [(dev.f110.ddl.column) = { null: true }];
+  bool                       is_trunk          = 6;
+  string                     bazel_version     = 7;
+  bool                       success           = 8;
+  string                     log_file          = 9;
+  string                     command           = 10;
+  string                     target            = 11 [deprecated = true];
+  string                     targets           = 12 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     platform          = 13 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via               = 14;
+  string                     config_name       = 15;
+  string                     node              = 16;
+  string                     manifest          = 17 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     container         = 18;
+  .google.protobuf.Timestamp start_at          = 19 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at       = 20 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
@@ -84,11 +91,11 @@ message TrustedUser {
   option (dev.f110.ddl.dao) = {
     queries: {
       name: "All"
-      query: "SELECT * FROM `trusted_user`"
+      query: "SELECT * FROM `:table_name:`"
     }
     queries: {
       name: "ByGithubId"
-      query: "SELECT * FROM `trusted_user` WHERE `github_id` = ?"
+      query: "SELECT * FROM `:table_name:` WHERE `github_id` = ?"
     }
   };
 }
@@ -106,7 +113,24 @@ message PermitPullRequest {
   option (dev.f110.ddl.dao) = {
     queries: {
       name: "ByRepositoryAndNumber"
-      query: "SELECT * FROM `permit_pull_request` WHERE `repository` = ? AND `number` = ?"
+      query: "SELECT * FROM `:table_name:` WHERE `repository` = ? AND `number` = ?"
+    }
+  };
+}
+
+message TestReport {
+  int32            id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository repository = 2;
+  string           label      = 3;
+  //  TestStatus                 status     = 4;
+  int64                      duration = 5;
+  .google.protobuf.Timestamp start_at = 6;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    indexes: {
+      name: "idx_label"
+      columns: "label"
     }
   };
 }

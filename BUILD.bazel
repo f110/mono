@@ -5,6 +5,8 @@
 # gazelle:resolve go go.f110.dev/mono/go/text/converter //go/text/converter
 # gazelle:resolve go go.f110.dev/mono/go/git //go/git
 # gazelle:resolve go go.f110.dev/mono/go/docutil //go/docutil
+# gazelle:resolve go go.f110.dev/mono/go/bazel/devtools //go/bazel/devtools
+# gazelle:resolve go go.f110.dev/mono/go/bazel/buildeventstream //go/bazel/buildeventstream
 
 load("//build/rules:vendor.bzl", "go_vendor")
 
