@@ -4,6 +4,7 @@ go_library(
     name = "gax-go",
     srcs = [
         "call_option.go",
+        "content_type.go",
         "gax.go",
         "header.go",
         "invoke.go",
@@ -14,6 +15,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/googleapis/gax-go/v2/apierror",
+        "//vendor/github.com/googleapis/gax-go/v2/internal",
+        "//vendor/google.golang.org/api/googleapi",
         "//vendor/google.golang.org/grpc",
         "//vendor/google.golang.org/grpc/codes",
         "//vendor/google.golang.org/grpc/status",

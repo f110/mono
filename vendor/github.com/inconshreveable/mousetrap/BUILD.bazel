@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "trap_others.go",
         "trap_windows.go",
-        "trap_windows_1.4.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/inconshreveable/mousetrap",
     importpath = "github.com/inconshreveable/mousetrap",

@@ -5,14 +5,16 @@ go_library(
     srcs = [
         "client.go",
         "groupversion.go",
+        "typeconverter.go",
     ],
     importmap = "go.f110.dev/mono/vendor/k8s.io/client-go/openapi",
     importpath = "k8s.io/client-go/openapi",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/google/gnostic/openapiv3",
-        "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/k8s.io/apimachinery/pkg/util/managedfields",
         "//vendor/k8s.io/client-go/rest",
         "//vendor/k8s.io/kube-openapi/pkg/handler3",
+        "//vendor/k8s.io/kube-openapi/pkg/spec3",
+        "//vendor/k8s.io/kube-openapi/pkg/validation/spec",
     ],
 )
