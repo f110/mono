@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//go/build/api",
         "//go/build/coordinator",
+        "//go/build/database",
         "//go/build/database/dao",
         "//go/build/gc",
         "//go/build/watcher",
@@ -20,6 +21,7 @@ go_library(
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/github.com/google/uuid",
         "//vendor/github.com/spf13/cobra",
+        "//vendor/go.f110.dev/protoc-ddl/probe",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",

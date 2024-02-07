@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-github/v49/github"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,6 +29,7 @@ import (
 
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/build/coordinator"
+	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/gc"
 	"go.f110.dev/mono/go/build/watcher"
@@ -84,6 +86,7 @@ type Options struct {
 
 const (
 	stateInit fsm.State = iota
+	stateCheckMigrate
 	stateSetup
 	stateStartApiServer
 	stateLeaderElection
@@ -116,6 +119,7 @@ func newProcess(opt Options) *process {
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:           p.init,
+			stateCheckMigrate:   p.checkMigrate,
 			stateSetup:          p.setup,
 			stateStartApiServer: p.startApiServer,
 			stateLeaderElection: p.leaderElection,
@@ -211,6 +215,24 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 		}
 	}
 
+	return fsm.Next(stateCheckMigrate)
+}
+
+func (p *process) checkMigrate(ctx context.Context) (fsm.State, error) {
+	pr := probe.NewProbe(p.dao.RawConnection)
+	ticker := time.NewTicker(1 * time.Second)
+	timeout := time.After(5 * time.Minute)
+Wait:
+	for {
+		select {
+		case <-ticker.C:
+			if pr.Ready(ctx, database.SchemaHash) {
+				break Wait
+			}
+		case <-timeout:
+			return fsm.Error(xerrors.New("waiting db migration was timed out"))
+		}
+	}
 	return fsm.Next(stateSetup)
 }
 
