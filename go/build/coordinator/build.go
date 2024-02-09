@@ -903,7 +903,10 @@ func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *co
 	switch job.Command {
 	case "test":
 		if task.IsTrunk {
-			args = append(args, fmt.Sprintf("--build_event_binary_file=%s/bep", commDir.Mount.MountPath))
+			args = append(args,
+				fmt.Sprintf("--build_event_binary_file=%s/bep", commDir.Mount.MountPath),
+				"--cache_test_results=no",
+			)
 		}
 		args = append(args, "--")
 		targets := strings.Split(task.Targets, "\n")
