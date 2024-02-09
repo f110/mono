@@ -658,7 +658,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	buf.Write(rawLog)
 
 	var testReport []byte
-	if jobConfiguration.Command == "test" {
+	if jobConfiguration.Command == "test" && task.IsTrunk {
 		logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.reportContainerName})
 		rawLog, err = logReq.DoRaw(ctx)
 		if err != nil {
