@@ -29,7 +29,6 @@ type Command struct {
 	parent   *Command
 	commands []*Command
 	executed bool
-	help     bool
 }
 
 func (c *Command) Usage() string {
@@ -105,7 +104,9 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		parent = parent.parent
 	}
 	logger.Flags(fs.flagSet)
-	if err := fs.Parse(args); err != nil && !c.help {
+	help := false
+	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
+	if err := fs.Parse(args); err != nil && !help {
 		var missingErr *missingRequiredFlagsError
 		if errors.As(err, &missingErr) {
 			_, _ = fmt.Fprintf(os.Stderr, "Required flags %s are missing\n\n", strings.Join(missingErr.Flags, ", "))
@@ -113,7 +114,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		c.printUsage()
 		return err
 	}
-	if c.help {
+	if help {
 		c.printUsage()
 		return nil
 	}
@@ -135,7 +136,6 @@ func (c *Command) printUsage() {
 func (c *Command) Flags() *FlagSet {
 	if c.flags == nil {
 		c.flags = NewFlagSet("", pflag.ContinueOnError)
-		c.flags.Bool("help", "Show help").Shorthand("h").Var(&c.help)
 	}
 
 	return c.flags
