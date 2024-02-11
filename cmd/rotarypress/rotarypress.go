@@ -200,6 +200,7 @@ func (r *RotaryPress) store(ctx context.Context) (fsm.State, error) {
 		if r.dryRun {
 			logger.Log.Info("Skip upload", zap.String("repository", v.Repository), zap.String("version", v.Version), zap.String("path", r.storePath(v)))
 		} else {
+			logger.Log.Info("Upload rules", zap.String("path", r.storePath(v)))
 			if err := r.client.PutReader(ctx, r.storePath(v), v.downloadedFile); err != nil {
 				return fsm.Error(err)
 			}
@@ -214,6 +215,7 @@ func (r *RotaryPress) store(ctx context.Context) (fsm.State, error) {
 		if r.dryRun {
 			logger.Log.Info("Skip upload bazel", zap.String("Version", b.Version), zap.String("Env", b.Env), zap.String("path", b.storePath(r.prefix)))
 		} else {
+			logger.Log.Info("Upload bazel", zap.String("path", b.storePath(r.prefix)))
 			if err := r.client.PutReader(ctx, b.storePath(r.prefix), b.downloadedFile); err != nil {
 				return fsm.Error(err)
 			}
@@ -224,6 +226,12 @@ func (r *RotaryPress) store(ctx context.Context) (fsm.State, error) {
 
 func (r *RotaryPress) finish(_ context.Context) (fsm.State, error) {
 	for _, v := range r.conf {
+		if v.downloadedFile != nil {
+			os.Remove(v.downloadedFile.Name())
+		}
+	}
+
+	for _, v := range r.bazelRelease {
 		if v.downloadedFile != nil {
 			os.Remove(v.downloadedFile.Name())
 		}
