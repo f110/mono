@@ -29,6 +29,7 @@ type Command struct {
 	parent   *Command
 	commands []*Command
 	executed bool
+	help     bool
 }
 
 func (c *Command) Usage() string {
@@ -50,6 +51,10 @@ func (c *Command) Usage() string {
 		if parent != nil {
 			globalFlags.AddFlagSet(parent.Flags())
 		}
+	}
+	if globalFlags == nil {
+		globalFlags = NewFlagSet("", pflag.ContinueOnError)
+		logger.Flags(globalFlags.flagSet)
 	}
 
 	buf := new(bytes.Buffer)
@@ -81,9 +86,6 @@ func (c *Command) Execute(args []string) error {
 	if c.executed {
 		return xerrors.New("already executed")
 	}
-	if err := logger.Init(); err != nil {
-		return err
-	}
 
 	c.executed = true
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -102,10 +104,8 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		fs.AddFlagSet(parent.Flags())
 		parent = parent.parent
 	}
-	help := false
-	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
 	logger.Flags(fs.flagSet)
-	if err := fs.Parse(args); err != nil && !help {
+	if err := fs.Parse(args); err != nil && !c.help {
 		var missingErr *missingRequiredFlagsError
 		if errors.As(err, &missingErr) {
 			_, _ = fmt.Fprintf(os.Stderr, "Required flags %s are missing\n\n", strings.Join(missingErr.Flags, ", "))
@@ -113,7 +113,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		c.printUsage()
 		return err
 	}
-	if help {
+	if c.help {
 		c.printUsage()
 		return nil
 	}
@@ -121,6 +121,9 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 	if c.Run == nil {
 		c.printUsage()
 		return xerrors.New("command not found")
+	}
+	if err := logger.Init(); err != nil {
+		return err
 	}
 	return c.Run(ctx, c, fs.Args())
 }
@@ -132,6 +135,7 @@ func (c *Command) printUsage() {
 func (c *Command) Flags() *FlagSet {
 	if c.flags == nil {
 		c.flags = NewFlagSet("", pflag.ContinueOnError)
+		c.flags.Bool("help", "Show help").Shorthand("h").Var(&c.help)
 	}
 
 	return c.flags
@@ -209,12 +213,12 @@ Available Commands:
   {{ left $.CommandNameLength .Name }}{{ .Short }}
 {{- end }}
 {{- end }}
-{{- if gt .Flags.Len 0 }}
+{{- if .Flags.HasFlags }}
 
 Options:
 {{ .Flags.Usage }}
 {{- end }}
-{{- if .GlobalFlags }}{{- if gt .GlobalFlags.Len 0 }}
+{{- if .GlobalFlags }}{{- if .GlobalFlags.HasFlags }}
 
 Global Options:
 {{ .GlobalFlags.Usage }}
