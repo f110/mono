@@ -11,8 +11,11 @@ go_library(
     deps = [
         "//go/cli",
         "//go/fsm",
+        "//go/githubutil",
         "//go/logger",
         "//go/storage",
+        "//vendor/github.com/blang/semver/v4:semver",
+        "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.starlark.net/syntax",
         "//vendor/go.uber.org/zap",
