@@ -1,6 +1,8 @@
 package k8sfactory
 
 import (
+	"sort"
+
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -179,7 +181,7 @@ func ContainerFactory(base *corev1.Container, traits ...Trait) *corev1.Container
 	if base == nil {
 		c = &corev1.Container{}
 	} else {
-		c = base
+		c = base.DeepCopy()
 	}
 
 	for _, v := range traits {
@@ -350,6 +352,23 @@ func Volume(vol *VolumeSource) Trait {
 			obj.Spec.Volumes = append(obj.Spec.Volumes, vol.Source)
 		}
 	}
+}
+
+func SortVolume() Trait {
+	var t Trait
+	t = func(object any) {
+		switch obj := object.(type) {
+		case *corev1.PodSpec:
+			sort.Slice(obj.Volumes, func(i, j int) bool {
+				return obj.Volumes[i].Name < obj.Volumes[j].Name
+			})
+		case *corev1.Pod:
+			t(&obj.Spec)
+		case *batchv1.Job:
+			t(&obj.Spec.Template.Spec)
+		}
+	}
+	return t
 }
 
 func ResourceLimit(cpu, mem resource.Quantity) Trait {

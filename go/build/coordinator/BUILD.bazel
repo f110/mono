@@ -1,8 +1,11 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "coordinator",
-    srcs = ["build.go"],
+    srcs = [
+        "build.go",
+        "job.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/coordinator",
     visibility = ["//visibility:public"],
     deps = [
@@ -35,5 +38,28 @@ go_library(
         "//vendor/k8s.io/client-go/rest",
         "//vendor/sigs.k8s.io/secrets-store-csi-driver/apis/v1:apis",
         "//vendor/sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned",
+    ],
+)
+
+go_test(
+    name = "coordinator_test",
+    srcs = ["job_test.go"],
+    embed = [":coordinator"],
+    deps = [
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/watcher",
+        "//go/k8s/k8sfactory",
+        "//go/k8s/k8smanifest",
+        "//go/logger",
+        "//go/varptr",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+        "//vendor/k8s.io/api/batch/v1:batch",
+        "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/api/meta",
+        "//vendor/k8s.io/apimachinery/pkg/api/resource",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
+        "//vendor/k8s.io/apimachinery/pkg/runtime",
     ],
 )
