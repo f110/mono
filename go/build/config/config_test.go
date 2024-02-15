@@ -35,6 +35,7 @@ func TestReadConfig(t *testing.T) {
         secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "github", vault_key = "token"),
         secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "provider", vault_key = "access_key"),
         secret(mount_path = "/var/vault/provider", vault_mount = "secrets/", vault_path = "provider", vault_key = "secret_key"),
+		registry_secret(host = "index.docker.io", vault_mount = "secrets/", vault_path = "provider", vault_key = "password"),
     ],
 	env = {
         "FOOBAR": "env var",
@@ -81,6 +82,16 @@ func TestReadConfig(t *testing.T) {
 	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultMount, "secrets/")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultPath, "provider")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].VaultKey, "secret_key")
+	assert.Equal(t, conf.Jobs[0].Secrets[0].(*Secret).VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[0].(*Secret).VaultPath, "github")
+	assert.Equal(t, conf.Jobs[0].Secrets[0].(*Secret).VaultKey, "token")
+	assert.Equal(t, conf.Jobs[0].Secrets[1].(*Secret).VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[1].(*Secret).VaultPath, "provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[1].(*Secret).VaultKey, "access_key")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).MountPath, "/var/vault/provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultPath, "provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultKey, "secret_key")
 }
 
 func TestRead_AllRequiredFieldsAreNotPresent(t *testing.T) {

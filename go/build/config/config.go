@@ -78,6 +78,37 @@ func (s *Secret) Hash() (uint32, error) {
 	return crc32.ChecksumIEEE(buf.Bytes()), nil
 }
 
+type RegistrySecret struct {
+	Host       string `attr:"host"`
+	VaultMount string `attr:"vault_mount"`
+	VaultPath  string `attr:"vault_path"`
+	VaultKey   string `attr:"vault_key"`
+}
+
+var _ starlark.Value = (*RegistrySecret)(nil)
+
+func (s *RegistrySecret) String() string {
+	return fmt.Sprintf("%s/%s:%s", s.VaultMount, s.VaultPath, s.VaultKey)
+}
+
+func (s *RegistrySecret) Type() string {
+	return "secret"
+}
+
+func (s *RegistrySecret) Freeze() {}
+
+func (s *RegistrySecret) Truth() starlark.Bool {
+	return true
+}
+
+func (s *RegistrySecret) Hash() (uint32, error) {
+	buf := new(bytes.Buffer)
+	if err := gob.NewEncoder(buf).Encode(s); err != nil {
+		return 0, err
+	}
+	return crc32.ChecksumIEEE(buf.Bytes()), nil
+}
+
 type Job struct {
 	// Name is a job name
 	Name  string      `attr:"name"`
@@ -218,6 +249,14 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 	})
 	mod["secret"] = starlark.NewBuiltin("secret", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		s := &Secret{}
+		err := starlark.UnpackArgs(fn.Name(), args, kwargs, argPairs(s)...)
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
+	})
+	mod["registry_secret"] = starlark.NewBuiltin("registry_secret", func(_ *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		s := &RegistrySecret{}
 		err := starlark.UnpackArgs(fn.Name(), args, kwargs, argPairs(s)...)
 		if err != nil {
 			return nil, err
