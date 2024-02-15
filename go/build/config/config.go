@@ -54,7 +54,7 @@ type Secret struct {
 	VaultKey   string `attr:"vault_key"`
 }
 
-var _ starlark.Value = &Secret{}
+var _ starlark.Value = (*Secret)(nil)
 
 func (s *Secret) String() string {
 	return fmt.Sprintf("%s/%s:%s", s.VaultMount, s.VaultPath, s.VaultKey)
@@ -98,12 +98,19 @@ type Job struct {
 	// The name of config
 	ConfigName string `attr:"config_name,allowempty"`
 	// Job schedule
-	Schedule string         `attr:"schedule,allowempty"`
-	Secrets  []*Secret      `attr:"secrets,allowempty"`
-	Env      map[string]any `attr:"env,allowempty"`
+	Schedule string           `attr:"schedule,allowempty"`
+	Secrets  []starlark.Value `attr:"secrets,allowempty"`
+	Env      map[string]any   `attr:"env,allowempty"`
 
 	RepositoryOwner string
 	RepositoryName  string
+}
+
+func (j *Job) Copy() *Job {
+	n := &Job{}
+	*n = *j
+
+	return n
 }
 
 func (j *Job) Identification() string {
