@@ -129,6 +129,8 @@ func InitContainer(c *corev1.Container) Trait {
 		switch obj := object.(type) {
 		case *corev1.Pod:
 			obj.Spec.InitContainers = append(obj.Spec.InitContainers, *c)
+		case *batchv1.Job:
+			obj.Spec.Template.Spec.InitContainers = append(obj.Spec.Template.Spec.InitContainers, *c)
 		}
 	}
 }

@@ -78,7 +78,7 @@ func Factory(base any, traits ...Trait) any {
 	}
 }
 
-func OnContainer(name string, t Trait) Trait {
+func OnContainer(name string, t ...Trait) Trait {
 	var fn Trait
 	fn = func(object any) {
 		switch v := object.(type) {
@@ -86,14 +86,18 @@ func OnContainer(name string, t Trait) Trait {
 			for i := range v.InitContainers {
 				con := &v.InitContainers[i]
 				if con.Name == name {
-					t(con)
+					for _, v := range t {
+						v(con)
+					}
 					break
 				}
 			}
 			for i := range v.Containers {
 				con := &v.Containers[i]
 				if con.Name == name {
-					t(con)
+					for _, v := range t {
+						v(con)
+					}
 					break
 				}
 			}

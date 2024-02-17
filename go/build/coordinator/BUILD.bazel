@@ -55,6 +55,7 @@ go_test(
         "//go/varptr",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
+        "//vendor/go.starlark.net/starlark",
         "//vendor/k8s.io/api/batch/v1:batch",
         "//vendor/k8s.io/api/core/v1:core",
         "//vendor/k8s.io/apimachinery/pkg/api/meta",

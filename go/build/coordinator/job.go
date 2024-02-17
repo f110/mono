@@ -52,11 +52,12 @@ type JobBuilder struct {
 	// commDirVolume is a empty dir volume for sharing Build Event protocol file between main and report container.
 	commDirVolume *k8sfactory.VolumeSource
 
-	sa                    *corev1.ServiceAccount
-	mainContainer         *corev1.Container
-	preProcessContainer   *corev1.Container
-	buildPod              *corev1.Pod
-	secretProviderClasses []runtime.Object
+	sa                       *corev1.ServiceAccount
+	mainContainer            *corev1.Container
+	preProcessContainer      *corev1.Container
+	credentialSetupContainer *corev1.Container
+	buildPod                 *corev1.Pod
+	secretProviderClasses    []runtime.Object
 }
 
 func NewJobBuilder(ns, bazelImage, sidecar string) *JobBuilder {
@@ -346,6 +347,7 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 		k8sfactory.Pod(
 			k8sfactory.PodFactory(j.buildPod,
 				k8sfactory.InitContainer(preProcessContainer),
+				k8sfactory.InitContainer(j.credentialSetupContainer),
 				k8sfactory.Container(mainContainer),
 				k8sfactory.Container(j.reportContainer),
 				k8sfactory.SortVolume(),
@@ -393,6 +395,7 @@ func (j *JobBuilder) injectSecret() {
 		}
 	}
 	secretProviderClasses := make(map[string]*secretsstorev1.SecretProviderClass)
+	registrySecretProviderClass := make(map[string]*secretsstorev1.SecretProviderClass)
 	for _, s := range j.job.Secrets {
 		switch secret := s.(type) {
 		case *config.Secret:
@@ -431,12 +434,61 @@ func (j *JobBuilder) injectSecret() {
 					)
 				}
 			}
+		case *config.RegistrySecret:
+			if secret.Host == "" {
+				continue
+			}
+
+			if _, ok := registrySecretProviderClass[secret.Host]; !ok {
+				name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(secret.Host, ".", "-", -1))
+				registrySecretProviderClass[secret.Host] = &secretsstorev1.SecretProviderClass{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      name,
+						Namespace: j.namespace,
+						Labels: map[string]string{
+							labelKeyJobId:  j.job.Identification(),
+							labelKeyCtrlBy: "bazel-build",
+						},
+					},
+					Spec: secretsstorev1.SecretProviderClassSpec{
+						Provider: "vault",
+						Parameters: map[string]string{
+							"roleName":     fmt.Sprintf("build-%s", j.job.RepositoryName),
+							"vaultAddress": j.vaultAddr,
+							"objects": fmt.Sprintf(
+								"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
+								secret.VaultKey,
+								fmt.Sprintf("%s/data/%s", secret.VaultMount, secret.VaultPath),
+								secret.VaultKey,
+							),
+						},
+					},
+				}
+			}
 		}
 	}
 	if len(secretProviderClasses) > 0 {
 		for mountPath, class := range secretProviderClasses {
 			envVolume := k8sfactory.NewSecretStoreVolumeSource(class.Name, mountPath)
 			j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Volume(envVolume))
+			j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Volume(envVolume))
+			j.secretProviderClasses = append(j.secretProviderClasses, class)
+		}
+	}
+	if len(registrySecretProviderClass) > 0 {
+		credVol := k8sfactory.NewEmptyDirVolumeSource("containerregistry", "/root/.config/containers")
+		j.credentialSetupContainer = k8sfactory.ContainerFactory(nil,
+			k8sfactory.Name("credential"),
+			k8sfactory.Image(j.sidecarImage, nil),
+			k8sfactory.Args("credential", "container-registry", fmt.Sprintf("--out=%s/auth.json", credVol.Mount.MountPath), "--dir=/etc/registry"),
+			k8sfactory.Volume(credVol),
+		)
+		j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Volume(credVol))
+		j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Volume(credVol))
+
+		for host, class := range registrySecretProviderClass {
+			envVolume := k8sfactory.NewSecretStoreVolumeSource(class.Name, "/etc/registry/"+host)
+			j.credentialSetupContainer = k8sfactory.ContainerFactory(j.credentialSetupContainer, k8sfactory.Volume(envVolume))
 			j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Volume(envVolume))
 			j.secretProviderClasses = append(j.secretProviderClasses, class)
 		}

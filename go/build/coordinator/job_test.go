@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.starlark.net/starlark"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -148,7 +149,8 @@ func TestJobBuilder(t *testing.T) {
 			Objects:  []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
-					AddSecretVolume("pre-process", "github-secret", "githubapp-secret", "/etc/github"), k8sfactory.SortVolume(),
+					AddSecretVolume("pre-process", "github-secret", "githubapp-secret", "/etc/github"),
+					k8sfactory.SortVolume(),
 					k8sfactory.OnContainer("pre-process", AddArgs("--github-app-id=2", "--github-installation-id=20", "--private-key-file=/etc/github/privatekey.pem")),
 				},
 			},
@@ -168,6 +170,62 @@ func TestJobBuilder(t *testing.T) {
 							"--", job.Targets[0],
 						),
 					),
+				},
+			},
+		},
+		{
+			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+				j.Secrets = []starlark.Value{&config.Secret{MountPath: "/etc/job/secret", VaultMount: "secrets", VaultPath: "login", VaultKey: "password"}}
+				return j, r, ta
+			},
+			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Objects: []runtime.Object{
+				saObject,
+				jobObject,
+				k8sfactory.NewSecretProviderClassFactory(nil,
+					k8sfactory.Namef("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), k8sfactory.Namespace(metav1.NamespaceDefault),
+					k8sfactory.Labels(map[string]string{labelKeyCtrlBy: "bazel-build", labelKeyJobId: job.Identification()}),
+					k8sfactory.Parameters(map[string]string{"objects": "- objectName: \"password\"\n  secretPath: \"secrets/data/login\"\n  secretKey: \"password\"\n", "roleName": "build-" + job.RepositoryName, "vaultAddress": "https://127.0.0.1:7000"}),
+					k8sfactory.Provider("vault"),
+				),
+			},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "example-100-linux-amd64-etc-job-secret", ReadOnly: true, MountPath: "/etc/job/secret"}})),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: varptr.Ptr(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id)}}),
+					k8sfactory.SortVolume(),
+				},
+			},
+		},
+		{
+			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+				j.Secrets = []starlark.Value{&config.RegistrySecret{Host: "registry.example.com", VaultMount: "secrets", VaultPath: "registry", VaultKey: "foobar"}}
+				return j, r, ta
+			},
+			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Objects: []runtime.Object{
+				saObject,
+				jobObject,
+				k8sfactory.NewSecretProviderClassFactory(nil,
+					k8sfactory.Namef("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), k8sfactory.Namespace(metav1.NamespaceDefault),
+					k8sfactory.Labels(map[string]string{labelKeyCtrlBy: "bazel-build", labelKeyJobId: job.Identification()}),
+					k8sfactory.Parameters(map[string]string{"objects": "- objectName: \"foobar\"\n  secretPath: \"secrets/data/registry\"\n  secretKey: \"foobar\"\n", "roleName": "build-" + job.RepositoryName, "vaultAddress": "https://127.0.0.1:7000"}),
+					k8sfactory.Provider("vault"),
+				),
+			},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					k8sfactory.InitContainer(k8sfactory.ContainerFactory(nil,
+						k8sfactory.Name("credential"),
+						k8sfactory.Image("registry/sidecar", nil),
+						k8sfactory.Args("credential", "container-registry", "--out=/root/.config/containers/auth.json", "--dir=/etc/registry"),
+						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.config/containers"}}),
+						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), ReadOnly: true, MountPath: "/etc/registry/registry.example.com"}}),
+					)),
+					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.config/containers"}})),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: varptr.Ptr(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
+					AddEmptyVolume("containerregistry"),
+					k8sfactory.SortVolume(),
 				},
 			},
 		},
@@ -306,6 +364,32 @@ func AddSecretVolume(containerName, volName, secretName, mountPath string) k8sfa
 				}
 			}
 			v.Volumes = append(v.Volumes, corev1.Volume{Name: volName, VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName}}})
+		case *batchv1.Job:
+			fn(&v.Spec.Template.Spec)
+		}
+	}
+	return fn
+}
+
+func AddCSIVolume(name string, csi *corev1.CSIVolumeSource) k8sfactory.Trait {
+	var fn k8sfactory.Trait
+	fn = func(obj any) {
+		switch v := obj.(type) {
+		case *corev1.PodSpec:
+			v.Volumes = append(v.Volumes, corev1.Volume{Name: name, VolumeSource: corev1.VolumeSource{CSI: csi}})
+		case *batchv1.Job:
+			fn(&v.Spec.Template.Spec)
+		}
+	}
+	return fn
+}
+
+func AddEmptyVolume(name string) k8sfactory.Trait {
+	var fn k8sfactory.Trait
+	fn = func(obj any) {
+		switch v := obj.(type) {
+		case *corev1.PodSpec:
+			v.Volumes = append(v.Volumes, corev1.Volume{Name: name, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
 		case *batchv1.Job:
 			fn(&v.Spec.Template.Spec)
 		}

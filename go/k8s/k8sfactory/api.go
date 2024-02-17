@@ -5,6 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
@@ -360,6 +361,41 @@ func DockerSecret(s *corev1.Secret) Trait {
 		switch obj := object.(type) {
 		case *harborv1alpha1.HarborRobotAccount:
 			obj.Spec.SecretName = s.Name
+		}
+	}
+}
+
+func NewSecretProviderClassFactory(base *secretsstorev1.SecretProviderClass, traits ...Trait) *secretsstorev1.SecretProviderClass {
+	var s *secretsstorev1.SecretProviderClass
+	if base == nil {
+		s = &secretsstorev1.SecretProviderClass{}
+	} else {
+		s = base.DeepCopy()
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func Parameters(params map[string]string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *secretsstorev1.SecretProviderClass:
+			obj.Spec.Parameters = params
+		}
+	}
+}
+
+func Provider(name string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *secretsstorev1.SecretProviderClass:
+			obj.Spec.Provider = secretsstorev1.Provider(name)
 		}
 	}
 }
