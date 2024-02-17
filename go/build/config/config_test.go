@@ -82,6 +82,10 @@ func TestReadConfig(t *testing.T) {
 	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultMount, "secrets/")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultPath, "provider")
 	assert.Equal(t, conf.Jobs[0].Secrets[2].(*Secret).VaultKey, "secret_key")
+	assert.Equal(t, conf.Jobs[0].Secrets[3].(*RegistrySecret).Host, "index.docker.io")
+	assert.Equal(t, conf.Jobs[0].Secrets[3].(*RegistrySecret).VaultMount, "secrets/")
+	assert.Equal(t, conf.Jobs[0].Secrets[3].(*RegistrySecret).VaultPath, "provider")
+	assert.Equal(t, conf.Jobs[0].Secrets[3].(*RegistrySecret).VaultKey, "password")
 }
 
 func TestRead_AllRequiredFieldsAreNotPresent(t *testing.T) {

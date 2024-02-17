@@ -36,6 +36,21 @@ func buildSidecar(args []string) error {
 	report.SetFlags(reportCmd.Flags())
 	root.AddCommand(reportCmd)
 
+	credential := sidecar.NewCredentialCommand()
+	credentialCmd := &cli.Command{
+		Use: "credential",
+	}
+	credential.SetGlobalFlags(credentialCmd.Flags())
+	root.AddCommand(credentialCmd)
+	containerRegistryCmd := &cli.Command{
+		Use: "container-registry",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return credential.ContainerRegistry(ctx)
+		},
+	}
+	credential.SetContainerRegistryFlags(containerRegistryCmd.Flags())
+	credentialCmd.AddCommand(containerRegistryCmd)
+
 	return root.Execute(args)
 }
 

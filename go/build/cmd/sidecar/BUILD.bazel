@@ -4,6 +4,7 @@ go_library(
     name = "sidecar",
     srcs = [
         "clone.go",
+        "credential.go",
         "report.go",
     ],
     importpath = "go.f110.dev/mono/go/build/cmd/sidecar",
