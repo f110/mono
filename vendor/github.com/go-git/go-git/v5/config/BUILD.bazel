@@ -17,6 +17,5 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/internal/url",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/format/config",
-        "//vendor/github.com/mitchellh/go-homedir",
     ],
 )
