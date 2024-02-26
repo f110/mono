@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/clipboard"
@@ -179,11 +179,7 @@ func (v *vault) List(_ context.Context, _ *RequestList) (*ResponseList, error) {
 
 	result := make([]*Item, 0)
 	for _, v := range items {
-		item, err := toItem(v)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, item)
+		result = append(result, toItem(v))
 	}
 
 	return &ResponseList{
@@ -208,10 +204,7 @@ func (v *vault) Get(_ context.Context, req *RequestGet) (*ResponseGet, error) {
 	if !ok {
 		return nil, xerrors.Newf("item not found: %s", req.Uuid)
 	}
-	item, err := toItem(k)
-	if err != nil {
-		return nil, err
-	}
+	item := toItem(k)
 
 	return &ResponseGet{Item: item}, nil
 }
@@ -247,15 +240,9 @@ func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*Resp
 	return &ResponseSetClipboard{}, nil
 }
 
-func toItem(in *opvault.Item) (*Item, error) {
-	createdAt, err := ptypes.TimestampProto(in.Created)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	updatedAt, err := ptypes.TimestampProto(in.Updated)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
+func toItem(in *opvault.Item) *Item {
+	createdAt := timestamppb.New(in.Created)
+	updatedAt := timestamppb.New(in.Updated)
 	password := ""
 	if in.Detail != nil {
 		for _, v := range in.Detail.Fields {
@@ -273,7 +260,7 @@ func toItem(in *opvault.Item) (*Item, error) {
 		Password:  password,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
-	}, nil
+	}
 }
 
 var _ OnePasswordServer = &vault{}

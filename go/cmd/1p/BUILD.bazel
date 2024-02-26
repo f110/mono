@@ -40,7 +40,6 @@ go_library(
         "//go/fsm",
         "//go/logger",
         "//go/opvault",
-        "//vendor/github.com/golang/protobuf/ptypes",
         "//vendor/github.com/peco/peco",
         "//vendor/github.com/shirou/gopsutil/v3/process",
         "//vendor/github.com/spf13/cobra",
