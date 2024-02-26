@@ -837,6 +837,10 @@ func (b *ObjectStorageStorer) EncodedObjectSize(hash plumbing.Hash) (int64, erro
 	return obj.Size(), nil
 }
 
+func (b *ObjectStorageStorer) AddAlternate(remote string) error {
+	return nil
+}
+
 type EncodedObject struct {
 	hash plumbing.Hash
 	typ  plumbing.ObjectType
