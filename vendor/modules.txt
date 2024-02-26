@@ -481,7 +481,7 @@ github.com/google/nixery/storage
 # github.com/google/pprof v0.0.0-20220412212628-83db2b799d1f
 ## explicit; go 1.17
 github.com/google/pprof/profile
-# github.com/google/uuid v1.3.0
+# github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
 # github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5 => github.com/sourcegraph/zoekt v0.0.0-20220526084836-6ca5909b5050

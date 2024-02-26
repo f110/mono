@@ -25,7 +25,7 @@ require (
 	github.com/google/go-containerregistry v0.4.0
 	github.com/google/go-github/v49 v49.0.0
 	github.com/google/nixery v0.0.0-20230429114902-a85d61307c16
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.8.1
