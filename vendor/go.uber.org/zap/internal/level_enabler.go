@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
+// Copyright (c) 2022 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,36 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package buffer
+// Package internal and its subpackages hold types and functionality
+// that are not part of Zap's public API.
+package internal
 
-import (
-	"go.uber.org/zap/internal/pool"
-)
+import "go.uber.org/zap/zapcore"
 
-// A Pool is a type-safe wrapper around a sync.Pool.
-type Pool struct {
-	p *pool.Pool[*Buffer]
-}
+// LeveledEnabler is an interface satisfied by LevelEnablers that are able to
+// report their own level.
+//
+// This interface is defined to use more conveniently in tests and non-zapcore
+// packages.
+// This cannot be imported from zapcore because of the cyclic dependency.
+type LeveledEnabler interface {
+	zapcore.LevelEnabler
 
-// NewPool constructs a new Pool.
-func NewPool() Pool {
-	return Pool{
-		p: pool.New(func() *Buffer {
-			return &Buffer{
-				bs: make([]byte, 0, _size),
-			}
-		}),
-	}
-}
-
-// Get retrieves a Buffer from the pool, creating one if necessary.
-func (p Pool) Get() *Buffer {
-	buf := p.p.Get()
-	buf.Reset()
-	buf.pool = p
-	return buf
-}
-
-func (p Pool) put(buf *Buffer) {
-	p.p.Put(buf)
+	Level() zapcore.Level
 }

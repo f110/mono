@@ -56,12 +56,24 @@ func (e *Error) StackTrace() Frames {
 	return StackTrace(e)
 }
 
+// New returns an error.
 func New(msg string) error {
 	return &Error{msg: msg}
 }
 
+// Newf returns an error with formatted text.
 func Newf(format string, a ...any) error {
 	return &Error{msg: fmt.Sprintf(format, a...)}
+}
+
+// NewWithStack returns an error with a stack trace.
+func NewWithStack(msg string) error {
+	return &Error{msg: msg, stackTrace: caller()}
+}
+
+// NewfWithStack returns an error with formatted text and a stack trace.
+func NewfWithStack(format string, a ...any) error {
+	return &Error{msg: fmt.Sprintf(format, a...), stackTrace: caller()}
 }
 
 // WithStack annotates err with a stack trace.
@@ -70,15 +82,26 @@ func WithStack(err error) error {
 	if err == nil {
 		return nil
 	}
-	return &Error{err: err, stackTrace: caller()}
+	if StackTrace(err) == nil {
+		return &Error{err: err, stackTrace: caller()}
+	}
+	return err
 }
 
 func WithMessage(err error, msg string) error {
-	return &Error{msg: msg, err: err, stackTrace: caller()}
+	var st []uintptr
+	if StackTrace(err) == nil {
+		st = caller()
+	}
+	return &Error{msg: msg, err: err, stackTrace: st}
 }
 
 func WithMessagef(err error, format string, a ...any) error {
-	return &Error{msg: fmt.Sprintf(format, a...), err: err, stackTrace: caller()}
+	var st []uintptr
+	if StackTrace(err) == nil {
+		st = caller()
+	}
+	return &Error{msg: fmt.Sprintf(format, a...), err: err, stackTrace: st}
 }
 
 type Frames []uintptr
@@ -86,9 +109,11 @@ type Frames []uintptr
 var _ zapcore.ArrayMarshaler = Frames{}
 
 func StackTrace(err error) Frames {
-	if _, ok := err.(*Error); !ok {
+	var sErr *Error
+	if !errors.As(err, &sErr) {
 		return nil
 	}
+	err = sErr
 
 	var frames Frames
 	for {

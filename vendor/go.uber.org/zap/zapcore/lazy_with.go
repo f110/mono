@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,36 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package buffer
+package zapcore
 
-import (
-	"go.uber.org/zap/internal/pool"
-)
+import "sync"
 
-// A Pool is a type-safe wrapper around a sync.Pool.
-type Pool struct {
-	p *pool.Pool[*Buffer]
+type lazyWithCore struct {
+	Core
+	sync.Once
+	fields []Field
 }
 
-// NewPool constructs a new Pool.
-func NewPool() Pool {
-	return Pool{
-		p: pool.New(func() *Buffer {
-			return &Buffer{
-				bs: make([]byte, 0, _size),
-			}
-		}),
+// NewLazyWith wraps a Core with a "lazy" Core that will only encode fields if
+// the logger is written to (or is further chained in a lon-lazy manner).
+func NewLazyWith(core Core, fields []Field) Core {
+	return &lazyWithCore{
+		Core:   core,
+		fields: fields,
 	}
 }
 
-// Get retrieves a Buffer from the pool, creating one if necessary.
-func (p Pool) Get() *Buffer {
-	buf := p.p.Get()
-	buf.Reset()
-	buf.pool = p
-	return buf
+func (d *lazyWithCore) initOnce() {
+	d.Once.Do(func() {
+		d.Core = d.Core.With(d.fields)
+	})
 }
 
-func (p Pool) put(buf *Buffer) {
-	p.p.Put(buf)
+func (d *lazyWithCore) With(fields []Field) Core {
+	d.initOnce()
+	return d.Core.With(fields)
+}
+
+func (d *lazyWithCore) Check(e Entry, ce *CheckedEntry) *CheckedEntry {
+	d.initOnce()
+	return d.Core.Check(e, ce)
 }
