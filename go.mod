@@ -30,7 +30,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.8.1
 	github.com/im7mortal/kmutex v1.0.1
-	github.com/jarcoal/httpmock v1.3.0
+	github.com/jarcoal/httpmock v1.3.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/minio/minio v0.0.0-20210407225602-2899cc92b45f
 	github.com/minio/minio-go/v6 v6.0.50
