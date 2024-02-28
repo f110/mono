@@ -833,7 +833,7 @@ github.com/skeema/knownhosts
 # github.com/sourcegraph/go-ctags v0.0.0-20220404085534-f974026334d7
 ## explicit; go 1.14
 github.com/sourcegraph/go-ctags
-# github.com/spf13/cobra v1.7.0
+# github.com/spf13/cobra v1.8.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
