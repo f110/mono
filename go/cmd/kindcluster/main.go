@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
-	goyaml "gopkg.in/yaml.v2"
+	goyaml "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

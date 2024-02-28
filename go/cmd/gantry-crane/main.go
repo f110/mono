@@ -15,7 +15,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var defaultArch = []string{"amd64"}

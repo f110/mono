@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"go.f110.dev/xerrors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/regexp/regexputil"
 )

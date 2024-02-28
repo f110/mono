@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"go.f110.dev/xerrors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ARecord struct {

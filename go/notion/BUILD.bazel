@@ -19,7 +19,7 @@ go_library(
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",
-        "//vendor/gopkg.in/yaml.v2:yaml_v2",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
     ],
 )
 

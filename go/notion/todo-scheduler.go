@@ -12,7 +12,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/logger"
 )
