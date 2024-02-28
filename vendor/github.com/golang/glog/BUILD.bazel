@@ -5,8 +5,13 @@ go_library(
     srcs = [
         "glog.go",
         "glog_file.go",
+        "glog_flags.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/golang/glog",
     importpath = "github.com/golang/glog",
     visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/golang/glog/internal/logsink",
+        "//vendor/github.com/golang/glog/internal/stackdump",
+    ],
 )
