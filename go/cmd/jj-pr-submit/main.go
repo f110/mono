@@ -250,7 +250,10 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	// Push all commits of current branch
 	var pushArgs []string
 	var changedPR []*commit
-	for _, v := range c.stack {
+	for i, v := range c.stack {
+		if c.SinglePR && i > 0 {
+			break
+		}
 		if v.Branch == "" {
 			logger.Log.Debug("Will create branch", zap.String("change_id", v.ChangeID))
 			pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", v.ChangeID))
