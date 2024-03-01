@@ -1,0 +1,147 @@
+<html>
+<head>
+  <title>Server information</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+  <style>
+    i.amber.icon {color: #FFA000;}
+  </style>
+</head>
+<body>
+
+<div class="ui menu inverted huge">
+  <div class="header item">
+    Dashboard
+  </div>
+
+  <div class="item right">
+    <a href="#"><i class="info icon"></i>Info</a>
+  </div>
+</div>
+
+<div class="ui newRepo modal">
+  <i class="close icon"></i>
+  <div class="header">
+    New Repository
+  </div>
+  <div class="content">
+    <form class="ui form newRepo" name="newRepo">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" placeholder="The name of the repository">
+      </div>
+      <div class="field">
+        <label>URL</label>
+        <input type="text" name="url" placeholder="URL of the repository">
+      </div>
+      <div class="field">
+        <label>Clone URL</label>
+        <input type="text" name="clone_url" placeholder="URL for cloning of the repository">
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <label>Private Repository</label>
+          <input type="checkbox" name="private">
+        </div>
+      </div>
+      <button class="ui button" type="submit" onclick="createRepository()">Add</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui basic modal">
+  <div class="ui icon header">
+    <i class="archive icon"></i>
+    Delete "<span class="repoName">test</span>" repository
+  </div>
+  <div class="actions">
+    <div class="ui red basic cancel inverted button">
+      <i class="remove icon"></i>
+      No
+    </div>
+    <div class="ui green ok inverted button">
+      <i class="checkmark icon"></i>
+      Yes
+    </div>
+  </div>
+</div>
+
+<div class="ui addTrustedUser modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Add Trusted User
+  </div>
+  <div class="content">
+    <form class="ui form addTrustedUser" name="addTrustedUser">
+      <div class="field">
+        <label>GitHub Username</label>
+        <input type="text" name="username" placeholder="octocat">
+      </div>
+      <button class="ui button" type="submit" onclick="createRepository()">Add</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui runTask modal">
+  <i class="close icon"></i>
+  <div class="header">
+    Run task
+  </div>
+  <div class="content">
+    <form class="ui form runTask" name="runTask">
+      <div class="field">
+        <label>Repository</label>
+        mono
+      </div>
+      <div class="field">
+        <label>Task name</label>
+        <input type="text" name="job_name">
+      </div>
+      <button class="ui button positive" type="submit" onclick="createRepository()">Run</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui container">
+  <table class="ui table definition">
+    <tbody>
+    <tr>
+      <td>Supported Bazel version</td>
+      <td>
+        <div class="ui bulleted list" style="column-count: 3">
+          <div class="item">7.0.2</div>
+          <div class="item">7.0.1</div>
+          <div class="item">7.0.0</div>
+          <div class="item">6.5.0</div>
+          <div class="item">6.4.0</div>
+          <div class="item">6.3.2</div>
+          <div class="item">6.3.1</div>
+          <div class="item">6.3.0</div>
+          <div class="item">6.2.1</div>
+          <div class="item">6.2.0</div>
+          <div class="item">6.1.2</div>
+          <div class="item">6.1.1</div>
+          <div class="item">6.1.0</div>
+          <div class="item">6.0.0</div>
+          <div class="item">5.4.0</div>
+          <div class="item">5.3.1</div>
+          <div class="item">5.3.0</div>
+          <div class="item">5.2.0</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Builder</td>
+      <td>Running@sha256:8f0debd617bcd21df8acd5b7540196e0b8f2f898e9667716d25c316fa6d70190</td>
+    </tr>
+    <tr>
+      <td>Schema version</td>
+      <td>e7cdc20cabf66477a2795ea05688d4a86bf4ecf12ec9c4e4263b53616ee3d8bf</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
