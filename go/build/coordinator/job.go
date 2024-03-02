@@ -158,8 +158,10 @@ func (j *JobBuilder) Clone() *JobBuilder {
 		remoteAssetAPI:          j.remoteAssetAPI,
 		vaultAddr:               j.vaultAddr,
 
-		workDirVolume: j.workDirVolume,
-		mainContainer: j.mainContainer,
+		workDirVolume:       j.workDirVolume,
+		mainContainer:       j.mainContainer,
+		preProcessContainer: j.preProcessContainer,
+		buildPod:            j.buildPod,
 	}
 }
 
