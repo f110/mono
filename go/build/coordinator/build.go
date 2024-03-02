@@ -270,7 +270,9 @@ func NewBazelBuilder(
 		defaultMemoryLimit = q
 	}
 	b.jobBuilder.DefaultLimit(defaultCPULimit, defaultMemoryLimit)
-	b.jobBuilder.Vault(vaultClient.Addr())
+	if vaultClient != nil {
+		b.jobBuilder.Vault(vaultClient.Addr())
+	}
 	if bazelOpt.BazelMirrorURL != "" {
 		b.jobBuilder.BazelBinaryMirror(bazelOpt.BazelMirrorURL)
 	}

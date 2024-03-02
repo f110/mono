@@ -112,7 +112,7 @@ func TestGithubWebHook(t *testing.T) {
 				PermitPullRequest: d.PermitPullRequest,
 			}
 
-			s, err := NewApi("", builder, daos, nil)
+			s, err := NewApi("", builder, daos, nil, nil, "")
 			require.NoError(t, err)
 			body, err := os.ReadFile("testdata/pull_request_opened.json")
 			require.NoError(t, err)
@@ -286,7 +286,7 @@ func TestGithubWebHook(t *testing.T) {
 			},
 		}}
 
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/pull_request_synchronize.json")
 		require.NoError(t, err)
@@ -318,7 +318,7 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		s, err := NewApi("", builder, daos, nil)
+		s, err := NewApi("", builder, daos, nil, nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/pull_request_closed.json")
 		require.NoError(t, err)
@@ -382,7 +382,7 @@ func TestGithubWebHook(t *testing.T) {
 			},
 		}}
 
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
 		require.NoError(t, err)
 		body, err := ioutil.ReadFile("testdata/issue_comment.json")
 		require.NoError(t, err)
@@ -442,7 +442,7 @@ func TestGithubWebHook(t *testing.T) {
 			},
 		}}
 
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}))
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/release_published.json")
 		require.NoError(t, err)

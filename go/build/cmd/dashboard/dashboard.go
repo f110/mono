@@ -61,7 +61,7 @@ func dashboard(opt Options) error {
 		minioOpt = storage.NewMinIOOptionsViaService(kubeClient, cfg, opt.MinIOName, opt.MinIONamespace, opt.MinIOPort, opt.MinIOAccessKey, opt.MinIOSecretAccessKey, opt.Dev)
 	}
 
-	d := web.NewDashboard(opt.Addr, dao.NewOptions(conn), opt.ApiHost, opt.MinIOBucket, minioOpt)
+	d := web.NewDashboard(opt.Addr, dao.NewOptions(conn), opt.ApiHost, opt.InternalApi, opt.MinIOBucket, minioOpt)
 
 	go func() {
 		<-ctx.Done()
@@ -89,6 +89,7 @@ type Options struct {
 	Addr                 string
 	DSN                  string
 	ApiHost              string
+	InternalApi          string
 	Dev                  bool
 	MinIOEndpoint        string
 	MinIOName            string
@@ -112,6 +113,7 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.StringVar(&opt.Addr, "addr", "", "Listen address")
 	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
 	fs.StringVar(&opt.ApiHost, "api", "", "API Host which user's browser can access")
+	fs.StringVar(&opt.InternalApi, "internal-api", "", "The URL for internal api")
 	fs.BoolVar(&opt.Dev, "dev", false, "development mode")
 	fs.StringVar(&opt.MinIOEndpoint, "minio-endpoint", "", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
 	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")

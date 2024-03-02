@@ -2,9 +2,11 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -26,16 +28,18 @@ const (
 type Dashboard struct {
 	*http.Server
 
-	dao     dao.Options
-	apiHost string
-	minio   *storage.MinIO
+	dao         dao.Options
+	apiHost     string
+	internalAPI string
+	minio       *storage.MinIO
 }
 
-func NewDashboard(addr string, daoOpt dao.Options, apiHost string, bucket string, minioOpt storage.MinIOOptions) *Dashboard {
+func NewDashboard(addr string, daoOpt dao.Options, apiHost, internalAPI string, bucket string, minioOpt storage.MinIOOptions) *Dashboard {
 	d := &Dashboard{
-		dao:     daoOpt,
-		apiHost: apiHost,
-		minio:   storage.NewMinIOStorage(bucket, minioOpt),
+		dao:         daoOpt,
+		apiHost:     apiHost,
+		internalAPI: internalAPI,
+		minio:       storage.NewMinIOStorage(bucket, minioOpt),
 	}
 
 	mux := http.NewServeMux()
@@ -48,6 +52,7 @@ func NewDashboard(addr string, daoOpt dao.Options, apiHost string, bucket string
 	mux.HandleFunc("/new_repo", d.handleNewRepository)
 	mux.HandleFunc("/delete_repo", d.handleDeleteRepository)
 	mux.HandleFunc("/add_trusted_user", d.handleAddTrustedUser)
+	mux.HandleFunc("/server_info", d.handleServerInfo)
 	mux.HandleFunc("/", d.handleIndex)
 	s := &http.Server{
 		Addr:    addr,
@@ -128,6 +133,40 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		RepoAndTasks: repoAndTasks,
 		TrustedUsers: trustedUsers,
 		APIHost:      template.JSStr(d.apiHost),
+	})
+	if err != nil {
+		logger.Log.Warn("Failed to render template", zap.Error(err))
+	}
+}
+
+func (d *Dashboard) handleServerInfo(w http.ResponseWriter, req *http.Request) {
+	readinessReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fmt.Sprintf("%s/readiness", d.internalAPI), nil)
+	if err != nil {
+		logger.Log.Error("Failed to create the request", logger.Error(err))
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	res, err := http.DefaultClient.Do(readinessReq)
+	if err != nil {
+		logger.Log.Error("Failed to request", logger.Error(err))
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	readinessAPI := &struct {
+		Versions []string `json:"versions"`
+	}{}
+	if err := json.NewDecoder(res.Body).Decode(readinessAPI); err != nil {
+		logger.Log.Error("Failed to parse readiness response", logger.Error(err))
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	versions := readinessAPI.Versions
+	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
+
+	err = ServerInfoTemplate.Execute(w, struct {
+		Versions []string
+	}{
+		Versions: readinessAPI.Versions,
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))

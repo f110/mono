@@ -10,9 +10,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v49/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
@@ -23,6 +26,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/storage"
 )
 
 const (
@@ -39,16 +43,20 @@ type Builder interface {
 type Api struct {
 	*http.Server
 
-	builder      Builder
-	dao          dao.Options
-	githubClient *github.Client
+	builder           Builder
+	dao               dao.Options
+	githubClient      *github.Client
+	stClient          *storage.MinIO
+	bazelMirrorPrefix string
 }
 
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client) (*Api, error) {
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, stClient *storage.MinIO, bazelMirrorPrefix string) (*Api, error) {
 	api := &Api{
-		builder:      builder,
-		dao:          dao,
-		githubClient: ghClient,
+		builder:           builder,
+		dao:               dao,
+		githubClient:      ghClient,
+		stClient:          stClient,
+		bazelMirrorPrefix: bazelMirrorPrefix,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/favicon.ico", http.NotFoundHandler())
@@ -609,9 +617,42 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 
 }
 
+type ReadinessResponse struct {
+	Versions []string `json:"versions"`
+}
+
 func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 	p := probe.NewProbe(a.dao.RawConnection)
 	if !p.Ready(req.Context(), database.SchemaHash) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	objs, err := a.stClient.List(req.Context(), a.bazelMirrorPrefix)
+	if err != nil {
+		logger.Log.Error("Failed to get the list of the file from the object storage", zap.Error(err), zap.String("prefix", a.bazelMirrorPrefix))
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	var versions semver.Collection
+	for _, v := range objs {
+		name := filepath.Base(v.Name)
+		if !strings.HasPrefix(name, "bazel-") {
+			continue
+		}
+		ver := name[6:]
+		ver = ver[:strings.Index(ver, "-")]
+		if v, err := semver.NewVersion(ver); err != nil {
+			continue
+		} else {
+			versions = append(versions, v)
+		}
+	}
+	versions = enumerable.Uniq(versions, func(t *semver.Version) string { return t.String() })
+	sort.Sort(versions)
+
+	res := &ReadinessResponse{Versions: enumerable.Map(versions, func(t *semver.Version) string { return t.String() })}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		logger.Log.Error("Failed to encode to json", zap.Error(err))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

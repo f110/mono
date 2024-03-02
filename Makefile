@@ -23,15 +23,20 @@ MINIO_NAME              = object-storage
 MINIO_NAMESPACE         = default
 MINIO_PORT              = 9000
 MINIO_BUCKET            = logs
-MINIO_ACCESS_KEY        = MsdgKFqgT7Bw
-MINIO_SECRET_ACCESS_KEY = P2ThRFth7w1p6gDROcE3ya3gXoIEevuA
+MINIO_ACCESS_KEY        = minioadmin
+MINIO_SECRET_ACCESS_KEY = minioadmin
+
+APP_ID          = 51841
+INSTALLATION_ID = 6365451
+PRIVATEKEY_FILE = $(CURDIR)/github-privatekey.pem
 
 DSN = $(DATABASE_USER):$(DATABASE_PASSWORD)@tcp($(DATABASE_HOST):$(DATABASE_PORT))/$(DATABASE_NAME)
 GITHUB = --github-app-id $(APP_ID) --github-installation-id $(INSTALLATION_ID) --github-private-key-file $(PRIVATEKEY_FILE)
 MINIO = --minio-endpoint http://127.0.0.1:9000 --minio-port $(MINIO_PORT) --minio-bucket $(MINIO_BUCKET) --minio-access-key $(MINIO_ACCESS_KEY) --minio-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
+BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirror-bucket build --bazel-mirror-access-key $(MINIO_ACCESS_KEY) --bazel-mirror-secret-access-key $(MINIO_SECRET_ACCESS_KEY) --bazel-mirror-prefix releases.bazel.build/
 
 DASHBOARDFLAGS = --addr 127.0.0.1:8080 --dsn "$(DSN)" --log-level debug --api http://127.0.0.1:8081 --dev $(MINIO)
-APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO)
+APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO)
 
 .PHONY: run-dashboard
 run-dashboard:

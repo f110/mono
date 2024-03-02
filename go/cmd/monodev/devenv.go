@@ -48,6 +48,7 @@ func build(cmd *cobra.Command) {
 			m.AddComponent(buildDatabase)
 			m.AddComponent(buildMySQLUSER)
 			m.AddComponent(minio)
+			m.AddComponent(buildBucket)
 
 			return m.Run(cmd.Context())
 		},

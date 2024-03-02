@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	IndexTemplate  *template.Template
-	DetailTemplate *template.Template
+	IndexTemplate      *template.Template
+	DetailTemplate     *template.Template
+	ServerInfoTemplate *template.Template
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 
 	IndexTemplate = template.Must(template.New("").Funcs(funcs).Parse(indexTemplate))
 	DetailTemplate = template.Must(template.New("").Funcs(funcs).Parse(detailTemplate))
+	ServerInfoTemplate = template.Must(template.New("").Funcs(funcs).Parse(infoTemplate))
 }
 
 const indexTemplate = `<html>
@@ -38,7 +40,7 @@ const indexTemplate = `<html>
 
 <div class="ui menu inverted huge">
   <div class="header item">
-    Dashboard
+    <a href="/">Dashboard</a>
   </div>
   <div class="ui item dropdown simple">
     Repositories<i class="dropdown icon"></i>
@@ -77,6 +79,10 @@ const indexTemplate = `<html>
       <a class="item" onclick="startRunTask({{ .Id }}, '{{ .Name }}')">{{ .Name }}</a>
       {{- end }}
     </div>
+  </div>
+
+  <div class="item right">
+    <a href="/server_info"><i class="info icon"></i>Info</a>
   </div>
 </div>
 
@@ -330,10 +336,14 @@ const detailTemplate = `<html>
 
 <div class="ui menu inverted huge">
   <div class="header item">
-    Dashboard
+    <a href="/">Dashboard</a>
   </div>
   <div class="ui item simple">
     {{ .Task.Repository.Name }}
+  </div>
+
+  <div class="item right">
+    <a href="/server_ionfo"><i class="info icon"></i>Info</a>
   </div>
 </div>
 
@@ -414,6 +424,57 @@ function redoTask(id) {
   });
 }
 </script>
+</body>
+</html>
+`
+
+const infoTemplate = `<html>
+<head>
+  <title>Server information</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+  <style>
+    i.amber.icon {color: #FFA000;}
+  </style>
+</head>
+<body>
+
+<div class="ui menu inverted huge">
+  <div class="header item">
+    <a href="/">Dashboard</a>
+  </div>
+
+  <div class="item right">
+    <a href="/server_info"><i class="info icon"></i>Info</a>
+  </div>
+</div>
+
+<div class="ui container">
+  <table class="ui table definition">
+    <tbody>
+    <tr>
+      <td>Supported Bazel version</td>
+      <td>
+        <div class="ui bulleted list" style="column-count: 3">
+          {{- range .Versions }}
+          <div class="item">{{ . }}</div>
+          {{- end }}
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Builder</td>
+      <td>Running</td>
+    </tr>
+    <tr>
+      <td>Schema version</td>
+      <td></td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
 </body>
 </html>
 `

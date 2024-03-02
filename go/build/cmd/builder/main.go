@@ -64,21 +64,29 @@ type Options struct {
 	VaultK8sAuthPath        string
 	VaultK8sAuthRole        string
 
-	Addr                string
-	DashboardUrl        string // URL of dashboard that can access people via browser
-	BuilderApiUrl       string // URL of the api of builder.
-	RemoteCache         string // If not empty, This value will passed to Bazel through --remote_cache argument.
-	RemoteAssetApi      bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
-	BazelImage          string
-	UseBazelisk         bool
-	DefaultBazelVersion string
-	BazelMirrorURL      string
-	SidecarImage        string
-	CLIImage            string
-	PullAlways          bool
-	TaskCPULimit        string
-	TaskMemoryLimit     string
-	WithGC              bool
+	Addr                       string
+	DashboardUrl               string // URL of dashboard that can access people via browser
+	BuilderApiUrl              string // URL of the api of builder.
+	RemoteCache                string // If not empty, This value will passed to Bazel through --remote_cache argument.
+	RemoteAssetApi             bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
+	BazelImage                 string
+	UseBazelisk                bool
+	DefaultBazelVersion        string
+	BazelMirrorURL             string
+	BazelMirrorEndpoint        string
+	BazelMirrorName            string
+	BazelMirrorNamespace       string
+	BazelMirrorPort            int
+	BazelMirrorBucket          string
+	BazelMirrorPrefix          string
+	BazelMirrorAccessKey       string
+	BazelMirrorSecretAccessKey string
+	SidecarImage               string
+	CLIImage                   string
+	PullAlways                 bool
+	TaskCPULimit               string
+	TaskMemoryLimit            string
+	WithGC                     bool
 
 	Dev   bool
 	Debug bool
@@ -107,6 +115,7 @@ type process struct {
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory
 	dao                       dao.Options
 	minioOpt                  storage.MinIOOptions
+	bazelMirrorMinIOOpt       storage.MinIOOptions
 	vaultClient               *vault.Client
 
 	bazelBuilder *coordinator.BazelBuilder
@@ -219,6 +228,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *process) checkMigrate(ctx context.Context) (fsm.State, error) {
+	logger.Log.Debug("Check migration")
 	pr := probe.NewProbe(p.dao.RawConnection)
 	ticker := time.NewTicker(1 * time.Second)
 	timeout := time.After(5 * time.Minute)
@@ -253,6 +263,23 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		)
 	}
 	p.minioOpt = minioOpt
+
+	var bazelMirrorMinIOOpt storage.MinIOOptions
+	if p.opt.BazelMirrorEndpoint != "" {
+		bazelMirrorMinIOOpt = storage.NewMinIOOptionsViaEndpoint(p.opt.BazelMirrorEndpoint, "", p.opt.BazelMirrorAccessKey, p.opt.BazelMirrorSecretAccessKey)
+	} else {
+		bazelMirrorMinIOOpt = storage.NewMinIOOptionsViaService(
+			p.kubeClient,
+			p.restCfg,
+			p.opt.BazelMirrorName,
+			p.opt.BazelMirrorNamespace,
+			p.opt.BazelMirrorPort,
+			p.opt.BazelMirrorAccessKey,
+			p.opt.BazelMirrorSecretAccessKey,
+			p.opt.Dev,
+		)
+	}
+	p.bazelMirrorMinIOOpt = bazelMirrorMinIOOpt
 
 	var kubernetesOpt coordinator.KubernetesOptions
 	if p.coreSharedInformerFactory != nil && p.kubeClient != nil {
@@ -301,7 +328,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewMinIOStorage(p.opt.BazelMirrorBucket, p.bazelMirrorMinIOOpt), p.opt.BazelMirrorPrefix)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -487,6 +514,14 @@ func AddCommand(rootCmd *cobra.Command) {
 	fs.BoolVar(&opt.UseBazelisk, "use-bazelisk", false, "Use bazelisk")
 	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
 	fs.StringVar(&opt.BazelMirrorURL, "bazel-mirror-url", "", "The URL of bazel")
+	fs.StringVar(&opt.BazelMirrorEndpoint, "bazel-mirror-endpoint", "", "The endpoint of MinIO for bazel mirror. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
+	fs.StringVar(&opt.BazelMirrorName, "bazel-mirror-name", "", "The name of MinIO for bazel mirror")
+	fs.StringVar(&opt.BazelMirrorNamespace, "bazel-mirror-namespace", "", "The namespace of MinIO for bazel mirror")
+	fs.IntVar(&opt.BazelMirrorPort, "bazel-mirror-port", 8080, "Port number of MinIO for bazel mirror")
+	fs.StringVar(&opt.BazelMirrorBucket, "bazel-mirror-bucket", "", "The bucket name that contains bazel's binaries")
+	fs.StringVar(&opt.BazelMirrorPrefix, "bazel-mirror-prefix", "", "The prefix of bazel's artifacts")
+	fs.StringVar(&opt.BazelMirrorAccessKey, "bazel-mirror-access-key", "", "The access key for bazel mirror")
+	fs.StringVar(&opt.BazelMirrorSecretAccessKey, "bazel-mirror-secret-access-key", "", "The secret access key for bazel mirror")
 	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
 	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
 	fs.BoolVar(&opt.PullAlways, "pull-always", false, "Pull always")

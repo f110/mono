@@ -183,6 +183,12 @@ var buildMySQLUSER = &mysqlUser{
 	Database: buildDatabase,
 }
 
+var buildBucket = &minioBucket{
+	Name:     "build",
+	Bucket:   "build",
+	Instance: minio,
+}
+
 type simpleCommandComponent struct {
 	Name               string
 	Type               componentType

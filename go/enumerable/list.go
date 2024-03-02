@@ -46,3 +46,11 @@ func Uniq[T, K comparable](ary []T, f func(T) K) []T {
 	}
 	return n
 }
+
+func Map[T, K any](ary []T, f func(T) K) []K {
+	n := make([]K, len(ary))
+	for i := range ary {
+		n[i] = f(ary[i])
+	}
+	return n
+}

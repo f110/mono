@@ -11,6 +11,8 @@ go_library(
         "//go/build/database/dao",
         "//go/enumerable",
         "//go/logger",
+        "//go/storage",
+        "//vendor/github.com/Masterminds/semver/v3:semver",
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",
         "//vendor/go.f110.dev/xerrors",
