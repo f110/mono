@@ -40,6 +40,7 @@ import (
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/varptr"
 	"go.f110.dev/mono/go/vault"
 )
 
@@ -336,6 +337,8 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 				return tasks, nil
 			}
 
+			task.Success = false
+			task.FinishedAt = varptr.Ptr(time.Now())
 			return nil, xerrors.WithStack(err)
 		}
 
@@ -573,8 +576,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 			}
 		}
 	}
-	now := time.Now()
-	task.StartAt = &now
+	task.StartAt = varptr.Ptr(time.Now())
 
 	var buf bytes.Buffer
 	for _, v := range builtObjects {
