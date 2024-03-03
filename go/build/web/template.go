@@ -409,6 +409,8 @@ const detailTemplate = `<html>
 </div>
 
 <script>
+const apiHost = {{ .APIHost }};
+
 function redoTask(id) {
   var params = new URLSearchParams();
   params.append("task_id", id);

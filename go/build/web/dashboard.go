@@ -203,14 +203,16 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 		revUrl = task.Repository.Url + "/commit/" + task.Revision
 	}
 	err = DetailTemplate.Execute(w, struct {
-		Task *Task
-		Job  *config.Job
+		Task    *Task
+		Job     *config.Job
+		APIHost template.JSStr
 	}{
 		Task: &Task{
 			Task:        task,
 			RevisionUrl: revUrl,
 		},
-		Job: jobConf,
+		Job:     jobConf,
+		APIHost: template.JSStr(d.apiHost),
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))
