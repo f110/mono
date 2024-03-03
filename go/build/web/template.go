@@ -345,7 +345,7 @@ const detailTemplate = `<html>
   </div>
 
   <div class="item right">
-    <a href="/server_ionfo"><i class="info icon"></i>Info</a>
+    <a href="/server_info"><i class="info icon"></i>Info</a>
   </div>
 </div>
 
