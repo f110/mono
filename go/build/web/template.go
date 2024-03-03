@@ -330,6 +330,8 @@ const detailTemplate = `<html>
     i.amber.icon {color: #FFA000;}
     .ui.amber.table {border-top: 0.2em solid #FFA000;}
     .ui.amber.button {background-color: #FFA000; color: #FFFFFF;}
+    .test-name {font-family: monospace}
+    .ui.list > .item > i.icon {margin-right: 5px}
   </style>
 </head>
 <body>
@@ -371,6 +373,24 @@ const detailTemplate = `<html>
       <td>{{ if .Task.StartAt }}{{ .Task.StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
     </tr>
     <tr>
+      <td>Test report</td>
+      <td>
+        {{- if .TestReport }}
+        <div class="ui accordion">
+          <div class="title"><i class="dropdown icon"></i>{{ len .TestReport }} tests executed</div>
+          <div class="content">
+            <div class="ui list">
+              {{- range .TestReport }}
+              <div class="item test-name"><i class="{{ if eq .Status 0 }}check circle green{{ else }}{{ if eq .Status 1 }}exclamation circle yellow{{ else }}exclamation triangle red{{ end }}{{ end }} icon"></i>{{ .Label }}</div>
+              {{- end }}
+            </div>
+        </div>
+        {{- else }}
+        There is no executed test
+        {{- end }}
+      </td>
+    </tr>
+    <tr>
       <td>Duration</td>
       <td>{{ Duration .Task.StartAt .Task.FinishedAt }}</td>
     </tr>
@@ -409,6 +429,10 @@ const detailTemplate = `<html>
 </div>
 
 <script>
+$('.ui.accordion')
+  .accordion()
+;
+
 const apiHost = {{ .APIHost }};
 
 function redoTask(id) {

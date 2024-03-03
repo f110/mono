@@ -6,6 +6,8 @@
   <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
   <style>
     .ui.amber.button {background-color: #FFA000; color: #FFFFFF;}
+    .test-name {font-family: monospace}
+    .ui.list > .item > i.icon {margin-right: 5px}
   </style>
 </head>
 <body>
@@ -47,6 +49,58 @@
       <td>2020/06/01 07:00:00</td>
     </tr>
     <tr>
+      <td>Test report</td>
+      <td>
+        <div class="ui accordion">
+          <div class="title"><i class="dropdown icon"></i>41 tests executed</div>
+          <div class="content">
+            <div class="ui list">
+              <div class="item test-name"><i class="check circle icon green"></i>//build/private/util:semver_tests_test_0</div>
+              <div class="item test-name"><i class="exclamation circle icon red"></i>//build/private/util:semver_tests_test_1</div>
+              <div class="item test-name"><i class="exclamation triangle icon yellow"></i>//build/private/util:semver_tests_test_2</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//build/private/util:semver_tests_test_3</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//build/private/util:semver_tests_test_4</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//build/private/util:semver_tests_test_5</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//cmd/mirror-releases:mirror-releases_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//cmd/simple-http-server:simple-http-server_test </div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/build/api:api_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/build/config:config_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/build/coordinator:coordinator_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cli:cli_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/dns-config-generator:dns-config-generator_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/git-data-service:git-data-service_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/jj-pr-submit:jj-pr-submit_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/monodev:monodev_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/pv-migrator:pv-migrator_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/repo-doc:repo-doc_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/cmd/unifibackup:unifibackup_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/codesearch:codesearch_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/collections/set:set_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/docutil:docutil_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/enumerable:enumerable_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/file:file_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/fsm:fsm_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/git:git_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/githubutil:githubutil_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/gomodule:gomodule_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/hash/crc16:crc16_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/k8s/controllers:controllers_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/k8s/controllers/controllertest:controllertest_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/k8s/volume:volume_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/logger:logger_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/macports:macports_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/notion:notion_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/opvault:opvault_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/queue:queue_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/regexp/regexputil:regexputil_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/storage:storage_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/ucl:ucl_test</div>
+              <div class="item test-name"><i class="check circle icon green"></i>//go/vault:vault_test</div>
+            </div>
+          </div>
+      </td>
+    </tr>
+    <tr>
       <td>Duration</td>
       <td>21m30s</td>
     </tr>
@@ -85,6 +139,9 @@
 </div>
 
 <script>
+$('.ui.accordion')
+  .accordion()
+;
 </script>
 </body>
 </html>

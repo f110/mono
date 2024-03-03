@@ -191,6 +191,12 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	reports, err := d.dao.TestReport.ListByTaskId(req.Context(), task.Id)
+	if err != nil {
+		logger.Log.Info("failed to get report", zap.Int32("task_id", task.Id))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	jobConf := &config.Job{}
 	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConf); err != nil {
@@ -203,16 +209,18 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 		revUrl = task.Repository.Url + "/commit/" + task.Revision
 	}
 	err = DetailTemplate.Execute(w, struct {
-		Task    *Task
-		Job     *config.Job
-		APIHost template.JSStr
+		Task       *Task
+		Job        *config.Job
+		TestReport []*database.TestReport
+		APIHost    template.JSStr
 	}{
 		Task: &Task{
 			Task:        task,
 			RevisionUrl: revUrl,
 		},
-		Job:     jobConf,
-		APIHost: template.JSStr(d.apiHost),
+		Job:        jobConf,
+		TestReport: reports,
+		APIHost:    template.JSStr(d.apiHost),
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", zap.Error(err))

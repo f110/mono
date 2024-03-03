@@ -119,18 +119,30 @@ message PermitPullRequest {
 }
 
 message TestReport {
-  int32            id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  SourceRepository repository = 2;
-  string           label      = 3;
-  //  TestStatus                 status     = 4;
-  int64                      duration = 5;
-  .google.protobuf.Timestamp start_at = 6;
+  int32                      id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository           repository = 2;
+  Task                       task       = 3;
+  string                     label      = 4;
+  TestStatus                 status     = 5;
+  int64                      duration   = 6;
+  .google.protobuf.Timestamp start_at   = 7;
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
     indexes: {
       name: "idx_label"
       columns: "label"
+    }
+    indexes: {
+      name: "idx_task_id"
+      columns: "task"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTaskId"
+      query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"
     }
   };
 }

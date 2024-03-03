@@ -279,6 +279,16 @@ func (d *TestReport) RegisterSelect(id int32, value *database.TestReport) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...dao.ListOption) ([]*database.TestReport, error) {
+	v, err := d.Call("ListByTaskId", map[string]interface{}{"taskId": taskId})
+	return v.([]*database.TestReport), err
+
+}
+
+func (d *TestReport) RegisterListByTaskId(taskId int32, value []*database.TestReport, err error) {
+	d.Register("ListByTaskId", map[string]interface{}{"taskId": taskId}, value, err)
+}
+
 func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport, opt ...dao.ExecOption) (*database.TestReport, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"testReport": testReport})
 	return testReport, nil

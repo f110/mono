@@ -66,10 +66,13 @@ DROP TABLE IF EXISTS `test_report`;
 CREATE TABLE `test_report` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,
 	`repository_id` INTEGER NOT NULL,
+	`task_id` INTEGER NOT NULL,
 	`label` VARCHAR(255) NOT NULL,
+	`status` INTEGER UNSIGNED NOT NULL,
 	`duration` BIGINT NOT NULL,
 	`start_at` DATETIME NOT NULL,
 	INDEX `idx_label` (`label`),
+	INDEX `idx_task_id` (`task_id`),
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 

@@ -1045,11 +1045,13 @@ type TestReport struct {
 	conn *sql.DB
 
 	sourceRepository *SourceRepository
+	task             *Task
 }
 
 type TestReportInterface interface {
 	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
 	Select(ctx context.Context, id int32) (*database.TestReport, error)
+	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.TestReport, error)
 	Create(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) (*database.TestReport, error)
 	Update(ctx context.Context, testReport *database.TestReport, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
@@ -1061,6 +1063,7 @@ func NewTestReport(conn *sql.DB) *TestReport {
 	return &TestReport{
 		conn:             conn,
 		sourceRepository: NewSourceRepository(conn),
+		task:             NewTask(conn),
 	}
 }
 
@@ -1088,7 +1091,7 @@ func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `test_report` WHERE `id` = ?", id)
 
 	v := &database.TestReport{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.Label, &v.Duration, &v.StartAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.TaskId, &v.Label, &v.Status, &v.Duration, &v.StartAt); err != nil {
 		return nil, err
 	}
 
@@ -1097,9 +1100,67 @@ func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport
 			v.Repository = rel
 		}
 	}
+	{
+		if rel, _ := d.task.Select(ctx, v.TaskId); rel != nil {
+			v.Task = rel
+		}
+	}
 
 	v.ResetMark()
 	return v, nil
+
+}
+
+func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.TestReport, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `task_id`, `label`, `status`, `duration`, `start_at` FROM `test_report` WHERE `task_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		taskId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.TestReport, 0)
+	for rows.Next() {
+		r := &database.TestReport{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.TaskId, &r.Label, &r.Status, &r.Duration, &r.StartAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		for _, v := range res {
+			{
+				if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+					v.Repository = rel
+				}
+			}
+			{
+				if rel, _ := d.task.Select(ctx, v.TaskId); rel != nil {
+					v.Task = rel
+				}
+			}
+
+		}
+	}
+
+	return res, nil
 
 }
 
@@ -1114,8 +1175,8 @@ func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `test_report` (`repository_id`, `label`, `duration`, `start_at`) VALUES (?, ?, ?, ?)",
-		testReport.RepositoryId, testReport.Label, testReport.Duration, testReport.StartAt,
+		"INSERT INTO `test_report` (`repository_id`, `task_id`, `label`, `status`, `duration`, `start_at`) VALUES (?, ?, ?, ?, ?, ?)",
+		testReport.RepositoryId, testReport.TaskId, testReport.Label, testReport.Status, testReport.Duration, testReport.StartAt,
 	)
 	if err != nil {
 		return nil, err

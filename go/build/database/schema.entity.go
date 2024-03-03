@@ -13,10 +13,13 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type Column struct {
-	Name  string
-	Value interface{}
-}
+type TestStatus uint32
+
+const (
+	TestStatusPassed TestStatus = 0
+	TestStatusFlaky  TestStatus = 1
+	TestStatusFailed TestStatus = 2
+)
 
 type SourceRepository struct {
 	Id        int32
@@ -428,12 +431,14 @@ func (e *PermitPullRequest) Copy() *PermitPullRequest {
 type TestReport struct {
 	Id           int32
 	RepositoryId int32
+	TaskId       int32
 	Label        string
-	// TestStatus                 status     = 4;
-	Duration int64
-	StartAt  time.Time
+	Status       TestStatus
+	Duration     int64
+	StartAt      time.Time
 
 	Repository *SourceRepository
+	Task       *Task
 
 	mu   sync.Mutex
 	mark *TestReport
@@ -451,7 +456,9 @@ func (e *TestReport) IsChanged() bool {
 	defer e.mu.Unlock()
 
 	return e.RepositoryId != e.mark.RepositoryId ||
+		e.TaskId != e.mark.TaskId ||
 		e.Label != e.mark.Label ||
+		e.Status != e.mark.Status ||
 		e.Duration != e.mark.Duration ||
 		!e.StartAt.Equal(e.mark.StartAt)
 }
@@ -464,8 +471,14 @@ func (e *TestReport) ChangedColumn() []ddl.Column {
 	if e.RepositoryId != e.mark.RepositoryId {
 		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
 	}
+	if e.TaskId != e.mark.TaskId {
+		res = append(res, ddl.Column{Name: "task_id", Value: e.TaskId})
+	}
 	if e.Label != e.mark.Label {
 		res = append(res, ddl.Column{Name: "label", Value: e.Label})
+	}
+	if e.Status != e.mark.Status {
+		res = append(res, ddl.Column{Name: "status", Value: e.Status})
 	}
 	if e.Duration != e.mark.Duration {
 		res = append(res, ddl.Column{Name: "duration", Value: e.Duration})
@@ -481,13 +494,18 @@ func (e *TestReport) Copy() *TestReport {
 	n := &TestReport{
 		Id:           e.Id,
 		RepositoryId: e.RepositoryId,
+		TaskId:       e.TaskId,
 		Label:        e.Label,
+		Status:       e.Status,
 		Duration:     e.Duration,
 		StartAt:      e.StartAt,
 	}
 
 	if e.Repository != nil {
 		n.Repository = e.Repository.Copy()
+	}
+	if e.Task != nil {
+		n.Task = e.Task.Copy()
 	}
 
 	return n

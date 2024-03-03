@@ -698,7 +698,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	}
 
 	if len(testReport) > 0 {
-		if err := b.updateTestReport(ctx, testReport, repo); err != nil {
+		if err := b.updateTestReport(ctx, testReport, repo, task); err != nil {
 			logger.Log.Warn("Failed to parse the report json", logger.Error(err))
 		}
 	}
@@ -716,21 +716,27 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	return nil
 }
 
-func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, repo *database.SourceRepository) error {
+func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, repo *database.SourceRepository, task *database.Task) error {
 	var report sidecar.TestReport
 	if err := json.Unmarshal(reportJSON, &report); err != nil {
 		return xerrors.WithStack(err)
 	}
 
 	for _, s := range report.Tests {
-		if s.Status == sidecar.TestStatusFailed {
-			continue
+		status := database.TestStatusFailed
+		switch s.Status {
+		case sidecar.TestStatusPassed:
+			status = database.TestStatusPassed
+		case sidecar.TestStatusFlaky:
+			status = database.TestStatusFlaky
 		}
 
 		_, err := b.dao.TestReport.Create(ctx, &database.TestReport{
 			RepositoryId: repo.Id,
 			Label:        s.Label,
+			TaskId:       task.Id,
 			Duration:     s.Duration,
+			Status:       status,
 			StartAt:      s.StartAt,
 		})
 		if err != nil {
