@@ -33,6 +33,7 @@ const (
 	stackRevsets           = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
 	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
 	lastPickedTemplateFile = ".last_template_file"
+	noSendTag              = "no-send:"
 )
 
 type jujutsuPRSubmitCommand struct {
@@ -130,7 +131,7 @@ func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (c *jujutsuPRSubmitCommand) displayStack(ctx context.Context) (fsm.State, error) {
-	commits, err := c.getStack(ctx)
+	commits, err := c.getStack(ctx, false)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -241,7 +242,7 @@ type stackedCommit []*commit
 
 func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, error) {
 	// Get all commits in current branch
-	stack, err := c.getStack(ctx)
+	stack, err := c.getStack(ctx, true)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -304,7 +305,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 		// Get all commits because the stack has been changed.
 		logger.Log.Debug("Re-fetch commits from jj")
-		stack, err := c.getStack(ctx)
+		stack, err := c.getStack(ctx, true)
 		if err != nil {
 			return fsm.Error(err)
 		}
@@ -335,7 +336,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 }
 
 // getStack returns commits of current stack. The first commit is the newest commit.
-func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, error) {
+func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend bool) (stackedCommit, error) {
 	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ branches ++ "]\\" ++ description ++ "\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
@@ -357,6 +358,9 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context) (stackedCommit, e
 		}
 
 		if len(line) < 3 {
+			continue
+		}
+		if withoutNoSend && strings.HasPrefix(line[3], noSendTag) {
 			continue
 		}
 		cm := &commit{
