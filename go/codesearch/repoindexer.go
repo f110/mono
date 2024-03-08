@@ -61,6 +61,7 @@ type IndexerCommand struct {
 	entryId             cron.EntryID
 	cancel              context.CancelFunc
 	caBundle            []byte
+	natsNotify          *Notify
 
 	mu sync.Mutex
 
@@ -178,6 +179,13 @@ func (r *IndexerCommand) Run() error {
 			return xerrors.WithStack(err)
 		}
 	}
+	if r.enableUpload() && r.NATSURL != "" {
+		n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		r.natsNotify = n
+	}
 
 	if r.RunScheduler {
 		if err := r.scheduler(config.RefreshSchedule); err != nil {
@@ -208,25 +216,21 @@ func (r *IndexerCommand) run() error {
 
 	if !r.WithoutFetch {
 		if err := r.indexer.Sync(ctx); err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
 	}
 	if err := r.indexer.BuildIndex(ctx); err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	if r.enableUpload() {
 		manifest, err := r.uploadIndex(ctx, r.indexer, r.Bucket, r.DisableObjectStorageCleanup)
 		if err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
 
-		if r.NATSURL != "" {
-			n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
-			if err != nil {
-				return xerrors.WithStack(err)
-			}
-			if err := n.Notify(ctx, manifest); err != nil {
-				return xerrors.WithStack(err)
+		if r.natsNotify != nil {
+			if err := r.natsNotify.Notify(ctx, manifest); err != nil {
+				return err
 			}
 		}
 	} else {
@@ -234,7 +238,7 @@ func (r *IndexerCommand) run() error {
 	}
 	if !r.DisableCleanup {
 		if err := r.indexer.Cleanup(ctx); err != nil {
-			return xerrors.WithStack(err)
+			return err
 		}
 	}
 
