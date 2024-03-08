@@ -22,23 +22,29 @@ func NewSourceRepository() *SourceRepository {
 
 func (d *SourceRepository) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	return nil
-
 }
 
 func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.SourceRepository, error) {
 	v, err := d.Call("Select", map[string]interface{}{"id": id})
 	return v.(*database.SourceRepository), err
-
 }
 
 func (d *SourceRepository) RegisterSelect(id int32, value *database.SourceRepository) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*database.SourceRepository, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.SourceRepository), err
+}
+
+func (d *SourceRepository) RegisterSelectMulti(id []int32, value []*database.SourceRepository) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.SourceRepository, error) {
 	v, err := d.Call("ListAll", map[string]interface{}{})
 	return v.([]*database.SourceRepository), err
-
 }
 
 func (d *SourceRepository) RegisterListAll(value []*database.SourceRepository, err error) {
@@ -48,7 +54,6 @@ func (d *SourceRepository) RegisterListAll(value []*database.SourceRepository, e
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...dao.ListOption) ([]*database.SourceRepository, error) {
 	v, err := d.Call("ListByUrl", map[string]interface{}{"url": url})
 	return v.([]*database.SourceRepository), err
-
 }
 
 func (d *SourceRepository) RegisterListByUrl(url string, value []*database.SourceRepository, err error) {
@@ -58,19 +63,16 @@ func (d *SourceRepository) RegisterListByUrl(url string, value []*database.Sourc
 func (d *SourceRepository) Create(ctx context.Context, sourceRepository *database.SourceRepository, opt ...dao.ExecOption) (*database.SourceRepository, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"sourceRepository": sourceRepository})
 	return sourceRepository, nil
-
 }
 
 func (d *SourceRepository) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
 	return nil
-
 }
 
 func (d *SourceRepository) Update(ctx context.Context, sourceRepository *database.SourceRepository, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Update", map[string]interface{}{"sourceRepository": sourceRepository})
 	return nil
-
 }
 
 type Task struct {
@@ -83,23 +85,29 @@ func NewTask() *Task {
 
 func (d *Task) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	return nil
-
 }
 
 func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	v, err := d.Call("Select", map[string]interface{}{"id": id})
 	return v.(*database.Task), err
-
 }
 
 func (d *Task) RegisterSelect(id int32, value *database.Task) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.Task), err
+}
+
+func (d *Task) RegisterSelectMulti(id []int32, value []*database.Task) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
 func (d *Task) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.Task, error) {
 	v, err := d.Call("ListAll", map[string]interface{}{})
 	return v.([]*database.Task), err
-
 }
 
 func (d *Task) RegisterListAll(value []*database.Task, err error) {
@@ -109,7 +117,6 @@ func (d *Task) RegisterListAll(value []*database.Task, err error) {
 func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Task, error) {
 	v, err := d.Call("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
 	return v.([]*database.Task), err
-
 }
 
 func (d *Task) RegisterListByRepositoryId(repositoryId int32, value []*database.Task, err error) {
@@ -119,7 +126,6 @@ func (d *Task) RegisterListByRepositoryId(repositoryId int32, value []*database.
 func (d *Task) ListPending(ctx context.Context, opt ...dao.ListOption) ([]*database.Task, error) {
 	v, err := d.Call("ListPending", map[string]interface{}{})
 	return v.([]*database.Task), err
-
 }
 
 func (d *Task) RegisterListPending(value []*database.Task, err error) {
@@ -129,19 +135,16 @@ func (d *Task) RegisterListPending(value []*database.Task, err error) {
 func (d *Task) Create(ctx context.Context, task *database.Task, opt ...dao.ExecOption) (*database.Task, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"task": task})
 	return task, nil
-
 }
 
 func (d *Task) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
 	return nil
-
 }
 
 func (d *Task) Update(ctx context.Context, task *database.Task, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Update", map[string]interface{}{"task": task})
 	return nil
-
 }
 
 type TrustedUser struct {
@@ -154,23 +157,29 @@ func NewTrustedUser() *TrustedUser {
 
 func (d *TrustedUser) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	return nil
-
 }
 
 func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUser, error) {
 	v, err := d.Call("Select", map[string]interface{}{"id": id})
 	return v.(*database.TrustedUser), err
-
 }
 
 func (d *TrustedUser) RegisterSelect(id int32, value *database.TrustedUser) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *TrustedUser) SelectMulti(ctx context.Context, id ...int32) ([]*database.TrustedUser, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.TrustedUser), err
+}
+
+func (d *TrustedUser) RegisterSelectMulti(id []int32, value []*database.TrustedUser) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
 func (d *TrustedUser) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.TrustedUser, error) {
 	v, err := d.Call("ListAll", map[string]interface{}{})
 	return v.([]*database.TrustedUser), err
-
 }
 
 func (d *TrustedUser) RegisterListAll(value []*database.TrustedUser, err error) {
@@ -180,7 +189,6 @@ func (d *TrustedUser) RegisterListAll(value []*database.TrustedUser, err error) 
 func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ...dao.ListOption) ([]*database.TrustedUser, error) {
 	v, err := d.Call("ListByGithubId", map[string]interface{}{"githubId": githubId})
 	return v.([]*database.TrustedUser), err
-
 }
 
 func (d *TrustedUser) RegisterListByGithubId(githubId int64, value []*database.TrustedUser, err error) {
@@ -190,19 +198,16 @@ func (d *TrustedUser) RegisterListByGithubId(githubId int64, value []*database.T
 func (d *TrustedUser) Create(ctx context.Context, trustedUser *database.TrustedUser, opt ...dao.ExecOption) (*database.TrustedUser, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"trustedUser": trustedUser})
 	return trustedUser, nil
-
 }
 
 func (d *TrustedUser) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
 	return nil
-
 }
 
 func (d *TrustedUser) Update(ctx context.Context, trustedUser *database.TrustedUser, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Update", map[string]interface{}{"trustedUser": trustedUser})
 	return nil
-
 }
 
 type PermitPullRequest struct {
@@ -215,23 +220,29 @@ func NewPermitPullRequest() *PermitPullRequest {
 
 func (d *PermitPullRequest) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	return nil
-
 }
 
 func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.PermitPullRequest, error) {
 	v, err := d.Call("Select", map[string]interface{}{"id": id})
 	return v.(*database.PermitPullRequest), err
-
 }
 
 func (d *PermitPullRequest) RegisterSelect(id int32, value *database.PermitPullRequest) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *PermitPullRequest) SelectMulti(ctx context.Context, id ...int32) ([]*database.PermitPullRequest, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.PermitPullRequest), err
+}
+
+func (d *PermitPullRequest) RegisterSelectMulti(id []int32, value []*database.PermitPullRequest) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
 func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repository string, number int32, opt ...dao.ListOption) ([]*database.PermitPullRequest, error) {
 	v, err := d.Call("ListByRepositoryAndNumber", map[string]interface{}{"repository": repository, "number": number})
 	return v.([]*database.PermitPullRequest), err
-
 }
 
 func (d *PermitPullRequest) RegisterListByRepositoryAndNumber(repository string, number int32, value []*database.PermitPullRequest, err error) {
@@ -241,19 +252,16 @@ func (d *PermitPullRequest) RegisterListByRepositoryAndNumber(repository string,
 func (d *PermitPullRequest) Create(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...dao.ExecOption) (*database.PermitPullRequest, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"permitPullRequest": permitPullRequest})
 	return permitPullRequest, nil
-
 }
 
 func (d *PermitPullRequest) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
 	return nil
-
 }
 
 func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *database.PermitPullRequest, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Update", map[string]interface{}{"permitPullRequest": permitPullRequest})
 	return nil
-
 }
 
 type TestReport struct {
@@ -266,23 +274,29 @@ func NewTestReport() *TestReport {
 
 func (d *TestReport) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	return nil
-
 }
 
 func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport, error) {
 	v, err := d.Call("Select", map[string]interface{}{"id": id})
 	return v.(*database.TestReport), err
-
 }
 
 func (d *TestReport) RegisterSelect(id int32, value *database.TestReport) {
 	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
 }
 
+func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.TestReport, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.TestReport), err
+}
+
+func (d *TestReport) RegisterSelectMulti(id []int32, value []*database.TestReport) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
 func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...dao.ListOption) ([]*database.TestReport, error) {
 	v, err := d.Call("ListByTaskId", map[string]interface{}{"taskId": taskId})
 	return v.([]*database.TestReport), err
-
 }
 
 func (d *TestReport) RegisterListByTaskId(taskId int32, value []*database.TestReport, err error) {
@@ -292,17 +306,14 @@ func (d *TestReport) RegisterListByTaskId(taskId int32, value []*database.TestRe
 func (d *TestReport) Create(ctx context.Context, testReport *database.TestReport, opt ...dao.ExecOption) (*database.TestReport, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"testReport": testReport})
 	return testReport, nil
-
 }
 
 func (d *TestReport) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
 	return nil
-
 }
 
 func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport, opt ...dao.ExecOption) error {
 	_, _ = d.Call("Update", map[string]interface{}{"testReport": testReport})
 	return nil
-
 }
