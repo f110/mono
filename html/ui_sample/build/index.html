@@ -6,6 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
   <style>
     i.amber.icon {color: #FFA000;}
+    .table-container {margin-left: 30px; margin-right: 30px;}
   </style>
 </head>
 <body>
@@ -136,117 +137,118 @@
   </div>
 </div>
 
-<div class="ui container">
-  <h2 class="ui block header">
-    <div class="ui grid">
-      <div class="two column row">
-        <div class="left floated column">mono.git</div>
-      </div>
-    </div>
-  </h2>
+<div class="table-container">
+  <table class="ui selectable striped table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Repository</th>
+        <th>Job</th>
+        <th>Command</th>
+        <th>OK</th>
+        <th>Rev</th>
+        <th>Log</th>
+        <th>Manifest</th>
+        <th>Trigger</th>
+        <th>Node</th>
+        <th>Start at</th>
+        <th>Duration</th>
+        <th>Test report</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>5</td>
+        <td><a href="">ops.git</a></td>
+        <td>dnscontrol</td>
+        <td>run</td>
+        <td><i class="sync amber icon"></i></td>
+        <td><a href="">00c4e93</a></td>
+        <td></td>
+        <td><a href="">yaml</a></td>
+        <td>push</td>
+        <td>whale1</td>
+        <td>2020/05/14 08:00:00</td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><a href="">mono.git</a></td>
+        <td class="buildinfo" data-content="Bazel version: 5.3.0">pkg</td>
+        <td>test</td>
+        <td><i class="green check icon"></i></td>
+        <td><a href="">604e577</a></td>
+        <td><a href="./log.txt">text</a></td>
+        <td><a href="">yaml</a></td>
+        <td>API</td>
+        <td>whale2</td>
+        <td>2020/06/01 07:00:00</td>
+        <td>1m</td>
+        <td>4/4</td>
+        <td><i class="amber redo icon"></i></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><a href="">mono.git</a></td>
+        <td class="buildinfo" data-content="Bazel version: 5.2.1">pkg</td>
+        <td>test</td>
+        <td><i class="red attention icon"></i></td>
+        <td><a href="">dc48cd9</a></td>
+        <td><a href="./log.txt">text</a></td>
+        <td><a href="">yaml</a></td>
+        <td>API</td>
+        <td>whale1</td>
+        <td>2020/05/15 08:00:00</td>
+        <td>1m</td>
+        <td>3/4</td>
+        <td><i class="amber redo icon"></i></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><a href="">mono.git</a></td>
+        <td>pkg</td>
+        <td>test</td>
+        <td><i class="green check icon"></i></td>
+        <td><a href="">00c4e93</a></td>
+        <td><a href="./log.txt">text</a></td>
+        <td><a href="">yaml</a></td>
+        <td>API</td>
+        <td>whale3</td>
+        <td>2020/05/14 08:00:00</td>
+        <td>1m</td>
+        <td>4/4</td>
+        <td><i class="amber redo icon"></i></td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td><a href="">ops.git</a></td>
+        <td>dnscontrol</td>
+        <td>run</td>
+        <td><i class="red attention icon"></i></td>
+        <td><a href="">00c4e93</a></td>
+        <td><a href="./log.txt">text</a></td>
+        <td><a href="">yaml</a></td>
+        <td>push</td>
+        <td>whale1</td>
+        <td>2020/05/14 08:00:00</td>
+        <td>10m</td>
+        <td></td>
+        <td><i class="amber redo icon"></i></td>
+      </tr>
+    </tbody>
+  </table>
 
-  <div class="ui container">
-    <table class="ui selectable striped table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Job</th>
-          <th>OK</th>
-          <th>Log</th>
-          <th>Rev</th>
-          <th>Trigger</th>
-          <th>Start at</th>
-          <th>Duration</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>3</td>
-          <td class="buildinfo" data-content="Bazel version: 5.3.0">pkg</td>
-          <td><i class="green check icon"></i></td>
-          <td><a href="./log.txt">text</a></td>
-          <td><a href="">604e577</a></td>
-          <td>API</td>
-          <td>2020/06/01 07:00:00</td>
-          <td>1m</td>
-          <td><i class="amber redo icon"></i></td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td class="buildinfo" data-content="Bazel version: 5.2.1">pkg</td>
-          <td><i class="red attention icon"></i></td>
-          <td><a href="./log.txt">text</a></td>
-          <td><a href="">dc48cd9</a></td>
-          <td>API</td>
-          <td>2020/05/15 08:00:00</td>
-          <td>1m</td>
-          <td><i class="amber redo icon"></i></td>
-        </tr>
-        <tr>
-          <td>1</td>
-          <td>pkg</td>
-          <td><i class="green check icon"></i></td>
-          <td><a href="./log.txt">text</a></td>
-          <td><a href="">00c4e93</a></td>
-          <td>API</td>
-          <td>2020/05/14 08:00:00</td>
-          <td>1m</td>
-          <td><i class="amber redo icon"></i></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h3 class="ui block header">
-      <div class="ui grid">
-        <div class="two column row">
-          <div class="left floated column">ops.git</div>
-        </div>
-      </div>
-    </h3>
-
-    <div class="ui container">
-      <table class="ui selectable striped table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Job</th>
-            <th>OK</th>
-            <th>Log</th>
-            <th>Rev</th>
-            <th>Trigger</th>
-            <th>Start at</th>
-            <th>Duration</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>4</td>
-          <td>dnscontrol</td>
-          <td><i class="sync amber icon"></i></td>
-          <td></td>
-          <td><a href="">00c4e93</a></td>
-          <td>push</td>
-          <td>2020/05/14 08:00:00</td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td>1</td>
-          <td>dnscontrol</td>
-          <td><i class="red attention icon"></i></td>
-          <td><a href="./log.txt">text</a></td>
-          <td><a href="">00c4e93</a></td>
-          <td>push</td>
-          <td>2020/05/14 08:00:00</td>
-          <td>10m</td>
-          <td><i class="amber redo icon"></i></td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <button class="ui labeled icon button">
+    <i class="left arrow icon"></i>
+    Newer
+  </button>
+  <button class="ui right labeled icon button">
+    <i class="right arrow icon"></i>
+    Older
+  </button>
 </div>
 
 <script>
