@@ -72,11 +72,6 @@ type Task struct {
 	RevisionUrl string
 }
 
-type RepositoryAndTasks struct {
-	Repo  *database.SourceRepository
-	Tasks []*Task
-}
-
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 	repoList, err := d.dao.Repository.ListAll(req.Context())
 	if err != nil {
@@ -94,44 +89,27 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	repoTaskMap := make(map[int32]*RepositoryAndTasks)
-	for _, v := range repoList {
-		repoTaskMap[v.Id] = &RepositoryAndTasks{
-			Repo:  v,
-			Tasks: make([]*Task, 0),
-		}
-	}
+	taskList := make([]*Task, 0, len(tasks))
 	for _, v := range tasks {
-		if _, ok := repoTaskMap[v.RepositoryId]; !ok {
-			continue
-		}
-
 		revUrl := ""
 		if strings.Contains(v.Repository.Url, "https://github.com") {
 			revUrl = v.Repository.Url + "/commit/" + v.Revision
 		}
-		repoTaskMap[v.RepositoryId].Tasks = append(repoTaskMap[v.RepositoryId].Tasks, &Task{
+		taskList = append(taskList, &Task{
 			Task:        v,
 			RevisionUrl: revUrl,
 		})
 	}
 
-	var repoAndTasks []*RepositoryAndTasks
-	for _, repo := range repoList {
-		repoAndTasks = append(repoAndTasks, &RepositoryAndTasks{
-			Repo:  repo,
-			Tasks: repoTaskMap[repo.Id].Tasks,
-		})
-	}
 	err = IndexTemplate.Execute(w, struct {
 		Repositories []*database.SourceRepository
-		RepoAndTasks []*RepositoryAndTasks
 		TrustedUsers []*database.TrustedUser
+		Tasks        []*Task
 		APIHost      template.JSStr
 	}{
 		Repositories: repoList,
-		RepoAndTasks: repoAndTasks,
 		TrustedUsers: trustedUsers,
+		Tasks:        taskList,
 		APIHost:      template.JSStr(d.apiHost),
 	})
 	if err != nil {

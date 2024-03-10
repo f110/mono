@@ -125,7 +125,11 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 
 func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*database.SourceRepository, error) {
 	inCause := strings.Repeat("?, ", len(id))
-	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `source_repository` WHERE `id` IN (%s)", inCause[:len(inCause)-2]))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `source_repository` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +140,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
+		res = append(res, r)
 	}
 
 	return res, nil
@@ -380,7 +385,11 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 
 func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, error) {
 	inCause := strings.Repeat("?, ", len(id))
-	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `task` WHERE `id` IN (%s)", inCause[:len(inCause)-2]))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `task` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -391,6 +400,7 @@ func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, 
 		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
+		res = append(res, r)
 	}
 
 	if len(res) > 0 {
@@ -725,7 +735,11 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 
 func (d *TrustedUser) SelectMulti(ctx context.Context, id ...int32) ([]*database.TrustedUser, error) {
 	inCause := strings.Repeat("?, ", len(id))
-	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `trusted_user` WHERE `id` IN (%s)", inCause[:len(inCause)-2]))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `trusted_user` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -736,6 +750,7 @@ func (d *TrustedUser) SelectMulti(ctx context.Context, id ...int32) ([]*database
 		if err := rows.Scan(&r.Id, &r.GithubId, &r.Username, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
+		res = append(res, r)
 	}
 
 	return res, nil
@@ -969,7 +984,11 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 
 func (d *PermitPullRequest) SelectMulti(ctx context.Context, id ...int32) ([]*database.PermitPullRequest, error) {
 	inCause := strings.Repeat("?, ", len(id))
-	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `permit_pull_request` WHERE `id` IN (%s)", inCause[:len(inCause)-2]))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `permit_pull_request` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -980,6 +999,7 @@ func (d *PermitPullRequest) SelectMulti(ctx context.Context, id ...int32) ([]*da
 		if err := rows.Scan(&r.Id, &r.Repository, &r.Number, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
+		res = append(res, r)
 	}
 
 	return res, nil
@@ -1194,7 +1214,11 @@ func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport
 
 func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.TestReport, error) {
 	inCause := strings.Repeat("?, ", len(id))
-	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `test_report` WHERE `id` IN (%s)", inCause[:len(inCause)-2]))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `test_report` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1205,6 +1229,7 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.TaskId, &r.Label, &r.Status, &r.Duration, &r.StartAt); err != nil {
 			return nil, err
 		}
+		res = append(res, r)
 	}
 
 	if len(res) > 0 {

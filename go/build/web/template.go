@@ -34,6 +34,7 @@ const indexTemplate = `<html>
   <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
   <style>
     i.amber.icon {color: #FFA000;}
+    .table-container {margin-left: 30px; margin-right: 30px;}
   </style>
 </head>
 <body>
@@ -172,49 +173,47 @@ const indexTemplate = `<html>
 </div>
 <!-- end of modal -->
 
-<div class="ui container">
-  {{- range .RepoAndTasks }}
-  <h2 class="ui block header">
-    <div class="ui grid">
-      <div class="two column row">
-        <div class="left floated column">{{ .Repo.Name }}</div>
-      </div>
-    </div>
-  </h2>
-
-  <div class="ui container">
-    <table class="ui selectable striped table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Job</th>
-          <th>OK</th>
-          <th>Log</th>
-          <th>Rev</th>
-          <th>Trigger</th>
-          <th>Start at</th>
-          <th>Duration</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-		{{- range .Tasks }}
-        <tr>
-          <td><a href="/task/{{ .Id }}">{{ .Id }}</a></td>
-          <td class="buildinfo" data-content="Bazel version: {{ .BazelVersion }}">{{ .JobName }}</td>
-          <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
-          <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
-          <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
-          <td>{{ .Via }}</td>
-          <td>{{ if .StartAt }}{{ .StartAt.Format "2006/01/02 15:04:06" }}{{ end }}</td>
-          <td>{{ Duration .StartAt .FinishedAt }}</td>
-          <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
-        </tr>
-        {{- end }}
-      </tbody>
-    </table>
-    {{- end }}
-  </div>
+<div class="table-container">
+  <table class="ui selectable striped table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Repository</th>
+        <th>Job</th>
+        <th>Command</th>
+        <th>OK</th>
+        <th>Rev</th>
+        <th>Log</th>
+        <th>Manifest</th>
+        <th>Trigger</th>
+        <th>Node</th>
+        <th>Start at</th>
+        <th>Duration</th>
+        <th>Test report</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{- range .Tasks }}
+      <tr>
+        <td><a href="/task/{{ .Id }}">{{ .Id }}</a></td>
+        <td>{{ .Repository.Name }}</td>
+        <td class="buildinfo" data-content="Bazel version: {{.BazelVersion }}">{{ .JobName }}</td>
+        <td>{{ .Command }}</td>
+        <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>
+        <td><a href="{{ .RevisionUrl }}">{{ if .Revision }}{{ slice .Revision 0 6 }}{{ end }}</a></td>
+        <td>{{ if .LogFile }}<a href="/logs/{{ .LogFile }}">text</a>{{ end }}</td>
+        <td><a href="/manifest/{{ .Id }}">yaml</a></td>
+        <td>{{ .Via }}</td>
+        <td>{{ .Node }}</td>
+        <td>{{ .StartAt }}</td>
+        <td>{{ Duration .StartAt .FinishedAt }}</td>
+        <td></td>
+        <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
+      </tr>
+      {{- end }}
+    </tbody>
+  </table>
 </div>
 
 <script>
