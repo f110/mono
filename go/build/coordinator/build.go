@@ -245,6 +245,9 @@ func NewBazelBuilder(
 	if bazelOpt.PullAlways {
 		b.jobBuilder.PullAlways()
 	}
+	if bazelOpt.BazelMirrorURL != "" {
+		b.jobBuilder.BazelBinaryMirror(bazelOpt.BazelMirrorURL)
+	}
 	if bazelOpt.UseBazelisk {
 		b.jobBuilder.UseBazelisk()
 	}
@@ -273,9 +276,6 @@ func NewBazelBuilder(
 	b.jobBuilder.DefaultLimit(defaultCPULimit, defaultMemoryLimit)
 	if vaultClient != nil {
 		b.jobBuilder.Vault(vaultClient.Addr())
-	}
-	if bazelOpt.BazelMirrorURL != "" {
-		b.jobBuilder.BazelBinaryMirror(bazelOpt.BazelMirrorURL)
 	}
 
 	if !b.IsStub() {
