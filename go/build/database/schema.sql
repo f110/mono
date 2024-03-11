@@ -35,6 +35,8 @@ CREATE TABLE `task` (
 	`node` VARCHAR(255) NOT NULL,
 	`manifest` TEXT NOT NULL,
 	`container` VARCHAR(255) NOT NULL,
+	`executed_tests_count` INTEGER NOT NULL,
+	`succeeded_tests_count` INTEGER NOT NULL,
 	`start_at` DATETIME NULL,
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,

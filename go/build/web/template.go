@@ -208,7 +208,7 @@ const indexTemplate = `<html>
         <td>{{ .Node }}</td>
         <td>{{ .StartAt }}</td>
         <td>{{ Duration .StartAt .FinishedAt }}</td>
-        <td></td>
+        <td>{{ if gt .ExecutedTestsCount 0 }}{{ .SucceededTestsCount }}/{{ .ExecutedTestsCount }}{{ end }}</td>
         <td>{{ if .FinishedAt }}<a href="#" onclick="redoTask({{ .Id }})"><i class="amber redo icon"></i></a>{{ end }}</td>
       </tr>
       {{- end }}

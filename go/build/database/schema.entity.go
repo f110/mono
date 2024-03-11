@@ -113,18 +113,20 @@ type Task struct {
 	LogFile          string
 	Command          string
 	// Deprecated.
-	Target     string
-	Targets    string
-	Platform   string
-	Via        string
-	ConfigName string
-	Node       string
-	Manifest   string
-	Container  string
-	StartAt    *time.Time
-	FinishedAt *time.Time
-	CreatedAt  time.Time
-	UpdatedAt  *time.Time
+	Target              string
+	Targets             string
+	Platform            string
+	Via                 string
+	ConfigName          string
+	Node                string
+	Manifest            string
+	Container           string
+	ExecutedTestsCount  int32
+	SucceededTestsCount int32
+	StartAt             *time.Time
+	FinishedAt          *time.Time
+	CreatedAt           time.Time
+	UpdatedAt           *time.Time
 
 	Repository *SourceRepository
 
@@ -160,6 +162,8 @@ func (e *Task) IsChanged() bool {
 		e.Node != e.mark.Node ||
 		e.Manifest != e.mark.Manifest ||
 		e.Container != e.mark.Container ||
+		e.ExecutedTestsCount != e.mark.ExecutedTestsCount ||
+		e.SucceededTestsCount != e.mark.SucceededTestsCount ||
 		((e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil)) ||
 		((e.FinishedAt != nil && (e.mark.FinishedAt == nil || !e.FinishedAt.Equal(*e.mark.FinishedAt))) || (e.FinishedAt == nil && e.mark.FinishedAt != nil)) ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
@@ -222,6 +226,12 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	if e.Container != e.mark.Container {
 		res = append(res, ddl.Column{Name: "container", Value: e.Container})
 	}
+	if e.ExecutedTestsCount != e.mark.ExecutedTestsCount {
+		res = append(res, ddl.Column{Name: "executed_tests_count", Value: e.ExecutedTestsCount})
+	}
+	if e.SucceededTestsCount != e.mark.SucceededTestsCount {
+		res = append(res, ddl.Column{Name: "succeeded_tests_count", Value: e.SucceededTestsCount})
+	}
 	if (e.StartAt != nil && (e.mark.StartAt == nil || !e.StartAt.Equal(*e.mark.StartAt))) || (e.StartAt == nil && e.mark.StartAt != nil) {
 		if e.StartAt != nil {
 			res = append(res, ddl.Column{Name: "start_at", Value: *e.StartAt})
@@ -252,25 +262,27 @@ func (e *Task) ChangedColumn() []ddl.Column {
 
 func (e *Task) Copy() *Task {
 	n := &Task{
-		Id:               e.Id,
-		RepositoryId:     e.RepositoryId,
-		JobName:          e.JobName,
-		JobConfiguration: e.JobConfiguration,
-		Revision:         e.Revision,
-		IsTrunk:          e.IsTrunk,
-		BazelVersion:     e.BazelVersion,
-		Success:          e.Success,
-		LogFile:          e.LogFile,
-		Command:          e.Command,
-		Target:           e.Target,
-		Targets:          e.Targets,
-		Platform:         e.Platform,
-		Via:              e.Via,
-		ConfigName:       e.ConfigName,
-		Node:             e.Node,
-		Manifest:         e.Manifest,
-		Container:        e.Container,
-		CreatedAt:        e.CreatedAt,
+		Id:                  e.Id,
+		RepositoryId:        e.RepositoryId,
+		JobName:             e.JobName,
+		JobConfiguration:    e.JobConfiguration,
+		Revision:            e.Revision,
+		IsTrunk:             e.IsTrunk,
+		BazelVersion:        e.BazelVersion,
+		Success:             e.Success,
+		LogFile:             e.LogFile,
+		Command:             e.Command,
+		Target:              e.Target,
+		Targets:             e.Targets,
+		Platform:            e.Platform,
+		Via:                 e.Via,
+		ConfigName:          e.ConfigName,
+		Node:                e.Node,
+		Manifest:            e.Manifest,
+		Container:           e.Container,
+		ExecutedTestsCount:  e.ExecutedTestsCount,
+		SucceededTestsCount: e.SucceededTestsCount,
+		CreatedAt:           e.CreatedAt,
 	}
 	if e.StartAt != nil {
 		v := *e.StartAt

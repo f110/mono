@@ -722,12 +722,16 @@ func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, 
 		return xerrors.WithStack(err)
 	}
 
+	task.ExecutedTestsCount = int32(len(report.Tests))
+	var succeededCount int32
 	for _, s := range report.Tests {
 		status := database.TestStatusFailed
 		switch s.Status {
 		case sidecar.TestStatusPassed:
+			succeededCount++
 			status = database.TestStatusPassed
 		case sidecar.TestStatusFlaky:
+			succeededCount++
 			status = database.TestStatusFlaky
 		}
 
@@ -743,6 +747,7 @@ func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, 
 			return xerrors.WithStack(err)
 		}
 	}
+	task.SucceededTestsCount = succeededCount
 
 	return nil
 }
