@@ -47,7 +47,7 @@ const indexTemplate = `<html>
     Repositories<i class="dropdown icon"></i>
     <div class="menu">
       {{- range .Repositories }}
-      <a class="item">{{ .Name }}</a>
+      <a class="item" href="/?repo={{ .Id }}">{{ .Name }}</a>
       {{- end }}
       <div class="ui divider"></div>
       <a class="item" onclick="newRepository();">New...</a>
@@ -197,7 +197,7 @@ const indexTemplate = `<html>
       {{- range .Tasks }}
       <tr>
         <td><a href="/task/{{ .Id }}">{{ .Id }}</a></td>
-        <td>{{ .Repository.Name }}</td>
+        <td><a href="/?repo={{ .Repository.Id }}">{{ .Repository.Name }}</a></td>
         <td class="buildinfo" data-content="Bazel version: {{.BazelVersion }}">{{ .JobName }}</td>
         <td>{{ .Command }}</td>
         <td>{{ if .FinishedAt }}{{ if .Success }}<i class="green check icon"></i>{{ else }}<i class="red attention icon"></i>{{ end }}{{ else }}<i class="sync amber alternate icon"></i>{{ end }}</td>

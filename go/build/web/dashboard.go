@@ -75,17 +75,44 @@ type Task struct {
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 	repoList, err := d.dao.Repository.ListAll(req.Context())
 	if err != nil {
-		logger.Log.Warn("Failed get repository", zap.Error(err))
+		logger.Log.Warn("Failed get repository", logger.Error(err))
 		return
 	}
-	tasks, err := d.dao.Task.ListAll(req.Context(), dao.Limit(100), dao.Desc)
-	if err != nil {
-		logger.Log.Warn("Failed to get the task", zap.Error(err))
-		return
+
+	var repoId int32
+	if v := req.URL.Query().Get("repo"); v != "" {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			http.Error(w, "invalid format", http.StatusBadRequest)
+			return
+		}
+		for _, v := range repoList {
+			if v.Id == int32(i) {
+				repoId = int32(i)
+				break
+			}
+		}
 	}
+	var tasks []*database.Task
+	if repoId != 0 {
+		t, err := d.dao.Task.ListByRepositoryId(req.Context(), repoId, dao.Limit(100), dao.Desc)
+		if err != nil {
+			logger.Log.Warn("Failed to get the task", logger.Error(err))
+			return
+		}
+		tasks = t
+	} else {
+		t, err := d.dao.Task.ListAll(req.Context(), dao.Limit(100), dao.Desc)
+		if err != nil {
+			logger.Log.Warn("Failed to get the task", logger.Error(err))
+			return
+		}
+		tasks = t
+	}
+
 	trustedUsers, err := d.dao.TrustedUser.ListAll(req.Context())
 	if err != nil {
-		logger.Log.Warn("Failed get trusted user", zap.Error(err))
+		logger.Log.Warn("Failed get trusted user", logger.Error(err))
 		return
 	}
 
@@ -113,7 +140,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		APIHost:      template.JSStr(d.apiHost),
 	})
 	if err != nil {
-		logger.Log.Warn("Failed to render template", zap.Error(err))
+		logger.Log.Warn("Failed to render template", logger.Error(err))
 	}
 }
 
