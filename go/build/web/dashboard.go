@@ -73,7 +73,7 @@ type Task struct {
 }
 
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
-	repoList, err := d.dao.Repository.ListAll(req.Context())
+	allRepo, err := d.dao.Repository.ListAll(req.Context())
 	if err != nil {
 		logger.Log.Warn("Failed get repository", logger.Error(err))
 		return
@@ -86,7 +86,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "invalid format", http.StatusBadRequest)
 			return
 		}
-		for _, v := range repoList {
+		for _, v := range allRepo {
 			if v.Id == int32(i) {
 				repoId = int32(i)
 				break
@@ -109,13 +109,8 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		}
 		tasks = t
 	}
-
-	trustedUsers, err := d.dao.TrustedUser.ListAll(req.Context())
-	if err != nil {
-		logger.Log.Warn("Failed get trusted user", logger.Error(err))
-		return
-	}
-
+	// FIXME: repoList is for the list of job name
+	repoList := make(map[int32]*database.SourceRepository)
 	taskList := make([]*Task, 0, len(tasks))
 	for _, v := range tasks {
 		revUrl := ""
@@ -126,18 +121,28 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 			Task:        v,
 			RevisionUrl: revUrl,
 		})
+		repoList[v.RepositoryId] = v.Repository
+	}
+
+	trustedUsers, err := d.dao.TrustedUser.ListAll(req.Context())
+	if err != nil {
+		logger.Log.Warn("Failed get trusted user", logger.Error(err))
+		return
 	}
 
 	err = IndexTemplate.Execute(w, struct {
-		Repositories []*database.SourceRepository
-		TrustedUsers []*database.TrustedUser
-		Tasks        []*Task
-		APIHost      template.JSStr
+		Repositories       []*database.SourceRepository
+		TrustedUsers       []*database.TrustedUser
+		Tasks              []*Task
+		Jobs               []string
+		FilterRepositoryId int32
+		APIHost            template.JSStr
 	}{
-		Repositories: repoList,
-		TrustedUsers: trustedUsers,
-		Tasks:        taskList,
-		APIHost:      template.JSStr(d.apiHost),
+		Repositories:       allRepo,
+		TrustedUsers:       trustedUsers,
+		Tasks:              taskList,
+		FilterRepositoryId: repoId,
+		APIHost:            template.JSStr(d.apiHost),
 	})
 	if err != nil {
 		logger.Log.Warn("Failed to render template", logger.Error(err))

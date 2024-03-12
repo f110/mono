@@ -174,6 +174,30 @@ const indexTemplate = `<html>
 <!-- end of modal -->
 
 <div class="table-container">
+  <div class="ui form">
+    <div class="inline fields">
+      <div class="field">
+        <select class="ui dropdown filter-repo">
+          <option value="">Repository</option>
+          {{- range .Repositories }}
+          <option value="{{ .Id }}"{{ if eq .Id $.FilterRepositoryId }}selected{{ end }}>{{ .Name }}</option>
+          {{- end }}
+        </select>
+      </div>
+
+      <!--
+      <div class="field">
+        <select class="ui dropdown filter-job">
+          <option value="">Job</option>
+          {{- range .Jobs }}
+          <option value="{{ . }}">{{ . }}</option>
+          {{- end }}
+        </select>
+      </div>
+      -->
+    </div>
+  </div>
+
   <table class="ui selectable striped table">
     <thead>
       <tr>
@@ -225,6 +249,26 @@ $('.ui.checkbox')
 
 $('.buildinfo')
   .popup({})
+;
+
+$('.filter-repo')
+  .dropdown({
+    onChange: function(value, text, $selectedItem) {
+      var u = new URL(location.href);
+      u.searchParams.set("repo", value);
+      location.href = u;
+    }
+  })
+;
+
+$('.filter-job')
+  .dropdown({
+    onChange: function(value, text, $selectedItem) {
+      var u = new URL(location.href);
+      u.searchParams.set("job", value);
+      location.href = u;
+    }
+  })
 ;
 
 function newRepository() {
