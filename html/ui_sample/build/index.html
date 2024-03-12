@@ -138,6 +138,26 @@
 </div>
 
 <div class="table-container">
+  <div class="ui form">
+    <div class="inline fields">
+      <div class="field">
+        <select class="ui dropdown filter-repo">
+          <option value="">Repository</option>
+          <option value="1">ops.git</option>
+          <option value="2">mono.git</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <select class="ui dropdown filter-job" onchange="filterJob(this)">
+          <option value="">Job</option>
+          <option value="dnscontrol">dnscontrol</option>
+          <option value="pkg">pkg</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
   <table class="ui selectable striped table">
     <thead>
       <tr>
@@ -258,6 +278,26 @@ $('.ui.checkbox')
 
 $('.buildinfo')
   .popup({})
+;
+
+$('.filter-repo')
+  .dropdown({
+    onChange: function(value, text, $selectedItem) {
+      var u = new URL(location.href);
+      u.searchParams.set("repo", value);
+      location.href = u;
+    }
+  })
+;
+
+$('.filter-job')
+  .dropdown({
+    onChange: function(value, text, $selectedItem) {
+      var u = new URL(location.href);
+      u.searchParams.set("job", value);
+      location.href = u;
+    }
+  })
 ;
 
 function createRepository() {
