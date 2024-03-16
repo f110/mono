@@ -7,7 +7,6 @@ job(
         "//...",
         "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
         "-//third_party/universal-ctags/ctags:ctags",
-        "-//containers/zoekt-indexer/...",
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
     platforms = [
