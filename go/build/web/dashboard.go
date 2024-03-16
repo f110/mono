@@ -17,6 +17,7 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -109,7 +110,6 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		}
 		tasks = t
 	}
-	// FIXME: repoList is for the list of job name
 	repoList := make(map[int32]*database.SourceRepository)
 	taskList := make([]*Task, 0, len(tasks))
 	for _, v := range tasks {
@@ -123,6 +123,18 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		})
 		repoList[v.RepositoryId] = v.Repository
 	}
+	var jobs []string
+	for repoId := range repoList {
+		tasks, err := d.dao.Task.ListUniqJobName(req.Context(), repoId)
+		if err != nil {
+			logger.Log.Error("Failed to get job list", logger.Error(err))
+			return
+		}
+		for _, v := range tasks {
+			jobs = append(jobs, v.JobName)
+		}
+	}
+	jobs = enumerable.Uniq(jobs, func(t string) string { return t })
 
 	trustedUsers, err := d.dao.TrustedUser.ListAll(req.Context())
 	if err != nil {
@@ -141,6 +153,7 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		Repositories:       allRepo,
 		TrustedUsers:       trustedUsers,
 		Tasks:              taskList,
+		Jobs:               jobs,
 		FilterRepositoryId: repoId,
 		APIHost:            template.JSStr(d.apiHost),
 	})

@@ -12,6 +12,7 @@ go_library(
         "//go/build/config",
         "//go/build/database",
         "//go/build/database/dao",
+        "//go/enumerable",
         "//go/logger",
         "//go/storage",
         "//vendor/github.com/google/go-github/v49/github",

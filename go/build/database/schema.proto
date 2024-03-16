@@ -77,6 +77,10 @@ message Task {
       name: "Pending"
       query: "SELECT * FROM `:table_name:` WHERE `start_at` IS NULL"
     }
+    queries: {
+      name: "UniqJobName"
+      query: "SELECT DISTINCT `job_name` FROM `:table_name:` WHERE job_name != '' AND `repository_id` = ?"
+    }
   };
 }
 

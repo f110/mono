@@ -185,7 +185,6 @@ const indexTemplate = `<html>
         </select>
       </div>
 
-      <!--
       <div class="field">
         <select class="ui dropdown filter-job">
           <option value="">Job</option>
@@ -194,7 +193,6 @@ const indexTemplate = `<html>
           {{- end }}
         </select>
       </div>
-      -->
     </div>
   </div>
 
