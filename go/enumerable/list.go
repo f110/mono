@@ -54,3 +54,16 @@ func Map[T, K any](ary []T, f func(T) K) []K {
 	}
 	return n
 }
+
+func InsertBefore[T comparable](s []T, before T, v ...T) []T {
+	for i := range s {
+		if s[i] == before {
+			n := make([]T, len(s)+len(v))
+			copy(n, s[:i])
+			copy(n[i:], v)
+			copy(n[i+len(v):], s[i:])
+			return n
+		}
+	}
+	return s
+}

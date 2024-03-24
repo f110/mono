@@ -312,6 +312,9 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 			"--cache_test_results=no",
 		)
 	}
+	if j.job.Command == "test" && !j.task.IsTrunk {
+		args = append(args, "--remote_upload_local_results=false")
+	}
 	switch j.job.Command {
 	case "test":
 		args = append(args, "--")

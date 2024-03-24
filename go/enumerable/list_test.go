@@ -24,3 +24,7 @@ func TestSum(t *testing.T) {
 func TestUniq(t *testing.T) {
 	assert.Equal(t, []int{1, 2, 3, 4, 5}, Uniq([]int{1, 1, 2, 3, 4, 4, 4, 5}, func(t int) int { return t }))
 }
+
+func TestInsertBefore(t *testing.T) {
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, InsertBefore([]int{1, 2, 3, 5}, 5, 4))
+}

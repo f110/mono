@@ -19,6 +19,7 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/watcher"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
@@ -113,7 +114,7 @@ func TestJobBuilder(t *testing.T) {
 				jobObject: {
 					RemoveContainer("report"),
 					RemoveVolume("comm"),
-					k8sfactory.OnContainer("main", RemoveArgs("--build_event_binary_file=/comm/bep", "--cache_test_results=no")),
+					k8sfactory.OnContainer("main", RemoveArgs("--build_event_binary_file=/comm/bep", "--cache_test_results=no"), AddArgsBefore("--", "--remote_upload_local_results=false")),
 				},
 			},
 		},
@@ -446,6 +447,15 @@ func AddArgs(args ...string) k8sfactory.Trait {
 		switch v := obj.(type) {
 		case *corev1.Container:
 			v.Args = append(v.Args, args...)
+		}
+	}
+}
+
+func AddArgsBefore(before string, args ...string) k8sfactory.Trait {
+	return func(obj any) {
+		switch v := obj.(type) {
+		case *corev1.Container:
+			v.Args = enumerable.InsertBefore(v.Args, before, args...)
 		}
 	}
 }

@@ -49,6 +49,7 @@ go_test(
         "//go/build/config",
         "//go/build/database",
         "//go/build/watcher",
+        "//go/enumerable",
         "//go/k8s/k8sfactory",
         "//go/k8s/k8smanifest",
         "//go/logger",
