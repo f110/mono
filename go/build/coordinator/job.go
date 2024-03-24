@@ -182,6 +182,9 @@ func (j *JobBuilder) Job(job *config.Job) *JobBuilder {
 	j.makeReportContainer()
 	j.injectSecret()
 
+	if job.Container != "" {
+		j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Image(job.Container, nil))
+	}
 	cpuLimit := j.defaultCPULimit
 	if j.job.CPULimit != "" {
 		q, err := resource.ParseQuantity(j.job.CPULimit)
@@ -237,17 +240,23 @@ func (j *JobBuilder) Task(task *database.Task) *JobBuilder {
 	if j.task != nil {
 		return j
 	}
+	if j.job == nil {
+		logger.Log.Error("Job is not set")
+		return j
+	}
 	j.task = task
 	j.makeReportContainer()
 	j.injectSecret()
 
-	imageTag := j.defaultBazelVersion
-	if j.useBazelisk {
-		imageTag = "bazelisk"
-	} else if j.task.BazelVersion != "" {
-		imageTag = j.task.BazelVersion
+	if j.mainContainer.Image == "" {
+		imageTag := j.defaultBazelVersion
+		if j.useBazelisk {
+			imageTag = "bazelisk"
+		} else if j.task.BazelVersion != "" {
+			imageTag = j.task.BazelVersion
+		}
+		j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Image(fmt.Sprintf("%s:%s", j.bazelImage, imageTag), nil))
 	}
-	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Image(fmt.Sprintf("%s:%s", j.bazelImage, imageTag), nil))
 
 	j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Labels(map[string]string{labelKeyTaskId: strconv.Itoa(int(j.task.Id))}))
 	return j

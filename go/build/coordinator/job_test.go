@@ -230,6 +230,17 @@ func TestJobBuilder(t *testing.T) {
 				},
 			},
 		},
+		{
+			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+				j.Container = "example.com/bazel:bazelisk"
+				return j, r, ta
+			},
+			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Objects:  []runtime.Object{saObject, jobObject},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {k8sfactory.OnContainer("main", k8sfactory.Image("example.com/bazel:bazelisk", nil))},
+			},
+		},
 	}
 
 	require.NoError(t, logger.Init())

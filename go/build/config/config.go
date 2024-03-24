@@ -116,6 +116,7 @@ type Job struct {
 	// If true, build at each revision
 	AllRevision bool   `attr:"all_revision,allowempty"`
 	Command     string `attr:"command"`
+	Container   string `attr:"container,allowempty"`
 	// Limit of CPU
 	CPULimit string `attr:"cpu_limit,allowempty"`
 	// Limit of memory

@@ -16,6 +16,7 @@ func TestReadConfig(t *testing.T) {
     event = ["push"],
     all_revision = True,
     command = "test",
+    container = "example.com/bazel:latest",
     cpu_limit = "2000m",
     github_status = True,
     memory_limit = "8Gi",
@@ -52,6 +53,7 @@ func TestReadConfig(t *testing.T) {
 	assert.True(t, conf.Jobs[0].AllRevision)
 	assert.True(t, conf.Jobs[0].GitHubStatus)
 	assert.Equal(t, "test", conf.Jobs[0].Command)
+	assert.Equal(t, "example.com/bazel:latest", conf.Jobs[0].Container)
 	assert.Equal(t, "2000m", conf.Jobs[0].CPULimit)
 	assert.Equal(t, "8Gi", conf.Jobs[0].MemoryLimit)
 	assert.Equal(t, "ci", conf.Jobs[0].ConfigName)
