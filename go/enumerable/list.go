@@ -67,3 +67,13 @@ func InsertBefore[T comparable](s []T, before T, v ...T) []T {
 	}
 	return s
 }
+
+func FindAll[T comparable](ary []T, f func(T) bool) []T {
+	n := make([]T, 0)
+	for _, v := range ary {
+		if f(v) {
+			n = append(n, v)
+		}
+	}
+	return n
+}

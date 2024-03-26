@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "deb_manager_lib",
+    srcs = [
+        "deb.go",
+        "main.go",
+    ],
+    importpath = "go.f110.dev/mono/build/private/deb_manager",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//go/enumerable",
+        "//go/logger",
+        "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
+        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+    ],
+)
+
+go_binary(
+    name = "deb_manager",
+    embed = [":deb_manager_lib"],
+    visibility = ["//visibility:public"],
+)
