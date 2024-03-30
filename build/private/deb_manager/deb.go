@@ -4,133 +4,114 @@ import (
 	"bufio"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
-	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/logger"
 )
 
-type UbuntuPackageIndex struct {
+type PackageIndex struct {
 	Root string
 
-	packageIndexes []*PackageIndex
+	scanner  *bufio.Scanner
+	packages map[string]*Package
 }
 
-func NewUbuntuPackageIndex(ctx context.Context, repos UbuntuRepositories) (*UbuntuPackageIndex, error) {
-	pi := make(map[string]*bufio.Scanner)
-	var wg sync.WaitGroup
-	for _, repo := range repos {
-		for i := len(repo.components) - 1; i >= 0; i-- {
-			c := repo.components[i]
-			wg.Add(1)
-			go func(repo *UbuntuRepository, component string) {
-				defer wg.Done()
-
-				req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://www.ftp.ne.jp/Linux/packages/ubuntu/archive/dists/%s/%s/binary-%s/Packages.gz", repo.suite, component, repo.arch), nil)
-				if err != nil {
-					logger.Log.Error("Failed to create http request", logger.Error(err))
-					return
-				}
-				client := &http.Client{
-					Timeout: 10 * time.Minute,
-				}
-				logger.Log.Info("Request", zap.String("url", req.URL.String()))
-				res, err := client.Do(req)
-				if err != nil {
-					logger.Log.Error("Failed to send http request", logger.Error(err))
-					return
-				}
-				defer res.Body.Close()
-
-				switch res.StatusCode {
-				case http.StatusOK:
-				default:
-					logger.Log.Error("Got unexpected status", zap.Int("status", res.StatusCode), zap.String("suite", repo.suite), zap.String("component", component))
-					return
-				}
-
-				r, err := gzip.NewReader(res.Body)
-				if err != nil {
-					logger.Log.Error("Failed to read Packages.gz", logger.Error(err))
-					return
-				}
-				tmpF, err := os.CreateTemp("", "packages.gz")
-				if err != nil {
-					logger.Log.Error("Failed to read Packages.gz", logger.Error(err))
-					return
-				}
-				if _, err := io.Copy(tmpF, r); err != nil {
-					logger.Log.Error("Failed to read Packages.gz", logger.Error(err))
-					return
-				}
-				if _, err := tmpF.Seek(0, io.SeekStart); err != nil {
-					logger.Log.Error("Failed to read Packages.gz", logger.Error(err))
-					return
-				}
-				pi[fmt.Sprintf("%s/%s", repo.suite, c)] = bufio.NewScanner(tmpF)
-			}(repo, c)
-		}
+func NewPackageIndex(ctx context.Context, ss *Snapshot) (*PackageIndex, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://snapshot.debian.org/archive/%s/%s/dists/%s/main/binary-%s/Packages.gz", ss.repository, ss.snapshot, ss.codename, ss.arch), nil)
+	if err != nil {
+		return nil, err
 	}
-	wg.Wait()
-
-	var packageIndexes []*PackageIndex
-	for _, repo := range repos {
-		for i := len(repo.components) - 1; i >= 0; i-- {
-			c := repo.components[i]
-			pi := &PackageIndex{scanner: pi[fmt.Sprintf("%s/%s", repo.suite, c)], packages: make(map[string]*Package), root: "https://www.ftp.ne.jp/Linux/packages/ubuntu/archive"}
-			if err := pi.parseIndex(); err != nil {
-				return nil, err
-			}
-			packageIndexes = append(packageIndexes, pi)
-		}
+	client := &http.Client{
+		Timeout: 10 * time.Minute,
 	}
-	return &UbuntuPackageIndex{
-		Root:           "https://www.ftp.ne.jp/Linux/packages/ubuntu/archive",
-		packageIndexes: packageIndexes,
+	logger.Log.Info("Request", zap.String("url", req.URL.String()))
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	switch res.StatusCode {
+	case http.StatusOK:
+	default:
+		return nil, fmt.Errorf("got %s", res.Status)
+	}
+
+	r, err := gzip.NewReader(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	tmpF, err := os.CreateTemp("", "packages.gz")
+	if err != nil {
+		return nil, err
+	}
+	if _, err := io.Copy(tmpF, r); err != nil {
+		return nil, err
+	}
+	if _, err := tmpF.Seek(0, io.SeekStart); err != nil {
+		return nil, err
+	}
+	return &PackageIndex{
+		Root:     fmt.Sprintf("https://snapshot.debian.org/archive/%s/%s/", ss.repository, ss.snapshot),
+		scanner:  bufio.NewScanner(tmpF),
+		packages: make(map[string]*Package),
 	}, nil
 }
 
-func NewPackageIndexFromFile(f string, _ *UbuntuRepository) (*UbuntuPackageIndex, error) {
+func NewPackageIndexFromFile(f string, ss *Snapshot) (*PackageIndex, error) {
 	file, err := os.Open(f)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 
 	var reader io.Reader = file
 	if strings.HasSuffix(f, ".gz") {
 		r, err := gzip.NewReader(file)
 		if err != nil {
-			return nil, xerrors.WithStack(err)
+			return nil, err
 		}
 		reader = r
 	}
-	return &UbuntuPackageIndex{
-		Root:           "https://www.ftp.ne.jp/Linux/packages/ubuntu/archive",
-		packageIndexes: []*PackageIndex{{scanner: bufio.NewScanner(reader), packages: make(map[string]*Package)}},
+	return &PackageIndex{
+		Root:     fmt.Sprintf("https://snapshot.debian.org/archive/%s/%s/", ss.repository, ss.snapshot),
+		scanner:  bufio.NewScanner(reader),
+		packages: make(map[string]*Package),
 	}, nil
 }
 
-func (pi *UbuntuPackageIndex) Find(name string) (*Package, error) {
-	for _, v := range pi.packageIndexes {
-		if p, err := v.Find(name); err != nil {
-			return nil, err
-		} else if p != nil {
-			return p, nil
-		}
+func (pi *PackageIndex) Find(name string) (*Package, error) {
+	if err := pi.parseIndex(); err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	p := pi.packages[name]
+	if p == nil {
+		return nil, nil
+	}
+	if p.depends != nil && p.Depends == nil {
+		depends := make([]*Package, 0, len(p.depends))
+		for _, v := range p.depends {
+			if _, ok := pi.packages[v]; !ok {
+				logger.Log.Info("Not found package", zap.String("name", name))
+				continue
+			}
+			depends = append(depends, pi.packages[v])
+		}
+		p.Depends = depends
+	}
+	p.URL = pi.Root + p.Filename
+	return p, nil
 }
 
-func (*UbuntuPackageIndex) ResolveDependency(p *Package) []*Package {
+func (pi *PackageIndex) ResolveDependency(p *Package) []*Package {
 	deps := make(map[string]*Package)
 	for _, v := range p.Depends {
 		p := v
@@ -165,31 +146,6 @@ func (*UbuntuPackageIndex) ResolveDependency(p *Package) []*Package {
 	return res
 }
 
-type PackageIndex struct {
-	root     string
-	scanner  *bufio.Scanner
-	packages map[string]*Package
-}
-
-func (pi *PackageIndex) Find(name string) (*Package, error) {
-	p, ok := pi.packages[name]
-	if !ok {
-		return nil, nil
-	}
-	if p.depends != nil && p.Depends == nil {
-		depends := make([]*Package, len(p.depends))
-		for i, v := range p.depends {
-			if _, ok := pi.packages[v]; !ok {
-				continue
-			}
-			depends[i] = pi.packages[v]
-		}
-		p.Depends = depends
-	}
-	p.URL = pi.root + p.Filename
-	return p, nil
-}
-
 func (pi *PackageIndex) parseIndex() error {
 	if pi.scanner == nil {
 		return nil
@@ -208,7 +164,7 @@ func (pi *PackageIndex) parseIndex() error {
 
 		i := strings.Index(line, ":")
 		if i == -1 {
-			return xerrors.New("invalid line")
+			return errors.New("invalid line")
 		}
 		switch line[:i] {
 		case "Package":
@@ -237,17 +193,16 @@ type Package struct {
 	depends  []string
 }
 
-type UbuntuRepository struct {
-	suite      string
-	components []string
+type Snapshot struct {
+	repository string
+	snapshot   string
 	arch       string
+	codename   string
 }
 
-func NewUbuntuRepository(suite string, components ...string) *UbuntuRepository {
-	return &UbuntuRepository{suite: suite, arch: "amd64", components: components}
+func NewSnapShot(repo, codename, snapshot string) *Snapshot {
+	return &Snapshot{repository: repo, snapshot: snapshot, arch: "amd64", codename: codename}
 }
-
-type UbuntuRepositories []*UbuntuRepository
 
 func parseDepends(in string) []string {
 	depends := make([]string, 0, strings.Count(in, ","))

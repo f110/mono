@@ -2,45 +2,31 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"sort"
 	"strings"
+	"syscall"
 
-	"go.f110.dev/xerrors"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/logger"
 )
 
-var preIncludedPackages = []string{
-	"libc6",
-	"base-files",
-	"net-base",
-	"tzdata",
-	"libssl3", // debian12
-}
-
-var excludePackages map[string]any
-
-func init() {
-	excludePackages = make(map[string]any)
-	for _, v := range preIncludedPackages {
-		excludePackages[v] = struct{}{}
-	}
+var codenameToName = map[string]string{
+	"bullseye": "debian11",
+	"bookworm": "debian12",
 }
 
 type config struct {
-	Ubuntu *ubuntu `json:"ubuntu"`
-}
-
-type ubuntu struct {
-	Jammy *ubuntuVersion `json:"jammy"`
-}
-
-type ubuntuVersion struct {
+	Snapshot struct {
+		Distro map[string]map[string]string `yaml:"distro"`
+	} `yaml:"snapshot"`
 	Packages []string `yaml:"packages"`
 }
 
@@ -50,62 +36,69 @@ func generate(ctx context.Context, confFile, macroFile, outFile string) error {
 		return err
 	}
 
+	distros := make([]string, 0)
+	packageIndices := make(map[string]*PackageIndex)
+	distroAndPackages := make(map[string][]*Package)
+	for distro, v := range conf.Snapshot.Distro {
+		distros = append(distros, distro)
+		for name, snapshot := range v {
+			ss := NewSnapShot(name, distro, snapshot)
+			pi, err := NewPackageIndex(ctx, ss)
+			if err != nil {
+				return err
+			}
+			packageIndices[distro] = pi
+			deps := conf.Packages
+			allPackages := make(map[string]*Package)
+			for {
+				if len(deps) == 0 {
+					break
+				}
+				v := deps[0]
+				if _, ok := allPackages[v]; ok {
+					deps = deps[1:]
+					continue
+				}
+
+				p, err := pi.Find(v)
+				if err != nil {
+					return err
+				}
+				if p == nil {
+					logger.Log.Info("package not found", zap.String("name", v))
+					deps = deps[1:]
+					continue
+				}
+				allPackages[p.Name] = p
+				for _, d := range p.Depends {
+					if d == nil {
+						continue
+					}
+					d := d
+					deps = append(deps, d.Name)
+				}
+				deps = deps[1:]
+			}
+
+			packages := make([]*Package, 0, len(allPackages))
+			for _, v := range allPackages {
+				packages = append(packages, v)
+			}
+			distroAndPackages[distro] = packages
+		}
+	}
+
 	rMacroFile, err := makeRepositoryMacroFile(outFile)
 	if err != nil {
 		return err
 	}
-	var distros []string
+	for distro, _ := range conf.Snapshot.Distro {
+		writePackageDep(rMacroFile, distro, distroAndPackages[distro])
+	}
 
-	if conf.Ubuntu != nil && conf.Ubuntu.Jammy != nil {
-		repos := make(UbuntuRepositories, 0)
-		repos = append(repos,
-			NewUbuntuRepository("jammy-security", "main", "restricted", "universe", "multiverse"),
-			NewUbuntuRepository("jammy-backports", "main", "restricted", "universe", "multiverse"),
-			NewUbuntuRepository("jammy-updates", "main", "restricted", "universe", "multiverse"),
-			NewUbuntuRepository("jammy", "main", "restricted", "universe", "multiverse"),
-		)
-
-		pi, err := NewUbuntuPackageIndex(ctx, repos)
-		if err != nil {
+	if macroFile != "" {
+		if err := makeMacroFile(macroFile, distros, conf.Packages, packageIndices); err != nil {
 			return err
-		}
-		allPackages := make(map[string]*Package)
-		deps := conf.Ubuntu.Jammy.Packages
-		for {
-			if len(deps) == 0 {
-				break
-			}
-			v := deps[0]
-			if _, ok := allPackages[v]; ok {
-				deps = deps[1:]
-				continue
-			}
-
-			p, err := pi.Find(v)
-			if err != nil {
-				return err
-			}
-			allPackages[p.Name] = p
-			for _, d := range p.Depends {
-				if d == nil {
-					continue
-				}
-				deps = append(deps, d.Name)
-			}
-			deps = deps[1:]
-		}
-
-		packages := make([]*Package, 0, len(allPackages))
-		for _, v := range allPackages {
-			packages = append(packages, v)
-		}
-
-		writePackageDep(rMacroFile, "jammy", packages)
-		distros = append(distros, "jammy")
-		if macroFile != "" {
-			if err := makeMacroFile(macroFile, "jammy", conf.Ubuntu.Jammy.Packages, pi); err != nil {
-				return err
-			}
 		}
 	}
 	return nil
@@ -114,7 +107,7 @@ func generate(ctx context.Context, confFile, macroFile, outFile string) error {
 func makeRepositoryMacroFile(outFile string) (*os.File, error) {
 	out, err := os.Create(outFile)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	out.WriteString(`load("//build/rules/deb:deb.bzl", "deb_pkg")
 
@@ -125,15 +118,12 @@ def debian_packages():
 
 }
 
-func writePackageDep(w io.Writer, version string, packages []*Package) {
+func writePackageDep(w io.Writer, distro string, packages []*Package) {
 	sort.Slice(packages, func(i, j int) bool { return packages[i].Name < packages[j].Name })
 
 	for _, v := range packages {
-		if _, ok := excludePackages[v.Name]; ok {
-			continue
-		}
 		fmt.Fprint(w, "    deb_pkg(\n")
-		fmt.Fprintf(w, "        name = \"%s_%s\",\n", version, v.Name)
+		fmt.Fprintf(w, "        name = \"%s_%s\",\n", codenameToName[distro], strings.Replace(v.Name, "+", "_", -1))
 		fmt.Fprintf(w, "        package_name = \"%s\",\n", v.Name)
 		fmt.Fprintf(w, "        sha256 = \"%s\",\n", v.SHA256)
 		fmt.Fprintf(w, "        urls = [\"%s\"],\n", v.URL)
@@ -142,70 +132,66 @@ func writePackageDep(w io.Writer, version string, packages []*Package) {
 	}
 }
 
-func makeMacroFile(outFile, version string, packages []string, pi *UbuntuPackageIndex) error {
+func makeMacroFile(outFile string, distros, packages []string, packageIndices map[string]*PackageIndex) error {
 	out, err := os.Create(outFile)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	out.WriteString("package_dependencies = {\n")
-	fmt.Fprintf(out, "    %q: {\n", version)
-	for _, pkgName := range packages {
-		p, err := pi.Find(pkgName)
-		if err != nil {
-			return err
+	for _, distro := range distros {
+		fmt.Fprintf(out, "    %q: {\n", codenameToName[distro])
+		pi := packageIndices[distro]
+		for _, pkgName := range packages {
+			p, err := pi.Find(pkgName)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(out, "        %q: ", pkgName)
+			deps := packageIndices[distro].ResolveDependency(p)
+			depPkgNames := enumerable.Map(deps, func(t *Package) string { return t.Name })
+			depPkgNames = enumerable.Map(depPkgNames, func(v string) string { return fmt.Sprintf("%q", v) })
+			sort.Strings(depPkgNames)
+			fmt.Fprintf(out, "[%s],\n", strings.Join(depPkgNames, ", "))
 		}
-		fmt.Fprintf(out, "        %q: ", pkgName)
-		deps := pi.ResolveDependency(p)
-		depPkgNames := enumerable.Map(deps, func(t *Package) string { return t.Name })
-		depPkgNames = enumerable.FindAll(depPkgNames, func(s string) bool { _, ok := excludePackages[s]; return !ok })
-		depPkgNames = enumerable.Map(depPkgNames, func(v string) string { return fmt.Sprintf("%q", v) })
-		sort.Strings(depPkgNames)
-		fmt.Fprintf(out, "[%s],\n", strings.Join(depPkgNames, ", "))
+		out.WriteString("    }\n")
 	}
-	out.WriteString("    }\n")
 	out.WriteString("}\n\n")
 
-	out.WriteString(`def deb_pkg(distro, *pkgs):
+	out.WriteString(`def deb_pkg(distro, excludes = None, *pkgs):
     all = {}
     for x in pkgs:
+        if x in excludes:
+            continue
         all[x] = None
         for x in package_dependencies[distro][x]:
             all[x] = None
-    return ["@%s_%s//:data" % (distro, k) for k in all]`)
-	out.WriteString("\n")
+    return ["@%s_%s//:data" % (distro, k.replace("+", "_")) for k in all]`)
 	return nil
 }
 
 func readConfig(confFile string) (*config, error) {
 	f, err := os.Open(confFile)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	var conf config
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
 	return &conf, nil
 }
 
-func debManager(args []string) error {
-	var confFile, utilityMacroFile, outFile string
-	cmd := &cli.Command{
-		Use: "deb-manager OUT_FILE",
-		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			return generate(ctx, confFile, utilityMacroFile, outFile)
-		},
-	}
-	cmd.Flags().String("conf", "Config file").Var(&confFile)
-	cmd.Flags().String("macro", "Macro file").Var(&utilityMacroFile)
-	cmd.Flags().String("out", "Out file").Var(&outFile)
-
-	return cmd.Execute(args)
-}
-
 func main() {
-	if err := debManager(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "%+v\n", err)
+	logger.Init()
+	var confFile, utilityMacroFile string
+	flag.StringVar(&confFile, "conf", "", "Config file")
+	flag.StringVar(&utilityMacroFile, "macro", "", "Macro file")
+	flag.Parse()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := generate(ctx, confFile, utilityMacroFile, flag.Args()[0]); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }
