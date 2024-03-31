@@ -85,3 +85,7 @@ load("//:dependencies.bzl", "container_dependencies", "repository_dependencies")
 repository_dependencies()
 
 container_dependencies()
+
+load("//:deb_packages.bzl", debian_package_dependencies = "debian_packages")
+
+debian_package_dependencies()

@@ -59,3 +59,35 @@ oci_push(
     remote_tags = ["latest"],
     repository = "quay.io/f110/zoekt-indexer",
 )
+
+load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
+
+pkg_tar(
+    name = "build_dep_packages",
+    mode = "0755",
+    deps = deb_pkg(
+        "debian12",
+        "libjansson-dev",
+        "libseccomp-dev",
+        excludes = [
+            "libc6",
+            "libgcc-s1",
+        ],
+    ),
+)
+
+container_image(
+    name = "build_image",
+    base = "@dev_f110_bazel_container_bazelisk_debian12",
+    labels = {
+        "org.opencontainers.image.source": "https://github.com/f110/mono",
+    },
+    tars = [":build_dep_packages"],
+)
+
+oci_push(
+    name = "push_build_image",
+    image = ":build_image",
+    remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/zoekt-indexer-builder",
+)

@@ -1,0 +1,7 @@
+snapshot:
+  distro:
+    bookworm:
+      debian: 20240327T025446Z
+packages:
+  - libjansson-dev
+  - libseccomp-dev

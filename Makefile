@@ -7,6 +7,9 @@ gen:
 	bazel query 'kind(vendor_proto_source, //...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_kubeproto, //...)' | xargs -n1 bazel run
 
+deb_packages.bzl: deb_packages.yaml
+	bazel run //build/private/deb_manager -- -conf $(CURDIR)/deb_packages.yaml -macro $(CURDIR)/build/rules/deb/deb_pkg.bzl $(CURDIR)/deb_packages.bzl
+
 .PHONY: update-deps gen
 
 push-unifibackup:

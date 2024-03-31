@@ -157,13 +157,15 @@ func makeMacroFile(outFile string, distros, packages []string, packageIndices ma
 	}
 	out.WriteString("}\n\n")
 
-	out.WriteString(`def deb_pkg(distro, excludes = None, *pkgs):
+	out.WriteString(`def deb_pkg(distro, *pkgs, excludes = None):
     all = {}
     for x in pkgs:
         if x in excludes:
             continue
         all[x] = None
         for x in package_dependencies[distro][x]:
+            if x in excludes:
+                continue
             all[x] = None
     return ["@%s_%s//:data" % (distro, k.replace("+", "_")) for k in all]`)
 	return nil
