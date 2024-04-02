@@ -490,11 +490,11 @@ func (j *JobBuilder) injectSecret() {
 		}
 	}
 	if len(registrySecretProviderClass) > 0 {
-		credVol := k8sfactory.NewEmptyDirVolumeSource("containerregistry", "/root/.config/containers")
+		credVol := k8sfactory.NewEmptyDirVolumeSource("containerregistry", "/root/.docker")
 		j.credentialSetupContainer = k8sfactory.ContainerFactory(nil,
 			k8sfactory.Name("credential"),
 			k8sfactory.Image(j.sidecarImage, nil),
-			k8sfactory.Args("credential", "container-registry", fmt.Sprintf("--out=%s/auth.json", credVol.Mount.MountPath), "--dir=/etc/registry"),
+			k8sfactory.Args("credential", "container-registry", fmt.Sprintf("--out=%s/config.json", credVol.Mount.MountPath), "--dir=/etc/registry"),
 			k8sfactory.Volume(credVol),
 		)
 		j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Volume(credVol))
