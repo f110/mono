@@ -57,10 +57,9 @@ func (c *CredentialCommand) ContainerRegistry(_ context.Context) error {
 				continue
 			}
 			buf, err := os.ReadFile(filepath.Join(c.dir, e.Name(), v.Name()))
-			if err != nil {
-				return xerrors.WithStack(err)
+			if err == nil {
+				conf.Auths[host] = &containerRegistryHostAuth{Auth: base64.StdEncoding.EncodeToString(append([]byte(v.Name()+":"), buf...))}
 			}
-			conf.Auths[host] = &containerRegistryHostAuth{Auth: base64.StdEncoding.EncodeToString(append([]byte(v.Name()+":"), buf...))}
 		}
 	}
 
