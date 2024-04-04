@@ -148,3 +148,74 @@ func TestJob(t *testing.T) {
 		})
 	}
 }
+
+func TestMarshalJob(t *testing.T) {
+	raw := `job(
+    name = "publish_zoekt_indexer",
+    command = "run",
+    container = "registry.f110.dev/tools/zoekt-indexer-builder:latest",
+    targets = ["//containers/zoekt-indexer:push"],
+    platforms = [
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    ],
+    secrets = [
+        registry_secret(host = "registry.f110.dev", vault_mount = "secrets", vault_path = "registry.f110.dev/build", vault_key = "robot"),
+    ],
+    cpu_limit = "2000m",
+    event = ["manual"],
+)`
+	config, err := Read(strings.NewReader(raw), "", "")
+	require.NoError(t, err)
+	job := config.Jobs[0]
+
+	encoded, err := MarshalJob(job)
+	require.NoError(t, err)
+
+	decodedJob := &Job{}
+	err = UnmarshalJob(encoded, decodedJob)
+	require.NoError(t, err)
+	assert.Equal(t, "publish_zoekt_indexer", decodedJob.Name)
+	if assert.IsType(t, &RegistrySecret{}, decodedJob.Secrets[0]) {
+		assert.Equal(t, "registry.f110.dev", decodedJob.Secrets[0].(*RegistrySecret).Host)
+		assert.Equal(t, "secrets", decodedJob.Secrets[0].(*RegistrySecret).VaultMount)
+		assert.Equal(t, "registry.f110.dev/build", decodedJob.Secrets[0].(*RegistrySecret).VaultPath)
+		assert.Equal(t, "robot", decodedJob.Secrets[0].(*RegistrySecret).VaultKey)
+	}
+}
+
+func TestUnmarshalJob(t *testing.T) {
+	raw := `job(
+    name = "test_all",
+    command = "test",
+    all_revision = True,
+    github_status = True,
+    targets = [
+        "//...",
+        "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
+        "-//third_party/universal-ctags/ctags:ctags",
+        "-//containers/zoekt-indexer/...",
+        "-//vendor/github.com/go-enry/go-oniguruma/...",
+    ],
+    platforms = [
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    ],
+    cpu_limit = "2000m",
+    memory_limit = "8192Mi",
+    event = ["push"],
+)`
+	config, err := Read(strings.NewReader(raw), "", "")
+	require.NoError(t, err)
+	jsonJob, err := json.Marshal(config.Jobs[0])
+	require.NoError(t, err)
+	gobJob, err := MarshalJob(config.Jobs[0])
+	require.NoError(t, err)
+
+	decodedJob := &Job{}
+	err = UnmarshalJob(jsonJob, decodedJob)
+	require.NoError(t, err)
+	assert.Equal(t, "test_all", decodedJob.Name)
+	decodedJob = &Job{}
+	err = UnmarshalJob(gobJob, decodedJob)
+	require.NoError(t, err)
+	assert.Equal(t, "test_all", decodedJob.Name)
+}

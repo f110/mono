@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -14,6 +15,11 @@ import (
 	"go.f110.dev/xerrors"
 	"go.starlark.net/starlark"
 )
+
+func init() {
+	gob.Register(&Secret{})
+	gob.Register(&RegistrySecret{})
+}
 
 //go:embed config.star
 var configModule string
@@ -197,6 +203,21 @@ func (j *Job) IsValid() error {
 		return xerrors.Newf("specifying argument is not allowed in %s command", j.Command)
 	}
 	return nil
+}
+
+func MarshalJob(j *Job) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := gob.NewEncoder(buf).Encode(j); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return buf.Bytes(), nil
+}
+
+func UnmarshalJob(b []byte, j *Job) error {
+	if len(b) > 0 && b[0] == '{' {
+		return json.Unmarshal(b, j)
+	}
+	return gob.NewDecoder(bytes.NewReader(b)).Decode(j)
 }
 
 func Read(r io.Reader, owner, repo string) (*Config, error) {
