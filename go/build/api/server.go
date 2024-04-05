@@ -494,8 +494,14 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 	}
 
 	jobConfiguration := &config.Job{}
-	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConfiguration); err != nil {
-		return
+	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+			return
+		}
+	} else if len(task.ParsedJobConfiguration) > 0 {
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+			return
+		}
 	}
 	newTasks, err := a.builder.Build(
 		req.Context(),

@@ -36,28 +36,29 @@ message SourceRepository {
 }
 
 message Task {
-  int32                      id                    = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  SourceRepository           repository            = 2;
-  string                     job_name              = 3;
-  string                     job_configuration     = 4 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     revision              = 5;
-  bool                       is_trunk              = 6;
-  string                     bazel_version         = 7;
-  bool                       success               = 8;
-  string                     log_file              = 9;
-  string                     command               = 10;
-  string                     target                = 11 [deprecated = true];
-  string                     targets               = 12 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     platform              = 13 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     via                   = 14;
-  string                     config_name           = 15;
-  string                     node                  = 16;
-  string                     manifest              = 17 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     container             = 18;
-  int32                      executed_tests_count  = 19;
-  int32                      succeeded_tests_count = 20;
-  .google.protobuf.Timestamp start_at              = 21 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at           = 22 [(dev.f110.ddl.column) = { null: true }];
+  int32                      id                       = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository           repository               = 2;
+  string                     job_name                 = 3;
+  string                     job_configuration        = 4 [(dev.f110.ddl.column) = { type: "text", null: true }, deprecated = true];
+  bytes                      parsed_job_configuration = 5;
+  string                     revision                 = 6;
+  bool                       is_trunk                 = 7;
+  string                     bazel_version            = 8;
+  bool                       success                  = 9;
+  string                     log_file                 = 10;
+  string                     command                  = 11;
+  string                     target                   = 12 [deprecated = true];
+  string                     targets                  = 13 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     platform                 = 14 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     via                      = 15;
+  string                     config_name              = 16;
+  string                     node                     = 17;
+  string                     manifest                 = 18 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     container                = 19;
+  int32                      executed_tests_count     = 20;
+  int32                      succeeded_tests_count    = 21;
+  .google.protobuf.Timestamp start_at                 = 22 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at              = 23 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"

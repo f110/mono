@@ -1,6 +1,7 @@
 package coordinator
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -25,6 +26,15 @@ import (
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/varptr"
 )
+
+func Test(t *testing.T) {
+	buf := `{"Name":"publish","Event":["manual"],"AllRevision":false,"Command":"run","Container":"","CPULimit":"2000m","MemoryLimit":"","GitHubStatus":false,"Platforms":["@io_bazel_rules_go//go/toolchain:linux_amd64"],"Targets":["//container/tree:push"],"Args":null,"Exclusive":false,"ConfigName":"","Schedule":"","Secrets":[{"Host":"registry.f110.dev","VaultMount":"globemaster","VaultPath":"registry.f110.dev/sandbox","VaultKey":"robot$sandbox"}],"Env":null,"RepositoryOwner":"f110","RepositoryName":"sandbox"}`
+	jobConfiguration := &config.Job{}
+	if err := json.Unmarshal([]byte(buf), jobConfiguration); err != nil {
+		t.Log(err)
+	}
+	t.Log(jobConfiguration)
+}
 
 func TestJobBuilder_Clone(t *testing.T) {
 	b := NewJobBuilder("default", "bazel", "sidecar")
@@ -219,11 +229,11 @@ func TestJobBuilder(t *testing.T) {
 					k8sfactory.InitContainer(k8sfactory.ContainerFactory(nil,
 						k8sfactory.Name("credential"),
 						k8sfactory.Image("registry/sidecar", nil),
-						k8sfactory.Args("credential", "container-registry", "--out=/root/.config/containers/auth.json", "--dir=/etc/registry"),
-						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.config/containers"}}),
+						k8sfactory.Args("credential", "container-registry", "--out=/root/.docker/config.json", "--dir=/etc/registry"),
+						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.docker"}}),
 						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), ReadOnly: true, MountPath: "/etc/registry/registry.example.com"}}),
 					)),
-					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.config/containers"}})),
+					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.docker"}})),
 					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: varptr.Ptr(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
 					AddEmptyVolume("containerregistry"),
 					k8sfactory.SortVolume(),

@@ -215,9 +215,16 @@ func MarshalJob(j *Job) ([]byte, error) {
 
 func UnmarshalJob(b []byte, j *Job) error {
 	if len(b) > 0 && b[0] == '{' {
-		return json.Unmarshal(b, j)
+		if err := json.Unmarshal(b, j); err != nil {
+			return xerrors.WithStack(err)
+		}
+		return nil
 	}
-	return gob.NewDecoder(bytes.NewReader(b)).Decode(j)
+
+	if err := gob.NewDecoder(bytes.NewReader(b)).Decode(j); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 func Read(r io.Reader, owner, repo string) (*Config, error) {

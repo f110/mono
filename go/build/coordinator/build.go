@@ -305,25 +305,24 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		}
 	}()
 
-	buf := new(bytes.Buffer)
-	if err := json.NewEncoder(buf).Encode(job); err != nil {
+	jobConfiguration, err := config.MarshalJob(job)
+	if err != nil {
 		return nil, err
 	}
-	jobConfiguration := buf.String()
 	t := strings.Join(targets, "\n")
 	for _, platform := range platforms {
 		task, err := b.dao.Task.Create(ctx, &database.Task{
-			RepositoryId:     repo.Id,
-			JobName:          job.Name,
-			JobConfiguration: jobConfiguration,
-			Revision:         revision,
-			IsTrunk:          isMainBranch,
-			BazelVersion:     bazelVersion,
-			Command:          command,
-			Targets:          t,
-			Platform:         platform,
-			Via:              via,
-			ConfigName:       job.ConfigName,
+			RepositoryId:           repo.Id,
+			JobName:                job.Name,
+			ParsedJobConfiguration: jobConfiguration,
+			Revision:               revision,
+			IsTrunk:                isMainBranch,
+			BazelVersion:           bazelVersion,
+			Command:                command,
+			Targets:                t,
+			Platform:               platform,
+			Via:                    via,
+			ConfigName:             job.ConfigName,
 		})
 		if err != nil {
 			return nil, xerrors.WithStack(err)
@@ -389,8 +388,16 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return xerrors.WithStack(err)
 	}
 	jobConfiguration := &config.Job{}
-	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConfiguration); err != nil {
-		return nil
+	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+			logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
+			return nil
+		}
+	} else if len(task.ParsedJobConfiguration) > 0 {
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+			logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
+			return nil
+		}
 	}
 
 	if task.FinishedAt != nil {

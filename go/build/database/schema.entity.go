@@ -102,16 +102,18 @@ func (e *SourceRepository) Copy() *SourceRepository {
 }
 
 type Task struct {
-	Id               int32
-	RepositoryId     int32
-	JobName          string
-	JobConfiguration string
-	Revision         string
-	IsTrunk          bool
-	BazelVersion     string
-	Success          bool
-	LogFile          string
-	Command          string
+	Id           int32
+	RepositoryId int32
+	JobName      string
+	// Deprecated.
+	JobConfiguration       *string
+	ParsedJobConfiguration []byte
+	Revision               string
+	IsTrunk                bool
+	BazelVersion           string
+	Success                bool
+	LogFile                string
+	Command                string
 	// Deprecated.
 	Target              string
 	Targets             string
@@ -147,7 +149,8 @@ func (e *Task) IsChanged() bool {
 
 	return e.RepositoryId != e.mark.RepositoryId ||
 		e.JobName != e.mark.JobName ||
-		e.JobConfiguration != e.mark.JobConfiguration ||
+		((e.JobConfiguration != nil && (e.mark.JobConfiguration == nil || *e.JobConfiguration != *e.mark.JobConfiguration)) || e.JobConfiguration == nil && e.mark.JobConfiguration != nil) ||
+		!bytes.Equal(e.ParsedJobConfiguration, e.mark.ParsedJobConfiguration) ||
 		e.Revision != e.mark.Revision ||
 		e.IsTrunk != e.mark.IsTrunk ||
 		e.BazelVersion != e.mark.BazelVersion ||
@@ -181,8 +184,15 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	if e.JobName != e.mark.JobName {
 		res = append(res, ddl.Column{Name: "job_name", Value: e.JobName})
 	}
-	if e.JobConfiguration != e.mark.JobConfiguration {
-		res = append(res, ddl.Column{Name: "job_configuration", Value: e.JobConfiguration})
+	if (e.JobConfiguration != nil && (e.mark.JobConfiguration == nil || *e.JobConfiguration != *e.mark.JobConfiguration)) || (e.JobConfiguration == nil && e.mark.JobConfiguration != nil) {
+		if e.JobConfiguration != nil {
+			res = append(res, ddl.Column{Name: "job_configuration", Value: *e.JobConfiguration})
+		} else {
+			res = append(res, ddl.Column{Name: "job_configuration", Value: nil})
+		}
+	}
+	if !bytes.Equal(e.ParsedJobConfiguration, e.mark.ParsedJobConfiguration) {
+		res = append(res, ddl.Column{Name: "parsed_job_configuration", Value: e.ParsedJobConfiguration})
 	}
 	if e.Revision != e.mark.Revision {
 		res = append(res, ddl.Column{Name: "revision", Value: e.Revision})
@@ -262,27 +272,31 @@ func (e *Task) ChangedColumn() []ddl.Column {
 
 func (e *Task) Copy() *Task {
 	n := &Task{
-		Id:                  e.Id,
-		RepositoryId:        e.RepositoryId,
-		JobName:             e.JobName,
-		JobConfiguration:    e.JobConfiguration,
-		Revision:            e.Revision,
-		IsTrunk:             e.IsTrunk,
-		BazelVersion:        e.BazelVersion,
-		Success:             e.Success,
-		LogFile:             e.LogFile,
-		Command:             e.Command,
-		Target:              e.Target,
-		Targets:             e.Targets,
-		Platform:            e.Platform,
-		Via:                 e.Via,
-		ConfigName:          e.ConfigName,
-		Node:                e.Node,
-		Manifest:            e.Manifest,
-		Container:           e.Container,
-		ExecutedTestsCount:  e.ExecutedTestsCount,
-		SucceededTestsCount: e.SucceededTestsCount,
-		CreatedAt:           e.CreatedAt,
+		Id:                     e.Id,
+		RepositoryId:           e.RepositoryId,
+		JobName:                e.JobName,
+		ParsedJobConfiguration: e.ParsedJobConfiguration,
+		Revision:               e.Revision,
+		IsTrunk:                e.IsTrunk,
+		BazelVersion:           e.BazelVersion,
+		Success:                e.Success,
+		LogFile:                e.LogFile,
+		Command:                e.Command,
+		Target:                 e.Target,
+		Targets:                e.Targets,
+		Platform:               e.Platform,
+		Via:                    e.Via,
+		ConfigName:             e.ConfigName,
+		Node:                   e.Node,
+		Manifest:               e.Manifest,
+		Container:              e.Container,
+		ExecutedTestsCount:     e.ExecutedTestsCount,
+		SucceededTestsCount:    e.SucceededTestsCount,
+		CreatedAt:              e.CreatedAt,
+	}
+	if e.JobConfiguration != nil {
+		v := *e.JobConfiguration
+		n.JobConfiguration = &v
 	}
 	if e.StartAt != nil {
 		v := *e.StartAt

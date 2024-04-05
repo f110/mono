@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.starlark.net/starlark"
 )
 
 func TestReadConfig(t *testing.T) {
@@ -218,4 +219,30 @@ func TestUnmarshalJob(t *testing.T) {
 	err = UnmarshalJob(gobJob, decodedJob)
 	require.NoError(t, err)
 	assert.Equal(t, "test_all", decodedJob.Name)
+}
+
+func Test(t *testing.T) {
+	raw := `job(
+    name = "test_all",
+    command = "test",
+    all_revision = True,
+    github_status = True,
+    targets = [
+        "//...",
+        "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
+        "-//third_party/universal-ctags/ctags:ctags",
+        "-//containers/zoekt-indexer/...",
+        "-//vendor/github.com/go-enry/go-oniguruma/...",
+    ],
+    platforms = [
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    ],
+    cpu_limit = "2000m",
+    memory_limit = "8192Mi",
+    event = ["push"],
+)`
+	config, err := Read(strings.NewReader(raw), "", "")
+	require.NoError(t, err)
+
+	starlark.AsString(config.Jobs[0].Secrets[0])
 }

@@ -222,10 +222,18 @@ func (d *Dashboard) handleTask(w http.ResponseWriter, req *http.Request) {
 	}
 
 	jobConf := &config.Job{}
-	if err := json.Unmarshal([]byte(task.JobConfiguration), jobConf); err != nil {
-		logger.Log.Warn("Failed to parse job configuration", logger.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConf); err != nil {
+			logger.Log.Warn("Failed to parse job configuration", logger.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else if len(task.ParsedJobConfiguration) > 0 {
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConf); err != nil {
+			logger.Log.Warn("Failed to parse job configuration by gob", logger.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	revUrl := ""
 	if strings.Contains(task.Repository.Url, "https://github.com") {
