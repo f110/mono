@@ -89,14 +89,24 @@ func (c *Command) Execute(args []string) error {
 	c.executed = true
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	cmd, nArgs := c.findCommand(args)
-	if cmd != nil {
-		return cmd.runCommand(ctx, nArgs)
+	if len(c.commands) != 0 {
+		if len(args) > 0 && args[0] == c.Use {
+			args = args[1:]
+		}
+		cmd, nArgs := c.findCommand(args)
+		if cmd != nil {
+			return cmd.runCommand(ctx, nArgs)
+		}
 	}
 	return c.runCommand(ctx, args)
 }
 
 func (c *Command) runCommand(ctx context.Context, args []string) error {
+	if len(args) > 0 {
+		if args[0] == c.Use {
+			args = args[1:]
+		}
+	}
 	fs := c.Flags().Copy()
 	parent := c.parent
 	for parent != nil {
@@ -191,6 +201,7 @@ func (c *Command) findCommand(args []string) (*Command, []string) {
 				return cmd.findCommand(append(nArgs, args[i+1:]...))
 			}
 		}
+		nArgs = append(nArgs, v)
 	}
 
 	return c, nArgs

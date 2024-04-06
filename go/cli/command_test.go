@@ -139,9 +139,31 @@ func TestCommand_Execute(t *testing.T) {
 		}
 		c1.Flags().String("override", "").Var(&override)
 
-		err := c1.Execute([]string{"ctl", "--override", "foo"})
+		err := c1.Execute([]string{"ctl", "--override", "foo", "bar"})
 		require.NoError(t, err)
 		assert.Equal(t, "foo", override)
-		assert.Equal(t, []string{}, args)
+		assert.Equal(t, []string{"bar"}, args)
+	})
+
+	t.Run("SubCommand", func(t *testing.T) {
+		c1 := &Command{
+			Use: "ctl",
+		}
+		var override string
+		var args []string
+		c2 := &Command{
+			Use: "get",
+			Run: func(_ context.Context, _ *Command, a []string) error {
+				args = a
+				return nil
+			},
+		}
+		c2.Flags().String("override", "").Var(&override)
+		c1.AddCommand(c2)
+
+		err := c1.Execute([]string{"ctl", "get", "--override", "foo", "bar"})
+		require.NoError(t, err)
+		assert.Equal(t, "foo", override)
+		assert.Equal(t, []string{"bar"}, args)
 	})
 }
