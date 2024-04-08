@@ -47,7 +47,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/yuin/goldmark v1.4.13
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	go.etcd.io/etcd/client/v3 v3.5.1
