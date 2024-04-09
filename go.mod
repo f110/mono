@@ -51,7 +51,7 @@ require (
 	github.com/yuin/goldmark v1.4.13
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	go.etcd.io/etcd/client/v3 v3.5.1
-	go.f110.dev/go-memcached v0.0.0-20230303100239-9d06b98d5678
+	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1
 	go.f110.dev/protoc-ddl v0.0.0-20240318220439-f8fad953adf2
 	go.f110.dev/xerrors v0.0.0-20240327103611-82ace5d19d4e

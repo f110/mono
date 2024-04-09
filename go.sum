@@ -1458,8 +1458,8 @@ go.etcd.io/etcd/client/pkg/v3 v3.5.1 h1:XIQcHCFSG53bJETYeRJtIxdLv2EWRGxcfzR8lSnT
 go.etcd.io/etcd/client/pkg/v3 v3.5.1/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
 go.etcd.io/etcd/client/v3 v3.5.1 h1:oImGuV5LGKjCqXdjkMHCyWa5OO1gYKCnC/1sgdfj1Uk=
 go.etcd.io/etcd/client/v3 v3.5.1/go.mod h1:OnjH4M8OnAotwaB2l9bVgZzRFKru7/ZMoS46OtKyd3Q=
-go.f110.dev/go-memcached v0.0.0-20230303100239-9d06b98d5678 h1:Sj8G8UQ+tpBDkMU03+avuNpngy362kqvAmGP1XuuVUg=
-go.f110.dev/go-memcached v0.0.0-20230303100239-9d06b98d5678/go.mod h1:qsC70AjhvI2KStwgacc3f+cLy7o5SB04H4zKA3e1W7o=
+go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c h1:9rI3TfcM1tJs5J6YT8OQPnFsmdfsxXWL14oHnIFD3iY=
+go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c/go.mod h1:qsC70AjhvI2KStwgacc3f+cLy7o5SB04H4zKA3e1W7o=
 go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1 h1:g9CKP+hJboQpgi/FwrXcaV208b6YmqW3DAauot/Z48I=
 go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1/go.mod h1:5HBQuFSb4rZa5YP0/4Ez7QMIQoAop/pHXcB8QAUA8po=
 go.f110.dev/protoc-ddl v0.0.0-20240318220439-f8fad953adf2 h1:AHqwiVBem0i/BeWlxtuH8iUCkow7vMoNi9B9Qmgru0U=

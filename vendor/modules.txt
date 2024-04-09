@@ -946,7 +946,7 @@ go.etcd.io/etcd/client/v3
 go.etcd.io/etcd/client/v3/credentials
 go.etcd.io/etcd/client/v3/internal/endpoint
 go.etcd.io/etcd/client/v3/internal/resolver
-# go.f110.dev/go-memcached v0.0.0-20230303100239-9d06b98d5678
+# go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 ## explicit; go 1.20
 go.f110.dev/go-memcached/client
 go.f110.dev/go-memcached/errors
