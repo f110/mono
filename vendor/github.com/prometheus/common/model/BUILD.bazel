@@ -8,7 +8,6 @@ go_library(
         "fnv.go",
         "labels.go",
         "labelset.go",
-        "metadata.go",
         "metric.go",
         "model.go",
         "signature.go",
@@ -22,8 +21,4 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/prometheus/common/model",
     importpath = "github.com/prometheus/common/model",
     visibility = ["//visibility:public"],
-    deps = [
-        "//vendor/github.com/prometheus/client_model/go",
-        "//vendor/google.golang.org/protobuf/proto",
-    ],
 )

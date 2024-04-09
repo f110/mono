@@ -38,9 +38,9 @@ require (
 	github.com/nats-io/nats.go v1.13.0
 	github.com/nissy/bon v1.3.0
 	github.com/peco/peco v0.5.8
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.48.0
+	github.com/prometheus/common v0.44.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v3 v3.22.4
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
@@ -171,6 +171,7 @@ require (
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab // indirect
 	github.com/minio/md5-simd v1.1.1 // indirect
