@@ -39,7 +39,7 @@ require (
 	github.com/nissy/bon v1.3.0
 	github.com/peco/peco v0.5.8
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/client_model v0.5.0
+	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.48.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v3 v3.22.4
