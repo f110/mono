@@ -19,6 +19,7 @@ go_library(
         "int64.go",
         "nocmp.go",
         "pointer_go118.go",
+        "pointer_go118_pre119.go",
         "pointer_go119.go",
         "string.go",
         "string_ext.go",

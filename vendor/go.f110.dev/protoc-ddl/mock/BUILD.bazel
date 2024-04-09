@@ -6,5 +6,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/go.f110.dev/protoc-ddl/mock",
     importpath = "go.f110.dev/protoc-ddl/mock",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/golang.org/x/xerrors"],
+    deps = ["//vendor/go.f110.dev/xerrors"],
 )

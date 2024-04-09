@@ -3,7 +3,7 @@ package mock
 import (
 	"fmt"
 
-	"golang.org/x/xerrors"
+	"go.f110.dev/xerrors"
 )
 
 type call struct {
