@@ -40,7 +40,7 @@ require (
 	github.com/peco/peco v0.5.8
 	github.com/prometheus/client_golang v1.19.0
 	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.48.0
+	github.com/prometheus/common v0.52.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v3 v3.22.4
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
@@ -59,8 +59,8 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.22.0
 	golang.org/x/mod v0.15.0
-	golang.org/x/net v0.21.0
-	golang.org/x/oauth2 v0.16.0
+	golang.org/x/net v0.22.0
+	golang.org/x/oauth2 v0.18.0
 	golang.org/x/term v0.19.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
 	google.golang.org/api v0.126.0

@@ -20,5 +20,6 @@ go_library(
         "//vendor/google.golang.org/protobuf/encoding/protodelim",
         "//vendor/google.golang.org/protobuf/encoding/prototext",
         "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
     ],
 )

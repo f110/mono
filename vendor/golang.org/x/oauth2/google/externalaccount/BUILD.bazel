@@ -5,18 +5,18 @@ go_library(
     srcs = [
         "aws.go",
         "basecredentials.go",
-        "err.go",
         "executablecredsource.go",
         "filecredsource.go",
         "header.go",
-        "impersonate.go",
+        "programmaticrefreshcredsource.go",
         "urlcredsource.go",
     ],
-    importmap = "go.f110.dev/mono/vendor/golang.org/x/oauth2/google/internal/externalaccount",
-    importpath = "golang.org/x/oauth2/google/internal/externalaccount",
-    visibility = ["//vendor/golang.org/x/oauth2/google:__subpackages__"],
+    importmap = "go.f110.dev/mono/vendor/golang.org/x/oauth2/google/externalaccount",
+    importpath = "golang.org/x/oauth2/google/externalaccount",
+    visibility = ["//visibility:public"],
     deps = [
         "//vendor/golang.org/x/oauth2",
+        "//vendor/golang.org/x/oauth2/google/internal/impersonate",
         "//vendor/golang.org/x/oauth2/google/internal/stsexchange",
     ],
 )
