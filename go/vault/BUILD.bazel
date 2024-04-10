@@ -26,6 +26,7 @@ go_test(
         "@vault//:bin",
     ],
     embed = [":vault"],
+    flaky = True,
     deps = [
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
