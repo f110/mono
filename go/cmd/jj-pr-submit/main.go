@@ -4,9 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/csv"
 	"fmt"
-	"io"
 	"io/fs"
 	"net/url"
 	"os"
@@ -337,41 +335,70 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend bool) (stackedCommit, error) {
-	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ branches ++ "]\\" ++ description ++ "\n"`
+	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ branches ++ "]\\" ++ description ++ "\\\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	r := csv.NewReader(bytes.NewReader(buf))
-	r.Comma = '\\'
-	r.LazyQuotes = true
+
+	type readState int
+	const (
+		readStateChangeID readState = iota
+		readCommitID
+		readBranches
+		readDescription
+	)
 	var commits stackedCommit
-	for {
-		line, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, xerrors.WithStack(err)
+	var changeID, commitID, branches, description string
+	var prev int
+	var state = readStateChangeID
+	for i := 0; i < len(buf); i++ {
+		if buf[i] != '\\' {
+			continue
 		}
 
-		if len(line) < 3 {
-			continue
+		switch state {
+		case readStateChangeID:
+			changeID = string(buf[prev:i])
+			state = readCommitID
+			prev = i + 1
+		case readCommitID:
+			commitID = string(buf[prev:i])
+			state = readBranches
+			prev = i + 1
+		case readBranches:
+			if buf[i-1] != ']' {
+				continue
+			}
+			branches = string(buf[prev+1 : i-1])
+			state = readDescription
+			prev = i + 1
+		case readDescription:
+			if buf[i+1] != '\n' {
+				continue
+			}
+			description = string(buf[prev:i])
+			if !(withoutNoSend && strings.HasPrefix(description, noSendTag)) {
+				cm := &commit{
+					ChangeID:    changeID,
+					CommitID:    commitID,
+					Branch:      strings.TrimSuffix(branches, "*"),
+					Description: description,
+				}
+				commits = append(commits, cm)
+				logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
+			}
+
+			// Next commit
+			i++
+			changeID, commitID, branches, description = "", "", "", ""
+			state = readStateChangeID
+			prev = i + 1
 		}
-		if withoutNoSend && strings.HasPrefix(line[3], noSendTag) {
-			continue
-		}
-		cm := &commit{
-			ChangeID:    line[0],
-			CommitID:    line[1],
-			Branch:      strings.TrimSuffix(line[2][1:len(line[2])-1], "*"),
-			Description: line[3],
-		}
-		commits = append(commits, cm)
-		logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
 	}
+
 	if len(commits) > 9 && !c.Force {
 		return nil, xerrors.Newf("there are %d commits in the stack.", len(commits))
 	}
