@@ -16,7 +16,7 @@ require (
 	github.com/aws/smithy-go v1.11.0
 	github.com/bazelbuild/buildtools v0.0.0-20220531122519-a43aed7014c8
 	github.com/blang/semver/v4 v4.0.0
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/go-sql-driver/mysql v1.7.1
