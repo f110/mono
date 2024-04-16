@@ -1,4 +1,6 @@
-// Copyright 2018 The etcd Authors
+// Go support for leveled logs, analogous to https://github.com/google/glog.
+//
+// Copyright 2023 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +14,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package clientv3
+//go:build !(unix || windows)
+
+package glog
 
 import (
-	"math/rand"
-	"time"
+	"fmt"
+	"runtime"
 )
 
-// jitterUp adds random jitter to the duration.
-//
-// This adds or subtracts time from the duration within a given jitter fraction.
-// For example for 10s and jitter 0.1, it will return a time within [9s, 11s])
-//
-// Reference: https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils
-func jitterUp(duration time.Duration, jitter float64) time.Duration {
-	multiplier := jitter * (rand.Float64()*2 - 1)
-	return time.Duration(float64(duration) * (1 + multiplier))
+// abortProcess returns an error on platforms that presumably don't support signals.
+func abortProcess() error {
+	return fmt.Errorf("not sending SIGABRT (%s/%s does not support signals), falling back", runtime.GOOS, runtime.GOARCH)
+
 }
