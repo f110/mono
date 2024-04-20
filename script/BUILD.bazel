@@ -33,3 +33,9 @@ sh_binary(
     srcs = ["backup-dependent-archives.sh"],
     deps = ["//script/lib"],
 )
+
+sh_binary(
+    name = "vendor_minio",
+    srcs = ["vendor-minio.sh"],
+    deps = ["//script/lib"],
+)
