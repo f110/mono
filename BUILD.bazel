@@ -22,9 +22,9 @@ go_vendor(
 load("//build/rules/kind:cluster.bzl", "cluster")
 
 cluster(
-    name = "mono",
+    name = "k8scluster",
     manifest = "//manifests/devcluster",
-    version = "v1.24.0",
+    version = "v1.29.2",
     worker_num = 3,
 )
 

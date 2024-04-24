@@ -6,6 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/kindcluster",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/k8s/kind",
         "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/gopkg.in/yaml.v3:yaml_v3",

@@ -67,10 +67,10 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 		log.Print("Cluster is already exist. Only apply the manifest.")
 	}
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 3*time.Minute)
+	cancelFunc()
 	if err := kindCluster.WaitReady(ctx); err != nil {
 		return xerrors.WithStack(err)
 	}
-	cancelFunc()
 	if err := kindCluster.Apply(manifestFile, "monodev"); err != nil {
 		return xerrors.WithStack(err)
 	}
