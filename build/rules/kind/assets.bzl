@@ -1,4 +1,148 @@
 KIND_ASSETS = {
+    "0.22.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.22.0/kind-linux-amd64",
+                "e4264d7ee07ca642fe52818d7c0ed188b193c214889dd055c929dbcb968d1f62",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.22.0/kind-darwin-amd64",
+                "28a9f7ad7fd77922c639e21c034d0f989b33402693f4f842099cd9185b144d20",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.22.0/kind-darwin-arm64",
+                "c8dd3b287965150ae4db668294edc48229116e95d94620c306d8fae932ee633f",
+            ),
+        },
+    },
+    "0.21.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.21.0/kind-linux-amd64",
+                "7bf22d258142eaa0e53899ded3ad06bae1b3e8ae5425a5e4dc5c8f9f263094a7",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.21.0/kind-darwin-amd64",
+                "09bc4cc9db750f874d12d333032e6e087f3ad06bff48131230865c5caee627af",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.21.0/kind-darwin-arm64",
+                "d9c7c5d0cf6b9953be73207a0ad798ec6f015305b1aa6ee9f61468b222acbf99",
+            ),
+        },
+    },
+    "0.20.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-linux-amd64",
+                "513a7213d6d3332dd9ef27c24dab35e5ef10a04fa27274fe1c14d8a246493ded",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-darwin-amd64",
+                "bffd8fb2006dc89fa0d1dde5ba6bf48caacb707e4df8551528f49145ebfeb7ad",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.20.0/kind-darwin-arm64",
+                "8df041a5cae55471f3b039c3c9942226eb909821af63b5677fc80904caffaabf",
+            ),
+        },
+    },
+    "0.19.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.19.0/kind-linux-amd64",
+                "b543dca8440de4273be19ad818dcdfcf12ad1f767c962242fcccdb383dff893b",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.19.0/kind-darwin-amd64",
+                "32bd46859a98bffdfc2e594850c4147d297b3f93007f8376b6d4a28e82dee29a",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.19.0/kind-darwin-arm64",
+                "2628c53ddf4a2de19950df0452176e400e33b8c83834afab93651c2b6f9546bd",
+            ),
+        },
+    },
+    "0.18.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-linux-amd64",
+                "705c722b0a87c9068e183f6d8baecd155a97a9683949ca837c2a500c9aa95c63",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-darwin-amd64",
+                "9c91e3a6f380ee4cab79094d3fade94eb10a4416d8d3a6d3e1bb9c616f392de4",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.18.0/kind-darwin-arm64",
+                "96e0765d385c4e5457dc95dc49f66d385727885dfe1ad77520af0a32b7f8ccb2",
+            ),
+        },
+    },
+    "0.17.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-linux-amd64",
+                "a8c045856db33f839908b6acb90dc8ec397253ffdaef7baf058f5a542e009b9c",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-darwin-amd64",
+                "a4e9f4cf18ec762934f4acd68752fe085bcded3a736258de0367085525180342",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-darwin-arm64",
+                "b9afee2707e711fb5d39049a361972f8c44ee7ce6145cafd0f7e4b47ceec1409",
+            ),
+        },
+    },
+    "0.16.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.16.0/kind-linux-amd64",
+                "a9438c56776bde1637ec763f3e450078258b791aaa631b8211b7ed3e4f50d089",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.16.0/kind-darwin-amd64",
+                "9936eafdcc4e34dfa3c9ad0e57162e19575c6581ab28f6780dc434bcb9245ecd",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.16.0/kind-darwin-arm64",
+                "3e8ac912f24066f8de8fbaed471b76307484afa8165193ee797b622beba54d0a",
+            ),
+        },
+    },
+    "0.15.0": {
+        "linux": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.15.0/kind-linux-amd64",
+                "278a19e4a17cdb7ecc115085d058212e012f11ff93a3465cff34ec0cf9f5d89b",
+            ),
+        },
+        "darwin": {
+            "amd64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.15.0/kind-darwin-amd64",
+                "104442150b0ec00d874e860c7a3e743e0d278fd6a24352467af3b86329a00a27",
+            ),
+            "arm64": (
+                "https://github.com/kubernetes-sigs/kind/releases/download/v0.15.0/kind-darwin-arm64",
+                "303b78486b62c41fdf18d5f91422d68d29adbb784fd3e40e75ce3582ce06e36e",
+            ),
+        },
+    },
     "0.14.0": {
         "linux": {
             "amd64": (

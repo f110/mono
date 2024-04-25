@@ -9,7 +9,7 @@ load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 binaries = {
     "kustomize": "v4.5.4",
-    "kind": "0.14.0",
+    "kind": "0.22.0",
     "etcd": "3.5.6",
     "minio": "RELEASE.2022-12-02T19-19-22Z",
     "vault": "1.11.4",
