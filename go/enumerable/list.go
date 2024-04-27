@@ -77,3 +77,12 @@ func FindAll[T comparable](ary []T, f func(T) bool) []T {
 	}
 	return n
 }
+
+func Index[T any](ary []T, f func(T) bool) int {
+	for i, v := range ary {
+		if f(v) {
+			return i
+		}
+	}
+	return -1
+}

@@ -28,3 +28,8 @@ func TestUniq(t *testing.T) {
 func TestInsertBefore(t *testing.T) {
 	assert.Equal(t, []int{1, 2, 3, 4, 5}, InsertBefore([]int{1, 2, 3, 5}, 5, 4))
 }
+
+func TestIndex(t *testing.T) {
+	assert.Equal(t, -1, Index([]int{1, 2, 3, 4, 5}, func(i int) bool { return i == 6 }))
+	assert.Equal(t, 4, Index([]int{1, 2, 3, 4, 5}, func(i int) bool { return i == 5 }))
+}

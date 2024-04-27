@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	ErrUnrecognizedState = xerrors.New("unrecognized state")
+	ErrUnrecognizedState = xerrors.Define("unrecognized state")
 )
 
 type FSM struct {
