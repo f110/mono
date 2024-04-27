@@ -92,7 +92,7 @@ func (m *ModuleProxy) Versions(ctx context.Context, module string) ([]string, er
 	}
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return nil, xerrors.Newf("%s is not found", module)
+		return nil, xerrors.Definef("%s is not found", module).WithStack()
 	}
 
 	var versions []string
@@ -110,7 +110,7 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, moduleName, version string) (
 
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return Info{}, xerrors.Newf("%s is not found", moduleName)
+		return Info{}, xerrors.Definef("%s is not found", moduleName).WithStack()
 	}
 	for _, v := range mod.Versions {
 		if version == v.Semver {
@@ -138,7 +138,7 @@ func (m *ModuleProxy) GetInfo(ctx context.Context, moduleName, version string) (
 		}
 	}
 
-	return Info{}, xerrors.Newf("%s is not found in %s", version, moduleName)
+	return Info{}, xerrors.Definef("%s is not found in %s", version, moduleName).WithStack()
 }
 
 func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info, error) {
@@ -149,7 +149,7 @@ func (m *ModuleProxy) GetLatestVersion(ctx context.Context, module string) (Info
 
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return Info{}, xerrors.Newf("%s is not found", module)
+		return Info{}, xerrors.Definef("%s is not found", module).WithStack()
 	}
 	if len(mod.Versions) > 0 {
 		modVer := mod.Versions[len(mod.Versions)-1]
@@ -171,7 +171,7 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) 
 
 	goMod := moduleRoot.FindModule(moduleName)
 	if goMod == nil {
-		return "", xerrors.Newf("%s is not found", version)
+		return "", xerrors.Definef("%s is not found", version).WithStack()
 	}
 
 	goModFile, err := goMod.ModuleFile(version)
@@ -198,7 +198,7 @@ func (m *ModuleProxy) GetGoMod(ctx context.Context, moduleName, version string) 
 		}
 	}
 
-	return "", xerrors.Newf("%s is not found", version)
+	return "", xerrors.Definef("%s is not found", version).WithStack()
 }
 
 func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, version string) error {
@@ -224,7 +224,7 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, versi
 		return nil
 	}
 
-	return xerrors.Newf("%s is not found", version)
+	return xerrors.Definef("%s is not found", version).WithStack()
 }
 
 func (m *ModuleProxy) CachedModuleRoots() ([]*ModuleRoot, error) {
@@ -370,7 +370,7 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 		return "", xerrors.WithStack(err)
 	}
 	if contents == nil {
-		return "", xerrors.Newf("%s is not found", version)
+		return "", xerrors.Definef("%s is not found", version).WithStack()
 	}
 	buf, err := contents.GetContent()
 	if err != nil {
@@ -413,7 +413,7 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 		return "", xerrors.WithStack(err)
 	}
 	if contents == nil {
-		return "", xerrors.Newf("%s is not found", pseudoVersion)
+		return "", xerrors.Definef("%s is not found", pseudoVersion).WithStack()
 	}
 	buf, err := contents.GetContent()
 	if err != nil {
@@ -437,7 +437,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Newf("%s module is not found", moduleName)
+		return xerrors.Definef("%s module is not found", moduleName).WithStack()
 	}
 
 	logger.Log.Debug("Make the archive file through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
@@ -475,7 +475,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
-		return xerrors.Newf("%s module is not found", moduleName)
+		return xerrors.Definef("%s module is not found", moduleName).WithStack()
 	}
 
 	logger.Log.Debug("Make the archive file for pseudo-version through GitHub API", zap.String("url", moduleRoot.RepositoryURL))
@@ -533,7 +533,7 @@ type ModuleArchive struct {
 func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot, module, version string, commit *github.RepositoryCommit) (*ModuleArchive, error) {
 	mod := moduleRoot.FindModule(module)
 	if mod == nil {
-		return nil, xerrors.Newf("%s module is not found", module)
+		return nil, xerrors.Definef("%s module is not found", module).WithStack()
 	}
 
 	return &ModuleArchive{ModuleRoot: moduleRoot, Module: mod, Version: version, Revision: commit.GetSHA(), ghClient: ghClient}, nil

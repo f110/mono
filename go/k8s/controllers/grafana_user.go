@@ -162,7 +162,7 @@ func (u *GrafanaUserController) GetObject(key string) (runtime.Object, error) {
 func (u *GrafanaUserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	app, ok := obj.(*grafanav1alpha1.Grafana)
 	if !ok {
-		return nil, xerrors.Newf("unexpected object type: %v", obj)
+		return nil, xerrors.Definef("unexpected object type: %v", obj).WithStack()
 	}
 
 	app, err := u.client.UpdateGrafana(ctx, app, metav1.UpdateOptions{})
@@ -180,7 +180,7 @@ func (u *GrafanaUserController) ensureUsers(app *grafanav1alpha1.Grafana, users 
 	}
 	password, ok := secret.Data[app.Spec.AdminPasswordSecret.Key]
 	if !ok {
-		return xerrors.Newf("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name)
+		return xerrors.Definef("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name).WithStack()
 	}
 	svc, err := u.serviceLister.Services(app.Namespace).Get(app.Spec.Service.Name)
 	if err != nil {

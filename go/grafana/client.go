@@ -78,7 +78,7 @@ func (c *Client) AddUser(user *User) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Newf("failed create user: %s", res.Status)
+		return xerrors.Definef("failed create user: %s", res.Status).WithStack()
 	}
 	res.Body.Close()
 
@@ -102,7 +102,7 @@ func (c *Client) DeleteUser(id int) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Newf("failed delete user: %s", res.Status)
+		return xerrors.Definef("failed delete user: %s", res.Status).WithStack()
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func (c *Client) ChangeUserPermission(id int, admin bool) error {
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Newf("failed update user permission: %s", res.Status)
+		return xerrors.Definef("failed update user permission: %s", res.Status).WithStack()
 	}
 
 	return nil

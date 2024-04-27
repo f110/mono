@@ -26,7 +26,7 @@ func WaitListen(addr string, timeout time.Duration) error {
 	retry := 0
 	for {
 		if retry > 10 {
-			return xerrors.WithStack(xerrors.New("netutil: timed out"))
+			return xerrors.Define("netutil: timed out").WithStack()
 		}
 
 		conn, err := net.DialTimeout("tcp", addr, 10*time.Millisecond)

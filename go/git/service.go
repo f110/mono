@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -66,7 +65,7 @@ func (g *DataService) ListRepositories(_ context.Context, _ *RequestListReposito
 func (g *DataService) ListReferences(_ context.Context, req *RequestListReferences) (*ResponseListReferences, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	refs, err := repo.References()
@@ -95,7 +94,7 @@ func (g *DataService) ListReferences(_ context.Context, req *RequestListReferenc
 func (g *DataService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	r, err := repo.Remote("origin")
@@ -122,7 +121,7 @@ func (g *DataService) GetRepository(_ context.Context, req *RequestGetRepository
 func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
@@ -142,10 +141,10 @@ func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) 
 func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	if req.Sha == "" && req.Ref == "" {
-		return nil, errors.New("SHA or ref field is required")
+		return nil, xerrors.New("SHA or ref field is required")
 	}
 
 	var h plumbing.Hash
@@ -194,7 +193,7 @@ func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*Resp
 func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	var tree *object.Tree
@@ -212,13 +211,13 @@ func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*Response
 		} else {
 			ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
 			if err != nil {
-				return nil, errors.New("ref is not found")
+				return nil, xerrors.New("ref is not found")
 			}
 			commitHash = ref.Hash()
 		}
 		commit, err := repo.CommitObject(commitHash)
 		if err != nil {
-			return nil, errors.New("commit is not found")
+			return nil, xerrors.New("commit is not found")
 		}
 		t, err := commit.Tree()
 		if err != nil {
@@ -230,10 +229,10 @@ func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*Response
 	if req.Path != "/" {
 		t, err := tree.Tree(req.Path)
 		if err != nil {
-			return nil, errors.New("path is not found")
+			return nil, xerrors.New("path is not found")
 		}
 		if t == nil {
-			return nil, errors.New("tree object is not found")
+			return nil, xerrors.New("tree object is not found")
 		}
 		pathTree = t
 	} else {
@@ -262,7 +261,7 @@ func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*Response
 func (g *DataService) GetBlob(_ context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	blob, err := repo.BlobObject(plumbing.NewHash(req.Sha))
 	if err != nil {
@@ -289,7 +288,7 @@ func (g *DataService) GetBlob(_ context.Context, req *RequestGetBlob) (*Response
 func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	var commitHash plumbing.Hash
@@ -298,24 +297,24 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 	} else {
 		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
 		if err != nil {
-			return nil, errors.New("ref is not found")
+			return nil, xerrors.New("ref is not found")
 		}
 		commitHash = ref.Hash()
 	}
 
 	commit, err := repo.CommitObject(commitHash)
 	if err != nil {
-		return nil, errors.New("commit is not found")
+		return nil, xerrors.New("commit is not found")
 	}
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, xerrors.Newf("failed to get tree: %v", err)
+		return nil, xerrors.WithMessage(err, "failed to get tree")
 	}
 	var treeEntry *object.TreeEntry
 	if req.Path != "/" {
 		te, err := tree.FindEntry(req.Path)
 		if err != nil {
-			return nil, xerrors.Newf("could not find the tree entry %s in %s: %v", req.Path, tree.Hash.String(), err)
+			return nil, xerrors.WithMessagef(err, "could not find the tree entry %s in %s", req.Path, tree.Hash.String())
 		}
 		treeEntry = te
 	} else {
@@ -337,26 +336,26 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 	case filemode.Regular, filemode.Executable:
 		blob, err := repo.BlobObject(treeEntry.Hash)
 		if err != nil {
-			return nil, xerrors.Newf("failed to get blob: %v", err)
+			return nil, xerrors.WithMessage(err, "failed to get blob")
 		}
 		r, err := blob.Reader()
 		if err != nil {
-			return nil, xerrors.Newf("failed to get file reader: %v", err)
+			return nil, xerrors.WithMessage(err, "failed to get file reader")
 		}
 		defer r.Close()
 		buf, err := io.ReadAll(r)
 		if err != nil {
-			return nil, xerrors.Newf("failed to read file: %v", err)
+			return nil, xerrors.WithMessage(err, "failed to read file")
 		}
 
 		var rawURL, editURL string
 		remote, err := repo.Remote("origin")
 		if err != nil {
-			return nil, xerrors.Newf("failed to get remote: %v", err)
+			return nil, xerrors.WithMessage(err, "failed to get remote")
 		}
 		u, err := url.Parse(remote.Config().URLs[0])
 		if err != nil {
-			return nil, xerrors.Newf("invalid remote url %s: %v", remote.Config().URLs[0], err)
+			return nil, xerrors.WithMessagef(err, "invalid remote url %s", remote.Config().URLs[0])
 		}
 		switch u.Host {
 		case "github.com":
@@ -389,7 +388,7 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 
 	var commitHash plumbing.Hash
@@ -398,21 +397,21 @@ func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, 
 	} else {
 		ref, err := repo.Reference(plumbing.ReferenceName(req.Ref), false)
 		if err != nil {
-			return nil, errors.New("ref is not found")
+			return nil, xerrors.New("ref is not found")
 		}
 		commitHash = ref.Hash()
 	}
 
 	commit, err := repo.CommitObject(commitHash)
 	if err != nil {
-		return nil, errors.New("commit is not found")
+		return nil, xerrors.New("commit is not found")
 	}
 	if req.Path == "" || req.Path == "/" {
 		return &ResponseStat{Hash: commit.TreeHash.String(), Mode: uint32(filemode.Dir)}, nil
 	}
 	tree, err := commit.Tree()
 	if err != nil {
-		return nil, xerrors.Newf("failed to get tree: %v", err)
+		return nil, xerrors.WithMessage(err, "failed to get tree")
 	}
 	if req.Path[0] == '/' {
 		req.Path = req.Path[1:]
@@ -422,7 +421,7 @@ func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, 
 	}
 	treeEntry, err := tree.FindEntry(req.Path)
 	if err != nil {
-		return nil, xerrors.Newf("could not find the tree entry %s in %s: %v", req.Path, tree.Hash.String(), err)
+		return nil, xerrors.WithMessagef(err, "could not find the tree entry %s in %s", req.Path, tree.Hash.String())
 	}
 
 	return &ResponseStat{Name: path.Join(path.Dir(req.Path), treeEntry.Name), Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
@@ -431,7 +430,7 @@ func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, 
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	iter, err := repo.Tags()
 	if err != nil {
@@ -461,7 +460,7 @@ func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*Response
 func (g *DataService) ListBranch(_ context.Context, req *RequestListBranch) (*ResponseListBranch, error) {
 	repo, ok := g.repo[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	iter, err := repo.Branches()
 	if err != nil {

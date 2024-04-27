@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/logger"
@@ -42,7 +43,7 @@ func NewPackageIndex(ctx context.Context, ss *Snapshot) (*PackageIndex, error) {
 	switch res.StatusCode {
 	case http.StatusOK:
 	default:
-		return nil, fmt.Errorf("got %s", res.Status)
+		return nil, xerrors.Definef("got %s", res.Status).WithStack()
 	}
 
 	r, err := gzip.NewReader(res.Body)

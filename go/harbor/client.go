@@ -72,9 +72,9 @@ func (h *Harbor) ListProjects() ([]Project, error) {
 	case http.StatusOK:
 		// Succeeded
 	case http.StatusUnauthorized:
-		return nil, xerrors.New("unauthorized")
+		return nil, xerrors.Define("unauthorized").WithStack()
 	default:
-		return nil, xerrors.Newf("harbor: list project. unknown status code: %d", res.StatusCode)
+		return nil, xerrors.Definef("harbor: list project. unknown status code: %d", res.StatusCode).WithStack()
 	}
 
 	projects := make([]Project, 0)
@@ -101,7 +101,7 @@ func (h *Harbor) ExistProject(name string) (bool, error) {
 	case http.StatusNotFound:
 		return false, nil
 	default:
-		return false, xerrors.Newf("harbor: exists project. unknown status code: %d", res.StatusCode)
+		return false, xerrors.Definef("harbor: exists project. unknown status code: %d", res.StatusCode).WithStack()
 	}
 }
 
@@ -125,9 +125,9 @@ func (h *Harbor) NewProject(p *NewProjectRequest) error {
 	case http.StatusCreated:
 	// Succeeded
 	case http.StatusConflict:
-		return xerrors.Newf("%s already exists", p.ProjectName)
+		return xerrors.Definef("%s already exists", p.ProjectName).WithStack()
 	default:
-		return xerrors.Newf("harbor: new project. unknown status code: %d", res.StatusCode)
+		return xerrors.Definef("harbor: new project. unknown status code: %d", res.StatusCode).WithStack()
 	}
 
 	return nil
@@ -149,11 +149,11 @@ func (h *Harbor) DeleteProject(projectId int) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusBadRequest:
-		return xerrors.Newf("invalid project id: %d", projectId)
+		return xerrors.Definef("invalid project id: %d", projectId).WithStack()
 	case http.StatusNotFound:
-		return xerrors.New("project not found")
+		return xerrors.Define("project not found").WithStack()
 	default:
-		return xerrors.Newf("harbor: delete project. unknown status code: %d", res.StatusCode)
+		return xerrors.Definef("harbor: delete project. unknown status code: %d", res.StatusCode).WithStack()
 	}
 }
 
@@ -177,13 +177,13 @@ func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccount
 	case http.StatusCreated:
 	// Succeeded
 	case http.StatusUnauthorized:
-		return nil, xerrors.New("create robot account: not logged in")
+		return nil, xerrors.Define("create robot account: not logged in").WithStack()
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		return nil, xerrors.Newf("create robot acount: unknown status code: %d %s", res.StatusCode, string(b))
+		return nil, xerrors.Definef("create robot acount: unknown status code: %d %s", res.StatusCode, string(b)).WithStack()
 	}
 
 	result := &RobotAccount{}
@@ -209,13 +209,13 @@ func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 	case http.StatusOK:
 	// Succeeded
 	case http.StatusNotFound:
-		return xerrors.New("robot account is not found")
+		return xerrors.Define("robot account is not found").WithStack()
 	default:
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
-		return xerrors.Newf("delete robot account: unknown status code: %d %s", res.StatusCode, string(b))
+		return xerrors.Definef("delete robot account: unknown status code: %d %s", res.StatusCode, string(b)).WithStack()
 	}
 
 	return nil
@@ -236,11 +236,11 @@ func (h *Harbor) GetRobotAccounts(projectId int) ([]*RobotAccount, error) {
 	case http.StatusOK:
 		// Succeeded
 	case http.StatusBadRequest, http.StatusNotFound:
-		return nil, xerrors.New("get robot accounts: project id is not found or invalid")
+		return nil, xerrors.Define("get robot accounts: project id is not found or invalid").WithStack()
 	case http.StatusUnauthorized:
-		return nil, xerrors.New("get robot accounts: not logged in")
+		return nil, xerrors.Define("get robot accounts: not logged in").WithStack()
 	default:
-		return nil, xerrors.Newf("get robot accounts: unknown status code: %d", res.StatusCode)
+		return nil, xerrors.Definef("get robot accounts: unknown status code: %d", res.StatusCode).WithStack()
 	}
 
 	result := make([]*RobotAccount, 0)

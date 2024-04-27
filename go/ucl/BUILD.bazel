@@ -5,6 +5,7 @@ go_library(
     srcs = ["decode.go"],
     importpath = "go.f110.dev/mono/go/ucl",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/go.f110.dev/xerrors"],
 )
 
 go_test(

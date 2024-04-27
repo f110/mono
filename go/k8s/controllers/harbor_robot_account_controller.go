@@ -195,7 +195,7 @@ func (c *HarborRobotAccountController) getProject(ctx context.Context, hra *harb
 	project, err := c.hClient.GetHarborProject(ctx, hra.Spec.ProjectNamespace, hra.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
 		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
-		return nil, xerrors.New("project not found")
+		return nil, xerrors.Define("project not found").WithStack()
 	} else if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

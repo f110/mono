@@ -54,7 +54,7 @@ func (g *GitHubClientFactory) Init() error {
 
 	if g.requiredCredential {
 		if g.Token == "" && !(g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "") {
-			return xerrors.New("any a credential for GitHub is mandatory. GitHub app or Personal access token is required")
+			return xerrors.Define("any a credential for GitHub is mandatory. GitHub app or Personal access token is required").WithStack()
 		}
 	}
 
@@ -69,7 +69,7 @@ func (g *GitHubClientFactory) Init() error {
 			return xerrors.WithStack(err)
 		}
 		if ok := rootCAs.AppendCertsFromPEM(b); !ok {
-			return xerrors.New("failed to read a certificate")
+			return xerrors.Define("failed to read a certificate").WithStack()
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: rootCAs}
 	}

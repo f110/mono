@@ -27,7 +27,7 @@ func redoTask(endpoint string, taskId int, via string) error {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return xerrors.Newf("failed trigger job: %s", res.Status)
+		return xerrors.Definef("failed trigger job: %s", res.Status).WithStack()
 	}
 	return nil
 }

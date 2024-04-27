@@ -182,7 +182,7 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org strin
 			fmt.Fprintf(os.Stderr, "Found %d issues\n", query.Search.IssueCount)
 		}
 		if query.Search.IssueCount > 1000 {
-			return nil, xerrors.New("result over than 1000. GitHub API can not fetch results over than 1000")
+			return nil, xerrors.Define("result over than 1000. GitHub API can not fetch results over than 1000").WithStack()
 		}
 		tickets = append(tickets, query.Search.Nodes...)
 
@@ -216,10 +216,10 @@ func showResult() error {
 	}
 
 	if os.Getenv("GITHUB_APITOKEN") == "" {
-		return xerrors.New("GITHUB_APITOKEN is mandatory environment variable")
+		return xerrors.Define("GITHUB_APITOKEN is mandatory environment variable").WithStack()
 	}
 	if start == "" {
-		return xerrors.New("start is a mandatory argument")
+		return xerrors.Define("start is a mandatory argument").WithStack()
 	}
 
 	ctx := context.Background()

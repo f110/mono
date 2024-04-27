@@ -113,7 +113,7 @@ func (b *ConsulBackupController) GetObject(key string) (runtime.Object, error) {
 func (b *ConsulBackupController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
 	backup, ok := obj.(*consulv1alpha1.ConsulBackup)
 	if !ok {
-		return nil, xerrors.Newf("unexpected object type: %T", obj)
+		return nil, xerrors.Definef("unexpected object type: %T", obj).WithStack()
 	}
 
 	updatedBackup, err := b.client.UpdateConsulBackup(ctx, backup, metav1.UpdateOptions{})
@@ -212,7 +212,7 @@ func (b *ConsulBackupController) storeBackupFile(
 		}
 		accessKey, ok := accessKeySecret.Data[spec.Credential.AccessKeyID.Key]
 		if !ok {
-			return xerrors.Newf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Definef("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
 		if err != nil {
@@ -220,7 +220,7 @@ func (b *ConsulBackupController) storeBackupFile(
 		}
 		secretAccessKey, ok := secretAccessKeySecret.Data[spec.Credential.SecretAccessKey.Key]
 		if !ok {
-			return xerrors.Newf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Definef("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 
 		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
@@ -246,7 +246,7 @@ func (b *ConsulBackupController) storeBackupFile(
 		}
 		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Newf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
+			return xerrors.Definef("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name).WithStack()
 		}
 
 		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})
@@ -279,7 +279,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 		}
 		accessKey, ok := accessKeySecret.Data[spec.Credential.AccessKeyID.Key]
 		if !ok {
-			return xerrors.Newf("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Definef("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
 		if err != nil {
@@ -287,7 +287,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 		}
 		secretAccessKey, ok := secretAccessKeySecret.Data[spec.Credential.SecretAccessKey.Key]
 		if !ok {
-			return xerrors.Newf("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name)
+			return xerrors.Definef("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 
 		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
@@ -321,7 +321,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 		}
 		b, ok := credential.Data[spec.Credential.ServiceAccountJSON.Key]
 		if !ok {
-			return xerrors.Newf("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name)
+			return xerrors.Definef("%s is not found in %s", spec.Credential.ServiceAccountJSON.Key, spec.Credential.ServiceAccountJSON.Name).WithStack()
 		}
 
 		gcsClient := storage.NewGCS(b, spec.Bucket, storage.GCSOptions{})

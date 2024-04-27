@@ -375,7 +375,7 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 		return xerrors.WithStack(err)
 	}
 	if res.StatusCode != http.StatusOK {
-		return xerrors.New("could not get pr")
+		return xerrors.Define("could not get pr").WithStack()
 	}
 	revision := pr.GetHead().GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)

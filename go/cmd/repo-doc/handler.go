@@ -223,7 +223,7 @@ func (h *httpHandler) makeDocument(file *git.ResponseGetFile, blobPath string) (
 		return d, nil
 	}
 
-	return nil, xerrors.New("not implemented")
+	return nil, xerrors.Define("not implemented").WithStack()
 }
 
 type directoryEntry struct {

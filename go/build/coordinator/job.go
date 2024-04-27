@@ -270,16 +270,16 @@ func (j *JobBuilder) Platform(p string) *JobBuilder {
 
 func (j *JobBuilder) Build() ([]runtime.Object, error) {
 	if j.job == nil {
-		return nil, xerrors.New("job is not set")
+		return nil, xerrors.Define("job is not set").WithStack()
 	}
 	if j.task == nil {
-		return nil, xerrors.New("task is not set")
+		return nil, xerrors.Define("task is not set").WithStack()
 	}
 	if j.repo == nil {
-		return nil, xerrors.New("repo is not set")
+		return nil, xerrors.Define("repo is not set").WithStack()
 	}
 	if j.platform == "" {
-		return nil, xerrors.New("platform is not set")
+		return nil, xerrors.Define("platform is not set").WithStack()
 	}
 
 	builtObjects := []runtime.Object{j.sa}

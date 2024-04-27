@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"net"
 	"strings"
 	"time"
@@ -117,12 +116,12 @@ func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
 
 func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	if len(c.Repositories) == 0 {
-		return errors.New("--repository is mandatory")
+		return xerrors.Define("--repository is mandatory").WithStack()
 	}
 	var repositories []*Repository
 	for _, v := range c.Repositories {
 		if strings.Index(v, "|") == -1 {
-			return xerrors.Newf("--repository=%s is invalid", v)
+			return xerrors.Definef("--repository=%s is invalid", v).WithStack()
 		}
 		s := strings.Split(v, "|")
 		repositories = append(repositories, &Repository{Name: s[0], URL: s[1], Prefix: s[2]})

@@ -45,10 +45,10 @@ func (s *toDoSchedulerCommand) Execute() error {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
 	if s.token == "" {
-		return xerrors.New("--token or NOTION_TOKEN is required")
+		return xerrors.Define("--token or NOTION_TOKEN is required").WithStack()
 	}
 	if s.conf == "" {
-		return xerrors.New("--conf is required")
+		return xerrors.Define("--conf is required").WithStack()
 	}
 
 	scheduler, err := notion.NewToDoScheduler(s.conf, s.token)

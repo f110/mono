@@ -323,7 +323,7 @@ func (b *ObjectStorageStorer) CheckAndSetReference(new, old *plumbing.Reference)
 			return xerrors.WithStack(err)
 		}
 		if oldRef.Hash() != old.Hash() {
-			return xerrors.New("reference has changed concurrently")
+			return xerrors.Define("reference has changed concurrently").WithStack()
 		}
 	}
 

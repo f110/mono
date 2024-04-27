@@ -30,7 +30,7 @@ func NewPackfile(idx idxfile.Index, f io.ReadSeekCloser) (*Packfile, error) {
 		return nil, xerrors.WithStack(err)
 	}
 	if buf[0] != 'P' || buf[1] != 'A' || buf[2] != 'C' || buf[3] != 'K' {
-		return nil, xerrors.New("invalid packfile format. The signature is mismatch")
+		return nil, xerrors.Define("invalid packfile format. The signature is mismatch").WithStack()
 	}
 
 	if _, err := io.ReadFull(f, buf); err != nil {
@@ -38,7 +38,7 @@ func NewPackfile(idx idxfile.Index, f io.ReadSeekCloser) (*Packfile, error) {
 	}
 	var version uint32
 	if v := binary.BigEndian.Uint32(buf); v != 2 {
-		return nil, xerrors.New("invalid packfile format. The version is not 2")
+		return nil, xerrors.Define("invalid packfile format. The version is not 2").WithStack()
 	} else {
 		version = v
 	}
@@ -51,7 +51,7 @@ func NewPackfile(idx idxfile.Index, f io.ReadSeekCloser) (*Packfile, error) {
 	if n, err := idx.Count(); err != nil {
 		return nil, xerrors.WithStack(err)
 	} else if n != int64(numOfObj) {
-		return nil, xerrors.New("invalid packfile format. mismatch the number of object count with the index")
+		return nil, xerrors.Define("invalid packfile format. mismatch the number of object count with the index").WithStack()
 	}
 
 	iter, err := idx.EntriesByOffset()

@@ -3,7 +3,7 @@ bazel_dep(name = "gazelle", version = "0.35.0")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 
-go_sdk.download(version = "1.22.1")
+go_sdk.download(version = "1.22.2")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 

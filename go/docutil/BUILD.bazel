@@ -61,6 +61,7 @@ go_test(
         "//go/logger",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/google.golang.org/grpc",
     ],
 )

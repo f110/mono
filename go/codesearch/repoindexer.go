@@ -123,12 +123,12 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 
 func (r *IndexerCommand) ValidateFlags() error {
 	if r.ConfigFile == "" {
-		return xerrors.New("--config is required")
+		return xerrors.Define("--config is required").WithStack()
 	}
 
 	if r.MinIOEndpoint != "" {
 		if r.MinIOName != "" || r.MinIONamespace != "" {
-			return xerrors.New("--minio-endpoint and --minio-name both specified")
+			return xerrors.Define("--minio-endpoint and --minio-name both specified").WithStack()
 		}
 	}
 

@@ -5,11 +5,11 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.f110.dev/xerrors"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/git"
@@ -118,7 +118,7 @@ func (m *mockGitClient) GetBlob(ctx context.Context, in *git.RequestGetBlob, opt
 			return &git.ResponseGetBlob{Content: []byte(m.Blobs[v.Path])}, nil
 		}
 	}
-	return nil, errors.New("not found")
+	return nil, xerrors.Define("not found").WithStack()
 }
 
 func (m *mockGitClient) GetFile(ctx context.Context, in *git.RequestGetFile, opts ...grpc.CallOption) (*git.ResponseGetFile, error) {

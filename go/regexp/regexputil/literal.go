@@ -67,7 +67,7 @@ func ParseRegexpLiteral(v string) (*RegexpLiteral, error) {
 		}
 	}
 	if len(v)-1 != replaceEnd {
-		return nil, xerrors.Newf("invalid regexp: %s", v)
+		return nil, xerrors.Definef("invalid regexp: %s", v).WithStack()
 	}
 
 	matchRe, err := regexp.Compile(v[matchStart:matchEnd])

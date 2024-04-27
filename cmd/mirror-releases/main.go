@@ -107,7 +107,7 @@ func (c *command) mirror(ctx context.Context, target *mirrorAsset) error {
 			}
 		}
 		if checksum == nil {
-			return xerrors.Newf("checksum for %s not found", filename)
+			return xerrors.Definef("checksum for %s not found", filename).WithStack()
 		}
 		switch target.ChecksumAlgorithm {
 		case SHA256Checksum:
@@ -118,7 +118,7 @@ func (c *command) mirror(ctx context.Context, target *mirrorAsset) error {
 			h := hasher.Sum(nil)
 			fileHash := hex.EncodeToString(h)
 			if fileHash != checksum.Hash {
-				return xerrors.Newf("%s checksum mismatched. expected: %s calculated: %s", target.OriginURL, checksum.Hash, fileHash)
+				return xerrors.Definef("%s checksum mismatched. expected: %s calculated: %s", target.OriginURL, checksum.Hash, fileHash).WithStack()
 			}
 			body.Seek(0, io.SeekStart)
 		}
@@ -263,7 +263,7 @@ func (d *downloader) Fetch(ctx context.Context, rawURL string) (io.ReadSeekClose
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		res.Body.Close()
-		return nil, "", xerrors.Newf("request error %s", res.Status)
+		return nil, "", xerrors.Definef("request error %s", res.Status).WithStack()
 	}
 
 	var filename string

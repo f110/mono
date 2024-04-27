@@ -83,7 +83,7 @@ func (c *Command) Usage() string {
 
 func (c *Command) Execute(args []string) error {
 	if c.executed {
-		return xerrors.New("already executed")
+		return xerrors.Define("already executed").WithStack()
 	}
 
 	c.executed = true

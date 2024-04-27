@@ -157,7 +157,7 @@ func (j *Job) Identification() string {
 
 func (j *Job) IsValid() error {
 	if j.Name == "" {
-		return xerrors.New("name is required")
+		return xerrors.Define("name is required").WithStack()
 	}
 
 	var keys []string
@@ -186,21 +186,21 @@ func (j *Job) IsValid() error {
 		for v := range requiredField {
 			k = append(k, v)
 		}
-		return xerrors.Newf("all mandatory fields are not set at %s: %s", j.Name, strings.Join(k, ", "))
+		return xerrors.Definef("all mandatory fields are not set at %s: %s", j.Name, strings.Join(k, ", ")).WithStack()
 	}
 
 	switch j.Command {
 	case "test":
 	case "run":
 		if len(j.Targets) != 1 {
-			return xerrors.New("can't specify multiple targets if the command is run")
+			return xerrors.Define("can't specify multiple targets if the command is run").WithStack()
 		}
 	default:
-		return xerrors.Newf("%s is not supported command", j.Command)
+		return xerrors.Definef("%s is not supported command", j.Command).WithStack()
 	}
 
 	if j.Args != nil && j.Command != "run" {
-		return xerrors.Newf("specifying argument is not allowed in %s command", j.Command)
+		return xerrors.Definef("specifying argument is not allowed in %s command", j.Command).WithStack()
 	}
 	return nil
 }
@@ -305,21 +305,21 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 	case reflect.String:
 		v, ok := val.(starlark.String)
 		if !ok {
-			return xerrors.Newf("expect starlark.String field: %T", val)
+			return xerrors.Definef("expect starlark.String field: %T", val).WithStack()
 		}
 		fv.SetString(v.GoString())
 		return nil
 	case reflect.Bool:
 		v, ok := val.(starlark.Bool)
 		if !ok {
-			return xerrors.Newf("expect starlark.Bool field: %T", val)
+			return xerrors.Definef("expect starlark.Bool field: %T", val).WithStack()
 		}
 		fv.SetBool(bool(v))
 		return nil
 	case reflect.Slice:
 		v, ok := val.(*starlark.List)
 		if !ok {
-			return xerrors.Newf("expect *starlark.List field: %T", val)
+			return xerrors.Definef("expect *starlark.List field: %T", val).WithStack()
 		}
 		if v.Len() == 0 {
 			return nil
@@ -343,13 +343,13 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 	case reflect.Map:
 		v, ok := val.(*starlark.Dict)
 		if !ok {
-			return xerrors.Newf("expect *starlark.Dict field: %T", val)
+			return xerrors.Definef("expect *starlark.Dict field: %T", val).WithStack()
 		}
 		m := make(map[string]any)
 		for _, t := range v.Items() {
 			k, ok := t.Index(0).(starlark.String)
 			if !ok {
-				return xerrors.Newf("the type of the key is not string: %T", t.Index(0))
+				return xerrors.Definef("the type of the key is not string: %T", t.Index(0)).WithStack()
 			}
 			key := k.GoString()
 
@@ -366,7 +366,7 @@ func setValue(ft reflect.Type, fv reflect.Value, val starlark.Value) error {
 		return nil
 	}
 
-	return xerrors.Newf("unsupported field type: %s", ft.Kind())
+	return xerrors.Definef("unsupported field type: %s", ft.Kind()).WithStack()
 }
 
 func argPairs(obj any) []any {

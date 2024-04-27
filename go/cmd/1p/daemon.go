@@ -193,7 +193,7 @@ func (v *vault) Get(_ context.Context, req *RequestGet) (*ResponseGet, error) {
 		return nil, err
 	}
 	if locked {
-		return nil, xerrors.New("Vault is locked. You have to unlock first")
+		return nil, xerrors.Define("Vault is locked. You have to unlock first").WithStack()
 	}
 
 	items := v.reader.Items()
@@ -202,7 +202,7 @@ func (v *vault) Get(_ context.Context, req *RequestGet) (*ResponseGet, error) {
 	}
 	k, ok := items[req.Uuid]
 	if !ok {
-		return nil, xerrors.Newf("item not found: %s", req.Uuid)
+		return nil, xerrors.Definef("item not found: %s", req.Uuid).WithStack()
 	}
 	item := toItem(k)
 
@@ -215,7 +215,7 @@ func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*Resp
 		return nil, err
 	}
 	if locked {
-		return nil, xerrors.New("Vault is locked. You have to unlock first")
+		return nil, xerrors.Define("Vault is locked. You have to unlock first").WithStack()
 	}
 
 	items := v.reader.Items()
@@ -224,7 +224,7 @@ func (v *vault) SetClipboard(_ context.Context, req *RequestSetClipboard) (*Resp
 	}
 	k, ok := items[req.Uuid]
 	if !ok {
-		return nil, xerrors.Newf("item not found: %s", req.Uuid)
+		return nil, xerrors.Definef("item not found: %s", req.Uuid).WithStack()
 	}
 
 	password := ""

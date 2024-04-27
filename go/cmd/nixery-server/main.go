@@ -72,7 +72,7 @@ func downloadPopularity(ctx context.Context, url string) (layers.Popularity, err
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, xerrors.WithStack(xerrors.Newf("popularity download from '%s' returned status: %s", url, res.Status))
+		return nil, xerrors.Definef("popularity download from '%s' returned status: %s", url, res.Status).WithStack()
 	}
 
 	var pop layers.Popularity

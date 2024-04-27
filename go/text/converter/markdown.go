@@ -18,6 +18,6 @@ func (m *MarkdownConverter) Convert(in string, outFormat Format) (string, error)
 		}
 		return buf.String(), nil
 	default:
-		return "", xerrors.Newf("%s is not supported", outFormat)
+		return "", xerrors.Definef("%s is not supported", outFormat).WithStack()
 	}
 }

@@ -30,7 +30,7 @@ func (s *Scanner) Start(ctx context.Context) error {
 
 func (s *Scanner) Stop() error {
 	if s.cancel == nil {
-		return xerrors.New("ble: Scanner is not started")
+		return xerrors.Define("ble: Scanner is not started").WithStack()
 	}
 	s.cancel()
 

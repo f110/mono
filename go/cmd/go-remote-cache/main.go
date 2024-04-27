@@ -224,7 +224,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 		logger.Log.Debug("Shutdown requested", zap.Int64("id", req.ID))
 		c.Shutdown()
 	default:
-		return nil, xerrors.Newf("unknown command %s", req.Command)
+		return nil, xerrors.Definef("unknown command %s", req.Command).WithStack()
 	}
 
 	return res, nil

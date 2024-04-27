@@ -123,7 +123,7 @@ func (d *DocSearchService) ListRepository(_ context.Context, req *RequestListRep
 func (d *DocSearchService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
 	docs, ok := d.data[req.Repo]
 	if !ok {
-		return nil, errors.New("repository is not found")
+		return nil, xerrors.New("repository is not found")
 	}
 
 	return &ResponseGetRepository{
@@ -137,7 +137,7 @@ func (d *DocSearchService) GetRepository(_ context.Context, req *RequestGetRepos
 func (d *DocSearchService) GetPage(_ context.Context, req *RequestGetPage) (*ResponseGetPage, error) {
 	docs, ok := d.data[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	page, ok := docs.Pages[req.Path]
 	if !ok {
@@ -165,11 +165,11 @@ func (d *DocSearchService) GetPage(_ context.Context, req *RequestGetPage) (*Res
 func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*ResponsePageLink, error) {
 	docs, ok := d.data[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	page, ok := docs.Pages[req.Sha]
 	if !ok {
-		return nil, errors.New("path is not found")
+		return nil, xerrors.New("path is not found")
 	}
 	return &ResponsePageLink{In: page.LinkIn, Out: page.LinkOut}, nil
 }
@@ -177,7 +177,7 @@ func (d *DocSearchService) PageLink(_ context.Context, req *RequestPageLink) (*R
 func (d *DocSearchService) GetDirectory(_ context.Context, req *RequestGetDirectory) (*ResponseGetDirectory, error) {
 	docs, ok := d.data[req.Repo]
 	if !ok {
-		return nil, errors.New("repository not found")
+		return nil, xerrors.New("repository not found")
 	}
 	prefix := req.Path
 	if prefix == "/" {
@@ -691,7 +691,7 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 	logger.Log.Debug("Fetch page title", zap.String("title", title), zap.String("url", u))
 
 	if title == "" {
-		return "", errors.New("title is not found")
+		return "", xerrors.New("title is not found")
 	}
 	return title, nil
 }

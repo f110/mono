@@ -400,7 +400,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend boo
 	}
 
 	if len(commits) > 9 && !c.Force {
-		return nil, xerrors.Newf("there are %d commits in the stack.", len(commits))
+		return nil, xerrors.Definef("there are %d commits in the stack.", len(commits)).WithStack()
 	}
 	if len(c.pullRequests) > 0 {
 		for _, v := range commits {

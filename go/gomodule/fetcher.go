@@ -195,7 +195,7 @@ func (m *ModuleRoot) FindModule(module string) *Module {
 func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
 	mod := m.FindModule(module)
 	if mod == nil {
-		return xerrors.Newf("%s is not found", module)
+		return xerrors.Definef("%s is not found", module).WithStack()
 	}
 	isTag := false
 	versionTag := ""
@@ -344,7 +344,7 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 		return nil
 	}
 
-	return xerrors.New("specified commit is not support")
+	return xerrors.Define("specified commit is not support").WithStack()
 }
 
 func (m *ModuleRoot) findModules(ctx context.Context) ([]*Module, error) {
@@ -559,7 +559,7 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 		return buf, nil
 	}
 
-	return nil, xerrors.Newf("%s is not found", version)
+	return nil, xerrors.Definef("%s is not found", version).WithStack()
 }
 
 func (m *Module) setVersions(vers []*ModuleVersion) {

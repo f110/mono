@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"go.f110.dev/xerrors"
 )
 
 func Unmarshal(b []byte, vars map[string]string, v any) error {
@@ -105,7 +107,7 @@ func (d *Decoder) preProcess(tokens []*token) ([]*token, error) {
 			name := tokens[pos+1].Value
 			f, ok := d.funcs[name]
 			if !ok {
-				return nil, fmt.Errorf("macro %s is not found", name)
+				return nil, xerrors.Definef("macro %s is not found", name).WithStack()
 			}
 			var args string
 			endPos := pos
@@ -348,7 +350,7 @@ func (d *decodeCtx) unmarshal(v any) error {
 		}
 		rv.Set(reflect.ValueOf(root))
 	} else {
-		return errors.New("unmarshal only supports \"any\" object")
+		return xerrors.New("unmarshal only supports \"any\" object")
 	}
 	return nil
 }

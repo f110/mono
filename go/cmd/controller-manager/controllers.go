@@ -358,7 +358,7 @@ func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 			}
 		}
 		if !found {
-			return fsm.Error(xerrors.New("minio-operator is not installed"))
+			return fsm.Error(xerrors.Define("minio-operator is not installed").WithStack())
 		}
 	}
 

@@ -81,7 +81,7 @@ func getRelease(ver string) (*release, error) {
 		}
 		filename := filepath.Base(u.Path)
 		if checksum, ok := checksums[filename]; !ok {
-			return nil, xerrors.Newf("unknown filename: %s", filename)
+			return nil, xerrors.Definef("unknown filename: %s", filename).WithStack()
 		} else {
 			v.SHA256 = checksum
 		}
@@ -138,15 +138,15 @@ func updateKustomizeAssets(args []string) error {
 		return err
 	}
 	if len(f.Stmt) != 1 {
-		return xerrors.New("the file has to include dict assign only")
+		return xerrors.Define("the file has to include dict assign only").WithStack()
 	}
 	a, ok := f.Stmt[0].(*build.AssignExpr)
 	if !ok {
-		return xerrors.Newf("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String())
+		return xerrors.Definef("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String()).WithStack()
 	}
 	dict, ok := a.RHS.(*build.DictExpr)
 	if !ok {
-		return xerrors.Newf("RHS is not dict: %s", reflect.TypeOf(a.RHS).String())
+		return xerrors.Definef("RHS is not dict: %s", reflect.TypeOf(a.RHS).String()).WithStack()
 	}
 	exists := make(map[string]*build.KeyValueExpr)
 	for _, v := range dict.List {

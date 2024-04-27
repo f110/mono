@@ -62,7 +62,7 @@ const (
 )
 
 var (
-	ErrOtherTaskIsRunning = xerrors.New("coordinator: Other task is running")
+	ErrOtherTaskIsRunning = xerrors.Define("coordinator: Other task is running")
 )
 
 type KubernetesOptions struct {
@@ -530,7 +530,7 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 
 func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task) error {
 	if job.Exclusive && b.isRunningJob(job) {
-		return xerrors.WithStack(ErrOtherTaskIsRunning)
+		return ErrOtherTaskIsRunning.WithStack()
 	}
 
 	builtObjects, err := b.buildJobTemplate(repo, job, task, task.Platform)
@@ -635,7 +635,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 		return xerrors.WithStack(err)
 	}
 	if len(podList.Items) != 1 {
-		return xerrors.New("Target pods not found or found more than 1")
+		return xerrors.Define("Target pods not found or found more than 1").WithStack()
 	}
 	if len(podList.Items[0].Status.ContainerStatuses) > 0 {
 		image := podList.Items[0].Status.ContainerStatuses[0].Image

@@ -203,7 +203,7 @@ func getClient(client *http.Client, host, site string) ([]*SiteClient, error) {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, xerrors.Newf("returns status not ok: %s", res.Status)
+		return nil, xerrors.Definef("returns status not ok: %s", res.Status).WithStack()
 	}
 
 	resBody := &ListClientResponse{}

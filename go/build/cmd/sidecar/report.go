@@ -77,7 +77,7 @@ func (b *TestReportCommand) Run(_ context.Context) error {
 	select {
 	case <-ch:
 	case <-time.After(b.startUpTimeout):
-		return xerrors.Newf("could not find event binary file in %v", b.startUpTimeout)
+		return xerrors.Definef("could not find event binary file in %v", b.startUpTimeout).WithStack()
 	}
 
 	watcher, err := fsnotify.NewWatcher()

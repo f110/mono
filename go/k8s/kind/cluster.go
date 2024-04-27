@@ -134,7 +134,7 @@ func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum i
 
 	imageHash, ok := NodeImageHash[clusterVersion]
 	if !ok {
-		return xerrors.Newf("not supported k8s version: %s", clusterVersion)
+		return xerrors.Definef("not supported k8s version: %s", clusterVersion).WithStack()
 	}
 	image := fmt.Sprintf("kindest/node:%s@sha256:%s", clusterVersion, imageHash)
 

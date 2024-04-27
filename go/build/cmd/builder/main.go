@@ -240,7 +240,7 @@ Wait:
 				break Wait
 			}
 		case <-timeout:
-			return fsm.Error(xerrors.New("waiting db migration was timed out"))
+			return fsm.Error(xerrors.Define("waiting db migration was timed out").WithStack())
 		}
 	}
 	return fsm.Next(stateSetup)

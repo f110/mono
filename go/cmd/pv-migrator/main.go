@@ -30,7 +30,7 @@ func copyFile(from, to string) error {
 	}
 	st, ok := s.Sys().(*syscall.Stat_t)
 	if !ok {
-		return fmt.Errorf("could not convert to syscall.Stat_t: %v", from)
+		return xerrors.Definef("could not convert to syscall.Stat_t: %v", from).WithStack()
 	}
 
 	d, err := os.Create(to)
@@ -75,7 +75,7 @@ func copyDirectory(from, to string) error {
 		if v.IsDir() {
 			st, ok := i.Sys().(*syscall.Stat_t)
 			if !ok {
-				return fmt.Errorf("could not convert syscall.Stat_t: %v", v.Name())
+				return xerrors.Definef("could not convert syscall.Stat_t: %v", v.Name()).WithStack()
 			}
 
 			if err := os.MkdirAll(t, i.Mode()); err != nil {

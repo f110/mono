@@ -67,7 +67,7 @@ func NewJobWatcher(jobInformer batchv1informers.JobInformer) *JobWatcher {
 
 func (j *JobWatcher) Run(ctx context.Context, workers int) error {
 	if !cache.WaitForCacheSync(ctx.Done(), j.jobInformer.Informer().HasSynced) {
-		return xerrors.New("failed to sync informer's cache")
+		return xerrors.Define("failed to sync informer's cache").WithStack()
 	}
 
 	for i := 0; i < workers; i++ {

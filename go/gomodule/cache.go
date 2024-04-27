@@ -19,7 +19,7 @@ import (
 	"go.f110.dev/mono/go/storage"
 )
 
-var CacheMiss = xerrors.New("gomodule: cache hit miss")
+var CacheMiss = xerrors.Define("gomodule: cache hit miss")
 
 type ModuleCache struct {
 	cachePool     *client.SinglePool

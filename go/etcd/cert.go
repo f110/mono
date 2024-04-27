@@ -26,7 +26,7 @@ func ReadCACertificate(path string) (*x509.Certificate, error) {
 		}
 	}
 	if data == nil {
-		return nil, xerrors.Newf("internal: %s not contain certificate", path)
+		return nil, xerrors.Definef("internal: %s not contain certificate", path).WithStack()
 	}
 
 	cer, err := x509.ParseCertificate(data)

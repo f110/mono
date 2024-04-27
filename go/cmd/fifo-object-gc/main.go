@@ -60,16 +60,16 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 		}
 		if dto.GetName() == "minio_cluster_capacity_raw_total_bytes" {
 			if len(dto.Metric) != 1 {
-				return nil, xerrors.New("unexpected minio_cluster_capacity_raw_total_bytes data: has multiple metrics")
+				return nil, xerrors.Define("unexpected minio_cluster_capacity_raw_total_bytes data: has multiple metrics").WithStack()
 			}
 			if dto.Metric[0].Gauge == nil {
-				return nil, xerrors.New("unexpected minio_cluster_capacity_raw_total_bytes data: the metrics is not gauge value")
+				return nil, xerrors.Define("unexpected minio_cluster_capacity_raw_total_bytes data: the metrics is not gauge value").WithStack()
 			}
 			capacity = dto.Metric[0].Gauge.GetValue()
 		}
 	}
 	if capacity == 0 {
-		return nil, xerrors.New("could not found capacity in metrics")
+		return nil, xerrors.Define("could not found capacity in metrics").WithStack()
 	}
 
 	logger.Log.Debug("Got cluster info from metrics endpoint", zap.Float64("capacity", capacity))

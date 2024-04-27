@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -220,7 +219,7 @@ type Cache struct {
 	data map[string]map[string]string
 }
 
-var errMiss = errors.New("cache miss")
+var errMiss = xerrors.New("cache miss")
 
 type contextCacheKey = struct{}
 

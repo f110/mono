@@ -67,7 +67,7 @@ func readData(prph ble.Peripheral, buf []byte) (*ThermometerData, error) {
 	}
 	checksum := binary.LittleEndian.Uint16(buf[5:7])
 	if checksum != crc16.ChecksumModBus(buf[:5]) {
-		return nil, xerrors.New("inkbird: Checksum mismatched")
+		return nil, xerrors.Define("inkbird: Checksum mismatched").WithStack()
 	}
 	battery := int8(buf[7])
 
@@ -106,7 +106,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 		}
 	}
 	if buf == nil {
-		return nil, xerrors.New("inkbird: sensor not found")
+		return nil, xerrors.Define("inkbird: sensor not found").WithStack()
 	}
 
 	data, err := readData(peripheral, buf)

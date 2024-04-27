@@ -41,7 +41,7 @@ func (s *docServerCommand) Execute() error {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
 	if s.token == "" {
-		return xerrors.New("--token or NOTION_TOKEN is required")
+		return xerrors.Define("--token or NOTION_TOKEN is required").WithStack()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -55,7 +55,7 @@ func authByHeader(publicKey crypto.PublicKey, h http.HandlerFunc, debug bool) ht
 		}
 		token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (i interface{}, err error) {
 			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
-				return nil, xerrors.Newf("unexpected signature algorithm: %s", token.Header["alg"])
+				return nil, xerrors.Definef("unexpected signature algorithm: %s", token.Header["alg"]).WithStack()
 			}
 
 			return publicKey, nil

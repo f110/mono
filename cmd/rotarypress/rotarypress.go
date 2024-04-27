@@ -354,7 +354,7 @@ func (r *ruleOnGithub) Fetch(ctx context.Context, client *http.Client) (*os.File
 	switch res.StatusCode {
 	case http.StatusOK:
 	default:
-		return nil, xerrors.Newf("got status: %d", res.StatusCode)
+		return nil, xerrors.Definef("got status: %d", res.StatusCode).WithStack()
 	}
 
 	h := sha256.New()
@@ -432,7 +432,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	switch res.StatusCode {
 	case http.StatusOK:
 	default:
-		return xerrors.Newf("got status: %d", res.StatusCode)
+		return xerrors.Definef("got status: %d", res.StatusCode).WithStack()
 	}
 
 	h := sha256.New()
@@ -450,7 +450,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	calculatedHash := hex.EncodeToString(h.Sum(nil))[:]
 	if string(expectedHash) != calculatedHash {
 		os.Remove(f.Name())
-		return xerrors.New("file hash is mismatched")
+		return xerrors.Define("file hash is mismatched").WithStack()
 	}
 	b.downloadedFile = f
 

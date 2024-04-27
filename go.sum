@@ -1464,8 +1464,8 @@ go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1 h1:g9CKP+hJboQpgi/F
 go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1/go.mod h1:5HBQuFSb4rZa5YP0/4Ez7QMIQoAop/pHXcB8QAUA8po=
 go.f110.dev/protoc-ddl v0.0.0-20240318220439-f8fad953adf2 h1:AHqwiVBem0i/BeWlxtuH8iUCkow7vMoNi9B9Qmgru0U=
 go.f110.dev/protoc-ddl v0.0.0-20240318220439-f8fad953adf2/go.mod h1:+L3lCQcV1EkT4qZQo9Hjybk35LEMtleeuinfIVqHo/Y=
-go.f110.dev/xerrors v0.0.0-20240327103611-82ace5d19d4e h1:1rZLIj42u7/MwPDMHLWvOykKmFhLetpqeBIR3ak7EEQ=
-go.f110.dev/xerrors v0.0.0-20240327103611-82ace5d19d4e/go.mod h1:cES3zXhfCuKnA7lnN4m3sivaMsBU/IlIl7yVw1VaN28=
+go.f110.dev/xerrors v0.0.0-20240427143538-be985a868d6a h1:1M5IssOhqgB/gumgxDJSNG9SqTDt7XrtAS+pAQ8Ak5w=
+go.f110.dev/xerrors v0.0.0-20240427143538-be985a868d6a/go.mod h1:cES3zXhfCuKnA7lnN4m3sivaMsBU/IlIl7yVw1VaN28=
 go.mongodb.org/mongo-driver v1.5.1/go.mod h1:gRXCHX4Jo7J0IJ1oDQyUxF7jfy19UfxniMS4xxMmUqw=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.opencensus.io v0.20.2/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=

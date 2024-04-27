@@ -170,7 +170,7 @@ func (i *imageIndex) Image(hash v1.Hash) (v1.Image, error) {
 		}
 	}
 
-	return nil, xerrors.New("image not found")
+	return nil, xerrors.Define("image not found").WithStack()
 }
 
 func (i *imageIndex) ImageIndex(hash v1.Hash) (v1.ImageIndex, error) {

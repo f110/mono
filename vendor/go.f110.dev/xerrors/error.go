@@ -51,9 +51,23 @@ func (e *Error) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (e *Error) WithStack() error {
+	return withStack(e, 4)
+}
+
 // StackTrace returns Frames that is most deeply frames in the error chain.
 func (e *Error) StackTrace() Frames {
 	return StackTrace(e)
+}
+
+// Define returns an error.
+func Define(msg string) *Error {
+	return &Error{msg: msg}
+}
+
+// Definef returns an error with formatted text.
+func Definef(format string, args ...any) *Error {
+	return &Error{msg: fmt.Sprintf(format, args...)}
 }
 
 // New returns an error.
@@ -67,11 +81,13 @@ func Newf(format string, a ...any) error {
 }
 
 // NewWithStack returns an error with a stack trace.
+// Deprecated: Use Define and WithStack as follows: Define(msg).WithStack().
 func NewWithStack(msg string) error {
 	return &Error{msg: msg, stackTrace: caller()}
 }
 
 // NewfWithStack returns an error with formatted text and a stack trace.
+// Deprecated: Use Definef and WithStack as follows: Definef(format, a...).WithStack().
 func NewfWithStack(format string, a ...any) error {
 	return &Error{msg: fmt.Sprintf(format, a...), stackTrace: caller()}
 }
@@ -84,6 +100,16 @@ func WithStack(err error) error {
 	}
 	if StackTrace(err) == nil {
 		return &Error{err: err, stackTrace: caller()}
+	}
+	return err
+}
+
+func withStack(err error, skip int) error {
+	if err == nil {
+		return nil
+	}
+	if StackTrace(err) == nil {
+		return &Error{err: err, stackTrace: callerSkip(skip)}
 	}
 	return err
 }
@@ -188,5 +214,11 @@ func (f *Frame) String() string {
 func caller() []uintptr {
 	pcs := make([]uintptr, 32)
 	n := runtime.Callers(3, pcs)
+	return pcs[:n]
+}
+
+func callerSkip(skip int) []uintptr {
+	pcs := make([]uintptr, 32)
+	n := runtime.Callers(skip, pcs)
 	return pcs[:n]
 }

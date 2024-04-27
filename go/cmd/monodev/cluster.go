@@ -105,7 +105,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 	if exist, err := kindCluster.IsExist(context.Background(), name); err != nil {
 		return xerrors.WithStack(err)
 	} else if !exist {
-		return xerrors.New("Cluster does not exist. You create the cluster first.")
+		return xerrors.Define("Cluster does not exist. You create the cluster first.").WithStack()
 	}
 
 	for _, imageTagAndFile := range images {
