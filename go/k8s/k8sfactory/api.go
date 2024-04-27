@@ -399,3 +399,38 @@ func Provider(name string) Trait {
 		}
 	}
 }
+
+func MinIOClusterFactory(base *miniov1alpha1.MinIOCluster, traits ...Trait) *miniov1alpha1.MinIOCluster {
+	var s *miniov1alpha1.MinIOCluster
+	if base == nil {
+		s = &miniov1alpha1.MinIOCluster{}
+	} else {
+		s = base.DeepCopy()
+	}
+
+	setGVK(s, client.Scheme)
+
+	for _, v := range traits {
+		v(s)
+	}
+
+	return s
+}
+
+func Nodes(n int) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *miniov1alpha1.MinIOCluster:
+			obj.Spec.Nodes = n
+		}
+	}
+}
+
+func TotalSize(n int) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *miniov1alpha1.MinIOCluster:
+			obj.Spec.TotalSize = n
+		}
+	}
+}

@@ -572,6 +572,8 @@ func Requests(req corev1.ResourceList) Trait {
 		switch obj := object.(type) {
 		case *corev1.Container:
 			obj.Resources.Requests = req
+		case *corev1.PersistentVolumeClaim:
+			obj.Spec.Resources.Requests = req
 		}
 	}
 }
@@ -637,6 +639,41 @@ func Pod(p *corev1.Pod) Trait {
 				ObjectMeta: p.ObjectMeta,
 				Spec:       p.Spec,
 			}
+		}
+	}
+}
+
+func PersistentVolumeClaimFactory(base *corev1.PersistentVolumeClaim, traits ...Trait) *corev1.PersistentVolumeClaim {
+	var e *corev1.PersistentVolumeClaim
+	if base == nil {
+		e = &corev1.PersistentVolumeClaim{}
+	} else {
+		e = base.DeepCopy()
+	}
+
+	setGVK(e, scheme.Scheme)
+
+	for _, v := range traits {
+		v(e)
+	}
+
+	return e
+}
+
+func StorageClassName(name string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.PersistentVolumeClaim:
+			obj.Spec.StorageClassName = varptr.Ptr(name)
+		}
+	}
+}
+
+func AccessModes(modes ...corev1.PersistentVolumeAccessMode) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.PersistentVolumeClaim:
+			obj.Spec.AccessModes = modes
 		}
 	}
 }

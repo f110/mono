@@ -1,0 +1,8 @@
+apiVersion: minio.f110.dev/v1alpha1
+kind: MinIOCluster
+metadata:
+  name: test-cluster
+spec:
+  image: minio/minio:RELEASE.2024-04-18T19-09-19Z
+  nodes: 1
+  totalSize: 10

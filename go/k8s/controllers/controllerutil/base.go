@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -268,4 +271,231 @@ func containsString(v []string, s string) bool {
 	}
 
 	return false
+}
+
+type GenericReconciler[T runtime.Object] interface {
+	Reconcile(ctx context.Context, obj T) error
+	Finalize(ctx context.Context, obj T) error
+}
+
+type GenericControllerBase[T runtime.Object] struct {
+	log            *zap.Logger
+	recorder       record.EventRecorder
+	queue          *WorkQueue
+	supervisor     *parallel.Supervisor
+	informers      []cache.SharedIndexInformer
+	eventSource    []cache.SharedIndexInformer
+	finalizers     []string
+	getObjectFn    func(namespace, name string) (T, error)
+	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error)
+	newReconciler  func() GenericReconciler[T]
+}
+
+func NewGenericControllerBase[T runtime.Object](
+	name string,
+	newReconciler func() GenericReconciler[T],
+	coreClient kubernetes.Interface,
+	eventSource []cache.SharedIndexInformer,
+	informers []cache.SharedIndexInformer,
+	finalizers []string,
+	getObjectFn func(namespace, name string) (T, error),
+	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error),
+) *GenericControllerBase[T] {
+	l := logger.Log.Named(name)
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+		l.Info(fmt.Sprintf(format, args...))
+	})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
+	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
+
+	return &GenericControllerBase[T]{
+		log:            l,
+		recorder:       recorder,
+		queue:          NewWorkQueue(name),
+		eventSource:    eventSource,
+		informers:      informers,
+		finalizers:     finalizers,
+		newReconciler:  newReconciler,
+		getObjectFn:    getObjectFn,
+		updateObjectFn: updateObjectFn,
+	}
+}
+
+func (b *GenericControllerBase[T]) StartWorkers(ctx context.Context, workers int) {
+	hasSynced := make([]cache.InformerSynced, 0)
+	for _, v := range b.informers {
+		hasSynced = append(hasSynced, v.HasSynced)
+	}
+	for _, v := range b.eventSource {
+		hasSynced = append(hasSynced, v.HasSynced)
+
+		v.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			AddFunc:    b.onAdd,
+			UpdateFunc: b.onUpdate,
+			DeleteFunc: b.onDelete,
+		})
+	}
+
+	b.log.Info("Wait to sync all informers cache")
+	if !b.WaitForSync(ctx) {
+		return
+	}
+
+	b.supervisor = parallel.NewSupervisor(ctx)
+	b.supervisor.Log = b.log
+	for i := 0; i < workers; i++ {
+		b.supervisor.Add(b.worker)
+	}
+}
+
+func (b *GenericControllerBase[T]) Shutdown() {
+	b.queue.Shutdown()
+
+	if b.supervisor != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		b.supervisor.Shutdown(ctx)
+		cancel()
+	}
+}
+
+func (b *GenericControllerBase[T]) WaitForSync(ctx context.Context) bool {
+	hasSynced := make([]cache.InformerSynced, 0)
+	for _, v := range b.informers {
+		hasSynced = append(hasSynced, v.HasSynced)
+	}
+	for _, v := range b.eventSource {
+		hasSynced = append(hasSynced, v.HasSynced)
+	}
+
+	return cache.WaitForCacheSync(ctx.Done(), hasSynced...)
+}
+
+func (b *GenericControllerBase[T]) EventRecorder() record.EventRecorder {
+	return b.recorder
+}
+
+func (b *GenericControllerBase[T]) Log() *zap.Logger {
+	return b.log
+}
+
+func (b *GenericControllerBase[T]) worker(ctx context.Context) {
+	for {
+		var key string
+		select {
+		case v, ok := <-b.queue.Get():
+			if !ok {
+				return
+			}
+			key = v.(string)
+		}
+		b.log.Debug("Get next queue", zap.String("key", key))
+
+		err := b.process(ctx, key)
+		if err != nil {
+			b.log.Info("Failed sync", zap.String("key", key), zap.Error(err))
+		}
+	}
+}
+
+func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string) error {
+	defer b.queue.Done(key)
+
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	obj, err := b.getObjectFn(namespace, name)
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	ctx, cancelFunc := context.WithTimeout(workerCtx, 30*time.Second)
+	defer cancelFunc()
+
+	target := obj.DeepCopyObject().(T)
+	objMeta, err := meta.Accessor(target)
+	if err != nil {
+		return err
+	}
+	if objMeta.GetDeletionTimestamp().IsZero() {
+		var updatedFinalizers bool
+		for _, finalizer := range b.finalizers {
+			if !containsString(objMeta.GetFinalizers(), finalizer) {
+				updatedFinalizers = true
+				objMeta.SetFinalizers(append(objMeta.GetFinalizers(), finalizer))
+			}
+		}
+		if updatedFinalizers {
+			if _, err := b.updateObjectFn(ctx, target, metav1.UpdateOptions{}); err != nil {
+				return WrapRetryError(xerrors.WithStack(err))
+			}
+			return nil
+		}
+	}
+
+	reconciler := b.newReconciler()
+	if objMeta.GetDeletionTimestamp().IsZero() {
+		err = reconciler.Reconcile(ctx, target)
+	} else {
+		err = reconciler.Finalize(ctx, target)
+	}
+	if err != nil {
+		if errors.Is(err, &RetryError{}) {
+			logger.Log.Debug("Retry queue", zap.Error(err), zap.String("name", objMeta.GetName()), zap.String("namespace", objMeta.GetNamespace()))
+			b.queue.AddRateLimited(obj)
+			return nil
+		}
+
+		return err
+	}
+
+	b.queue.Forget(obj)
+	return nil
+}
+
+func (b *GenericControllerBase[T]) onAdd(obj any) {
+	b.enqueue(obj)
+}
+
+func (b *GenericControllerBase[T]) onUpdate(old, cur any) {
+	oldObj, err := meta.Accessor(old)
+	if err != nil {
+		return
+	}
+	curObj, err := meta.Accessor(cur)
+	if err != nil {
+		return
+	}
+
+	if oldObj.GetUID() != curObj.GetUID() {
+		if key, err := cache.MetaNamespaceKeyFunc(oldObj); err != nil {
+			return
+		} else {
+			b.onDelete(cache.DeletedFinalStateUnknown{Key: key, Obj: oldObj})
+		}
+	}
+
+	b.enqueue(cur)
+}
+
+func (b *GenericControllerBase[T]) onDelete(obj any) {
+	dfsu, ok := obj.(cache.DeletedFinalStateUnknown)
+	if ok {
+		b.enqueue(dfsu.Key)
+		return
+	}
+
+	b.enqueue(obj)
+}
+
+func (b *GenericControllerBase[T]) enqueue(obj any) {
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		return
+	}
+	b.queue.Add(key)
 }

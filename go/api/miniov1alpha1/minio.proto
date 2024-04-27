@@ -21,6 +21,34 @@ enum BucketPolicy {
   POLICY_PRIVATE   = 2 [(dev.f110.kubeproto.value) = { value: "Private" }];
 }
 
+enum ClusterPhase {
+  CLUSTER_PHASE_CREATING = 0 [(dev.f110.kubeproto.value) = { value: "Creating" }];
+  CLUSTER_PHASE_RUNNING  = 1 [(dev.f110.kubeproto.value) = { value: "Running" }];
+}
+
+message MinIOCluster {
+  MinIOClusterSpec   spec   = 1;
+  MinIOClusterStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];
+
+  option (dev.f110.kubeproto.kind) = {
+    additional_printer_columns: { name: "status", type: "string", json_path: ".status.phase", description: "status", format: "byte", priority: 0 }
+    additional_printer_columns: { name: "age", type: "date", json_path: ".metadata.creationTimestamp", description: "age", format: "date", priority: 0 }
+  };
+}
+
+message MinIOClusterSpec {
+  optional string storage_class_name = 1;
+  optional string image              = 2;
+  // total_size is the size of the cluster in Gigabytes.
+  int32 total_size = 3;
+  int32 nodes      = 4;
+}
+
+message MinIOClusterStatus {
+  ClusterPhase phase = 1;
+  bool         ready = 2;
+}
+
 message MinIOBucket {
   MinIOBucketSpec   spec   = 1;
   MinIOBucketStatus status = 2 [(dev.f110.kubeproto.field) = { sub_resource: true }];

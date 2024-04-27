@@ -19,6 +19,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemaGroupVersion,
 		&MinIOBucket{},
 		&MinIOBucketList{},
+		&MinIOCluster{},
+		&MinIOClusterList{},
 		&MinIOUser{},
 		&MinIOUserList{},
 	)
@@ -39,6 +41,13 @@ const (
 	BucketPolicyPublic   BucketPolicy = "Public"
 	BucketPolicyReadOnly BucketPolicy = "ReadOnly"
 	BucketPolicyPrivate  BucketPolicy = "Private"
+)
+
+type ClusterPhase string
+
+const (
+	ClusterPhaseCreating ClusterPhase = "Creating"
+	ClusterPhaseRunning  ClusterPhase = "Running"
 )
 
 type MinIOBucket struct {
@@ -101,6 +110,72 @@ func (in *MinIOBucketList) DeepCopy() *MinIOBucketList {
 }
 
 func (in *MinIOBucketList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+type MinIOCluster struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              MinIOClusterSpec   `json:"spec"`
+	Status            MinIOClusterStatus `json:"status"`
+}
+
+func (in *MinIOCluster) DeepCopyInto(out *MinIOCluster) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *MinIOCluster) DeepCopy() *MinIOCluster {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOCluster)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *MinIOCluster) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+type MinIOClusterList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []MinIOCluster `json:"items"`
+}
+
+func (in *MinIOClusterList) DeepCopyInto(out *MinIOClusterList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		l := make([]MinIOCluster, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&l[i])
+		}
+		out.Items = l
+	}
+}
+
+func (in *MinIOClusterList) DeepCopy() *MinIOClusterList {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOClusterList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *MinIOClusterList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
@@ -217,6 +292,45 @@ func (in *MinIOBucketStatus) DeepCopy() *MinIOBucketStatus {
 		return nil
 	}
 	out := new(MinIOBucketStatus)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type MinIOClusterSpec struct {
+	StorageClassName string `json:"storageClassName,omitempty"`
+	Image            string `json:"image,omitempty"`
+	// total_size is the size of the cluster in Gigabytes.
+	TotalSize int `json:"totalSize"`
+	Nodes     int `json:"nodes"`
+}
+
+func (in *MinIOClusterSpec) DeepCopyInto(out *MinIOClusterSpec) {
+	*out = *in
+}
+
+func (in *MinIOClusterSpec) DeepCopy() *MinIOClusterSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOClusterSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type MinIOClusterStatus struct {
+	Phase ClusterPhase `json:"phase"`
+	Ready bool         `json:"ready"`
+}
+
+func (in *MinIOClusterStatus) DeepCopyInto(out *MinIOClusterStatus) {
+	*out = *in
+}
+
+func (in *MinIOClusterStatus) DeepCopy() *MinIOClusterStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOClusterStatus)
 	in.DeepCopyInto(out)
 	return out
 }

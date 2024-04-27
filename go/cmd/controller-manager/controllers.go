@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
+	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -34,17 +34,19 @@ const (
 	ControllerGrafanaUser        = "grafana-user"
 	ControllerHarborProject      = "harbor-project"
 	ControllerHarborRobotAccount = "harbor-robot-account"
+	ControllerMinIOCluster       = "minio-cluster"
 	ControllerMinIOBucket        = "minio-bucket"
 	ControllerMinIOUser          = "minio-user"
 	ControllerConsulBackup       = "consul-backup"
 )
 
 type ChildController struct {
-	Name string
-	New  func(*Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
+	Name   string
+	New    func(*Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
+	Enable bool
 }
 
-type ChildControllers []ChildController
+type ChildControllers []*ChildController
 
 var AllChildControllers = ChildControllers{
 	{
@@ -56,6 +58,7 @@ var AllChildControllers = ChildControllers{
 			}
 			return gu, nil
 		},
+		Enable: true,
 	},
 	{
 		Name: ControllerHarborProject,
@@ -77,6 +80,7 @@ var AllChildControllers = ChildControllers{
 			}
 			return hpc, nil
 		},
+		Enable: true,
 	},
 	{
 		Name: ControllerHarborRobotAccount,
@@ -97,6 +101,15 @@ var AllChildControllers = ChildControllers{
 			}
 			return hrac, nil
 		},
+		Enable: true,
+	},
+	{
+		Name: ControllerMinIOCluster,
+		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.dev)
+			return mcc, nil
+		},
+		Enable: false,
 	},
 	{
 		Name: ControllerMinIOBucket,
@@ -107,6 +120,7 @@ var AllChildControllers = ChildControllers{
 			}
 			return mbc, nil
 		},
+		Enable: true,
 	},
 	{
 		Name: ControllerMinIOUser,
@@ -125,6 +139,7 @@ var AllChildControllers = ChildControllers{
 			}
 			return muc, nil
 		},
+		Enable: true,
 	},
 	{
 		Name: ControllerConsulBackup,
@@ -135,30 +150,8 @@ var AllChildControllers = ChildControllers{
 			}
 			return b, nil
 		},
+		Enable: true,
 	},
-}
-
-func NewChildControllers(args []string) (ChildControllers, error) {
-	if len(args) == 0 {
-		return AllChildControllers, nil
-	}
-
-	c := make(map[string]ChildController)
-	for _, v := range AllChildControllers {
-		c[v.Name] = v
-	}
-
-	childControllers := make(ChildControllers, 0)
-	for _, v := range args {
-		cont, ok := c[v]
-		if !ok {
-			return nil, xerrors.Newf("%s is unknown controller", v)
-		}
-
-		childControllers = append(childControllers, cont)
-	}
-
-	return childControllers, nil
 }
 
 const (
@@ -229,7 +222,6 @@ func New(args []string) *Controllers {
 		stateInit,
 		stateShutdown,
 	)
-	p.FSM.SignalHandling(os.Interrupt, syscall.SIGTERM)
 
 	return p
 }
@@ -239,8 +231,8 @@ func (p *Controllers) Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&p.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	fs.BoolVar(&p.enableLeaderElection, "enable-leader-election", p.enableLeaderElection,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	fs.StringVar(&p.leaseLockName, "lease-lock-name", "", "the lease lock resource name")
-	fs.StringVar(&p.leaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
+	fs.StringVar(&p.leaseLockName, "lease-lock-name", "mono", "the lease lock resource name")
+	fs.StringVar(&p.leaseLockNamespace, "lease-lock-namespace", "default", "the lease lock resource namespace")
 	fs.StringVar(&p.clusterDomain, "cluster-domain", p.clusterDomain, "Cluster domain")
 	fs.IntVar(&p.workers, "workers", p.workers, "The number of workers on each controller")
 	fs.StringVar(&p.harborNamespace, "harbor-namespace", "", "the namespace name to which harbor service belongs")
@@ -271,11 +263,15 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 
 	kubeconfigPath := ""
 	if p.dev {
-		h, err := os.UserHomeDir()
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
+		if v := os.Getenv("BUILD_WORKSPACE_DIRECTORY"); v != "" {
+			kubeconfigPath = filepath.Join(v, ".kubeconfig")
+		} else {
+			h, err := os.UserHomeDir()
+			if err != nil {
+				return fsm.Error(xerrors.WithStack(err))
+			}
+			kubeconfigPath = filepath.Join(h, ".kube", "config")
 		}
-		kubeconfigPath = filepath.Join(h, ".kube", "config")
 	}
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	if err != nil {
@@ -317,6 +313,23 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 		}
 	}
 
+	if len(p.args) != 0 {
+		c := make(map[string]*ChildController)
+		for _, v := range AllChildControllers {
+			c[v.Name] = v
+			v.Enable = false
+		}
+
+		for _, v := range p.args {
+			cont, ok := c[v]
+			if !ok {
+				continue
+			}
+
+			logger.Log.Debug("Enable controller", zap.String("name", cont.Name))
+			cont.Enable = true
+		}
+	}
 	return fsm.Next(stateCheckResources)
 }
 
@@ -325,19 +338,28 @@ func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	found := false
-	for _, v := range apiList {
-		if v.GroupVersion == "miniocontroller.min.io/v1beta1" {
-			for _, v := range v.APIResources {
-				if v.Kind == "MinIOInstance" {
-					found = true
-					break
+	enabledBucketController := false
+	for _, v := range AllChildControllers {
+		if v.Name == ControllerMinIOBucket && v.Enable {
+			enabledBucketController = true
+			break
+		}
+	}
+	if enabledBucketController {
+		found := false
+		for _, v := range apiList {
+			if v.GroupVersion == "miniocontroller.min.io/v1beta1" {
+				for _, v := range v.APIResources {
+					if v.Kind == "MinIOInstance" {
+						found = true
+						break
+					}
 				}
 			}
 		}
-	}
-	if !found {
-		return fsm.Error(xerrors.New("minio-operator is not installed"))
+		if !found {
+			return fsm.Error(xerrors.New("minio-operator is not installed"))
+		}
 	}
 
 	return stateStartMetricsServer, nil
@@ -360,6 +382,10 @@ func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) leaderElection(_ context.Context) (fsm.State, error) {
+	if !p.enableLeaderElection || p.dev {
+		return fsm.Next(stateStartWorkers)
+	}
+
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      p.leaseLockName,
@@ -398,18 +424,18 @@ func (p *Controllers) leaderElection(_ context.Context) (fsm.State, error) {
 	case <-p.ctx.Done():
 		return fsm.UnknownState, nil
 	}
-	return stateStartWorkers, nil
+	return fsm.Next(stateStartWorkers)
 }
 
 func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
 	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 
-	child, err := NewChildControllers(p.args)
-	if err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
-	for _, v := range child {
+	for _, v := range AllChildControllers {
+		if !v.Enable {
+			continue
+		}
+
 		cont, err := v.New(p, coreSharedInformerFactory, factory)
 		if err != nil {
 			return fsm.Error(xerrors.WithMessagef(err, "Failed create %s controller", v.Name))

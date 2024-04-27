@@ -27,7 +27,10 @@ vendor_kubeproto(
 
 go_library(
     name = "miniov1alpha1",
-    srcs = ["go_api.generated.object.go"],
+    srcs = [
+        "const.go",
+        "go_api.generated.object.go",
+    ],
     importpath = "go.f110.dev/mono/go/api/miniov1alpha1",
     visibility = ["//visibility:public"],
     deps = [

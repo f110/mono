@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func controllerManager(args []string) error {
 	c := New(args)
 
-	return c.Loop()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+	return c.LoopContext(ctx)
 }
 
 func main() {

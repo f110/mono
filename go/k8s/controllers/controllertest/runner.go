@@ -157,6 +157,9 @@ Match:
 			matchVerb = true
 			switch v.Verb {
 			case ActionCreate:
+				if reflect.TypeOf(v.Object) != reflect.TypeOf(e.Object) {
+					continue
+				}
 				actualActionObjMeta, ok := v.Object.(metav1.Object)
 				if !ok {
 					continue
@@ -261,6 +264,34 @@ func (r *TestRunner) registerObjectFixture(obj runtime.Object, gvk schema.GroupV
 	if err := informer.GetIndexer().Add(obj); err != nil {
 		return
 	}
+}
+
+type GenericTestRunner[T runtime.Object] struct {
+	*TestRunner
+}
+
+func NewGenericTestRunner[T runtime.Object]() *GenericTestRunner[T] {
+	return &GenericTestRunner[T]{
+		TestRunner: NewTestRunner(),
+	}
+}
+
+func (r *GenericTestRunner[T]) Reconcile(c controllerutil.GenericReconciler[T], v T) error {
+	r.RegisterFixture(v)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	return c.Reconcile(ctx, v)
+}
+
+func (r *GenericTestRunner[T]) Finalize(c controllerutil.GenericReconciler[T], v T) error {
+	r.RegisterFixture(v)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	return c.Finalize(ctx, v)
 }
 
 func resourceName(v runtime.Object) string {

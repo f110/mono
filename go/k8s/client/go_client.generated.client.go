@@ -548,6 +548,54 @@ func (c *MinioV1alpha1) WatchMinIOBucket(ctx context.Context, namespace string, 
 	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "miniobuckets"}, namespace, opts)
 }
 
+func (c *MinioV1alpha1) GetMinIOCluster(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.Get(ctx, "minioclusters", "MinIOCluster", namespace, name, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
+func (c *MinioV1alpha1) CreateMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.CreateOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.Create(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
+func (c *MinioV1alpha1) UpdateMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.Update(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
+func (c *MinioV1alpha1) UpdateStatusMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOCluster, error) {
+	result, err := c.backend.UpdateStatus(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOCluster), nil
+}
+
+func (c *MinioV1alpha1) DeleteMinIOCluster(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
+	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "minioclusters"}, namespace, name, opts)
+}
+
+func (c *MinioV1alpha1) ListMinIOCluster(ctx context.Context, namespace string, opts metav1.ListOptions) (*miniov1alpha1.MinIOClusterList, error) {
+	result, err := c.backend.List(ctx, "minioclusters", "MinIOCluster", namespace, opts, &miniov1alpha1.MinIOClusterList{})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*miniov1alpha1.MinIOClusterList), nil
+}
+
+func (c *MinioV1alpha1) WatchMinIOCluster(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "minioclusters"}, namespace, opts)
+}
+
 func (c *MinioV1alpha1) GetMinIOUser(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*miniov1alpha1.MinIOUser, error) {
 	result, err := c.backend.Get(ctx, "miniousers", "MinIOUser", namespace, name, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
@@ -749,6 +797,8 @@ func (f *InformerFactory) InformerFor(obj runtime.Object) cache.SharedIndexInfor
 		return NewHarborV1alpha1Informer(f.cache, f.set.HarborV1alpha1, f.namespace, f.resyncPeriod).HarborRobotAccountInformer()
 	case *miniov1alpha1.MinIOBucket:
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOBucketInformer()
+	case *miniov1alpha1.MinIOCluster:
+		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case *miniov1alpha1.MinIOUser:
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
 	case *v1beta1.MinIOInstance:
@@ -774,6 +824,8 @@ func (f *InformerFactory) InformerForResource(gvr schema.GroupVersionResource) c
 		return NewHarborV1alpha1Informer(f.cache, f.set.HarborV1alpha1, f.namespace, f.resyncPeriod).HarborRobotAccountInformer()
 	case miniov1alpha1.SchemaGroupVersion.WithResource("miniobuckets"):
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOBucketInformer()
+	case miniov1alpha1.SchemaGroupVersion.WithResource("minioclusters"):
+		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case miniov1alpha1.SchemaGroupVersion.WithResource("miniousers"):
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
 	case v1beta1.SchemaGroupVersion.WithResource("minioinstances"):
@@ -993,6 +1045,28 @@ func (f *MinioV1alpha1Informer) MinIOBucketInformer() cache.SharedIndexInformer 
 
 func (f *MinioV1alpha1Informer) MinIOBucketLister() *MinioV1alpha1MinIOBucketLister {
 	return NewMinioV1alpha1MinIOBucketLister(f.MinIOBucketInformer().GetIndexer())
+}
+
+func (f *MinioV1alpha1Informer) MinIOClusterInformer() cache.SharedIndexInformer {
+	return f.cache.Write(&miniov1alpha1.MinIOCluster{}, func() cache.SharedIndexInformer {
+		return cache.NewSharedIndexInformer(
+			&cache.ListWatch{
+				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+					return f.client.ListMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
+				},
+				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+					return f.client.WatchMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
+				},
+			},
+			&miniov1alpha1.MinIOCluster{},
+			f.resyncPeriod,
+			f.indexers,
+		)
+	})
+}
+
+func (f *MinioV1alpha1Informer) MinIOClusterLister() *MinioV1alpha1MinIOClusterLister {
+	return NewMinioV1alpha1MinIOClusterLister(f.MinIOClusterInformer().GetIndexer())
 }
 
 func (f *MinioV1alpha1Informer) MinIOUserInformer() cache.SharedIndexInformer {
@@ -1239,6 +1313,33 @@ func (x *MinioV1alpha1MinIOBucketLister) Get(namespace, name string) (*miniov1al
 		return nil, k8serrors.NewNotFound(miniov1alpha1.SchemaGroupVersion.WithResource("miniobucket").GroupResource(), name)
 	}
 	return obj.(*miniov1alpha1.MinIOBucket).DeepCopy(), nil
+}
+
+type MinioV1alpha1MinIOClusterLister struct {
+	indexer cache.Indexer
+}
+
+func NewMinioV1alpha1MinIOClusterLister(indexer cache.Indexer) *MinioV1alpha1MinIOClusterLister {
+	return &MinioV1alpha1MinIOClusterLister{indexer: indexer}
+}
+
+func (x *MinioV1alpha1MinIOClusterLister) List(namespace string, selector labels.Selector) ([]*miniov1alpha1.MinIOCluster, error) {
+	var ret []*miniov1alpha1.MinIOCluster
+	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
+		ret = append(ret, m.(*miniov1alpha1.MinIOCluster).DeepCopy())
+	})
+	return ret, err
+}
+
+func (x *MinioV1alpha1MinIOClusterLister) Get(namespace, name string) (*miniov1alpha1.MinIOCluster, error) {
+	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, k8serrors.NewNotFound(miniov1alpha1.SchemaGroupVersion.WithResource("miniocluster").GroupResource(), name)
+	}
+	return obj.(*miniov1alpha1.MinIOCluster).DeepCopy(), nil
 }
 
 type MinioV1alpha1MinIOUserLister struct {
