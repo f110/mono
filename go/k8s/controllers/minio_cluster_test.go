@@ -26,6 +26,7 @@ func TestMinIOClusterController_Reconcile(t *testing.T) {
 		k8sfactory.Name(target.Name)))
 	runner.AssertCreateAction(t, k8sfactory.SecretFactory(nil,
 		k8sfactory.Name(target.Name)))
+	runner.AssertUpdateAction(t, "status", target)
 	runner.AssertNoUnexpectedAction(t)
 }
 
