@@ -29,4 +29,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/github.com/go-sql-driver/mysql",
     importpath = "github.com/go-sql-driver/mysql",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/filippo.io/edwards25519"],
 )

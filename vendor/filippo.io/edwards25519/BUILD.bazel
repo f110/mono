@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "edwards25519",
+    srcs = [
+        "doc.go",
+        "edwards25519.go",
+        "extra.go",
+        "scalar.go",
+        "scalar_fiat.go",
+        "scalarmult.go",
+        "tables.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/filippo.io/edwards25519",
+    importpath = "filippo.io/edwards25519",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/filippo.io/edwards25519/field"],
+)
