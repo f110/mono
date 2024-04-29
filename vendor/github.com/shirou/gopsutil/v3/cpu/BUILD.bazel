@@ -5,6 +5,8 @@ go_library(
     srcs = [
         "cpu.go",
         "cpu_aix.go",
+        "cpu_aix_cgo.go",
+        "cpu_aix_nocgo.go",
         "cpu_darwin.go",
         "cpu_darwin_cgo.go",
         "cpu_darwin_nocgo.go",
@@ -17,6 +19,9 @@ go_library(
         "cpu_freebsd_arm.go",
         "cpu_freebsd_arm64.go",
         "cpu_linux.go",
+        "cpu_netbsd.go",
+        "cpu_netbsd_amd64.go",
+        "cpu_netbsd_arm64.go",
         "cpu_openbsd.go",
         "cpu_openbsd_386.go",
         "cpu_openbsd_amd64.go",
@@ -40,6 +45,7 @@ go_library(
             "//vendor/github.com/tklauser/go-sysconf",
         ],
         "@io_bazel_rules_go//go/platform:darwin": [
+            "//vendor/github.com/shoenig/go-m1cpu",
             "//vendor/github.com/tklauser/go-sysconf",
             "//vendor/golang.org/x/sys/unix",
         ],
@@ -52,11 +58,16 @@ go_library(
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:ios": [
+            "//vendor/github.com/shoenig/go-m1cpu",
             "//vendor/github.com/tklauser/go-sysconf",
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
             "//vendor/github.com/tklauser/go-sysconf",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "//vendor/github.com/tklauser/go-sysconf",
+            "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:openbsd": [
             "//vendor/github.com/tklauser/go-sysconf",

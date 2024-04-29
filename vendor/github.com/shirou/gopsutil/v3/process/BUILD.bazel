@@ -6,7 +6,6 @@ go_library(
         "process.go",
         "process_bsd.go",
         "process_darwin.go",
-        "process_darwin_386.go",
         "process_darwin_amd64.go",
         "process_darwin_arm64.go",
         "process_darwin_cgo.go",

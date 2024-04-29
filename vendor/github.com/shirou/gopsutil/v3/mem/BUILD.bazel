@@ -5,6 +5,8 @@ go_library(
     srcs = [
         "mem.go",
         "mem_aix.go",
+        "mem_aix_cgo.go",
+        "mem_aix_nocgo.go",
         "mem_bsd.go",
         "mem_darwin.go",
         "mem_darwin_cgo.go",
@@ -12,6 +14,7 @@ go_library(
         "mem_fallback.go",
         "mem_freebsd.go",
         "mem_linux.go",
+        "mem_netbsd.go",
         "mem_openbsd.go",
         "mem_openbsd_386.go",
         "mem_openbsd_amd64.go",
@@ -46,11 +49,17 @@ go_library(
         "@io_bazel_rules_go//go/platform:linux": [
             "//vendor/golang.org/x/sys/unix",
         ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
         "@io_bazel_rules_go//go/platform:openbsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:plan9": [
             "//vendor/github.com/lufia/plan9stats",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "//vendor/github.com/tklauser/go-sysconf",
         ],
         "@io_bazel_rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",

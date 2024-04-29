@@ -55,8 +55,6 @@ func (p *Process) NameWithContext(ctx context.Context) (string, error) {
 			extendedName := filepath.Base(cmdlineSlice[0])
 			if strings.HasPrefix(extendedName, p.name) {
 				name = extendedName
-			} else {
-				name = cmdlineSlice[0]
 			}
 		}
 	}
@@ -69,7 +67,13 @@ func (p *Process) CwdWithContext(ctx context.Context) (string, error) {
 }
 
 func (p *Process) ExeWithContext(ctx context.Context) (string, error) {
-	return "", common.ErrNotImplementedError
+	mib := []int32{CTLKern, KernProc, KernProcPathname, p.Pid}
+	buf, _, err := common.CallSyscall(mib)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Trim(string(buf), "\x00"), nil
 }
 
 func (p *Process) CmdlineWithContext(ctx context.Context) (string, error) {
@@ -282,11 +286,11 @@ func (p *Process) ChildrenWithContext(ctx context.Context) ([]*Process, error) {
 }
 
 func (p *Process) ConnectionsWithContext(ctx context.Context) ([]net.ConnectionStat, error) {
-	return nil, common.ErrNotImplementedError
+	return net.ConnectionsPidWithContext(ctx, "all", p.Pid)
 }
 
 func (p *Process) ConnectionsMaxWithContext(ctx context.Context, max int) ([]net.ConnectionStat, error) {
-	return nil, common.ErrNotImplementedError
+	return net.ConnectionsPidMaxWithContext(ctx, "all", p.Pid, max)
 }
 
 func ProcessesWithContext(ctx context.Context) ([]*Process, error) {

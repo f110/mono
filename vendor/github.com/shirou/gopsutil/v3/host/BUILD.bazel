@@ -6,7 +6,6 @@ go_library(
         "host.go",
         "host_bsd.go",
         "host_darwin.go",
-        "host_darwin_386.go",
         "host_darwin_amd64.go",
         "host_darwin_arm64.go",
         "host_darwin_cgo.go",
@@ -26,9 +25,11 @@ go_library(
         "host_linux_mips64.go",
         "host_linux_mips64le.go",
         "host_linux_mipsle.go",
+        "host_linux_ppc64.go",
         "host_linux_ppc64le.go",
         "host_linux_riscv64.go",
         "host_linux_s390x.go",
+        "host_netbsd.go",
         "host_openbsd.go",
         "host_openbsd_386.go",
         "host_openbsd_amd64.go",
@@ -39,7 +40,6 @@ go_library(
         "host_windows.go",
         "smc_darwin.c",
         "smc_darwin.h",
-        "types.go",
     ],
     cgo = True,
     clinkopts = select({
@@ -73,6 +73,9 @@ go_library(
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:openbsd": [

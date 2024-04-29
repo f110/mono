@@ -5,6 +5,8 @@ go_library(
     srcs = [
         "net.go",
         "net_aix.go",
+        "net_aix_cgo.go",
+        "net_aix_nocgo.go",
         "net_darwin.go",
         "net_fallback.go",
         "net_freebsd.go",
@@ -12,6 +14,7 @@ go_library(
         "net_linux_111.go",
         "net_linux_116.go",
         "net_openbsd.go",
+        "net_solaris.go",
         "net_unix.go",
         "net_windows.go",
     ],
@@ -21,6 +24,9 @@ go_library(
     deps = [
         "//vendor/github.com/shirou/gopsutil/v3/internal/common",
     ] + select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//vendor/github.com/power-devops/perfstat",
+        ],
         "@io_bazel_rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",
         ],

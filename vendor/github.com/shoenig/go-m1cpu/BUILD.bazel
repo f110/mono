@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-m1cpu",
+    srcs = [
+        "cpu.go",
+        "incompatible.go",
+    ],
+    cgo = True,
+    clinkopts = select({
+        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+            "-framework CoreFoundation -framework IOKit",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_arm64": [
+            "-framework CoreFoundation -framework IOKit",
+        ],
+        "//conditions:default": [],
+    }),
+    importmap = "go.f110.dev/mono/vendor/github.com/shoenig/go-m1cpu",
+    importpath = "github.com/shoenig/go-m1cpu",
+    visibility = ["//visibility:public"],
+)
