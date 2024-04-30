@@ -53,8 +53,10 @@ func getRelease(ver string) (*release, error) {
 
 	assets := make(map[string]*asset)
 	checksums := make(map[string]string)
+	foundChecksums := false
 	for _, v := range rel.Assets {
 		if v.GetName() == "checksums.txt" {
+			foundChecksums = true
 			checksums, err = getChecksum(context.TODO(), v.GetBrowserDownloadURL())
 			if err != nil {
 				return nil, err
@@ -72,6 +74,9 @@ func getRelease(ver string) (*release, error) {
 			Arch: arch,
 			URL:  v.GetBrowserDownloadURL(),
 		}
+	}
+	if !foundChecksums {
+		return nil, xerrors.Define("checksums.txt is not found").WithStack()
 	}
 	newRelease := &release{Version: ver, Assets: make([]*asset, 0)}
 	for _, v := range assets {
@@ -237,7 +242,7 @@ func releaseToKeyValueExpr(release *release) *build.KeyValueExpr {
 
 func main() {
 	if err := updateKustomizeAssets(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 }
