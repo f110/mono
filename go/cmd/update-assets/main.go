@@ -29,11 +29,14 @@ var (
 		"v5.1.1", // darwin/arm64 is not distributed
 		"v5.1.0", // darwin/arm64 is not distributed
 	}
+	minimumKindVersion = semver.MustParse("0.20.0")
 )
 
 const (
 	KustomizeRepositoryOwner = "kubernetes-sigs"
 	KustomizeRepositoryName  = "kustomize"
+	KindRepositoryOwner      = "kubernetes-sigs"
+	KindRepositoryName       = "kind"
 )
 
 type release struct {
@@ -57,63 +60,6 @@ func init() {
 	for _, v := range ignoreKustomizeVersion {
 		ignoreVersions["kustomize"][v] = struct{}{}
 	}
-}
-
-func getRelease(ctx context.Context, gClient *github.Client, ver string) (*release, error) {
-	rel, _, err := gClient.Repositories.GetReleaseByTag(
-		ctx,
-		KustomizeRepositoryOwner,
-		KustomizeRepositoryName,
-		fmt.Sprintf("kustomize/%s", ver),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	assets := make(map[string]*asset)
-	checksums := make(map[string]string)
-	foundChecksums := false
-	for _, v := range rel.Assets {
-		if v.GetName() == "checksums.txt" {
-			foundChecksums = true
-			checksums, err = getChecksum(ctx, v.GetBrowserDownloadURL())
-			if err != nil {
-				return nil, err
-			}
-			continue
-		}
-		s := strings.Split(v.GetName(), "_")
-		if s[3] != "amd64.tar.gz" && s[3] != "arm64.tar.gz" {
-			continue
-		}
-		a := strings.Split(s[3], ".")
-		arch := a[0]
-		assets[v.GetName()] = &asset{
-			OS:   s[2],
-			Arch: arch,
-			URL:  v.GetBrowserDownloadURL(),
-		}
-	}
-	if !foundChecksums {
-		return nil, xerrors.Define("checksums.txt is not found").WithStack()
-	}
-	newRelease := &release{Version: ver, Assets: make([]*asset, 0)}
-	for _, v := range assets {
-		u, err := url.Parse(v.URL)
-		if err != nil {
-			return nil, err
-		}
-		filename := filepath.Base(u.Path)
-		if checksum, ok := checksums[filename]; !ok {
-			return nil, xerrors.Definef("unknown filename: %s", filename).WithStack()
-		} else {
-			v.SHA256 = checksum
-		}
-
-		newRelease.Assets = append(newRelease.Assets, v)
-	}
-
-	return newRelease, nil
 }
 
 func getChecksum(ctx context.Context, url string) (map[string]string, error) {
@@ -197,7 +143,7 @@ type kustomizeAssets struct {
 }
 
 func (k *kustomizeAssets) Flags(fs *cli.FlagSet) {
-	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile)
+	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile).Required()
 	fs.Bool("overwrite", "Overwrite").Var(&k.overwrite)
 }
 
@@ -258,7 +204,7 @@ func (k *kustomizeAssets) update(ctx context.Context) error {
 
 	for _, v := range vers {
 		log.Printf("Get %s", v)
-		rel, err := getRelease(ctx, gClient, v)
+		rel, err := k.getRelease(ctx, gClient, v)
 		if err != nil {
 			return err
 		}
@@ -280,6 +226,179 @@ func (k *kustomizeAssets) update(ctx context.Context) error {
 	return nil
 }
 
+func (k *kustomizeAssets) getRelease(ctx context.Context, gClient *github.Client, ver string) (*release, error) {
+	rel, _, err := gClient.Repositories.GetReleaseByTag(
+		ctx,
+		KustomizeRepositoryOwner,
+		KustomizeRepositoryName,
+		fmt.Sprintf("kustomize/%s", ver),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	assets := make(map[string]*asset)
+	checksums := make(map[string]string)
+	foundChecksums := false
+	for _, v := range rel.Assets {
+		if v.GetName() == "checksums.txt" {
+			foundChecksums = true
+			checksums, err = getChecksum(ctx, v.GetBrowserDownloadURL())
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		s := strings.Split(v.GetName(), "_")
+		if s[3] != "amd64.tar.gz" && s[3] != "arm64.tar.gz" {
+			continue
+		}
+		a := strings.Split(s[3], ".")
+		arch := a[0]
+		assets[v.GetName()] = &asset{
+			OS:   s[2],
+			Arch: arch,
+			URL:  v.GetBrowserDownloadURL(),
+		}
+	}
+	if !foundChecksums {
+		return nil, xerrors.Define("checksums.txt is not found").WithStack()
+	}
+	newRelease := &release{Version: ver, Assets: make([]*asset, 0)}
+	for _, v := range assets {
+		u, err := url.Parse(v.URL)
+		if err != nil {
+			return nil, err
+		}
+		filename := filepath.Base(u.Path)
+		if checksum, ok := checksums[filename]; !ok {
+			return nil, xerrors.Definef("unknown filename: %s", filename).WithStack()
+		} else {
+			v.SHA256 = checksum
+		}
+
+		newRelease.Assets = append(newRelease.Assets, v)
+	}
+
+	return newRelease, nil
+}
+
+type kindAssets struct {
+	assetsFile string
+	overwrite  bool
+}
+
+func (k *kindAssets) Flags(fs *cli.FlagSet) {
+	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile).Required()
+	fs.Bool("overwrite", "Overwrite").Var(&k.overwrite)
+}
+
+func (k *kindAssets) update(ctx context.Context) error {
+	buf, err := os.ReadFile(k.assetsFile)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	f, err := build.Parse(filepath.Base(k.assetsFile), buf)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if len(f.Stmt) != 1 {
+		return xerrors.Definef("the file has to include dict assign only").WithStack()
+	}
+
+	a, ok := f.Stmt[0].(*build.AssignExpr)
+	if !ok {
+		return xerrors.Definef("statement is not assign: %T", f.Stmt[0]).WithStack()
+	}
+	dict, ok := a.RHS.(*build.DictExpr)
+	if !ok {
+		return xerrors.Definef("RHS is not dict: %T", a.RHS).WithStack()
+	}
+	exists := make(map[string]*build.KeyValueExpr)
+	for _, v := range dict.List {
+		key, ok := v.Key.(*build.StringExpr)
+		if !ok {
+			continue
+		}
+		exists[key.Value] = v
+	}
+
+	gClient := github.NewClient(nil)
+	rel, _, err := gClient.Repositories.ListReleases(ctx, KindRepositoryOwner, KindRepositoryName, &github.ListOptions{})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	vers := make([]string, 0)
+	for _, v := range rel {
+		ver := strings.TrimPrefix(v.GetTagName(), "v")
+		sVer, err := semver.NewVersion(ver)
+		if err != nil {
+			continue
+		}
+		if sVer.LessThan(minimumKindVersion) {
+			continue
+		}
+
+		if _, ok := exists[ver]; ok {
+			log.Printf("%s is already exists", ver)
+			continue
+		}
+		vers = append(vers, ver)
+	}
+	if len(vers) == 0 {
+		log.Print("No need to update the asset file")
+		return nil
+	}
+
+	for _, v := range vers {
+		rel, err := k.getRelease(ctx, gClient, v)
+		if err != nil {
+			return err
+		}
+		dict.List = append(dict.List, releaseToKeyValueExpr(rel))
+		sort.Slice(dict.List, func(i, j int) bool {
+			left := semver.MustParse(dict.List[i].Key.(*build.StringExpr).Value)
+			right := semver.MustParse(dict.List[j].Key.(*build.StringExpr).Value)
+			return left.GreaterThan(right)
+		})
+	}
+	out := build.FormatString(f)
+	fmt.Print(out)
+
+	return nil
+}
+
+func (k *kindAssets) getRelease(ctx context.Context, gClient *github.Client, ver string) (*release, error) {
+	rel, _, err := gClient.Repositories.GetReleaseByTag(ctx, KindRepositoryOwner, KindRepositoryName, "v"+ver)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	newRelease := &release{Version: ver, Assets: make([]*asset, 0)}
+	for _, v := range rel.Assets {
+		if strings.HasSuffix(v.GetName(), ".sha256sum") {
+			continue
+		}
+		s := strings.Split(v.GetName(), "-")
+		if s[1] != "darwin" && s[1] != "linux" {
+			continue
+		}
+		checksums, err := getChecksum(ctx, v.GetBrowserDownloadURL()+".sha256sum")
+		if err != nil {
+			continue
+		}
+
+		a := &asset{
+			OS:     s[1],
+			Arch:   s[2],
+			URL:    v.GetBrowserDownloadURL(),
+			SHA256: checksums[v.GetName()],
+		}
+		newRelease.Assets = append(newRelease.Assets, a)
+	}
+	return newRelease, nil
+}
+
 func updateAssets(args []string) error {
 	cmd := &cli.Command{
 		Use: "update-assets",
@@ -294,6 +413,16 @@ func updateAssets(args []string) error {
 	}
 	kustomize.Flags(kustomizeCmd.Flags())
 	cmd.AddCommand(kustomizeCmd)
+
+	kind := &kindAssets{}
+	kindCmd := &cli.Command{
+		Use: "kind",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return kind.update(ctx)
+		},
+	}
+	kind.Flags(kindCmd.Flags())
+	cmd.AddCommand(kindCmd)
 
 	return cmd.Execute(args)
 }
