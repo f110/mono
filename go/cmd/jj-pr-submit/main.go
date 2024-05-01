@@ -247,7 +247,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	c.stack = stack
 
 	// Push all commits of current branch
-	var pushArgs []string
+	var pushArgs [][]string
 	var changedPR []*commit
 	for i, v := range c.stack {
 		if c.SinglePR && i > 0 {
@@ -255,7 +255,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		}
 		if v.Branch == "" {
 			logger.Log.Debug("Will create branch", zap.String("change_id", v.ChangeID))
-			pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", v.ChangeID))
+			pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", v.ChangeID)})
 		} else {
 			var found bool
 			for _, r := range c.remoteBranches {
@@ -265,7 +265,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				}
 			}
 			if !found {
-				pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", v.ChangeID))
+				pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", v.ChangeID)})
 			}
 		}
 	}
@@ -282,23 +282,25 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		for _, h := range c.stack {
 			if strings.HasPrefix(h.ChangeID, shortChangeID) && commitID != h.CommitID {
 				logger.Log.Debug("Will update branch", zap.String("change_id", h.ChangeID))
-				pushArgs = append(pushArgs, fmt.Sprintf("--change=%s", h.ChangeID))
+				pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", h.ChangeID)})
 				changedPR = append(changedPR, h)
 				break
 			}
 		}
 	}
 	if len(pushArgs) > 0 {
-		pushArgs = append([]string{"git", "push"}, pushArgs...)
-		logger.Log.Debug("Push commits to create branches")
-		cmd := exec.CommandContext(ctx, "jj", pushArgs...)
-		cmd.Dir = c.Dir
-		if c.DryRun {
-			cmd.Args = append(cmd.Args, "--dry-run")
-		}
-		cmd.Stdout = os.Stdout
-		if err = cmd.Run(); err != nil {
-			return fsm.Error(xerrors.WithStack(err))
+		for _, v := range pushArgs {
+			args := append([]string{"git", "push"}, v...)
+			logger.Log.Debug("Push commits to create branches")
+			cmd := exec.CommandContext(ctx, "jj", args...)
+			cmd.Dir = c.Dir
+			if c.DryRun {
+				cmd.Args = append(cmd.Args, "--dry-run")
+			}
+			cmd.Stdout = os.Stdout
+			if err = cmd.Run(); err != nil {
+				return fsm.Error(xerrors.WithStack(err))
+			}
 		}
 
 		// Get all commits because the stack has been changed.
