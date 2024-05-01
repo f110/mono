@@ -620,7 +620,6 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
 		logger.Log.Warn("Failed to encode the response", logger.Error(err))
 	}
-
 }
 
 type ReadinessResponse struct {

@@ -333,6 +333,7 @@ type TaskInterface interface {
 	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
 	ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
 	ListUniqJobName(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
+	ListByRevision(ctx context.Context, repositoryId int32, revision string, opt ...ListOption) ([]*database.Task, error)
 	Create(ctx context.Context, task *database.Task, opt ...ExecOption) (*database.Task, error)
 	Update(ctx context.Context, task *database.Task, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
@@ -608,6 +609,60 @@ func (d *Task) ListUniqJobName(ctx context.Context, repositoryId int32, opt ...L
 	for rows.Next() {
 		r := &database.Task{}
 		if err := rows.Scan(&r.JobName); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Task) ListByRevision(ctx context.Context, repositoryId int32, revision string, opt ...ListOption) ([]*database.Task, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ? AND `revision` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+		revision,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.Task, 0)
+	for rows.Next() {
+		r := &database.Task{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()

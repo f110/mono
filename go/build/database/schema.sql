@@ -42,6 +42,7 @@ CREATE TABLE `task` (
 	`finished_at` DATETIME NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
+	INDEX `idx_repo` (`repository_id`),
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 

@@ -305,6 +305,20 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		}
 	}()
 
+	taskList, err := b.dao.Task.ListByRevision(ctx, repo.Id, revision, dao.Desc)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	for _, v := range taskList {
+		if time.Since(v.CreatedAt) > jobTimeout {
+			break
+		}
+		if v.FinishedAt == nil {
+			logger.Log.Warn("Other task is still running", zap.Int32("task_id", v.Id))
+			return nil, nil
+		}
+	}
+
 	jobConfiguration, err := config.MarshalJob(job)
 	if err != nil {
 		return nil, err

@@ -63,6 +63,10 @@ message Task {
   option (dev.f110.ddl.table) = {
     primary_key: "id"
     with_timestamp: true
+    indexes: {
+      name: "idx_repo"
+      columns: "repository"
+    }
   };
 
   option (dev.f110.ddl.dao) = {
@@ -81,6 +85,10 @@ message Task {
     queries: {
       name: "UniqJobName"
       query: "SELECT DISTINCT `job_name` FROM `:table_name:` WHERE job_name != '' AND `repository_id` = ?"
+    }
+    queries: {
+      name: "ByRevision"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `revision` = ?"
     }
   };
 }

@@ -141,6 +141,15 @@ func (d *Task) RegisterListUniqJobName(repositoryId int32, value []*database.Tas
 	d.Register("ListUniqJobName", map[string]interface{}{"repositoryId": repositoryId}, value, err)
 }
 
+func (d *Task) ListByRevision(ctx context.Context, repositoryId int32, revision string, opt ...dao.ListOption) ([]*database.Task, error) {
+	v, err := d.Call("ListByRevision", map[string]interface{}{"repositoryId": repositoryId, "revision": revision})
+	return v.([]*database.Task), err
+}
+
+func (d *Task) RegisterListByRevision(repositoryId int32, revision string, value []*database.Task, err error) {
+	d.Register("ListByRevision", map[string]interface{}{"repositoryId": repositoryId, "revision": revision}, value, err)
+}
+
 func (d *Task) Create(ctx context.Context, task *database.Task, opt ...dao.ExecOption) (*database.Task, error) {
 	_, _ = d.Call("Create", map[string]interface{}{"task": task})
 	return task, nil
