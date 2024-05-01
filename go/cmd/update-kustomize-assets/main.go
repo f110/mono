@@ -22,6 +22,14 @@ import (
 	"go.f110.dev/xerrors"
 )
 
+var (
+	ignoreKustomizeVersion = []string{
+		"v5.2.0", // darwin/arm64 is not distributed
+		"v5.1.1", // darwin/arm64 is not distributed
+		"v5.1.0", // darwin/arm64 is not distributed
+	}
+)
+
 const (
 	KustomizeRepositoryOwner = "kubernetes-sigs"
 	KustomizeRepositoryName  = "kustomize"
@@ -39,8 +47,18 @@ type asset struct {
 	SHA256 string
 }
 
-func getRelease(ver string) (*release, error) {
-	gClient := github.NewClient(nil)
+var ignoreVersions map[string]map[string]struct{}
+
+func init() {
+	ignoreVersions = make(map[string]map[string]struct{})
+
+	ignoreVersions["kustomize"] = make(map[string]struct{})
+	for _, v := range ignoreKustomizeVersion {
+		ignoreVersions["kustomize"][v] = struct{}{}
+	}
+}
+
+func getRelease(gClient *github.Client, ver string) (*release, error) {
 	rel, _, err := gClient.Repositories.GetReleaseByTag(
 		context.TODO(),
 		KustomizeRepositoryOwner,
@@ -124,11 +142,9 @@ func getChecksum(ctx context.Context, url string) (map[string]string, error) {
 
 func updateKustomizeAssets(args []string) error {
 	assetsFile := ""
-	version := ""
 	overwrite := false
 	fs := pflag.NewFlagSet("update-kustomize-assets", pflag.ContinueOnError)
 	fs.StringVar(&assetsFile, "assets-file", "", "File path of assets.bzl")
-	fs.StringVar(&version, "version", "", "Version of kustomize")
 	fs.BoolVar(&overwrite, "overwrite", false, "Overwrite")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -161,13 +177,36 @@ func updateKustomizeAssets(args []string) error {
 		}
 		exists[key.Value] = v
 	}
-	if _, ok := exists[version]; ok {
-		log.Printf("%s is already exists", version)
+
+	gClient := github.NewClient(nil)
+	rel, _, err := gClient.Repositories.ListReleases(context.Background(), KustomizeRepositoryOwner, KustomizeRepositoryName, &github.ListOptions{})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	vers := make([]string, 0)
+	for _, v := range rel {
+		if !strings.HasPrefix(v.GetName(), "kustomize/") {
+			continue
+		}
+		ver := strings.TrimPrefix(v.GetName(), "kustomize/")
+		if _, ok := exists[ver]; ok {
+			log.Printf("%s is already exists", ver)
+			continue
+		}
+		if _, ok := ignoreVersions["kustomize"][ver]; ok {
+			log.Printf("%s is ignored version", ver)
+			continue
+		}
+		vers = append(vers, ver)
+	}
+	if len(vers) == 0 {
+		log.Print("No need to update the asset file")
 		return nil
 	}
 
-	if version != "" {
-		rel, err := getRelease(version)
+	for _, v := range vers {
+		log.Printf("Get %s", v)
+		rel, err := getRelease(gClient, v)
 		if err != nil {
 			return err
 		}
