@@ -1,21 +1,21 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "update-kustomize-assets_lib",
+    name = "update-assets_lib",
     srcs = ["main.go"],
-    importpath = "go.f110.dev/mono/go/cmd/update-kustomize-assets",
+    importpath = "go.f110.dev/mono/go/cmd/update-assets",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//vendor/github.com/Masterminds/semver/v3:semver",
         "//vendor/github.com/bazelbuild/buildtools/build",
         "//vendor/github.com/google/go-github/v49/github",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
     ],
 )
 
 go_binary(
-    name = "update-kustomize-assets",
-    embed = [":update-kustomize-assets_lib"],
+    name = "update-assets",
+    embed = [":update-assets_lib"],
     visibility = ["//visibility:public"],
 )

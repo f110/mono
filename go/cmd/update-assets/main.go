@@ -18,8 +18,9 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/bazelbuild/buildtools/build"
 	"github.com/google/go-github/v49/github"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/cli"
 )
 
 var (
@@ -58,9 +59,9 @@ func init() {
 	}
 }
 
-func getRelease(gClient *github.Client, ver string) (*release, error) {
+func getRelease(ctx context.Context, gClient *github.Client, ver string) (*release, error) {
 	rel, _, err := gClient.Repositories.GetReleaseByTag(
-		context.TODO(),
+		ctx,
 		KustomizeRepositoryOwner,
 		KustomizeRepositoryName,
 		fmt.Sprintf("kustomize/%s", ver),
@@ -75,7 +76,7 @@ func getRelease(gClient *github.Client, ver string) (*release, error) {
 	for _, v := range rel.Assets {
 		if v.GetName() == "checksums.txt" {
 			foundChecksums = true
-			checksums, err = getChecksum(context.TODO(), v.GetBrowserDownloadURL())
+			checksums, err = getChecksum(ctx, v.GetBrowserDownloadURL())
 			if err != nil {
 				return nil, err
 			}
@@ -140,95 +141,6 @@ func getChecksum(ctx context.Context, url string) (map[string]string, error) {
 	return sums, nil
 }
 
-func updateKustomizeAssets(args []string) error {
-	assetsFile := ""
-	overwrite := false
-	fs := pflag.NewFlagSet("update-kustomize-assets", pflag.ContinueOnError)
-	fs.StringVar(&assetsFile, "assets-file", "", "File path of assets.bzl")
-	fs.BoolVar(&overwrite, "overwrite", false, "Overwrite")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	buf, err := os.ReadFile(assetsFile)
-	if err != nil {
-		return err
-	}
-	f, err := build.Parse(filepath.Base(assetsFile), buf)
-	if err != nil {
-		return err
-	}
-	if len(f.Stmt) != 1 {
-		return xerrors.Define("the file has to include dict assign only").WithStack()
-	}
-	a, ok := f.Stmt[0].(*build.AssignExpr)
-	if !ok {
-		return xerrors.Definef("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String()).WithStack()
-	}
-	dict, ok := a.RHS.(*build.DictExpr)
-	if !ok {
-		return xerrors.Definef("RHS is not dict: %s", reflect.TypeOf(a.RHS).String()).WithStack()
-	}
-	exists := make(map[string]*build.KeyValueExpr)
-	for _, v := range dict.List {
-		key, ok := v.Key.(*build.StringExpr)
-		if !ok {
-			continue
-		}
-		exists[key.Value] = v
-	}
-
-	gClient := github.NewClient(nil)
-	rel, _, err := gClient.Repositories.ListReleases(context.Background(), KustomizeRepositoryOwner, KustomizeRepositoryName, &github.ListOptions{})
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	vers := make([]string, 0)
-	for _, v := range rel {
-		if !strings.HasPrefix(v.GetName(), "kustomize/") {
-			continue
-		}
-		ver := strings.TrimPrefix(v.GetName(), "kustomize/")
-		if _, ok := exists[ver]; ok {
-			log.Printf("%s is already exists", ver)
-			continue
-		}
-		if _, ok := ignoreVersions["kustomize"][ver]; ok {
-			log.Printf("%s is ignored version", ver)
-			continue
-		}
-		vers = append(vers, ver)
-	}
-	if len(vers) == 0 {
-		log.Print("No need to update the asset file")
-		return nil
-	}
-
-	for _, v := range vers {
-		log.Printf("Get %s", v)
-		rel, err := getRelease(gClient, v)
-		if err != nil {
-			return err
-		}
-		dict.List = append(dict.List, releaseToKeyValueExpr(rel))
-		sort.Slice(dict.List, func(i, j int) bool {
-			left := semver.MustParse(dict.List[i].Key.(*build.StringExpr).Value)
-			right := semver.MustParse(dict.List[j].Key.(*build.StringExpr).Value)
-			return left.LessThan(right)
-		})
-	}
-	out := build.FormatString(f)
-	fmt.Print(out)
-
-	if overwrite {
-		if err := os.WriteFile(assetsFile, []byte(out), 0644); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func releaseToKeyValueExpr(release *release) *build.KeyValueExpr {
 	sort.Slice(release.Assets, func(i, j int) bool {
 		return release.Assets[i].OS < release.Assets[j].OS
@@ -279,8 +191,115 @@ func releaseToKeyValueExpr(release *release) *build.KeyValueExpr {
 	return kv
 }
 
+type kustomizeAssets struct {
+	assetsFile string
+	overwrite  bool
+}
+
+func (k *kustomizeAssets) Flags(fs *cli.FlagSet) {
+	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile)
+	fs.Bool("overwrite", "Overwrite").Var(&k.overwrite)
+}
+
+func (k *kustomizeAssets) update(ctx context.Context) error {
+	buf, err := os.ReadFile(k.assetsFile)
+	if err != nil {
+		return err
+	}
+	f, err := build.Parse(filepath.Base(k.assetsFile), buf)
+	if err != nil {
+		return err
+	}
+	if len(f.Stmt) != 1 {
+		return xerrors.Define("the file has to include dict assign only").WithStack()
+	}
+	a, ok := f.Stmt[0].(*build.AssignExpr)
+	if !ok {
+		return xerrors.Definef("statement is not assign: %s", reflect.TypeOf(f.Stmt[0]).String()).WithStack()
+	}
+	dict, ok := a.RHS.(*build.DictExpr)
+	if !ok {
+		return xerrors.Definef("RHS is not dict: %s", reflect.TypeOf(a.RHS).String()).WithStack()
+	}
+	exists := make(map[string]*build.KeyValueExpr)
+	for _, v := range dict.List {
+		key, ok := v.Key.(*build.StringExpr)
+		if !ok {
+			continue
+		}
+		exists[key.Value] = v
+	}
+
+	gClient := github.NewClient(nil)
+	rel, _, err := gClient.Repositories.ListReleases(ctx, KustomizeRepositoryOwner, KustomizeRepositoryName, &github.ListOptions{})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	vers := make([]string, 0)
+	for _, v := range rel {
+		if !strings.HasPrefix(v.GetName(), "kustomize/") {
+			continue
+		}
+		ver := strings.TrimPrefix(v.GetName(), "kustomize/")
+		if _, ok := exists[ver]; ok {
+			log.Printf("%s is already exists", ver)
+			continue
+		}
+		if _, ok := ignoreVersions["kustomize"][ver]; ok {
+			log.Printf("%s is ignored version", ver)
+			continue
+		}
+		vers = append(vers, ver)
+	}
+	if len(vers) == 0 {
+		log.Print("No need to update the asset file")
+		return nil
+	}
+
+	for _, v := range vers {
+		log.Printf("Get %s", v)
+		rel, err := getRelease(ctx, gClient, v)
+		if err != nil {
+			return err
+		}
+		dict.List = append(dict.List, releaseToKeyValueExpr(rel))
+		sort.Slice(dict.List, func(i, j int) bool {
+			left := semver.MustParse(dict.List[i].Key.(*build.StringExpr).Value)
+			right := semver.MustParse(dict.List[j].Key.(*build.StringExpr).Value)
+			return left.LessThan(right)
+		})
+	}
+	out := build.FormatString(f)
+	fmt.Print(out)
+
+	if k.overwrite {
+		if err := os.WriteFile(k.assetsFile, []byte(out), 0644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func updateAssets(args []string) error {
+	cmd := &cli.Command{
+		Use: "update-assets",
+	}
+
+	kustomize := &kustomizeAssets{}
+	kustomizeCmd := &cli.Command{
+		Use: "kustomize",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return kustomize.update(ctx)
+		},
+	}
+	kustomize.Flags(kustomizeCmd.Flags())
+	cmd.AddCommand(kustomizeCmd)
+
+	return cmd.Execute(args)
+}
+
 func main() {
-	if err := updateKustomizeAssets(os.Args); err != nil {
+	if err := updateAssets(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
