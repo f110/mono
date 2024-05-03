@@ -16,6 +16,8 @@ var (
 	output   = "stdout"
 )
 
+// Flags sets the flag of logger.
+// We can't receive *cli.FlagSet directly due to avoid cycle dependency.
 func Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&logLevel, "log-level", "info", "Log level")
 }
