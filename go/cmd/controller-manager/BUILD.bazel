@@ -22,6 +22,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/controller-manager",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/fsm",
         "//go/k8s/client",
         "//go/k8s/controllers",

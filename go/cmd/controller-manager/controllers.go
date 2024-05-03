@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,6 +21,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/component-base/metrics/legacyregistry"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers"
@@ -226,33 +226,31 @@ func New(args []string) *Controllers {
 	return p
 }
 
-func (p *Controllers) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&p.id, "id", uuid.New().String(), "the holder identity name")
-	fs.StringVar(&p.metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	fs.BoolVar(&p.enableLeaderElection, "enable-leader-election", p.enableLeaderElection,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
-	fs.StringVar(&p.leaseLockName, "lease-lock-name", "mono", "the lease lock resource name")
-	fs.StringVar(&p.leaseLockNamespace, "lease-lock-namespace", "default", "the lease lock resource namespace")
-	fs.StringVar(&p.clusterDomain, "cluster-domain", p.clusterDomain, "Cluster domain")
-	fs.IntVar(&p.workers, "workers", p.workers, "The number of workers on each controller")
-	fs.StringVar(&p.harborNamespace, "harbor-namespace", "", "the namespace name to which harbor service belongs")
-	fs.StringVar(&p.harborServiceName, "harbor-service-name", "", "the service name of harbor")
-	fs.StringVar(&p.adminSecretName, "admin-secret-name", "", "the secret name that including admin password")
-	fs.StringVar(&p.coreConfigMapName, "core-configmap-name", "", "the configmap name that used harbor core")
-	fs.BoolVar(&p.dev, "dev", p.dev, "development mode")
-	fs.StringVar(&p.serviceAccountTokenFile, "service-account-token-file", "/var/run/secrets/kubernetes.io/serviceaccount/token", "a file path that contains JWT token")
-	fs.StringVar(&p.vaultAddr, "vault-addr", "http://127.0.0.1:8200", "the address to vault")
-	fs.StringVar(&p.vaultToken, "vault-token", "", "the token for vault")
-	fs.StringVar(&p.vaultK8sAuthPath, "vault-k8s-auth-path", "auth/kubernetes", "The mount path of kubernetes auth method")
-	fs.StringVar(&p.vaultK8sAuthRole, "vault-k8s-auth-role", "", "Role name for k8s auth method")
-	logger.Flags(fs)
+func (p *Controllers) Flags(fs *cli.FlagSet) {
+	fs.String("id", "the holder identity name").Var(&p.id).Default(uuid.New().String())
+	fs.String("metrics-addr", "The address the metric endpoint binds to.").Var(&p.metricsAddr).Default(":8080")
+	fs.Bool("enable-leader-election",
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.").Var(&p.enableLeaderElection).Default(p.enableLeaderElection)
+	fs.String("lease-lock-name", "the lease lock resource name").Var(&p.leaseLockName).Default("mono")
+	fs.String("lease-lock-namespace", "the lease lock resource namespace").Var(&p.leaseLockNamespace).Default("default")
+	fs.String("cluster-domain", "Cluster domain").Var(&p.clusterDomain).Default(p.clusterDomain)
+	fs.Int("workers", "The number of workers on each controller").Var(&p.workers).Default(p.workers)
+	fs.String("harbor-namespace", "the namespace name to which harbor service belongs").Var(&p.harborNamespace)
+	fs.String("harbor-service-name", "the service name of harbor").Var(&p.harborServiceName)
+	fs.String("admin-secret-name", "the secret name that including admin password").Var(&p.adminSecretName)
+	fs.String("core-configmap-name", "the configmap name that used harbor core").Var(&p.coreConfigMapName)
+	fs.Bool("dev", "development mode").Var(&p.dev).Default(p.dev)
+	fs.String("service-account-token-file", "a file path that contains JWT token").Var(&p.serviceAccountTokenFile).Default("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	fs.String("vault-addr", "the address to vault").Var(&p.vaultAddr).Default("http://127.0.0.1:8200")
+	fs.String("vault-token", "the token for vault").Var(&p.vaultToken)
+	fs.String("vault-k8s-auth-path", "The mount path of kubernetes auth method").Var(&p.vaultK8sAuthPath).Default("auth/kubernetes")
+	fs.String("vault-k8s-auth-role", "Role name for k8s auth method").Var(&p.vaultK8sAuthRole)
+	logger.Flags(fs.FlagSet())
 }
 
 func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
-	fs := pflag.NewFlagSet("controller-manager", pflag.ExitOnError)
+	fs := cli.NewFlagSet("controller-manager", pflag.ExitOnError)
 	p.Flags(fs)
-	goFlagSet := flag.NewFlagSet("", flag.ContinueOnError)
-	fs.AddGoFlagSet(goFlagSet)
 	if err := fs.Parse(p.args); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}

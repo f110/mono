@@ -47,6 +47,10 @@ func (fs *FlagSet) Len() int {
 	return len(fs.flags)
 }
 
+func (fs *FlagSet) FlagSet() *pflag.FlagSet {
+	return fs.flagSet
+}
+
 func (fs *FlagSet) Copy() *FlagSet {
 	newFs := pflag.NewFlagSet(fs.name, fs.errorHandling)
 	var flags []flag
