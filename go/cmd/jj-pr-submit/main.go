@@ -9,20 +9,17 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/google/go-github/v49/github"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
 )
@@ -89,14 +86,14 @@ func newCommand() *jujutsuPRSubmitCommand {
 	return c
 }
 
-func (c *jujutsuPRSubmitCommand) flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Dir, "dir", "", "Working directory")
-	fs.StringVar(&c.Repository, "repository", "", "Repository name. If not specified, try to get from remote url")
-	fs.StringVar(&c.DefaultBranch, "default-branch", "", "Default branch name. If not specified, get from API")
-	fs.BoolVar(&c.DryRun, "dry-run", false, "Not impact on remote")
-	fs.BoolVar(&c.Force, "force", false, "Push commits when there are more than 10 commits in the stack")
-	fs.BoolVar(&c.DisplayStack, "display-stack", false, "Only display the stack")
-	fs.BoolVar(&c.SinglePR, "single-pr", false, "Make the PR in multiple commits")
+func (c *jujutsuPRSubmitCommand) flags(fs *cli.FlagSet) {
+	fs.String("dir", "Working directory").Var(&c.Dir)
+	fs.String("repository", "Repository name. If not specified, try to get from remote url").Var(&c.Repository)
+	fs.String("default-branch", "Default branch name. If not specified, get from API").Var(&c.DefaultBranch)
+	fs.Bool("dry-run", "Not impact on remote").Var(&c.DryRun)
+	fs.Bool("force", "Push commits when there are more than 10 commits in the stack").Var(&c.Force)
+	fs.Bool("display-stack", "Only display the stack").Var(&c.DisplayStack)
+	fs.Bool("single-pr", "Make the PR in multiple commits").Var(&c.SinglePR)
 }
 
 func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
@@ -763,22 +760,15 @@ func newPullRequest(pr *github.PullRequest) *pullRequest {
 
 func jujutsuPRSubmit() error {
 	c := newCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "jj-pr-submit",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			return logger.Init()
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return c.LoopContext(ctx)
 		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			return c.LoopContext(cmd.Context())
-		},
-		SilenceErrors: true,
 	}
 	c.flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {

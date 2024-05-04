@@ -6,11 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/jj-pr-submit",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/fsm",
         "//go/logger",
         "//vendor/github.com/google/go-github/v49/github",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/golang.org/x/oauth2",
