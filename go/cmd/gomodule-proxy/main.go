@@ -7,24 +7,22 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
-
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 )
 
 func goModuleProxy() error {
 	proxy := newGoModuleProxyCommand()
 
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "gomodule-proxy",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			if err := logger.Init(); err != nil {
 				return err
 			}
-			return proxy.LoopContext(cmd.Context())
+			return proxy.LoopContext(ctx)
 		},
 	}
-	logger.Flags(cmd.Flags())
 	proxy.Flags(cmd.Flags())
 	for _, v := range proxy.RequiredFlags() {
 		if err := cmd.MarkFlagRequired(v); err != nil {

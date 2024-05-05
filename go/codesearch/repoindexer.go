@@ -118,7 +118,7 @@ func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
 	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
 	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
 
-	r.githubClientFactory.Flags(fs)
+	r.githubClientFactory.PFlags(fs)
 }
 
 func (r *IndexerCommand) ValidateFlags() error {

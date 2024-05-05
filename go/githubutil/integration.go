@@ -11,6 +11,8 @@ import (
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/cli"
 )
 
 type GitHubClientFactory struct {
@@ -37,7 +39,17 @@ func NewGitHubClientFactory(name string, requiredCredential bool) *GitHubClientF
 	return &GitHubClientFactory{Name: name, requiredCredential: requiredCredential}
 }
 
-func (g *GitHubClientFactory) Flags(fs *pflag.FlagSet) {
+func (g *GitHubClientFactory) Flags(fs *cli.FlagSet) {
+	fs.Int64("github-app-id", "GitHub Application ID")
+	fs.Int64("github-installation-id", "GitHub Application installation ID").Var(&g.InstallationID)
+	fs.String("github-private-key-file", "Private key file for GitHub App").Var(&g.PrivateKeyFile)
+	fs.String("github-token", "Personal access token for GitHub").Var(&g.Token)
+	fs.String("github-api-endpoint", "REST API endpoint of github if you want to use non-default endpoint").Var(&g.GitHubAPIEndpoint)
+	fs.String("github-graphql-endpoint", "GraphQL endpoint of github if you want to use non-default endpoint").Var(&g.GitHubGraphQLEndpoint)
+	fs.String("github-ca-cert-file", "Certificate file path").Var(&g.CACertFile)
+}
+
+func (g *GitHubClientFactory) PFlags(fs *pflag.FlagSet) {
 	fs.Int64Var(&g.AppID, "github-app-id", g.AppID, "GitHub Application ID")
 	fs.Int64Var(&g.InstallationID, "github-installation-id", g.InstallationID, "GitHub Application installation ID")
 	fs.StringVar(&g.PrivateKeyFile, "github-private-key-file", g.PrivateKeyFile, "Private key file for GitHub App")

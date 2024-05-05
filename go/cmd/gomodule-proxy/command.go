@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/gomodule"
@@ -72,19 +72,19 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 	return c
 }
 
-func (c *goModuleProxyCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVarP(&c.ConfigPath, "config", "c", c.ConfigPath, "Configuration file path")
-	fs.StringVar(&c.ModuleDir, "mod-dir", c.ModuleDir, "Module directory")
-	fs.StringVar(&c.Addr, "addr", c.Addr, "Listen addr")
-	fs.StringVar(&c.UpstreamURL, "upstream", c.UpstreamURL, "Upstream module proxy URL")
-	fs.StringVar(&c.CABundleFile, "ca-bundle-file", c.CABundleFile, "A file path that contains ca certificate to clone a repository")
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The name of region of object storage")
-	fs.StringVar(&c.StorageBucket, "storage-bucket", c.StorageBucket, "The name of bucket for an archive file")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "Access key")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "Secret access key")
-	fs.StringVar(&c.StorageCACertFile, "storage-ca-file", c.StorageCACertFile, "File path that contains the certificate of CA")
-	fs.StringSliceVar(&c.MemcachedServers, "memcached-servers", nil, "Memcached server name and address for the metadata cache")
+func (c *goModuleProxyCommand) Flags(fs *cli.FlagSet) {
+	fs.String("config", "Configuration file path").Var(&c.ConfigPath).Shorthand("c").Default(c.ConfigPath)
+	fs.String("mod-dir", "Module directory").Var(&c.ModuleDir).Default(c.ModuleDir)
+	fs.String("addr", "Listen addr").Var(&c.Addr).Default(c.Addr)
+	fs.String("upstream", "Upstream module proxy URL").Var(&c.UpstreamURL).Default(c.UpstreamURL)
+	fs.String("ca-bundle-file", "A file path that contains ca certificate to clone a repository").Var(&c.CABundleFile).Default(c.CABundleFile)
+	fs.String("storage-endpoint", "The endpoint of object storage").Var(&c.StorageEndpoint).Default(c.StorageEndpoint)
+	fs.String("storage-region", "The name of region of object storage").Var(&c.StorageRegion).Default(c.StorageRegion)
+	fs.String("storage-bucket", "The name of bucket for an archive file").Var(&c.StorageBucket).Default(c.StorageBucket)
+	fs.String("storage-access-key", "Access key").Var(&c.StorageAccessKey).Default(c.StorageAccessKey)
+	fs.String("storage-secret-access-key", "Secret access key").Var(&c.StorageSecretAccessKey).Default(c.StorageSecretAccessKey)
+	fs.String("storage-ca-file", "File path that contains the certificate of CA").Var(&c.StorageCACertFile).Default(c.StorageCACertFile)
+	fs.StringArray("memcached-servers", "Memcached server name and address for the metadata cache").Var(&c.MemcachedServers)
 
 	c.githubClientFactory.Flags(fs)
 }
