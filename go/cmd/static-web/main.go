@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/httpserver"
 	"go.f110.dev/mono/go/logger"
 )
@@ -25,13 +23,10 @@ const (
 
 func staticWeb() error {
 	var documentRoot, listenAddr, mode string
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use:   "static-web",
 		Short: "Serve static files",
-		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return logger.Init()
-		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, cmd *cli.Command, _ []string) error {
 			http.Handle("/favicon.ico", http.NotFoundHandler())
 			switch Mode(mode) {
 			case ModeSPA:
@@ -45,7 +40,6 @@ func staticWeb() error {
 				Handler: http.DefaultServeMux,
 			}
 			go func() {
-				ctx := cmd.Context()
 				<-ctx.Done()
 				logger.Log.Info("Shutdown")
 				s.Shutdown(context.Background())
@@ -59,14 +53,11 @@ func staticWeb() error {
 			return nil
 		},
 	}
-	logger.Flags(cmd.Flags())
-	cmd.Flags().StringVar(&documentRoot, "document-root", "", "The document root")
-	cmd.Flags().StringVar(&listenAddr, "listen-addr", ":8050", "Listen address")
-	cmd.Flags().StringVar(&mode, "mode", string(ModeSimple), "")
+	cmd.Flags().String("document-root", "The document root").Var(&documentRoot)
+	cmd.Flags().String("listen-addr", "Listen address").Var(&listenAddr).Default(":8050")
+	cmd.Flags().String("mode", "").Var(&mode).Default(string(ModeSimple))
 
-	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancelFunc()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {
