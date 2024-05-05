@@ -23,7 +23,7 @@ func (e *missingRequiredFlagsError) Is(err error) bool {
 }
 
 type flagTypes interface {
-	int | int64 | uint | bool | string | []string | float32 | time.Duration
+	int | int64 | uint | uint64 | bool | string | []string | float32 | time.Duration
 }
 
 type FlagSet struct {
@@ -232,7 +232,7 @@ func (fs *FlagSet) Uint(name, usage string) *Flag[uint] {
 		name,
 		usage,
 		func(f *FlagValue[uint], in string) error {
-			v, err := strconv.ParseUint(in, 0, 32)
+			v, err := strconv.ParseUint(in, 10, 32)
 			if err != nil {
 				return err
 			}
@@ -241,6 +241,27 @@ func (fs *FlagSet) Uint(name, usage string) *Flag[uint] {
 		},
 		nil,
 		func(u uint) string {
+			return fmt.Sprintf("%d", u)
+		},
+	)
+	fs.flags = append(fs.flags, f)
+	return f
+}
+
+func (fs *FlagSet) Uint64(name, usage string) *Flag[uint64] {
+	f := NewFlag(
+		name,
+		usage,
+		func(f *FlagValue[uint64], in string) error {
+			v, err := strconv.ParseUint(in, 10, 64)
+			if err != nil {
+				return err
+			}
+			*f.value = uint64(v)
+			return nil
+		},
+		nil,
+		func(u uint64) string {
 			return fmt.Sprintf("%d", u)
 		},
 	)

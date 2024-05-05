@@ -9,10 +9,10 @@ import (
 	"syscall"
 
 	"github.com/robfig/cron/v3"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/k8s/volume"
 	"go.f110.dev/mono/go/logger"
@@ -86,39 +86,39 @@ func NewIndexerCommand() *IndexerCommand {
 	}
 }
 
-func (r *IndexerCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVarP(&r.ConfigFile, "config", "c", r.ConfigFile, "Config file")
-	fs.StringVar(&r.WorkDir, "work-dir", r.WorkDir, "Working root directory")
-	fs.StringVar(&r.Ctags, "ctags", r.Ctags, "ctags path")
-	fs.BoolVar(&r.RunScheduler, "run-scheduler", r.RunScheduler, "")
-	fs.BoolVar(&r.InitRun, "init-run", r.InitRun, "")
-	fs.BoolVar(&r.WithoutFetch, "without-fetch", r.WithoutFetch, "Disable fetch")
-	fs.BoolVar(&r.DisableCleanup, "disable-cleanup", r.DisableCleanup, "Disable cleanup in the working directory not the object storage")
-	fs.IntVar(&r.Parallelism, "parallelism", r.Parallelism, "The number of workers")
-	fs.StringVar(&r.MinIOEndpoint, "minio-endpoint", r.MinIOEndpoint, "The endpoint of MinIO")
-	fs.StringVar(&r.MinIORegion, "minio-region", r.MinIORegion, "The region name")
-	fs.StringVar(&r.MinIOName, "minio-name", r.MinIOName, "The name of MinIO")
-	fs.StringVar(&r.MinIONamespace, "minio-namespace", r.MinIONamespace, "The namespace of MinIO")
-	fs.IntVar(&r.MinIOPort, "minio-port", r.MinIOPort, "Port number of MinIO")
-	fs.StringVar(&r.Bucket, "minio-bucket", r.Bucket, "Deprecated. Use --bucket instead. The bucket name that will be used")
-	fs.StringVar(&r.MinIOAccessKey, "minio-access-key", r.MinIOAccessKey, "The access key for MinIO API")
-	fs.StringVar(&r.MinIOSecretAccessKey, "minio-secret-access-key", r.MinIOSecretAccessKey, "The secret access key for MinIO API")
-	fs.StringVar(&r.S3Endpoint, "s3-endpoint", r.S3Endpoint, "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param")
-	fs.StringVar(&r.S3Region, "s3-region", r.S3Region, "The region name")
-	fs.StringVar(&r.S3AccessKey, "s3-access-key", r.S3AccessKey, "The access key for S3 API")
-	fs.StringVar(&r.S3SecretAccessKey, "s3-secret-access-key", r.S3SecretAccessKey, "The secret access key for S3 API")
-	fs.StringVar(&r.S3CACertFile, "s3-ca-file", r.S3CACertFile, "File path that contains the certificate of CA")
-	fs.Uint64Var(&r.S3PartSize, "s3-part-size", r.S3PartSize, "Part size")
-	fs.StringVar(&r.Bucket, "bucket", r.Bucket, "The bucket name")
-	fs.StringVar(&r.NATSURL, "nats-url", r.NATSURL, "The URL for nats-server")
-	fs.StringVar(&r.NATSStreamName, "nats-stream-name", r.NATSStreamName, "The name of stream for JetStream")
-	fs.StringVar(&r.NATSSubject, "nats-subject", r.NATSSubject, "The subject of stream")
-	fs.BoolVar(&r.DisableObjectStorageCleanup, "disable-object-storage-cleanup", r.DisableObjectStorageCleanup, "Disable cleanup in the object storage after uploaded the index")
-	fs.StringVar(&r.CABundleFile, "ca-bundle-file", r.CABundleFile, "A file path that contains ca certificates for clone a repository")
-	fs.BoolVar(&r.Dev, "dev", r.Dev, "Development mode")
-	fs.StringVar(&r.HTTPAddr, "http-addr", r.HTTPAddr, "HTTP listen addr")
+func (r *IndexerCommand) Flags(fs *cli.FlagSet) {
+	fs.String("config", "Config file").Var(&r.ConfigFile).Shorthand("c")
+	fs.String("work-dir", "Working root directory").Var(&r.WorkDir).Default(r.WorkDir)
+	fs.String("ctags", "ctags path").Var(&r.Ctags)
+	fs.Bool("run-scheduler", "").Var(&r.RunScheduler)
+	fs.Bool("init-run", "").Var(&r.InitRun)
+	fs.Bool("without-fetch", "Disable fetch").Var(&r.WithoutFetch)
+	fs.Bool("disable-cleanup", "Disable cleanup in the working directory not the object storage").Var(&r.DisableCleanup)
+	fs.Int("parallelism", "The number of workers").Var(&r.Parallelism).Default(r.Parallelism)
+	fs.String("minio-endpoint", "The endpoint of MinIO").Var(&r.MinIOEndpoint)
+	fs.String("minio-region", "The region name").Var(&r.MinIORegion)
+	fs.String("minio-name", "The name of MinIO").Var(&r.MinIOName)
+	fs.String("minio-namespace", "The namespace of MinIO").Var(&r.MinIONamespace)
+	fs.Int("minio-port", "Port number of MinIO").Var(&r.MinIOPort)
+	fs.String("minio-bucket", "The bucket name that will be used").Var(&r.Bucket).Deprecated("Use --bucket instead")
+	fs.String("minio-access-key", "The access key for MinIO API").Var(&r.MinIOAccessKey)
+	fs.String("minio-secret-access-key", "The secret access key for MinIO API").Var(&r.MinIOSecretAccessKey)
+	fs.String("s3-endpoint", "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param").Var(&r.S3Endpoint)
+	fs.String("s3-region", "The region name").Var(&r.S3Region)
+	fs.String("s3-access-key", "The access key for S3 API").Var(&r.S3AccessKey)
+	fs.String("s3-secret-access-key", "The secret access key for S3 API").Var(&r.S3SecretAccessKey)
+	fs.String("s3-ca-file", "File path that contains the certificate of CA").Var(&r.S3CACertFile)
+	fs.Uint64("s3-part-size", "Part size").Var(&r.S3PartSize)
+	fs.String("bucket", "The bucket name").Var(&r.Bucket)
+	fs.String("nats-url", "The URL for nats-server").Var(&r.NATSURL)
+	fs.String("nats-stream-name", "The name of stream for JetStream").Var(&r.NATSStreamName).Default(r.NATSStreamName)
+	fs.String("nats-subject", "The subject of stream").Var(&r.NATSSubject).Default(r.NATSSubject)
+	fs.Bool("disable-object-storage-cleanup", "Disable cleanup in the object storage after uploaded the index").Var(&r.DisableObjectStorageCleanup)
+	fs.String("ca-bundle-file", "A file path that contains ca certificates for clone a repository").Var(&r.CABundleFile)
+	fs.Bool("dev", "Development mode").Var(&r.Dev)
+	fs.String("http-addr", "HTTP listen addr").Var(&r.HTTPAddr)
 
-	r.githubClientFactory.PFlags(fs)
+	r.githubClientFactory.Flags(fs)
 }
 
 func (r *IndexerCommand) ValidateFlags() error {

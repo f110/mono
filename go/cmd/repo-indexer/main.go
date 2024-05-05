@@ -1,25 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/codesearch"
-	"go.f110.dev/mono/go/logger"
 )
 
 func repoIndexer(args []string) error {
 	indexer := codesearch.NewIndexerCommand()
 
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "repo-indexer",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return xerrors.WithStack(err)
-			}
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			if err := indexer.Init(); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -31,12 +28,9 @@ func repoIndexer(args []string) error {
 			return nil
 		},
 	}
-
 	indexer.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	cmd.SetArgs(args)
-	return cmd.Execute()
+	return cmd.Execute(args)
 }
 
 func main() {
