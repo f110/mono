@@ -73,7 +73,7 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 }
 
 func (c *goModuleProxyCommand) Flags(fs *cli.FlagSet) {
-	fs.String("config", "Configuration file path").Var(&c.ConfigPath).Shorthand("c").Default(c.ConfigPath)
+	fs.String("config", "Configuration file path").Var(&c.ConfigPath).Shorthand("c").Default(c.ConfigPath).Required()
 	fs.String("mod-dir", "Module directory").Var(&c.ModuleDir).Default(c.ModuleDir)
 	fs.String("addr", "Listen addr").Var(&c.Addr).Default(c.Addr)
 	fs.String("upstream", "Upstream module proxy URL").Var(&c.UpstreamURL).Default(c.UpstreamURL)

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
@@ -24,15 +22,8 @@ func goModuleProxy() error {
 		},
 	}
 	proxy.Flags(cmd.Flags())
-	for _, v := range proxy.RequiredFlags() {
-		if err := cmd.MarkFlagRequired(v); err != nil {
-			return err
-		}
-	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {
