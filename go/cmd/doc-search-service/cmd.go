@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -13,6 +12,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
@@ -120,16 +120,16 @@ func (c *docSearchService) shutDown(_ context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
-func (c *docSearchService) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Listen, "listen", ":8057", "Listen addr")
-	fs.StringVar(&c.GitDataService, "git-data-service", "127.0.0.1:9010", "The url of git-data-service")
-	fs.IntVar(&c.Workers, "workers", 1, "The number of workers to fetching page title")
-	fs.IntVar(&c.MaxConns, "max-conns", 1, "The total number of connections to fetch the external page title")
-	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
-	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
-	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
+func (c *docSearchService) Flags(fs *cli.FlagSet) {
+	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8057")
+	fs.String("git-data-service", "The url of git-data-service").Var(&c.GitDataService).Default("127.0.0.1:9010")
+	fs.Int("workers", "The number of workers to fetching page title").Var(&c.Workers).Default(1)
+	fs.Int("max-conns", "The total number of connections to fetch the external page title").Var(&c.MaxConns).Default(1)
+	fs.Bool("insecure", "Insecure access to backend").Var(&c.Insecure)
+	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
+	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
+	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
+	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
+	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
 }
