@@ -7,11 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/notion"
 )
 
@@ -24,23 +22,18 @@ type toDoSchedulerCommand struct {
 }
 
 func newToDoSchedulerCommand() *toDoSchedulerCommand {
-	return &toDoSchedulerCommand{
-		schedule: "0 * * * *",
-	}
+	return &toDoSchedulerCommand{}
 }
 
-func (s *toDoSchedulerCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&s.conf, "conf", s.conf, "Config file path")
-	fs.StringVar(&s.token, "token", s.token, "API token for notion")
-	fs.BoolVar(&s.dryRun, "dry-run", s.dryRun, "Dry run")
-	fs.BoolVar(&s.oneshot, "oneshot", s.oneshot, "Execute only once")
-	fs.StringVar(&s.schedule, "schedule", s.schedule, "Check schedule")
+func (s *toDoSchedulerCommand) Flags(fs *cli.FlagSet) {
+	fs.String("conf", "Config file path").Var(&s.conf)
+	fs.String("token", "API token for notion").Var(&s.token)
+	fs.Bool("dry-run", "Dry run").Var(&s.dryRun)
+	fs.Bool("oneshot", "Execute only once").Var(&s.oneshot)
+	fs.String("schedule", "Check schedule").Var(&s.schedule).Default("0 * * * *")
 }
 
 func (s *toDoSchedulerCommand) Execute() error {
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
 	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
@@ -77,17 +70,15 @@ func (s *toDoSchedulerCommand) Execute() error {
 func notionToDoScheduler(args []string) error {
 	todoSchedulerCmd := newToDoSchedulerCommand()
 
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "notion-todo-scheduler",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			return todoSchedulerCmd.Execute()
 		},
 	}
 	todoSchedulerCmd.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	cmd.SetArgs(args)
-	return cmd.Execute()
+	return cmd.Execute(args)
 }
 
 func main() {
