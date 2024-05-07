@@ -7,18 +7,15 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/signal"
 	"sort"
-	"syscall"
 	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
@@ -222,19 +219,19 @@ func newFIFOObjectGarbageCollectorCommand() *fifoObjectGarbageCollectorCommand {
 	return c
 }
 
-func (c *fifoObjectGarbageCollectorCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
-	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
-	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
-	fs.StringVar(&c.Prefix, "prefix", "", "Object prefix")
-	fs.DurationVar(&c.Interval, "interval", 60*time.Minute, "GC interval")
-	fs.IntVar(&c.MaxUsedPercent, "max-used-percent", 90, "GC threshold")
-	fs.IntVar(&c.PurgePercent, "purge-percent", 10, "Will purge data size percent")
-	fs.BoolVar(&c.OneShot, "one-shot", false, "Run GC")
-	fs.BoolVar(&c.DryRun, "dry-run", false, "Dry run mode")
+func (c *fifoObjectGarbageCollectorCommand) Flags(fs *cli.FlagSet) {
+	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
+	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
+	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
+	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
+	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
+	fs.String("prefix", "Object prefix").Var(&c.Prefix)
+	fs.Duration("interval", "GC interval").Var(&c.Interval).Default(60 * time.Minute)
+	fs.Int("max-used-percent", "GC threshold").Var(&c.MaxUsedPercent).Default(90)
+	fs.Int("purge-percent", "Will purge data size percent").Var(&c.PurgePercent).Default(10)
+	fs.Bool("one-shot", "Run GC").Var(&c.OneShot)
+	fs.Bool("dry-run", "Dry run mode").Var(&c.DryRun)
 }
 
 func (c *fifoObjectGarbageCollectorCommand) init(ctx context.Context) (fsm.State, error) {
@@ -275,21 +272,15 @@ func (c *fifoObjectGarbageCollectorCommand) shuttingDown(_ context.Context) (fsm
 
 func FIFOObjectGarbageCollector() error {
 	c := newFIFOObjectGarbageCollectorCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "fifo-object-gc",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := logger.Init(); err != nil {
-				return err
-			}
-			return c.LoopContext(cmd.Context())
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return c.LoopContext(ctx)
 		},
 	}
 	c.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {
