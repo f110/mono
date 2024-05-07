@@ -4,16 +4,21 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+
+	"go.f110.dev/mono/go/cli"
 )
 
 func controllerManager(args []string) error {
 	c := New(args)
+	cmd := &cli.Command{
+		Use: "controller-manager",
+		Run: func(ctx context.Context, _ *cli.Command, args []string) error {
+			return c.LoopContext(ctx)
+		},
+	}
+	c.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-	return c.LoopContext(ctx)
+	return cmd.Execute(args)
 }
 
 func main() {

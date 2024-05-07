@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +41,7 @@ const (
 
 type ChildController struct {
 	Name   string
-	New    func(*Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
+	New    func(context.Context, *Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
 	Enable bool
 }
 
@@ -51,7 +50,7 @@ type ChildControllers []*ChildController
 var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerGrafanaUser,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			gu, err := controllers.NewGrafanaUserController(core, factory, p.coreClient, p.client)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
@@ -62,9 +61,9 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborProject,
-		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(ctx context.Context, p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			hpc, err := controllers.NewHarborProjectController(
-				p.ctx,
+				ctx,
 				p.coreClient,
 				p.client,
 				p.config,
@@ -84,9 +83,9 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborRobotAccount,
-		New: func(p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(ctx context.Context, p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			hrac, err := controllers.NewHarborRobotAccountController(
-				p.ctx,
+				ctx,
 				p.coreClient,
 				p.client,
 				p.config,
@@ -105,7 +104,7 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOCluster,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			return mcc, nil
 		},
@@ -113,7 +112,7 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOBucket,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			mbc, err := controllers.NewMinIOBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
@@ -124,7 +123,7 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOUser,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			muc, err := controllers.NewMinIOUserController(
 				p.coreClient,
 				p.client,
@@ -143,7 +142,7 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerConsulBackup,
-		New: func(p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
 			b, err := controllers.NewConsulBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
@@ -170,10 +169,8 @@ type controller interface {
 
 type Controllers struct {
 	*fsm.FSM
-	args   []string
-	ctx    context.Context
-	cancel context.CancelFunc
-	probe  *probe.Probe
+	args  []string
+	probe *probe.Probe
 
 	controllers []controller
 
@@ -202,11 +199,8 @@ type Controllers struct {
 }
 
 func New(args []string) *Controllers {
-	ctx, cancel := context.WithCancel(context.Background())
 	p := &Controllers{
 		args:        args,
-		ctx:         ctx,
-		cancel:      cancel,
 		controllers: make([]controller, 0),
 		workers:     1,
 	}
@@ -245,19 +239,12 @@ func (p *Controllers) Flags(fs *cli.FlagSet) {
 	fs.String("vault-token", "the token for vault").Var(&p.vaultToken)
 	fs.String("vault-k8s-auth-path", "The mount path of kubernetes auth method").Var(&p.vaultK8sAuthPath).Default("auth/kubernetes")
 	fs.String("vault-k8s-auth-role", "Role name for k8s auth method").Var(&p.vaultK8sAuthRole)
-	logger.Flags(fs.FlagSet())
 }
 
 func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
-	fs := cli.NewFlagSet("controller-manager", pflag.ExitOnError)
-	p.Flags(fs)
-	if err := fs.Parse(p.args); err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	}
 	if err := logger.OverrideKlog(); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	p.args = fs.Args()[1:]
 
 	kubeconfigPath := ""
 	if p.dev {
@@ -360,7 +347,7 @@ func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 		}
 	}
 
-	return stateStartMetricsServer, nil
+	return fsm.Next(stateStartMetricsServer)
 }
 
 func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
@@ -376,10 +363,10 @@ func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
 		}
 	}()
 
-	return stateLeaderElection, nil
+	return fsm.Next(stateLeaderElection)
 }
 
-func (p *Controllers) leaderElection(_ context.Context) (fsm.State, error) {
+func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 	if !p.enableLeaderElection || p.dev {
 		return fsm.Next(stateStartWorkers)
 	}
@@ -415,11 +402,11 @@ func (p *Controllers) leaderElection(_ context.Context) (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	go e.Run(p.ctx)
+	go e.Run(ctx)
 
 	select {
 	case <-elected:
-	case <-p.ctx.Done():
+	case <-ctx.Done():
 		return fsm.UnknownState, nil
 	}
 	return fsm.Next(stateStartWorkers)
@@ -434,25 +421,23 @@ func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
 			continue
 		}
 
-		cont, err := v.New(p, coreSharedInformerFactory, factory)
+		cont, err := v.New(ctx, p, coreSharedInformerFactory, factory)
 		if err != nil {
 			return fsm.Error(xerrors.WithMessagef(err, "Failed create %s controller", v.Name))
 		}
 		p.controllers = append(p.controllers, cont)
 	}
 
-	coreSharedInformerFactory.Start(p.ctx.Done())
-	factory.Run(p.ctx)
+	coreSharedInformerFactory.Start(ctx.Done())
+	factory.Run(ctx)
 
 	for _, v := range p.controllers {
-		v.StartWorkers(p.ctx, p.workers)
+		v.StartWorkers(ctx, p.workers)
 	}
 	return fsm.Wait()
 }
 
 func (p *Controllers) shutdown(_ context.Context) (fsm.State, error) {
-	p.cancel()
-
 	for _, v := range p.controllers {
 		v.Shutdown()
 	}
