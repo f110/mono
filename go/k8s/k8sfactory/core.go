@@ -169,6 +169,15 @@ func ServiceAccount(v string) Trait {
 	}
 }
 
+func Hostname(v string) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Pod:
+			obj.Spec.Hostname = v
+		}
+	}
+}
+
 func Subdomain(v string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
@@ -467,6 +476,13 @@ func IPNone(object any) {
 	switch obj := object.(type) {
 	case *corev1.Service:
 		obj.Spec.ClusterIP = corev1.ClusterIPNone
+	}
+}
+
+func PublishNotReadyAddresses(object any) {
+	switch obj := object.(type) {
+	case *corev1.Service:
+		obj.Spec.PublishNotReadyAddresses = true
 	}
 }
 

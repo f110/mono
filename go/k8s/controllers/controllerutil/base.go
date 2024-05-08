@@ -395,6 +395,7 @@ func (b *GenericControllerBase[T]) worker(ctx context.Context) {
 		if err != nil {
 			b.log.Info("Failed sync", zap.String("key", key), zap.Error(err))
 		}
+		b.log.Debug("Finished process", zap.String("key", key))
 	}
 }
 

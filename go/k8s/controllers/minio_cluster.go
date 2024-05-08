@@ -168,11 +168,22 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 		}
 	}
 
-	if rCtx.svc == nil {
-		svc := m.service(rCtx.Obj)
-		m.changed = true
-		if _, err := m.coreClient.CoreV1().Services(rCtx.Obj.Namespace).Create(ctx, svc, metav1.CreateOptions{}); err != nil {
-			return controllerutil.WrapRetryError(xerrors.WithStack(err))
+	svcs := m.services(rCtx.Obj)
+	existSvc := make(map[string]*corev1.Service)
+	for _, v := range rCtx.svcs {
+		existSvc[v.Name] = v
+	}
+	for _, svc := range svcs {
+		if oldSvc, ok := existSvc[svc.Name]; !ok {
+			m.changed = true
+			if _, err := m.coreClient.CoreV1().Services(svc.Namespace).Create(ctx, svc, metav1.CreateOptions{}); err != nil {
+				return controllerutil.WrapRetryError(xerrors.WithStack(err))
+			}
+		} else if !reflect.DeepEqual(svc, oldSvc) {
+			m.changed = true
+			if _, err := m.coreClient.CoreV1().Services(svc.Namespace).Update(ctx, svc, metav1.UpdateOptions{}); err != nil {
+				return controllerutil.WrapRetryError(xerrors.WithStack(err))
+			}
 		}
 	}
 
@@ -235,10 +246,12 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
 	}
-	if rCtx.svc != nil {
+	if rCtx.svcs != nil {
 		m.changed = true
-		if err := m.coreClient.CoreV1().Services(rCtx.svc.Namespace).Delete(ctx, rCtx.svc.Name, metav1.DeleteOptions{}); err != nil {
-			return controllerutil.WrapRetryError(xerrors.WithStack(err))
+		for _, svc := range rCtx.svcs {
+			if err := m.coreClient.CoreV1().Services(svc.Namespace).Delete(ctx, svc.Name, metav1.DeleteOptions{}); err != nil {
+				return controllerutil.WrapRetryError(xerrors.WithStack(err))
+			}
 		}
 	}
 	if rCtx.secret != nil {
@@ -324,8 +337,17 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	svc, err := m.serviceLister.Services(ctx.Obj.Namespace).Get(ctx.Obj.Name)
 	if err != nil && !kerrors.IsNotFound(err) {
 		return xerrors.WithStack(err)
+	} else if svc != nil {
+		ctx.svcs = append(ctx.svcs, svc)
 	}
-	ctx.svc = svc
+	if ctx.Obj.Spec.Nodes > 1 {
+		svc, err = m.serviceLister.Services(ctx.Obj.Namespace).Get(fmt.Sprintf("%s-hl", ctx.Obj.Name))
+		if err != nil && !kerrors.IsNotFound(err) {
+			return xerrors.WithStack(err)
+		} else if svc != nil {
+			ctx.svcs = append(ctx.svcs, svc)
+		}
+	}
 
 	secret, err := m.secretLister.Secrets(ctx.Obj.Namespace).Get(ctx.Obj.Name)
 	if err != nil && !kerrors.IsNotFound(err) {
@@ -337,31 +359,52 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	return nil
 }
 
+func (m *minIOClusterReconciler) pods(obj *miniov1alpha1.MinIOCluster) []*corev1.Pod {
+	pods := make([]*corev1.Pod, 0)
+	for i := 0; i < obj.Spec.Nodes; i++ {
+		pods = append(pods, m.pod(obj, i+1))
+	}
+
+	return pods
+}
+
 func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int) *corev1.Pod {
 	dataVolumeSource := k8sfactory.NewPersistentVolumeClaimVolumeSource("data", "/data", fmt.Sprintf("%s-data-%d", obj.Name, index))
-	return k8sfactory.PodFactory(nil,
+	container := k8sfactory.ContainerFactory(nil,
+		k8sfactory.Name("minio"),
+		k8sfactory.Image(obj.Spec.Image, nil),
+		k8sfactory.Args("server", "--address=:9000", "--console-address=:8080", dataVolumeSource.Mount.MountPath),
+		k8sfactory.EnvVar("MINIO_BROWSER_LOGIN_ANIMATION", "off"),
+		k8sfactory.EnvVar("MINIO_BROWSER", "on"),
+		k8sfactory.EnvVar("MINIO_ROOT_USER", "root"),
+		k8sfactory.EnvFromSecret("MINIO_ROOT_PASSWORD", obj.Name, "password"),
+		k8sfactory.Volume(dataVolumeSource),
+		k8sfactory.Port("api", corev1.ProtocolTCP, 9000),
+		k8sfactory.Port("http", corev1.ProtocolTCP, 8080),
+		k8sfactory.LivenessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/live")),
+		k8sfactory.ReadinessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/ready")),
+	)
+	pod := k8sfactory.PodFactory(nil,
 		k8sfactory.Namef("%s-%d", obj.Name, index),
 		k8sfactory.Namespace(obj.Namespace),
 		k8sfactory.Label(miniov1alpha1.LabelNameMinIOName, obj.Name),
-		k8sfactory.Container(
-			k8sfactory.ContainerFactory(nil,
-				k8sfactory.Name("minio"),
-				k8sfactory.Image(obj.Spec.Image, nil),
-				k8sfactory.Args("server", "--address=:9000", "--console-address=:8080", dataVolumeSource.Mount.MountPath),
-				k8sfactory.EnvVar("MINIO_BROWSER_LOGIN_ANIMATION", "off"),
-				k8sfactory.EnvVar("MINIO_BROWSER", "on"),
-				k8sfactory.EnvVar("MINIO_ROOT_USER", "root"),
-				k8sfactory.EnvFromSecret("MINIO_ROOT_PASSWORD", obj.Name, "password"),
-				k8sfactory.Volume(dataVolumeSource),
-				k8sfactory.Port("api", corev1.ProtocolTCP, 9000),
-				k8sfactory.Port("http", corev1.ProtocolTCP, 8080),
-				k8sfactory.LivenessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/live")),
-				k8sfactory.ReadinessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/ready")),
-			),
-		),
 		k8sfactory.Volume(dataVolumeSource),
 		k8sfactory.ControlledBy(obj, client.Scheme),
 	)
+
+	// HA mode
+	if obj.Spec.Nodes > 1 {
+		subdomain := fmt.Sprintf("%s-hl", obj.Name)
+		pod = k8sfactory.PodFactory(pod,
+			k8sfactory.Subdomain(subdomain),
+			k8sfactory.Hostname(pod.Name),
+		)
+		container = k8sfactory.ContainerFactory(container,
+			k8sfactory.EnvVar("MINIO_VOLUMES", fmt.Sprintf("http://%s-{1...%d}.%s.%s.svc:9000/data", obj.Name, obj.Spec.Nodes, subdomain, obj.Namespace)),
+		)
+	}
+
+	return k8sfactory.PodFactory(pod, k8sfactory.Container(container))
 }
 
 func (m *minIOClusterReconciler) pvc(obj *miniov1alpha1.MinIOCluster, index int) *corev1.PersistentVolumeClaim {
@@ -392,8 +435,9 @@ func (m *minIOClusterReconciler) secret(obj *miniov1alpha1.MinIOCluster) *corev1
 	)
 }
 
-func (m *minIOClusterReconciler) service(obj *miniov1alpha1.MinIOCluster) *corev1.Service {
-	return k8sfactory.ServiceFactory(nil,
+func (m *minIOClusterReconciler) services(obj *miniov1alpha1.MinIOCluster) []*corev1.Service {
+	services := make([]*corev1.Service, 1)
+	services[0] = k8sfactory.ServiceFactory(nil,
 		k8sfactory.Name(obj.Name),
 		k8sfactory.Namespace(obj.Namespace),
 		k8sfactory.Labels(map[string]string{miniov1alpha1.LabelNameMinIOName: obj.Name}),
@@ -402,6 +446,23 @@ func (m *minIOClusterReconciler) service(obj *miniov1alpha1.MinIOCluster) *corev
 		k8sfactory.Selector(miniov1alpha1.LabelNameMinIOName, obj.Name),
 		k8sfactory.ControlledBy(obj, client.Scheme),
 	)
+
+	// HA mode
+	if obj.Spec.Nodes > 1 {
+		s := k8sfactory.ServiceFactory(nil,
+			k8sfactory.Namef("%s-hl", obj.Name),
+			k8sfactory.Namespace(obj.Namespace),
+			k8sfactory.Labels(map[string]string{miniov1alpha1.LabelNameMinIOName: obj.Name}),
+			k8sfactory.Selector(miniov1alpha1.LabelNameMinIOName, obj.Name),
+			k8sfactory.ClusterIP,
+			k8sfactory.IPNone,
+			k8sfactory.PublishNotReadyAddresses,
+			k8sfactory.Port("api", corev1.ProtocolTCP, 9000),
+			k8sfactory.ControlledBy(obj, client.Scheme),
+		)
+		services = append(services, s)
+	}
+	return services
 }
 
 type reconcileContext struct {
@@ -411,12 +472,12 @@ type reconcileContext struct {
 
 	pods   []*corev1.Pod
 	pvc    []*corev1.PersistentVolumeClaim
-	svc    *corev1.Service
+	svcs   []*corev1.Service
 	secret *corev1.Secret
 }
 
 func (c *reconcileContext) NoResources() bool {
-	return len(c.pods) == 0 && len(c.pvc) == 0 && c.svc == nil && c.secret == nil
+	return len(c.pods) == 0 && len(c.pvc) == 0 && len(c.svcs) == 0 && c.secret == nil
 }
 
 func (c *reconcileContext) StatusChanged() bool {

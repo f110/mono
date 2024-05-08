@@ -613,10 +613,10 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Ready
+    - description: status
       format: byte
-      jsonPath: .status.ready
-      name: ready
+      jsonPath: .status.phase
+      name: status
       type: string
     - description: age
       format: date
