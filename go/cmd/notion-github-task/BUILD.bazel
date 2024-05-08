@@ -6,10 +6,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/notion-github-task",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/logger",
+        "//go/cli",
         "//go/notion",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
     ],
 )

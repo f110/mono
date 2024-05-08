@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/notion"
 )
 
@@ -32,25 +28,18 @@ func newGitHubTaskCommand() *githubTaskCommand {
 	}
 }
 
-func (g *githubTaskCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&g.notionToken, "notion-token", "", "API token for Notion")
-	fs.StringVar(&g.githubToken, "github-token", "", "Personal access token of GitHub")
-	fs.Int64Var(&g.appId, "github-app-id", 0, "GitHub App Id")
-	fs.Int64Var(&g.installationId, "github-installation-id", 0, "GitHub App installation Id")
-	fs.StringVar(&g.privateKeyFile, "github-private-key-file", "", "Private key file")
-	fs.StringVar(&g.configFile, "config-file", "", "Config file path")
-	fs.StringVar(&g.schedule, "schedule", g.schedule, "Check schedule")
-	fs.BoolVar(&g.oneshot, "oneshot", false, "Oneshot execution")
+func (g *githubTaskCommand) Flags(fs *cli.FlagSet) {
+	fs.String("notion-token", "API token for Notion").Var(&g.notionToken)
+	fs.String("github-token", "Personal access token of GitHub").Var(&g.githubToken)
+	fs.Int64("github-app-id", "GitHub App Id").Var(&g.appId)
+	fs.Int64("github-installation-id", "GitHub App installation Id").Var(&g.installationId)
+	fs.String("github-private-key-file", "Private key file").Var(&g.privateKeyFile)
+	fs.String("config-file", "Config file path").Var(&g.configFile).Required()
+	fs.String("schedule", "Check schedule").Var(&g.schedule).Default("0 * * * *")
+	fs.Bool("oneshot", "Oneshot execution").Var(&g.oneshot)
 }
 
-func (g *githubTaskCommand) RequiredFlags() []string {
-	return []string{"config-file"}
-}
-
-func (g *githubTaskCommand) Execute() error {
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
+func (g *githubTaskCommand) Execute(ctx context.Context) error {
 	if g.githubToken == "" && os.Getenv("GITHUB_TOKEN") != "" {
 		g.githubToken = os.Getenv("GITHUB_TOKEN")
 	}
@@ -63,9 +52,6 @@ func (g *githubTaskCommand) Execute() error {
 	if g.notionToken == "" {
 		return xerrors.New("--notion-token or NOTION_TOKEN is required")
 	}
-
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancel()
 
 	var ghTask *notion.GitHubTask
 	if g.githubToken != "" {
@@ -98,22 +84,15 @@ func (g *githubTaskCommand) Execute() error {
 
 func notionGitHubTask(args []string) error {
 	githubTask := newGitHubTaskCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "notion-github-task",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return githubTask.Execute()
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return githubTask.Execute(ctx)
 		},
 	}
 	githubTask.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
-	for _, v := range githubTask.RequiredFlags() {
-		if err := cmd.MarkFlagRequired(v); err != nil {
-			return xerrors.WithStack(err)
-		}
-	}
 
-	cmd.SetArgs(args)
-	return cmd.Execute()
+	return cmd.Execute(args)
 }
 
 func main() {
