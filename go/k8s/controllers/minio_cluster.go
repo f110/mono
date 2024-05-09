@@ -406,6 +406,15 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 		pod = k8sfactory.PodFactory(pod,
 			k8sfactory.Subdomain(subdomain),
 			k8sfactory.Hostname(pod.Name),
+			k8sfactory.PreferredInterPodAntiAffinity(
+				100,
+				k8sfactory.MatchExpression(metav1.LabelSelectorRequirement{
+					Key:      miniov1alpha1.LabelNameMinIOName,
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{obj.Name},
+				}),
+				"kubernetes.io/hostname",
+			),
 		)
 		container = k8sfactory.ContainerFactory(container,
 			k8sfactory.EnvVar("MINIO_VOLUMES", fmt.Sprintf("http://%s-{1...%d}.%s.%s.svc:9000/data", obj.Name, obj.Spec.Nodes, subdomain, obj.Namespace)),
