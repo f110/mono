@@ -4,31 +4,21 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/spf13/cobra"
-
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 )
 
 func runCommand() error {
 	c := newRepoDocCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "repo-doc",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return err
-			}
-			return c.LoopContext(cmd.Context())
+		Run: func(ctx context.Context, cmd *cli.Command, _ []string) error {
+			return c.LoopContext(ctx)
 		},
 	}
 	c.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {

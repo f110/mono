@@ -18,6 +18,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/repo-doc",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/docutil",
         "//go/fsm",
         "//go/git",
@@ -26,8 +27,6 @@ go_library(
         "//vendor/github.com/abhinav/goldmark-mermaid",
         "//vendor/github.com/go-git/go-git/v5/plumbing",
         "//vendor/github.com/go-git/go-git/v5/plumbing/filemode",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/github.com/yuin/goldmark",
         "//vendor/github.com/yuin/goldmark-highlighting",
         "//vendor/github.com/yuin/goldmark/ast",

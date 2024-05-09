@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
@@ -57,14 +57,14 @@ func newRepoDocCommand() *repoDocCommand {
 	return c
 }
 
-func (c *repoDocCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Listen, "listen", ":8016", "Listen addr")
-	fs.StringVar(&c.GitDataService, "git-data-service", "", "The url of git-data-service")
-	fs.BoolVar(&c.Insecure, "insecure", false, "Insecure access to backend")
-	fs.StringVar(&c.StaticDirectory, "static-dir", "", "Directory path that contains will be served as static file")
-	fs.StringVar(&c.GlobalTitle, "title", "repo-doc", "General title")
-	fs.IntVar(&c.MaxDepthToC, "max-depth-toc", 2, "Maximum depth of table of content")
-	fs.StringVar(&c.SearchService, "search-service", "", "The url of search-service")
+func (c *repoDocCommand) Flags(fs *cli.FlagSet) {
+	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8016")
+	fs.String("git-data-service", "The url of git-data-service").Var(&c.GitDataService)
+	fs.Bool("insecure", "Insecure access to backend").Var(&c.Insecure)
+	fs.String("static-dir", "Directory path that contains will be served as static file").Var(&c.StaticDirectory)
+	fs.String("title", "General title").Var(&c.GlobalTitle).Default("repo-doc")
+	fs.Int("max-depth-toc", "Maximum depth of table of content").Var(&c.MaxDepthToC).Default(2)
+	fs.String("search-service", "The url of search-service").Var(&c.SearchService)
 }
 
 func (c *repoDocCommand) init(ctx context.Context) (fsm.State, error) {
