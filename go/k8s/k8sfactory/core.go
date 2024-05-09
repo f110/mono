@@ -321,32 +321,68 @@ func ReadinessProbe(p *corev1.Probe) Trait {
 	}
 }
 
-func TCPProbe(port int) *corev1.Probe {
-	return &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			TCPSocket: &corev1.TCPSocketAction{
-				Port: intstr.FromInt(port),
-			},
+func ProbeFactory(base *corev1.Probe, traits ...Trait) *corev1.Probe {
+	var p *corev1.Probe
+	if base == nil {
+		p = &corev1.Probe{}
+	} else {
+		p = base.DeepCopy()
+	}
+
+	for _, v := range traits {
+		v(p)
+	}
+
+	return p
+}
+
+func InitialDelay(s int) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Probe:
+			obj.InitialDelaySeconds = int32(s)
+		}
+	}
+}
+
+func Timeout(s int) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Probe:
+			obj.TimeoutSeconds = int32(s)
+		}
+	}
+}
+
+func ProbeHandler(h corev1.ProbeHandler) Trait {
+	return func(object any) {
+		switch obj := object.(type) {
+		case *corev1.Probe:
+			obj.ProbeHandler = h
+		}
+	}
+}
+
+func TCPProbe(port int) corev1.ProbeHandler {
+	return corev1.ProbeHandler{
+		TCPSocket: &corev1.TCPSocketAction{
+			Port: intstr.FromInt32(int32(port)),
 		},
 	}
 }
 
-func HTTPProbe(port int, path string) *corev1.Probe {
-	return &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Port: intstr.FromInt(port),
-				Path: path,
-			},
+func HTTPProbe(port int, path string) corev1.ProbeHandler {
+	return corev1.ProbeHandler{
+		HTTPGet: &corev1.HTTPGetAction{
+			Port: intstr.FromInt32(int32(port)),
+			Path: path,
 		},
 	}
 }
 
-func ExecProbe(command ...string) *corev1.Probe {
-	return &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{Command: command},
-		},
+func ExecProbe(command ...string) corev1.ProbeHandler {
+	return corev1.ProbeHandler{
+		Exec: &corev1.ExecAction{Command: command},
 	}
 }
 

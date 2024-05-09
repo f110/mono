@@ -381,8 +381,16 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 		k8sfactory.Volume(dataVolumeSource),
 		k8sfactory.Port("api", corev1.ProtocolTCP, 9000),
 		k8sfactory.Port("http", corev1.ProtocolTCP, 8080),
-		k8sfactory.LivenessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/live")),
-		k8sfactory.ReadinessProbe(k8sfactory.HTTPProbe(9000, "/minio/health/ready")),
+		k8sfactory.LivenessProbe(
+			k8sfactory.ProbeFactory(nil,
+				k8sfactory.ProbeHandler(k8sfactory.HTTPProbe(9000, "/minio/health/live")),
+			),
+		),
+		k8sfactory.ReadinessProbe(
+			k8sfactory.ProbeFactory(nil,
+				k8sfactory.ProbeHandler(k8sfactory.HTTPProbe(9000, "/minio/health/ready")),
+			),
+		),
 	)
 	pod := k8sfactory.PodFactory(nil,
 		k8sfactory.Namef("%s-%d", obj.Name, index),
@@ -401,6 +409,18 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 		)
 		container = k8sfactory.ContainerFactory(container,
 			k8sfactory.EnvVar("MINIO_VOLUMES", fmt.Sprintf("http://%s-{1...%d}.%s.%s.svc:9000/data", obj.Name, obj.Spec.Nodes, subdomain, obj.Namespace)),
+			k8sfactory.LivenessProbe(
+				k8sfactory.ProbeFactory(nil,
+					k8sfactory.ProbeHandler(k8sfactory.HTTPProbe(9000, "/minio/health/live")),
+					k8sfactory.InitialDelay(60),
+				),
+			),
+			k8sfactory.ReadinessProbe(
+				k8sfactory.ProbeFactory(nil,
+					k8sfactory.ProbeHandler(k8sfactory.HTTPProbe(9000, "/minio/health/ready")),
+					k8sfactory.InitialDelay(60),
+				),
+			),
 		)
 	}
 
