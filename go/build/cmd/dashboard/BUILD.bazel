@@ -8,11 +8,11 @@ go_library(
     deps = [
         "//go/build/database/dao",
         "//go/build/web",
+        "//go/cli",
         "//go/logger",
         "//go/signals",
         "//go/storage",
         "//vendor/github.com/go-sql-driver/mysql",
-        "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/k8s.io/client-go/kubernetes",

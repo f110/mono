@@ -5,16 +5,13 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v49/github"
 	"github.com/google/uuid"
-	"github.com/spf13/cobra"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -33,6 +30,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/gc"
 	"go.f110.dev/mono/go/build/watcher"
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
@@ -428,11 +426,9 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
-func builder(opt Options) error {
+func builder(ctx context.Context, opt Options) error {
 	p := newProcess(opt)
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	if err := p.FSM.LoopContext(ctx); err != nil {
 		return err
 	}
@@ -440,12 +436,12 @@ func builder(opt Options) error {
 	return nil
 }
 
-func AddCommand(rootCmd *cobra.Command) {
+func AddCommand(rootCmd *cli.Command) {
 	opt := Options{}
 
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "builder",
-		PreRunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			if v := os.Getenv("GITHUB_APP_ID"); v != "" {
 				appId, err := strconv.ParseInt(v, 10, 64)
 				if err != nil {
@@ -464,81 +460,58 @@ func AddCommand(rootCmd *cobra.Command) {
 				opt.GithubPrivateKeyFile = v
 			}
 
-			return nil
-		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return builder(opt)
+			return builder(ctx, opt)
 		},
 	}
 
 	fs := cmd.Flags()
-	fs.StringVar(&opt.DSN, "dsn", "", "Data source name")
-	fs.StringVar(&opt.Id, "id", uuid.New().String(), "the holder identity name")
-	fs.BoolVar(
-		&opt.EnableLeaderElection,
-		"enable-leader-election",
-		opt.EnableLeaderElection,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
-	)
-	fs.StringVar(&opt.LeaseLockName, "lease-lock-name", "", "the lease lock resource name")
-	fs.StringVar(&opt.LeaseLockNamespace, "lease-lock-namespace", "", "the lease lock resource namespace")
-	fs.StringVar(&opt.Namespace, "namespace", "", "The namespace which will be created the job")
-	fs.StringVar(
-		&opt.GithubAppSecretName,
-		"github-app-secret-name",
-		"",
-		"The name of Secret which contains github app id, installation id and private key.",
-	)
-	fs.Int64Var(&opt.GithubAppId, "github-app-id", 0, "GitHub App id")
-	fs.Int64Var(&opt.GithubInstallationId, "github-installation-id", 0, "GitHub Installation id")
-	fs.StringVar(&opt.GithubPrivateKeyFile, "github-private-key-file", "", "PrivateKey file path of GitHub App")
-	fs.StringVar(&opt.Addr, "addr", "127.0.0.1:8081", "Listen addr which will be served API")
-	fs.StringVar(&opt.DashboardUrl, "dashboard", "http://localhost", "URL of dashboard")
-	fs.StringVar(&opt.BuilderApiUrl, "builder-api", "http://localhost", "URL of the api of builder")
-	fs.BoolVar(&opt.Dev, "dev", opt.Dev, "development mode")
-	fs.StringVar(&opt.MinIOEndpoint, "minio-endpoint", "", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
-	fs.StringVar(&opt.MinIOName, "minio-name", "", "The name of MinIO")
-	fs.StringVar(&opt.MinIONamespace, "minio-namespace", "", "The namespace of MinIO")
-	fs.IntVar(&opt.MinIOPort, "minio-port", 8080, "Port number of MinIO")
-	fs.StringVar(&opt.MinIOBucket, "minio-bucket", "logs", "The bucket name that will be used a log storage")
-	fs.StringVar(&opt.MinIOAccessKey, "minio-access-key", "", "The access key")
-	fs.StringVar(&opt.MinIOSecretAccessKey, "minio-secret-access-key", "", "The secret access key")
-	fs.StringVar(&opt.ServiceAccountTokenFile, "service-account-token-file", "/var/run/secrets/kubernetes.io/serviceaccount/token", "A file path that contains JWT token")
-	fs.StringVar(&opt.VaultAddr, "vault-addr", "", "The vault URL")
-	fs.StringVar(&opt.VaultTokenFile, "vault-token-file", "", "The token for Vault")
-	fs.StringVar(&opt.VaultK8sAuthPath, "vault-k8s-auth-path", "auth/kubernetes", "The mount path of kubernetes auth method")
-	fs.StringVar(&opt.VaultK8sAuthRole, "vault-k8s-auth-role", "", "Role name for k8s auth method")
-	fs.StringVar(&opt.RemoteCache, "remote-cache", "", "The url of remote cache of bazel.")
-	fs.BoolVar(&opt.RemoteAssetApi, "remote-asset", false, "Enable Remote Asset API. This is experimental feature.")
-	fs.StringVar(&opt.BazelImage, "bazel-image", "ghcr.io/f110/bazel-container", "Bazel container image")
-	fs.BoolVar(&opt.UseBazelisk, "use-bazelisk", false, "Use bazelisk")
-	fs.StringVar(&opt.DefaultBazelVersion, "default-bazel-version", "3.2.0", "Default bazel version")
-	fs.StringVar(&opt.BazelMirrorURL, "bazel-mirror-url", "", "The URL of bazel")
-	fs.StringVar(&opt.BazelMirrorEndpoint, "bazel-mirror-endpoint", "", "The endpoint of MinIO for bazel mirror. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.")
-	fs.StringVar(&opt.BazelMirrorName, "bazel-mirror-name", "", "The name of MinIO for bazel mirror")
-	fs.StringVar(&opt.BazelMirrorNamespace, "bazel-mirror-namespace", "", "The namespace of MinIO for bazel mirror")
-	fs.IntVar(&opt.BazelMirrorPort, "bazel-mirror-port", 8080, "Port number of MinIO for bazel mirror")
-	fs.StringVar(&opt.BazelMirrorBucket, "bazel-mirror-bucket", "", "The bucket name that contains bazel's binaries")
-	fs.StringVar(&opt.BazelMirrorPrefix, "bazel-mirror-prefix", "", "The prefix of bazel's artifacts")
-	fs.StringVar(&opt.BazelMirrorAccessKey, "bazel-mirror-access-key", "", "The access key for bazel mirror")
-	fs.StringVar(&opt.BazelMirrorSecretAccessKey, "bazel-mirror-secret-access-key", "", "The secret access key for bazel mirror")
-	fs.StringVar(&opt.SidecarImage, "sidecar-image", "registry.f110.dev/build/sidecar", "Sidecar container image")
-	fs.StringVar(&opt.CLIImage, "ctl-image", "registry.f110.dev/build/buildctl", "CLI container image")
-	fs.BoolVar(&opt.PullAlways, "pull-always", false, "Pull always")
-	fs.StringVar(
-		&opt.TaskCPULimit,
-		"task-cpu-limit",
-		"1000m",
-		"Task cpu limit. If the job set the limit, It will used the job defined value.",
-	)
-	fs.StringVar(
-		&opt.TaskMemoryLimit,
-		"task-memory-limit",
-		"4096Mi",
-		"Task memory limit. If the job set the limit, It will used the job defined value.",
-	)
-	fs.BoolVar(&opt.WithGC, "with-gc", false, "Enable GC for the job")
-	fs.BoolVar(&opt.Debug, "debug", false, "Enable debugging mode")
+	fs.String("dsn", "Data source name").Var(&opt.DSN)
+	fs.String("id", "the holder identity name").Var(&opt.Id).Default(uuid.New().String())
+	fs.Bool("enable-leader-election", "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.").Var(&opt.EnableLeaderElection)
+	fs.String("lease-lock-name", "the lease lock resource name").Var(&opt.LeaseLockName)
+	fs.String("lease-lock-namespace", "the lease lock resource namespace").Var(&opt.LeaseLockNamespace)
+	fs.String("namespace", "The namespace which will be created the job").Var(&opt.Namespace)
+	fs.String("github-app-secret-name", "The name of Secret which contains github app id, installation id and private key.").Var(&opt.GithubAppSecretName)
+	fs.Int64("github-app-id", "GitHub App id").Var(&opt.GithubAppId)
+	fs.Int64("github-installation-id", "GitHub Installation id").Var(&opt.GithubInstallationId)
+	fs.String("github-private-key-file", "PrivateKey file path of GitHub App").Var(&opt.GithubPrivateKeyFile)
+	fs.String("addr", "Listen addr which will be served API").Var(&opt.Addr).Default("127.0.0.1:8081")
+	fs.String("dashboard", "URL of dashboard").Var(&opt.DashboardUrl).Default("http://localhost")
+	fs.String("builder-api", "URL of the api of builder").Var(&opt.BuilderApiUrl).Default("http://localhost")
+	fs.Bool("dev", "development mode").Var(&opt.Dev)
+	fs.String("minio-endpoint", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.").Var(&opt.MinIOEndpoint)
+	fs.String("minio-name", "The name of MinIO").Var(&opt.MinIOName)
+	fs.String("minio-namespace", "The namespace of MinIO").Var(&opt.MinIONamespace)
+	fs.Int("minio-port", "Port number of MinIO").Var(&opt.MinIOPort).Default(8080)
+	fs.String("minio-bucket", "The bucket name that will be used a log storage").Var(&opt.MinIOBucket).Default("logs")
+	fs.String("minio-access-key", "The access key").Var(&opt.MinIOAccessKey)
+	fs.String("minio-secret-access-key", "The secret access key").Var(&opt.MinIOSecretAccessKey)
+	fs.String("service-account-token-file", "A file path that contains JWT token").Var(&opt.ServiceAccountTokenFile).Default("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	fs.String("vault-addr", "The vault URL").Var(&opt.VaultAddr)
+	fs.String("vault-token-file", "The token for Vault").Var(&opt.VaultTokenFile)
+	fs.String("vault-k8s-auth-path", "The mount path of kubernetes auth method").Var(&opt.VaultK8sAuthPath).Default("auth/kubernetes")
+	fs.String("vault-k8s-auth-role", "Role name for k8s auth method").Var(&opt.VaultK8sAuthRole)
+	fs.String("remote-cache", "The url of remote cache of bazel.").Var(&opt.RemoteCache)
+	fs.Bool("remote-asset", "Enable Remote Asset API. This is experimental feature.").Var(&opt.RemoteAssetApi)
+	fs.String("bazel-image", "Bazel container image").Var(&opt.BazelImage).Default("ghcr.io/f110/bazel-container")
+	fs.Bool("use-bazelisk", "Use bazelisk").Var(&opt.UseBazelisk)
+	fs.String("default-bazel-version", "Default bazel version").Var(&opt.DefaultBazelVersion).Default("3.2.0")
+	fs.String("bazel-mirror-url", "The URL of bazel").Var(&opt.BazelMirrorURL)
+	fs.String("bazel-mirror-endpoint", "The endpoint of MinIO for bazel mirror. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.").Var(&opt.BazelMirrorEndpoint)
+	fs.String("bazel-mirror-name", "The name of MinIO for bazel mirror").Var(&opt.BazelMirrorName)
+	fs.String("bazel-mirror-namespace", "The namespace of MinIO for bazel mirror").Var(&opt.BazelMirrorNamespace)
+	fs.Int("bazel-mirror-port", "Port number of MinIO for bazel mirror").Var(&opt.BazelMirrorPort).Default(8080)
+	fs.String("bazel-mirror-bucket", "The bucket name that contains bazel's binaries").Var(&opt.BazelMirrorBucket)
+	fs.String("bazel-mirror-prefix", "The prefix of bazel's artifacts").Var(&opt.BazelMirrorPrefix)
+	fs.String("bazel-mirror-access-key", "The access key for bazel mirror").Var(&opt.BazelMirrorAccessKey)
+	fs.String("bazel-mirror-secret-access-key", "The secret access key for bazel mirror").Var(&opt.BazelMirrorSecretAccessKey)
+	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
+	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
+	fs.Bool("pull-always", "Pull always").Var(&opt.PullAlways)
+	fs.String("task-cpu-limit", "Task cpu limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskCPULimit).Default("1000m")
+	fs.String("task-memory-limit", "Task memory limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskMemoryLimit).Default("4096Mi")
+	fs.Bool("with-gc", "Enable GC for the job").Var(&opt.WithGC)
+	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)
 }
