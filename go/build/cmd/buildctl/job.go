@@ -1,14 +1,16 @@
 package buildctl
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/cli"
 )
 
 func redoTask(endpoint string, taskId int, via string) error {
@@ -32,23 +34,23 @@ func redoTask(endpoint string, taskId int, via string) error {
 	return nil
 }
 
-func Job(rootCmd *cobra.Command) {
-	job := &cobra.Command{
+func Job(rootCmd *cli.Command) {
+	job := &cli.Command{
 		Use: "job",
 	}
 
 	endpoint := ""
 	jobId := 0
 	via := ""
-	redo := &cobra.Command{
+	redo := &cli.Command{
 		Use: "redo",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			return redoTask(endpoint, jobId, via)
 		},
 	}
-	redo.Flags().StringVar(&endpoint, "endpoint", "", "API Endpoint")
-	redo.Flags().IntVar(&jobId, "job-id", 0, "Trigger task id")
-	redo.Flags().StringVar(&via, "via", "", "Via")
+	redo.Flags().String("endpoint", "API Endpoint").Var(&endpoint)
+	redo.Flags().Int("job-id", "Trigger task id").Var(&jobId)
+	redo.Flags().String("via", "Via").Var(&via)
 	job.AddCommand(redo)
 
 	rootCmd.AddCommand(job)

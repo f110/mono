@@ -4,27 +4,21 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"go.f110.dev/mono/go/build/cmd/buildctl"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 )
 
 func buildCtl(args []string) error {
-	rootCmd := &cobra.Command{
+	rootCmd := &cli.Command{
 		Use: "buildctl",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			return logger.Init()
-		},
 	}
 	buildctl.Job(rootCmd)
 
-	rootCmd.SetArgs(args)
-	return rootCmd.Execute()
+	return rootCmd.Execute(args)
 }
 
 func main() {
-	if err := buildCtl(os.Args[1:]); err != nil {
+	if err := buildCtl(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
