@@ -120,6 +120,7 @@ type minIOClusterReconciler struct {
 var _ controllerutil.GenericReconciler[*miniov1alpha1.MinIOCluster] = (*minIOClusterReconciler)(nil)
 
 func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
+	logger.Log.Debug("Start reconciling MinIOCluster")
 	if logger.Log.Level() == zapcore.DebugLevel {
 		defer logger.Log.Debug("Finished reconciling MinIOCluster")
 	}
@@ -229,6 +230,10 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 }
 
 func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
+	logger.Log.Debug("Start finalizing MinIOCluster")
+	if logger.Log.Level() == zapcore.DebugLevel {
+		defer logger.Log.Debug("Finished finalizing MinIOCluster")
+	}
 	rCtx, err := m.newContext(obj)
 	if err != nil {
 		return err
@@ -338,7 +343,9 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	if err != nil && !kerrors.IsNotFound(err) {
 		return xerrors.WithStack(err)
 	} else if svc != nil {
-		ctx.svcs = append(ctx.svcs, svc)
+		ctx.svcs = []*corev1.Service{svc}
+	} else {
+		ctx.svcs = nil
 	}
 	if ctx.Obj.Spec.Nodes > 1 {
 		svc, err = m.serviceLister.Services(ctx.Obj.Namespace).Get(fmt.Sprintf("%s-hl", ctx.Obj.Name))

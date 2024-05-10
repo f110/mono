@@ -436,6 +436,18 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 			}
 			return nil
 		}
+	} else {
+		var finalizing bool
+		for _, finalizer := range b.finalizers {
+			if containsString(objMeta.GetFinalizers(), finalizer) {
+				finalizing = true
+				break
+			}
+		}
+		if !finalizing {
+			logger.Log.Debug("Skip finalize because all finalizers are removed", zap.String("key", key))
+			return nil
+		}
 	}
 
 	reconciler := b.newReconciler()
@@ -498,5 +510,6 @@ func (b *GenericControllerBase[T]) enqueue(obj any) {
 	if err != nil {
 		return
 	}
+	logger.Log.Debug("Enqueue", zap.String("key", key))
 	b.queue.Add(key)
 }
