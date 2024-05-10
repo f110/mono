@@ -6,13 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/notion"
-	"go.f110.dev/mono/go/signals"
 )
 
 type docServerCommand struct {
@@ -27,16 +24,13 @@ func newDocServerCommand() *docServerCommand {
 	}
 }
 
-func (s *docServerCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&s.addr, "addr", s.addr, "Listen addr")
-	fs.StringVar(&s.conf, "conf", s.conf, "Config file path")
-	fs.StringVar(&s.token, "token", "", "API token for notion")
+func (s *docServerCommand) Flags(fs *cli.FlagSet) {
+	fs.String("addr", "Listen addr").Var(&s.addr).Default(":7000")
+	fs.String("conf", "Config file path").Var(&s.conf)
+	fs.String("token", "API token for notion").Var(&s.token)
 }
 
-func (s *docServerCommand) Execute() error {
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
+func (s *docServerCommand) Execute(ctx context.Context) error {
 	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
@@ -44,20 +38,16 @@ func (s *docServerCommand) Execute() error {
 		return xerrors.Define("--token or NOTION_TOKEN is required").WithStack()
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	signals.SetupSignalHandler(cancel)
-
 	srv, err := notion.NewDatabaseDocServer(s.addr, s.conf, s.token)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	go srv.Start()
 	<-ctx.Done()
-	cancel()
 
-	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	sCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	if err := srv.Stop(ctx); err != nil {
+	if err := srv.Stop(sCtx); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -66,18 +56,15 @@ func (s *docServerCommand) Execute() error {
 
 func notionDocServer(args []string) error {
 	docServerCmd := newDocServerCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "notion-doc-server",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			return docServerCmd.Execute()
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return docServerCmd.Execute(ctx)
 		},
 	}
 	docServerCmd.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
 
-	cmd.SetArgs(args)
-
-	return cmd.Execute()
+	return cmd.Execute(args)
 }
 
 func main() {
