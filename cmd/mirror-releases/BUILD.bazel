@@ -9,12 +9,11 @@ go_library(
     importpath = "go.f110.dev/mono/cmd/mirror-releases",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/logger",
         "//go/storage",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp",
         "//vendor/github.com/ProtonMail/go-crypto/openpgp/packet",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
     ],

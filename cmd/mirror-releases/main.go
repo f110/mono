@@ -10,19 +10,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -45,15 +42,15 @@ func newCommand() *command {
 	return &command{}
 }
 
-func (c *command) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Endpoint, "endpoint", "", "")
-	fs.StringVar(&c.Bucket, "bucket", "", "The bucket name")
-	fs.StringVar(&c.Region, "region", "", "")
-	fs.StringVar(&c.AccessKey, "access-key", "", "")
-	fs.StringVar(&c.SecretAccessKey, "secret-access-key", "", "")
-	fs.StringVar(&c.CAFile, "ca-file", "", "File path that contains CA certificate")
-	fs.StringVar(&c.Prefix, "prefix", "", "")
-	fs.StringVar(&c.MetadataPrefix, "metadata", "_mirror_metadata", "")
+func (c *command) Flags(fs *cli.FlagSet) {
+	fs.String("endpoint", "").Var(&c.Endpoint)
+	fs.String("bucket", "The bucket name").Var(&c.Bucket)
+	fs.String("region", "").Var(&c.Region)
+	fs.String("access-key", "").Var(&c.AccessKey)
+	fs.String("secret-access-key", "").Var(&c.SecretAccessKey)
+	fs.String("ca-file", "File path that contains CA certificate").Var(&c.CAFile)
+	fs.String("prefix", "").Var(&c.Prefix)
+	fs.String("metadata", "").Var(&c.MetadataPrefix).Default("_mirror_metadata")
 }
 
 func (c *command) Run(ctx context.Context) error {
@@ -312,21 +309,15 @@ func (d *downloader) Close() {
 
 func mirrorReleases() error {
 	c := newCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "mirror-releases",
-		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return logger.Init()
-		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			return c.Run(cmd.Context())
+		Run: func(ctx context.Context, cmd *cli.Command, _ []string) error {
+			return c.Run(ctx)
 		},
 	}
-	logger.Flags(cmd.Flags())
 	c.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {
