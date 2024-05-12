@@ -4,35 +4,25 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/spf13/cobra"
-
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 )
 
 func runCommand() error {
 	c := newGitDataServiceCommand()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "git-data-service",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := logger.Init(); err != nil {
-				return err
-			}
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			if err := c.ValidateFlagValue(); err != nil {
 				return err
 			}
-			return c.LoopContext(cmd.Context())
+			return c.LoopContext(ctx)
 		},
 	}
 	c.Flags(cmd.Flags())
-	logger.Flags(cmd.Flags())
-	c.GitHubClient.PFlags(cmd.Flags())
+	c.GitHubClient.Flags(cmd.Flags())
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	return cmd.ExecuteContext(ctx)
+	return cmd.Execute(os.Args)
 }
 
 func main() {

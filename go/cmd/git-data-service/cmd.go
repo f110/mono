@@ -8,7 +8,6 @@ import (
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -16,6 +15,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
@@ -89,29 +89,29 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 	return c
 }
 
-func (c *gitDataServiceCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Listen, "listen", ":8056", "Listen addr")
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
-	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
-	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
-	fs.StringVar(&c.MemcachedEndpoint, "memcached-endpoint", c.MemcachedEndpoint, "The endpoint of memcached")
-	fs.StringVar(&c.ListenWebhookReceiver, "listen-webhook-receiver", "", "Listen addr of webhook receiver.")
+func (c *gitDataServiceCommand) Flags(fs *cli.FlagSet) {
+	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8056")
+	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
+	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
+	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
+	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
+	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
+	fs.String("memcached-endpoint", "The endpoint of memcached").Var(&c.MemcachedEndpoint)
+	fs.String("listen-webhook-receiver", "Listen addr of webhook receiver.").Var(&c.ListenWebhookReceiver)
 
-	fs.StringSliceVar(&c.Repositories, "repository", nil, "The repository name that will be served."+
+	fs.StringArray("repository", "The repository name that will be served."+
 		"The value consists three elements separated by a vertical bar. The first element is the repository name. "+
 		"The second element is a url for the repository. "+
-		"The third element is a prefix in an object storage. (e.g. go|https://github.com/golang/go.git|golang/go)")
-	fs.StringVar(&c.LockFilePath, "lock-file-path", "", "The path of the lock file.  If not set the value, don't get the lock")
-	fs.DurationVar(&c.RefreshInterval, "refresh-interval", 0, "The interval time for updating the repository"+
-		"If set zero, interval updating is disabled.")
-	fs.DurationVar(&c.RefreshTimeout, "refresh-timeout", 1*time.Minute, "The duration for timeout to updating repository")
-	fs.IntVar(&c.RefreshWorkers, "refresh-workers", 1, "The number of workers for updating repository")
-	fs.BoolVar(&c.DisableInflatePackFile, "disable-inflate-packfile", false, "Disable inflating packfile")
+		"The third element is a prefix in an object storage. (e.g. go|https://github.com/golang/go.git|golang/go)").Var(&c.Repositories)
+	fs.String("lock-file-path", "The path of the lock file.  If not set the value, don't get the lock").Var(&c.LockFilePath)
+	fs.Duration("refresh-interval", "The interval time for updating the repository"+
+		"If set zero, interval updating is disabled.").Var(&c.RefreshInterval)
+	fs.Duration("refresh-timeout", "The duration for timeout to updating repository").Var(&c.RefreshTimeout).Default(1 * time.Minute)
+	fs.Int("refresh-workers", "The number of workers for updating repository").Var(&c.RefreshWorkers).Default(1)
+	fs.Bool("disable-inflate-packfile", "Disable inflating packfile").Var(&c.DisableInflatePackFile)
 
-	fs.DurationVar(&c.RepositoryInitTimeout, "repository-init-timeout", 5*time.Minute, "The duration for timeout to initializing repository")
+	fs.Duration("repository-init-timeout", "The duration for timeout to initializing repository").Var(&c.RepositoryInitTimeout).Default(5 * time.Minute)
 }
 
 func (c *gitDataServiceCommand) ValidateFlagValue() error {
