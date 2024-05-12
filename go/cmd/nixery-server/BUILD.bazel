@@ -6,6 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/nixery-server",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/fsm",
         "//go/logger",
         "//go/nixery",
@@ -15,8 +16,6 @@ go_library(
         "//vendor/github.com/google/nixery/manifest",
         "//vendor/github.com/google/nixery/storage",
         "//vendor/github.com/im7mortal/kmutex",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
     ],

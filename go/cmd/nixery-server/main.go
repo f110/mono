@@ -23,9 +23,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/signal"
 	"regexp"
-	"syscall"
 	"time"
 
 	"github.com/google/nixery/builder"
@@ -34,11 +32,10 @@ import (
 	mf "github.com/google/nixery/manifest"
 	nstorage "github.com/google/nixery/storage"
 	"github.com/im7mortal/kmutex"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/nixery"
@@ -242,17 +239,17 @@ func newNixeryServerCmd() *nixeryServerCmd {
 	return c
 }
 
-func (c *nixeryServerCmd) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Listen, "listen", ":8381", "Listen addr")
-	fs.StringVar(&c.WebDir, "web-dir", "", "Directory path for static assets")
-	fs.StringVar(&c.Storage, "storage", "s3", "The name of the storage")
-	fs.StringVar(&c.StorageEndpoint, "storage-endpoint", c.StorageEndpoint, "The endpoint of the object storage")
-	fs.StringVar(&c.StorageRegion, "storage-region", c.StorageRegion, "The region name")
-	fs.StringVar(&c.Bucket, "bucket", c.Bucket, "The bucket name that will be used")
-	fs.StringVar(&c.StorageAccessKey, "storage-access-key", c.StorageAccessKey, "The access key for the object storage")
-	fs.StringVar(&c.StorageSecretAccessKey, "storage-secret-access-key", c.StorageSecretAccessKey, "The secret access key for the object storage")
-	fs.StringVar(&c.StorageCAFile, "storage-ca-file", "", "File path that contains CA certificate")
-	fs.StringVar(&c.StoragePath, "storage-path", "", "The directory path")
+func (c *nixeryServerCmd) Flags(fs *cli.FlagSet) {
+	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8381")
+	fs.String("web-dir", "Directory path for static assets").Var(&c.WebDir)
+	fs.String("storage", "The name of the storage").Var(&c.StorageRegion).Default("s3")
+	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
+	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
+	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
+	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
+	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
+	fs.String("storage-path", "The directory path").Var(&c.StoragePath)
 }
 
 func (c *nixeryServerCmd) init(ctx context.Context) (fsm.State, error) {
@@ -336,24 +333,16 @@ func (c *nixeryServerCmd) shuttingDown(ctx context.Context) (fsm.State, error) {
 
 func main() {
 	serverCmd := newNixeryServerCmd()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "nixery-server",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return err
-			}
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			logger.HijackStandardLogrus()
-			cmd.SilenceUsage = true
-			return serverCmd.LoopContext(cmd.Context())
+			return serverCmd.LoopContext(ctx)
 		},
 	}
-	logger.Flags(cmd.Flags())
 	serverCmd.Flags(cmd.Flags())
-	cmd.SilenceErrors = true
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	if err := cmd.ExecuteContext(ctx); err != nil {
+	if err := cmd.Execute(os.Args); err != nil {
 		os.Exit(1)
 	}
 }
