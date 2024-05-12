@@ -2,11 +2,12 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"os"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 )
 
@@ -23,11 +24,11 @@ func graph(dir string) error {
 	return nil
 }
 
-func Graph() *cobra.Command {
-	graphCmd := &cobra.Command{
+func Graph() *cli.Command {
+	graphCmd := &cli.Command{
 		Use:   "graph",
 		Short: "Visualize FSM",
-		RunE: func(_ *cobra.Command, args []string) error {
+		Run: func(_ context.Context, _ *cli.Command, args []string) error {
 			return graph(args[0])
 		},
 	}

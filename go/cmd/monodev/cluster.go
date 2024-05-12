@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/k8s/kind"
 )
 
@@ -271,8 +271,8 @@ func childPodsOfStatefulSet(ctx context.Context, client kubernetes.Interface, st
 	return childPods, nil
 }
 
-func Cluster() *cobra.Command {
-	clusterCmd := &cobra.Command{
+func Cluster() *cli.Command {
+	clusterCmd := &cli.Command{
 		Use: "cluster",
 	}
 
@@ -284,48 +284,48 @@ func Cluster() *cobra.Command {
 	workerNum := 1
 	manifestFile := ""
 
-	createCmd := &cobra.Command{
+	createCmd := &cli.Command{
 		Use:   "create",
 		Short: "Create the cluster by kind",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			return setupCluster(kindPath, clusterName, k8sVersion, workerNum, kubeConfig, manifestFile)
 		},
 	}
-	createCmd.Flags().StringVar(&kindPath, "kind", "", "kind command path")
-	createCmd.Flags().StringVar(&clusterName, "name", defaultClusterName, "Cluster name")
-	createCmd.Flags().StringVar(&k8sVersion, "k8s-version", "", "Kubernetes version")
-	createCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "Path to the kubeconfig file. If not specified, will be used default file of kubectl")
-	createCmd.Flags().StringVar(&crdFile, "crd", "", "Applying manifest file after create the cluster")
-	createCmd.Flags().IntVar(&workerNum, "worker-num", 3, "The number of k8s workers")
-	createCmd.Flags().StringVar(&manifestFile, "manifest", "", "A manifest file for the container")
+	createCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	createCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
+	createCmd.Flags().String("k8s-version", "Kubernetes version").Var(&k8sVersion)
+	createCmd.Flags().String("kubeconfig", "Path to the kubeconfig file. If not specified, will be used default file of kubectl").Var(&kubeConfig)
+	createCmd.Flags().String("crd", "Applying manifest file after create the cluster").Var(&crdFile)
+	createCmd.Flags().Int("worker-num", "The number of k8s workers").Var(&workerNum).Default(3)
+	createCmd.Flags().String("manifest", "A manifest file for the container").Var(&manifestFile)
 	clusterCmd.AddCommand(createCmd)
 
-	deleteCmd := &cobra.Command{
+	deleteCmd := &cli.Command{
 		Use:   "delete",
 		Short: "Delete the cluster",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			return deleteCluster(kindPath, clusterName, kubeConfig)
 		},
 	}
-	deleteCmd.Flags().StringVar(&kindPath, "kind", "", "kind command path")
-	deleteCmd.Flags().StringVar(&clusterName, "name", defaultClusterName, "Cluster name")
-	deleteCmd.Flags().StringVar(&kubeConfig, "kubeconfig", "", "Path to the kubeconfig file. If not specified, will be used default file of kubectl")
+	deleteCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	deleteCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
+	deleteCmd.Flags().String("kubeconfig", "Path to the kubeconfig file. If not specified, will be used default file of kubectl").Var(&kubeConfig)
 	clusterCmd.AddCommand(deleteCmd)
 
 	namespace := ""
 	var images []string
-	runCmd := &cobra.Command{
+	runCmd := &cli.Command{
 		Use:   "run",
 		Short: "Run the container by manifest",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			return runContainer(kindPath, clusterName, manifestFile, namespace, images)
 		},
 	}
-	runCmd.Flags().StringVar(&kindPath, "kind", "", "kind command path")
-	runCmd.Flags().StringVar(&clusterName, "name", defaultClusterName, "Cluster name")
-	runCmd.Flags().StringVar(&manifestFile, "manifest", "", "A manifest file for the container")
-	runCmd.Flags().StringVar(&namespace, "namespace", metav1.NamespaceDefault, "Namespace")
-	runCmd.Flags().StringArrayVar(&images, "images", []string{}, "Load image and tagging (e.g. --images=quay.io/f110/example:latest=./image.tar)")
+	runCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	runCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
+	runCmd.Flags().String("manifest", "A manifest file for the container").Var(&manifestFile)
+	runCmd.Flags().String("namespace", "Namespace").Var(&namespace).Default(metav1.NamespaceDefault)
+	runCmd.Flags().StringArray("images", "Load image and tagging (e.g. --images=quay.io/f110/example:latest=./image.tar)").Var(&images)
 	clusterCmd.AddCommand(runCmd)
 
 	return clusterCmd

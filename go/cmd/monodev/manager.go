@@ -6,25 +6,25 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/parallel"
 )
 
-type Manager []*cobra.Command
+type Manager []*cli.Command
 
 var CommandManager = make(Manager, 0)
 
-func (m *Manager) Add(cmd *cobra.Command) {
+func (m *Manager) Add(cmd *cli.Command) {
 	for _, v := range *m {
 		cmd.AddCommand(v)
 	}
 }
 
-func (m *Manager) Register(cmd *cobra.Command) {
+func (m *Manager) Register(cmd *cli.Command) {
 	*m = append(*m, cmd)
 }
 

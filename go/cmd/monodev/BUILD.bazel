@@ -13,6 +13,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/monodev",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/docutil",
         "//go/fsm",
         "//go/git",
@@ -26,8 +27,6 @@ go_library(
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport",
         "//vendor/github.com/go-git/go-git/v5/plumbing/transport/http",
         "//vendor/github.com/go-sql-driver/mysql",
-        "//vendor/github.com/spf13/cobra",
-        "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/go-memcached/client",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",

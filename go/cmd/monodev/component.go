@@ -22,12 +22,12 @@ import (
 	gitTransport "github.com/go-git/go-git/v5/plumbing/transport"
 	gitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/spf13/pflag"
 	"go.f110.dev/go-memcached/client"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
@@ -281,8 +281,8 @@ func (c *simpleCommandComponent) Ready() bool {
 	return true
 }
 
-func (c *simpleCommandComponent) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.ExecutableFilePath, c.Name, c.Name, "Executable file path")
+func (c *simpleCommandComponent) Flags(fs *cli.FlagSet) {
+	fs.String(c.Name, "Executable file path").Var(&c.ExecutableFilePath).Default(c.Name)
 }
 
 type grpcServerComponent struct {

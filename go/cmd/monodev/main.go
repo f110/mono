@@ -1,36 +1,21 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/spf13/cobra"
-	"go.f110.dev/xerrors"
-
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 )
 
 func monoDev() error {
-	rootCmd := &cobra.Command{
+	rootCmd := &cli.Command{
 		Use:   "monodev",
 		Short: "Utilities for development",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return xerrors.WithStack(err)
-			}
-			return nil
-		},
 	}
-	logger.Flags(rootCmd.PersistentFlags())
 
 	CommandManager.Add(rootCmd)
 
-	ctx, cancelFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer cancelFunc()
-	return rootCmd.ExecuteContext(ctx)
+	return rootCmd.Execute(os.Args)
 }
 
 func main() {

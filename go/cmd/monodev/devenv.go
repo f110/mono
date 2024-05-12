@@ -1,56 +1,58 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+
+	"go.f110.dev/mono/go/cli"
 )
 
 func init() {
 	CommandManager.Register(DevEnv())
 }
 
-func goModuleProxy(cmd *cobra.Command) {
-	goModuleProxyCmd := &cobra.Command{
+func goModuleProxy(cmd *cli.Command) {
+	goModuleProxyCmd := &cli.Command{
 		Use:   "gomodule-proxy",
 		Short: "Start memcached and minio",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(memcached)
 			m.AddComponent(minio)
 
-			return m.Run(cmd.Context())
+			return m.Run(ctx)
 		},
 	}
 
 	cmd.AddCommand(goModuleProxyCmd)
 }
 
-func repoDoc(cmd *cobra.Command) {
-	repoDocCmd := &cobra.Command{
+func repoDoc(cmd *cli.Command) {
+	repoDocCmd := &cli.Command{
 		Use:   "repo-doc",
 		Short: "Start minio and git-data-service",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(docSearchService)
 
-			return m.Run(cmd.Context())
+			return m.Run(ctx)
 		},
 	}
 
 	cmd.AddCommand(repoDocCmd)
 }
 
-func build(cmd *cobra.Command) {
-	buildCmd := &cobra.Command{
+func build(cmd *cli.Command) {
+	buildCmd := &cli.Command{
 		Use:   "build",
 		Short: "Start MySQL",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(buildDatabase)
 			m.AddComponent(buildMySQLUSER)
 			m.AddComponent(minio)
 			m.AddComponent(buildBucket)
 
-			return m.Run(cmd.Context())
+			return m.Run(ctx)
 		},
 	}
 	etcd.Flags(buildCmd.Flags())
@@ -59,14 +61,13 @@ func build(cmd *cobra.Command) {
 	cmd.AddCommand(buildCmd)
 }
 
-func DevEnv() *cobra.Command {
-	devEnvCmd := &cobra.Command{
-		Use:     "env",
-		Aliases: []string{"dev-env"},
-		Short:   "Start some middlewares for development",
+func DevEnv() *cli.Command {
+	devEnvCmd := &cli.Command{
+		Use:   "env",
+		Short: "Start some middlewares for development",
 	}
 
-	for _, v := range []func(*cobra.Command){
+	for _, v := range []func(*cli.Command){
 		goModuleProxy,
 		repoDoc,
 		build,
