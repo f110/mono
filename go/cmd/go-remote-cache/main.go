@@ -10,17 +10,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -282,21 +280,15 @@ type entry struct {
 
 func goRemoteCache() error {
 	c := NewGoRemoteCacheCmd()
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "go-remote-cache",
-		PreRunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			logger.OutputStderr()
-			return logger.Init()
-		},
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
-			defer stop()
 			return c.LoopContext(ctx)
 		},
 	}
-	logger.Flags(cmd.Flags())
 
-	return cmd.ExecuteContext(context.Background())
+	return cmd.Execute(os.Args)
 }
 
 func main() {
