@@ -4,5 +4,10 @@ metadata:
   name: test-cluster
 spec:
   image: minio/minio:RELEASE.2024-04-18T19-09-19Z
-  nodes: 3
+  nodes: 1
   totalSize: 10
+  buckets:
+    - name: foo
+      policy: Public
+      createIndexFile: true
+    - name: bar

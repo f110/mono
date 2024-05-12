@@ -40,8 +40,20 @@ message MinIOClusterSpec {
   optional string storage_class_name = 1;
   optional string image              = 2;
   // total_size is the size of the cluster in Gigabytes.
-  int32 total_size = 3;
-  int32 nodes      = 4;
+  int32                       total_size = 3;
+  int32                       nodes      = 4;
+  repeated MinIOClusterBucket buckets    = 5;
+}
+
+message MinIOClusterBucket {
+  string name = 1;
+  // policy is the policy of the bucket. One of public, readOnly, private.
+  // If you don't want to give public access, set private or an empty value.
+  // If it is an empty value, The bucket will not have any policy.
+  // Currently, MinIOBucket can't use prefix based policy.
+  optional BucketPolicy policy = 2;
+  // create_index_file is a flag that creates index.html on top of bucket.
+  optional bool create_index_file = 3;
 }
 
 message MinIOClusterStatus {

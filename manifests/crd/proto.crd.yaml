@@ -641,6 +641,30 @@ spec:
             type: object
           spec:
             properties:
+              buckets:
+                items:
+                  properties:
+                    createIndexFile:
+                      description: create_index_file is a flag that creates index.html
+                        on top of bucket.
+                      type: boolean
+                    name:
+                      type: string
+                    policy:
+                      description: |-
+                        policy is the policy of the bucket. One of public, readOnly, private.
+                         If you don't want to give public access, set private or an empty value.
+                         If it is an empty value, The bucket will not have any policy.
+                         Currently, MinIOBucket can't use prefix based policy.
+                      enum:
+                      - Public
+                      - ReadOnly
+                      - Private
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               image:
                 type: string
               nodes:

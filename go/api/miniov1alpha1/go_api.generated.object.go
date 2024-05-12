@@ -300,12 +300,20 @@ type MinIOClusterSpec struct {
 	StorageClassName string `json:"storageClassName,omitempty"`
 	Image            string `json:"image,omitempty"`
 	// total_size is the size of the cluster in Gigabytes.
-	TotalSize int `json:"totalSize"`
-	Nodes     int `json:"nodes"`
+	TotalSize int                  `json:"totalSize"`
+	Nodes     int                  `json:"nodes"`
+	Buckets   []MinIOClusterBucket `json:"buckets"`
 }
 
 func (in *MinIOClusterSpec) DeepCopyInto(out *MinIOClusterSpec) {
 	*out = *in
+	if in.Buckets != nil {
+		l := make([]MinIOClusterBucket, len(in.Buckets))
+		for i := range in.Buckets {
+			in.Buckets[i].DeepCopyInto(&l[i])
+		}
+		out.Buckets = l
+	}
 }
 
 func (in *MinIOClusterSpec) DeepCopy() *MinIOClusterSpec {
@@ -373,6 +381,31 @@ func (in *MinIOUserStatus) DeepCopy() *MinIOUserStatus {
 		return nil
 	}
 	out := new(MinIOUserStatus)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type MinIOClusterBucket struct {
+	Name string `json:"name"`
+	// policy is the policy of the bucket. One of public, readOnly, private.
+	//
+	//	If you don't want to give public access, set private or an empty value.
+	//	If it is an empty value, The bucket will not have any policy.
+	//	Currently, MinIOBucket can't use prefix based policy.
+	Policy BucketPolicy `json:"policy,omitempty"`
+	// create_index_file is a flag that creates index.html on top of bucket.
+	CreateIndexFile bool `json:"createIndexFile,omitempty"`
+}
+
+func (in *MinIOClusterBucket) DeepCopyInto(out *MinIOClusterBucket) {
+	*out = *in
+}
+
+func (in *MinIOClusterBucket) DeepCopy() *MinIOClusterBucket {
+	if in == nil {
+		return nil
+	}
+	out := new(MinIOClusterBucket)
 	in.DeepCopyInto(out)
 	return out
 }

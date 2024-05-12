@@ -2,11 +2,16 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v6/pkg/policy"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -28,6 +33,7 @@ import (
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
+	"go.f110.dev/mono/go/k8s/portforward"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/stringsutil"
 )
@@ -92,18 +98,21 @@ func NewMinIOClusterController(
 
 func (c *MinIOClusterController) newReconciler() controllerutil.GenericReconciler[*miniov1alpha1.MinIOCluster] {
 	return &minIOClusterReconciler{
-		coreClient:    c.coreClient,
-		mClient:       c.mClient,
-		podLister:     c.podLister,
-		pvcLister:     c.pvcLister,
-		serviceLister: c.serviceLister,
-		secretLister:  c.secretLister,
-		logger:        c.Log(),
-		recorder:      c.EventRecorder(),
+		config:            c.config,
+		coreClient:        c.coreClient,
+		mClient:           c.mClient,
+		podLister:         c.podLister,
+		pvcLister:         c.pvcLister,
+		serviceLister:     c.serviceLister,
+		secretLister:      c.secretLister,
+		runOutsideCluster: c.runOutsideCluster,
+		logger:            c.Log(),
+		recorder:          c.EventRecorder(),
 	}
 }
 
 type minIOClusterReconciler struct {
+	config        *rest.Config
 	coreClient    kubernetes.Interface
 	mClient       *client.MinioV1alpha1
 	podLister     corev1listers.PodLister
@@ -111,8 +120,9 @@ type minIOClusterReconciler struct {
 	serviceLister corev1listers.ServiceLister
 	secretLister  corev1listers.SecretLister
 
-	logger   *zap.Logger
-	recorder record.EventRecorder
+	logger            *zap.Logger
+	recorder          record.EventRecorder
+	runOutsideCluster bool
 
 	changed bool
 }
@@ -224,6 +234,91 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 		logger.Log.Debug("Update MinIOCluster status", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace), zap.Any("status", rCtx.Obj.Status))
 		if _, err := m.mClient.UpdateStatusMinIOCluster(ctx, rCtx.Obj, metav1.UpdateOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
+		}
+	}
+
+	if rCtx.Obj.Status.Phase == miniov1alpha1.ClusterPhaseRunning {
+		instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", obj.Name, obj.Namespace)
+		if m.runOutsideCluster {
+			forwarder, port, err := portforward.PortForward(ctx, rCtx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			defer forwarder.Close()
+			instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
+		}
+
+		mc, err := minio.New(instanceEndpoint, "root", string(rCtx.secret.Data["password"]), false)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		for _, bucket := range rCtx.Obj.Spec.Buckets {
+			if exists, err := mc.BucketExistsWithContext(ctx, bucket.Name); err != nil {
+				return xerrors.WithStack(err)
+			} else if !exists {
+				logger.Log.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				if err := mc.MakeBucketWithContext(ctx, bucket.Name, ""); err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
+
+			gotPolicyString, err := mc.GetBucketPolicy(bucket.Name)
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			var currentPolicy *policy.BucketAccessPolicy
+			if gotPolicyString != "" {
+				cp := &policy.BucketAccessPolicy{}
+				if err := json.Unmarshal([]byte(gotPolicyString), cp); err != nil {
+					return xerrors.WithStack(err)
+				}
+				currentPolicy = cp
+			}
+			p := &policy.BucketAccessPolicy{
+				Version: "2012-10-17",
+			}
+			switch bucket.Policy {
+			case "", miniov1alpha1.BucketPolicyPrivate:
+				logger.Log.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, ""); err != nil {
+					return xerrors.WithStack(err)
+				}
+			case miniov1alpha1.BucketPolicyPublic:
+				p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, bucket.Name, "*")
+			case miniov1alpha1.BucketPolicyReadOnly:
+				p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadOnly, bucket.Name, "*")
+			}
+			if len(p.Statements) > 0 && currentPolicy != nil && !reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
+				b, err := json.Marshal(p)
+				if err != nil {
+					return xerrors.WithStack(err)
+				}
+				logger.Log.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, string(b)); err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
+
+			if bucket.CreateIndexFile {
+				stat, err := mc.StatObjectWithContext(ctx, bucket.Name, "index.html", minio.StatObjectOptions{})
+				if err != nil {
+					var mErr minio.ErrorResponse
+					if errors.As(err, &mErr) {
+						if mErr.Code != "NoSuchKey" {
+							return xerrors.WithStack(err)
+						}
+						// NoSuchKey is not error
+					} else {
+						return xerrors.WithStack(err)
+					}
+				}
+				if stat.Key == "" {
+					logger.Log.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					if _, err := mc.PutObjectWithContext(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
+						return xerrors.WithStack(err)
+					}
+				}
+			}
 		}
 	}
 	return nil
@@ -523,6 +618,19 @@ func (c *reconcileContext) StatusChanged() bool {
 func (c *reconcileContext) CurrentPhase() miniov1alpha1.ClusterPhase {
 	if c.Obj.Spec.Nodes != len(c.pods) {
 		return miniov1alpha1.ClusterPhaseCreating
+	}
+
+	for _, pod := range c.pods {
+		if pod.Status.Phase != corev1.PodRunning {
+			return miniov1alpha1.ClusterPhaseCreating
+		}
+		for _, v := range pod.Status.Conditions {
+			if v.Type == corev1.PodReady {
+				if v.Status != corev1.ConditionTrue {
+					return miniov1alpha1.ClusterPhaseCreating
+				}
+			}
+		}
 	}
 
 	return miniov1alpha1.ClusterPhaseRunning
