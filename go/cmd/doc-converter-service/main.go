@@ -1,28 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/text/converter"
 )
 
 func docConverterService(args []string) error {
 	port := 6391
-	cmd := &cobra.Command{
+	cmd := &cli.Command{
 		Use: "doc-converter-service",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			if err := logger.Init(); err != nil {
-				return xerrors.WithStack(err)
-			}
-
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			s := grpc.NewServer()
 			converter.RegisterMarkdownTextConverterServer(s, &converter.MarkdownConverterService{})
 
@@ -37,11 +34,9 @@ func docConverterService(args []string) error {
 			return nil
 		},
 	}
-	cmd.Flags().IntVarP(&port, "port", "p", port, "Listen port")
-	logger.Flags(cmd.Flags())
+	cmd.Flags().Int("port", "Listen port").Var(&port).Shorthand("p").Default(port)
 
-	cmd.SetArgs(args)
-	return cmd.Execute()
+	return cmd.Execute(args)
 }
 
 func main() {

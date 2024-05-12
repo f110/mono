@@ -6,9 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/doc-converter-service",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/logger",
         "//go/text/converter",
-        "//vendor/github.com/spf13/cobra",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
         "//vendor/google.golang.org/grpc",
