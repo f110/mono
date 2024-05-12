@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -18,11 +17,11 @@ import (
 
 	"github.com/peco/peco"
 	"github.com/shirou/gopsutil/v3/process"
-	"github.com/spf13/cobra"
 	"go.f110.dev/xerrors"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/opvault"
 )
@@ -31,7 +30,7 @@ const (
 	ConfigDirName = ".1p"
 )
 
-var subcommands = []func(command *cobra.Command){
+var subcommands = []func(command *cli.Command){
 	Daemon,
 	Shutdown,
 	UseVault,
@@ -108,12 +107,12 @@ func Main() error {
 	return nil
 }
 
-func Daemon(rootCmd *cobra.Command) {
+func Daemon(rootCmd *cli.Command) {
 	daemonize := false
 	foreground := false
-	daemonCmd := &cobra.Command{
+	daemonCmd := &cli.Command{
 		Use: "daemon",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			if !foreground {
 				homeDir, err := os.UserHomeDir()
 				if err != nil {
@@ -152,16 +151,16 @@ func Daemon(rootCmd *cobra.Command) {
 			return d.Loop()
 		},
 	}
-	daemonCmd.Flags().BoolVar(&daemonize, "daemonize", false, "Daemonize")
-	daemonCmd.Flags().BoolVar(&foreground, "foreground", false, "")
+	daemonCmd.Flags().Bool("daemonize", "Daemonize").Var(&daemonize)
+	daemonCmd.Flags().Bool("foreground", "").Var(&foreground)
 
 	rootCmd.AddCommand(daemonCmd)
 }
 
-func Shutdown(rootCmd *cobra.Command) {
-	shutdownCmd := &cobra.Command{
+func Shutdown(rootCmd *cli.Command) {
+	shutdownCmd := &cli.Command{
 		Use: "shutdown",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -198,11 +197,11 @@ func Shutdown(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(shutdownCmd)
 }
 
-func UseVault(rootCmd *cobra.Command) {
+func UseVault(rootCmd *cli.Command) {
 	path := ""
-	useVaultCmd := &cobra.Command{
+	useVaultCmd := &cli.Command{
 		Use: "use-vault",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
 			if path == "" {
 				return xerrors.New("--path is mandatory")
 			}
@@ -221,21 +220,21 @@ func UseVault(rootCmd *cobra.Command) {
 			return nil
 		},
 	}
-	useVaultCmd.Flags().StringVar(&path, "path", "", "The path to opvault")
+	useVaultCmd.Flags().String("path", "The path to opvault").Var(&path)
 
 	rootCmd.AddCommand(useVaultCmd)
 }
 
-func Info(rootCmd *cobra.Command) {
-	infoCmd := &cobra.Command{
+func Info(rootCmd *cli.Command) {
+	infoCmd := &cli.Command{
 		Use: "info",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			client, err := dial()
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			res, err := client.Info(ctx, &RequestInfo{})
+			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			res, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -254,16 +253,16 @@ func Info(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(infoCmd)
 }
 
-func Unlock(rootCmd *cobra.Command) {
-	unlockCmd := &cobra.Command{
+func Unlock(rootCmd *cli.Command) {
+	unlockCmd := &cli.Command{
 		Use: "unlock",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			client, err := dial()
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			info, err := client.Info(ctx, &RequestInfo{})
+			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -279,8 +278,8 @@ func Unlock(rootCmd *cobra.Command) {
 				return xerrors.WithStack(err)
 			}
 			fmt.Println()
-			ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
-			res, err := client.Unlock(ctx, &RequestUnlock{MasterPassword: masterPassword})
+			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			res, err := client.Unlock(tCtx, &RequestUnlock{MasterPassword: masterPassword})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -297,16 +296,16 @@ func Unlock(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(unlockCmd)
 }
 
-func List(rootCmd *cobra.Command) {
-	listCmd := &cobra.Command{
+func List(rootCmd *cli.Command) {
+	listCmd := &cli.Command{
 		Use: "list",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			client, err := dial()
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			info, err := client.Info(ctx, &RequestInfo{})
+			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -315,8 +314,8 @@ func List(rootCmd *cobra.Command) {
 				return xerrors.New("Vault is locked")
 			}
 
-			ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
-			list, err := client.List(ctx, &RequestList{})
+			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			list, err := client.List(tCtx, &RequestList{})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -335,11 +334,10 @@ func List(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(listCmd)
 }
 
-func Get(rootCmd *cobra.Command) {
-	getCmd := &cobra.Command{
+func Get(rootCmd *cli.Command) {
+	getCmd := &cli.Command{
 		Use: "get UUID",
-		RunE: func(_ *cobra.Command, args []string) error {
-			log.Print(args)
+		Run: func(ctx context.Context, _ *cli.Command, args []string) error {
 			if len(args) != 1 {
 				return xerrors.New("UUID is required")
 			}
@@ -347,8 +345,8 @@ func Get(rootCmd *cobra.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-			info, err := client.Info(ctx, &RequestInfo{})
+			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -357,8 +355,8 @@ func Get(rootCmd *cobra.Command) {
 				return xerrors.New("Vault is locked")
 			}
 
-			ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
-			res, err := client.Get(ctx, &RequestGet{Uuid: args[0]})
+			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			res, err := client.Get(tCtx, &RequestGet{Uuid: args[0]})
 			cancel()
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -424,7 +422,7 @@ func dial() (OnePasswordClient, error) {
 	return NewOnePasswordClient(conn), nil
 }
 
-func AddCommand(rootCmd *cobra.Command) {
+func AddCommand(rootCmd *cli.Command) {
 	for _, v := range subcommands {
 		v(rootCmd)
 	}

@@ -1,29 +1,25 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
-
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/cli"
 )
 
 func onep() error {
-	rootCmd := &cobra.Command{
+	rootCmd := &cli.Command{
 		Use:   "1p",
 		Short: "The CLI for 1Password",
-		PersistentPreRun: func(_ *cobra.Command, _ []string) {
-			logger.Init()
-		},
-		RunE: func(_ *cobra.Command, args []string) error {
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			return Main()
 		},
 	}
 
 	AddCommand(rootCmd)
 
-	return rootCmd.Execute()
+	return rootCmd.Execute(os.Args)
 }
 
 func main() {
