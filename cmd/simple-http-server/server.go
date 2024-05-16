@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -20,7 +19,6 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/http/httpserver"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/ucl"
 )
 
 type SimpleHTTPServer struct {
@@ -70,19 +68,11 @@ func (s *SimpleHTTPServer) init(_ context.Context) (fsm.State, error) {
 }
 
 func (s *SimpleHTTPServer) readConfig() error {
-	d, err := ucl.NewFileDecoder(s.configFile)
+	conf, err := readConfigFile(s.configFile)
 	if err != nil {
 		return err
 	}
-	buf, err := d.ToJSON(nil)
-	if err != nil {
-		return err
-	}
-	var conf Config
-	if err := json.Unmarshal(buf, &conf); err != nil {
-		return err
-	}
-	for _, v := range conf.Server {
+	for _, v := range conf.Servers() {
 		switch c := v.Path.(type) {
 		case map[string]any:
 			for p, e := range c {
@@ -137,7 +127,7 @@ func (s *SimpleHTTPServer) readConfig() error {
 			log.Printf("%T", c)
 		}
 	}
-	s.config = &conf
+	s.config = conf
 
 	return nil
 }
@@ -148,11 +138,11 @@ var allMethods = []string{
 }
 
 func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
-	if len(s.config.Server) == 0 {
+	if len(s.config.Servers()) == 0 {
 		return fsm.Error(errors.New("there is no server"))
 	}
 	accessLogger := make(map[string]bon.Middleware)
-	for _, v := range s.config.Server {
+	for _, v := range s.config.Servers() {
 		router := bon.NewRouter()
 		server := &http.Server{
 			Addr:    v.Listen,

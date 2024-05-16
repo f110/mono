@@ -42,7 +42,7 @@ func NewDecoder(in io.Reader) *Decoder {
 func NewFileDecoder(f string) (*Decoder, error) {
 	file, err := os.Open(f)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.WithStack(err)
 	}
 	d := &Decoder{r: bufio.NewReader(file), funcs: make(map[string]any)}
 	wd := filepath.Dir(f)

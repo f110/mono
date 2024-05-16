@@ -16,6 +16,7 @@ go_library(
         "//go/logger",
         "//go/ucl",
         "//vendor/github.com/nissy/bon",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
     ],
 )
@@ -28,11 +29,15 @@ go_binary(
 
 go_test(
     name = "simple-http-server_test",
-    srcs = ["server_test.go"],
+    srcs = [
+        "config_test.go",
+        "server_test.go",
+    ],
     embed = [":simple-http-server_lib"],
     deps = [
         "//go/logger",
         "//go/netutil",
+        "//go/ucl",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
     ],
