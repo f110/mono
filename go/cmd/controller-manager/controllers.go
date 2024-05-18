@@ -108,7 +108,7 @@ var AllChildControllers = ChildControllers{
 			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.dev)
 			return mcc, nil
 		},
-		Enable: false,
+		Enable: true,
 	},
 	{
 		Name: ControllerMinIOBucket,

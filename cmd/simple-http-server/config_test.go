@@ -12,7 +12,6 @@ import (
 
 func TestConfig(t *testing.T) {
 	t.Run("MultiServer", func(t *testing.T) {
-
 		multiServer := `
 server {
   listen: ":8081"
