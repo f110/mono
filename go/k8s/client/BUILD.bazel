@@ -1,4 +1,6 @@
+load("@dev_f110_kubeproto//bazel:def.bzl", "go_client")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
 
 go_library(
     name = "client",
@@ -22,9 +24,6 @@ go_library(
         "//vendor/k8s.io/client-go/tools/cache",
     ],
 )
-
-load("@dev_f110_kubeproto//bazel:def.bzl", "go_client")
-load("//build/rules:vendor.bzl", "vendor_kubeproto")
 
 go_client(
     name = "go_client",

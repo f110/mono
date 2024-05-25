@@ -1,6 +1,7 @@
+load("@rules_oci//oci:defs.bzl", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//build/rules/container:def.bzl", "container_image")
-load("@rules_oci//oci:defs.bzl", "oci_push")
+load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
 
 pkg_tar(
     name = "ctags",
@@ -59,8 +60,6 @@ oci_push(
     remote_tags = ["latest"],
     repository = "quay.io/f110/zoekt-indexer",
 )
-
-load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
 
 pkg_tar(
     name = "build_dep_packages",

@@ -1,6 +1,6 @@
-load("//build/rules/kustomize:def.bzl", "kustomization")
 load("@dev_f110_kubeproto//bazel:def.bzl", "crd_proto_manifest")
 load("//build/rules:vendor.bzl", "vendor_kubeproto")
+load("//build/rules/kustomize:def.bzl", "kustomization")
 
 kustomization(
     name = "crd",

@@ -1,5 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@dev_f110_protoc_ddl//rules:def.bzl", "vendor_ddl")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 vendor_ddl(
     name = "vendor",

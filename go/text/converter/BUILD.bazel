@@ -1,3 +1,4 @@
+load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source", "vendor_proto_source")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 
@@ -20,8 +21,6 @@ go_proto_library(
     ],
     visibility = ["//visibility:private"],
 )
-
-load("@dev_f110_rules_extras//go:grpc.bzl", "vendor_grpc_source", "vendor_proto_source")
 
 vendor_proto_source(
     name = "vendor_common_proto_source",

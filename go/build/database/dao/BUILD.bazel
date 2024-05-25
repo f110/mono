@@ -1,3 +1,4 @@
+load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
@@ -10,8 +11,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = ["//go/build/database"],
 )
-
-load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
 
 schema_dao(
     name = "dao_schema",

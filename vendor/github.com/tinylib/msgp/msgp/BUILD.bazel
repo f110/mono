@@ -17,6 +17,7 @@ go_library(
         "json.go",
         "json_bytes.go",
         "number.go",
+        "purego.go",
         "read.go",
         "read_bytes.go",
         "size.go",

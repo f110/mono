@@ -9,6 +9,8 @@
 # gazelle:resolve go go.f110.dev/mono/go/bazel/buildeventstream //go/bazel/buildeventstream
 
 load("//build/rules:vendor.bzl", "go_vendor")
+load("//build/rules/kind:cluster.bzl", "cluster")
+load(":development_environments.bzl", "register_development_environments")
 
 go_vendor(
     name = "vendor",
@@ -18,8 +20,6 @@ go_vendor(
         "patch/cloudflare-circl-remove-assembly-codes.patch",
     ],
 )
-
-load("//build/rules/kind:cluster.bzl", "cluster")
 
 cluster(
     name = "k8scluster",
@@ -32,7 +32,5 @@ alias(
     name = "monodev",
     actual = "//go/cmd/monodev",
 )
-
-load(":development_environments.bzl", "register_development_environments")
 
 register_development_environments()
