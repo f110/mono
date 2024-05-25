@@ -89,3 +89,15 @@ container_dependencies()
 load("//:deb_packages.bzl", debian_package_dependencies = "debian_packages")
 
 debian_package_dependencies()
+
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies")
+
+rules_proto_dependencies()
+
+load("@rules_proto//proto:toolchains.bzl", "rules_proto_toolchains")
+
+rules_proto_toolchains()
+
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
+bazel_features_deps()
