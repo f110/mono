@@ -156,8 +156,18 @@ func (d *dotOutput) analyzeFSMFunc() {
 						if !ok {
 							break
 						}
+						if r.Name == "fsm" && callingFunc.Sel.Name == "Next" {
+							arg := v.Args[0].(*ast.Ident)
+							f.NextState[arg.Name] = struct{}{}
+						}
 						if r.Name == "fsm" && callingFunc.Sel.Name == "Error" {
 							f.NextState["fsm.UnknownState"] = struct{}{}
+						}
+						if r.Name == "fsm" && callingFunc.Sel.Name == "Wait" {
+							f.NextState["fsm.WaitState"] = struct{}{}
+						}
+						if r.Name == "fsm" && callingFunc.Sel.Name == "Finish" {
+							f.NextState["fsm.CloseState"] = struct{}{}
 						}
 					}
 				}
