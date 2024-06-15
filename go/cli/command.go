@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -90,8 +91,14 @@ func (c *Command) Execute(args []string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	if len(c.commands) != 0 {
-		if len(args) > 0 && args[0] == c.Use {
-			args = args[1:]
+		if len(args) > 0 {
+			e := args[0]
+			if strings.Index(e, "/") != -1 {
+				e = filepath.Base(e)
+			}
+			if e == c.Use {
+				args = args[1:]
+			}
 		}
 		cmd, nArgs := c.findCommand(args)
 		if cmd != nil {
