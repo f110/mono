@@ -5,7 +5,7 @@ go_library(
     srcs = [
         "doc.go",
         "hashes.go",
-        "hashes_generic.go",
+        "hashes_noasm.go",
         "keccakf.go",
         "keccakf_amd64.go",
         "keccakf_amd64.s",
@@ -14,18 +14,11 @@ go_library(
         "sha3_s390x.go",
         "sha3_s390x.s",
         "shake.go",
-        "shake_generic.go",
+        "shake_noasm.go",
         "xor.go",
-        "xor_generic.go",
-        "xor_unaligned.go",
     ],
     importmap = "go.f110.dev/mono/vendor/golang.org/x/crypto/sha3",
     importpath = "golang.org/x/crypto/sha3",
     visibility = ["//visibility:public"],
-    deps = select({
-        "@io_bazel_rules_go//go/platform:s390x": [
-            "//vendor/golang.org/x/sys/cpu",
-        ],
-        "//conditions:default": [],
-    }),
+    deps = ["//vendor/golang.org/x/sys/cpu"],
 )
