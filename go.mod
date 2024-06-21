@@ -58,7 +58,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.24.0
 	golang.org/x/mod v0.17.0
-	golang.org/x/net v0.25.0
+	golang.org/x/net v0.26.0
 	golang.org/x/oauth2 v0.16.0
 	golang.org/x/term v0.21.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
