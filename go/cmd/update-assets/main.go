@@ -364,6 +364,11 @@ func (k *kindAssets) update(ctx context.Context) error {
 	}
 	out := build.FormatString(f)
 	fmt.Print(out)
+	if k.overwrite {
+		if err := os.WriteFile(k.assetsFile, []byte(out), 0644); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
