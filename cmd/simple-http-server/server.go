@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"strconv"
@@ -141,6 +142,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 	if len(s.config.Servers()) == 0 {
 		return fsm.Error(errors.New("there is no server"))
 	}
+
 	accessLogger := make(map[string]bon.Middleware)
 	for _, v := range s.config.Servers() {
 		router := bon.NewRouter()
@@ -202,6 +204,25 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 			}
 		}()
 		s.servers = append(s.servers, server)
+	}
+
+	if s.config.Pprof != "" {
+		router := bon.NewRouter()
+		router.Handle(http.MethodGet, "/debug/pprof/*", http.HandlerFunc(pprof.Index))
+		router.Handle(http.MethodGet, "/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+		router.Handle(http.MethodGet, "/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+		router.Handle(http.MethodGet, "/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+		router.Handle(http.MethodGet, "/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+		server := &http.Server{
+			Addr:    s.config.Pprof,
+			Handler: router,
+		}
+		go func() {
+			logger.Log.Info("Start profile server", zap.String("addr", server.Addr))
+			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				log.Print(err)
+			}
+		}()
 	}
 	return fsm.Wait()
 }

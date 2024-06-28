@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Server json.RawMessage `json:"server"`
+	Pprof  string          `json:"pprof"`
 
 	servers []*ConfigServer
 }

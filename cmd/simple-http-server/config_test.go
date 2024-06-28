@@ -29,12 +29,15 @@ server {
     root = "."
   }
 }
+
+pprof = ":8083"
 `
 
 		d := ucl.NewDecoder(strings.NewReader(multiServer))
 		conf, err := readConfig(d)
 		require.NoError(t, err)
 		assert.Len(t, conf.Servers(), 2)
+		assert.Equal(t, ":8083", conf.Pprof)
 	})
 
 	t.Run("SingleServer", func(t *testing.T) {
@@ -45,11 +48,14 @@ server {
   path "/*" {
     proxy: "incluster-hl-svc.storage.svc.cluster.local:9000/mirror/"
   }
-}`
+}
+
+pprof = ":8083"`
 
 		d := ucl.NewDecoder(strings.NewReader(singleServer))
 		conf, err := readConfig(d)
 		require.NoError(t, err)
 		assert.Len(t, conf.Servers(), 1)
+		assert.Equal(t, ":8083", conf.Pprof)
 	})
 }
