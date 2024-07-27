@@ -46,3 +46,26 @@ job(
     cpu_limit = "2000m",
     event = ["manual"],
 )
+
+job(
+    name = "mirror_bazel",
+    command = "run",
+    targets = ["//cmd/rotarypress"],
+    platforms = [
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    ],
+    secrets = [
+        secret(mount_path = "/var/vault/globemaster/storage/token", vault_mount = "globemaster", vault_path = "storage/token", vault_key = "secretkey"),
+    ],
+    args = [
+        "--rules-macro-file=$(WORKSPACE)/rules_dependencies.bzl",
+        "--bucket=mirror",
+        "--endpoint=http://incluster-hl-svc.storage.svc.cluster.local:9000",
+        "--region=US",
+        "--access-key=NogubAm7w1PC",
+        "--secret-access-key-file=/var/vault/globemaster/storage/token/secretkey",
+        "--bazel",
+    ],
+    cpu_limit = "1000m",
+    event = ["manual"],
+)
