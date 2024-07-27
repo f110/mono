@@ -47,6 +47,9 @@ func StandardLogger(name string) *log.Logger {
 }
 
 func initLogger() error {
+	if Log != nil {
+		return nil
+	}
 	encoderConf := zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",

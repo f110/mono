@@ -1,7 +1,6 @@
 package coordinator
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.starlark.net/starlark"
+	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,13 +27,9 @@ import (
 	"go.f110.dev/mono/go/varptr"
 )
 
-func Test(t *testing.T) {
-	buf := `{"Name":"publish","Event":["manual"],"AllRevision":false,"Command":"run","Container":"","CPULimit":"2000m","MemoryLimit":"","GitHubStatus":false,"Platforms":["@io_bazel_rules_go//go/toolchain:linux_amd64"],"Targets":["//container/tree:push"],"Args":null,"Exclusive":false,"ConfigName":"","Schedule":"","Secrets":[{"Host":"registry.f110.dev","VaultMount":"globemaster","VaultPath":"registry.f110.dev/sandbox","VaultKey":"robot$sandbox"}],"Env":null,"RepositoryOwner":"f110","RepositoryName":"sandbox"}`
-	jobConfiguration := &config.Job{}
-	if err := json.Unmarshal([]byte(buf), jobConfiguration); err != nil {
-		t.Log(err)
-	}
-	t.Log(jobConfiguration)
+func TestMain(m *testing.M) {
+	logger.Log = zap.NewNop()
+	m.Run()
 }
 
 func TestJobBuilder_Clone(t *testing.T) {
@@ -52,7 +48,7 @@ func TestJobBuilder(t *testing.T) {
 		Platform       string
 		Mutation       func(*config.Job, *database.SourceRepository, *database.Task) (*config.Job, *database.SourceRepository, *database.Task)
 		Error          string
-		Objects        []runtime.Object
+		ExpectObjects  []runtime.Object
 		ObjectMutation map[runtime.Object][]k8sfactory.Trait
 	}{
 		{
@@ -94,8 +90,8 @@ func TestJobBuilder(t *testing.T) {
 			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 		},
 		{
 			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
@@ -103,8 +99,8 @@ func TestJobBuilder(t *testing.T) {
 				ta.Command = "run"
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					RemoveContainer("report"),
@@ -118,8 +114,8 @@ func TestJobBuilder(t *testing.T) {
 				ta.IsTrunk = false
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					RemoveContainer("report"),
@@ -134,8 +130,8 @@ func TestJobBuilder(t *testing.T) {
 				j.MemoryLimit = "2048Mi"
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.ResourceLimit(resource.MustParse("2000m"), resource.MustParse("2048Mi")))},
 			},
@@ -145,8 +141,8 @@ func TestJobBuilder(t *testing.T) {
 				j.Env = map[string]any{"FOOBAR": "baz"}
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.EnvVar("FOOBAR", "baz"))},
 			},
@@ -156,8 +152,8 @@ func TestJobBuilder(t *testing.T) {
 				r.Private = true
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					AddSecretVolume("pre-process", "github-secret", "githubapp-secret", "/etc/github"),
@@ -171,8 +167,8 @@ func TestJobBuilder(t *testing.T) {
 				ta.ConfigName = "e2e"
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					k8sfactory.OnContainer("main",
@@ -190,7 +186,7 @@ func TestJobBuilder(t *testing.T) {
 				return j, r, ta
 			},
 			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects: []runtime.Object{
+			ExpectObjects: []runtime.Object{
 				saObject,
 				jobObject,
 				k8sfactory.NewSecretProviderClassFactory(nil,
@@ -214,7 +210,7 @@ func TestJobBuilder(t *testing.T) {
 				return j, r, ta
 			},
 			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects: []runtime.Object{
+			ExpectObjects: []runtime.Object{
 				saObject,
 				jobObject,
 				k8sfactory.NewSecretProviderClassFactory(nil,
@@ -245,8 +241,8 @@ func TestJobBuilder(t *testing.T) {
 				j.Container = "example.com/bazel:bazelisk"
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
-			Objects:  []runtime.Object{saObject, jobObject},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.Image("example.com/bazel:bazelisk", nil))},
 			},
@@ -295,7 +291,7 @@ func TestJobBuilder(t *testing.T) {
 				require.NoError(t, err)
 
 				expectObjects := make(map[objectIdentifier]runtime.Object)
-				for _, o := range tc.Objects {
+				for _, o := range tc.ExpectObjects {
 					m, err := meta.Accessor(o)
 					require.NoError(t, err)
 					gvk := o.GetObjectKind().GroupVersionKind()
@@ -543,7 +539,7 @@ func testJobBuilderFixtures() (*config.Job, *database.SourceRepository, *databas
 							Name:            "pre-process",
 							Image:           "registry/sidecar",
 							ImagePullPolicy: corev1.PullAlways,
-							Args:            []string{"clone", "--work-dir=work", "--url=https://github.com/f110/example.git", "--commit=e192aef54cb0d31afd7cae64b079be2a12a56a74"},
+							Args:            []string{"clone", "--work-dir=/work", "--url=https://github.com/f110/example.git", "--commit=e192aef54cb0d31afd7cae64b079be2a12a56a74"},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "workdir",
@@ -569,6 +565,7 @@ func testJobBuilderFixtures() (*config.Job, *database.SourceRepository, *databas
 								},
 							},
 							Env: []corev1.EnvVar{
+								{Name: "WORKSPACE", Value: "/work"},
 								{Name: "BAZELISK_FORMAT_URL", Value: "https://bazelmirror/bazel-%v-%o-%m%e"},
 							},
 							WorkingDir: "/work",
