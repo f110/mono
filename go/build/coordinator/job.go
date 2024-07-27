@@ -76,6 +76,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string) *JobBuilder {
 			k8sfactory.PullPolicy(corev1.PullIfNotPresent),
 			k8sfactory.WorkDir(workDir.Mount.MountPath),
 			k8sfactory.Volume(workDir),
+			k8sfactory.EnvVar("WORKSPACE", workDir.Mount.MountPath),
 		),
 		preProcessContainer: k8sfactory.ContainerFactory(nil,
 			k8sfactory.Name("pre-process"),
@@ -284,7 +285,7 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 
 	builtObjects := []runtime.Object{j.sa}
 
-	preProcessArgs := []string{"clone", "--work-dir=work", fmt.Sprintf("--url=%s", j.repo.CloneUrl)}
+	preProcessArgs := []string{"clone", fmt.Sprintf("--work-dir=%s", j.workDirVolume.Mount.MountPath), fmt.Sprintf("--url=%s", j.repo.CloneUrl)}
 	if j.task.Revision != "" {
 		preProcessArgs = append(preProcessArgs, "--commit="+j.task.Revision)
 	}
