@@ -35,16 +35,17 @@ type RotaryPress struct {
 	githubClientFactory *githubutil.GitHubClientFactory
 
 	// Flags
-	macroFile       string
-	dryRun          bool
-	endpoint        string
-	region          string
-	accessKey       string
-	secretAccessKey string
-	bucket          string
-	caFile          string
-	prefix          string
-	bazel           bool
+	macroFile           string
+	dryRun              bool
+	endpoint            string
+	region              string
+	accessKey           string
+	secretAccessKey     string
+	secretAccessKeyFile string
+	bucket              string
+	caFile              string
+	prefix              string
+	bazel               bool
 }
 
 const (
@@ -78,17 +79,29 @@ func (r *RotaryPress) SetFlags(fs *cli.FlagSet) {
 	fs.String("bucket", "The bucket name").Var(&r.bucket).Required()
 	fs.String("region", "").Var(&r.region)
 	fs.String("access-key", "").Var(&r.accessKey).Required()
-	fs.String("secret-access-key", "").Var(&r.secretAccessKey).Required()
+	fs.String("secret-access-key", "").Var(&r.secretAccessKey)
+	fs.String("secret-access-key-file", "").Var(&r.secretAccessKeyFile)
 	fs.String("ca-file", "File path that contains CA certificate").Var(&r.caFile)
 	fs.String("prefix", "").Var(&r.prefix)
 	fs.Bool("bazel", "Check bazel release").Var(&r.bazel)
 }
 
 func (r *RotaryPress) init(_ context.Context) (fsm.State, error) {
+	if r.secretAccessKey == "" && r.secretAccessKeyFile == "" {
+		return fsm.Error(xerrors.New("--secret-access-key and --secret-access-key-file must be set"))
+	}
+
 	if conf, err := r.readMacroFile(); err != nil {
 		return fsm.Error(err)
 	} else {
 		r.conf = conf
+	}
+	if r.secretAccessKeyFile != "" {
+		buf, err := os.ReadFile(r.secretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		r.secretAccessKey = string(bytes.TrimSuffix(buf, []byte("\n")))
 	}
 	opt := storage.NewS3OptionToExternal(r.endpoint, r.region, r.accessKey, r.secretAccessKey)
 	opt.PathStyle = true
