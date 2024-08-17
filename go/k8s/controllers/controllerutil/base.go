@@ -106,7 +106,7 @@ func (b *ControllerBase) StartWorkers(ctx context.Context, workers int) {
 
 	b.supervisor = parallel.NewSupervisor(ctx)
 	b.supervisor.Log = b.log
-	for i := 0; i < workers; i++ {
+	for range workers {
 		b.supervisor.Add(b.worker)
 	}
 }
@@ -344,7 +344,7 @@ func (b *GenericControllerBase[T]) StartWorkers(ctx context.Context, workers int
 
 	b.supervisor = parallel.NewSupervisor(ctx)
 	b.supervisor.Log = b.log
-	for i := 0; i < workers; i++ {
+	for range workers {
 		b.supervisor.Add(b.worker)
 	}
 }

@@ -156,7 +156,7 @@ func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) erro
 	deleteSize := int64(float64(totalSize-maxUsedSize) * gc.purgePercent)
 	var size int64
 	var deleteObjects []*storage.Object
-	for i := 0; i < len(objects); i++ {
+	for i := range len(objects) {
 		size += objects[i].Size
 		if size > deleteSize {
 			deleteObjects = objects[:i+1]

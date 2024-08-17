@@ -79,7 +79,7 @@ func StronglyConnectedComponents[T comparable](g *DirectedGraph[T]) [][]*Node[T]
 	}
 
 	rnodes := make([]*Node[T], len(g.nodes))
-	for i := 0; i < len(g.nodes); i++ {
+	for i := range len(g.nodes) {
 		rnodes[i] = order[len(g.nodes)-i-1]
 	}
 	for i, v := range rnodes {

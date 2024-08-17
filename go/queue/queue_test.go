@@ -35,7 +35,7 @@ func TestSimple(t *testing.T) {
 
 	var got []string
 	var mu sync.Mutex
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		go func() {
 			v := q.Dequeue().(string)
 			mu.Lock()

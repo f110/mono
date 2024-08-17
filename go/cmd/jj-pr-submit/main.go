@@ -353,7 +353,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend boo
 	var changeID, commitID, branches, description string
 	var prev int
 	var state = readStateChangeID
-	for i := 0; i < len(buf); i++ {
+	for i := range len(buf) {
 		if buf[i] != '\\' {
 			continue
 		}

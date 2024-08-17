@@ -155,7 +155,7 @@ func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum i
 	// If workerNum equals 1 is intended to create a single node cluster.
 	// In that case, We shouldn't add Node.
 	if workerNum > 2 {
-		for i := 0; i < workerNum; i++ {
+		for range workerNum {
 			clusterConf.Nodes = append(clusterConf.Nodes,
 				configv1alpha4.Node{Role: configv1alpha4.WorkerRole, Image: image})
 		}

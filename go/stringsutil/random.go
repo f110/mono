@@ -10,7 +10,7 @@ var chars = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz12345678
 func RandomString(length int) string {
 	var b strings.Builder
 	b.Grow(length)
-	for i := 0; i < length; i++ {
+	for range length {
 		b.WriteRune(chars[rand.Intn(len(chars))])
 	}
 	return b.String()
@@ -21,7 +21,7 @@ var token68 = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345
 func RandomToken68(length int) string {
 	var b strings.Builder
 	b.Grow(length)
-	for i := 0; i < length; i++ {
+	for range length {
 		b.WriteRune(token68[rand.Intn(len(chars))])
 	}
 	return b.String()

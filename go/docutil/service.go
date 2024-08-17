@@ -222,7 +222,7 @@ func (d *DocSearchService) GetDirectory(_ context.Context, req *RequestGetDirect
 func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int) error {
 	q := queue.NewSimple()
 
-	for i := 0; i < maxConns; i++ {
+	for i := range maxConns {
 		logger.Log.Debug("Start fetching page title worker", zap.Int("thread", i+1))
 		go func() {
 			d.gettingExternalLinkTitleWorker(ctx, q)
@@ -453,7 +453,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 
 	ch := make(chan *git.TreeEntry, workers)
 	var wg sync.WaitGroup
-	for i := 0; i < workers; i++ {
+	for range workers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

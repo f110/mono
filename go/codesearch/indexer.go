@@ -134,7 +134,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 		queue := make(chan file, x.parallelism)
 		var docCount int32
 		var wg sync.WaitGroup
-		for i := 0; i < x.parallelism; i++ {
+		for range x.parallelism {
 			wg.Add(1)
 			go func() {
 				x.worker(queue, builder, v, fileBranches, &docCount)

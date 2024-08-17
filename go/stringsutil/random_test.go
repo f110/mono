@@ -20,7 +20,7 @@ func BenchmarkRandomString(b *testing.B) {
 
 	b.Run("RandomToken68", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			if len(RandomToken68(length)) != length {
 				b.Fail()
 			}
@@ -29,7 +29,7 @@ func BenchmarkRandomString(b *testing.B) {
 
 	b.Run("RandomString", func(b *testing.B) {
 		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			if len(RandomString(length)) != length {
 				b.Fail()
 			}

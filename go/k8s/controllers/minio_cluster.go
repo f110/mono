@@ -139,7 +139,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 		return err
 	}
 
-	for i := 0; i < rCtx.Obj.Spec.Nodes; i++ {
+	for i := range rCtx.Obj.Spec.Nodes {
 		var existPVC *corev1.PersistentVolumeClaim
 		for _, v := range rCtx.pvc {
 			if v.Name == fmt.Sprintf("%s-data-%d", rCtx.Obj.Name, i+1) {
@@ -463,7 +463,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 
 func (m *minIOClusterReconciler) pods(obj *miniov1alpha1.MinIOCluster) []*corev1.Pod {
 	pods := make([]*corev1.Pod, 0)
-	for i := 0; i < obj.Spec.Nodes; i++ {
+	for i := range obj.Spec.Nodes {
 		pods = append(pods, m.pod(obj, i+1))
 	}
 

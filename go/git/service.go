@@ -17,6 +17,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"go.f110.dev/mono/go/enumerable"
 )
 
 type DataService struct {
@@ -180,11 +182,7 @@ func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*Resp
 		},
 	}
 	if len(commit.ParentHashes) > 0 {
-		parents := make([]string, len(commit.ParentHashes))
-		for i := 0; i < len(commit.ParentHashes); i++ {
-			parents[i] = commit.ParentHashes[i].String()
-		}
-		res.Commit.Parents = parents
+		res.Commit.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
 	}
 
 	return res, nil

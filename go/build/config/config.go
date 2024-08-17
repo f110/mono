@@ -164,7 +164,7 @@ func (j *Job) IsValid() error {
 	requiredField := make(map[string]struct{})
 	typ := reflect.TypeOf(j).Elem()
 	val := reflect.ValueOf(j).Elem()
-	for i := 0; i < typ.NumField(); i++ {
+	for i := range typ.NumField() {
 		ft := typ.Field(i)
 		if v := ft.Tag.Get("attr"); v != "" {
 			t := strings.Split(v, ",")
@@ -254,7 +254,7 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 
 				typ := reflect.TypeOf(job).Elem()
 				val := reflect.ValueOf(job).Elem()
-				for i := 0; i < typ.NumField(); i++ {
+				for i := range typ.NumField() {
 					ft := typ.Field(i)
 					if v := ft.Tag.Get("attr"); v != "" {
 						t := strings.Split(v, ",")
@@ -373,7 +373,7 @@ func argPairs(obj any) []any {
 	var pairs []any
 	st := reflect.TypeOf(obj).Elem()
 	sv := reflect.ValueOf(obj).Elem()
-	for i := 0; i < st.NumField(); i++ {
+	for i := range st.NumField() {
 		ft := st.Field(i)
 		starTag := ft.Tag.Get("attr")
 		if starTag == "" {

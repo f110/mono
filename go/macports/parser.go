@@ -58,7 +58,7 @@ func ParsePortfile(r io.Reader) (*Portfile, error) {
 
 				typ := reflect.TypeOf(*portfile)
 				set := false
-				for i := 0; i < typ.NumField(); i++ {
+				for i := range typ.NumField() {
 					ft := typ.Field(i)
 					tag := ft.Tag.Get("portfile")
 					if tag == "" {
@@ -119,7 +119,7 @@ type PortfileToken struct {
 func (t *PortfileToken) String() string {
 	s := new(strings.Builder)
 	s.Grow(t.StartPos)
-	for i := 0; i < t.StartPos; i++ {
+	for range t.StartPos {
 		s.WriteRune(' ')
 	}
 	s.WriteString(t.Value)
