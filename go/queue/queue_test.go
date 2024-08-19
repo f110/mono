@@ -11,19 +11,19 @@ import (
 
 func TestSimple(t *testing.T) {
 	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(4))
-	q := NewSimple()
+	q := NewSimple[string]()
 	q.Enqueue("foo")
 	q.Enqueue("bar")
 
-	assert.Equal(t, "foo", q.Dequeue().(string))
-	assert.Equal(t, "bar", q.Dequeue().(string))
+	assert.Equal(t, "foo", *q.Dequeue())
+	assert.Equal(t, "bar", *q.Dequeue())
 
 	// One worker is waiting a new item
 	go func() {
 		time.Sleep(50 * time.Millisecond)
 		q.Enqueue("baz")
 	}()
-	assert.Equal(t, "baz", q.Dequeue().(string))
+	assert.Equal(t, "baz", *q.Dequeue())
 
 	// Multiple workers are waiting a new item
 	go func() {
@@ -37,9 +37,9 @@ func TestSimple(t *testing.T) {
 	var mu sync.Mutex
 	for range 3 {
 		go func() {
-			v := q.Dequeue().(string)
+			v := q.Dequeue()
 			mu.Lock()
-			got = append(got, v)
+			got = append(got, *v)
 			mu.Unlock()
 		}()
 	}

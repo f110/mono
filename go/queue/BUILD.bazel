@@ -5,6 +5,7 @@ go_library(
     srcs = ["queue.go"],
     importpath = "go.f110.dev/mono/go/queue",
     visibility = ["//visibility:public"],
+    deps = ["//go/list"],
 )
 
 go_test(

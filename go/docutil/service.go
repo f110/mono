@@ -220,7 +220,7 @@ func (d *DocSearchService) GetDirectory(_ context.Context, req *RequestGetDirect
 }
 
 func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int) error {
-	q := queue.NewSimple()
+	q := queue.NewSimple[*pageLinkItem]()
 
 	for i := range maxConns {
 		logger.Log.Debug("Start fetching page title worker", zap.Int("thread", i+1))
@@ -277,7 +277,7 @@ func (d *DocSearchService) interpolateCitedLinks() {
 	}
 }
 
-func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, q *queue.Simple) {
+func (d *DocSearchService) interpolateLinkTitle(ctx context.Context, q *queue.Simple[*pageLinkItem]) {
 	for sourceRepoName, docs := range d.data {
 		externalLinkTitleCache := newTitleCache(ctx, d.storage, docs)
 
@@ -331,7 +331,7 @@ type pageLinkItem struct {
 	docs *docSet
 }
 
-func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q *queue.Simple) {
+func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q *queue.Simple[*pageLinkItem]) {
 	var cached, remote, failed, skipped int
 	for {
 		v := q.Dequeue()
@@ -339,7 +339,7 @@ func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q
 			break
 		}
 
-		link := v.(*pageLinkItem)
+		link := *v
 		u := link.Destination
 		if i := strings.IndexRune(u, '#'); i > 0 {
 			u = u[:i]

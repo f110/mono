@@ -1,21 +1,21 @@
 package queue
 
 import (
-	"container/list"
+	"go.f110.dev/mono/go/list"
 )
 
 // Simple is a fifo queue
-type Simple struct {
-	q            *list.List
+type Simple[T any] struct {
+	q            *list.List[T]
 	s            chan struct{}
 	shuttingDown bool
 }
 
-func NewSimple() *Simple {
-	return &Simple{q: list.New(), s: make(chan struct{})}
+func NewSimple[T any]() *Simple[T] {
+	return &Simple[T]{q: list.NewDoubleLinked[T](), s: make(chan struct{})}
 }
 
-func (q *Simple) Enqueue(v any) {
+func (q *Simple[T]) Enqueue(v T) {
 	if q.shuttingDown {
 		return
 	}
@@ -28,21 +28,21 @@ func (q *Simple) Enqueue(v any) {
 	}
 }
 
-func (q *Simple) Dequeue() any {
+func (q *Simple[T]) Dequeue() *T {
 	v := q.q.Front()
 	if v == nil {
 		_, ok := <-q.s
 		if !ok {
 			return nil
 		}
-		
+
 		v = q.q.Front()
 	}
 	q.q.Remove(v)
-	return v.Value
+	return &v.Value
 }
 
-func (q *Simple) Shutdown() {
+func (q *Simple[T]) Shutdown() {
 	if q.shuttingDown {
 		return
 	}
