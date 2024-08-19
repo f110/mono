@@ -1,6 +1,7 @@
 package enumerable
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,4 +33,8 @@ func TestInsertBefore(t *testing.T) {
 func TestIndex(t *testing.T) {
 	assert.Equal(t, -1, Index([]int{1, 2, 3, 4, 5}, func(i int) bool { return i == 6 }))
 	assert.Equal(t, 4, Index([]int{1, 2, 3, 4, 5}, func(i int) bool { return i == 5 }))
+}
+
+func TestCollectFunc(t *testing.T) {
+	assert.Equal(t, []int{2, 4, 6, 8, 10}, slices.Collect(CollectFunc(slices.Values([]int{1, 2, 3, 4, 5}), func(i int) int { return i * 2 })))
 }

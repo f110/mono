@@ -1,5 +1,9 @@
 package enumerable
 
+import (
+	"iter"
+)
+
 func IsInclude[T comparable](ary []T, val T) bool {
 	for _, v := range ary {
 		if v == val {
@@ -53,6 +57,16 @@ func Map[T, K any](ary []T, f func(T) K) []K {
 		n[i] = f(ary[i])
 	}
 	return n
+}
+
+func CollectFunc[T, K any](seq iter.Seq[T], f func(T) K) iter.Seq[K] {
+	return func(yield func(K) bool) {
+		for v := range seq {
+			if !yield(f(v)) {
+				return
+			}
+		}
+	}
 }
 
 func InsertBefore[T comparable](s []T, before T, v ...T) []T {
