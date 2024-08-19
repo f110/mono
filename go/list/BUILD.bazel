@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "list",
+    srcs = ["double.go"],
+    importpath = "go.f110.dev/mono/go/list",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "list_test",
+    srcs = ["double_test.go"],
+    embed = [":list"],
+    deps = [
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
