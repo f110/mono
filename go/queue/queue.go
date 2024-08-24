@@ -1,18 +1,23 @@
 package queue
 
 import (
+	"sync"
+
 	"go.f110.dev/mono/go/list"
 )
 
 // Simple is a fifo queue
 type Simple[T any] struct {
 	q            *list.List[T]
-	s            chan struct{}
+	mu           sync.Mutex
+	cond         *sync.Cond
 	shuttingDown bool
 }
 
 func NewSimple[T any]() *Simple[T] {
-	return &Simple[T]{q: list.NewDoubleLinked[T](), s: make(chan struct{})}
+	q := &Simple[T]{q: list.NewDoubleLinked[T]()}
+	q.cond = sync.NewCond(&q.mu)
+	return q
 }
 
 func (q *Simple[T]) Enqueue(v T) {
@@ -20,21 +25,18 @@ func (q *Simple[T]) Enqueue(v T) {
 		return
 	}
 
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	q.q.PushBack(v)
-
-	select {
-	case q.s <- struct{}{}:
-	default:
-	}
+	q.cond.Signal()
 }
 
 func (q *Simple[T]) Dequeue() *T {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	v := q.q.Front()
 	if v == nil {
-		_, ok := <-q.s
-		if !ok {
-			return nil
-		}
+		q.cond.Wait()
 
 		v = q.q.Front()
 	}
@@ -48,5 +50,4 @@ func (q *Simple[T]) Shutdown() {
 	}
 
 	q.shuttingDown = true
-	close(q.s)
 }
