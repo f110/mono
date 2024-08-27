@@ -18,6 +18,7 @@ import (
 func TestQueryLog(t *testing.T) {
 	if !dbtestutil.CanUseTemporaryMySQL() {
 		t.Skipped()
+		return
 	}
 
 	logger.Init()
