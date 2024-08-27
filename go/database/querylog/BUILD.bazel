@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "querylog",
+    srcs = ["querylog.go"],
+    importpath = "go.f110.dev/mono/go/database/querylog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/go-sql-driver/mysql",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_test(
+    name = "querylog_test",
+    srcs = ["querylog_test.go"],
+    embed = [":querylog"],
+    deps = [
+        "//go/database/dbtestutil",
+        "//go/logger",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

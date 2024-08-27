@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"io"
 	"log"
+	"net/url"
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
@@ -44,6 +46,55 @@ func Init() error {
 
 func StandardLogger(name string) *log.Logger {
 	return zap.NewStdLog(Log.Named(name))
+}
+
+type customWriter struct {
+	io.Writer
+}
+
+func (cw customWriter) Close() error {
+	return nil
+}
+func (cw customWriter) Sync() error {
+	return nil
+}
+
+func NewBufferLogger(w io.Writer) *zap.Logger {
+	err := zap.RegisterSink("buffer", func(_ *url.URL) (zap.Sink, error) {
+		return customWriter{w}, nil
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	encoderConf := zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+	zapConf := &zap.Config{
+		Level:            zap.NewAtomicLevelAt(zap.DebugLevel),
+		Development:      false,
+		Sampling:         nil, // disable sampling
+		Encoding:         "console",
+		EncoderConfig:    encoderConf,
+		OutputPaths:      []string{"buffer:whatever"},
+		ErrorOutputPaths: []string{"buffer:whatever"},
+	}
+
+	zapLogger, err := zapConf.Build()
+	if err != nil {
+		panic(err)
+	}
+	return zapLogger
 }
 
 func initLogger() error {

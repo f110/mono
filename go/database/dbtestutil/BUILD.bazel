@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dbtestutil",
+    srcs = ["mysql.go"],
+    importpath = "go.f110.dev/mono/go/database/dbtestutil",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger",
+        "//go/netutil",
+        "//vendor/go.f110.dev/xerrors",
+    ],
+)
