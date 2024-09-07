@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -18,6 +17,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/web"
 	"go.f110.dev/mono/go/cli"
+	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/signals"
 	"go.f110.dev/mono/go/storage"
@@ -40,7 +40,7 @@ func dashboard(ctx context.Context, opt Options) error {
 	signals.SetupSignalHandler(cancelFunc)
 
 	logger.Log.Debug("Open sql connection", zap.String("dsn", opt.DSN))
-	conn, err := sql.Open("mysql", opt.DSN)
+	conn, err := sql.Open("querylog", opt.DSN)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

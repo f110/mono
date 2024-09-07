@@ -31,6 +31,7 @@ import (
 	"go.f110.dev/mono/go/build/gc"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/cli"
+	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
@@ -190,7 +191,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	p.opt.DSN = parsedDSN.FormatDSN()
 
 	logger.Log.Debug("Open sql connection", zap.String("dsn", p.opt.DSN))
-	conn, err := sql.Open("mysql", p.opt.DSN)
+	conn, err := sql.Open("querylog", p.opt.DSN)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
