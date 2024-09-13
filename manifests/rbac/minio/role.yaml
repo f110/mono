@@ -12,6 +12,7 @@ rules:
   - pods
   - secrets
   - services
+  - persistentvolumeclaims
   verbs:
   - get
   - list
@@ -64,6 +65,38 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+    - minio.f110.dev
+  resources:
+    - miniobuckets
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
+    - minio.f110.dev
+  resources:
+    - minioclusters
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- apiGroups:
+    - minio.f110.dev
+  resources:
+    - minioclusters/status
+  verbs:
+    - get
+    - patch
+    - update
 - apiGroups:
   - miniocontroller.min.io
   resources:
