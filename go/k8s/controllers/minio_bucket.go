@@ -88,7 +88,7 @@ func NewMinIOBucketController(
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
-		"minio-bucket-operator",
+		"minio-bucket-controller",
 		c,
 		coreClient,
 		[]cache.SharedIndexInformer{mbInformer},
@@ -321,7 +321,7 @@ func (r *BucketReconciler) init(_ context.Context) (fsm.State, error) {
 	}
 	if len(instances) == 0 {
 		r.logger.Debug("MinIO instance is not found", zap.String("selector", metav1.FormatLabelSelector(&r.Obj.Spec.Selector)))
-		return bucketStateUpdateStatus, nil
+		return fsm.Next(bucketStateUpdateStatus)
 	}
 	if len(instances) > 1 {
 		return fsm.Error(xerrors.New("found some instances"))
@@ -349,7 +349,7 @@ func (r *BucketReconciler) init(_ context.Context) (fsm.State, error) {
 	}
 	r.MinIOClient = mc
 
-	return bucketStateEnsureBucket, nil
+	return fsm.Next(bucketStateEnsureBucket)
 }
 
 func (r *BucketReconciler) ensureBucket(_ context.Context) (fsm.State, error) {
@@ -357,7 +357,7 @@ func (r *BucketReconciler) ensureBucket(_ context.Context) (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	} else if exists {
 		r.logger.Debug("Already exists", zap.String("name", r.Obj.Name))
-		return bucketStateEnsureBucketPolicy, nil
+		return fsm.Next(bucketStateEnsureBucketPolicy)
 	}
 	r.logger.Debug("Created", zap.String("name", r.Obj.Name))
 
@@ -365,7 +365,7 @@ func (r *BucketReconciler) ensureBucket(_ context.Context) (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 
-	return bucketStateEnsureBucketPolicy, nil
+	return fsm.Next(bucketStateEnsureBucketPolicy)
 }
 
 func (r *BucketReconciler) ensureBucketPolicy(_ context.Context) (fsm.State, error) {
@@ -400,7 +400,7 @@ func (r *BucketReconciler) ensureBucketPolicy(_ context.Context) (fsm.State, err
 	if len(p.Statements) > 0 && currentPolicy != nil {
 		if reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
 			logger.Log.Debug("Skip set bucket policy because already set same policy")
-			return bucketStateEnsureIndexFile, nil
+			return fsm.Next(bucketStateEnsureIndexFile)
 		}
 	}
 
@@ -413,12 +413,12 @@ func (r *BucketReconciler) ensureBucketPolicy(_ context.Context) (fsm.State, err
 		return fsm.Error(xerrors.WithStack(err))
 	}
 
-	return bucketStateEnsureIndexFile, nil
+	return fsm.Next(bucketStateEnsureIndexFile)
 }
 
 func (r *BucketReconciler) ensureIndexFile(_ context.Context) (fsm.State, error) {
 	if !r.Obj.Spec.CreateIndexFile {
-		return bucketStateUpdateStatus, nil
+		return fsm.Next(bucketStateUpdateStatus)
 	}
 
 	stat, err := r.MinIOClient.StatObjectWithContext(r.ctx, r.Obj.Name, "index.html", minio.StatObjectOptions{})
@@ -434,7 +434,7 @@ func (r *BucketReconciler) ensureIndexFile(_ context.Context) (fsm.State, error)
 	}
 	if stat.Key != "" {
 		r.logger.Debug("Skip create index file", zap.String("name", r.Obj.Name))
-		return bucketStateUpdateStatus, nil
+		return fsm.Next(bucketStateUpdateStatus)
 	}
 
 	r.logger.Debug("Create index.html", zap.String("name", r.Obj.Name))
@@ -449,7 +449,7 @@ func (r *BucketReconciler) ensureIndexFile(_ context.Context) (fsm.State, error)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	return bucketStateUpdateStatus, nil
+	return fsm.Next(bucketStateUpdateStatus)
 }
 
 func (r *BucketReconciler) updateStatus(_ context.Context) (fsm.State, error) {
@@ -462,7 +462,7 @@ func (r *BucketReconciler) updateStatus(_ context.Context) (fsm.State, error) {
 		}
 	}
 
-	return bucketStateCleanup, nil
+	return fsm.Next(bucketStateCleanup)
 }
 
 func (r *BucketReconciler) cleanup(_ context.Context) (fsm.State, error) {
