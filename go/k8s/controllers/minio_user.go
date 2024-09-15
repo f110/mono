@@ -11,6 +11,7 @@ import (
 	"github.com/minio/minio/pkg/madmin"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,6 +51,7 @@ type MinIOUserController struct {
 	secretLister   corev1listers.SecretLister
 	serviceLister  corev1listers.ServiceLister
 	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
+	clusterLister  *client.MinioV1alpha1MinIOClusterLister
 
 	queue *controllerutil.WorkQueue
 
@@ -75,6 +77,7 @@ func NewMinIOUserController(
 	controllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceAll, 30*time.Second)
 	instanceInformer := controllerInformers.MinIOInstanceInformer()
 	instanceLister := controllerInformers.MinIOInstanceLister()
+	clusterLister := minioInformers.MinIOClusterLister()
 
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
@@ -88,15 +91,16 @@ func NewMinIOUserController(
 		secretLister:      secretInformer.Lister(),
 		serviceLister:     serviceInformer.Lister(),
 		instanceLister:    instanceLister,
+		clusterLister:     clusterLister,
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
-		"minio-user-operator",
+		"minio-user-controller",
 		c,
 		coreClient,
 		[]cache.SharedIndexInformer{minioUserInformer},
 		[]cache.SharedIndexInformer{instanceInformer, serviceInformer.Informer(), secretInformer.Informer()},
-		[]string{minIOBucketControllerFinalizerName},
+		[]string{minIOUserControllerFinalizerName},
 	)
 
 	return c, nil
@@ -139,6 +143,8 @@ func (c *MinIOUserController) UpdateObject(ctx context.Context, obj runtime.Obje
 }
 
 func (c *MinIOUserController) Reconcile(ctx context.Context, obj runtime.Object) error {
+	var instances []*miniocontrollerv1beta1.MinIOInstance
+
 	currentUser := obj.(*miniov1alpha1.MinIOUser)
 	minioUser := currentUser.DeepCopy()
 
@@ -146,7 +152,22 @@ func (c *MinIOUserController) Reconcile(ctx context.Context, obj runtime.Object)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	instances, err := c.instanceLister.List(minioUser.Namespace, s)
+	clusters, err := c.clusterLister.List(minioUser.Namespace, s)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	switch len(clusters) {
+	case 0:
+	case 1:
+		if err := c.makeUserForCluster(ctx, minioUser, clusters[0]); err != nil {
+			return err
+		}
+		goto StatusUpdate
+	default:
+		return xerrors.New("found some clusters")
+	}
+
+	instances, err = c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -157,50 +178,11 @@ func (c *MinIOUserController) Reconcile(ctx context.Context, obj runtime.Object)
 	if len(instances) > 1 {
 		return xerrors.New("found some instances")
 	}
-
-	for _, instance := range instances {
-		creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-
-		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		if forwarder != nil {
-			defer forwarder.Close()
-		}
-
-		adminClient, err := madmin.New(
-			instanceEndpoint,
-			string(creds.Data["accesskey"]),
-			string(creds.Data["secretkey"]),
-			false,
-		)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		if c.transport != nil {
-			adminClient.SetCustomTransport(c.transport)
-		}
-
-		secret, err := c.ensureUser(ctx, adminClient, minioUser)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-
-		if minioUser.Spec.Path != "" && !minioUser.Status.Vault {
-			if err := c.saveAccessKeyToVault(minioUser, secret); err != nil {
-				return xerrors.WithStack(err)
-			}
-		}
+	if err := c.makeUserForMinIOInstance(ctx, minioUser, instances[0]); err != nil {
+		return err
 	}
 
-	if err := c.setStatus(minioUser); err != nil {
-		return xerrors.WithStack(err)
-	}
-
+StatusUpdate:
 	if !reflect.DeepEqual(minioUser.Status, currentUser.Status) {
 		_, err = c.mClient.UpdateStatusMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 		if err != nil {
@@ -208,6 +190,88 @@ func (c *MinIOUserController) Reconcile(ctx context.Context, obj runtime.Object)
 		}
 	}
 
+	return nil
+}
+
+func (c *MinIOUserController) makeUserForMinIOInstance(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, instance *miniocontrollerv1beta1.MinIOInstance) error {
+	creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+
+	adminClient, err := madmin.New(
+		instanceEndpoint,
+		string(creds.Data["accesskey"]),
+		string(creds.Data["secretkey"]),
+		false,
+	)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if c.transport != nil {
+		adminClient.SetCustomTransport(c.transport)
+	}
+
+	secret, err := c.ensureUser(ctx, adminClient, minioUser)
+	if err != nil {
+		return err
+	}
+
+	if c.vaultClient != nil && minioUser.Spec.Path != "" && !minioUser.Status.Vault {
+		if err := c.saveAccessKeyToVault(minioUser, secret); err != nil {
+			return err
+		}
+	}
+
+	if err := c.setStatus(minioUser); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *MinIOUserController) makeUserForCluster(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, cluster *miniov1alpha1.MinIOCluster) error {
+	sc, err := c.secretLister.Secrets(cluster.Namespace).Get(cluster.Name)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	instanceEndpoint, forwarder, err := c.getMinIOClusterEndpoint(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+
+	adminClient, err := madmin.New(instanceEndpoint, defaultMinIOClusterAdminUser, string(sc.Data["password"]), false)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if c.transport != nil {
+		adminClient.SetCustomTransport(c.transport)
+	}
+
+	secret, err := c.ensureUser(ctx, adminClient, minioUser)
+	if err != nil {
+		return err
+	}
+	if c.vaultClient != nil && minioUser.Spec.Path != "" && !minioUser.Status.Vault {
+		if err := c.saveAccessKeyToVault(minioUser, secret); err != nil {
+			return err
+		}
+	}
+
+	if err := c.setStatus(minioUser); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -278,57 +342,131 @@ func (c *MinIOUserController) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser
 
 func (c *MinIOUserController) Finalize(ctx context.Context, obj runtime.Object) error {
 	minioUser := obj.(*miniov1alpha1.MinIOUser)
+	c.Log().Debug("Start finalizing MinIOUser")
+	if c.Log().Level() == zapcore.DebugLevel {
+		defer c.Log().Debug("Finished finalizing MinIOUser")
+	}
+	var instances []*miniocontrollerv1beta1.MinIOInstance
 
 	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	instances, err := c.instanceLister.List(minioUser.Namespace, s)
+	clusters, err := c.clusterLister.List(minioUser.Namespace, s)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	switch len(clusters) {
+	case 0:
+	case 1:
+		if err := c.deleteUserFromCluster(ctx, minioUser, clusters[0]); err != nil {
+			return err
+		}
+		goto StatusUpdate
+	default:
+		return xerrors.New("found some clusters")
+	}
+
+	instances, err = c.instanceLister.List(minioUser.Namespace, s)
 	if err != nil {
 		return err
 	}
-
-	for _, instance := range instances {
-		creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
-		if err != nil {
-			return xerrors.WithStack(err)
+	switch len(instances) {
+	case 0:
+		c.Log().Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(&minioUser.Spec.Selector)))
+		return nil
+	case 1:
+		if err := c.deleteUserFromInstance(ctx, minioUser, instances[0]); err != nil {
+			return err
 		}
-
-		instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		if forwarder != nil {
-			defer forwarder.Close()
-		}
-
-		secret, err := c.secretLister.Secrets(minioUser.Namespace).Get(fmt.Sprintf("%s-accesskey", minioUser.Name))
-		if apierrors.IsNotFound(err) {
-			continue
-		}
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-
-		adminClient, err := madmin.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-
-		if err := adminClient.RemoveUser(ctx, string(secret.Data["accesskey"])); err != nil {
-			return xerrors.WithStack(err)
-		}
-		c.Log().Debug("Remove minio user", zap.String("name", minioUser.Name))
-
-		if err := c.coreClient.CoreV1().Secrets(secret.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); err != nil {
-			return xerrors.WithStack(err)
-		}
+	default:
+		return xerrors.New("found multiple MinIO instances")
 	}
 
+StatusUpdate:
 	minioUser.Finalizers = enumerable.Delete(minioUser.Finalizers, minIOUserControllerFinalizerName)
 
 	_, err = c.mClient.UpdateMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 	return err
+}
+
+func (c *MinIOUserController) deleteUserFromInstance(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, instance *miniocontrollerv1beta1.MinIOInstance) error {
+	creds, err := c.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	instanceEndpoint, forwarder, err := c.getMinIOInstanceEndpoint(ctx, instance)
+	if err != nil {
+		return err
+	}
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+
+	secret, err := c.secretLister.Secrets(minioUser.Namespace).Get(fmt.Sprintf("%s-accesskey", minioUser.Name))
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	adminClient, err := madmin.New(instanceEndpoint, string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), false)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	if err := adminClient.RemoveUser(ctx, string(secret.Data["accesskey"])); err != nil {
+		return xerrors.WithStack(err)
+	}
+	c.Log().Debug("Remove minio user", zap.String("name", minioUser.Name))
+
+	if err := c.coreClient.CoreV1().Secrets(secret.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func (c *MinIOUserController) deleteUserFromCluster(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, cluster *miniov1alpha1.MinIOCluster) error {
+	sc, err := c.secretLister.Secrets(cluster.Namespace).Get(cluster.Name)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	instanceEndpoint, forwarder, err := c.getMinIOClusterEndpoint(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	if forwarder != nil {
+		defer forwarder.Close()
+	}
+
+	accessKeySecret, err := c.secretLister.Secrets(minioUser.Namespace).Get(fmt.Sprintf("%s-accesskey", minioUser.Name))
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	adminClient, err := madmin.New(instanceEndpoint, defaultMinIOClusterAdminUser, string(sc.Data["password"]), false)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if c.transport != nil {
+		adminClient.SetCustomTransport(c.transport)
+	}
+
+	if err := adminClient.RemoveUser(ctx, string(accessKeySecret.Data["accesskey"])); err != nil {
+		return xerrors.WithStack(err)
+	}
+	c.Log().Debug("Remove minio user", zap.String("name", minioUser.Name))
+
+	if err := c.coreClient.CoreV1().Secrets(accessKeySecret.Namespace).Delete(ctx, accessKeySecret.Name, metav1.DeleteOptions{}); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *MinIOUserController) getMinIOInstanceEndpoint(
@@ -350,11 +488,34 @@ func (c *MinIOUserController) getMinIOInstanceEndpoint(
 
 		ports, err := forwarder.GetPorts()
 		if err != nil {
-			return "", nil, err
+			return "", nil, xerrors.WithStack(err)
 		}
 		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", ports[0].Local)
 	}
 
+	return instanceEndpoint, forwarder, nil
+}
+
+func (c *MinIOUserController) getMinIOClusterEndpoint(ctx context.Context, cluster *miniov1alpha1.MinIOCluster) (string, *portforward.PortForwarder, error) {
+	svc, err := c.serviceLister.Services(cluster.Namespace).Get(cluster.Name)
+	if err != nil {
+		return "", nil, xerrors.WithStack(err)
+	}
+
+	var forwarder *portforward.PortForwarder
+	instanceEndpoint := fmt.Sprintf("%s.%s.svc:%d", cluster.Name, cluster.Namespace, svc.Spec.Ports[0].Port)
+	if c.runOutsideCluster {
+		forwarder, err = c.portForward(ctx, svc, int(svc.Spec.Ports[0].Port))
+		if err != nil {
+			return "", nil, err
+		}
+
+		ports, err := forwarder.GetPorts()
+		if err != nil {
+			return "", nil, xerrors.WithStack(err)
+		}
+		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", ports[0].Local)
+	}
 	return instanceEndpoint, forwarder, nil
 }
 

@@ -2,6 +2,8 @@ apiVersion: minio.f110.dev/v1alpha1
 kind: MinIOCluster
 metadata:
   name: test-cluster
+  labels:
+    app: minio
 spec:
   image: minio/minio:RELEASE.2024-04-18T19-09-19Z
   nodes: 1

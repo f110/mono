@@ -34,12 +34,12 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/portforward"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/stringsutil"
 )
 
 const (
 	minIOClusterControllerFinalizerName = "minio-cluster-controller.minio.f110.dev/finalizer"
+	defaultMinIOClusterAdminUser        = "root"
 )
 
 type MinIOClusterController struct {
@@ -130,9 +130,9 @@ type minIOClusterReconciler struct {
 var _ controllerutil.GenericReconciler[*miniov1alpha1.MinIOCluster] = (*minIOClusterReconciler)(nil)
 
 func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
-	logger.Log.Debug("Start reconciling MinIOCluster")
-	if logger.Log.Level() == zapcore.DebugLevel {
-		defer logger.Log.Debug("Finished reconciling MinIOCluster")
+	m.logger.Debug("Start reconciling MinIOCluster")
+	if m.logger.Level() == zapcore.DebugLevel {
+		defer m.logger.Debug("Finished reconciling MinIOCluster")
 	}
 	rCtx, err := m.newContext(obj)
 	if err != nil {
@@ -231,7 +231,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	}
 	rCtx.Obj.Status.Phase = rCtx.CurrentPhase()
 	if rCtx.StatusChanged() {
-		logger.Log.Debug("Update MinIOCluster status", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace), zap.Any("status", rCtx.Obj.Status))
+		m.logger.Debug("Update MinIOCluster status", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace), zap.Any("status", rCtx.Obj.Status))
 		if _, err := m.mClient.UpdateStatusMinIOCluster(ctx, rCtx.Obj, metav1.UpdateOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
@@ -248,7 +248,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
 		}
 
-		mc, err := minio.New(instanceEndpoint, "root", string(rCtx.secret.Data["password"]), false)
+		mc, err := minio.New(instanceEndpoint, defaultMinIOClusterAdminUser, string(rCtx.secret.Data["password"]), false)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -256,7 +256,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			if exists, err := mc.BucketExistsWithContext(ctx, bucket.Name); err != nil {
 				return xerrors.WithStack(err)
 			} else if !exists {
-				logger.Log.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				m.logger.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
 				if err := mc.MakeBucketWithContext(ctx, bucket.Name, ""); err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -279,7 +279,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			}
 			switch bucket.Policy {
 			case "", miniov1alpha1.BucketPolicyPrivate:
-				logger.Log.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				m.logger.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
 				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, ""); err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -293,7 +293,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 				if err != nil {
 					return xerrors.WithStack(err)
 				}
-				logger.Log.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+				m.logger.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
 				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, string(b)); err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -313,7 +313,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 					}
 				}
 				if stat.Key == "" {
-					logger.Log.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					m.logger.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
 					if _, err := mc.PutObjectWithContext(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
 						return xerrors.WithStack(err)
 					}
@@ -325,9 +325,9 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 }
 
 func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
-	logger.Log.Debug("Start finalizing MinIOCluster")
-	if logger.Log.Level() == zapcore.DebugLevel {
-		defer logger.Log.Debug("Finished finalizing MinIOCluster")
+	m.logger.Debug("Start finalizing MinIOCluster")
+	if m.logger.Level() == zapcore.DebugLevel {
+		defer m.logger.Debug("Finished finalizing MinIOCluster")
 	}
 	rCtx, err := m.newContext(obj)
 	if err != nil {
@@ -369,7 +369,7 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 	}
 	if rCtx.NoResources() {
 		rCtx.Obj.Finalizers = enumerable.Delete(rCtx.Obj.Finalizers, minIOClusterControllerFinalizerName)
-		logger.Log.Debug("Update MinIOCluster", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+		m.logger.Debug("Update MinIOCluster", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
 		_, err = m.mClient.UpdateMinIOCluster(ctx, rCtx.Obj, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -478,7 +478,7 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 		k8sfactory.Args("server", "--address=:9000", "--console-address=:8080", dataVolumeSource.Mount.MountPath),
 		k8sfactory.EnvVar("MINIO_BROWSER_LOGIN_ANIMATION", "off"),
 		k8sfactory.EnvVar("MINIO_BROWSER", "on"),
-		k8sfactory.EnvVar("MINIO_ROOT_USER", "root"),
+		k8sfactory.EnvVar("MINIO_ROOT_USER", defaultMinIOClusterAdminUser),
 		k8sfactory.EnvFromSecret("MINIO_ROOT_PASSWORD", obj.Name, "password"),
 		k8sfactory.Volume(dataVolumeSource),
 		k8sfactory.Port("api", corev1.ProtocolTCP, 9000),

@@ -510,6 +510,6 @@ func (b *GenericControllerBase[T]) enqueue(obj any) {
 	if err != nil {
 		return
 	}
-	logger.Log.Debug("Enqueue", zap.String("key", key))
+	b.Log().Debug("Enqueue", zap.String("key", key))
 	b.queue.Add(key)
 }

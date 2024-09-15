@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jarcoal/httpmock"
+	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestMinIOUserController(t *testing.T) {
-	t.Run("CreateSecret", func(t *testing.T) {
+	t.Run("MinIOInstance", func(t *testing.T) {
 		runner := newRunner()
 		controller, mockTransport := newMinIOUserController(t, runner)
 		mockTransport.RegisterResponder(
@@ -33,8 +34,15 @@ func TestMinIOUserController(t *testing.T) {
 				"",
 			),
 		)
-		target, fixtures := minIOUserFixture()
-		runner.RegisterFixture(fixtures...)
+		instance, depObjs := minIOInstanceFixtureForMinIOUser()
+		target := k8sfactory.MinIOUserFactory(nil,
+			k8sfactory.Name("test"),
+			k8sfactory.DefaultNamespace,
+			k8sfactory.VaultPath("/secret", "/test"),
+			k8sfactory.MinIOSelector(k8sfactory.MatchLabel(instance.ObjectMeta.Labels)),
+		)
+		runner.RegisterFixture(instance)
+		runner.RegisterFixture(depObjs...)
 
 		err := runner.Reconcile(controller, target)
 		require.NoError(t, err)
@@ -45,9 +53,50 @@ func TestMinIOUserController(t *testing.T) {
 		))
 		runner.AssertNoUnexpectedAction(t)
 	})
+
+	t.Run("MinIOCluster", func(t *testing.T) {
+		runner := newRunner()
+		controller, mockTransport := newMinIOUserController(t, runner)
+		mockTransport.RegisterResponder(
+			http.MethodPut,
+			"/minio/admin/v3/add-user",
+			httpmock.NewStringResponder(
+				http.StatusOK,
+				"",
+			),
+		)
+		mockTransport.RegisterResponder(
+			http.MethodPost,
+			"/v1/secret/data/test",
+			httpmock.NewStringResponder(
+				http.StatusOK,
+				"",
+			),
+		)
+		cluster, depObjs := minIOClusterFixtureForMinIOUser()
+		target := k8sfactory.MinIOUserFactory(nil,
+			k8sfactory.Name("test"),
+			k8sfactory.DefaultNamespace,
+			k8sfactory.VaultPath("/secret", "/test"),
+			k8sfactory.MinIOSelector(k8sfactory.MatchLabel(cluster.ObjectMeta.Labels)),
+		)
+		runner.RegisterFixture(cluster)
+		runner.RegisterFixture(depObjs...)
+
+		err := runner.Reconcile(controller, target)
+		require.NoError(t, err)
+
+		runner.AssertCreateAction(t,
+			k8sfactory.SecretFactory(nil,
+				k8sfactory.Namef("%s-accesskey", target.Name),
+				k8sfactory.Namespace(target.Namespace),
+			),
+		)
+		runner.AssertNoUnexpectedAction(t)
+	})
 }
 
-func minIOUserFixture() (*miniov1alpha1.MinIOUser, []runtime.Object) {
+func minIOInstanceFixtureForMinIOUser() (*miniocontrollerv1beta1.MinIOInstance, []runtime.Object) {
 	secret := k8sfactory.SecretFactory(nil,
 		k8sfactory.Name("root-accesskey"),
 		k8sfactory.DefaultNamespace,
@@ -65,12 +114,26 @@ func minIOUserFixture() (*miniov1alpha1.MinIOUser, []runtime.Object) {
 		k8sfactory.DefaultNamespace,
 		k8sfactory.Port("", corev1.ProtocolTCP, 9000),
 	)
-	user := k8sfactory.MinIOUserFactory(nil,
+
+	return instance, []runtime.Object{service, secret}
+}
+
+func minIOClusterFixtureForMinIOUser() (*miniov1alpha1.MinIOCluster, []runtime.Object) {
+	secret := k8sfactory.SecretFactory(nil,
 		k8sfactory.Name("test"),
 		k8sfactory.DefaultNamespace,
-		k8sfactory.VaultPath("/secret", "/test"),
-		k8sfactory.MinIOSelector(k8sfactory.MatchLabel(instance.ObjectMeta.Labels)),
+		k8sfactory.Data("password", []byte("rootaccesskey")),
+	)
+	service := k8sfactory.ServiceFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Port("", corev1.ProtocolTCP, 9000),
+	)
+	cluster := k8sfactory.MinIOClusterFactory(nil,
+		k8sfactory.Name("test"),
+		k8sfactory.DefaultNamespace,
+		k8sfactory.Labels(map[string]string{"app": "minio"}),
 	)
 
-	return user, []runtime.Object{instance, service, secret}
+	return cluster, []runtime.Object{secret, service}
 }

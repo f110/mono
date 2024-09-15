@@ -250,6 +250,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 	if p.dev {
 		if v := os.Getenv("BUILD_WORKSPACE_DIRECTORY"); v != "" {
 			kubeconfigPath = filepath.Join(v, ".kubeconfig")
+			logger.Log.Info("Use local kubeconfig", zap.String("path", kubeconfigPath))
 		} else {
 			h, err := os.UserHomeDir()
 			if err != nil {
@@ -290,10 +291,14 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 				return fsm.Error(xerrors.WithStack(err))
 			}
 			saToken := strings.TrimSpace(string(buf))
+			logger.Log.Info("Using a service account for Vault authentication")
+			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
 			if err != nil {
+				cancel()
 				return fsm.Error(err)
 			}
+			cancel()
 			p.vaultClient = vc
 		}
 	}
@@ -319,6 +324,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
+	logger.Log.Info("Check custom resource definitions")
 	_, apiList, err := p.coreClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -351,6 +357,7 @@ func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
+	logger.Log.Info("Start metrics server")
 	http.Handle("/metrics", legacyregistry.HandlerWithReset())
 	go http.ListenAndServe(":9300", nil)
 
@@ -371,6 +378,7 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 		return fsm.Next(stateStartWorkers)
 	}
 
+	logger.Log.Info("Start leader election")
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      p.leaseLockName,
@@ -413,6 +421,7 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
+	logger.Log.Info("Start workers")
 	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
 	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 
