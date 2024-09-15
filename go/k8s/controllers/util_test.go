@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/vault"
@@ -36,7 +37,7 @@ func newMinIOBucketController(t *testing.T, runner *controllertest.TestRunner) *
 	return controller
 }
 
-func newMinIOUserController(t *testing.T, runner *controllertest.TestRunner) (*MinIOUserController, *httpmock.MockTransport) {
+func newMinIOUserController(t *testing.T, runner *controllertest.GenericTestRunner[*miniov1alpha1.MinIOUser]) (*MinIOUserController, *httpmock.MockTransport) {
 	tr := httpmock.NewMockTransport()
 	vaultClient, err := vault.NewClient("http://localhost:8300", "", vault.HttpClient(&http.Client{Transport: tr}))
 	require.NoError(t, err)

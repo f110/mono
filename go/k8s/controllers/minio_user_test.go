@@ -11,12 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
+	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 )
 
 func TestMinIOUserController(t *testing.T) {
 	t.Run("MinIOInstance", func(t *testing.T) {
-		runner := newRunner()
+		runner := controllertest.NewGenericTestRunner[*miniov1alpha1.MinIOUser]()
 		controller, mockTransport := newMinIOUserController(t, runner)
 		mockTransport.RegisterResponder(
 			http.MethodPut,
@@ -44,7 +45,7 @@ func TestMinIOUserController(t *testing.T) {
 		runner.RegisterFixture(instance)
 		runner.RegisterFixture(depObjs...)
 
-		err := runner.Reconcile(controller, target)
+		err := runner.Reconcile(controller.newReconciler(), target)
 		require.NoError(t, err)
 
 		runner.AssertCreateAction(t, k8sfactory.SecretFactory(nil,
@@ -55,7 +56,7 @@ func TestMinIOUserController(t *testing.T) {
 	})
 
 	t.Run("MinIOCluster", func(t *testing.T) {
-		runner := newRunner()
+		runner := controllertest.NewGenericTestRunner[*miniov1alpha1.MinIOUser]()
 		controller, mockTransport := newMinIOUserController(t, runner)
 		mockTransport.RegisterResponder(
 			http.MethodPut,
@@ -83,7 +84,7 @@ func TestMinIOUserController(t *testing.T) {
 		runner.RegisterFixture(cluster)
 		runner.RegisterFixture(depObjs...)
 
-		err := runner.Reconcile(controller, target)
+		err := runner.Reconcile(controller.newReconciler(), target)
 		require.NoError(t, err)
 
 		runner.AssertCreateAction(t,
