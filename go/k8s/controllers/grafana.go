@@ -11,8 +11,6 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	corev1listers "k8s.io/client-go/listers/core/v1"
@@ -27,11 +25,11 @@ import (
 )
 
 const (
-	grafanaUserControllerFinalizerName = "grafana-user-controller.grafana.f110.dev/finalizer"
+	grafanaControllerFinalizerName = "grafana-user-controller.grafana.f110.dev/finalizer" // historical reason
 )
 
-type GrafanaUserController struct {
-	*controllerutil.ControllerBase
+type GrafanaController struct {
+	*controllerutil.GenericControllerBase[*grafanav1alpha1.Grafana]
 
 	client *client.GrafanaV1alpha1
 
@@ -44,80 +42,64 @@ type GrafanaUserController struct {
 	transport http.RoundTripper
 }
 
-var _ controllerutil.Controller = &GrafanaUserController{}
-
-func NewGrafanaUserController(
+func NewGrafanaController(
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	factory *client.InformerFactory,
 	coreClient kubernetes.Interface,
 	apiClient *client.Set,
-) (*GrafanaUserController, error) {
+) (*GrafanaController, error) {
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	grafanaInformers := client.NewGrafanaV1alpha1Informer(factory.Cache(), apiClient.GrafanaV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	appInformer := grafanaInformers.GrafanaInformer()
 	userInformer := grafanaInformers.GrafanaUserInformer()
 
-	a := &GrafanaUserController{
+	a := &GrafanaController{
 		client:        apiClient.GrafanaV1alpha1,
 		secretLister:  secretInformer.Lister(),
 		serviceLister: serviceInformer.Lister(),
 		appLister:     grafanaInformers.GrafanaLister(),
 		userLister:    grafanaInformers.GrafanaUserLister(),
 	}
-	a.ControllerBase = controllerutil.NewBase(
-		"grafana-user-controller",
-		a,
+	a.GenericControllerBase = controllerutil.NewGenericControllerBase[*grafanav1alpha1.Grafana](
+		"grafana-controller",
+		a.newReconciler,
 		coreClient,
 		[]cache.SharedIndexInformer{appInformer, userInformer},
 		[]cache.SharedIndexInformer{secretInformer.Informer(), serviceInformer.Informer()},
-		[]string{grafanaUserControllerFinalizerName},
+		[]string{grafanaControllerFinalizerName},
+		grafanaInformers.GrafanaLister().Get,
+		apiClient.GrafanaV1alpha1.UpdateGrafana,
 	)
 
 	return a, nil
 }
 
-func (u *GrafanaUserController) ObjectToKeys(obj interface{}) []string {
-	switch v := obj.(type) {
-	case *grafanav1alpha1.Grafana:
-		return []string{u.toKey(v)}
-	case *grafanav1alpha1.GrafanaUser:
-		apps, err := u.appLister.List(metav1.NamespaceAll, labels.Everything())
-		if err != nil {
-			return nil
-		}
-
-		keys := make([]string, 0)
-		for _, app := range apps {
-			sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
-			if err != nil {
-				continue
-			}
-			if sel.Matches(labels.Set(v.GetLabels())) {
-				key := u.toKey(app)
-				if key != "" {
-					keys = append(keys, key)
-				}
-			}
-		}
-
-		return keys
-	default:
-		return nil
+func (u *GrafanaController) newReconciler() controllerutil.GenericReconciler[*grafanav1alpha1.Grafana] {
+	return &grafanaReconciler{
+		serviceLister: u.serviceLister,
+		secretLister:  u.secretLister,
+		userLister:    u.userLister,
+		client:        u.client,
+		logger:        u.Log(),
+		transport:     u.transport,
 	}
 }
 
-func (u *GrafanaUserController) toKey(v *grafanav1alpha1.Grafana) string {
-	key, err := cache.MetaNamespaceKeyFunc(v)
-	if err != nil {
-		return ""
-	}
-	return key
+type grafanaReconciler struct {
+	serviceLister corev1listers.ServiceLister
+	secretLister  corev1listers.SecretLister
+	userLister    *client.GrafanaV1alpha1GrafanaUserLister
+	client        *client.GrafanaV1alpha1
+
+	logger    *zap.Logger
+	transport http.RoundTripper
 }
 
-func (u *GrafanaUserController) Reconcile(ctx context.Context, obj runtime.Object) error {
-	app := obj.(*grafanav1alpha1.Grafana)
+var _ controllerutil.GenericReconciler[*grafanav1alpha1.Grafana] = (*grafanaReconciler)(nil)
 
+func (u *grafanaReconciler) Reconcile(ctx context.Context, obj *grafanav1alpha1.Grafana) error {
+	app := obj
 	sel, err := metav1.LabelSelectorAsSelector(&app.Spec.UserSelector)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -142,38 +124,12 @@ func (u *GrafanaUserController) Reconcile(ctx context.Context, obj runtime.Objec
 	return nil
 }
 
-func (u *GrafanaUserController) Finalize(ctx context.Context, obj runtime.Object) error {
+func (u *grafanaReconciler) Finalize(ctx context.Context, obj *grafanav1alpha1.Grafana) error {
 	return nil
 }
 
-func (u *GrafanaUserController) GetObject(key string) (runtime.Object, error) {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-
-	obj, err := u.appLister.Get(namespace, name)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	return obj, nil
-}
-
-func (u *GrafanaUserController) UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error) {
-	app, ok := obj.(*grafanav1alpha1.Grafana)
-	if !ok {
-		return nil, xerrors.Definef("unexpected object type: %v", obj).WithStack()
-	}
-
-	app, err := u.client.UpdateGrafana(ctx, app, metav1.UpdateOptions{})
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	return app, nil
-}
-
-func (u *GrafanaUserController) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
-	u.Log().Debug("users", zap.Int("len", len(users)))
+func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
+	u.logger.Debug("users", zap.Int("len", len(users)))
 	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -222,9 +178,9 @@ func (u *GrafanaUserController) ensureUsers(app *grafanav1alpha1.Grafana, users 
 		grafanaUser := allUsers[email]
 		s := strings.Split(grafanaUser.Spec.Email, "@")
 		name := s[0]
-		u.Log().Info("Add User", zap.String("email", grafanaUser.Spec.Email), zap.String("name", name))
+		u.logger.Info("Add User", zap.String("email", grafanaUser.Spec.Email), zap.String("name", name))
 		if err := grafanaClient.AddUser(&grafana.User{Name: name, Login: name, Email: grafanaUser.Spec.Email, Password: stringsutil.RandomString(32)}); err != nil {
-			u.Log().Warn("Failed add user", zap.String("email", email), zap.Error(err))
+			u.logger.Warn("Failed add user", zap.String("email", email), zap.Error(err))
 		}
 	}
 
@@ -236,9 +192,9 @@ func (u *GrafanaUserController) ensureUsers(app *grafanav1alpha1.Grafana, users 
 			continue
 		}
 		grafanaUser := currentUsersMap[email]
-		u.Log().Info("Delete User", zap.Int("id", grafanaUser.Id))
+		u.logger.Info("Delete User", zap.Int("id", grafanaUser.Id))
 		if err := grafanaClient.DeleteUser(grafanaUser.Id); err != nil {
-			u.Log().Warn("Failed delete user", zap.String("email", grafanaUser.Email), zap.Int("id", grafanaUser.Id), zap.Error(err))
+			u.logger.Warn("Failed delete user", zap.String("email", grafanaUser.Email), zap.Int("id", grafanaUser.Id), zap.Error(err))
 		}
 	}
 
@@ -252,9 +208,9 @@ func (u *GrafanaUserController) ensureUsers(app *grafanav1alpha1.Grafana, users 
 			continue
 		}
 		if grafanaUser.Spec.Admin != v.IsAdmin {
-			u.Log().Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", grafanaUser.Spec.Admin))
+			u.logger.Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", grafanaUser.Spec.Admin))
 			if err := grafanaClient.ChangeUserPermission(v.Id, grafanaUser.Spec.Admin); err != nil {
-				u.Log().Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
+				u.logger.Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
 			}
 		}
 	}

@@ -5,7 +5,7 @@ go_library(
     srcs = [
         "consul_backup.go",
         "docker.go",
-        "grafana_user.go",
+        "grafana.go",
         "harbor_project_controller.go",
         "harbor_robot_account_controller.go",
         "minio_bucket.go",
@@ -62,7 +62,7 @@ go_test(
     name = "controllers_test",
     srcs = [
         "consul_backup_test.go",
-        "grafana_user_test.go",
+        "grafana_test.go",
         "harbor_project_controller_test.go",
         "harbor_robot_account_controller_test.go",
         "minio_bucket_test.go",

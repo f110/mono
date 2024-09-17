@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"go.f110.dev/mono/go/api/grafanav1alpha1"
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
@@ -72,9 +73,9 @@ func newConsulBackupController(t *testing.T) (*controllertest.TestRunner, *Consu
 	return runner, controller
 }
 
-func newGrafanaUserController(t *testing.T) (*controllertest.TestRunner, *GrafanaUserController) {
-	runner := controllertest.NewTestRunner()
-	controller, err := NewGrafanaUserController(
+func newGrafanaUserController(t *testing.T) (*controllertest.GenericTestRunner[*grafanav1alpha1.Grafana], *GrafanaController) {
+	runner := controllertest.NewGenericTestRunner[*grafanav1alpha1.Grafana]()
+	controller, err := NewGrafanaController(
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
 		runner.CoreClient,

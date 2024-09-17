@@ -51,7 +51,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerGrafanaUser,
 		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			gu, err := controllers.NewGrafanaUserController(core, factory, p.coreClient, p.client)
+			gu, err := controllers.NewGrafanaController(core, factory, p.coreClient, p.client)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
