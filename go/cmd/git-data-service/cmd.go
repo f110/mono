@@ -16,6 +16,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
@@ -83,7 +84,7 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 		stateShuttingDown,
 	)
 	c.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 5*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	}
 
 	return c
@@ -159,7 +160,7 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, cachePool)
 
 		if ok, err := storer.Exist(); !ok && err == nil {
-			ctx, cancel := context.WithTimeout(ctx, c.RepositoryInitTimeout)
+			ctx, cancel := ctxutil.WithTimeout(ctx, c.RepositoryInitTimeout)
 
 			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
 			var auth *http.BasicAuth

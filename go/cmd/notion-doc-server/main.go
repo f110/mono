@@ -9,6 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/notion"
 )
 
@@ -45,7 +46,7 @@ func (s *docServerCommand) Execute(ctx context.Context) error {
 	go srv.Start()
 	<-ctx.Done()
 
-	sCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	sCtx, cancel := ctxutil.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := srv.Stop(sCtx); err != nil {
 		return xerrors.WithStack(err)

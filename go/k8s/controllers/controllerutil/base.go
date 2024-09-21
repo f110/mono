@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/parallel"
@@ -115,7 +116,7 @@ func (b *ControllerBase) Shutdown() {
 	b.queue.Shutdown()
 
 	if b.supervisor != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := ctxutil.WithTimeout(context.Background(), 30*time.Second)
 		b.supervisor.Shutdown(ctx)
 		cancel()
 	}
@@ -163,7 +164,7 @@ func (b *ControllerBase) worker(ctx context.Context) {
 func (b *ControllerBase) process(key string) error {
 	defer b.queue.Done(key)
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 	obj, err := b.impl.GetObject(key)
 	if err != nil {
@@ -353,7 +354,7 @@ func (b *GenericControllerBase[T]) Shutdown() {
 	b.queue.Shutdown()
 
 	if b.supervisor != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := ctxutil.WithTimeout(context.Background(), 30*time.Second)
 		b.supervisor.Shutdown(ctx)
 		cancel()
 	}
@@ -414,7 +415,7 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 		return err
 	}
 
-	ctx, cancelFunc := context.WithTimeout(workerCtx, 30*time.Second)
+	ctx, cancelFunc := ctxutil.WithTimeout(workerCtx, 30*time.Second)
 	defer cancelFunc()
 
 	target := obj.DeepCopyObject().(T)

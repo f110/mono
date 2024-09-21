@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/opvault"
 )
@@ -55,7 +56,7 @@ func Main() error {
 	} else if err != nil {
 		return xerrors.WithStack(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := ctxutil.WithTimeout(context.Background(), 100*time.Millisecond)
 	info, err := client.Info(ctx, &RequestInfo{})
 	cancel()
 	if err != nil {
@@ -71,7 +72,7 @@ func Main() error {
 		}
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel = ctxutil.WithTimeout(context.Background(), 1*time.Second)
 	list, err := client.List(ctx, &RequestList{})
 	cancel()
 	if err != nil {
@@ -97,7 +98,7 @@ func Main() error {
 	}
 
 	s := strings.SplitN(selected.DisplayString(), " ", 2)
-	ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel = ctxutil.WithTimeout(context.Background(), 1*time.Second)
 	_, err = client.SetClipboard(ctx, &RequestSetClipboard{Uuid: s[0]})
 	cancel()
 	if err != nil {
@@ -210,7 +211,7 @@ func UseVault(rootCmd *cli.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+			ctx, cancel := ctxutil.WithTimeout(context.Background(), 1*time.Second)
 			_, err = client.UseVault(ctx, &RequestUseVault{Path: path})
 			cancel()
 			if err != nil {
@@ -233,7 +234,7 @@ func Info(rootCmd *cli.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel := ctxutil.WithTimeout(ctx, 1*time.Second)
 			res, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
@@ -261,7 +262,7 @@ func Unlock(rootCmd *cli.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel := ctxutil.WithTimeout(ctx, 1*time.Second)
 			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
@@ -278,7 +279,7 @@ func Unlock(rootCmd *cli.Command) {
 				return xerrors.WithStack(err)
 			}
 			fmt.Println()
-			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel = ctxutil.WithTimeout(ctx, 1*time.Second)
 			res, err := client.Unlock(tCtx, &RequestUnlock{MasterPassword: masterPassword})
 			cancel()
 			if err != nil {
@@ -304,7 +305,7 @@ func List(rootCmd *cli.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel := ctxutil.WithTimeout(ctx, 1*time.Second)
 			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
@@ -314,7 +315,7 @@ func List(rootCmd *cli.Command) {
 				return xerrors.New("Vault is locked")
 			}
 
-			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel = ctxutil.WithTimeout(ctx, 1*time.Second)
 			list, err := client.List(tCtx, &RequestList{})
 			cancel()
 			if err != nil {
@@ -345,7 +346,7 @@ func Get(rootCmd *cli.Command) {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			tCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel := ctxutil.WithTimeout(ctx, 1*time.Second)
 			info, err := client.Info(tCtx, &RequestInfo{})
 			cancel()
 			if err != nil {
@@ -355,7 +356,7 @@ func Get(rootCmd *cli.Command) {
 				return xerrors.New("Vault is locked")
 			}
 
-			tCtx, cancel = context.WithTimeout(ctx, 1*time.Second)
+			tCtx, cancel = ctxutil.WithTimeout(ctx, 1*time.Second)
 			res, err := client.Get(tCtx, &RequestGet{Uuid: args[0]})
 			cancel()
 			if err != nil {
@@ -407,7 +408,7 @@ func dial() (OnePasswordClient, error) {
 		var d net.Dialer
 		return d.DialContext(ctx, "unix", addr)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	ctx, cancel := ctxutil.WithTimeout(context.Background(), 500*time.Millisecond)
 	conn, err := grpc.DialContext(
 		ctx,
 		filepath.Join(confDir, socketFilename),

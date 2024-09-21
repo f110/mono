@@ -13,6 +13,7 @@ go_library(
         "//go/build/gc",
         "//go/build/watcher",
         "//go/cli",
+        "//go/ctxutil",
         "//go/database/querylog",
         "//go/fsm",
         "//go/githubutil",

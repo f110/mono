@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -228,7 +229,7 @@ func (u *repositoryUpdater) update(ctx context.Context) {
 }
 
 func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository) {
-	timeoutCtx, stop := context.WithTimeout(ctx, u.timeout)
+	timeoutCtx, stop := ctxutil.WithTimeout(ctx, u.timeout)
 	defer stop()
 
 	var auth *gitHttp.BasicAuth

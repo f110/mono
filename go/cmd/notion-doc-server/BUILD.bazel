@@ -13,6 +13,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
+        "//go/ctxutil",
         "//go/notion",
         "//vendor/go.f110.dev/xerrors",
     ],

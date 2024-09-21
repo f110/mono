@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -52,7 +53,7 @@ func NewGoRemoteCacheCmd() *GoRemoteCache {
 		stateShuttingDown,
 	)
 	c.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 10*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 10*time.Second)
 	}
 	c.FSM.DisableErrorOutput = true
 

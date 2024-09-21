@@ -25,6 +25,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/docutil",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/ctxutil",
         "//go/git",
         "//go/logger",
         "//go/queue",

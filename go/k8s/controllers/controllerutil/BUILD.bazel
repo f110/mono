@@ -11,6 +11,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/k8s/controllers/controllerutil",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/ctxutil",
         "//go/k8s/client",
         "//go/logger",
         "//go/parallel",

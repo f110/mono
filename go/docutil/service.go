@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/queue"
@@ -638,7 +639,7 @@ type seenKey struct {
 }
 
 func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string) (string, error) {
-	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	reqCtx, cancel := ctxutil.WithTimeout(ctx, 10*time.Second)
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, u, nil)
 	if err != nil {
 		cancel()
@@ -759,7 +760,7 @@ func (c *titleCache) Save() error {
 	cacheBuf := new(bytes.Buffer)
 	if err := json.NewEncoder(cacheBuf).Encode(data); err == nil {
 		// We must create the new context because the context may be closed.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := ctxutil.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		key := fmt.Sprintf("external_links/%s/%s.json", c.docs.Repository.Name, c.docs.Ref.String())

@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/kind"
 )
 
@@ -66,7 +67,7 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 	} else {
 		log.Print("Cluster is already exist. Only apply the manifest.")
 	}
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 3*time.Minute)
 	cancelFunc()
 	if err := kindCluster.WaitReady(ctx); err != nil {
 		return xerrors.WithStack(err)

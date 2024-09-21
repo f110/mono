@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
+        "//go/ctxutil",
         "//go/fsm",
         "//go/githubutil",
         "//go/gomodule",

@@ -22,6 +22,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/ctxutil"
 )
 
 const (
@@ -136,7 +138,7 @@ func (rt *InjectAuthRoundTripper) login() (*http.Cookie, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFunc()
 	req = req.WithContext(ctx)
 

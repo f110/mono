@@ -21,6 +21,7 @@ import (
 	"k8s.io/component-base/metrics/legacyregistry"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers"
@@ -292,7 +293,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 			}
 			saToken := strings.TrimSpace(string(buf))
 			logger.Log.Info("Using a service account for Vault authentication")
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			ctx, cancel := ctxutil.WithTimeout(ctx, 5*time.Second)
 			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
 			if err != nil {
 				cancel()

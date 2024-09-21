@@ -37,6 +37,7 @@ go_library(
     deps = [
         "//go/cli",
         "//go/clipboard",
+        "//go/ctxutil",
         "//go/fsm",
         "//go/logger",
         "//go/opvault",

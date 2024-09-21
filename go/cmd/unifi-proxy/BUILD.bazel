@@ -6,6 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/unifi-proxy",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/ctxutil",
         "//vendor/github.com/golang-jwt/jwt/v4:jwt",
         "//vendor/github.com/spf13/pflag",
         "//vendor/go.f110.dev/xerrors",

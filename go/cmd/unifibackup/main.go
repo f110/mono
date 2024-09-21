@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -97,7 +98,7 @@ func unifiBackup(args []string) error {
 			}
 			latestBackup := selectLatestBackup(m)
 
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 10*time.Second)
 			path := filepath.Join(pathPrefix, latestBackup)
 			obj := client.Bucket(bucket).Object(path)
 			if _, err := obj.Attrs(ctx); err == storage.ErrObjectNotExist {

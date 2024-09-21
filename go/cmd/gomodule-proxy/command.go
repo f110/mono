@@ -12,6 +12,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/gomodule"
@@ -67,7 +68,7 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 		stateShuttingDown,
 	)
 	c.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 5*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	}
 	return c
 }

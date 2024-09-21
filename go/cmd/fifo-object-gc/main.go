@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
@@ -95,7 +96,7 @@ func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) err
 	for {
 		select {
 		case <-t.C:
-			c, cancel := context.WithTimeout(ctx, gc.interval/2)
+			c, cancel := ctxutil.WithTimeout(ctx, gc.interval/2)
 			if err := gc.gc(c, execute); err != nil {
 				cancel()
 				return err
@@ -114,7 +115,7 @@ func (gc *fifoObjectGarbageCollector) startInvokeServer(execute bool) error {
 		Addr: ":8080",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			go func() {
-				ctx, cancel := context.WithTimeout(context.Background(), gc.interval/2)
+				ctx, cancel := ctxutil.WithTimeout(context.Background(), gc.interval/2)
 				defer cancel()
 				if err := gc.gc(ctx, execute); err != nil {
 					logger.Log.Error("Failed garbage collecting", zap.Error(err))

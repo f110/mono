@@ -31,6 +31,7 @@ import (
 	"go.f110.dev/mono/go/build/gc"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
@@ -122,7 +123,7 @@ type process struct {
 }
 
 func newProcess(opt Options) *process {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := ctxutil.WithCancel(context.Background())
 	p := &process{ctx: ctx, cancel: cancel, opt: opt}
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
@@ -138,7 +139,7 @@ func newProcess(opt Options) *process {
 		stateShutdown,
 	)
 	p.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 10*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 10*time.Second)
 	}
 
 	return p

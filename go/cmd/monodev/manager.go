@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/parallel"
 )
@@ -63,7 +64,7 @@ func (m *componentManager) Run(ctx context.Context) error {
 	<-ctx.Done()
 
 	logger.Log.Debug("Shutting down")
-	ctx, cFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cFunc := ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	if err := m.supervisor.Shutdown(ctx); err != nil {
 		cFunc()
 		return xerrors.WithStack(err)

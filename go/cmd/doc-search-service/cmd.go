@@ -13,6 +13,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
@@ -85,7 +86,7 @@ func (c *docSearchService) init(ctx context.Context) (fsm.State, error) {
 	c.s = s
 
 	logger.Log.Debug("Initialize cache")
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+	ctx, cancel := ctxutil.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	if err := service.Initialize(ctx, c.Workers, c.MaxConns); err != nil {
 		return fsm.Error(err)

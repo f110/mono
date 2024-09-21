@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/http/httpserver"
 	"go.f110.dev/mono/go/logger"
@@ -50,7 +51,7 @@ func NewSimpleHTTPServer() *SimpleHTTPServer {
 		stateShutdown,
 	)
 	s.FSM.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 30*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 30*time.Second)
 	}
 	s.FSM.DisableErrorOutput = true
 	return s

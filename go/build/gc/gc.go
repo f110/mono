@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/web"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -32,13 +33,13 @@ func NewGC(interval time.Duration, daoOpt dao.Options, bucket string, minioOpt s
 func (g *GC) Start() {
 	t := time.NewTicker(g.interval)
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 30*time.Second)
 	g.sweep(ctx)
 	cancelFunc()
 	for {
 		select {
 		case <-t.C:
-			ctx, cancelFunc = context.WithTimeout(context.Background(), 30*time.Second)
+			ctx, cancelFunc = ctxutil.WithTimeout(context.Background(), 30*time.Second)
 			g.sweep(ctx)
 			cancelFunc()
 		}

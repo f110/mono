@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
@@ -51,7 +52,7 @@ func newRepoDocCommand() *repoDocCommand {
 		stateShuttingDown,
 	)
 	c.CloseContext = func() (context.Context, context.CancelFunc) {
-		return context.WithTimeout(context.Background(), 5*time.Second)
+		return ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	}
 
 	return c

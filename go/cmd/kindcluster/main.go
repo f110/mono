@@ -10,6 +10,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/kind"
 )
 
@@ -50,7 +51,7 @@ func createCmd(rootCmd *cli.Command) {
 				fmt.Println("Cluster is already exist. Only apply the manifest.")
 			}
 
-			tCtx, cancelFunc := context.WithTimeout(ctx, 3*time.Minute)
+			tCtx, cancelFunc := ctxutil.WithTimeout(ctx, 3*time.Minute)
 			defer cancelFunc()
 			if err := cluster.WaitReady(tCtx); err != nil {
 				return err
