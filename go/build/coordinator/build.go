@@ -37,6 +37,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/watcher"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -377,7 +378,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return nil
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	ctx, cancelFunc := ctxutil.WithCancel(context.Background())
 	defer cancelFunc()
 
 	repoId, err := strconv.Atoi(job.Labels[labelKeyRepoId])

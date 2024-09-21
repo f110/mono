@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/ctxutil"
 )
 
 var DefaultScanner = &Scanner{}
@@ -23,7 +25,7 @@ func (s *Scanner) Start(ctx context.Context) error {
 		return nil
 	}
 
-	sCtx, cancel := context.WithCancel(ctx)
+	sCtx, cancel := ctxutil.WithCancel(ctx)
 	s.cancel = cancel
 	return s.start(sCtx)
 }

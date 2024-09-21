@@ -18,6 +18,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/cli",
+        "//go/ctxutil",
         "//go/githubutil",
         "//go/k8s/volume",
         "//go/logger",

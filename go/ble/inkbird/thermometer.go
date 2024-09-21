@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/ble"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/hash/crc16"
 	"go.f110.dev/mono/go/logger"
 )
@@ -86,7 +87,7 @@ func (t *ThermometerDataProvider) Stop() error {
 }
 
 func Read(ctx context.Context, id string) (*ThermometerData, error) {
-	sCtx, cancel := context.WithCancel(ctx)
+	sCtx, cancel := ctxutil.WithCancel(ctx)
 	defer cancel()
 
 	scanCh, err := ble.Scan(sCtx)
@@ -117,7 +118,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 }
 
 func Scan(ctx context.Context) error {
-	sCtx, cancel := context.WithCancel(ctx)
+	sCtx, cancel := ctxutil.WithCancel(ctx)
 	defer cancel()
 
 	scanCh, err := ble.Scan(sCtx)

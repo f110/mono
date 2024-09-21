@@ -14,6 +14,7 @@ go_library(
         "//go/build/database",
         "//go/build/database/dao",
         "//go/build/watcher",
+        "//go/ctxutil",
         "//go/k8s/k8sfactory",
         "//go/k8s/k8smanifest",
         "//go/logger",

@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/k8s/volume"
 	"go.f110.dev/mono/go/logger"
@@ -207,7 +208,7 @@ func (r *IndexerCommand) run() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := ctxutil.WithCancel(context.Background())
 	defer func() {
 		r.indexer.Reset()
 		cancel()

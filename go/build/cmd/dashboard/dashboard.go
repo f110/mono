@@ -17,6 +17,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/web"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/signals"
@@ -36,7 +37,7 @@ func dashboard(ctx context.Context, opt Options) error {
 	parsedDSN.Loc = loc
 	opt.DSN = parsedDSN.FormatDSN()
 
-	cCtx, cancelFunc := context.WithCancel(ctx)
+	cCtx, cancelFunc := ctxutil.WithCancel(ctx)
 	signals.SetupSignalHandler(cancelFunc)
 
 	logger.Log.Debug("Open sql connection", zap.String("dsn", opt.DSN))

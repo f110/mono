@@ -13,6 +13,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/ble",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/ctxutil",
         "//vendor/go.f110.dev/xerrors",
     ] + select({
         "@io_bazel_rules_go//go/platform:android": [

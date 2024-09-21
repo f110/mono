@@ -10,6 +10,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -39,7 +40,7 @@ type Supervisor struct {
 }
 
 func NewSupervisor(ctx context.Context) *Supervisor {
-	c, cancel := context.WithCancel(ctx)
+	c, cancel := ctxutil.WithCancel(ctx)
 	return &Supervisor{Log: logger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
 }
 
