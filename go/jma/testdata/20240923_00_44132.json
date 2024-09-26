@@ -1,0 +1,342 @@
+{
+  "20240923000000": {
+    "prefNumber": 44,
+    "observationNumber": 132,
+    "pressure": [
+      1004.7,
+      0
+    ],
+    "normalPressure": [
+      1007.5,
+      0
+    ],
+    "temp": [
+      23.7,
+      0
+    ],
+    "humidity": [
+      88,
+      0
+    ],
+    "snow": [
+      null,
+      5
+    ],
+    "snow1h": [
+      0,
+      6
+    ],
+    "snow6h": [
+      0,
+      6
+    ],
+    "snow12h": [
+      0,
+      6
+    ],
+    "snow24h": [
+      0,
+      6
+    ],
+    "sun10m": [
+      0,
+      0
+    ],
+    "sun1h": [
+      0.0,
+      0
+    ],
+    "precipitation10m": [
+      0.0,
+      0
+    ],
+    "precipitation1h": [
+      0.0,
+      0
+    ],
+    "precipitation3h": [
+      0.0,
+      0
+    ],
+    "precipitation24h": [
+      2.5,
+      0
+    ],
+    "windDirection": [
+      2,
+      0
+    ],
+    "wind": [
+      3.6,
+      0
+    ],
+    "maxTempTime": {
+      "hour": 3,
+      "minute": 5
+    },
+    "maxTemp": [
+      28.9,
+      0
+    ],
+    "minTempTime": {
+      "hour": 20,
+      "minute": 46
+    },
+    "minTemp": [
+      22.5,
+      0
+    ],
+    "gustTime": {
+      "hour": 2,
+      "minute": 6
+    },
+    "gustDirection": [
+      8,
+      0
+    ],
+    "gust": [
+      14.7,
+      0
+    ]
+  },
+  "20240923001000": {
+    "prefNumber": 44,
+    "observationNumber": 132,
+    "pressure": [
+      1004.6,
+      0
+    ],
+    "normalPressure": [
+      1007.4,
+      0
+    ],
+    "temp": [
+      23.7,
+      0
+    ],
+    "humidity": [
+      87,
+      0
+    ],
+    "sun10m": [
+      0,
+      0
+    ],
+    "sun1h": [
+      0.0,
+      0
+    ],
+    "precipitation10m": [
+      0.0,
+      0
+    ],
+    "precipitation1h": [
+      0.0,
+      0
+    ],
+    "precipitation3h": [
+      0.0,
+      0
+    ],
+    "precipitation24h": [
+      2.5,
+      0
+    ],
+    "windDirection": [
+      2,
+      0
+    ],
+    "wind": [
+      3.9,
+      0
+    ],
+    "maxTempTime": {
+      "hour": 15,
+      "minute": 10
+    },
+    "maxTemp": [
+      23.7,
+      0
+    ],
+    "minTempTime": {
+      "hour": 15,
+      "minute": 8
+    },
+    "minTemp": [
+      23.6,
+      0
+    ],
+    "gustTime": {
+      "hour": 15,
+      "minute": 2
+    },
+    "gustDirection": [
+      1,
+      0
+    ],
+    "gust": [
+      7.4,
+      0
+    ]
+  },
+  "20240923002000": {
+    "prefNumber": 44,
+    "observationNumber": 132,
+    "pressure": [
+      1004.7,
+      0
+    ],
+    "normalPressure": [
+      1007.5,
+      0
+    ],
+    "temp": [
+      23.6,
+      0
+    ],
+    "humidity": [
+      88,
+      0
+    ],
+    "sun10m": [
+      0,
+      0
+    ],
+    "sun1h": [
+      0.0,
+      0
+    ],
+    "precipitation10m": [
+      0.0,
+      0
+    ],
+    "precipitation1h": [
+      0.0,
+      0
+    ],
+    "precipitation3h": [
+      0.0,
+      0
+    ],
+    "precipitation24h": [
+      2.5,
+      0
+    ],
+    "windDirection": [
+      2,
+      0
+    ],
+    "wind": [
+      2.8,
+      0
+    ],
+    "maxTempTime": {
+      "hour": 15,
+      "minute": 16
+    },
+    "maxTemp": [
+      23.7,
+      0
+    ],
+    "minTempTime": {
+      "hour": 15,
+      "minute": 20
+    },
+    "minTemp": [
+      23.6,
+      0
+    ],
+    "gustTime": {
+      "hour": 15,
+      "minute": 2
+    },
+    "gustDirection": [
+      1,
+      0
+    ],
+    "gust": [
+      7.4,
+      0
+    ]
+  },
+  "20240923003000": {
+    "prefNumber": 44,
+    "observationNumber": 132,
+    "pressure": [
+      1004.7,
+      0
+    ],
+    "normalPressure": [
+      1007.5,
+      0
+    ],
+    "temp": [
+      23.6,
+      0
+    ],
+    "humidity": [
+      88,
+      0
+    ],
+    "sun10m": [
+      0,
+      0
+    ],
+    "sun1h": [
+      0.0,
+      0
+    ],
+    "precipitation10m": [
+      0.0,
+      0
+    ],
+    "precipitation1h": [
+      0.0,
+      0
+    ],
+    "precipitation3h": [
+      0.0,
+      0
+    ],
+    "precipitation24h": [
+      2.5,
+      0
+    ],
+    "windDirection": [
+      2,
+      0
+    ],
+    "wind": [
+      3.6,
+      0
+    ],
+    "maxTempTime": {
+      "hour": 15,
+      "minute": 16
+    },
+    "maxTemp": [
+      23.7,
+      0
+    ],
+    "minTempTime": {
+      "hour": 15,
+      "minute": 29
+    },
+    "minTemp": [
+      23.5,
+      0
+    ],
+    "gustTime": {
+      "hour": 15,
+      "minute": 2
+    },
+    "gustDirection": [
+      1,
+      0
+    ],
+    "gust": [
+      7.4,
+      0
+    ]
+  }
+}

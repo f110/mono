@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "jma",
+    srcs = [
+        "amedas.go",
+        "const.go",
+    ],
+    importpath = "go.f110.dev/mono/go/jma",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/go.f110.dev/xerrors"],
+)
+
+go_test(
+    name = "jma_test",
+    srcs = ["amedas_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":jma"],
+    deps = [
+        "//vendor/github.com/jarcoal/httpmock",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)
