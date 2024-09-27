@@ -48,6 +48,24 @@ func TestAmedas_GetObservedDataRange(t *testing.T) {
 	assert.True(t, sort.SliceIsSorted(data, func(i, j int) bool { return data[i].Time.Before(data[j].Time) }))
 }
 
+func TestAmedas_GetObservedDataIter(t *testing.T) {
+	tr := newMockTransport()
+
+	a := NewAmedas()
+	a.client = &http.Client{Transport: tr}
+	loc, _ := time.LoadLocation("Asia/Tokyo")
+	dataIter := a.GetObservedDataIter(context.Background(), Tokyo, 132, time.Date(2024, 9, 23, 0, 35, 0, 0, loc))
+	var i int
+	for v := range dataIter {
+		require.NotNil(t, v)
+		require.NoError(t, v.Err)
+		i++
+		if i == 5 {
+			break
+		}
+	}
+}
+
 func newMockTransport() http.RoundTripper {
 	tr := httpmock.NewMockTransport()
 	tr.RegisterRegexpResponder(http.MethodGet,

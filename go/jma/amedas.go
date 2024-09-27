@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"net/http"
 	"sort"
 	"time"
@@ -81,6 +82,8 @@ func (a *Amedas) GetObservedData(ctx context.Context, pref PrefectureNumber, sit
 	return result, nil
 }
 
+// GetObservedDataRange returns a list of AmedasData.
+// The list is sorted in ascending order, oldest first.
 func (a *Amedas) GetObservedDataRange(ctx context.Context, pref PrefectureNumber, site int, t time.Time, d time.Duration) ([]*AmedasData, error) {
 	earliestTime := t.Add(-d).Truncate(3 * time.Hour)
 	baseTime := earliestTime
@@ -99,12 +102,38 @@ func (a *Amedas) GetObservedDataRange(ctx context.Context, pref PrefectureNumber
 	return result, nil
 }
 
+// GetObservedDataIter returns the iterator for AmedasData.
+// Data is returned in descending order.
+func (a *Amedas) GetObservedDataIter(ctx context.Context, pref PrefectureNumber, site int, t time.Time) iter.Seq[*AmedasDataIter] {
+	baseTime := t.Truncate(3 * time.Hour)
+	return func(yield func(*AmedasDataIter) bool) {
+		for {
+			data, err := a.GetObservedData(ctx, pref, site, baseTime)
+			if err != nil {
+				yield(&AmedasDataIter{Err: err})
+				return
+			}
+			for i := len(data) - 1; i > 0; i-- {
+				if !yield(&AmedasDataIter{AmedasData: data[i]}) {
+					return
+				}
+			}
+			baseTime = baseTime.Add(-3 * time.Hour)
+		}
+	}
+}
+
 type AmedasData struct {
 	Time             time.Time
 	SeeLevelPressure float64
 	Pressure         float64
 	Temperature      float64
 	Humidity         int
+}
+
+type AmedasDataIter struct {
+	*AmedasData
+	Err error
 }
 
 type amedasDataPoint map[string]*amedasData
