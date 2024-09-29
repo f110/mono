@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "amedas-exporter_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/amedas-exporter",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//go/ctxutil",
+        "//go/enumerable",
+        "//go/fsm",
+        "//go/jma",
+        "//go/logger",
+        "//go/prometheus/exporter",
+        "//go/ucl",
+        "//vendor/github.com/prometheus/client_golang/prometheus",
+        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
+        "//vendor/go.uber.org/zap",
+    ],
+)
+
+go_binary(
+    name = "amedas-exporter",
+    embed = [":amedas-exporter_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "amedas-exporter_test",
+    srcs = ["conf_test.go"],
+    embed = [":amedas-exporter_lib"],
+    deps = [
+        "//go/ucl",
+        "//vendor/github.com/stretchr/testify/assert",
+        "//vendor/github.com/stretchr/testify/require",
+    ],
+)

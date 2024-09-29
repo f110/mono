@@ -2,11 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "exporter",
-    srcs = ["inkbird.go"],
+    srcs = [
+        "amedas.go",
+        "inkbird.go",
+    ],
     importpath = "go.f110.dev/mono/go/prometheus/exporter",
     visibility = ["//visibility:public"],
     deps = [
         "//go/ble/inkbird",
+        "//go/jma",
         "//vendor/github.com/prometheus/client_golang/prometheus",
         "//vendor/go.f110.dev/xerrors",
     ],

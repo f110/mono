@@ -23,7 +23,7 @@
         <option value="gopkg.in/src-d/go-git.v4/storage" />
         <option value="gotest.tools/assert" />
         <option value="gotest.tools/v3/assert" />
-        <option value="k8s.io/apimachinery/pkg/util/json" />
+        <option value="k8s.io/apimachinery/pkg/util" />
         <option value="sigs.k8s.io/kind/pkg/errors" />
       </array>
     </option>
