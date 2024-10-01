@@ -178,31 +178,41 @@ func (s *configurationAmedasSite) UnmarshalJSON(b []byte) error {
 	if !ok {
 		return nil
 	}
+
+	var sites []map[string]interface{}
 	multiSite, ok := data["site"].([]interface{})
 	if ok {
-		for _, m := range multiSite {
-			for k, v := range m.(map[string]interface{}) {
-				var sites []*site
-				nos, ok := v.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				if _, ok := nos["no"]; !ok {
-					continue
-				}
-				n, ok := nos["no"].([]interface{})
-				if ok {
-					val := enumerable.Map(n, func(t interface{}) int { return int(t.(float64)) })
-					for _, siteNo := range val {
-						sites = append(sites, &site{Pref: k, No: siteNo})
-					}
-				}
-				single, ok := nos["no"].(float64)
-				if ok {
-					sites = append(sites, &site{Pref: k, No: int(single)})
-				}
-				s.Sites = append(s.Sites, sites...)
+		sites = enumerable.Map(multiSite, func(t interface{}) map[string]interface{} { return t.(map[string]interface{}) })
+	} else {
+		site, ok := data["site"].(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		sites = []map[string]interface{}{site}
+	}
+
+	for _, m := range sites {
+		for k, v := range m {
+			var sites []*site
+			nos, ok := v.(map[string]interface{})
+			if !ok {
+				continue
 			}
+			if _, ok := nos["no"]; !ok {
+				continue
+			}
+			n, ok := nos["no"].([]interface{})
+			if ok {
+				val := enumerable.Map(n, func(t interface{}) int { return int(t.(float64)) })
+				for _, siteNo := range val {
+					sites = append(sites, &site{Pref: k, No: siteNo})
+				}
+			}
+			single, ok := nos["no"].(float64)
+			if ok {
+				sites = append(sites, &site{Pref: k, No: int(single)})
+			}
+			s.Sites = append(s.Sites, sites...)
 		}
 	}
 	return nil
