@@ -18,7 +18,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
-	github.com/go-git/go-git/v5 v5.11.0
+	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/go-containerregistry v0.4.0
@@ -206,10 +206,10 @@ require (
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/schemalex/schemalex v0.1.1 // indirect
 	github.com/secure-io/sio-go v0.3.1 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
-	github.com/skeema/knownhosts v1.2.1 // indirect
+	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/sourcegraph/go-ctags v0.0.0-20220404085534-f974026334d7 // indirect
 	github.com/tinylib/msgp v1.1.6 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
