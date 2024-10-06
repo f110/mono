@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"io"
+	"iter"
 	"net/http"
 	"os"
 
@@ -204,6 +205,51 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 	}
 
 	return objs, nil
+}
+
+func (s *S3) ListIter(ctx context.Context, prefix string) (iter.Seq[*Object], error) {
+	c, err := s.opt.Client()
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+
+	paginator := s3.NewListObjectsV2Paginator(c, &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(prefix),
+	})
+
+	return func(yield func(*Object) bool) {
+		for paginator.HasMorePages() {
+			var page *s3.ListObjectsV2Output
+			retryCount := 1
+			for {
+				p, err := paginator.NextPage(ctx)
+				if err != nil {
+					if s.opt.Retries > 0 && retryCount < s.opt.Retries {
+						logger.Log.Info("Retrying get a next page", zap.Int("retryCount", retryCount), zap.String("prefix", prefix))
+						retryCount++
+						continue
+					}
+					if !yield(&Object{Err: err}) {
+						return
+					}
+				}
+				page = p
+				break
+			}
+
+			for _, v := range page.Contents {
+				obj := &Object{
+					Name:         aws.ToString(v.Key),
+					Size:         v.Size,
+					LastModified: aws.ToTime(v.LastModified),
+				}
+				if !yield(obj) {
+					return
+				}
+			}
+		}
+	}, nil
 }
 
 func (s *S3) Put(ctx context.Context, name string, data []byte) error {

@@ -28,4 +28,5 @@ type Object struct {
 	Size         int64
 	LastModified time.Time
 	Body         io.ReadCloser
+	Err          error
 }
