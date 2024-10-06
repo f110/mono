@@ -1852,7 +1852,7 @@ sigs.k8s.io/kind/pkg/apis/config/defaults
 sigs.k8s.io/kind/pkg/apis/config/v1alpha4
 sigs.k8s.io/kind/pkg/errors
 sigs.k8s.io/kind/pkg/internal/sets
-# sigs.k8s.io/secrets-store-csi-driver v1.4.1
+# sigs.k8s.io/secrets-store-csi-driver v1.4.5
 ## explicit; go 1.21
 sigs.k8s.io/secrets-store-csi-driver/apis/v1
 sigs.k8s.io/secrets-store-csi-driver/apis/v1alpha1
