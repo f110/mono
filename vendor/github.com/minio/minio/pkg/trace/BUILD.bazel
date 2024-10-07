@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "trace",
-    srcs = ["trace.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio/pkg/trace",
-    importpath = "github.com/minio/minio/pkg/trace",
-    visibility = ["//visibility:public"],
-)

@@ -4,6 +4,7 @@ go_library(
     name = "plan9stats",
     srcs = [
         "cpu.go",
+        "disk.go",
         "doc.go",
         "host.go",
         "int.go",

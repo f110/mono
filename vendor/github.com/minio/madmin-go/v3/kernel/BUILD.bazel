@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "kernel",
+    srcs = [
+        "kernel.go",
+        "kernel_other.go",
+        "kernel_utsname_int8.go",
+        "kernel_utsname_uint8.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/minio/madmin-go/v3/kernel",
+    importpath = "github.com/minio/madmin-go/v3/kernel",
+    visibility = ["//visibility:public"],
+)

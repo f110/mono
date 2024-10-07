@@ -1,6 +1,6 @@
 /*
  * MinIO Go Library for Amazon S3 Compatible Cloud Storage
- * Copyright 2015-2017 MinIO, Inc.
+ * Copyright 2015-2023 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,29 @@ package minio
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7/pkg/encrypt"
+	"github.com/minio/minio-go/v7/pkg/tags"
 )
 
 // expirationDateFormat date format for expiration key in json policy.
-const expirationDateFormat = "2006-01-02T15:04:05.999Z"
+const expirationDateFormat = "2006-01-02T15:04:05.000Z"
 
 // policyCondition explanation:
 // http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html
 //
 // Example:
 //
-//   policyCondition {
-//       matchType: "$eq",
-//       key: "$Content-Type",
-//       value: "image/png",
-//   }
-//
+//	policyCondition {
+//	    matchType: "$eq",
+//	    key: "$Content-Type",
+//	    value: "image/png",
+//	}
 type policyCondition struct {
 	matchType string
 	condition string
@@ -98,10 +102,8 @@ func (p *PostPolicy) SetKey(key string) error {
 
 // SetKeyStartsWith - Sets an object name that an policy based upload
 // can start with.
+// Can use an empty value ("") to allow any key.
 func (p *PostPolicy) SetKeyStartsWith(keyStartsWith string) error {
-	if strings.TrimSpace(keyStartsWith) == "" || keyStartsWith == "" {
-		return errInvalidArgument("Object prefix is empty.")
-	}
 	policyCond := policyCondition{
 		matchType: "starts-with",
 		condition: "$key",
@@ -152,6 +154,27 @@ func (p *PostPolicy) SetCondition(matchType, condition, value string) error {
 	return errInvalidArgument("Invalid condition in policy")
 }
 
+// SetTagging - Sets tagging for the object for this policy based upload.
+func (p *PostPolicy) SetTagging(tagging string) error {
+	if strings.TrimSpace(tagging) == "" || tagging == "" {
+		return errInvalidArgument("No tagging specified.")
+	}
+	_, err := tags.ParseObjectXML(strings.NewReader(tagging))
+	if err != nil {
+		return errors.New("The XML you provided was not well-formed or did not validate against our published schema.") //nolint
+	}
+	policyCond := policyCondition{
+		matchType: "eq",
+		condition: "$tagging",
+		value:     tagging,
+	}
+	if err := p.addNewPolicy(policyCond); err != nil {
+		return err
+	}
+	p.formData["tagging"] = tagging
+	return nil
+}
+
 // SetContentType - Sets content-type of the object for this policy
 // based upload.
 func (p *PostPolicy) SetContentType(contentType string) error {
@@ -172,10 +195,8 @@ func (p *PostPolicy) SetContentType(contentType string) error {
 
 // SetContentTypeStartsWith - Sets what content-type of the object for this policy
 // based upload can start with.
+// Can use an empty value ("") to allow any content-type.
 func (p *PostPolicy) SetContentTypeStartsWith(contentTypeStartsWith string) error {
-	if strings.TrimSpace(contentTypeStartsWith) == "" || contentTypeStartsWith == "" {
-		return errInvalidArgument("No content type specified.")
-	}
 	policyCond := policyCondition{
 		matchType: "starts-with",
 		condition: "$Content-Type",
@@ -188,6 +209,23 @@ func (p *PostPolicy) SetContentTypeStartsWith(contentTypeStartsWith string) erro
 	return nil
 }
 
+// SetContentDisposition - Sets content-disposition of the object for this policy
+func (p *PostPolicy) SetContentDisposition(contentDisposition string) error {
+	if strings.TrimSpace(contentDisposition) == "" || contentDisposition == "" {
+		return errInvalidArgument("No content disposition specified.")
+	}
+	policyCond := policyCondition{
+		matchType: "eq",
+		condition: "$Content-Disposition",
+		value:     contentDisposition,
+	}
+	if err := p.addNewPolicy(policyCond); err != nil {
+		return err
+	}
+	p.formData["Content-Disposition"] = contentDisposition
+	return nil
+}
+
 // SetContentLengthRange - Set new min and max content length
 // condition for all incoming uploads.
 func (p *PostPolicy) SetContentLengthRange(min, max int64) error {
@@ -197,8 +235,8 @@ func (p *PostPolicy) SetContentLengthRange(min, max int64) error {
 	if min < 0 {
 		return errInvalidArgument("Minimum limit cannot be negative.")
 	}
-	if max < 0 {
-		return errInvalidArgument("Maximum limit cannot be negative.")
+	if max <= 0 {
+		return errInvalidArgument("Maximum limit cannot be non-positive.")
 	}
 	p.contentLengthRange.min = min
 	p.contentLengthRange.max = max
@@ -243,7 +281,7 @@ func (p *PostPolicy) SetSuccessStatusAction(status string) error {
 
 // SetUserMetadata - Set user metadata as a key/value couple.
 // Can be retrieved through a HEAD request or an event.
-func (p *PostPolicy) SetUserMetadata(key string, value string) error {
+func (p *PostPolicy) SetUserMetadata(key, value string) error {
 	if strings.TrimSpace(key) == "" || key == "" {
 		return errInvalidArgument("Key is empty")
 	}
@@ -263,9 +301,29 @@ func (p *PostPolicy) SetUserMetadata(key string, value string) error {
 	return nil
 }
 
+// SetChecksum sets the checksum of the request.
+func (p *PostPolicy) SetChecksum(c Checksum) {
+	if c.IsSet() {
+		p.formData[amzChecksumAlgo] = c.Type.String()
+		p.formData[c.Type.Key()] = c.Encoded()
+	}
+}
+
+// SetEncryption - sets encryption headers for POST API
+func (p *PostPolicy) SetEncryption(sse encrypt.ServerSide) {
+	if sse == nil {
+		return
+	}
+	h := http.Header{}
+	sse.Marshal(h)
+	for k, v := range h {
+		p.formData[k] = v[0]
+	}
+}
+
 // SetUserData - Set user data as a key/value couple.
 // Can be retrieved through a HEAD request or an event.
-func (p *PostPolicy) SetUserData(key string, value string) error {
+func (p *PostPolicy) SetUserData(key, value string) error {
 	if key == "" {
 		return errInvalidArgument("Key is empty")
 	}
@@ -286,9 +344,13 @@ func (p *PostPolicy) SetUserData(key string, value string) error {
 }
 
 // addNewPolicy - internal helper to validate adding new policies.
+// Can use starts-with with an empty value ("") to allow any content within a form field.
 func (p *PostPolicy) addNewPolicy(policyCond policyCondition) error {
-	if policyCond.matchType == "" || policyCond.condition == "" || policyCond.value == "" {
+	if policyCond.matchType == "" || policyCond.condition == "" {
 		return errInvalidArgument("Policy fields are empty.")
+	}
+	if policyCond.matchType != "starts-with" && policyCond.value == "" {
+		return errInvalidArgument("Policy value is empty.")
 	}
 	p.conditions = append(p.conditions, policyCond)
 	return nil
@@ -316,8 +378,8 @@ func (p PostPolicy) marshalJSON() []byte {
 	}
 	retStr := "{"
 	retStr = retStr + expirationStr + ","
-	retStr = retStr + conditionsStr
-	retStr = retStr + "}"
+	retStr += conditionsStr
+	retStr += "}"
 	return []byte(retStr)
 }
 

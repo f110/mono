@@ -1,0 +1,49 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "load",
+    srcs = [
+        "load.go",
+        "load_aix.go",
+        "load_aix_cgo.go",
+        "load_aix_nocgo.go",
+        "load_bsd.go",
+        "load_darwin.go",
+        "load_fallback.go",
+        "load_freebsd.go",
+        "load_linux.go",
+        "load_openbsd.go",
+        "load_solaris.go",
+        "load_windows.go",
+    ],
+    cgo = True,
+    clinkopts = select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "-L/usr/lib -lperfstat",
+        ],
+        "//conditions:default": [],
+    }),
+    importmap = "go.f110.dev/mono/vendor/github.com/shirou/gopsutil/v3/load",
+    importpath = "github.com/shirou/gopsutil/v3/load",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/shirou/gopsutil/v3/internal/common",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//vendor/github.com/power-devops/perfstat",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "//conditions:default": [],
+    }),
+)

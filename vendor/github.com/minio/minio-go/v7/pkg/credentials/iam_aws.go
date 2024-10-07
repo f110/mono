@@ -19,9 +19,10 @@ package credentials
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -30,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/goccy/go-json"
 )
 
 // DefaultExpiryWindow - Default expiry window.
@@ -38,7 +39,10 @@ import (
 // prior to the credentials actually expiring. This is beneficial
 // so race conditions with expiring credentials do not cause
 // request to fail unexpectedly due to ExpiredTokenException exceptions.
-const DefaultExpiryWindow = time.Second * 10 // 10 secs
+// DefaultExpiryWindow can be used as parameter to (*Expiry).SetExpiration.
+// When used the tokens refresh will be triggered when 80% of the elapsed
+// time until the actual expiration time is passed.
+const DefaultExpiryWindow = -1
 
 // A IAM retrieves credentials from the EC2 service, and keeps track if
 // those credentials are expired.
@@ -50,15 +54,37 @@ type IAM struct {
 
 	// Custom endpoint to fetch IAM role credentials.
 	Endpoint string
+
+	// Region configurable custom region for STS
+	Region string
+
+	// Support for container authorization token https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
+	Container struct {
+		AuthorizationToken     string
+		AuthorizationTokenFile string
+		CredentialsFullURI     string
+		CredentialsRelativeURI string
+	}
+
+	// EKS based k8s RBAC authorization - https://docs.aws.amazon.com/eks/latest/userguide/pod-configuration.html
+	EKSIdentity struct {
+		TokenFile       string
+		RoleARN         string
+		RoleSessionName string
+	}
 }
 
 // IAM Roles for Amazon EC2
 // http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 const (
-	defaultIAMRoleEndpoint      = "http://169.254.169.254"
-	defaultECSRoleEndpoint      = "http://169.254.170.2"
-	defaultSTSRoleEndpoint      = "https://sts.amazonaws.com"
-	defaultIAMSecurityCredsPath = "/latest/meta-data/iam/security-credentials/"
+	DefaultIAMRoleEndpoint      = "http://169.254.169.254"
+	DefaultECSRoleEndpoint      = "http://169.254.170.2"
+	DefaultSTSRoleEndpoint      = "https://sts.amazonaws.com"
+	DefaultIAMSecurityCredsPath = "/latest/meta-data/iam/security-credentials/"
+	TokenRequestTTLHeader       = "X-aws-ec2-metadata-token-ttl-seconds"
+	TokenPath                   = "/latest/api/token"
+	TokenTTL                    = "21600"
+	TokenRequestHeader          = "X-aws-ec2-metadata-token"
 )
 
 // NewIAM returns a pointer to a new Credentials object wrapping the IAM.
@@ -75,21 +101,61 @@ func NewIAM(endpoint string) *Credentials {
 // Error will be returned if the request fails, or unable to extract
 // the desired
 func (m *IAM) Retrieve() (Value, error) {
+	token := os.Getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN")
+	if token == "" {
+		token = m.Container.AuthorizationToken
+	}
+
+	tokenFile := os.Getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
+	if tokenFile == "" {
+		tokenFile = m.Container.AuthorizationToken
+	}
+
+	relativeURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+	if relativeURI == "" {
+		relativeURI = m.Container.CredentialsRelativeURI
+	}
+
+	fullURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI")
+	if fullURI == "" {
+		fullURI = m.Container.CredentialsFullURI
+	}
+
+	identityFile := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+	if identityFile == "" {
+		identityFile = m.EKSIdentity.TokenFile
+	}
+
+	roleArn := os.Getenv("AWS_ROLE_ARN")
+	if roleArn == "" {
+		roleArn = m.EKSIdentity.RoleARN
+	}
+
+	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+	if roleSessionName == "" {
+		roleSessionName = m.EKSIdentity.RoleSessionName
+	}
+
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = m.Region
+	}
+
 	var roleCreds ec2RoleCredRespBody
 	var err error
 
 	endpoint := m.Endpoint
 	switch {
-	case len(os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")) > 0:
+	case identityFile != "":
 		if len(endpoint) == 0 {
-			if len(os.Getenv("AWS_REGION")) > 0 {
-				if strings.HasPrefix(os.Getenv("AWS_REGION"), "cn-") {
-					endpoint = "https://sts." + os.Getenv("AWS_REGION") + ".amazonaws.com.cn"
+			if region != "" {
+				if strings.HasPrefix(region, "cn-") {
+					endpoint = "https://sts." + region + ".amazonaws.com.cn"
 				} else {
-					endpoint = "https://sts." + os.Getenv("AWS_REGION") + ".amazonaws.com"
+					endpoint = "https://sts." + region + ".amazonaws.com"
 				}
 			} else {
-				endpoint = defaultSTSRoleEndpoint
+				endpoint = DefaultSTSRoleEndpoint
 			}
 		}
 
@@ -97,15 +163,15 @@ func (m *IAM) Retrieve() (Value, error) {
 			Client:      m.Client,
 			STSEndpoint: endpoint,
 			GetWebIDTokenExpiry: func() (*WebIdentityToken, error) {
-				token, err := ioutil.ReadFile(os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE"))
+				token, err := os.ReadFile(identityFile)
 				if err != nil {
 					return nil, err
 				}
 
 				return &WebIdentityToken{Token: string(token)}, nil
 			},
-			roleARN:         os.Getenv("AWS_ROLE_ARN"),
-			roleSessionName: os.Getenv("AWS_ROLE_SESSION_NAME"),
+			RoleARN:         roleArn,
+			roleSessionName: roleSessionName,
 		}
 
 		stsWebIdentityCreds, err := creds.Retrieve()
@@ -114,17 +180,20 @@ func (m *IAM) Retrieve() (Value, error) {
 		}
 		return stsWebIdentityCreds, err
 
-	case len(os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")) > 0:
+	case relativeURI != "":
 		if len(endpoint) == 0 {
-			endpoint = fmt.Sprintf("%s%s", defaultECSRoleEndpoint,
-				os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"))
+			endpoint = fmt.Sprintf("%s%s", DefaultECSRoleEndpoint, relativeURI)
 		}
 
-		roleCreds, err = getEcsTaskCredentials(m.Client, endpoint)
+		roleCreds, err = getEcsTaskCredentials(m.Client, endpoint, token)
 
-	case len(os.Getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI")) > 0:
+	case tokenFile != "" && fullURI != "":
+		endpoint = fullURI
+		roleCreds, err = getEKSPodIdentityCredentials(m.Client, endpoint, tokenFile)
+
+	case fullURI != "":
 		if len(endpoint) == 0 {
-			endpoint = os.Getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI")
+			endpoint = fullURI
 			var ok bool
 			if ok, err = isLoopback(endpoint); !ok {
 				if err == nil {
@@ -134,7 +203,7 @@ func (m *IAM) Retrieve() (Value, error) {
 			}
 		}
 
-		roleCreds, err = getEcsTaskCredentials(m.Client, endpoint)
+		roleCreds, err = getEcsTaskCredentials(m.Client, endpoint, token)
 
 	default:
 		roleCreds, err = getCredentials(m.Client, endpoint)
@@ -150,6 +219,7 @@ func (m *IAM) Retrieve() (Value, error) {
 		AccessKeyID:     roleCreds.AccessKeyID,
 		SecretAccessKey: roleCreds.SecretAccessKey,
 		SessionToken:    roleCreds.Token,
+		Expiration:      roleCreds.Expiration,
 		SignerType:      SignatureV4,
 	}, nil
 }
@@ -176,15 +246,11 @@ type ec2RoleCredRespBody struct {
 // be sent to fetch the rolling access credentials.
 // http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 func getIAMRoleURL(endpoint string) (*url.URL, error) {
-	if endpoint == "" {
-		endpoint = defaultIAMRoleEndpoint
-	}
-
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
 	}
-	u.Path = defaultIAMSecurityCredsPath
+	u.Path = DefaultIAMSecurityCredsPath
 	return u, nil
 }
 
@@ -192,10 +258,13 @@ func getIAMRoleURL(endpoint string) (*url.URL, error) {
 // with the current EC2 service. If there are no credentials,
 // or there is an error making or receiving the request.
 // http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
-func listRoleNames(client *http.Client, u *url.URL) ([]string, error) {
+func listRoleNames(client *http.Client, u *url.URL, token string) ([]string, error) {
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+	if token != "" {
+		req.Header.Add(TokenRequestHeader, token)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -219,10 +288,14 @@ func listRoleNames(client *http.Client, u *url.URL) ([]string, error) {
 	return credsList, nil
 }
 
-func getEcsTaskCredentials(client *http.Client, endpoint string) (ec2RoleCredRespBody, error) {
+func getEcsTaskCredentials(client *http.Client, endpoint, token string) (ec2RoleCredRespBody, error) {
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
 		return ec2RoleCredRespBody{}, err
+	}
+
+	if token != "" {
+		req.Header.Set("Authorization", token)
 	}
 
 	resp, err := client.Do(req)
@@ -235,11 +308,47 @@ func getEcsTaskCredentials(client *http.Client, endpoint string) (ec2RoleCredRes
 	}
 
 	respCreds := ec2RoleCredRespBody{}
-	if err := jsoniter.NewDecoder(resp.Body).Decode(&respCreds); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&respCreds); err != nil {
 		return ec2RoleCredRespBody{}, err
 	}
 
 	return respCreds, nil
+}
+
+func getEKSPodIdentityCredentials(client *http.Client, endpoint string, tokenFile string) (ec2RoleCredRespBody, error) {
+	if tokenFile != "" {
+		bytes, err := os.ReadFile(tokenFile)
+		if err != nil {
+			return ec2RoleCredRespBody{}, fmt.Errorf("getEKSPodIdentityCredentials: failed to read token file:%s", err)
+		}
+		token := string(bytes)
+		return getEcsTaskCredentials(client, endpoint, token)
+	}
+	return ec2RoleCredRespBody{}, fmt.Errorf("getEKSPodIdentityCredentials: no tokenFile found")
+}
+
+func fetchIMDSToken(client *http.Client, endpoint string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, endpoint+TokenPath, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add(TokenRequestTTLHeader, TokenTTL)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New(resp.Status)
+	}
+	return string(data), nil
 }
 
 // getCredentials - obtains the credentials from the IAM role name associated with
@@ -248,6 +357,21 @@ func getEcsTaskCredentials(client *http.Client, endpoint string) (ec2RoleCredRes
 // If the credentials cannot be found, or there is an error
 // reading the response an error will be returned.
 func getCredentials(client *http.Client, endpoint string) (ec2RoleCredRespBody, error) {
+	if endpoint == "" {
+		endpoint = DefaultIAMRoleEndpoint
+	}
+
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html
+	token, err := fetchIMDSToken(client, endpoint)
+	if err != nil {
+		// Return only errors for valid situations, if the IMDSv2 is not enabled
+		// we will not be able to get the token, in such a situation we have
+		// to rely on IMDSv1 behavior as a fallback, this check ensures that.
+		// Refer https://github.com/minio/minio-go/issues/1866
+		if !errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, context.Canceled) {
+			return ec2RoleCredRespBody{}, err
+		}
+	}
 
 	// http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 	u, err := getIAMRoleURL(endpoint)
@@ -256,7 +380,7 @@ func getCredentials(client *http.Client, endpoint string) (ec2RoleCredRespBody, 
 	}
 
 	// http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
-	roleNames, err := listRoleNames(client, u)
+	roleNames, err := listRoleNames(client, u, token)
 	if err != nil {
 		return ec2RoleCredRespBody{}, err
 	}
@@ -280,6 +404,9 @@ func getCredentials(client *http.Client, endpoint string) (ec2RoleCredRespBody, 
 	if err != nil {
 		return ec2RoleCredRespBody{}, err
 	}
+	if token != "" {
+		req.Header.Add(TokenRequestHeader, token)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -291,7 +418,7 @@ func getCredentials(client *http.Client, endpoint string) (ec2RoleCredRespBody, 
 	}
 
 	respCreds := ec2RoleCredRespBody{}
-	if err := jsoniter.NewDecoder(resp.Body).Decode(&respCreds); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&respCreds); err != nil {
 		return ec2RoleCredRespBody{}, err
 	}
 

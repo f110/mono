@@ -63,7 +63,6 @@ go_library(
         ],
         "@io_bazel_rules_go//go/platform:windows": [
             "//vendor/github.com/mattn/go-colorable",
-            "//vendor/github.com/mattn/go-isatty",
         ],
         "//conditions:default": [],
     }),

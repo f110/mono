@@ -4,6 +4,8 @@ go_library(
     name = "host",
     srcs = [
         "host.go",
+        "host_aix.go",
+        "host_aix_ppc64.go",
         "host_bsd.go",
         "host_darwin.go",
         "host_darwin_amd64.go",

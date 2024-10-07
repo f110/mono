@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	madmin "github.com/minio/madmin-go/v3"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	"github.com/minio/minio/pkg/madmin"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
