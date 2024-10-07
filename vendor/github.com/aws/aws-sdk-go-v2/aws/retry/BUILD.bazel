@@ -3,6 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "retry",
     srcs = [
+        "adaptive.go",
+        "adaptive_ratelimit.go",
+        "adaptive_token_bucket.go",
         "doc.go",
         "errors.go",
         "jitter_backoff.go",
@@ -11,6 +14,7 @@ go_library(
         "retry.go",
         "retryable_error.go",
         "standard.go",
+        "throttle_error.go",
         "timeout_error.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/aws/retry",

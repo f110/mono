@@ -2,8 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "ddtrace",
-    srcs = ["ddtrace.go"],
+    srcs = [
+        "ddtrace.go",
+        "span_link_msgp.go",
+    ],
     importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace",
     importpath = "gopkg.in/DataDog/dd-trace-go.v1/ddtrace",
     visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/tinylib/msgp/msgp",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+    ],
 )

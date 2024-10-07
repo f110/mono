@@ -15,16 +15,13 @@ import (
 
 // Returns torrent files from a bucket. BitTorrent can save you bandwidth when
 // you're distributing large files. For more information about BitTorrent, see
-// Using BitTorrent with Amazon S3
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/S3Torrent.html). You can get
-// torrent only for objects that are less than 5 GB in size, and that are not
-// encrypted using server-side encryption with a customer-provided encryption key.
-// To use GET, you must have READ access to the object. This action is not
-// supported by Amazon S3 on Outposts. The following action is related to
-// GetObjectTorrent:
-//
-// * GetObject
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
+// Using BitTorrent with Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/S3Torrent.html)
+// . You can get torrent only for objects that are less than 5 GB in size, and that
+// are not encrypted using server-side encryption with a customer-provided
+// encryption key. To use GET, you must have READ access to the object. This action
+// is not supported by Amazon S3 on Outposts. The following action is related to
+// GetObjectTorrent :
+//   - GetObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
 func (c *Client) GetObjectTorrent(ctx context.Context, params *GetObjectTorrentInput, optFns ...func(*Options)) (*GetObjectTorrentOutput, error) {
 	if params == nil {
 		params = &GetObjectTorrentInput{}
@@ -53,14 +50,14 @@ type GetObjectTorrentInput struct {
 	Key *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	// Confirms that the requester knows that they will be charged for the request.
 	// Bucket owners need not specify this parameter in their requests. For information
-	// about downloading objects from requester pays buckets, see Downloading Objects
-	// in Requestor Pays Buckets
-	// (https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html)
+	// about downloading objects from Requester Pays buckets, see Downloading Objects
+	// in Requester Pays Buckets (https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html)
 	// in the Amazon S3 User Guide.
 	RequestPayer types.RequestPayer
 
@@ -184,7 +181,6 @@ func addGetObjectTorrentUpdateEndpoint(stack *middleware.Stack, options Options)
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "limiter",
+    srcs = ["limiter.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/appsec-internal-go/limiter",
+    importpath = "github.com/DataDog/appsec-internal-go/limiter",
+    visibility = ["//visibility:public"],
+)

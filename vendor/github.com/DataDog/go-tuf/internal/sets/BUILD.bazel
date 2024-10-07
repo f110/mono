@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sets",
+    srcs = ["strings.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-tuf/internal/sets",
+    importpath = "github.com/DataDog/go-tuf/internal/sets",
+    visibility = ["//vendor/github.com/DataDog/go-tuf:__subpackages__"],
+)

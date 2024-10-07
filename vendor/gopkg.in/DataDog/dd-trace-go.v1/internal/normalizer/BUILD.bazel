@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "normalizer",
+    srcs = ["normalizer.go"],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/normalizer",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/normalizer",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = [
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+    ],
+)

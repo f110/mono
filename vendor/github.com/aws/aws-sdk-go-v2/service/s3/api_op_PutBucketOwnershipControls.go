@@ -6,6 +6,7 @@ import (
 	"context"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	internalChecksum "github.com/aws/aws-sdk-go-v2/service/internal/checksum"
 	s3cust "github.com/aws/aws-sdk-go-v2/service/s3/internal/customizations"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go/middleware"
@@ -14,16 +15,11 @@ import (
 
 // Creates or modifies OwnershipControls for an Amazon S3 bucket. To use this
 // operation, you must have the s3:PutBucketOwnershipControls permission. For more
-// information about Amazon S3 permissions, see Specifying Permissions in a Policy
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html).
-// For information about Amazon S3 Object Ownership, see Using Object Ownership
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/about-object-ownership.html).
-// The following operations are related to PutBucketOwnershipControls:
-//
-// *
-// GetBucketOwnershipControls
-//
-// * DeleteBucketOwnershipControls
+// information about Amazon S3 permissions, see Specifying permissions in a policy (https://docs.aws.amazon.com/AmazonS3/latest/user-guide/using-with-s3-actions.html)
+// . For information about Amazon S3 Object Ownership, see Using object ownership (https://docs.aws.amazon.com/AmazonS3/latest/user-guide/about-object-ownership.html)
+// . The following operations are related to PutBucketOwnershipControls :
+//   - GetBucketOwnershipControls
+//   - DeleteBucketOwnershipControls
 func (c *Client) PutBucketOwnershipControls(ctx context.Context, params *PutBucketOwnershipControlsInput, optFns ...func(*Options)) (*PutBucketOwnershipControlsOutput, error) {
 	if params == nil {
 		params = &PutBucketOwnershipControlsInput{}
@@ -46,8 +42,8 @@ type PutBucketOwnershipControlsInput struct {
 	// This member is required.
 	Bucket *string
 
-	// The OwnershipControls (BucketOwnerPreferred or ObjectWriter) that you want to
-	// apply to this Amazon S3 bucket.
+	// The OwnershipControls (BucketOwnerEnforced, BucketOwnerPreferred, or
+	// ObjectWriter) that you want to apply to this Amazon S3 bucket.
 	//
 	// This member is required.
 	OwnershipControls *types.OwnershipControls
@@ -58,7 +54,8 @@ type PutBucketOwnershipControlsInput struct {
 	ContentMD5 *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -128,6 +125,9 @@ func (c *Client) addOperationPutBucketOwnershipControlsMiddlewares(stack *middle
 	if err = addMetadataRetrieverMiddleware(stack); err != nil {
 		return err
 	}
+	if err = addPutBucketOwnershipControlsInputChecksumMiddlewares(stack, options); err != nil {
+		return err
+	}
 	if err = addPutBucketOwnershipControlsUpdateEndpoint(stack, options); err != nil {
 		return err
 	}
@@ -143,9 +143,6 @@ func (c *Client) addOperationPutBucketOwnershipControlsMiddlewares(stack *middle
 	if err = addRequestResponseLogging(stack, options); err != nil {
 		return err
 	}
-	if err = smithyhttp.AddContentChecksumMiddleware(stack); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -158,9 +155,19 @@ func newServiceMetadataMiddleware_opPutBucketOwnershipControls(region string) *a
 	}
 }
 
-// getPutBucketOwnershipControlsBucketMember returns a pointer to string denoting a
-// provided bucket member valueand a boolean indicating if the input has a modeled
-// bucket name,
+func addPutBucketOwnershipControlsInputChecksumMiddlewares(stack *middleware.Stack, options Options) error {
+	return internalChecksum.AddInputMiddleware(stack, internalChecksum.InputMiddlewareOptions{
+		GetAlgorithm:                     nil,
+		RequireChecksum:                  true,
+		EnableTrailingChecksum:           false,
+		EnableComputeSHA256PayloadHash:   true,
+		EnableDecodedContentLengthHeader: true,
+	})
+}
+
+// getPutBucketOwnershipControlsBucketMember returns a pointer to string denoting
+// a provided bucket member valueand a boolean indicating if the input has a
+// modeled bucket name,
 func getPutBucketOwnershipControlsBucketMember(input interface{}) (*string, bool) {
 	in := input.(*PutBucketOwnershipControlsInput)
 	if in.Bucket == nil {
@@ -179,7 +186,6 @@ func addPutBucketOwnershipControlsUpdateEndpoint(stack *middleware.Stack, option
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

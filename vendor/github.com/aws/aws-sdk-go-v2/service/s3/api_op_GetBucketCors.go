@@ -12,19 +12,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Returns the cors configuration information set for the bucket. To use this
-// operation, you must have permission to perform the s3:GetBucketCORS action. By
-// default, the bucket owner has this permission and can grant it to others. For
-// more information about cors, see  Enabling Cross-Origin Resource Sharing
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html). The following
-// operations are related to GetBucketCors:
-//
-// * PutBucketCors
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketCors.html)
-//
-// *
-// DeleteBucketCors
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketCors.html)
+// Returns the Cross-Origin Resource Sharing (CORS) configuration information set
+// for the bucket. To use this operation, you must have permission to perform the
+// s3:GetBucketCORS action. By default, the bucket owner has this permission and
+// can grant it to others. For more information about CORS, see Enabling
+// Cross-Origin Resource Sharing (https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html)
+// . The following operations are related to GetBucketCors :
+//   - PutBucketCors (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketCors.html)
+//   - DeleteBucketCors (https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucketCors.html)
 func (c *Client) GetBucketCors(ctx context.Context, params *GetBucketCorsInput, optFns ...func(*Options)) (*GetBucketCorsOutput, error) {
 	if params == nil {
 		params = &GetBucketCorsInput{}
@@ -48,7 +43,8 @@ type GetBucketCorsInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -171,7 +167,6 @@ func addGetBucketCorsUpdateEndpoint(stack *middleware.Stack, options Options) er
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

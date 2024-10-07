@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "errors",
+    srcs = [
+        "support.go",
+        "waf.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-libddwaf/v3/errors",
+    importpath = "github.com/DataDog/go-libddwaf/v3/errors",
+    visibility = ["//visibility:public"],
+)

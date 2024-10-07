@@ -9,6 +9,7 @@ go_library(
         "headers.go",
         "hmac.go",
         "host.go",
+        "scope.go",
         "time.go",
         "util.go",
     ],

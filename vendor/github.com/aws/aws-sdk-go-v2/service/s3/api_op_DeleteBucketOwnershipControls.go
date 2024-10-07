@@ -13,16 +13,11 @@ import (
 
 // Removes OwnershipControls for an Amazon S3 bucket. To use this operation, you
 // must have the s3:PutBucketOwnershipControls permission. For more information
-// about Amazon S3 permissions, see Specifying Permissions in a Policy
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html).
-// For information about Amazon S3 Object Ownership, see Using Object Ownership
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/about-object-ownership.html).
-// The following operations are related to DeleteBucketOwnershipControls:
-//
-// *
-// GetBucketOwnershipControls
-//
-// * PutBucketOwnershipControls
+// about Amazon S3 permissions, see Specifying Permissions in a Policy (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html)
+// . For information about Amazon S3 Object Ownership, see Using Object Ownership (https://docs.aws.amazon.com/AmazonS3/latest/dev/about-object-ownership.html)
+// . The following operations are related to DeleteBucketOwnershipControls :
+//   - GetBucketOwnershipControls
+//   - PutBucketOwnershipControls
 func (c *Client) DeleteBucketOwnershipControls(ctx context.Context, params *DeleteBucketOwnershipControlsInput, optFns ...func(*Options)) (*DeleteBucketOwnershipControlsOutput, error) {
 	if params == nil {
 		params = &DeleteBucketOwnershipControlsInput{}
@@ -46,7 +41,8 @@ type DeleteBucketOwnershipControlsInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -164,7 +160,6 @@ func addDeleteBucketOwnershipControlsUpdateEndpoint(stack *middleware.Stack, opt
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

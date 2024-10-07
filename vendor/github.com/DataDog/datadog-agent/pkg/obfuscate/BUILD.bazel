@@ -19,7 +19,8 @@ go_library(
     importpath = "github.com/DataDog/datadog-agent/pkg/obfuscate",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/DataDog/datadog-go/statsd",
-        "//vendor/github.com/dgraph-io/ristretto",
+        "//vendor/github.com/DataDog/datadog-go/v5/statsd",
+        "//vendor/github.com/outcaste-io/ristretto",
+        "//vendor/go.uber.org/atomic",
     ],
 )

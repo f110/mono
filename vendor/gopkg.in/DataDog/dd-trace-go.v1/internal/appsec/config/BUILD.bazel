@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "config",
+    srcs = [
+        "config.go",
+        "rules_manager.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/config",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/config",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = [
+        "//vendor/github.com/DataDog/appsec-internal-go/appsec",
+        "//vendor/github.com/DataDog/datadog-agent/pkg/remoteconfig/state",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/remoteconfig",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/telemetry",
+    ],
+)

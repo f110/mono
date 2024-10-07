@@ -6,9 +6,11 @@ go_library(
         "runewidth.go",
         "runewidth_js.go",
         "runewidth_posix.go",
+        "runewidth_table.go",
         "runewidth_windows.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/mattn/go-runewidth",
     importpath = "github.com/mattn/go-runewidth",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/rivo/uniseg"],
 )

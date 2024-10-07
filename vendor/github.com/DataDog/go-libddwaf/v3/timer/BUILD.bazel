@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "timer",
+    srcs = [
+        "base_timer.go",
+        "clock.go",
+        "component.go",
+        "config.go",
+        "node_timer.go",
+        "timer.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-libddwaf/v3/timer",
+    importpath = "github.com/DataDog/go-libddwaf/v3/timer",
+    visibility = ["//visibility:public"],
+)

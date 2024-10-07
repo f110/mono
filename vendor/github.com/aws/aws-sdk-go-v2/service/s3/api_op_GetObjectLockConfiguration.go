@@ -14,8 +14,9 @@ import (
 
 // Gets the Object Lock configuration for a bucket. The rule specified in the
 // Object Lock configuration will be applied by default to every new object placed
-// in the specified bucket. For more information, see Locking Objects
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html).
+// in the specified bucket. For more information, see Locking Objects (https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html)
+// . The following action is related to GetObjectLockConfiguration :
+//   - GetObjectAttributes (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAttributes.html)
 func (c *Client) GetObjectLockConfiguration(ctx context.Context, params *GetObjectLockConfigurationInput, optFns ...func(*Options)) (*GetObjectLockConfigurationOutput, error) {
 	if params == nil {
 		params = &GetObjectLockConfigurationInput{}
@@ -33,21 +34,21 @@ func (c *Client) GetObjectLockConfiguration(ctx context.Context, params *GetObje
 
 type GetObjectLockConfigurationInput struct {
 
-	// The bucket whose Object Lock configuration you want to retrieve. When using this
-	// action with an access point, you must direct requests to the access point
+	// The bucket whose Object Lock configuration you want to retrieve. When using
+	// this action with an access point, you must direct requests to the access point
 	// hostname. The access point hostname takes the form
 	// AccessPointName-AccountId.s3-accesspoint.Region.amazonaws.com. When using this
 	// action with an access point through the Amazon Web Services SDKs, you provide
 	// the access point ARN in place of the bucket name. For more information about
-	// access point ARNs, see Using access points
-	// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html)
+	// access point ARNs, see Using access points (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html)
 	// in the Amazon S3 User Guide.
 	//
 	// This member is required.
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -148,9 +149,9 @@ func newServiceMetadataMiddleware_opGetObjectLockConfiguration(region string) *a
 	}
 }
 
-// getGetObjectLockConfigurationBucketMember returns a pointer to string denoting a
-// provided bucket member valueand a boolean indicating if the input has a modeled
-// bucket name,
+// getGetObjectLockConfigurationBucketMember returns a pointer to string denoting
+// a provided bucket member valueand a boolean indicating if the input has a
+// modeled bucket name,
 func getGetObjectLockConfigurationBucketMember(input interface{}) (*string, bool) {
 	in := input.(*GetObjectLockConfigurationInput)
 	if in.Bucket == nil {
@@ -169,7 +170,6 @@ func addGetObjectLockConfigurationUpdateEndpoint(stack *middleware.Stack, option
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

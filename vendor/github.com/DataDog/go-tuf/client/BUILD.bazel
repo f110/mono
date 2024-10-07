@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = [
+        "client.go",
+        "delegations.go",
+        "errors.go",
+        "file_store.go",
+        "local_store.go",
+        "remote_store.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-tuf/client",
+    importpath = "github.com/DataDog/go-tuf/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/go-tuf/data",
+        "//vendor/github.com/DataDog/go-tuf/internal/roles",
+        "//vendor/github.com/DataDog/go-tuf/pkg/targets",
+        "//vendor/github.com/DataDog/go-tuf/util",
+        "//vendor/github.com/DataDog/go-tuf/verify",
+    ],
+)

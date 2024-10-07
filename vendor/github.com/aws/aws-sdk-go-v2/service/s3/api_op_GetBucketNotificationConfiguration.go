@@ -19,14 +19,10 @@ import (
 // grant permission to other users to read this configuration with the
 // s3:GetBucketNotification permission. For more information about setting and
 // reading the notification configuration on a bucket, see Setting Up Notification
-// of Bucket Events
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html). For
-// more information about bucket policies, see Using Bucket Policies
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html). The
-// following action is related to GetBucketNotification:
-//
-// * PutBucketNotification
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketNotification.html)
+// of Bucket Events (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+// . For more information about bucket policies, see Using Bucket Policies (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html)
+// . The following action is related to GetBucketNotification :
+//   - PutBucketNotification (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketNotification.html)
 func (c *Client) GetBucketNotificationConfiguration(ctx context.Context, params *GetBucketNotificationConfigurationInput, optFns ...func(*Options)) (*GetBucketNotificationConfigurationOutput, error) {
 	if params == nil {
 		params = &GetBucketNotificationConfigurationInput{}
@@ -50,26 +46,30 @@ type GetBucketNotificationConfigurationInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
 }
 
-// A container for specifying the notification configuration of the bucket. If this
-// element is empty, notifications are turned off for the bucket.
+// A container for specifying the notification configuration of the bucket. If
+// this element is empty, notifications are turned off for the bucket.
 type GetBucketNotificationConfigurationOutput struct {
+
+	// Enables delivery of events to Amazon EventBridge.
+	EventBridgeConfiguration *types.EventBridgeConfiguration
 
 	// Describes the Lambda functions to invoke and the events for which to invoke
 	// them.
 	LambdaFunctionConfigurations []types.LambdaFunctionConfiguration
 
-	// The Amazon Simple Queue Service queues to publish messages to and the events for
-	// which to publish messages.
+	// The Amazon Simple Queue Service queues to publish messages to and the events
+	// for which to publish messages.
 	QueueConfigurations []types.QueueConfiguration
 
-	// The topic to which notifications are sent and the events for which notifications
-	// are generated.
+	// The topic to which notifications are sent and the events for which
+	// notifications are generated.
 	TopicConfigurations []types.TopicConfiguration
 
 	// Metadata pertaining to the operation's result.
@@ -183,7 +183,6 @@ func addGetBucketNotificationConfigurationUpdateEndpoint(stack *middleware.Stack
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

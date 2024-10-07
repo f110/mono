@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "constants",
+    srcs = [
+        "ci.go",
+        "env.go",
+        "git.go",
+        "os.go",
+        "runtime.go",
+        "span_types.go",
+        "tags.go",
+        "test_tags.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/civisibility/constants",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/civisibility/constants",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+)

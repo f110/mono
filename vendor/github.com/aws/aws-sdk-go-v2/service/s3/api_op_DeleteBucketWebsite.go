@@ -21,16 +21,10 @@ import (
 // bucket owners can grant other users permission to delete the website
 // configuration by writing a bucket policy granting them the
 // S3:DeleteBucketWebsite permission. For more information about hosting websites,
-// see Hosting Websites on Amazon S3
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html). The
-// following operations are related to DeleteBucketWebsite:
-//
-// * GetBucketWebsite
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketWebsite.html)
-//
-// *
-// PutBucketWebsite
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketWebsite.html)
+// see Hosting Websites on Amazon S3 (https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html)
+// . The following operations are related to DeleteBucketWebsite :
+//   - GetBucketWebsite (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketWebsite.html)
+//   - PutBucketWebsite (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketWebsite.html)
 func (c *Client) DeleteBucketWebsite(ctx context.Context, params *DeleteBucketWebsiteInput, optFns ...func(*Options)) (*DeleteBucketWebsiteOutput, error) {
 	if params == nil {
 		params = &DeleteBucketWebsiteInput{}
@@ -54,7 +48,8 @@ type DeleteBucketWebsiteInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -172,7 +167,6 @@ func addDeleteBucketWebsiteUpdateEndpoint(stack *middleware.Stack, options Optio
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

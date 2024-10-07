@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cachedfetch",
+    srcs = ["fetcher.go"],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/hostname/cachedfetch",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/hostname/cachedfetch",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log"],
+)

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "middleware.go",
         "presign_middleware.go",
+        "stream.go",
         "v4.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/aws/signer/v4",
@@ -14,6 +15,7 @@ go_library(
         "//vendor/github.com/aws/aws-sdk-go-v2/aws",
         "//vendor/github.com/aws/aws-sdk-go-v2/aws/middleware",
         "//vendor/github.com/aws/aws-sdk-go-v2/aws/signer/internal/v4:internal",
+        "//vendor/github.com/aws/aws-sdk-go-v2/internal/auth",
         "//vendor/github.com/aws/aws-sdk-go-v2/internal/sdk",
         "//vendor/github.com/aws/smithy-go/encoding/httpbinding",
         "//vendor/github.com/aws/smithy-go/logging",

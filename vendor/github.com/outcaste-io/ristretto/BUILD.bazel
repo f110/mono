@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ristretto",
+    srcs = [
+        "cache.go",
+        "metrics.go",
+        "policy.go",
+        "ring.go",
+        "sketch.go",
+        "store.go",
+        "ttl.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/outcaste-io/ristretto",
+    importpath = "github.com/outcaste-io/ristretto",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/outcaste-io/ristretto/z",
+        "//vendor/go.uber.org/atomic",
+    ],
+)

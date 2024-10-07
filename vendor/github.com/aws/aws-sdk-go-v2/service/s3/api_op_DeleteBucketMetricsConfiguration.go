@@ -17,30 +17,15 @@ import (
 // permissions to perform the s3:PutMetricsConfiguration action. The bucket owner
 // has this permission by default. The bucket owner can grant this permission to
 // others. For more information about permissions, see Permissions Related to
-// Bucket Subresource Operations
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources)
-// and Managing Access Permissions to Your Amazon S3 Resources
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html).
-// For information about CloudWatch request metrics for Amazon S3, see Monitoring
-// Metrics with Amazon CloudWatch
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html).
-// The following operations are related to DeleteBucketMetricsConfiguration:
-//
-// *
-// GetBucketMetricsConfiguration
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketMetricsConfiguration.html)
-//
-// *
-// PutBucketMetricsConfiguration
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketMetricsConfiguration.html)
-//
-// *
-// ListBucketMetricsConfigurations
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketMetricsConfigurations.html)
-//
-// *
-// Monitoring Metrics with Amazon CloudWatch
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html)
+// Bucket Subresource Operations (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources)
+// and Managing Access Permissions to Your Amazon S3 Resources (https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html)
+// . For information about CloudWatch request metrics for Amazon S3, see
+// Monitoring Metrics with Amazon CloudWatch (https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html)
+// . The following operations are related to DeleteBucketMetricsConfiguration :
+//   - GetBucketMetricsConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketMetricsConfiguration.html)
+//   - PutBucketMetricsConfiguration (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketMetricsConfiguration.html)
+//   - ListBucketMetricsConfigurations (https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBucketMetricsConfigurations.html)
+//   - Monitoring Metrics with Amazon CloudWatch (https://docs.aws.amazon.com/AmazonS3/latest/dev/cloudwatch-monitoring.html)
 func (c *Client) DeleteBucketMetricsConfiguration(ctx context.Context, params *DeleteBucketMetricsConfigurationInput, optFns ...func(*Options)) (*DeleteBucketMetricsConfigurationOutput, error) {
 	if params == nil {
 		params = &DeleteBucketMetricsConfigurationInput{}
@@ -69,7 +54,8 @@ type DeleteBucketMetricsConfigurationInput struct {
 	Id *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -187,7 +173,6 @@ func addDeleteBucketMetricsConfigurationUpdateEndpoint(stack *middleware.Stack, 
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

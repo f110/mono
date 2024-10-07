@@ -13,24 +13,16 @@ import (
 
 // This implementation of the DELETE action removes default encryption from the
 // bucket. For information about the Amazon S3 default encryption feature, see
-// Amazon S3 Default Bucket Encryption
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html) in the
-// Amazon S3 User Guide. To use this operation, you must have permissions to
+// Amazon S3 Default Bucket Encryption (https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html)
+// in the Amazon S3 User Guide. To use this operation, you must have permissions to
 // perform the s3:PutEncryptionConfiguration action. The bucket owner has this
 // permission by default. The bucket owner can grant this permission to others. For
 // more information about permissions, see Permissions Related to Bucket
-// Subresource Operations
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources)
-// and Managing Access Permissions to your Amazon S3 Resources
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html)
+// Subresource Operations (https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-with-s3-actions.html#using-with-s3-actions-related-to-bucket-subresources)
+// and Managing Access Permissions to your Amazon S3 Resources (https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-access-control.html)
 // in the Amazon S3 User Guide. Related Resources
-//
-// * PutBucketEncryption
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketEncryption.html)
-//
-// *
-// GetBucketEncryption
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketEncryption.html)
+//   - PutBucketEncryption (https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketEncryption.html)
+//   - GetBucketEncryption (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketEncryption.html)
 func (c *Client) DeleteBucketEncryption(ctx context.Context, params *DeleteBucketEncryptionInput, optFns ...func(*Options)) (*DeleteBucketEncryptionOutput, error) {
 	if params == nil {
 		params = &DeleteBucketEncryptionInput{}
@@ -55,7 +47,8 @@ type DeleteBucketEncryptionInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -173,7 +166,6 @@ func addDeleteBucketEncryptionUpdateEndpoint(stack *middleware.Stack, options Op
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

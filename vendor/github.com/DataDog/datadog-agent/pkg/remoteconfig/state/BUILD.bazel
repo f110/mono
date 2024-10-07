@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "state",
+    srcs = [
+        "agent_config.go",
+        "configs.go",
+        "configs_agent_task.go",
+        "configs_asm.go",
+        "path.go",
+        "products.go",
+        "repository.go",
+        "tuf.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/datadog-agent/pkg/remoteconfig/state",
+    importpath = "github.com/DataDog/datadog-agent/pkg/remoteconfig/state",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/DataDog/go-tuf/client",
+        "//vendor/github.com/DataDog/go-tuf/data",
+        "//vendor/github.com/DataDog/go-tuf/util",
+        "//vendor/github.com/DataDog/go-tuf/verify",
+        "//vendor/github.com/pkg/errors",
+    ],
+)

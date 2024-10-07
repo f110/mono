@@ -6,5 +6,5 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo",
     importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/appsec/dyngo",
     visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
-    deps = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log"],
+    deps = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/orchestrion"],
 )

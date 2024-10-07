@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "orchestrion",
+    srcs = [
+        "context.go",
+        "context_stack.go",
+        "gls.go",
+        "orchestrion.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/orchestrion",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/orchestrion",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+)

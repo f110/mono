@@ -19,20 +19,18 @@ import (
 
 // Passes transformed objects to a GetObject operation when using Object Lambda
 // access points. For information about Object Lambda access points, see
-// Transforming objects with Object Lambda access points
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/transforming-objects.html)
+// Transforming objects with Object Lambda access points (https://docs.aws.amazon.com/AmazonS3/latest/userguide/transforming-objects.html)
 // in the Amazon S3 User Guide. This operation supports metadata that can be
-// returned by GetObject
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html), in
-// addition to RequestRoute, RequestToken, StatusCode, ErrorCode, and ErrorMessage.
-// The GetObject response metadata is supported so that the WriteGetObjectResponse
-// caller, typically an Lambda function, can provide the same metadata when it
-// internally invokes GetObject. When WriteGetObjectResponse is called by a
-// customer-owned Lambda function, the metadata returned to the end user GetObject
-// call might differ from what Amazon S3 would normally return. You can include any
-// number of metadata headers. When including a metadata header, it should be
-// prefaced with x-amz-meta. For example, x-amz-meta-my-custom-header:
-// MyCustomValue. The primary use case for this is to forward GetObject metadata.
+// returned by GetObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
+// , in addition to RequestRoute , RequestToken , StatusCode , ErrorCode , and
+// ErrorMessage . The GetObject response metadata is supported so that the
+// WriteGetObjectResponse caller, typically an Lambda function, can provide the
+// same metadata when it internally invokes GetObject . When WriteGetObjectResponse
+// is called by a customer-owned Lambda function, the metadata returned to the end
+// user GetObject call might differ from what Amazon S3 would normally return. You
+// can include any number of metadata headers. When including a metadata header, it
+// should be prefaced with x-amz-meta . For example, x-amz-meta-my-custom-header:
+// MyCustomValue . The primary use case for this is to forward GetObject metadata.
 // Amazon Web Services provides some prebuilt Lambda functions that you can use
 // with S3 Object Lambda to detect and redact personally identifiable information
 // (PII) and decompress S3 objects. These Lambda functions are available in the
@@ -52,9 +50,8 @@ import (
 // equipped to decompress objects stored in S3 in one of six compressed file
 // formats including bzip2, gzip, snappy, zlib, zstandard and ZIP. For information
 // on how to view and use these functions, see Using Amazon Web Services built
-// Lambda functions
-// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-examples.html) in
-// the Amazon S3 User Guide.
+// Lambda functions (https://docs.aws.amazon.com/AmazonS3/latest/userguide/olap-examples.html)
+// in the Amazon S3 User Guide.
 func (c *Client) WriteGetObjectResponse(ctx context.Context, params *WriteGetObjectResponseInput, optFns ...func(*Options)) (*WriteGetObjectResponseOutput, error) {
 	if params == nil {
 		params = &WriteGetObjectResponseInput{}
@@ -96,6 +93,50 @@ type WriteGetObjectResponseInput struct {
 	// Specifies caching behavior along the request/reply chain.
 	CacheControl *string
 
+	// This header can be used as a data integrity check to verify that the data
+	// received is the same data that was originally sent. This specifies the
+	// base64-encoded, 32-bit CRC32 checksum of the object returned by the Object
+	// Lambda function. This may not match the checksum for the object stored in Amazon
+	// S3. Amazon S3 will perform validation of the checksum values only when the
+	// original GetObject request required checksum validation. For more information
+	// about checksums, see Checking object integrity (https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html)
+	// in the Amazon S3 User Guide. Only one checksum header can be specified at a
+	// time. If you supply multiple checksum headers, this request will fail.
+	ChecksumCRC32 *string
+
+	// This header can be used as a data integrity check to verify that the data
+	// received is the same data that was originally sent. This specifies the
+	// base64-encoded, 32-bit CRC32C checksum of the object returned by the Object
+	// Lambda function. This may not match the checksum for the object stored in Amazon
+	// S3. Amazon S3 will perform validation of the checksum values only when the
+	// original GetObject request required checksum validation. For more information
+	// about checksums, see Checking object integrity (https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html)
+	// in the Amazon S3 User Guide. Only one checksum header can be specified at a
+	// time. If you supply multiple checksum headers, this request will fail.
+	ChecksumCRC32C *string
+
+	// This header can be used as a data integrity check to verify that the data
+	// received is the same data that was originally sent. This specifies the
+	// base64-encoded, 160-bit SHA-1 digest of the object returned by the Object Lambda
+	// function. This may not match the checksum for the object stored in Amazon S3.
+	// Amazon S3 will perform validation of the checksum values only when the original
+	// GetObject request required checksum validation. For more information about
+	// checksums, see Checking object integrity (https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html)
+	// in the Amazon S3 User Guide. Only one checksum header can be specified at a
+	// time. If you supply multiple checksum headers, this request will fail.
+	ChecksumSHA1 *string
+
+	// This header can be used as a data integrity check to verify that the data
+	// received is the same data that was originally sent. This specifies the
+	// base64-encoded, 256-bit SHA-256 digest of the object returned by the Object
+	// Lambda function. This may not match the checksum for the object stored in Amazon
+	// S3. Amazon S3 will perform validation of the checksum values only when the
+	// original GetObject request required checksum validation. For more information
+	// about checksums, see Checking object integrity (https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html)
+	// in the Amazon S3 User Guide. Only one checksum header can be specified at a
+	// time. If you supply multiple checksum headers, this request will fail.
+	ChecksumSHA256 *string
+
 	// Specifies presentational information for the object.
 	ContentDisposition *string
 
@@ -116,8 +157,8 @@ type WriteGetObjectResponseInput struct {
 	// A standard MIME type describing the format of the object data.
 	ContentType *string
 
-	// Specifies whether an object stored in Amazon S3 is (true) or is not (false) a
-	// delete marker.
+	// Specifies whether an object stored in Amazon S3 is ( true ) or is not ( false )
+	// a delete marker.
 	DeleteMarker bool
 
 	// An opaque identifier assigned by a web server to a specific version of a
@@ -125,20 +166,22 @@ type WriteGetObjectResponseInput struct {
 	ETag *string
 
 	// A string that uniquely identifies an error condition. Returned in the  tag of
-	// the error XML response for a corresponding GetObject call. Cannot be used with a
-	// successful StatusCode header or when the transformed object is provided in the
-	// body. All error codes from S3 are sentence-cased. Regex value is
-	// "^[A-Z][a-zA-Z]+$".
+	// the error XML response for a corresponding GetObject call. Cannot be used with
+	// a successful StatusCode header or when the transformed object is provided in
+	// the body. All error codes from S3 are sentence-cased. The regular expression
+	// (regex) value is "^[A-Z][a-zA-Z]+$" .
 	ErrorCode *string
 
 	// Contains a generic description of the error condition. Returned in the tag of
-	// the error XML response for a corresponding GetObject call. Cannot be used with a
-	// successful StatusCode header or when the transformed object is provided in body.
+	// the error XML response for a corresponding GetObject call. Cannot be used with
+	// a successful StatusCode header or when the transformed object is provided in
+	// body.
 	ErrorMessage *string
 
-	// If object stored in Amazon S3 expiration is configured (see PUT Bucket
-	// lifecycle) it includes expiry-date and rule-id key-value pairs providing object
-	// expiration information. The value of the rule-id is URL encoded.
+	// If the object expiration is configured (see PUT Bucket lifecycle), the response
+	// includes this header. It includes the expiry-date and rule-id key-value pairs
+	// that provide the object expiration information. The value of the rule-id is
+	// URL-encoded.
 	Expiration *string
 
 	// The date and time at which the object is no longer cacheable.
@@ -160,8 +203,8 @@ type WriteGetObjectResponseInput struct {
 	ObjectLockLegalHoldStatus types.ObjectLockLegalHoldStatus
 
 	// Indicates whether an object stored in Amazon S3 has Object Lock enabled. For
-	// more information about S3 Object Lock, see Object Lock
-	// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html).
+	// more information about S3 Object Lock, see Object Lock (https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html)
+	// .
 	ObjectLockMode types.ObjectLockMode
 
 	// The date and time when Object Lock is configured to expire.
@@ -170,9 +213,9 @@ type WriteGetObjectResponseInput struct {
 	// The count of parts this object has.
 	PartsCount int32
 
-	// Indicates if request involves bucket that is either a source or destination in a
-	// Replication rule. For more information about S3 Replication, see Replication
-	// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html).
+	// Indicates if request involves bucket that is either a source or destination in
+	// a Replication rule. For more information about S3 Replication, see Replication (https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html)
+	// .
 	ReplicationStatus types.ReplicationStatus
 
 	// If present, indicates that the requester was successfully charged for the
@@ -189,8 +232,8 @@ type WriteGetObjectResponseInput struct {
 
 	// 128-bit MD5 digest of customer-provided encryption key used in Amazon S3 to
 	// encrypt data stored in S3. For more information, see Protecting data using
-	// server-side encryption with customer-provided encryption keys (SSE-C)
-	// (https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerSideEncryptionCustomerKeys.html).
+	// server-side encryption with customer-provided encryption keys (SSE-C) (https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerSideEncryptionCustomerKeys.html)
+	// .
 	SSECustomerKeyMD5 *string
 
 	// If present, specifies the ID of the Amazon Web Services Key Management Service
@@ -204,41 +247,26 @@ type WriteGetObjectResponseInput struct {
 
 	// The integer status code for an HTTP response of a corresponding GetObject
 	// request. Status Codes
-	//
-	// * 200 - OK
-	//
-	// * 206 - Partial Content
-	//
-	// * 304 - Not
-	// Modified
-	//
-	// * 400 - Bad Request
-	//
-	// * 401 - Unauthorized
-	//
-	// * 403 - Forbidden
-	//
-	// * 404 -
-	// Not Found
-	//
-	// * 405 - Method Not Allowed
-	//
-	// * 409 - Conflict
-	//
-	// * 411 - Length
-	// Required
-	//
-	// * 412 - Precondition Failed
-	//
-	// * 416 - Range Not Satisfiable
-	//
-	// * 500 -
-	// Internal Server Error
-	//
-	// * 503 - Service Unavailable
+	//   - 200 - OK
+	//   - 206 - Partial Content
+	//   - 304 - Not Modified
+	//   - 400 - Bad Request
+	//   - 401 - Unauthorized
+	//   - 403 - Forbidden
+	//   - 404 - Not Found
+	//   - 405 - Method Not Allowed
+	//   - 409 - Conflict
+	//   - 411 - Length Required
+	//   - 412 - Precondition Failed
+	//   - 416 - Range Not Satisfiable
+	//   - 500 - Internal Server Error
+	//   - 503 - Service Unavailable
 	StatusCode int32
 
-	// The class of storage used to store object in Amazon S3.
+	// Provides storage class information of the object. Amazon S3 returns this header
+	// for all objects except for S3 Standard storage class objects. For more
+	// information, see Storage Classes (https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html)
+	// .
 	StorageClass types.StorageClass
 
 	// The number of tags, if any, on the object.
@@ -399,7 +427,6 @@ func addWriteGetObjectResponseUpdateEndpoint(stack *middleware.Stack, options Op
 		TargetS3ObjectLambda:           true,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

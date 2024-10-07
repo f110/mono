@@ -22,12 +22,9 @@ import (
 // Web Services account that owns a bucket can always use this operation, even if
 // the policy explicitly denies the root user the ability to perform this action.
 // For more information about bucket policies, see Using Bucket Policies and User
-// Policies
-// (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html). The
-// following action is related to GetBucketPolicy:
-//
-// * GetObject
-// (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
+// Policies (https://docs.aws.amazon.com/AmazonS3/latest/dev/using-iam-policies.html)
+// . The following action is related to GetBucketPolicy :
+//   - GetObject (https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html)
 func (c *Client) GetBucketPolicy(ctx context.Context, params *GetBucketPolicyInput, optFns ...func(*Options)) (*GetBucketPolicyOutput, error) {
 	if params == nil {
 		params = &GetBucketPolicyInput{}
@@ -51,7 +48,8 @@ type GetBucketPolicyInput struct {
 	Bucket *string
 
 	// The account ID of the expected bucket owner. If the bucket is owned by a
-	// different account, the request will fail with an HTTP 403 (Access Denied) error.
+	// different account, the request fails with the HTTP status code 403 Forbidden
+	// (access denied).
 	ExpectedBucketOwner *string
 
 	noSmithyDocumentSerde
@@ -173,7 +171,6 @@ func addGetBucketPolicyUpdateEndpoint(stack *middleware.Stack, options Options) 
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

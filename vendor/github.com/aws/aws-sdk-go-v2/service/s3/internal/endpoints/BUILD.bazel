@@ -8,6 +8,7 @@ go_library(
     visibility = ["//vendor/github.com/aws/aws-sdk-go-v2/service/s3:__subpackages__"],
     deps = [
         "//vendor/github.com/aws/aws-sdk-go-v2/aws",
-        "//vendor/github.com/aws/aws-sdk-go-v2/internal/endpoints",
+        "//vendor/github.com/aws/aws-sdk-go-v2/internal/endpoints/v2:endpoints",
+        "//vendor/github.com/aws/smithy-go/logging",
     ],
 )

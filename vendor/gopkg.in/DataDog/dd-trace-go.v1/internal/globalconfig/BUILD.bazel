@@ -6,5 +6,8 @@ go_library(
     importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig",
     importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal/globalconfig",
     visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
-    deps = ["//vendor/github.com/google/uuid"],
+    deps = [
+        "//vendor/github.com/google/uuid",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal",
+    ],
 )

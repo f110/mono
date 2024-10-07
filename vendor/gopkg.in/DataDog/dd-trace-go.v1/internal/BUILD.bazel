@@ -3,10 +3,23 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "internal",
     srcs = [
-        "container.go",
+        "active_span_key.go",
+        "agent.go",
+        "container_linux.go",
+        "container_stub.go",
         "env.go",
+        "gitmetadata.go",
+        "meta_struct.go",
+        "statsd.go",
+        "trace_context.go",
+        "utils.go",
     ],
     importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/internal",
     importpath = "gopkg.in/DataDog/dd-trace-go.v1/internal",
     visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1:__subpackages__"],
+    deps = [
+        "//vendor/github.com/DataDog/datadog-go/v5/statsd",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/log",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/orchestrion",
+    ],
 )

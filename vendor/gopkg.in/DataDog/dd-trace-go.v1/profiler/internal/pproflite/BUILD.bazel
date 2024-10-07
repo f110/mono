@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "pproflite",
+    srcs = [
+        "decoder.go",
+        "encoder.go",
+        "pproflite.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler/internal/pproflite",
+    importpath = "gopkg.in/DataDog/dd-trace-go.v1/profiler/internal/pproflite",
+    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler:__subpackages__"],
+    deps = [
+        "//vendor/github.com/richardartoul/molecule",
+        "//vendor/github.com/richardartoul/molecule/src/codec",
+    ],
+)

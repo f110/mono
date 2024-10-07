@@ -17,5 +17,6 @@ go_library(
         "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext",
         "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/internal",
         "//vendor/gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer",
+        "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/telemetry",
     ],
 )

@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "keys",
+    srcs = [
+        "deprecated_ecdsa.go",
+        "ecdsa.go",
+        "ed25519.go",
+        "keys.go",
+        "pkix.go",
+        "rsa.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-tuf/pkg/keys",
+    importpath = "github.com/DataDog/go-tuf/pkg/keys",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/DataDog/go-tuf/data"],
+)
