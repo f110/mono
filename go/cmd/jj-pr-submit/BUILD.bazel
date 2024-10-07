@@ -12,6 +12,7 @@ go_library(
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
+        "//vendor/go.uber.org/zap/zapcore",
         "//vendor/golang.org/x/oauth2",
     ],
 )

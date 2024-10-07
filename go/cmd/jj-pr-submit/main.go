@@ -17,6 +17,7 @@ import (
 	"github.com/google/go-github/v49/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
@@ -25,7 +26,7 @@ import (
 )
 
 const (
-	stackRevsets           = "ancestors(latest(%s@origin) & remote_branches())..@ ~ empty()"
+	stackRevsets           = "ancestors(latest(%s@origin) & remote_bookmarks())..@ ~ empty()"
 	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
 	lastPickedTemplateFile = ".last_template_file"
 	noSendTag              = "no-send:"
@@ -295,6 +296,9 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				cmd.Args = append(cmd.Args, "--dry-run")
 			}
 			cmd.Stdout = os.Stdout
+			if logger.Log.Level() == zapcore.DebugLevel {
+				cmd.Stderr = os.Stderr
+			}
 			if err = cmd.Run(); err != nil {
 				return fsm.Error(xerrors.WithStack(err))
 			}
@@ -334,7 +338,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend bool) (stackedCommit, error) {
-	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ branches ++ "]\\" ++ description ++ "\\\n"`
+	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ bookmarks ++ "]\\" ++ description ++ "\\\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
