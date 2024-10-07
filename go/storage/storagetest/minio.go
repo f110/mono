@@ -193,26 +193,19 @@ type CommonPrefix struct {
 }
 
 type ObjectInfo struct {
-	ETag         string      `json:"etag"`
-	Key          string      `json:"name"`
-	LastModified time.Time   `json:"lastModified"`
-	Size         int64       `json:"size"`
-	ContentType  string      `json:"contentType"`
-	Expires      time.Time   `json:"expires"`
-	Metadata     http.Header `json:"metadata" xml:"-"`
-	UserMetadata StringMap   `json:"userMetadata"`
-	UserTags     StringMap   `json:"userTags"`
-	UserTagCount int
-	Owner        Owner
-	Grant        []struct {
-		Grantee struct {
-			ID          string `xml:"ID"`
-			DisplayName string `xml:"DisplayName"`
-			URI         string `xml:"URI"`
-		} `xml:"Grantee"`
-		Permission string `xml:"Permission"`
-	} `xml:"Grant"`
-	StorageClass      string `json:"storageClass"`
+	ETag              string      `json:"etag"`
+	Key               string      `json:"name"`
+	LastModified      time.Time   `json:"lastModified"`
+	Size              int64       `json:"size"`
+	ContentType       string      `json:"contentType"`
+	Expires           time.Time   `json:"expires"`
+	Metadata          http.Header `json:"metadata" xml:"-"`
+	UserMetadata      StringMap   `json:"userMetadata"`
+	UserTags          StringMap   `json:"userTags"`
+	UserTagCount      int
+	Owner             Owner
+	Grant             []minio.Grant `xml:"Grant"`
+	StorageClass      string        `json:"storageClass"`
 	IsLatest          bool
 	IsDeleteMarker    bool
 	VersionID         string `xml:"VersionId"`
