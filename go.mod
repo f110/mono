@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.44.0
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
-	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/abhinav/goldmark-mermaid v0.1.1
 	github.com/aws/aws-sdk-go-v2 v1.10.0
