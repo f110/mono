@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xdsclient",
+    srcs = [
+        "attributes.go",
+        "authority.go",
+        "client.go",
+        "client_new.go",
+        "client_refcounted.go",
+        "clientimpl.go",
+        "clientimpl_authority.go",
+        "clientimpl_dump.go",
+        "clientimpl_loadreport.go",
+        "clientimpl_watchers.go",
+        "logging.go",
+        "requests_counter.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/xdsclient",
+    importpath = "google.golang.org/grpc/xds/internal/xdsclient",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/admin/v3:admin",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/service/status/v3:status",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal",
+        "//vendor/google.golang.org/grpc/internal/cache",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/grpcsync",
+        "//vendor/google.golang.org/grpc/internal/xds/bootstrap",
+        "//vendor/google.golang.org/grpc/resolver",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/load",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/transport",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/xdsresource",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

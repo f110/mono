@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "server",
+    srcs = [
+        "conn_wrapper.go",
+        "listener_wrapper.go",
+        "rds_handler.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/server",
+    importpath = "google.golang.org/grpc/xds/internal/server",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/google.golang.org/grpc/backoff",
+        "//vendor/google.golang.org/grpc/connectivity",
+        "//vendor/google.golang.org/grpc/credentials/tls/certprovider",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal/backoff",
+        "//vendor/google.golang.org/grpc/internal/credentials/xds",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/grpcsync",
+        "//vendor/google.golang.org/grpc/internal/transport",
+        "//vendor/google.golang.org/grpc/internal/xds/bootstrap",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/xdsresource",
+    ],
+)

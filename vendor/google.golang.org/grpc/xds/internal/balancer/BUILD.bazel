@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "balancer",
+    srcs = ["balancer.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/balancer",
+    importpath = "google.golang.org/grpc/xds/internal/balancer",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/google.golang.org/grpc/balancer/leastrequest",
+        "//vendor/google.golang.org/grpc/balancer/weightedtarget",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/cdsbalancer",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/clusterimpl",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/clustermanager",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/clusterresolver",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/outlierdetection",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/priority",
+    ],
+)

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "distribution",
+    srcs = ["distribution.pb.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/genproto/googleapis/api/distribution",
+    importpath = "google.golang.org/genproto/googleapis/api/distribution",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

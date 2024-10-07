@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "wrr",
+    srcs = [
+        "edf.go",
+        "random.go",
+        "wrr.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/internal/wrr",
+    importpath = "google.golang.org/grpc/internal/wrr",
+    visibility = ["//vendor/google.golang.org/grpc:__subpackages__"],
+)

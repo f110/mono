@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xdslbregistry",
+    srcs = ["xdslbregistry.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/xdsclient/xdslbregistry",
+    importpath = "google.golang.org/grpc/xds/internal/xdsclient/xdslbregistry",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = ["//vendor/github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3:cluster"],
+)

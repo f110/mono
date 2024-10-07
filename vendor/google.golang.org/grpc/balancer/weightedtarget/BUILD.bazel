@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "weightedtarget",
+    srcs = [
+        "logging.go",
+        "weightedtarget.go",
+        "weightedtarget_config.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/balancer/weightedtarget",
+    importpath = "google.golang.org/grpc/balancer/weightedtarget",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/balancer/weightedtarget/weightedaggregator",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal/balancergroup",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/hierarchy",
+        "//vendor/google.golang.org/grpc/internal/pretty",
+        "//vendor/google.golang.org/grpc/internal/serviceconfig",
+        "//vendor/google.golang.org/grpc/internal/wrr",
+        "//vendor/google.golang.org/grpc/resolver",
+        "//vendor/google.golang.org/grpc/serviceconfig",
+    ],
+)

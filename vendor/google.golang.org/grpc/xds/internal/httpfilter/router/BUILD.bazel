@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "router",
+    srcs = ["router.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/httpfilter/router",
+    importpath = "google.golang.org/grpc/xds/internal/httpfilter/router",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3:router",
+        "//vendor/google.golang.org/grpc/internal/resolver",
+        "//vendor/google.golang.org/grpc/xds/internal/httpfilter",
+        "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+    ],
+)

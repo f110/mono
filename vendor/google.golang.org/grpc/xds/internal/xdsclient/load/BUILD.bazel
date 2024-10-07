@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "load",
+    srcs = [
+        "reporter.go",
+        "store.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/xdsclient/load",
+    importpath = "google.golang.org/grpc/xds/internal/xdsclient/load",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+)

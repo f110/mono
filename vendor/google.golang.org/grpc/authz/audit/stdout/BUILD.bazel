@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stdout",
+    srcs = ["stdout_logger.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/authz/audit/stdout",
+    importpath = "google.golang.org/grpc/authz/audit/stdout",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/grpc/authz/audit",
+        "//vendor/google.golang.org/grpc/grpclog",
+    ],
+)

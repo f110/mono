@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "load_stats",
+    srcs = [
+        "lrs.pb.go",
+        "lrs.pb.validate.go",
+        "lrs_grpc.pb.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3",
+    importpath = "github.com/envoyproxy/go-control-plane/envoy/service/load_stats/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3:endpoint",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+    ],
+)

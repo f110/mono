@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "overload",
+    srcs = [
+        "overload.pb.go",
+        "overload.pb.validate.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/envoyproxy/go-control-plane/envoy/config/overload/v3",
+    importpath = "github.com/envoyproxy/go-control-plane/envoy/config/overload/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/v3:type",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+    ],
+)

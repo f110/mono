@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "iterator",
+    srcs = ["iterator.go"],
+    importmap = "go.f110.dev/mono/vendor/github.com/googleapis/gax-go/v2/iterator",
+    importpath = "github.com/googleapis/gax-go/v2/iterator",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/google.golang.org/api/iterator"],
+)

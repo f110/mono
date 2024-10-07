@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "converter",
+    srcs = ["converter.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/xdsclient/xdslbregistry/converter",
+    importpath = "google.golang.org/grpc/xds/internal/xdsclient/xdslbregistry/converter",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/type/v1:type",
+        "//vendor/github.com/cncf/xds/go/xds/type/v3:type",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/client_side_weighted_round_robin/v3:client_side_weighted_round_robin",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/least_request/v3:least_request",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/pick_first/v3:pick_first",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/ring_hash/v3:ring_hash",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/load_balancing_policies/wrr_locality/v3:wrr_locality",
+        "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/balancer/leastrequest",
+        "//vendor/google.golang.org/grpc/balancer/pickfirst",
+        "//vendor/google.golang.org/grpc/balancer/roundrobin",
+        "//vendor/google.golang.org/grpc/balancer/weightedroundrobin",
+        "//vendor/google.golang.org/grpc/internal/envconfig",
+        "//vendor/google.golang.org/grpc/internal/serviceconfig",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/ringhash",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/wrrlocality",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/xdslbregistry",
+        "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/google.golang.org/protobuf/types/known/structpb",
+    ],
+)

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metric",
+    srcs = ["metric.pb.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/genproto/googleapis/api/metric",
+    importpath = "google.golang.org/genproto/googleapis/api/metric",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/google.golang.org/genproto/googleapis/api",
+        "//vendor/google.golang.org/genproto/googleapis/api/label",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+    ],
+)

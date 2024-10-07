@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["version.go"],
+    importmap = "go.f110.dev/mono/vendor/cloud.google.com/go/monitoring/internal",
+    importpath = "cloud.google.com/go/monitoring/internal",
+    visibility = ["//vendor/cloud.google.com/go/monitoring:__subpackages__"],
+)

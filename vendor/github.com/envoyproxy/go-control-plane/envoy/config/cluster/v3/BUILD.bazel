@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cluster",
+    srcs = [
+        "circuit_breaker.pb.go",
+        "circuit_breaker.pb.validate.go",
+        "cluster.pb.go",
+        "cluster.pb.validate.go",
+        "filter.pb.go",
+        "filter.pb.validate.go",
+        "outlier_detection.pb.go",
+        "outlier_detection.pb.validate.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3",
+    importpath = "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/annotations",
+        "//vendor/github.com/cncf/xds/go/xds/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3:endpoint",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/metadata/v3:metadata",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/v3:type",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//vendor/google.golang.org/protobuf/types/known/structpb",
+        "//vendor/google.golang.org/protobuf/types/known/wrapperspb",
+    ],
+)

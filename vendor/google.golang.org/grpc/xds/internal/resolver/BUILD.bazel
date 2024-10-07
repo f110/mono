@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "resolver",
+    srcs = [
+        "logging.go",
+        "serviceconfig.go",
+        "watch_service.go",
+        "xds_resolver.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/resolver",
+    importpath = "google.golang.org/grpc/xds/internal/resolver",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/github.com/cespare/xxhash/v2:xxhash",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/grpcsync",
+        "//vendor/google.golang.org/grpc/internal/grpcutil",
+        "//vendor/google.golang.org/grpc/internal/pretty",
+        "//vendor/google.golang.org/grpc/internal/resolver",
+        "//vendor/google.golang.org/grpc/internal/serviceconfig",
+        "//vendor/google.golang.org/grpc/internal/wrr",
+        "//vendor/google.golang.org/grpc/internal/xds/bootstrap",
+        "//vendor/google.golang.org/grpc/metadata",
+        "//vendor/google.golang.org/grpc/resolver",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/clustermanager",
+        "//vendor/google.golang.org/grpc/xds/internal/balancer/ringhash",
+        "//vendor/google.golang.org/grpc/xds/internal/httpfilter",
+        "//vendor/google.golang.org/grpc/xds/internal/resolver/internal",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient",
+        "//vendor/google.golang.org/grpc/xds/internal/xdsclient/xdsresource",
+    ],
+)

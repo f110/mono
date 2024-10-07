@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gcp",
+    srcs = [
+        "app_engine.go",
+        "bms.go",
+        "detector.go",
+        "faas.go",
+        "gce.go",
+        "gke.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+    importpath = "github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/cloud.google.com/go/compute/metadata"],
+)

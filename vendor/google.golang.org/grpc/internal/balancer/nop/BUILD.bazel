@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "nop",
+    srcs = ["nop.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/internal/balancer/nop",
+    importpath = "google.golang.org/grpc/internal/balancer/nop",
+    visibility = ["//vendor/google.golang.org/grpc:__subpackages__"],
+    deps = [
+        "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/balancer/base",
+        "//vendor/google.golang.org/grpc/connectivity",
+    ],
+)

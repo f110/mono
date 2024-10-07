@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rbac",
+    srcs = [
+        "converter.go",
+        "matchers.go",
+        "rbac_engine.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/internal/xds/rbac",
+    importpath = "google.golang.org/grpc/internal/xds/rbac",
+    visibility = ["//vendor/google.golang.org/grpc:__subpackages__"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/type/v1:type",
+        "//vendor/github.com/cncf/xds/go/xds/type/v3:type",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3:rbac",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/route/v3:route",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/rbac/audit_loggers/stream/v3:stream",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3:matcher",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/authz/audit",
+        "//vendor/google.golang.org/grpc/authz/audit/stdout",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/credentials",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal/transport",
+        "//vendor/google.golang.org/grpc/internal/xds/matcher",
+        "//vendor/google.golang.org/grpc/metadata",
+        "//vendor/google.golang.org/grpc/peer",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/encoding/protojson",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/structpb",
+    ],
+)

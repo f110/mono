@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "weightedroundrobin",
+    srcs = [
+        "balancer.go",
+        "config.go",
+        "logging.go",
+        "scheduler.go",
+        "weightedroundrobin.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/balancer/weightedroundrobin",
+    importpath = "google.golang.org/grpc/balancer/weightedroundrobin",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/xds/data/orca/v3:orca",
+        "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/balancer/base",
+        "//vendor/google.golang.org/grpc/balancer/weightedroundrobin/internal",
+        "//vendor/google.golang.org/grpc/balancer/weightedtarget",
+        "//vendor/google.golang.org/grpc/connectivity",
+        "//vendor/google.golang.org/grpc/experimental/stats",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/serviceconfig",
+        "//vendor/google.golang.org/grpc/orca",
+        "//vendor/google.golang.org/grpc/resolver",
+        "//vendor/google.golang.org/grpc/serviceconfig",
+    ],
+)

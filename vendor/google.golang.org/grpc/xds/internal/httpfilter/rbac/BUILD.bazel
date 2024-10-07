@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "rbac",
+    srcs = ["rbac.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/httpfilter/rbac",
+    importpath = "google.golang.org/grpc/xds/internal/httpfilter/rbac",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/rbac/v3:rbac",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/rbac/v3:rbac",
+        "//vendor/google.golang.org/grpc/internal",
+        "//vendor/google.golang.org/grpc/internal/resolver",
+        "//vendor/google.golang.org/grpc/internal/xds/rbac",
+        "//vendor/google.golang.org/grpc/xds/internal/httpfilter",
+        "//vendor/google.golang.org/protobuf/proto",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+    ],
+)

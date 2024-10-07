@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "priority",
+    srcs = [
+        "balancer.go",
+        "balancer_child.go",
+        "balancer_priority.go",
+        "config.go",
+        "ignore_resolve_now.go",
+        "logging.go",
+        "utils.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/balancer/priority",
+    importpath = "google.golang.org/grpc/xds/internal/balancer/priority",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = [
+        "//vendor/google.golang.org/grpc/balancer",
+        "//vendor/google.golang.org/grpc/balancer/base",
+        "//vendor/google.golang.org/grpc/connectivity",
+        "//vendor/google.golang.org/grpc/grpclog",
+        "//vendor/google.golang.org/grpc/internal/balancergroup",
+        "//vendor/google.golang.org/grpc/internal/buffer",
+        "//vendor/google.golang.org/grpc/internal/grpclog",
+        "//vendor/google.golang.org/grpc/internal/grpcsync",
+        "//vendor/google.golang.org/grpc/internal/hierarchy",
+        "//vendor/google.golang.org/grpc/internal/pretty",
+        "//vendor/google.golang.org/grpc/internal/serviceconfig",
+        "//vendor/google.golang.org/grpc/resolver",
+        "//vendor/google.golang.org/grpc/serviceconfig",
+    ],
+)

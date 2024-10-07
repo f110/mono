@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "core",
+    srcs = [
+        "authority.pb.go",
+        "authority.pb.validate.go",
+        "cidr.pb.go",
+        "cidr.pb.validate.go",
+        "collection_entry.pb.go",
+        "collection_entry.pb.validate.go",
+        "context_params.pb.go",
+        "context_params.pb.validate.go",
+        "extension.pb.go",
+        "extension.pb.validate.go",
+        "resource.pb.go",
+        "resource.pb.validate.go",
+        "resource_locator.pb.go",
+        "resource_locator.pb.validate.go",
+        "resource_name.pb.go",
+        "resource_name.pb.validate.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/cncf/xds/go/xds/core/v3",
+    importpath = "github.com/cncf/xds/go/xds/core/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/xds/annotations/v3:annotations",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/wrapperspb",
+    ],
+)

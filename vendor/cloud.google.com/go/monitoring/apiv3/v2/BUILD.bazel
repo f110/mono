@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "apiv3",
+    srcs = [
+        "alert_policy_client.go",
+        "auxiliary.go",
+        "auxiliary_go123.go",
+        "doc.go",
+        "group_client.go",
+        "metric_client.go",
+        "notification_channel_client.go",
+        "query_client.go",
+        "service_monitoring_client.go",
+        "snooze_client.go",
+        "uptime_check_client.go",
+        "version.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/cloud.google.com/go/monitoring/apiv3/v2",
+    importpath = "cloud.google.com/go/monitoring/apiv3/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/cloud.google.com/go/monitoring/apiv3/v2/monitoringpb",
+        "//vendor/cloud.google.com/go/monitoring/internal",
+        "//vendor/github.com/googleapis/gax-go/v2:gax-go",
+        "//vendor/github.com/googleapis/gax-go/v2/iterator",
+        "//vendor/google.golang.org/api/iterator",
+        "//vendor/google.golang.org/api/option",
+        "//vendor/google.golang.org/api/option/internaloption",
+        "//vendor/google.golang.org/api/transport/grpc",
+        "//vendor/google.golang.org/genproto/googleapis/api/metric",
+        "//vendor/google.golang.org/genproto/googleapis/api/monitoredres",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/protobuf/proto",
+    ],
+)

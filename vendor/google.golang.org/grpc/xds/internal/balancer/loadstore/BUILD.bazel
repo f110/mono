@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "loadstore",
+    srcs = ["load_store_wrapper.go"],
+    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/balancer/loadstore",
+    importpath = "google.golang.org/grpc/xds/internal/balancer/loadstore",
+    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
+    deps = ["//vendor/google.golang.org/grpc/xds/internal/xdsclient/load"],
+)

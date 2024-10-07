@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "status",
+    srcs = [
+        "csds.pb.go",
+        "csds.pb.validate.go",
+        "csds_grpc.pb.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/envoyproxy/go-control-plane/envoy/service/status/v3",
+    importpath = "github.com/envoyproxy/go-control-plane/envoy/service/status/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/admin/v3:admin",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3:matcher",
+        "//vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//vendor/google.golang.org/grpc",
+        "//vendor/google.golang.org/grpc/codes",
+        "//vendor/google.golang.org/grpc/status",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tls",
+    srcs = [
+        "cert.pb.go",
+        "cert.pb.validate.go",
+        "common.pb.go",
+        "common.pb.validate.go",
+        "secret.pb.go",
+        "secret.pb.validate.go",
+        "tls.pb.go",
+        "tls.pb.validate.go",
+        "tls_spiffe_validator_config.pb.go",
+        "tls_spiffe_validator_config.pb.validate.go",
+    ],
+    importmap = "go.f110.dev/mono/vendor/github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3",
+    importpath = "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/cncf/xds/go/udpa/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/annotations",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
+        "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3:matcher",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//vendor/google.golang.org/protobuf/types/known/anypb",
+        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//vendor/google.golang.org/protobuf/types/known/wrapperspb",
+    ],
+)
