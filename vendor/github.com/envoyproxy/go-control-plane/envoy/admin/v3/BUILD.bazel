@@ -36,7 +36,7 @@ go_library(
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/core/v3:core",
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/tap/v3:tap",
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/v3:type",
-        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate",
         "//vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//vendor/google.golang.org/protobuf/runtime/protoimpl",
         "//vendor/google.golang.org/protobuf/types/known/anypb",

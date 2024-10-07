@@ -16,7 +16,7 @@ go_library(
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/config/route/v3:route",
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3:matcher",
         "//vendor/github.com/envoyproxy/go-control-plane/envoy/type/v3:type",
-        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate:validate_go",
+        "//vendor/github.com/envoyproxy/protoc-gen-validate/validate",
         "//vendor/google.golang.org/genproto/googleapis/api/expr/v1alpha1",
         "//vendor/google.golang.org/protobuf/reflect/protoreflect",
         "//vendor/google.golang.org/protobuf/runtime/protoimpl",
