@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"go.f110.dev/xerrors"
+	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +22,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/kind"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -65,7 +66,7 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 			return xerrors.WithStack(err)
 		}
 	} else {
-		log.Print("Cluster is already exist. Only apply the manifest.")
+		logger.Log.Info("Cluster is already exist. Only apply the manifest.")
 	}
 	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 3*time.Minute)
 	cancelFunc()
@@ -215,7 +216,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 	}
 
 	for _, v := range restartPods {
-		log.Printf("Delete Pod.%s", v.Name)
+		logger.Log.Info("Delete Pod", zap.String("name", v.Name))
 		err := client.CoreV1().Pods(namespace).Delete(context.Background(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)

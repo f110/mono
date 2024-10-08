@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,6 +16,7 @@ import (
 	"time"
 
 	"go.f110.dev/xerrors"
+	"go.uber.org/zap"
 	goyaml "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +36,8 @@ import (
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
 	configv1alpha4 "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
+
+	"go.f110.dev/mono/go/logger"
 )
 
 var NodeImageHash = map[string]string{
@@ -240,7 +242,7 @@ func (c *Cluster) LoadImageFiles(ctx context.Context, images ...*ContainerImageF
 			return err
 		}
 
-		log.Printf("Load image file: %s", v.repoTags)
+		logger.Log.Info("Load image file", zap.String("tag", v.repoTags))
 		cmd := exec.CommandContext(ctx, c.kind, "load", "image-archive", "--name", c.name, v.File)
 		if err := cmd.Run(); err != nil {
 			return err
@@ -260,7 +262,7 @@ func (c *Cluster) LoadImageFiles(ctx context.Context, images ...*ContainerImageF
 
 	for _, node := range nodes {
 		for _, image := range images {
-			log.Printf("Set an image tag %s:%s on %s", image.Repository, image.Tag, node)
+			logger.Log.Info("Set an image tag", zap.String("tag", fmt.Sprintf("%s:%s", image.Repository, image.Tag)), zap.String("node", node))
 			cmd = exec.CommandContext(
 				ctx,
 				"docker", "exec", node,
@@ -452,7 +454,7 @@ func portForward(ctx context.Context, cfg *rest.Config, client kubernetes.Interf
 	go func() {
 		err := pf.ForwardPorts()
 		if err != nil {
-			log.Print(err)
+			fmt.Print(err)
 		}
 	}()
 
@@ -555,7 +557,6 @@ func (k objects) Apply(cfg *rest.Config, fieldManager string) error {
 			}
 			data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, obj.Object)
 			if err != nil {
-				log.Print(err)
 				return true, nil
 			}
 			force := true
@@ -579,11 +580,9 @@ func (k objects) Apply(cfg *rest.Config, fieldManager string) error {
 					return false, nil
 				}
 
-				log.Printf("%s.%s: %v", unstructuredObj.GetKind(), unstructuredObj.GetName(), err)
-				log.Print(string(obj.Raw))
 				return true, nil
 			}
-			log.Printf("%s.%s was created", unstructuredObj.GetKind(), unstructuredObj.GetName())
+			logger.Log.Info("The object was created", zap.String("kind", unstructuredObj.GetKind()), zap.String("name", unstructuredObj.GetName()))
 			return true, nil
 		})
 		if err != nil {

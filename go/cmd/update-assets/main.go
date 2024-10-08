@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,8 +18,10 @@ import (
 	"github.com/bazelbuild/buildtools/build"
 	"github.com/google/go-github/v49/github"
 	"go.f110.dev/xerrors"
+	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/logger"
 )
 
 var (
@@ -188,22 +189,22 @@ func (k *kustomizeAssets) update(ctx context.Context) error {
 		}
 		ver := strings.TrimPrefix(v.GetName(), "kustomize/")
 		if _, ok := exists[ver]; ok {
-			log.Printf("%s is already exists", ver)
+			logger.Log.Info("Already exists", zap.String("version", ver))
 			continue
 		}
 		if _, ok := ignoreVersions["kustomize"][ver]; ok {
-			log.Printf("%s is ignored version", ver)
+			logger.Log.Info("Ignored version", zap.String("version", ver))
 			continue
 		}
 		vers = append(vers, ver)
 	}
 	if len(vers) == 0 {
-		log.Print("No need to update the asset file")
+		logger.Log.Info("No need to update the asset file")
 		return nil
 	}
 
 	for _, v := range vers {
-		log.Printf("Get %s", v)
+		logger.Log.Debug("Get", zap.String("version", v))
 		rel, err := k.getRelease(ctx, gClient, v)
 		if err != nil {
 			return err
@@ -340,13 +341,13 @@ func (k *kindAssets) update(ctx context.Context) error {
 		}
 
 		if _, ok := exists[ver]; ok {
-			log.Printf("%s is already exists", ver)
+			logger.Log.Info("Already exists", zap.String("version", ver))
 			continue
 		}
 		vers = append(vers, ver)
 	}
 	if len(vers) == 0 {
-		log.Print("No need to update the asset file")
+		logger.Log.Info("No need to update the asset file")
 		return nil
 	}
 

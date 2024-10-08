@@ -3,7 +3,6 @@ package inkbird
 import (
 	"context"
 	"encoding/binary"
-	"log"
 	"time"
 
 	"go.f110.dev/xerrors"
@@ -128,7 +127,7 @@ func Scan(ctx context.Context) error {
 
 	for prph := range scanCh {
 		if prph.Name == "sps" && len(prph.ManufacturerData) == 9 {
-			log.Printf("Found sensor: %s", prph.Address)
+			logger.Log.Info("Found sensor", zap.String("address", prph.Address))
 		}
 	}
 
