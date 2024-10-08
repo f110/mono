@@ -7,10 +7,12 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
+        "//go/logger",
         "//vendor/github.com/Masterminds/semver/v3:semver",
         "//vendor/github.com/bazelbuild/buildtools/build",
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
     ],
 )
 

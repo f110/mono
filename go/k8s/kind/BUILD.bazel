@@ -6,7 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/k8s/kind",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//vendor/go.f110.dev/xerrors",
+        "//vendor/go.uber.org/zap",
         "//vendor/gopkg.in/yaml.v3:yaml_v3",
         "//vendor/k8s.io/api/core/v1:core",
         "//vendor/k8s.io/apimachinery/pkg/api/errors",
