@@ -762,21 +762,26 @@ func newPullRequest(pr *github.PullRequest) *pullRequest {
 	}
 }
 
-func jujutsuPRSubmit() error {
-	c := newCommand()
+func jujutsuPR() error {
 	cmd := &cli.Command{
-		Use: "jj-pr-submit",
+		Use: "jj pr",
+	}
+
+	c := newCommand()
+	submitCmd := &cli.Command{
+		Use: "submit",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			return c.LoopContext(ctx)
 		},
 	}
-	c.flags(cmd.Flags())
+	c.flags(submitCmd.Flags())
+	cmd.AddCommand(submitCmd)
 
 	return cmd.Execute(os.Args)
 }
 
 func main() {
-	if err := jujutsuPRSubmit(); err != nil {
+	if err := jujutsuPR(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
