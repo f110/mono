@@ -285,7 +285,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace (
-	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
-	github.com/google/zoekt => github.com/sourcegraph/zoekt v0.0.0-20220526084836-6ca5909b5050
-)
+replace github.com/google/zoekt => github.com/sourcegraph/zoekt v0.0.0-20220526084836-6ca5909b5050

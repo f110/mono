@@ -2193,5 +2193,4 @@ sigs.k8s.io/yaml/goyaml.v2
 ## explicit
 software.sslmate.com/src/go-pkcs12
 software.sslmate.com/src/go-pkcs12/internal/rc2
-# github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
 # github.com/google/zoekt => github.com/sourcegraph/zoekt v0.0.0-20220526084836-6ca5909b5050
