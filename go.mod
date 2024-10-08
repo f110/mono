@@ -8,7 +8,6 @@ require (
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/abhinav/goldmark-mermaid v0.1.1
 	github.com/aws/aws-sdk-go-v2 v1.20.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.20
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.6.0
@@ -47,8 +46,9 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
-	github.com/yuin/goldmark v1.4.13
+	github.com/yuin/goldmark v1.7.4
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
+	go.abhg.dev/goldmark/mermaid v0.5.0
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1

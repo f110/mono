@@ -3,10 +3,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "extension",
     srcs = [
+        "cjk.go",
         "definition_list.go",
         "footnote.go",
         "gfm.go",
         "linkify.go",
+        "package.go",
         "strikethrough.go",
         "table.go",
         "tasklist.go",

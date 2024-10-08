@@ -1,16 +1,20 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "goldmark-mermaid",
+    name = "mermaid",
     srcs = [
         "ast.go",
+        "cli.go",
+        "client_render.go",
         "doc.go",
         "extend.go",
-        "render.go",
+        "rendermode.go",
+        "rendermode_string.go",
+        "server_render.go",
         "transform.go",
     ],
-    importmap = "go.f110.dev/mono/vendor/github.com/abhinav/goldmark-mermaid",
-    importpath = "github.com/abhinav/goldmark-mermaid",
+    importmap = "go.f110.dev/mono/vendor/go.abhg.dev/goldmark/mermaid",
+    importpath = "go.abhg.dev/goldmark/mermaid",
     visibility = ["//visibility:public"],
     deps = [
         "//vendor/github.com/yuin/goldmark",

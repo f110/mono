@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"fmt"
 
-	"github.com/abhinav/goldmark-mermaid"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/ast"
@@ -16,6 +15,7 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
+	"go.abhg.dev/goldmark/mermaid"
 	"go.f110.dev/xerrors"
 )
 

@@ -2,18 +2,18 @@ package mermaid
 
 import "github.com/yuin/goldmark/ast"
 
-// Kind is the kind of a Mermaid block.
+// Kind is the node kind of a Mermaid [Block] node.
 var Kind = ast.NewNodeKind("MermaidBlock")
 
 // Block is a Mermaid block.
 //
-//  ```mermaid
-//  graph TD;
-//      A-->B;
-//      A-->C;
-//      B-->D;
-//      C-->D;
-//  ```
+//	```mermaid
+//	graph TD;
+//	    A-->B;
+//	    A-->C;
+//	    B-->D;
+//	    C-->D;
+//	```
 //
 // Its raw contents are the plain text of the Mermaid diagram.
 type Block struct {
@@ -31,7 +31,7 @@ func (b *Block) Dump(src []byte, level int) {
 	ast.DumpHelper(b, src, level, nil, nil)
 }
 
-// ScriptKind is the kind of a Mermaid Script block.
+// ScriptKind is the node kind of a Mermaid [ScriptBlock] node.
 var ScriptKind = ast.NewNodeKind("MermaidScriptBlock")
 
 // ScriptBlock marks where the Mermaid Javascript will be included.
