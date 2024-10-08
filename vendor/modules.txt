@@ -754,6 +754,7 @@ github.com/kevinburke/ssh_config
 # github.com/klauspost/compress v1.17.9
 ## explicit; go 1.20
 github.com/klauspost/compress
+github.com/klauspost/compress/flate
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
 github.com/klauspost/compress/internal/cpuinfo
@@ -861,15 +862,14 @@ github.com/munnerz/goautoneg
 # github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
 ## explicit
 github.com/mxk/go-flowrate/flowrate
-# github.com/nats-io/nats-server/v2 v2.1.9
-## explicit
-# github.com/nats-io/nats.go v1.13.0
-## explicit; go 1.16
+# github.com/nats-io/nats.go v1.37.0
+## explicit; go 1.20
 github.com/nats-io/nats.go
 github.com/nats-io/nats.go/encoders/builtin
+github.com/nats-io/nats.go/internal/parser
 github.com/nats-io/nats.go/util
-# github.com/nats-io/nkeys v0.3.0
-## explicit; go 1.16
+# github.com/nats-io/nkeys v0.4.7
+## explicit; go 1.20
 github.com/nats-io/nkeys
 # github.com/nats-io/nuid v1.0.1
 ## explicit
@@ -1278,6 +1278,8 @@ golang.org/x/crypto/ed25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
+golang.org/x/crypto/nacl/box
+golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/openpgp/armor
 golang.org/x/crypto/openpgp/elgamal
@@ -1285,6 +1287,7 @@ golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent

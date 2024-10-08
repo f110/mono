@@ -5,13 +5,19 @@ go_library(
     srcs = [
         "crc16.go",
         "creds_utils.go",
+        "errors.go",
         "keypair.go",
-        "main.go",
+        "nkeys.go",
         "public.go",
         "strkey.go",
+        "xkeys.go",
     ],
     importmap = "go.f110.dev/mono/vendor/github.com/nats-io/nkeys",
     importpath = "github.com/nats-io/nkeys",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/golang.org/x/crypto/ed25519"],
+    deps = [
+        "//vendor/golang.org/x/crypto/curve25519",
+        "//vendor/golang.org/x/crypto/ed25519",
+        "//vendor/golang.org/x/crypto/nacl/box",
+    ],
 )
