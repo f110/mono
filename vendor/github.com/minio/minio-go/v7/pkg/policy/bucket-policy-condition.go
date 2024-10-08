@@ -17,7 +17,7 @@
 
 package policy
 
-import "github.com/minio/minio-go/v6/pkg/set"
+import "github.com/minio/minio-go/v7/pkg/set"
 
 // ConditionKeyMap - map of policy condition key and value.
 type ConditionKeyMap map[string]set.StringSet
@@ -46,9 +46,7 @@ func (ckm ConditionKeyMap) Remove(key string, value set.StringSet) {
 
 // RemoveKey - removes key and its value.
 func (ckm ConditionKeyMap) RemoveKey(key string) {
-	if _, ok := ckm[key]; ok {
-		delete(ckm, key)
-	}
+	delete(ckm, key)
 }
 
 // CopyConditionKeyMap - returns new copy of given ConditionKeyMap.
@@ -63,7 +61,7 @@ func CopyConditionKeyMap(condKeyMap ConditionKeyMap) ConditionKeyMap {
 }
 
 // mergeConditionKeyMap - returns a new ConditionKeyMap which contains merged key/value of given two ConditionKeyMap.
-func mergeConditionKeyMap(condKeyMap1 ConditionKeyMap, condKeyMap2 ConditionKeyMap) ConditionKeyMap {
+func mergeConditionKeyMap(condKeyMap1, condKeyMap2 ConditionKeyMap) ConditionKeyMap {
 	out := CopyConditionKeyMap(condKeyMap1)
 
 	for k, v := range condKeyMap2 {
@@ -91,13 +89,11 @@ func (cond ConditionMap) Add(condKey string, condKeyMap ConditionKeyMap) {
 
 // Remove - removes condition key and its value.
 func (cond ConditionMap) Remove(condKey string) {
-	if _, ok := cond[condKey]; ok {
-		delete(cond, condKey)
-	}
+	delete(cond, condKey)
 }
 
 // mergeConditionMap - returns new ConditionMap which contains merged key/value of two ConditionMap.
-func mergeConditionMap(condMap1 ConditionMap, condMap2 ConditionMap) ConditionMap {
+func mergeConditionMap(condMap1, condMap2 ConditionMap) ConditionMap {
 	out := make(ConditionMap)
 
 	for k, v := range condMap1 {

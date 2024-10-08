@@ -6,8 +6,8 @@ go_library(
         "bucket-policy.go",
         "bucket-policy-condition.go",
     ],
-    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio-go/v6/pkg/policy",
-    importpath = "github.com/minio/minio-go/v6/pkg/policy",
+    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio-go/v7/pkg/policy",
+    importpath = "github.com/minio/minio-go/v7/pkg/policy",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/minio/minio-go/v6/pkg/set"],
+    deps = ["//vendor/github.com/minio/minio-go/v7/pkg/set"],
 )

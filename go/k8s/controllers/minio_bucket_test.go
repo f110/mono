@@ -1,14 +1,13 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 	"regexp"
 	"runtime/debug"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -61,13 +60,13 @@ func TestMinIOBucketController(t *testing.T) {
 		mockTransport.RegisterRegexpResponder(
 			http.MethodDelete,
 			regexp.MustCompile(".*/bucket1/\\?policy=$"),
-			httpmock.NewStringResponder(http.StatusOK, ""),
+			httpmock.NewStringResponder(http.StatusNoContent, ""),
 		)
 		mockTransport.RegisterRegexpResponder(
 			http.MethodDelete,
 			regexp.MustCompile(".*"),
 			func(request *http.Request) (*http.Response, error) {
-				log.Print(request.URL.String())
+				t.Log(request.URL.String())
 				debug.PrintStack()
 				return nil, nil
 			},

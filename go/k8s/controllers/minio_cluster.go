@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/minio/minio-go/v6"
-	"github.com/minio/minio-go/v6/pkg/policy"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7/pkg/policy"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -248,21 +249,25 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
 		}
 
-		mc, err := minio.New(instanceEndpoint, defaultMinIOClusterAdminUser, string(rCtx.secret.Data["password"]), false)
+		creds := credentials.NewStaticV4(defaultMinIOClusterAdminUser, string(rCtx.secret.Data["password"]), "")
+		mc, err := minio.New(instanceEndpoint, &minio.Options{
+			Creds:  creds,
+			Secure: false,
+		})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
 		for _, bucket := range rCtx.Obj.Spec.Buckets {
-			if exists, err := mc.BucketExistsWithContext(ctx, bucket.Name); err != nil {
+			if exists, err := mc.BucketExists(ctx, bucket.Name); err != nil {
 				return xerrors.WithStack(err)
 			} else if !exists {
 				m.logger.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.MakeBucketWithContext(ctx, bucket.Name, ""); err != nil {
+				if err := mc.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{}); err != nil {
 					return xerrors.WithStack(err)
 				}
 			}
 
-			gotPolicyString, err := mc.GetBucketPolicy(bucket.Name)
+			gotPolicyString, err := mc.GetBucketPolicy(ctx, bucket.Name)
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -280,7 +285,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			switch bucket.Policy {
 			case "", miniov1alpha1.BucketPolicyPrivate:
 				m.logger.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, ""); err != nil {
+				if err := mc.SetBucketPolicy(ctx, bucket.Name, ""); err != nil {
 					return xerrors.WithStack(err)
 				}
 			case miniov1alpha1.BucketPolicyPublic:
@@ -294,13 +299,13 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 					return xerrors.WithStack(err)
 				}
 				m.logger.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.SetBucketPolicyWithContext(ctx, bucket.Name, string(b)); err != nil {
+				if err := mc.SetBucketPolicy(ctx, bucket.Name, string(b)); err != nil {
 					return xerrors.WithStack(err)
 				}
 			}
 
 			if bucket.CreateIndexFile {
-				stat, err := mc.StatObjectWithContext(ctx, bucket.Name, "index.html", minio.StatObjectOptions{})
+				stat, err := mc.StatObject(ctx, bucket.Name, "index.html", minio.StatObjectOptions{})
 				if err != nil {
 					var mErr minio.ErrorResponse
 					if errors.As(err, &mErr) {
@@ -314,7 +319,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 				}
 				if stat.Key == "" {
 					m.logger.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-					if _, err := mc.PutObjectWithContext(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
+					if _, err := mc.PutObject(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
 						return xerrors.WithStack(err)
 					}
 				}
