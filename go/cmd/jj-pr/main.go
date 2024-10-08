@@ -343,7 +343,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend boo
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, xerrors.WithStack(xerrors.WithStack(err))
 	}
 
 	type readState int
@@ -425,7 +425,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	cmd.Dir = c.Dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
-		return fsm.Error(err)
+		return fsm.Error(xerrors.WithStack(err))
 	}
 	repoRoot := strings.TrimSpace(string(buf))
 	templates, err := c.findPullRequestTemplate(repoRoot)
