@@ -1016,8 +1016,8 @@ go.etcd.io/etcd/client/v3 v3.5.13 h1:o0fHTNJLeO0MyVbc7I3fsCf6nrOqn5d+diSarKnB2js
 go.etcd.io/etcd/client/v3 v3.5.13/go.mod h1:cqiAeY8b5DEEcpxvgWKsbLIWNM/8Wy2xJSDMtioMcoI=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c h1:9rI3TfcM1tJs5J6YT8OQPnFsmdfsxXWL14oHnIFD3iY=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c/go.mod h1:qsC70AjhvI2KStwgacc3f+cLy7o5SB04H4zKA3e1W7o=
-go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1 h1:g9CKP+hJboQpgi/FwrXcaV208b6YmqW3DAauot/Z48I=
-go.f110.dev/notion-api/v3 v3.0.0-20230627142503-4d79754400e1/go.mod h1:5HBQuFSb4rZa5YP0/4Ez7QMIQoAop/pHXcB8QAUA8po=
+go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0 h1:gSnmo+s12m4IdHywPJoJNMXkwQ9OkxJ1w7GigjVtEHg=
+go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0/go.mod h1:sQJf2G+CTpEwIOqSogbqYtVSJCVxB2zYraxUK4HNGL0=
 go.f110.dev/protoc-ddl v0.0.0-20240525123142-1cb0fefe60f4 h1:cJ+xbheJSLqWSGqrvJYqFuzYl2KIAxxrPNe/5s6OPiE=
 go.f110.dev/protoc-ddl v0.0.0-20240525123142-1cb0fefe60f4/go.mod h1:+L3lCQcV1EkT4qZQo9Hjybk35LEMtleeuinfIVqHo/Y=
 go.f110.dev/xerrors v0.0.0-20240427143538-be985a868d6a h1:1M5IssOhqgB/gumgxDJSNG9SqTDt7XrtAS+pAQ8Ak5w=

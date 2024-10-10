@@ -29,6 +29,8 @@ type Meta struct {
 	ID string `json:"id,omitempty"`
 }
 
+func (m *Meta) GetID() string { return m.ID }
+
 type ListMeta struct {
 	// Type of object
 	Object     ObjectType `json:"object,omitempty"`
@@ -763,12 +765,14 @@ type BlockList struct {
 }
 
 type Paragraph struct {
-	Text     []*RichTextObject `json:"text,omitempty"`
+	RichText []*RichTextObject `json:"rich_text,omitempty"`
 	Children []*Block          `json:"children,omitempty"`
+	Color    string            `json:"color,omitempty"`
 }
 
 type Heading struct {
-	Text []*RichTextObject `json:"text"`
+	RichText []*RichTextObject `json:"rich_text"`
+	Color    string            `json:"color,omitempty"`
 }
 
 type ToDo struct {
@@ -782,7 +786,7 @@ type ChildPage struct {
 }
 
 type Code struct {
-	Text     []*RichTextObject `json:"text"`
+	RichText []*RichTextObject `json:"rich_text"`
 	Language string            `json:"language"`
 }
 
