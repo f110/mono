@@ -36,9 +36,9 @@ require (
 	github.com/nats-io/nats.go v1.37.0
 	github.com/nissy/bon v1.3.0
 	github.com/peco/peco v0.5.8
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.4
 	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.59.1
+	github.com/prometheus/common v0.60.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
