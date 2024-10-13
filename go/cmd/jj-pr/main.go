@@ -30,6 +30,7 @@ const (
 	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
 	lastPickedTemplateFile = ".last_template_file"
 	noSendTag              = "no-send:"
+	wipTag                 = "WIP:"
 )
 
 type jujutsuPRSubmitCommand struct {
@@ -383,7 +384,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend boo
 				continue
 			}
 			description = string(buf[prev:i])
-			if !(withoutNoSend && strings.HasPrefix(description, noSendTag)) {
+			if !(withoutNoSend && (strings.HasPrefix(description, noSendTag) || strings.HasPrefix(description, wipTag))) {
 				cm := &commit{
 					ChangeID:    changeID,
 					CommitID:    commitID,
