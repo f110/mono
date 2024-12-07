@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "loggingpb",
+    srcs = [
+        "log_entry.pb.go",
+        "logging.pb.go",
+        "logging_config.pb.go",
+        "logging_metrics.pb.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/logging/apiv2/loggingpb",
+    importpath = "cloud.google.com/go/logging/apiv2/loggingpb",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/distribution",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/metric",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/logging/type",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/longrunning",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/rpc/status",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/anypb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/emptypb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/fieldmaskpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/structpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

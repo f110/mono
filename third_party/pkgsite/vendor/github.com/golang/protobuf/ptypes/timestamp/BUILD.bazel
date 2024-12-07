@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "timestamp",
+    srcs = ["timestamp.pb.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/golang/protobuf/ptypes/timestamp",
+    importpath = "github.com/golang/protobuf/ptypes/timestamp",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

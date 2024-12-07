@@ -1,0 +1,567 @@
+/* stylelint-disable no-descending-specificity */
+
+/*!
+ * Copyright 2021 The Go Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
+.go-Banner {
+  background-color: var(--gray-1);
+
+  /**
+   * Only show on wide viewports so the
+   * text never wraps or gets cut off.
+   */
+  display: none;
+}
+
+.go-Banner-inner {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  min-height: 2.5rem;
+  padding: 0.5rem var(--gutter);
+}
+
+.Site--wide .go-Banner-inner {
+  max-width: 98rem;
+}
+
+.go-Banner--full .go-Banner-inner {
+  max-width: unset;
+}
+
+.go-Banner-message {
+  color: var(--white);
+  margin-right: 1.25rem;
+}
+
+.go-Banner-action:link,
+.go-Banner-action:visited {
+  color: var(--white);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+@media only screen and (min-width: 52rem) {
+  .go-Banner {
+    display: block;
+  }
+}
+
+.go-Header {
+  background: #007d9c;
+  border-bottom: none;
+  box-shadow: 0 0.0625rem 0.125rem rgb(171 171 171 / 30%);
+  top: 0;
+  width: 100%;
+  z-index: 20;
+}
+
+.go-Header-inner {
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.Site--wide .go-Header-inner {
+  max-width: 98rem;
+}
+
+.go-Header--full .go-Header-inner {
+  max-width: initial;
+}
+
+.go-Header-nav {
+  align-items: center;
+  display: flex;
+  height: 3.5rem;
+  justify-content: space-between;
+}
+
+.go-Header-rightContent {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.go-Header-rightContent form {
+  flex-grow: 1;
+}
+
+.go-Header-inner--dark {
+  border-bottom: none;
+  color: var(--white);
+}
+
+.go-Header-logo {
+  display: block;
+  height: 2rem;
+  margin-right: 2.25rem;
+  width: 5.125rem;
+}
+
+.go-Header-logo--hidden {
+  display: none;
+}
+
+.go-Header-menuItem {
+  display: none;
+  position: relative;
+}
+
+.go-Header-menu {
+  align-items: stretch;
+  display: flex;
+  height: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-local='true'] .go-Header-menu {
+  display: none;
+}
+
+.go-Header-submenu {
+  background: transparent;
+  background-color: var(--color-background);
+  border: 0.0625rem solid #007d9d;
+  border-width: 0 0.0625rem 0.0625rem;
+  color: var(--color-text);
+  display: none;
+  flex-flow: column wrap;
+  list-style-type: none;
+  margin-top: 3.5rem;
+  opacity: 0;
+  padding: 1.5rem 1.5rem 0;
+  position: absolute;
+  transition: all 0.2s ease;
+  visibility: hidden;
+}
+
+.go-Header-menuItem:hover > .js-desktop-menu-hover:not(.forced-closed) ~ .go-Header-submenu,
+.go-Header-menuItem:focus-within > .js-desktop-menu-hover:not(.forced-closed) ~ .go-Header-submenu {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+}
+
+.go-Header-menuItem .go-Header-submenuItem a:link,
+.go-Header-menuItem .go-Header-submenuItem a:visited {
+  align-items: baseline;
+  border-bottom: none;
+  color: var(--color-text-link);
+  display: inline-flex;
+  font-weight: 400;
+  margin: 0;
+  margin-bottom: -0.125rem;
+  padding: 0;
+}
+
+.go-Header-menuItem .go-Icon {
+  filter: brightness(0%) saturate(100%) invert(100%);
+  font-size: 1.25rem;
+}
+
+.go-Header-menuItem .go-Header-submenuItem .go-Icon,
+.go-NavigationDrawer-listItem .go-Icon {
+  filter: brightness(0) saturate(100%) invert(60%) sepia(97%) saturate(125%) hue-rotate(162deg)
+    brightness(71%) contrast(177%);
+}
+
+.go-Header-submenu .go-Header-submenuItem i {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  transform: translateY(0.1rem); /* to get bottom alignment w/ text  */
+}
+
+.go-Header-menu .go-Header-submenu--why {
+  left: -0.0625rem;
+  width: 18.5rem;
+}
+
+.go-Header-menu .go-Header-submenu--docs {
+  height: 20.78rem;
+  left: -12rem;
+  width: 37.25rem;
+}
+
+.go-Header-menu .go-Header-submenu--community {
+  height: 18.4rem;
+  right: -0.0625rem;
+  width: 37.25rem;
+}
+
+.go-Header-socialIcons {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.go-Header-submenu .go-Header-submenuItem a.go-Header-socialIcon {
+  display: inline-flex;
+  flex: 0 1 auto;
+  width: auto;
+}
+
+.go-Header-submenu .go-Header-submenuItem a.go-Header-socialIcon:not(:last-child) {
+  margin-right: 0.75rem;
+}
+@media only screen and (min-width: 65rem) {
+  .go-Header-menuItem {
+    align-items: stretch;
+    display: inline-flex;
+    flex: none;
+  }
+
+  .go-Header-menu {
+    justify-content: flex-end;
+  }
+
+  .go-Header-navOpen {
+    display: none;
+  }
+}
+
+.go-Header-menuItem .js-desktop-menu-hover img {
+  pointer-events: none;
+}
+
+.go-Header-menuItem a:link,
+.go-Header-menuItem a:visited {
+  align-items: center;
+  border-bottom: 0.1875rem solid transparent;
+  border-top: 0.1875rem solid transparent; /* To ensure the text remains centered. */
+  color: var(--color-text);
+  display: inline-flex;
+  padding: 0 1.5rem;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+}
+
+.go-Header-menuItem--active a:link,
+.go-Header-menuItem--active a:visited {
+  border-bottom-color: var(--turq-med);
+  font-weight: bold;
+}
+
+.go-Header-menuItem a:hover {
+  border-bottom-color: var(--white);
+}
+
+.go-Header-menuItem:hover > a:not(.forced-closed).js-desktop-menu-hover,
+.go-Header-menuItem:focus-within > a:not(.forced-closed).js-desktop-menu-hover {
+  background: var(--white);
+  border-color: var(--white);
+  color: var(--color-text-link);
+}
+
+/* Need to get around icon.css color management */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])
+    .go-Header-menuItem:hover
+    > a:not(.forced-closed).js-desktop-menu-hover
+    .go-Icon,
+  :root:not([data-theme='light'])
+    .go-Header-menuItem:focus-within
+    > a:not(.forced-closed).js-desktop-menu-hover
+    .go-Icon {
+    filter: brightness(0) saturate(100%) invert(60%) sepia(97%) saturate(125%) hue-rotate(158deg)
+      brightness(83%) contrast(157%);
+  }
+
+  :root:not([data-theme='light']) .go-Header-submenuItem .go-Icon:not(.go-Icon--accented) {
+    filter: brightness(0) saturate(100%) invert(60%) sepia(97%) saturate(125%) hue-rotate(163deg)
+      brightness(80%) contrast(157%);
+  }
+}
+
+.go-NavigationDrawer-listItem > div:not(.go-NavigationDrawer),
+.go-NavigationDrawer-listItem a:link,
+.go-NavigationDrawer-listItem a:visited {
+  display: block;
+  margin: 0 1rem;
+  padding: 0.5rem;
+}
+
+.go-NavigationDrawer-listItem > span {
+  color: var(--gray-2);
+}
+
+.go-Header-inner--dark .go-Header-menuItem a:link,
+.go-Header-inner--dark .go-Header-menuItem a:visited {
+  color: var(--white);
+}
+
+.go-NavigationDrawer-listItem.go-NavigationDrawer-hasSubnav > a i {
+  float: right;
+}
+
+.go-Header-inner--dark .go-Header-menuItem .go-Header-submenuItem {
+  color: var(--color-text-link);
+}
+
+.go-Header-inner--dark .go-Header-menuItem .js-desktop-menu-hover.is-expanded {
+  background-color: var(--white);
+  color: var(--color-text-link);
+}
+
+.go-Header-inner--dark .go-Header-menuItem .go-Header-submenu a:link,
+.go-Header-inner--dark .go-Header-menuItem .go-Header-submenu a:visited {
+  align-items: baseline;
+  color: var(--color-text-link);
+  display: inline-flex;
+  margin-bottom: -0.125rem;
+  width: auto;
+}
+
+.go-Header-submenu .go-Header-submenuItem a:link,
+.go-Header-submenu .go-Header-submenuItem a:visited {
+  border-bottom: none;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+}
+
+.go-Header-submenu .go-Header-submenuItem a:focus {
+  text-decoration: underline !important;
+}
+
+.go-Header-inner--dark .go-Header-menuItem:hover > a:not(.forced-closed).js-desktop-menu-hover,
+.go-Header-inner--dark
+  .go-Header-menuItem:focus-within
+  > a:not(.forced-closed).js-desktop-menu-hover {
+  background: var(--color-background);
+  border-color: var(--color-background);
+}
+
+.go-Header-submenu p {
+  max-width: 15.5rem;
+}
+
+.go-Header-submenu a:link:hover,
+.go-Header-submenu a:visited:hover {
+  border-bottom: 0.125rem solid var(--turq-dark);
+  text-decoration: none;
+}
+
+.go-Header-submenu a:link:hover > *,
+.go-Header-submenu a:visited:hover > * {
+  text-decoration: none;
+}
+
+.go-Header-submenu .go-Header-submenuItem {
+  line-height: 1;
+  padding-bottom: 1.5rem;
+}
+
+.go-Header-submenu .go-Header-submenuItem p {
+  color: var(--color-text-subtle);
+  font-size: 0.875rem;
+  margin-top: 0.55rem;
+}
+
+.go-Header-inner--dark .go-Header-submenu .go-Header-submenuItem p {
+  color: var(--color-text-subtle);
+}
+
+.go-Header-navOpen {
+  background: no-repeat center/2rem url('/images/menu-24px.svg');
+  border: none;
+  height: 2.5rem;
+  margin-left: 1rem;
+  width: 2.5rem;
+}
+
+.go-Header-navOpen--hidden {
+  display: none;
+}
+
+.go-Header-navOpen--white {
+  background: no-repeat center/2rem url('/static/shared/icon/menu_gm_grey_24dp.svg');
+  filter: brightness(0) saturate(100%) invert(100%) sepia(97%) saturate(13%) hue-rotate(245deg)
+    brightness(103%) contrast(107%);
+}
+
+.go-SearchForm--expanded {
+  flex-grow: 1;
+}
+
+.go-SearchForm-form {
+  display: none;
+}
+
+.go-SearchForm-form::after {
+  right: 2.75rem;
+}
+
+.go-SearchForm--expanded .go-SearchForm-form {
+  display: flex;
+}
+
+.go-SearchForm-expandSearch {
+  appearance: none;
+  background: none;
+  font-size: 1.5rem;
+}
+
+.go-SearchForm--expanded .go-SearchForm-expandSearch {
+  display: none;
+}
+
+@media only screen and (min-width: 32rem) {
+  .go-Header-rightContent {
+    width: 100%;
+  }
+
+  .go-SearchForm {
+    flex: 1;
+  }
+
+  .go-SearchForm-form {
+    display: flex;
+  }
+
+  .go-SearchForm-expandSearch {
+    display: none;
+  }
+
+  .go-Header-logo--hidden {
+    display: initial;
+  }
+}
+
+.go-NavigationDrawer {
+  background: var(--color-background);
+  height: 100%;
+  left: auto;
+  max-width: 27rem;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transform: translateX(100%);
+  transition: transform 100ms ease-in-out;
+  width: 85%;
+  z-index: 30;
+}
+@media only screen and (min-width: 65rem) {
+  .go-NavigationDrawer {
+    display: none;
+  }
+}
+
+.go-NavigationDrawer.is-active {
+  transform: translateX(0);
+}
+
+.go-NavigationDrawer-header {
+  border-bottom: 0.0625rem solid #eee;
+  margin-bottom: 0.5rem;
+}
+
+.go-NavigationDrawer-submenuItem {
+  width: 100%;
+}
+
+.go-NavigationDrawer-submenuItem .go-NavigationDrawer-header {
+  align-items: center;
+  color: var(--color-text-link);
+  display: flex;
+  font-size: 1.375rem;
+  justify-content: flex-start;
+  min-height: 4.0625rem;
+  padding: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.go-NavigationDrawer-submenuItem .go-NavigationDrawer-header > a {
+  display: flex;
+  margin-left: 0;
+}
+
+.go-NavigationDrawer-logo {
+  display: block;
+  height: 2rem;
+  margin: 1rem;
+  width: 5.125rem;
+}
+
+.go-NavigationDrawer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.go-NavigationDrawer-listItem {
+  color: var(--color-text-subtle);
+  font-size: 1.125rem;
+  margin: 0 0.5rem;
+}
+
+.go-NavigationDrawer-listItem--active {
+  background-color: var(--blue);
+  border-radius: 0.4rem;
+}
+
+.go-NavigationDrawer-listItem .material-icons {
+  color: var(--color-brand-primary);
+  display: inline-block;
+  margin-right: 0.5rem;
+  text-decoration: none;
+  vertical-align: sub;
+}
+@media only screen and (max-width: 57.7rem) {
+  .go-NavigationDrawer-listItem .go-Header-socialIcons {
+    padding: 0.5rem 0;
+  }
+
+  .go-NavigationDrawer-listItem a.go-Header-socialIcon {
+    display: inline-block;
+    margin: 0;
+    padding: 0 0.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .go-NavigationDrawer-listItem .go-Icon:not(.go-Icon--accented) {
+      filter: brightness(0) saturate(100%) invert(60%) sepia(97%) saturate(125%) hue-rotate(163deg)
+        brightness(80%) contrast(157%);
+    }
+  }
+}
+
+.go-NavigationDrawer-scrim {
+  display: none;
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 20;
+}
+
+.go-NavigationDrawer.is-active + .go-NavigationDrawer-scrim {
+  background-color: var(--gray-1);
+  display: block;
+  opacity: 0.32;
+}
+
+.skip-to-content-link {
+  background: var(--color-background);
+  border-radius: 0.375rem;
+  clip: rect(0 0 0 0);
+  color: var(--color-text);
+  font-weight: 500;
+  left: 8%;
+  margin: 0.313rem;
+  overflow: hidden;
+  position: absolute;
+  top: 0.75rem;
+}
+
+.skip-to-content-link:focus {
+  clip: unset;
+  z-index: 1;
+}

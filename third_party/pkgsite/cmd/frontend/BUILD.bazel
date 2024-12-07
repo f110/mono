@@ -1,0 +1,41 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "frontend_lib",
+    srcs = ["main.go"],
+    importpath = "golang.org/x/pkgsite/cmd/frontend",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/pkgsite/cmd/internal/cmdconfig",
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/config/serverconfig",
+        "//third_party/pkgsite/internal/dcensus",
+        "//third_party/pkgsite/internal/fetch",
+        "//third_party/pkgsite/internal/fetchdatasource",
+        "//third_party/pkgsite/internal/frontend",
+        "//third_party/pkgsite/internal/frontend/fetchserver",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/middleware",
+        "//third_party/pkgsite/internal/middleware/timeout",
+        "//third_party/pkgsite/internal/postgres",
+        "//third_party/pkgsite/internal/proxy",
+        "//third_party/pkgsite/internal/queue",
+        "//third_party/pkgsite/internal/queue/gcpqueue",
+        "//third_party/pkgsite/internal/source",
+        "//third_party/pkgsite/internal/static",
+        "//third_party/pkgsite/internal/trace",
+        "//third_party/pkgsite/internal/vuln",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/profiler",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v8:redis",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
+    ],
+)
+
+go_binary(
+    name = "frontend",
+    embed = [":frontend_lib"],
+    visibility = ["//visibility:public"],
+)

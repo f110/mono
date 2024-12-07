@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = [
+        "arg.go",
+        "internal.go",
+        "log.go",
+        "once.go",
+        "unsafe.go",
+        "util.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/go-redis/redis/v8/internal",
+    importpath = "github.com/go-redis/redis/v8/internal",
+    visibility = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v8:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v8/internal/rand",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v8/internal/util",
+    ],
+)

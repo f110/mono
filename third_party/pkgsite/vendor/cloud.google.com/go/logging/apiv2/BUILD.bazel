@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "apiv2",
+    srcs = [
+        "config_client.go",
+        "doc.go",
+        "info.go",
+        "logging_client.go",
+        "metrics_client.go",
+        "path_funcs.go",
+        "version.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/logging/apiv2",
+    importpath = "cloud.google.com/go/logging/apiv2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/apiv2/loggingpb",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/logging/internal",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/longrunning",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/longrunning/autogen",
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:gax-go",
+        "//third_party/pkgsite/vendor/google.golang.org/api/iterator",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option/internaloption",
+        "//third_party/pkgsite/vendor/google.golang.org/api/transport/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/monitoredres",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/longrunning",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/proto",
+    ],
+)

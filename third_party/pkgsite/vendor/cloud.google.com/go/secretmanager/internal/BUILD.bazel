@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["version.go"],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/secretmanager/internal",
+    importpath = "cloud.google.com/go/secretmanager/internal",
+    visibility = ["//third_party/pkgsite/vendor/cloud.google.com/go/secretmanager:__subpackages__"],
+)

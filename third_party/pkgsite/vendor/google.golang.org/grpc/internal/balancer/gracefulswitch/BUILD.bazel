@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gracefulswitch",
+    srcs = ["gracefulswitch.go"],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/internal/balancer/gracefulswitch",
+    importpath = "google.golang.org/grpc/internal/balancer/gracefulswitch",
+    visibility = ["//third_party/pkgsite/vendor/google.golang.org/grpc:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer/base",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/connectivity",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/resolver",
+    ],
+)

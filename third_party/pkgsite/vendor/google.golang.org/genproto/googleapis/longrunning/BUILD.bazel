@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "longrunning",
+    srcs = ["alias.go"],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/genproto/googleapis/longrunning",
+    importpath = "google.golang.org/genproto/googleapis/longrunning",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/longrunning/autogen/longrunningpb",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+    ],
+)

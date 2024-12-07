@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "idtoken",
+    srcs = [
+        "cache.go",
+        "compute.go",
+        "doc.go",
+        "idtoken.go",
+        "validate.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/api/idtoken",
+    importpath = "google.golang.org/api/idtoken",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/compute/metadata",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2/google",
+        "//third_party/pkgsite/vendor/google.golang.org/api/impersonate",
+        "//third_party/pkgsite/vendor/google.golang.org/api/internal",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option/internaloption",
+        "//third_party/pkgsite/vendor/google.golang.org/api/transport/http",
+    ],
+)

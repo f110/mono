@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "js_parser",
+    srcs = [
+        "global_name_parser.go",
+        "js_parser.go",
+        "js_parser_lower.go",
+        "json_parser.go",
+        "sourcemap_parser.go",
+        "ts_parser.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/internal/js_parser",
+    importpath = "github.com/evanw/esbuild/internal/js_parser",
+    visibility = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/compat",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/config",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/helpers",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_lexer",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/logger",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/renamer",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/runtime",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/sourcemap",
+    ],
+)

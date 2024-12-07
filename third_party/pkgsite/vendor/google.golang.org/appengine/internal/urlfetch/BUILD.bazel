@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "urlfetch",
+    srcs = ["urlfetch_service.pb.go"],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/appengine/internal/urlfetch",
+    importpath = "google.golang.org/appengine/internal/urlfetch",
+    visibility = ["//third_party/pkgsite/vendor/google.golang.org/appengine:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/github.com/golang/protobuf/proto"],
+)

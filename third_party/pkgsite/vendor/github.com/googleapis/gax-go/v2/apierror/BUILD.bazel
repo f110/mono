@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "apierror",
+    srcs = ["apierror.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/googleapis/gax-go/v2/apierror",
+    importpath = "github.com/googleapis/gax-go/v2/apierror",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2/apierror/internal/proto",
+        "//third_party/pkgsite/vendor/google.golang.org/api/googleapi",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/rpc/errdetails",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/encoding/protojson",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/proto",
+    ],
+)

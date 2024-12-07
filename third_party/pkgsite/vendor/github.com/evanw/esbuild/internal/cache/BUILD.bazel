@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cache",
+    srcs = [
+        "cache.go",
+        "cache_ast.go",
+        "cache_fs.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/internal/cache",
+    importpath = "github.com/evanw/esbuild/internal/cache",
+    visibility = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/css_ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/css_parser",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/fs",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_parser",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/logger",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/runtime",
+    ],
+)

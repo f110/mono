@@ -101,3 +101,10 @@ rules_proto_toolchains()
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 
 bazel_features_deps()
+
+http_archive(
+    name = "com_github_golang-migrate_migrate_amd64",
+    build_file_content = """exports_files(["migrate"])""",
+    sha256 = "2a08137b4720aa457bc760540723e313783f1fab27473463bdcc5fc2e9252959",
+    urls = ["https://github.com/golang-migrate/migrate/releases/download/v4.18.1/migrate.linux-amd64.tar.gz"],
+)

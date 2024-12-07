@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "grpc",
+    srcs = [
+        "dial.go",
+        "dial_socketopt.go",
+        "pool.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/api/transport/grpc",
+    importpath = "google.golang.org/api/transport/grpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/compute/metadata",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ocgrpc",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2",
+        "//third_party/pkgsite/vendor/google.golang.org/api/internal",
+        "//third_party/pkgsite/vendor/google.golang.org/api/option",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/balancer/grpclb",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials/google",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials/insecure",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials/oauth",
+    ],
+)

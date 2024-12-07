@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stubs",
+    srcs = ["storage.pb.go"],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/storage/internal/apiv2/stubs",
+    importpath = "cloud.google.com/go/storage/internal/apiv2/stubs",
+    visibility = ["//third_party/pkgsite/vendor/cloud.google.com/go/storage:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/iam/v1:iam",
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/type/date",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/emptypb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/fieldmaskpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/timestamppb",
+    ],
+)

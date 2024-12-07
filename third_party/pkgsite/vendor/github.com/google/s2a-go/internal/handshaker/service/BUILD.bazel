@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "service",
+    srcs = ["service.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/s2a-go/internal/handshaker/service",
+    importpath = "github.com/google/s2a-go/internal/handshaker/service",
+    visibility = ["//third_party/pkgsite/vendor/github.com/google/s2a-go:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/appengine",
+        "//third_party/pkgsite/vendor/google.golang.org/appengine/socket",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog",
+    ],
+)

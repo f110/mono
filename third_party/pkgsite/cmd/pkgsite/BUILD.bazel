@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "pkgsite_lib",
+    srcs = ["main.go"],
+    importpath = "golang.org/x/pkgsite/cmd/pkgsite",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/pkgsite/cmd/internal/pkgsite",
+        "//third_party/pkgsite/internal/browser",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/middleware/timeout",
+        "//third_party/pkgsite/internal/proxy",
+        "//third_party/pkgsite/internal/stdlib",
+    ],
+)
+
+go_binary(
+    name = "pkgsite",
+    embed = [":pkgsite_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,8 +1,0 @@
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
-
-pkg_tar(
-    name = "files",
-    srcs = glob(["*.css"]),
-    package_dir = "/content/static/css",
-    visibility = ["//visibility:public"],
-)

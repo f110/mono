@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sample",
+    srcs = ["sample.go"],
+    importpath = "golang.org/x/pkgsite/internal/testing/sample",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/godoc",
+        "//third_party/pkgsite/internal/licenses",
+        "//third_party/pkgsite/internal/source",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/vendor/github.com/google/go-cmp/cmp",
+        "//third_party/pkgsite/vendor/github.com/google/go-cmp/cmp/cmpopts",
+        "//third_party/pkgsite/vendor/github.com/google/licensecheck",
+    ],
+)

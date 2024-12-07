@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "typesinternal",
+    srcs = [
+        "element.go",
+        "errorcode.go",
+        "errorcode_string.go",
+        "recv.go",
+        "toonew.go",
+        "types.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/tools/internal/typesinternal",
+    importpath = "golang.org/x/tools/internal/typesinternal",
+    visibility = ["//third_party/pkgsite/vendor/golang.org/x/tools:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/types/typeutil",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/internal/aliases",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/internal/stdlib",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/internal/versions",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "catmsg",
+    srcs = [
+        "catmsg.go",
+        "codec.go",
+        "varint.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/text/internal/catmsg",
+    importpath = "golang.org/x/text/internal/catmsg",
+    visibility = ["//third_party/pkgsite/vendor/golang.org/x/text:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/text/language"],
+)

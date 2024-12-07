@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "serverconfig",
+    srcs = ["config.go"],
+    importpath = "golang.org/x/pkgsite/internal/config/serverconfig",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/secrets",
+        "//third_party/pkgsite/vendor/cloud.google.com/go/storage",
+        "//third_party/pkgsite/vendor/golang.org/x/net/context/ctxhttp",
+        "//third_party/pkgsite/vendor/gopkg.in/yaml.v3:yaml_v3",
+    ],
+)

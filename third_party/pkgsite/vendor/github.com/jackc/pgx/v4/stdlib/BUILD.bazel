@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stdlib",
+    srcs = ["sql.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/jackc/pgx/v4/stdlib",
+    importpath = "github.com/jackc/pgx/v4/stdlib",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/jackc/pgconn",
+        "//third_party/pkgsite/vendor/github.com/jackc/pgtype",
+        "//third_party/pkgsite/vendor/github.com/jackc/pgx/v4:pgx",
+    ],
+)

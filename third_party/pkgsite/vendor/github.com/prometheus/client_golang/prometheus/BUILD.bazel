@@ -1,0 +1,86 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "prometheus",
+    srcs = [
+        "collector.go",
+        "counter.go",
+        "desc.go",
+        "doc.go",
+        "expvar_collector.go",
+        "fnv.go",
+        "gauge.go",
+        "go_collector.go",
+        "histogram.go",
+        "labels.go",
+        "metric.go",
+        "observer.go",
+        "process_collector.go",
+        "process_collector_other.go",
+        "process_collector_windows.go",
+        "registry.go",
+        "summary.go",
+        "timer.go",
+        "untyped.go",
+        "value.go",
+        "vec.go",
+        "wrap.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/prometheus/client_golang/prometheus",
+    importpath = "github.com/prometheus/client_golang/prometheus",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/beorn7/perks/quantile",
+        "//third_party/pkgsite/vendor/github.com/cespare/xxhash/v2:xxhash",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/ptypes",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_golang/prometheus/internal",
+        "//third_party/pkgsite/vendor/github.com/prometheus/client_model/go",
+        "//third_party/pkgsite/vendor/github.com/prometheus/common/expfmt",
+        "//third_party/pkgsite/vendor/github.com/prometheus/common/model",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:aix": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:android": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:illumos": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:js": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "//third_party/pkgsite/vendor/github.com/prometheus/procfs",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "//third_party/pkgsite/vendor/golang.org/x/sys/windows",
+        ],
+        "//conditions:default": [],
+    }),
+)

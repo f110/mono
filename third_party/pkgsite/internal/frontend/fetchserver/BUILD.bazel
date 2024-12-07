@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "fetchserver",
+    srcs = [
+        "404.go",
+        "fetch.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/frontend/fetchserver",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/cookie",
+        "//third_party/pkgsite/internal/dcensus",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/experiment",
+        "//third_party/pkgsite/internal/fetch",
+        "//third_party/pkgsite/internal/frontend/page",
+        "//third_party/pkgsite/internal/frontend/serrors",
+        "//third_party/pkgsite/internal/frontend/urlinfo",
+        "//third_party/pkgsite/internal/frontend/versions",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/proxy",
+        "//third_party/pkgsite/internal/queue",
+        "//third_party/pkgsite/internal/source",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/internal/version",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template/uncheckedconversions",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/tag",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module",
+    ],
+)

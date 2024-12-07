@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "log",
+    srcs = ["log.go"],
+    importpath = "golang.org/x/pkgsite/internal/log",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = ["//third_party/pkgsite/internal/experiment"],
+)

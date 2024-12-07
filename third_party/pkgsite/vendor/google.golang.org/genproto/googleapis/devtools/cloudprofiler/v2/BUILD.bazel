@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cloudprofiler",
+    srcs = ["profiler.pb.go"],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/genproto/googleapis/devtools/cloudprofiler/v2",
+    importpath = "google.golang.org/genproto/googleapis/devtools/cloudprofiler/v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/api/annotations",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/status",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/durationpb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/fieldmaskpb",
+    ],
+)

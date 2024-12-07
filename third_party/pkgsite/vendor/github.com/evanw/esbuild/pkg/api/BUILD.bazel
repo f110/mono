@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "api",
+    srcs = [
+        "api.go",
+        "api_impl.go",
+        "api_js_table.go",
+        "serve_other.go",
+        "serve_wasm.go",
+        "watcher.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/pkg/api",
+    importpath = "github.com/evanw/esbuild/pkg/api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/api_helpers",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/bundler",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/cache",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/compat",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/config",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/fs",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/graph",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/helpers",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_ast",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/js_parser",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/linker",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/logger",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/resolver",
+        "//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/xxhash",
+    ],
+)

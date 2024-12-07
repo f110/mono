@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "prototext",
+    srcs = [
+        "decode.go",
+        "doc.go",
+        "encode.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/protobuf/encoding/prototext",
+    importpath = "google.golang.org/protobuf/encoding/prototext",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/encoding/protowire",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/encoding/messageset",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/encoding/text",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/errors",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/flags",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/genid",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/order",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/pragma",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/set",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/internal/strs",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/proto",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoregistry",
+    ],
+)

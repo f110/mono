@@ -1,0 +1,18 @@
+<!--
+  Copyright 2020 The Go Authors. All rights reserved.
+  Use of this source code is governed by a BSD-style
+  license that can be found in the LICENSE file.
+-->
+
+{{define "pre-content"}}
+  <link href="/static/frontend/error/error.min.css?version={{.AppVersionLabel}}" rel="stylesheet">
+{{end}}
+
+{{define "main"}}
+  <main class="go-Container" id="main-content">
+    <div class="go-Content go-Content--center">
+      {{template "gopher-airplane" ""}}
+      {{template "message" .MessageData}}
+    </div>
+  </main>
+{{end}}

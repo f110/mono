@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "uncheckedconversions",
+    srcs = ["uncheckedconversions.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/safehtml/template/uncheckedconversions",
+    importpath = "github.com/google/safehtml/template/uncheckedconversions",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/internal/template/raw",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template",
+    ],
+)

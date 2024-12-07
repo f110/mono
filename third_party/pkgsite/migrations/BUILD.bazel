@@ -1,0 +1,8 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "files",
+    srcs = glob(["*.sql"]),
+    package_dir = "/migrations",
+    visibility = ["//visibility:public"],
+)

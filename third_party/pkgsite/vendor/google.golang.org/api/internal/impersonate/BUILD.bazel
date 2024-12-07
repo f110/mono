@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "impersonate",
+    srcs = ["impersonate.go"],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/api/internal/impersonate",
+    importpath = "google.golang.org/api/internal/impersonate",
+    visibility = ["//third_party/pkgsite/vendor/google.golang.org/api:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/oauth2"],
+)

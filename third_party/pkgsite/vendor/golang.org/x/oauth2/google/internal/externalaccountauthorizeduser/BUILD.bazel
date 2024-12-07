@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "externalaccountauthorizeduser",
+    srcs = ["externalaccountauthorizeduser.go"],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/oauth2/google/internal/externalaccountauthorizeduser",
+    importpath = "golang.org/x/oauth2/google/internal/externalaccountauthorizeduser",
+    visibility = ["//third_party/pkgsite/vendor/golang.org/x/oauth2/google:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2/google/internal/stsexchange",
+    ],
+)

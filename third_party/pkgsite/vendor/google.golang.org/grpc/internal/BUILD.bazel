@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = [
+        "internal.go",
+        "xds_handshake_cluster.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/internal",
+    importpath = "google.golang.org/grpc/internal",
+    visibility = ["//third_party/pkgsite/vendor/google.golang.org/grpc:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/attributes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/connectivity",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/resolver",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/serviceconfig",
+    ],
+)

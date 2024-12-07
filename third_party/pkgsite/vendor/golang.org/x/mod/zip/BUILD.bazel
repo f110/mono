@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "zip",
+    srcs = ["zip.go"],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/mod/zip",
+    importpath = "golang.org/x/mod/zip",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/golang.org/x/mod/modfile",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module",
+    ],
+)

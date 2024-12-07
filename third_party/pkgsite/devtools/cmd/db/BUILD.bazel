@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "db_lib",
+    srcs = ["main.go"],
+    importpath = "golang.org/x/pkgsite/devtools/cmd/db",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//third_party/pkgsite/internal/config/serverconfig",
+        "//third_party/pkgsite/internal/database",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/vendor/github.com/jackc/pgx/v4/stdlib",
+        "//third_party/pkgsite/vendor/github.com/lib/pq",
+    ],
+)
+
+go_binary(
+    name = "db",
+    embed = [":db_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dcensus",
+    srcs = [
+        "dcensus.go",
+        "debug.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/dcensus",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/config",
+        "//third_party/pkgsite/internal/config/serverconfig",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/vendor/contrib.go.opencensus.io/exporter/prometheus",
+        "//third_party/pkgsite/vendor/contrib.go.opencensus.io/exporter/stackdriver",
+        "//third_party/pkgsite/vendor/go.opencensus.io/plugin/ochttp",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats",
+        "//third_party/pkgsite/vendor/go.opencensus.io/stats/view",
+        "//third_party/pkgsite/vendor/go.opencensus.io/tag",
+        "//third_party/pkgsite/vendor/go.opencensus.io/trace",
+        "//third_party/pkgsite/vendor/go.opencensus.io/zpages",
+    ],
+)

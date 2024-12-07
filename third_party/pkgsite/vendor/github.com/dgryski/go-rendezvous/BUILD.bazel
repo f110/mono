@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go-rendezvous",
+    srcs = ["rdv.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/dgryski/go-rendezvous",
+    importpath = "github.com/dgryski/go-rendezvous",
+    visibility = ["//visibility:public"],
+)

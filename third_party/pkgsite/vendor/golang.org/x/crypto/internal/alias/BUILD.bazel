@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "alias",
+    srcs = [
+        "alias.go",
+        "alias_purego.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/crypto/internal/alias",
+    importpath = "golang.org/x/crypto/internal/alias",
+    visibility = ["//third_party/pkgsite/vendor/golang.org/x/crypto:__subpackages__"],
+)

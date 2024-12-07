@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "templates",
+    srcs = ["templates.go"],
+    importpath = "golang.org/x/pkgsite/internal/frontend/templates",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template",
+        "//third_party/pkgsite/vendor/golang.org/x/text/cases",
+        "//third_party/pkgsite/vendor/golang.org/x/text/language",
+    ],
+)

@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "template",
+    srcs = [
+        "context.go",
+        "delim_string.go",
+        "doc.go",
+        "error.go",
+        "escape.go",
+        "init.go",
+        "sanitize.go",
+        "sanitizers.go",
+        "state_string.go",
+        "template.go",
+        "transition.go",
+        "trustedfs.go",
+        "trustedsource.go",
+        "trustedtemplate.go",
+        "url.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/safehtml/template",
+    importpath = "github.com/google/safehtml/template",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/google/safehtml",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/internal/safehtmlutil",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/internal/template/raw",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/uncheckedconversions",
+    ],
+)

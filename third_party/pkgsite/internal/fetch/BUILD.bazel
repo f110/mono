@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "fetch",
+    srcs = [
+        "fetch.go",
+        "getters.go",
+        "known_alternatives.go",
+        "largefork.go",
+        "latest.go",
+        "limit.go",
+        "load.go",
+        "package.go",
+        "readme.go",
+        "unit.go",
+        "zip_signatures.gen.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/fetch",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/fuzzy",
+        "//third_party/pkgsite/internal/godoc",
+        "//third_party/pkgsite/internal/licenses",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/proxy",
+        "//third_party/pkgsite/internal/source",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/internal/trace",
+        "//third_party/pkgsite/internal/version",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/modfile",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/module",
+        "//third_party/pkgsite/vendor/golang.org/x/sync/errgroup",
+        "//third_party/pkgsite/vendor/golang.org/x/tools/go/packages",
+    ],
+)

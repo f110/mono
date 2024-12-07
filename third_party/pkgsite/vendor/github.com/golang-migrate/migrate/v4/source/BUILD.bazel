@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "source",
+    srcs = [
+        "driver.go",
+        "errors.go",
+        "migration.go",
+        "parse.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source",
+    importpath = "github.com/golang-migrate/migrate/v4/source",
+    visibility = ["//visibility:public"],
+)

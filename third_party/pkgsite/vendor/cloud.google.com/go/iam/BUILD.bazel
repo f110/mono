@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "iam",
+    srcs = ["iam.go"],
+    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go/iam",
+    importpath = "cloud.google.com/go/iam",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/iam/apiv1/iampb",
+        "//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2:gax-go",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/codes",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/metadata",
+    ],
+)

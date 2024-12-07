@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "xxhash",
+    srcs = [
+        "xxhash.go",
+        "xxhash_other.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/internal/xxhash",
+    importpath = "github.com/evanw/esbuild/internal/xxhash",
+    visibility = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild:__subpackages__"],
+)

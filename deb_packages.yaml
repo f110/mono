@@ -1,7 +1,8 @@
 snapshot:
   distro:
     bookworm:
-      debian: 20240327T025446Z
+      debian: 20240510T205852Z
 packages:
-  - libjansson-dev
-  - libseccomp-dev
+  - libjansson-dev # for zoekt-indexer
+  - libseccomp-dev # for zoekt-indexer
+  - git # for pkgsite

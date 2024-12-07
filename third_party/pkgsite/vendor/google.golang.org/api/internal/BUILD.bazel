@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = [
+        "cba.go",
+        "conn_pool.go",
+        "creds.go",
+        "s2a.go",
+        "settings.go",
+        "version.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/api/internal",
+    importpath = "google.golang.org/api/internal",
+    visibility = ["//third_party/pkgsite/vendor/google.golang.org/api:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/cloud.google.com/go/compute/metadata",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/fallback",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2",
+        "//third_party/pkgsite/vendor/golang.org/x/oauth2/google",
+        "//third_party/pkgsite/vendor/google.golang.org/api/internal/cert",
+        "//third_party/pkgsite/vendor/google.golang.org/api/internal/impersonate",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials",
+    ],
+)

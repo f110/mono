@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "api_helpers",
+    srcs = ["use_timer.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/internal/api_helpers",
+    importpath = "github.com/evanw/esbuild/internal/api_helpers",
+    visibility = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild:__subpackages__"],
+)

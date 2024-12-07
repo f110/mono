@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "markdown",
+    srcs = [
+        "break.go",
+        "code.go",
+        "emoji.go",
+        "entity.go",
+        "heading.go",
+        "html.go",
+        "inline.go",
+        "link.go",
+        "list.go",
+        "para.go",
+        "parse.go",
+        "quote.go",
+        "table.go",
+        "tables.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/rsc.io/markdown",
+    importpath = "rsc.io/markdown",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/text/cases"],
+)

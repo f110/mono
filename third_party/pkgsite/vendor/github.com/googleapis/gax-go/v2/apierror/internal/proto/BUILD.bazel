@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "proto",
+    srcs = [
+        "custom_error.pb.go",
+        "error.pb.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/googleapis/gax-go/v2/apierror/internal/proto",
+    importpath = "github.com/googleapis/gax-go/v2/apierror/internal/proto",
+    visibility = ["//third_party/pkgsite/vendor/github.com/googleapis/gax-go/v2/apierror:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/google.golang.org/genproto/googleapis/rpc/code",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/anypb",
+    ],
+)

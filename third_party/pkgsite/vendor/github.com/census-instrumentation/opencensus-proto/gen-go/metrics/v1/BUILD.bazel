@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metrics",
+    srcs = ["metrics.pb.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1",
+    importpath = "github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/census-instrumentation/opencensus-proto/gen-go/resource/v1:resource",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/reflect/protoreflect",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/runtime/protoimpl",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/timestamppb",
+        "//third_party/pkgsite/vendor/google.golang.org/protobuf/types/known/wrapperspb",
+    ],
+)

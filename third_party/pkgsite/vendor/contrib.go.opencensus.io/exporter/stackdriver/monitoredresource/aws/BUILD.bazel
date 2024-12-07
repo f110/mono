@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "aws",
+    srcs = [
+        "aws_identity_doc_utils.go",
+        "monitored_resources.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/contrib.go.opencensus.io/exporter/stackdriver/monitoredresource/aws",
+    importpath = "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource/aws",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/ec2metadata",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/session",
+    ],
+)

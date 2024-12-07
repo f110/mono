@@ -1,0 +1,41 @@
+{
+  "name": "pkgsite",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "url": "https://go.googlesource.com/pkgsite"
+  },
+  "private": true,
+  "scripts": {
+    "license-check": "jsgl --local .",
+    "lint": "run-s --continue-on-error \"lint:* -- {1}\" -- ",
+    "lint:css": "stylelint **/*.css",
+    "lint:ts": "eslint static --ext .ts",
+    "test": "run-s --continue-on-error test:*",
+    "test:typecheck": "tsc --noEmit",
+    "test:unit": "jest static"
+  },
+  "dependencies": {
+    "@babel/core": "^7.24.5",
+    "@types/marked": "4.0.1",
+    "@typescript-eslint/eslint-plugin": "5.2.0",
+    "@typescript-eslint/parser": "5.2.0",
+    "eslint": "8.1.0",
+    "eslint-config-prettier": "6.14.0",
+    "eslint-plugin-jest": "25.2.2",
+    "eslint-plugin-prettier": "3.3.0",
+    "jest": "27.3.1",
+    "js-green-licenses": "4.0.0",
+    "marked": "4.0.10",
+    "npm-run-all": "4.1.5",
+    "postcss": "8.4.38",
+    "prettier": "2.1.2",
+    "stylelint": "14.2.0",
+    "stylelint-config-prettier": "9.0.3",
+    "stylelint-config-recommended": "6.0.0",
+    "stylelint-config-standard": "24.0.0",
+    "stylelint-order": "5.0.0",
+    "stylelint-prettier": "2.0.0",
+    "ts-jest": "27.0.7",
+    "typescript": "4.0.3"
+  }
+}

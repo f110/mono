@@ -1,0 +1,226 @@
+<!--
+  Copyright 2021 The Go Authors. All rights reserved.
+  Use of this source code is governed by a BSD-style
+  license that can be found in the LICENSE file.
+-->
+
+{{define "main-styles"}}
+  <link href="/static/frontend/vuln/entry/entry.min.css?version={{.AppVersionLabel}}" rel="stylesheet">
+{{end}}
+
+{{define "main-content"}}
+  {{/* . is internal/frontend.VulnEntryPage */}}
+  <nav class="go-Breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li>
+        <a href="/vuln" data-gtmc="breadcrumb link">Vulnerability Database</a>
+      </li>
+      <li>
+        <a href="/vuln/list" data-gtmc="breadcrumb link">All Reports</a>
+      </li>
+      <li>
+        <a href="#" data-gtmc="breadcrumb link" aria-current="location">{{.Entry.ID}}</a>
+      </li>
+    </ol>
+  </nav>
+  <div class="Vuln-header">
+    <h1 class="Vuln-title">Vulnerability Report: {{.Entry.ID}}</h1>
+    {{template "vuln-chips" .Entry}}
+  </div>
+  {{template "vuln-details" .Entry}}
+  {{$numAdvs := subtract (len .AdvisoryLinks) 1}}
+  {{with .AdvisoryLinks}}
+    <p>
+      For detailed information about this vulnerability, visit
+      {{range $i, $v := . -}}
+        {{- if gt $i 0}}
+          {{- if not (eq $i $numAdvs)}},{{else}}{{if gt $i 1}},{{end}} or {{end -}}
+        {{end}}
+        <a href="{{$v.Href}}" target="_blank" rel="noopener">{{$v.Href}}</a>
+      {{- end -}}.
+    </p>
+  {{end}}
+  <div class="VulnEntry">
+    {{template "affected-packages" .}}
+    {{template "affected-modules" .}}
+    {{template "custom-versions-note" .}}
+    {{template "entry" .}}
+  </div>
+{{end}}
+
+{{define "vuln-details"}}
+  <div class="Vuln-details">
+    {{template "vuln-details-metadata" .}}
+    <p>{{.Details}}</p>
+  </div>
+{{end}}
+
+{{define "affected-packages"}}
+  {{if .AffectedPackages}}
+    <h2>Affected Packages</h2>
+    <ul class="VulnEntryPackages VulnEntryPackages-container">
+      {{if .Entry.HasCustomVersions}}
+          <li class="VulnEntryPackages-item VulnEntryPackages-item-container VulnTable-item-4col">
+            {{template "path-versions-title"}}
+            {{template "custom-versions-title" .}}
+            {{template "table-title" "Symbols"}}
+          </li>
+          {{range .AffectedPackages}}
+            <li class="VulnEntryPackages-item VulnEntryPackages-item-container VulnTable-item-4col">
+              {{template "path-versions-data" .}}
+              {{template "custom-versions-data" .}}
+              {{template "symbols-data" .}}
+            </li>
+          {{end}}
+        </ul>
+      {{else}}
+        <li class="VulnEntryPackages-item VulnEntryPackages-item-container">
+          {{template "path-versions-title"}}
+          {{template "table-title" "Symbols"}}
+        </li>
+        {{range .AffectedPackages}}
+        <li class="VulnEntryPackages-item VulnEntryPackages-item-container">
+          {{template "path-versions-data" .}}
+          {{template "symbols-data" .}}
+        </li>
+      {{end}}
+      {{end}}
+    </ul>
+  {{end}}
+{{end}}
+
+{{define "affected-modules"}}
+  {{if .ModulesWithNoPackages}}
+    <h2>Affected Modules</h2>
+    <ul class="VulnEntryPackages VulnEntryPackages-container">
+    {{if .Entry.HasCustomVersions}}
+        <li class="VulnEntryPackages-item VulnEntryPackages-item-container">
+          {{template "path-versions-title"}}
+          {{template "custom-versions-title" .}}
+        </li>
+        {{range .ModulesWithNoPackages}}
+          <li class="VulnEntryPackages-item VulnEntryPackages-item-container">
+            {{template "path-versions-data" .}}
+            {{template "custom-versions-data" .}}
+          </li>
+        {{end}}
+    {{else}}
+          <li class="VulnEntryPackages-item VulnEntryPackages-item-container VulnTable-2col">
+            {{template "path-versions-title"}}
+          </li>
+        {{range .ModulesWithNoPackages}}
+          <li class="VulnEntryPackages-item VulnEntryPackages-item-container VulnTable-2col">
+            {{template "path-versions-data" .}}
+          </li>
+        {{end}}
+    {{end}}
+    </ul>
+  {{end}}
+{{end}}
+
+{{define "affected-modules-custom-versions-inner"}}
+
+{{end}}
+
+{{define "custom-versions-note"}}
+  {{if .Entry.HasCustomVersions}}
+    <p class="vuln-details">
+      <sup id="versions-note">*Custom versions, which can't be mapped automatically to standard Go module versions, are ignored by <code>govulncheck</code>. (See this <a target="_blank" href="https://go.dev/doc/security/vuln/database#note-on-versions">note on versions</a> for more details.)</sup>
+    </p>
+  {{end}}
+{{end}}
+
+{{define "path-versions-title"}}
+  {{template "table-title" "Path"}}
+  {{template "table-title" "Go Versions"}}
+{{end}}
+
+{{define "table-title"}}
+  <div class="VulnEntryPackages-attr">{{.}}</div>
+{{end}}
+
+{{define "custom-versions-title"}}
+  <div class="VulnEntryPackages-attr">Custom Versions<sup><a href="#versions-note">*</a></sup></div>
+{{end}}
+
+{{define "path-versions-data"}}
+ <div class="VulnEntryPackages-attr" data-name="Path"><a href="/{{.Path}}">{{.Path}}</a></div>
+ <div class="VulnEntryPackages-attr" data-name="Go Versions">{{if .Versions}}{{.Versions}}{{else}}all versions, no known fixed{{end}}</div>
+{{end}}
+
+{{define "custom-versions-data"}}
+  <div class="VulnEntryPackages-attr" data-name="Custom Versions">
+  {{if .CustomVersions}}
+    {{.CustomVersions}}
+  {{else}}
+    -
+  {{end}}
+  </div>
+{{end}}
+
+{{define "symbols-data"}}
+  <div class="VulnEntryPackages-attr VulnEntryPackages-symbols" data-name="Symbols">
+  {{ $vuln := . }}
+  {{if .ExportedSymbols}}{{ $length := len .ExportedSymbols}}
+      {{if lt $length 5}}<ul>{{range .ExportedSymbols}}<li><a href="/{{$vuln.Path}}#{{.}}">{{.}}</a></li>{{end}}</ul>
+      {{else}}<details><summary>{{len .ExportedSymbols}} affected symbols</summary>
+      <ul class="VulnEntryPackages-detailsContent">{{range .ExportedSymbols}}<li><a href="/{{$vuln.Path}}#{{.}}">{{.}}</a></li>{{end}}</ul></details>
+      {{end}}
+  {{else if .UnexportedSymbols}}
+    <details><summary>{{len .UnexportedSymbols}} unexported affected symbols</summary>
+      <ul class="VulnEntryPackages-detailsContent">
+        {{range .UnexportedSymbols}}
+          <li>{{.}}</li>
+        {{end}}
+      </ul>
+    </details>
+  {{else}}all symbols{{end}}
+  </div>
+{{end}}
+
+{{define "entry"}}
+  {{$e := .Entry}}
+  {{if .AliasLinks}}
+    <h2>Aliases</h2>
+    <ul class="VulnEntry-aliases">
+      {{range .AliasLinks}}<li>
+        {{if .Href}}
+          <a href="{{.Href}}" target="_blank" rel="noopener">{{.Body}}</a>
+        {{else}}
+          {{.Body}}
+        {{end}}
+      </li>{{end}}
+    </ul>
+  {{end}}
+  {{if $e.References}}
+    <h2>References</h2>
+    <ul class="VulnEntry-referenceList">
+      {{range $e.References}}<li><a href="{{.URL}}" target="_blank" rel="noopener">{{.URL}}</a></li>{{end}}
+      <li>
+        <a target="_blank" rel="noopener" href="https://vuln.go.dev/ID/{{.Entry.ID}}.json">
+          https://vuln.go.dev/ID/{{.Entry.ID}}.json
+        </a>
+      </li>
+    </ul>
+  {{end}}
+  {{with $e.Credits}}
+    <h2>Credits</h2>
+    <ul>
+      <li>
+        {{range $i, $v := .}}{{if gt $i 0}}, {{end}}{{$v.Name}}{{end}}
+      </li>
+    </ul>
+  {{end}}
+  <h2>Feedback</h2>
+  {{if $e.IsUnreviewed}}
+    <div>
+      This report is <a target="_blank" href="https://go.dev/doc/security/vuln/database#database-specificreview-status">unreviewed</a>. It was automatically generated from a third-party source and its details have not been verified by the Go team.
+    </div>
+  {{end}}
+  <div>
+    See anything missing or incorrect?
+    <a target="_blank" rel="noopener" href="https://github.com/golang/vulndb/issues/new?assignees=&labels=Needs+Triage%2CSuggested+Edit&template=suggest_edit.yaml&title=x%2Fvulndb%3A+suggestion+regarding+{{$e.ID}}&report={{$e.ID}}">
+      Suggest an edit to this report.
+    </a>
+  </div>
+{{end}}

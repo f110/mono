@@ -1,0 +1,60 @@
+/*!
+* Copyright 2019-2020 The Go Authors. All rights reserved.
+* Use of this source code is governed by a BSD-style
+* license that can be found in the LICENSE file.
+*/
+
+.UnitMeta {
+  display: grid;
+  gap: 1rem 2rem;
+  white-space: nowrap;
+}
+
+.UnitMeta-details,
+.UnitMeta-links {
+  display: flex;
+  flex-flow: wrap;
+  flex-direction: row;
+  gap: 1rem 2rem;
+}
+
+.UnitMeta-repo {
+  align-items: center;
+  display: flex;
+  overflow: hidden;
+}
+
+.UnitMeta-repo a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 50rem) {
+  .UnitMeta {
+    grid-template-columns: max-content auto;
+  }
+
+  .UnitMeta-details,
+  .UnitMeta-links {
+    flex-direction: row;
+  }
+}
+@media (min-width: 112rem) {
+  :root[data-layout='responsive'] .UnitMeta {
+    grid-template-columns: 100%;
+  }
+
+  :root[data-layout='responsive'] .UnitMeta-details,
+  :root[data-layout='responsive'] .UnitMeta-links {
+    flex-direction: column;
+    white-space: nowrap;
+  }
+}
+
+.UnitMeta-detailsLearn {
+  width: 100%;
+}
+@media (min-width: 50rem) {
+  .UnitMeta-detailsLearn {
+    width: initial;
+  }
+}

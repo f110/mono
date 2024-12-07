@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "query",
+    srcs = [
+        "build.go",
+        "unmarshal.go",
+        "unmarshal_error.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/query",
+    importpath = "github.com/aws/aws-sdk-go/private/protocol/query",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/query/queryutil",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
+    ],
+)

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "iofs",
+    srcs = [
+        "doc.go",
+        "iofs.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source/iofs",
+    importpath = "github.com/golang-migrate/migrate/v4/source/iofs",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/pkgsite/vendor/github.com/golang-migrate/migrate/v4/source"],
+)

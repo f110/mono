@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "session",
+    srcs = [
+        "cabundle_transport.go",
+        "cabundle_transport_1_5.go",
+        "cabundle_transport_1_6.go",
+        "credentials.go",
+        "doc.go",
+        "env_config.go",
+        "session.go",
+        "shared_config.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/session",
+    importpath = "github.com/aws/aws-sdk-go/aws/session",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/awserr",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/client",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/corehandlers",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials/processcreds",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/credentials/stscreds",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/csm",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/defaults",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/endpoints",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/aws/request",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/internal/ini",
+        "//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go/internal/shareddefaults",
+    ],
+)

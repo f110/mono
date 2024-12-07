@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "css_lexer",
+    srcs = ["css_lexer.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/evanw/esbuild/internal/css_lexer",
+    importpath = "github.com/evanw/esbuild/internal/css_lexer",
+    visibility = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/github.com/evanw/esbuild/internal/logger"],
+)

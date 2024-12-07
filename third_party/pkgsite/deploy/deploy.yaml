@@ -1,0 +1,98 @@
+# Copyright 2020 The Go Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+timeout: 90m
+options:
+  machineType: N1_HIGHCPU_8
+  env:
+    # To prevent errors from tput when TERM is unset.
+    - TERM=dumb
+steps:
+  - id: all.bash
+    name: gcr.io/cloud-builders/docker
+    entrypoint: devtools/docker/compose.sh
+    args:
+      - run
+      - allbash
+      - ci
+  - id: Prepare
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: deploy/prepare.sh
+    args:
+      - $PROJECT_ID
+  - id: Check redistributable
+    name: golang:1.23
+    entrypoint: private/devtools/check_redist.sh
+  - id: Build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/build.sh $PROJECT_ID $(cat _BUILD_TAG)
+  - id: Config - staging
+    name: gcr.io/cloud-builders/gsutil
+    entrypoint: deploy/config.sh
+    args:
+      - staging
+  - id: Worker - staging
+    name: gcr.io/cloud-builders/gke-deploy
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/worker.sh staging gcr.io/$PROJECT_ID/worker:$(cat _BUILD_TAG)
+  - id: Frontend - staging
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/frontend.sh staging gcr.io/$PROJECT_ID/frontend:$(cat _BUILD_TAG)
+  - id: Pagecheck - staging
+    name: golang:1.23
+    entrypoint:  deploy/pagecheck.sh
+    args:
+      - staging
+  - id: screentest - staging
+    name: gcr.io/cloud-builders/docker
+    entrypoint: deploy/screentest.sh
+    args:
+      - staging
+    env:
+      - QUOTA_BYPASS=$_QUOTA_BYPASS
+  - id: Config - prod
+    name: gcr.io/cloud-builders/gsutil
+    entrypoint: deploy/config.sh
+    args:
+      - prod
+  - id: Worker - prod
+    name: gcr.io/cloud-builders/gke-deploy
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/worker.sh prod gcr.io/$PROJECT_ID/worker:$(cat _BUILD_TAG)
+  - id: Frontend - prod
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/frontend.sh prod gcr.io/$PROJECT_ID/frontend:$(cat _BUILD_TAG)
+  - id: Pagecheck - prod
+    name: golang:1.23
+    entrypoint:  deploy/pagecheck.sh
+    args:
+      - prod
+  - id: Frontend - beta
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: sh
+    args:
+      - -c
+      - deploy/frontend.sh beta gcr.io/$PROJECT_ID/frontend:$(cat _BUILD_TAG)
+  - id: Pagecheck - beta
+    name: golang:1.23
+    entrypoint:  deploy/pagecheck.sh
+    args:
+      - beta
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID/screentest-artifacts'
+    paths: ['tests/screentest/testdata/*.png']

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "page",
+    srcs = ["page.go"],
+    importpath = "golang.org/x/pkgsite/internal/frontend/page",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/experiment",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml",
+        "//third_party/pkgsite/vendor/github.com/google/safehtml/template",
+    ],
+)

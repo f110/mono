@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "client",
+    srcs = ["client.go"],
+    importpath = "golang.org/x/pkgsite/internal/frontend/client",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/auth",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/frontend",
+        "//third_party/pkgsite/internal/frontend/versions",
+    ],
+)

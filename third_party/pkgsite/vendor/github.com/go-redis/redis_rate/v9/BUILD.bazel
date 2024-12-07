@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "redis_rate",
+    srcs = [
+        "lua.go",
+        "rate.go",
+    ],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/go-redis/redis_rate/v9",
+    importpath = "github.com/go-redis/redis_rate/v9",
+    visibility = ["//visibility:public"],
+    deps = ["//third_party/pkgsite/vendor/github.com/go-redis/redis/v8:redis"],
+)

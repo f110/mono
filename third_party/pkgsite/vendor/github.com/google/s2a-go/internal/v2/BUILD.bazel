@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "internal",
+    srcs = ["s2av2.go"],
+    importmap = "golang.org/x/pkgsite/vendor/github.com/google/s2a-go/internal/v2",
+    importpath = "github.com/google/s2a-go/internal/v2",
+    visibility = ["//third_party/pkgsite/vendor/github.com/google/s2a-go:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/vendor/github.com/golang/protobuf/proto",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/fallback",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/internal/handshaker/service",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/internal/proto/common_go_proto",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/internal/proto/v2/s2a_go_proto",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/internal/tokenmanager",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/internal/v2/tlsconfigstore",
+        "//third_party/pkgsite/vendor/github.com/google/s2a-go/stream",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/credentials",
+        "//third_party/pkgsite/vendor/google.golang.org/grpc/grpclog",
+    ],
+)

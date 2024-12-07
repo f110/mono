@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "versions",
+    srcs = [
+        "symbol.go",
+        "versions.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/frontend/versions",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/fetch",
+        "//third_party/pkgsite/internal/frontend/serrors",
+        "//third_party/pkgsite/internal/log",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/internal/version",
+        "//third_party/pkgsite/internal/vuln",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/semver",
+    ],
+)

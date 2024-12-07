@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "symbol",
+    srcs = [
+        "apigodoc.go",
+        "compare.go",
+        "generate.go",
+        "goapi.go",
+        "intro.go",
+        "stdlib.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/symbol",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal",
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/internal/stdlib",
+        "//third_party/pkgsite/vendor/golang.org/x/mod/semver",
+    ],
+)

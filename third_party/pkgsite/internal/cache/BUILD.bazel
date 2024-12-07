@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cache",
+    srcs = ["cache.go"],
+    importpath = "golang.org/x/pkgsite/internal/cache",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = [
+        "//third_party/pkgsite/internal/derrors",
+        "//third_party/pkgsite/vendor/github.com/go-redis/redis/v8:redis",
+    ],
+)

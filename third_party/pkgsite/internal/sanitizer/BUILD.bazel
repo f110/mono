@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "sanitizer",
+    srcs = ["sanitizer.go"],
+    importpath = "golang.org/x/pkgsite/internal/sanitizer",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+    deps = ["//third_party/pkgsite/vendor/golang.org/x/net/html"],
+)

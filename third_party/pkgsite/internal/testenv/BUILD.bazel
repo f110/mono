@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testenv",
+    srcs = [
+        "exec.go",
+        "testenv.go",
+    ],
+    importpath = "golang.org/x/pkgsite/internal/testenv",
+    visibility = ["//third_party/pkgsite:__subpackages__"],
+)
