@@ -145,7 +145,7 @@ func (r *RotaryPress) fetchBazel(ctx context.Context) (fsm.State, error) {
 		return fsm.Error(err)
 	}
 	env := []string{"linux-x86_64", "darwin-arm64"}
-	minimumVer := semver.MustParse("6.0.0")
+	minimumVer := semver.MustParse("7.0.0")
 	for _, release := range releases {
 		if release.GetPrerelease() {
 			continue
@@ -187,7 +187,7 @@ func (r *RotaryPress) fetchBazel(ctx context.Context) (fsm.State, error) {
 
 	for _, release := range r.bazelRelease {
 		if r.dryRun {
-			logger.Log.Info("Skip download", zap.String("Version", release.Version), zap.String("Env", release.Env))
+			logger.Log.Info("Skip download", zap.String("Version", release.Version), zap.String("Env", release.Env), zap.String("url", release.URL))
 			f, err := os.CreateTemp("", "")
 			if err != nil {
 				return fsm.Error(err)
@@ -415,6 +415,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
+	logger.Log.Debug("Download hash file", zap.String("url", req.URL.String()))
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -436,6 +437,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
+	logger.Log.Debug("Download binary file", zap.String("url", req.URL.String()))
 	res, err = httpClient.Do(req)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -461,6 +463,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 		return xerrors.WithStack(err)
 	}
 	calculatedHash := hex.EncodeToString(h.Sum(nil))[:]
+	logger.Log.Debug("Verify file", zap.String("hash", calculatedHash), zap.String("expected_hash", string(expectedHash)))
 	if string(expectedHash) != calculatedHash {
 		os.Remove(f.Name())
 		return xerrors.Define("file hash is mismatched").WithStack()
