@@ -1,8 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_cross_binary")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_push")
-load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//build/rules/container:def.bzl", "container_image")
+load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
 
 go_cross_binary(
     name = "frontend_linux_amd64",
