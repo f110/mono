@@ -184,7 +184,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 		if err != nil {
 			return nil, err
 		}
-		res.OutputID, err = hex.DecodeString(e.OutputID)
+		res.ObjectID, err = hex.DecodeString(e.OutputID)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
@@ -192,14 +192,14 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 		res.DiskPath = filepath.Join(c.BaseDir, outputFile)
 		res.TimeNanos = r.LastModified.UnixNano()
 	case "put":
-		actionFileName, objectFileName := fmt.Sprintf("a-%x", req.ActionID), fmt.Sprintf("o-%x", req.ObjectID)
+		actionFileName, objectFileName := fmt.Sprintf("a-%x", req.ActionID), fmt.Sprintf("o-%x", req.OutputID)
 
 		if err := c.client.Put(context.Background(), path.Join(c.Prefix, objectFileName), req.body); err != nil {
 			return nil, err
 		}
 
 		e := &entry{
-			OutputID:  fmt.Sprintf("%x", req.ObjectID),
+			OutputID:  fmt.Sprintf("%x", req.OutputID),
 			Size:      req.BodySize,
 			TimeNanos: time.Now().UnixNano(),
 		}
@@ -256,7 +256,7 @@ type request struct {
 	ID       int64
 	Command  string
 	ActionID []byte `json:",omitempty"`
-	ObjectID []byte `json:",omitempty"`
+	OutputID []byte `json:",omitempty"`
 	BodySize int64  `json:",omitempty"`
 
 	body []byte
@@ -267,7 +267,7 @@ type response struct {
 	Err           string   `json:",omitempty"`
 	KnownCommands []string `json:",omitempty"`
 	Miss          bool     `json:",omitempty"`
-	OutputID      []byte   `json:",omitempty"`
+	ObjectID      []byte   `json:",omitempty"`
 	Size          int64    `json:",omitempty"`
 	TimeNanos     int64    `json:",omitempty"`
 	DiskPath      string   `json:",omitempty"`
