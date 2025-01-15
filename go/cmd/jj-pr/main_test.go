@@ -31,7 +31,7 @@ func TestJujutsuPRSubmitCommand(t *testing.T) {
 		repo := ghMock.Repository("f110/mono")
 		ghClient := github.NewClient(&http.Client{Transport: ghMock.RegisteredTransport()})
 
-		c := newCommand()
+		c := newSubmitCommand()
 		c.ghClient = ghClient
 		c.repositoryOwner, c.repositoryName = "f110", "mono"
 		c.DefaultBranch = "master"
@@ -104,7 +104,7 @@ This PR contains fixing some security issues.`,
 			},
 		)
 
-		c := newCommand()
+		c := newSubmitCommand()
 		c.ghClient = ghClient
 		c.repositoryOwner, c.repositoryName = "f110", "mono"
 		c.DefaultBranch = "master"
@@ -147,7 +147,7 @@ func TestFindPullRequestTemplate(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(dir, ".github/CODEOWNERS"), nil, 0644))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "docs/pull_request_template.md"), nil, 0644))
 
-	c := newCommand()
+	c := newSubmitCommand()
 	templates, err := c.findPullRequestTemplate(dir)
 	require.NoError(t, err)
 	assert.Len(t, templates, 3)

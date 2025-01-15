@@ -41,7 +41,6 @@ type jujutsuPRSubmitCommand struct {
 	DefaultBranch string
 	DryRun        bool
 	Force         bool
-	DisplayStack  bool
 	SinglePR      bool
 
 	repositoryOwner string
@@ -59,7 +58,6 @@ const (
 	stateInit fsm.State = iota
 	stateGetToken
 	stateGetMetadata
-	stateDisplayStack
 	statePushCommit
 	stateCreatePR
 	stateUpdatePR
@@ -67,14 +65,13 @@ const (
 	stateClose
 )
 
-func newCommand() *jujutsuPRSubmitCommand {
+func newSubmitCommand() *jujutsuPRSubmitCommand {
 	c := &jujutsuPRSubmitCommand{}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:           c.init,
 			stateGetToken:       c.getToken,
 			stateGetMetadata:    c.getMetadata,
-			stateDisplayStack:   c.displayStack,
 			statePushCommit:     c.pushCommit,
 			stateCreatePR:       c.createPR,
 			stateUpdatePR:       c.updatePR,
@@ -94,7 +91,6 @@ func (c *jujutsuPRSubmitCommand) flags(fs *cli.FlagSet) {
 	fs.String("default-branch", "Default branch name. If not specified, get from API").Var(&c.DefaultBranch)
 	fs.Bool("dry-run", "Not impact on remote").Var(&c.DryRun)
 	fs.Bool("force", "Push commits when there are more than 10 commits in the stack").Var(&c.Force)
-	fs.Bool("display-stack", "Only display the stack").Var(&c.DisplayStack)
 	fs.Bool("single-pr", "Make the PR in multiple commits").Var(&c.SinglePR)
 }
 
@@ -127,33 +123,16 @@ func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
 	return fsm.Next(stateGetToken)
 }
 
-func (c *jujutsuPRSubmitCommand) displayStack(ctx context.Context) (fsm.State, error) {
-	commits, err := c.getStack(ctx, false)
+func (c *jujutsuPRSubmitCommand) getToken(ctx context.Context) (fsm.State, error) {
+	token, err := getToken(ctx)
 	if err != nil {
 		return fsm.Error(err)
 	}
-	for i, v := range commits {
-		var title string
-		if i := strings.Index(v.Description, "\n"); i > 0 {
-			title = v.Description[:i]
-		} else {
-			title = v.Description
-		}
-		fmt.Printf("%d. %s: %s\n", i+1, v.ChangeID[:12], title)
-	}
-	return fsm.Finish()
-}
 
-func (c *jujutsuPRSubmitCommand) getToken(ctx context.Context) (fsm.State, error) {
-	cmd := exec.CommandContext(ctx, "gh", "auth", "token")
-	if v, err := cmd.CombinedOutput(); err != nil {
-		return fsm.Error(xerrors.WithStack(err))
-	} else {
-		c.token = strings.TrimSpace(string(v))
-	}
-	if c.token == "" {
+	if token == "" {
 		return fsm.Error(xerrors.New("could not get api token"))
 	}
+	c.token = token
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: c.token})
 	c.ghClient = github.NewClient(oauth2.NewClient(ctx, ts))
 
@@ -167,14 +146,13 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			logger.Log.Debug("Retrieve repository metadata")
-			repo, _, err := c.ghClient.Repositories.Get(ctx, c.repositoryOwner, c.repositoryName)
+
+			v, err := getDefaultBranch(ctx, c.ghClient, c.repositoryOwner, c.repositoryName)
 			if err != nil {
-				logger.Log.Error("Could not get repository metadata from api.github.com", logger.Error(err))
 				gotError = true
 				return
 			}
-			c.DefaultBranch = repo.GetDefaultBranch()
+			c.DefaultBranch = v
 		}()
 	}
 
@@ -207,9 +185,6 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 
 	if gotError {
 		return fsm.Error(xerrors.New(""))
-	}
-	if c.DisplayStack {
-		return fsm.Next(stateDisplayStack)
 	}
 	return fsm.Next(statePushCommit)
 }
@@ -337,70 +312,10 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	return fsm.Next(stateCreatePR)
 }
 
-// getStack returns commits of current stack. The first commit is the newest commit.
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend bool) (stackedCommit, error) {
-	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ bookmarks ++ "]\\" ++ description ++ "\\\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, c.DefaultBranch), "--no-graph", "--template", logTemplate)
-	cmd.Dir = c.Dir
-	buf, err := cmd.CombinedOutput()
+	commits, err := getStack(ctx, withoutNoSend, c.Dir, c.DefaultBranch)
 	if err != nil {
-		return nil, xerrors.WithStack(xerrors.WithStack(err))
-	}
-
-	type readState int
-	const (
-		readStateChangeID readState = iota
-		readCommitID
-		readBranches
-		readDescription
-	)
-	var commits stackedCommit
-	var changeID, commitID, branches, description string
-	var prev int
-	var state = readStateChangeID
-	for i := range len(buf) {
-		if buf[i] != '\\' {
-			continue
-		}
-
-		switch state {
-		case readStateChangeID:
-			changeID = string(buf[prev:i])
-			state = readCommitID
-			prev = i + 1
-		case readCommitID:
-			commitID = string(buf[prev:i])
-			state = readBranches
-			prev = i + 1
-		case readBranches:
-			if buf[i-1] != ']' {
-				continue
-			}
-			branches = string(buf[prev+1 : i-1])
-			state = readDescription
-			prev = i + 1
-		case readDescription:
-			if buf[i+1] != '\n' {
-				continue
-			}
-			description = string(buf[prev:i])
-			if !(withoutNoSend && (strings.HasPrefix(description, noSendTag) || strings.HasPrefix(description, wipTag))) {
-				cm := &commit{
-					ChangeID:    changeID,
-					CommitID:    commitID,
-					Branch:      strings.TrimSuffix(branches, "*"),
-					Description: description,
-				}
-				commits = append(commits, cm)
-				logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
-			}
-
-			// Next commit
-			i++
-			changeID, commitID, branches, description = "", "", "", ""
-			state = readStateChangeID
-			prev = i + 1
-		}
+		return nil, err
 	}
 
 	if len(commits) > 9 && !c.Force {
@@ -714,6 +629,103 @@ func (c *jujutsuPRSubmitCommand) close(_ context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
+func getToken(ctx context.Context) (string, error) {
+	cmd := exec.CommandContext(ctx, "gh", "auth", "token")
+	v, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(v)), nil
+}
+
+func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name string) (string, error) {
+	logger.Log.Debug("Retrieve repository metadata")
+	cmd := exec.CommandContext(ctx, "jj", "show", "trunk()", "--template", "remote_bookmarks")
+	buf, err := cmd.CombinedOutput()
+	if err == nil {
+		if i := bytes.Index(buf, []byte("@")); i >= 0 {
+			logger.Log.Debug("Get default branch from local repository")
+			return string(buf[:i]), nil
+		}
+	}
+
+	repo, _, err := ghClient.Repositories.Get(ctx, owner, name)
+	if err != nil {
+		logger.Log.Error("Could not get repository metadata from api.github.com", logger.Error(err))
+		return "", err
+	}
+	return repo.GetDefaultBranch(), nil
+}
+
+// getStack returns commits of current stack. The first commit is the newest commit.
+func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string) (stackedCommit, error) {
+	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ bookmarks ++ "]\\" ++ description ++ "\\\n"`
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch), "--no-graph", "--template", logTemplate)
+	cmd.Dir = dir
+	buf, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, xerrors.WithStack(xerrors.WithStack(err))
+	}
+
+	type readState int
+	const (
+		readStateChangeID readState = iota
+		readCommitID
+		readBranches
+		readDescription
+	)
+	var commits stackedCommit
+	var changeID, commitID, branches, description string
+	var prev int
+	var state = readStateChangeID
+	for i := range len(buf) {
+		if buf[i] != '\\' {
+			continue
+		}
+
+		switch state {
+		case readStateChangeID:
+			changeID = string(buf[prev:i])
+			state = readCommitID
+			prev = i + 1
+		case readCommitID:
+			commitID = string(buf[prev:i])
+			state = readBranches
+			prev = i + 1
+		case readBranches:
+			if buf[i-1] != ']' {
+				continue
+			}
+			branches = string(buf[prev+1 : i-1])
+			state = readDescription
+			prev = i + 1
+		case readDescription:
+			if buf[i+1] != '\n' {
+				continue
+			}
+			description = string(buf[prev:i])
+			if !(withoutNoSend && (strings.HasPrefix(description, noSendTag) || strings.HasPrefix(description, wipTag))) {
+				cm := &commit{
+					ChangeID:    changeID,
+					CommitID:    commitID,
+					Branch:      strings.TrimSuffix(branches, "*"),
+					Description: description,
+				}
+				commits = append(commits, cm)
+				logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
+			}
+
+			// Next commit
+			i++
+			changeID, commitID, branches, description = "", "", "", ""
+			state = readStateChangeID
+			prev = i + 1
+		}
+	}
+
+	return commits, nil
+}
+
 func findRepositoryOwnerName(ctx context.Context, dir string) (string, string, error) {
 	c := exec.CommandContext(ctx, "jj", "git", "remote", "list")
 	c.Dir = dir
@@ -768,15 +780,54 @@ func jujutsuPR() error {
 		Use: "jj pr",
 	}
 
-	c := newCommand()
-	submitCmd := &cli.Command{
-		Use: "submit",
+	{
+		c := newSubmitCommand()
+		submitCmd := &cli.Command{
+			Use: "submit",
+			Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+				return c.LoopContext(ctx)
+			},
+		}
+		c.flags(submitCmd.Flags())
+		cmd.AddCommand(submitCmd)
+	}
+
+	stackCmd := &cli.Command{
+		Use: "stack",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			return c.LoopContext(ctx)
+			token, err := getToken(ctx)
+			if err != nil {
+				return err
+			}
+			ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+			ghClient := github.NewClient(oauth2.NewClient(ctx, ts))
+
+			owner, repoName, err := findRepositoryOwnerName(ctx, "")
+			if err != nil {
+				return err
+			}
+			defaultBranch, err := getDefaultBranch(ctx, ghClient, owner, repoName)
+			if err != nil {
+				return err
+			}
+
+			commits, err := getStack(ctx, false, "", defaultBranch)
+			if err != nil {
+				return err
+			}
+			for i, v := range commits {
+				var title string
+				if i := strings.Index(v.Description, "\n"); i > 0 {
+					title = v.Description[:i]
+				} else {
+					title = v.Description
+				}
+				fmt.Printf("%d. %s: %s\n", i+1, v.ChangeID[:12], title)
+			}
+			return nil
 		},
 	}
-	c.flags(submitCmd.Flags())
-	cmd.AddCommand(submitCmd)
+	cmd.AddCommand(stackCmd)
 
 	return cmd.Execute(os.Args)
 }
