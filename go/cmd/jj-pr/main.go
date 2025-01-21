@@ -152,123 +152,129 @@ func findRepositoryOwnerName(ctx context.Context, dir string) (string, string, e
 	return owner, name, nil
 }
 
+func jujutsuPRSubmit(rootCmd *cli.Command) {
+	c := newSubmitCommand()
+	submitCmd := &cli.Command{
+		Use: "submit",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return c.LoopContext(ctx)
+		},
+	}
+	c.flags(submitCmd.Flags())
+	rootCmd.AddCommand(submitCmd)
+}
+
+func jujutsuPRStack(rootCmd *cli.Command) {
+	dir := ""
+	stackCmd := &cli.Command{
+		Use: "stack",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			token, err := getToken(ctx)
+			if err != nil {
+				return err
+			}
+			ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+			ghClient := github.NewClient(oauth2.NewClient(ctx, ts))
+
+			owner, repoName, err := findRepositoryOwnerName(ctx, dir)
+			if err != nil {
+				return err
+			}
+			defaultBranch, err := getDefaultBranch(ctx, ghClient, owner, repoName)
+			if err != nil {
+				return err
+			}
+
+			commits, err := getStack(ctx, false, dir, defaultBranch)
+			if err != nil {
+				return err
+			}
+			for i, v := range commits {
+				var title string
+				if i := strings.Index(v.Description, "\n"); i > 0 {
+					title = v.Description[:i]
+				} else {
+					title = v.Description
+				}
+				fmt.Printf("%d. %s: %s\n", i+1, v.ChangeID[:12], title)
+			}
+			return nil
+		},
+	}
+	stackCmd.Flags().String("dir", "Working directory").Var(&dir)
+	rootCmd.AddCommand(stackCmd)
+}
+
+func jujutsuPRList(rootCmd *cli.Command) {
+	dir := ""
+	listCmd := &cli.Command{
+		Use: "list",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			owner, repoName, err := findRepositoryOwnerName(ctx, dir)
+			if err != nil {
+				return err
+			}
+
+			cmd := exec.CommandContext(ctx, "jj", "bookmark", "list", "--template", `name ++ "\\\n"`)
+			cmd.Dir = dir
+			buf, err := cmd.CombinedOutput()
+			if err != nil {
+				return err
+			}
+			localBookmarks := make(map[string]struct{})
+			for _, v := range strings.Split(string(buf), "\n") {
+				localBookmarks[v] = struct{}{}
+			}
+
+			token, err := getToken(ctx)
+			if err != nil {
+				return err
+			}
+			ghClient := github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})))
+
+			me, _, err := ghClient.Users.Get(ctx, "")
+			if err != nil {
+				return err
+			}
+
+			opt := &github.PullRequestListOptions{}
+			for {
+				prs, res, err := ghClient.PullRequests.List(ctx, owner, repoName, opt)
+				if err != nil {
+					return err
+				}
+
+				for _, pr := range prs {
+					own := ""
+					if _, ok := localBookmarks[pr.Head.GetRef()]; ok {
+						own = "*"
+					}
+					if pr.User.GetLogin() == me.GetLogin() {
+						own = "*"
+					}
+					fmt.Printf("#%d%s: %s %s\n", pr.GetNumber(), own, pr.GetTitle(), pr.GetHTMLURL())
+				}
+
+				if res.NextPage == 0 {
+					break
+				}
+				opt.Page = res.NextPage
+			}
+			return nil
+		},
+	}
+	listCmd.Flags().String("dir", "Working directory").Var(&dir)
+	rootCmd.AddCommand(listCmd)
+}
+
 func jujutsuPR() error {
 	cmd := &cli.Command{
 		Use: "jj pr",
 	}
 
-	{
-		c := newSubmitCommand()
-		submitCmd := &cli.Command{
-			Use: "submit",
-			Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-				return c.LoopContext(ctx)
-			},
-		}
-		c.flags(submitCmd.Flags())
-		cmd.AddCommand(submitCmd)
-	}
-
-	{
-		stackCmd := &cli.Command{
-			Use: "stack",
-			Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-				token, err := getToken(ctx)
-				if err != nil {
-					return err
-				}
-				ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-				ghClient := github.NewClient(oauth2.NewClient(ctx, ts))
-
-				owner, repoName, err := findRepositoryOwnerName(ctx, "")
-				if err != nil {
-					return err
-				}
-				defaultBranch, err := getDefaultBranch(ctx, ghClient, owner, repoName)
-				if err != nil {
-					return err
-				}
-
-				commits, err := getStack(ctx, false, "", defaultBranch)
-				if err != nil {
-					return err
-				}
-				for i, v := range commits {
-					var title string
-					if i := strings.Index(v.Description, "\n"); i > 0 {
-						title = v.Description[:i]
-					} else {
-						title = v.Description
-					}
-					fmt.Printf("%d. %s: %s\n", i+1, v.ChangeID[:12], title)
-				}
-				return nil
-			},
-		}
-		cmd.AddCommand(stackCmd)
-	}
-
-	{
-		dir := ""
-		listCmd := &cli.Command{
-			Use: "list",
-			Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-				owner, repoName, err := findRepositoryOwnerName(ctx, dir)
-				if err != nil {
-					return err
-				}
-
-				cmd := exec.CommandContext(ctx, "jj", "bookmark", "list", "--template", `name ++ "\\\n"`)
-				cmd.Dir = dir
-				buf, err := cmd.CombinedOutput()
-				if err != nil {
-					return err
-				}
-				localBookmarks := make(map[string]struct{})
-				for _, v := range strings.Split(string(buf), "\n") {
-					localBookmarks[v] = struct{}{}
-				}
-
-				token, err := getToken(ctx)
-				if err != nil {
-					return err
-				}
-				ghClient := github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})))
-
-				me, _, err := ghClient.Users.Get(ctx, "")
-				if err != nil {
-					return err
-				}
-
-				opt := &github.PullRequestListOptions{}
-				for {
-					prs, res, err := ghClient.PullRequests.List(ctx, owner, repoName, opt)
-					if err != nil {
-						return err
-					}
-
-					for _, pr := range prs {
-						own := ""
-						if _, ok := localBookmarks[pr.Head.GetRef()]; ok {
-							own = "*"
-						}
-						if pr.User.GetLogin() == me.GetLogin() {
-							own = "*"
-						}
-						fmt.Printf("#%d%s: %s %s\n", pr.GetNumber(), own, pr.GetTitle(), pr.GetHTMLURL())
-					}
-
-					if res.NextPage == 0 {
-						break
-					}
-					opt.Page = res.NextPage
-				}
-				return nil
-			},
-		}
-		listCmd.Flags().String("dir", "Working directory").Var(&dir)
-		cmd.AddCommand(listCmd)
-	}
+	jujutsuPRSubmit(cmd)
+	jujutsuPRStack(cmd)
+	jujutsuPRList(cmd)
 
 	return cmd.Execute(os.Args)
 }
