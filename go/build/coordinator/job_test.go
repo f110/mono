@@ -247,6 +247,25 @@ func TestJobBuilder(t *testing.T) {
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.Image("example.com/bazel:bazelisk", nil))},
 			},
 		},
+		{
+			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+				j.Command = "run"
+				ta.Command = "run"
+				j.Args = []string{"--verbose"}
+				return j, r, ta
+			},
+			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					RemoveContainer("report"),
+					RemoveVolume("comm"),
+					k8sfactory.OnContainer("main",
+						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64", "//...", "--", "--verbose"),
+					),
+				},
+			},
+		},
 	}
 
 	require.NoError(t, logger.Init())

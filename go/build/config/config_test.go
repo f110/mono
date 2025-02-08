@@ -163,6 +163,7 @@ func TestMarshalJob(t *testing.T) {
     ],
     cpu_limit = "2000m",
     event = ["manual"],
+	args = ["--verbose"],
 )`
 	config, err := Read(strings.NewReader(raw), "", "")
 	require.NoError(t, err)
@@ -180,6 +181,7 @@ func TestMarshalJob(t *testing.T) {
 		assert.Equal(t, "secrets", decodedJob.Secrets[0].(*RegistrySecret).VaultMount)
 		assert.Equal(t, "registry.f110.dev/build", decodedJob.Secrets[0].(*RegistrySecret).VaultPath)
 		assert.Equal(t, "robot", decodedJob.Secrets[0].(*RegistrySecret).VaultKey)
+		assert.Equal(t, []string{"--verbose"}, decodedJob.Args)
 	}
 }
 
