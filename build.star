@@ -40,6 +40,9 @@ job(
     platforms = [
         "@io_bazel_rules_go//go/toolchain:linux_amd64",
     ],
+    args = [
+        "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
+    ],
     cpu_limit = "2000m",
     event = ["manual"],
 )
