@@ -48,6 +48,20 @@ job(
 )
 
 job(
+    name = "publish_build_sidecar",
+    command = "run",
+    targets = ["//containers/build:push_sidecar"],
+    platforms = [
+        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    ],
+    args = [
+        "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
+    ],
+    cpu_limit = "2000m",
+    event = ["manual"],
+)
+
+job(
     name = "mirror_bazel",
     command = "run",
     targets = ["//cmd/rotarypress"],
