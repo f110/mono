@@ -499,6 +499,16 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 			),
 		),
 	)
+	if obj.Spec.IdentityProvider != nil {
+		container = k8sfactory.ContainerFactory(container,
+			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_CONFIG_URL", obj.Spec.IdentityProvider.DiscoveryUrl),
+			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_CLIENT_ID", obj.Spec.IdentityProvider.ClientId),
+			k8sfactory.EnvFromSecret("MINIO_IDENTITY_OPENID_CLIENT_SECRET", obj.Spec.IdentityProvider.ClientSecretRef.Name, obj.Spec.IdentityProvider.ClientSecretRef.Key),
+			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_ROLE_POLICY", "consoleAdmin"),
+			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_SCOPES", strings.Join(obj.Spec.IdentityProvider.Scopes, ",")),
+			k8sfactory.EnvVar("MINIO_BROWSER_REDIRECT_URL", obj.Spec.ExternalUrl),
+		)
+	}
 	pod := k8sfactory.PodFactory(nil,
 		k8sfactory.Namef("%s-%d", obj.Name, index),
 		k8sfactory.Namespace(obj.Namespace),

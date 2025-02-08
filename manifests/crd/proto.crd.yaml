@@ -665,6 +665,35 @@ spec:
                   - name
                   type: object
                 type: array
+              externalUrl:
+                type: string
+              identityProvider:
+                properties:
+                  clientId:
+                    type: string
+                  clientSecretRef:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  comment:
+                    type: string
+                  discoveryUrl:
+                    type: string
+                  scopes:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - discoveryUrl
+                - clientId
+                - clientSecretRef
+                - scopes
+                type: object
               image:
                 type: string
               nodes:

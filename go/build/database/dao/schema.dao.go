@@ -1342,18 +1342,11 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	}
 
 	if len(res) > 0 {
-		taskPrimaryKeys := make([]int32, len(res))
 		repositoryPrimaryKeys := make([]int32, len(res))
+		taskPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			taskPrimaryKeys[i] = v.TaskId
 			repositoryPrimaryKeys[i] = v.RepositoryId
-		}
-		taskData := make(map[int32]*database.Task)
-		{
-			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
-			for _, v := range rels {
-				taskData[v.Id] = v
-			}
+			taskPrimaryKeys[i] = v.TaskId
 		}
 		repositoryData := make(map[int32]*database.SourceRepository)
 		{
@@ -1362,9 +1355,16 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 				repositoryData[v.Id] = v
 			}
 		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Task = taskData[v.TaskId]
 			v.Repository = repositoryData[v.RepositoryId]
+			v.Task = taskData[v.TaskId]
 		}
 	}
 	return res, nil

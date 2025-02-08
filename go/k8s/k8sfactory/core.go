@@ -242,6 +242,9 @@ func PullPolicy(p corev1.PullPolicy) Trait {
 
 func EnvVar(k, v string) Trait {
 	return func(object any) {
+		if v == "" {
+			return
+		}
 		c, ok := object.(*corev1.Container)
 		if !ok {
 			return

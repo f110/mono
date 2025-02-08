@@ -300,9 +300,11 @@ type MinIOClusterSpec struct {
 	StorageClassName string `json:"storageClassName,omitempty"`
 	Image            string `json:"image,omitempty"`
 	// total_size is the size of the cluster in Gigabytes.
-	TotalSize int                  `json:"totalSize"`
-	Nodes     int                  `json:"nodes"`
-	Buckets   []MinIOClusterBucket `json:"buckets"`
+	TotalSize        int                  `json:"totalSize"`
+	Nodes            int                  `json:"nodes"`
+	Buckets          []MinIOClusterBucket `json:"buckets"`
+	IdentityProvider *IdentityProvider    `json:"identityProvider,omitempty"`
+	ExternalUrl      string               `json:"externalUrl,omitempty"`
 }
 
 func (in *MinIOClusterSpec) DeepCopyInto(out *MinIOClusterSpec) {
@@ -313,6 +315,11 @@ func (in *MinIOClusterSpec) DeepCopyInto(out *MinIOClusterSpec) {
 			in.Buckets[i].DeepCopyInto(&l[i])
 		}
 		out.Buckets = l
+	}
+	if in.IdentityProvider != nil {
+		in, out := &in.IdentityProvider, &out.IdentityProvider
+		*out = new(IdentityProvider)
+		(*in).DeepCopyInto(*out)
 	}
 }
 
@@ -406,6 +413,51 @@ func (in *MinIOClusterBucket) DeepCopy() *MinIOClusterBucket {
 		return nil
 	}
 	out := new(MinIOClusterBucket)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type IdentityProvider struct {
+	DiscoveryUrl    string         `json:"discoveryUrl"`
+	ClientId        string         `json:"clientId"`
+	ClientSecretRef SecretSelector `json:"clientSecretRef"`
+	Scopes          []string       `json:"scopes"`
+	Comment         string         `json:"comment,omitempty"`
+}
+
+func (in *IdentityProvider) DeepCopyInto(out *IdentityProvider) {
+	*out = *in
+	in.ClientSecretRef.DeepCopyInto(&out.ClientSecretRef)
+	if in.Scopes != nil {
+		t := make([]string, len(in.Scopes))
+		copy(t, in.Scopes)
+		out.Scopes = t
+	}
+}
+
+func (in *IdentityProvider) DeepCopy() *IdentityProvider {
+	if in == nil {
+		return nil
+	}
+	out := new(IdentityProvider)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type SecretSelector struct {
+	Name string `json:"name"`
+	Key  string `json:"key,omitempty"`
+}
+
+func (in *SecretSelector) DeepCopyInto(out *SecretSelector) {
+	*out = *in
+}
+
+func (in *SecretSelector) DeepCopy() *SecretSelector {
+	if in == nil {
+		return nil
+	}
+	out := new(SecretSelector)
 	in.DeepCopyInto(out)
 	return out
 }

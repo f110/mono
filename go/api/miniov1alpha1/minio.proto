@@ -40,9 +40,11 @@ message MinIOClusterSpec {
   optional string storage_class_name = 1;
   optional string image              = 2;
   // total_size is the size of the cluster in Gigabytes.
-  int32                       total_size = 3;
-  int32                       nodes      = 4;
-  repeated MinIOClusterBucket buckets    = 5;
+  int32                       total_size        = 3;
+  int32                       nodes             = 4;
+  repeated MinIOClusterBucket buckets           = 5;
+  optional IdentityProvider   identity_provider = 6;
+  optional string             external_url      = 7;
 }
 
 message MinIOClusterBucket {
@@ -54,6 +56,19 @@ message MinIOClusterBucket {
   optional BucketPolicy policy = 2;
   // create_index_file is a flag that creates index.html on top of bucket.
   optional bool create_index_file = 3;
+}
+
+message IdentityProvider {
+  string          discovery_url     = 1;
+  string          client_id         = 2;
+  SecretSelector  client_secret_ref = 3;
+  repeated string scopes            = 4;
+  optional string comment           = 5;
+}
+
+message SecretSelector {
+  string          name = 1;
+  optional string key  = 2;
 }
 
 message MinIOClusterStatus {

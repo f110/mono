@@ -223,7 +223,7 @@ func New(args []string) *Controllers {
 
 func (p *Controllers) Flags(fs *cli.FlagSet) {
 	fs.String("id", "the holder identity name").Var(&p.id).Default(uuid.New().String())
-	fs.String("metrics-addr", "The address the metric endpoint binds to.").Var(&p.metricsAddr).Default(":8080")
+	fs.String("metrics-addr", "The address the metric endpoint binds to.").Var(&p.metricsAddr).Default(":8081")
 	fs.Bool("enable-leader-election",
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.").Var(&p.enableLeaderElection).Default(p.enableLeaderElection)
 	fs.String("lease-lock-name", "the lease lock resource name").Var(&p.leaseLockName).Default("mono")
