@@ -345,7 +345,7 @@ func (c *Cluster) WaitReady(ctx context.Context) error {
 		return xerrors.WithStack(err)
 	}
 
-	return wait.PollImmediate(1*time.Second, 3*time.Minute, func() (done bool, err error) {
+	err = wait.PollImmediate(1*time.Second, 3*time.Minute, func() (done bool, err error) {
 		nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, err
@@ -367,6 +367,10 @@ func (c *Cluster) WaitReady(ctx context.Context) error {
 
 		return false, nil
 	})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *Cluster) Apply(f, fieldManager string) error {

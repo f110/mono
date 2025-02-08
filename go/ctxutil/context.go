@@ -15,7 +15,10 @@ type sourceCtx struct {
 }
 
 func (s *sourceCtx) Err() error {
-	return fmt.Errorf("%s of %s:%d", s.Context.Err(), s.file, s.line)
+	if s.Context.Err() != nil {
+		return fmt.Errorf("%s of %s:%d", s.Context.Err(), s.file, s.line)
+	}
+	return nil
 }
 
 func WithTimeout(parent context.Context, duration time.Duration) (context.Context, context.CancelFunc) {

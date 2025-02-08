@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/blang/semver/v4"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,6 +25,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/kind"
 	"go.f110.dev/mono/go/logger"
 )
@@ -29,7 +34,18 @@ const (
 	defaultClusterName = "mono"
 )
 
+var (
+	defaultClusterVersion = ""
+)
+
 func init() {
+	vers := slices.Collect(enumerable.CollectFunc(maps.Keys(kind.NodeImageHash), func(v string) semver.Version {
+		// Remove v prefix
+		return semver.MustParse(v[1:])
+	}))
+	sort.Sort(semver.Versions(vers))
+	defaultClusterVersion = "v" + vers[len(vers)-1].String()
+
 	CommandManager.Register(Cluster())
 }
 
@@ -68,13 +84,16 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 	} else {
 		logger.Log.Info("Cluster is already exist. Only apply the manifest.")
 	}
+	if manifestFile == "" {
+		return nil
+	}
 	ctx, cancelFunc := ctxutil.WithTimeout(context.Background(), 3*time.Minute)
-	cancelFunc()
+	defer cancelFunc()
 	if err := kindCluster.WaitReady(ctx); err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	if err := kindCluster.Apply(manifestFile, "monodev"); err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 
 	return nil
@@ -293,9 +312,9 @@ func Cluster() *cli.Command {
 			return setupCluster(kindPath, clusterName, k8sVersion, workerNum, kubeConfig, manifestFile)
 		},
 	}
-	createCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	createCmd.Flags().String("kind", "kind command path").Var(&kindPath).Default("kind")
 	createCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
-	createCmd.Flags().String("k8s-version", "Kubernetes version").Var(&k8sVersion)
+	createCmd.Flags().String("k8s-version", "Kubernetes version").Var(&k8sVersion).Default(defaultClusterVersion)
 	createCmd.Flags().String("kubeconfig", "Path to the kubeconfig file. If not specified, will be used default file of kubectl").Var(&kubeConfig)
 	createCmd.Flags().String("crd", "Applying manifest file after create the cluster").Var(&crdFile)
 	createCmd.Flags().Int("worker-num", "The number of k8s workers").Var(&workerNum).Default(3)
@@ -309,7 +328,7 @@ func Cluster() *cli.Command {
 			return deleteCluster(kindPath, clusterName, kubeConfig)
 		},
 	}
-	deleteCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	deleteCmd.Flags().String("kind", "kind command path").Var(&kindPath).Default("kind")
 	deleteCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
 	deleteCmd.Flags().String("kubeconfig", "Path to the kubeconfig file. If not specified, will be used default file of kubectl").Var(&kubeConfig)
 	clusterCmd.AddCommand(deleteCmd)
@@ -323,7 +342,7 @@ func Cluster() *cli.Command {
 			return runContainer(kindPath, clusterName, manifestFile, namespace, images)
 		},
 	}
-	runCmd.Flags().String("kind", "kind command path").Var(&kindPath)
+	runCmd.Flags().String("kind", "kind command path").Var(&kindPath).Default("kind")
 	runCmd.Flags().String("name", "Cluster name").Var(&clusterName).Default(defaultClusterName)
 	runCmd.Flags().String("manifest", "A manifest file for the container").Var(&manifestFile)
 	runCmd.Flags().String("namespace", "Namespace").Var(&namespace).Default(metav1.NamespaceDefault)
