@@ -20,5 +20,6 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
+    remote_tags = ["latest"],
     repository = "repo.center.x.f110.dev/tools/controller-manager",
 )
