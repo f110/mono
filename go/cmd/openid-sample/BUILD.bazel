@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "openid-sample_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/openid-sample",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//vendor/github.com/zitadel/oidc/v3/pkg/client/rp",
+        "//vendor/github.com/zitadel/oidc/v3/pkg/oidc",
+    ],
+)
+
+go_binary(
+    name = "openid-sample",
+    embed = [":openid-sample_lib"],
+    visibility = ["//visibility:public"],
+)
