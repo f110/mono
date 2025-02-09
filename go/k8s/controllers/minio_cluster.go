@@ -448,7 +448,7 @@ func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
 	}
 	var enabled bool
 	for _, v := range bytes.Split(kv, []byte(" ")) {
-		if !bytes.HasPrefix(v, []byte("client_id=")) {
+		if bytes.HasPrefix(v, []byte("client_id=")) {
 			if v[len(v)-1] != '=' {
 				enabled = true
 			}
