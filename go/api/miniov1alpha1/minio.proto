@@ -8,6 +8,7 @@ option (dev.f110.kubeproto.k8s) = {
 };
 
 import "kube.proto";
+import "k8s.io/api/core/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 
 enum BucketFinalizePolicy {
@@ -59,16 +60,22 @@ message MinIOClusterBucket {
 }
 
 message IdentityProvider {
-  string          discovery_url     = 1;
-  string          client_id         = 2;
-  SecretSelector  client_secret_ref = 3;
-  repeated string scopes            = 4;
-  optional string comment           = 5;
+  string          discovery_url = 1;
+  string          client_id     = 2;
+  SecretSelector  client_secret = 3;
+  repeated string scopes        = 4;
+  optional string comment       = 5;
 }
 
 message SecretSelector {
-  string          name = 1;
-  optional string key  = 2;
+  optional k8s.io.api.core.v1.SecretKeySelector secret = 1;
+  optional VaultSecretSelector                  vault  = 2;
+}
+
+message VaultSecretSelector {
+  string mount_path = 1;
+  string path       = 2;
+  string key        = 3;
 }
 
 message MinIOClusterStatus {

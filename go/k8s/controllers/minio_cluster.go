@@ -1,15 +1,18 @@
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/policy"
@@ -36,6 +39,7 @@ import (
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/portforward"
 	"go.f110.dev/mono/go/stringsutil"
+	"go.f110.dev/mono/go/vault"
 )
 
 const (
@@ -48,6 +52,7 @@ type MinIOClusterController struct {
 
 	config        *rest.Config
 	coreClient    kubernetes.Interface
+	vaultClient   *vault.Client
 	mClient       *client.MinioV1alpha1
 	podLister     corev1listers.PodLister
 	pvcLister     corev1listers.PersistentVolumeClaimLister
@@ -63,6 +68,7 @@ func NewMinIOClusterController(
 	cfg *rest.Config,
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
 	factory *client.InformerFactory,
+	vaultClient *vault.Client,
 	runOutsideCluster bool,
 ) *MinIOClusterController {
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
@@ -77,6 +83,7 @@ func NewMinIOClusterController(
 		runOutsideCluster: runOutsideCluster,
 		config:            cfg,
 		coreClient:        coreClient,
+		vaultClient:       vaultClient,
 		mClient:           apiClient.MinioV1alpha1,
 		podLister:         podInformer.Lister(),
 		pvcLister:         pvcInformer.Lister(),
@@ -101,6 +108,7 @@ func (c *MinIOClusterController) newReconciler() controllerutil.GenericReconcile
 	return &minIOClusterReconciler{
 		config:            c.config,
 		coreClient:        c.coreClient,
+		vaultClient:       c.vaultClient,
 		mClient:           c.mClient,
 		podLister:         c.podLister,
 		pvcLister:         c.pvcLister,
@@ -115,6 +123,7 @@ func (c *MinIOClusterController) newReconciler() controllerutil.GenericReconcile
 type minIOClusterReconciler struct {
 	config        *rest.Config
 	coreClient    kubernetes.Interface
+	vaultClient   *vault.Client
 	mClient       *client.MinioV1alpha1
 	podLister     corev1listers.PodLister
 	pvcLister     corev1listers.PersistentVolumeClaimLister
@@ -135,7 +144,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	if m.logger.Level() == zapcore.DebugLevel {
 		defer m.logger.Debug("Finished reconciling MinIOCluster")
 	}
-	rCtx, err := m.newContext(obj)
+	rCtx, err := m.newContext(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -239,91 +248,26 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	}
 
 	if rCtx.Obj.Status.Phase == miniov1alpha1.ClusterPhaseRunning {
-		instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", obj.Name, obj.Namespace)
-		if m.runOutsideCluster {
-			forwarder, port, err := portforward.PortForward(ctx, rCtx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
-			if err != nil {
-				return xerrors.WithStack(err)
+		if err := m.ensureBuckets(rCtx); err != nil {
+			var uErr *url.Error
+			if errors.As(err, &uErr) {
+				if strings.Contains(uErr.Error(), "Connection closed") {
+					m.logger.Info("The instance is not ready yet", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					return nil
+				}
 			}
-			defer forwarder.Close()
-			instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
+			return err
 		}
 
-		creds := credentials.NewStaticV4(defaultMinIOClusterAdminUser, string(rCtx.secret.Data["password"]), "")
-		mc, err := minio.New(instanceEndpoint, &minio.Options{
-			Creds:  creds,
-			Secure: false,
-		})
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		for _, bucket := range rCtx.Obj.Spec.Buckets {
-			if exists, err := mc.BucketExists(ctx, bucket.Name); err != nil {
-				return xerrors.WithStack(err)
-			} else if !exists {
-				m.logger.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{}); err != nil {
-					return xerrors.WithStack(err)
+		if err := m.setupOIDC(rCtx); err != nil {
+			var uErr *url.Error
+			if errors.As(err, &uErr) {
+				if strings.Contains(uErr.Error(), "Connection closed") {
+					m.logger.Info("The instance is not ready yet", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					return nil
 				}
 			}
-
-			gotPolicyString, err := mc.GetBucketPolicy(ctx, bucket.Name)
-			if err != nil {
-				return xerrors.WithStack(err)
-			}
-			var currentPolicy *policy.BucketAccessPolicy
-			if gotPolicyString != "" {
-				cp := &policy.BucketAccessPolicy{}
-				if err := json.Unmarshal([]byte(gotPolicyString), cp); err != nil {
-					return xerrors.WithStack(err)
-				}
-				currentPolicy = cp
-			}
-			p := &policy.BucketAccessPolicy{
-				Version: "2012-10-17",
-			}
-			switch bucket.Policy {
-			case "", miniov1alpha1.BucketPolicyPrivate:
-				m.logger.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.SetBucketPolicy(ctx, bucket.Name, ""); err != nil {
-					return xerrors.WithStack(err)
-				}
-			case miniov1alpha1.BucketPolicyPublic:
-				p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, bucket.Name, "*")
-			case miniov1alpha1.BucketPolicyReadOnly:
-				p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadOnly, bucket.Name, "*")
-			}
-			if len(p.Statements) > 0 && currentPolicy != nil && !reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
-				b, err := json.Marshal(p)
-				if err != nil {
-					return xerrors.WithStack(err)
-				}
-				m.logger.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-				if err := mc.SetBucketPolicy(ctx, bucket.Name, string(b)); err != nil {
-					return xerrors.WithStack(err)
-				}
-			}
-
-			if bucket.CreateIndexFile {
-				stat, err := mc.StatObject(ctx, bucket.Name, "index.html", minio.StatObjectOptions{})
-				if err != nil {
-					var mErr minio.ErrorResponse
-					if errors.As(err, &mErr) {
-						if mErr.Code != "NoSuchKey" {
-							return xerrors.WithStack(err)
-						}
-						// NoSuchKey is not error
-					} else {
-						return xerrors.WithStack(err)
-					}
-				}
-				if stat.Key == "" {
-					m.logger.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
-					if _, err := mc.PutObject(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
-						return xerrors.WithStack(err)
-					}
-				}
-			}
+			return err
 		}
 	}
 	return nil
@@ -334,7 +278,7 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 	if m.logger.Level() == zapcore.DebugLevel {
 		defer m.logger.Debug("Finished finalizing MinIOCluster")
 	}
-	rCtx, err := m.newContext(obj)
+	rCtx, err := m.newContext(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -383,12 +327,184 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 	return nil
 }
 
-func (m *minIOClusterReconciler) newContext(obj *miniov1alpha1.MinIOCluster) (*reconcileContext, error) {
-	ctx := &reconcileContext{original: obj.DeepCopy(), Obj: obj}
-	if err := m.reloadContext(ctx); err != nil {
+func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
+	if len(ctx.Obj.Spec.Buckets) == 0 {
+		return nil
+	}
+
+	instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", ctx.Obj.Name, ctx.Obj.Namespace)
+	if m.runOutsideCluster {
+		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		defer forwarder.Close()
+		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
+	}
+
+	creds := credentials.NewStaticV4(defaultMinIOClusterAdminUser, string(ctx.secret.Data["password"]), "")
+	mc, err := minio.New(instanceEndpoint, &minio.Options{
+		Creds:  creds,
+		Secure: false,
+	})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	for _, bucket := range ctx.Obj.Spec.Buckets {
+		if exists, err := mc.BucketExists(ctx, bucket.Name); err != nil {
+			return xerrors.WithStack(err)
+		} else if !exists {
+			m.logger.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			if err := mc.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{}); err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
+
+		gotPolicyString, err := mc.GetBucketPolicy(ctx, bucket.Name)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		var currentPolicy *policy.BucketAccessPolicy
+		if gotPolicyString != "" {
+			cp := &policy.BucketAccessPolicy{}
+			if err := json.Unmarshal([]byte(gotPolicyString), cp); err != nil {
+				return xerrors.WithStack(err)
+			}
+			currentPolicy = cp
+		}
+		p := &policy.BucketAccessPolicy{
+			Version: "2012-10-17",
+		}
+		switch bucket.Policy {
+		case "", miniov1alpha1.BucketPolicyPrivate:
+			m.logger.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			if err := mc.SetBucketPolicy(ctx, bucket.Name, ""); err != nil {
+				return xerrors.WithStack(err)
+			}
+		case miniov1alpha1.BucketPolicyPublic:
+			p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadWrite, bucket.Name, "*")
+		case miniov1alpha1.BucketPolicyReadOnly:
+			p.Statements = policy.SetPolicy(nil, policy.BucketPolicyReadOnly, bucket.Name, "*")
+		}
+		if len(p.Statements) > 0 && currentPolicy != nil && !reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
+			b, err := json.Marshal(p)
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			m.logger.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			if err := mc.SetBucketPolicy(ctx, bucket.Name, string(b)); err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
+
+		if bucket.CreateIndexFile {
+			stat, err := mc.StatObject(ctx, bucket.Name, "index.html", minio.StatObjectOptions{})
+			if err != nil {
+				var mErr minio.ErrorResponse
+				if errors.As(err, &mErr) {
+					if mErr.Code != "NoSuchKey" {
+						return xerrors.WithStack(err)
+					}
+					// NoSuchKey is not error
+				} else {
+					return xerrors.WithStack(err)
+				}
+			}
+			if stat.Key == "" {
+				m.logger.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+				if _, err := mc.PutObject(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
+					return xerrors.WithStack(err)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
+	if ctx.Obj.Spec.IdentityProvider == nil {
+		return nil
+	}
+
+	instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", ctx.Obj.Name, ctx.Obj.Namespace)
+	if m.runOutsideCluster {
+		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		defer forwarder.Close()
+		instanceEndpoint = fmt.Sprintf("127.0.0.1:%d", port)
+	}
+
+	creds := credentials.NewStaticV4(defaultMinIOClusterAdminUser, string(ctx.secret.Data["password"]), "")
+	adminClient, err := madmin.NewWithOptions(instanceEndpoint, &madmin.Options{Creds: creds, Secure: false})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	kv, err := adminClient.GetConfigKV(ctx, "identity_openid")
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	var enabled bool
+	for _, v := range bytes.Split(kv, []byte(" ")) {
+		if !bytes.HasPrefix(v, []byte("client_id=")) {
+			if v[len(v)-1] != '=' {
+				enabled = true
+			}
+			break
+		}
+	}
+	if enabled {
+		m.logger.Debug("Already set up OIDC", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+		return nil
+	}
+
+	var clientSecret string
+	if ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret != nil {
+		secret, err := m.secretLister.Secrets(ctx.Obj.Namespace).Get(ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret.Name)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		clientSecret = string(secret.Data[ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret.Key])
+	}
+	if ctx.Obj.Spec.IdentityProvider.ClientSecret.Vault != nil {
+		s, err := m.vaultClient.Get(ctx, ctx.Obj.Spec.IdentityProvider.ClientSecret.Vault.MountPath, ctx.Obj.Spec.IdentityProvider.ClientSecret.Vault.Path, ctx.Obj.Spec.IdentityProvider.ClientSecret.Vault.Key)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		clientSecret = s
+	}
+
+	input := []string{"identity_openid",
+		"enabled=true",
+		fmt.Sprintf("config_url=%s", ctx.Obj.Spec.IdentityProvider.DiscoveryUrl),
+		fmt.Sprintf("client_id=%s", ctx.Obj.Spec.IdentityProvider.ClientId),
+		fmt.Sprintf("client_secret=%s", clientSecret),
+		"role_policy=consoleAdmin",
+		fmt.Sprintf("scopes=%s", strings.Join(ctx.Obj.Spec.IdentityProvider.Scopes, ",")),
+		fmt.Sprintf("redirect_uri=%s/oauth_callback", ctx.Obj.Spec.ExternalUrl),
+	}
+	m.logger.Debug("Setting up OIDC", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+	_, err = adminClient.SetConfigKV(ctx, strings.Join(input, " "))
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	m.logger.Info("Restart minio service", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+	_, err = adminClient.ServiceAction(ctx, madmin.ServiceActionOpts{Action: madmin.ServiceActionRestart})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func (m *minIOClusterReconciler) newContext(ctx context.Context, obj *miniov1alpha1.MinIOCluster) (*reconcileContext, error) {
+	rCtx := &reconcileContext{Context: ctx, original: obj.DeepCopy(), Obj: obj}
+	if err := m.reloadContext(rCtx); err != nil {
 		return nil, err
 	}
-	return ctx, nil
+	return rCtx, nil
 }
 
 func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
@@ -499,16 +615,6 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 			),
 		),
 	)
-	if obj.Spec.IdentityProvider != nil {
-		container = k8sfactory.ContainerFactory(container,
-			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_CONFIG_URL", obj.Spec.IdentityProvider.DiscoveryUrl),
-			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_CLIENT_ID", obj.Spec.IdentityProvider.ClientId),
-			k8sfactory.EnvFromSecret("MINIO_IDENTITY_OPENID_CLIENT_SECRET", obj.Spec.IdentityProvider.ClientSecretRef.Name, obj.Spec.IdentityProvider.ClientSecretRef.Key),
-			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_ROLE_POLICY", "consoleAdmin"),
-			k8sfactory.EnvVar("MINIO_IDENTITY_OPENID_SCOPES", strings.Join(obj.Spec.IdentityProvider.Scopes, ",")),
-			k8sfactory.EnvVar("MINIO_BROWSER_REDIRECT_URL", obj.Spec.ExternalUrl),
-		)
-	}
 	pod := k8sfactory.PodFactory(nil,
 		k8sfactory.Namef("%s-%d", obj.Name, index),
 		k8sfactory.Namespace(obj.Namespace),
@@ -612,6 +718,8 @@ func (m *minIOClusterReconciler) services(obj *miniov1alpha1.MinIOCluster) []*co
 }
 
 type reconcileContext struct {
+	context.Context
+
 	Obj *miniov1alpha1.MinIOCluster
 
 	original *miniov1alpha1.MinIOCluster

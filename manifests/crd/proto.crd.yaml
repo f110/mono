@@ -671,14 +671,39 @@ spec:
                 properties:
                   clientId:
                     type: string
-                  clientSecretRef:
+                  clientSecret:
                     properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                    required:
-                    - name
+                      secret:
+                        properties:
+                          key:
+                            description: The key of the secret to select from.  Must
+                              be a valid secret key.
+                            type: string
+                          name:
+                            description: |-
+                              Name of the referent.
+                               More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          optional:
+                            description: Specify whether the Secret or its key must
+                              be defined
+                            type: boolean
+                        required:
+                        - key
+                        type: object
+                      vault:
+                        properties:
+                          key:
+                            type: string
+                          mountPath:
+                            type: string
+                          path:
+                            type: string
+                        required:
+                        - mountPath
+                        - path
+                        - key
+                        type: object
                     type: object
                   comment:
                     type: string
@@ -691,7 +716,7 @@ spec:
                 required:
                 - discoveryUrl
                 - clientId
-                - clientSecretRef
+                - clientSecret
                 - scopes
                 type: object
               image:

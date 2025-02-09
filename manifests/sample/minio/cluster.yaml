@@ -10,9 +10,10 @@ spec:
   totalSize: 10
   identityProvider:
     clientId: "306238040135762435"
-    clientSecretRef:
-      name: client-secret
-      key: clientSecret
+    clientSecret:
+      secret:
+        name: client-secret
+        key: clientSecret
     discoveryUrl: "https://login.f110.dev/.well-known/openid-configuration"
     scopes: ["oidc", "email"]
   externalUrl: http://127.0.0.1:8080

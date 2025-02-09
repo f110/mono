@@ -1,6 +1,7 @@
 package miniov1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -418,16 +419,16 @@ func (in *MinIOClusterBucket) DeepCopy() *MinIOClusterBucket {
 }
 
 type IdentityProvider struct {
-	DiscoveryUrl    string         `json:"discoveryUrl"`
-	ClientId        string         `json:"clientId"`
-	ClientSecretRef SecretSelector `json:"clientSecretRef"`
-	Scopes          []string       `json:"scopes"`
-	Comment         string         `json:"comment,omitempty"`
+	DiscoveryUrl string         `json:"discoveryUrl"`
+	ClientId     string         `json:"clientId"`
+	ClientSecret SecretSelector `json:"clientSecret"`
+	Scopes       []string       `json:"scopes"`
+	Comment      string         `json:"comment,omitempty"`
 }
 
 func (in *IdentityProvider) DeepCopyInto(out *IdentityProvider) {
 	*out = *in
-	in.ClientSecretRef.DeepCopyInto(&out.ClientSecretRef)
+	in.ClientSecret.DeepCopyInto(&out.ClientSecret)
 	if in.Scopes != nil {
 		t := make([]string, len(in.Scopes))
 		copy(t, in.Scopes)
@@ -445,12 +446,22 @@ func (in *IdentityProvider) DeepCopy() *IdentityProvider {
 }
 
 type SecretSelector struct {
-	Name string `json:"name"`
-	Key  string `json:"key,omitempty"`
+	Secret *corev1.SecretKeySelector `json:"secret,omitempty"`
+	Vault  *VaultSecretSelector      `json:"vault,omitempty"`
 }
 
 func (in *SecretSelector) DeepCopyInto(out *SecretSelector) {
 	*out = *in
+	if in.Secret != nil {
+		in, out := &in.Secret, &out.Secret
+		*out = new(corev1.SecretKeySelector)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Vault != nil {
+		in, out := &in.Vault, &out.Vault
+		*out = new(VaultSecretSelector)
+		(*in).DeepCopyInto(*out)
+	}
 }
 
 func (in *SecretSelector) DeepCopy() *SecretSelector {
@@ -458,6 +469,25 @@ func (in *SecretSelector) DeepCopy() *SecretSelector {
 		return nil
 	}
 	out := new(SecretSelector)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type VaultSecretSelector struct {
+	MountPath string `json:"mountPath"`
+	Path      string `json:"path"`
+	Key       string `json:"key"`
+}
+
+func (in *VaultSecretSelector) DeepCopyInto(out *VaultSecretSelector) {
+	*out = *in
+}
+
+func (in *VaultSecretSelector) DeepCopy() *VaultSecretSelector {
+	if in == nil {
+		return nil
+	}
+	out := new(VaultSecretSelector)
 	in.DeepCopyInto(out)
 	return out
 }

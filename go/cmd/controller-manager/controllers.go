@@ -106,7 +106,7 @@ var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerMinIOCluster,
 		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.dev)
+			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.vaultClient, p.dev)
 			return mcc, nil
 		},
 		Enable: true,
