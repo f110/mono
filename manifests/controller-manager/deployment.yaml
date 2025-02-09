@@ -41,11 +41,11 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              port: 8080
+              port: 8081
               path: /liveness
           readinessProbe:
             httpGet:
-              port: 8080
+              port: 8081
               path: /readiness
           resources:
             limits:
