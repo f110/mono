@@ -12,7 +12,7 @@ import (
 
 func TestMinIOClusterController_Reconcile(t *testing.T) {
 	runner := controllertest.NewGenericTestRunner[*miniov1alpha1.MinIOCluster]()
-	controller := NewMinIOClusterController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, false)
+	controller := NewMinIOClusterController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, nil, false)
 
 	target := minioClusterFixture()
 	err := runner.Reconcile(controller.newReconciler(), target)
