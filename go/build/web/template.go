@@ -209,6 +209,7 @@ const indexTemplate = `<html>
         <th>Manifest</th>
         <th>Trigger</th>
         <th>Node</th>
+		<th>Bazel version</th>
         <th>Start at</th>
         <th>Duration</th>
         <th>Test report</th>
@@ -228,6 +229,7 @@ const indexTemplate = `<html>
         <td><a href="/manifest/{{ .Id }}">yaml</a></td>
         <td>{{ .Via }}</td>
         <td>{{ .Node }}</td>
+		<td style="background-color: {{ if eq .BehindVersion 0 }}#FFFFFF{{ else if eq .BehindVersion 1 }}#FFE5E5{{ else if eq .BehindVersion 2 }}#FFDBDB{{ else if eq .BehindVersion 3 }}#FFD1D1{{ else if eq .BehindVersion 4 }}#FFC6C6{{ else }}#FFBCBC{{ end }}">{{ .BazelVersion }}</td>
         <td>{{ .StartAt }}</td>
         <td>{{ Duration .StartAt .FinishedAt }}</td>
         <td>{{ if gt .ExecutedTestsCount 0 }}{{ .SucceededTestsCount }}/{{ .ExecutedTestsCount }}{{ end }}</td>

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -10,8 +11,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/google/go-github/v49/github"
 	"go.f110.dev/protoc-ddl/probe"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/build/config"
@@ -70,7 +73,8 @@ func (d *Dashboard) Start() error {
 
 type Task struct {
 	*database.Task
-	RevisionUrl string
+	RevisionUrl   string
+	BehindVersion int
 }
 
 func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
@@ -93,6 +97,16 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 				break
 			}
 		}
+	}
+
+	versions, err := d.callReadiness(req.Context())
+	if err != nil {
+		logger.Log.Warn("Failed get supported bazel versions", logger.Error(err))
+		return
+	}
+	behindVersions := make(map[string]int)
+	for i, v := range versions {
+		behindVersions[v.String()] = len(versions) - 1 - i
 	}
 	var tasks []*database.Task
 	if repoId != 0 {
@@ -117,9 +131,14 @@ func (d *Dashboard) handleIndex(w http.ResponseWriter, req *http.Request) {
 		if strings.Contains(v.Repository.Url, "https://github.com") {
 			revUrl = v.Repository.Url + "/commit/" + v.Revision
 		}
+		bv := -1
+		if v, ok := behindVersions[v.BazelVersion]; ok {
+			bv = v
+		}
 		taskList = append(taskList, &Task{
-			Task:        v,
-			RevisionUrl: revUrl,
+			Task:          v,
+			RevisionUrl:   revUrl,
+			BehindVersion: bv,
 		})
 		repoList[v.RepositoryId] = v.Repository
 	}
@@ -430,3 +449,24 @@ func (d *Dashboard) handleReadiness(w http.ResponseWriter, req *http.Request) {
 }
 
 func (*Dashboard) handleLiveness(_ http.ResponseWriter, _ *http.Request) {}
+
+func (d *Dashboard) callReadiness(ctx context.Context) ([]semver.Version, error) {
+	readinessReq, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/readiness", d.internalAPI), nil)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	res, err := http.DefaultClient.Do(readinessReq)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	readinessAPI := &struct {
+		Versions []string `json:"versions"`
+	}{}
+	if err := json.NewDecoder(res.Body).Decode(readinessAPI); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	versions := readinessAPI.Versions
+	semVersions := semver.Versions(enumerable.Map(versions, func(v string) semver.Version { return semver.MustParse(v) }))
+	sort.Sort(semVersions)
+	return semVersions, nil
+}

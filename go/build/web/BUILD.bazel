@@ -15,8 +15,10 @@ go_library(
         "//go/enumerable",
         "//go/logger",
         "//go/storage",
+        "//vendor/github.com/blang/semver/v4:semver",
         "//vendor/github.com/google/go-github/v49/github",
         "//vendor/go.f110.dev/protoc-ddl/probe",
+        "//vendor/go.f110.dev/xerrors",
         "//vendor/go.uber.org/zap",
     ],
 )

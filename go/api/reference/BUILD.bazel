@@ -1,0 +1,24 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
+load("//build/rules:vendor.bzl", "vendor_kubeproto")
+
+proto_library(
+    name = "reference_proto",
+    srcs = ["selector.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@dev_f110_kubeproto//:k8s_proto",
+        "@dev_f110_kubeproto//:kubeproto",
+    ],
+)
+
+kubeproto_go_api(
+    name = "go_api",
+    srcs = [":reference_proto"],
+    importpath = "go.f110.dev/mono/go/api/reference",
+)
+
+vendor_kubeproto(
+    name = "vendor_go_api",
+    src = ":go_api",
+)
