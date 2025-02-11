@@ -1,0 +1,123 @@
+package coordinator
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	batchv1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	fakesecretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake"
+
+	"go.f110.dev/mono/go/build/database"
+	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/k8s/controllers/controllertest"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
+	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/testing/assert"
+)
+
+func TestBazelBuilder_SyncJob(t *testing.T) {
+	runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
+	podInformer := runner.CoreSharedInformerFactory.Core().V1().Pods()
+	jobInformer := runner.CoreSharedInformerFactory.Batch().V1().Jobs()
+	mockDAO := struct {
+		Repository *daotest.SourceRepository
+		Task       *daotest.Task
+	}{
+		Repository: daotest.NewSourceRepository(),
+		Task:       daotest.NewTask(),
+	}
+	mockDAO.Task.RegisterListPending([]*database.Task{}, nil)
+	b, err := NewBazelBuilder(
+		"",
+		KubernetesOptions{
+			JobInformer:       jobInformer,
+			PodInformer:       podInformer,
+			Client:            runner.CoreClient,
+			SecretStoreClient: fakesecretstoreclient.NewSimpleClientset(),
+		},
+		dao.Options{
+			Repository: mockDAO.Repository,
+			Task:       mockDAO.Task,
+		},
+		metav1.NamespaceDefault,
+		nil,
+		"foo",
+		storage.MinIOOptions{},
+		BazelOptions{},
+		nil,
+		false,
+	)
+	require.NoError(t, err)
+
+	mockDAO.Repository.RegisterSelect(1, &database.SourceRepository{Id: 1, Url: "https://github.com/f110/mono"})
+	mockDAO.Task.RegisterSelect(1, &database.Task{Id: 1})
+	target := k8sfactory.JobFactory(nil,
+		k8sfactory.Namespace(metav1.NamespaceDefault),
+		k8sfactory.Name(t.Name()),
+		k8sfactory.CreatedAt(time.Now().Add(-1*time.Minute)),
+		k8sfactory.Labels(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "1"}),
+		k8sfactory.Finalizer(bazelBuilderControllerFinalizerName),
+		k8sfactory.MatchLabelSelector(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "1"}),
+	)
+
+	t.Run("Finished normally", func(t *testing.T) {
+		target := k8sfactory.JobFactory(target,
+			k8sfactory.Name(t.Name()),
+			k8sfactory.JobComplete,
+			k8sfactory.Pod(
+				k8sfactory.PodFactory(nil,
+					k8sfactory.Container(k8sfactory.ContainerFactory(nil)),
+				),
+			),
+		)
+		runner.RegisterFixture(target)
+		err = b.syncJob(target)
+		require.NoError(t, err)
+
+		called := mockDAO.Task.Called("Update")
+		require.Len(t, called, 1)
+		updated := called[0].Args["task"].(*database.Task)
+		assert.NotNil(t, updated.FinishedAt)
+		assert.True(t, updated.Success)
+		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
+		runner.AssertNoUnexpectedAction(t)
+	})
+
+	t.Run("Timed out", func(t *testing.T) {
+		target := k8sfactory.JobFactory(target,
+			k8sfactory.Name(t.Name()),
+			k8sfactory.CreatedAt(time.Now().Add(-2*time.Hour)),
+		)
+		runner.RegisterFixture(target)
+		err = b.syncJob(target)
+		require.NoError(t, err)
+
+		called := mockDAO.Task.Called("Update")
+		require.Len(t, called, 1)
+		updated := called[0].Args["task"].(*database.Task)
+		assert.NotNil(t, updated.FinishedAt)
+		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
+		runner.AssertNoUnexpectedAction(t)
+	})
+
+	t.Run("Delete Job", func(t *testing.T) {
+		target := k8sfactory.JobFactory(target,
+			k8sfactory.Name(t.Name()),
+			k8sfactory.Delete,
+		)
+		runner.RegisterFixture(target)
+		err = b.syncJob(target)
+		require.NoError(t, err)
+
+		called := mockDAO.Task.Called("Update")
+		require.Len(t, called, 1)
+		updated := called[0].Args["task"].(*database.Task)
+		assert.NotNil(t, updated.FinishedAt)
+
+		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(t.Name())))
+		runner.AssertNoUnexpectedAction(t)
+	})
+}

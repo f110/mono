@@ -112,11 +112,10 @@ func Container(c *corev1.Container) Trait {
 			return
 		}
 
-		p, ok := object.(*corev1.Pod)
-		if !ok {
-			return
+		switch obj := object.(type) {
+		case *corev1.Pod:
+			obj.Spec.Containers = append(obj.Spec.Containers, *c)
 		}
-		p.Spec.Containers = append(p.Spec.Containers, *c)
 	}
 }
 

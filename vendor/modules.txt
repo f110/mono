@@ -2196,9 +2196,12 @@ sigs.k8s.io/kind/pkg/internal/sets
 sigs.k8s.io/secrets-store-csi-driver/apis/v1
 sigs.k8s.io/secrets-store-csi-driver/apis/v1alpha1
 sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned
+sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake
 sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/scheme
 sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1
+sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1/fake
 sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1alpha1
+sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/typed/apis/v1alpha1/fake
 # sigs.k8s.io/structured-merge-diff/v4 v4.4.1
 ## explicit; go 1.13
 sigs.k8s.io/structured-merge-diff/v4/fieldpath

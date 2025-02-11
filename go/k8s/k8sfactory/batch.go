@@ -88,3 +88,12 @@ func BackoffLimit(limit int32) Trait {
 		}
 	}
 }
+
+func JobComplete(object any) {
+	switch obj := object.(type) {
+	case *batchv1.Job:
+		obj.Status.Conditions = append(obj.Status.Conditions, batchv1.JobCondition{
+			Type: batchv1.JobComplete,
+		})
+	}
+}

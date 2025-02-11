@@ -38,6 +38,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/ctxutil"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -60,6 +61,8 @@ const (
 
 	jobTimeout = 1 * time.Hour
 	jobType    = "bazelBuilder"
+
+	bazelBuilderControllerFinalizerName = "build.f110.dev/finalizer"
 )
 
 var (
@@ -373,11 +376,6 @@ func (b *BazelBuilder) IsStub() bool {
 // syncJob is the reconcile function.
 // If BazelBuilder is running stub mode, syncJob is never triggered.
 func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
-	if !job.DeletionTimestamp.IsZero() {
-		logger.Log.Debug("Job has been deleted", zap.String("job.name", job.Name))
-		return nil
-	}
-
 	ctx, cancelFunc := ctxutil.WithCancel(context.Background())
 	defer cancelFunc()
 
@@ -430,10 +428,26 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		logger.Log.Info("Job is timed out", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		now := time.Now()
 		task.FinishedAt = &now
+		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
 		}
+		if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
+			return xerrors.WithStack(err)
+		}
 		return nil
+	}
+
+	if !job.DeletionTimestamp.IsZero() {
+		// Someone deletes the job manually.
+		task.FinishedAt = varptr.Ptr(job.DeletionTimestamp.Time)
+		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
+		if err := b.dao.Task.Update(context.Background(), task); err != nil {
+			return xerrors.WithStack(err)
+		}
+		if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
+			return xerrors.WithStack(err)
+		}
 	}
 
 	if len(job.Status.Conditions) == 0 {
@@ -463,13 +477,12 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			logger.Log.Info("Job was failed", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		}
 	}
-	if task.FinishedAt != nil {
-		if err := b.teardownJob(ctx, job); err != nil {
-			return xerrors.WithStack(err)
-		}
-	}
 
+	job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
 	if err := b.dao.Task.Update(context.Background(), task); err != nil {
+		return xerrors.WithStack(err)
+	}
+	if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -648,6 +661,9 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.WithStack(err)
+	}
+	if len(podList.Items) == 0 {
+		return nil
 	}
 	if len(podList.Items) != 1 {
 		return xerrors.Define("Target pods not found or found more than 1").WithStack()

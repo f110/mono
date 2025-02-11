@@ -5,12 +5,14 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/stringsutil"
 )
 
@@ -228,6 +230,8 @@ func MatchLabelSelector(label map[string]string) Trait {
 			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
 		case *policyv1.PodDisruptionBudget:
 			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
+		case *batchv1.Job:
+			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
 		}
 	}
 }
@@ -248,6 +252,15 @@ func Finalizer(v string) Trait {
 			}
 
 			m.SetFinalizers(append(m.GetFinalizers(), v))
+		}
+	}
+}
+
+func RemoveFinalizer(v string) Trait {
+	return func(object any) {
+		m, ok := object.(metav1.Object)
+		if ok {
+			m.SetFinalizers(enumerable.Delete(m.GetFinalizers(), v))
 		}
 	}
 }

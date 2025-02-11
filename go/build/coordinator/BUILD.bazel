@@ -44,16 +44,22 @@ go_library(
 
 go_test(
     name = "coordinator_test",
-    srcs = ["job_test.go"],
+    srcs = [
+        "build_test.go",
+        "job_test.go",
+    ],
     embed = [":coordinator"],
     deps = [
         "//go/build/config",
         "//go/build/database",
+        "//go/build/database/dao",
         "//go/build/watcher",
         "//go/enumerable",
+        "//go/k8s/controllers/controllertest",
         "//go/k8s/k8sfactory",
         "//go/k8s/k8smanifest",
         "//go/logger",
+        "//go/storage",
         "//go/varptr",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/github.com/stretchr/testify/require",
@@ -65,5 +71,6 @@ go_test(
         "//vendor/k8s.io/apimachinery/pkg/api/resource",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/apimachinery/pkg/runtime",
+        "//vendor/sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake",
     ],
 )

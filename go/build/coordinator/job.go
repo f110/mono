@@ -350,6 +350,7 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 			labelKeyCtrlBy:    "bazel-build",
 			watcher.TypeLabel: jobType,
 		}),
+		k8sfactory.Finalizer(bazelBuilderControllerFinalizerName),
 		k8sfactory.BackoffLimit(0),
 		k8sfactory.PodFailurePolicy(batchv1.PodFailurePolicyRule{
 			Action: batchv1.PodFailurePolicyActionFailJob,

@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.starlark.net/starlark"
-	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -28,7 +27,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	logger.Log = zap.NewNop()
+	logger.SetLogLevel("debug")
+	logger.Init()
 	m.Run()
 }
 
