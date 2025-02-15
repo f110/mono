@@ -544,6 +544,7 @@ func testJobBuilderFixtures() (*config.Job, *database.SourceRepository, *databas
 				labelKeyCtrlBy:    "bazel-build",
 				watcher.TypeLabel: "bazelBuilder",
 			},
+			Finalizers: []string{bazelBuilderControllerFinalizerName},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{

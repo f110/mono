@@ -80,6 +80,11 @@ func (r *TestRunner) Finalize(c controllerutil.Controller, v runtime.Object) err
 	}
 }
 
+func (r *TestRunner) Reset() {
+	r.CoreClient.ClearActions()
+	r.Actions = nil
+}
+
 func (r *TestRunner) editActions() []*Action {
 	if r.Actions != nil {
 		return r.Actions

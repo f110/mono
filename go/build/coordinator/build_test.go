@@ -64,6 +64,11 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	)
 
 	t.Run("Finished normally", func(t *testing.T) {
+		t.Cleanup(func() {
+			mockDAO.Task.Reset()
+			runner.Reset()
+		})
+
 		target := k8sfactory.JobFactory(target,
 			k8sfactory.Name(t.Name()),
 			k8sfactory.JobComplete,
@@ -87,9 +92,21 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	})
 
 	t.Run("Timed out", func(t *testing.T) {
+		t.Cleanup(func() {
+			mockDAO.Task.Reset()
+			runner.Reset()
+		})
+
+		mockDAO.Task.RegisterSelect(2, &database.Task{Id: 2})
 		target := k8sfactory.JobFactory(target,
-			k8sfactory.Name(t.Name()),
+			k8sfactory.Name("timed-out"),
 			k8sfactory.CreatedAt(time.Now().Add(-2*time.Hour)),
+			k8sfactory.Label(labelKeyTaskId, "2"),
+			k8sfactory.Pod(
+				k8sfactory.PodFactory(nil,
+					k8sfactory.Container(k8sfactory.ContainerFactory(nil)),
+				),
+			),
 		)
 		runner.RegisterFixture(target)
 		err = b.syncJob(target)
@@ -104,9 +121,16 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	})
 
 	t.Run("Delete Job", func(t *testing.T) {
+		t.Cleanup(func() {
+			mockDAO.Task.Reset()
+			runner.Reset()
+		})
+
+		mockDAO.Task.RegisterSelect(3, &database.Task{Id: 3})
 		target := k8sfactory.JobFactory(target,
 			k8sfactory.Name(t.Name()),
 			k8sfactory.Delete,
+			k8sfactory.Label(labelKeyTaskId, "3"),
 		)
 		runner.RegisterFixture(target)
 		err = b.syncJob(target)
