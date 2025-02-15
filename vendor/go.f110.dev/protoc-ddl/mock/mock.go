@@ -51,6 +51,7 @@ func (m *Mock) Call(name string, args map[string]interface{}) (interface{}, erro
 
 func (m *Mock) Reset() {
 	m.mock = make(map[string][]*call)
+	m.called = make(map[string][]*call)
 }
 
 type Call struct {
