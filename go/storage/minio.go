@@ -14,6 +14,7 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	corev1listers "k8s.io/client-go/listers/core/v1"
@@ -110,7 +111,28 @@ func (m *MinIOOptions) newMinIOClientViaService(ctx context.Context) (*minio.Cli
 
 func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
 	var forwarder *pf.PortForwarder
-	endpoint := fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+	var endpoint string
+	if m.ServiceLister != nil {
+		if _, err := m.ServiceLister.Services(namespace).Get(name); apierrors.IsNotFound(err) {
+			if _, err := m.ServiceLister.Services(namespace).Get(fmt.Sprintf("%s-hl-svc", name)); err == nil {
+				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+			}
+		} else if err != nil {
+			return "", nil, xerrors.WithStack(err)
+		} else {
+			endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
+		}
+	} else {
+		if _, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); apierrors.IsNotFound(err) {
+			if _, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{}); err == nil {
+				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+			}
+		} else if err != nil {
+			return "", nil, xerrors.WithStack(err)
+		} else {
+			endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
+		}
+	}
 	if m.Dev {
 		var svc *corev1.Service
 		if m.ServiceLister != nil {
@@ -120,8 +142,13 @@ func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace str
 				svc = s
 			}
 		} else {
-			s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
-			if err != nil {
+			s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
+			if apierrors.IsNotFound(err) {
+				s, err = m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
+				if err != nil {
+					return "", nil, xerrors.WithStack(err)
+				}
+			} else if err != nil {
 				return "", nil, xerrors.WithStack(err)
 			}
 			svc = s
