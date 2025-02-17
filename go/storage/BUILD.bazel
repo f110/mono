@@ -28,6 +28,7 @@ go_library(
         "//vendor/google.golang.org/api/iterator",
         "//vendor/google.golang.org/api/option",
         "//vendor/k8s.io/api/core/v1:core",
+        "//vendor/k8s.io/apimachinery/pkg/api/errors",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:meta",
         "//vendor/k8s.io/client-go/kubernetes",
         "//vendor/k8s.io/client-go/listers/core/v1:core",
