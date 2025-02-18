@@ -358,6 +358,7 @@ type MinIOUserSpec struct {
 	Path string `json:"path"`
 	// mount_path is a mount path of KV secrets engine.
 	MountPath string `json:"mountPath"`
+	Policy    string `json:"policy"`
 }
 
 func (in *MinIOUserSpec) DeepCopyInto(out *MinIOUserSpec) {

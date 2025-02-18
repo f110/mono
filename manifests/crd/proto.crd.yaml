@@ -794,6 +794,8 @@ spec:
               path:
                 description: path is a path in vault
                 type: string
+              policy:
+                type: string
               selector:
                 properties:
                   matchExpressions:
@@ -843,6 +845,7 @@ spec:
             - selector
             - path
             - mountPath
+            - policy
             type: object
           status:
             properties:

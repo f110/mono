@@ -299,6 +299,15 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 	if err := adminClient.AddUser(ctx, accessKey, secretKey); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
+	if user.Spec.Policy != "" {
+		_, err = adminClient.AttachPolicy(nil, madmin.PolicyAssociationReq{
+			User:     accessKey,
+			Policies: []string{user.Spec.Policy},
+		})
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+	}
 
 	secret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
