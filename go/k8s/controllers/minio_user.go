@@ -300,7 +300,7 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 		return nil, xerrors.WithStack(err)
 	}
 	if user.Spec.Policy != "" {
-		_, err = adminClient.AttachPolicy(nil, madmin.PolicyAssociationReq{
+		_, err = adminClient.AttachPolicy(ctx, madmin.PolicyAssociationReq{
 			User:     accessKey,
 			Policies: []string{user.Spec.Policy},
 		})
