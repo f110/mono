@@ -7,12 +7,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"sync"
 	"time"
 
 	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/logger"
 )
 
 var (
@@ -46,9 +49,14 @@ type opOpt struct {
 }
 
 type Client struct {
-	addr       *url.URL
-	token      string
-	httpClient *http.Client
+	addr                *url.URL
+	token               string
+	tokenExpirationTime time.Time
+	httpClient          *http.Client
+
+	enginePath                  string
+	role                        string
+	serviceAccountTokenFilePath string
 }
 
 // NewClient makes a client for Vault with a static token.
@@ -70,14 +78,20 @@ func NewClient(addr, token string, opts ...ClientOpt) (*Client, error) {
 }
 
 // NewClientAsK8SServiceAccount makes a client for Vault as a service account of Kubernetes.
-func NewClientAsK8SServiceAccount(ctx context.Context, addr, enginePath, role, token string, opts ...ClientOpt) (*Client, error) {
+func NewClientAsK8SServiceAccount(ctx context.Context, addr, enginePath, role, serviceAccountTokenFilePath string, opts ...ClientOpt) (*Client, error) {
 	c, err := NewClient(addr, "", opts...)
 	if err != nil {
 		return nil, err
 	}
-	if err := c.LoginAsK8SServiceAccount(ctx, enginePath, role, token); err != nil {
+	c.enginePath = enginePath
+	c.role = role
+	c.serviceAccountTokenFilePath = serviceAccountTokenFilePath
+	if err := c.LoginAsK8SServiceAccount(ctx, enginePath, role); err != nil {
 		return nil, err
 	}
+	go func() {
+		_ = c.startAutoTokenRefresh()
+	}()
 	return c, nil
 }
 
@@ -174,10 +188,16 @@ func (c *Client) Set(ctx context.Context, mountPath, dataPath string, data map[s
 	return nil
 }
 
-func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role, token string) error {
+func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role string) error {
+	tokenBuf, err := os.ReadFile(c.serviceAccountTokenFilePath)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	saToken := strings.TrimSpace(string(tokenBuf))
+
 	payload := map[string]string{
 		"role": role,
-		"jwt":  token,
+		"jwt":  saToken,
 	}
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
@@ -211,7 +231,21 @@ func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role,
 		return xerrors.WithStack(err)
 	}
 	c.token = login.Auth.ClientToken
+	c.tokenExpirationTime = time.Now().Add(time.Duration(login.Auth.LeaseDuration) * time.Second)
 	return nil
+}
+
+func (c *Client) startAutoTokenRefresh() error {
+	logger.Log.Debug("Starting auto-token refresh")
+	for {
+		refreshDuration := time.Duration(int(c.tokenExpirationTime.Sub(time.Now()).Seconds()*0.6)) * time.Second
+		<-time.After(refreshDuration)
+
+		if err := c.LoginAsK8SServiceAccount(context.Background(), c.enginePath, c.role); err != nil {
+			return err
+		}
+		logger.Log.Debug("Refreshed token")
+	}
 }
 
 type Cache struct {

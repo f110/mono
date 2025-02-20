@@ -9,6 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/vault",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logger",
         "//go/netutil",
         "//go/stringsutil",
         "//vendor/go.f110.dev/xerrors",

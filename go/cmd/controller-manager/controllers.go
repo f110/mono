@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -287,14 +286,9 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 			}
 			p.vaultClient = vc
 		} else if _, err := os.Stat(p.serviceAccountTokenFile); err == nil {
-			buf, err := os.ReadFile(p.serviceAccountTokenFile)
-			if err != nil {
-				return fsm.Error(xerrors.WithStack(err))
-			}
-			saToken := strings.TrimSpace(string(buf))
 			logger.Log.Info("Using a service account for Vault authentication")
 			ctx, cancel := ctxutil.WithTimeout(ctx, 5*time.Second)
-			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, saToken)
+			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, p.serviceAccountTokenFile)
 			if err != nil {
 				cancel()
 				return fsm.Error(err)

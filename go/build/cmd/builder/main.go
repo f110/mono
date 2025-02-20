@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -210,12 +209,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 			}
 			p.vaultClient = vc
 		} else if _, err := os.Stat(p.opt.ServiceAccountTokenFile); err == nil {
-			buf, err := os.ReadFile(p.opt.ServiceAccountTokenFile)
-			if err != nil {
-				return fsm.Error(err)
-			}
-			saToken := strings.TrimSpace(string(buf))
-			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, saToken)
+			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, p.opt.ServiceAccountTokenFile)
 			if err != nil {
 				logger.Log.Debug("Can not log in", logger.Verbose(err))
 				return fsm.Error(err)
