@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
+
+go_library(
+    name = "vault-client-sample_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/vault-client-sample",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//go/http/httplogger",
+        "//go/logger",
+        "//go/vault",
+    ],
+)
+
+go_binary(
+    name = "vault-client-sample",
+    embed = [":vault-client-sample_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_cross_binary(
+    name = "linux_amd64",
+    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    target = ":vault-client-sample",
+    visibility = ["//visibility:public"],
+)

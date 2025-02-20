@@ -19,7 +19,7 @@ func oidcSample() error {
 		"306238040135762435",
 		"ttbKIRvJilXRCpZmbjdlnNyb0bV6NZ6fGVrWlLkaxObLALaITWFhc0GofnzR7jId",
 		"http://127.0.0.1:8082/callback",
-		[]string{"openid", "profile", "email", "urn:zitadel:iam:org:projects:roles"},
+		[]string{"openid", "profile", "email"},
 	)
 	if err != nil {
 		return err
