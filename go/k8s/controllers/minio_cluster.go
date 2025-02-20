@@ -600,6 +600,7 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 		k8sfactory.EnvVar("MINIO_BROWSER_LOGIN_ANIMATION", "off"),
 		k8sfactory.EnvVar("MINIO_BROWSER", "on"),
 		k8sfactory.EnvVar("MINIO_ROOT_USER", defaultMinIOClusterAdminUser),
+		k8sfactory.EnvVar("MINIO_PROMETHEUS_AUTH_TYPE", "public"),
 		k8sfactory.EnvFromSecret("MINIO_ROOT_PASSWORD", obj.Name, "password"),
 		k8sfactory.Volume(dataVolumeSource),
 		k8sfactory.Port("api", corev1.ProtocolTCP, 9000),
