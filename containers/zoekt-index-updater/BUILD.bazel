@@ -5,7 +5,7 @@ load("//build/rules/container:def.bzl", "container_image")
 pkg_tar(
     name = "bin",
     files = {
-        "//go/cmd/index-updater": "/usr/local/bin/index-updater",
+        "//go/cmd/index-updater:linux_amd64": "/usr/local/bin/index-updater",
     },
     mode = "0755",
 )
