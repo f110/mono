@@ -83,14 +83,14 @@ job(
         "@io_bazel_rules_go//go/toolchain:linux_amd64",
     ],
     secrets = [
-        secret(mount_path = "/var/vault/globemaster/storage/token", vault_mount = "globemaster", vault_path = "storage/token", vault_key = "secretkey"),
+        secret(mount_path = "/var/vault/globemaster/storage/token", vault_mount = "globemaster", vault_path = "storage/mirror-bazel/token", vault_key = "secretkey"),
     ],
     args = [
         "--rules-macro-file=$(WORKSPACE)/rules_dependencies.bzl",
         "--bucket=mirror",
-        "--endpoint=http://incluster-hl-svc.storage.svc.cluster.local:9000",
+        "--endpoint=http://incluster.storage.svc.cluster.local:9000",
         "--region=US",
-        "--access-key=NogubAm7w1PC",
+        "--access-key=I4e91N6IGSeJfxsq",
         "--secret-access-key-file=/var/vault/globemaster/storage/token/secretkey",
         "--bazel",
     ],
