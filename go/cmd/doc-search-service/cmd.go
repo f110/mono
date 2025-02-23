@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"net"
+	"os"
+	"strings"
 	"time"
 
 	"go.f110.dev/xerrors"
@@ -26,17 +28,18 @@ type docSearchService struct {
 	*fsm.FSM
 	s *grpc.Server
 
-	Listen                 string
-	GitDataService         string
-	Insecure               bool
-	Workers                int
-	MaxConns               int
-	Bucket                 string
-	StorageEndpoint        string
-	StorageRegion          string
-	StorageAccessKey       string
-	StorageSecretAccessKey string
-	StorageCAFile          string
+	Listen                     string
+	GitDataService             string
+	Insecure                   bool
+	Workers                    int
+	MaxConns                   int
+	Bucket                     string
+	StorageEndpoint            string
+	StorageRegion              string
+	StorageAccessKey           string
+	StorageSecretAccessKey     string
+	StorageSecretAccessKeyFile string
+	StorageCAFile              string
 
 	gitData git.GitDataClient
 }
@@ -72,7 +75,16 @@ func (c *docSearchService) init(ctx context.Context) (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	c.gitData = git.NewGitDataClient(conn)
-	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
+
+	secretAccessKey := c.StorageSecretAccessKey
+	if c.StorageSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(c.StorageSecretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		secretAccessKey = strings.TrimSpace(string(b))
+	}
+	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, secretAccessKey)
 	opt.PathStyle = true
 	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
@@ -132,5 +144,6 @@ func (c *docSearchService) Flags(fs *cli.FlagSet) {
 	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
 	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
 	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-secret-access-key-file", "The file containing the secret access key for the object storage").Var(&c.StorageSecretAccessKeyFile)
 	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
 }
