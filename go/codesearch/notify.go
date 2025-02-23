@@ -31,11 +31,13 @@ func NewNotify(u, streamName, subject string) (*Notify, error) {
 	}
 	n := &Notify{subject: fmt.Sprintf("%s.%s", streamName, subject), js: js}
 
-	_, err = js.StreamInfo(streamName)
+	si, err := js.StreamInfo(streamName)
 	if errors.Is(err, nats.ErrStreamNotFound) {
 		if err = n.setupStream(streamName); err != nil {
 			return nil, xerrors.WithStack(err)
 		}
+	} else {
+		logger.Log.Debug("Exist stream", zap.Any("stream_info", si))
 	}
 	if err != nil {
 		return nil, xerrors.WithStack(err)

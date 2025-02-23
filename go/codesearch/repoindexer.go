@@ -184,6 +184,7 @@ func (r *IndexerCommand) Run() error {
 		}
 	}
 	if r.enableUpload() && r.NATSURL != "" {
+		logger.Log.Debug("Start notifier")
 		n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
 		if err != nil {
 			return xerrors.WithStack(err)
