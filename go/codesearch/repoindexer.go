@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -41,6 +42,7 @@ type IndexerCommand struct {
 	MinIOPort                   int
 	MinIOAccessKey              string
 	MinIOSecretAccessKey        string
+	MinIOSecretAccessKeyFile    string
 	S3Endpoint                  string
 	S3Region                    string
 	S3AccessKey                 string
@@ -104,6 +106,7 @@ func (r *IndexerCommand) Flags(fs *cli.FlagSet) {
 	fs.String("minio-bucket", "The bucket name that will be used").Var(&r.Bucket).Deprecated("Use --bucket instead")
 	fs.String("minio-access-key", "The access key for MinIO API").Var(&r.MinIOAccessKey)
 	fs.String("minio-secret-access-key", "The secret access key for MinIO API").Var(&r.MinIOSecretAccessKey)
+	fs.String("minio-secret-access-key-file", "The file path that contains secret access key for MinIO API").Var(&r.MinIOSecretAccessKeyFile)
 	fs.String("s3-endpoint", "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param").Var(&r.S3Endpoint)
 	fs.String("s3-region", "The region name").Var(&r.S3Region)
 	fs.String("s3-access-key", "The access key for S3 API").Var(&r.S3AccessKey)
@@ -372,15 +375,23 @@ func (r *IndexerCommand) canUseS3() bool {
 
 func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
 	if r.canUseMinIO() {
+		secretAccessKey := r.MinIOSecretAccessKey
+		if r.MinIOSecretAccessKeyFile != "" {
+			b, err := os.ReadFile(r.MinIOSecretAccessKeyFile)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			secretAccessKey = strings.TrimSpace(string(b))
+		}
 		var opt storage.MinIOOptions
 		if r.MinIOName != "" && r.MinIONamespace != "" {
 			k8sClient, k8sConf, err := newK8sClient(r.Dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
-			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, r.MinIOSecretAccessKey, r.Dev)
+			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, r.MinIOName, r.MinIONamespace, r.MinIOPort, r.MinIOAccessKey, secretAccessKey, r.Dev)
 		} else if r.MinIOEndpoint != "" {
-			opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIORegion, r.MinIOAccessKey, r.MinIOSecretAccessKey)
+			opt = storage.NewMinIOOptionsViaEndpoint(r.MinIOEndpoint, r.MinIORegion, r.MinIOAccessKey, secretAccessKey)
 		}
 		return storage.NewMinIOStorage(r.Bucket, opt), nil
 	}
