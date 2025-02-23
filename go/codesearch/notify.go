@@ -99,6 +99,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 }
 
 func (n *Notify) setupStream(streamName string) error {
+	logger.Log.Info("Add stream", zap.String("subject", streamName+".*"))
 	_, err := n.js.AddStream(&nats.StreamConfig{
 		Name:      streamName,
 		Subjects:  []string{streamName + ".*"},
