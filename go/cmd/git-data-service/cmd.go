@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -34,13 +35,14 @@ type gitDataServiceCommand struct {
 	RepositoryInitTimeout time.Duration
 	GitHubClient          *githubutil.GitHubClientFactory
 
-	StorageEndpoint        string
-	StorageRegion          string
-	StorageAccessKey       string
-	StorageSecretAccessKey string
-	StorageCAFile          string
-	MemcachedEndpoint      string
-	ListenWebhookReceiver  string
+	StorageEndpoint            string
+	StorageRegion              string
+	StorageAccessKey           string
+	StorageSecretAccessKey     string
+	StorageSecretAccessKeyFile string
+	StorageCAFile              string
+	MemcachedEndpoint          string
+	ListenWebhookReceiver      string
 
 	Bucket string
 
@@ -97,6 +99,7 @@ func (c *gitDataServiceCommand) Flags(fs *cli.FlagSet) {
 	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)
 	fs.String("storage-access-key", "The access key for the object storage").Var(&c.StorageAccessKey)
 	fs.String("storage-secret-access-key", "The secret access key for the object storage").Var(&c.StorageSecretAccessKey)
+	fs.String("storage-secret-access-key-file", "The file path that containing the secret access key for the object storage").Var(&c.StorageSecretAccessKeyFile)
 	fs.String("storage-ca-file", "File path that contains CA certificate").Var(&c.StorageCAFile)
 	fs.String("memcached-endpoint", "The endpoint of memcached").Var(&c.MemcachedEndpoint)
 	fs.String("listen-webhook-receiver", "Listen addr of webhook receiver.").Var(&c.ListenWebhookReceiver)
@@ -137,7 +140,15 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		return fsm.Error(err)
 	}
 
-	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, c.StorageSecretAccessKey)
+	secretAccessKey := c.StorageSecretAccessKey
+	if c.StorageSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(c.StorageSecretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		secretAccessKey = strings.TrimSpace(string(b))
+	}
+	opt := storage.NewS3OptionToExternal(c.StorageEndpoint, c.StorageRegion, c.StorageAccessKey, secretAccessKey)
 	opt.PathStyle = true
 	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
