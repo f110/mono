@@ -78,6 +78,7 @@ pkg_tar(
 container_image(
     name = "build_image",
     base = "@dev_f110_bazel_container_bazelisk_debian12",
+    entrypoint = ["/usr/local/bin/bazel"],
     labels = {
         "org.opencontainers.image.source": "https://github.com/f110/mono",
     },

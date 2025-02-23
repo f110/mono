@@ -22,7 +22,7 @@ containers = {
     "com_google_distroless_base_debian12": "gcr.io/distroless/base-debian12@sha256:9d6c97c160bff0f78a443b583811dd0c8dde5c5086fe8fd2aaf2c23ee7e9590a",
     "com_google_distroless_base_debian12_arm64": "gcr.io/distroless/base-debian12@sha256:b251ebd844116427f92523668ca5e9f8d803e479eef44705b62090176d5e8cc7",
     "nix_amd64": "docker.io/nixos/nix@sha256:52498160e7a93d9b6b881200690b7e5c446baa314dbf06c0a8015389afd0e58f",  # 2.15.2-amd64
-    "dev_f110_bazel_container_bazelisk_debian12": "ghcr.io/f110/bazel-container@sha256:10f98ff4a85b19835252174302ff73dfb19a9142ad70d6cb0b7f9bb80a2fcc50",  # bazelisk-debian12
+    "dev_f110_bazel_container_bazelisk_debian12": "ghcr.io/f110/bazel-container@sha256:8add211839557fe61b0a48ccb4cf3e6ec81e460c1aa1ae65c22742deb37278d7",  # bazelisk-debian12
 }
 
 def repository_dependencies():
