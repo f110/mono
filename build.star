@@ -21,14 +21,12 @@ job(
 job(
     name = "publish_zoekt_indexer",
     command = "run",
-    container = "registry.f110.dev/tools/zoekt-indexer-builder:latest",
+    container = "repo.center.x.f110.dev/codesearch/zoekt-indexer-builder:latest",
     targets = ["//containers/zoekt-indexer:push"],
     platforms = [
         "@io_bazel_rules_go//go/toolchain:linux_amd64",
     ],
-    secrets = [
-        registry_secret(host = "registry.f110.dev", vault_mount = "globemaster", vault_path = "registry.f110.dev/build", vault_key = "robot$build"),
-    ],
+    args = ["--insecure"],
     cpu_limit = "2000m",
     event = ["manual"],
 )
