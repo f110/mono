@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -22,19 +23,20 @@ type UpdaterCommand struct {
 	Subscribe bool
 	HTTPAddr  string
 
-	Bucket               string
-	MinIOEndpoint        string
-	MinIORegion          string
-	MinIOName            string
-	MinIONamespace       string
-	MinIOPort            int
-	MinIOAccessKey       string
-	MinIOSecretAccessKey string
-	S3Endpoint           string
-	S3Region             string
-	S3AccessKey          string
-	S3SecretAccessKey    string
-	S3CACertFile         string
+	Bucket                   string
+	MinIOEndpoint            string
+	MinIORegion              string
+	MinIOName                string
+	MinIONamespace           string
+	MinIOPort                int
+	MinIOAccessKey           string
+	MinIOSecretAccessKey     string
+	MinIOSecretAccessKeyFile string
+	S3Endpoint               string
+	S3Region                 string
+	S3AccessKey              string
+	S3SecretAccessKey        string
+	S3CACertFile             string
 
 	NATSURL        string
 	NATSStreamName string
@@ -77,6 +79,7 @@ func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
 	fs.IntVar(&u.MinIOPort, "minio-port", u.MinIOPort, "Port number of MinIO")
 	fs.StringVar(&u.MinIOAccessKey, "minio-access-key", u.MinIOAccessKey, "The access key")
 	fs.StringVar(&u.MinIOSecretAccessKey, "minio-secret-access-key", u.MinIOSecretAccessKey, "The secret access key")
+	fs.StringVar(&u.MinIOSecretAccessKeyFile, "minio-secret-access-key-file", u.MinIOSecretAccessKeyFile, "The file path that contains secret access key for MinIO API")
 	fs.StringVar(&u.S3Endpoint, "s3-endpoint", u.S3Endpoint, "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param")
 	fs.StringVar(&u.S3Region, "s3-region", u.S3Region, "The region name")
 	fs.StringVar(&u.S3AccessKey, "s3-access-key", u.S3AccessKey, "The access key for S3 API")
@@ -246,13 +249,21 @@ func (u *UpdaterCommand) downloadIndex(m Manifest) error {
 
 func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
 	if u.canUseMinIO() {
+		secretAccessKey := u.MinIOSecretAccessKey
+		if u.MinIOSecretAccessKeyFile != "" {
+			b, err := os.ReadFile(u.MinIOSecretAccessKeyFile)
+			if err != nil {
+				return nil, xerrors.WithStack(err)
+			}
+			secretAccessKey = strings.TrimSpace(string(b))
+		}
 		var opt storage.MinIOOptions
 		if u.MinIOName != "" && u.MinIONamespace != "" {
 			k8sClient, k8sConf, err := newK8sClient(u.Dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
-			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, u.MinIOSecretAccessKey, u.Dev)
+			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, secretAccessKey, u.Dev)
 		} else if u.MinIOEndpoint != "" {
 			opt = storage.NewMinIOOptionsViaEndpoint(u.MinIOEndpoint, u.MinIORegion, u.MinIOAccessKey, u.MinIOSecretAccessKey)
 		}
