@@ -788,6 +788,16 @@ spec:
             type: object
           spec:
             properties:
+              instanceRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - namespace
+                - name
+                type: object
               mountPath:
                 description: mount_path is a mount path of KV secrets engine.
                 type: string
@@ -842,7 +852,6 @@ spec:
                     type: object
                 type: object
             required:
-            - selector
             - path
             - mountPath
             - policy
@@ -850,6 +859,8 @@ spec:
           status:
             properties:
               accessKey:
+                type: string
+              instance:
                 type: string
               ready:
                 type: boolean

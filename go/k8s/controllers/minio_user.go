@@ -141,43 +141,59 @@ func (u *minIOUserReconciler) Reconcile(ctx context.Context, obj *miniov1alpha1.
 	currentUser := obj
 	minioUser := currentUser.DeepCopy()
 
-	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	clusters, err := u.clusterLister.List(minioUser.Namespace, s)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	switch len(clusters) {
-	case 0:
-	case 1:
-		if err := u.makeUserForCluster(ctx, minioUser, clusters[0]); err != nil {
+	if minioUser.Spec.Selector != nil {
+		s, err := metav1.LabelSelectorAsSelector(minioUser.Spec.Selector)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		clusters, err := u.clusterLister.List(minioUser.Namespace, s)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		switch len(clusters) {
+		case 0:
+		case 1:
+			if err := u.makeUserForCluster(ctx, minioUser, clusters[0]); err != nil {
+				return err
+			}
+			goto StatusUpdate
+		default:
+			return xerrors.New("found some clusters")
+		}
+
+		instances, err = u.instanceLister.List(minioUser.Namespace, s)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if len(instances) == 0 {
+			u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
+			return nil
+		}
+		if len(instances) > 1 {
+			return xerrors.New("found some instances")
+		}
+		if err := u.makeUserForMinIOInstance(ctx, minioUser, instances[0]); err != nil {
 			return err
 		}
-		goto StatusUpdate
-	default:
-		return xerrors.New("found some clusters")
 	}
 
-	instances, err = u.instanceLister.List(minioUser.Namespace, s)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	if len(instances) == 0 {
-		u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(&minioUser.Spec.Selector)))
-		return nil
-	}
-	if len(instances) > 1 {
-		return xerrors.New("found some instances")
-	}
-	if err := u.makeUserForMinIOInstance(ctx, minioUser, instances[0]); err != nil {
-		return err
+	if minioUser.Spec.InstanceRef != nil {
+		namespace := minioUser.Spec.InstanceRef.Namespace
+		if namespace == "" {
+			namespace = minioUser.Namespace
+		}
+		cluster, err := u.clusterLister.Get(namespace, minioUser.Spec.InstanceRef.Name)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := u.makeUserForCluster(ctx, minioUser, cluster); err != nil {
+			return err
+		}
 	}
 
 StatusUpdate:
 	if !reflect.DeepEqual(minioUser.Status, currentUser.Status) {
-		_, err = u.mClient.UpdateStatusMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
+		_, err := u.mClient.UpdateStatusMinIOUser(ctx, minioUser, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -350,7 +366,7 @@ func (u *minIOUserReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.M
 	}
 	var instances []*miniocontrollerv1beta1.MinIOInstance
 
-	s, err := metav1.LabelSelectorAsSelector(&minioUser.Spec.Selector)
+	s, err := metav1.LabelSelectorAsSelector(minioUser.Spec.Selector)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -375,7 +391,7 @@ func (u *minIOUserReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.M
 	}
 	switch len(instances) {
 	case 0:
-		u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(&minioUser.Spec.Selector)))
+		u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
 		return nil
 	case 1:
 		if err := u.deleteUserFromInstance(ctx, minioUser, instances[0]); err != nil {

@@ -123,16 +123,23 @@ message MinIOUser {
 
 message MinIOUserSpec {
   // selector is a selector of MinIOInstance
-  k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector = 1;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.LabelSelector selector     = 1 [deprecated = true];
+  optional InstanceRef                                        instance_ref = 2;
   // path is a path in vault
-  string path = 2;
+  string path = 3;
   // mount_path is a mount path of KV secrets engine.
-  string mount_path = 3;
-  string policy     = 4;
+  string mount_path = 4;
+  string policy     = 5;
 }
 
 message MinIOUserStatus {
   bool            ready      = 1;
   optional string access_key = 2;
   optional bool   vault      = 3;
+  optional string instance   = 4;
+}
+
+message InstanceRef {
+  string namespace = 1;
+  string name      = 2;
 }

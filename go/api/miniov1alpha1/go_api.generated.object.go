@@ -353,7 +353,8 @@ func (in *MinIOClusterStatus) DeepCopy() *MinIOClusterStatus {
 
 type MinIOUserSpec struct {
 	// selector is a selector of MinIOInstance
-	Selector metav1.LabelSelector `json:"selector"`
+	Selector    *metav1.LabelSelector `json:"selector,omitempty"`
+	InstanceRef *InstanceRef          `json:"instanceRef,omitempty"`
 	// path is a path in vault
 	Path string `json:"path"`
 	// mount_path is a mount path of KV secrets engine.
@@ -363,7 +364,16 @@ type MinIOUserSpec struct {
 
 func (in *MinIOUserSpec) DeepCopyInto(out *MinIOUserSpec) {
 	*out = *in
-	in.Selector.DeepCopyInto(&out.Selector)
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.InstanceRef != nil {
+		in, out := &in.InstanceRef, &out.InstanceRef
+		*out = new(InstanceRef)
+		(*in).DeepCopyInto(*out)
+	}
 }
 
 func (in *MinIOUserSpec) DeepCopy() *MinIOUserSpec {
@@ -379,6 +389,7 @@ type MinIOUserStatus struct {
 	Ready     bool   `json:"ready"`
 	AccessKey string `json:"accessKey,omitempty"`
 	Vault     bool   `json:"vault,omitempty"`
+	Instance  string `json:"instance,omitempty"`
 }
 
 func (in *MinIOUserStatus) DeepCopyInto(out *MinIOUserStatus) {
@@ -442,6 +453,24 @@ func (in *IdentityProvider) DeepCopy() *IdentityProvider {
 		return nil
 	}
 	out := new(IdentityProvider)
+	in.DeepCopyInto(out)
+	return out
+}
+
+type InstanceRef struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+func (in *InstanceRef) DeepCopyInto(out *InstanceRef) {
+	*out = *in
+}
+
+func (in *InstanceRef) DeepCopy() *InstanceRef {
+	if in == nil {
+		return nil
+	}
+	out := new(InstanceRef)
 	in.DeepCopyInto(out)
 	return out
 }
