@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "atomicfile",
-    srcs = ["atomicfile.go"],
-    importmap = "github.com/STNS/STNS/v2/vendor/github.com/facebookgo/atomicfile",
-    importpath = "github.com/facebookgo/atomicfile",
-    visibility = ["//visibility:public"],
-)

@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "realip",
-    srcs = ["realip.go"],
-    importmap = "github.com/STNS/STNS/v2/vendor/github.com/tomasen/realip",
-    importpath = "github.com/tomasen/realip",
-    visibility = ["//visibility:public"],
-)

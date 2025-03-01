@@ -11,12 +11,6 @@ sh_binary(
 )
 
 sh_binary(
-    name = "vendor_stns",
-    srcs = ["vendor-stns.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
     name = "vendor_universal_ctags",
     srcs = ["vendor-universal-ctags.sh"],
     deps = ["//script/lib"],
