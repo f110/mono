@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/minio/madmin-go/v3"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -216,17 +217,16 @@ func (u *minIOUserReconciler) makeUserForMinIOInstance(ctx context.Context, mini
 		defer forwarder.Close()
 	}
 
-	adminClient, err := madmin.New(
-		instanceEndpoint,
-		string(creds.Data["accesskey"]),
-		string(creds.Data["secretkey"]),
-		false,
-	)
-	if err != nil {
-		return xerrors.WithStack(err)
+	opts := &madmin.Options{
+		Creds:  credentials.NewStaticV4(string(creds.Data["accesskey"]), string(creds.Data["secretkey"]), ""),
+		Secure: false,
 	}
 	if u.transport != nil {
-		adminClient.SetCustomTransport(u.transport)
+		opts.Transport = u.transport
+	}
+	adminClient, err := madmin.NewWithOptions(instanceEndpoint, opts)
+	if err != nil {
+		return xerrors.WithStack(err)
 	}
 
 	secret, err := u.ensureUser(ctx, adminClient, minioUser)
@@ -260,12 +260,13 @@ func (u *minIOUserReconciler) makeUserForCluster(ctx context.Context, minioUser 
 		defer forwarder.Close()
 	}
 
-	adminClient, err := madmin.New(instanceEndpoint, defaultMinIOClusterAdminUser, string(sc.Data["password"]), false)
+	opts := &madmin.Options{Creds: credentials.NewStaticV4(defaultMinIOClusterAdminUser, string(sc.Data["password"]), ""), Secure: false}
+	if u.transport != nil {
+		opts.Transport = u.transport
+	}
+	adminClient, err := madmin.NewWithOptions(instanceEndpoint, opts)
 	if err != nil {
 		return xerrors.WithStack(err)
-	}
-	if u.transport != nil {
-		adminClient.SetCustomTransport(u.transport)
 	}
 
 	secret, err := u.ensureUser(ctx, adminClient, minioUser)

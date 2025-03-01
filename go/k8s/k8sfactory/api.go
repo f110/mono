@@ -195,7 +195,7 @@ func MinIOSelector(sel metav1.LabelSelector) Trait {
 		case *miniov1alpha1.MinIOBucket:
 			obj.Spec.Selector = sel
 		case *miniov1alpha1.MinIOUser:
-			obj.Spec.Selector = sel
+			obj.Spec.Selector = &sel
 		}
 	}
 }
