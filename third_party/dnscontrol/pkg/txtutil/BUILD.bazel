@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "txtutil",
-    srcs = ["txtutil.go"],
-    importpath = "github.com/StackExchange/dnscontrol/v3/pkg/txtutil",
-    visibility = ["//visibility:public"],
-    deps = ["//third_party/dnscontrol/models"],
-)

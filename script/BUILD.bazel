@@ -5,12 +5,6 @@ sh_binary(
 )
 
 sh_binary(
-    name = "vendor_dnscontrol",
-    srcs = ["vendor-dnscontrol.sh"],
-    deps = ["//script/lib"],
-)
-
-sh_binary(
     name = "vendor_universal_ctags",
     srcs = ["vendor-universal-ctags.sh"],
     deps = ["//script/lib"],

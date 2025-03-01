@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "optargs",
-    srcs = ["optargs.go"],
-    importmap = "github.com/StackExchange/dnscontrol/v3/vendor/github.com/ditashi/jsbeautifier-go/optargs",
-    importpath = "github.com/ditashi/jsbeautifier-go/optargs",
-    visibility = ["//visibility:public"],
-)
