@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"go.f110.dev/xerrors"
 
@@ -12,14 +13,15 @@ import (
 )
 
 type githubTaskCommand struct {
-	notionToken    string
-	githubToken    string
-	appId          int64
-	installationId int64
-	privateKeyFile string
-	configFile     string
-	schedule       string
-	oneshot        bool
+	notionToken     string
+	notionTokenFile string
+	githubToken     string
+	appId           int64
+	installationId  int64
+	privateKeyFile  string
+	configFile      string
+	schedule        string
+	oneshot         bool
 }
 
 func newGitHubTaskCommand() *githubTaskCommand {
@@ -30,6 +32,7 @@ func newGitHubTaskCommand() *githubTaskCommand {
 
 func (g *githubTaskCommand) Flags(fs *cli.FlagSet) {
 	fs.String("notion-token", "API token for Notion").Var(&g.notionToken)
+	fs.String("notion-token-file", "The file path that contains API token for notion").Var(&g.notionTokenFile)
 	fs.String("github-token", "Personal access token of GitHub").Var(&g.githubToken)
 	fs.Int64("github-app-id", "GitHub App Id").Var(&g.appId)
 	fs.Int64("github-installation-id", "GitHub App installation Id").Var(&g.installationId)
@@ -49,8 +52,15 @@ func (g *githubTaskCommand) Execute(ctx context.Context) error {
 	if g.notionToken == "" && os.Getenv("NOTION_TOKEN") != "" {
 		g.notionToken = os.Getenv("NOTION_TOKEN")
 	}
+	if g.notionTokenFile != "" {
+		b, err := os.ReadFile(g.notionTokenFile)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		g.notionToken = strings.TrimSpace(string(b))
+	}
 	if g.notionToken == "" {
-		return xerrors.New("--notion-token or NOTION_TOKEN is required")
+		return xerrors.New("--notion-token, --notion-token-file or NOTION_TOKEN is required")
 	}
 
 	var ghTask *notion.GitHubTask

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"go.f110.dev/xerrors"
@@ -14,11 +15,12 @@ import (
 )
 
 type toDoSchedulerCommand struct {
-	conf     string
-	token    string
-	schedule string
-	dryRun   bool
-	oneshot  bool
+	conf      string
+	token     string
+	tokenFile string
+	schedule  string
+	dryRun    bool
+	oneshot   bool
 }
 
 func newToDoSchedulerCommand() *toDoSchedulerCommand {
@@ -28,6 +30,7 @@ func newToDoSchedulerCommand() *toDoSchedulerCommand {
 func (s *toDoSchedulerCommand) Flags(fs *cli.FlagSet) {
 	fs.String("conf", "Config file path").Var(&s.conf)
 	fs.String("token", "API token for notion").Var(&s.token)
+	fs.String("token-file", "The file containing the token").Var(&s.tokenFile)
 	fs.Bool("dry-run", "Dry run").Var(&s.dryRun)
 	fs.Bool("oneshot", "Execute only once").Var(&s.oneshot)
 	fs.String("schedule", "Check schedule").Var(&s.schedule).Default("0 * * * *")
@@ -37,8 +40,15 @@ func (s *toDoSchedulerCommand) Execute() error {
 	if s.token == "" && os.Getenv("NOTION_TOKEN") != "" {
 		s.token = os.Getenv("NOTION_TOKEN")
 	}
+	if s.tokenFile != "" {
+		b, err := os.ReadFile(s.tokenFile)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		s.token = strings.TrimSpace(string(b))
+	}
 	if s.token == "" {
-		return xerrors.Define("--token or NOTION_TOKEN is required").WithStack()
+		return xerrors.Define("--token, --token-file or NOTION_TOKEN is required").WithStack()
 	}
 	if s.conf == "" {
 		return xerrors.Define("--conf is required").WithStack()
