@@ -21,5 +21,5 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "registry.f110.dev/tools/notion-github-task",
+    repository = "repo.center.x.f110.dev/automation-tools/notion-github-task",
 )
