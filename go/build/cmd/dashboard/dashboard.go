@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +38,13 @@ func dashboard(ctx context.Context, opt Options) error {
 	}
 	parsedDSN.Loc = loc
 	opt.DSN = parsedDSN.FormatDSN()
+	if opt.MinIOSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(opt.MinIOSecretAccessKeyFile)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		opt.MinIOSecretAccessKey = strings.TrimSpace(string(b))
+	}
 
 	cCtx, cancelFunc := ctxutil.WithCancel(ctx)
 	signals.SetupSignalHandler(cancelFunc)
@@ -87,18 +96,19 @@ func dashboard(ctx context.Context, opt Options) error {
 }
 
 type Options struct {
-	Addr                 string
-	DSN                  string
-	ApiHost              string
-	InternalApi          string
-	Dev                  bool
-	MinIOEndpoint        string
-	MinIOName            string
-	MinIONamespace       string
-	MinIOPort            int
-	MinIOBucket          string
-	MinIOAccessKey       string
-	MinIOSecretAccessKey string
+	Addr                     string
+	DSN                      string
+	ApiHost                  string
+	InternalApi              string
+	Dev                      bool
+	MinIOEndpoint            string
+	MinIOName                string
+	MinIONamespace           string
+	MinIOPort                int
+	MinIOBucket              string
+	MinIOAccessKey           string
+	MinIOSecretAccessKey     string
+	MinIOSecretAccessKeyFile string
 }
 
 func AddCommand(rootCmd *cli.Command) {
@@ -123,6 +133,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("minio-bucket", "The bucket name that will be used a log storage").Var(&opt.MinIOBucket).Default("logs")
 	fs.String("minio-access-key", "The access key").Var(&opt.MinIOAccessKey)
 	fs.String("minio-secret-access-key", "The secret access key").Var(&opt.MinIOSecretAccessKey)
+	fs.String("minio-secret-access-key-file", "The file path that contains secret access key").Var(&opt.MinIOSecretAccessKeyFile)
 
 	rootCmd.AddCommand(cmd)
 }
