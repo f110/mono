@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -40,52 +41,54 @@ import (
 )
 
 type Options struct {
-	Id                      string // Identity name. This name used to leader election.
-	DSN                     string // DataSourceName.
-	Namespace               string
-	EnableLeaderElection    bool
-	LeaseLockName           string
-	LeaseLockNamespace      string
-	GithubAppId             int64
-	GithubInstallationId    int64
-	GithubPrivateKeyFile    string
-	GithubAppSecretName     string
-	MinIOEndpoint           string
-	MinIOName               string
-	MinIONamespace          string
-	MinIOPort               int
-	MinIOBucket             string
-	MinIOAccessKey          string
-	MinIOSecretAccessKey    string
-	ServiceAccountTokenFile string
-	VaultAddr               string
-	VaultTokenFile          string
-	VaultK8sAuthPath        string
-	VaultK8sAuthRole        string
+	Id                       string // Identity name. This name used to leader election.
+	DSN                      string // DataSourceName.
+	Namespace                string
+	EnableLeaderElection     bool
+	LeaseLockName            string
+	LeaseLockNamespace       string
+	GithubAppId              int64
+	GithubInstallationId     int64
+	GithubPrivateKeyFile     string
+	GithubAppSecretName      string
+	MinIOEndpoint            string
+	MinIOName                string
+	MinIONamespace           string
+	MinIOPort                int
+	MinIOBucket              string
+	MinIOAccessKey           string
+	MinIOSecretAccessKey     string
+	MinIOSecretAccessKeyFile string
+	ServiceAccountTokenFile  string
+	VaultAddr                string
+	VaultTokenFile           string
+	VaultK8sAuthPath         string
+	VaultK8sAuthRole         string
 
-	Addr                       string
-	DashboardUrl               string // URL of dashboard that can access people via browser
-	BuilderApiUrl              string // URL of the api of builder.
-	RemoteCache                string // If not empty, This value will passed to Bazel through --remote_cache argument.
-	RemoteAssetApi             bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
-	BazelImage                 string
-	UseBazelisk                bool
-	DefaultBazelVersion        string
-	BazelMirrorURL             string
-	BazelMirrorEndpoint        string
-	BazelMirrorName            string
-	BazelMirrorNamespace       string
-	BazelMirrorPort            int
-	BazelMirrorBucket          string
-	BazelMirrorPrefix          string
-	BazelMirrorAccessKey       string
-	BazelMirrorSecretAccessKey string
-	SidecarImage               string
-	CLIImage                   string
-	PullAlways                 bool
-	TaskCPULimit               string
-	TaskMemoryLimit            string
-	WithGC                     bool
+	Addr                           string
+	DashboardUrl                   string // URL of dashboard that can access people via browser
+	BuilderApiUrl                  string // URL of the api of builder.
+	RemoteCache                    string // If not empty, This value will passed to Bazel through --remote_cache argument.
+	RemoteAssetApi                 bool   // Use Remote Asset API. An api is experimental and depends on remote cache with gRPC.
+	BazelImage                     string
+	UseBazelisk                    bool
+	DefaultBazelVersion            string
+	BazelMirrorURL                 string
+	BazelMirrorEndpoint            string
+	BazelMirrorName                string
+	BazelMirrorNamespace           string
+	BazelMirrorPort                int
+	BazelMirrorBucket              string
+	BazelMirrorPrefix              string
+	BazelMirrorAccessKey           string
+	BazelMirrorSecretAccessKey     string
+	BazelMirrorSecretAccessKeyFile string
+	SidecarImage                   string
+	CLIImage                       string
+	PullAlways                     bool
+	TaskCPULimit                   string
+	TaskMemoryLimit                string
+	WithGC                         bool
 
 	Dev   bool
 	Debug bool
@@ -216,6 +219,21 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 			}
 			p.vaultClient = vc
 		}
+	}
+
+	if p.opt.MinIOSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(p.opt.MinIOSecretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		p.opt.MinIOSecretAccessKey = strings.TrimSpace(string(b))
+	}
+	if p.opt.BazelMirrorSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(p.opt.BazelMirrorSecretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		p.opt.BazelMirrorSecretAccessKey = strings.TrimSpace(string(b))
 	}
 
 	return fsm.Next(stateCheckMigrate)
@@ -482,6 +500,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("minio-bucket", "The bucket name that will be used a log storage").Var(&opt.MinIOBucket).Default("logs")
 	fs.String("minio-access-key", "The access key").Var(&opt.MinIOAccessKey)
 	fs.String("minio-secret-access-key", "The secret access key").Var(&opt.MinIOSecretAccessKey)
+	fs.String("minio-secret-access-key-file", "The file path that contains secret access key").Var(&opt.MinIOSecretAccessKeyFile)
 	fs.String("service-account-token-file", "A file path that contains JWT token").Var(&opt.ServiceAccountTokenFile).Default("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	fs.String("vault-addr", "The vault URL").Var(&opt.VaultAddr)
 	fs.String("vault-token-file", "The token for Vault").Var(&opt.VaultTokenFile)
@@ -501,6 +520,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("bazel-mirror-prefix", "The prefix of bazel's artifacts").Var(&opt.BazelMirrorPrefix)
 	fs.String("bazel-mirror-access-key", "The access key for bazel mirror").Var(&opt.BazelMirrorAccessKey)
 	fs.String("bazel-mirror-secret-access-key", "The secret access key for bazel mirror").Var(&opt.BazelMirrorSecretAccessKey)
+	fs.String("bazel-mirror-secret-access-key-file", "The file path that contains secret access key").Var(&opt.BazelMirrorSecretAccessKeyFile)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
 	fs.Bool("pull-always", "Pull always").Var(&opt.PullAlways)
