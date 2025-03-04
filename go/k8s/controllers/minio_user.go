@@ -29,6 +29,7 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/stringsutil"
 	"go.f110.dev/mono/go/vault"
 )
@@ -47,10 +48,11 @@ type MinIOUserController struct {
 	vaultClient *vault.Client
 	mClient     *client.MinioV1alpha1
 
-	secretLister   corev1listers.SecretLister
-	serviceLister  corev1listers.ServiceLister
-	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
-	clusterLister  *client.MinioV1alpha1MinIOClusterLister
+	configMapLister corev1listers.ConfigMapLister
+	secretLister    corev1listers.SecretLister
+	serviceLister   corev1listers.ServiceLister
+	instanceLister  *client.MiniocontrollerV1beta1MinIOInstanceLister
+	clusterLister   *client.MinioV1alpha1MinIOClusterLister
 
 	transport         http.RoundTripper
 	runOutsideCluster bool
@@ -74,6 +76,7 @@ func NewMinIOUserController(
 	instanceLister := controllerInformers.MinIOInstanceLister()
 	clusterLister := minioInformers.MinIOClusterLister()
 
+	configMapInformer := coreSharedInformerFactory.Core().V1().ConfigMaps()
 	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
 	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
 
@@ -82,6 +85,7 @@ func NewMinIOUserController(
 		coreClient:        coreClient,
 		vaultClient:       vaultClient,
 		mClient:           apiClient.MinioV1alpha1,
+		configMapLister:   configMapInformer.Lister(),
 		secretLister:      secretInformer.Lister(),
 		serviceLister:     serviceInformer.Lister(),
 		instanceLister:    instanceLister,
@@ -93,7 +97,7 @@ func NewMinIOUserController(
 		c.newReconciler,
 		coreClient,
 		[]cache.SharedIndexInformer{minioUserInformer},
-		[]cache.SharedIndexInformer{instanceInformer, serviceInformer.Informer(), secretInformer.Informer()},
+		[]cache.SharedIndexInformer{instanceInformer, configMapInformer.Informer(), serviceInformer.Informer(), secretInformer.Informer()},
 		[]string{minIOUserControllerFinalizerName},
 		minioUserLister.Get,
 		apiClient.MinioV1alpha1.UpdateMinIOUser,
@@ -108,6 +112,7 @@ func (c *MinIOUserController) newReconciler() controllerutil.GenericReconciler[*
 		coreClient:        c.coreClient,
 		mClient:           c.mClient,
 		vaultClient:       c.vaultClient,
+		configMapLister:   c.configMapLister,
 		secretLister:      c.secretLister,
 		serviceLister:     c.serviceLister,
 		instanceLister:    c.instanceLister,
@@ -124,10 +129,11 @@ type minIOUserReconciler struct {
 	coreClient  kubernetes.Interface
 	vaultClient *vault.Client
 
-	secretLister   corev1listers.SecretLister
-	serviceLister  corev1listers.ServiceLister
-	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
-	clusterLister  *client.MinioV1alpha1MinIOClusterLister
+	configMapLister corev1listers.ConfigMapLister
+	secretLister    corev1listers.SecretLister
+	serviceLister   corev1listers.ServiceLister
+	instanceLister  *client.MiniocontrollerV1beta1MinIOInstanceLister
+	clusterLister   *client.MinioV1alpha1MinIOClusterLister
 
 	logger            *zap.Logger
 	transport         http.RoundTripper
@@ -240,6 +246,9 @@ func (u *minIOUserReconciler) makeUserForMinIOInstance(ctx context.Context, mini
 		}
 	}
 
+	if err := u.ensureConfigMap(ctx, minioUser, secret); err != nil {
+		return err
+	}
 	if err := u.setStatus(minioUser); err != nil {
 		return err
 	}
@@ -279,8 +288,38 @@ func (u *minIOUserReconciler) makeUserForCluster(ctx context.Context, minioUser 
 		}
 	}
 
+	if err := u.ensureConfigMap(ctx, minioUser, secret); err != nil {
+		return err
+	}
 	if err := u.setStatus(minioUser); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1alpha1.MinIOUser, secret *corev1.Secret) error {
+	cm := k8sfactory.ConfigMapFactory(nil,
+		k8sfactory.Namef("%s-accesskey", user.Name),
+		k8sfactory.Namespace(user.Namespace),
+		k8sfactory.Data("accesskey", secret.Data["accesskey"]),
+	)
+	controllerutil.SetOwner(cm, user, client.Scheme)
+
+	oldCM, err := u.configMapLister.ConfigMaps(cm.Namespace).Get(cm.Name)
+	if apierrors.IsNotFound(err) {
+		u.logger.Info("Create ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
+		u.coreClient.CoreV1().ConfigMaps(cm.Namespace).Create(ctx, cm, metav1.CreateOptions{})
+	} else if err != nil {
+		return xerrors.WithStack(err)
+	} else {
+		if v, ok := oldCM.Data["accesskey"]; !ok || v != string(secret.Data["accesskey"]) {
+			newCM := oldCM.DeepCopy()
+			newCM.Data = cm.Data
+			u.logger.Info("Update ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
+			if _, err := u.coreClient.CoreV1().ConfigMaps(cm.Namespace).Update(ctx, newCM, metav1.UpdateOptions{}); err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
 	}
 	return nil
 }
@@ -313,6 +352,7 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 
 	accessKey := stringsutil.RandomString(accessKeyLength)
 	secretKey := stringsutil.RandomString(secretKeyLength)
+	u.logger.Info("Create user", zap.String("accesskey", accessKey))
 	if err := adminClient.AddUser(ctx, accessKey, secretKey); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -326,16 +366,12 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 		}
 	}
 
-	secret = &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-accesskey", user.Name),
-			Namespace: user.Namespace,
-		},
-		Data: map[string][]byte{
-			"accesskey": []byte(accessKey),
-			"secretkey": []byte(secretKey),
-		},
-	}
+	secret = k8sfactory.SecretFactory(nil,
+		k8sfactory.Namef("%s-accesskey", user.Name),
+		k8sfactory.Namespace(user.Namespace),
+		k8sfactory.Data("accesskey", []byte(accessKey)),
+		k8sfactory.Data("secretkey", []byte(secretKey)),
+	)
 	controllerutil.SetOwner(secret, user, client.Scheme)
 	secret, err = u.coreClient.CoreV1().Secrets(user.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {

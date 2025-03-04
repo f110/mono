@@ -48,10 +48,18 @@ func TestMinIOUserController(t *testing.T) {
 		err := runner.Reconcile(controller.newReconciler(), target)
 		require.NoError(t, err)
 
-		runner.AssertCreateAction(t, k8sfactory.SecretFactory(nil,
-			k8sfactory.Namef("%s-accesskey", target.Name),
-			k8sfactory.Namespace(target.Namespace),
-		))
+		runner.AssertCreateAction(t,
+			k8sfactory.SecretFactory(nil,
+				k8sfactory.Namef("%s-accesskey", target.Name),
+				k8sfactory.Namespace(target.Namespace),
+			),
+		)
+		runner.AssertCreateAction(t,
+			k8sfactory.ConfigMapFactory(nil,
+				k8sfactory.Namef("%s-accesskey", target.Name),
+				k8sfactory.Namespace(target.Namespace),
+			),
+		)
 		runner.AssertNoUnexpectedAction(t)
 	})
 
@@ -89,6 +97,12 @@ func TestMinIOUserController(t *testing.T) {
 
 		runner.AssertCreateAction(t,
 			k8sfactory.SecretFactory(nil,
+				k8sfactory.Namef("%s-accesskey", target.Name),
+				k8sfactory.Namespace(target.Namespace),
+			),
+		)
+		runner.AssertCreateAction(t,
+			k8sfactory.ConfigMapFactory(nil,
 				k8sfactory.Namef("%s-accesskey", target.Name),
 				k8sfactory.Namespace(target.Namespace),
 			),
