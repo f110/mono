@@ -13,6 +13,7 @@ rules:
   - secrets
   - services
   - persistentvolumeclaims
+  - configmaps
   verbs:
   - create
   - delete
