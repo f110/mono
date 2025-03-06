@@ -57,7 +57,7 @@ func dashboard(ctx context.Context, opt Options) error {
 
 	var minioOpt storage.MinIOOptions
 	if opt.MinIOEndpoint != "" {
-		storage.NewMinIOOptionsViaEndpoint(opt.MinIOEndpoint, "", opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
+		minioOpt = storage.NewMinIOOptionsViaEndpoint(opt.MinIOEndpoint, "", opt.MinIOAccessKey, opt.MinIOSecretAccessKey)
 	} else {
 		cfg, err := clientcmd.BuildConfigFromFlags("", "")
 		if err != nil {
