@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -49,7 +50,7 @@ func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name 
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string) (stackedCommit, error) {
-	const logTemplate = `change_id ++ "\\" ++ commit_id ++ "\\[" ++ bookmarks ++ "]\\" ++ description ++ "\\\n"`
+	const logTemplate = `"{\"change_id\":" ++ change_id.normal_hex().escape_json() ++ ",\"commit_id\":" ++ commit_id.normal_hex().escape_json() ++ ",\"bookmarks\":[" ++ bookmarks.map(|x| x.name().escape_json()).join(",") ++ "]" ++ ",\"description\":" ++ description.escape_json() ++ "}\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
@@ -57,59 +58,16 @@ func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string
 		return nil, xerrors.WithStack(xerrors.WithStack(err))
 	}
 
-	type readState int
-	const (
-		readStateChangeID readState = iota
-		readCommitID
-		readBranches
-		readDescription
-	)
 	var commits stackedCommit
-	var changeID, commitID, branches, description string
-	var prev int
-	var state = readStateChangeID
-	for i := range len(buf) {
-		if buf[i] != '\\' {
-			continue
+	scanner := bufio.NewScanner(bytes.NewReader(buf))
+	for scanner.Scan() {
+		c := &commit{}
+		if err := json.Unmarshal(scanner.Bytes(), c); err != nil {
+			return nil, xerrors.WithStack(err)
 		}
-
-		switch state {
-		case readStateChangeID:
-			changeID = string(buf[prev:i])
-			state = readCommitID
-			prev = i + 1
-		case readCommitID:
-			commitID = string(buf[prev:i])
-			state = readBranches
-			prev = i + 1
-		case readBranches:
-			if buf[i-1] != ']' {
-				continue
-			}
-			branches = string(buf[prev+1 : i-1])
-			state = readDescription
-			prev = i + 1
-		case readDescription:
-			if buf[i+1] != '\n' {
-				continue
-			}
-			description = string(buf[prev:i])
-			if !(withoutNoSend && (strings.HasPrefix(description, noSendTag) || strings.HasPrefix(description, wipTag))) {
-				cm := &commit{
-					ChangeID:    changeID,
-					CommitID:    commitID,
-					Branch:      strings.TrimSuffix(branches, "*"),
-					Description: description,
-				}
-				commits = append(commits, cm)
-				logger.Log.Debug("Stack", zap.String("change_id", cm.ChangeID), zap.String("branch", cm.Branch))
-			}
-
-			// Next commit
-			i++
-			changeID, commitID, branches, description = "", "", "", ""
-			state = readStateChangeID
-			prev = i + 1
+		if !(withoutNoSend && (strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag))) {
+			logger.Log.Debug("Stack", zap.String("change_id", c.ChangeID), zap.Strings("bookmarks", c.Bookmarks))
+			commits = append(commits, c)
 		}
 	}
 
