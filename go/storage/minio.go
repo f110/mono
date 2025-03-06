@@ -112,47 +112,37 @@ func (m *MinIOOptions) newMinIOClientViaService(ctx context.Context) (*minio.Cli
 func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
 	var forwarder *pf.PortForwarder
 	var endpoint string
+	var svc *corev1.Service
 	if m.ServiceLister != nil {
-		if _, err := m.ServiceLister.Services(namespace).Get(name); apierrors.IsNotFound(err) {
-			if _, err := m.ServiceLister.Services(namespace).Get(fmt.Sprintf("%s-hl-svc", name)); err == nil {
+		if s, err := m.ServiceLister.Services(namespace).Get(name); apierrors.IsNotFound(err) {
+			if s, err := m.ServiceLister.Services(namespace).Get(fmt.Sprintf("%s-hl-svc", name)); err == nil {
+				svc = s
 				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+			} else {
+				return "", nil, xerrors.WithStack(err)
 			}
 		} else if err != nil {
 			return "", nil, xerrors.WithStack(err)
 		} else {
+			svc = s
 			endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
 		}
 	} else {
-		if _, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); apierrors.IsNotFound(err) {
-			if _, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{}); err == nil {
+		if s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); apierrors.IsNotFound(err) {
+			if s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{}); err == nil {
+				svc = s
 				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
+			} else {
+				return "", nil, xerrors.WithStack(err)
 			}
 		} else if err != nil {
 			return "", nil, xerrors.WithStack(err)
 		} else {
+			svc = s
 			endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
 		}
 	}
 	if m.Dev {
-		var svc *corev1.Service
-		if m.ServiceLister != nil {
-			if s, err := m.ServiceLister.Services(namespace).Get(name); err != nil {
-				return "", nil, xerrors.WithStack(err)
-			} else {
-				svc = s
-			}
-		} else {
-			s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
-			if apierrors.IsNotFound(err) {
-				s, err = m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{})
-				if err != nil {
-					return "", nil, xerrors.WithStack(err)
-				}
-			} else if err != nil {
-				return "", nil, xerrors.WithStack(err)
-			}
-			svc = s
-		}
 		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.restConfig, m.k8sClient, m.PodLister)
 		if err != nil {
 			return "", nil, xerrors.WithStack(err)
