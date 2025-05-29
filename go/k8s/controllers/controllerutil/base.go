@@ -324,13 +324,7 @@ func NewGenericControllerBase[T runtime.Object](
 }
 
 func (b *GenericControllerBase[T]) StartWorkers(ctx context.Context, workers int) {
-	hasSynced := make([]cache.InformerSynced, 0)
-	for _, v := range b.informers {
-		hasSynced = append(hasSynced, v.HasSynced)
-	}
 	for _, v := range b.eventSource {
-		hasSynced = append(hasSynced, v.HasSynced)
-
 		v.AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc:    b.onAdd,
 			UpdateFunc: b.onUpdate,
