@@ -4,15 +4,15 @@ import (
 	"sync"
 )
 
-type Set struct {
-	set
+type Set[T comparable] struct {
+	set[T]
 	rw sync.RWMutex
 }
 
-type set map[any]struct{}
+type set[T comparable] map[T]struct{}
 
-func New(values ...any) *Set {
-	s := &Set{set: make(set)}
+func New[T comparable](values ...T) *Set[T] {
+	s := &Set[T]{set: make(set[T])}
 	for _, v := range values {
 		s.Add(v)
 	}
@@ -20,14 +20,14 @@ func New(values ...any) *Set {
 	return s
 }
 
-func (s *Set) Add(v any) {
+func (s *Set[T]) Add(v T) {
 	s.rw.Lock()
 	s.set[v] = struct{}{}
 	s.rw.Unlock()
 }
 
-func (s *Set) ToSlice() []any {
-	v := make([]interface{}, 0, len(s.set))
+func (s *Set[T]) ToSlice() []T {
+	v := make([]T, 0, len(s.set))
 	s.rw.RLock()
 	for k, _ := range s.set {
 		v = append(v, k)
@@ -37,8 +37,8 @@ func (s *Set) ToSlice() []any {
 	return v
 }
 
-func (s *Set) Diff(other *Set) *Set {
-	d := New()
+func (s *Set[T]) Diff(other *Set[T]) *Set[T] {
+	d := New[T]()
 	s.rw.RLock()
 	for k := range s.set {
 		if !other.Has(k) {
@@ -50,7 +50,7 @@ func (s *Set) Diff(other *Set) *Set {
 	return d
 }
 
-func (s *Set) Has(v any) bool {
+func (s *Set[T]) Has(v T) bool {
 	s.rw.RLock()
 	_, ok := s.set[v]
 	s.rw.RUnlock()
@@ -58,7 +58,7 @@ func (s *Set) Has(v any) bool {
 	return ok
 }
 
-func (s *Set) Union(v *Set) {
+func (s *Set[T]) Union(v *Set[T]) {
 	s.rw.Lock()
 	v.rw.RLock()
 	for k := range v.set {
@@ -68,8 +68,8 @@ func (s *Set) Union(v *Set) {
 	s.rw.Unlock()
 }
 
-func (s *Set) Join(right *Set) *Set {
-	d := New()
+func (s *Set[T]) Join(right *Set[T]) *Set[T] {
+	d := New[T]()
 	s.rw.RLock()
 	for k := range s.set {
 		if right.Has(k) {
@@ -81,10 +81,10 @@ func (s *Set) Join(right *Set) *Set {
 	return d
 }
 
-func (s *Set) LeftOuter(right *Set) *Set {
+func (s *Set[T]) LeftOuter(right *Set[T]) *Set[T] {
 	return s.Diff(right)
 }
 
-func (s *Set) RightOuter(right *Set) *Set {
+func (s *Set[T]) RightOuter(right *Set[T]) *Set[T] {
 	return right.Diff(s)
 }

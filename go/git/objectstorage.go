@@ -549,7 +549,7 @@ func (b *ObjectStorageStorer) PackRefs() error {
 	if len(r) == 0 {
 		return nil
 	}
-	refSet := set.New()
+	refSet := set.New[*plumbing.Reference]()
 	for _, v := range r {
 		refSet.Add(v)
 	}
@@ -558,15 +558,14 @@ func (b *ObjectStorageStorer) PackRefs() error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	packedRefsSet := set.New()
+	packedRefsSet := set.New[*plumbing.Reference]()
 	for _, v := range packedRefs {
 		refSet.Add(v)
 		packedRefsSet.Add(v)
 	}
 
 	buf := new(bytes.Buffer)
-	for _, v := range refSet.ToSlice() {
-		ref := v.(*plumbing.Reference)
+	for _, ref := range refSet.ToSlice() {
 		if _, err := fmt.Fprintln(buf, ref.String()); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -578,8 +577,7 @@ func (b *ObjectStorageStorer) PackRefs() error {
 
 	// Delete all loose refs.
 	looseRefs := refSet.RightOuter(packedRefsSet)
-	for _, v := range looseRefs.ToSlice() {
-		ref := v.(*plumbing.Reference)
+	for _, ref := range looseRefs.ToSlice() {
 		err := b.backend.Delete(context.Background(), path.Join(b.rootPath, ref.Name().String()))
 		if err != nil {
 			return xerrors.WithStack(err)

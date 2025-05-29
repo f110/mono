@@ -163,18 +163,17 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 		currentUsersMap[v.Email] = v
 	}
 
-	currentUsersSet := set.New()
+	currentUsersSet := set.New[string]()
 	for _, v := range currentUsers {
 		currentUsersSet.Add(v.Email)
 	}
-	idealUsersSet := set.New()
+	idealUsersSet := set.New[string]()
 	for _, v := range users {
 		idealUsersSet.Add(v.Spec.Email)
 	}
 
 	missingUsersSet := idealUsersSet.Diff(currentUsersSet)
-	for _, v := range missingUsersSet.ToSlice() {
-		email := v.(string)
+	for _, email := range missingUsersSet.ToSlice() {
 		grafanaUser := allUsers[email]
 		s := strings.Split(grafanaUser.Spec.Email, "@")
 		name := s[0]
@@ -185,8 +184,7 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 	}
 
 	redundantUsersSet := currentUsersSet.Diff(idealUsersSet)
-	for _, v := range redundantUsersSet.ToSlice() {
-		email := v.(string)
+	for _, email := range redundantUsersSet.ToSlice() {
 		// Admin user should not delete
 		if email == "admin@localhost" {
 			continue
