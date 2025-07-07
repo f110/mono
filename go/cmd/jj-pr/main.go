@@ -50,7 +50,7 @@ func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name 
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string) (stackedCommit, error) {
-	const logTemplate = `"{\"change_id\":" ++ json(change_id) ++ ",\"commit_id\":" ++ json(commit_id) ++ ",\"bookmarks\":[" ++ bookmarks.map(|x| x.name().escape_json()).join(",") ++ "]" ++ ",\"description\":" ++ description.escape_json() ++ "}\n"`
+	const logTemplate = `"{\"change_id\":" ++ json(change_id) ++ ",\"commit_id\":" ++ json(commit_id) ++ ",\"bookmarks\":" ++ json(bookmarks) ++ ",\"description\":" ++ json(description) ++ "}\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
@@ -66,7 +66,7 @@ func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string
 			return nil, xerrors.WithStack(err)
 		}
 		if !(withoutNoSend && (strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag))) {
-			logger.Log.Debug("Stack", zap.String("change_id", c.ChangeID), zap.Strings("bookmarks", c.Bookmarks))
+			logger.Log.Debug("Stack", zap.String("change_id", c.ChangeID), zap.Any("bookmarks", c.Bookmarks))
 			commits = append(commits, c)
 		}
 	}

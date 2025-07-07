@@ -209,9 +209,12 @@ type commit struct {
 	ChangeID string `json:"change_id"`
 	CommitID string `json:"commit_id"`
 	// Branch is local branch name if exists.
-	Branch      string   `json:"-"`
-	Description string   `json:"description"`
-	Bookmarks   []string `json:"bookmarks"`
+	Branch      string `json:"-"`
+	Description string `json:"description"`
+	Bookmarks   []struct {
+		Name   string   `json:"name"`
+		Target []string `json:"target"`
+	} `json:"bookmarks"`
 
 	PullRequest *pullRequest
 }
@@ -265,7 +268,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		RemoteBranch:
 			for _, r := range c.remoteBranches {
 				for _, b := range v.Bookmarks {
-					if r.GetName() == b {
+					if r.GetName() == b.Name {
 						found = true
 						break RemoteBranch
 					}
@@ -359,7 +362,7 @@ func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend boo
 		PullRequest:
 			for _, pr := range c.pullRequests {
 				for _, b := range v.Bookmarks {
-					if pr.Head.GetRef() == b {
+					if pr.Head.GetRef() == b.Name {
 						v.PullRequest = newPullRequest(pr)
 						break PullRequest
 					}
@@ -418,7 +421,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
 				Title: github.String(title),
 				Body:  github.String(description),
-				Head:  github.String(c.stack[0].Bookmarks[0]),
+				Head:  github.String(c.stack[0].Bookmarks[0].Name),
 				Base:  github.String(c.DefaultBranch),
 				Draft: github.Bool(true),
 			})
@@ -450,7 +453,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 		if !c.DryRun {
 			baseBranch := c.DefaultBranch
 			if i != len(c.stack)-1 {
-				baseBranch = c.stack[i+1].Bookmarks[0]
+				baseBranch = c.stack[i+1].Bookmarks[0].Name
 			}
 			var title, description string
 			if i := strings.Index(v.Description, "\n"); i > 0 {
@@ -468,7 +471,7 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
 				Title: github.String(title),
 				Body:  github.String(description),
-				Head:  github.String(v.Bookmarks[0]),
+				Head:  github.String(v.Bookmarks[0].Name),
 				Base:  github.String(baseBranch),
 				Draft: github.Bool(true),
 			})
@@ -596,9 +599,9 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		var updatedPR github.PullRequest
 
 		var needUpdateBaseBranch, needUpdateTitle, needUpdateBody bool
-		if i != len(c.stack)-1 && v.PullRequest.Base != c.stack[i+1].Bookmarks[0] {
+		if i != len(c.stack)-1 && v.PullRequest.Base != c.stack[i+1].Bookmarks[0].Name {
 			needUpdateBaseBranch = true
-			updatedPR.Base = &github.PullRequestBranch{Ref: github.String(c.stack[i+1].Bookmarks[0])}
+			updatedPR.Base = &github.PullRequestBranch{Ref: github.String(c.stack[i+1].Bookmarks[0].Name)}
 		}
 		if i := strings.Index(v.Description, "\n"); i > 0 {
 			if v.PullRequest.Title != v.Description[:i] {
