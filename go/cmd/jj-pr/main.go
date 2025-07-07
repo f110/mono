@@ -50,7 +50,7 @@ func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name 
 
 // getStack returns commits of current stack. The first commit is the newest commit.
 func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string) (stackedCommit, error) {
-	const logTemplate = `"{\"change_id\":" ++ change_id.normal_hex().escape_json() ++ ",\"commit_id\":" ++ commit_id.normal_hex().escape_json() ++ ",\"bookmarks\":[" ++ bookmarks.map(|x| x.name().escape_json()).join(",") ++ "]" ++ ",\"description\":" ++ description.escape_json() ++ "}\n"`
+	const logTemplate = `"{\"change_id\":" ++ json(change_id) ++ ",\"commit_id\":" ++ json(commit_id) ++ ",\"bookmarks\":[" ++ bookmarks.map(|x| x.name().escape_json()).join(",") ++ "]" ++ ",\"description\":" ++ description.escape_json() ++ "}\n"`
 	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch), "--no-graph", "--template", logTemplate)
 	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
