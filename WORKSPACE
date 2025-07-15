@@ -32,7 +32,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.24.0")
+go_register_toolchains(version = "1.24.5")
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
