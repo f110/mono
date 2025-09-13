@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "gmpc_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/gmpc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//vendor/go.f110.dev/xerrors",
+    ],
+)
+
+go_binary(
+    name = "gmpc",
+    embed = [":gmpc_lib"],
+    visibility = ["//visibility:public"],
+)

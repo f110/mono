@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -128,6 +129,15 @@ func WithMessagef(err error, format string, a ...any) error {
 		st = caller()
 	}
 	return &Error{msg: fmt.Sprintf(format, a...), err: err, stackTrace: st}
+}
+
+func ZapField(err error) zap.Field {
+	var sErr *Error
+	if errors.As(err, &sErr) {
+		return zap.Array("stack", sErr.StackTrace())
+	} else {
+		return zap.Field{}
+	}
 }
 
 type Frames []uintptr

@@ -19,10 +19,12 @@ require (
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/golang-jwt/jwt/v4 v4.5.0
-	github.com/google/go-cmp v0.6.0
+	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/golang-jwt/jwt/v5 v5.2.3
+	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.4.0
 	github.com/google/go-github/v49 v49.0.0
+	github.com/google/go-github/v73 v73.0.0
 	github.com/google/nixery v0.0.0-20230429114902-a85d61307c16
 	github.com/google/uuid v1.6.0
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
@@ -54,7 +56,7 @@ require (
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
 	go.f110.dev/protoc-ddl v0.0.0-20250215035122-f062b329388b
-	go.f110.dev/xerrors v0.0.0-20241005060613-5d51f0ed30e0
+	go.f110.dev/xerrors v0.0.0-20250707144214-45e6a09c948d
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.31.0

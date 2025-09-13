@@ -48,6 +48,10 @@ func StandardLogger(name string) *log.Logger {
 	return zap.NewStdLog(Log.Named(name))
 }
 
+func String(key, val string) zap.Field {
+	return zap.String(key, val)
+}
+
 type customWriter struct {
 	io.Writer
 }

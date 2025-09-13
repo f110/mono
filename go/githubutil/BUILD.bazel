@@ -18,6 +18,7 @@ go_library(
         "//vendor/github.com/spf13/pflag",
         "//vendor/github.com/stretchr/testify/assert",
         "//vendor/go.f110.dev/xerrors",
+        "//vendor/golang.org/x/oauth2",
     ],
 )
 

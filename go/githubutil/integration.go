@@ -11,6 +11,7 @@ import (
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
+	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
 )
@@ -20,6 +21,7 @@ type GitHubClientFactory struct {
 	REST          *github.Client
 	GraphQL       *githubv4.Client
 	TokenProvider *TokenProvider
+	OAuthConfig   *oauth2.Config
 
 	Name           string
 	AppID          int64
@@ -31,6 +33,9 @@ type GitHubClientFactory struct {
 	GitHubAPIEndpoint     string
 	GitHubGraphQLEndpoint string
 	CACertFile            string
+	ClientID              string
+	ClientSecret          string
+	RedirectURL           string
 
 	requiredCredential bool
 }
@@ -47,6 +52,9 @@ func (g *GitHubClientFactory) Flags(fs *cli.FlagSet) {
 	fs.String("github-api-endpoint", "REST API endpoint of github if you want to use non-default endpoint").Var(&g.GitHubAPIEndpoint)
 	fs.String("github-graphql-endpoint", "GraphQL endpoint of github if you want to use non-default endpoint").Var(&g.GitHubGraphQLEndpoint)
 	fs.String("github-ca-cert-file", "Certificate file path").Var(&g.CACertFile)
+	fs.String("github-redirect-url", "The URL to redirect").Var(&g.RedirectURL)
+	fs.String("github-client-id", "GitHub Client ID").Var(&g.ClientID)
+	fs.String("github-client-secret", "GitHub Client Secret").Var(&g.ClientSecret)
 }
 
 func (g *GitHubClientFactory) PFlags(fs *pflag.FlagSet) {
@@ -57,6 +65,9 @@ func (g *GitHubClientFactory) PFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&g.GitHubAPIEndpoint, "github-api-endpoint", g.GitHubAPIEndpoint, "REST API endpoint of github if you want to use non-default endpoint")
 	fs.StringVar(&g.GitHubGraphQLEndpoint, "github-graphql-endpoint", g.GitHubGraphQLEndpoint, "GraphQL endpoint of github if you want to use non-default endpoint")
 	fs.StringVar(&g.CACertFile, "github-ca-cert-file", g.CACertFile, "Certificate file path")
+	fs.StringVar(&g.RedirectURL, "github-redirect-url", g.RedirectURL, "URL to redirect to")
+	fs.StringVar(&g.ClientID, "github-client-id", g.ClientID, "GitHub Client ID")
+	fs.StringVar(&g.ClientSecret, "github-client-secret", g.ClientSecret, "GitHub Client Secret")
 }
 
 func (g *GitHubClientFactory) Init() error {
@@ -117,6 +128,17 @@ func (g *GitHubClientFactory) Init() error {
 		g.GraphQL = githubv4.NewEnterpriseClient(g.GitHubGraphQLEndpoint, httpClient)
 	} else {
 		g.GraphQL = githubv4.NewClient(httpClient)
+	}
+
+	g.OAuthConfig = &oauth2.Config{
+		Endpoint: oauth2.Endpoint{
+			AuthURL:       "https://github.com/login/oauth/authorize",
+			TokenURL:      "https://github.com/login/oauth/access_token",
+			DeviceAuthURL: "https://github.com/login/device/code",
+		},
+		ClientID:     g.ClientID,
+		ClientSecret: g.ClientSecret,
+		RedirectURL:  g.RedirectURL,
 	}
 
 	g.Initialized = true

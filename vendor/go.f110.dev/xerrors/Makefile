@@ -1,4 +1,7 @@
+BAZEL = bazel
+GO    = $(BAZEL) run @rules_go//go --
+
 .PHONY: update-deps
 update-deps:
-	bazel run @rules_go//go mod tidy
-	bazel run //:gazelle -- update
+	$(GO) mod tidy
+	$(BAZEL) run //:gazelle -- update

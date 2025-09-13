@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"net/http"
 	"net/url"
@@ -22,11 +25,12 @@ import (
 type goModuleProxyCommand struct {
 	*fsm.FSM
 
-	ConfigPath   string
-	ModuleDir    string
-	Addr         string
-	UpstreamURL  string
-	CABundleFile string
+	ConfigPath     string
+	ModuleDir      string
+	Addr           string
+	UpstreamURL    string
+	CABundleFile   string
+	SigningKeyFile string
 
 	StorageEndpoint        string
 	StorageRegion          string
@@ -37,11 +41,12 @@ type goModuleProxyCommand struct {
 
 	MemcachedServers []string
 
-	upstream *url.URL
-	config   gomodule.Config
-	cache    *gomodule.ModuleCache
-	caBundle []byte
-	server   *gomodule.ProxyServer
+	upstream   *url.URL
+	config     gomodule.Config
+	cache      *gomodule.ModuleCache
+	caBundle   []byte
+	signingKey *ecdsa.PrivateKey
+	server     *gomodule.ProxyServer
 
 	githubClientFactory *githubutil.GitHubClientFactory
 }
@@ -86,6 +91,7 @@ func (c *goModuleProxyCommand) Flags(fs *cli.FlagSet) {
 	fs.String("storage-secret-access-key", "Secret access key").Var(&c.StorageSecretAccessKey).Default(c.StorageSecretAccessKey)
 	fs.String("storage-ca-file", "File path that contains the certificate of CA").Var(&c.StorageCACertFile).Default(c.StorageCACertFile)
 	fs.StringArray("memcached-servers", "Memcached server name and address for the metadata cache").Var(&c.MemcachedServers)
+	fs.String("signing-key-file", "A file path that contains signing key").Var(&c.SigningKeyFile)
 
 	c.githubClientFactory.Flags(fs)
 }
@@ -139,8 +145,23 @@ func (c *goModuleProxyCommand) init(_ context.Context) (fsm.State, error) {
 		logger.Log.Debug("Disable cache")
 	}
 
+	var proxyOpts []gomodule.ProxyServerOption
+	if c.SigningKeyFile != "" {
+		buf, err := os.ReadFile(c.SigningKeyFile)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		block, _ := pem.Decode(buf)
+		signingKey, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		c.signingKey = signingKey
+		proxyOpts = append(proxyOpts, gomodule.WithGitHubUserAuthentication(gomodule.NewUserAuthentication(c.signingKey, nil)))
+	}
+
 	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle)
-	c.server = gomodule.NewProxyServer(c.Addr, c.upstream, proxy)
+	c.server = gomodule.NewProxyServer(c.Addr, c.upstream, proxy, c.githubClientFactory, proxyOpts...)
 
 	return fsm.Next(stateStartServer)
 }

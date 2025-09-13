@@ -3,6 +3,7 @@ package gomodule
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,17 +15,29 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
 )
 
 type ProxyServer struct {
-	s     *http.Server
-	rr    *httputil.ReverseProxy
-	r     *mux.Router
-	proxy *ModuleProxy
+	s               *http.Server
+	rr              *httputil.ReverseProxy
+	r               *mux.Router
+	proxy           *ModuleProxy
+	ghClientFactory *githubutil.GitHubClientFactory
+
+	githubUserAuthentication *UserAuthentication
 }
 
-func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxyServer {
+type ProxyServerOption func(*ProxyServer)
+
+func WithGitHubUserAuthentication(module *UserAuthentication) ProxyServerOption {
+	return func(p *ProxyServer) {
+		p.githubUserAuthentication = module
+	}
+}
+
+func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy, ghClientFactory *githubutil.GitHubClientFactory, opts ...ProxyServerOption) *ProxyServer {
 	targetQuery := upstream.RawQuery
 	director := func(req *http.Request) {
 		req.URL.Scheme = upstream.Scheme
@@ -42,9 +55,13 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxySe
 	}
 
 	s := &ProxyServer{
-		r:     mux.NewRouter(),
-		rr:    &httputil.ReverseProxy{Director: director},
-		proxy: proxy,
+		r:               mux.NewRouter(),
+		rr:              &httputil.ReverseProxy{Director: director},
+		proxy:           proxy,
+		ghClientFactory: ghClientFactory,
+	}
+	for _, opt := range opts {
+		opt(s)
 	}
 	s.s = &http.Server{
 		Addr:    addr,
@@ -62,6 +79,9 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxySe
 	s.r.Methods(http.MethodGet).Path("/").HandlerFunc(s.index)
 	s.r.Methods(http.MethodGet).Path("/{module:.+}/@v/invalidate").HandlerFunc(s.handle(s.invalidate))
 	s.r.Methods(http.MethodPost).Path("/flush_all").HandlerFunc(s.flushAll) // This endpoint is hidden.
+	if s.githubUserAuthentication != nil {
+		s.githubUserAuthentication.RegisterHttpMux(s.r)
+	}
 
 	// Probes
 	s.r.Methods(http.MethodGet).Path("/_/liveness").HandlerFunc(func(w http.ResponseWriter, req *http.Request) {})
@@ -76,7 +96,7 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy) *ProxySe
 func (s *ProxyServer) Start() error {
 	logger.Log.Info("Start proxy", zap.String("addr", s.s.Addr))
 	if err := s.s.ListenAndServe(); err != nil {
-		if err == http.ErrServerClosed {
+		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
 
