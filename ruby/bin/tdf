@@ -47,7 +47,7 @@ if ARGV[0].nil?
   exit 1
 end
 
-doc = Nokogiri::HTML(URI.open("https://www.jsports.co.jp/cycle/tour/schedule/"))
+doc = Nokogiri::HTML(URI.open("https://www.jsports.co.jp/cycle/tour_2025/schedule/"))
 
 schedules = []
 # Stage
