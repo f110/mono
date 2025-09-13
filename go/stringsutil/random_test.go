@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRandomStringWithCharset(t *testing.T) {
+	assert.Len(t, RandomStringWithCharset(10, []rune("ABCDEFG")), 10)
+}
+
 func TestRandomString(t *testing.T) {
 	assert.Len(t, RandomString(10), 10)
 }

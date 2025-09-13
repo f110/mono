@@ -2,7 +2,19 @@
   <profile version="1.0">
     <option name="myName" value="Project Default" />
     <inspection_tool class="GoSwitchMissingCasesForIotaConsts" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GoUnhandledErrorResult" enabled="true" level="WARNING" enabled_by_default="true">
+      <functions>
+        <function importPath="errors" name="Unwrap" />
+        <function importPath="errors" name="Join" />
+        <function importPath="fmt" name="Errorf" />
+        <function importPath="fmt" name="Println" />
+        <function importPath="errors" name="New" />
+        <function importPath="fmt" name="Print" />
+        <function importPath="fmt" name="Printf" />
+        <function importPath="math/rand" name="Read" />
+        <function importPath="io" name="WriteString" />
+      </functions>
+    </inspection_tool>
     <inspection_tool class="SqlResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
-    <inspection_tool class="UsePropertyAccessSyntax" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
   </profile>
 </component>
