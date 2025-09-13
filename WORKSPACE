@@ -7,12 +7,6 @@ load("//:rules_dependencies.bzl", "rules_dependencies")
 rules_dependencies()
 
 git_repository(
-    name = "dev_f110_rules_extras",
-    commit = "dd9d0fc35009dd3d3c852e94432e64ec4a2c27b1",
-    remote = "https://github.com/f110/rules_extras",
-)
-
-git_repository(
     name = "dev_f110_protoc_ddl",
     commit = "1cb0fefe60f4aeecc458a2f48abbc4a4e59f637f",
     remote = "https://github.com/f110/protoc-ddl",
@@ -23,10 +17,6 @@ git_repository(
     commit = "90d00e364ad040d388c54b32c9ac3d85604bc6ec",
     remote = "https://github.com/f110/kubeproto",
 )
-
-load("@dev_f110_rules_extras//go:deps.bzl", "go_extras_dependencies")
-
-go_extras_dependencies()
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
