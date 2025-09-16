@@ -81,10 +81,22 @@ go_library(
             "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
             "//vendor/golang.org/x/sys/unix",
         ],
+        "@io_bazel_rules_go//go/platform:osx": [
+            "//vendor/github.com/cyphar/filepath-securejoin",
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
+        ],
         "@io_bazel_rules_go//go/platform:plan9": [
             "//vendor/github.com/cyphar/filepath-securejoin",
             "//vendor/github.com/go-git/go-billy/v5:go-billy",
             "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx": [
+            "//vendor/github.com/cyphar/filepath-securejoin",
+            "//vendor/github.com/go-git/go-billy/v5:go-billy",
+            "//vendor/github.com/go-git/go-billy/v5/helper/chroot",
+            "//vendor/golang.org/x/sys/unix",
         ],
         "@io_bazel_rules_go//go/platform:solaris": [
             "//vendor/github.com/cyphar/filepath-securejoin",

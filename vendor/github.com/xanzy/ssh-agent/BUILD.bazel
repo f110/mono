@@ -44,7 +44,13 @@ go_library(
         "@io_bazel_rules_go//go/platform:openbsd": [
             "//vendor/golang.org/x/crypto/ssh/agent",
         ],
+        "@io_bazel_rules_go//go/platform:osx": [
+            "//vendor/golang.org/x/crypto/ssh/agent",
+        ],
         "@io_bazel_rules_go//go/platform:plan9": [
+            "//vendor/golang.org/x/crypto/ssh/agent",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx": [
             "//vendor/golang.org/x/crypto/ssh/agent",
         ],
         "@io_bazel_rules_go//go/platform:solaris": [

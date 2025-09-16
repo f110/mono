@@ -59,7 +59,15 @@ go_library(
             "//vendor/github.com/coreos/go-systemd/v22/journal",
             "//vendor/go.etcd.io/etcd/client/pkg/v3/systemd",
         ],
+        "@io_bazel_rules_go//go/platform:osx": [
+            "//vendor/github.com/coreos/go-systemd/v22/journal",
+            "//vendor/go.etcd.io/etcd/client/pkg/v3/systemd",
+        ],
         "@io_bazel_rules_go//go/platform:plan9": [
+            "//vendor/github.com/coreos/go-systemd/v22/journal",
+            "//vendor/go.etcd.io/etcd/client/pkg/v3/systemd",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx": [
             "//vendor/github.com/coreos/go-systemd/v22/journal",
             "//vendor/go.etcd.io/etcd/client/pkg/v3/systemd",
         ],

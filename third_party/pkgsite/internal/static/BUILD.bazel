@@ -43,6 +43,12 @@ go_library(
         "@io_bazel_rules_go//go/platform:openbsd": [
             "//third_party/pkgsite/vendor/github.com/evanw/esbuild/pkg/api",
         ],
+        "@io_bazel_rules_go//go/platform:osx": [
+            "//third_party/pkgsite/vendor/github.com/evanw/esbuild/pkg/api",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx": [
+            "//third_party/pkgsite/vendor/github.com/evanw/esbuild/pkg/api",
+        ],
         "@io_bazel_rules_go//go/platform:solaris": [
             "//third_party/pkgsite/vendor/github.com/evanw/esbuild/pkg/api",
         ],

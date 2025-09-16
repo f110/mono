@@ -138,6 +138,30 @@ go_library(
         "@io_bazel_rules_go//go/platform:openbsd_arm64": [
             "//vendor/golang.org/x/sys/unix",
         ],
+        "@io_bazel_rules_go//go/platform:osx_386": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:osx_amd64": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:osx_arm": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:osx_arm64": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx_386": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx_amd64": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx_arm": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
+        "@io_bazel_rules_go//go/platform:qnx_arm64": [
+            "//vendor/golang.org/x/sys/unix",
+        ],
         "@io_bazel_rules_go//go/platform:solaris_amd64": [
             "//vendor/golang.org/x/sys/unix",
         ],

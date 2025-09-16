@@ -1,6 +1,6 @@
-load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 
 go_proto_library(
     name = "doc_search_go_proto",

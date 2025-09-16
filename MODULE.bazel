@@ -1,0 +1,54 @@
+bazel_dep(name = "rules_go", repo_name = "io_bazel_rules_go", version = "0.57.0")
+bazel_dep(name = "gazelle", repo_name = "bazel_gazelle", version = "0.45.0")
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", repo_name = "com_google_protobuf", version = "32.1")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "rules_oci", version = "2.2.6")
+bazel_dep(name = "aspect_bazel_lib", version = "2.21.1")
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+kind_binary = use_repo_rule("//build/rules/kind:def.bzl", "kind_binary")
+
+kustomize_binary = use_repo_rule("//build/rules/kustomize:def.bzl", "kustomize_binary")
+
+vault_binary = use_repo_rule("//build/rules/vault:def.bzl", "vault_binary")
+
+git_repository(
+    name = "dev_f110_protoc_ddl",
+    commit = "0250c7635d392ecfec56d09a945a73b759b28787",
+    remote = "https://github.com/f110/protoc-ddl",
+)
+
+git_repository(
+    name = "dev_f110_kubeproto",
+    commit = "90d00e364ad040d388c54b32c9ac3d85604bc6ec",
+    remote = "https://github.com/f110/kubeproto",
+)
+
+kind_binary(
+    name = "kind",
+    version = "0.22.0",
+)
+
+kustomize_binary(
+    name = "kustomize",
+    version = "v4.5.4",
+)
+
+vault_binary(
+    name = "vault",
+    version = "1.11.4",
+)
+# -- repo definitions -- #
+
+extension_for_oci_alias = use_extension("//:extension_for_oci_alias.bzl", "extension_for_oci_alias")
+
+use_repo(extension_for_oci_alias, "com_google_distroless_base")
+# End of extension `extension_for_oci_alias`
+
+extension_for_oci_pull = use_extension("//:extension_for_oci_pull.bzl", "extension_for_oci_pull")
+
+use_repo(extension_for_oci_pull, "com_google_distroless_base_single")
+# End of extension `extension_for_oci_pull`

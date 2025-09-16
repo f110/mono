@@ -1,5 +1,9 @@
+BAZEL ?= bazel
+GO ?= $(BAZEL) run @io_bazel_rules_go//go --
+
 update-deps:
-	bazel run //:vendor
+	$(GO) mod tidy
+	$(BAZEL) run //:vendor
 
 gen:
 	bazel query 'kind(vendor_ddl, //...)' | xargs -n1 bazel run

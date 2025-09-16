@@ -1,8 +1,8 @@
-load("@mono//build/rules/kustomize:def.bzl", "kustomize_toolchain")
+load("@//build/rules/kustomize:def.bzl", "kustomize_toolchain")
 
 sh_binary(
     name = "bin",
-    srcs = ["kustomize"]
+    srcs = ["kustomize"],
 )
 
 kustomize_toolchain(
