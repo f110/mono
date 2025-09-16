@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "tracer",
@@ -76,7 +76,7 @@ go_library(
         "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/traceprof",
         "//vendor/gopkg.in/DataDog/dd-trace-go.v1/internal/version",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows": [
+        "@rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],

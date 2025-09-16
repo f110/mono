@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "load",
@@ -18,7 +18,7 @@ go_library(
     ],
     cgo = True,
     clinkopts = select({
-        "@io_bazel_rules_go//go/platform:aix": [
+        "@rules_go//go/platform:aix": [
             "-L/usr/lib -lperfstat",
         ],
         "//conditions:default": [],
@@ -29,19 +29,19 @@ go_library(
     deps = [
         "//vendor/github.com/shirou/gopsutil/v3/internal/common",
     ] + select({
-        "@io_bazel_rules_go//go/platform:aix": [
+        "@rules_go//go/platform:aix": [
             "//vendor/github.com/power-devops/perfstat",
         ],
-        "@io_bazel_rules_go//go/platform:darwin": [
+        "@rules_go//go/platform:darwin": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
+        "@rules_go//go/platform:freebsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:ios": [
+        "@rules_go//go/platform:ios": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
+        "@rules_go//go/platform:openbsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "//conditions:default": [],

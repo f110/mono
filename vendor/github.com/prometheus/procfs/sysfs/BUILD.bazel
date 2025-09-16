@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "sysfs",
@@ -32,12 +32,12 @@ go_library(
     importpath = "github.com/prometheus/procfs/sysfs",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:android": [
+        "@rules_go//go/platform:android": [
             "//vendor/github.com/prometheus/procfs/internal/fs",
             "//vendor/github.com/prometheus/procfs/internal/util",
             "//vendor/golang.org/x/sync/errgroup",
         ],
-        "@io_bazel_rules_go//go/platform:linux": [
+        "@rules_go//go/platform:linux": [
             "//vendor/github.com/prometheus/procfs/internal/fs",
             "//vendor/github.com/prometheus/procfs/internal/util",
             "//vendor/golang.org/x/sync/errgroup",

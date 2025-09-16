@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "common",
@@ -22,22 +22,22 @@ go_library(
     deps = [
         "//vendor/github.com/shirou/gopsutil/v3/common",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin": [
+        "@rules_go//go/platform:darwin": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
+        "@rules_go//go/platform:freebsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:ios": [
+        "@rules_go//go/platform:ios": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:netbsd": [
+        "@rules_go//go/platform:netbsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
+        "@rules_go//go/platform:openbsd": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:windows": [
+        "@rules_go//go/platform:windows": [
             "//vendor/github.com/yusufpapurcu/wmi",
             "//vendor/golang.org/x/sys/windows",
         ],

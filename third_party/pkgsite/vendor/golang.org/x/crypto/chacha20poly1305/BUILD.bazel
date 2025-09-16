@@ -18,7 +18,7 @@ go_library(
         "//third_party/pkgsite/vendor/golang.org/x/crypto/internal/alias",
         "//third_party/pkgsite/vendor/golang.org/x/crypto/internal/poly1305",
     ] + select({
-        "@io_bazel_rules_go//go/platform:amd64": [
+        "@rules_go//go/platform:amd64": [
             "//third_party/pkgsite/vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],

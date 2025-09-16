@@ -1,10 +1,10 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
 load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 
 go_proto_library(
     name = "buildeventstream_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    compilers = ["@rules_go//proto:go_grpc"],
     importpath = "go.f110.dev/mono/go/bazel/buildeventstream",
     proto = "//proto/bazel/buildeventstream",
     visibility = ["//visibility:private"],

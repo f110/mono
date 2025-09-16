@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go-winio",
@@ -20,7 +20,7 @@ go_library(
     importpath = "github.com/Microsoft/go-winio",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:windows": [
+        "@rules_go//go/platform:windows": [
             "//vendor/github.com/Microsoft/go-winio/internal/fs",
             "//vendor/github.com/Microsoft/go-winio/internal/socket",
             "//vendor/github.com/Microsoft/go-winio/pkg/guid",

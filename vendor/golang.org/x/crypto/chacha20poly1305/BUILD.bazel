@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "chacha20poly1305",
@@ -18,7 +18,7 @@ go_library(
         "//vendor/golang.org/x/crypto/internal/alias",
         "//vendor/golang.org/x/crypto/internal/poly1305",
     ] + select({
-        "@io_bazel_rules_go//go/platform:amd64": [
+        "@rules_go//go/platform:amd64": [
             "//vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],

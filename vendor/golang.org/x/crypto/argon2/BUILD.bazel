@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "argon2",
@@ -16,7 +16,7 @@ go_library(
     deps = [
         "//vendor/golang.org/x/crypto/blake2b",
     ] + select({
-        "@io_bazel_rules_go//go/platform:amd64": [
+        "@rules_go//go/platform:amd64": [
             "//vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],

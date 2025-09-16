@@ -1,5 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 
@@ -12,7 +12,7 @@ proto_library(
 
 go_proto_library(
     name = "onepassword_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    compilers = ["@rules_go//proto:go_grpc"],
     importpath = "go.f110.dev/mono/go/cmd/1p/proto",
     proto = ":onepassword_proto",
     visibility = ["//visibility:private"],

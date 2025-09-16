@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "color",
@@ -14,7 +14,7 @@ go_library(
         "//vendor/github.com/mattn/go-colorable",
         "//vendor/github.com/mattn/go-isatty",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows": [
+        "@rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],

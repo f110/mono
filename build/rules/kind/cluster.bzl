@@ -57,10 +57,10 @@ cluster_create = rule(
             cfg = "host",
         ),
         "_go_context_data": attr.label(
-            default = "@io_bazel_rules_go//:go_context_data",
+            default = "@rules_go//:go_context_data",
         ),
     },
-    toolchains = ["@io_bazel_rules_go//go:toolchain"],
+    toolchains = ["@rules_go//go:toolchain"],
 )
 
 def _cluster_delete_impl(ctx):
@@ -106,10 +106,10 @@ cluster_delete = rule(
             cfg = "host",
         ),
         "_go_context_data": attr.label(
-            default = "@io_bazel_rules_go//:go_context_data",
+            default = "@rules_go//:go_context_data",
         ),
     },
-    toolchains = ["@io_bazel_rules_go//go:toolchain"],
+    toolchains = ["@rules_go//go:toolchain"],
 )
 
 def cluster(name, **kwargs):

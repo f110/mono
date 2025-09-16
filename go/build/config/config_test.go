@@ -21,7 +21,7 @@ func TestReadConfig(t *testing.T) {
     github_status = True,
     memory_limit = "8Gi",
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     targets = [
         "//...",
@@ -58,7 +58,7 @@ func TestReadConfig(t *testing.T) {
 	assert.Equal(t, "8Gi", conf.Jobs[0].MemoryLimit)
 	assert.Equal(t, "ci", conf.Jobs[0].ConfigName)
 	assert.True(t, conf.Jobs[0].Exclusive)
-	assert.Equal(t, []string{"@io_bazel_rules_go//go/toolchain:linux_amd64"}, conf.Jobs[0].Platforms)
+	assert.Equal(t, []string{"@rules_go//go/toolchain:linux_amd64"}, conf.Jobs[0].Platforms)
 	assert.Equal(t,
 		[]string{
 			"//...",
@@ -118,7 +118,7 @@ func TestJob(t *testing.T) {
 		Name:      t.Name(),
 		Event:     []EventType{EventPush},
 		Command:   "test",
-		Platforms: []string{"@io_bazel_rules_go//go/toolchain:linux_amd64"},
+		Platforms: []string{"@rules_go//go/toolchain:linux_amd64"},
 		Targets:   []string{"//:test"},
 	}
 
@@ -156,7 +156,7 @@ func TestMarshalJob(t *testing.T) {
     container = "registry.f110.dev/tools/zoekt-indexer-builder:latest",
     targets = ["//containers/zoekt-indexer:push"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     secrets = [
         registry_secret(host = "registry.f110.dev", vault_mount = "secrets", vault_path = "registry.f110.dev/build", vault_key = "robot"),
@@ -199,7 +199,7 @@ func TestUnmarshalJob(t *testing.T) {
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     cpu_limit = "2000m",
     memory_limit = "8192Mi",

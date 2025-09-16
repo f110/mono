@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "net",
@@ -24,10 +24,10 @@ go_library(
     deps = [
         "//vendor/github.com/shirou/gopsutil/v3/internal/common",
     ] + select({
-        "@io_bazel_rules_go//go/platform:aix": [
+        "@rules_go//go/platform:aix": [
             "//vendor/github.com/power-devops/perfstat",
         ],
-        "@io_bazel_rules_go//go/platform:windows": [
+        "@rules_go//go/platform:windows": [
             "//vendor/golang.org/x/sys/windows",
         ],
         "//conditions:default": [],

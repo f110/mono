@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "perfstat",
@@ -30,7 +30,7 @@ go_library(
     ],
     cgo = True,
     clinkopts = select({
-        "@io_bazel_rules_go//go/platform:aix": [
+        "@rules_go//go/platform:aix": [
             "-lperfstat",
         ],
         "//conditions:default": [],
@@ -39,7 +39,7 @@ go_library(
     importpath = "github.com/power-devops/perfstat",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:aix": [
+        "@rules_go//go/platform:aix": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "//conditions:default": [],

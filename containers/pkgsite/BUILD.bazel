@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_cross_binary")
+load("@rules_go//go:def.bzl", "go_cross_binary")
 load("@rules_oci//oci:defs.bzl", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//build/rules/container:def.bzl", "container_image")
@@ -6,19 +6,19 @@ load("//build/rules/deb:deb_pkg.bzl", "deb_pkg")
 
 go_cross_binary(
     name = "frontend_linux_amd64",
-    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    platform = "@rules_go//go/toolchain:linux_amd64",
     target = "//third_party/pkgsite/cmd/frontend",
 )
 
 go_cross_binary(
     name = "seeddb_linux_amd64",
-    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    platform = "@rules_go//go/toolchain:linux_amd64",
     target = "//third_party/pkgsite/devtools/cmd/seeddb",
 )
 
 go_cross_binary(
     name = "db_linux_amd64",
-    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    platform = "@rules_go//go/toolchain:linux_amd64",
     target = "//third_party/pkgsite/devtools/cmd/db",
 )
 

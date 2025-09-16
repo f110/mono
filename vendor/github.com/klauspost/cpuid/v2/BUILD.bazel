@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "cpuid",
@@ -20,10 +20,10 @@ go_library(
     importpath = "github.com/klauspost/cpuid/v2",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+        "@rules_go//go/platform:darwin_arm64": [
             "//vendor/golang.org/x/sys/unix",
         ],
-        "@io_bazel_rules_go//go/platform:ios_arm64": [
+        "@rules_go//go/platform:ios_arm64": [
             "//vendor/golang.org/x/sys/unix",
         ],
         "//conditions:default": [],

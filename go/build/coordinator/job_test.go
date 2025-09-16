@@ -55,7 +55,7 @@ func TestJobBuilder(t *testing.T) {
 			Mutation: func(_ *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
 				return nil, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "job is not set",
 		},
 		{
@@ -63,21 +63,21 @@ func TestJobBuilder(t *testing.T) {
 				j.RepositoryName = ""
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "job is not set",
 		},
 		{
 			Mutation: func(j *config.Job, r *database.SourceRepository, _ *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
 				return j, r, nil
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "task is not set",
 		},
 		{
 			Mutation: func(j *config.Job, _ *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
 				return j, nil, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "repo is not set",
 		},
 		{
@@ -90,7 +90,7 @@ func TestJobBuilder(t *testing.T) {
 			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 		},
 		{
@@ -99,13 +99,13 @@ func TestJobBuilder(t *testing.T) {
 				ta.Command = "run"
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					RemoveContainer("report"),
 					RemoveVolume("comm"),
-					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64", "//...")),
+					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "//...")),
 				},
 			},
 		},
@@ -114,7 +114,7 @@ func TestJobBuilder(t *testing.T) {
 				ta.IsTrunk = false
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
@@ -130,7 +130,7 @@ func TestJobBuilder(t *testing.T) {
 				j.MemoryLimit = "2048Mi"
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.ResourceLimit(resource.MustParse("2000m"), resource.MustParse("2048Mi")))},
@@ -141,7 +141,7 @@ func TestJobBuilder(t *testing.T) {
 				j.Env = map[string]any{"FOOBAR": "baz"}
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.EnvVar("FOOBAR", "baz"))},
@@ -152,7 +152,7 @@ func TestJobBuilder(t *testing.T) {
 				r.Private = true
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
@@ -167,12 +167,12 @@ func TestJobBuilder(t *testing.T) {
 				ta.ConfigName = "e2e"
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					k8sfactory.OnContainer("main",
-						k8sfactory.Args("test", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--config=e2e", "--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64",
+						k8sfactory.Args("test", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--config=e2e", "--platforms=@rules_go//go/toolchain:linux_amd64",
 							"--build_event_binary_file=/comm/bep", "--cache_test_results=no",
 							"--", job.Targets[0],
 						),
@@ -185,7 +185,7 @@ func TestJobBuilder(t *testing.T) {
 				j.Secrets = []starlark.Value{&config.Secret{MountPath: "/etc/job/secret", VaultMount: "secrets", VaultPath: "login", VaultKey: "password"}}
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{
 				saObject,
 				jobObject,
@@ -209,7 +209,7 @@ func TestJobBuilder(t *testing.T) {
 				j.Secrets = []starlark.Value{&config.RegistrySecret{Host: "registry.example.com", VaultMount: "secrets", VaultPath: "registry", VaultKey: "foobar"}}
 				return j, r, ta
 			},
-			Platform: "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform: "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{
 				saObject,
 				jobObject,
@@ -241,7 +241,7 @@ func TestJobBuilder(t *testing.T) {
 				j.Container = "example.com/bazel:bazelisk"
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {k8sfactory.OnContainer("main", k8sfactory.Image("example.com/bazel:bazelisk", nil))},
@@ -254,14 +254,14 @@ func TestJobBuilder(t *testing.T) {
 				j.Args = []string{"--verbose"}
 				return j, r, ta
 			},
-			Platform:      "@io_bazel_rules_go//go/toolchain:linux_amd64",
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					RemoveContainer("report"),
 					RemoveVolume("comm"),
 					k8sfactory.OnContainer("main",
-						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64", "//...", "--", "--verbose"),
+						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "//...", "--", "--verbose"),
 					),
 				},
 			},
@@ -574,7 +574,7 @@ func testJobBuilderFixtures() (*config.Job, *database.SourceRepository, *databas
 							Image:           "registry/bazel:bazelisk",
 							ImagePullPolicy: corev1.PullAlways,
 							Args: []string{
-								"test", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64",
+								"test", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64",
 								"--build_event_binary_file=/comm/bep", "--cache_test_results=no",
 								"--", job.Targets[0],
 							},

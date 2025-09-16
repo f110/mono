@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go-m1cpu",
@@ -8,10 +8,10 @@ go_library(
     ],
     cgo = True,
     clinkopts = select({
-        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+        "@rules_go//go/platform:darwin_arm64": [
             "-framework CoreFoundation -framework IOKit",
         ],
-        "@io_bazel_rules_go//go/platform:ios_arm64": [
+        "@rules_go//go/platform:ios_arm64": [
             "-framework CoreFoundation -framework IOKit",
         ],
         "//conditions:default": [],

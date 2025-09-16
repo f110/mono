@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "blake2b",
@@ -16,7 +16,7 @@ go_library(
     importpath = "golang.org/x/crypto/blake2b",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:amd64": [
+        "@rules_go//go/platform:amd64": [
             "//vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],

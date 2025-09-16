@@ -19,7 +19,7 @@ go_library(
     deps = [
         "//third_party/pkgsite/vendor/golang.org/x/crypto/internal/alias",
     ] + select({
-        "@io_bazel_rules_go//go/platform:s390x": [
+        "@rules_go//go/platform:s390x": [
             "//third_party/pkgsite/vendor/golang.org/x/sys/cpu",
         ],
         "//conditions:default": [],

@@ -1,8 +1,8 @@
-bazel_dep(name = "rules_go", repo_name = "io_bazel_rules_go", version = "0.57.0")
-bazel_dep(name = "gazelle", repo_name = "bazel_gazelle", version = "0.45.0")
+bazel_dep(name = "rules_go", version = "0.57.0")
+bazel_dep(name = "gazelle", version = "0.45.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.1")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-bazel_dep(name = "protobuf", repo_name = "com_google_protobuf", version = "32.1")
+bazel_dep(name = "protobuf", version = "32.1")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
 bazel_dep(name = "rules_oci", version = "2.2.6")
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.1")
@@ -23,7 +23,7 @@ git_repository(
 
 git_repository(
     name = "dev_f110_kubeproto",
-    commit = "90d00e364ad040d388c54b32c9ac3d85604bc6ec",
+    commit = "967ff2e248a2134c37d514499b4370a58e33bd24",
     remote = "https://github.com/f110/kubeproto",
 )
 

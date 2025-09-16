@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
 
 go_library(
     name = "build-sidecar_lib",
@@ -20,7 +20,7 @@ go_binary(
 
 go_cross_binary(
     name = "linux_amd64",
-    platform = "@io_bazel_rules_go//go/toolchain:linux_amd64",
+    platform = "@rules_go//go/toolchain:linux_amd64",
     target = ":build-sidecar",
     visibility = ["//visibility:public"],
 )

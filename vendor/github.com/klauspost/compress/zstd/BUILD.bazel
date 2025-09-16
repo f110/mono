@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "zstd",
@@ -52,7 +52,7 @@ go_library(
         "//vendor/github.com/klauspost/compress/internal/snapref",
         "//vendor/github.com/klauspost/compress/zstd/internal/xxhash",
     ] + select({
-        "@io_bazel_rules_go//go/platform:amd64": [
+        "@rules_go//go/platform:amd64": [
             "//vendor/github.com/klauspost/compress/internal/cpuinfo",
         ],
         "//conditions:default": [],

@@ -1,5 +1,5 @@
 BAZEL ?= bazel
-GO ?= $(BAZEL) run @io_bazel_rules_go//go --
+GO ?= $(BAZEL) run @rules_go//go --
 
 update-deps:
 	$(GO) mod tidy
@@ -17,7 +17,7 @@ deb_packages.bzl: deb_packages.yaml
 .PHONY: update-deps gen
 
 push-unifibackup:
-	bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64 //containers/unifibackup:push
+	bazel run --platforms=@rules_go//go/toolchain:linux_arm64 //containers/unifibackup:push
 
 DATABASE_HOST     = localhost
 DATABASE_PORT     = 13306

@@ -11,7 +11,7 @@ job(
         "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     cpu_limit = "2000m",
     memory_limit = "8192Mi",
@@ -24,7 +24,7 @@ job(
     container = "repo.center.x.f110.dev/codesearch/zoekt-indexer-builder:latest",
     targets = ["//containers/zoekt-indexer:push"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     args = ["--insecure"],
     cpu_limit = "2000m",
@@ -36,7 +36,7 @@ job(
     command = "run",
     targets = ["//containers/build:push_build"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     args = [
         "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
@@ -50,7 +50,7 @@ job(
     command = "run",
     targets = ["//containers/build:push_sidecar"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     args = [
         "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
@@ -64,7 +64,7 @@ job(
     command = "run",
     targets = ["//containers/controller-manager:push"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     args = [
         "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
@@ -78,7 +78,7 @@ job(
     command = "run",
     targets = ["//cmd/rotarypress"],
     platforms = [
-        "@io_bazel_rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_amd64",
     ],
     secrets = [
         secret(mount_path = "/var/vault/globemaster/storage/token", vault_mount = "globemaster", vault_path = "storage/mirror-bazel/token", vault_key = "secretkey"),

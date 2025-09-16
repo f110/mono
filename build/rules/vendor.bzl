@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_context")
+load("@rules_go//go:def.bzl", "go_context")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 
 def _vendor_kubeproto_impl(ctx):
@@ -83,15 +83,15 @@ _go_vendor = rule(
             allow_single_file = True,
         ),
         "_gazelle": attr.label(
-            default = "@bazel_gazelle//cmd/gazelle",
+            default = "@gazelle//cmd/gazelle",
             executable = True,
             cfg = "host",
         ),
         "_go_context_data": attr.label(
-            default = "@io_bazel_rules_go//:go_context_data",
+            default = "@rules_go//:go_context_data",
         ),
     },
-    toolchains = ["@io_bazel_rules_go//go:toolchain"],
+    toolchains = ["@rules_go//go:toolchain"],
 )
 
 def go_vendor(name, **kwargs):

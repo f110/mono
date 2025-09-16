@@ -1,5 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
-load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//proto:def.bzl", "go_proto_library")
 load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 
 go_library(
@@ -70,7 +70,7 @@ go_test(
 
 go_proto_library(
     name = "git_data_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    compilers = ["@rules_go//proto:go_grpc"],
     importpath = "go.f110.dev/mono/go/git",
     proto = "//proto/git:git_data",
     visibility = ["//visibility:private"],
