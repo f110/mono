@@ -12,7 +12,7 @@ go_library(
         "//go/ctxutil",
         "//go/logger",
         "//go/storage",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )

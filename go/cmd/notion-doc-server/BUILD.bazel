@@ -15,6 +15,6 @@ go_library(
         "//go/cli",
         "//go/ctxutil",
         "//go/notion",
-        "//vendor/go.f110.dev/xerrors",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

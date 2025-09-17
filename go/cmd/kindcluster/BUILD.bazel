@@ -9,7 +9,7 @@ go_library(
         "//go/cli",
         "//go/ctxutil",
         "//go/k8s/kind",
-        "//vendor/go.f110.dev/xerrors",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

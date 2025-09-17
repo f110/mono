@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "xml",
-    srcs = ["error_utils.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/aws/protocol/xml",
-    importpath = "github.com/aws/aws-sdk-go-v2/aws/protocol/xml",
-    visibility = ["//visibility:public"],
-)

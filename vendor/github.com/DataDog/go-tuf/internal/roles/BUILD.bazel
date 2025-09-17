@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "roles",
-    srcs = ["roles.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-tuf/internal/roles",
-    importpath = "github.com/DataDog/go-tuf/internal/roles",
-    visibility = ["//vendor/github.com/DataDog/go-tuf:__subpackages__"],
-)

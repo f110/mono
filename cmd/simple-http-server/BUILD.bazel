@@ -16,9 +16,9 @@ go_library(
         "//go/http/httpserver",
         "//go/logger",
         "//go/ucl",
-        "//vendor/github.com/nissy/bon",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
+        "@com_github_nissy_bon//:bon",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -39,8 +39,8 @@ go_test(
         "//go/logger",
         "//go/netutil",
         "//go/ucl",
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
 

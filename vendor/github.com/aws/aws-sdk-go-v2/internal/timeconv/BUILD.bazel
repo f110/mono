@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "timeconv",
-    srcs = ["duration.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/internal/timeconv",
-    importpath = "github.com/aws/aws-sdk-go-v2/internal/timeconv",
-    visibility = ["//vendor/github.com/aws/aws-sdk-go-v2:__subpackages__"],
-)

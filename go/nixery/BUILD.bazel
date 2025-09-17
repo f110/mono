@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/storage",
-        "//vendor/github.com/google/nixery/storage",
-        "//vendor/go.f110.dev/xerrors",
+        "@com_github_google_nixery//storage",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

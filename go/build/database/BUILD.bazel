@@ -21,7 +21,7 @@ go_library(
     ],  # keep
     importpath = "go.f110.dev/mono/go/build/database",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/go.f110.dev/protoc-ddl"],
+    deps = ["@dev_f110_go_protoc_ddl//:protoc-ddl"],
 )
 
 sql_schema(

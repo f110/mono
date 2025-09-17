@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "errors",
-    srcs = ["errors.go"],
-    importmap = "go.f110.dev/mono/vendor/go.f110.dev/go-memcached/errors",
-    importpath = "go.f110.dev/go-memcached/errors",
-    visibility = ["//visibility:public"],
-)

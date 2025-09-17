@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "byteutil",
-    srcs = ["byteutil.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/ProtonMail/go-crypto/internal/byteutil",
-    importpath = "github.com/ProtonMail/go-crypto/internal/byteutil",
-    visibility = ["//vendor/github.com/ProtonMail/go-crypto:__subpackages__"],
-)

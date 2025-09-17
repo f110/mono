@@ -10,9 +10,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logger",
-        "//vendor/github.com/mattn/go-shellwords",
-        "//vendor/github.com/spf13/pflag",
-        "//vendor/go.f110.dev/xerrors",
+        "@com_github_mattn_go_shellwords//:go-shellwords",
+        "@com_github_spf13_pflag//:pflag",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 
@@ -24,8 +24,8 @@ go_test(
     ],
     embed = [":cli"],
     deps = [
-        "//vendor/github.com/spf13/pflag",
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_spf13_pflag//:pflag",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

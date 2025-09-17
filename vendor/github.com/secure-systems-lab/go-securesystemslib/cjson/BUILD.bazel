@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "cjson",
-    srcs = ["canonicaljson.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/secure-systems-lab/go-securesystemslib/cjson",
-    importpath = "github.com/secure-systems-lab/go-securesystemslib/cjson",
-    visibility = ["//visibility:public"],
-)

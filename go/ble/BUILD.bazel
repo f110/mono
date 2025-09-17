@@ -14,25 +14,25 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/ctxutil",
-        "//vendor/go.f110.dev/xerrors",
+        "@dev_f110_go_xerrors//:xerrors",
     ] + select({
         "@rules_go//go/platform:android": [
             "//go/logger",
-            "//vendor/github.com/go-ble/ble",
-            "//vendor/github.com/go-ble/ble/linux",
-            "//vendor/go.uber.org/zap",
+            "@com_github_go_ble_ble//:ble",
+            "@com_github_go_ble_ble//linux",
+            "@org_uber_go_zap//:zap",
         ],
         "@rules_go//go/platform:darwin": [
-            "//vendor/github.com/JuulLabs-OSS/cbgo",
+            "@com_github_juullabs_oss_cbgo//:cbgo",
         ],
         "@rules_go//go/platform:ios": [
-            "//vendor/github.com/JuulLabs-OSS/cbgo",
+            "@com_github_juullabs_oss_cbgo//:cbgo",
         ],
         "@rules_go//go/platform:linux": [
             "//go/logger",
-            "//vendor/github.com/go-ble/ble",
-            "//vendor/github.com/go-ble/ble/linux",
-            "//vendor/go.uber.org/zap",
+            "@com_github_go_ble_ble//:ble",
+            "@com_github_go_ble_ble//linux",
+            "@org_uber_go_zap//:zap",
         ],
         "//conditions:default": [],
     }),

@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logger",
-        "//vendor/go.uber.org/zap",
-        "//vendor/google.golang.org/grpc",
+        "@org_golang_google_grpc//:grpc",
+        "@org_uber_go_zap//:zap",
     ],
 )

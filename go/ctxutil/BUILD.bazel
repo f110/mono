@@ -11,5 +11,5 @@ go_test(
     name = "ctxutil_test",
     srcs = ["context_test.go"],
     embed = [":ctxutil"],
-    deps = ["//vendor/github.com/stretchr/testify/assert"],
+    deps = ["@com_github_stretchr_testify//assert"],
 )

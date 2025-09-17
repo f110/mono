@@ -24,10 +24,10 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/bazel/devtools",
-        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
-        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
-        "//vendor/google.golang.org/protobuf/types/known/anypb",
-        "//vendor/google.golang.org/protobuf/types/known/durationpb",
-        "//vendor/google.golang.org/protobuf/types/known/timestamppb",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/known/anypb",
+        "@org_golang_google_protobuf//types/known/durationpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )

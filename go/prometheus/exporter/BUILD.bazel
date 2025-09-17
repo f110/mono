@@ -11,7 +11,7 @@ go_library(
     deps = [
         "//go/ble/inkbird",
         "//go/jma",
-        "//vendor/github.com/prometheus/client_golang/prometheus",
-        "//vendor/go.f110.dev/xerrors",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

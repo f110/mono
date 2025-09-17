@@ -3,7 +3,8 @@ GO ?= $(BAZEL) run @rules_go//go --
 
 update-deps:
 	$(GO) mod tidy
-	$(BAZEL) run //:vendor
+	$(BAZEL) mod tidy
+	$(BAZEL) run //:gazelle
 
 gen:
 	bazel query 'kind(vendor_ddl, //...)' | xargs -n1 bazel run

@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/cli",
         "//go/codesearch",
-        "//vendor/go.f110.dev/xerrors",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

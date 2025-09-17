@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "audit",
-    srcs = ["audit_logger.go"],
-    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/authz/audit",
-    importpath = "google.golang.org/grpc/authz/audit",
-    visibility = ["//visibility:public"],
-)

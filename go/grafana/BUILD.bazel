@@ -5,5 +5,5 @@ go_library(
     srcs = ["client.go"],
     importpath = "go.f110.dev/mono/go/grafana",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/go.f110.dev/xerrors"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
 )

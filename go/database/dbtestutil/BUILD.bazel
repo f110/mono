@@ -8,6 +8,6 @@ go_library(
     deps = [
         "//go/logger",
         "//go/netutil",
-        "//vendor/go.f110.dev/xerrors",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

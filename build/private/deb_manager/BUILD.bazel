@@ -11,9 +11,9 @@ go_library(
     deps = [
         "//go/enumerable",
         "//go/logger",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
-        "//vendor/gopkg.in/yaml.v3:yaml_v3",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@in_gopkg_yaml_v3//:yaml_v3",
+        "@org_uber_go_zap//:zap",
     ],
 )
 

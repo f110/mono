@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "stat",
-    srcs = ["summary.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/sketches-go/ddsketch/stat",
-    importpath = "github.com/DataDog/sketches-go/ddsketch/stat",
-    visibility = ["//visibility:public"],
-)

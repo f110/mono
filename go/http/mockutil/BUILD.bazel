@@ -5,5 +5,5 @@ go_library(
     srcs = ["responder.go"],
     importpath = "go.f110.dev/mono/go/http/mockutil",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/jarcoal/httpmock"],
+    deps = ["@com_github_jarcoal_httpmock//:httpmock"],
 )

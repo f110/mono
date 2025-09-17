@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "immutable",
-    srcs = ["stringslice.go"],
-    importmap = "go.f110.dev/mono/vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler/internal/immutable",
-    importpath = "gopkg.in/DataDog/dd-trace-go.v1/profiler/internal/immutable",
-    visibility = ["//vendor/gopkg.in/DataDog/dd-trace-go.v1/profiler:__subpackages__"],
-)

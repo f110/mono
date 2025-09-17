@@ -9,9 +9,9 @@ go_library(
         "//go/cli",
         "//go/logger",
         "//go/text/converter",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
-        "//vendor/google.golang.org/grpc",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_uber_go_zap//:zap",
     ],
 )
 

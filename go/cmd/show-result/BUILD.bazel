@@ -6,10 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/show-result",
     visibility = ["//visibility:private"],
     deps = [
-        "//vendor/github.com/shurcooL/githubv4",
-        "//vendor/github.com/spf13/pflag",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/golang.org/x/oauth2",
+        "@com_github_shurcool_githubv4//:githubv4",
+        "@com_github_spf13_pflag//:pflag",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_x_oauth2//:oauth2",
     ],
 )
 

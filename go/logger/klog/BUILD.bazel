@@ -5,5 +5,5 @@ go_library(
     srcs = ["wrap.go"],
     importpath = "go.f110.dev/mono/go/logger/klog",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/k8s.io/klog/v2:klog"],
+    deps = ["@io_k8s_klog_v2//:klog"],
 )

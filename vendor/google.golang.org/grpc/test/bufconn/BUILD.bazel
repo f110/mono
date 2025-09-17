@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "bufconn",
-    srcs = ["bufconn.go"],
-    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/test/bufconn",
-    importpath = "google.golang.org/grpc/test/bufconn",
-    visibility = ["//visibility:public"],
-)

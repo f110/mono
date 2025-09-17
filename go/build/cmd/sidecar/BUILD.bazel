@@ -14,8 +14,8 @@ go_library(
         "//go/cli",
         "//go/file",
         "//go/git",
-        "//vendor/github.com/fsnotify/fsnotify",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/google.golang.org/protobuf/encoding/protodelim",
+        "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_protobuf//encoding/protodelim",
     ],
 )

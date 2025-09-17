@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "version",
-    srcs = ["version.go"],
-    importmap = "go.f110.dev/mono/vendor/google.golang.org/grpc/xds/internal/xdsclient/xdsresource/version",
-    importpath = "google.golang.org/grpc/xds/internal/xdsclient/xdsresource/version",
-    visibility = ["//vendor/google.golang.org/grpc/xds:__subpackages__"],
-)

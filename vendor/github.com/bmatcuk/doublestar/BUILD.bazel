@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "doublestar",
-    srcs = ["doublestar.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/bmatcuk/doublestar",
-    importpath = "github.com/bmatcuk/doublestar",
-    visibility = ["//visibility:public"],
-)

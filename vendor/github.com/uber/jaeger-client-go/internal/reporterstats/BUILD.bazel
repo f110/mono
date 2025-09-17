@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "reporterstats",
-    srcs = ["stats.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/uber/jaeger-client-go/internal/reporterstats",
-    importpath = "github.com/uber/jaeger-client-go/internal/reporterstats",
-    visibility = ["//vendor/github.com/uber/jaeger-client-go:__subpackages__"],
-)

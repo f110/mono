@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "callctx",
-    srcs = ["callctx.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/googleapis/gax-go/v2/callctx",
-    importpath = "github.com/googleapis/gax-go/v2/callctx",
-    visibility = ["//visibility:public"],
-)

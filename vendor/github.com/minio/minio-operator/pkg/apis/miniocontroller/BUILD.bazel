@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "miniocontroller",
-    srcs = ["register.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/minio/minio-operator/pkg/apis/miniocontroller",
-    importpath = "github.com/minio/minio-operator/pkg/apis/miniocontroller",
-    visibility = ["//visibility:public"],
-)

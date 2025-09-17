@@ -12,7 +12,7 @@ go_test(
     srcs = ["parser_test.go"],
     embed = [":macports"],
     deps = [
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

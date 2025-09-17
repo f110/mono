@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "regex",
-    srcs = ["standard.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/go-enry/go-enry/v2/regex",
-    importpath = "github.com/go-enry/go-enry/v2/regex",
-    visibility = ["//visibility:public"],
-)

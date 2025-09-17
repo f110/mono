@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/storage/storagetest",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/github.com/jarcoal/httpmock",
-        "//vendor/github.com/minio/minio-go/v7:minio-go",
+        "@com_github_jarcoal_httpmock//:httpmock",
+        "@com_github_minio_minio_go_v7//:minio-go",
     ],
 )

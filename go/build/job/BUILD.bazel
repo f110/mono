@@ -5,5 +5,5 @@ go_library(
     srcs = ["job.go"],
     importpath = "go.f110.dev/mono/go/build/job",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/go.uber.org/zap"],
+    deps = ["@org_uber_go_zap//:zap"],
 )

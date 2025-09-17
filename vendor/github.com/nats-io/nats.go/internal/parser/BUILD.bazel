@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "parser",
-    srcs = ["parse.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/nats-io/nats.go/internal/parser",
-    importpath = "github.com/nats-io/nats.go/internal/parser",
-    visibility = ["//vendor/github.com/nats-io/nats.go:__subpackages__"],
-)

@@ -11,5 +11,5 @@ go_test(
     name = "stringsutil_test",
     srcs = ["random_test.go"],
     embed = [":stringsutil"],
-    deps = ["//vendor/github.com/stretchr/testify/assert"],
+    deps = ["@com_github_stretchr_testify//assert"],
 )

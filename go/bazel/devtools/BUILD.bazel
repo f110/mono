@@ -36,9 +36,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/bazel/devtools",
     visibility = ["//visibility:public"],
     deps = [
-        "//vendor/google.golang.org/protobuf/reflect/protoreflect",
-        "//vendor/google.golang.org/protobuf/runtime/protoimpl",
-        "//vendor/google.golang.org/protobuf/types/descriptorpb",
-        "//vendor/google.golang.org/protobuf/types/known/durationpb",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/descriptorpb",
+        "@org_golang_google_protobuf//types/known/durationpb",
     ],
 )

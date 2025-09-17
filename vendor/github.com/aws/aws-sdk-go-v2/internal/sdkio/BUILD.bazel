@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "sdkio",
-    srcs = ["byte.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/aws/aws-sdk-go-v2/internal/sdkio",
-    importpath = "github.com/aws/aws-sdk-go-v2/internal/sdkio",
-    visibility = ["//vendor/github.com/aws/aws-sdk-go-v2:__subpackages__"],
-)

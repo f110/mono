@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "unsafe",
-    srcs = ["utils.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/go-libddwaf/v3/internal/unsafe",
-    importpath = "github.com/DataDog/go-libddwaf/v3/internal/unsafe",
-    visibility = ["//vendor/github.com/DataDog/go-libddwaf/v3:__subpackages__"],
-)

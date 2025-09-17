@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "gostackparse",
-    srcs = ["gostackparse.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/DataDog/gostackparse",
-    importpath = "github.com/DataDog/gostackparse",
-    visibility = ["//visibility:public"],
-)

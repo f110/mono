@@ -14,9 +14,9 @@ go_library(
         "//go/logger",
         "//go/prometheus/exporter",
         "//go/ucl",
-        "//vendor/github.com/prometheus/client_golang/prometheus",
-        "//vendor/github.com/prometheus/client_golang/prometheus/promhttp",
-        "//vendor/go.uber.org/zap",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -32,8 +32,8 @@ go_test(
     embed = [":amedas-exporter_lib"],
     deps = [
         "//go/ucl",
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
 

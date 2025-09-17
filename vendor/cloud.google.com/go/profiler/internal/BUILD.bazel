@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "internal",
-    srcs = ["version.go"],
-    importmap = "go.f110.dev/mono/vendor/cloud.google.com/go/profiler/internal",
-    importpath = "cloud.google.com/go/profiler/internal",
-    visibility = ["//vendor/cloud.google.com/go/profiler:__subpackages__"],
-)

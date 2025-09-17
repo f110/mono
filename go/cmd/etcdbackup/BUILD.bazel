@@ -9,8 +9,8 @@ go_library(
         "//go/etcd",
         "//go/logger",
         "//go/storage",
-        "//vendor/github.com/spf13/pflag",
-        "//vendor/go.f110.dev/xerrors",
+        "@com_github_spf13_pflag//:pflag",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

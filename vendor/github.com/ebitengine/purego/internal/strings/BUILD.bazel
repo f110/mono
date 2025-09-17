@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "strings",
-    srcs = ["strings.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/ebitengine/purego/internal/strings",
-    importpath = "github.com/ebitengine/purego/internal/strings",
-    visibility = ["//vendor/github.com/ebitengine/purego:__subpackages__"],
-)

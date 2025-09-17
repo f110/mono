@@ -12,10 +12,10 @@ go_library(
         "//go/fsm",
         "//go/logger",
         "//go/storage",
-        "//vendor/github.com/prometheus/client_model/go",
-        "//vendor/github.com/prometheus/common/expfmt",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
+        "@com_github_prometheus_client_model//go",
+        "@com_github_prometheus_common//expfmt",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )
 

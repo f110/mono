@@ -1048,8 +1048,10 @@ go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0 h1:gSnmo+s12m4IdHyw
 go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0/go.mod h1:sQJf2G+CTpEwIOqSogbqYtVSJCVxB2zYraxUK4HNGL0=
 go.f110.dev/protoc-ddl v0.0.0-20250215035122-f062b329388b h1:p1mI+7OFVMK0aEKyDIyp2UfDoAHNqNzKvI3fy3O4HpA=
 go.f110.dev/protoc-ddl v0.0.0-20250215035122-f062b329388b/go.mod h1:+L3lCQcV1EkT4qZQo9Hjybk35LEMtleeuinfIVqHo/Y=
-go.f110.dev/xerrors v0.0.0-20250707144214-45e6a09c948d h1:de4V8TyfvA0MFVLdHhe2MqocqrtKAJy47bEvxBJaUUo=
-go.f110.dev/xerrors v0.0.0-20250707144214-45e6a09c948d/go.mod h1:3yUl7O5IuWwb+EnyHpK/zlyMK8z8s0boTM8skb6UyWg=
+go.f110.dev/protoc-ddl v0.0.0-20250913124159-0250c7635d39 h1:f9RadXAlVGYTw/Fc8gP8PNIQnK42dgcKYjbUI1ZKc9c=
+go.f110.dev/protoc-ddl v0.0.0-20250913124159-0250c7635d39/go.mod h1:+L3lCQcV1EkT4qZQo9Hjybk35LEMtleeuinfIVqHo/Y=
+go.f110.dev/xerrors v0.0.0-20250916060705-8edc3a624c97 h1:MxCt0PxUvBmYpDlFQLE+V31Gs91H0sVaqHkLF+MBxlI=
+go.f110.dev/xerrors v0.0.0-20250916060705-8edc3a624c97/go.mod h1:3yUl7O5IuWwb+EnyHpK/zlyMK8z8s0boTM8skb6UyWg=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=

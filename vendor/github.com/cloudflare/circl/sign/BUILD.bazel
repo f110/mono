@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "sign",
-    srcs = ["sign.go"],
-    importmap = "go.f110.dev/mono/vendor/github.com/cloudflare/circl/sign",
-    importpath = "github.com/cloudflare/circl/sign",
-    visibility = ["//visibility:public"],
-)

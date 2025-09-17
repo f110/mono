@@ -5,7 +5,7 @@ go_library(
     srcs = ["literal.go"],
     importpath = "go.f110.dev/mono/go/regexp/regexputil",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/go.f110.dev/xerrors"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
 )
 
 go_test(
@@ -13,7 +13,7 @@ go_test(
     srcs = ["literal_test.go"],
     embed = [":regexputil"],
     deps = [
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

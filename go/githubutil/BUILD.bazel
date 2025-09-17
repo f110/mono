@@ -11,14 +11,14 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/cli",
-        "//vendor/github.com/golang-jwt/jwt/v4:jwt",
-        "//vendor/github.com/google/go-github/v49/github",
-        "//vendor/github.com/jarcoal/httpmock",
-        "//vendor/github.com/shurcooL/githubv4",
-        "//vendor/github.com/spf13/pflag",
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/golang.org/x/oauth2",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+        "@com_github_google_go_github_v49//github",
+        "@com_github_jarcoal_httpmock//:httpmock",
+        "@com_github_shurcool_githubv4//:githubv4",
+        "@com_github_spf13_pflag//:pflag",
+        "@com_github_stretchr_testify//assert",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_x_oauth2//:oauth2",
     ],
 )
 
@@ -27,8 +27,8 @@ go_test(
     srcs = ["testing_test.go"],
     embed = [":githubutil"],
     deps = [
-        "//vendor/github.com/google/go-github/v49/github",
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_google_go_github_v49//github",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

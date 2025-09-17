@@ -12,10 +12,10 @@ go_library(
         "//go/cli",
         "//go/logger",
         "//go/storage",
-        "//vendor/github.com/ProtonMail/go-crypto/openpgp",
-        "//vendor/github.com/ProtonMail/go-crypto/openpgp/packet",
-        "//vendor/go.f110.dev/xerrors",
-        "//vendor/go.uber.org/zap",
+        "@com_github_protonmail_go_crypto//openpgp",
+        "@com_github_protonmail_go_crypto//openpgp/packet",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -33,7 +33,7 @@ go_test(
     ],
     embed = [":mirror-releases_lib"],
     deps = [
-        "//vendor/github.com/stretchr/testify/assert",
-        "//vendor/github.com/stretchr/testify/require",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )
