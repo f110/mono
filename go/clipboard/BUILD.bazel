@@ -6,8 +6,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/clipboard",
     visibility = ["//visibility:public"],
     deps = [
-        "@com_github_burntsushi_xgb//:go_default_library",
-        "@com_github_burntsushi_xgb//xproto:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
+        "@com_github_burntsushi_xgb//:xgb",
+        "@com_github_burntsushi_xgb//xproto",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

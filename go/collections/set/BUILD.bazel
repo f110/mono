@@ -11,5 +11,5 @@ go_test(
     name = "set_test",
     srcs = ["map_test.go"],
     embed = [":set"],
-    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
+    deps = ["@com_github_stretchr_testify//assert"],
 )

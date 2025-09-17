@@ -12,7 +12,7 @@ go_library(
         "//go/logger",
         "//go/netutil",
         "//go/stringsutil",
-        "@dev_f110_go_xerrors//:go_default_library",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 
@@ -29,7 +29,7 @@ go_test(
     embed = [":vault"],
     flaky = True,
     deps = [
-        "@com_github_stretchr_testify//assert:go_default_library",
-        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

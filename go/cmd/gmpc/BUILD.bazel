@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
-        "@dev_f110_go_xerrors//:go_default_library",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

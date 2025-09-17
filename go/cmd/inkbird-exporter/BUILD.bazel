@@ -8,11 +8,11 @@ go_library(
     deps = [
         "//go/logger",
         "//go/prometheus/exporter",
-        "@com_github_prometheus_client_golang//prometheus:go_default_library",
-        "@com_github_prometheus_client_golang//prometheus/promhttp:go_default_library",
-        "@com_github_spf13_pflag//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@com_github_spf13_pflag//:pflag",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )
 

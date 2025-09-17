@@ -6,8 +6,10 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/zoekt-index-show",
     visibility = ["//visibility:private"],
     deps = [
-        "@com_github_spf13_pflag//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
+        "@com_github_google_zoekt//query",
+        "@com_github_google_zoekt//shards",
+        "@com_github_spf13_pflag//:pflag",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

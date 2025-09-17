@@ -13,13 +13,13 @@ go_library(
         "//go/githubutil",
         "//go/k8s/volume",
         "//go/logger",
-        "@com_github_robfig_cron_v3//:go_default_library",
-        "@com_github_shurcool_githubv4//:go_default_library",
-        "@dev_f110_go_notion_api_v3//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
-        "@in_gopkg_yaml_v3//:go_default_library",
-        "@org_golang_x_oauth2//:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
+        "@com_github_robfig_cron_v3//:cron",
+        "@com_github_shurcool_githubv4//:githubv4",
+        "@dev_f110_go_notion_api_v3//:notion-api",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@in_gopkg_yaml_v3//:yaml_v3",
+        "@org_golang_x_oauth2//:oauth2",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -28,7 +28,7 @@ go_test(
     srcs = ["todo-scheduler_test.go"],
     embed = [":notion"],
     deps = [
-        "@com_github_stretchr_testify//assert:go_default_library",
-        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

@@ -5,7 +5,7 @@ go_library(
     srcs = ["decode.go"],
     importpath = "go.f110.dev/mono/go/ucl",
     visibility = ["//visibility:public"],
-    deps = ["@dev_f110_go_xerrors//:go_default_library"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
 )
 
 go_test(
@@ -14,7 +14,7 @@ go_test(
     data = glob(["testdata/**"]),
     embed = [":ucl"],
     deps = [
-        "@com_github_stretchr_testify//assert:go_default_library",
-        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

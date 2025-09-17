@@ -6,9 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/unissh-list-machines",
     visibility = ["//visibility:private"],
     deps = [
-        "@com_github_spf13_pflag//:go_default_library",
-        "@com_sslmate_software_src_go_pkcs12//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
+        "@com_github_spf13_pflag//:pflag",
+        "@com_sslmate_software_src_go_pkcs12//:go-pkcs12",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )
 

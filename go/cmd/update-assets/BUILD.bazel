@@ -8,11 +8,11 @@ go_library(
     deps = [
         "//go/cli",
         "//go/logger",
-        "@com_github_bazelbuild_buildtools//build:go_default_library",
-        "@com_github_google_go_github_v49//github:go_default_library",
-        "@com_github_masterminds_semver_v3//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
+        "@com_github_bazelbuild_buildtools//build",
+        "@com_github_google_go_github_v49//github",
+        "@com_github_masterminds_semver_v3//:semver",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_uber_go_zap//:zap",
     ],
 )
 

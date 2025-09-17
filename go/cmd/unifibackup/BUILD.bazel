@@ -8,12 +8,12 @@ go_library(
     deps = [
         "//go/ctxutil",
         "//go/logger",
-        "@com_github_fsnotify_fsnotify//:go_default_library",
-        "@com_github_spf13_pflag//:go_default_library",
-        "@com_google_cloud_go_storage//:go_default_library",
-        "@dev_f110_go_xerrors//:go_default_library",
-        "@org_golang_google_api//option:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
+        "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_spf13_pflag//:pflag",
+        "@com_google_cloud_go_storage//:storage",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_api//option",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -29,7 +29,7 @@ go_test(
     data = glob(["testdata/**"]),
     embed = [":unifibackup_lib"],
     deps = [
-        "@com_github_stretchr_testify//assert:go_default_library",
-        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

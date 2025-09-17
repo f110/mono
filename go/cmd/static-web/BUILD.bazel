@@ -9,7 +9,7 @@ go_library(
         "//go/cli",
         "//go/http/httpserver",
         "//go/logger",
-        "@org_uber_go_zap//:go_default_library",
+        "@org_uber_go_zap//:zap",
     ],
 )
 
