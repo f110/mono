@@ -9,20 +9,10 @@
 # gazelle:resolve go go.f110.dev/mono/go/bazel/buildeventstream //go/bazel/buildeventstream
 
 load("@gazelle//:def.bzl", "gazelle")
-load("//build/rules:vendor.bzl", "go_vendor")
 load("//build/rules/kind:cluster.bzl", "cluster")
 load(":development_environments.bzl", "register_development_environments")
 
 gazelle(name = "gazelle")
-
-go_vendor(
-    name = "vendor",
-    patches = [
-        "patch/fix-minio-operator-group-name.patch",
-        "patch/fix-minio-operator-schemagroupversion.patch",
-        "patch/cloudflare-circl-remove-assembly-codes.patch",
-    ],
-)
 
 cluster(
     name = "k8scluster",

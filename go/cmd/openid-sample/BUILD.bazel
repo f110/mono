@@ -6,8 +6,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/openid-sample",
     visibility = ["//visibility:private"],
     deps = [
-        "@com_github_zitadel_oidc_v3//pkg/client/rp",
-        "@com_github_zitadel_oidc_v3//pkg/oidc",
+        "@com_github_zitadel_oidc_v3//pkg/client/rp:go_default_library",
+        "@com_github_zitadel_oidc_v3//pkg/oidc:go_default_library",
     ],
 )
 

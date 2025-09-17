@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logger",
-        "@dev_f110_go_xerrors//:xerrors",
-        "@io_etcd_go_etcd_client_v3//:client",
+        "@dev_f110_go_xerrors//:go_default_library",
+        "@io_etcd_go_etcd_client_v3//:go_default_library",
     ],
 )

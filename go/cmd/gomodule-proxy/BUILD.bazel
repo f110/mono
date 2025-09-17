@@ -15,7 +15,7 @@ go_library(
         "//go/githubutil",
         "//go/gomodule",
         "//go/logger",
-        "@dev_f110_go_go_memcached//client",
+        "@dev_f110_go_go_memcached//client:go_default_library",
     ],
 )
 

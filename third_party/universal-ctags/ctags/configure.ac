@@ -351,8 +351,8 @@ AC_CHECK_PROG(STRIP, strip, strip, :)
 AC_SYS_LARGEFILE
 
 AC_CHECK_PROG([perl_found], [perl], [yes], [no])
-AM_CONDITIONAL([RUN_OPTLIB2C], [test "${perl_found}" = "no"])
-AM_CONDITIONAL([RUN_TXT2CSTR], [test "${perl_found}" = "no"])
+AM_CONDITIONAL([RUN_OPTLIB2C], [test "${perl_found}" = "yes"])
+AM_CONDITIONAL([RUN_TXT2CSTR], [test "${perl_found}" = "yes"])
 
 # rst2man and rst2html are part of python-docutils, and if not found
 # 	can be installed using pip ("pip install docutils"). On some

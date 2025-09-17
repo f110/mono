@@ -14,25 +14,25 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/ctxutil",
-        "@dev_f110_go_xerrors//:xerrors",
+        "@dev_f110_go_xerrors//:go_default_library",
     ] + select({
         "@rules_go//go/platform:android": [
             "//go/logger",
-            "@com_github_go_ble_ble//:ble",
-            "@com_github_go_ble_ble//linux",
-            "@org_uber_go_zap//:zap",
+            "@com_github_go_ble_ble//:go_default_library",
+            "@com_github_go_ble_ble//linux:go_default_library",
+            "@org_uber_go_zap//:go_default_library",
         ],
         "@rules_go//go/platform:darwin": [
-            "@com_github_juullabs_oss_cbgo//:cbgo",
+            "@com_github_juullabs_oss_cbgo//:go_default_library",
         ],
         "@rules_go//go/platform:ios": [
-            "@com_github_juullabs_oss_cbgo//:cbgo",
+            "@com_github_juullabs_oss_cbgo//:go_default_library",
         ],
         "@rules_go//go/platform:linux": [
             "//go/logger",
-            "@com_github_go_ble_ble//:ble",
-            "@com_github_go_ble_ble//linux",
-            "@org_uber_go_zap//:zap",
+            "@com_github_go_ble_ble//:go_default_library",
+            "@com_github_go_ble_ble//linux:go_default_library",
+            "@org_uber_go_zap//:go_default_library",
         ],
         "//conditions:default": [],
     }),

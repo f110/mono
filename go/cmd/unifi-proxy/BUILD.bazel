@@ -7,9 +7,9 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/ctxutil",
-        "@com_github_golang_jwt_jwt_v4//:jwt",
-        "@com_github_spf13_pflag//:pflag",
-        "@dev_f110_go_xerrors//:xerrors",
+        "@com_github_golang_jwt_jwt_v4//:go_default_library",
+        "@com_github_spf13_pflag//:go_default_library",
+        "@dev_f110_go_xerrors//:go_default_library",
     ],
 )
 

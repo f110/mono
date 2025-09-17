@@ -34,46 +34,45 @@ syntax = "proto2";
 // This package holds interesting messages.
 package my.test;  // dotted package name
 
-//import "imp.proto";
-import "multi/multi1.proto";  // unused import
+// import "imp.proto";
+import "multi/multi1.proto"; // unused import
 
 enum HatType {
   // deliberately skipping 0
   FEDORA = 1;
-  FEZ = 2;
+  FEZ    = 2;
 }
 
 // This enum represents days of the week.
 enum Days {
   option allow_alias = true;
 
-  MONDAY = 1;
+  MONDAY  = 1;
   TUESDAY = 2;
-  LUNDI = 1;  // same value as MONDAY
+  LUNDI   = 1;  // same value as MONDAY
 }
 
 // This is a message that might be sent somewhere.
 message Request {
   enum Color {
-    RED = 0;
+    RED   = 0;
     GREEN = 1;
-    BLUE = 2;
+    BLUE  = 2;
   }
   repeated int64 key = 1;
-//  optional imp.ImportedMessage imported_message = 2;
-  optional Color hue = 3; // no default
-  optional HatType hat = 4 [default=FEDORA];
-//  optional imp.ImportedMessage.Owner owner = 6;
-  optional float deadline = 7 [default=inf];
+  //  optional imp.ImportedMessage imported_message = 2;
+  optional Color   hue = 3;  // no default
+  optional HatType hat = 4 [default = FEDORA];
+  //  optional imp.ImportedMessage.Owner owner = 6;
+  optional float deadline  = 7 [default = inf];
   optional group SomeGroup = 8 {
     optional int32 group_field = 9;
   }
 
   // These foreign types are in imp2.proto,
   // which is publicly imported by imp.proto.
-//  optional imp.PubliclyImportedMessage pub = 10;
-//  optional imp.PubliclyImportedEnum pub_enum = 13 [default=HAIR];
-
+  //  optional imp.PubliclyImportedMessage pub = 10;
+  //  optional imp.PubliclyImportedEnum pub_enum = 13 [default=HAIR];
 
   // This is a map field. It will generate map[int32]string.
   map<int32, string> name_mapping = 14;
@@ -88,26 +87,26 @@ message Request {
 message Reply {
   message Entry {
     required int64 key_that_needs_1234camel_CasIng = 1;
-    optional int64 value = 2 [default=7];
-    optional int64 _my_field_name_2 = 3;
+    optional int64 value                           = 2 [default = 7];
+    optional int64 _my_field_name_2                = 3;
     enum Game {
       FOOTBALL = 1;
-      TENNIS = 2;
+      TENNIS   = 2;
     }
   }
-  repeated Entry found = 1;
-  repeated int32 compact_keys = 2 [packed=true];
+  repeated Entry    found        = 1;
+  repeated int32    compact_keys = 2 [packed = true];
   extensions 100 to max;
 }
 
 message OtherBase {
-  optional string name = 1;
+  optional string   name = 1;
   extensions 100 to max;
 }
 
 message ReplyExtensions {
   extend Reply {
-    optional double time = 101;
+    optional double          time   = 101;
     optional ReplyExtensions carrot = 105;
   }
   extend OtherBase {
@@ -121,14 +120,14 @@ message OtherReplyExtensions {
 
 // top-level extension
 extend Reply {
-  optional string tag = 103;
+  optional string               tag   = 103;
   optional OtherReplyExtensions donut = 106;
-//  optional imp.ImportedMessage elephant = 107;  // extend with message from another file.
+  //  optional imp.ImportedMessage elephant = 107;  // extend with message from another file.
 }
 
 message OldReply {
   // Extensions will be encoded in MessageSet wire format.
-  option message_set_wire_format = true;
+  option            message_set_wire_format = true;
   extensions 100 to max;
 }
 
@@ -137,20 +136,20 @@ message Communique {
 
   // This is a oneof, called "union".
   oneof union {
-    int32 number = 5;
-    string name = 6;
-    bytes data = 7;
-    double temp_c = 8;
-    float height = 9;
-    Days today = 10;
-    bool maybe = 11;
-    sint32 delta = 12;  // name will conflict with Delta below
-    Reply msg = 13;
-    group SomeGroup = 14 {
+    int32  number    = 5;
+    string name      = 6;
+    bytes  data      = 7;
+    double temp_c    = 8;
+    float  height    = 9;
+    Days   today     = 10;
+    bool   maybe     = 11;
+    sint32 delta     = 12;  // name will conflict with Delta below
+    Reply  msg       = 13;
+    group  SomeGroup = 14 {
       optional string member = 15;
     }
   }
 
-  message Delta {}
+  message Delta {
+  }
 }
-

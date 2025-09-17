@@ -33,37 +33,37 @@
 package TestPackage;
 
 message Message1 {
-    required string field1 = 1 [default="; required string thisIsNotAField = 1;"];
-    //optional string commentedField2 = 2;
-    /* optional string commentedField3 = 3; */
+  required string field1 = 1 [default = "; required string thisIsNotAField = 1;"];
+  // optional string commentedField2 = 2;
+  /* optional string commentedField3 = 3; */
 }
 
 message Message2 {
-    message NestedMessage {
-        required string field2 = 2;
-    }
+  message NestedMessage {
+    required string field2 = 2;
+  }
 
-    enum Enum1 {
-        YES = 1;
-        NO = 2;
-    }
+  enum Enum1 {
+    YES = 1;
+    NO  = 2;
+  }
 
-    repeated NestedMessage field3 = 3;
-    optional Enum1 field4 = 4;
+  repeated NestedMessage field3 = 3;
+  optional Enum1         field4 = 4;
 }
 
 message Message3 {
-    required Message2.NestedMessage field5 = 5;
-    required .TestPackage.Message2.Enum1 field6 = 6;
+  required Message2.NestedMessage      field5 = 5;
+  required .TestPackage.Message2.Enum1 field6 = 6;
 
-    extensions 7 to 8;
+  extensions 7 to 8;
 }
 
 extend Message3 {
-    optional Message2 . NestedMessage field7 = 7;
-    repeated int32 field8 = 8 [packed=true];
+  optional Message2.NestedMessage field7 = 7;
+  repeated int32                  field8 = 8 [packed = true];
 }
 
 service Service1 {
-    rpc Method1(Message1) returns(Message2);
+  rpc Method1(Message1) returns (Message2);
 }

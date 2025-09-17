@@ -21,6 +21,6 @@ go_library(
     deps = [
         "//go/build/database",
         "//go/build/database/dao",
-        "@dev_f110_go_protoc_ddl//mock",
+        "@dev_f110_go_protoc_ddl//mock:go_default_library",
     ],
 )

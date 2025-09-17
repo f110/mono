@@ -11,5 +11,5 @@ go_test(
     name = "crc16_test",
     srcs = ["crc16_test.go"],
     embed = [":crc16"],
-    deps = ["@com_github_stretchr_testify//assert"],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
 )

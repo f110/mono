@@ -55,7 +55,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
-	go.f110.dev/protoc-ddl v0.0.0-20250913124159-0250c7635d39
+	go.f110.dev/protoc-ddl v0.0.0-20250917072214-f6f450e9d2f3
 	go.f110.dev/xerrors v0.0.0-20250916060705-8edc3a624c97
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.27.0

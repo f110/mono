@@ -7,9 +7,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/k8s/client",
-        "@dev_f110_go_xerrors//:xerrors",
-        "@io_k8s_apimachinery//pkg/runtime",
-        "@io_k8s_apimachinery//pkg/runtime/serializer/json",
-        "@io_k8s_client_go//kubernetes/scheme",
+        "@dev_f110_go_xerrors//:go_default_library",
+        "@io_k8s_apimachinery//pkg/runtime:go_default_library",
+        "@io_k8s_apimachinery//pkg/runtime/serializer/json:go_default_library",
+        "@io_k8s_client_go//kubernetes/scheme:go_default_library",
     ],
 )
