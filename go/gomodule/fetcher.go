@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -219,7 +220,7 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 			if err := m.cache.Archive(ctx, module, version, w); err == nil {
 				logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
 				return nil
-			} else if err != CacheMiss {
+			} else if !errors.Is(err, CacheMiss) {
 				return xerrors.WithStack(err)
 			}
 		}
@@ -272,7 +273,10 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 				foundLicenseFile = true
 			}
 
-			p := strings.TrimPrefix(name, filepath.Dir(mod.ModFilePath))
+			p := name
+			if filepath.Dir(mod.ModFilePath) != "." {
+				p = strings.TrimPrefix(name, filepath.Dir(mod.ModFilePath))
+			}
 			fileWriter, err := zipWriter.Create(filepath.Join(modDir, p))
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -660,7 +664,7 @@ func (vcs *VCS) Download(ctx context.Context, dir string) error {
 		Auth:       vcs.getAuthMethod(ctx),
 		CABundle:   vcs.caBundle},
 	)
-	if err != nil && err != git.NoErrAlreadyUpToDate {
+	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return xerrors.WithStack(err)
 	}
 
