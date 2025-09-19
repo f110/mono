@@ -19,7 +19,10 @@ go_test(
 
 go_library(
     name = "assertion",
-    srcs = ["assert.go"],
+    srcs = [
+        "assert.go",
+        "must.go",
+    ],
     importpath = "go.f110.dev/mono/go/testing/assertion",
     visibility = ["//visibility:public"],
     deps = [

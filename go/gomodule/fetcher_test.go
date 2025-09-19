@@ -12,15 +12,16 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestModuleRoot(t *testing.T) {
 	dir := t.TempDir()
 	repo, err := git.PlainInit(dir, false)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	wt, err := repo.Worktree()
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 
 	addFile(t, wt, dir, "go.mod", []byte("module github.com/f110/gomodule-proxy-test"))
 	addFile(t, wt, dir, "const.go", []byte("package proxy\n\nconst Foo = \"bar\""))
@@ -33,7 +34,7 @@ func TestModuleRoot(t *testing.T) {
 			When:  time.Now(),
 		},
 	})
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	_, err = repo.CreateTag("v1.0.0", commitHash, &git.CreateTagOptions{
 		Tagger: &object.Signature{
 			Email: "test@example.com",
@@ -41,7 +42,7 @@ func TestModuleRoot(t *testing.T) {
 		},
 		Message: "v1.0.0",
 	})
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	_, err = repo.CreateTag("pkg/api/v1.5.0", commitHash, &git.CreateTagOptions{
 		Tagger: &object.Signature{
 			Email: "test@example.com",
@@ -49,25 +50,25 @@ func TestModuleRoot(t *testing.T) {
 		},
 		Message: "pkg/api/v1.5.0",
 	})
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 
 	vcsRepo := NewVCS("git", "", "", nil, nil)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	vcsRepo.synced = true
 	err = vcsRepo.Open(dir)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	moduleRoot := &ModuleRoot{
 		dir:      dir,
 		RootPath: "github.com/f110/gomodule-proxy-test",
 		vcs:      vcsRepo,
 	}
 	modules, err := moduleRoot.findModules(context.Background())
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	moduleRoot.Modules = modules
 	err = moduleRoot.findVersions()
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 
-	require.Len(t, modules, 2)
+	assertion.MustLen(t, modules, 2)
 	for _, v := range modules {
 		var vers []string
 		for _, ver := range v.Versions {
@@ -83,9 +84,9 @@ func TestModuleRoot(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test/pkg/api", "v1.5.0")
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	zipReader, err := zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	var files []string
 	for _, v := range zipReader.File {
 		files = append(files, v.Name)
@@ -97,9 +98,9 @@ func TestModuleRoot(t *testing.T) {
 	}, files)
 
 	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test", "v1.0.0")
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	zipReader, err = zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	files = []string{}
 	for _, v := range zipReader.File {
 		files = append(files, v.Name)
@@ -111,10 +112,12 @@ func TestModuleRoot(t *testing.T) {
 }
 
 func addFile(t *testing.T, wt *git.Worktree, dir, filename string, buf []byte) {
+	t.Helper()
+
 	err := os.MkdirAll(filepath.Dir(filepath.Join(dir, filename)), 0755)
-	require.NoError(t, err)
+	assertion.MustNoError(t, err)
 	err = os.WriteFile(filepath.Join(dir, filename), buf, 0644)
-	require.NoError(t, err)
+	assertion.NoError(t, err)
 	_, err = wt.Add(filename)
-	require.NoError(t, err)
+	assertion.NoError(t, err)
 }
