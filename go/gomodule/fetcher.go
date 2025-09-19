@@ -193,7 +193,7 @@ func (m *ModuleRoot) FindModule(module string) *Module {
 	return nil
 }
 
-func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string) error {
+func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version string, removeBazelFile bool) error {
 	mod := m.FindModule(module)
 	if mod == nil {
 		return xerrors.Definef("%s is not found", module).WithStack()
@@ -271,6 +271,9 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 
 			if filepath.Join(filepath.Dir(mod.ModFilePath), "LICENSE") == name {
 				foundLicenseFile = true
+			}
+			if removeBazelFile && (name == "BUILD" || name == "BUILD.bazel") {
+				continue Walk
 			}
 
 			p := name

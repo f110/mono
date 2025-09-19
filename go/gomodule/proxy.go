@@ -30,22 +30,35 @@ const (
 type ModuleProxy struct {
 	conf Config
 
-	fetcher *ModuleFetcher
-	ghProxy *GitHubProxy
-	cache   *ModuleCache
+	fetcher         *ModuleFetcher
+	ghProxy         *GitHubProxy
+	cache           *ModuleCache
+	removeBazelFile bool
 
 	mu              sync.Mutex
 	confLookupCache map[string]*ModuleSetting
 }
 
-func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, ghClient *github.Client, tokenProvider *githubutil.TokenProvider, caBundle []byte) *ModuleProxy {
-	return &ModuleProxy{
+type ModuleProxyOption func(*ModuleProxy)
+
+func RemoveBazelFiles(v bool) ModuleProxyOption {
+	return func(p *ModuleProxy) {
+		p.removeBazelFile = v
+	}
+}
+
+func NewModuleProxy(conf Config, moduleDir string, cache *ModuleCache, ghClient *github.Client, tokenProvider *githubutil.TokenProvider, caBundle []byte, opts ...ModuleProxyOption) *ModuleProxy {
+	p := &ModuleProxy{
 		conf:            conf,
 		fetcher:         NewModuleFetcher(moduleDir, cache, tokenProvider, caBundle),
 		ghProxy:         NewGitHubProxy(cache, ghClient),
 		cache:           cache,
 		confLookupCache: make(map[string]*ModuleSetting),
 	}
+	for _, v := range opts {
+		v(p)
+	}
+	return p
 }
 
 func (m *ModuleProxy) GetConfig(module string) *ModuleSetting {
@@ -207,17 +220,18 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, versi
 		return err
 	}
 
-	err = moduleRoot.Archive(ctx, w, moduleName, version)
+	err = moduleRoot.Archive(ctx, w, moduleName, version, m.removeBazelFile)
 	if err == nil {
 		return nil
 	}
 	if moduleRoot.IsGitHub {
+		logger.Log.Debug("The module root is hosted by GitHub", zap.String("module", moduleName), zap.String("version", version))
 		if module.IsPseudoVersion(version) {
-			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version); err != nil {
+			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version, m.removeBazelFile); err != nil {
 				return err
 			}
 		} else {
-			if err := m.ghProxy.Archive(ctx, w, moduleRoot, moduleName, version); err != nil {
+			if err := m.ghProxy.Archive(ctx, w, moduleRoot, moduleName, version, m.removeBazelFile); err != nil {
 				return err
 			}
 		}
@@ -313,7 +327,7 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 }
 
 func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoot, module string, pseudoVersion *PseudoVersion) (Info, error) {
-	if len(pseudoVersion.Revision) > 11 {
+	if g.cache != nil && len(pseudoVersion.Revision) > 11 {
 		t, err := g.cache.GetModInfo(module, pseudoVersion.Revision)
 		if err == nil {
 			logger.Log.Debug("The mod info was found in cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision))
@@ -333,14 +347,16 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 	}
 
 	t := commit.Commit.Committer.GetDate()
-	if err := g.cache.SetModInfo(module, commit.GetSHA(), t); err != nil {
-		logger.Log.Warn("Failed set cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision), zap.Error(err))
+	if g.cache != nil {
+		if err := g.cache.SetModInfo(module, commit.GetSHA(), t); err != nil {
+			logger.Log.Warn("Failed set cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision), zap.Error(err))
+		}
 	}
 	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t}, nil
 }
 
 func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, module *Module, version string) (string, error) {
-	if len(version) > 11 {
+	if g.cache != nil && len(version) > 11 {
 		modFile, err := g.cache.GetModFile(module.Path, version[:12])
 		if err == nil {
 			logger.Log.Debug("The module file was found in cache",
@@ -376,14 +392,16 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 	if err != nil {
 		return "", xerrors.WithStack(err)
 	}
-	if err := g.cache.SetModFile(module.Path, version, []byte(buf)); err != nil {
-		logger.Log.Warn("Failed set the module fie", zap.Error(err))
+	if g.cache != nil {
+		if err := g.cache.SetModFile(module.Path, version, []byte(buf)); err != nil {
+			logger.Log.Warn("Failed set the module fie", zap.Error(err))
+		}
 	}
 	return buf, nil
 }
 
 func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRoot, module *Module, pseudoVersion *PseudoVersion) (string, error) {
-	if len(pseudoVersion.Revision) > 11 {
+	if g.cache != nil && len(pseudoVersion.Revision) > 11 {
 		modFile, err := g.cache.GetModFile(module.Path, pseudoVersion.Revision)
 		if err == nil {
 			logger.Log.Debug("The module file was found in cache",
@@ -420,13 +438,15 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 		return "", xerrors.WithStack(err)
 	}
 
-	if err := g.cache.SetModFile(module.Path, pseudoVersion.Revision, []byte(buf)); err != nil {
-		logger.Log.Warn("Failed set the module fie", zap.Error(err))
+	if g.cache != nil {
+		if err := g.cache.SetModFile(module.Path, pseudoVersion.Revision, []byte(buf)); err != nil {
+			logger.Log.Warn("Failed set the module fie", zap.Error(err))
+		}
 	}
 	return buf, nil
 }
 
-func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
+func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string, removeBazelFile bool) error {
 	if err := g.cache.Archive(ctx, moduleName, version, w); err == nil {
 		logger.Log.Debug("An archive file of module was found in cache",
 			zap.String("module", moduleName),
@@ -457,7 +477,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 		return xerrors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
-	if err := archiver.Pack(ctx, buf); err != nil {
+	if err := archiver.Pack(ctx, buf, removeBazelFile); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -472,7 +492,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 	return nil
 }
 
-func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string) error {
+func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string, removeBazelFile bool) error {
 	mod := moduleRoot.FindModule(moduleName)
 	if mod == nil {
 		return xerrors.Definef("%s module is not found", moduleName).WithStack()
@@ -506,7 +526,7 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 		return xerrors.WithStack(err)
 	}
 	buf := new(bytes.Buffer)
-	if err := archiver.Pack(ctx, buf); err != nil {
+	if err := archiver.Pack(ctx, buf, removeBazelFile); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -539,7 +559,7 @@ func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot,
 	return &ModuleArchive{ModuleRoot: moduleRoot, Module: mod, Version: version, Revision: commit.GetSHA(), ghClient: ghClient}, nil
 }
 
-func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
+func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer, skipBazelFile bool) error {
 	logger.Log.Debug("Pack the archive file through GitHub API", zap.String("url", a.ModuleRoot.RepositoryURL))
 	u, err := url.Parse(a.ModuleRoot.RepositoryURL)
 	if err != nil {
@@ -591,6 +611,9 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer) error {
 	var files []modzip.File
 	for _, v := range fr.File {
 		if v.Mode().IsDir() {
+			continue
+		}
+		if skipBazelFile && (v.Name == "BUILD" || v.Name == "BUILD.bazel") {
 			continue
 		}
 		files = append(files, newModFile(v))

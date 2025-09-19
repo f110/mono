@@ -25,12 +25,13 @@ import (
 type goModuleProxyCommand struct {
 	*fsm.FSM
 
-	ConfigPath     string
-	ModuleDir      string
-	Addr           string
-	UpstreamURL    string
-	CABundleFile   string
-	SigningKeyFile string
+	ConfigPath      string
+	ModuleDir       string
+	Addr            string
+	UpstreamURL     string
+	CABundleFile    string
+	SigningKeyFile  string
+	RemoveBazelFile bool
 
 	StorageEndpoint        string
 	StorageRegion          string
@@ -92,6 +93,7 @@ func (c *goModuleProxyCommand) Flags(fs *cli.FlagSet) {
 	fs.String("storage-ca-file", "File path that contains the certificate of CA").Var(&c.StorageCACertFile).Default(c.StorageCACertFile)
 	fs.StringArray("memcached-servers", "Memcached server name and address for the metadata cache").Var(&c.MemcachedServers)
 	fs.String("signing-key-file", "A file path that contains signing key").Var(&c.SigningKeyFile)
+	fs.Bool("remove-bazel-file", "Remove bazel related files. CAUTION: This flag may cause a checksum mismatch").Var(&c.RemoveBazelFile)
 
 	c.githubClientFactory.Flags(fs)
 }
@@ -160,7 +162,12 @@ func (c *goModuleProxyCommand) init(_ context.Context) (fsm.State, error) {
 		proxyOpts = append(proxyOpts, gomodule.WithGitHubUserAuthentication(gomodule.NewUserAuthentication(c.signingKey, nil)))
 	}
 
-	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle)
+	var moduleProxyOpts []gomodule.ModuleProxyOption
+	if c.RemoveBazelFile {
+		moduleProxyOpts = append(moduleProxyOpts, gomodule.RemoveBazelFiles(true))
+	}
+
+	proxy := gomodule.NewModuleProxy(c.config, c.ModuleDir, c.cache, c.githubClientFactory.REST, c.githubClientFactory.TokenProvider, c.caBundle, moduleProxyOpts...)
 	c.server = gomodule.NewProxyServer(c.Addr, c.upstream, proxy, c.githubClientFactory, proxyOpts...)
 
 	return fsm.Next(stateStartServer)

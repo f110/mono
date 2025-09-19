@@ -83,7 +83,7 @@ func TestModuleRoot(t *testing.T) {
 	}
 
 	buf := new(bytes.Buffer)
-	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test/pkg/api", "v1.5.0")
+	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test/pkg/api", "v1.5.0", false)
 	assertion.MustNoError(t, err)
 	zipReader, err := zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
 	assertion.MustNoError(t, err)
@@ -97,7 +97,7 @@ func TestModuleRoot(t *testing.T) {
 		"github.com/f110/gomodule-proxy-test/pkg/api@v1.5.0/const2.go",
 	}, files)
 
-	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test", "v1.0.0")
+	err = moduleRoot.Archive(context.Background(), buf, "github.com/f110/gomodule-proxy-test", "v1.0.0", false)
 	assertion.MustNoError(t, err)
 	zipReader, err = zip.NewReader(bytes.NewReader(buf.Bytes()), 4096)
 	assertion.MustNoError(t, err)
