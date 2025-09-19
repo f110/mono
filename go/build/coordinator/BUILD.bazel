@@ -62,7 +62,7 @@ go_test(
         "//go/k8s/k8smanifest",
         "//go/logger",
         "//go/storage",
-        "//go/testing/assert",
+        "//go/testing/assertion",
         "//go/varptr",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

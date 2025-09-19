@@ -15,7 +15,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/storage"
-	"go.f110.dev/mono/go/testing/assert"
+	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestBazelBuilder_SyncJob(t *testing.T) {
@@ -85,8 +85,8 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		called := mockDAO.Task.Called("Update")
 		require.Len(t, called, 1)
 		updated := called[0].Args["task"].(*database.Task)
-		assert.NotNil(t, updated.FinishedAt)
-		assert.True(t, updated.Success)
+		assertion.NotNil(t, updated.FinishedAt)
+		assertion.True(t, updated.Success)
 		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
 		runner.AssertNoUnexpectedAction(t)
 	})
@@ -115,7 +115,7 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		called := mockDAO.Task.Called("Update")
 		require.Len(t, called, 1)
 		updated := called[0].Args["task"].(*database.Task)
-		assert.NotNil(t, updated.FinishedAt)
+		assertion.NotNil(t, updated.FinishedAt)
 		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
 		runner.AssertNoUnexpectedAction(t)
 	})
@@ -139,7 +139,7 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		called := mockDAO.Task.Called("Update")
 		require.Len(t, called, 1)
 		updated := called[0].Args["task"].(*database.Task)
-		assert.NotNil(t, updated.FinishedAt)
+		assertion.NotNil(t, updated.FinishedAt)
 
 		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(t.Name())))
 		runner.AssertNoUnexpectedAction(t)
