@@ -5,10 +5,8 @@ job(
     github_status = True,
     targets = [
         "//...",
-        "-//vendor/github.com/JuulLabs-OSS/cbgo:cbgo",
         "-//third_party/universal-ctags/ctags:ctags",
         "-//containers/zoekt-indexer/...",
-        "-//vendor/github.com/go-enry/go-oniguruma/...",
     ],
     platforms = [
         "@rules_go//go/toolchain:linux_amd64",
