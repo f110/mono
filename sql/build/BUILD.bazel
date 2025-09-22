@@ -1,4 +1,4 @@
-load("@dev_f110_protoc_ddl//rules:def.bzl", "vendor_ddl")
+load("@protoc_ddl//rules:def.bzl", "vendor_ddl")
 load("@rules_go//go:def.bzl", "go_library")
 
 vendor_ddl(
@@ -9,7 +9,7 @@ vendor_ddl(
 sh_binary(
     name = "migrate",
     srcs = [
-        "@dev_f110_protoc_ddl//cmd/migrate",
+        "@protoc_ddl//cmd/migrate",
     ],
     args = [
         "--schema=$(location //sql/build:schema.sql)",

@@ -18,7 +18,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
 	github.com/go-git/go-git/v5 v5.16.2
-	github.com/go-sql-driver/mysql v1.8.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/google/go-cmp v0.7.0
@@ -46,8 +46,8 @@ require (
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.10.0
+	github.com/spf13/pflag v1.0.10
+	github.com/stretchr/testify v1.11.1
 	github.com/yuin/goldmark v1.7.4
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	github.com/zitadel/oidc/v3 v3.34.1
@@ -55,8 +55,8 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
-	go.f110.dev/protoc-ddl v0.0.0-20250917072214-f6f450e9d2f3
-	go.f110.dev/xerrors v0.0.0-20250916060705-8edc3a624c97
+	go.f110.dev/protoc-ddl v0.0.0-20250922014825-0d4d02686e47
+	go.f110.dev/xerrors v0.0.0-20250917112712-38fe07e3caa9
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.37.0
@@ -216,10 +216,10 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/outcaste-io/ristretto v0.2.3 // indirect
 	github.com/philhofer/fwd v1.1.3-0.20240612014219-fbbf4953d986 // indirect
-	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
-	github.com/pingcap/failpoint v0.0.0-20220801062533-2eaa32854a6c // indirect
+	github.com/pingcap/errors v0.11.5-0.20250523034308-74f78ae071ee // indirect
+	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
 	github.com/pingcap/log v1.1.0 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20240223105127-2c46b8e00418 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20250919022735-b3011b689de0 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/xattr v0.4.7 // indirect

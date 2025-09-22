@@ -1,4 +1,4 @@
-load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
+load("@protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(

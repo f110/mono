@@ -1,4 +1,4 @@
-load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_dao_mock", "vendor_ddl")
+load("@protoc_ddl//rules:def.bzl", "schema_dao_mock", "vendor_ddl")
 load("@rules_go//go:def.bzl", "go_library")
 
 schema_dao_mock(
@@ -21,6 +21,6 @@ go_library(
     deps = [
         "//go/build/database",
         "//go/build/database/dao",
-        "@dev_f110_go_protoc_ddl//mock",
+        "@protoc_ddl//mock",
     ],
 )

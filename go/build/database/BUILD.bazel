@@ -1,4 +1,4 @@
-load("@dev_f110_protoc_ddl//rules:def.bzl", "schema_entity", "sql_schema", "vendor_ddl")
+load("@protoc_ddl//rules:def.bzl", "schema_entity", "sql_schema", "vendor_ddl")
 load("@rules_go//go:def.bzl", "go_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 
@@ -7,8 +7,8 @@ proto_library(
     srcs = ["schema.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_protobuf//:timestamp_proto",
-        "@dev_f110_protoc_ddl//:ddl_proto",
+        "@protobuf//:timestamp_proto",
+        "@protoc_ddl//:ddl_proto",
     ],
 )
 
@@ -21,7 +21,7 @@ go_library(
     ],  # keep
     importpath = "go.f110.dev/mono/go/build/database",
     visibility = ["//visibility:public"],
-    deps = ["@dev_f110_go_protoc_ddl//:protoc-ddl"],
+    deps = ["@protoc_ddl//:protoc-ddl"],
 )
 
 sql_schema(
