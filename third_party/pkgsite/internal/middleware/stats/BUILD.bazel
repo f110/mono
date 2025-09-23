@@ -1,8 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "stats",
-    srcs = ["stats.go"],
-    importpath = "golang.org/x/pkgsite/internal/middleware/stats",
-    visibility = ["//third_party/pkgsite:__subpackages__"],
-)

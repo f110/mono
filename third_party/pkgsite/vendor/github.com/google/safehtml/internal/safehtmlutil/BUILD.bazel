@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "safehtmlutil",
-    srcs = ["safehtmlutil.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/google/safehtml/internal/safehtmlutil",
-    importpath = "github.com/google/safehtml/internal/safehtmlutil",
-    visibility = ["//third_party/pkgsite/vendor/github.com/google/safehtml:__subpackages__"],
-)

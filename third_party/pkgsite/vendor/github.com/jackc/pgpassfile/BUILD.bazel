@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "pgpassfile",
-    srcs = ["pgpass.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/jackc/pgpassfile",
-    importpath = "github.com/jackc/pgpassfile",
-    visibility = ["//visibility:public"],
-)

@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "grpcrand",
-    srcs = ["grpcrand.go"],
-    importmap = "golang.org/x/pkgsite/vendor/google.golang.org/grpc/internal/grpcrand",
-    importpath = "google.golang.org/grpc/internal/grpcrand",
-    visibility = ["//third_party/pkgsite/vendor/google.golang.org/grpc:__subpackages__"],
-)

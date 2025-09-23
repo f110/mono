@@ -1,8 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "poller",
-    srcs = ["poller.go"],
-    importpath = "golang.org/x/pkgsite/internal/poller",
-    visibility = ["//third_party/pkgsite:__subpackages__"],
-)

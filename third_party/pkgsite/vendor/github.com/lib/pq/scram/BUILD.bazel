@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "scram",
-    srcs = ["scram.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/lib/pq/scram",
-    importpath = "github.com/lib/pq/scram",
-    visibility = ["//visibility:public"],
-)

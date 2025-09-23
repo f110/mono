@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "tagencoding",
-    srcs = ["tagencoding.go"],
-    importmap = "golang.org/x/pkgsite/vendor/go.opencensus.io/internal/tagencoding",
-    importpath = "go.opencensus.io/internal/tagencoding",
-    visibility = ["//third_party/pkgsite/vendor/go.opencensus.io:__subpackages__"],
-)

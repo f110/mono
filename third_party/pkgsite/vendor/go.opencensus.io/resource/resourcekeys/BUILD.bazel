@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "resourcekeys",
-    srcs = ["const.go"],
-    importmap = "golang.org/x/pkgsite/vendor/go.opencensus.io/resource/resourcekeys",
-    importpath = "go.opencensus.io/resource/resourcekeys",
-    visibility = ["//visibility:public"],
-)

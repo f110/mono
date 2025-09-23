@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "strings",
-    srcs = ["strings.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/aws/aws-sdk-go/internal/strings",
-    importpath = "github.com/aws/aws-sdk-go/internal/strings",
-    visibility = ["//third_party/pkgsite/vendor/github.com/aws/aws-sdk-go:__subpackages__"],
-)

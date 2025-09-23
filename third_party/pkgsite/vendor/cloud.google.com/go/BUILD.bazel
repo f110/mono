@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go",
-    srcs = ["doc.go"],
-    importmap = "golang.org/x/pkgsite/vendor/cloud.google.com/go",
-    importpath = "cloud.google.com/go",
-    visibility = ["//visibility:public"],
-)

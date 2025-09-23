@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "packagesinternal",
-    srcs = ["packages.go"],
-    importmap = "golang.org/x/pkgsite/vendor/golang.org/x/tools/internal/packagesinternal",
-    importpath = "golang.org/x/tools/internal/packagesinternal",
-    visibility = ["//third_party/pkgsite/vendor/golang.org/x/tools:__subpackages__"],
-)

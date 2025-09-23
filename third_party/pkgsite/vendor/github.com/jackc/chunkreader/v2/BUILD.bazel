@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "chunkreader",
-    srcs = ["chunkreader.go"],
-    importmap = "golang.org/x/pkgsite/vendor/github.com/jackc/chunkreader/v2",
-    importpath = "github.com/jackc/chunkreader/v2",
-    visibility = ["//visibility:public"],
-)
