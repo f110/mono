@@ -5,7 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_push")
 pkg_tar(
     name = "bin",
     files = {
-        "//vendor/github.com/google/zoekt/cmd/zoekt-webserver": "/usr/local/bin/zoekt-webserver",
+        "@com_github_google_zoekt//cmd/zoekt-webserver": "/usr/local/bin/zoekt-webserver",
     },
     mode = "0755",
 )
@@ -20,13 +20,13 @@ container_image(
 oci_push(
     name = "push",
     image = ":image",
-    repository = "registry.f110.dev/tools/zoekt-webserver",
     remote_tags = ["latest"],
+    repository = "registry.f110.dev/tools/zoekt-webserver",
 )
 
 oci_push(
     name = "push_quay",
     image = ":image",
-    repository = "quay.io/f110/zoekt-webserver",
     remote_tags = ["latest"],
+    repository = "quay.io/f110/zoekt-webserver",
 )
