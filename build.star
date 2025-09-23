@@ -5,7 +5,6 @@ job(
     github_status = True,
     targets = [
         "//...",
-        "-//third_party/universal-ctags/ctags:ctags",
         "-//containers/zoekt-indexer/...",
     ],
     platforms = [
