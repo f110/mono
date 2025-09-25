@@ -209,14 +209,16 @@ type commit struct {
 	ChangeID string `json:"change_id"`
 	CommitID string `json:"commit_id"`
 	// Branch is local branch name if exists.
-	Branch      string `json:"-"`
-	Description string `json:"description"`
-	Bookmarks   []struct {
-		Name   string   `json:"name"`
-		Target []string `json:"target"`
-	} `json:"bookmarks"`
+	Branch      string      `json:"-"`
+	Description string      `json:"description"`
+	Bookmarks   []*bookmark `json:"bookmarks"`
 
 	PullRequest *pullRequest
+}
+
+type bookmark struct {
+	Name   string   `json:"name"`
+	Target []string `json:"target"`
 }
 
 type pullRequest struct {

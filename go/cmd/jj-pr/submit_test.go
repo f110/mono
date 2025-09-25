@@ -30,19 +30,19 @@ func TestJujutsuPRSubmitCommand(t *testing.T) {
 		c.RootDir = t.TempDir()
 		c.stack = []*commit{
 			{
-				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Bookmarks: []string{"push-ylsnsuvootnp"},
+				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Bookmarks: []*bookmark{{Name: "push-ylsnsuvootnp"}},
 				Description: `util: Fix
 
 This PR fixes the bug.`,
 			},
 			{
-				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []string{"push-ulplmwrqqxyx"},
+				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-ulplmwrqqxyx"}},
 				Description: `math: Add
 
 This PR improves math package.`,
 			},
 			{
-				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []string{"push-wlkxotovqzqn"},
+				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-wlkxotovqzqn"}},
 				Description: `crypto: Fix security issue
 
 This PR contains fixing some security issues.`,
@@ -103,21 +103,21 @@ This PR contains fixing some security issues.`,
 		c.DefaultBranch = "master"
 		c.stack = []*commit{
 			{
-				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Bookmarks: []string{"push-ylsnsuvootnp"},
+				ChangeID: "ylsnsuvootnpnwoxvokynlptorzkmxwy", CommitID: "b947bd3ba890e5252f1a151014f72ade7ca03a03", Bookmarks: []*bookmark{{Name: "push-ylsnsuvootnp"}},
 				Description: `util: Fix
 
 This PR fixes the bug.`,
 				PullRequest: newPullRequest(&repo.GetPullRequest(3).PullRequest),
 			},
 			{
-				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []string{"push-ulplmwrqqxyx"},
+				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-ulplmwrqqxyx"}},
 				Description: `math: Add
 
 This PR improves math package.`,
 				PullRequest: newPullRequest(&repo.GetPullRequest(2).PullRequest),
 			},
 			{
-				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []string{"push-wlkxotovqzqn"},
+				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-wlkxotovqzqn"}},
 				Description: `crypto: Fix security issue
 
 This PR contains fixing some security issues.`,
