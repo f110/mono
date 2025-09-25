@@ -78,33 +78,3 @@ oci_push(
     remote_tags = ["latest"],
     repository = CONTAINER_REGISTRY + "/build/buildctl",
 )
-
-pkg_tar(
-    name = "registry_nixery-prepare-image",
-    srcs = ["//sh/cmd/nixery-prepare-image:bin"],
-    package_dir = "/usr/local/bin",
-)
-
-pkg_tar(
-    name = "registry_bin",
-    files = {
-        "//go/cmd/nixery-server:linux_amd64": "/usr/local/bin/nixery-server",
-    },
-)
-
-oci_image(
-    name = "registry_image",
-    base = "@nix_amd64",
-    entrypoint = ["/usr/local/bin/nixery-server"],
-    tars = [
-        ":registry_bin",
-        ":registry_nixery-prepare-image",
-    ],
-)
-
-oci_push(
-    name = "registry_push",
-    image = ":registry_image",
-    remote_tags = ["latest"],
-    repository = "registry.f110.dev/build/registry",
-)
