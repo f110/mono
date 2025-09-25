@@ -6,6 +6,7 @@ job(
     targets = [
         "//...",
         "-//containers/zoekt-indexer/...",
+        "-//py/...",
     ],
     platforms = [
         "@rules_go//go/toolchain:linux_amd64",
