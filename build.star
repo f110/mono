@@ -6,6 +6,7 @@ job(
     targets = [
         "//...",
         "-//containers/zoekt-indexer/...",
+        "-//containers/zoekt-webserver/...",
         "-//py/...",
     ],
     platforms = [
