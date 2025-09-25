@@ -20,7 +20,7 @@ def multi_platform_download_and_extract(ctx, assets, build_file_label):
     )
 
 def multi_platform_download(ctx, assets, build_file_label):
-    download_path = ctx.path(ctx.name)
+    download_path = ctx.path(ctx.original_name)
     url, checksum = _get_url_and_checksum(ctx, assets)
     ctx.download(
         url = url,

@@ -33,6 +33,11 @@ go_deps.gazelle_override(
     path = "cel.dev/expr",
 )
 
+go_deps.gazelle_override(
+    build_extra_args = ["-proto=disable"],
+    path = "go.etcd.io/etcd/api/v3",
+)
+
 use_repo(
     go_deps,
     "com_github_aws_aws_sdk_go_v2",
@@ -129,6 +134,10 @@ kustomize_binary = use_repo_rule("//build/rules/kustomize:def.bzl", "kustomize_b
 
 vault_binary = use_repo_rule("//build/rules/vault:def.bzl", "vault_binary")
 
+minio_binary = use_repo_rule("//build/rules/minio:def.bzl", "minio_binary")
+
+etcd_binary = use_repo_rule("//build/rules/etcd:def.bzl", "etcd_binary")
+
 git_override(
     commit = "0d4d02686e470e43f95d395ac204121103b03f66",
     module_name = "protoc_ddl",
@@ -139,7 +148,7 @@ git_override(
 
 git_repository(
     name = "dev_f110_kubeproto",
-    commit = "967ff2e248a2134c37d514499b4370a58e33bd24",
+    commit = "4993655b87e3ee877420469e47d26460050161a4",
     remote = "https://github.com/f110/kubeproto",
 )
 
@@ -156,6 +165,16 @@ kustomize_binary(
 vault_binary(
     name = "vault",
     version = "1.11.4",
+)
+
+minio_binary(
+    name = "minio",
+    version = "RELEASE.2022-12-02T19-19-22Z",
+)
+
+etcd_binary(
+    name = "etcd",
+    version = "3.5.6",
 )
 # -- repo definitions -- #
 
@@ -178,3 +197,17 @@ pip.parse(
 )
 
 use_repo(pip, "pypi")
+
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "argocd_vault_plugin",
+    sha256 = "957001f4bcd5db9aca468fbea9afa19d5088c06708fbcf97b07ba8e369447932",
+    urls = ["https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.13.1/argocd-vault-plugin_1.13.1_linux_amd64"],
+)
+
+http_file(
+    name = "bazel_remote",
+    sha256 = "5e4b248262a56e389e9ee4212ffd0498746347fb5bf155785c9410ba2abc7b07",
+    urls = ["https://github.com/buchgr/bazel-remote/releases/download/v2.4.1/bazel-remote-2.4.1-linux-x86_64"],
+)
