@@ -76,7 +76,7 @@ require (
 	k8s.io/component-base v0.30.2
 	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01
 	k8s.io/klog/v2 v2.130.1
-	sigs.k8s.io/kind v0.24.0
+	sigs.k8s.io/kind v0.30.0
 	sigs.k8s.io/secrets-store-csi-driver v1.4.5
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20200408181440-2981468c0ff3
 )
