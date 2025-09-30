@@ -45,7 +45,6 @@ use_repo(
     "com_github_go_ble_ble",
     "com_github_go_git_go_git_v5",
     "com_github_go_sql_driver_mysql",
-    "com_github_golang_jwt_jwt_v4",
     "com_github_golang_jwt_jwt_v5",
     "com_github_google_go_cmp",
     "com_github_google_go_containerregistry",
