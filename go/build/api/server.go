@@ -571,7 +571,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch(), false)
+	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch(), 5)
 	if err != nil {
 		logger.Log.Info("Failed to branch", logger.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
