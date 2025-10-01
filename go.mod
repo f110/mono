@@ -38,9 +38,9 @@ require (
 	github.com/nats-io/nats.go v1.37.0
 	github.com/nissy/bon v1.3.0
 	github.com/peco/peco v0.5.8
-	github.com/prometheus/client_golang v1.20.4
-	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.60.0
+	github.com/prometheus/client_golang v1.23.2
+	github.com/prometheus/client_model v0.6.2
+	github.com/prometheus/common v0.66.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
@@ -185,7 +185,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/keegancsmith/rpc v1.3.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/lestrrat-go/pdebug v0.0.0-20180220043849-39f9a71bcabe // indirect
 	github.com/lufia/plan9stats v0.0.0-20240909124753-873cd0166683 // indirect
@@ -224,7 +224,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/prometheus/prom2json v1.4.0 // indirect
 	github.com/prometheus/prometheus v0.54.1 // indirect
 	github.com/richardartoul/molecule v1.0.1-0.20240531184615-7ca0df43c0b3 // indirect
