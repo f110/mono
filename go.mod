@@ -22,7 +22,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.4.0
-	github.com/google/go-github/v49 v49.0.0
 	github.com/google/go-github/v73 v73.0.0
 	github.com/google/nixery v0.0.0-20230429114902-a85d61307c16
 	github.com/google/uuid v1.6.0
@@ -265,6 +264,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

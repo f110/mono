@@ -15,7 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/githubutil"
@@ -70,7 +70,7 @@ func checkoutCommit(ctx context.Context, dir, u, commit string, rt http.RoundTri
 		s[2], // repo
 		github.Tarball,
 		&github.RepositoryContentGetOptions{Ref: commit},
-		true,
+		5,
 	)
 	if err != nil {
 		return err

@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"golang.org/x/mod/module"
@@ -320,10 +320,10 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 	}
 
 	t := commit.Commit.Author.GetDate()
-	if err := g.cache.SetModInfo(module, commit.GetSHA(), t); err != nil {
+	if err := g.cache.SetModInfo(module, commit.GetSHA(), t.Time); err != nil {
 		logger.Log.Warn("Failed set cache", zap.Error(err))
 	}
-	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t}, nil
+	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t.Time}, nil
 }
 
 func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoot, module string, pseudoVersion *PseudoVersion) (Info, error) {
@@ -348,11 +348,11 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 
 	t := commit.Commit.Committer.GetDate()
 	if g.cache != nil {
-		if err := g.cache.SetModInfo(module, commit.GetSHA(), t); err != nil {
+		if err := g.cache.SetModInfo(module, commit.GetSHA(), t.Time); err != nil {
 			logger.Log.Warn("Failed set cache", zap.String("module", module), zap.String("revision", pseudoVersion.Revision), zap.Error(err))
 		}
 	}
-	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t}, nil
+	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t.Time}, nil
 }
 
 func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, module *Module, version string) (string, error) {
@@ -575,7 +575,7 @@ func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer, skipBazelFile boo
 		&github.RepositoryContentGetOptions{
 			Ref: a.Revision,
 		},
-		true,
+		5,
 	)
 	if err != nil {
 		return xerrors.WithStack(err)

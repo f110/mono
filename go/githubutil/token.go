@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"go.f110.dev/xerrors"
 )
 

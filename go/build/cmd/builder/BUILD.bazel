@@ -21,7 +21,7 @@ go_library(
         "//go/storage",
         "//go/vault",
         "@com_github_go_sql_driver_mysql//:mysql",
-        "@com_github_google_go_github_v49//github",
+        "@com_github_google_go_github_v73//github",
         "@com_github_google_uuid//:uuid",
         "@dev_f110_go_xerrors//:xerrors",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

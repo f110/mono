@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )

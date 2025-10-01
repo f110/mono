@@ -29,7 +29,7 @@ go_library(
         "@com_github_go_git_go_git_v5//plumbing/object",
         "@com_github_go_git_go_git_v5//plumbing/transport",
         "@com_github_go_git_go_git_v5//plumbing/transport/http",
-        "@com_github_google_go_github_v49//github",
+        "@com_github_google_go_github_v73//github",
         "@com_github_google_zoekt//:zoekt",
         "@com_github_google_zoekt//build",
         "@com_github_nats_io_nats_go//:nats_go",

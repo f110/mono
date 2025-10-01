@@ -20,7 +20,7 @@ go_library(
         "@com_github_go_git_go_git_v5//:go-git",
         "@com_github_go_git_go_git_v5//plumbing",
         "@com_github_go_git_go_git_v5//plumbing/transport/http",
-        "@com_github_google_go_github_v49//github",
+        "@com_github_google_go_github_v73//github",
         "@dev_f110_go_go_memcached//client",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",

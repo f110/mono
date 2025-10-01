@@ -22,7 +22,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"github.com/google/zoekt"
 	"github.com/google/zoekt/build"
 	"github.com/shurcooL/githubv4"

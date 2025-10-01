@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"github.com/google/uuid"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
