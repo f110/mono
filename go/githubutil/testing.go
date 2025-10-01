@@ -13,6 +13,8 @@ import (
 	"github.com/google/go-github/v73/github"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+
+	"go.f110.dev/mono/go/varptr"
 )
 
 type Mock struct {
@@ -208,7 +210,7 @@ func (r *Repository) PullRequests(pullRequests ...*github.PullRequest) {
 			PullRequest: *v,
 		})
 		if v.GetNumber() == 0 {
-			r.pullRequests[len(r.pullRequests)-1].Number = github.Int(r.nextIndex())
+			r.pullRequests[len(r.pullRequests)-1].Number = varptr.Ptr(r.nextIndex())
 		}
 	}
 }

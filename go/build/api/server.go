@@ -27,6 +27,7 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
+	"go.f110.dev/mono/go/varptr"
 )
 
 const (
@@ -122,7 +123,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					event.Repo.GetOwner().GetLogin(),
 					event.Repo.GetName(),
 					event.PullRequest.GetNumber(),
-					&github.IssueComment{Body: github.String(body)},
+					&github.IssueComment{Body: varptr.Ptr(body)},
 				)
 				if err != nil {
 					logger.Log.Warn("Failed create the comment", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
@@ -448,7 +449,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				event.Repo.GetOwner().GetLogin(),
 				event.Repo.GetName(),
 				event.Issue.GetNumber(),
-				&github.IssueComment{Body: github.String(body)},
+				&github.IssueComment{Body: varptr.Ptr(body)},
 			)
 			if err != nil {
 				return xerrors.WithStack(err)

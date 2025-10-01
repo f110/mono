@@ -12,6 +12,7 @@ go_library(
         "//go/cli",
         "//go/fsm",
         "//go/logger",
+        "//go/varptr",
         "@com_github_google_go_github_v73//github",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_x_oauth2//:oauth2",
@@ -36,6 +37,7 @@ go_test(
     deps = [
         "//go/githubutil",
         "//go/logger",
+        "//go/varptr",
         "@com_github_google_go_github_v73//github",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

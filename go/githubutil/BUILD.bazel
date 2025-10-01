@@ -11,6 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/cli",
+        "//go/varptr",
         "@com_github_golang_jwt_jwt_v5//:jwt",
         "@com_github_google_go_github_v73//github",
         "@com_github_jarcoal_httpmock//:httpmock",
@@ -27,6 +28,7 @@ go_test(
     srcs = ["testing_test.go"],
     embed = [":githubutil"],
     deps = [
+        "//go/varptr",
         "@com_github_google_go_github_v73//github",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

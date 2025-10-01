@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/varptr"
 )
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
@@ -75,25 +76,25 @@ This PR contains fixing some security issues.`,
 		ghClient := ghMock.Client()
 		repo.PullRequests(
 			&github.PullRequest{
-				Number: github.Int(1),
-				Base:   &github.PullRequestBranch{Ref: github.String("master")},
-				Head:   &github.PullRequestBranch{Ref: github.String("push-wlkxotovqzqn")},
-				Title:  github.String("crypto: Fix security issue"),
-				Body:   github.String("This PR contains fixing some security issues."),
+				Number: varptr.Ptr(1),
+				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("master")},
+				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-wlkxotovqzqn")},
+				Title:  varptr.Ptr("crypto: Fix security issue"),
+				Body:   varptr.Ptr("This PR contains fixing some security issues."),
 			},
 			&github.PullRequest{
-				Number: github.Int(2),
-				Base:   &github.PullRequestBranch{Ref: github.String("push-wlkxotovqzqn")},
-				Head:   &github.PullRequestBranch{Ref: github.String("push-ulplmwrqqxyx")},
-				Title:  github.String("math: Add"),
-				Body:   github.String("This PR improves math package."),
+				Number: varptr.Ptr(2),
+				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("push-wlkxotovqzqn")},
+				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ulplmwrqqxyx")},
+				Title:  varptr.Ptr("math: Add"),
+				Body:   varptr.Ptr("This PR improves math package."),
 			},
 			&github.PullRequest{
-				Number: github.Int(3),
-				Base:   &github.PullRequestBranch{Ref: github.String("push-ulplmwrqqxyx")},
-				Head:   &github.PullRequestBranch{Ref: github.String("push-ylsnsuvootnp")},
-				Title:  github.String("util: Fix"),
-				Body:   github.String("This PR fixes the bug."),
+				Number: varptr.Ptr(3),
+				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ulplmwrqqxyx")},
+				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ylsnsuvootnp")},
+				Title:  varptr.Ptr("util: Fix"),
+				Body:   varptr.Ptr("This PR fixes the bug."),
 			},
 		)
 

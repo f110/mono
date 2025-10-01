@@ -12,6 +12,7 @@ go_library(
         "//go/enumerable",
         "//go/logger",
         "//go/storage",
+        "//go/varptr",
         "@com_github_google_go_github_v73//github",
         "@com_github_masterminds_semver_v3//:semver",
         "@dev_f110_go_xerrors//:xerrors",

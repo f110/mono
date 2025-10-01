@@ -818,9 +818,9 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 		repoName,
 		task.Revision,
 		&github.RepoStatus{
-			State:     github.String(state),
-			Context:   github.String(fmt.Sprintf("%s %s", task.Command, job.Name)),
-			TargetURL: github.String(targetUrl),
+			State:     varptr.Ptr(state),
+			Context:   varptr.Ptr(fmt.Sprintf("%s %s", task.Command, job.Name)),
+			TargetURL: varptr.Ptr(targetUrl),
 		},
 	)
 	if err != nil {

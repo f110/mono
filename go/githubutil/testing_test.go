@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-github/v73/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.f110.dev/mono/go/varptr"
 )
 
 func TestMock(t *testing.T) {
@@ -27,16 +29,16 @@ func TestMock(t *testing.T) {
 			ghClient := m.Client()
 			repo.PullRequests(
 				&github.PullRequest{
-					Number: github.Int(1),
-					Title:  github.String(t.Name()),
-					Body:   github.String("PR description"),
-					Base:   &github.PullRequestBranch{Ref: github.String("master")},
-					Head:   &github.PullRequestBranch{Ref: github.String("feature-1")},
+					Number: varptr.Ptr(1),
+					Title:  varptr.Ptr(t.Name()),
+					Body:   varptr.Ptr("PR description"),
+					Base:   &github.PullRequestBranch{Ref: varptr.Ptr("master")},
+					Head:   &github.PullRequestBranch{Ref: varptr.Ptr("feature-1")},
 				},
 			)
 
 			pr, _, err := ghClient.PullRequests.Edit(context.Background(), "f110", "gh-test", 1, &github.PullRequest{
-				Base: &github.PullRequestBranch{Ref: github.String("main")},
+				Base: &github.PullRequestBranch{Ref: varptr.Ptr("main")},
 			})
 			require.NoError(t, err)
 			assert.Equal(t, t.Name(), pr.GetTitle())
@@ -49,13 +51,13 @@ func TestMock(t *testing.T) {
 			ghClient := m.Client()
 			repo.PullRequests(
 				&github.PullRequest{
-					Number: github.Int(1),
-					Title:  github.String(t.Name()),
+					Number: varptr.Ptr(1),
+					Title:  varptr.Ptr(t.Name()),
 				},
 			)
 
 			comment, _, err := ghClient.PullRequests.CreateComment(context.Background(), "f110", "gh-test", 1, &github.PullRequestComment{
-				Body: github.String("Comment"),
+				Body: varptr.Ptr("Comment"),
 			})
 			require.NoError(t, err)
 			assert.NotNil(t, comment)

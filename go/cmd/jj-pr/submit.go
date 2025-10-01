@@ -21,6 +21,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/varptr"
 )
 
 const (
@@ -421,11 +422,11 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 				description = template
 			}
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
-				Title: github.String(title),
-				Body:  github.String(description),
-				Head:  github.String(c.stack[0].Bookmarks[0].Name),
-				Base:  github.String(c.DefaultBranch),
-				Draft: github.Bool(true),
+				Title: varptr.Ptr(title),
+				Body:  varptr.Ptr(description),
+				Head:  varptr.Ptr(c.stack[0].Bookmarks[0].Name),
+				Base:  varptr.Ptr(c.DefaultBranch),
+				Draft: varptr.Ptr(true),
 			})
 			if err != nil {
 				return fsm.Error(xerrors.WithStack(err))
@@ -471,11 +472,11 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			}
 
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
-				Title: github.String(title),
-				Body:  github.String(description),
-				Head:  github.String(v.Bookmarks[0].Name),
-				Base:  github.String(baseBranch),
-				Draft: github.Bool(true),
+				Title: varptr.Ptr(title),
+				Body:  varptr.Ptr(description),
+				Head:  varptr.Ptr(v.Bookmarks[0].Name),
+				Base:  varptr.Ptr(baseBranch),
+				Draft: varptr.Ptr(true),
 			})
 			if err != nil {
 				return fsm.Error(xerrors.WithStack(err))
@@ -603,11 +604,11 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		var needUpdateBaseBranch, needUpdateTitle, needUpdateBody bool
 		if i != len(c.stack)-1 && v.PullRequest.Base != c.stack[i+1].Bookmarks[0].Name {
 			needUpdateBaseBranch = true
-			updatedPR.Base = &github.PullRequestBranch{Ref: github.String(c.stack[i+1].Bookmarks[0].Name)}
+			updatedPR.Base = &github.PullRequestBranch{Ref: varptr.Ptr(c.stack[i+1].Bookmarks[0].Name)}
 		}
 		if i := strings.Index(v.Description, "\n"); i > 0 {
 			if v.PullRequest.Title != v.Description[:i] {
-				updatedPR.Title = github.String(v.Description[:i])
+				updatedPR.Title = varptr.Ptr(v.Description[:i])
 				needUpdateTitle = true
 			}
 		}
@@ -637,7 +638,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 			body = v.Description
 		}
 		if body != v.PullRequest.Body {
-			updatedPR.Body = github.String(body)
+			updatedPR.Body = varptr.Ptr(body)
 			needUpdateBody = true
 		}
 
