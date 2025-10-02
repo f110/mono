@@ -8,29 +8,38 @@ bazel_dep(name = "rules_oci", version = "2.2.6")
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.1")
 bazel_dep(name = "rules_python", version = "1.6.1")
 bazel_dep(name = "protoc_ddl", version = "0.0.0")
+bazel_dep(name = "aspect_rules_js", version = "2.0.2")
+bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+
 go_deps.from_file(go_mod = "//:go.mod")
+
 go_deps.gazelle_override(
     build_file_generation = "clean",
     path = "github.com/pingcap/tidb/pkg/parser",
 )
+
 go_deps.gazelle_override(
     build_file_generation = "clean",
     path = "go.f110.dev/xerrors",
 )
+
 go_deps.gazelle_override(
     build_file_generation = "clean",
     path = "go.f110.dev/go-memcached",
 )
+
 go_deps.gazelle_override(
     build_file_generation = "clean",
     path = "cel.dev/expr",
 )
+
 go_deps.gazelle_override(
     build_extra_args = ["-proto=disable"],
     path = "go.etcd.io/etcd/api/v3",
 )
+
 use_repo(
     go_deps,
     "com_github_aws_aws_sdk_go_v2",
@@ -107,6 +116,7 @@ use_repo(
     "org_golang_x_tools_go_vcs",
     "org_uber_go_zap",
 )
+
 go_deps.module_override(
     patch_strip = 5,
     patches = [
@@ -118,19 +128,9 @@ go_deps.module_override(
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-kind_binary = use_repo_rule("//build/rules/kind:def.bzl", "kind_binary")
-
-kustomize_binary = use_repo_rule("//build/rules/kustomize:def.bzl", "kustomize_binary")
-
-vault_binary = use_repo_rule("//build/rules/vault:def.bzl", "vault_binary")
-
-minio_binary = use_repo_rule("//build/rules/minio:def.bzl", "minio_binary")
-
-etcd_binary = use_repo_rule("//build/rules/etcd:def.bzl", "etcd_binary")
-
 git_override(
-    module_name = "protoc_ddl",
     commit = "0d4d02686e470e43f95d395ac204121103b03f66",
+    module_name = "protoc_ddl",
     patch_strip = 1,
     patches = ["//patch:protoc-ddl.patch"],
     remote = "https://github.com/f110/protoc-ddl",
@@ -142,46 +142,39 @@ git_repository(
     remote = "https://github.com/f110/kubeproto",
 )
 
-kind_binary(
-    name = "kind",
-    version = "0.22.0",
+toolset_ext = use_extension("//build/rules/toolset:module.bzl", "toolset_extension")
+
+toolset_ext.k8s(
+    etcd = "3.5.6",
+    kind = "0.27.0",
+    kustomize = "v4.5.4",
+    minio = "RELEASE.2022-12-02T19-19-22Z",
 )
 
-kustomize_binary(
-    name = "kustomize",
-    version = "v4.5.4",
+toolset_ext.test_tool(
+    vault = "1.11.4",
 )
 
-vault_binary(
-    name = "vault",
-    version = "1.11.4",
-)
-
-minio_binary(
-    name = "minio",
-    version = "RELEASE.2022-12-02T19-19-22Z",
-)
-
-etcd_binary(
-    name = "etcd",
-    version = "3.5.6",
-)
-# -- repo definitions -- #
+use_repo(toolset_ext, "kustomize", "kind", "etcd", "minio", "vault")
 
 extension_for_oci_alias = use_extension("//:extension_for_oci_alias.bzl", "extension_for_oci_alias")
+
 use_repo(extension_for_oci_alias, "com_google_distroless_base")
 # End of extension `extension_for_oci_alias`
 
 extension_for_oci_pull = use_extension("//:extension_for_oci_pull.bzl", "extension_for_oci_pull")
+
 use_repo(extension_for_oci_pull, "com_google_distroless_base_single")
 # End of extension `extension_for_oci_pull`
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
 pip.parse(
     hub_name = "pypi",
     python_version = "3.12",
     requirements_lock = "//:requirements.txt",
 )
+
 use_repo(pip, "pypi")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")

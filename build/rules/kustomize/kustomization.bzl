@@ -1,47 +1,8 @@
-load("//build/rules/kustomize:assets.bzl", "KUSTOMIZE_ASSETS")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//build/private/util:semver.bzl", "semver")
-load("//build/private/assets:assets.bzl", "multi_platform_download_and_extract")
+load("//build/rules/kustomize:toolchain.bzl", "KustomizeToolchain")
 
 Kustomization = provider()
-
-def _kustomize_binary_impl(ctx):
-    if not ctx.attr.version in KUSTOMIZE_ASSETS:
-        fail("%s is not supported version" % ctx.attr.version)
-    multi_platform_download_and_extract(ctx, KUSTOMIZE_ASSETS[ctx.attr.version], Label("//build/rules/kustomize:BUILD.kustomize.bazel"))
-
-kustomize_binary = repository_rule(
-    implementation = _kustomize_binary_impl,
-    attrs = {
-        "version": attr.string(),
-    },
-)
-
-KustomizeToolchain = provider(
-    fields = {
-        "version": "The version string of kustomize",
-        "bin": "",
-    },
-)
-
-def _kustomize_toolchain(ctx):
-    return [KustomizeToolchain(
-        version = ctx.attr.version,
-        bin = ctx.executable.bin,
-    )]
-
-kustomize_toolchain = rule(
-    implementation = _kustomize_toolchain,
-    attrs = {
-        "version": attr.string(
-            mandatory = True,
-        ),
-        "bin": attr.label(
-            executable = True,
-            cfg = "host",
-        ),
-    },
-)
 
 def _kustomization_impl(ctx):
     toolchain = ctx.attr._kustomize[KustomizeToolchain]
