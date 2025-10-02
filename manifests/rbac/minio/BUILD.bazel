@@ -1,4 +1,4 @@
-load("//build/rules/kustomize:def.bzl", "kustomization")
+load("//build/rules/kustomize:kustomization.bzl", "kustomization")
 
 kustomization(
     name = "minio",
