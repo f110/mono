@@ -311,7 +311,7 @@
     },
     "//build/rules/toolset:module.bzl%toolset_extension": {
       "general": {
-        "bzlTransitiveDigest": "ptaCn+Nnq/HsCigZ7fLWF4sMKJ3myD2lGkA+i3FUMr8=",
+        "bzlTransitiveDigest": "fEz4Jo6gSZI3HOS65Tim1gk/kHPPm9eppTZlZvDq5Dc=",
         "usagesDigest": "YdG0OG5zq3TX32wSgw26wvmN98IWiFE2Osk7bjKO90U=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
