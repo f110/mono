@@ -94,3 +94,17 @@ job(
     cpu_limit = "1000m",
     event = ["manual"],
 )
+
+job(
+    name = "publish_bazel_remote",
+    command = "run",
+    targets = ["//containers/bazel-remote:push"],
+    platforms = [
+        "@rules_go//go/toolchain:linux_amd64",
+    ],
+    args = [
+        "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
+    ],
+    cpu_limit = "2000m",
+    event = ["manual"],
+)

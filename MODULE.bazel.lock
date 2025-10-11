@@ -513,7 +513,7 @@
     "@@rules_oci+//oci:extensions.bzl%oci": {
       "general": {
         "bzlTransitiveDigest": "Qw1U7DdYaYH2FWR3M2U1XZeO6U+Xta3atoQjQgjVFAk=",
-        "usagesDigest": "U611cw3Q4XMvH4JQE4gSwFpDBtXZJCBv7Jrij7oQPIY=",
+        "usagesDigest": "3c2aXfxhc/lzK2zJpo7VsYFH9Pk4Nbsqvhe7T0v96QE=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -558,6 +558,49 @@
                 "@@platforms//cpu:arm64": "@com_google_distroless_base_linux_arm64_v8"
               },
               "bzlmod_repository": "com_google_distroless_base",
+              "reproducible": true
+            }
+          },
+          "com_google_distroless_base_debian12_linux_amd64": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
+            "attributes": {
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base-debian12",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platform": "linux/amd64",
+              "target_name": "com_google_distroless_base_debian12_linux_amd64",
+              "bazel_tags": []
+            }
+          },
+          "com_google_distroless_base_debian12_linux_arm64_v8": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
+            "attributes": {
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base-debian12",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platform": "linux/arm64/v8",
+              "target_name": "com_google_distroless_base_debian12_linux_arm64_v8",
+              "bazel_tags": []
+            }
+          },
+          "com_google_distroless_base_debian12": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_alias",
+            "attributes": {
+              "target_name": "com_google_distroless_base_debian12",
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base-debian12",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platforms": {
+                "@@platforms//cpu:x86_64": "@com_google_distroless_base_debian12_linux_amd64",
+                "@@platforms//cpu:arm64": "@com_google_distroless_base_debian12_linux_arm64_v8"
+              },
+              "bzlmod_repository": "com_google_distroless_base_debian12",
               "reproducible": true
             }
           },
@@ -679,7 +722,10 @@
           "explicitRootModuleDirectDeps": [
             "com_google_distroless_base",
             "com_google_distroless_base_linux_amd64",
-            "com_google_distroless_base_linux_arm64_v8"
+            "com_google_distroless_base_linux_arm64_v8",
+            "com_google_distroless_base_debian12",
+            "com_google_distroless_base_debian12_linux_amd64",
+            "com_google_distroless_base_debian12_linux_arm64_v8"
           ],
           "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO",
