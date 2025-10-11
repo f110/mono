@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
+        "//go/enumerable",
         "//go/logger",
         "@com_github_bazelbuild_buildtools//build",
         "@com_github_google_go_github_v73//github",

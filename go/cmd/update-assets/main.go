@@ -4,15 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/bazelbuild/buildtools/build"
@@ -21,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -68,10 +73,12 @@ func getChecksum(ctx context.Context, url string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Log.Info("Get", logger.String("url", url))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
 	contents, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -109,7 +116,7 @@ func releaseToKeyValueExpr(release *release) *build.KeyValueExpr {
 			return v[i].Arch < v[j].Arch
 		})
 
-		osFiles := &build.DictExpr{}
+		osFiles := &build.DictExpr{ForceMultiLine: true}
 		for _, a := range v {
 			osFiles.List = append(osFiles.List, &build.KeyValueExpr{
 				Key: &build.StringExpr{Value: a.Arch},
@@ -131,7 +138,8 @@ func releaseToKeyValueExpr(release *release) *build.KeyValueExpr {
 	kv := &build.KeyValueExpr{
 		Key: &build.StringExpr{Value: release.Version},
 		Value: &build.DictExpr{
-			List: files,
+			List:           files,
+			ForceMultiLine: true,
 		},
 	}
 
@@ -405,6 +413,151 @@ func (k *kindAssets) getRelease(ctx context.Context, gClient *github.Client, ver
 	return newRelease, nil
 }
 
+type vaultAssets struct {
+	assetsFile string
+	overwrite  bool
+}
+
+func (h *vaultAssets) Flags(fs *cli.FlagSet) {
+	fs.String("assets-file", "File path of assets.bzl").Var(&h.assetsFile).Required()
+	fs.Bool("overwrite", "Overwrite").Var(&h.overwrite)
+}
+
+type hashicorpRelease struct {
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Builds       []*hashicorpBuild `json:"builds"`
+	IsPreRelease bool              `json:"is_prerelease"`
+	ChecksumURL  string            `json:"url_shasums"`
+	Created      time.Time         `json:"timestamp_created"`
+
+	semver *semver.Version
+}
+
+type hashicorpBuild struct {
+	Arch string `json:"arch"`
+	OS   string `json:"os"`
+	URL  string `json:"url"`
+}
+
+func (h *vaultAssets) update(ctx context.Context) error {
+	buf, err := os.ReadFile(h.assetsFile)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	f, err := build.Parse(filepath.Base(h.assetsFile), buf)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if len(f.Stmt) != 1 {
+		return xerrors.Definef("the file has to include dict assign only").WithStack()
+	}
+
+	a, ok := f.Stmt[0].(*build.AssignExpr)
+	if !ok {
+		return xerrors.Definef("statement is not assign: %T", f.Stmt[0]).WithStack()
+	}
+	dict, ok := a.RHS.(*build.DictExpr)
+	if !ok {
+		return xerrors.Definef("RHS is not dict: %T", a.RHS).WithStack()
+	}
+	exists := make(map[string]*build.KeyValueExpr)
+	for _, v := range dict.List {
+		key, ok := v.Key.(*build.StringExpr)
+		if !ok {
+			continue
+		}
+		exists[key.Value] = v
+	}
+
+	var releases []*hashicorpRelease
+	q := url.Values{}
+	q.Set("license_class", "oss")
+	q.Set("limit", "20")
+	for {
+		logger.Log.Info("Req", logger.String("path", "/v1/releases/vault?%s"+q.Encode()))
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.releases.hashicorp.com/v1/releases/vault?"+q.Encode(), nil)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		var got []*hashicorpRelease
+		if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+			return xerrors.WithStack(err)
+		}
+		if len(got) == 0 {
+			break
+		}
+		stable := enumerable.FindAll(got, func(v *hashicorpRelease) bool { return !v.IsPreRelease })
+		candidates := enumerable.Each(
+			enumerable.FindAll(stable,
+				func(h *hashicorpRelease) bool { _, ok := exists[h.Version]; return !ok }),
+			func(h *hashicorpRelease) { h.semver = semver.MustParse(h.Version) },
+		)
+		releases = append(releases, candidates...)
+		if len(candidates) != len(stable) {
+			break
+		}
+		q.Set("after", candidates[len(candidates)-1].Created.Format(time.RFC3339))
+	}
+	slices.SortFunc(releases, func(a, b *hashicorpRelease) int { return a.semver.Compare(b.semver) })
+
+	for _, v := range releases {
+		logger.Log.Debug("Get", logger.String("version", v.Version))
+		rel, err := h.getRelease(ctx, v)
+		if err != nil {
+			return err
+		}
+		dict.List = append(dict.List, releaseToKeyValueExpr(rel))
+		sort.Slice(dict.List, func(i, j int) bool {
+			left := semver.MustParse(dict.List[i].Key.(*build.StringExpr).Value)
+			right := semver.MustParse(dict.List[j].Key.(*build.StringExpr).Value)
+			return left.LessThan(right)
+		})
+	}
+
+	out := build.FormatString(f)
+	fmt.Print(out)
+	if h.overwrite {
+		if err := os.WriteFile(h.assetsFile, []byte(out), 0644); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+	return nil
+}
+
+func (h *vaultAssets) getRelease(ctx context.Context, rel *hashicorpRelease) (*release, error) {
+	checksums, err := getChecksum(ctx, rel.ChecksumURL)
+	if err != nil {
+		return nil, err
+	}
+	newRelease := &release{Version: rel.Version, Assets: make([]*asset, 0)}
+	assets := make(map[string]*hashicorpBuild)
+	for _, b := range rel.Builds {
+		assets[fmt.Sprintf("%s/%s", b.OS, b.Arch)] = b
+	}
+	for _, osName := range []string{"darwin", "linux"} {
+		for _, archName := range []string{"amd64", "arm64"} {
+			if b, ok := assets[fmt.Sprintf("%s/%s", osName, archName)]; ok {
+				u, err := url.Parse(b.URL)
+				if err != nil {
+					return nil, xerrors.WithStack(err)
+				}
+				newRelease.Assets = append(newRelease.Assets, &asset{
+					OS:     osName,
+					Arch:   archName,
+					URL:    b.URL,
+					SHA256: checksums[path.Base(u.Path)],
+				})
+			}
+		}
+	}
+	return newRelease, nil
+}
+
 func updateAssets(args []string) error {
 	cmd := &cli.Command{
 		Use: "update-assets",
@@ -429,6 +582,16 @@ func updateAssets(args []string) error {
 	}
 	kind.Flags(kindCmd.Flags())
 	cmd.AddCommand(kindCmd)
+
+	vault := &vaultAssets{}
+	vaultCmd := &cli.Command{
+		Use: "vault",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return vault.update(ctx)
+		},
+	}
+	vault.Flags(vaultCmd.Flags())
+	cmd.AddCommand(vaultCmd)
 
 	return cmd.Execute(args)
 }

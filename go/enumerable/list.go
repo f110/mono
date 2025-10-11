@@ -100,3 +100,10 @@ func Index[T any](ary []T, f func(T) bool) int {
 	}
 	return -1
 }
+
+func Each[T any](ary []T, f func(T)) []T {
+	for i := range ary {
+		f(ary[i])
+	}
+	return ary
+}
