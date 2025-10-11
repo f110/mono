@@ -230,85 +230,6 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "//:extension_for_oci_alias.bzl%extension_for_oci_alias": {
-      "general": {
-        "bzlTransitiveDigest": "ZaLFuDsANcf/dLjkR/+IZ1OD2+412yJkpPHIuwLSrc8=",
-        "usagesDigest": "Gk9xk3pFauCZHhSx986vkKsP9o4ITl0m6/MrwyABm3A=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {
-          "com_google_distroless_base": {
-            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_alias",
-            "attributes": {
-              "scheme": "https",
-              "registry": "gcr.io",
-              "repository": "distroless/base",
-              "identifier": "sha256:8267a5d9fa15a538227a8850e81cf6c548a78de73458e99a67e8799bbffb1ba0",
-              "platform": "@@//external:com_google_distroless_base_single",
-              "target_name": "com_google_distroless_base",
-              "reproducible": true
-            }
-          }
-        },
-        "recordedRepoMappingEntries": [
-          [
-            "",
-            "rules_oci",
-            "rules_oci+"
-          ],
-          [
-            "rules_oci+",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib+"
-          ],
-          [
-            "rules_oci+",
-            "bazel_skylib",
-            "bazel_skylib+"
-          ]
-        ]
-      }
-    },
-    "//:extension_for_oci_pull.bzl%extension_for_oci_pull": {
-      "general": {
-        "bzlTransitiveDigest": "4BRn8vdZ/ogTssX3QP9o5mfOO4G/Y96u0+5fCCtFBW0=",
-        "usagesDigest": "2skvNpZ4faPZr/SrGMDx0E/kXMlh9O/1uYwRjjI+Uz8=",
-        "recordedFileInputs": {},
-        "recordedDirentsInputs": {},
-        "envVariables": {},
-        "generatedRepoSpecs": {
-          "com_google_distroless_base_single": {
-            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
-            "attributes": {
-              "scheme": "https",
-              "registry": "gcr.io",
-              "repository": "distroless/base",
-              "identifier": "sha256:8267a5d9fa15a538227a8850e81cf6c548a78de73458e99a67e8799bbffb1ba0",
-              "target_name": "com_google_distroless_base_single",
-              "bazel_tags": []
-            }
-          }
-        },
-        "recordedRepoMappingEntries": [
-          [
-            "",
-            "rules_oci",
-            "rules_oci+"
-          ],
-          [
-            "rules_oci+",
-            "aspect_bazel_lib",
-            "aspect_bazel_lib+"
-          ],
-          [
-            "rules_oci+",
-            "bazel_skylib",
-            "bazel_skylib+"
-          ]
-        ]
-      }
-    },
     "//build/rules/toolset:module.bzl%toolset_extension": {
       "general": {
         "bzlTransitiveDigest": "fEz4Jo6gSZI3HOS65Tim1gk/kHPPm9eppTZlZvDq5Dc=",
@@ -592,11 +513,54 @@
     "@@rules_oci+//oci:extensions.bzl%oci": {
       "general": {
         "bzlTransitiveDigest": "Qw1U7DdYaYH2FWR3M2U1XZeO6U+Xta3atoQjQgjVFAk=",
-        "usagesDigest": "/O1PwnnkqSBmI9Oe08ZYYqjM4IS8JR+/9rjgzVTNDaQ=",
+        "usagesDigest": "U611cw3Q4XMvH4JQE4gSwFpDBtXZJCBv7Jrij7oQPIY=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
         "generatedRepoSpecs": {
+          "com_google_distroless_base_linux_amd64": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
+            "attributes": {
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platform": "linux/amd64",
+              "target_name": "com_google_distroless_base_linux_amd64",
+              "bazel_tags": []
+            }
+          },
+          "com_google_distroless_base_linux_arm64_v8": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_pull",
+            "attributes": {
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platform": "linux/arm64/v8",
+              "target_name": "com_google_distroless_base_linux_arm64_v8",
+              "bazel_tags": []
+            }
+          },
+          "com_google_distroless_base": {
+            "repoRuleId": "@@rules_oci+//oci/private:pull.bzl%oci_alias",
+            "attributes": {
+              "target_name": "com_google_distroless_base",
+              "www_authenticate_challenges": {},
+              "scheme": "https",
+              "registry": "gcr.io",
+              "repository": "distroless/base",
+              "identifier": "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+              "platforms": {
+                "@@platforms//cpu:x86_64": "@com_google_distroless_base_linux_amd64",
+                "@@platforms//cpu:arm64": "@com_google_distroless_base_linux_arm64_v8"
+              },
+              "bzlmod_repository": "com_google_distroless_base",
+              "reproducible": true
+            }
+          },
           "oci_crane_darwin_amd64": {
             "repoRuleId": "@@rules_oci+//oci:repositories.bzl%crane_repositories",
             "attributes": {
@@ -712,7 +676,11 @@
           }
         },
         "moduleExtensionMetadata": {
-          "explicitRootModuleDirectDeps": [],
+          "explicitRootModuleDirectDeps": [
+            "com_google_distroless_base",
+            "com_google_distroless_base_linux_amd64",
+            "com_google_distroless_base_linux_arm64_v8"
+          ],
           "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO",
           "reproducible": false

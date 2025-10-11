@@ -155,17 +155,39 @@ toolset_ext.test_tool(
     vault = "1.11.4",
 )
 
-use_repo(toolset_ext, "kustomize", "kind", "etcd", "minio", "vault")
+use_repo(toolset_ext, "etcd", "kind", "kustomize", "minio", "vault")
 
-extension_for_oci_alias = use_extension("//:extension_for_oci_alias.bzl", "extension_for_oci_alias")
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
-use_repo(extension_for_oci_alias, "com_google_distroless_base")
-# End of extension `extension_for_oci_alias`
+oci.pull(
+    name = "com_google_distroless_base",
+    digest = "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
 
-extension_for_oci_pull = use_extension("//:extension_for_oci_pull.bzl", "extension_for_oci_pull")
+oci.pull(
+    name = "com_google_distroless_base_debian12",
+    digest = "sha256:9e9b50d2048db3741f86a48d939b4e4cc775f5889b3496439343301ff54cdba8",
+    image = "gcr.io/distroless/base-debian12",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
 
-use_repo(extension_for_oci_pull, "com_google_distroless_base_single")
-# End of extension `extension_for_oci_pull`
+use_repo(
+    oci,
+    "com_google_distroless_base",
+    "com_google_distroless_base_linux_amd64",
+    "com_google_distroless_base_linux_arm64_v8",
+    "com_google_distroless_base_debian12",
+    "com_google_distroless_base_debian12_linux_amd64",
+    "com_google_distroless_base_debian12_linux_arm64_v8",
+)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 
