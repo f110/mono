@@ -1,0 +1,18 @@
+digraph dot {
+	"fsm.WaitState" [shape = box];
+	"fsm.UnknownState" [shape = box];
+	"fsm.CloseState" [shape = box];
+
+	"stateInit" -> "fsm.UnknownState";
+	"stateInit" -> "stateCheckResources";
+	"stateCheckResources" -> "stateStartMetricsServer";
+	"stateCheckResources" -> "fsm.UnknownState";
+	"stateStartMetricsServer" -> "stateLeaderElection";
+	"stateLeaderElection" -> "stateStartWorkers";
+	"stateLeaderElection" -> "fsm.UnknownState";
+	"stateStartWorkers" -> "fsm.WaitState";
+	"stateStartWorkers" -> "fsm.UnknownState";
+	"stateShutdown" -> "fsm.CloseState";
+	"fsm.UnknownState" -> "stateShutdown";
+	"fsm.WaitState" -> "stateShutdown";
+}

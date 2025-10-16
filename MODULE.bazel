@@ -10,6 +10,7 @@ bazel_dep(name = "rules_python", version = "1.6.1")
 bazel_dep(name = "protoc_ddl", version = "0.0.0")
 bazel_dep(name = "aspect_rules_js", version = "2.0.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.1.0")
+bazel_dep(name = "rules_nodejs", version = "6.5.2")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 
@@ -141,6 +142,22 @@ git_repository(
     commit = "4993655b87e3ee877420469e47d26460050161a4",
     remote = "https://github.com/f110/kubeproto",
 )
+
+node = use_extension(
+    "@rules_nodejs//nodejs:extensions.bzl",
+    "node",
+    dev_dependency = True,
+)
+
+node.toolchain(node_version = "22.20.0")
+
+pnpm = use_extension(
+    "@aspect_rules_js//npm:extensions.bzl",
+    "pnpm",
+    dev_dependency = True,
+)
+
+use_repo(pnpm, "pnpm")
 
 toolset_ext = use_extension("//build/rules/toolset:module.bzl", "toolset_extension")
 

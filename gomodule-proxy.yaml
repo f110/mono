@@ -1,0 +1,2 @@
+- module_name: github.com/prometheus-operator/prometheus-operator
+- module_name: github.com/pingcap/tidb/pkg/parser

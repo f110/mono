@@ -1,0 +1,2 @@
+rules:
+  - {owner: f110, name: protoc-ddl, branches: [master]}
