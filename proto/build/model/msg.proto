@@ -1,0 +1,72 @@
+edition = "2023";
+
+package mono.build.model;
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package                 = "go.f110.dev/mono/go/build/model";
+
+enum RepositoryStatus {
+  REPOSITORY_STATUS_UNKNOWN              = 0;
+  REPOSITORY_STATUS_READY                = 1;
+  REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
+}
+
+enum TestStatus {
+  TEST_STATUS_PASSED = 0;
+  TEST_STATUS_FLAKY  = 1;
+  TEST_STATUS_FAILED = 2;
+}
+
+message Repository {
+  int32  id               = 1;
+  string name             = 2;
+  string url              = 3;
+  string clone_url        = 4;
+  bool private            = 5;
+  RepositoryStatus status = 6;
+}
+
+message Task {
+  int32                     id                       = 1;
+  int32                     repository_id            = 2;
+  string                    job_name                 = 3;
+  string                    parsed_job_configuration = 4;
+  string                    revision                 = 5;
+  string                    bazel_version            = 6;
+  string                    command                  = 7;
+  bool                      is_trunk                 = 8;
+  bool                      success                  = 9;
+  string                    log_file                 = 10;
+  repeated string           targets                  = 11;
+  string                    platform                 = 12;
+  string                    via                      = 13;
+  string                    config_name              = 14;
+  string                    node                     = 15;
+  string                    manifest                 = 16;
+  string                    container                = 17;
+  int32                     executed_tests_count     = 18;
+  int32                     succeeded_tests_count    = 19;
+  google.protobuf.Timestamp start_at                 = 20;
+  google.protobuf.Timestamp finished_at              = 21;
+  google.protobuf.Timestamp created_at               = 22;
+  google.protobuf.Timestamp updated_at               = 23;
+  string                    repository_url           = 24;
+  string                    revision_url             = 25;
+  string                    cpu_limit                = 26;
+  string                    memory_limit             = 27;
+  repeated TestReport       test_reports             = 28;
+}
+
+message Job {
+  string name          = 1;
+  int32  repository_id = 2;
+}
+
+message TestReport {
+  string     label    = 1;
+  TestStatus status   = 2;
+  int64      duration = 3;
+}

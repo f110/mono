@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"go.f110.dev/mono/go/build/cmd/bff"
 	"go.f110.dev/mono/go/build/cmd/builder"
 	"go.f110.dev/mono/go/build/cmd/dashboard"
 	"go.f110.dev/mono/go/cli"
@@ -15,6 +16,7 @@ func main() {
 	}
 	dashboard.AddCommand(rootCmd)
 	builder.AddCommand(rootCmd)
+	bff.AddCommand(rootCmd)
 
 	if err := rootCmd.Execute(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)

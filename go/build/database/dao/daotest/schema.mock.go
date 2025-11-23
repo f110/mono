@@ -335,3 +335,48 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 	_, _ = d.Call("Update", map[string]interface{}{"testReport": testReport})
 	return nil
 }
+
+type Job struct {
+	*mock.Mock
+}
+
+func NewJob() *Job {
+	return &Job{Mock: mock.New()}
+}
+
+func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *Job) Select(ctx context.Context, repositoryId int32, name string) (*database.Job, error) {
+	v, err := d.Call("Select", map[string]interface{}{"repositoryId": repositoryId, "name": name})
+	return v.(*database.Job), err
+}
+
+func (d *Job) RegisterSelect(repositoryId int32, name string, value *database.Job) {
+	d.Register("Select", map[string]interface{}{"repositoryId": repositoryId, "name": name}, value, nil)
+}
+
+func (d *Job) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Job, error) {
+	v, err := d.Call("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
+	return v.([]*database.Job), err
+}
+
+func (d *Job) RegisterListByRepositoryId(repositoryId int32, value []*database.Job, err error) {
+	d.Register("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId}, value, err)
+}
+
+func (d *Job) Create(ctx context.Context, job *database.Job, opt ...dao.ExecOption) (*database.Job, error) {
+	_, _ = d.Call("Create", map[string]interface{}{"job": job})
+	return job, nil
+}
+
+func (d *Job) Delete(ctx context.Context, repositoryId int32, name string, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]interface{}{"repositoryId": repositoryId, "name": name})
+	return nil
+}
+
+func (d *Job) Update(ctx context.Context, job *database.Job, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]interface{}{"job": job})
+	return nil
+}

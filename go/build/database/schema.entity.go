@@ -21,14 +21,24 @@ const (
 	TestStatusFailed TestStatus = 2
 )
 
+type SourceRepositoryStatus uint32
+
+const (
+	SourceRepositoryStatusUnknown            SourceRepositoryStatus = 0
+	SourceRepositoryStatusReady              SourceRepositoryStatus = 1
+	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
+)
+
 type SourceRepository struct {
-	Id        int32
-	Url       string
-	CloneUrl  string
-	Name      string
-	Private   bool
-	CreatedAt time.Time
-	UpdatedAt *time.Time
+	Id            int32
+	Url           string
+	CloneUrl      string
+	Name          string
+	Private       bool
+	Status        SourceRepositoryStatus
+	DefaultBranch string
+	CreatedAt     time.Time
+	UpdatedAt     *time.Time
 
 	mu   sync.Mutex
 	mark *SourceRepository
@@ -49,6 +59,8 @@ func (e *SourceRepository) IsChanged() bool {
 		e.CloneUrl != e.mark.CloneUrl ||
 		e.Name != e.mark.Name ||
 		e.Private != e.mark.Private ||
+		e.Status != e.mark.Status ||
+		e.DefaultBranch != e.mark.DefaultBranch ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -70,6 +82,12 @@ func (e *SourceRepository) ChangedColumn() []ddl.Column {
 	if e.Private != e.mark.Private {
 		res = append(res, ddl.Column{Name: "private", Value: e.Private})
 	}
+	if e.Status != e.mark.Status {
+		res = append(res, ddl.Column{Name: "status", Value: e.Status})
+	}
+	if e.DefaultBranch != e.mark.DefaultBranch {
+		res = append(res, ddl.Column{Name: "default_branch", Value: e.DefaultBranch})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -86,12 +104,14 @@ func (e *SourceRepository) ChangedColumn() []ddl.Column {
 
 func (e *SourceRepository) Copy() *SourceRepository {
 	n := &SourceRepository{
-		Id:        e.Id,
-		Url:       e.Url,
-		CloneUrl:  e.CloneUrl,
-		Name:      e.Name,
-		Private:   e.Private,
-		CreatedAt: e.CreatedAt,
+		Id:            e.Id,
+		Url:           e.Url,
+		CloneUrl:      e.CloneUrl,
+		Name:          e.Name,
+		Private:       e.Private,
+		Status:        e.Status,
+		DefaultBranch: e.DefaultBranch,
+		CreatedAt:     e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {
 		v := *e.UpdatedAt
@@ -532,6 +552,53 @@ func (e *TestReport) Copy() *TestReport {
 	}
 	if e.Task != nil {
 		n.Task = e.Task.Copy()
+	}
+
+	return n
+}
+
+// Job table stores the job definition for manually triggerable jobs defined in the default branch.
+type Job struct {
+	RepositoryId int32
+	Name         string
+
+	Repository *SourceRepository
+
+	mu   sync.Mutex
+	mark *Job
+}
+
+func (e *Job) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *Job) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return false
+}
+
+func (e *Job) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+
+	return res
+}
+
+func (e *Job) Copy() *Job {
+	n := &Job{
+		RepositoryId: e.RepositoryId,
+		Name:         e.Name,
+	}
+
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
 	}
 
 	return n

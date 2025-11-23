@@ -1,0 +1,11 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "api",
+    srcs = ["api.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto/build/model",
+        "@protobuf//:go_features_proto",
+    ],
+)

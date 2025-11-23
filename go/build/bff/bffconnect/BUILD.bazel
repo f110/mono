@@ -1,0 +1,44 @@
+load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
+
+go_proto_library(
+    name = "bff_proto_connect",
+    compilers = ["//build/rules/proto:connect_go_compiler"],
+    importpath = "go.f110.dev/mono/go/build/bff",
+    protos = [
+        "//proto/build/bff",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+vendor_grpc_source(
+    name = "vendor_connect_source",
+    src = ":bff_proto_connect",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "bffconnect",
+    srcs = [
+        "bff.connect.go",
+        "bff.go",
+    ],
+    importpath = "go.f110.dev/mono/go/build/bff/bffconnect",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/build/api",
+        "//go/build/bff",
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/model",
+        "//go/enumerable",
+        "//go/logger",
+        "//go/storage",
+        "//go/varptr",
+        "@com_connectrpc_connect//:connect",
+        "@com_github_rs_cors//:cors",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_protobuf//types/known/durationpb",
+    ],
+)

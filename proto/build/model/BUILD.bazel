@@ -1,0 +1,21 @@
+load("@aspect_rules_ts//ts:proto.bzl", "ts_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "model",
+    srcs = ["msg.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@protobuf//:go_features_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+ts_proto_library(
+    name = "model_es",
+    copy_files = True,
+    node_modules = "//ts/apps/build:node_modules",
+    proto = "//proto/build/model",
+    proto_srcs = ["msg.proto"],
+    visibility = ["//visibility:public"],
+)

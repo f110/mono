@@ -1,5 +1,6 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 
 CONTAINER_REGISTRY = "repo.center.x.f110.dev"
 
@@ -77,4 +78,88 @@ oci_push(
     image = ":ctl_image",
     remote_tags = ["latest"],
     repository = CONTAINER_REGISTRY + "/build/buildctl",
+)
+
+pkg_files(
+    name = "frontend_server_bin",
+    srcs = ["//cmd/simple-http-server:linux_amd64"],
+    prefix = "/usr/local/bin",
+    renames = {
+        "//cmd/simple-http-server:linux_amd64": "simple-http-server",
+    },
+)
+
+pkg_files(
+    name = "frontend_server_conf",
+    srcs = ["build.conf"],
+    prefix = "/etc/simple-http-server",
+)
+
+pkg_tar(
+    name = "frontend_server",
+    srcs = [
+        ":frontend_server_bin",
+        ":frontend_server_conf"
+    ],
+    mode = "0755",
+)
+
+pkg_files(
+    name = "frontend_assets_files",
+    srcs = ["//ts/apps/build:vite_build_prod"],
+    prefix = "/assets",
+    strip_prefix = "dist/"
+)
+
+pkg_tar(
+    name = "frontend_assets",
+    srcs = [":frontend_assets_files"],
+    mode = "0644",
+)
+
+oci_image(
+    name = "frontend_image",
+    base = "@com_google_distroless_base",
+    tars = [
+        ":frontend_assets",
+        ":frontend_server",
+    ],
+    entrypoint = ["/usr/local/bin/simple-http-server", "--config", "/etc/simple-http-server/build.conf"],
+)
+
+oci_push(
+    name = "push_frontend",
+    image = ":frontend_image",
+    remote_tags = ["latest"],
+    repository = CONTAINER_REGISTRY + "/build/frontend",
+)
+
+pkg_files(
+    name = "frontend_dev_assets_files",
+    srcs = ["//ts/apps/build:vite_build_dev"],
+    prefix = "/assets",
+    strip_prefix = "dist/"
+)
+
+pkg_tar(
+    name = "frontend_dev_assets",
+    srcs = [":frontend_dev_assets_files"],
+    mode = "0644",
+)
+
+oci_image(
+    name = "frontend_dev_image",
+    base = "@com_google_distroless_base",
+    tars = [
+        ":frontend_dev_assets",
+        ":frontend_server",
+    ],
+    entrypoint = ["/usr/local/bin/simple-http-server", "--config", "/etc/simple-http-server/build.conf"],
+)
+
+oci_push(
+    name = "push_frontend_dev",
+    image = ":frontend_dev_image",
+    remote_tags = ["dev-latest"],
+    repository = CONTAINER_REGISTRY + "/build/frontend",
 )

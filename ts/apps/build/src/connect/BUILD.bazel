@@ -1,0 +1,13 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("//build/rules/ts:vendor.bzl", "vendor_ts")
+
+js_library(
+    name = "connect",
+    srcs = ["bff_pb.js"],
+    visibility = ["//visibility:public"],
+)
+
+vendor_ts(
+    name = "vendor_bff",
+    src = "//proto/build/bff:bff_es",
+)

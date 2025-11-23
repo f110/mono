@@ -1,14 +1,22 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
 
 go_library(
     name = "api",
-    srcs = ["server.go"],
+    srcs = [
+        "api.pb.go",
+        "api_grpc.pb.go",
+        "backend.go",
+        "server.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/api",
     visibility = ["//visibility:public"],
     deps = [
         "//go/build/config",
         "//go/build/database",
         "//go/build/database/dao",
+        "//go/build/model",
         "//go/enumerable",
         "//go/logger",
         "//go/storage",
@@ -16,6 +24,13 @@ go_library(
         "@com_github_google_go_github_v73//github",
         "@com_github_masterminds_semver_v3//:semver",
         "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/gofeaturespb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
         "@org_uber_go_zap//:zap",
         "@protoc_ddl//probe",
     ],
@@ -36,4 +51,32 @@ go_test(
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
+)
+
+go_proto_library(
+    name = "api_go_proto",
+    compilers = ["@rules_go//proto:go_proto"],
+    importpath = "go.f110.dev/mono/go/build/api",
+    proto = "//proto/build/api",
+    visibility = ["//visibility:private"],
+)
+
+go_proto_library(
+    name = "api_go_grpc",
+    compilers = ["@rules_go//proto:go_grpc_v2"],
+    importpath = "go.f110.dev/mono/go/build/api",
+    proto = "//proto/build/api",
+    visibility = ["//visibility:private"],
+)
+
+vendor_grpc_source(
+    name = "vendor_api_proto_source",
+    src = ":api_go_proto",
+    visibility = ["//visibility:public"],
+)
+
+vendor_grpc_source(
+    name = "vendor_api_grpc_source",
+    src = ":api_go_grpc",
+    visibility = ["//visibility:public"],
 )

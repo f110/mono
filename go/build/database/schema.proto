@@ -1,9 +1,11 @@
 syntax = "proto3";
+
 package build.schema;
-option  go_package = "go.f110.dev/mono/go/build/database;database";
 
 import "ddl.proto";
 import "google/protobuf/timestamp.proto";
+
+option go_package = "go.f110.dev/mono/go/build/database;database";
 
 enum TestStatus {
   TEST_STATUS_PASSED = 0;
@@ -11,12 +13,20 @@ enum TestStatus {
   TEST_STATUS_FAILED = 2;
 }
 
+enum SourceRepositoryStatus {
+  SOURCE_REPOSITORY_STATUS_UNKNOWN              = 0;
+  SOURCE_REPOSITORY_STATUS_READY                = 1;
+  SOURCE_REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
+}
+
 message SourceRepository {
-  int32  id        = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  string url       = 2;
-  string clone_url = 3;
-  string name      = 4 [(dev.f110.ddl.column) = { size: 100 }];
-  bool private     = 5;
+  int32  id                             = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string url                            = 2;
+  string clone_url                      = 3;
+  string name                           = 4 [(dev.f110.ddl.column) = { size: 100 }];
+  bool private                          = 5;
+  SourceRepositoryStatus status         = 6;
+  string                 default_branch = 7;
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
@@ -158,6 +168,24 @@ message TestReport {
     queries: {
       name: "ByTaskId"
       query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"
+    }
+  };
+}
+
+// Job table stores the job definition for manually triggerable jobs defined in the default branch.
+message Job {
+  SourceRepository repository = 1;
+  string           name       = 2;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "repository"
+    primary_key: "name"
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepositoryId"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
     }
   };
 }

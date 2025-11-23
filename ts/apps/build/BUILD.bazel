@@ -1,0 +1,100 @@
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@aspect_rules_js//js:defs.bzl", "js_library", "js_run_binary", "js_run_devserver")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@npm//ts/apps/build:vite/package_json.bzl", "bin")
+
+SRC_PATTERNS = [
+    "**/*.tsx",
+    "**/*.ts",
+]
+
+TEST_PATTERNS = [
+    "*.test.tsx",
+    "*.test.ts",
+    "*.spec.tsx",
+    "*.spec.ts",
+]
+
+ASSET_PATTERNS = [
+    "index.html",
+    "src/*.svg",
+    "src/*.css",
+]
+
+GENERATED_PACKAGES = [
+    "//ts/apps/build/src/connect",
+    "//ts/apps/build/src/model",
+]
+
+NPM_DEPS = [
+    "//ts/apps/build:node_modules/@bufbuild/protobuf",
+    "//ts/apps/build:node_modules/@connectrpc/connect",
+    "//ts/apps/build:node_modules/@connectrpc/connect-query",
+    "//ts/apps/build:node_modules/@connectrpc/connect-web",
+    "//ts/apps/build:node_modules/@emotion/react",
+    "//ts/apps/build:node_modules/@emotion/styled",
+    "//ts/apps/build:node_modules/@mui/icons-material",
+    "//ts/apps/build:node_modules/@mui/material",
+    "//ts/apps/build:node_modules/@tanstack/react-query",
+    "//ts/apps/build:node_modules/@tanstack/react-router",
+    "//ts/apps/build:node_modules/dayjs",
+    "//ts/apps/build:node_modules/react",
+    "//ts/apps/build:node_modules/react-dom",
+    "//ts/apps/build:node_modules/react-hook-form",
+    "//ts/apps/build:node_modules/@types/react",
+    "//ts/apps/build:node_modules/@tanstack/react-query-devtools",
+    "//ts/apps/build:node_modules/@tanstack/react-router-devtools",
+    "//ts/apps/build:node_modules/@tanstack/router-devtools",
+    "//ts/apps/build:node_modules/@tanstack/router-plugin",
+    "//ts/apps/build:node_modules/@types/react-dom",
+    "//ts/apps/build:node_modules/@types/node",
+    "//ts/apps/build:node_modules/@vitejs/plugin-react",
+    "//ts/apps/build:node_modules/vite"
+]
+
+npm_link_all_packages()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    deps = ["tsconfig.app.json", "tsconfig.node.json"],
+    visibility = ["//ts/apps/build:__subpackages__"],
+)
+
+bin.vite_binary(
+    name = "vite",
+    chdir = package_name(),
+    data = ["vite.config.ts"],
+)
+
+js_run_binary(
+    name = "vite_build_dev",
+    srcs = glob(
+       include = SRC_PATTERNS + ASSET_PATTERNS,
+       allow_empty = True,
+       exclude = TEST_PATTERNS
+    ) + GENERATED_PACKAGES + NPM_DEPS,
+    args = ["build", "--mode", "dev"],
+    chdir = package_name(),
+    out_dirs = [
+        "dist",
+    ],
+    tool = ":vite",
+    visibility = ["//visibility:public"],
+)
+
+js_run_binary(
+    name = "vite_build_prod",
+    srcs = glob(
+       include = SRC_PATTERNS + ASSET_PATTERNS,
+       allow_empty = True,
+       exclude = TEST_PATTERNS
+    ) + GENERATED_PACKAGES + NPM_DEPS,
+    args = ["build", "--mode", "prod"],
+    chdir = package_name(),
+    out_dirs = [
+        "dist",
+    ],
+    tool = ":vite",
+    visibility = ["//visibility:public"],
+)

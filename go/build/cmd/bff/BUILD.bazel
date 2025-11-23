@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "bff",
+    srcs = ["bff.go"],
+    importpath = "go.f110.dev/mono/go/build/cmd/bff",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/build/api",
+        "//go/build/bff/bffconnect",
+        "//go/cli",
+        "//go/logger",
+        "//go/storage",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)

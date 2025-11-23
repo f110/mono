@@ -115,7 +115,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `source_repository` WHERE `id` = ?", id)
 
 	v := &database.SourceRepository{}
-	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.Status, &v.DefaultBranch, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -137,7 +137,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 	res := make([]*database.SourceRepository, 0, len(id))
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
@@ -148,7 +148,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository`"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`, `updated_at` FROM `source_repository`"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -172,7 +172,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -184,7 +184,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -209,7 +209,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -230,8 +230,8 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `created_at`) VALUES (?, ?, ?, ?, ?)",
-		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, time.Now(),
+		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, sourceRepository.Status, sourceRepository.DefaultBranch, time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -1528,5 +1528,212 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 	}
 
 	testReport.ResetMark()
+	return nil
+}
+
+type Job struct {
+	conn *sql.DB
+
+	sourceRepository *SourceRepository
+}
+
+type JobInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, repositoryId int32, name string) (*database.Job, error)
+	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error)
+	Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error)
+	Update(ctx context.Context, job *database.Job, opt ...ExecOption) error
+	Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error
+}
+
+var _ JobInterface = &Job{}
+
+func NewJob(conn *sql.DB) *Job {
+	return &Job{
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
+	}
+}
+
+func (d *Job) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Job) Select(ctx context.Context, repositoryId int32, name string) (*database.Job, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `repository_id` = ? AND `name` = ?", repositoryId, name)
+
+	v := &database.Job{}
+	if err := row.Scan(&v.RepositoryId, &v.Name); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *Job) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `repository_id`, `name` FROM `job` WHERE `repository_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`repository_id`,`name`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.Job, 0)
+	for rows.Next() {
+		r := &database.Job{}
+		if err := rows.Scan(&r.RepositoryId, &r.Name); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) (*database.Job, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `job` (`repository_id`, `name`) VALUES (?, ?)",
+		job.RepositoryId, job.Name,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	job = job.Copy()
+
+	job.ResetMark()
+	return job, nil
+}
+
+func (d *Job) Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `job` WHERE `repository_id` = ? AND `name` = ?", repositoryId, name)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) error {
+	if !job.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := job.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]interface{}, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+
+	query := fmt.Sprintf("UPDATE `job` SET %s WHERE `repository_id` = ? AND `name` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, job.RepositoryId, job.Name)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	job.ResetMark()
 	return nil
 }

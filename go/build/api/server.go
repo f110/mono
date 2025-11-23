@@ -20,6 +20,7 @@ import (
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
@@ -66,10 +67,25 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/redo", api.handleRedo)
 	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/webhook", api.handleWebHook)
+
+	bs := newBackendService(builder, dao, ghClient)
+	grpcServer := grpc.NewServer()
+	RegisterAPIServer(grpcServer, bs)
 	s := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr: addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if req.ProtoMajor == 2 && strings.HasPrefix(
+				req.Header.Get("Content-Type"), "application/grpc") {
+				grpcServer.ServeHTTP(w, req)
+			} else {
+				mux.ServeHTTP(w, req)
+			}
+		}),
+		Protocols: new(http.Protocols),
 	}
+	s.Protocols.SetHTTP1(true)
+	s.Protocols.SetHTTP2(true)
+	s.Protocols.SetUnencryptedHTTP2(true)
 	api.Server = s
 
 	return api, nil
@@ -184,7 +200,6 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-
 		}
 	}
 }

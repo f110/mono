@@ -1,0 +1,76 @@
+edition = "2023";
+
+package mono.build.api;
+
+import "google/protobuf/go_features.proto";
+import "proto/build/model/msg.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package                 = "go.f110.dev/mono/go/build/api";
+
+service API {
+  rpc ListTasks(RequestListTasks) returns (ResponseListTasks);
+  rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
+  rpc SaveRepository(RequestSaveRepository) returns (ResponseSaveRepository);
+  rpc DeleteRepository(RequestDeleteRepository) returns (ResponseDeleteRepository);
+  rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
+  rpc ListJobs(RequestListJobs) returns (ResponseListJobs);
+  rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
+}
+
+message RequestListTasks {
+  repeated int32 ids            = 1;
+  repeated int32 repository_ids = 2;
+}
+
+message ResponseListTasks {
+  repeated mono.build.model.Task tasks = 1;
+}
+
+message RequestListRepositories {
+  repeated int32 ids = 1;
+}
+
+message ResponseListRepositories {
+  repeated mono.build.model.Repository repositories = 1;
+}
+
+message RequestSaveRepository {
+  mono.build.model.Repository repository = 1;
+}
+
+message ResponseSaveRepository {
+  mono.build.model.Repository repository = 1;
+}
+
+message RequestDeleteRepository {
+  int32 repository_id = 1;
+}
+
+message ResponseDeleteRepository {
+}
+
+message RequestListJobs {
+  int32 repository_id = 1;
+}
+
+message ResponseListJobs {
+  repeated mono.build.model.Job jobs = 1;
+}
+
+message RequestSyncRepository {
+  int32 repository_id = 1;
+  bool  async         = 2;
+}
+
+message ResponseSyncRepository {}
+
+message RequestInvokeJob {
+  int32  task_id       = 1;
+  int32  repository_id = 2;
+  string job_name      = 3;
+}
+
+message ResponseInvokeJob {
+  int32 task_id = 1;
+}

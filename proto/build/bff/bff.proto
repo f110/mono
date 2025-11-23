@@ -1,0 +1,127 @@
+edition = "2023";
+
+package mono.build.bff;
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "proto/build/model/msg.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package                 = "go.f110.dev/mono/go/build/bff";
+
+service BFF {
+  rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
+  rpc ListTasks(RequestListTasks) returns (ResponseListTasks);
+  rpc GetLogs(RequestGetLogs) returns (ResponseGetLogs);
+  rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
+  rpc ListJobs(RequestListJobs) returns (ResponseListJobs);
+  rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
+  rpc SaveRepository(RequestSaveRepository) returns (ResponseSaveRepository);
+  rpc RemoveRepository(RequestRemoveRepository) returns (ResponseRemoveRepository);
+  rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
+  rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
+}
+
+message RequestListRepositories {}
+
+message ResponseListRepositories {
+  repeated mono.build.model.Repository repositories = 1;
+}
+
+message RequestListTasks {
+  int32 repository_id = 1;
+  int32 task_id       = 2;
+}
+
+message ResponseListTasks {
+  repeated BFFTask tasks = 1;
+}
+
+message RequestGetLogs {
+  int32 task_id = 1;
+}
+
+message ResponseGetLogs {
+  string body = 1;
+}
+
+message RequestGetServerInfo {
+}
+
+message ResponseGetServerInfo {
+  repeated string supported_bazel_versions = 1;
+}
+
+message RequestListJobs {
+  int32 repository_id = 1;
+}
+
+message ResponseListJobs {
+  repeated mono.build.model.Job jobs = 1;
+}
+
+message RequestInvokeJob {
+  int32  repository_id = 1;
+  string job_name      = 2;
+}
+
+message ResponseInvokeJob {}
+
+message RequestSaveRepository {
+  mono.build.model.Repository repository = 1;
+}
+
+message ResponseSaveRepository {
+  mono.build.model.Repository repository = 1;
+}
+
+message RequestRemoveRepository {
+  int32 repository_id = 1;
+}
+
+message ResponseRemoveRepository {}
+
+message RequestRestartTask {
+  int32 task_id = 1;
+}
+
+message ResponseRestartTask {}
+
+message RequestSyncRepository {
+  int32 repository_id = 1;
+}
+
+message ResponseSyncRepository {}
+
+message BFFTask {
+  int32                       id                       = 1;
+  mono.build.model.Repository repository               = 2;
+  string                      job_name                 = 3;
+  string                      parsed_job_configuration = 4;
+  string                      revision                 = 5;
+  string                      bazel_version            = 6;
+  string                      command                  = 7;
+  bool                        is_trunk                 = 8;
+  bool                        success                  = 9;
+  string                      log_file                 = 10;
+  repeated string             targets                  = 11;
+  string                      platform                 = 12;
+  string                      via                      = 13;
+  string                      config_name              = 14;
+  string                      node                     = 15;
+  string                      manifest                 = 16;
+  string                      container                = 17;
+  int32                       executed_tests_count     = 18;
+  int32                       succeeded_tests_count    = 19;
+  google.protobuf.Timestamp   start_at                 = 20;
+  google.protobuf.Timestamp   finished_at              = 21;
+  google.protobuf.Timestamp   created_at               = 22;
+  google.protobuf.Timestamp   updated_at               = 23;
+  string                      repository_url           = 24;
+  string                      revision_url             = 25;
+  string                      cpu_limit                = 26;
+  string                      memory_limit             = 27;
+  repeated mono.build.model.TestReport test_reports    = 28;
+  google.protobuf.Duration             duration        = 29;
+}

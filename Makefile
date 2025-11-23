@@ -7,10 +7,13 @@ update-deps:
 	$(BAZEL) run //:gazelle
 
 gen:
-	bazel query 'kind(vendor_ddl, //...)' | xargs -n1 bazel run
-	bazel query 'kind(vendor_grpc_source, //...)' | xargs -n1 bazel run
-	bazel query 'kind(vendor_proto_source, //...)' | xargs -n1 bazel run
-	bazel query 'kind(vendor_kubeproto, //...)' | xargs -n1 bazel run
+	bazel query 'kind(vendor_ddl, //go/...)' | xargs -n1 bazel run
+	bazel query 'kind(vendor_grpc_source, //go/...)' | xargs -n1 bazel run
+	bazel query 'kind(vendor_proto_source, //go/...)' | xargs -n1 bazel run
+	# FIXME: temporary
+	#bazel query 'kind(vendor_kubeproto, //go/...)' | xargs -n1 bazel run
+	bazel run //ts/apps/build/src/connect:vendor_bff
+	bazel run //ts/apps/build/src/model:vendor_model
 
 deb_packages.bzl: deb_packages.yaml
 	bazel run //build/private/deb_manager -- -conf $(CURDIR)/deb_packages.yaml -macro $(CURDIR)/build/rules/deb/deb_pkg.bzl $(CURDIR)/deb_packages.bzl
@@ -45,10 +48,15 @@ BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirro
 
 DASHBOARDFLAGS = --addr 127.0.0.1:8080 --dsn "$(DSN)" --log-level debug --api http://127.0.0.1:8081 --internal-api http://127.0.0.1:8081 --dev $(MINIO)
 APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO)
+BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --log-level debug
 
 .PHONY: run-dashboard
 run-dashboard:
 	bazel run //go/cmd/build -- dashboard $(DASHBOARDFLAGS)
+
+.PHONY: run-bff
+run-bff:
+	bazel run //go/cmd/build -- bff $(BFFFLAGS)
 
 .PHONY: run-api
 run-api:
@@ -56,4 +64,4 @@ run-api:
 
 .PHONY: run-migrate
 run-migrate:
-	bazel run @dev_f110_protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/build/database/schema.sql --driver mysql --dsn "$(DSN)" --execute
+	bazel run @protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/build/database/schema.sql --driver mysql --dsn "$(DSN)" --execute

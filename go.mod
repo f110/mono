@@ -4,6 +4,7 @@ go 1.24.5
 
 require (
 	cloud.google.com/go/storage v1.57.0
+	connectrpc.com/connect v1.19.1
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Masterminds/semver/v3 v3.3.0
@@ -41,6 +42,7 @@ require (
 	github.com/prometheus/client_model v0.6.2
 	github.com/prometheus/common v0.66.1
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rs/cors v1.11.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/sirupsen/logrus v1.9.3

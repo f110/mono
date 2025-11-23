@@ -10,6 +10,8 @@ CREATE TABLE `source_repository` (
 	`clone_url` VARCHAR(255) NOT NULL,
 	`name` VARCHAR(100) NOT NULL,
 	`private` TINYINT(1) NOT NULL,
+	`status` INTEGER UNSIGNED NOT NULL,
+	`default_branch` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
@@ -78,6 +80,13 @@ CREATE TABLE `test_report` (
 	INDEX `idx_label` (`label`),
 	INDEX `idx_task_id` (`task_id`),
 	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `job`;
+CREATE TABLE `job` (
+	`repository_id` INTEGER NOT NULL,
+	`name` VARCHAR(255) NOT NULL,
+	PRIMARY KEY(`repository_id`,`name`)
 ) Engine=InnoDB;
 
 SET foreign_key_checks=1;
