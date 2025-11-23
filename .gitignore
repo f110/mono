@@ -1,6 +1,7 @@
 /bazel-*
 .kubeconfig
-/.minio_data
-/.example_git_data
-/.mysql
-/.etcd_data
+.minio_data
+.example_git_data
+.mysql
+.etcd_data
+node_modules
