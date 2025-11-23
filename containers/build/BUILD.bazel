@@ -80,9 +80,16 @@ oci_push(
     repository = CONTAINER_REGISTRY + "/build/buildctl",
 )
 
+attributes = pkg_attributes(
+    mode = "0755",
+    user = "root",
+    group = "root",
+)
+
 pkg_files(
     name = "frontend_server_bin",
     srcs = ["//cmd/simple-http-server:linux_amd64"],
+    attributes = attributes,
     prefix = "/usr/local/bin",
     renames = {
         "//cmd/simple-http-server:linux_amd64": "simple-http-server",
