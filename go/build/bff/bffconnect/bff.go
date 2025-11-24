@@ -10,6 +10,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/cors"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"go.f110.dev/mono/go/build/api"
@@ -34,15 +36,21 @@ type BFF struct {
 	s3        *storage.S3
 }
 
-func NewBFF(addr string, apiClient api.APIClient, bucket string, s3Opt storage.S3Options) *BFF {
+func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, bucket string, s3Opt storage.S3Options) *BFF {
 	b := &BFF{
 		apiClient: apiClient,
 		s3:        storage.NewS3(bucket, s3Opt),
 	}
 	mux := http.NewServeMux()
-	mux.Handle(
-		NewBFFHandler(b),
-	)
+	mux.Handle(NewBFFHandler(b))
+	mux.HandleFunc("GET /liveness", func(_ http.ResponseWriter, _ *http.Request) { return })
+	mux.HandleFunc("GET /readiness", func(w http.ResponseWriter, _ *http.Request) {
+		switch grpcConn.GetState() {
+		case connectivity.Ready:
+		default:
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+	})
 	c := cors.New(cors.Options{
 		AllowOriginFunc: func(_ string) bool { return true },
 		AllowedHeaders:  []string{"Connect-Protocol-Version", "Content-Type"},

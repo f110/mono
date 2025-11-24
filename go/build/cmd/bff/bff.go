@@ -34,7 +34,7 @@ func bffCmd(ctx context.Context, opts options) error {
 	}
 	apiClient := api.NewAPIClient(conn)
 	s3Opt := storage.NewS3OptionToExternal(opts.StorageEndpoint, opts.StorageRegion, opts.AccessKey, opts.SecretAccessKey)
-	b := bffconnect.NewBFF(opts.Addr, apiClient, opts.Bucket, s3Opt)
+	b := bffconnect.NewBFF(opts.Addr, conn, apiClient, opts.Bucket, s3Opt)
 	go func() {
 		<-ctx.Done()
 		b.Shutdown(context.Background())
