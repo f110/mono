@@ -46,7 +46,7 @@ func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, buc
 	mux.HandleFunc("GET /liveness", func(_ http.ResponseWriter, _ *http.Request) { return })
 	mux.HandleFunc("GET /readiness", func(w http.ResponseWriter, _ *http.Request) {
 		switch grpcConn.GetState() {
-		case connectivity.Ready:
+		case connectivity.Idle, connectivity.Connecting, connectivity.Ready:
 		default:
 			w.WriteHeader(http.StatusServiceUnavailable)
 		}
