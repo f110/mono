@@ -39,6 +39,8 @@ go_library(
         "@com_connectrpc_connect//:connect",
         "@com_github_rs_cors//:cors",
         "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//connectivity",
         "@org_golang_google_protobuf//types/known/durationpb",
     ],
 )

@@ -159,9 +159,9 @@ npm = use_extension(
 )
 npm.npm_translate_lock(
     name = "npm",
+    generate_bzl_library_targets = True,
     npmrc = "//ts:.npmrc",
     pnpm_lock = "//ts:pnpm-lock.yaml",
-    generate_bzl_library_targets = True,
 )
 use_repo(npm, "npm")
 

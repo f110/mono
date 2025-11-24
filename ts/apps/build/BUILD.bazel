@@ -1,6 +1,6 @@
-load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@aspect_rules_js//js:defs.bzl", "js_library", "js_run_binary", "js_run_devserver")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//ts/apps/build:vite/package_json.bzl", "bin")
 
 SRC_PATTERNS = [
@@ -49,7 +49,7 @@ NPM_DEPS = [
     "//ts/apps/build:node_modules/@types/react-dom",
     "//ts/apps/build:node_modules/@types/node",
     "//ts/apps/build:node_modules/@vitejs/plugin-react",
-    "//ts/apps/build:node_modules/vite"
+    "//ts/apps/build:node_modules/vite",
 ]
 
 npm_link_all_packages()
@@ -57,8 +57,11 @@ npm_link_all_packages()
 ts_config(
     name = "tsconfig",
     src = "tsconfig.json",
-    deps = ["tsconfig.app.json", "tsconfig.node.json"],
     visibility = ["//ts/apps/build:__subpackages__"],
+    deps = [
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+    ],
 )
 
 bin.vite_binary(
@@ -70,11 +73,15 @@ bin.vite_binary(
 js_run_binary(
     name = "vite_build_dev",
     srcs = glob(
-       include = SRC_PATTERNS + ASSET_PATTERNS,
-       allow_empty = True,
-       exclude = TEST_PATTERNS
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
     ) + GENERATED_PACKAGES + NPM_DEPS,
-    args = ["build", "--mode", "dev"],
+    args = [
+        "build",
+        "--mode",
+        "dev",
+    ],
     chdir = package_name(),
     out_dirs = [
         "dist",
@@ -86,11 +93,15 @@ js_run_binary(
 js_run_binary(
     name = "vite_build_prod",
     srcs = glob(
-       include = SRC_PATTERNS + ASSET_PATTERNS,
-       allow_empty = True,
-       exclude = TEST_PATTERNS
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
     ) + GENERATED_PACKAGES + NPM_DEPS,
-    args = ["build", "--mode", "prod"],
+    args = [
+        "build",
+        "--mode",
+        "prod",
+    ],
     chdir = package_name(),
     out_dirs = [
         "dist",
