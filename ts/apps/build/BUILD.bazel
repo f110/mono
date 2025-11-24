@@ -6,6 +6,7 @@ load("@npm//ts/apps/build:vite/package_json.bzl", "bin")
 SRC_PATTERNS = [
     "**/*.tsx",
     "**/*.ts",
+    "env/*",
 ]
 
 TEST_PATTERNS = [
