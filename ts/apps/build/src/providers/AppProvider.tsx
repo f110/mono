@@ -6,6 +6,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const transport = createConnectTransport({
     baseUrl: import.meta.env.VITE_BFF_URL,
+    fetch: (input, init) => fetch(input, { ...init, credentials: 'include' }),
   })
   const queryClient = new QueryClient()
 

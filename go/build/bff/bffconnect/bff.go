@@ -52,8 +52,9 @@ func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, buc
 		}
 	})
 	c := cors.New(cors.Options{
-		AllowOriginFunc: func(_ string) bool { return true },
-		AllowedHeaders:  []string{"Connect-Protocol-Version", "Content-Type"},
+		AllowOriginFunc:  func(_ string) bool { return true },
+		AllowedHeaders:   []string{"Connect-Protocol-Version", "Content-Type"},
+		AllowCredentials: true,
 	})
 	b.Server = &http.Server{
 		Addr:      addr,
