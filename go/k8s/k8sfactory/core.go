@@ -159,6 +159,34 @@ func PreferredInterPodAntiAffinity(weight int32, selector *metav1.LabelSelector,
 	}
 }
 
+func AntiNodeAffinity(key string, nodes []string) Trait {
+	return func(object any) {
+		if len(nodes) == 0 {
+			return
+		}
+
+		switch obj := object.(type) {
+		case *corev1.Pod:
+			if obj.Spec.Affinity == nil {
+				obj.Spec.Affinity = &corev1.Affinity{}
+			}
+			if obj.Spec.Affinity.NodeAffinity == nil {
+				obj.Spec.Affinity.NodeAffinity = &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}
+			}
+			if obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+				obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &corev1.NodeSelector{}
+			}
+
+			obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(
+				obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms,
+				corev1.NodeSelectorTerm{MatchExpressions: []corev1.NodeSelectorRequirement{
+					{Key: key, Operator: corev1.NodeSelectorOpNotIn, Values: nodes},
+				}},
+			)
+		}
+	}
+}
+
 func ServiceAccount(v string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {

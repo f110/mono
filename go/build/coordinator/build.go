@@ -209,6 +209,7 @@ func NewBazelBuilder(
 	minIOOpt storage.MinIOOptions,
 	bazelOpt BazelOptions,
 	vaultClient *vault.Client,
+	excludeNodes []string,
 	dev bool,
 ) (*BazelBuilder, error) {
 	bazelImage := bazelImage
@@ -231,7 +232,7 @@ func NewBazelBuilder(
 		vaultClient:       vaultClient,
 		dev:               dev,
 		taskQueue:         newTaskQueue(),
-		jobBuilder:        NewJobBuilder(namespace, bazelImage, sidecarImage),
+		jobBuilder:        NewJobBuilder(namespace, bazelImage, sidecarImage, excludeNodes),
 	}
 	if kOpt.JobInformer != nil {
 		b.jobLister = kOpt.JobInformer.Lister()

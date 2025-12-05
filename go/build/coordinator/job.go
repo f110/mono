@@ -42,6 +42,7 @@ type JobBuilder struct {
 	remoteCache          string
 	remoteAssetAPI       bool
 	vaultAddr            string
+	excludeNodes         []string
 
 	PreProcessContainerName string
 	BuildContainerName      string
@@ -60,7 +61,7 @@ type JobBuilder struct {
 	secretProviderClasses    []runtime.Object
 }
 
-func NewJobBuilder(ns, bazelImage, sidecar string) *JobBuilder {
+func NewJobBuilder(ns, bazelImage, sidecar string, excludeNodes []string) *JobBuilder {
 	workDir := k8sfactory.NewEmptyDirVolumeSource("workdir", "/work")
 	return &JobBuilder{
 		namespace:               ns,
@@ -69,6 +70,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string) *JobBuilder {
 		PreProcessContainerName: "pre-process",
 		BuildContainerName:      "main",
 		ReportContainerName:     "report",
+		excludeNodes:            excludeNodes,
 
 		workDirVolume: workDir,
 		mainContainer: k8sfactory.ContainerFactory(nil,
@@ -90,6 +92,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string) *JobBuilder {
 			}),
 			k8sfactory.RestartPolicy(corev1.RestartPolicyNever),
 			k8sfactory.Volume(workDir),
+			k8sfactory.AntiNodeAffinity("kubernetes.io/hostname", excludeNodes),
 		),
 	}
 }

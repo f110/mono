@@ -89,6 +89,7 @@ type Options struct {
 	TaskCPULimit                   string
 	TaskMemoryLimit                string
 	WithGC                         bool
+	ExcludeNodes                   []string
 
 	Dev   bool
 	Debug bool
@@ -328,6 +329,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		minioOpt,
 		bazelOpt,
 		p.vaultClient,
+		p.opt.ExcludeNodes,
 		p.opt.Dev,
 	)
 	if err != nil {
@@ -527,6 +529,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("task-cpu-limit", "Task cpu limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskCPULimit).Default("1000m")
 	fs.String("task-memory-limit", "Task memory limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskMemoryLimit).Default("4096Mi")
 	fs.Bool("with-gc", "Enable GC for the job").Var(&opt.WithGC)
+	fs.StringArray("exclude-nodes", "THe list of node to not assigned job").Var(&opt.ExcludeNodes)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)

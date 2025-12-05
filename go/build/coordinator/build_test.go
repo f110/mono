@@ -48,6 +48,7 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		storage.MinIOOptions{},
 		BazelOptions{},
 		nil,
+		nil,
 		false,
 	)
 	require.NoError(t, err)
