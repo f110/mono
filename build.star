@@ -59,6 +59,20 @@ job(
 )
 
 job(
+    name = "publish_build_frontend",
+    command = "run",
+    targets = ["//containers/build:push_frontend"],
+    platforms = [
+        "@rules_go//go/toolchain:linux_amd64",
+    ],
+    args = [
+        "--insecure",  # To run internally, accessing to the registry is used http. So We have to pass --insecure flag.
+    ],
+    cpu_limit = "2000m",
+    event = ["manual"],
+)
+
+job(
     name = "publish_build_frontend_dev",
     command = "run",
     targets = ["//containers/build:push_frontend_dev"],
