@@ -283,6 +283,7 @@ func (*backendService) dbTaskToAPITask(task *database.Task) *model.Task {
 	return model.Task_builder{
 		Id:                  varptr.Ptr(task.Id),
 		RepositoryId:        varptr.Ptr(task.RepositoryId),
+		JobName:             varptr.Ptr(task.JobName),
 		Revision:            varptr.Ptr(task.Revision),
 		BazelVersion:        varptr.Ptr(task.BazelVersion),
 		Command:             varptr.Ptr(task.Command),
