@@ -55,7 +55,7 @@ func (s *backendService) ListTasks(ctx context.Context, req *RequestListTasks) (
 	} else if len(req.GetRepositoryIds()) > 0 {
 		var allTasks []*model.Task
 		for _, v := range req.GetRepositoryIds() {
-			t, err := s.dao.Task.ListByRepositoryId(ctx, v)
+			t, err := s.dao.Task.ListByRepositoryId(ctx, v, dao.Desc)
 			if err != nil {
 				return nil, status.Error(codes.Internal, "Failed to list tasks")
 			}
@@ -65,7 +65,7 @@ func (s *backendService) ListTasks(ctx context.Context, req *RequestListTasks) (
 		return ResponseListTasks_builder{Tasks: allTasks}.Build(), nil
 	}
 	// We don't return test reports when requested all tasks.
-	t, err := s.dao.Task.ListAll(ctx)
+	t, err := s.dao.Task.ListAll(ctx, dao.Limit(100), dao.Desc)
 	if err != nil {
 		logger.Log.Warn("Failed to list all tasks", logger.Error(err))
 		return nil, status.Error(codes.Internal, "failed to list all tasks")
