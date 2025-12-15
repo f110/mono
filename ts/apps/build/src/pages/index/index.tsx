@@ -1,5 +1,6 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import SyncIcon from '@mui/icons-material/Sync'
 import { useState } from 'react'
 import * as React from 'react'
 import {
@@ -61,8 +62,10 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
       <StyledTableCell align="center">
         {task.success ? (
           <CheckIcon color="success" />
-        ) : (
+        ) : task.finishedAt ? (
           <ErrorIcon color="error" />
+        ) : (
+          <SyncIcon color="warning" />
         )}
       </StyledTableCell>
       <StyledTableCell>

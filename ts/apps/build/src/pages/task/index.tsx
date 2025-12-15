@@ -5,6 +5,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import ErrorIcon from '@mui/icons-material/Error'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import SyncIcon from '@mui/icons-material/Sync'
 import {
   Accordion,
   AccordionDetails,
@@ -113,8 +114,10 @@ export const TaskPage: React.FC = () => {
                   <DefinitionTableCell>
                     {task?.success ? (
                       <CheckIcon color="success" />
-                    ) : (
+                    ) : task?.finishedAt ? (
                       <ErrorIcon color="error" />
+                    ) : (
+                      <SyncIcon color="warning" />
                     )}
                   </DefinitionTableCell>
                 </TableRow>
