@@ -81,7 +81,7 @@ export const RunTaskModal: React.FC<Props> = ({
   )
   const onSelect = (select: SelectChangeEvent) => {
     const selectedRepository = repositories.find(
-      (r) => String(r.id) === select.target.value,
+      (r) => r.id === Number(select.target.value),
     )
     setRepository(selectedRepository)
   }
