@@ -9,10 +9,14 @@ import (
 )
 
 func buildCtl(args []string) error {
+	endpoint := ""
 	rootCmd := &cli.Command{
 		Use: "buildctl",
 	}
-	buildctl.Job(rootCmd)
+	rootCmd.Flags().String("endpoint", "RPC Endpoint").Var(&endpoint).Required()
+	buildctl.Repositories(rootCmd, &endpoint)
+	buildctl.Jobs(rootCmd, &endpoint)
+	buildctl.Tasks(rootCmd, &endpoint)
 
 	return rootCmd.Execute(args)
 }

@@ -2,11 +2,21 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "buildctl",
-    srcs = ["job.go"],
+    srcs = [
+        "jobs.go",
+        "repositories.go",
+        "tasks.go",
+        "util.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/cmd/buildctl",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/build/api",
         "//go/cli",
+        "//go/varptr",
+        "@com_github_olekukonko_tablewriter//:tablewriter",
         "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
     ],
 )

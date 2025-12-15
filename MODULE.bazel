@@ -14,7 +14,6 @@ bazel_dep(name = "aspect_rules_ts", version = "3.7.1")
 bazel_dep(name = "rules_nodejs", version = "6.6.0")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-
 go_sdk.from_file(go_mod = "//:go.mod")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
@@ -73,6 +72,7 @@ use_repo(
     "com_github_minio_minio_operator",
     "com_github_nats_io_nats_go",
     "com_github_nissy_bon",
+    "com_github_olekukonko_tablewriter",
     "com_github_peco_peco",
     "com_github_prometheus_client_golang",
     "com_github_prometheus_client_model",
