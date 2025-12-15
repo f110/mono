@@ -63,18 +63,17 @@ func (s *backendService) ListTasks(ctx context.Context, req *RequestListTasks) (
 			allTasks = append(allTasks, tasks...)
 		}
 		return ResponseListTasks_builder{Tasks: allTasks}.Build(), nil
-	} else {
-		// We don't return test reports when requested all tasks.
-		t, err := s.dao.Task.ListAll(ctx)
-		if err != nil {
-			logger.Log.Warn("Failed to list all tasks", logger.Error(err))
-			return nil, status.Error(codes.Internal, "failed to list all tasks")
-		}
-		dbTasks = t
-		var tasks []*model.Task
-		tasks = enumerable.Map(dbTasks, s.dbTaskToAPITask)
-		return ResponseListTasks_builder{Tasks: tasks}.Build(), nil
 	}
+	// We don't return test reports when requested all tasks.
+	t, err := s.dao.Task.ListAll(ctx)
+	if err != nil {
+		logger.Log.Warn("Failed to list all tasks", logger.Error(err))
+		return nil, status.Error(codes.Internal, "failed to list all tasks")
+	}
+	dbTasks = t
+	var tasks []*model.Task
+	tasks = enumerable.Map(dbTasks, s.dbTaskToAPITask)
+	return ResponseListTasks_builder{Tasks: tasks}.Build(), nil
 }
 
 func (s *backendService) SaveRepository(ctx context.Context, req *RequestSaveRepository) (*ResponseSaveRepository, error) {
@@ -282,30 +281,29 @@ func (*backendService) dbTaskToAPITask(task *database.Task) *model.Task {
 		}
 	}
 	return model.Task_builder{
-		Id:                     varptr.Ptr(task.Id),
-		RepositoryId:           varptr.Ptr(task.RepositoryId),
-		ParsedJobConfiguration: varptr.Ptr(string(task.ParsedJobConfiguration)),
-		Revision:               varptr.Ptr(task.Revision),
-		BazelVersion:           varptr.Ptr(task.BazelVersion),
-		Command:                varptr.Ptr(task.Command),
-		IsTrunk:                varptr.Ptr(task.IsTrunk),
-		Success:                varptr.Ptr(task.Success),
-		LogFile:                varptr.Ptr(task.LogFile),
-		Targets:                strings.Split(task.Targets, ","),
-		Platform:               varptr.Ptr(task.Platform),
-		Via:                    varptr.Ptr(task.Via),
-		ConfigName:             varptr.Ptr(task.ConfigName),
-		Node:                   varptr.Ptr(task.Node),
-		Manifest:               varptr.Ptr(task.Manifest),
-		Container:              varptr.Ptr(task.Container),
-		CpuLimit:               varptr.Ptr(cpuLimit),
-		MemoryLimit:            varptr.Ptr(memoryLimit),
-		ExecutedTestsCount:     varptr.Ptr(task.ExecutedTestsCount),
-		SucceededTestsCount:    varptr.Ptr(task.SucceededTestsCount),
-		StartAt:                startAt,
-		FinishedAt:             finishedAt,
-		CreatedAt:              timestamppb.New(task.CreatedAt),
-		UpdatedAt:              timestamppb.New(task.CreatedAt),
+		Id:                  varptr.Ptr(task.Id),
+		RepositoryId:        varptr.Ptr(task.RepositoryId),
+		Revision:            varptr.Ptr(task.Revision),
+		BazelVersion:        varptr.Ptr(task.BazelVersion),
+		Command:             varptr.Ptr(task.Command),
+		IsTrunk:             varptr.Ptr(task.IsTrunk),
+		Success:             varptr.Ptr(task.Success),
+		LogFile:             varptr.Ptr(task.LogFile),
+		Targets:             strings.Split(task.Targets, ","),
+		Platform:            varptr.Ptr(task.Platform),
+		Via:                 varptr.Ptr(task.Via),
+		ConfigName:          varptr.Ptr(task.ConfigName),
+		Node:                varptr.Ptr(task.Node),
+		Manifest:            varptr.Ptr(task.Manifest),
+		Container:           varptr.Ptr(task.Container),
+		CpuLimit:            varptr.Ptr(cpuLimit),
+		MemoryLimit:         varptr.Ptr(memoryLimit),
+		ExecutedTestsCount:  varptr.Ptr(task.ExecutedTestsCount),
+		SucceededTestsCount: varptr.Ptr(task.SucceededTestsCount),
+		StartAt:             startAt,
+		FinishedAt:          finishedAt,
+		CreatedAt:           timestamppb.New(task.CreatedAt),
+		UpdatedAt:           timestamppb.New(task.CreatedAt),
 	}.Build()
 }
 
