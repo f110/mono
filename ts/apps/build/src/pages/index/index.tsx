@@ -147,7 +147,7 @@ export const IndexPage: React.FC = () => {
 
   const params = useSearch({ strict: false })
   const tasks = useListTasks(
-    'repository_id' in params ? Number(params['repository_id']) : 0,
+    'repository_id' in params ? Number(params['repository_id']) : undefined,
   )
   const repositories = useListRepositories()
   const { mutate: restartTask } = useRestartTask()
