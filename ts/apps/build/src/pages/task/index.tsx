@@ -1,6 +1,6 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { Code } from '@connectrpc/connect'
-import { useQuery } from '@connectrpc/connect-query'
+import { useSuspenseQuery } from '@connectrpc/connect-query'
 import CheckIcon from '@mui/icons-material/Check'
 import ErrorIcon from '@mui/icons-material/Error'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -49,7 +49,7 @@ export const TaskPage: React.FC = () => {
     data: tasks,
     error: taskError,
     isSuccess,
-  } = useQuery(
+  } = useSuspenseQuery(
     BFF.method.listTasks,
     {
       taskId: Number(taskId),
@@ -63,13 +63,9 @@ export const TaskPage: React.FC = () => {
       },
     },
   )
-  if (taskError?.code == Code.NotFound) {
+  if (taskError?.code == Code.NotFound || !tasks) {
     throw notFound()
   }
-  if (!tasks) {
-    return <></>
-  }
-
   const task = tasks.tasks[0]
   const start = task?.startAt
     ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss')
