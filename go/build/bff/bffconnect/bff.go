@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 
 	"connectrpc.com/connect"
 	"github.com/rs/cors"
@@ -184,7 +183,7 @@ func (b *BFF) GetLogs(ctx context.Context, req *connect.Request[bff.RequestGetLo
 	if len(tasks.GetTasks()) != 1 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("invalid task id"))
 	}
-	logObj, err := b.s3.Get(ctx, path.Join("logs", tasks.GetTasks()[0].GetLogFile()))
+	logObj, err := b.s3.Get(ctx, tasks.GetTasks()[0].GetLogFile())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
