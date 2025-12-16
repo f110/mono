@@ -1,6 +1,6 @@
 import { useQuery } from '@connectrpc/connect-query'
 import * as React from 'react'
-import { Modal, Container, Typography, Box, Stack } from '@mui/material'
+import { Modal, Container, Typography, Box, Stack, Paper } from '@mui/material'
 import { BFF } from '../connect/bff_pb'
 
 const modalStyle = {
@@ -12,6 +12,7 @@ const modalStyle = {
   border: '0',
   boxShadow: 24,
   p: 2,
+  height: '80%',
 }
 
 type Props = {
@@ -40,10 +41,14 @@ export const LogModal: React.FC<Props> = ({ open, onClose, taskId }) => {
       aria-describedby="modal-modal-description"
     >
       <Container sx={modalStyle} maxWidth="lg">
-        <Box sx={{ width: '100%' }}>
-          <Stack spacing={2}>
+        <Box sx={{ width: '100%', height: '100%' }}>
+          <Stack spacing={2} sx={{ height: '100%' }}>
             <Typography variant="h6">Log</Typography>
-            <Typography>{logs?.body}</Typography>
+            <Box sx={{ overflow: 'auto' }}>
+              <Paper sx={{ fontFamily: 'monospace' }}>
+                <pre>{logs?.body}</pre>
+              </Paper>
+            </Box>
           </Stack>
         </Box>
       </Container>
