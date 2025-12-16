@@ -8,6 +8,8 @@ job(
         "-//containers/zoekt-indexer/...",
         "-//containers/zoekt-webserver/...",
         "-//py/...",
+        "-//ts/packages/eslint-config/...",
+        "-//ts/packages/typescript-config/...",
     ],
     platforms = [
         "@rules_go//go/toolchain:linux_amd64",
