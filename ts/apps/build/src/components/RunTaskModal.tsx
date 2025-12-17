@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@connectrpc/connect-query'
+import { useQuery } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import * as React from 'react'
 import {
@@ -13,8 +13,10 @@ import {
   MenuItem,
   FormControl,
   type SelectChangeEvent,
+  Alert,
 } from '@mui/material'
 import { BFF } from '../connect/bff_pb'
+import { useInvokeJob } from '../hooks/useInvokeJob.ts'
 import type { Job, Repository } from '../model/msg_pb'
 
 type JobSelectProps = {
@@ -86,16 +88,27 @@ export const RunTaskModal: React.FC<Props> = ({
     setRepository(selectedRepository)
   }
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined)
-  const { mutate: InvokeJob } = useMutation(BFF.method.invokeJob)
+  const [error, setError] = useState<string | undefined>(undefined)
+  const { mutate: InvokeJob, isPending } = useInvokeJob()
   const startJob = () => {
     if (!repository || !selectedJob) {
       return
     }
 
-    InvokeJob({
-      repositoryId: repository.id,
-      jobName: selectedJob.name,
-    })
+    InvokeJob(
+      {
+        repositoryId: repository.id,
+        jobName: selectedJob.name,
+      },
+      {
+        onSuccess: () => {
+          onClose()
+        },
+        onError: () => {
+          setError('Failed to invoke job')
+        },
+      },
+    )
   }
 
   return (
@@ -109,6 +122,7 @@ export const RunTaskModal: React.FC<Props> = ({
         <Box sx={{ width: '100%' }}>
           <Stack spacing={2}>
             <Typography variant="h6">Run task</Typography>
+            {error && <Alert severity="error">{error}</Alert>}
             <Stack spacing={1}>
               <FormControl>
                 <InputLabel id="repository">Repository...</InputLabel>
@@ -138,6 +152,7 @@ export const RunTaskModal: React.FC<Props> = ({
                   color="primary"
                   sx={{ textTransform: 'none' }}
                   onClick={startJob}
+                  disabled={isPending}
                 >
                   Start
                 </Button>
