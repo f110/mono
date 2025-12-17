@@ -84,7 +84,9 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
         </Link>
         @
         <Link to="." href={task.revisionUrl}>
-          {task.revision}
+          {task.revision.length === 40
+            ? task.revision.slice(0, 8)
+            : task.revision}
         </Link>
       </StyledTableCell>
       <StyledTableCell>{task.jobName}</StyledTableCell>
