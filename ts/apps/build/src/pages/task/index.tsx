@@ -110,7 +110,7 @@ export const TaskPage: React.FC = () => {
                   <DefinitionTableCell>{taskId}</DefinitionTableCell>
                 </TableRow>
                 <TableRow>
-                  <DefinitionTableCell>Status</DefinitionTableCell>
+                  <DefinitionTableCell>Succeeded</DefinitionTableCell>
                   <DefinitionTableCell>
                     {task?.success ? (
                       <CheckIcon color="success" />
@@ -204,22 +204,26 @@ export const TaskPage: React.FC = () => {
                 <TableRow>
                   <DefinitionTableCell>Log</DefinitionTableCell>
                   <DefinitionTableCell>
-                    <Link to="." onClick={() => setLogModal(true)}>
-                      text
-                    </Link>
+                    {task.finishedAt && (
+                      <Link to="." onClick={() => setLogModal(true)}>
+                        text
+                      </Link>
+                    )}
                   </DefinitionTableCell>
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Job manifest</DefinitionTableCell>
                   <DefinitionTableCell>
-                    <Link
-                      to="."
-                      onClick={() => {
-                        manifestModalOpen(task ? task.manifest : '')
-                      }}
-                    >
-                      yaml
-                    </Link>
+                    {task.startAt && (
+                      <Link
+                        to="."
+                        onClick={() => {
+                          manifestModalOpen(task ? task.manifest : '')
+                        }}
+                      >
+                        yaml
+                      </Link>
+                    )}
                   </DefinitionTableCell>
                 </TableRow>
               </TableBody>

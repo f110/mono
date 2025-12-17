@@ -152,7 +152,8 @@ export const RunTaskModal: React.FC<Props> = ({
                   color="primary"
                   sx={{ textTransform: 'none' }}
                   onClick={startJob}
-                  disabled={isPending}
+                  loading={isPending}
+                  loadingPosition="end"
                 >
                   Start
                 </Button>

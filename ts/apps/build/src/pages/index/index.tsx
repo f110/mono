@@ -92,24 +92,28 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
       <StyledTableCell>{task.jobName}</StyledTableCell>
       <StyledTableCell>{task.command}</StyledTableCell>
       <StyledTableCell>
-        <Link
-          to="."
-          onClick={() => {
-            openLogModal(task.id)
-          }}
-        >
-          text
-        </Link>
+        {task.finishedAt && (
+          <Link
+            to="."
+            onClick={() => {
+              openLogModal(task.id)
+            }}
+          >
+            text
+          </Link>
+        )}
       </StyledTableCell>
       <StyledTableCell>
-        <Link
-          to="."
-          onClick={() => {
-            openManifestModal(task.manifest)
-          }}
-        >
-          yaml
-        </Link>
+        {task.startAt && (
+          <Link
+            to="."
+            onClick={() => {
+              openManifestModal(task.manifest)
+            }}
+          >
+            yaml
+          </Link>
+        )}
       </StyledTableCell>
       <StyledTableCell>{task.via}</StyledTableCell>
       <StyledTableCell>{start}</StyledTableCell>

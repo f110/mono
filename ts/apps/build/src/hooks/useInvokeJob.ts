@@ -7,7 +7,6 @@ export function useInvokeJob(): ReturnType<typeof useMutation> {
 
   return useMutation(BFF.method.invokeJob, {
     onSuccess: () => {
-      console.log('invalidate cache')
       void queryClient.invalidateQueries({
         queryKey: createConnectQueryKey({
           schema: BFF.method.listTasks,
