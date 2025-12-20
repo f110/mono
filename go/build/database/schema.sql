@@ -36,6 +36,7 @@ CREATE TABLE `task` (
 	`via` VARCHAR(255) NOT NULL,
 	`config_name` VARCHAR(255) NOT NULL,
 	`node` VARCHAR(255) NOT NULL,
+	`job_object_name` VARCHAR(255) NOT NULL,
 	`manifest` TEXT NOT NULL,
 	`container` VARCHAR(255) NOT NULL,
 	`executed_tests_count` INTEGER NOT NULL,

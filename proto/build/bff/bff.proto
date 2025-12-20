@@ -21,6 +21,7 @@ service BFF {
   rpc RemoveRepository(RequestRemoveRepository) returns (ResponseRemoveRepository);
   rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
   rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
+  rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
 }
 
 message RequestListRepositories {}
@@ -93,6 +94,12 @@ message RequestSyncRepository {
 }
 
 message ResponseSyncRepository {}
+
+message RequestForceStopTask {
+  int32 task_id = 1;
+}
+
+message ResponseForceStopTask {}
 
 message BFFTask {
   int32                       id                       = 1;

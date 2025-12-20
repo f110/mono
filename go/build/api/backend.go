@@ -258,6 +258,13 @@ func (s *backendService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (
 	return ResponseInvokeJob_builder{TaskId: varptr.Ptr(taskID)}.Build(), nil
 }
 
+func (s *backendService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {
+	if err := s.builder.ForceStop(ctx, req.GetTaskId()); err != nil {
+		return nil, status.Error(codes.Internal, "failed to force stop task")
+	}
+	return ResponseForceStopTask_builder{}.Build(), nil
+}
+
 func (*backendService) dbTaskToAPITask(task *database.Task) *model.Task {
 	var startAt, finishedAt *timestamppb.Timestamp
 	if task.StartAt != nil {

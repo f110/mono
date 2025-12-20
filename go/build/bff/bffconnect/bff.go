@@ -270,3 +270,14 @@ func (b *BFF) RestartTask(ctx context.Context, req *connect.Request[bff.RequestR
 	}
 	return connect.NewResponse(bff.ResponseRestartTask_builder{}.Build()), nil
 }
+
+func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error) {
+	if !req.Msg.HasTaskId() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("task id must be specified"))
+	}
+	_, err := b.apiClient.ForceStopTask(ctx, api.RequestForceStopTask_builder{TaskId: varptr.Ptr(req.Msg.GetTaskId())}.Build())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(bff.ResponseForceStopTask_builder{}.Build()), nil
+}

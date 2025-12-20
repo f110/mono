@@ -63,12 +63,13 @@ message Task {
   string                     via                      = 15;
   string                     config_name              = 16;
   string                     node                     = 17;
-  string                     manifest                 = 18 [(dev.f110.ddl.column) = { type: "text" }];
-  string                     container                = 19;
-  int32                      executed_tests_count     = 20;
-  int32                      succeeded_tests_count    = 21;
-  .google.protobuf.Timestamp start_at                 = 22 [(dev.f110.ddl.column) = { null: true }];
-  .google.protobuf.Timestamp finished_at              = 23 [(dev.f110.ddl.column) = { null: true }];
+  string                     job_object_name          = 18;
+  string                     manifest                 = 19 [(dev.f110.ddl.column) = { type: "text" }];
+  string                     container                = 20;
+  int32                      executed_tests_count     = 21;
+  int32                      succeeded_tests_count    = 22;
+  .google.protobuf.Timestamp start_at                 = 23 [(dev.f110.ddl.column) = { null: true }];
+  .google.protobuf.Timestamp finished_at              = 24 [(dev.f110.ddl.column) = { null: true }];
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"

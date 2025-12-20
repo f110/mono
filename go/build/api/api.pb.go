@@ -1017,6 +1017,124 @@ func (b0 ResponseInvokeJob_builder) Build() *ResponseInvokeJob {
 	return m0
 }
 
+type RequestForceStopTask struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestForceStopTask) Reset() {
+	*x = RequestForceStopTask{}
+	mi := &file_proto_build_api_api_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestForceStopTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestForceStopTask) ProtoMessage() {}
+
+func (x *RequestForceStopTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestForceStopTask) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *RequestForceStopTask) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestForceStopTask) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestForceStopTask) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_TaskId = 0
+}
+
+type RequestForceStopTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TaskId *int32
+}
+
+func (b0 RequestForceStopTask_builder) Build() *RequestForceStopTask {
+	m0 := &RequestForceStopTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	return m0
+}
+
+type ResponseForceStopTask struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseForceStopTask) Reset() {
+	*x = ResponseForceStopTask{}
+	mi := &file_proto_build_api_api_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseForceStopTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseForceStopTask) ProtoMessage() {}
+
+func (x *ResponseForceStopTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ResponseForceStopTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ResponseForceStopTask_builder) Build() *ResponseForceStopTask {
+	m0 := &ResponseForceStopTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
 var File_proto_build_api_api_proto protoreflect.FileDescriptor
 
 const file_proto_build_api_api_proto_rawDesc = "" +
@@ -1055,7 +1173,10 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x19\n" +
 	"\bjob_name\x18\x03 \x01(\tR\ajobName\",\n" +
 	"\x11ResponseInvokeJob\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\x05R\x06taskId2\x88\x05\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"/\n" +
+	"\x14RequestForceStopTask\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"\x17\n" +
+	"\x15ResponseForceStopTask2\xe6\x05\n" +
 	"\x03API\x12P\n" +
 	"\tListTasks\x12 .mono.build.api.RequestListTasks\x1a!.mono.build.api.ResponseListTasks\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.api.RequestListRepositories\x1a(.mono.build.api.ResponseListRepositories\x12_\n" +
@@ -1063,9 +1184,10 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x10DeleteRepository\x12'.mono.build.api.RequestDeleteRepository\x1a(.mono.build.api.ResponseDeleteRepository\x12_\n" +
 	"\x0eSyncRepository\x12%.mono.build.api.RequestSyncRepository\x1a&.mono.build.api.ResponseSyncRepository\x12M\n" +
 	"\bListJobs\x12\x1f.mono.build.api.RequestListJobs\x1a .mono.build.api.ResponseListJobs\x12P\n" +
-	"\tInvokeJob\x12 .mono.build.api.RequestInvokeJob\x1a!.mono.build.api.ResponseInvokeJobB'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\tInvokeJob\x12 .mono.build.api.RequestInvokeJob\x1a!.mono.build.api.ResponseInvokeJob\x12\\\n" +
+	"\rForceStopTask\x12$.mono.build.api.RequestForceStopTask\x1a%.mono.build.api.ResponseForceStopTaskB'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_proto_build_api_api_proto_goTypes = []any{
 	(*RequestListTasks)(nil),         // 0: mono.build.api.RequestListTasks
 	(*ResponseListTasks)(nil),        // 1: mono.build.api.ResponseListTasks
@@ -1081,16 +1203,18 @@ var file_proto_build_api_api_proto_goTypes = []any{
 	(*ResponseSyncRepository)(nil),   // 11: mono.build.api.ResponseSyncRepository
 	(*RequestInvokeJob)(nil),         // 12: mono.build.api.RequestInvokeJob
 	(*ResponseInvokeJob)(nil),        // 13: mono.build.api.ResponseInvokeJob
-	(*model.Task)(nil),               // 14: mono.build.model.Task
-	(*model.Repository)(nil),         // 15: mono.build.model.Repository
-	(*model.Job)(nil),                // 16: mono.build.model.Job
+	(*RequestForceStopTask)(nil),     // 14: mono.build.api.RequestForceStopTask
+	(*ResponseForceStopTask)(nil),    // 15: mono.build.api.ResponseForceStopTask
+	(*model.Task)(nil),               // 16: mono.build.model.Task
+	(*model.Repository)(nil),         // 17: mono.build.model.Repository
+	(*model.Job)(nil),                // 18: mono.build.model.Job
 }
 var file_proto_build_api_api_proto_depIdxs = []int32{
-	14, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
-	15, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	15, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	15, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	16, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	16, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
+	17, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	17, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	17, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	18, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
 	0,  // 5: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
 	2,  // 6: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
 	4,  // 7: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
@@ -1098,15 +1222,17 @@ var file_proto_build_api_api_proto_depIdxs = []int32{
 	10, // 9: mono.build.api.API.SyncRepository:input_type -> mono.build.api.RequestSyncRepository
 	8,  // 10: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
 	12, // 11: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
-	1,  // 12: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
-	3,  // 13: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
-	5,  // 14: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
-	7,  // 15: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
-	11, // 16: mono.build.api.API.SyncRepository:output_type -> mono.build.api.ResponseSyncRepository
-	9,  // 17: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
-	13, // 18: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
-	12, // [12:19] is the sub-list for method output_type
-	5,  // [5:12] is the sub-list for method input_type
+	14, // 12: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
+	1,  // 13: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
+	3,  // 14: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
+	5,  // 15: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
+	7,  // 16: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
+	11, // 17: mono.build.api.API.SyncRepository:output_type -> mono.build.api.ResponseSyncRepository
+	9,  // 18: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
+	13, // 19: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
+	15, // 20: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
+	13, // [13:21] is the sub-list for method output_type
+	5,  // [5:13] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -1123,7 +1249,7 @@ func file_proto_build_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_api_api_proto_rawDesc), len(file_proto_build_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

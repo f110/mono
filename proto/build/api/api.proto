@@ -16,6 +16,7 @@ service API {
   rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
   rpc ListJobs(RequestListJobs) returns (ResponseListJobs);
   rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
+  rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
 }
 
 message RequestListTasks {
@@ -74,3 +75,9 @@ message RequestInvokeJob {
 message ResponseInvokeJob {
   int32 task_id = 1;
 }
+
+message RequestForceStopTask {
+  int32 task_id = 1;
+}
+
+message ResponseForceStopTask {}

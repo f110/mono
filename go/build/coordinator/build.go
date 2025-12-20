@@ -39,6 +39,7 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -54,10 +55,11 @@ const (
 	defaultCPULimit    = "1000m"
 	defaultMemoryLimit = "4096Mi"
 
-	labelKeyRepoId = "build.f110.dev/repo-id"
-	labelKeyJobId  = "build.f110.dev/job-id"
-	labelKeyTaskId = "build.f110.dev/task-id"
-	labelKeyCtrlBy = "build.f110.dev/control-by"
+	labelKeyRepoId    = "build.f110.dev/repo-id"
+	labelKeyJobId     = "build.f110.dev/job-id"
+	labelKeyTaskId    = "build.f110.dev/task-id"
+	labelKeyCtrlBy    = "build.f110.dev/control-by"
+	labelKeyForceStop = "build.f110.dev/force-stop"
 
 	jobTimeout = 1 * time.Hour
 	jobType    = "bazelBuilder"
@@ -370,6 +372,34 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 	return tasks, nil
 }
 
+func (b *BazelBuilder) ForceStop(ctx context.Context, taskId int32) error {
+	task, err := b.dao.Task.Select(ctx, taskId)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if task.JobObjectName == "" {
+		return xerrors.New("could not stop the job")
+	}
+
+	if b.IsStub() {
+		task.FinishedAt = varptr.Ptr(time.Now())
+		if err := b.dao.Task.Update(ctx, task); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	job, err := b.jobLister.Jobs(b.Namespace).Get(task.JobObjectName)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	job = k8sfactory.JobFactory(job, k8sfactory.Label(labelKeyForceStop, "true"))
+	_, err = b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
 func (b *BazelBuilder) IsStub() bool {
 	return b.client == nil || b.jobLister == nil || b.podLister == nil
 }
@@ -424,11 +454,14 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return nil
 	}
 
-	// Timed out
-	if job.CreationTimestamp.Add(jobTimeout).Before(time.Now()) {
-		logger.Log.Info("Job is timed out", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
-		now := time.Now()
-		task.FinishedAt = &now
+	// Timed out or force stop
+	if job.CreationTimestamp.Add(jobTimeout).Before(time.Now()) || job.GetLabels()[labelKeyForceStop] != "" {
+		if job.GetLabels()[labelKeyForceStop] == "" {
+			logger.Log.Info("Job is timed out", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+		} else {
+			logger.Log.Info("Force stop job", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
+		}
+		task.FinishedAt = varptr.Ptr(time.Now())
 		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
@@ -566,6 +599,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	if err != nil {
 		return err
 	}
+	var createdJob *batchv1.Job
 	for _, v := range builtObjects {
 		switch obj := v.(type) {
 		case *batchv1.Job:
@@ -573,7 +607,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 				m, _ := k8smanifest.Marshal(obj)
 				logger.Log.Info("Create Job", zap.String("manifest", string(m)))
 			} else {
-				_, err := b.client.BatchV1().Jobs(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				createdJob, err = b.client.BatchV1().Jobs(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
 				if err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -613,6 +647,9 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		}
 	}
 	task.StartAt = varptr.Ptr(time.Now())
+	if createdJob != nil {
+		task.JobObjectName = createdJob.Name
+	}
 
 	var buf bytes.Buffer
 	for _, v := range builtObjects {

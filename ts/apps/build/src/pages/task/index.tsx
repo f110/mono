@@ -35,6 +35,8 @@ import { useState } from 'react'
 import { LogModal } from '../../components/LogModal.tsx'
 import { ManifestModal } from '../../components/ManifestModal.tsx'
 import { BFF } from '../../connect/bff_pb'
+import { useInvokeJob } from '../../hooks/useInvokeJob.ts'
+import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { TestStatus } from '../../model/msg_pb'
 import { formatDuration } from '../../utils/duration.ts'
 
@@ -82,6 +84,12 @@ export const TaskPage: React.FC = () => {
     setManifestModal(true)
   }
   const [logModal, setLogModal] = useState(false)
+
+  const { mutate: restartTask } = useRestartTask()
+  const handleRerun = () => {
+    restartTask({ taskId: Number(taskId) })
+  }
+  const handleForceStop = () => {}
 
   if (!isSuccess) {
     return <></>
@@ -229,14 +237,24 @@ export const TaskPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
-          <Stack direction="row" sx={{ width: '100%' }}>
+          <Stack direction="row" sx={{ width: '100%' }} spacing={2}>
             <Button
               variant="contained"
               color="warning"
               sx={{ textTransform: 'none' }}
+              onClick={handleRerun}
             >
               Rerun
             </Button>
+            {!task.finishedAt && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleForceStop}
+              >
+                Force Stop
+              </Button>
+            )}
           </Stack>
         </Stack>
       </Box>

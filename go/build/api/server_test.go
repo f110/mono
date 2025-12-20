@@ -38,6 +38,10 @@ func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, 
 	return []*database.Task{}, nil
 }
 
+func (m *MockBuilder) ForceStop(_ context.Context, _ int32) error {
+	return nil
+}
+
 type MockTransport struct {
 	req   []*http.Request
 	res   []*http.Response

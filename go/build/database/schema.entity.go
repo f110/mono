@@ -141,6 +141,7 @@ type Task struct {
 	Via                 string
 	ConfigName          string
 	Node                string
+	JobObjectName       string
 	Manifest            string
 	Container           string
 	ExecutedTestsCount  int32
@@ -183,6 +184,7 @@ func (e *Task) IsChanged() bool {
 		e.Via != e.mark.Via ||
 		e.ConfigName != e.mark.ConfigName ||
 		e.Node != e.mark.Node ||
+		e.JobObjectName != e.mark.JobObjectName ||
 		e.Manifest != e.mark.Manifest ||
 		e.Container != e.mark.Container ||
 		e.ExecutedTestsCount != e.mark.ExecutedTestsCount ||
@@ -250,6 +252,9 @@ func (e *Task) ChangedColumn() []ddl.Column {
 	if e.Node != e.mark.Node {
 		res = append(res, ddl.Column{Name: "node", Value: e.Node})
 	}
+	if e.JobObjectName != e.mark.JobObjectName {
+		res = append(res, ddl.Column{Name: "job_object_name", Value: e.JobObjectName})
+	}
 	if e.Manifest != e.mark.Manifest {
 		res = append(res, ddl.Column{Name: "manifest", Value: e.Manifest})
 	}
@@ -308,6 +313,7 @@ func (e *Task) Copy() *Task {
 		Via:                    e.Via,
 		ConfigName:             e.ConfigName,
 		Node:                   e.Node,
+		JobObjectName:          e.JobObjectName,
 		Manifest:               e.Manifest,
 		Container:              e.Container,
 		ExecutedTestsCount:     e.ExecutedTestsCount,

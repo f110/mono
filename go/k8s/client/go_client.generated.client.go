@@ -118,7 +118,7 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 	}
 	{
 		conf := *cfg
-		conf.GroupVersion = &v1beta1.SchemaGroupVersion
+		conf.GroupVersion = &v1beta1.SchemeGroupVersion
 		conf.APIPath = "/apis"
 		conf.NegotiatedSerializer = Codecs.WithoutConversion()
 		c, err := rest.RESTClientFor(&conf)
@@ -828,9 +828,9 @@ func (f *InformerFactory) InformerForResource(gvr schema.GroupVersionResource) c
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case miniov1alpha1.SchemaGroupVersion.WithResource("miniousers"):
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
-	case v1beta1.SchemaGroupVersion.WithResource("minioinstances"):
+	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
 		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MinIOInstanceInformer()
-	case v1beta1.SchemaGroupVersion.WithResource("mirrors"):
+	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
 		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MirrorInformer()
 	default:
 		return nil
@@ -1391,7 +1391,7 @@ func (x *MiniocontrollerV1beta1MinIOInstanceLister) Get(namespace, name string) 
 		return nil, err
 	}
 	if !exists {
-		return nil, k8serrors.NewNotFound(v1beta1.SchemaGroupVersion.WithResource("minioinstance").GroupResource(), name)
+		return nil, k8serrors.NewNotFound(v1beta1.SchemeGroupVersion.WithResource("minioinstance").GroupResource(), name)
 	}
 	return obj.(*v1beta1.MinIOInstance).DeepCopy(), nil
 }
@@ -1418,7 +1418,7 @@ func (x *MiniocontrollerV1beta1MirrorLister) Get(namespace, name string) (*v1bet
 		return nil, err
 	}
 	if !exists {
-		return nil, k8serrors.NewNotFound(v1beta1.SchemaGroupVersion.WithResource("mirror").GroupResource(), name)
+		return nil, k8serrors.NewNotFound(v1beta1.SchemeGroupVersion.WithResource("mirror").GroupResource(), name)
 	}
 	return obj.(*v1beta1.Mirror).DeepCopy(), nil
 }

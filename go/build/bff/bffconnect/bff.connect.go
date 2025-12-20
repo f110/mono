@@ -53,6 +53,8 @@ const (
 	BFFSyncRepositoryProcedure = "/mono.build.bff.BFF/SyncRepository"
 	// BFFRestartTaskProcedure is the fully-qualified name of the BFF's RestartTask RPC.
 	BFFRestartTaskProcedure = "/mono.build.bff.BFF/RestartTask"
+	// BFFForceStopTaskProcedure is the fully-qualified name of the BFF's ForceStopTask RPC.
+	BFFForceStopTaskProcedure = "/mono.build.bff.BFF/ForceStopTask"
 )
 
 // BFFClient is a client for the mono.build.bff.BFF service.
@@ -67,6 +69,7 @@ type BFFClient interface {
 	RemoveRepository(context.Context, *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error)
 	SyncRepository(context.Context, *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error)
+	ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error)
 }
 
 // NewBFFClient constructs a client for the mono.build.bff.BFF service. By default, it uses the
@@ -140,6 +143,12 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 			connect.WithSchema(bFFMethods.ByName("RestartTask")),
 			connect.WithClientOptions(opts...),
 		),
+		forceStopTask: connect.NewClient[bff.RequestForceStopTask, bff.ResponseForceStopTask](
+			httpClient,
+			baseURL+BFFForceStopTaskProcedure,
+			connect.WithSchema(bFFMethods.ByName("ForceStopTask")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -155,6 +164,7 @@ type bFFClient struct {
 	removeRepository *connect.Client[bff.RequestRemoveRepository, bff.ResponseRemoveRepository]
 	syncRepository   *connect.Client[bff.RequestSyncRepository, bff.ResponseSyncRepository]
 	restartTask      *connect.Client[bff.RequestRestartTask, bff.ResponseRestartTask]
+	forceStopTask    *connect.Client[bff.RequestForceStopTask, bff.ResponseForceStopTask]
 }
 
 // ListRepositories calls mono.build.bff.BFF.ListRepositories.
@@ -207,6 +217,11 @@ func (c *bFFClient) RestartTask(ctx context.Context, req *connect.Request[bff.Re
 	return c.restartTask.CallUnary(ctx, req)
 }
 
+// ForceStopTask calls mono.build.bff.BFF.ForceStopTask.
+func (c *bFFClient) ForceStopTask(ctx context.Context, req *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error) {
+	return c.forceStopTask.CallUnary(ctx, req)
+}
+
 // BFFHandler is an implementation of the mono.build.bff.BFF service.
 type BFFHandler interface {
 	ListRepositories(context.Context, *connect.Request[bff.RequestListRepositories]) (*connect.Response[bff.ResponseListRepositories], error)
@@ -219,6 +234,7 @@ type BFFHandler interface {
 	RemoveRepository(context.Context, *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error)
 	SyncRepository(context.Context, *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error)
+	ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error)
 }
 
 // NewBFFHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -288,6 +304,12 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 		connect.WithSchema(bFFMethods.ByName("RestartTask")),
 		connect.WithHandlerOptions(opts...),
 	)
+	bFFForceStopTaskHandler := connect.NewUnaryHandler(
+		BFFForceStopTaskProcedure,
+		svc.ForceStopTask,
+		connect.WithSchema(bFFMethods.ByName("ForceStopTask")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.build.bff.BFF/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BFFListRepositoriesProcedure:
@@ -310,6 +332,8 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 			bFFSyncRepositoryHandler.ServeHTTP(w, r)
 		case BFFRestartTaskProcedure:
 			bFFRestartTaskHandler.ServeHTTP(w, r)
+		case BFFForceStopTaskProcedure:
+			bFFForceStopTaskHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -357,4 +381,8 @@ func (UnimplementedBFFHandler) SyncRepository(context.Context, *connect.Request[
 
 func (UnimplementedBFFHandler) RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.RestartTask is not implemented"))
+}
+
+func (UnimplementedBFFHandler) ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ForceStopTask is not implemented"))
 }

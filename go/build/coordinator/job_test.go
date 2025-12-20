@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestJobBuilder_Clone(t *testing.T) {
-	b := NewJobBuilder("default", "bazel", "sidecar")
+	b := NewJobBuilder("default", "bazel", "sidecar", nil)
 	assert.False(t, b.useBazelisk)
 	n := b.Clone()
 	b.UseBazelisk()
@@ -271,7 +271,7 @@ func TestJobBuilder(t *testing.T) {
 	require.NoError(t, logger.Init())
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			b := NewJobBuilder(metav1.NamespaceDefault, "registry/bazel", "registry/sidecar")
+			b := NewJobBuilder(metav1.NamespaceDefault, "registry/bazel", "registry/sidecar", nil)
 			b.BazelBinaryMirror("https://bazelmirror")
 			b.DefaultBazelVersion("6.0.0")
 			b.UseBazelisk()

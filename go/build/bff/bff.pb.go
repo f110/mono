@@ -1318,6 +1318,124 @@ func (b0 ResponseSyncRepository_builder) Build() *ResponseSyncRepository {
 	return m0
 }
 
+type RequestForceStopTask struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestForceStopTask) Reset() {
+	*x = RequestForceStopTask{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestForceStopTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestForceStopTask) ProtoMessage() {}
+
+func (x *RequestForceStopTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestForceStopTask) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *RequestForceStopTask) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestForceStopTask) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestForceStopTask) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_TaskId = 0
+}
+
+type RequestForceStopTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TaskId *int32
+}
+
+func (b0 RequestForceStopTask_builder) Build() *RequestForceStopTask {
+	m0 := &RequestForceStopTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	return m0
+}
+
+type ResponseForceStopTask struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseForceStopTask) Reset() {
+	*x = ResponseForceStopTask{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseForceStopTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseForceStopTask) ProtoMessage() {}
+
+func (x *ResponseForceStopTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ResponseForceStopTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ResponseForceStopTask_builder) Build() *ResponseForceStopTask {
+	m0 := &ResponseForceStopTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
 type BFFTask struct {
 	state                             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id                     int32                  `protobuf:"varint,1,opt,name=id"`
@@ -1357,7 +1475,7 @@ type BFFTask struct {
 
 func (x *BFFTask) Reset() {
 	*x = BFFTask{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[20]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1369,7 +1487,7 @@ func (x *BFFTask) String() string {
 func (*BFFTask) ProtoMessage() {}
 
 func (x *BFFTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[20]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2265,7 +2383,10 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x13ResponseRestartTask\"<\n" +
 	"\x15RequestSyncRepository\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"\x18\n" +
-	"\x16ResponseSyncRepository\"\xe0\b\n" +
+	"\x16ResponseSyncRepository\"/\n" +
+	"\x14RequestForceStopTask\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"\x17\n" +
+	"\x15ResponseForceStopTask\"\xe0\b\n" +
 	"\aBFFTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12<\n" +
 	"\n" +
@@ -2302,7 +2423,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\tcpu_limit\x18\x1a \x01(\tR\bcpuLimit\x12!\n" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
 	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x125\n" +
-	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\x8a\a\n" +
+	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\xe8\a\n" +
 	"\x03BFF\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.bff.RequestListRepositories\x1a(.mono.build.bff.ResponseListRepositories\x12P\n" +
 	"\tListTasks\x12 .mono.build.bff.RequestListTasks\x1a!.mono.build.bff.ResponseListTasks\x12J\n" +
@@ -2313,9 +2434,10 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x0eSaveRepository\x12%.mono.build.bff.RequestSaveRepository\x1a&.mono.build.bff.ResponseSaveRepository\x12e\n" +
 	"\x10RemoveRepository\x12'.mono.build.bff.RequestRemoveRepository\x1a(.mono.build.bff.ResponseRemoveRepository\x12_\n" +
 	"\x0eSyncRepository\x12%.mono.build.bff.RequestSyncRepository\x1a&.mono.build.bff.ResponseSyncRepository\x12V\n" +
-	"\vRestartTask\x12\".mono.build.bff.RequestRestartTask\x1a#.mono.build.bff.ResponseRestartTaskB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\vRestartTask\x12\".mono.build.bff.RequestRestartTask\x1a#.mono.build.bff.ResponseRestartTask\x12\\\n" +
+	"\rForceStopTask\x12$.mono.build.bff.RequestForceStopTask\x1a%.mono.build.bff.ResponseForceStopTaskB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestListRepositories)(nil),  // 0: mono.build.bff.RequestListRepositories
 	(*ResponseListRepositories)(nil), // 1: mono.build.bff.ResponseListRepositories
@@ -2337,26 +2459,28 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*ResponseRestartTask)(nil),      // 17: mono.build.bff.ResponseRestartTask
 	(*RequestSyncRepository)(nil),    // 18: mono.build.bff.RequestSyncRepository
 	(*ResponseSyncRepository)(nil),   // 19: mono.build.bff.ResponseSyncRepository
-	(*BFFTask)(nil),                  // 20: mono.build.bff.BFFTask
-	(*model.Repository)(nil),         // 21: mono.build.model.Repository
-	(*model.Job)(nil),                // 22: mono.build.model.Job
-	(*timestamppb.Timestamp)(nil),    // 23: google.protobuf.Timestamp
-	(*model.TestReport)(nil),         // 24: mono.build.model.TestReport
-	(*durationpb.Duration)(nil),      // 25: google.protobuf.Duration
+	(*RequestForceStopTask)(nil),     // 20: mono.build.bff.RequestForceStopTask
+	(*ResponseForceStopTask)(nil),    // 21: mono.build.bff.ResponseForceStopTask
+	(*BFFTask)(nil),                  // 22: mono.build.bff.BFFTask
+	(*model.Repository)(nil),         // 23: mono.build.model.Repository
+	(*model.Job)(nil),                // 24: mono.build.model.Job
+	(*timestamppb.Timestamp)(nil),    // 25: google.protobuf.Timestamp
+	(*model.TestReport)(nil),         // 26: mono.build.model.TestReport
+	(*durationpb.Duration)(nil),      // 27: google.protobuf.Duration
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
-	21, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	20, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
-	22, // 2: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	21, // 3: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	21, // 4: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	21, // 5: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
-	23, // 6: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
-	23, // 7: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
-	23, // 8: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
-	23, // 9: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
-	24, // 10: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
-	25, // 11: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
+	23, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	22, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
+	24, // 2: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	23, // 3: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	23, // 4: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	23, // 5: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
+	25, // 6: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
+	25, // 7: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
+	25, // 8: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
+	25, // 9: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
+	26, // 10: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
+	27, // 11: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
 	0,  // 12: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
 	2,  // 13: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
 	4,  // 14: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
@@ -2367,18 +2491,20 @@ var file_proto_build_bff_bff_proto_depIdxs = []int32{
 	14, // 19: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
 	18, // 20: mono.build.bff.BFF.SyncRepository:input_type -> mono.build.bff.RequestSyncRepository
 	16, // 21: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
-	1,  // 22: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 23: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 24: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 25: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	9,  // 26: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	11, // 27: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	13, // 28: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	15, // 29: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	19, // 30: mono.build.bff.BFF.SyncRepository:output_type -> mono.build.bff.ResponseSyncRepository
-	17, // 31: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	22, // [22:32] is the sub-list for method output_type
-	12, // [12:22] is the sub-list for method input_type
+	20, // 22: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
+	1,  // 23: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 24: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 25: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 26: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	9,  // 27: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	11, // 28: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	13, // 29: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	15, // 30: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	19, // 31: mono.build.bff.BFF.SyncRepository:output_type -> mono.build.bff.ResponseSyncRepository
+	17, // 32: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	21, // 33: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	23, // [23:34] is the sub-list for method output_type
+	12, // [12:23] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name
@@ -2395,7 +2521,7 @@ func file_proto_build_bff_bff_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_bff_bff_proto_rawDesc), len(file_proto_build_bff_bff_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
