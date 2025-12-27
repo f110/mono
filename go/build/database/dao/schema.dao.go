@@ -330,6 +330,7 @@ type TaskInterface interface {
 	Select(ctx context.Context, id int32) (*database.Task, error)
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
+	ListOffsetAll(ctx context.Context, id int32, opt ...ListOption) ([]*database.Task, error)
 	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
 	ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error)
 	ListUniqJobName(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error)
@@ -371,7 +372,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `task` WHERE `id` = ?", id)
 
 	v := &database.Task{}
-	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.JobConfiguration, &v.ParsedJobConfiguration, &v.Revision, &v.IsTrunk, &v.BazelVersion, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.Manifest, &v.Container, &v.ExecutedTestsCount, &v.SucceededTestsCount, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.JobConfiguration, &v.ParsedJobConfiguration, &v.Revision, &v.IsTrunk, &v.BazelVersion, &v.Success, &v.LogFile, &v.Command, &v.Target, &v.Targets, &v.Platform, &v.Via, &v.ConfigName, &v.Node, &v.JobObjectName, &v.Manifest, &v.Container, &v.ExecutedTestsCount, &v.SucceededTestsCount, &v.StartAt, &v.FinishedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -399,7 +400,7 @@ func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, 
 	res := make([]*database.Task, 0, len(id))
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
@@ -426,7 +427,7 @@ func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, 
 
 func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task`"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -450,7 +451,60 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Task) ListOffsetAll(ctx context.Context, id int32, opt ...ListOption) ([]*database.Task, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `id` <= ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.Task, 0)
+	for rows.Next() {
+		r := &database.Task{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -478,7 +532,7 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 
 func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -503,7 +557,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -531,7 +585,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 
 func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `start_at` IS NULL"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -555,7 +609,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -636,7 +690,7 @@ func (d *Task) ListUniqJobName(ctx context.Context, repositoryId int32, opt ...L
 
 func (d *Task) ListByRevision(ctx context.Context, repositoryId int32, revision string, opt ...ListOption) ([]*database.Task, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ? AND `revision` = ?"
+	query := "SELECT `id`, `repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`, `updated_at` FROM `task` WHERE `repository_id` = ? AND `revision` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -662,7 +716,7 @@ func (d *Task) ListByRevision(ctx context.Context, repositoryId int32, revision 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
 		r := &database.Task{}
-		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.JobConfiguration, &r.ParsedJobConfiguration, &r.Revision, &r.IsTrunk, &r.BazelVersion, &r.Success, &r.LogFile, &r.Command, &r.Target, &r.Targets, &r.Platform, &r.Via, &r.ConfigName, &r.Node, &r.JobObjectName, &r.Manifest, &r.Container, &r.ExecutedTestsCount, &r.SucceededTestsCount, &r.StartAt, &r.FinishedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -699,8 +753,8 @@ func (d *Task) Create(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		task.RepositoryId, task.JobName, task.JobConfiguration, task.ParsedJobConfiguration, task.Revision, task.IsTrunk, task.BazelVersion, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.Manifest, task.Container, task.ExecutedTestsCount, task.SucceededTestsCount, task.StartAt, task.FinishedAt, time.Now(),
+		"INSERT INTO `task` (`repository_id`, `job_name`, `job_configuration`, `parsed_job_configuration`, `revision`, `is_trunk`, `bazel_version`, `success`, `log_file`, `command`, `target`, `targets`, `platform`, `via`, `config_name`, `node`, `job_object_name`, `manifest`, `container`, `executed_tests_count`, `succeeded_tests_count`, `start_at`, `finished_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		task.RepositoryId, task.JobName, task.JobConfiguration, task.ParsedJobConfiguration, task.Revision, task.IsTrunk, task.BazelVersion, task.Success, task.LogFile, task.Command, task.Target, task.Targets, task.Platform, task.Via, task.ConfigName, task.Node, task.JobObjectName, task.Manifest, task.Container, task.ExecutedTestsCount, task.SucceededTestsCount, task.StartAt, task.FinishedAt, time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -1342,18 +1396,11 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	}
 
 	if len(res) > 0 {
-		repositoryPrimaryKeys := make([]int32, len(res))
 		taskPrimaryKeys := make([]int32, len(res))
+		repositoryPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			repositoryPrimaryKeys[i] = v.RepositoryId
 			taskPrimaryKeys[i] = v.TaskId
-		}
-		repositoryData := make(map[int32]*database.SourceRepository)
-		{
-			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
-			for _, v := range rels {
-				repositoryData[v.Id] = v
-			}
+			repositoryPrimaryKeys[i] = v.RepositoryId
 		}
 		taskData := make(map[int32]*database.Task)
 		{
@@ -1362,9 +1409,16 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 				taskData[v.Id] = v
 			}
 		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Repository = repositoryData[v.RepositoryId]
 			v.Task = taskData[v.TaskId]
+			v.Repository = repositoryData[v.RepositoryId]
 		}
 	}
 	return res, nil
@@ -1404,18 +1458,11 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		repositoryPrimaryKeys := make([]int32, len(res))
 		taskPrimaryKeys := make([]int32, len(res))
+		repositoryPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			repositoryPrimaryKeys[i] = v.RepositoryId
 			taskPrimaryKeys[i] = v.TaskId
-		}
-		repositoryData := make(map[int32]*database.SourceRepository)
-		{
-			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
-			for _, v := range rels {
-				repositoryData[v.Id] = v
-			}
+			repositoryPrimaryKeys[i] = v.RepositoryId
 		}
 		taskData := make(map[int32]*database.Task)
 		{
@@ -1424,9 +1471,16 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 				taskData[v.Id] = v
 			}
 		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Repository = repositoryData[v.RepositoryId]
 			v.Task = taskData[v.TaskId]
+			v.Repository = repositoryData[v.RepositoryId]
 		}
 	}
 

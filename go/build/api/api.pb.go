@@ -26,6 +26,10 @@ type RequestListTasks struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Ids           []int32                `protobuf:"varint,1,rep,packed,name=ids"`
 	xxx_hidden_RepositoryIds []int32                `protobuf:"varint,2,rep,packed,name=repository_ids,json=repositoryIds"`
+	xxx_hidden_PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize"`
+	xxx_hidden_PageToken     *string                `protobuf:"bytes,4,opt,name=page_token,json=pageToken"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -69,6 +73,23 @@ func (x *RequestListTasks) GetRepositoryIds() []int32 {
 	return nil
 }
 
+func (x *RequestListTasks) GetPageSize() int32 {
+	if x != nil {
+		return x.xxx_hidden_PageSize
+	}
+	return 0
+}
+
+func (x *RequestListTasks) GetPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_PageToken != nil {
+			return *x.xxx_hidden_PageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *RequestListTasks) SetIds(v []int32) {
 	x.xxx_hidden_Ids = v
 }
@@ -77,11 +98,47 @@ func (x *RequestListTasks) SetRepositoryIds(v []int32) {
 	x.xxx_hidden_RepositoryIds = v
 }
 
+func (x *RequestListTasks) SetPageSize(v int32) {
+	x.xxx_hidden_PageSize = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestListTasks) SetPageToken(v string) {
+	x.xxx_hidden_PageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
+}
+
+func (x *RequestListTasks) HasPageSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestListTasks) HasPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *RequestListTasks) ClearPageSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_PageSize = 0
+}
+
+func (x *RequestListTasks) ClearPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_PageToken = nil
+}
+
 type RequestListTasks_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Ids           []int32
 	RepositoryIds []int32
+	PageSize      *int32
+	PageToken     *string
 }
 
 func (b0 RequestListTasks_builder) Build() *RequestListTasks {
@@ -90,14 +147,25 @@ func (b0 RequestListTasks_builder) Build() *RequestListTasks {
 	_, _ = b, x
 	x.xxx_hidden_Ids = b.Ids
 	x.xxx_hidden_RepositoryIds = b.RepositoryIds
+	if b.PageSize != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_PageSize = *b.PageSize
+	}
+	if b.PageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_PageToken = b.PageToken
+	}
 	return m0
 }
 
 type ResponseListTasks struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Tasks *[]*model.Task         `protobuf:"bytes,1,rep,name=tasks"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Tasks         *[]*model.Task         `protobuf:"bytes,1,rep,name=tasks"`
+	xxx_hidden_NextPageToken *string                `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ResponseListTasks) Reset() {
@@ -134,14 +202,42 @@ func (x *ResponseListTasks) GetTasks() []*model.Task {
 	return nil
 }
 
+func (x *ResponseListTasks) GetNextPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_NextPageToken != nil {
+			return *x.xxx_hidden_NextPageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ResponseListTasks) SetTasks(v []*model.Task) {
 	x.xxx_hidden_Tasks = &v
+}
+
+func (x *ResponseListTasks) SetNextPageToken(v string) {
+	x.xxx_hidden_NextPageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ResponseListTasks) HasNextPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseListTasks) ClearNextPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_NextPageToken = nil
 }
 
 type ResponseListTasks_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Tasks []*model.Task
+	Tasks         []*model.Task
+	NextPageToken *string
 }
 
 func (b0 ResponseListTasks_builder) Build() *ResponseListTasks {
@@ -149,6 +245,10 @@ func (b0 ResponseListTasks_builder) Build() *ResponseListTasks {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Tasks = &b.Tasks
+	if b.NextPageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_NextPageToken = b.NextPageToken
+	}
 	return m0
 }
 
@@ -1139,12 +1239,16 @@ var File_proto_build_api_api_proto protoreflect.FileDescriptor
 
 const file_proto_build_api_api_proto_rawDesc = "" +
 	"\n" +
-	"\x19proto/build/api/api.proto\x12\x0emono.build.api\x1a!google/protobuf/go_features.proto\x1a\x1bproto/build/model/msg.proto\"K\n" +
+	"\x19proto/build/api/api.proto\x12\x0emono.build.api\x1a!google/protobuf/go_features.proto\x1a\x1bproto/build/model/msg.proto\"\x87\x01\n" +
 	"\x10RequestListTasks\x12\x10\n" +
 	"\x03ids\x18\x01 \x03(\x05R\x03ids\x12%\n" +
-	"\x0erepository_ids\x18\x02 \x03(\x05R\rrepositoryIds\"A\n" +
+	"\x0erepository_ids\x18\x02 \x03(\x05R\rrepositoryIds\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"i\n" +
 	"\x11ResponseListTasks\x12,\n" +
-	"\x05tasks\x18\x01 \x03(\v2\x16.mono.build.model.TaskR\x05tasks\"+\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x16.mono.build.model.TaskR\x05tasks\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"+\n" +
 	"\x17RequestListRepositories\x12\x10\n" +
 	"\x03ids\x18\x01 \x03(\x05R\x03ids\"\\\n" +
 	"\x18ResponseListRepositories\x12@\n" +

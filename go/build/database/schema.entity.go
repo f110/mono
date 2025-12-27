@@ -13,20 +13,20 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type TestStatus uint32
-
-const (
-	TestStatusPassed TestStatus = 0
-	TestStatusFlaky  TestStatus = 1
-	TestStatusFailed TestStatus = 2
-)
-
 type SourceRepositoryStatus uint32
 
 const (
 	SourceRepositoryStatusUnknown            SourceRepositoryStatus = 0
 	SourceRepositoryStatusReady              SourceRepositoryStatus = 1
 	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
+)
+
+type TestStatus uint32
+
+const (
+	TestStatusPassed TestStatus = 0
+	TestStatusFlaky  TestStatus = 1
+	TestStatusFailed TestStatus = 2
 )
 
 type SourceRepository struct {

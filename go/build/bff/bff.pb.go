@@ -130,6 +130,8 @@ type RequestListTasks struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_RepositoryId int32                  `protobuf:"varint,1,opt,name=repository_id,json=repositoryId"`
 	xxx_hidden_TaskId       int32                  `protobuf:"varint,2,opt,name=task_id,json=taskId"`
+	xxx_hidden_PageSize     int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize"`
+	xxx_hidden_PageToken    *string                `protobuf:"bytes,4,opt,name=page_token,json=pageToken"`
 	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
 	XXX_presence            [1]uint32
 	unknownFields           protoimpl.UnknownFields
@@ -175,14 +177,41 @@ func (x *RequestListTasks) GetTaskId() int32 {
 	return 0
 }
 
+func (x *RequestListTasks) GetPageSize() int32 {
+	if x != nil {
+		return x.xxx_hidden_PageSize
+	}
+	return 0
+}
+
+func (x *RequestListTasks) GetPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_PageToken != nil {
+			return *x.xxx_hidden_PageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *RequestListTasks) SetRepositoryId(v int32) {
 	x.xxx_hidden_RepositoryId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *RequestListTasks) SetTaskId(v int32) {
 	x.xxx_hidden_TaskId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *RequestListTasks) SetPageSize(v int32) {
+	x.xxx_hidden_PageSize = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestListTasks) SetPageToken(v string) {
+	x.xxx_hidden_PageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *RequestListTasks) HasRepositoryId() bool {
@@ -199,6 +228,20 @@ func (x *RequestListTasks) HasTaskId() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
+func (x *RequestListTasks) HasPageSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestListTasks) HasPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
 func (x *RequestListTasks) ClearRepositoryId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_RepositoryId = 0
@@ -209,11 +252,23 @@ func (x *RequestListTasks) ClearTaskId() {
 	x.xxx_hidden_TaskId = 0
 }
 
+func (x *RequestListTasks) ClearPageSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_PageSize = 0
+}
+
+func (x *RequestListTasks) ClearPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_PageToken = nil
+}
+
 type RequestListTasks_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	RepositoryId *int32
 	TaskId       *int32
+	PageSize     *int32
+	PageToken    *string
 }
 
 func (b0 RequestListTasks_builder) Build() *RequestListTasks {
@@ -221,21 +276,32 @@ func (b0 RequestListTasks_builder) Build() *RequestListTasks {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.RepositoryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_RepositoryId = *b.RepositoryId
 	}
 	if b.TaskId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
 		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.PageSize != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_PageSize = *b.PageSize
+	}
+	if b.PageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_PageToken = b.PageToken
 	}
 	return m0
 }
 
 type ResponseListTasks struct {
-	state            protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Tasks *[]*BFFTask            `protobuf:"bytes,1,rep,name=tasks"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Tasks         *[]*BFFTask            `protobuf:"bytes,1,rep,name=tasks"`
+	xxx_hidden_NextPageToken *string                `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ResponseListTasks) Reset() {
@@ -272,14 +338,42 @@ func (x *ResponseListTasks) GetTasks() []*BFFTask {
 	return nil
 }
 
+func (x *ResponseListTasks) GetNextPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_NextPageToken != nil {
+			return *x.xxx_hidden_NextPageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ResponseListTasks) SetTasks(v []*BFFTask) {
 	x.xxx_hidden_Tasks = &v
+}
+
+func (x *ResponseListTasks) SetNextPageToken(v string) {
+	x.xxx_hidden_NextPageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ResponseListTasks) HasNextPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseListTasks) ClearNextPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_NextPageToken = nil
 }
 
 type ResponseListTasks_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Tasks []*BFFTask
+	Tasks         []*BFFTask
+	NextPageToken *string
 }
 
 func (b0 ResponseListTasks_builder) Build() *ResponseListTasks {
@@ -287,6 +381,10 @@ func (b0 ResponseListTasks_builder) Build() *ResponseListTasks {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Tasks = &b.Tasks
+	if b.NextPageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_NextPageToken = b.NextPageToken
+	}
 	return m0
 }
 
@@ -2346,12 +2444,16 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x19proto/build/bff/bff.proto\x12\x0emono.build.bff\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bproto/build/model/msg.proto\"\x19\n" +
 	"\x17RequestListRepositories\"\\\n" +
 	"\x18ResponseListRepositories\x12@\n" +
-	"\frepositories\x18\x01 \x03(\v2\x1c.mono.build.model.RepositoryR\frepositories\"P\n" +
+	"\frepositories\x18\x01 \x03(\v2\x1c.mono.build.model.RepositoryR\frepositories\"\x8c\x01\n" +
 	"\x10RequestListTasks\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\x12\x17\n" +
-	"\atask_id\x18\x02 \x01(\x05R\x06taskId\"B\n" +
+	"\atask_id\x18\x02 \x01(\x05R\x06taskId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"j\n" +
 	"\x11ResponseListTasks\x12-\n" +
-	"\x05tasks\x18\x01 \x03(\v2\x17.mono.build.bff.BFFTaskR\x05tasks\")\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x17.mono.build.bff.BFFTaskR\x05tasks\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\")\n" +
 	"\x0eRequestGetLogs\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"%\n" +
 	"\x0fResponseGetLogs\x12\x12\n" +

@@ -33,10 +33,15 @@ message ResponseListRepositories {
 message RequestListTasks {
   int32 repository_id = 1;
   int32 task_id       = 2;
+
+  int32  page_size  = 3;
+  string page_token = 4;
 }
 
 message ResponseListTasks {
   repeated BFFTask tasks = 1;
+
+  string next_page_token = 2;
 }
 
 message RequestGetLogs {

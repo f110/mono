@@ -130,7 +130,7 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 
 git_override(
     module_name = "protoc_ddl",
-    commit = "0d4d02686e470e43f95d395ac204121103b03f66",
+    commit = "6ef36e8a9aafa2f2a329b3aa23e3ca91288d383b",
     patch_strip = 1,
     patches = ["//patch:protoc-ddl.patch"],
     remote = "https://github.com/f110/protoc-ddl",

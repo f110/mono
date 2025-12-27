@@ -69,7 +69,7 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/webhook", api.handleWebHook)
 
-	bs := newBackendService(builder, dao, ghClient)
+	bs := newAPIService(builder, dao, ghClient)
 	grpcServer := grpc.NewServer()
 	RegisterAPIServer(grpcServer, bs)
 	s := &http.Server{

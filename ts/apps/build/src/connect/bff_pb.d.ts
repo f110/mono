@@ -53,6 +53,16 @@ export declare type RequestListTasks = Message<"mono.build.bff.RequestListTasks"
    * @generated from field: int32 task_id = 2;
    */
   taskId: number;
+
+  /**
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
 };
 
 /**
@@ -69,6 +79,11 @@ export declare type ResponseListTasks = Message<"mono.build.bff.ResponseListTask
    * @generated from field: repeated mono.build.bff.BFFTask tasks = 1;
    */
   tasks: BFFTask[];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**

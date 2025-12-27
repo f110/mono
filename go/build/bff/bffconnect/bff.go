@@ -101,13 +101,26 @@ func (b *BFF) ListTasks(ctx context.Context, req *connect.Request[bff.RequestLis
 	if req.Msg.HasRepositoryId() {
 		repositoryIds = []int32{req.Msg.GetRepositoryId()}
 	}
-	tasks, err := b.apiClient.ListTasks(ctx, api.RequestListTasks_builder{Ids: ids, RepositoryIds: repositoryIds}.Build())
+	var pageToken *string
+	if req.Msg.HasPageToken() {
+		pageToken = varptr.Ptr(req.Msg.GetPageToken())
+	}
+	var pageSize *int32
+	if req.Msg.HasPageSize() {
+		pageSize = varptr.Ptr(req.Msg.GetPageSize())
+	}
+	tasks, err := b.apiClient.ListTasks(ctx, api.RequestListTasks_builder{Ids: ids, RepositoryIds: repositoryIds, PageToken: pageToken, PageSize: pageSize}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	if len(tasks.GetTasks()) == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, nil)
 	}
+	var nextPageToken *string
+	if tasks.HasNextPageToken() {
+		nextPageToken = varptr.Ptr(tasks.GetNextPageToken())
+	}
+
 	apiTasks := tasks.GetTasks()
 	repositoryIDs := enumerable.Uniq(enumerable.Map(apiTasks, func(v *model.Task) int32 { return v.GetRepositoryId() }), func(t int32) int32 { return t })
 	repositories, err := b.apiClient.ListRepositories(ctx, api.RequestListRepositories_builder{Ids: repositoryIDs}.Build())
@@ -128,7 +141,7 @@ func (b *BFF) ListTasks(ctx context.Context, req *connect.Request[bff.RequestLis
 		bffTasks = enumerable.Map(tasks.GetTasks(), b.apiTaskToBFFTask(repositoriesMap))
 	}
 
-	return connect.NewResponse(bff.ResponseListTasks_builder{Tasks: bffTasks}.Build()), nil
+	return connect.NewResponse(bff.ResponseListTasks_builder{Tasks: bffTasks, NextPageToken: nextPageToken}.Build()), nil
 }
 
 func (*BFF) apiTaskToBFFTask(repositories map[int32]*model.Repository) func(*model.Task) *bff.BFFTask {

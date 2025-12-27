@@ -1,4 +1,5 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
+import { useQuery, useSuspenseQuery } from '@connectrpc/connect-query'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import SyncIcon from '@mui/icons-material/Sync'
 import { useState } from 'react'
@@ -22,6 +23,7 @@ import {
   MenuItem,
   FormControl,
   type SelectChangeEvent,
+  TablePagination,
 } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -32,9 +34,8 @@ import { ManifestModal } from '../../components/ManifestModal.tsx'
 import { RunTaskModal } from '../../components/RunTaskModal.tsx'
 import { StyledTableCell, StyledTableRow } from '../../components/Table.tsx'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import type { BFFTask } from '../../connect/bff_pb'
+import { BFF, type BFFTask } from '../../connect/bff_pb'
 import { useListRepositories } from '../../hooks/useListRepositories.ts'
-import { useListTasks } from '../../hooks/useListTasks.ts'
 import dayjs from 'dayjs'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { Route } from '../../routes'
@@ -154,10 +155,40 @@ export const IndexPage: React.FC = () => {
     setLogModal(false)
   }
 
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(1)
+  const [pageToken, setPageToken] = useState<string | undefined>(undefined)
+  const [pageTokenHistory, setPageTokenHistory] = useState<string[]>([])
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => {
+    if (page + 1 == newPage) {
+      setPageTokenHistory([...pageTokenHistory, pageToken])
+      setPageToken(tasks.data?.nextPageToken)
+    } else if (page - 1 == newPage) {
+      const token = pageTokenHistory.pop()
+      setPageToken(token)
+      setPageTokenHistory([...pageTokenHistory])
+    }
+    setPage(newPage)
+  }
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+    setPageToken(undefined)
+    setPageTokenHistory([])
+  }
+
   const params = useSearch({ strict: false })
-  const tasks = useListTasks(
-    'repository_id' in params ? Number(params['repository_id']) : undefined,
-  )
+  const tasks = useQuery(BFF.method.listTasks, {
+    repositoryId:
+      'repository_id' in params ? Number(params['repository_id']) : undefined,
+    pageSize: rowsPerPage,
+    pageToken: pageToken,
+  })
   const repositories = useListRepositories()
   const { mutate: restartTask } = useRestartTask()
   const onRestart = (id: number) => {
@@ -250,7 +281,7 @@ export const IndexPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tasks.map((task) => (
+                {tasks.data?.tasks.map((task) => (
                   <TaskResultRow
                     key={String(task.id)}
                     task={task}
@@ -261,6 +292,21 @@ export const IndexPage: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={-1}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              slotProps={{
+                actions: {
+                  nextButton: {
+                    disabled: tasks.data?.nextPageToken === '',
+                  },
+                },
+              }}
+            />
           </TableContainer>
         </Stack>
       </Box>

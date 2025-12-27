@@ -86,6 +86,10 @@ message Task {
       query: "SELECT * FROM `:table_name:`"
     }
     queries: {
+      name: "OffsetAll"
+      query: "SELECT * FROM `:table_name:` WHERE `id` <= ?"
+    }
+    queries: {
       name: "ByRepositoryId"
       query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
     }

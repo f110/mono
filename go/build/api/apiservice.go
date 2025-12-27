@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v73/github"
@@ -19,19 +21,19 @@ import (
 	"go.f110.dev/mono/go/varptr"
 )
 
-type backendService struct {
+type apiService struct {
 	builder      Builder
 	dao          dao.Options
 	githubClient *github.Client
 }
 
-var _ APIServer = (*backendService)(nil)
+var _ APIServer = (*apiService)(nil)
 
-func newBackendService(builder Builder, dao dao.Options, githubClient *github.Client) *backendService {
-	return &backendService{builder: builder, dao: dao, githubClient: githubClient}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient}
 }
 
-func (s *backendService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
+func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	allRepo, err := s.dao.Repository.ListAll(ctx)
 	if err != nil {
 		logger.Log.Warn("Failed to list repositories", logger.Error(err))
@@ -41,21 +43,23 @@ func (s *backendService) ListRepositories(ctx context.Context, _ *RequestListRep
 	return ResponseListRepositories_builder{Repositories: repositories}.Build(), nil
 }
 
-func (s *backendService) ListTasks(ctx context.Context, req *RequestListTasks) (*ResponseListTasks, error) {
-	var dbTasks []*database.Task
+func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*ResponseListTasks, error) {
+	// TODO: Implement pagination
 	if len(req.GetIds()) > 0 {
+		if len(req.GetIds()) > 100 {
+			return nil, status.Error(codes.InvalidArgument, "too many ids specified")
+		}
 		t, err := s.dao.Task.SelectMulti(ctx, req.GetIds()...)
 		if err != nil {
 			return nil, status.Error(codes.Internal, "Failed to list tasks")
 		}
-		dbTasks = t
 		var tasks []*model.Task
-		tasks = enumerable.Map(dbTasks, s.dbTaskToAPITaskWithTestReport(ctx))
+		tasks = enumerable.Map(t, s.dbTaskToAPITaskWithTestReport(ctx))
 		return ResponseListTasks_builder{Tasks: tasks}.Build(), nil
 	} else if len(req.GetRepositoryIds()) > 0 {
 		var allTasks []*model.Task
 		for _, v := range req.GetRepositoryIds() {
-			t, err := s.dao.Task.ListByRepositoryId(ctx, v, dao.Desc)
+			t, err := s.dao.Task.ListByRepositoryId(ctx, v, dao.Sort("id"), dao.Desc)
 			if err != nil {
 				return nil, status.Error(codes.Internal, "Failed to list tasks")
 			}
@@ -64,19 +68,47 @@ func (s *backendService) ListTasks(ctx context.Context, req *RequestListTasks) (
 		}
 		return ResponseListTasks_builder{Tasks: allTasks}.Build(), nil
 	}
+
 	// We don't return test reports when requested all tasks.
-	t, err := s.dao.Task.ListAll(ctx, dao.Limit(100), dao.Desc)
-	if err != nil {
-		logger.Log.Warn("Failed to list all tasks", logger.Error(err))
-		return nil, status.Error(codes.Internal, "failed to list all tasks")
+	pageSize := 100
+	if req.HasPageSize() {
+		pageSize = int(req.GetPageSize())
 	}
-	dbTasks = t
-	var tasks []*model.Task
-	tasks = enumerable.Map(dbTasks, s.dbTaskToAPITask)
-	return ResponseListTasks_builder{Tasks: tasks}.Build(), nil
+	if pageSize > 100 {
+		pageSize = 100
+	}
+	var receivedTasks []*database.Task
+	if req.HasPageToken() {
+		boundary, err := strconv.Atoi(req.GetPageToken())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid page_token")
+		}
+		t, err := s.dao.Task.ListOffsetAll(ctx, int32(boundary), dao.Limit(pageSize+1), dao.Sort("id"), dao.Desc)
+		if err != nil {
+			logger.Log.Warn("Failed to list all tasks", logger.Error(err))
+			return nil, status.Error(codes.Internal, "failed to list all tasks")
+		}
+		receivedTasks = t
+	} else {
+		t, err := s.dao.Task.ListAll(ctx, dao.Desc, dao.Limit(pageSize+1), dao.Desc)
+		if err != nil {
+			logger.Log.Warn("Failed to list all tasks", logger.Error(err))
+			return nil, status.Error(codes.Internal, "failed to list all tasks")
+		}
+		receivedTasks = t
+	}
+	var nextPageToken *string
+	if len(receivedTasks) == pageSize+1 {
+		nextPageToken = varptr.Ptr(fmt.Sprintf("%d", receivedTasks[pageSize].Id))
+		receivedTasks = receivedTasks[:pageSize]
+	}
+	return ResponseListTasks_builder{
+		Tasks:         enumerable.Map(receivedTasks, s.dbTaskToAPITask),
+		NextPageToken: nextPageToken,
+	}.Build(), nil
 }
 
-func (s *backendService) SaveRepository(ctx context.Context, req *RequestSaveRepository) (*ResponseSaveRepository, error) {
+func (s *apiService) SaveRepository(ctx context.Context, req *RequestSaveRepository) (*ResponseSaveRepository, error) {
 	if !req.HasRepository() {
 		return nil, status.Error(codes.InvalidArgument, "no repository specified")
 	}
@@ -97,14 +129,14 @@ func (s *backendService) SaveRepository(ctx context.Context, req *RequestSaveRep
 	return ResponseSaveRepository_builder{Repository: s.dbRepoToAPIRepo(repo)}.Build(), nil
 }
 
-func (s *backendService) DeleteRepository(ctx context.Context, req *RequestDeleteRepository) (*ResponseDeleteRepository, error) {
+func (s *apiService) DeleteRepository(ctx context.Context, req *RequestDeleteRepository) (*ResponseDeleteRepository, error) {
 	if err := s.dao.Repository.Delete(ctx, req.GetRepositoryId()); err != nil {
 		return nil, status.Error(codes.Internal, "failed to delete repository")
 	}
 	return ResponseDeleteRepository_builder{}.Build(), nil
 }
 
-func (s *backendService) SyncRepository(ctx context.Context, req *RequestSyncRepository) (*ResponseSyncRepository, error) {
+func (s *apiService) SyncRepository(ctx context.Context, req *RequestSyncRepository) (*ResponseSyncRepository, error) {
 	repository, err := s.dao.Repository.Select(ctx, req.GetRepositoryId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "repository not found")
@@ -159,7 +191,7 @@ func (s *backendService) SyncRepository(ctx context.Context, req *RequestSyncRep
 	return ResponseSyncRepository_builder{}.Build(), nil
 }
 
-func (s *backendService) ListJobs(ctx context.Context, req *RequestListJobs) (*ResponseListJobs, error) {
+func (s *apiService) ListJobs(ctx context.Context, req *RequestListJobs) (*ResponseListJobs, error) {
 	j, err := s.dao.Job.ListByRepositoryId(ctx, req.GetRepositoryId())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to list jobs")
@@ -168,7 +200,7 @@ func (s *backendService) ListJobs(ctx context.Context, req *RequestListJobs) (*R
 	return ResponseListJobs_builder{Jobs: jobs}.Build(), nil
 }
 
-func (s *backendService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*ResponseInvokeJob, error) {
+func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*ResponseInvokeJob, error) {
 	if req.HasTaskId() {
 		task, err := s.dao.Task.Select(ctx, req.GetTaskId())
 		if err != nil {
@@ -258,14 +290,14 @@ func (s *backendService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (
 	return ResponseInvokeJob_builder{TaskId: varptr.Ptr(taskID)}.Build(), nil
 }
 
-func (s *backendService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {
+func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {
 	if err := s.builder.ForceStop(ctx, req.GetTaskId()); err != nil {
 		return nil, status.Error(codes.Internal, "failed to force stop task")
 	}
 	return ResponseForceStopTask_builder{}.Build(), nil
 }
 
-func (*backendService) dbTaskToAPITask(task *database.Task) *model.Task {
+func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {
 	var startAt, finishedAt *timestamppb.Timestamp
 	if task.StartAt != nil {
 		startAt = timestamppb.New(*task.StartAt)
@@ -315,7 +347,7 @@ func (*backendService) dbTaskToAPITask(task *database.Task) *model.Task {
 	}.Build()
 }
 
-func (s *backendService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *database.Task) *model.Task {
+func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *database.Task) *model.Task {
 	return func(v *database.Task) *model.Task {
 		task := s.dbTaskToAPITask(v)
 		tr, err := s.dao.TestReport.ListByTaskId(ctx, task.GetId())
@@ -329,7 +361,7 @@ func (s *backendService) dbTaskToAPITaskWithTestReport(ctx context.Context) func
 	}
 }
 
-func (*backendService) dbTestReportToAPITestReport(tr *database.TestReport) *model.TestReport {
+func (*apiService) dbTestReportToAPITestReport(tr *database.TestReport) *model.TestReport {
 	return model.TestReport_builder{
 		Label:    varptr.Ptr(tr.Label),
 		Status:   varptr.Ptr(model.TestStatus(tr.Status)),
@@ -337,7 +369,7 @@ func (*backendService) dbTestReportToAPITestReport(tr *database.TestReport) *mod
 	}.Build()
 }
 
-func (*backendService) dbRepoToAPIRepo(repo *database.SourceRepository) *model.Repository {
+func (*apiService) dbRepoToAPIRepo(repo *database.SourceRepository) *model.Repository {
 	return model.Repository_builder{
 		Id:       varptr.Ptr(repo.Id),
 		Name:     varptr.Ptr(repo.Name),

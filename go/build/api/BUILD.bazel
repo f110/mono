@@ -7,7 +7,7 @@ go_library(
     srcs = [
         "api.pb.go",
         "api_grpc.pb.go",
-        "backend.go",
+        "apiservice.go",
         "server.go",
     ],
     importpath = "go.f110.dev/mono/go/build/api",

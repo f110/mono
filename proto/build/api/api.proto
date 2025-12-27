@@ -22,10 +22,15 @@ service API {
 message RequestListTasks {
   repeated int32 ids            = 1;
   repeated int32 repository_ids = 2;
+
+  int32  page_size  = 3;
+  string page_token = 4;
 }
 
 message ResponseListTasks {
   repeated mono.build.model.Task tasks = 1;
+
+  string next_page_token = 2;
 }
 
 message RequestListRepositories {
