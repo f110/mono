@@ -46,7 +46,7 @@ func NewGitHubClientFactory(name string, requiredCredential bool) *GitHubClientF
 }
 
 func (g *GitHubClientFactory) Flags(fs *cli.FlagSet) {
-	fs.Int64("github-app-id", "GitHub Application ID")
+	fs.Int64("github-app-id", "GitHub Application ID").Var(&g.AppID)
 	fs.Int64("github-installation-id", "GitHub Application installation ID").Var(&g.InstallationID)
 	fs.String("github-private-key-file", "Private key file for GitHub App").Var(&g.PrivateKeyFile)
 	fs.String("github-token", "Personal access token for GitHub").Var(&g.Token)
