@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/logger"
 )
 
 type GitHubClientFactory struct {
@@ -100,6 +101,7 @@ func (g *GitHubClientFactory) Init() error {
 	var httpClient *http.Client
 	var app *App
 	if g.AppID > 0 && g.InstallationID > 0 && g.PrivateKeyFile != "" {
+		logger.Log.Debug("Set up with GitHub App", logger.Int64("app_id", g.AppID), logger.Int64("installation_id", g.InstallationID), logger.String("private_key_file", g.PrivateKeyFile))
 		app, err = NewApp(g.AppID, g.InstallationID, g.PrivateKeyFile)
 		if err != nil {
 			return err

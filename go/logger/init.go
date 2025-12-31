@@ -52,7 +52,10 @@ func String(key, val string) zap.Field {
 	return zap.String(key, val)
 }
 
-var Int32 = zap.Int32
+var (
+	Int32 = zap.Int32
+	Int64 = zap.Int64
+)
 
 type customWriter struct {
 	io.Writer
