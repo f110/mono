@@ -209,6 +209,7 @@ func (u *repositoryUpdater) update(ctx context.Context) {
 	sem := make(chan struct{}, u.parallel)
 	doneCh := make(chan struct{})
 	for _, v := range u.repo {
+		logger.Log.Info("Updating repository", logger.String("repo", v.Name))
 		go func(repo *git.Repository) {
 			sem <- struct{}{}
 			defer func() { <-sem }()
@@ -246,7 +247,7 @@ func (u *repositoryUpdater) updateRepo(ctx context.Context, repo *git.Repository
 		RemoteName: upstreamRemoteName,
 	})
 	if err != nil {
-		if err != git.NoErrAlreadyUpToDate {
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			logger.Log.Warn("Failed fetch repository", logger.Error(err))
 		}
 		return
