@@ -30,6 +30,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/collections/set"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -83,6 +84,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
+	logger.Log.Debug("Inflate packfile", logger.String("path", prefix))
 	if err := InflatePackFile(ctx, b, prefix, repo); err != nil {
 		return nil, xerrors.WithMessage(err, "failed to inflate pack file")
 	}
