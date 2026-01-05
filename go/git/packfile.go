@@ -5,6 +5,7 @@ import (
 	"compress/zlib"
 	"encoding/binary"
 	"io"
+	"log"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
@@ -151,6 +152,9 @@ func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.Encode
 			break
 		}
 	}
+	if hash.String() == "0004398dd8ec4db542da68b83d74ace6b8bf827d" {
+		log.Printf("bufSize: %d", bufSize)
+	}
 	buf = make([]byte, bufSize)
 	if _, err := p.file.Read(buf); err != nil {
 		return nil, xerrors.WithStack(err)
@@ -169,8 +173,12 @@ func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.Encode
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
+		if hash.String() == "0004398dd8ec4db542da68b83d74ace6b8bf827d" {
+			all, _ := io.ReadAll(r)
+			log.Printf("% x", all)
+		}
 
-		_, err = readInt64LittleEndian(r) // src size
+		_, err = readInt64LittleEndian(r) // base object size
 		if err != nil {
 			return nil, err
 		}
@@ -179,6 +187,81 @@ func (p *Packfile) readObject(offset int64, hash plumbing.Hash) (plumbing.Encode
 			return nil, err
 		}
 		obj.SetSize(size)
+		if hash.String() == "0004398dd8ec4db542da68b83d74ace6b8bf827d" {
+			n := 0
+			// Parse instructions
+			c := make([]byte, 1)
+			readBuf := make([]byte, 1)
+			for {
+				n += 1
+				_, err := r.Read(c)
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return nil, xerrors.WithStack(err)
+				}
+
+				// Copy
+				if c[0] > 7&1 {
+					flag := c[0] & 0x7F
+					log.Printf("%b", flag)
+					var offset1, offset2, offset3, offset4, size1, size2, size3 uint8
+					if flag&0x1 == 0x1 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						offset1 = readBuf[0]
+					}
+					if flag&0x2 == 0x2 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						offset2 = readBuf[0]
+					}
+					if flag&0x4 == 0x4 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						offset3 = readBuf[0]
+					}
+					if flag&0x8 == 0x8 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						offset4 = readBuf[0]
+					}
+					if flag&0x10 == 0x10 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						size1 = readBuf[0]
+					}
+					if flag&0x20 == 0x20 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						size2 = readBuf[0]
+					}
+					if flag&0x40 == 0x40 {
+						n++
+						if _, err := r.Read(readBuf); err != nil {
+							return nil, xerrors.WithStack(err)
+						}
+						size3 = readBuf[0]
+					}
+					log.Printf("remain: %d, offset1: %d, offset2: %d, offset3: %d, offset4: %d, size1: %d, size2: %d, size3: %d", bufSize-2-int64(n), offset1, offset2, offset3, offset4, size1, size2, size3)
+				} else {
+					log.Printf("unknown: %b", c)
+				}
+			}
+		}
 		actualHash, err := p.index.FindHash(offsetReference)
 		if err != nil {
 			return nil, err

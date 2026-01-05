@@ -189,20 +189,20 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		} else if err != nil {
 			return fsm.Error(err)
 		}
-		if !c.DisableInflatePackFile && storer.IncludePackFile(ctx) {
-			logger.Log.Info("Inflate packfile", zap.String("name", r.Name))
-			if err := storer.InflatePackFile(ctx); err != nil {
-				return fsm.Error(err)
-			}
-		}
 
 		gitRepo, err := goGit.Open(storer, nil)
 		if err != nil {
 			return fsm.Error(xerrors.WithStack(err))
 		}
-
 		repo[r.Name] = gitRepo
 		r.GoGit = gitRepo
+
+		if !c.DisableInflatePackFile && storer.IncludePackFile(ctx) {
+			logger.Log.Info("Inflate packfile", zap.String("name", r.Name))
+			if err := git.InflatePackFile(ctx, storageClient, r.Prefix, gitRepo); err != nil {
+				return fsm.Error(err)
+			}
+		}
 	}
 
 	s := grpc.NewServer()

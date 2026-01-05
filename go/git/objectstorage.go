@@ -15,12 +15,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/format/objfile"
+	"github.com/go-git/go-git/v5/plumbing/format/packfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	gitStorage "github.com/go-git/go-git/v5/storage"
@@ -81,11 +83,79 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
-	if err := s.InflatePackFile(ctx); err != nil {
+	if err := InflatePackFile(ctx, b, prefix, repo); err != nil {
 		return nil, xerrors.WithMessage(err, "failed to inflate pack file")
 	}
 
 	return repo, nil
+}
+
+func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath string, repo *git.Repository) error {
+	packFiles, err := st.List(ctx, path.Join(rootPath, "objects/pack"))
+	if err != nil {
+		return err
+	}
+	var packs []plumbing.Hash
+	for _, v := range packFiles {
+		n := filepath.Base(v.Name)
+		if filepath.Ext(n) == ".pack" {
+			packs = append(packs, plumbing.NewHash(n[5:len(n)-5]))
+		}
+	}
+
+	for _, v := range packs {
+		file, err := st.Get(ctx, filepath.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
+		if err != nil {
+			return err
+		}
+		idx := idxfile.NewMemoryIndex()
+		if err := idxfile.NewDecoder(file.Body).Decode(idx); err != nil {
+			return err
+		}
+		if err := file.Body.Close(); err != nil {
+			return err
+		}
+
+		file, err = st.Get(ctx, filepath.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String())))
+		if err != nil {
+			return err
+		}
+		buf, err := io.ReadAll(file.Body)
+		if err != nil {
+			return err
+		}
+		if err := file.Body.Close(); err != nil {
+			return err
+		}
+		packfileReader := packfile.NewPackfile(idx, nil, newBufferedFile(fmt.Sprintf("objects/pack/pack-%s.pack", v.String()), buf), 0)
+
+		objs, err := packfileReader.GetAll()
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+
+		for {
+			obj, err := objs.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			if _, err := repo.Storer.SetEncodedObject(obj); err != nil {
+				return err
+			}
+		}
+
+		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
+			return err
+		}
+		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type ObjectStorageStorer struct {
@@ -130,70 +200,6 @@ func (b *ObjectStorageStorer) IncludePackFile(ctx context.Context) bool {
 		return true
 	}
 	return false
-}
-
-func (b *ObjectStorageStorer) InflatePackFile(ctx context.Context) error {
-	packFiles, err := b.backend.List(ctx, path.Join(b.rootPath, "objects/pack"))
-	if err != nil {
-		return err
-	}
-	var packs []plumbing.Hash
-	for _, v := range packFiles {
-		n := filepath.Base(v.Name)
-		if filepath.Ext(n) == ".pack" {
-			packs = append(packs, plumbing.NewHash(n[5:len(n)-5]))
-		}
-	}
-
-	for _, v := range packs {
-		file, err := b.backend.Get(ctx, filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
-		if err != nil {
-			return err
-		}
-		idx := idxfile.NewMemoryIndex()
-		if err := idxfile.NewDecoder(file.Body).Decode(idx); err != nil {
-			return err
-		}
-		if err := file.Body.Close(); err != nil {
-			return err
-		}
-
-		file, err = b.backend.Get(ctx, filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String())))
-		if err != nil {
-			return err
-		}
-		buf, err := io.ReadAll(file.Body)
-		if err != nil {
-			return err
-		}
-		if err := file.Body.Close(); err != nil {
-			return err
-		}
-		packfile, err := NewPackfile(idx, nopCloser(bytes.NewReader(buf)))
-		if err != nil {
-			return err
-		}
-
-		objs, err := packfile.All()
-		if err != nil {
-			return err
-		}
-
-		for _, obj := range objs {
-			if _, err := b.SetEncodedObject(obj); err != nil {
-				return err
-			}
-		}
-
-		if err := b.backend.Delete(ctx, path.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
-			return err
-		}
-		if err := b.backend.Delete(ctx, path.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (b *ObjectStorageStorer) Config() (*config.Config, error) {
@@ -697,11 +703,11 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	if err := file.Body.Close(); err != nil {
 		return nil, err
 	}
-	packfile, err := NewPackfile(packIndex, nopCloser(bytes.NewReader(buf)))
+	packfileReader, err := NewPackfile(packIndex, nopCloser(bytes.NewReader(buf)))
 	if err != nil {
 		return nil, err
 	}
-	obj, err := packfile.Get(h)
+	obj, err := packfileReader.Get(h)
 	if err == nil {
 		if b.EnabledCache() &&
 			(obj.Type() == plumbing.TreeObject ||
@@ -938,5 +944,42 @@ func (e *EncodedObject) UnmarshalJSON(b []byte) error {
 		e.r = io.NopCloser(bytes.NewReader(buf))
 		e.size = int64(len(buf))
 	}
+	return nil
+}
+
+type bufferedFile struct {
+	*bytes.Reader
+	stub *bytes.Buffer
+	name string
+}
+
+var _ billy.File = (*bufferedFile)(nil)
+
+func newBufferedFile(name string, buf []byte) *bufferedFile {
+	return &bufferedFile{name: name, Reader: bytes.NewReader(buf), stub: bytes.NewBuffer(buf)}
+}
+
+func (f *bufferedFile) Name() string {
+	return f.name
+}
+
+func (f *bufferedFile) Close() error {
+	return nil
+}
+
+func (f *bufferedFile) Lock() error {
+	return nil
+}
+
+func (f *bufferedFile) Unlock() error {
+	return nil
+}
+
+func (f *bufferedFile) Write(p []byte) (int, error) {
+	return f.stub.Write(p)
+}
+
+func (f *bufferedFile) Truncate(size int64) error {
+	f.stub.Truncate(int(size))
 	return nil
 }
