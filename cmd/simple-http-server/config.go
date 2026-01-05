@@ -28,10 +28,17 @@ type ConfigServer struct {
 }
 
 type PathConfig struct {
-	Path      string
-	Proxy     string
-	Root      string
-	AccessLog string
+	Path       string
+	Proxy      string
+	Root       string
+	AccessLog  string
+	GitBackend *GitBackend
+}
+
+type GitBackend struct {
+	Addr string
+	Repo string
+	Ref  string
 }
 
 func readConfigFile(p string) (*Config, error) {

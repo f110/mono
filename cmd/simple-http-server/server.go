@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/nissy/bon"
+	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
@@ -83,6 +85,7 @@ func (s *SimpleHTTPServer) readConfig() error {
 					continue
 				}
 				var proxy, root, accessLog string
+				var gitBackend *GitBackend
 				if v, ok := val["proxy"]; ok {
 					proxy = v.(string)
 				}
@@ -92,11 +95,23 @@ func (s *SimpleHTTPServer) readConfig() error {
 				if v, ok := val["access_log"]; ok {
 					accessLog = v.(string)
 				}
+				if v, ok := val["git"]; ok {
+					buf, err := json.Marshal(v)
+					if err != nil {
+						return xerrors.WithStack(err)
+					}
+					var backend GitBackend
+					if err := json.Unmarshal(buf, &backend); err != nil {
+						return xerrors.WithStack(err)
+					}
+					gitBackend = &backend
+				}
 				v.path = append(v.path, &PathConfig{
-					Path:      p,
-					Proxy:     proxy,
-					Root:      root,
-					AccessLog: accessLog,
+					Path:       p,
+					Proxy:      proxy,
+					Root:       root,
+					AccessLog:  accessLog,
+					GitBackend: gitBackend,
 				})
 			}
 		case []any:
@@ -108,6 +123,7 @@ func (s *SimpleHTTPServer) readConfig() error {
 				for p, va := range entry {
 					val := va.(map[string]any)
 					var proxy, root, accessLog string
+					var gitBackend *GitBackend
 					if v, ok := val["proxy"]; ok {
 						proxy = v.(string)
 					}
@@ -117,11 +133,23 @@ func (s *SimpleHTTPServer) readConfig() error {
 					if v, ok := val["access_log"]; ok {
 						accessLog = v.(string)
 					}
+					if v, ok := val["git"]; ok {
+						buf, err := json.Marshal(v)
+						if err != nil {
+							return xerrors.WithStack(err)
+						}
+						var backend GitBackend
+						if err := json.Unmarshal(buf, &backend); err != nil {
+							return xerrors.WithStack(err)
+						}
+						gitBackend = &backend
+					}
 					v.path = append(v.path, &PathConfig{
-						Path:      p,
-						Proxy:     proxy,
-						Root:      root,
-						AccessLog: accessLog,
+						Path:       p,
+						Proxy:      proxy,
+						Root:       root,
+						AccessLog:  accessLog,
+						GitBackend: gitBackend,
 					})
 				}
 			}
@@ -176,6 +204,13 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 					return fsm.Error(err)
 				}
 				handler = httputil.NewSingleHostReverseProxy(u)
+			}
+			if p.GitBackend != nil {
+				h, err := httpserver.GitBackend(p.GitBackend.Addr, p.GitBackend.Repo, p.GitBackend.Ref)
+				if err != nil {
+					return fsm.Error(err)
+				}
+				handler = h
 			}
 			var middlewares []bon.Middleware
 			if p.AccessLog != "" {

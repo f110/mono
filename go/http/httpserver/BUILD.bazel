@@ -2,7 +2,18 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "httpserver",
-    srcs = ["spa.go"],
+    srcs = [
+        "git.go",
+        "spa.go",
+    ],
     importpath = "go.f110.dev/mono/go/http/httpserver",
     visibility = ["//visibility:public"],
+    deps = [
+        "//go/git",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_grpc//status",
+    ],
 )
