@@ -58,6 +58,7 @@ go_proto_library(
     compilers = ["@rules_go//proto:go_proto"],
     importpath = "go.f110.dev/mono/go/build/api",
     proto = "//proto/build/api",
+    deps = ["//go/build/model"],
     visibility = ["//visibility:private"],
 )
 
@@ -65,7 +66,8 @@ go_proto_library(
     name = "api_go_grpc",
     compilers = ["@rules_go//proto:go_grpc_v2"],
     importpath = "go.f110.dev/mono/go/build/api",
-    proto = "//proto/build/api",
+    protos = ["//proto/build/api"],
+    embed = [":api_go_proto"],
     visibility = ["//visibility:private"],
 )
 
