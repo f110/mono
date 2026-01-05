@@ -84,7 +84,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
-	logger.Log.Debug("Inflate packfile", logger.String("path", prefix))
+	logger.Log.Debug("Start inflate packfile", logger.String("path", prefix))
 	if err := InflatePackFile(ctx, b, prefix, repo); err != nil {
 		return nil, xerrors.WithMessage(err, "failed to inflate pack file")
 	}
@@ -106,6 +106,7 @@ func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath st
 	}
 
 	for _, v := range packs {
+		logger.Log.Debug("Inflate packfile", logger.Stringf("file", "pack-%s.idx", v.String()))
 		file, err := st.Get(ctx, filepath.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
 		if err != nil {
 			return err
@@ -149,9 +150,11 @@ func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath st
 			}
 		}
 
-		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
+		logger.Log.Debug("Delete idx file", logger.Stringf("file", "pack-%s.idx", v.String()))
+		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String()))); err != nil {
 			return err
 		}
+		logger.Log.Debug("Delete pack file", logger.Stringf("file", "pack-%s.pack", v.String()))
 		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
 			return err
 		}
@@ -798,9 +801,6 @@ func (b *ObjectStorageStorer) readUnpackedEncodedObject(f io.ReadCloser, h plumb
 	obj.SetSize(size)
 	obj.SetReader(r)
 
-	if err := f.Close(); err != nil {
-		return nil, xerrors.WithStack(err)
-	}
 	return obj, nil
 }
 

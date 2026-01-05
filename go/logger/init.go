@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -50,6 +51,10 @@ func StandardLogger(name string) *log.Logger {
 
 func String(key, val string) zap.Field {
 	return zap.String(key, val)
+}
+
+func Stringf(key, format string, args ...interface{}) zap.Field {
+	return zap.String(key, fmt.Sprintf(format, args...))
 }
 
 var (
