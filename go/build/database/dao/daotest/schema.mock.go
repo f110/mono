@@ -114,6 +114,15 @@ func (d *Task) RegisterListAll(value []*database.Task, err error) {
 	d.Register("ListAll", map[string]interface{}{}, value, err)
 }
 
+func (d *Task) ListOffsetAll(ctx context.Context, id int32, opt ...dao.ListOption) ([]*database.Task, error) {
+	v, err := d.Call("ListOffsetAll", map[string]interface{}{"id": id})
+	return v.([]*database.Task), err
+}
+
+func (d *Task) RegisterListOffsetAll(id int32, value []*database.Task, err error) {
+	d.Register("ListOffsetAll", map[string]interface{}{"id": id}, value, err)
+}
+
 func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Task, error) {
 	v, err := d.Call("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
 	return v.([]*database.Task), err
