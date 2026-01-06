@@ -53,6 +53,16 @@ export declare type RequestListTasks = Message<"mono.build.bff.RequestListTasks"
    * @generated from field: int32 task_id = 2;
    */
   taskId: number;
+
+  /**
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
 };
 
 /**
@@ -69,6 +79,11 @@ export declare type ResponseListTasks = Message<"mono.build.bff.ResponseListTask
    * @generated from field: repeated mono.build.bff.BFFTask tasks = 1;
    */
   tasks: BFFTask[];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -319,6 +334,34 @@ export declare type ResponseSyncRepository = Message<"mono.build.bff.ResponseSyn
 export declare const ResponseSyncRepositorySchema: GenMessage<ResponseSyncRepository>;
 
 /**
+ * @generated from message mono.build.bff.RequestForceStopTask
+ */
+export declare type RequestForceStopTask = Message<"mono.build.bff.RequestForceStopTask"> & {
+  /**
+   * @generated from field: int32 task_id = 1;
+   */
+  taskId: number;
+};
+
+/**
+ * Describes the message mono.build.bff.RequestForceStopTask.
+ * Use `create(RequestForceStopTaskSchema)` to create a new message.
+ */
+export declare const RequestForceStopTaskSchema: GenMessage<RequestForceStopTask>;
+
+/**
+ * @generated from message mono.build.bff.ResponseForceStopTask
+ */
+export declare type ResponseForceStopTask = Message<"mono.build.bff.ResponseForceStopTask"> & {
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseForceStopTask.
+ * Use `create(ResponseForceStopTaskSchema)` to create a new message.
+ */
+export declare const ResponseForceStopTaskSchema: GenMessage<ResponseForceStopTask>;
+
+/**
  * @generated from message mono.build.bff.BFFTask
  */
 export declare type BFFTask = Message<"mono.build.bff.BFFTask"> & {
@@ -557,6 +600,14 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestRestartTaskSchema;
     output: typeof ResponseRestartTaskSchema;
+  },
+  /**
+   * @generated from rpc mono.build.bff.BFF.ForceStopTask
+   */
+  forceStopTask: {
+    methodKind: "unary";
+    input: typeof RequestForceStopTaskSchema;
+    output: typeof ResponseForceStopTaskSchema;
   },
 }>;
 
