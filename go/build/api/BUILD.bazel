@@ -57,7 +57,7 @@ go_proto_library(
     name = "api_go_proto",
     compilers = ["@rules_go//proto:go_proto"],
     importpath = "go.f110.dev/mono/go/build/api",
-    proto = "//proto/build/api",
+    protos = ["//proto/build/api"],
     deps = ["//go/build/model"],
     visibility = ["//visibility:private"],
 )

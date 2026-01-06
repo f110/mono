@@ -6,7 +6,8 @@ go_proto_library(
     name = "bff_go_proto",
     compilers = ["@rules_go//proto:go_proto"],
     importpath = "go.f110.dev/mono/go/build/bff",
-    proto = "//proto/build/bff",
+    protos = ["//proto/build/bff"],
+    deps = ["//go/build/model"],
     visibility = ["//visibility:private"],
 )
 

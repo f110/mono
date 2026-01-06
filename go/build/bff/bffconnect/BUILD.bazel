@@ -6,9 +6,11 @@ go_proto_library(
     name = "bff_proto_connect",
     compilers = ["//build/rules/proto:connect_go_compiler"],
     importpath = "go.f110.dev/mono/go/build/bff",
+    overrideimportpath = "go.f110.dev/mono/go/build/bff/bffconnect",
     protos = [
         "//proto/build/bff",
     ],
+    deps = ["//go/build/bff:bff"],
     visibility = ["//visibility:public"],
 )
 

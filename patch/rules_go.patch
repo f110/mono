@@ -1,0 +1,29 @@
+diff --git a/proto/def.bzl b/proto/def.bzl
+index 948ff048c8..462c91f519 100644
+--- a/proto/def.bzl
++++ b/proto/def.bzl
+@@ -151,12 +151,16 @@
+             importpath = go.importpath,
+         ))
+ 
++    overrideimportpath = None
++    if ctx.attr.overrideimportpath:
++        overrideimportpath = ctx.attr.overrideimportpath
+     go_info = new_go_info(
+         go,
+         ctx.attr,
+         resolver = _proto_library_to_source,
+         generated_srcs = go_srcs,
+         coverage_instrumented = False,
++        importpath = overrideimportpath,
+     )
+     providers = [go_info]
+     output_groups = {
+@@ -191,6 +195,7 @@
+             aspects = [_go_proto_aspect],
+         ),
+         "importpath": attr.string(),
++        "overrideimportpath": attr.string(),
+         "importmap": attr.string(),
+         "importpath_aliases": attr.string_list(),  # experimental, undocumented
+         "embed": attr.label_list(providers = [GoInfo]),
