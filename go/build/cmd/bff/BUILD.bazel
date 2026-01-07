@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/build/api",
-        "//go/build/bff/bffconnect",
+        "//go/build/bff",
         "//go/cli",
         "//go/logger",
         "//go/storage",

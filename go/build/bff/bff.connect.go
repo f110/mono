@@ -2,13 +2,12 @@
 //
 // Source: proto/build/bff/bff.proto
 
-package bffconnect
+package bff
 
 import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	bff "go.f110.dev/mono/go/build/bff"
 	http "net/http"
 	strings "strings"
 )
@@ -59,17 +58,17 @@ const (
 
 // BFFClient is a client for the mono.build.bff.BFF service.
 type BFFClient interface {
-	ListRepositories(context.Context, *connect.Request[bff.RequestListRepositories]) (*connect.Response[bff.ResponseListRepositories], error)
-	ListTasks(context.Context, *connect.Request[bff.RequestListTasks]) (*connect.Response[bff.ResponseListTasks], error)
-	GetLogs(context.Context, *connect.Request[bff.RequestGetLogs]) (*connect.Response[bff.ResponseGetLogs], error)
-	GetServerInfo(context.Context, *connect.Request[bff.RequestGetServerInfo]) (*connect.Response[bff.ResponseGetServerInfo], error)
-	ListJobs(context.Context, *connect.Request[bff.RequestListJobs]) (*connect.Response[bff.ResponseListJobs], error)
-	InvokeJob(context.Context, *connect.Request[bff.RequestInvokeJob]) (*connect.Response[bff.ResponseInvokeJob], error)
-	SaveRepository(context.Context, *connect.Request[bff.RequestSaveRepository]) (*connect.Response[bff.ResponseSaveRepository], error)
-	RemoveRepository(context.Context, *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error)
-	SyncRepository(context.Context, *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error)
-	RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error)
-	ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error)
+	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	ListTasks(context.Context, *connect.Request[RequestListTasks]) (*connect.Response[ResponseListTasks], error)
+	GetLogs(context.Context, *connect.Request[RequestGetLogs]) (*connect.Response[ResponseGetLogs], error)
+	GetServerInfo(context.Context, *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error)
+	ListJobs(context.Context, *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error)
+	InvokeJob(context.Context, *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error)
+	SaveRepository(context.Context, *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error)
+	RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error)
+	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
+	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
+	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 }
 
 // NewBFFClient constructs a client for the mono.build.bff.BFF service. By default, it uses the
@@ -81,69 +80,69 @@ type BFFClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) BFFClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	bFFMethods := bff.File_proto_build_bff_bff_proto.Services().ByName("BFF").Methods()
+	bFFMethods := File_proto_build_bff_bff_proto.Services().ByName("BFF").Methods()
 	return &bFFClient{
-		listRepositories: connect.NewClient[bff.RequestListRepositories, bff.ResponseListRepositories](
+		listRepositories: connect.NewClient[RequestListRepositories, ResponseListRepositories](
 			httpClient,
 			baseURL+BFFListRepositoriesProcedure,
 			connect.WithSchema(bFFMethods.ByName("ListRepositories")),
 			connect.WithClientOptions(opts...),
 		),
-		listTasks: connect.NewClient[bff.RequestListTasks, bff.ResponseListTasks](
+		listTasks: connect.NewClient[RequestListTasks, ResponseListTasks](
 			httpClient,
 			baseURL+BFFListTasksProcedure,
 			connect.WithSchema(bFFMethods.ByName("ListTasks")),
 			connect.WithClientOptions(opts...),
 		),
-		getLogs: connect.NewClient[bff.RequestGetLogs, bff.ResponseGetLogs](
+		getLogs: connect.NewClient[RequestGetLogs, ResponseGetLogs](
 			httpClient,
 			baseURL+BFFGetLogsProcedure,
 			connect.WithSchema(bFFMethods.ByName("GetLogs")),
 			connect.WithClientOptions(opts...),
 		),
-		getServerInfo: connect.NewClient[bff.RequestGetServerInfo, bff.ResponseGetServerInfo](
+		getServerInfo: connect.NewClient[RequestGetServerInfo, ResponseGetServerInfo](
 			httpClient,
 			baseURL+BFFGetServerInfoProcedure,
 			connect.WithSchema(bFFMethods.ByName("GetServerInfo")),
 			connect.WithClientOptions(opts...),
 		),
-		listJobs: connect.NewClient[bff.RequestListJobs, bff.ResponseListJobs](
+		listJobs: connect.NewClient[RequestListJobs, ResponseListJobs](
 			httpClient,
 			baseURL+BFFListJobsProcedure,
 			connect.WithSchema(bFFMethods.ByName("ListJobs")),
 			connect.WithClientOptions(opts...),
 		),
-		invokeJob: connect.NewClient[bff.RequestInvokeJob, bff.ResponseInvokeJob](
+		invokeJob: connect.NewClient[RequestInvokeJob, ResponseInvokeJob](
 			httpClient,
 			baseURL+BFFInvokeJobProcedure,
 			connect.WithSchema(bFFMethods.ByName("InvokeJob")),
 			connect.WithClientOptions(opts...),
 		),
-		saveRepository: connect.NewClient[bff.RequestSaveRepository, bff.ResponseSaveRepository](
+		saveRepository: connect.NewClient[RequestSaveRepository, ResponseSaveRepository](
 			httpClient,
 			baseURL+BFFSaveRepositoryProcedure,
 			connect.WithSchema(bFFMethods.ByName("SaveRepository")),
 			connect.WithClientOptions(opts...),
 		),
-		removeRepository: connect.NewClient[bff.RequestRemoveRepository, bff.ResponseRemoveRepository](
+		removeRepository: connect.NewClient[RequestRemoveRepository, ResponseRemoveRepository](
 			httpClient,
 			baseURL+BFFRemoveRepositoryProcedure,
 			connect.WithSchema(bFFMethods.ByName("RemoveRepository")),
 			connect.WithClientOptions(opts...),
 		),
-		syncRepository: connect.NewClient[bff.RequestSyncRepository, bff.ResponseSyncRepository](
+		syncRepository: connect.NewClient[RequestSyncRepository, ResponseSyncRepository](
 			httpClient,
 			baseURL+BFFSyncRepositoryProcedure,
 			connect.WithSchema(bFFMethods.ByName("SyncRepository")),
 			connect.WithClientOptions(opts...),
 		),
-		restartTask: connect.NewClient[bff.RequestRestartTask, bff.ResponseRestartTask](
+		restartTask: connect.NewClient[RequestRestartTask, ResponseRestartTask](
 			httpClient,
 			baseURL+BFFRestartTaskProcedure,
 			connect.WithSchema(bFFMethods.ByName("RestartTask")),
 			connect.WithClientOptions(opts...),
 		),
-		forceStopTask: connect.NewClient[bff.RequestForceStopTask, bff.ResponseForceStopTask](
+		forceStopTask: connect.NewClient[RequestForceStopTask, ResponseForceStopTask](
 			httpClient,
 			baseURL+BFFForceStopTaskProcedure,
 			connect.WithSchema(bFFMethods.ByName("ForceStopTask")),
@@ -154,87 +153,87 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 
 // bFFClient implements BFFClient.
 type bFFClient struct {
-	listRepositories *connect.Client[bff.RequestListRepositories, bff.ResponseListRepositories]
-	listTasks        *connect.Client[bff.RequestListTasks, bff.ResponseListTasks]
-	getLogs          *connect.Client[bff.RequestGetLogs, bff.ResponseGetLogs]
-	getServerInfo    *connect.Client[bff.RequestGetServerInfo, bff.ResponseGetServerInfo]
-	listJobs         *connect.Client[bff.RequestListJobs, bff.ResponseListJobs]
-	invokeJob        *connect.Client[bff.RequestInvokeJob, bff.ResponseInvokeJob]
-	saveRepository   *connect.Client[bff.RequestSaveRepository, bff.ResponseSaveRepository]
-	removeRepository *connect.Client[bff.RequestRemoveRepository, bff.ResponseRemoveRepository]
-	syncRepository   *connect.Client[bff.RequestSyncRepository, bff.ResponseSyncRepository]
-	restartTask      *connect.Client[bff.RequestRestartTask, bff.ResponseRestartTask]
-	forceStopTask    *connect.Client[bff.RequestForceStopTask, bff.ResponseForceStopTask]
+	listRepositories *connect.Client[RequestListRepositories, ResponseListRepositories]
+	listTasks        *connect.Client[RequestListTasks, ResponseListTasks]
+	getLogs          *connect.Client[RequestGetLogs, ResponseGetLogs]
+	getServerInfo    *connect.Client[RequestGetServerInfo, ResponseGetServerInfo]
+	listJobs         *connect.Client[RequestListJobs, ResponseListJobs]
+	invokeJob        *connect.Client[RequestInvokeJob, ResponseInvokeJob]
+	saveRepository   *connect.Client[RequestSaveRepository, ResponseSaveRepository]
+	removeRepository *connect.Client[RequestRemoveRepository, ResponseRemoveRepository]
+	syncRepository   *connect.Client[RequestSyncRepository, ResponseSyncRepository]
+	restartTask      *connect.Client[RequestRestartTask, ResponseRestartTask]
+	forceStopTask    *connect.Client[RequestForceStopTask, ResponseForceStopTask]
 }
 
 // ListRepositories calls mono.build.bff.BFF.ListRepositories.
-func (c *bFFClient) ListRepositories(ctx context.Context, req *connect.Request[bff.RequestListRepositories]) (*connect.Response[bff.ResponseListRepositories], error) {
+func (c *bFFClient) ListRepositories(ctx context.Context, req *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	return c.listRepositories.CallUnary(ctx, req)
 }
 
 // ListTasks calls mono.build.bff.BFF.ListTasks.
-func (c *bFFClient) ListTasks(ctx context.Context, req *connect.Request[bff.RequestListTasks]) (*connect.Response[bff.ResponseListTasks], error) {
+func (c *bFFClient) ListTasks(ctx context.Context, req *connect.Request[RequestListTasks]) (*connect.Response[ResponseListTasks], error) {
 	return c.listTasks.CallUnary(ctx, req)
 }
 
 // GetLogs calls mono.build.bff.BFF.GetLogs.
-func (c *bFFClient) GetLogs(ctx context.Context, req *connect.Request[bff.RequestGetLogs]) (*connect.Response[bff.ResponseGetLogs], error) {
+func (c *bFFClient) GetLogs(ctx context.Context, req *connect.Request[RequestGetLogs]) (*connect.Response[ResponseGetLogs], error) {
 	return c.getLogs.CallUnary(ctx, req)
 }
 
 // GetServerInfo calls mono.build.bff.BFF.GetServerInfo.
-func (c *bFFClient) GetServerInfo(ctx context.Context, req *connect.Request[bff.RequestGetServerInfo]) (*connect.Response[bff.ResponseGetServerInfo], error) {
+func (c *bFFClient) GetServerInfo(ctx context.Context, req *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {
 	return c.getServerInfo.CallUnary(ctx, req)
 }
 
 // ListJobs calls mono.build.bff.BFF.ListJobs.
-func (c *bFFClient) ListJobs(ctx context.Context, req *connect.Request[bff.RequestListJobs]) (*connect.Response[bff.ResponseListJobs], error) {
+func (c *bFFClient) ListJobs(ctx context.Context, req *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {
 	return c.listJobs.CallUnary(ctx, req)
 }
 
 // InvokeJob calls mono.build.bff.BFF.InvokeJob.
-func (c *bFFClient) InvokeJob(ctx context.Context, req *connect.Request[bff.RequestInvokeJob]) (*connect.Response[bff.ResponseInvokeJob], error) {
+func (c *bFFClient) InvokeJob(ctx context.Context, req *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error) {
 	return c.invokeJob.CallUnary(ctx, req)
 }
 
 // SaveRepository calls mono.build.bff.BFF.SaveRepository.
-func (c *bFFClient) SaveRepository(ctx context.Context, req *connect.Request[bff.RequestSaveRepository]) (*connect.Response[bff.ResponseSaveRepository], error) {
+func (c *bFFClient) SaveRepository(ctx context.Context, req *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error) {
 	return c.saveRepository.CallUnary(ctx, req)
 }
 
 // RemoveRepository calls mono.build.bff.BFF.RemoveRepository.
-func (c *bFFClient) RemoveRepository(ctx context.Context, req *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error) {
+func (c *bFFClient) RemoveRepository(ctx context.Context, req *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error) {
 	return c.removeRepository.CallUnary(ctx, req)
 }
 
 // SyncRepository calls mono.build.bff.BFF.SyncRepository.
-func (c *bFFClient) SyncRepository(ctx context.Context, req *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error) {
+func (c *bFFClient) SyncRepository(ctx context.Context, req *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
 	return c.syncRepository.CallUnary(ctx, req)
 }
 
 // RestartTask calls mono.build.bff.BFF.RestartTask.
-func (c *bFFClient) RestartTask(ctx context.Context, req *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error) {
+func (c *bFFClient) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	return c.restartTask.CallUnary(ctx, req)
 }
 
 // ForceStopTask calls mono.build.bff.BFF.ForceStopTask.
-func (c *bFFClient) ForceStopTask(ctx context.Context, req *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error) {
+func (c *bFFClient) ForceStopTask(ctx context.Context, req *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error) {
 	return c.forceStopTask.CallUnary(ctx, req)
 }
 
 // BFFHandler is an implementation of the mono.build.bff.BFF service.
 type BFFHandler interface {
-	ListRepositories(context.Context, *connect.Request[bff.RequestListRepositories]) (*connect.Response[bff.ResponseListRepositories], error)
-	ListTasks(context.Context, *connect.Request[bff.RequestListTasks]) (*connect.Response[bff.ResponseListTasks], error)
-	GetLogs(context.Context, *connect.Request[bff.RequestGetLogs]) (*connect.Response[bff.ResponseGetLogs], error)
-	GetServerInfo(context.Context, *connect.Request[bff.RequestGetServerInfo]) (*connect.Response[bff.ResponseGetServerInfo], error)
-	ListJobs(context.Context, *connect.Request[bff.RequestListJobs]) (*connect.Response[bff.ResponseListJobs], error)
-	InvokeJob(context.Context, *connect.Request[bff.RequestInvokeJob]) (*connect.Response[bff.ResponseInvokeJob], error)
-	SaveRepository(context.Context, *connect.Request[bff.RequestSaveRepository]) (*connect.Response[bff.ResponseSaveRepository], error)
-	RemoveRepository(context.Context, *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error)
-	SyncRepository(context.Context, *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error)
-	RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error)
-	ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error)
+	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	ListTasks(context.Context, *connect.Request[RequestListTasks]) (*connect.Response[ResponseListTasks], error)
+	GetLogs(context.Context, *connect.Request[RequestGetLogs]) (*connect.Response[ResponseGetLogs], error)
+	GetServerInfo(context.Context, *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error)
+	ListJobs(context.Context, *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error)
+	InvokeJob(context.Context, *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error)
+	SaveRepository(context.Context, *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error)
+	RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error)
+	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
+	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
+	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 }
 
 // NewBFFHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -243,7 +242,7 @@ type BFFHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	bFFMethods := bff.File_proto_build_bff_bff_proto.Services().ByName("BFF").Methods()
+	bFFMethods := File_proto_build_bff_bff_proto.Services().ByName("BFF").Methods()
 	bFFListRepositoriesHandler := connect.NewUnaryHandler(
 		BFFListRepositoriesProcedure,
 		svc.ListRepositories,
@@ -343,46 +342,46 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 // UnimplementedBFFHandler returns CodeUnimplemented from all methods.
 type UnimplementedBFFHandler struct{}
 
-func (UnimplementedBFFHandler) ListRepositories(context.Context, *connect.Request[bff.RequestListRepositories]) (*connect.Response[bff.ResponseListRepositories], error) {
+func (UnimplementedBFFHandler) ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListRepositories is not implemented"))
 }
 
-func (UnimplementedBFFHandler) ListTasks(context.Context, *connect.Request[bff.RequestListTasks]) (*connect.Response[bff.ResponseListTasks], error) {
+func (UnimplementedBFFHandler) ListTasks(context.Context, *connect.Request[RequestListTasks]) (*connect.Response[ResponseListTasks], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListTasks is not implemented"))
 }
 
-func (UnimplementedBFFHandler) GetLogs(context.Context, *connect.Request[bff.RequestGetLogs]) (*connect.Response[bff.ResponseGetLogs], error) {
+func (UnimplementedBFFHandler) GetLogs(context.Context, *connect.Request[RequestGetLogs]) (*connect.Response[ResponseGetLogs], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.GetLogs is not implemented"))
 }
 
-func (UnimplementedBFFHandler) GetServerInfo(context.Context, *connect.Request[bff.RequestGetServerInfo]) (*connect.Response[bff.ResponseGetServerInfo], error) {
+func (UnimplementedBFFHandler) GetServerInfo(context.Context, *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.GetServerInfo is not implemented"))
 }
 
-func (UnimplementedBFFHandler) ListJobs(context.Context, *connect.Request[bff.RequestListJobs]) (*connect.Response[bff.ResponseListJobs], error) {
+func (UnimplementedBFFHandler) ListJobs(context.Context, *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListJobs is not implemented"))
 }
 
-func (UnimplementedBFFHandler) InvokeJob(context.Context, *connect.Request[bff.RequestInvokeJob]) (*connect.Response[bff.ResponseInvokeJob], error) {
+func (UnimplementedBFFHandler) InvokeJob(context.Context, *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.InvokeJob is not implemented"))
 }
 
-func (UnimplementedBFFHandler) SaveRepository(context.Context, *connect.Request[bff.RequestSaveRepository]) (*connect.Response[bff.ResponseSaveRepository], error) {
+func (UnimplementedBFFHandler) SaveRepository(context.Context, *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.SaveRepository is not implemented"))
 }
 
-func (UnimplementedBFFHandler) RemoveRepository(context.Context, *connect.Request[bff.RequestRemoveRepository]) (*connect.Response[bff.ResponseRemoveRepository], error) {
+func (UnimplementedBFFHandler) RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.RemoveRepository is not implemented"))
 }
 
-func (UnimplementedBFFHandler) SyncRepository(context.Context, *connect.Request[bff.RequestSyncRepository]) (*connect.Response[bff.ResponseSyncRepository], error) {
+func (UnimplementedBFFHandler) SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.SyncRepository is not implemented"))
 }
 
-func (UnimplementedBFFHandler) RestartTask(context.Context, *connect.Request[bff.RequestRestartTask]) (*connect.Response[bff.ResponseRestartTask], error) {
+func (UnimplementedBFFHandler) RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.RestartTask is not implemented"))
 }
 
-func (UnimplementedBFFHandler) ForceStopTask(context.Context, *connect.Request[bff.RequestForceStopTask]) (*connect.Response[bff.ResponseForceStopTask], error) {
+func (UnimplementedBFFHandler) ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ForceStopTask is not implemented"))
 }

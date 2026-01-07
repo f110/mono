@@ -13,12 +13,6 @@ bazel_dep(name = "aspect_rules_js", version = "2.8.0")
 bazel_dep(name = "aspect_rules_ts", version = "3.7.1")
 bazel_dep(name = "rules_nodejs", version = "6.6.0")
 
-single_version_override(
-    module_name = "rules_go",
-    patches = ["//patch:rules_go.patch"],
-    patch_strip = 1,
-)
-
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(go_mod = "//:go.mod")
 

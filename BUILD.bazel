@@ -9,7 +9,6 @@
 # gazelle:resolve go go.f110.dev/mono/go/bazel/buildeventstream //go/bazel/buildeventstream
 # gazelle:resolve go go.f110.dev/mono/go/build/api //go/build/api
 # gazelle:resolve go go.f110.dev/mono/go/build/bff //go/build/bff:bff
-# gazelle:resolve go go.f110.dev/mono/go/build/bff/bffconnect //go/build/bff/bffconnect
 # gazelle:resolve go go.f110.dev/mono/go/build/model //go/build/model
 
 load("@gazelle//:def.bzl", "gazelle")

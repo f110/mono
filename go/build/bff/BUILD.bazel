@@ -16,13 +16,46 @@ vendor_grpc_source(
     src = ":bff_go_proto",
 )
 
+go_proto_library(
+    name = "bff_proto_connect",
+    compilers = ["//build/rules/proto:connect_go_compiler"],
+    embed = [":bff_go_proto"],
+    importpath = "go.f110.dev/mono/go/build/bff",
+    protos = [
+        "//proto/build/bff",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+vendor_grpc_source(
+    name = "vendor_connect_source",
+    src = ":bff_proto_connect",
+    visibility = ["//visibility:public"],
+)
+
 go_library(
     name = "bff",
-    srcs = ["bff.pb.go"],
+    srcs = [
+        "bff.connect.go",
+        "bff.go",
+        "bff.pb.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/bff",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/build/api",
+        "//go/build/config",
+        "//go/build/database",
         "//go/build/model",
+        "//go/enumerable",
+        "//go/logger",
+        "//go/storage",
+        "//go/varptr",
+        "@com_connectrpc_connect//:connect",
+        "@com_github_rs_cors//:cors",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//connectivity",
         "@org_golang_google_protobuf//reflect/protoreflect",
         "@org_golang_google_protobuf//runtime/protoimpl",
         "@org_golang_google_protobuf//types/gofeaturespb",

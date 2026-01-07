@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"go.f110.dev/mono/go/build/api"
-	"go.f110.dev/mono/go/build/bff/bffconnect"
+	"go.f110.dev/mono/go/build/bff"
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -35,7 +35,7 @@ func bffCmd(ctx context.Context, opts options) error {
 	apiClient := api.NewAPIClient(conn)
 	s3Opt := storage.NewS3OptionToExternal(opts.StorageEndpoint, opts.StorageRegion, opts.AccessKey, opts.SecretAccessKey)
 	s3Opt.PathStyle = true
-	b := bffconnect.NewBFF(opts.Addr, conn, apiClient, opts.Bucket, s3Opt)
+	b := bff.NewBFF(opts.Addr, conn, apiClient, opts.Bucket, s3Opt)
 	go func() {
 		<-ctx.Done()
 		b.Shutdown(context.Background())
