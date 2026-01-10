@@ -6,7 +6,6 @@ import (
 
 	"go.f110.dev/mono/go/build/cmd/bff"
 	"go.f110.dev/mono/go/build/cmd/builder"
-	"go.f110.dev/mono/go/build/cmd/dashboard"
 	"go.f110.dev/mono/go/cli"
 )
 
@@ -14,7 +13,6 @@ func main() {
 	rootCmd := &cli.Command{
 		Use: "build",
 	}
-	dashboard.AddCommand(rootCmd)
 	builder.AddCommand(rootCmd)
 	bff.AddCommand(rootCmd)
 

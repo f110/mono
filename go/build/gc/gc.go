@@ -10,7 +10,6 @@ import (
 
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
-	"go.f110.dev/mono/go/build/web"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
@@ -57,7 +56,7 @@ func (g *GC) sweep(ctx context.Context) {
 		return tasks[i].Id > tasks[j].Id
 	})
 
-	garbageTasks := tasks[web.NumberOfTaskPerJob:]
+	garbageTasks := tasks[10:]
 	for _, t := range garbageTasks {
 		if err := g.cleanTask(ctx, t); err != nil {
 			logger.Log.Info("Failed to cleanup task", zap.Error(err), zap.Int32("task_id", t.Id))

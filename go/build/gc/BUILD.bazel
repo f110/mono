@@ -8,7 +8,6 @@ go_library(
     deps = [
         "//go/build/database",
         "//go/build/database/dao",
-        "//go/build/web",
         "//go/ctxutil",
         "//go/logger",
         "//go/storage",

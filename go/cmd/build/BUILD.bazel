@@ -8,7 +8,6 @@ go_library(
     deps = [
         "//go/build/cmd/bff",
         "//go/build/cmd/builder",
-        "//go/build/cmd/dashboard",
         "//go/cli",
     ],
 )

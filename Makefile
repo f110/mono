@@ -46,13 +46,8 @@ GITHUB = --github-app-id $(APP_ID) --github-installation-id $(INSTALLATION_ID) -
 MINIO = --minio-endpoint http://127.0.0.1:9000 --minio-port $(MINIO_PORT) --minio-bucket $(MINIO_BUCKET) --minio-access-key $(MINIO_ACCESS_KEY) --minio-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirror-bucket build --bazel-mirror-access-key $(MINIO_ACCESS_KEY) --bazel-mirror-secret-access-key $(MINIO_SECRET_ACCESS_KEY) --bazel-mirror-prefix releases.bazel.build/
 
-DASHBOARDFLAGS = --addr 127.0.0.1:8080 --dsn "$(DSN)" --log-level debug --api http://127.0.0.1:8081 --internal-api http://127.0.0.1:8081 --dev $(MINIO)
 APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO)
 BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --log-level debug
-
-.PHONY: run-dashboard
-run-dashboard:
-	bazel run //go/cmd/build -- dashboard $(DASHBOARDFLAGS)
 
 .PHONY: run-bff
 run-bff:
