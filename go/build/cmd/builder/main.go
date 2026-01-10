@@ -83,6 +83,7 @@ type Options struct {
 	BazelMirrorAccessKey           string
 	BazelMirrorSecretAccessKey     string
 	BazelMirrorSecretAccessKeyFile string
+	CentralRegistryMirrorURL       string
 	SidecarImage                   string
 	CLIImage                       string
 	PullAlways                     bool
@@ -314,6 +315,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.UseBazelisk,
 		p.opt.DefaultBazelVersion,
 		p.opt.BazelMirrorURL,
+		p.opt.CentralRegistryMirrorURL,
 		p.opt.PullAlways,
 		p.opt.GithubAppId,
 		p.opt.GithubInstallationId,
@@ -523,6 +525,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("bazel-mirror-access-key", "The access key for bazel mirror").Var(&opt.BazelMirrorAccessKey)
 	fs.String("bazel-mirror-secret-access-key", "The secret access key for bazel mirror").Var(&opt.BazelMirrorSecretAccessKey)
 	fs.String("bazel-mirror-secret-access-key-file", "The file path that contains secret access key").Var(&opt.BazelMirrorSecretAccessKeyFile)
+	fs.String("central-registry-mirror-url", "The URL of Bazel Central Registry mirror").Var(&opt.CentralRegistryMirrorURL)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
 	fs.Bool("pull-always", "Pull always").Var(&opt.PullAlways)

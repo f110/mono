@@ -23,26 +23,27 @@ import (
 )
 
 type JobBuilder struct {
-	repo                 *database.SourceRepository
-	task                 *database.Task
-	job                  *config.Job
-	platform             string
-	bazelImage           string
-	sidecarImage         string
-	defaultBazelVersion  string
-	bazelMirrorURL       string
-	namespace            string
-	useBazelisk          bool
-	pullAlways           bool
-	githubAppId          int64
-	githubInstallationId int64
-	githubAppSecretName  string
-	defaultCPULimit      resource.Quantity
-	defaultMemoryLimit   resource.Quantity
-	remoteCache          string
-	remoteAssetAPI       bool
-	vaultAddr            string
-	excludeNodes         []string
+	repo                     *database.SourceRepository
+	task                     *database.Task
+	job                      *config.Job
+	platform                 string
+	bazelImage               string
+	sidecarImage             string
+	defaultBazelVersion      string
+	bazelMirrorURL           string
+	centralRegistryMirrorURL string
+	namespace                string
+	useBazelisk              bool
+	pullAlways               bool
+	githubAppId              int64
+	githubInstallationId     int64
+	githubAppSecretName      string
+	defaultCPULimit          resource.Quantity
+	defaultMemoryLimit       resource.Quantity
+	remoteCache              string
+	remoteAssetAPI           bool
+	vaultAddr                string
+	excludeNodes             []string
 
 	PreProcessContainerName string
 	BuildContainerName      string
@@ -99,6 +100,10 @@ func NewJobBuilder(ns, bazelImage, sidecar string, excludeNodes []string) *JobBu
 
 func (j *JobBuilder) BazelBinaryMirror(u string) {
 	j.bazelMirrorURL = u
+}
+
+func (j *JobBuilder) CentralRegistryMirror(u string) {
+	j.centralRegistryMirrorURL = u
 }
 
 func (j *JobBuilder) DefaultBazelVersion(ver string) {
@@ -307,6 +312,9 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 		if j.remoteAssetAPI {
 			args = append(args, fmt.Sprintf("--experimental_remote_downloader=%s", j.remoteCache))
 		}
+	}
+	if j.centralRegistryMirrorURL != "" {
+		args = append(args, fmt.Sprintf("--registry=%s", j.centralRegistryMirrorURL))
 	}
 	if j.task.ConfigName != "" {
 		args = append(args, fmt.Sprintf("--config=%s", j.task.ConfigName))

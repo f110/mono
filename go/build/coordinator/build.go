@@ -101,32 +101,34 @@ func NewKubernetesOptions(
 }
 
 type BazelOptions struct {
-	RemoteCache          string
-	EnableRemoteAssetApi bool
-	SidecarImage         string
-	BazelImage           string
-	UseBazelisk          bool
-	DefaultVersion       string
-	PullAlways           bool
-	BazelMirrorURL       string
-	GithubAppId          int64
-	GithubInstallationId int64
-	GithubAppSecretName  string
+	RemoteCache              string
+	EnableRemoteAssetApi     bool
+	SidecarImage             string
+	BazelImage               string
+	UseBazelisk              bool
+	DefaultVersion           string
+	PullAlways               bool
+	BazelMirrorURL           string
+	CentralRegistryMirrorURL string
+	GithubAppId              int64
+	GithubInstallationId     int64
+	GithubAppSecretName      string
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
 	return BazelOptions{
-		RemoteCache:          remoteCache,
-		EnableRemoteAssetApi: enableRemoteAssetApi,
-		SidecarImage:         sidecarImage,
-		BazelImage:           bazelImage,
-		UseBazelisk:          useBazelisk,
-		DefaultVersion:       defaultVersion,
-		BazelMirrorURL:       bazelMirrorURL,
-		PullAlways:           pullAlways,
-		GithubAppId:          githubAppId,
-		GithubInstallationId: githubInstallationId,
-		GithubAppSecretName:  githubAppSecretName,
+		RemoteCache:              remoteCache,
+		EnableRemoteAssetApi:     enableRemoteAssetApi,
+		SidecarImage:             sidecarImage,
+		BazelImage:               bazelImage,
+		UseBazelisk:              useBazelisk,
+		DefaultVersion:           defaultVersion,
+		BazelMirrorURL:           bazelMirrorURL,
+		CentralRegistryMirrorURL: centralRegistryMirrorURL,
+		PullAlways:               pullAlways,
+		GithubAppId:              githubAppId,
+		GithubInstallationId:     githubInstallationId,
+		GithubAppSecretName:      githubAppSecretName,
 	}
 }
 
@@ -263,6 +265,9 @@ func NewBazelBuilder(
 	}
 	if bazelOpt.EnableRemoteAssetApi {
 		b.jobBuilder.EnableRemoteAssetAPI()
+	}
+	if bazelOpt.CentralRegistryMirrorURL != "" {
+		b.jobBuilder.CentralRegistryMirror(bazelOpt.CentralRegistryMirrorURL)
 	}
 	defaultCPULimit := resource.MustParse(defaultCPULimit)
 	defaultMemoryLimit := resource.MustParse(defaultMemoryLimit)
