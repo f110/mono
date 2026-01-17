@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"sync"
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
@@ -15,8 +16,9 @@ import (
 var (
 	Log *zap.Logger
 
-	logLevel string
-	output   = "stdout"
+	logLevel         string
+	output           = "stdout"
+	registerSinkOnce sync.Once
 )
 
 // Flags sets the flag of logger.
@@ -74,12 +76,14 @@ func (cw customWriter) Sync() error {
 }
 
 func NewBufferLogger(w io.Writer) *zap.Logger {
-	err := zap.RegisterSink("buffer", func(_ *url.URL) (zap.Sink, error) {
-		return customWriter{w}, nil
+	registerSinkOnce.Do(func() {
+		err := zap.RegisterSink("buffer", func(_ *url.URL) (zap.Sink, error) {
+			return customWriter{w}, nil
+		})
+		if err != nil {
+			panic(err)
+		}
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	encoderConf := zapcore.EncoderConfig{
 		TimeKey:        "time",
