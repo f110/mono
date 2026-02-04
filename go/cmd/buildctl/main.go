@@ -13,10 +13,11 @@ func buildCtl(args []string) error {
 	rootCmd := &cli.Command{
 		Use: "buildctl",
 	}
-	rootCmd.Flags().String("endpoint", "RPC Endpoint").Var(&endpoint).Required()
+	rootCmd.Flags().String("endpoint", "RPC Endpoint").Var(&endpoint)
 	buildctl.Repositories(rootCmd, &endpoint)
 	buildctl.Jobs(rootCmd, &endpoint)
 	buildctl.Tasks(rootCmd, &endpoint)
+	buildctl.Test(rootCmd)
 
 	return rootCmd.Execute(args)
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -39,7 +38,7 @@ const (
 )
 
 type Builder interface {
-	Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error)
+	Build(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error)
 	ForceStop(ctx context.Context, taskId int32) error
 }
 
@@ -49,11 +48,11 @@ type Api struct {
 	builder           Builder
 	dao               dao.Options
 	githubClient      *github.Client
-	stClient          *storage.MinIO
+	stClient          *storage.S3
 	bazelMirrorPrefix string
 }
 
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, stClient *storage.MinIO, bazelMirrorPrefix string) (*Api, error) {
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string) (*Api, error) {
 	api := &Api{
 		builder:           builder,
 		dao:               dao,
@@ -207,55 +206,25 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 
 func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision string, useCommittedConfig bool) (*config.Config, string, error) {
 	// Find the configuration file
-	var commitSHA string
+	var commit *github.RepositoryCommit
 	if useCommittedConfig {
 		// Read configuration file of the revision
-		commit, _, err := a.githubClient.Git.GetCommit(ctx, owner, repoName, revision)
+		c, _, err := a.githubClient.Repositories.GetCommit(ctx, owner, repoName, revision, nil)
 		if err != nil {
 			return nil, "", xerrors.WithMessagef(err, "failed to get the commit: %s", revision)
 		}
-		commitSHA = commit.GetSHA()
+		commit = c
 	} else {
 		// If the revision doesn't belong to the main branch, the build configuration will be read from the main branch.
-		commit, _, err := a.githubClient.Repositories.GetCommit(ctx, owner, repoName, "HEAD", nil)
+		c, _, err := a.githubClient.Repositories.GetCommit(ctx, owner, repoName, "HEAD", nil)
 		if err != nil {
 			return nil, "", xerrors.WithMessage(err, "failed to get HEAD commit")
 		}
-		commitSHA = commit.GetSHA()
-	}
-	tree, _, err := a.githubClient.Git.GetTree(ctx, owner, repoName, commitSHA, false)
-	if err != nil {
-		return nil, "", xerrors.WithMessagef(err, "failed to get the tree: %s", commitSHA)
-	}
-	var blobSHA, versionBlobSHA string
-	for _, e := range tree.Entries {
-		switch e.GetPath() {
-		case BuildConfigurationFile:
-			blobSHA = e.GetSHA()
-		case BazelVersionFile:
-			versionBlobSHA = e.GetSHA()
-		}
-	}
-	if blobSHA == "" {
-		logger.Log.Debug("build configuration file is not found", zap.String("repo", repoName), zap.String("revision", commitSHA))
-		return nil, "", nil
-	}
-	buildConfFileBlob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, blobSHA)
-	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
-		return nil, "", nil
-	}
-	var bazelVersion string
-	if versionBlobSHA != "" {
-		if blob, _, err := a.githubClient.Git.GetBlobRaw(ctx, owner, repoName, versionBlobSHA); err == nil {
-			bazelVersion = strings.TrimRight(string(blob), "\n")
-		} else {
-			logger.Log.Info("Failed to get the blob of .bazelversion", zap.Error(err))
-		}
+		commit = c
 	}
 
 	// Parse the configuration file
-	conf, err := config.Read(bytes.NewReader(buildConfFileBlob), owner, repoName)
+	conf, err := config.ReadFromSpecifiedCommit(ctx, a.githubClient, owner, repoName, commit.GetSHA())
 	if err != nil {
 		return nil, "", err
 	}
@@ -264,7 +233,7 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 		return nil, "", nil
 	}
 
-	return conf, bazelVersion, nil
+	return conf, conf.BazelVersion, nil
 }
 
 func (a *Api) findRepository(ctx context.Context, repoURL string) *database.SourceRepository {
@@ -412,7 +381,7 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	return nil
 }
 
-func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.Job, bazelVersion, revision, via string, isMainBranch bool) error {
+func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.SourceRepository, jobs []*config.JobV2, bazelVersion, revision, via string, isMainBranch bool) error {
 	for _, v := range jobs {
 		// Trigger the job when Command is build or test only.
 		// In other words, If command is run, we are not trigger the job via PushEvent.
@@ -510,14 +479,24 @@ func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jobConfiguration := &config.Job{}
+	jobConfiguration := &config.JobV2{}
 	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
-		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
-			return
+		j := &config.Job{}
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
+			if err := config.UnmarshalJobV2([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+				return
+			}
+		} else {
+			jobConfiguration = j.ToV2()
 		}
 	} else if len(task.ParsedJobConfiguration) > 0 {
-		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConfiguration); err != nil {
-			return
+		j := &config.Job{}
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+				return
+			}
+		} else {
+			jobConfiguration = j.ToV2()
 		}
 	}
 	newTasks, err := a.builder.Build(
@@ -599,7 +578,7 @@ func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var job *config.Job
+	var job *config.JobV2
 	for _, v := range conf.Jobs {
 		if v.Name == req.FormValue("job_name") {
 			job = v

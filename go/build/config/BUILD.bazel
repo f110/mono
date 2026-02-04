@@ -4,9 +4,13 @@ go_library(
     name = "config",
     srcs = [
         "config.go",
+        "embed.go",
         "read.go",
     ],
-    embedsrcs = ["config.star"],
+    embedsrcs = [
+        "config.star",
+        "schema.cue",
+    ],
     importpath = "go.f110.dev/mono/go/build/config",
     visibility = ["//visibility:public"],
     deps = [
@@ -14,14 +18,23 @@ go_library(
         "@com_github_google_go_github_v73//github",
         "@dev_f110_go_xerrors//:xerrors",
         "@net_starlark_go//starlark",
+        "@org_cuelang_go//cue",
+        "@org_cuelang_go//cue/cuecontext",
     ],
 )
 
 go_test(
     name = "config_test",
-    srcs = ["config_test.go"],
+    srcs = [
+        "config_test.go",
+        "main_test.go",
+        "read_test.go",
+    ],
     embed = [":config"],
     deps = [
+        "//go/githubutil",
+        "//go/logger",
+        "//go/testing/assertion",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

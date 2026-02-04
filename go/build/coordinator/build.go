@@ -141,7 +141,7 @@ func newTaskQueue() *taskQueue {
 	return &taskQueue{queues: make(map[string][]*database.Task)}
 }
 
-func (tq *taskQueue) Enqueue(job *config.Job, task *database.Task) {
+func (tq *taskQueue) Enqueue(job *config.JobV2, task *database.Task) {
 	tq.EnqueueById(job.Identification(), task)
 }
 
@@ -152,7 +152,7 @@ func (tq *taskQueue) EnqueueById(id string, task *database.Task) {
 	tq.queues[id] = append(tq.queues[id], task)
 }
 
-func (tq *taskQueue) Dequeue(job *config.Job) *database.Task {
+func (tq *taskQueue) Dequeue(job *config.JobV2) *database.Task {
 	return tq.DequeueById(job.Identification())
 }
 
@@ -191,7 +191,7 @@ type BazelBuilder struct {
 
 	dao                    dao.Options
 	githubClient           *github.Client
-	minio                  *storage.MinIO
+	storage                *storage.S3
 	vaultAddr              string
 	sidecarImage           string
 	bazelImage             string
@@ -210,7 +210,7 @@ func NewBazelBuilder(
 	namespace string,
 	ghClient *github.Client,
 	bucket string,
-	minIOOpt storage.MinIOOptions,
+	storageOpt storage.S3Options,
 	bazelOpt BazelOptions,
 	vaultClient *vault.Client,
 	excludeNodes []string,
@@ -232,7 +232,7 @@ func NewBazelBuilder(
 		secretStoreClient: kOpt.SecretStoreClient,
 		dao:               daoOpt,
 		githubClient:      ghClient,
-		minio:             storage.NewMinIOStorage(bucket, minIOOpt),
+		storage:           storage.NewS3(bucket, storageOpt),
 		vaultClient:       vaultClient,
 		dev:               dev,
 		taskQueue:         newTaskQueue(),
@@ -305,7 +305,7 @@ func NewBazelBuilder(
 	return b, nil
 }
 
-func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
+func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
 	var tasks []*database.Task
 	defer func() {
 		for _, task := range tasks {
@@ -436,16 +436,23 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		}
 		return xerrors.WithStack(err)
 	}
-	jobConfiguration := &config.Job{}
+	jobConfiguration := &config.JobV2{}
 	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
-		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+		j := &config.Job{}
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
 			logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
 			return nil
 		}
+		jobConfiguration = j.ToV2()
 	} else if len(task.ParsedJobConfiguration) > 0 {
-		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConfiguration); err != nil {
-			logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
-			return nil
+		j := &config.Job{}
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+				logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
+				return nil
+			}
+		} else {
+			jobConfiguration = j.ToV2()
 		}
 	}
 
@@ -595,7 +602,7 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 	return task, nil
 }
 
-func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task) error {
+func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, task *database.Task) error {
 	if job.Exclusive && b.isRunningJob(job) {
 		return ErrOtherTaskIsRunning.WithStack()
 	}
@@ -672,7 +679,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	return nil
 }
 
-func (b *BazelBuilder) isRunningJob(job *config.Job) bool {
+func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
 	if b.IsStub() {
 		return false
 	}
@@ -700,7 +707,7 @@ func (b *BazelBuilder) isRunningJob(job *config.Job) bool {
 	return false
 }
 
-func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *database.SourceRepository, jobConfiguration *config.Job, task *database.Task, success bool) error {
+func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *database.SourceRepository, jobConfiguration *config.JobV2, task *database.Task, success bool) error {
 	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -748,7 +755,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 		testReport = rawLog
 	}
 
-	if err := b.minio.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
+	if err := b.storage.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
 		return xerrors.WithStack(err)
 	}
 	task.LogFile = job.Name
@@ -833,7 +840,7 @@ func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, 
 	return nil
 }
 
-func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.SourceRepository, job *config.Job, task *database.Task, state string) error {
+func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, task *database.Task, state string) error {
 	if task.Revision == "" {
 		return nil
 	}
@@ -873,7 +880,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.Job, task *database.Task, platform string) ([]runtime.Object, error) {
+func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.JobV2, task *database.Task, platform string) ([]runtime.Object, error) {
 	jobBuilder := b.jobBuilder.Clone()
 	builtObjects, err := jobBuilder.
 		Repo(repo).

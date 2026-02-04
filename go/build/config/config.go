@@ -34,13 +34,14 @@ const (
 )
 
 type Config struct {
-	Jobs            []*Job
+	Jobs            []*JobV2
+	BazelVersion    string
 	RepositoryOwner string
 	RepositoryName  string
 }
 
-func (c *Config) Job(event EventType) []*Job {
-	var jobs []*Job
+func (c *Config) Job(event EventType) []*JobV2 {
+	var jobs []*JobV2
 	for _, job := range c.Jobs {
 		for _, e := range job.Event {
 			if e == event {
@@ -54,10 +55,11 @@ func (c *Config) Job(event EventType) []*Job {
 }
 
 type Secret struct {
-	MountPath  string `attr:"mount_path"`
-	VaultMount string `attr:"vault_mount"`
-	VaultPath  string `attr:"vault_path"`
-	VaultKey   string `attr:"vault_key"`
+	MountPath  string `attr:"mount_path" yaml:"mount_path,omitempty" json:"mount_path,omitempty"`
+	Host       string `yaml:"host,omitempty" json:"host,omitempty"`
+	VaultMount string `attr:"vault_mount" yaml:"vault_mount" json:"vault_mount"`
+	VaultPath  string `attr:"vault_path" yaml:"vault_path" json:"vault_path"`
+	VaultKey   string `attr:"vault_key" yaml:"vault_key" json:"vault_key"`
 }
 
 var _ starlark.Value = (*Secret)(nil)
@@ -144,6 +146,48 @@ type Job struct {
 	RepositoryName  string
 }
 
+func (j *Job) ToV2() *JobV2 {
+	var secrets []*Secret
+	for _, s := range j.Secrets {
+		switch s := s.(type) {
+		case *Secret:
+			secrets = append(secrets, &Secret{
+				MountPath:  s.MountPath,
+				VaultMount: s.VaultMount,
+				VaultPath:  s.VaultPath,
+				VaultKey:   s.VaultKey,
+			})
+		case *RegistrySecret:
+			secrets = append(secrets, &Secret{
+				Host:       s.Host,
+				VaultMount: s.VaultMount,
+				VaultPath:  s.VaultPath,
+				VaultKey:   s.VaultKey,
+			})
+		}
+	}
+	return &JobV2{
+		Name:            j.Name,
+		Event:           j.Event,
+		AllRevision:     j.AllRevision,
+		Command:         j.Command,
+		Container:       j.Container,
+		CPULimit:        j.CPULimit,
+		MemoryLimit:     j.MemoryLimit,
+		GitHubStatus:    j.GitHubStatus,
+		Platforms:       j.Platforms,
+		Targets:         j.Targets,
+		Args:            j.Args,
+		Exclusive:       j.Exclusive,
+		ConfigName:      j.ConfigName,
+		Schedule:        j.Schedule,
+		Env:             j.Env,
+		Secrets:         secrets,
+		RepositoryOwner: j.RepositoryOwner,
+		RepositoryName:  j.RepositoryName,
+	}
+}
+
 func (j *Job) Copy() *Job {
 	n := &Job{}
 	*n = *j
@@ -205,16 +249,46 @@ func (j *Job) IsValid() error {
 	return nil
 }
 
-func MarshalJob(j *Job) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if err := gob.NewEncoder(buf).Encode(j); err != nil {
+func MarshalJob(j *JobV2) ([]byte, error) {
+	j.SchemaVersion = "2"
+	b, err := json.Marshal(j)
+	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	return buf.Bytes(), nil
+	return b, nil
+}
+
+func UnmarshalJobV2(b []byte, j *JobV2) error {
+	if len(b) == 0 || b[0] != '{' {
+		return xerrors.New("this json is not JobV2, probably Job")
+	}
+	sv := &struct {
+		SchemaVersion string `json:"schema_version"`
+	}{}
+	if err := json.Unmarshal(b, sv); err != nil {
+		return xerrors.WithStack(err)
+	}
+	if sv.SchemaVersion != "2" {
+		return xerrors.New("this json is not JobV2")
+	}
+	if err := json.Unmarshal(b, j); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 func UnmarshalJob(b []byte, j *Job) error {
 	if len(b) > 0 && b[0] == '{' {
+		sv := &struct {
+			SchemaVersion string `json:"schema_version"`
+		}{}
+		if err := json.Unmarshal(b, sv); err != nil {
+			return xerrors.WithStack(err)
+		}
+		if sv.SchemaVersion != "" {
+			return xerrors.New("this json is not Job, probably JobV2")
+		}
+
 		if err := json.Unmarshal(b, j); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -273,7 +347,7 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 			return nil, err
 		}
 
-		config.Jobs = append(config.Jobs, job)
+		config.Jobs = append(config.Jobs, job.ToV2())
 		return starlark.String(""), nil
 	})
 	mod["secret"] = starlark.NewBuiltin("secret", func(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -400,4 +474,39 @@ func argPairs(obj any) []any {
 	}
 
 	return pairs
+}
+
+type JobV2 struct {
+	SchemaVersion string `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+
+	// Name is a job name
+	Name  string      `yaml:"name" json:"name"`
+	Event []EventType `yaml:"event" json:"event"`
+	// If true, build at each revision
+	AllRevision bool   `yaml:"all_revision,omitempty" json:"all_revision,omitempty"`
+	Command     string `yaml:"command" json:"command,omitempty"`
+	Container   string `yaml:"container,omitempty" json:"container,omitempty"`
+	// Limit of CPU
+	CPULimit string `yaml:"cpu_limit,omitempty" json:"cpu_limit,omitempty"`
+	// Limit of memory
+	MemoryLimit  string   `yaml:"memory_limit,omitempty" json:"memory_limit,omitempty"`
+	GitHubStatus bool     `yaml:"github_status,omitempty" json:"github_status,omitempty"`
+	Platforms    []string `yaml:"platforms,omitempty" json:"platforms,omitempty"`
+	Targets      []string `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Args         []string `yaml:"args,omitempty" json:"args,omitempty"`
+	// Do not allow parallelized build in this job
+	Exclusive bool `yaml:"exclusive,omitempty" json:"exclusive,omitempty"`
+	// The name of config
+	ConfigName string `yaml:"config_name,omitempty" json:"config_name,omitempty"`
+	// Job schedule
+	Schedule string         `yaml:"schedule,omitempty" json:"schedule,omitempty"`
+	Secrets  []*Secret      `yaml:"secrets,omitempty" json:"secrets,omitempty"`
+	Env      map[string]any `yaml:"env,omitempty" json:"env,omitempty"`
+
+	RepositoryOwner string `yaml:"-" json:"-"`
+	RepositoryName  string `yaml:"-" json:"-"`
+}
+
+func (j *JobV2) Identification() string {
+	return fmt.Sprintf("%s-%s-%s", j.RepositoryOwner, j.RepositoryName, j.Name)
 }

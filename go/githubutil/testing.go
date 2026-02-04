@@ -1,6 +1,9 @@
 package githubutil
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,6 +28,13 @@ type Mock struct {
 type Repository struct {
 	mu           sync.Mutex
 	pullRequests []*PullRequest
+	files        []*File
+}
+
+func newRepository() *Repository {
+	return &Repository{
+		files: []*File{{Name: "", sha: newHash(), mode: fileTypeDir}},
+	}
 }
 
 func NewMock() *Mock {
@@ -39,7 +49,7 @@ func (m *Mock) Repository(name string) *Repository {
 		return r
 	}
 
-	r := &Repository{}
+	r := newRepository()
 	m.Repositories[name] = r
 	return r
 }
@@ -56,6 +66,8 @@ func (m *Mock) Client() *github.Client {
 
 func (m *Mock) RegisterResponder(tr *httpmock.MockTransport) {
 	m.registerPullRequestService(tr)
+	m.registerGitService(tr)
+	m.registerRepositoriesService(tr)
 }
 
 func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
@@ -162,6 +174,120 @@ func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
 	})
 }
 
+func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
+	// Get commit
+	// GET /repos/octocat/example/git/commits/{sha}
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/git/commits/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		commit := &github.Commit{
+			Tree: &github.Tree{
+				SHA: varptr.Ptr(r.files[0].sha),
+			},
+		}
+		return newMockJSONResponse(req, http.StatusOK, commit)
+	})
+	// Get tree
+	// Get /repos/octocat/example/git/trees/{sha}
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/git/trees/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		var prefix *string
+		for _, v := range r.files {
+			if v.sha == s[len(s)-1] {
+				prefix = varptr.Ptr(v.Name)
+				break
+			}
+		}
+		if prefix == nil {
+			return newNotFoundResponse(req)
+		}
+
+		var entries []*github.TreeEntry
+		for _, v := range r.files[1:] { // Exclude root node
+			// Repository root
+			if *prefix == "" {
+				if strings.Index(v.Name, "/") == -1 {
+					ft := "blob"
+					if v.mode == fileTypeDir {
+						ft = "tree"
+					}
+					entries = append(entries, &github.TreeEntry{
+						SHA:  varptr.Ptr(v.sha),
+						Type: varptr.Ptr(ft),
+						Path: varptr.Ptr(v.Name),
+					})
+				}
+				continue
+			}
+
+			if strings.HasPrefix(v.Name, *prefix) && v.Name != *prefix {
+				// Exclude children
+				rest := v.Name[strings.Index(v.Name, *prefix)+len(*prefix)+1:]
+				if strings.Index(rest, "/") != -1 {
+					continue
+				}
+
+				ft := "blog"
+				if v.mode == fileTypeDir {
+					ft = "tree"
+				}
+				entries = append(entries, &github.TreeEntry{
+					SHA:  varptr.Ptr(v.sha),
+					Type: varptr.Ptr(ft),
+					Path: varptr.Ptr(strings.TrimPrefix(v.Name, *prefix+"/")),
+				})
+			}
+		}
+		tree := &github.Tree{
+			SHA:     varptr.Ptr(r.files[0].sha),
+			Entries: entries,
+		}
+		return newMockJSONResponse(req, http.StatusOK, tree)
+	})
+	// Get blob
+	// Get /repos/octocat/git/blobs/{sha}
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/git/blobs/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		sha := s[len(s)-1]
+		for _, v := range r.files {
+			if v.sha == sha {
+				return httpmock.NewBytesResponse(http.StatusOK, v.Body), nil
+			}
+		}
+		return newNotFoundResponse(req)
+	})
+}
+
+func (m *Mock) registerRepositoriesService(tr *httpmock.MockTransport) {
+	// Get commit
+	// Get /repos/octocat/exampe/commits/{sha}
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/commits/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		commit := &github.RepositoryCommit{
+			SHA: varptr.Ptr(r.files[0].sha),
+			Commit: &github.Commit{
+				Tree: &github.Tree{
+					SHA: varptr.Ptr(r.files[0].sha),
+				},
+			},
+		}
+		return newMockJSONResponse(req, http.StatusOK, commit)
+	})
+}
+
 func (m *Mock) findRepository(p string) *Repository {
 	s := strings.Split(p, "/")
 	name := fmt.Sprintf("%s/%s", s[2], s[3])
@@ -226,6 +352,66 @@ func (r *Repository) GetPullRequest(num int) *PullRequest {
 	return nil
 }
 
+func (r *Repository) Files(files ...File) {
+	for _, f := range files {
+		if f.Name == "" {
+			continue
+		}
+
+		name := f.Name
+		if name[0] == '/' {
+			name = name[1:]
+		}
+		s := strings.Split(name, "/")
+		f.Name = name
+		var dirs []string
+		if len(s) > 1 {
+			dirs = s[:len(s)-1]
+		}
+		for i := 1; i <= len(dirs); i++ {
+			dir := strings.Join(dirs[:i], "/")
+			r.addDir(dir)
+		}
+		r.addFile(f)
+	}
+}
+
+func (r *Repository) addDir(dir string) {
+	for _, v := range r.files {
+		if v.Name == dir {
+			return
+		}
+	}
+	r.files = append(r.files, &File{
+		Name: dir,
+		sha:  newHash(),
+		mode: fileTypeDir,
+	})
+}
+
+func (r *Repository) addFile(file File) {
+	if file.sha == "" {
+		file.sha = newHash()
+	}
+	file.mode = fileTypeRegular
+	r.files = append(r.files, &file)
+}
+
+type fileType int
+
+const (
+	fileTypeRegular fileType = iota
+	fileTypeDir
+)
+
+type File struct {
+	Name string
+	Body []byte
+
+	sha  string
+	mode fileType
+}
+
 type PullRequest struct {
 	github.PullRequest
 
@@ -240,12 +426,26 @@ func newErrResponse(req *http.Request, status int, message string) (*http.Respon
 	res, err := httpmock.NewJsonResponse(status, &struct {
 		Message string `json:"message"`
 	}{Message: message})
-	res.Request = req
+	if res != nil {
+		res.Request = req
+	}
 	return res, err
 }
 
 func newMockJSONResponse(req *http.Request, status int, body any) (*http.Response, error) {
 	res, err := httpmock.NewJsonResponse(status, body)
-	res.Request = req
+	if res != nil {
+		res.Request = req
+	}
 	return res, err
+}
+
+func newHash() string {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		panic(err)
+	}
+	h := sha256.New()
+	hash := h.Sum(buf)
+	return hex.EncodeToString(hash)
 }

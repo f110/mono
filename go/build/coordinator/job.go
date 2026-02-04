@@ -25,7 +25,7 @@ import (
 type JobBuilder struct {
 	repo                     *database.SourceRepository
 	task                     *database.Task
-	job                      *config.Job
+	job                      *config.JobV2
 	platform                 string
 	bazelImage               string
 	sidecarImage             string
@@ -174,7 +174,7 @@ func (j *JobBuilder) Clone() *JobBuilder {
 	}
 }
 
-func (j *JobBuilder) Job(job *config.Job) *JobBuilder {
+func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 	if j.job != nil {
 		return j
 	}
@@ -424,51 +424,10 @@ func (j *JobBuilder) injectSecret() {
 	secretProviderClasses := make(map[string]*secretsstorev1.SecretProviderClass)
 	registrySecretProviderClass := make(map[string]*secretsstorev1.SecretProviderClass)
 	for _, s := range j.job.Secrets {
-		switch secret := s.(type) {
-		case *config.Secret:
-			if secret.MountPath != "" {
-				name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(secret.MountPath[1:], "/", "-", -1))
-				if c, ok := secretProviderClasses[secret.MountPath]; !ok {
-					secretProviderClasses[secret.MountPath] = &secretsstorev1.SecretProviderClass{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      name,
-							Namespace: j.namespace,
-							Labels: map[string]string{
-								labelKeyJobId:  j.job.Identification(),
-								labelKeyCtrlBy: "bazel-build",
-							},
-						},
-						Spec: secretsstorev1.SecretProviderClassSpec{
-							Provider: "vault",
-							Parameters: map[string]string{
-								"roleName":     fmt.Sprintf("build-%s", j.job.RepositoryName),
-								"vaultAddress": j.vaultAddr,
-								"objects": fmt.Sprintf(
-									"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
-									secret.VaultKey,
-									fmt.Sprintf("%s/data/%s", secret.VaultMount, secret.VaultPath),
-									secret.VaultKey,
-								),
-							},
-						},
-					}
-				} else {
-					c.Spec.Parameters["objects"] += fmt.Sprintf(
-						"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
-						secret.VaultKey,
-						fmt.Sprintf("%s/data/%s", secret.VaultMount, secret.VaultPath),
-						secret.VaultKey,
-					)
-				}
-			}
-		case *config.RegistrySecret:
-			if secret.Host == "" {
-				continue
-			}
-
-			if _, ok := registrySecretProviderClass[secret.Host]; !ok {
-				name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(secret.Host, ".", "-", -1))
-				registrySecretProviderClass[secret.Host] = &secretsstorev1.SecretProviderClass{
+		if s.MountPath != "" {
+			name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(s.MountPath[1:], "/", "-", -1))
+			if c, ok := secretProviderClasses[s.MountPath]; !ok {
+				secretProviderClasses[s.MountPath] = &secretsstorev1.SecretProviderClass{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      name,
 						Namespace: j.namespace,
@@ -484,9 +443,43 @@ func (j *JobBuilder) injectSecret() {
 							"vaultAddress": j.vaultAddr,
 							"objects": fmt.Sprintf(
 								"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
-								secret.VaultKey,
-								fmt.Sprintf("%s/data/%s", secret.VaultMount, secret.VaultPath),
-								secret.VaultKey,
+								s.VaultKey,
+								fmt.Sprintf("%s/data/%s", s.VaultMount, s.VaultPath),
+								s.VaultKey,
+							),
+						},
+					},
+				}
+			} else {
+				c.Spec.Parameters["objects"] += fmt.Sprintf(
+					"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
+					s.VaultKey,
+					fmt.Sprintf("%s/data/%s", s.VaultMount, s.VaultPath),
+					s.VaultKey,
+				)
+			}
+		} else if s.Host != "" {
+			if _, ok := registrySecretProviderClass[s.Host]; !ok {
+				name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(s.Host, ".", "-", -1))
+				registrySecretProviderClass[s.Host] = &secretsstorev1.SecretProviderClass{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      name,
+						Namespace: j.namespace,
+						Labels: map[string]string{
+							labelKeyJobId:  j.job.Identification(),
+							labelKeyCtrlBy: "bazel-build",
+						},
+					},
+					Spec: secretsstorev1.SecretProviderClassSpec{
+						Provider: "vault",
+						Parameters: map[string]string{
+							"roleName":     fmt.Sprintf("build-%s", j.job.RepositoryName),
+							"vaultAddress": j.vaultAddr,
+							"objects": fmt.Sprintf(
+								"- objectName: %q\n  secretPath: %q\n  secretKey: %q\n",
+								s.VaultKey,
+								fmt.Sprintf("%s/data/%s", s.VaultMount, s.VaultPath),
+								s.VaultKey,
 							),
 						},
 					},

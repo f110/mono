@@ -118,8 +118,8 @@ type process struct {
 	restCfg                   *rest.Config
 	coreSharedInformerFactory kubeinformers.SharedInformerFactory
 	dao                       dao.Options
-	minioOpt                  storage.MinIOOptions
-	bazelMirrorMinIOOpt       storage.MinIOOptions
+	storageOpt                storage.S3Options
+	bazelMirrorStorageOpt     storage.S3Options
 	vaultClient               *vault.Client
 
 	bazelBuilder *coordinator.BazelBuilder
@@ -261,11 +261,11 @@ Wait:
 }
 
 func (p *process) setup(_ context.Context) (fsm.State, error) {
-	var minioOpt storage.MinIOOptions
+	var storageOpt storage.S3Options
 	if p.opt.MinIOEndpoint != "" {
-		minioOpt = storage.NewMinIOOptionsViaEndpoint(p.opt.MinIOEndpoint, "", p.opt.MinIOAccessKey, p.opt.MinIOSecretAccessKey)
+		storageOpt = storage.NewS3OptionToExternal(p.opt.MinIOEndpoint, "", p.opt.MinIOAccessKey, p.opt.MinIOSecretAccessKey)
 	} else {
-		minioOpt = storage.NewMinIOOptionsViaService(
+		storageOpt = storage.NewS3OptionViaService(
 			p.kubeClient,
 			p.restCfg,
 			p.opt.MinIOName,
@@ -276,13 +276,13 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.Dev,
 		)
 	}
-	p.minioOpt = minioOpt
+	p.storageOpt = storageOpt
 
-	var bazelMirrorMinIOOpt storage.MinIOOptions
+	var bazelMirrorStorageOpt storage.S3Options
 	if p.opt.BazelMirrorEndpoint != "" {
-		bazelMirrorMinIOOpt = storage.NewMinIOOptionsViaEndpoint(p.opt.BazelMirrorEndpoint, "", p.opt.BazelMirrorAccessKey, p.opt.BazelMirrorSecretAccessKey)
+		bazelMirrorStorageOpt = storage.NewS3OptionToExternal(p.opt.BazelMirrorEndpoint, "", p.opt.BazelMirrorAccessKey, p.opt.BazelMirrorSecretAccessKey)
 	} else {
-		bazelMirrorMinIOOpt = storage.NewMinIOOptionsViaService(
+		bazelMirrorStorageOpt = storage.NewS3OptionViaService(
 			p.kubeClient,
 			p.restCfg,
 			p.opt.BazelMirrorName,
@@ -293,7 +293,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.Dev,
 		)
 	}
-	p.bazelMirrorMinIOOpt = bazelMirrorMinIOOpt
+	p.bazelMirrorStorageOpt = bazelMirrorStorageOpt
 
 	var kubernetesOpt coordinator.KubernetesOptions
 	if p.coreSharedInformerFactory != nil && p.kubeClient != nil {
@@ -328,7 +328,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.Namespace,
 		p.ghClient,
 		p.opt.MinIOBucket,
-		minioOpt,
+		storageOpt,
 		bazelOpt,
 		p.vaultClient,
 		p.opt.ExcludeNodes,
@@ -344,7 +344,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewMinIOStorage(p.opt.BazelMirrorBucket, p.bazelMirrorMinIOOpt), p.opt.BazelMirrorPrefix)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -424,7 +424,7 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	}
 
 	if p.opt.WithGC {
-		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.minioOpt)
+		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.storageOpt)
 		go func() {
 			logger.Log.Info("Start GC")
 			g.Start()

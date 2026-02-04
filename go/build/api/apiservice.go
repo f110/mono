@@ -157,7 +157,7 @@ func (s *apiService) SyncRepository(ctx context.Context, req *RequestSyncReposit
 		return ResponseSyncRepository_builder{}.Build(), nil
 	}
 
-	manuallyTriggerableJobs := enumerable.FindAll(c.Jobs, func(job *config.Job) bool { return enumerable.IsInclude(job.Event, config.EventManual) })
+	manuallyTriggerableJobs := enumerable.FindAll(c.Jobs, func(job *config.JobV2) bool { return enumerable.IsInclude(job.Event, config.EventManual) })
 	if len(manuallyTriggerableJobs) == 0 {
 		return ResponseSyncRepository_builder{}.Build(), nil
 	}
@@ -208,14 +208,24 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 			return nil, status.Error(codes.NotFound, "Task not found")
 		}
 
-		jobConfiguration := &config.Job{}
+		jobConfiguration := &config.JobV2{}
 		if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
-			if err := config.UnmarshalJob([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
-				return nil, status.Error(codes.FailedPrecondition, err.Error())
+			j := &config.Job{}
+			if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
+				if err := config.UnmarshalJobV2([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+					return nil, status.Error(codes.FailedPrecondition, err.Error())
+				}
+			} else {
+				jobConfiguration = j.ToV2()
 			}
 		} else if len(task.ParsedJobConfiguration) > 0 {
-			if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConfiguration); err != nil {
-				return nil, status.Error(codes.FailedPrecondition, err.Error())
+			j := &config.Job{}
+			if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
+				if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+					return nil, status.Error(codes.FailedPrecondition, err.Error())
+				}
+			} else {
+				jobConfiguration = j.ToV2()
 			}
 		}
 		newTasks, err := s.builder.Build(
@@ -261,18 +271,14 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	if conf == nil {
 		return nil, status.Error(codes.Internal, "failed to read config")
 	}
-	i := enumerable.Index(conf.Jobs, func(job *config.Job) bool { return job.Name == req.GetJobName() })
+	i := enumerable.Index(conf.Jobs, func(job *config.JobV2) bool { return job.Name == req.GetJobName() })
 	job := conf.Jobs[i]
-	bazelVersion, err := config.GetBazelVersionFromRepository(ctx, s.githubClient, owner, repoName)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get bazel version")
-	}
 	newTasks, err := s.builder.Build(
 		ctx,
 		repo,
 		job,
 		repo.DefaultBranch,
-		bazelVersion,
+		conf.BazelVersion,
 		job.Command,
 		job.Targets,
 		job.Platforms,
@@ -317,6 +323,12 @@ func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {
 		if err := config.UnmarshalJob(task.ParsedJobConfiguration, jobConf); err == nil {
 			cpuLimit = jobConf.CPULimit
 			memoryLimit = jobConf.MemoryLimit
+		} else {
+			j := &config.JobV2{}
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, j); err == nil {
+				cpuLimit = j.CPULimit
+				memoryLimit = j.MemoryLimit
+			}
 		}
 	}
 	return model.Task_builder{

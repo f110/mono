@@ -29,3 +29,19 @@ func MustLen(t testing.TB, object any, length int) {
 		t.Fatalf("\"%v\" should have %d item(s), but has %d", object, length, v.Len())
 	}
 }
+
+func MustEmpty(t testing.TB, object any) {
+	t.Helper()
+
+	if !isEmpty(object) {
+		t.Fatalf("Should be empty, but was %v", object)
+	}
+}
+
+func MustNotEmpty(t testing.TB, object any) {
+	t.Helper()
+
+	if isEmpty(object) {
+		t.Fatalf("Should not be empty, but was %v", object)
+	}
+}

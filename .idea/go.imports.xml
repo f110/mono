@@ -3,6 +3,7 @@
   <component name="GoImports">
     <option name="excludedPackages">
       <array>
+        <option value="github.com/aws/smithy-go/testing" />
         <option value="github.com/bmizerany/assert" />
         <option value="github.com/docker/cli/kubernetes/client/clientset" />
         <option value="github.com/emicklei/go-restful/log" />

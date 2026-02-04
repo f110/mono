@@ -106,6 +106,7 @@ use_repo(
     "io_k8s_sigs_kind",
     "io_k8s_sigs_secrets_store_csi_driver",
     "net_starlark_go",
+    "org_cuelang_go",
     "org_golang_google_api",
     "org_golang_google_genproto_googleapis_rpc",
     "org_golang_google_grpc",

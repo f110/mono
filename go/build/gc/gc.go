@@ -18,14 +18,14 @@ import (
 type GC struct {
 	interval time.Duration
 	dao      dao.Options
-	minio    *storage.MinIO
+	storage  *storage.S3
 }
 
-func NewGC(interval time.Duration, daoOpt dao.Options, bucket string, minioOpt storage.MinIOOptions) *GC {
+func NewGC(interval time.Duration, daoOpt dao.Options, bucket string, storageOpt storage.S3Options) *GC {
 	return &GC{
 		interval: interval,
 		dao:      daoOpt,
-		minio:    storage.NewMinIOStorage(bucket, minioOpt),
+		storage:  storage.NewS3(bucket, storageOpt),
 	}
 }
 
@@ -71,7 +71,7 @@ func (g *GC) cleanTask(ctx context.Context, t *database.Task) error {
 
 	if t.LogFile != "" {
 		logger.Log.Info("Delete log file from object storage", zap.String("name", t.LogFile), zap.Int32("task_id", t.Id))
-		if err := g.minio.Delete(ctx, t.LogFile); err != nil {
+		if err := g.storage.Delete(ctx, t.LogFile); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
