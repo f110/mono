@@ -9,10 +9,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -65,8 +63,6 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.Handle("/favicon.ico", http.NotFoundHandler())
 	mux.HandleFunc("/liveness", api.handleLiveness)
 	mux.HandleFunc("/readiness", api.handleReadiness)
-	mux.HandleFunc("/redo", api.handleRedo)
-	mux.HandleFunc("/run", api.handleRun)
 	mux.HandleFunc("/webhook", api.handleWebHook)
 
 	bs := newAPIService(builder, dao, ghClient)
@@ -454,179 +450,6 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 		}
 	}
 	return nil
-}
-
-type RunResponse struct {
-	TaskId int32 `json:"task_id"`
-}
-
-func (a *Api) handleRedo(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := req.ParseForm(); err != nil {
-		logger.Log.Info("Failed parse form", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	taskId, err := strconv.Atoi(req.FormValue("task_id"))
-	if err != nil {
-		logger.Log.Info("Failed parse task id", zap.Error(err), zap.String("task_id", req.FormValue("task_id")))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	task, err := a.dao.Task.Select(req.Context(), int32(taskId))
-	if err != nil {
-		logger.Log.Info("Task is not found", zap.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	jobConfiguration := &config.JobV2{}
-	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
-		j := &config.Job{}
-		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
-			if err := config.UnmarshalJobV2([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
-				return
-			}
-		} else {
-			jobConfiguration = j.ToV2()
-		}
-	} else if len(task.ParsedJobConfiguration) > 0 {
-		j := &config.Job{}
-		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
-			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
-				return
-			}
-		} else {
-			jobConfiguration = j.ToV2()
-		}
-	}
-	newTasks, err := a.builder.Build(
-		req.Context(),
-		task.Repository,
-		jobConfiguration,
-		task.Revision,
-		task.BazelVersion,
-		task.Command,
-		jobConfiguration.Targets,
-		jobConfiguration.Platforms,
-		"api",
-		false,
-	)
-	if err != nil {
-		logger.Log.Warn("Failed build job", zap.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	logger.Log.Info("Success enqueue redo-job", zap.Int32("task_id", task.Id), zap.Int32("new_task_id", newTasks[len(newTasks)-1].Id))
-	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
-		logger.Log.Warn("Failed encode response", zap.Error(err))
-	}
-}
-
-func (a *Api) handleRun(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := req.ParseForm(); err != nil {
-		logger.Log.Info("Failed to parse form", logger.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	repositoryId, err := strconv.Atoi(req.FormValue("repository_id"))
-	if err != nil {
-		logger.Log.Info("Failed to parse repository id", logger.Error(err), zap.String("repository_id", req.FormValue("repository_id")))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	repo, err := a.dao.Repository.Select(req.Context(), int32(repositoryId))
-	if err != nil {
-		logger.Log.Info("Failed to get the repository", logger.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	u, err := url.Parse(repo.Url)
-	if err != nil {
-		logger.Log.Info("Failed to parse repository URL", logger.Error(err), zap.String("url", repo.Url))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if u.Hostname() != "github.com" {
-		logger.Log.Info("The repository is not hosted github.com")
-		return
-	}
-	// u.Path is /owner/repo if URL is github.com.
-	s := strings.Split(u.Path, "/")
-	owner, repoName := s[1], s[2]
-	githubRepo, _, err := a.githubClient.Repositories.Get(req.Context(), owner, repoName)
-	if err != nil {
-		logger.Log.Info("Failed to get the information of repository from github", logger.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	branch, _, err := a.githubClient.Repositories.GetBranch(req.Context(), owner, repoName, githubRepo.GetDefaultBranch(), 5)
-	if err != nil {
-		logger.Log.Info("Failed to branch", logger.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	conf, bazelVersion, err := a.fetchBuildConfig(req.Context(), owner, repoName, branch.Commit.GetSHA(), true)
-	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	var job *config.JobV2
-	for _, v := range conf.Jobs {
-		if v.Name == req.FormValue("job_name") {
-			job = v
-			break
-		}
-	}
-	if job == nil {
-		logger.Log.Info("The job is not found", zap.String("job_name", req.FormValue("job_name")))
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	if !enumerable.IsInclude(job.Event, "manual") {
-		logger.Log.Info("The job is not intended to trigger manually", zap.String("job_name", job.Name))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	newTasks, err := a.builder.Build(
-		req.Context(),
-		repo,
-		job,
-		githubRepo.GetDefaultBranch(),
-		bazelVersion,
-		job.Command,
-		job.Targets,
-		job.Platforms,
-		"manual",
-		false,
-	)
-	if err != nil {
-		logger.Log.Warn("Failed to start building job", logger.Error(err))
-		return
-	}
-	if newTasks == nil {
-		logger.Log.Warn("Failed to build job")
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(RunResponse{TaskId: newTasks[len(newTasks)-1].Id}); err != nil {
-		logger.Log.Warn("Failed to encode the response", logger.Error(err))
-	}
 }
 
 type ReadinessResponse struct {
