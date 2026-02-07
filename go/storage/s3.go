@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
 	"iter"
 	"net/http"
@@ -19,7 +20,13 @@ import (
 	"github.com/aws/smithy-go"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	pf "k8s.io/client-go/tools/portforward"
 
+	"go.f110.dev/mono/go/k8s/portforward"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -32,6 +39,14 @@ type S3Options struct {
 	CACertFile      string
 	PartSize        uint64
 	Retries         int
+
+	Name      string
+	Namespace string
+	Port      int
+	Dev       bool
+
+	k8sClient  kubernetes.Interface
+	restConfig *rest.Config
 
 	client *s3.Client
 }
@@ -53,9 +68,33 @@ func NewS3OptionToExternal(endpoint, region, accessKey, secretAccessKey string) 
 	}
 }
 
-func (s *S3Options) Client() (*s3.Client, error) {
+func NewS3OptionViaService(client kubernetes.Interface, config *rest.Config, name, namespace string, port int, accessKey, secretAccessKey string, dev bool) S3Options {
+	return S3Options{
+		Name:            name,
+		Namespace:       namespace,
+		Port:            port,
+		AccessKey:       accessKey,
+		SecretAccessKey: secretAccessKey,
+		Dev:             dev,
+		k8sClient:       client,
+		restConfig:      config,
+	}
+}
+
+func (s *S3Options) Client(ctx context.Context) (*s3.Client, error) {
 	if s.client != nil {
 		return s.client, nil
+	}
+
+	if s.k8sClient != nil && s.Endpoint == "" {
+		endpoint, forwarder, err := s.getS3Endpoint(ctx, s.Name, s.Namespace, s.Port)
+		if err != nil {
+			if forwarder != nil {
+				forwarder.Close()
+			}
+			return nil, err
+		}
+		s.Endpoint = endpoint
 	}
 
 	cp, err := x509.SystemCertPool()
@@ -96,8 +135,30 @@ func (s *S3Options) Client() (*s3.Client, error) {
 	return s.client, nil
 }
 
-func (s *S3Options) Uploader() (*manager.Uploader, error) {
-	c, err := s.Client()
+func (s *S3Options) getS3Endpoint(ctx context.Context, name, namespace string, port int) (string, *pf.PortForwarder, error) {
+	var forwarder *pf.PortForwarder
+	var endpoint string
+	var endpointService *corev1.Service
+	if svc, err := s.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
+		return "", nil, xerrors.WithStack(err)
+	} else {
+		endpointService = svc
+		endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
+	}
+	if s.Dev {
+		f, port, err := portforward.PortForward(ctx, endpointService, int(endpointService.Spec.Ports[0].Port), s.restConfig, s.k8sClient, nil)
+		if err != nil {
+			return "", nil, err
+		}
+		forwarder = f
+		endpoint = fmt.Sprintf("127.0.0.1:%d", port)
+	}
+
+	return endpoint, forwarder, nil
+}
+
+func (s *S3Options) Uploader(ctx context.Context) (*manager.Uploader, error) {
+	c, err := s.Client(ctx)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -129,7 +190,7 @@ func (s *S3) Endpoint() string {
 }
 
 func (s *S3) Get(ctx context.Context, name string) (*Object, error) {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -167,7 +228,7 @@ func (s *S3) Get(ctx context.Context, name string) (*Object, error) {
 }
 
 func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -208,7 +269,7 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 }
 
 func (s *S3) ListIter(ctx context.Context, prefix string) (iter.Seq[*Object], error) {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -257,7 +318,7 @@ func (s *S3) Put(ctx context.Context, name string, data []byte) error {
 }
 
 func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
-	uploader, err := s.opt.Uploader()
+	uploader, err := s.opt.Uploader(ctx)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -282,7 +343,7 @@ func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 }
 
 func (s *S3) Delete(ctx context.Context, name string) error {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -307,7 +368,7 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 }
 
 func (s *S3) MakeBucket(ctx context.Context, name string) error {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return err
 	}
@@ -321,7 +382,7 @@ func (s *S3) MakeBucket(ctx context.Context, name string) error {
 }
 
 func (s *S3) ExistBucket(ctx context.Context, name string) bool {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return false
 	}
@@ -334,7 +395,7 @@ func (s *S3) ExistBucket(ctx context.Context, name string) bool {
 }
 
 func (s *S3) ExistObject(ctx context.Context, key string) bool {
-	c, err := s.opt.Client()
+	c, err := s.opt.Client(ctx)
 	if err != nil {
 		return false
 	}
