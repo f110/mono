@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.starlark.net/starlark"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -46,20 +45,20 @@ func TestJobBuilder(t *testing.T) {
 
 	cases := []struct {
 		Platform       string
-		Mutation       func(*config.Job, *database.SourceRepository, *database.Task) (*config.Job, *database.SourceRepository, *database.Task)
+		Mutation       func(*config.JobV2, *database.SourceRepository, *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task)
 		Error          string
 		ExpectObjects  []runtime.Object
 		ObjectMutation map[runtime.Object][]k8sfactory.Trait
 	}{
 		{
-			Mutation: func(_ *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(_ *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				return nil, r, ta
 			},
 			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "job is not set",
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.RepositoryName = ""
 				return j, r, ta
 			},
@@ -67,34 +66,34 @@ func TestJobBuilder(t *testing.T) {
 			Error:    "job is not set",
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, _ *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, _ *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				return j, r, nil
 			},
 			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "task is not set",
 		},
 		{
-			Mutation: func(j *config.Job, _ *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, _ *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				return j, nil, ta
 			},
 			Platform: "@rules_go//go/toolchain:linux_amd64",
 			Error:    "repo is not set",
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				return j, r, ta
 			},
 			Error: "platform is not set",
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				return j, r, ta
 			},
 			Platform:      "@rules_go//go/toolchain:linux_amd64",
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.Command = "run"
 				ta.Command = "run"
 				return j, r, ta
@@ -110,7 +109,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				ta.IsTrunk = false
 				return j, r, ta
 			},
@@ -125,7 +124,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.CPULimit = "2000m"
 				j.MemoryLimit = "2048Mi"
 				return j, r, ta
@@ -137,7 +136,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.Env = map[string]any{"FOOBAR": "baz"}
 				return j, r, ta
 			},
@@ -148,7 +147,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				r.Private = true
 				return j, r, ta
 			},
@@ -163,7 +162,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				ta.ConfigName = "e2e"
 				return j, r, ta
 			},
@@ -181,8 +180,8 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
-				j.Secrets = []starlark.Value{&config.Secret{MountPath: "/etc/job/secret", VaultMount: "secrets", VaultPath: "login", VaultKey: "password"}}
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
+				j.Secrets = []*config.Secret{{MountPath: "/etc/job/secret", VaultMount: "secrets", VaultPath: "login", VaultKey: "password"}}
 				return j, r, ta
 			},
 			Platform: "@rules_go//go/toolchain:linux_amd64",
@@ -205,8 +204,8 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
-				j.Secrets = []starlark.Value{&config.RegistrySecret{Host: "registry.example.com", VaultMount: "secrets", VaultPath: "registry", VaultKey: "foobar"}}
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
+				j.Secrets = []*config.Secret{{Host: "registry.example.com", VaultMount: "secrets", VaultPath: "registry", VaultKey: "foobar"}}
 				return j, r, ta
 			},
 			Platform: "@rules_go//go/toolchain:linux_amd64",
@@ -237,7 +236,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.Container = "example.com/bazel:bazelisk"
 				return j, r, ta
 			},
@@ -248,7 +247,7 @@ func TestJobBuilder(t *testing.T) {
 			},
 		},
 		{
-			Mutation: func(j *config.Job, r *database.SourceRepository, ta *database.Task) (*config.Job, *database.SourceRepository, *database.Task) {
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.Command = "run"
 				ta.Command = "run"
 				j.Args = []string{"--verbose"}
@@ -282,7 +281,7 @@ func TestJobBuilder(t *testing.T) {
 			b.EnableRemoteAssetAPI()
 			b.Vault("https://127.0.0.1:7000")
 
-			var j *config.Job
+			var j *config.JobV2
 			var r *database.SourceRepository
 			var ta *database.Task
 			if tc.Mutation != nil {
@@ -508,8 +507,8 @@ func printAsManifest(obj runtime.Object) {
 	k8smanifest.NewEncoder(os.Stdout).Encode(obj)
 }
 
-func testJobBuilderFixtures() (*config.Job, *database.SourceRepository, *database.Task, *corev1.ServiceAccount, *batchv1.Job) {
-	job := &config.Job{
+func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *database.Task, *corev1.ServiceAccount, *batchv1.Job) {
+	job := &config.JobV2{
 		Name:            "test_all",
 		RepositoryOwner: "f110",
 		RepositoryName:  "example",

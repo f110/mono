@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -22,17 +21,19 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/varptr"
 )
 
 type MockBuilder struct {
-	jobs   []*config.Job
+	jobs   []*config.JobV2
 	called bool
 }
 
 var _ Builder = &MockBuilder{}
 
-func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.Job, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
+func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
 	m.jobs = append(m.jobs, job)
 	m.called = true
 	return []*database.Task{}, nil
@@ -172,27 +173,29 @@ func TestGithubWebHook(t *testing.T) {
 				nil,
 			)
 
-			mockTransport := &MockTransport{res: []*http.Response{
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+			ghMock := githubutil.NewMock()
+			repo := ghMock.Repository("f110/ops")
+			err := repo.Commits(&githubutil.Commit{
+				IsHead: true,
+				Files: []*githubutil.File{
+					{Name: ".build/test.cue", Body: []byte(`jobs: {
+	test_all: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		cpu_limit:     "2000m"
+		memory_limit:  "8192Mi"
+		event: ["pull_request"]
+	}
+}
+`)},
+					{Name: ".bazelversion", Body: []byte("8.4.1")},
 				},
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-				},
-				{
-					StatusCode: http.StatusOK,
-					Body: io.NopCloser(strings.NewReader(`job(
-	name = "foo",
-    event = ["pull_request"],
-	command = "test",
-	targets = ["//..."],
-	platforms = ["linux_amd64"],
-)`)),
-				},
-			}}
-			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
+			})
+			require.NoError(t, err)
+			s.githubClient = ghMock.Client()
 
 			s.handleWebHook(w, req)
 
@@ -205,27 +208,29 @@ func TestGithubWebHook(t *testing.T) {
 
 			mock, s, builder, w, req := setup(t)
 
-			mockTransport := &MockTransport{res: []*http.Response{
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+			ghMock := githubutil.NewMock()
+			repo := ghMock.Repository("f110/ops")
+			err := repo.Commits(&githubutil.Commit{
+				IsHead: true,
+				Files: []*githubutil.File{
+					{Name: ".build/test.cue", Body: []byte(`jobs: {
+	test_all: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		cpu_limit:     "2000m"
+		memory_limit:  "8192Mi"
+		event: ["pull_request"]
+	}
+}
+`)},
+					{Name: ".bazelversion", Body: []byte("8.4.1")},
 				},
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-				},
-				{
-					StatusCode: http.StatusOK,
-					Body: io.NopCloser(strings.NewReader(`job(
-	name = "foo",
-	event = ["pull_request"],
-	command = "test",
-	targets = ["//..."],
-	platforms = ["linux_amd64"],
-)`)),
-				},
-			}}
-			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
+			})
+			require.NoError(t, err)
+			s.githubClient = ghMock.Client()
 
 			mock.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, nil, sql.ErrNoRows)
 			mock.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/ops", 28,
@@ -269,28 +274,33 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		mockTransport := &MockTransport{res: []*http.Response{
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+		ghMock := githubutil.NewMock()
+		repo := ghMock.Repository("f110/ops")
+		err := repo.Commits(&githubutil.Commit{
+			IsHead: true,
+			Files: []*githubutil.File{
+				{
+					Name: ".build/test.cue",
+					Body: []byte(`jobs: {
+	test_all: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		cpu_limit:     "2000m"
+		memory_limit:  "8192Mi"
+		event: ["pull_request"]
+	}
+}
+`),
+				},
+				{Name: ".bazelversion", Body: []byte("8.4.1")},
 			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body: io.NopCloser(strings.NewReader(`job(
-	name = "foo",
-    event = ["pull_request"],
-	command = "test",
-	targets = ["//..."],
-	platforms = ["linux_amd64"],
-)`)),
-			},
-		}}
+		})
+		require.NoError(t, err)
 
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
+		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/pull_request_synchronize.json")
 		require.NoError(t, err)
@@ -357,38 +367,40 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		mockTransport := &MockTransport{res: []*http.Response{
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{}`)),
+		ghMock := githubutil.NewMock()
+		repo := ghMock.Repository("f110/ops")
+		repo.PullRequests(&github.PullRequest{
+			Number: varptr.Ptr(28),
+		})
+		err := repo.Commits(&githubutil.Commit{
+			IsHead: true,
+			Files: []*githubutil.File{
+				{
+					Name: ".build/test.cue",
+					Body: []byte(`jobs: {
+	test_all: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		cpu_limit:     "2000m"
+		memory_limit:  "8192Mi"
+		event: ["pull_request"]
+	}
+}
+`),
+				},
+				{
+					Name: ".bazelversion", Body: []byte("8.4.1"),
+				},
 			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"head":{"sha":"9697650793febd8884fe38a84365067624efacab"}}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body: io.NopCloser(strings.NewReader(`job(
-	name = "foo",
-	event = ["pull_request"],
-	command = "test",
-	targets = ["//..."],
-	platforms = ["linux_amd64"],
-)`)),
-			},
-		}}
-
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
+		})
 		require.NoError(t, err)
-		body, err := ioutil.ReadFile("testdata/issue_comment.json")
+
+		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
+		require.NoError(t, err)
+		body, err := os.ReadFile("testdata/issue_comment.json")
 		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
@@ -421,32 +433,65 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		mockTransport := &MockTransport{res: []*http.Response{
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
+		//		mockTransport := &MockTransport{res: []*http.Response{
+		//			{
+		//				StatusCode: http.StatusOK,
+		//				Body:       io.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
+		//			},
+		//			{
+		//				StatusCode: http.StatusOK,
+		//				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
+		//			},
+		//			{
+		//				StatusCode: http.StatusOK,
+		//				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
+		//			},
+		//			{
+		//				StatusCode: http.StatusOK,
+		//				Body: io.NopCloser(strings.NewReader(`job(
+		//	name = "foo",
+		//	event = ["release"],
+		//	command = "test",
+		//	targets = ["//..."],
+		//	platforms = ["linux_amd64"],
+		//)`)),
+		//			},
+		//		}}
+		ghMock := githubutil.NewMock()
+		repo := ghMock.Repository("f110/sandbox")
+		repo.PullRequests(&github.PullRequest{
+			Number: varptr.Ptr(28),
+		})
+		commit := &githubutil.Commit{
+			IsHead: true,
+			Files: []*githubutil.File{
+				{
+					Name: ".build/release.cue",
+					Body: []byte(`jobs: {
+	release: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		cpu_limit:     "2000m"
+		memory_limit:  "8192Mi"
+		event: ["release"]
+	}
+}
+`),
+				},
+				{
+					Name: ".bazelversion",
+					Body: []byte("8.4.1"),
+				},
 			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-			},
-			{
-				StatusCode: http.StatusOK,
-				Body: io.NopCloser(strings.NewReader(`job(
-	name = "foo",
-	event = ["release"],
-	command = "test",
-	targets = ["//..."],
-	platforms = ["linux_amd64"],
-)`)),
-			},
-		}}
+		}
+		err := repo.Commits(commit)
+		require.NoError(t, err)
+		repo.Tags(&githubutil.Tag{Name: "1605187034", Commit: commit})
 
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: mockTransport}), nil, "")
+		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/release_published.json")
 		require.NoError(t, err)

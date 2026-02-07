@@ -5,6 +5,8 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/stretchr/testify/require"
+
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/testing/assertion"
 )
@@ -124,7 +126,7 @@ func TestParseFile(t *testing.T) {
 				assertion.MustNoError(t, err)
 				assertion.Equal(t, tc.Job, jobs[0])
 			} else {
-				if testing.Verbose() {
+				if testing.Verbose() && err != nil {
 					t.Log(err)
 				}
 				assertion.MustError(t, err)
@@ -136,9 +138,18 @@ func TestParseFile(t *testing.T) {
 func TestGithubProvider(t *testing.T) {
 	ghMock := githubutil.NewMock()
 	repo := ghMock.Repository("f110/gh-test")
-	repo.Files(githubutil.File{Name: ".build/test.cue", Body: []byte(`jobs: test_all: {}`)}, githubutil.File{Name: ".build/mirror.cue"})
+	err := repo.Commits(&githubutil.Commit{
+		IsHead: true,
+		Files: []*githubutil.File{
+			{Name: ".build/test.cue", Body: []byte(`jobs: test_all: {}`)},
+			{Name: ".build/mirror.cue"},
+		},
+	})
+	require.NoError(t, err)
 
-	provider, err := newGitHubProvider(t.Context(), ghMock.Client(), "f110", "gh-test")
+	commit, _, err := ghMock.Client().Git.GetCommit(t.Context(), "f110", "gh-test", "HEAD")
+	require.NoError(t, err)
+	provider, err := newGitHubProvider(t.Context(), ghMock.Client(), "f110", "gh-test", commit.GetTree().GetSHA())
 	assertion.MustNoError(t, err)
 	entries, err := provider.ReadDir(".build")
 	assertion.MustNoError(t, err)

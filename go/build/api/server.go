@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -95,7 +96,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	// Skip validate payload. Because validating body was done by the upstream proxy.
 	payload, err := io.ReadAll(req.Body)
 	if err != nil {
-		logger.Log.Warn("Failed read body", zap.Error(err))
+		logger.Log.Warn("Failed read body", logger.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -103,7 +104,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	messageType := github.WebHookType(req)
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
-		logger.Log.Warn("Failed parse webhook's payload", zap.Error(err))
+		logger.Log.Warn("Failed parse webhook's payload", logger.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -142,18 +143,18 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					&github.IssueComment{Body: varptr.Ptr(body)},
 				)
 				if err != nil {
-					logger.Log.Warn("Failed create the comment", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					logger.Log.Warn("Failed create the comment", logger.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 				return
 			} else {
 				if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
-					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()), logger.Error(err), logger.StackTrace(err))
 					return
 				}
 				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-					logger.Log.Warn("Failed build the pull request", zap.Error(err))
+					logger.Log.Warn("Failed build the pull request", logger.Error(err))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -166,7 +167,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				}
 				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-					logger.Log.Warn("Failed build the pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					logger.Log.Warn("Failed build the pull request", logger.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -181,13 +182,15 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			}
 			permit := permits[0]
 			if err := a.dao.PermitPullRequest.Delete(req.Context(), permit.Id); err != nil {
-				logger.Log.Warn("Failed delete PermitPullRequest", zap.Error(err))
+				logger.Log.Warn("Failed delete PermitPullRequest", logger.Error(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
 	case *github.IssueCommentEvent:
 		if err := a.issueComment(req.Context(), event); err != nil {
+			logger.Log.Warn("Failed handle comment", logger.Error(err), logger.StackTrace(err))
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	case *github.ReleaseEvent:
@@ -224,7 +227,7 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 	}
 
 	// Parse the configuration file
-	conf, err := config.ReadFromSpecifiedCommit(ctx, a.githubClient, owner, repoName, commit.GetSHA())
+	conf, err := config.ReadFromSpecifiedCommit(ctx, a.githubClient, owner, repoName, commit.GetCommit().GetTree().GetSHA())
 	if err != nil {
 		return nil, "", err
 	}
@@ -315,7 +318,7 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.PullRequest.Head.GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
 	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		logger.Log.Info("Skip build", logger.Error(err), logger.StackTrace(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
 		return nil
 	}
 	if conf == nil {
@@ -336,6 +339,7 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
+	a.githubClient.Git.GetTag(ctx, event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.Release.GetTagName())
 
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), ref.Object.GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true)
@@ -358,6 +362,7 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceRepository, owner, repoName string, number int) error {
 	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repoName, number)
 	if err != nil {
+		log.Println(1)
 		return xerrors.WithStack(err)
 	}
 	if res.StatusCode != http.StatusOK {
@@ -408,6 +413,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 		if strings.Contains(event.Comment.GetBody(), AllowCommand) {
 			users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 			if err != nil {
+				log.Println(2)
 				return xerrors.WithStack(err)
 			}
 			if len(users) != 1 {
@@ -424,6 +430,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				Number:     int32(event.Issue.GetNumber()),
 			})
 			if err != nil {
+				log.Print("1")
 				return xerrors.WithStack(err)
 			}
 
@@ -442,7 +449,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 
 			repo := a.findRepository(ctx, event.Repo.GetHTMLURL())
 			if err := a.buildPullRequest(ctx, repo, event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.Issue.GetNumber()); err != nil {
-				return xerrors.WithStack(err)
+				return err
 			}
 		}
 	}

@@ -69,15 +69,15 @@ func TestMarshalJob(t *testing.T) {
 	encoded, err := MarshalJob(job)
 	require.NoError(t, err)
 
-	decodedJob := &Job{}
-	err = UnmarshalJob(encoded, decodedJob)
+	decodedJob := &JobV2{}
+	err = UnmarshalJobV2(encoded, decodedJob)
 	require.NoError(t, err)
 	assert.Equal(t, "publish_zoekt_indexer", decodedJob.Name)
-	if assert.IsType(t, &RegistrySecret{}, decodedJob.Secrets[0]) {
-		assert.Equal(t, "registry.f110.dev", decodedJob.Secrets[0].(*RegistrySecret).Host)
-		assert.Equal(t, "secrets", decodedJob.Secrets[0].(*RegistrySecret).VaultMount)
-		assert.Equal(t, "registry.f110.dev/build", decodedJob.Secrets[0].(*RegistrySecret).VaultPath)
-		assert.Equal(t, "robot", decodedJob.Secrets[0].(*RegistrySecret).VaultKey)
+	if assert.IsType(t, &Secret{}, decodedJob.Secrets[0]) {
+		assert.Equal(t, "registry.f110.dev", decodedJob.Secrets[0].Host)
+		assert.Equal(t, "secrets", decodedJob.Secrets[0].VaultMount)
+		assert.Equal(t, "registry.f110.dev/build", decodedJob.Secrets[0].VaultPath)
+		assert.Equal(t, "robot", decodedJob.Secrets[0].VaultKey)
 		assert.Equal(t, []string{"--verbose"}, decodedJob.Args)
 	}
 }
@@ -113,8 +113,8 @@ func TestUnmarshalJob(t *testing.T) {
 	err = UnmarshalJob(jsonJob, decodedJob)
 	require.NoError(t, err)
 	assert.Equal(t, "test_all", decodedJob.Name)
-	decodedJob = &Job{}
-	err = UnmarshalJob(gobJob, decodedJob)
+	decodedJobV2 := &JobV2{}
+	err = UnmarshalJobV2(gobJob, decodedJobV2)
 	require.NoError(t, err)
-	assert.Equal(t, "test_all", decodedJob.Name)
+	assert.Equal(t, "test_all", decodedJobV2.Name)
 }

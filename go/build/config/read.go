@@ -39,11 +39,11 @@ func ReadFromSpecifiedCommit(ctx context.Context, githubClient *github.Client, o
 	}
 	jobs, err := ReadJobsFromBuildDir(provider)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.WithMessage(err, "failed to read build dir")
 	}
 	bazelVersion, err := ReadBazelVersion(provider)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.WithMessage(err, "failed to read .bazelversion")
 	}
 	return &Config{RepositoryOwner: owner, RepositoryName: repoName, Jobs: jobs, BazelVersion: bazelVersion}, nil
 }
@@ -102,6 +102,10 @@ GetTree:
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
+		if path == "" {
+			entries = tree.Entries
+			break
+		}
 
 		s := strings.Split(path, "/")
 		if len(s) > 0 {
@@ -113,11 +117,7 @@ GetTree:
 					continue GetTree
 				}
 			}
-		}
-
-		if path == "" {
-			entries = tree.Entries
-			break
+			return nil, fs.ErrNotExist
 		}
 	}
 	if entries == nil {
@@ -283,7 +283,14 @@ func ParseFile(f fs.File) ([]*JobV2, error) {
 	if rawConf.Err() != nil {
 		return nil, xerrors.WithStack(rawConf.Err())
 	}
-	parsed := cueSchema.Unify(rawConf).LookupPath(cue.ParsePath("output"))
+	parsed := cueSchema.Unify(rawConf)
+	if parsed.Err() != nil {
+		return nil, xerrors.WithStack(parsed.Err())
+	}
+	if err := parsed.Validate(cue.Concrete(true)); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	parsed = parsed.LookupPath(cue.ParsePath("output"))
 	if parsed.Err() != nil {
 		return nil, xerrors.WithStack(parsed.Err())
 	}

@@ -510,3 +510,10 @@ type JobV2 struct {
 func (j *JobV2) Identification() string {
 	return fmt.Sprintf("%s-%s-%s", j.RepositoryOwner, j.RepositoryName, j.Name)
 }
+
+func (j *JobV2) Copy() *JobV2 {
+	n := &JobV2{}
+	*n = *j
+
+	return n
+}
