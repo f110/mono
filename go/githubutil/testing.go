@@ -13,9 +13,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/google/go-github/v73/github"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/varptr"
 )
@@ -28,13 +30,59 @@ type Mock struct {
 type Repository struct {
 	mu           sync.Mutex
 	pullRequests []*PullRequest
-	files        []*File
+	issues       []*Issue
+	tags         []*Tag
+	commits      []*Commit
+
+	headCommit *Commit
+	rootCommit *Commit
+}
+
+type Commit struct {
+	Parents []*Commit `json:"-"`
+	Files   []*File   `json:"-"`
+	IsHead  bool      `json:"-"`
+
+	files    []*File
+	ghCommit *github.Commit
+}
+
+type fileType int
+
+const (
+	fileTypeRegular fileType = iota
+	fileTypeDir
+)
+
+type File struct {
+	Name string
+	Body []byte
+
+	sha  string
+	mode fileType
+}
+
+type PullRequest struct {
+	github.PullRequest
+
+	Comments []*github.PullRequestComment `json:"-"`
+}
+
+type Issue struct {
+	github.Issue
+
+	Comments []*github.IssueComment `json:"-"`
+}
+
+type Tag struct {
+	Name   string
+	Commit *Commit
+
+	ghTag *github.Tag
 }
 
 func newRepository() *Repository {
-	return &Repository{
-		files: []*File{{Name: "", sha: newHash(), mode: fileTypeDir}},
-	}
+	return &Repository{}
 }
 
 func NewMock() *Mock {
@@ -64,13 +112,154 @@ func (m *Mock) Client() *github.Client {
 	return github.NewClient(&http.Client{Transport: m.RegisteredTransport()})
 }
 
+func (r *Repository) AssertPullRequest(t *testing.T, number int) *PullRequest {
+	t.Helper()
+	for _, v := range r.pullRequests {
+		if v.GetNumber() == number {
+			return v
+		}
+	}
+
+	assert.Failf(t, "Pull request is not found", "pull request %d is not found", number)
+	return nil
+}
+
+func (r *Repository) PullRequests(pullRequests ...*github.PullRequest) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range pullRequests {
+		r.pullRequests = append(r.pullRequests, &PullRequest{
+			PullRequest: *v,
+		})
+		if v.GetNumber() == 0 {
+			r.pullRequests[len(r.pullRequests)-1].Number = varptr.Ptr(r.nextIndex())
+		}
+	}
+}
+
+func (r *Repository) GetPullRequest(num int) *PullRequest {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range r.pullRequests {
+		if v.GetNumber() == num {
+			return v
+		}
+	}
+	return nil
+}
+
+func (r *Repository) Issues(issues ...*github.Issue) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range issues {
+		r.issues = append(r.issues, &Issue{
+			Issue: *v,
+		})
+		if v.GetNumber() == 0 {
+			r.issues[len(r.issues)-1].Number = varptr.Ptr(r.nextIndex())
+		}
+	}
+}
+
+func (r *Repository) GetIssue(num int) *Issue {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range r.issues {
+		if v.GetNumber() == num {
+			return v
+		}
+	}
+	return nil
+}
+
+func (r *Repository) Commits(commits ...*Commit) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var rootCommit *Commit
+	for _, v := range commits {
+		if len(v.Parents) == 0 {
+			if rootCommit != nil {
+				return xerrors.New("multiple root commits are found")
+			}
+			rootCommit = v
+		}
+		if v.IsHead {
+			if r.headCommit != nil {
+				return xerrors.New("multiple head commits are found")
+			}
+			r.headCommit = v
+		}
+
+		v.ghCommit = &github.Commit{SHA: varptr.Ptr(NewHash())}
+		v.files = []*File{{Name: "", sha: NewHash(), mode: fileTypeDir}} // Root directory
+		v.ghCommit.Tree = &github.Tree{SHA: varptr.Ptr(v.files[0].sha)}
+		for _, f := range v.Files {
+			if f.Name == "" {
+				continue
+			}
+
+			name := f.Name
+			if name[0] == '/' {
+				name = name[1:]
+			}
+			s := strings.Split(name, "/")
+			f.Name = name
+			var dirs []string
+			if len(s) > 1 {
+				dirs = s[:len(s)-1]
+			}
+			for i := 1; i <= len(dirs); i++ {
+				dir := strings.Join(dirs[:i], "/")
+				v.addDir(dir)
+			}
+			v.addFile(f)
+		}
+	}
+	if rootCommit != nil {
+		if r.rootCommit != nil {
+			return xerrors.New("multiple root commits are found")
+		}
+		r.rootCommit = rootCommit
+	}
+	r.commits = append(r.commits, commits...)
+	return nil
+}
+
+func (r *Repository) Tags(tags ...*Tag) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, v := range tags {
+		v.ghTag = &github.Tag{
+			Tag: varptr.Ptr(v.Name),
+		}
+	}
+	r.tags = append(r.tags, tags...)
+}
+
 func (m *Mock) RegisterResponder(tr *httpmock.MockTransport) {
+	m.registerIssuesService(tr)
 	m.registerPullRequestService(tr)
 	m.registerGitService(tr)
 	m.registerRepositoriesService(tr)
 }
 
 func (m *Mock) registerPullRequestService(tr *httpmock.MockTransport) {
+	// Get a pull request
+	// GET /repos/octocat/example/pulls/1
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls/\d+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		num, err := strconv.Atoi(s[5])
+		if err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+		pr := r.GetPullRequest(num)
+		return newMockJSONResponse(req, http.StatusOK, pr)
+	})
 	// Create a pull request
 	// POST /repos/octocat/example/pulls
 	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/pulls$`), func(req *http.Request) (*http.Response, error) {
@@ -182,12 +371,20 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 		if r == nil {
 			return newNotFoundResponse(req)
 		}
-		commit := &github.Commit{
-			Tree: &github.Tree{
-				SHA: varptr.Ptr(r.files[0].sha),
-			},
+		s := strings.Split(req.URL.Path, "/")
+		sha := s[len(s)-1]
+		if sha == "HEAD" { // Special case
+			if r.headCommit == nil {
+				return newNotFoundResponse(req)
+			}
+			return newMockJSONResponse(req, http.StatusOK, r.headCommit.ghCommit)
 		}
-		return newMockJSONResponse(req, http.StatusOK, commit)
+		for _, v := range r.commits {
+			if v.ghCommit.GetSHA() == sha {
+				return newMockJSONResponse(req, http.StatusOK, v.ghCommit)
+			}
+		}
+		return newNotFoundResponse(req)
 	})
 	// Get tree
 	// Get /repos/octocat/example/git/trees/{sha}
@@ -198,10 +395,12 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 		}
 		s := strings.Split(req.URL.Path, "/")
 		var prefix *string
-		for _, v := range r.files {
-			if v.sha == s[len(s)-1] {
-				prefix = varptr.Ptr(v.Name)
-				break
+		for _, c := range r.commits {
+			for _, v := range c.files {
+				if v.sha == s[len(s)-1] {
+					prefix = varptr.Ptr(v.Name)
+					break
+				}
 			}
 		}
 		if prefix == nil {
@@ -209,49 +408,51 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 		}
 
 		var entries []*github.TreeEntry
-		for _, v := range r.files[1:] { // Exclude root node
-			// Repository root
-			if *prefix == "" {
-				if strings.Index(v.Name, "/") == -1 {
-					ft := "blob"
+		for _, c := range r.commits {
+			for _, v := range c.files[1:] { // Exclude root node
+				// Repository root
+				if *prefix == "" {
+					if strings.Index(v.Name, "/") == -1 {
+						ft := "blob"
+						if v.mode == fileTypeDir {
+							ft = "tree"
+						}
+						entries = append(entries, &github.TreeEntry{
+							SHA:  varptr.Ptr(v.sha),
+							Type: varptr.Ptr(ft),
+							Path: varptr.Ptr(v.Name),
+						})
+					}
+					continue
+				}
+
+				if strings.HasPrefix(v.Name, *prefix) && v.Name != *prefix {
+					// Exclude children
+					rest := v.Name[strings.Index(v.Name, *prefix)+len(*prefix)+1:]
+					if strings.Index(rest, "/") != -1 {
+						continue
+					}
+
+					ft := "blog"
 					if v.mode == fileTypeDir {
 						ft = "tree"
 					}
 					entries = append(entries, &github.TreeEntry{
 						SHA:  varptr.Ptr(v.sha),
 						Type: varptr.Ptr(ft),
-						Path: varptr.Ptr(v.Name),
+						Path: varptr.Ptr(strings.TrimPrefix(v.Name, *prefix+"/")),
 					})
 				}
-				continue
-			}
-
-			if strings.HasPrefix(v.Name, *prefix) && v.Name != *prefix {
-				// Exclude children
-				rest := v.Name[strings.Index(v.Name, *prefix)+len(*prefix)+1:]
-				if strings.Index(rest, "/") != -1 {
-					continue
-				}
-
-				ft := "blog"
-				if v.mode == fileTypeDir {
-					ft = "tree"
-				}
-				entries = append(entries, &github.TreeEntry{
-					SHA:  varptr.Ptr(v.sha),
-					Type: varptr.Ptr(ft),
-					Path: varptr.Ptr(strings.TrimPrefix(v.Name, *prefix+"/")),
-				})
 			}
 		}
 		tree := &github.Tree{
-			SHA:     varptr.Ptr(r.files[0].sha),
+			SHA:     varptr.Ptr(s[len(s)-1]),
 			Entries: entries,
 		}
 		return newMockJSONResponse(req, http.StatusOK, tree)
 	})
 	// Get blob
-	// Get /repos/octocat/git/blobs/{sha}
+	// GET /repos/octocat/example/git/blobs/{sha}
 	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/git/blobs/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
 		r := m.findRepository(req.URL.Path)
 		if r == nil {
@@ -259,9 +460,36 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 		}
 		s := strings.Split(req.URL.Path, "/")
 		sha := s[len(s)-1]
-		for _, v := range r.files {
-			if v.sha == sha {
-				return httpmock.NewBytesResponse(http.StatusOK, v.Body), nil
+		for _, c := range r.commits {
+			for _, v := range c.files {
+				if v.sha == sha {
+					return httpmock.NewBytesResponse(http.StatusOK, v.Body), nil
+				}
+			}
+		}
+		return newNotFoundResponse(req)
+	})
+	// Get ref
+	// GET /repos/octocat/example/git/ref/tags/{sha}
+	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/git/ref/[^?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		ref := plumbing.ReferenceName("refs/" + strings.Join(s[6:], "/"))
+		if ref.IsTag() {
+			for _, v := range r.tags {
+				if v.Name == ref.Short() {
+					reference := &github.Reference{
+						Ref: varptr.Ptr(ref.String()),
+						Object: &github.GitObject{
+							SHA:  v.Commit.ghCommit.SHA,
+							Type: varptr.Ptr("commit"),
+						},
+					}
+					return newMockJSONResponse(req, http.StatusOK, reference)
+				}
 			}
 		}
 		return newNotFoundResponse(req)
@@ -276,15 +504,91 @@ func (m *Mock) registerRepositoriesService(tr *httpmock.MockTransport) {
 		if r == nil {
 			return newNotFoundResponse(req)
 		}
-		commit := &github.RepositoryCommit{
-			SHA: varptr.Ptr(r.files[0].sha),
-			Commit: &github.Commit{
-				Tree: &github.Tree{
-					SHA: varptr.Ptr(r.files[0].sha),
-				},
-			},
+		s := strings.Split(req.URL.Path, "/")
+		sha := s[len(s)-1]
+		if sha == "HEAD" { // Special case
+			if r.headCommit == nil {
+				return newNotFoundResponse(req)
+			}
+			return newMockJSONResponse(req, http.StatusOK, &github.RepositoryCommit{
+				SHA:    r.headCommit.ghCommit.SHA,
+				Commit: r.headCommit.ghCommit,
+			})
 		}
-		return newMockJSONResponse(req, http.StatusOK, commit)
+		for _, c := range r.commits {
+			if c.ghCommit.GetSHA() == sha {
+				commit := &github.RepositoryCommit{
+					SHA:    c.ghCommit.SHA,
+					Commit: c.ghCommit,
+				}
+				return newMockJSONResponse(req, http.StatusOK, commit)
+			}
+		}
+		return newNotFoundResponse(req)
+	})
+}
+
+func (m *Mock) registerIssuesService(tr *httpmock.MockTransport) {
+	// Create issue
+	// Post /repos/octocat/example/issues
+	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/issues$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+
+		var reqIssue github.IssueRequest
+		if err := json.NewDecoder(req.Body).Decode(&reqIssue); err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+
+		newNumber := r.NextIndex()
+		issue := &github.Issue{
+			Number: &newNumber,
+			Title:  reqIssue.Title,
+			Body:   reqIssue.Body,
+		}
+		r.Issues(issue)
+		return newMockJSONResponse(req, http.StatusOK, issue)
+	})
+	// Create a new comment
+	// POST /repos/octocat/example/issues/1/comments
+	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/issues/\d+/comments`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		s := strings.Split(req.URL.Path, "/")
+		num, err := strconv.Atoi(s[5])
+		if err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+
+		issue := r.GetIssue(num)
+		if issue != nil {
+			var comment github.IssueComment
+			if err := json.NewDecoder(req.Body).Decode(&comment); err != nil {
+				return newErrResponse(req, http.StatusBadRequest, err.Error())
+			}
+
+			issue.Comments = append(issue.Comments, &comment)
+			return newMockJSONResponse(req, http.StatusOK, comment)
+		}
+
+		pr := r.GetPullRequest(num)
+		if pr != nil {
+			var comment github.IssueComment
+			if err := json.NewDecoder(req.Body).Decode(&comment); err != nil {
+				return newErrResponse(req, http.StatusBadRequest, err.Error())
+			}
+
+			pr.Comments = append(pr.Comments, &github.PullRequestComment{
+				Body: comment.Body,
+			})
+			return newMockJSONResponse(req, http.StatusOK, comment)
+		}
+
+		return newNotFoundResponse(req)
 	})
 }
 
@@ -295,18 +599,6 @@ func (m *Mock) findRepository(p string) *Repository {
 	if r, ok := m.Repositories[name]; ok {
 		return r
 	}
-	return nil
-}
-
-func (r *Repository) AssertPullRequest(t *testing.T, number int) *PullRequest {
-	t.Helper()
-	for _, v := range r.pullRequests {
-		if v.GetNumber() == number {
-			return v
-		}
-	}
-
-	assert.Failf(t, "Pull request is not found", "pull request %d is not found", number)
 	return nil
 }
 
@@ -324,98 +616,34 @@ func (r *Repository) nextIndex() int {
 			lastIndex = v.GetNumber()
 		}
 	}
+	for _, v := range r.issues {
+		if v.GetNumber() > lastIndex {
+			lastIndex = v.GetNumber()
+		}
+	}
 
 	return lastIndex + 1
 }
 
-func (r *Repository) PullRequests(pullRequests ...*github.PullRequest) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, v := range pullRequests {
-		r.pullRequests = append(r.pullRequests, &PullRequest{
-			PullRequest: *v,
-		})
-		if v.GetNumber() == 0 {
-			r.pullRequests[len(r.pullRequests)-1].Number = varptr.Ptr(r.nextIndex())
-		}
-	}
-}
-
-func (r *Repository) GetPullRequest(num int) *PullRequest {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, v := range r.pullRequests {
-		if v.GetNumber() == num {
-			return v
-		}
-	}
-	return nil
-}
-
-func (r *Repository) Files(files ...File) {
-	for _, f := range files {
-		if f.Name == "" {
-			continue
-		}
-
-		name := f.Name
-		if name[0] == '/' {
-			name = name[1:]
-		}
-		s := strings.Split(name, "/")
-		f.Name = name
-		var dirs []string
-		if len(s) > 1 {
-			dirs = s[:len(s)-1]
-		}
-		for i := 1; i <= len(dirs); i++ {
-			dir := strings.Join(dirs[:i], "/")
-			r.addDir(dir)
-		}
-		r.addFile(f)
-	}
-}
-
-func (r *Repository) addDir(dir string) {
-	for _, v := range r.files {
+func (c *Commit) addDir(dir string) {
+	for _, v := range c.files {
 		if v.Name == dir {
 			return
 		}
 	}
-	r.files = append(r.files, &File{
+	c.files = append(c.files, &File{
 		Name: dir,
-		sha:  newHash(),
+		sha:  NewHash(),
 		mode: fileTypeDir,
 	})
 }
 
-func (r *Repository) addFile(file File) {
+func (c *Commit) addFile(file *File) {
 	if file.sha == "" {
-		file.sha = newHash()
+		file.sha = NewHash()
 	}
 	file.mode = fileTypeRegular
-	r.files = append(r.files, &file)
-}
-
-type fileType int
-
-const (
-	fileTypeRegular fileType = iota
-	fileTypeDir
-)
-
-type File struct {
-	Name string
-	Body []byte
-
-	sha  string
-	mode fileType
-}
-
-type PullRequest struct {
-	github.PullRequest
-
-	Comments []*github.PullRequestComment
+	c.files = append(c.files, file)
 }
 
 func newNotFoundResponse(req *http.Request) (*http.Response, error) {
@@ -440,7 +668,7 @@ func newMockJSONResponse(req *http.Request, status int, body any) (*http.Respons
 	return res, err
 }
 
-func newHash() string {
+func NewHash() string {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
 		panic(err)

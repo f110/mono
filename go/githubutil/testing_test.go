@@ -14,12 +14,29 @@ import (
 
 func TestMock(t *testing.T) {
 	t.Run("PullRequestService", func(t *testing.T) {
+		t.Run("Get", func(t *testing.T) {
+			m := NewMock()
+			repo := m.Repository("f110/gh-test")
+			repo.PullRequests(&github.PullRequest{
+				Number: varptr.Ptr(1),
+				Title:  varptr.Ptr(t.Name()),
+				Body:   varptr.Ptr("PR description"),
+				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("master")},
+				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("feature-1")},
+			})
+			ghClient := m.Client()
+
+			pr, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "gh-test", 1)
+			require.NoError(t, err)
+			assert.Equal(t, 1, pr.GetNumber())
+		})
+
 		t.Run("Create", func(t *testing.T) {
 			m := NewMock()
 			m.Repository("f110/gh-test")
 			ghClient := m.Client()
 
-			pr, _, err := ghClient.PullRequests.Create(context.Background(), "f110", "gh-test", &github.NewPullRequest{})
+			pr, _, err := ghClient.PullRequests.Create(t.Context(), "f110", "gh-test", &github.NewPullRequest{})
 			require.NoError(t, err)
 			assert.Equal(t, 1, pr.GetNumber())
 		})
@@ -38,7 +55,7 @@ func TestMock(t *testing.T) {
 				},
 			)
 
-			pr, _, err := ghClient.PullRequests.Edit(context.Background(), "f110", "gh-test", 1, &github.PullRequest{
+			pr, _, err := ghClient.PullRequests.Edit(t.Context(), "f110", "gh-test", 1, &github.PullRequest{
 				Base: &github.PullRequestBranch{Ref: varptr.Ptr("main")},
 			})
 			require.NoError(t, err)
@@ -71,9 +88,19 @@ func TestMock(t *testing.T) {
 	t.Run("GitService", func(t *testing.T) {
 		m := NewMock()
 		repo := m.Repository("f110/gh-test")
-		repo.Files(File{Name: ".github/CODEOWNERS"}, File{Name: "/docs/sample/README.md"})
-		repo.Files(File{Name: ".build/mirror.cue"}, File{Name: ".build/test.cue"})
-		repo.Files(File{Name: "README.md", Body: []byte("README")})
+		commit := &Commit{
+			IsHead: true,
+			Files: []*File{
+				{Name: ".github/CODEOWNERS"},
+				{Name: "/docs/sample/README.md"},
+				{Name: ".build/mirror.cue"},
+				{Name: ".build/test.cue"},
+				{Name: "README.md", Body: []byte("README")},
+			},
+		}
+		err := repo.Commits(commit)
+		require.NoError(t, err)
+		repo.Tags(&Tag{Name: "v1.0.0", Commit: commit})
 
 		ghClient := m.Client()
 
@@ -86,6 +113,7 @@ func TestMock(t *testing.T) {
 		t.Run("GetTree", func(t *testing.T) {
 			commit, _, err := ghClient.Git.GetCommit(t.Context(), "f110", "gh-test", "HEAD")
 			assertion.MustNoError(t, err)
+			assertion.MustNotEmpty(t, commit.GetTree().GetSHA())
 
 			tree, _, err := ghClient.Git.GetTree(t.Context(), "f110", "gh-test", commit.GetTree().GetSHA(), false)
 			assertion.MustNoError(t, err)
@@ -128,11 +156,23 @@ func TestMock(t *testing.T) {
 			assertion.MustNoError(t, err)
 			assertion.Equal(t, "README", string(blob))
 		})
+
+		t.Run("GetRef", func(t *testing.T) {
+			ref, _, err := ghClient.Git.GetRef(t.Context(), "f110", "gh-test", "tags/v1.0.0")
+			assertion.MustNoError(t, err)
+			assertion.NotEmpty(t, ref.GetObject().GetSHA())
+			assertion.Equal(t, "commit", ref.GetObject().GetType())
+		})
 	})
 
 	t.Run("RepositoriesService", func(t *testing.T) {
 		m := NewMock()
-		m.Repository("f110/gh-test")
+		repo := m.Repository("f110/gh-test")
+		err := repo.Commits(&Commit{
+			IsHead: true,
+			Files:  []*File{{Name: "README.md", Body: []byte("README")}},
+		})
+		require.NoError(t, err)
 
 		ghClient := m.Client()
 
@@ -141,6 +181,37 @@ func TestMock(t *testing.T) {
 			assertion.MustNoError(t, err)
 			assertion.NotEmpty(t, repoCommit.GetSHA())
 			assertion.NotEmpty(t, repoCommit.GetCommit().GetTree().GetSHA())
+		})
+	})
+
+	t.Run("IssueService", func(t *testing.T) {
+		t.Run("Create", func(t *testing.T) {
+			m := NewMock()
+			m.Repository("f110/gh-test")
+			ghClient := m.Client()
+
+			pr, _, err := ghClient.Issues.Create(t.Context(), "f110", "gh-test", &github.IssueRequest{})
+			require.NoError(t, err)
+			assert.Equal(t, 1, pr.GetNumber())
+		})
+
+		t.Run("CreateComment", func(t *testing.T) {
+			m := NewMock()
+			repo := m.Repository("f110/gh-test")
+			ghClient := m.Client()
+			repo.Issues(&github.Issue{
+				Number: varptr.Ptr(1),
+				Title:  varptr.Ptr(t.Name()),
+			})
+
+			comment, _, err := ghClient.Issues.CreateComment(t.Context(), "f110", "gh-test", 1, &github.IssueComment{
+				Body: varptr.Ptr("Comment"),
+			})
+			require.NoError(t, err)
+			assert.NotNil(t, comment)
+			issue := repo.GetIssue(1)
+			require.NotNil(t, issue)
+			assert.Len(t, issue.Comments, 1)
 		})
 	})
 }
