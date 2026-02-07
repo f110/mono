@@ -13,6 +13,7 @@ go_library(
         "//go/cli",
         "//go/logger",
         "//go/varptr",
+        "@com_github_go_git_go_git_v5//plumbing",
         "@com_github_golang_jwt_jwt_v5//:jwt",
         "@com_github_google_go_github_v73//github",
         "@com_github_jarcoal_httpmock//:httpmock",
