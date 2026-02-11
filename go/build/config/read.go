@@ -45,6 +45,10 @@ func ReadFromSpecifiedCommit(ctx context.Context, githubClient *github.Client, o
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to read .bazelversion")
 	}
+	for _, j := range jobs {
+		j.RepositoryOwner = owner
+		j.RepositoryName = repoName
+	}
 	return &Config{RepositoryOwner: owner, RepositoryName: repoName, Jobs: jobs, BazelVersion: bazelVersion}, nil
 }
 
