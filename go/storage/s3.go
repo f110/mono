@@ -45,8 +45,9 @@ type S3Options struct {
 	Port      int
 	Dev       bool
 
-	k8sClient  kubernetes.Interface
-	restConfig *rest.Config
+	k8sClient    kubernetes.Interface
+	restConfig   *rest.Config
+	withInsecure bool
 
 	client *s3.Client
 }
@@ -76,6 +77,7 @@ func NewS3OptionViaService(client kubernetes.Interface, config *rest.Config, nam
 		AccessKey:       accessKey,
 		SecretAccessKey: secretAccessKey,
 		Dev:             dev,
+		withInsecure:    true,
 		k8sClient:       client,
 		restConfig:      config,
 	}
@@ -94,7 +96,11 @@ func (s *S3Options) Client(ctx context.Context) (*s3.Client, error) {
 			}
 			return nil, err
 		}
-		s.Endpoint = endpoint
+		if !s.withInsecure {
+			s.Endpoint = fmt.Sprintf("https://%s", endpoint)
+		} else {
+			s.Endpoint = fmt.Sprintf("http://%s", endpoint)
+		}
 	}
 
 	cp, err := x509.SystemCertPool()

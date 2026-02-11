@@ -464,7 +464,7 @@ func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 	}
 	objs, err := a.stClient.List(req.Context(), a.bazelMirrorPrefix)
 	if err != nil {
-		logger.Log.Error("Failed to get the list of the file from the object storage", zap.Error(err), zap.String("prefix", a.bazelMirrorPrefix))
+		logger.Log.Error("Failed to get the list of the file from the object storage", logger.Error(err), logger.StackTrace(err), zap.String("prefix", a.bazelMirrorPrefix))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

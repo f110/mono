@@ -275,6 +275,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.MinIOSecretAccessKey,
 			p.opt.Dev,
 		)
+		storageOpt.PathStyle = true
 	}
 	p.storageOpt = storageOpt
 
@@ -292,6 +293,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.BazelMirrorSecretAccessKey,
 			p.opt.Dev,
 		)
+		bazelMirrorStorageOpt.PathStyle = true
 	}
 	p.bazelMirrorStorageOpt = bazelMirrorStorageOpt
 
