@@ -207,12 +207,18 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 			logger.Log.Info("Task is not found", logger.Error(err))
 			return nil, status.Error(codes.NotFound, "Task not found")
 		}
+		u, err := url.Parse(task.Repository.Url)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to parse repository url")
+		}
+		p := strings.Split(u.Path, "/")
+		owner, repoName := p[1], p[2]
 
 		jobConfiguration := &config.JobV2{}
 		if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
 			j := &config.Job{}
 			if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
-				if err := config.UnmarshalJobV2([]byte(*task.JobConfiguration), jobConfiguration); err != nil {
+				if err := config.UnmarshalJobV2([]byte(*task.JobConfiguration), jobConfiguration, owner, repoName); err != nil {
 					return nil, status.Error(codes.FailedPrecondition, err.Error())
 				}
 			} else {
@@ -221,7 +227,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 		} else if len(task.ParsedJobConfiguration) > 0 {
 			j := &config.Job{}
 			if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
-				if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+				if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration, owner, repoName); err != nil {
 					return nil, status.Error(codes.FailedPrecondition, err.Error())
 				}
 			} else {
@@ -325,7 +331,7 @@ func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {
 			memoryLimit = jobConf.MemoryLimit
 		} else {
 			j := &config.JobV2{}
-			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, j); err == nil {
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, j, "", ""); err == nil {
 				cpuLimit = j.CPULimit
 				memoryLimit = j.MemoryLimit
 			}

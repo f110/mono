@@ -258,7 +258,7 @@ func MarshalJob(j *JobV2) ([]byte, error) {
 	return b, nil
 }
 
-func UnmarshalJobV2(b []byte, j *JobV2) error {
+func UnmarshalJobV2(b []byte, j *JobV2, repoOwner, name string) error {
 	if len(b) == 0 || b[0] != '{' {
 		return xerrors.New("this json is not JobV2, probably Job")
 	}
@@ -274,6 +274,8 @@ func UnmarshalJobV2(b []byte, j *JobV2) error {
 	if err := json.Unmarshal(b, j); err != nil {
 		return xerrors.WithStack(err)
 	}
+	j.RepositoryOwner = repoOwner
+	j.RepositoryName = name
 	return nil
 }
 

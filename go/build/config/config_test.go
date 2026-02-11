@@ -70,7 +70,7 @@ func TestMarshalJob(t *testing.T) {
 	require.NoError(t, err)
 
 	decodedJob := &JobV2{}
-	err = UnmarshalJobV2(encoded, decodedJob)
+	err = UnmarshalJobV2(encoded, decodedJob, "", "")
 	require.NoError(t, err)
 	assert.Equal(t, "publish_zoekt_indexer", decodedJob.Name)
 	if assert.IsType(t, &Secret{}, decodedJob.Secrets[0]) {
@@ -114,7 +114,7 @@ func TestUnmarshalJob(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "test_all", decodedJob.Name)
 	decodedJobV2 := &JobV2{}
-	err = UnmarshalJobV2(gobJob, decodedJobV2)
+	err = UnmarshalJobV2(gobJob, decodedJobV2, "", "")
 	require.NoError(t, err)
 	assert.Equal(t, "test_all", decodedJobV2.Name)
 }

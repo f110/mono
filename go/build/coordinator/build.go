@@ -436,6 +436,12 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		}
 		return xerrors.WithStack(err)
 	}
+	u, err := url.Parse(repo.Url)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	p := strings.Split(u.Path, "/")
+	owner, repoName := p[1], p[2]
 	jobConfiguration := &config.JobV2{}
 	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
 		j := &config.Job{}
@@ -447,7 +453,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	} else if len(task.ParsedJobConfiguration) > 0 {
 		j := &config.Job{}
 		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
-			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration); err != nil {
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration, owner, repoName); err != nil {
 				logger.Log.Warn("Failed to decode json", zap.Int32("task.id", task.Id))
 				return nil
 			}
