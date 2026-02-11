@@ -1,5 +1,5 @@
 import { timestampDate } from '@bufbuild/protobuf/wkt'
-import { useQuery, useSuspenseQuery } from '@connectrpc/connect-query'
+import { useQuery } from '@connectrpc/connect-query'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import SyncIcon from '@mui/icons-material/Sync'
 import { useState } from 'react'
@@ -160,10 +160,10 @@ export const IndexPage: React.FC = () => {
   const [pageToken, setPageToken] = useState<string | undefined>(undefined)
   const [pageTokenHistory, setPageTokenHistory] = useState<string[]>([])
   const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
+    _: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
-    if (page + 1 == newPage) {
+    if (page + 1 == newPage && pageToken !== undefined) {
       setPageTokenHistory([...pageTokenHistory, pageToken])
       setPageToken(tasks.data?.nextPageToken)
     } else if (page - 1 == newPage) {

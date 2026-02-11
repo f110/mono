@@ -85,7 +85,7 @@ js_run_binary(
     ],
     chdir = package_name(),
     out_dirs = [
-        "dist_dev",
+        "dist",
     ],
     tool = ":vite",
     visibility = ["//visibility:public"],
