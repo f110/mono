@@ -115,7 +115,7 @@ pkg_files(
     name = "frontend_assets_files",
     srcs = ["//ts/apps/build:vite_build_prod"],
     prefix = "/assets",
-    strip_prefix = "dist/",
+    strip_prefix = "dist_prod/",
 )
 
 pkg_tar(
@@ -149,7 +149,7 @@ pkg_files(
     name = "frontend_dev_assets_files",
     srcs = ["//ts/apps/build:vite_build_dev"],
     prefix = "/assets",
-    strip_prefix = "dist/",
+    strip_prefix = "dist_dev/",
 )
 
 pkg_tar(

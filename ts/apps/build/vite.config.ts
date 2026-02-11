@@ -5,17 +5,22 @@ import { defineConfig } from 'vite'
 
 const envDir = path.join(__dirname, './env')
 
-export default defineConfig({
-  server: {
-    host: '127.0.0.1',
-    port: 8301,
-  },
-  envDir,
-  plugins: [
-    tanstackRouter({
-      target: 'react',
-      autoCodeSplitting: true,
-    }),
-    react(),
-  ],
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      host: '127.0.0.1',
+      port: 8301,
+    },
+    envDir,
+    plugins: [
+      tanstackRouter({
+        target: 'react',
+        autoCodeSplitting: true,
+      }),
+      react(),
+    ],
+    build: {
+      outDir: 'dist_' + mode,
+    },
+  }
 })
