@@ -156,7 +156,7 @@ export const IndexPage: React.FC = () => {
   }
 
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(50)
   const [pageToken, setPageToken] = useState<string | undefined>(undefined)
   const [pageTokenHistory, setPageTokenHistory] = useState<string[]>([])
   const handleChangePage = (
