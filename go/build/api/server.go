@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -143,17 +142,16 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 				return
-			} else {
-				if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
-					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()), logger.Error(err), logger.StackTrace(err))
-					return
-				}
-				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
-				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-					logger.Log.Warn("Failed build the pull request", logger.Error(err))
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
+			}
+			if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
+				logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()), logger.Error(err), logger.StackTrace(err))
+				return
+			}
+			repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
+			if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
+				logger.Log.Warn("Failed build the pull request", logger.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 		case "synchronize":
 			if ok, _ := a.allowPullRequest(req.Context(), event); ok {
@@ -358,7 +356,6 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceRepository, owner, repoName string, number int) error {
 	pr, res, err := a.githubClient.PullRequests.Get(ctx, owner, repoName, number)
 	if err != nil {
-		log.Println(1)
 		return xerrors.WithStack(err)
 	}
 	if res.StatusCode != http.StatusOK {
@@ -377,6 +374,15 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	jobs := conf.Job(config.EventPullRequest)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "pr", false); err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	validateConfigState := "failure"
+	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
+		validateConfigState = "success"
+	}
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: varptr.Ptr(validateConfigState), Context: varptr.Ptr("Validate config")})
+	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
@@ -409,7 +415,6 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 		if strings.Contains(event.Comment.GetBody(), AllowCommand) {
 			users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 			if err != nil {
-				log.Println(2)
 				return xerrors.WithStack(err)
 			}
 			if len(users) != 1 {
@@ -426,7 +431,6 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				Number:     int32(event.Issue.GetNumber()),
 			})
 			if err != nil {
-				log.Print("1")
 				return xerrors.WithStack(err)
 			}
 
