@@ -41,7 +41,7 @@ func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, buc
 		s3:        storage.NewS3(bucket, s3Opt),
 	}
 	mux := http.NewServeMux()
-	mux.Handle(NewBFFHandler(b))
+	mux.Handle(NewBFFHandler(b, connect.WithInterceptors(newAccessLogInterceptor())))
 	mux.HandleFunc("GET /liveness", func(_ http.ResponseWriter, _ *http.Request) { return })
 	mux.HandleFunc("GET /readiness", func(w http.ResponseWriter, _ *http.Request) {
 		switch grpcConn.GetState() {
