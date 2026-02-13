@@ -325,6 +325,14 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 		return xerrors.WithStack(err)
 	}
 
+	validateConfigState := "failure"
+	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
+		validateConfigState = "success"
+	}
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: varptr.Ptr(validateConfigState), Context: varptr.Ptr("Validate config")})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
 	return nil
 }
 
