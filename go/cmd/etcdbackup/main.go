@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -66,7 +65,7 @@ func etcdBackup(args []string) error {
 		clientCert = c
 	}
 
-	credential, err := ioutil.ReadFile(credentialFile)
+	credential, err := os.ReadFile(credentialFile)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

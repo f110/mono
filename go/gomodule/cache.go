@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"go.f110.dev/go-memcached/client"
@@ -359,13 +360,7 @@ func (c *ModuleCache) addCachedModuleRoot(repoRoot string) error {
 		if err := json.NewDecoder(bytes.NewReader(item.Value)).Decode(&cachedModules); err != nil {
 			return xerrors.WithStack(err)
 		}
-		found := false
-		for _, v := range cachedModules {
-			if v == repoRoot {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(cachedModules, repoRoot)
 		if found {
 			logger.Log.Debug("The module already cached", zap.String("repoRoot", repoRoot))
 			return nil

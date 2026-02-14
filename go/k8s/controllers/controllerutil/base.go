@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.f110.dev/xerrors"
@@ -25,7 +26,7 @@ import (
 )
 
 type Controller interface {
-	ObjectToKeys(obj interface{}) []string
+	ObjectToKeys(obj any) []string
 	GetObject(key string) (runtime.Object, error)
 	UpdateObject(ctx context.Context, obj runtime.Object) (runtime.Object, error)
 	Reconcile(ctx context.Context, obj runtime.Object) error
@@ -60,7 +61,7 @@ func NewBase(
 ) *ControllerBase {
 	logger := logger.Log.Named(name)
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		logger.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
@@ -144,7 +145,7 @@ func (b *ControllerBase) Log() *zap.Logger {
 
 func (b *ControllerBase) worker(ctx context.Context) {
 	for {
-		var obj interface{}
+		var obj any
 		select {
 		case v, ok := <-b.queue.Get():
 			if !ok {
@@ -219,11 +220,11 @@ func (b *ControllerBase) process(key string) error {
 	return nil
 }
 
-func (b *ControllerBase) onAdd(obj interface{}) {
+func (b *ControllerBase) onAdd(obj any) {
 	b.enqueue(obj)
 }
 
-func (b *ControllerBase) onUpdate(old, cur interface{}) {
+func (b *ControllerBase) onUpdate(old, cur any) {
 	oldObj, err := meta.Accessor(old)
 	if err != nil {
 		return
@@ -244,7 +245,7 @@ func (b *ControllerBase) onUpdate(old, cur interface{}) {
 	b.enqueue(cur)
 }
 
-func (b *ControllerBase) onDelete(obj interface{}) {
+func (b *ControllerBase) onDelete(obj any) {
 	dfsu, ok := obj.(cache.DeletedFinalStateUnknown)
 	if ok {
 		b.enqueue(dfsu.Key)
@@ -254,7 +255,7 @@ func (b *ControllerBase) onDelete(obj interface{}) {
 	b.enqueue(obj)
 }
 
-func (b *ControllerBase) enqueue(obj interface{}) {
+func (b *ControllerBase) enqueue(obj any) {
 	keys := b.impl.ObjectToKeys(obj)
 	for _, v := range keys {
 		if v == "" {
@@ -265,13 +266,7 @@ func (b *ControllerBase) enqueue(obj interface{}) {
 }
 
 func containsString(v []string, s string) bool {
-	for _, item := range v {
-		if item == s {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(v, s)
 }
 
 type GenericReconciler[T runtime.Object] interface {
@@ -304,7 +299,7 @@ func NewGenericControllerBase[T runtime.Object](
 ) *GenericControllerBase[T] {
 	l := logger.Log.Named(name)
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		l.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})

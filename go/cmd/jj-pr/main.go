@@ -34,9 +34,9 @@ func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name 
 	cmd := exec.CommandContext(ctx, "jj", "show", "trunk()", "--template", "remote_bookmarks")
 	buf, err := cmd.CombinedOutput()
 	if err == nil {
-		if i := bytes.Index(buf, []byte("@")); i >= 0 {
+		if before, _, ok := bytes.Cut(buf, []byte("@")); ok {
 			logger.Log.Debug("Get default branch from local repository")
-			return string(buf[:i]), nil
+			return string(before), nil
 		}
 	}
 
@@ -98,8 +98,8 @@ func findRepositoryOwnerName(ctx context.Context, dir string) (string, string, e
 		}
 		s = strings.Split(u.Path, "/")
 		owner, name = s[1], s[2]
-		if strings.HasSuffix(name, ".git") {
-			name = strings.TrimSuffix(name, ".git")
+		if before, ok := strings.CutSuffix(name, ".git"); ok {
+			name = before
 		}
 		break
 	}
@@ -180,7 +180,7 @@ func jujutsuPRList(rootCmd *cli.Command) {
 				return err
 			}
 			localBookmarks := make(map[string]struct{})
-			for _, v := range strings.Split(string(buf), "\n") {
+			for v := range strings.SplitSeq(string(buf), "\n") {
 				localBookmarks[v] = struct{}{}
 			}
 

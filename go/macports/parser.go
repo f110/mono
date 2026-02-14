@@ -56,7 +56,7 @@ func ParsePortfile(r io.Reader) (*Portfile, error) {
 					portfile.Checksum = kv
 				}
 
-				typ := reflect.TypeOf(*portfile)
+				typ := reflect.TypeFor[Portfile]()
 				set := false
 				for i := range typ.NumField() {
 					ft := typ.Field(i)

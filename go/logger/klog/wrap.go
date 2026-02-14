@@ -15,9 +15,9 @@ func NewContext(name string) context.Context {
 	return context.WithValue(context.Background(), "name", name)
 }
 
-func Infof(ctx context.Context, format string, args ...interface{}) {
+func Infof(ctx context.Context, format string, args ...any) {
 	name := getName(ctx)
-	klog.Infof("%s: "+format, append([]interface{}{name}, args...))
+	klog.Infof("%s: "+format, append([]any{name}, args...))
 }
 
 func getName(ctx context.Context) string {

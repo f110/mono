@@ -218,7 +218,7 @@ func (e *githubEntry) ModTime() time.Time {
 	return time.Time{}
 }
 
-func (e *githubEntry) Sys() interface{} {
+func (e *githubEntry) Sys() any {
 	return nil
 }
 

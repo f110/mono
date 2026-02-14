@@ -2,6 +2,8 @@ package k8sfactory
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,7 +35,7 @@ func Name(v string) Trait {
 	}
 }
 
-func Namef(format string, a ...interface{}) Trait {
+func Namef(format string, a ...any) Trait {
 	return Name(fmt.Sprintf(format, a...))
 }
 
@@ -123,9 +125,7 @@ func Annotations(annotations map[string]string) Trait {
 		if ok {
 			a := m.GetAnnotations()
 			if a != nil {
-				for k, v := range annotations {
-					a[k] = v
-				}
+				maps.Copy(a, annotations)
 			} else {
 				a = annotations
 			}
@@ -158,9 +158,7 @@ func Labels(label map[string]string) Trait {
 		if ok {
 			a := m.GetLabels()
 			if a != nil {
-				for k, v := range label {
-					a[k] = v
-				}
+				maps.Copy(a, label)
 			} else {
 				a = label
 			}
@@ -222,7 +220,7 @@ func MatchExpression(v ...metav1.LabelSelectorRequirement) *metav1.LabelSelector
 }
 
 func MatchLabelSelector(label map[string]string) Trait {
-	return func(object interface{}) {
+	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Service:
 			obj.Spec.Selector = label
@@ -240,13 +238,7 @@ func Finalizer(v string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			found := false
-			for _, f := range m.GetFinalizers() {
-				if f == v {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(m.GetFinalizers(), v)
 			if found {
 				return
 			}

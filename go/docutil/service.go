@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
@@ -455,9 +456,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 	ch := make(chan *git.TreeEntry, workers)
 	var wg sync.WaitGroup
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			for {
 				entry, ok := <-ch
@@ -473,7 +472,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 					mu.Unlock()
 				}
 			}
-		}()
+		})
 	}
 
 	tree, err := d.client.GetTree(ctx, &git.RequestGetTree{
@@ -751,9 +750,7 @@ func (c *titleCache) Save() error {
 		return nil
 	}
 	data := make(map[string]string)
-	for k, v := range c.cache {
-		data[k] = v
-	}
+	maps.Copy(data, c.cache)
 	c.changed = false
 	c.mu.Unlock()
 

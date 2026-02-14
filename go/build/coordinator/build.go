@@ -43,7 +43,6 @@ import (
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
-	"go.f110.dev/mono/go/varptr"
 	"go.f110.dev/mono/go/vault"
 )
 
@@ -363,7 +362,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 			}
 
 			task.Success = false
-			task.FinishedAt = varptr.Ptr(time.Now())
+			task.FinishedAt = new(time.Now())
 			return nil, xerrors.WithStack(err)
 		}
 
@@ -387,7 +386,7 @@ func (b *BazelBuilder) ForceStop(ctx context.Context, taskId int32) error {
 	}
 
 	if b.IsStub() {
-		task.FinishedAt = varptr.Ptr(time.Now())
+		task.FinishedAt = new(time.Now())
 		if err := b.dao.Task.Update(ctx, task); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -479,7 +478,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		} else {
 			logger.Log.Info("Force stop job", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
 		}
-		task.FinishedAt = varptr.Ptr(time.Now())
+		task.FinishedAt = new(time.Now())
 		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
@@ -492,7 +491,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 
 	if !job.DeletionTimestamp.IsZero() {
 		// Someone deletes the job manually.
-		task.FinishedAt = varptr.Ptr(job.DeletionTimestamp.Time)
+		task.FinishedAt = new(job.DeletionTimestamp.Time)
 		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
@@ -664,7 +663,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 			}
 		}
 	}
-	task.StartAt = varptr.Ptr(time.Now())
+	task.StartAt = new(time.Now())
 	if createdJob != nil {
 		task.JobObjectName = createdJob.Name
 	}
@@ -874,9 +873,9 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 		repoName,
 		task.Revision,
 		&github.RepoStatus{
-			State:     varptr.Ptr(state),
-			Context:   varptr.Ptr(fmt.Sprintf("%s %s", task.Command, job.Name)),
-			TargetURL: varptr.Ptr(targetUrl),
+			State:     new(state),
+			Context:   new(fmt.Sprintf("%s %s", task.Command, job.Name)),
+			TargetURL: new(targetUrl),
 		},
 	)
 	if err != nil {

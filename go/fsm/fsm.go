@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
 
 	"go.f110.dev/xerrors"
 )
@@ -72,11 +73,9 @@ func (f *FSM) SignalHandling(signals ...os.Signal) {
 
 	go func() {
 		for sig := range signalCh {
-			for _, v := range signals {
-				if v == sig {
-					f.nextState(f.closeState)
-					return
-				}
+			if slices.Contains(signals, sig) {
+				f.nextState(f.closeState)
+				return
 			}
 		}
 	}()

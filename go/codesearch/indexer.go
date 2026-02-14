@@ -135,11 +135,9 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 		var docCount int32
 		var wg sync.WaitGroup
 		for range x.parallelism {
-			wg.Add(1)
-			go func() {
+			wg.Go(func() {
 				x.worker(queue, builder, v, fileBranches, &docCount)
-				wg.Done()
-			}()
+			})
 		}
 		for f := range files {
 			queue <- f

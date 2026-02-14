@@ -170,7 +170,7 @@ type site struct {
 }
 
 func (s *configurationAmedasSite) UnmarshalJSON(b []byte) error {
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
 	}
@@ -179,31 +179,31 @@ func (s *configurationAmedasSite) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	var sites []map[string]interface{}
-	multiSite, ok := data["site"].([]interface{})
+	var sites []map[string]any
+	multiSite, ok := data["site"].([]any)
 	if ok {
-		sites = enumerable.Map(multiSite, func(t interface{}) map[string]interface{} { return t.(map[string]interface{}) })
+		sites = enumerable.Map(multiSite, func(t any) map[string]any { return t.(map[string]any) })
 	} else {
-		site, ok := data["site"].(map[string]interface{})
+		site, ok := data["site"].(map[string]any)
 		if !ok {
 			return nil
 		}
-		sites = []map[string]interface{}{site}
+		sites = []map[string]any{site}
 	}
 
 	for _, m := range sites {
 		for k, v := range m {
 			var sites []*site
-			nos, ok := v.(map[string]interface{})
+			nos, ok := v.(map[string]any)
 			if !ok {
 				continue
 			}
 			if _, ok := nos["no"]; !ok {
 				continue
 			}
-			n, ok := nos["no"].([]interface{})
+			n, ok := nos["no"].([]any)
 			if ok {
-				val := enumerable.Map(n, func(t interface{}) int { return int(t.(float64)) })
+				val := enumerable.Map(n, func(t any) int { return int(t.(float64)) })
 				for _, siteNo := range val {
 					sites = append(sites, &site{Pref: k, No: siteNo})
 				}

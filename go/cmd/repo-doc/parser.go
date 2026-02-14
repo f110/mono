@@ -177,7 +177,7 @@ func (m *markdownAutoHeadingIDTransformer) Transform(node *ast.Document, reader 
 				if !ok {
 					t := n.Text(reader.Source())
 					t = bytes.Replace(t, []byte(" "), []byte("-"), -1)
-					n.SetAttribute([]byte("id"), []byte(fmt.Sprintf("user-content-%s", t)))
+					n.SetAttribute([]byte("id"), fmt.Appendf(nil, "user-content-%s", t))
 				}
 			}
 		}

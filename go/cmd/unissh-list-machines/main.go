@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"sort"
@@ -92,23 +91,23 @@ const (
 )
 
 type Radio struct {
-	Name                  string      `json:"name"`
-	Radio                 string      `json:"radio"`
-	HT                    string      `json:"ht"`
-	Channel               interface{} `json:"channel"`
-	TXPowerMode           string      `json:"tx_power_mode"`
-	AntennaGain           int         `json:"antenna_gain"`
-	MinRSSIEnabled        bool        `json:"min_rssi_enabled"`
-	HardNoiseFloorEnabled bool        `json:"hard_noise_floor_enabled"`
-	SensLevelEnabled      bool        `json:"sens_level_enabled"`
-	VWireEnabled          bool        `json:"vwire_enabled"`
-	MaxTXPower            int         `json:"max_tx_power"`
-	MinTXPower            int         `json:"min_tx_power"`
-	NSS                   int         `json:"nss"`
-	RadioCaps             int         `json:"radio_caps"`
-	BuiltinAntenna        bool        `json:"builtin_antenna"`
-	BuiltinAntennaGain    int         `json:"builtin_ant_gain"`
-	CurrentAntennaGain    int         `json:"current_antenna_gain"`
+	Name                  string `json:"name"`
+	Radio                 string `json:"radio"`
+	HT                    string `json:"ht"`
+	Channel               any    `json:"channel"`
+	TXPowerMode           string `json:"tx_power_mode"`
+	AntennaGain           int    `json:"antenna_gain"`
+	MinRSSIEnabled        bool   `json:"min_rssi_enabled"`
+	HardNoiseFloorEnabled bool   `json:"hard_noise_floor_enabled"`
+	SensLevelEnabled      bool   `json:"sens_level_enabled"`
+	VWireEnabled          bool   `json:"vwire_enabled"`
+	MaxTXPower            int    `json:"max_tx_power"`
+	MinTXPower            int    `json:"min_tx_power"`
+	NSS                   int    `json:"nss"`
+	RadioCaps             int    `json:"radio_caps"`
+	BuiltinAntenna        bool   `json:"builtin_antenna"`
+	BuiltinAntennaGain    int    `json:"builtin_ant_gain"`
+	CurrentAntennaGain    int    `json:"current_antenna_gain"`
 }
 
 type Ethernet struct {
@@ -245,7 +244,7 @@ func getDevice(client *http.Client, host, site string) ([]*SiteDevice, error) {
 }
 
 func unissh(host, credentialFile, password, site string) error {
-	b, err := ioutil.ReadFile(credentialFile)
+	b, err := os.ReadFile(credentialFile)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -132,7 +132,7 @@ func (r *Reader) ensureReadProfile() error {
 }
 
 func (r *Reader) readProfile() error {
-	buf, err := ioutil.ReadFile(filepath.Join(r.dir, "default", "profile.js"))
+	buf, err := os.ReadFile(filepath.Join(r.dir, "default", "profile.js"))
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -217,7 +217,7 @@ func (r *Reader) readItems() error {
 }
 
 func (r *Reader) readBand(file string) (map[string]*Item, error) {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -264,7 +264,7 @@ func (r *Reader) readAttachments(item *Item, files []string) ([]*Attachment, err
 }
 
 func (r *Reader) readAttachment(item *Item, file string) (*Attachment, error) {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -297,7 +297,7 @@ func (r *Reader) readAttachment(item *Item, file string) (*Attachment, error) {
 }
 
 func (r *Reader) readFolders() error {
-	buf, err := ioutil.ReadFile(filepath.Join(r.dir, "default", "folders.js"))
+	buf, err := os.ReadFile(filepath.Join(r.dir, "default", "folders.js"))
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -531,7 +531,7 @@ func (a *Attachment) Data() ([]byte, error) {
 		return a.data, nil
 	}
 
-	buf, err := ioutil.ReadFile(a.OriginalFile)
+	buf, err := os.ReadFile(a.OriginalFile)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

@@ -166,7 +166,7 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org strin
 	if org != "" {
 		q += " org:" + org
 	}
-	variables := map[string]interface{}{
+	variables := map[string]any{
 		"searchQuery": githubv4.String(q),
 		"cursor":      (*githubv4.String)(nil),
 	}
@@ -196,7 +196,7 @@ func getIssueAndPullRequest(client *githubv4.Client, user, start, end, org strin
 		}
 
 		page++
-		variables["cursor"] = githubv4.NewString(query.Search.PageInfo.EndCursor)
+		variables["cursor"] = new(query.Search.PageInfo.EndCursor)
 		fmt.Fprintf(os.Stderr, "Cursor: %s\n", query.Search.PageInfo.EndCursor)
 	}
 

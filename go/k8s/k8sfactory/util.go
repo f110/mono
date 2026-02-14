@@ -10,8 +10,6 @@ import (
 	policyv1 "k8s.io/api/policy/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	"go.f110.dev/mono/go/varptr"
 )
 
 type Trait func(object any)
@@ -199,7 +197,7 @@ func NewSecretStoreVolumeSource(name, path string) *VolumeSource {
 			VolumeSource: corev1.VolumeSource{
 				CSI: &corev1.CSIVolumeSource{
 					Driver:   "secrets-store.csi.k8s.io",
-					ReadOnly: varptr.Ptr(true),
+					ReadOnly: new(true),
 					VolumeAttributes: map[string]string{
 						"secretProviderClass": name,
 					},

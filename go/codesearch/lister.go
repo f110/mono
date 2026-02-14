@@ -92,7 +92,7 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 
 	for _, rule := range x.rules {
 		if rule.Query != "" {
-			vars := map[string]interface{}{
+			vars := map[string]any{
 				"searchQuery": githubv4.String(rule.Query),
 				"cursor":      (*githubv4.String)(nil),
 			}

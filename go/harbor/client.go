@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"go.f110.dev/xerrors"
@@ -179,7 +178,7 @@ func (h *Harbor) CreateRobotAccount(projectId int, robotRequest *NewRobotAccount
 	case http.StatusUnauthorized:
 		return nil, xerrors.Define("create robot account: not logged in").WithStack()
 	default:
-		b, err := ioutil.ReadAll(res.Body)
+		b, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
@@ -211,7 +210,7 @@ func (h *Harbor) DeleteRobotAccount(projectId, robotId int) error {
 	case http.StatusNotFound:
 		return xerrors.Define("robot account is not found").WithStack()
 	default:
-		b, err := ioutil.ReadAll(res.Body)
+		b, err := io.ReadAll(res.Body)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -272,10 +271,10 @@ type Project struct {
 
 type NewProjectRequest struct {
 	ProjectName  string          `json:"project_name"`
-	CVEWhitelist CVEWhitelist    `json:"cve_whitelist,omitempty"`
+	CVEWhitelist CVEWhitelist    `json:"cve_whitelist"`
 	CountLimit   int             `json:"count_limit,omitempty"`
 	StorageLimit int             `json:"storage_limit,omitempty"`
-	Metadata     ProjectMetadata `json:"metadata,omitempty"`
+	Metadata     ProjectMetadata `json:"metadata"`
 }
 
 type ProjectMetadata struct {

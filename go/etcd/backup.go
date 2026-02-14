@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"go.etcd.io/etcd/client/v3"
@@ -64,7 +63,7 @@ func (b *Backup) Compressed() (io.Reader, error) {
 
 	writeBuffer := new(bytes.Buffer)
 	w := zlib.NewWriter(writeBuffer)
-	buf, err := ioutil.ReadAll(b.data)
+	buf, err := io.ReadAll(b.data)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

@@ -10,7 +10,6 @@ import (
 
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/varptr"
 )
 
 func Repositories(rootCmd *cli.Command, endpoint *string) {
@@ -50,7 +49,7 @@ func Repositories(rootCmd *cli.Command, endpoint *string) {
 				return err
 			}
 
-			_, err = apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: varptr.Ptr(int32(repositoryID))}.Build())
+			_, err = apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: new(int32(repositoryID))}.Build())
 			if err != nil {
 				return xerrors.WithStack(err)
 			}

@@ -10,7 +10,6 @@ import (
 
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/varptr"
 )
 
 func Jobs(rootCmd *cli.Command, endpoint *string) {
@@ -28,7 +27,7 @@ func Jobs(rootCmd *cli.Command, endpoint *string) {
 				return err
 			}
 
-			jobs, err := apiClient.ListJobs(ctx, api.RequestListJobs_builder{RepositoryId: varptr.Ptr(int32(repositoryID))}.Build())
+			jobs, err := apiClient.ListJobs(ctx, api.RequestListJobs_builder{RepositoryId: new(int32(repositoryID))}.Build())
 			if err != nil {
 				return err
 			}
@@ -53,7 +52,7 @@ func Jobs(rootCmd *cli.Command, endpoint *string) {
 			}
 
 			job, err := apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{
-				RepositoryId: varptr.Ptr(int32(repositoryID)),
+				RepositoryId: new(int32(repositoryID)),
 				JobName:      &jobName,
 			}.Build())
 			if err != nil {

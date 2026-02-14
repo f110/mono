@@ -72,7 +72,7 @@ func (a *UserAuthentication) BuildJWT(userID int64, userName string) (string, er
 }
 
 func (a *UserAuthentication) VerifyJWT(tokenString string) (int64, string, error) {
-	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (any, error) {
 		return a.signingPublicKey, nil
 	})
 	if err != nil {
@@ -231,7 +231,7 @@ func (a *UserAuthentication) loginCallback(w http.ResponseWriter, req *http.Requ
 	userCode := cookie.Value
 	err = a.cache.Set(&client.Item{
 		Key:   fmt.Sprintf("userCode/%s", userCode),
-		Value: []byte(fmt.Sprintf("%d,%s", myself.GetID(), myself.GetLogin())),
+		Value: fmt.Appendf(nil, "%d,%s", myself.GetID(), myself.GetLogin()),
 	})
 	if err != nil {
 		logger.Log.Info("Failed to set the value", logger.StackTrace(err))

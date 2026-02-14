@@ -16,7 +16,7 @@ type Auth struct {
 }
 
 func NewDockerConfig(registry, username, password string) *DockerConfig {
-	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	auth := base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))
 	return &DockerConfig{
 		Auths: map[string]Auth{
 			registry: {Username: username, Password: password, Auth: auth},

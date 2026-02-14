@@ -18,8 +18,6 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"go.f110.dev/xerrors"
-
-	"go.f110.dev/mono/go/varptr"
 )
 
 type Mock struct {
@@ -132,7 +130,7 @@ func (r *Repository) PullRequests(pullRequests ...*github.PullRequest) {
 			PullRequest: *v,
 		})
 		if v.GetNumber() == 0 {
-			r.pullRequests[len(r.pullRequests)-1].Number = varptr.Ptr(r.nextIndex())
+			r.pullRequests[len(r.pullRequests)-1].Number = new(r.nextIndex())
 		}
 	}
 }
@@ -156,7 +154,7 @@ func (r *Repository) Issues(issues ...*github.Issue) {
 			Issue: *v,
 		})
 		if v.GetNumber() == 0 {
-			r.issues[len(r.issues)-1].Number = varptr.Ptr(r.nextIndex())
+			r.issues[len(r.issues)-1].Number = new(r.nextIndex())
 		}
 	}
 }
@@ -191,9 +189,9 @@ func (r *Repository) Commits(commits ...*Commit) error {
 			r.headCommit = v
 		}
 
-		v.ghCommit = &github.Commit{SHA: varptr.Ptr(NewHash())}
+		v.ghCommit = &github.Commit{SHA: new(NewHash())}
 		v.files = []*File{{Name: "", sha: NewHash(), mode: fileTypeDir}} // Root directory
-		v.ghCommit.Tree = &github.Tree{SHA: varptr.Ptr(v.files[0].sha)}
+		v.ghCommit.Tree = &github.Tree{SHA: new(v.files[0].sha)}
 		for _, f := range v.Files {
 			if f.Name == "" {
 				continue
@@ -231,7 +229,7 @@ func (r *Repository) Tags(tags ...*Tag) {
 	defer r.mu.Unlock()
 	for _, v := range tags {
 		v.ghTag = &github.Tag{
-			Tag: varptr.Ptr(v.Name),
+			Tag: new(v.Name),
 		}
 	}
 	r.tags = append(r.tags, tags...)
@@ -398,7 +396,7 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 		for _, c := range r.commits {
 			for _, v := range c.files {
 				if v.sha == s[len(s)-1] {
-					prefix = varptr.Ptr(v.Name)
+					prefix = new(v.Name)
 					break
 				}
 			}
@@ -418,9 +416,9 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 							ft = "tree"
 						}
 						entries = append(entries, &github.TreeEntry{
-							SHA:  varptr.Ptr(v.sha),
-							Type: varptr.Ptr(ft),
-							Path: varptr.Ptr(v.Name),
+							SHA:  new(v.sha),
+							Type: new(ft),
+							Path: new(v.Name),
 						})
 					}
 					continue
@@ -438,15 +436,15 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 						ft = "tree"
 					}
 					entries = append(entries, &github.TreeEntry{
-						SHA:  varptr.Ptr(v.sha),
-						Type: varptr.Ptr(ft),
-						Path: varptr.Ptr(strings.TrimPrefix(v.Name, *prefix+"/")),
+						SHA:  new(v.sha),
+						Type: new(ft),
+						Path: new(strings.TrimPrefix(v.Name, *prefix+"/")),
 					})
 				}
 			}
 		}
 		tree := &github.Tree{
-			SHA:     varptr.Ptr(s[len(s)-1]),
+			SHA:     new(s[len(s)-1]),
 			Entries: entries,
 		}
 		return newMockJSONResponse(req, http.StatusOK, tree)
@@ -482,10 +480,10 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 			for _, v := range r.tags {
 				if v.Name == ref.Short() {
 					reference := &github.Reference{
-						Ref: varptr.Ptr(ref.String()),
+						Ref: new(ref.String()),
 						Object: &github.GitObject{
 							SHA:  v.Commit.ghCommit.SHA,
-							Type: varptr.Ptr("commit"),
+							Type: new("commit"),
 						},
 					}
 					return newMockJSONResponse(req, http.StatusOK, reference)

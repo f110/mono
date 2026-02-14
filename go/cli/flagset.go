@@ -19,7 +19,7 @@ func (e *missingRequiredFlagsError) Error() string {
 }
 
 func (e *missingRequiredFlagsError) Is(err error) bool {
-	return reflect.TypeOf(err) == reflect.TypeOf(e)
+	return reflect.TypeOf(err) == reflect.TypeFor[*missingRequiredFlagsError]()
 }
 
 type flagTypes interface {

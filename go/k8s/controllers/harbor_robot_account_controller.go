@@ -93,7 +93,7 @@ func NewHarborRobotAccountController(
 	return c, nil
 }
 
-func (c *HarborRobotAccountController) ObjectToKeys(obj interface{}) []string {
+func (c *HarborRobotAccountController) ObjectToKeys(obj any) []string {
 	hra, ok := obj.(*harborv1alpha1.HarborRobotAccount)
 	if !ok {
 		return nil

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -137,7 +136,7 @@ func Daemon(rootCmd *cli.Command) {
 						return xerrors.WithStack(err)
 					}
 					pid := cmd.Process.Pid
-					if err := ioutil.WriteFile(filepath.Join(homeDir, ConfigDirName, "1p.pid"), []byte(strconv.Itoa(pid)), 0644); err != nil {
+					if err := os.WriteFile(filepath.Join(homeDir, ConfigDirName, "1p.pid"), []byte(strconv.Itoa(pid)), 0644); err != nil {
 						return xerrors.WithStack(err)
 					}
 					return nil
@@ -171,7 +170,7 @@ func Shutdown(rootCmd *cli.Command) {
 				return nil
 			}
 
-			buf, err := ioutil.ReadFile(pidFile)
+			buf, err := os.ReadFile(pidFile)
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -391,7 +390,7 @@ func dial() (OnePasswordClient, error) {
 		return nil, ErrDaemonNotExist
 	}
 
-	buf, err := ioutil.ReadFile(pidFile)
+	buf, err := os.ReadFile(pidFile)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

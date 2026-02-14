@@ -9,14 +9,14 @@ import (
 )
 
 type WorkQueue struct {
-	ch        chan interface{}
+	ch        chan any
 	closeOnce sync.Once
 	queue     workqueue.RateLimitingInterface
 }
 
 func NewWorkQueue(name string) *WorkQueue {
 	q := &WorkQueue{
-		ch:    make(chan interface{}),
+		ch:    make(chan any),
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), name),
 	}
 	go q.run()
@@ -24,23 +24,23 @@ func NewWorkQueue(name string) *WorkQueue {
 	return q
 }
 
-func (q *WorkQueue) Get() <-chan interface{} {
+func (q *WorkQueue) Get() <-chan any {
 	return q.ch
 }
 
-func (q *WorkQueue) Add(item interface{}) {
+func (q *WorkQueue) Add(item any) {
 	q.queue.Add(item)
 }
 
-func (q *WorkQueue) AddRateLimited(item interface{}) {
+func (q *WorkQueue) AddRateLimited(item any) {
 	q.queue.AddRateLimited(item)
 }
 
-func (q *WorkQueue) Forget(item interface{}) {
+func (q *WorkQueue) Forget(item any) {
 	q.queue.Forget(item)
 }
 
-func (q *WorkQueue) Done(item interface{}) {
+func (q *WorkQueue) Done(item any) {
 	q.queue.Done(item)
 }
 

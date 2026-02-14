@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -50,9 +51,7 @@ func NewFileDecoder(f string) (*Decoder, error) {
 }
 
 func (d *Decoder) Funcs(funcs map[string]any) *Decoder {
-	for k, v := range funcs {
-		d.funcs[k] = v
-	}
+	maps.Copy(d.funcs, funcs)
 	return d
 }
 
@@ -371,11 +370,11 @@ func (d *decodeCtx) unmarshalObject(parent map[string]any) error {
 				continue
 			}
 			if symbol != 0 && d.tokens[symbol].Value == t.Value {
-				val := ""
+				var val strings.Builder
 				for _, v := range d.tokens[symbol+2 : d.pos-1] {
-					val += v.Value
+					val.WriteString(v.Value)
 				}
-				d.setObjectValue(parent, key, val)
+				d.setObjectValue(parent, key, val.String())
 				key = ""
 				symbol = 0
 				continue

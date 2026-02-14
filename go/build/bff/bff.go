@@ -21,7 +21,6 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
-	"go.f110.dev/mono/go/varptr"
 )
 
 type Builder interface {
@@ -78,10 +77,10 @@ func (b *BFF) ListRepositories(ctx context.Context, _ *connect.Request[RequestLi
 	}
 	repositories := enumerable.Map(allRepo.GetRepositories(), func(v *model.Repository) *model.Repository {
 		return model.Repository_builder{
-			Id:      varptr.Ptr(v.GetId()),
-			Name:    varptr.Ptr(v.GetName()),
-			Url:     varptr.Ptr(v.GetUrl()),
-			Private: varptr.Ptr(v.GetPrivate()),
+			Id:      new(v.GetId()),
+			Name:    new(v.GetName()),
+			Url:     new(v.GetUrl()),
+			Private: new(v.GetPrivate()),
 		}.Build()
 	})
 	return connect.NewResponse(ResponseListRepositories_builder{Repositories: repositories}.Build()), nil
@@ -102,11 +101,11 @@ func (b *BFF) ListTasks(ctx context.Context, req *connect.Request[RequestListTas
 	}
 	var pageToken *string
 	if req.Msg.HasPageToken() {
-		pageToken = varptr.Ptr(req.Msg.GetPageToken())
+		pageToken = new(req.Msg.GetPageToken())
 	}
 	var pageSize *int32
 	if req.Msg.HasPageSize() {
-		pageSize = varptr.Ptr(req.Msg.GetPageSize())
+		pageSize = new(req.Msg.GetPageSize())
 	}
 	tasks, err := b.apiClient.ListTasks(ctx, api.RequestListTasks_builder{Ids: ids, RepositoryIds: repositoryIds, PageToken: pageToken, PageSize: pageSize}.Build())
 	if err != nil {
@@ -117,7 +116,7 @@ func (b *BFF) ListTasks(ctx context.Context, req *connect.Request[RequestListTas
 	}
 	var nextPageToken *string
 	if tasks.HasNextPageToken() {
-		nextPageToken = varptr.Ptr(tasks.GetNextPageToken())
+		nextPageToken = new(tasks.GetNextPageToken())
 	}
 
 	apiTasks := tasks.GetTasks()
@@ -154,33 +153,33 @@ func (*BFF) apiTaskToBFFTask(repositories map[int32]*model.Repository) func(*mod
 			}
 		}
 		return BFFTask_builder{
-			Id:                     varptr.Ptr(v.GetId()),
+			Id:                     new(v.GetId()),
 			Repository:             repositories[v.GetRepositoryId()],
-			JobName:                varptr.Ptr(v.GetJobName()),
-			ParsedJobConfiguration: varptr.Ptr(v.GetParsedJobConfiguration()),
-			Revision:               varptr.Ptr(v.GetRevision()),
-			BazelVersion:           varptr.Ptr(v.GetBazelVersion()),
-			Command:                varptr.Ptr(v.GetCommand()),
-			IsTrunk:                varptr.Ptr(v.GetIsTrunk()),
-			Success:                varptr.Ptr(v.GetSuccess()),
-			LogFile:                varptr.Ptr(v.GetLogFile()),
+			JobName:                new(v.GetJobName()),
+			ParsedJobConfiguration: new(v.GetParsedJobConfiguration()),
+			Revision:               new(v.GetRevision()),
+			BazelVersion:           new(v.GetBazelVersion()),
+			Command:                new(v.GetCommand()),
+			IsTrunk:                new(v.GetIsTrunk()),
+			Success:                new(v.GetSuccess()),
+			LogFile:                new(v.GetLogFile()),
 			Targets:                v.GetTargets(),
-			Platform:               varptr.Ptr(v.GetPlatform()),
-			Via:                    varptr.Ptr(v.GetVia()),
-			ConfigName:             varptr.Ptr(v.GetConfigName()),
-			Node:                   varptr.Ptr(v.GetNode()),
-			Manifest:               varptr.Ptr(v.GetManifest()),
-			Container:              varptr.Ptr(v.GetContainer()),
-			ExecutedTestsCount:     varptr.Ptr(v.GetExecutedTestsCount()),
-			SucceededTestsCount:    varptr.Ptr(v.GetSucceededTestsCount()),
+			Platform:               new(v.GetPlatform()),
+			Via:                    new(v.GetVia()),
+			ConfigName:             new(v.GetConfigName()),
+			Node:                   new(v.GetNode()),
+			Manifest:               new(v.GetManifest()),
+			Container:              new(v.GetContainer()),
+			ExecutedTestsCount:     new(v.GetExecutedTestsCount()),
+			SucceededTestsCount:    new(v.GetSucceededTestsCount()),
 			StartAt:                v.GetStartAt(),
 			FinishedAt:             v.GetFinishedAt(),
 			CreatedAt:              v.GetCreatedAt(),
 			UpdatedAt:              v.GetUpdatedAt(),
-			RepositoryUrl:          varptr.Ptr(repositories[v.GetRepositoryId()].GetUrl()),
-			RevisionUrl:            varptr.Ptr(revisionURL),
-			CpuLimit:               varptr.Ptr(v.GetCpuLimit()),
-			MemoryLimit:            varptr.Ptr(v.GetMemoryLimit()),
+			RepositoryUrl:          new(repositories[v.GetRepositoryId()].GetUrl()),
+			RevisionUrl:            new(revisionURL),
+			CpuLimit:               new(v.GetCpuLimit()),
+			MemoryLimit:            new(v.GetMemoryLimit()),
 			TestReports:            v.GetTestReports(),
 			Duration:               durationpb.New(v.GetFinishedAt().AsTime().Sub(v.GetStartAt().AsTime())),
 		}.Build()
@@ -204,7 +203,7 @@ func (b *BFF) GetLogs(ctx context.Context, req *connect.Request[RequestGetLogs])
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	defer logObj.Body.Close()
-	return connect.NewResponse(ResponseGetLogs_builder{Body: varptr.Ptr(string(buf))}.Build()), nil
+	return connect.NewResponse(ResponseGetLogs_builder{Body: new(string(buf))}.Build()), nil
 }
 
 func (b *BFF) GetServerInfo(_ context.Context, _ *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {
@@ -212,7 +211,7 @@ func (b *BFF) GetServerInfo(_ context.Context, _ *connect.Request[RequestGetServ
 }
 
 func (b *BFF) ListJobs(ctx context.Context, req *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {
-	jobs, err := b.apiClient.ListJobs(ctx, api.RequestListJobs_builder{RepositoryId: varptr.Ptr(req.Msg.GetRepositoryId())}.Build())
+	jobs, err := b.apiClient.ListJobs(ctx, api.RequestListJobs_builder{RepositoryId: new(req.Msg.GetRepositoryId())}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -226,7 +225,7 @@ func (b *BFF) InvokeJob(ctx context.Context, req *connect.Request[RequestInvokeJ
 	if !req.Msg.HasRepositoryId() || !req.Msg.HasJobName() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("repository_id and job_name must be specified"))
 	}
-	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: varptr.Ptr(req.Msg.GetRepositoryId()), JobName: varptr.Ptr(req.Msg.GetJobName())}.Build())
+	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: new(req.Msg.GetRepositoryId()), JobName: new(req.Msg.GetJobName())}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -242,25 +241,25 @@ func (b *BFF) SaveRepository(ctx context.Context, req *connect.Request[RequestSa
 	}
 
 	createdRepository, err := b.apiClient.SaveRepository(ctx, api.RequestSaveRepository_builder{Repository: model.Repository_builder{
-		Name:     varptr.Ptr(req.Msg.GetRepository().GetName()),
-		Url:      varptr.Ptr(req.Msg.GetRepository().GetUrl()),
-		CloneUrl: varptr.Ptr(req.Msg.GetRepository().GetCloneUrl()),
-		Private:  varptr.Ptr(req.Msg.GetRepository().GetPrivate()),
+		Name:     new(req.Msg.GetRepository().GetName()),
+		Url:      new(req.Msg.GetRepository().GetUrl()),
+		CloneUrl: new(req.Msg.GetRepository().GetCloneUrl()),
+		Private:  new(req.Msg.GetRepository().GetPrivate()),
 	}.Build()}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseSaveRepository_builder{Repository: model.Repository_builder{
-		Id:       varptr.Ptr(createdRepository.GetRepository().GetId()),
-		Name:     varptr.Ptr(createdRepository.GetRepository().GetName()),
-		Url:      varptr.Ptr(createdRepository.GetRepository().GetUrl()),
-		CloneUrl: varptr.Ptr(createdRepository.GetRepository().GetCloneUrl()),
-		Private:  varptr.Ptr(createdRepository.GetRepository().GetPrivate()),
+		Id:       new(createdRepository.GetRepository().GetId()),
+		Name:     new(createdRepository.GetRepository().GetName()),
+		Url:      new(createdRepository.GetRepository().GetUrl()),
+		CloneUrl: new(createdRepository.GetRepository().GetCloneUrl()),
+		Private:  new(createdRepository.GetRepository().GetPrivate()),
 	}.Build()}.Build()), nil
 }
 
 func (b *BFF) RemoveRepository(ctx context.Context, req *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error) {
-	_, err := b.apiClient.DeleteRepository(ctx, api.RequestDeleteRepository_builder{RepositoryId: varptr.Ptr(req.Msg.GetRepositoryId())}.Build())
+	_, err := b.apiClient.DeleteRepository(ctx, api.RequestDeleteRepository_builder{RepositoryId: new(req.Msg.GetRepositoryId())}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -268,14 +267,14 @@ func (b *BFF) RemoveRepository(ctx context.Context, req *connect.Request[Request
 }
 
 func (b *BFF) SyncRepository(ctx context.Context, req *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
-	if _, err := b.apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: varptr.Ptr(req.Msg.GetRepositoryId())}.Build()); err != nil {
+	if _, err := b.apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: new(req.Msg.GetRepositoryId())}.Build()); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseSyncRepository_builder{}.Build()), nil
 }
 
 func (b *BFF) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
-	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{TaskId: varptr.Ptr(req.Msg.GetTaskId())}.Build())
+	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{TaskId: new(req.Msg.GetTaskId())}.Build())
 	if err != nil {
 		logger.Log.Error("Failed to restart task", logger.Error(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -287,7 +286,7 @@ func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[RequestFor
 	if !req.Msg.HasTaskId() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("task id must be specified"))
 	}
-	_, err := b.apiClient.ForceStopTask(ctx, api.RequestForceStopTask_builder{TaskId: varptr.Ptr(req.Msg.GetTaskId())}.Build())
+	_, err := b.apiClient.ForceStopTask(ctx, api.RequestForceStopTask_builder{TaskId: new(req.Msg.GetTaskId())}.Build())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

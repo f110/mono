@@ -25,7 +25,6 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
-	"go.f110.dev/mono/go/varptr"
 )
 
 const (
@@ -135,7 +134,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					event.Repo.GetOwner().GetLogin(),
 					event.Repo.GetName(),
 					event.PullRequest.GetNumber(),
-					&github.IssueComment{Body: varptr.Ptr(body)},
+					&github.IssueComment{Body: new(body)},
 				)
 				if err != nil {
 					logger.Log.Warn("Failed create the comment", logger.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
@@ -273,7 +272,7 @@ func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEve
 	return false, nil
 }
 
-func (a *Api) skipCI(_ context.Context, e interface{}) (bool, error) {
+func (a *Api) skipCI(_ context.Context, e any) (bool, error) {
 	switch event := e.(type) {
 	case *github.PushEvent:
 		if strings.HasPrefix(event.HeadCommit.GetMessage(), SkipCI) {
@@ -329,7 +328,7 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
 		validateConfigState = "success"
 	}
-	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: varptr.Ptr(validateConfigState), Context: varptr.Ptr("Validate config")})
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -389,7 +388,7 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
 		validateConfigState = "success"
 	}
-	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: varptr.Ptr(validateConfigState), Context: varptr.Ptr("Validate config")})
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -449,7 +448,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 				event.Repo.GetOwner().GetLogin(),
 				event.Repo.GetName(),
 				event.Issue.GetNumber(),
-				&github.IssueComment{Body: varptr.Ptr(body)},
+				&github.IssueComment{Body: new(body)},
 			)
 			if err != nil {
 				return xerrors.WithStack(err)

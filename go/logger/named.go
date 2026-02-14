@@ -14,7 +14,7 @@ type NamedWriter struct {
 var _ io.Writer = &NamedWriter{}
 
 func NewNamedWriter(w io.Writer, name string) *NamedWriter {
-	return &NamedWriter{name: []byte(fmt.Sprintf("[%s] ", name)), w: w, lineStart: true}
+	return &NamedWriter{name: fmt.Appendf(nil, "[%s] ", name), w: w, lineStart: true}
 }
 
 func (w *NamedWriter) Write(b []byte) (int, error) {

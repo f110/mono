@@ -3,13 +3,13 @@ package etcd
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
+	"os"
 
 	"go.f110.dev/xerrors"
 )
 
 func ReadCACertificate(path string) (*x509.Certificate, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

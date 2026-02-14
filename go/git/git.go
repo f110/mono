@@ -54,8 +54,8 @@ func Clone(ctx context.Context, appId, installationId int64, privateKeyFile, dir
 
 func checkoutCommit(ctx context.Context, dir, u, commit string, rt http.RoundTripper) error {
 	addr := u
-	if strings.HasSuffix(u, ".git") {
-		addr = strings.TrimSuffix(u, ".git")
+	if before, ok := strings.CutSuffix(u, ".git"); ok {
+		addr = before
 	}
 	parsed, err := url.Parse(addr)
 	if err != nil {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -41,7 +40,7 @@ func gantryCrane(args []string) error {
 
 	logs.Progress.SetOutput(os.Stdout)
 
-	buf, err := ioutil.ReadFile(confFile)
+	buf, err := os.ReadFile(confFile)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

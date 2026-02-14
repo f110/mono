@@ -55,7 +55,7 @@ func String(key, val string) zap.Field {
 	return zap.String(key, val)
 }
 
-func Stringf(key, format string, args ...interface{}) zap.Field {
+func Stringf(key, format string, args ...any) zap.Field {
 	return zap.String(key, fmt.Sprintf(format, args...))
 }
 

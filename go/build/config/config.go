@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"reflect"
+	"slices"
 	"strings"
 
 	"go.f110.dev/xerrors"
@@ -43,11 +44,8 @@ type Config struct {
 func (c *Config) Job(event EventType) []*JobV2 {
 	var jobs []*JobV2
 	for _, job := range c.Jobs {
-		for _, e := range job.Event {
-			if e == event {
-				jobs = append(jobs, job)
-				break
-			}
+		if slices.Contains(job.Event, event) {
+			jobs = append(jobs, job)
 		}
 	}
 
@@ -206,7 +204,7 @@ func (j *Job) IsValid() error {
 
 	var keys []string
 	requiredField := make(map[string]struct{})
-	typ := reflect.TypeOf(j).Elem()
+	typ := reflect.TypeFor[Job]()
 	val := reflect.ValueOf(j).Elem()
 	for i := range typ.NumField() {
 		ft := typ.Field(i)
@@ -328,7 +326,7 @@ func Read(r io.Reader, owner, repo string) (*Config, error) {
 			case "string":
 				s := name.(starlark.String)
 
-				typ := reflect.TypeOf(job).Elem()
+				typ := reflect.TypeFor[Job]()
 				val := reflect.ValueOf(job).Elem()
 				for i := range typ.NumField() {
 					ft := typ.Field(i)

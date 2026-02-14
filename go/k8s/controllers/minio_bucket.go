@@ -105,7 +105,7 @@ func NewMinIOBucketController(
 	return c, nil
 }
 
-func (c *MinIOBucketController) ObjectToKeys(obj interface{}) []string {
+func (c *MinIOBucketController) ObjectToKeys(obj any) []string {
 	bucket, ok := obj.(*miniov1alpha1.MinIOBucket)
 	if !ok {
 		return nil

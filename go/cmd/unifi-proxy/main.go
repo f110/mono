@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -55,7 +55,7 @@ func authByHeader(publicKey crypto.PublicKey, h http.HandlerFunc, debug bool) ht
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (i interface{}, err error) {
+		token, err := jwt.Parse(tokenHeader, func(token *jwt.Token) (i any, err error) {
 			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 				return nil, xerrors.Definef("unexpected signature algorithm: %s", token.Header["alg"]).WithStack()
 			}
@@ -146,7 +146,7 @@ func (rt *InjectAuthRoundTripper) login() (*http.Cookie, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -261,7 +261,7 @@ func newProxy(conf *Config) (*http.Server, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	buf, err := ioutil.ReadFile(conf.PublicKeyFile)
+	buf, err := os.ReadFile(conf.PublicKeyFile)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}

@@ -19,7 +19,6 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/varptr"
 )
 
 type JobBuilder struct {
@@ -366,7 +365,7 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 		k8sfactory.PodFailurePolicy(batchv1.PodFailurePolicyRule{
 			Action: batchv1.PodFailurePolicyActionFailJob,
 			OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{
-				ContainerName: varptr.Ptr(j.BuildContainerName),
+				ContainerName: new(j.BuildContainerName),
 				Operator:      batchv1.PodFailurePolicyOnExitCodesOpNotIn,
 				Values:        []int32{0},
 			},

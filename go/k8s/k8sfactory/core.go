@@ -10,8 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
-
-	"go.f110.dev/mono/go/varptr"
 )
 
 func PodFactory(base *corev1.Pod, traits ...Trait) *corev1.Pod {
@@ -43,7 +41,7 @@ func Ready(v any) {
 			Name:    v.Name,
 			Ready:   true,
 			Image:   v.Image,
-			Started: varptr.Ptr(true),
+			Started: new(true),
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
@@ -74,7 +72,7 @@ func NotReady(v any) {
 			Name:    v.Name,
 			Image:   v.Image,
 			Ready:   false,
-			Started: varptr.Ptr(true),
+			Started: new(true),
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
@@ -746,7 +744,7 @@ func StorageClassName(name string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.PersistentVolumeClaim:
-			obj.Spec.StorageClassName = varptr.Ptr(name)
+			obj.Spec.StorageClassName = new(name)
 		}
 	}
 }

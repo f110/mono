@@ -42,16 +42,14 @@ func bffCmd(ctx context.Context, opts options) error {
 	}()
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 
 		logger.Log.Info("Listen", logger.String("addr", opts.Addr))
 		if err := b.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Log.Error("Error", logger.Error(err))
 			return
 		}
-	}()
+	})
 
 	wg.Wait()
 	return nil

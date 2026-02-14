@@ -161,7 +161,7 @@ func (c *Cluster) IsExist(ctx context.Context, name string) (bool, error) {
 }
 
 func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum int) error {
-	kindConfFile, err := ioutil.TempFile("", "kind.config.yaml")
+	kindConfFile, err := os.CreateTemp("", "kind.config.yaml")
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -199,7 +199,7 @@ func (c *Cluster) Create(ctx context.Context, clusterVersion string, workerNum i
 	}
 
 	if c.kubeConfig == "" {
-		f, err := ioutil.TempFile("", "config")
+		f, err := os.CreateTemp("", "config")
 		if err != nil {
 			return err
 		}

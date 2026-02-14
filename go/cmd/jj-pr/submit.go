@@ -21,7 +21,6 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/varptr"
 )
 
 const (
@@ -160,9 +159,7 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	var wg sync.WaitGroup
 	gotError := false
 	if c.DefaultBranch == "" {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			v, err := getDefaultBranch(ctx, c.ghClient, c.repositoryOwner, c.repositoryName)
 			if err != nil {
@@ -170,12 +167,10 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 				return
 			}
 			c.DefaultBranch = v
-		}()
+		})
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		logger.Log.Debug("Retrieve the branch list")
 		branches, _, err := c.ghClient.Repositories.ListBranches(ctx, c.repositoryOwner, c.repositoryName, &github.BranchListOptions{})
 		if err != nil {
@@ -184,11 +179,9 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 			return
 		}
 		c.remoteBranches = branches
-	}()
+	})
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		logger.Log.Debug("Retrieve pull requests")
 		pullRequests, _, err := c.ghClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{})
 		if err != nil {
@@ -197,7 +190,7 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 			return
 		}
 		c.pullRequests = pullRequests
-	}()
+	})
 	wg.Wait()
 
 	if gotError {
@@ -422,11 +415,11 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 				description = template
 			}
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
-				Title: varptr.Ptr(title),
-				Body:  varptr.Ptr(description),
-				Head:  varptr.Ptr(c.stack[0].Bookmarks[0].Name),
-				Base:  varptr.Ptr(c.DefaultBranch),
-				Draft: varptr.Ptr(true),
+				Title: new(title),
+				Body:  new(description),
+				Head:  new(c.stack[0].Bookmarks[0].Name),
+				Base:  new(c.DefaultBranch),
+				Draft: new(true),
 			})
 			if err != nil {
 				return fsm.Error(xerrors.WithStack(err))
@@ -472,11 +465,11 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			}
 
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
-				Title: varptr.Ptr(title),
-				Body:  varptr.Ptr(description),
-				Head:  varptr.Ptr(v.Bookmarks[0].Name),
-				Base:  varptr.Ptr(baseBranch),
-				Draft: varptr.Ptr(true),
+				Title: new(title),
+				Body:  new(description),
+				Head:  new(v.Bookmarks[0].Name),
+				Base:  new(baseBranch),
+				Draft: new(true),
 			})
 			if err != nil {
 				return fsm.Error(xerrors.WithStack(err))
@@ -604,17 +597,18 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		var needUpdateBaseBranch, needUpdateTitle, needUpdateBody bool
 		if i != len(c.stack)-1 && v.PullRequest.Base != c.stack[i+1].Bookmarks[0].Name {
 			needUpdateBaseBranch = true
-			updatedPR.Base = &github.PullRequestBranch{Ref: varptr.Ptr(c.stack[i+1].Bookmarks[0].Name)}
+			updatedPR.Base = &github.PullRequestBranch{Ref: new(c.stack[i+1].Bookmarks[0].Name)}
 		}
 		if i := strings.Index(v.Description, "\n"); i > 0 {
 			if v.PullRequest.Title != v.Description[:i] {
-				updatedPR.Title = varptr.Ptr(v.Description[:i])
+				updatedPR.Title = new(v.Description[:i])
 				needUpdateTitle = true
 			}
 		}
 		body := v.PullRequest.Body
 		if len(c.stack) > 1 {
-			stackNav := stackNavigatorHeader
+			var stackNav strings.Builder
+			stackNav.WriteString(stackNavigatorHeader)
 			for i := len(c.stack) - 1; i >= 0; i-- {
 				c := c.stack[i]
 				var arrow string
@@ -623,7 +617,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				}
 				// Sometimes, PullRequest is nil when dry-run is enabled.
 				if c.PullRequest != nil {
-					stackNav += fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID)
+					stackNav.WriteString(fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID))
 				}
 			}
 			if i := strings.LastIndex(v.PullRequest.Body, stackNavigatorHeader+"1."); i >= 0 {
@@ -632,13 +626,13 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 			if len(body) > 0 && body[len(body)-1] != '\n' {
 				body += "\n"
 			}
-			body += stackNav
+			body += stackNav.String()
 		}
 		if body == "" {
 			body = v.Description
 		}
 		if body != v.PullRequest.Body {
-			updatedPR.Body = varptr.Ptr(body)
+			updatedPR.Body = new(body)
 			needUpdateBody = true
 		}
 

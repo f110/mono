@@ -128,7 +128,7 @@ func (g *GitHubTask) Start(schedule string) error {
 }
 
 func (g *GitHubTask) Execute() error {
-	err := g.GHClient.Query(context.Background(), &query, map[string]interface{}{"query": githubv4.String("is:open assignee:@me")})
+	err := g.GHClient.Query(context.Background(), &query, map[string]any{"query": githubv4.String("is:open assignee:@me")})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

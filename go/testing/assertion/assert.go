@@ -17,7 +17,7 @@ type Option func(any) cmp.Option
 
 func IgnoreFields(fields ...string) Option {
 	return func(v any) cmp.Option {
-		if typ := reflect.TypeOf(v); typ.Kind() == reflect.Ptr {
+		if typ := reflect.TypeOf(v); typ.Kind() == reflect.Pointer {
 			return cmpopts.IgnoreFields(reflect.ValueOf(v).Elem().Interface(), fields...)
 		}
 		return cmpopts.IgnoreFields(v, fields...)
@@ -258,7 +258,7 @@ func isNil(v any) bool {
 
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Slice, reflect.Ptr:
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Slice, reflect.Pointer:
 		return val.IsNil()
 	}
 
@@ -291,7 +291,7 @@ func contains(object, contain any) (bool, bool) {
 	case reflect.Map:
 		keys := val.MapKeys()
 		found := false
-		for i := 0; i < len(keys); i++ {
+		for i := range keys {
 			key := keys[i]
 			if key.Type().Comparable() && key.Interface() == contain {
 				found = true

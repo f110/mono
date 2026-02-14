@@ -245,7 +245,7 @@ func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.S
 	return pf, nil
 }
 
-func (c *HarborProjectController) ObjectToKeys(obj interface{}) []string {
+func (c *HarborProjectController) ObjectToKeys(obj any) []string {
 	hp, ok := obj.(*harborv1alpha1.HarborProject)
 	if !ok {
 		return nil

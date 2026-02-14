@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -84,7 +83,7 @@ func NewVault() (*vault, error) {
 }
 
 func (v *vault) readConfig(path string) error {
-	buf, err := ioutil.ReadFile(path)
+	buf, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
 		v.config = &vaultConfig{}
 		return nil
@@ -103,7 +102,7 @@ func (v *vault) persistConfig() error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	if err := ioutil.WriteFile(v.configFilePath, buf, 0644); err != nil {
+	if err := os.WriteFile(v.configFilePath, buf, 0644); err != nil {
 		return xerrors.WithStack(err)
 	}
 

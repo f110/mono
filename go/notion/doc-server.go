@@ -66,7 +66,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		b := struct {
 			Id    string
 			Title string
-			Data  map[string]interface{}
+			Data  map[string]any
 		}{}
 
 		if err := json.NewDecoder(req.Body).Decode(&b); err != nil {

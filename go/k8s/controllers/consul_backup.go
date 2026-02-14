@@ -80,7 +80,7 @@ func NewConsulBackupController(
 	return b, nil
 }
 
-func (b *ConsulBackupController) ObjectToKeys(obj interface{}) []string {
+func (b *ConsulBackupController) ObjectToKeys(obj any) []string {
 	switch v := obj.(type) {
 	case *consulv1alpha1.ConsulBackup:
 		key, err := cache.MetaNamespaceKeyFunc(v)

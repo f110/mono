@@ -120,7 +120,7 @@ func (j *JobWatcher) processNextItem() bool {
 	}
 	logger.Log.Debug("Got next queue", zap.String("key", obj.(string)))
 
-	func(obj interface{}) {
+	func(obj any) {
 		defer j.queue.Done(obj)
 
 		if err := j.dispatch(obj.(string)); err != nil {
@@ -136,7 +136,7 @@ func (j *JobWatcher) processNextItem() bool {
 	return true
 }
 
-func (j *JobWatcher) addJob(obj interface{}) {
+func (j *JobWatcher) addJob(obj any) {
 	job := obj.(*batchv1.Job)
 
 	if key, err := cache.MetaNamespaceKeyFunc(job); err != nil {
@@ -146,7 +146,7 @@ func (j *JobWatcher) addJob(obj interface{}) {
 	}
 }
 
-func (j *JobWatcher) updateJob(_, cur interface{}) {
+func (j *JobWatcher) updateJob(_, cur any) {
 	job := cur.(*batchv1.Job)
 
 	if key, err := cache.MetaNamespaceKeyFunc(job); err != nil {
@@ -156,7 +156,7 @@ func (j *JobWatcher) updateJob(_, cur interface{}) {
 	}
 }
 
-func (j *JobWatcher) deleteJob(obj interface{}) {
+func (j *JobWatcher) deleteJob(obj any) {
 	job, ok := obj.(*batchv1.Job)
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)

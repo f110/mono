@@ -18,7 +18,6 @@ import (
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/varptr"
 )
 
 type apiService struct {
@@ -99,7 +98,7 @@ func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*Res
 	}
 	var nextPageToken *string
 	if len(receivedTasks) == pageSize+1 {
-		nextPageToken = varptr.Ptr(fmt.Sprintf("%d", receivedTasks[pageSize].Id))
+		nextPageToken = new(fmt.Sprintf("%d", receivedTasks[pageSize].Id))
 		receivedTasks = receivedTasks[:pageSize]
 	}
 	return ResponseListTasks_builder{
@@ -252,7 +251,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 		}
 
 		logger.Log.Info("Success enqueue redo-job", logger.Int32("task_id", task.Id), logger.Int32("new_task_id", newTasks[len(newTasks)-1].Id))
-		return ResponseInvokeJob_builder{TaskId: varptr.Ptr(newTasks[len(newTasks)-1].Id)}.Build(), nil
+		return ResponseInvokeJob_builder{TaskId: new(newTasks[len(newTasks)-1].Id)}.Build(), nil
 	}
 
 	if !req.HasRepositoryId() || !req.HasJobName() {
@@ -299,7 +298,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	}
 	taskID = newTasks[0].Id
 
-	return ResponseInvokeJob_builder{TaskId: varptr.Ptr(taskID)}.Build(), nil
+	return ResponseInvokeJob_builder{TaskId: new(taskID)}.Build(), nil
 }
 
 func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {
@@ -338,26 +337,26 @@ func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {
 		}
 	}
 	return model.Task_builder{
-		Id:                  varptr.Ptr(task.Id),
-		RepositoryId:        varptr.Ptr(task.RepositoryId),
-		JobName:             varptr.Ptr(task.JobName),
-		Revision:            varptr.Ptr(task.Revision),
-		BazelVersion:        varptr.Ptr(task.BazelVersion),
-		Command:             varptr.Ptr(task.Command),
-		IsTrunk:             varptr.Ptr(task.IsTrunk),
-		Success:             varptr.Ptr(task.Success),
-		LogFile:             varptr.Ptr(task.LogFile),
+		Id:                  new(task.Id),
+		RepositoryId:        new(task.RepositoryId),
+		JobName:             new(task.JobName),
+		Revision:            new(task.Revision),
+		BazelVersion:        new(task.BazelVersion),
+		Command:             new(task.Command),
+		IsTrunk:             new(task.IsTrunk),
+		Success:             new(task.Success),
+		LogFile:             new(task.LogFile),
 		Targets:             strings.Split(task.Targets, ","),
-		Platform:            varptr.Ptr(task.Platform),
-		Via:                 varptr.Ptr(task.Via),
-		ConfigName:          varptr.Ptr(task.ConfigName),
-		Node:                varptr.Ptr(task.Node),
-		Manifest:            varptr.Ptr(task.Manifest),
-		Container:           varptr.Ptr(task.Container),
-		CpuLimit:            varptr.Ptr(cpuLimit),
-		MemoryLimit:         varptr.Ptr(memoryLimit),
-		ExecutedTestsCount:  varptr.Ptr(task.ExecutedTestsCount),
-		SucceededTestsCount: varptr.Ptr(task.SucceededTestsCount),
+		Platform:            new(task.Platform),
+		Via:                 new(task.Via),
+		ConfigName:          new(task.ConfigName),
+		Node:                new(task.Node),
+		Manifest:            new(task.Manifest),
+		Container:           new(task.Container),
+		CpuLimit:            new(cpuLimit),
+		MemoryLimit:         new(memoryLimit),
+		ExecutedTestsCount:  new(task.ExecutedTestsCount),
+		SucceededTestsCount: new(task.SucceededTestsCount),
 		StartAt:             startAt,
 		FinishedAt:          finishedAt,
 		CreatedAt:           timestamppb.New(task.CreatedAt),
@@ -381,26 +380,26 @@ func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *
 
 func (*apiService) dbTestReportToAPITestReport(tr *database.TestReport) *model.TestReport {
 	return model.TestReport_builder{
-		Label:    varptr.Ptr(tr.Label),
-		Status:   varptr.Ptr(model.TestStatus(tr.Status)),
-		Duration: varptr.Ptr(tr.Duration),
+		Label:    new(tr.Label),
+		Status:   new(model.TestStatus(tr.Status)),
+		Duration: new(tr.Duration),
 	}.Build()
 }
 
 func (*apiService) dbRepoToAPIRepo(repo *database.SourceRepository) *model.Repository {
 	return model.Repository_builder{
-		Id:       varptr.Ptr(repo.Id),
-		Name:     varptr.Ptr(repo.Name),
-		Url:      varptr.Ptr(repo.Url),
-		CloneUrl: varptr.Ptr(repo.CloneUrl),
-		Private:  varptr.Ptr(repo.Private),
-		Status:   varptr.Ptr(model.RepositoryStatus(repo.Status)),
+		Id:       new(repo.Id),
+		Name:     new(repo.Name),
+		Url:      new(repo.Url),
+		CloneUrl: new(repo.CloneUrl),
+		Private:  new(repo.Private),
+		Status:   new(model.RepositoryStatus(repo.Status)),
 	}.Build()
 }
 
 func dbJobToAPIJob(job *database.Job) *model.Job {
 	return model.Job_builder{
-		Name:         varptr.Ptr(job.Name),
-		RepositoryId: varptr.Ptr(job.RepositoryId),
+		Name:         new(job.Name),
+		RepositoryId: new(job.RepositoryId),
 	}.Build()
 }

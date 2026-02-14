@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/varptr"
 )
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
@@ -76,25 +75,25 @@ This PR contains fixing some security issues.`,
 		ghClient := ghMock.Client()
 		repo.PullRequests(
 			&github.PullRequest{
-				Number: varptr.Ptr(1),
-				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("master")},
-				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-wlkxotovqzqn")},
-				Title:  varptr.Ptr("crypto: Fix security issue"),
-				Body:   varptr.Ptr("This PR contains fixing some security issues."),
+				Number: new(1),
+				Base:   &github.PullRequestBranch{Ref: new("master")},
+				Head:   &github.PullRequestBranch{Ref: new("push-wlkxotovqzqn")},
+				Title:  new("crypto: Fix security issue"),
+				Body:   new("This PR contains fixing some security issues."),
 			},
 			&github.PullRequest{
-				Number: varptr.Ptr(2),
-				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("push-wlkxotovqzqn")},
-				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ulplmwrqqxyx")},
-				Title:  varptr.Ptr("math: Add"),
-				Body:   varptr.Ptr("This PR improves math package."),
+				Number: new(2),
+				Base:   &github.PullRequestBranch{Ref: new("push-wlkxotovqzqn")},
+				Head:   &github.PullRequestBranch{Ref: new("push-ulplmwrqqxyx")},
+				Title:  new("math: Add"),
+				Body:   new("This PR improves math package."),
 			},
 			&github.PullRequest{
-				Number: varptr.Ptr(3),
-				Base:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ulplmwrqqxyx")},
-				Head:   &github.PullRequestBranch{Ref: varptr.Ptr("push-ylsnsuvootnp")},
-				Title:  varptr.Ptr("util: Fix"),
-				Body:   varptr.Ptr("This PR fixes the bug."),
+				Number: new(3),
+				Base:   &github.PullRequestBranch{Ref: new("push-ulplmwrqqxyx")},
+				Head:   &github.PullRequestBranch{Ref: new("push-ylsnsuvootnp")},
+				Title:  new("util: Fix"),
+				Body:   new("This PR fixes the bug."),
 			},
 		)
 

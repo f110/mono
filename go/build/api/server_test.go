@@ -23,7 +23,6 @@ import (
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/varptr"
 )
 
 type MockBuilder struct {
@@ -370,7 +369,7 @@ func TestGithubWebHook(t *testing.T) {
 		ghMock := githubutil.NewMock()
 		repo := ghMock.Repository("f110/ops")
 		repo.PullRequests(&github.PullRequest{
-			Number: varptr.Ptr(28),
+			Number: new(28),
 		})
 		err := repo.Commits(&githubutil.Commit{
 			IsHead: true,
@@ -460,7 +459,7 @@ func TestGithubWebHook(t *testing.T) {
 		ghMock := githubutil.NewMock()
 		repo := ghMock.Repository("f110/sandbox")
 		repo.PullRequests(&github.PullRequest{
-			Number: varptr.Ptr(28),
+			Number: new(28),
 		})
 		commit := &githubutil.Commit{
 			IsHead: true,

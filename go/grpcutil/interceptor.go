@@ -11,7 +11,7 @@ import (
 )
 
 func WithLogging() grpc.DialOption {
-	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if !logger.Enabled() {
 			return invoker(ctx, method, req, reply, cc, opts...)
 		}
@@ -21,7 +21,7 @@ func WithLogging() grpc.DialOption {
 	})
 }
 
-func Logging(l *zap.Logger, ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+func Logging(l *zap.Logger, ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	t1 := time.Now()
 	defer l.Debug(method, zap.Any("req", req), zap.Duration("elapsed", time.Since(t1)))
 	return invoker(ctx, method, req, reply, cc, opts...)

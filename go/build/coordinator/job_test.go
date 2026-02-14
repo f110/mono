@@ -198,7 +198,7 @@ func TestJobBuilder(t *testing.T) {
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "example-100-linux-amd64-etc-job-secret", ReadOnly: true, MountPath: "/etc/job/secret"}})),
-					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: varptr.Ptr(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id)}}),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: new(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id)}}),
 					k8sfactory.SortVolume(),
 				},
 			},
@@ -229,7 +229,7 @@ func TestJobBuilder(t *testing.T) {
 						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), ReadOnly: true, MountPath: "/etc/registry/registry.example.com"}}),
 					)),
 					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.docker"}})),
-					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: varptr.Ptr(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: new(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
 					AddEmptyVolume("containerregistry"),
 					k8sfactory.SortVolume(),
 				},
@@ -630,7 +630,7 @@ func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *datab
 			},
 			PodFailurePolicy: &batchv1.PodFailurePolicy{
 				Rules: []batchv1.PodFailurePolicyRule{
-					{Action: batchv1.PodFailurePolicyActionFailJob, OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{ContainerName: varptr.Ptr("main"), Operator: batchv1.PodFailurePolicyOnExitCodesOpNotIn, Values: []int32{0}}},
+					{Action: batchv1.PodFailurePolicyActionFailJob, OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{ContainerName: new("main"), Operator: batchv1.PodFailurePolicyOnExitCodesOpNotIn, Values: []int32{0}}},
 				},
 			},
 			BackoffLimit: varptr.Ptr[int32](0),
