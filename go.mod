@@ -1,6 +1,6 @@
 module go.f110.dev/mono
 
-go 1.24.5
+go 1.26.0
 
 require (
 	cloud.google.com/go/storage v1.57.0

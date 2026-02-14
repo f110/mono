@@ -6,6 +6,10 @@ update-deps:
 	$(BAZEL) mod tidy
 	$(BAZEL) run //:gazelle
 
+.PHONY: tidy
+tidy:
+	$(GO) mod tidy
+
 gen:
 	bazel query 'kind(vendor_ddl, //go/...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_grpc_source, //go/...)' | xargs -n1 bazel run
