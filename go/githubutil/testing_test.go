@@ -181,6 +181,12 @@ func TestMock(t *testing.T) {
 			assertion.NotEmpty(t, repoCommit.GetSHA())
 			assertion.NotEmpty(t, repoCommit.GetCommit().GetTree().GetSHA())
 		})
+
+		t.Run("CreateStatus", func(t *testing.T) {
+			status, _, err := ghClient.Repositories.CreateStatus(t.Context(), "f110", "gh-test", "HEAD", &github.RepoStatus{State: new("success")})
+			assertion.MustNoError(t, err)
+			assertion.NotEmpty(t, *status.State)
+		})
 	})
 
 	t.Run("IssueService", func(t *testing.T) {

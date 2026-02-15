@@ -41,8 +41,9 @@ type Commit struct {
 	Files   []*File   `json:"-"`
 	IsHead  bool      `json:"-"`
 
-	files    []*File
-	ghCommit *github.Commit
+	files      []*File
+	ghCommit   *github.Commit
+	ghStatuses []*github.RepoStatus
 }
 
 type fileType int
@@ -496,7 +497,7 @@ func (m *Mock) registerGitService(tr *httpmock.MockTransport) {
 
 func (m *Mock) registerRepositoriesService(tr *httpmock.MockTransport) {
 	// Get commit
-	// Get /repos/octocat/exampe/commits/{sha}
+	// Get /repos/octocat/example/commits/{sha}
 	tr.RegisterRegexpResponder(http.MethodGet, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/commits/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
 		r := m.findRepository(req.URL.Path)
 		if r == nil {
@@ -523,6 +524,40 @@ func (m *Mock) registerRepositoriesService(tr *httpmock.MockTransport) {
 			}
 		}
 		return newNotFoundResponse(req)
+	})
+	// Create commit status
+	// POST /repos/octocat/example/statuses/{sha}
+	tr.RegisterRegexpResponder(http.MethodPost, regexp.MustCompile(`/repos/[^/?]+/[^/?]+/statuses/[^/?]+$`), func(req *http.Request) (*http.Response, error) {
+		r := m.findRepository(req.URL.Path)
+		if r == nil {
+			return newNotFoundResponse(req)
+		}
+		var status github.RepoStatus
+		if err := json.NewDecoder(req.Body).Decode(&status); err != nil {
+			return newErrResponse(req, http.StatusBadRequest, err.Error())
+		}
+
+		s := strings.Split(req.URL.Path, "/")
+		sha := s[len(s)-1]
+		var commit *Commit
+		if sha == "HEAD" {
+			if r.headCommit == nil {
+				return newNotFoundResponse(req)
+			}
+			commit = r.headCommit
+		} else {
+			for _, v := range r.commits {
+				if v.ghCommit.GetSHA() == sha {
+					commit = v
+					break
+				}
+			}
+		}
+		if commit == nil {
+			return newNotFoundResponse(req)
+		}
+		commit.ghStatuses = append(commit.ghStatuses, &status)
+		return newMockJSONResponse(req, http.StatusOK, status)
 	})
 }
 
