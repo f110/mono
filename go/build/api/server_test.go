@@ -175,6 +175,7 @@ func TestGithubWebHook(t *testing.T) {
 			ghMock := githubutil.NewMock()
 			repo := ghMock.Repository("f110/ops")
 			err := repo.Commits(&githubutil.Commit{
+				Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
 				IsHead: true,
 				Files: []*githubutil.File{
 					{Name: ".build/test.cue", Body: []byte(`jobs: {
@@ -210,6 +211,7 @@ func TestGithubWebHook(t *testing.T) {
 			ghMock := githubutil.NewMock()
 			repo := ghMock.Repository("f110/ops")
 			err := repo.Commits(&githubutil.Commit{
+				Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
 				IsHead: true,
 				Files: []*githubutil.File{
 					{Name: ".build/test.cue", Body: []byte(`jobs: {
@@ -276,6 +278,7 @@ func TestGithubWebHook(t *testing.T) {
 		ghMock := githubutil.NewMock()
 		repo := ghMock.Repository("f110/ops")
 		err := repo.Commits(&githubutil.Commit{
+			Hash:   "5bd79ba34f1d860afc697c15830c80e2e63edfbf",
 			IsHead: true,
 			Files: []*githubutil.File{
 				{
@@ -370,8 +373,12 @@ func TestGithubWebHook(t *testing.T) {
 		repo := ghMock.Repository("f110/ops")
 		repo.PullRequests(&github.PullRequest{
 			Number: new(28),
+			Head: &github.PullRequestBranch{
+				SHA: new("69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
+			},
 		})
 		err := repo.Commits(&githubutil.Commit{
+			Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
 			IsHead: true,
 			Files: []*githubutil.File{
 				{
@@ -432,36 +439,16 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		//		mockTransport := &MockTransport{res: []*http.Response{
-		//			{
-		//				StatusCode: http.StatusOK,
-		//				Body:       io.NopCloser(strings.NewReader(`{"object":{"sha":"abc0123"}}`)),
-		//			},
-		//			{
-		//				StatusCode: http.StatusOK,
-		//				Body:       io.NopCloser(strings.NewReader(`{"sha":"9697650793febd8884fe38a84365067624efacab"}`)),
-		//			},
-		//			{
-		//				StatusCode: http.StatusOK,
-		//				Body:       io.NopCloser(strings.NewReader(`{"tree":[{"path":"build.star","sha":"buildstarsha"}]}`)),
-		//			},
-		//			{
-		//				StatusCode: http.StatusOK,
-		//				Body: io.NopCloser(strings.NewReader(`job(
-		//	name = "foo",
-		//	event = ["release"],
-		//	command = "test",
-		//	targets = ["//..."],
-		//	platforms = ["linux_amd64"],
-		//)`)),
-		//			},
-		//		}}
 		ghMock := githubutil.NewMock()
 		repo := ghMock.Repository("f110/sandbox")
 		repo.PullRequests(&github.PullRequest{
 			Number: new(28),
+			Head: &github.PullRequestBranch{
+				SHA: new("69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
+			},
 		})
 		commit := &githubutil.Commit{
+			Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
 			IsHead: true,
 			Files: []*githubutil.File{
 				{

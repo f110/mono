@@ -160,7 +160,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 				}
 				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-					logger.Log.Warn("Failed build the pull request", logger.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					logger.Log.Warn("Failed build the pull request", logger.Error(err), logger.StackTrace(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}

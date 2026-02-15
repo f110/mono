@@ -37,6 +37,7 @@ type Repository struct {
 }
 
 type Commit struct {
+	Hash    string    `json:"-"`
 	Parents []*Commit `json:"-"`
 	Files   []*File   `json:"-"`
 	IsHead  bool      `json:"-"`
@@ -190,7 +191,11 @@ func (r *Repository) Commits(commits ...*Commit) error {
 			r.headCommit = v
 		}
 
-		v.ghCommit = &github.Commit{SHA: new(NewHash())}
+		sha := v.Hash
+		if sha == "" {
+			sha = NewHash()
+		}
+		v.ghCommit = &github.Commit{SHA: new(sha)}
 		v.files = []*File{{Name: "", sha: NewHash(), mode: fileTypeDir}} // Root directory
 		v.ghCommit.Tree = &github.Tree{SHA: new(v.files[0].sha)}
 		for _, f := range v.Files {
