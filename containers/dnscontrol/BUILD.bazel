@@ -1,0 +1,38 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+
+pkg_files(
+    name = "bin",
+    srcs = ["@stackexchange_dnscontrol//:file"],
+    attributes = pkg_attributes(
+        group = "root",
+        user = "root",
+        mode = "0755",
+    ),
+    prefix = "/usr/local/bin",
+    renames = {
+        "@stackexchange_dnscontrol//:file": "dnscontrol",
+    },
+)
+
+pkg_tar(
+    name = "bin_layer",
+    srcs = [":bin"]
+)
+
+oci_image(
+    name = "image",
+    base = "@com_google_distroless_base",
+    entrypoint = ["/usr/local/bin/dnscontrol"],
+    tars = [
+        ":bin_layer",
+    ],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "repo.center.x.f110.dev/stackexchange/dnscontrol",
+)
