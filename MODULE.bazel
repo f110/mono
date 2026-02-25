@@ -246,7 +246,7 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 http_archive(
     name = "stackexchange_dnscontrol",
+    build_file_content = '''filegroup(name = "file", srcs = ["dnscontrol"], visibility = ["//visibility:public"])''',
     sha256 = "510b9bccf6544b8739625bc1e2090598fcf3ef7e8d522b87749847111fa9e0dc",
     urls = ["https://github.com/StackExchange/dnscontrol/releases/download/v4.35.0/dnscontrol_4.35.0_linux_amd64.tar.gz"],
-    build_file_content = '''filegroup(name = "file", srcs = ["dnscontrol"], visibility = ["//visibility:public"])''',
 )

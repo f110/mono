@@ -24,7 +24,6 @@ go_library(
         "//go/enumerable",
         "//go/k8s/client",
         "//go/stringsutil",
-        "//go/varptr",
         "@com_github_minio_minio_operator//pkg/apis/miniocontroller/v1beta1",
         "@io_k8s_api//apps/v1:apps",
         "@io_k8s_api//batch/v1:batch",

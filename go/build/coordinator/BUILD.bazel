@@ -20,7 +20,6 @@ go_library(
         "//go/k8s/k8smanifest",
         "//go/logger",
         "//go/storage",
-        "//go/varptr",
         "//go/vault",
         "@com_github_google_go_github_v73//github",
         "@dev_f110_go_xerrors//:xerrors",
