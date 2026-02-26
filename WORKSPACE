@@ -1,1 +1,1 @@
-workspace(name = "mono")
+workspace(name = "dev_f110_mono")

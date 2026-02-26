@@ -1,3 +1,8 @@
+module(
+    name = "dev_f110_mono",
+    version = "1.0",
+)
+
 bazel_dep(name = "rules_go", version = "0.57.0")
 bazel_dep(name = "gazelle", version = "0.45.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.1")
