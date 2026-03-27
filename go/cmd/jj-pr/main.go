@@ -48,10 +48,20 @@ func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name 
 	return repo.GetDefaultBranch(), nil
 }
 
-// getStack returns commits of current stack. The first commit is the newest commit.
-func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch string) (stackedCommit, error) {
+// getStack returns commits of the current stack. The first commit is the newest commit.
+func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch, changeID string) (stackedCommit, error) {
+	if changeID == "" {
+		cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", "@", "--no-graph", "--template", "change_id")
+		cmd.Dir = dir
+		buf, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		changeID = strings.TrimSpace(string(buf))
+	}
+
 	const logTemplate = `"{\"change_id\":" ++ json(change_id) ++ ",\"commit_id\":" ++ json(commit_id) ++ ",\"bookmarks\":" ++ json(bookmarks) ++ ",\"description\":" ++ json(description) ++ "}\n"`
-	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch), "--no-graph", "--template", logTemplate)
+	cmd := exec.CommandContext(ctx, "jj", "log", "--revisions", fmt.Sprintf(stackRevsets, defaultBranch, changeID), "--no-graph", "--template", logTemplate)
 	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
@@ -143,7 +153,7 @@ func jujutsuPRStack(rootCmd *cli.Command) {
 				return err
 			}
 
-			commits, err := getStack(ctx, false, dir, defaultBranch)
+			commits, err := getStack(ctx, false, dir, defaultBranch, "")
 			if err != nil {
 				return err
 			}

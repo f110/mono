@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	stackRevsets           = "ancestors(latest(%s@origin) & remote_bookmarks())..@ ~ empty()"
+	stackRevsets           = "ancestors(latest(%s@origin) & remote_bookmarks())..change_id(%s) ~ empty()"
 	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
 	lastPickedTemplateFile = ".last_template_file"
 	noSendTag              = "no-send:"
@@ -40,6 +40,7 @@ type jujutsuPRSubmitCommand struct {
 	DryRun        bool
 	Force         bool
 	SinglePR      bool
+	Revision      string
 	RootDir       string
 
 	repositoryOwner string
@@ -108,6 +109,7 @@ func (c *jujutsuPRSubmitCommand) flags(fs *cli.FlagSet) {
 	fs.Bool("dry-run", "Not impact on remote").Var(&c.DryRun)
 	fs.Bool("force", "Push commits when there are more than 10 commits in the stack").Var(&c.Force)
 	fs.Bool("single-pr", "Make the PR in multiple commits").Var(&c.SinglePR)
+	fs.String("revision", "Revision to create PR from. If not specified, use current revision").Shorthand("r").Var(&c.Revision)
 }
 
 func (c *jujutsuPRSubmitCommand) init(ctx context.Context) (fsm.State, error) {
@@ -345,7 +347,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 }
 
 func (c *jujutsuPRSubmitCommand) getStack(ctx context.Context, withoutNoSend bool) (stackedCommit, error) {
-	commits, err := getStack(ctx, withoutNoSend, c.Dir, c.DefaultBranch)
+	commits, err := getStack(ctx, withoutNoSend, c.Dir, c.DefaultBranch, c.Revision)
 	if err != nil {
 		return nil, err
 	}
