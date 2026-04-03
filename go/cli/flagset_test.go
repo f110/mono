@@ -71,6 +71,24 @@ func TestFlagSet(t *testing.T) {
 		assert.EqualError(t, err, "required flags \"--foo, --bar\" aren't set")
 	})
 
+	t.Run("Float64", func(t *testing.T) {
+		fs := NewFlagSet("cmd", pflag.ContinueOnError)
+		var foo, bar, baz float64
+		fs.Float64("foo", "Usage foo").Var(&foo).Default(2.0)
+		fs.Float64("bar", "Usage bar").Var(&bar).Shorthand("b").Default(2.0)
+		fs.Float64("baz", "Usage baz").Var(&baz).Default(10.0)
+		err := fs.Parse([]string{"cmd", "--foo", "3.0", "-b", "4.0"})
+		require.NoError(t, err)
+		assert.Equal(t, 10.0, baz)
+
+		fs = NewFlagSet("cmd", pflag.ContinueOnError)
+		fs.Float64("foo", "Usage foo").Required()
+		fs.Float64("bar", "Usage bar").Shorthand("b").Required()
+		err = fs.Parse([]string{"cmd"})
+		require.Error(t, err)
+		assert.EqualError(t, err, "required flags \"--foo, --bar\" aren't set")
+	})
+
 	t.Run("Bool", func(t *testing.T) {
 		fs := NewFlagSet("cmd", pflag.ContinueOnError)
 		var foo, bar, baz bool

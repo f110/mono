@@ -23,7 +23,7 @@ func (e *missingRequiredFlagsError) Is(err error) bool {
 }
 
 type flagTypes interface {
-	int | int64 | uint | uint64 | bool | string | []string | float32 | time.Duration
+	int | int64 | uint | uint64 | bool | string | []string | float32 | float64 | time.Duration
 }
 
 type FlagSet struct {
@@ -349,6 +349,27 @@ func (fs *FlagSet) Float32(name, usage string) *Flag[float32] {
 		nil,
 		func(f float32) string {
 			return strconv.FormatFloat(float64(f), 'g', -1, 32)
+		},
+	)
+	fs.flags = append(fs.flags, f)
+	return f
+}
+
+func (fs *FlagSet) Float64(name, usage string) *Flag[float64] {
+	f := NewFlag(
+		name,
+		usage,
+		func(f *FlagValue[float64], in string) error {
+			v, err := strconv.ParseFloat(in, 64)
+			if err != nil {
+				return err
+			}
+			*f.value = v
+			return nil
+		},
+		nil,
+		func(f float64) string {
+			return strconv.FormatFloat(f, 'g', -1, 64)
 		},
 	)
 	fs.flags = append(fs.flags, f)
