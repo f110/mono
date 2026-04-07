@@ -111,7 +111,6 @@ job(
         secret(mount_path = "/var/vault/globemaster/storage/token", vault_mount = "globemaster", vault_path = "storage/mirror-bazel/token", vault_key = "secretkey"),
     ],
     args = [
-        "--rules-macro-file=$(WORKSPACE)/rules_dependencies.bzl",
         "--bucket=mirror",
         "--endpoint=http://incluster.storage.svc.cluster.local:9000",
         "--region=US",
