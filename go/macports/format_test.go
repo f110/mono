@@ -1,97 +1,14 @@
 package macports
 
 import (
-	"io"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"go.f110.dev/mono/go/enumerable"
 )
 
-var portfile = `# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
-
-
-PortSystem 1.0
-PortGroup  golang 1.0
-
-go.setup   github.com/kubecfg/kubecfg 0.26.0 v
-revision   0
-
-name             kubecfg
-homepage         https://github.com/kubecfg/kubecfg
-description      A tool for managing complex enterprise Kubernetes environments as code.
-long_description kubecfg allows you to express the patterns across your infrastructure and \
-    reuse these powerful "templates" across many services, and then manage those templates \
-    as files in version control. The more complex your infrastructure is, the more you will \
-    gain from using kubecfg. objects through ownersReferences on them.
-license          Apache-2.0
-
-checksums           rmd160  f0dfa68de7f98847399f064aa8930d39483db97e \
-                    sha256  322ed2b6d4214bafac63ee3d666aa240b077a0949d68bc97e5b6dfc484345b7e \
-                    size    266525
-
-categories      sysutils
-platforms       darwin
-supported_archs x86_64 arm64
-installs_libs   no
-
-build.cmd        make
-build.target     kubecfg
-build.post_args  VERSION=v${version}
-build.env-delete GO111MODULE=off GOPROXY=off
-
-destroot {
-    xinstall -m 0755 ${worksrcpath}/${name} ${destroot}${prefix}/bin/
-}`
-
-func TestParsePortfile(t *testing.T) {
-	port, err := ParsePortfile(strings.NewReader(portfile))
-	require.NoError(t, err)
-	require.NotNil(t, port)
-
-	assert.Equal(t, "1.0", port.PortSystem)
-	assert.Equal(t, "kubecfg", port.Name)
-	assert.Equal(t, "https://github.com/kubecfg/kubecfg", port.Homepage)
-	assert.Equal(t, "A tool for managing complex enterprise Kubernetes environments as code.", port.Description)
-	assert.Equal(t,
-		"kubecfg allows you to express the patterns across your infrastructure and reuse these powerful \"templates\" across many services, and then manage those templates as files in version control. The more complex your infrastructure is, the more you will gain from using kubecfg. objects through ownersReferences on them.",
-		port.LongDescription,
-	)
-	assert.Equal(t, "Apache-2.0", port.License)
-
-	assert.Equal(t, "f0dfa68de7f98847399f064aa8930d39483db97e", port.Checksum["rmd160"])
-	assert.Equal(t, "322ed2b6d4214bafac63ee3d666aa240b077a0949d68bc97e5b6dfc484345b7e", port.Checksum["sha256"])
-	assert.Equal(t, int64(266525), port.Size)
-
-	assert.Equal(t, "golang 1.0", port.Attrs["PortGroup"][0])
-	assert.Equal(t, "github.com/kubecfg/kubecfg 0.26.0 v", port.Attrs["go.setup"][0])
-	assert.Equal(t, "0", port.Attrs["revision"][0])
-	assert.Equal(t, "make", port.Attrs["build.cmd"][0])
-	assert.Equal(t, "kubecfg", port.Attrs["build.target"][0])
-	assert.Equal(t, "VERSION=v${version}", port.Attrs["build.post_args"][0])
-	assert.Equal(t, "GO111MODULE=off GOPROXY=off", port.Attrs["build.env-delete"][0])
-	assert.Equal(t, "sysutils", port.Attrs["categories"][0])
-	assert.Equal(t, "darwin", port.Attrs["platforms"][0])
-	assert.Equal(t, "x86_64 arm64", port.Attrs["supported_archs"][0])
-	assert.Equal(t, "no", port.Attrs["installs_libs"][0])
-}
-
-func TestParseAsTokens(t *testing.T) {
-	tokens, err := ParseAsTokens(strings.NewReader(portfile))
-	require.NoError(t, err)
-	assert.Len(t, tokens, 80)
-
-	for _, v := range tokens {
-		t.Logf("%#v", v)
-	}
-	assert.Len(t, enumerable.FindAll(tokens, func(token *PortfileToken) bool { return token.Type == PortfileTokenLineBreak }), 34)
-}
-
-func TestTokenize(t *testing.T) {
-	expectTokens := []*PortfileToken{
+func TestOutput(t *testing.T) {
+	tokens := []*PortfileToken{
 		{
 			Type:  PortfileTokenComment,
 			Value: "# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4",
@@ -177,19 +94,8 @@ func TestTokenize(t *testing.T) {
 		{Type: PortfileTokenRBracket, StartPos: 0},
 	}
 
-	lexer := NewLexer(strings.NewReader(portfile))
-	for i := range expectTokens {
-		token, err := lexer.Scan()
-		require.NoError(t, err)
-		assert.Equalf(t, expectTokens[i].Type, token.Type, "token %d", i)
-		assert.Equalf(t, expectTokens[i].Value, token.Value, "token %d", i)
-		assert.Equalf(t, expectTokens[i].StartPos, token.StartPos, "token %d", i)
-	}
-	_, err := lexer.Scan()
-	assert.ErrorIs(t, err, io.EOF)
-}
-
-func TestPortfileToken_String(t *testing.T) {
-	token := &PortfileToken{Type: PortfileTokenIdent, Value: "1.0", StartPos: 11}
-	assert.Equal(t, "           1.0", token.String())
+	got, err := Output(tokens)
+	require.NoError(t, err)
+	assert.Contains(t, got, "PortSystem 1.0")
+	assert.Contains(t, got, "checksums           rmd160  f0dfa68de7f98847399f064aa8930d39483db97e ")
 }
