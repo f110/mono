@@ -2,16 +2,23 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "macports",
-    srcs = ["parser.go"],
+    srcs = [
+        "format.go",
+        "parser.go",
+    ],
     importpath = "go.f110.dev/mono/go/macports",
     visibility = ["//visibility:public"],
 )
 
 go_test(
     name = "macports_test",
-    srcs = ["parser_test.go"],
+    srcs = [
+        "format_test.go",
+        "parser_test.go",
+    ],
     embed = [":macports"],
     deps = [
+        "//go/enumerable",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
