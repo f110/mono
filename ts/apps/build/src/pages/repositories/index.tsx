@@ -15,6 +15,7 @@ import {
   IconButton,
   Container,
   Badge,
+  CircularProgress,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -73,7 +74,7 @@ export const RepositoriesPage: React.FC = () => {
       repositoryId: result,
     })
   }
-  const { mutate: syncRepository } = useMutation(BFF.method.syncRepository)
+  const { mutate: syncRepository, isPending: isSyncing, variables: syncVariables } = useMutation(BFF.method.syncRepository)
   const onSyncRepository = (id: number) => {
     syncRepository({ repositoryId: id })
   }
@@ -102,8 +103,13 @@ export const RepositoriesPage: React.FC = () => {
                     <IconButton
                       aria-label="sync"
                       onClick={() => onSyncRepository(repository.id)}
+                      disabled={isSyncing && syncVariables?.repositoryId === repository.id}
                     >
-                      <SyncIcon color="primary" />
+                      {isSyncing && syncVariables?.repositoryId === repository.id ? (
+                        <CircularProgress size={24} />
+                      ) : (
+                        <SyncIcon color="primary" />
+                      )}
                     </IconButton>
                     <IconButton
                       edge="end"
