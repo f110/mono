@@ -2,7 +2,6 @@ jobs: mirror_bazel: {
 	command: "run"
 	targets: ["//cmd/rotarypress"]
 	args: [
-		"--rules-macro-file=$(WORKSPACE)/rules_dependencies.bzl",
 		"--bucket=mirror",
 		"--endpoint=http://incluster.storage.svc.cluster.local:9000",
 		"--region=US",
