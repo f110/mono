@@ -7,7 +7,6 @@ jobs: mirror_bazel: {
 		"--region=US",
 		"--access-key=I4e91N6IGSeJfxsq",
 		"--secret-access-key-file=/var/vault/globemaster/storage/token/secretkey",
-		"--bazel",
 	]
 	platforms: ["@rules_go//go/toolchain:linux_amd64"]
 	secrets: [
