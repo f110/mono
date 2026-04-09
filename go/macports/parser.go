@@ -10,7 +10,7 @@ import (
 
 type Portfile struct {
 	PortSystem      string   `portfile:"PortSystem"`
-	PortGroup       []string `portfile:"PortGroup"`
+	PortGroup       []string
 	Name            string   `portfile:"name"`
 	Homepage        string   `portfile:"homepage"`
 	Description     string   `portfile:"description"`
@@ -28,67 +28,29 @@ func ParsePortfile(r io.Reader) (*Portfile, error) {
 	portfile := &Portfile{Attrs: make(map[string][]string), Checksum: make(map[string]string)}
 
 	lexer := NewLexer(r)
-	var tokens []*PortfileToken
 	ctx := &parserCtx{}
 	for {
 		token, err := lexer.Scan()
 		if err == io.EOF {
 			break
 		}
-		tokens = append(tokens, token)
 
 		switch token.Type {
 		case PortfileTokenIdent:
 			switch ctx.State {
 			case parserStateInit:
-				ctx.State = parserStateValue
+				if token.StartPos > 0 && ctx.LastKey != "" {
+					if err := applyValue(portfile, ctx.LastKey, token.Value, true); err != nil {
+						return nil, err
+					}
+				} else if token.StartPos == 0 {
+					ctx.LastKey = token.Value
+					ctx.State = parserStateValue
+				}
 			case parserStateValue:
-				key := tokens[len(tokens)-2]
-				if key.Value == "checksums" {
-					kv := splitKeyAndValue(token.Value)
-					if v, ok := kv["size"]; ok {
-						size, err := strconv.ParseInt(v, 10, 64)
-						if err != nil {
-							return nil, err
-						}
-						portfile.Size = size
-						delete(kv, "size")
-					}
-					portfile.Checksum = kv
+				if err := applyValue(portfile, ctx.LastKey, token.Value, false); err != nil {
+					return nil, err
 				}
-
-				typ := reflect.TypeFor[Portfile]()
-				set := false
-				for i := range typ.NumField() {
-					ft := typ.Field(i)
-					tag := ft.Tag.Get("portfile")
-					if tag == "" {
-						continue
-					}
-					if tag == key.Value {
-						v := reflect.ValueOf(portfile).Elem()
-						fv := v.Field(i)
-						switch fv.Kind() {
-						case reflect.String:
-							fv.SetString(token.Value)
-						case reflect.Slice:
-							val := fv.Interface()
-							s := val.([]string)
-							if s != nil {
-								s = append(s, token.Value)
-							} else {
-								s = []string{token.Value}
-							}
-							fv.Set(reflect.ValueOf(s))
-						}
-						set = true
-						break
-					}
-				}
-				if !set {
-					portfile.Attrs[key.Value] = append(portfile.Attrs[key.Value], token.Value)
-				}
-
 				ctx.State = parserStateInit
 			}
 		case PortfileTokenLBracket:
@@ -127,7 +89,8 @@ const (
 )
 
 type parserCtx struct {
-	State parserState
+	State   parserState
+	LastKey string
 }
 
 type PortfileTokenType string
@@ -194,7 +157,7 @@ func (c *lexerCtx) peekN(n int) (rune, error) {
 		return 0, err
 	}
 
-	return rune(b[0]), nil
+	return rune(b[n-1]), nil
 }
 
 func (c *lexerCtx) skipWhiteSpace() error {
@@ -364,6 +327,49 @@ func isBackSlash(v rune) bool {
 		return true
 	}
 	return false
+}
+
+func applyValue(portfile *Portfile, key, value string, continuation bool) error {
+	if key == "checksums" {
+		kv := splitKeyAndValue(value)
+		if v, ok := kv["size"]; ok {
+			size, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return err
+			}
+			portfile.Size = size
+			delete(kv, "size")
+		}
+		for k, v := range kv {
+			portfile.Checksum[k] = v
+		}
+		return nil
+	}
+
+	typ := reflect.TypeFor[Portfile]()
+	for i := range typ.NumField() {
+		ft := typ.Field(i)
+		tag := ft.Tag.Get("portfile")
+		if tag == "" || tag != key {
+			continue
+		}
+		fv := reflect.ValueOf(portfile).Elem().Field(i)
+		switch fv.Kind() {
+		case reflect.String:
+			if continuation {
+				existing := strings.TrimSuffix(fv.String(), " \\")
+				fv.SetString(existing + " " + value)
+			} else {
+				fv.SetString(value)
+			}
+		case reflect.Slice:
+			s := fv.Interface().([]string)
+			fv.Set(reflect.ValueOf(append(s, value)))
+		}
+		return nil
+	}
+	portfile.Attrs[key] = append(portfile.Attrs[key], value)
+	return nil
 }
 
 func splitKeyAndValue(v string) map[string]string {
