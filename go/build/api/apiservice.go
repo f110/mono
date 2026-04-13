@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v73/github"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,18 +21,21 @@ import (
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/storage"
 )
 
 type apiService struct {
-	builder      Builder
-	dao          dao.Options
-	githubClient *github.Client
+	builder           Builder
+	dao               dao.Options
+	githubClient      *github.Client
+	stClient          *storage.S3
+	bazelMirrorPrefix string
 }
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -306,6 +312,31 @@ func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTas
 		return nil, status.Error(codes.Internal, "failed to force stop task")
 	}
 	return ResponseForceStopTask_builder{}.Build(), nil
+}
+
+func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo) (*ResponseGetServerInfo, error) {
+	objs, err := s.stClient.List(ctx, s.bazelMirrorPrefix)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list bazel mirror objects")
+	}
+	var versions semver.Collection
+	for _, v := range objs {
+		name := filepath.Base(v.Name)
+		if !strings.HasPrefix(name, "bazel-") {
+			continue
+		}
+		ver := name[6:]
+		if idx := strings.Index(ver, "-"); idx >= 0 {
+			ver = ver[:idx]
+		}
+		if sv, err := semver.NewVersion(ver); err == nil {
+			versions = append(versions, sv)
+		}
+	}
+	versions = enumerable.Uniq(versions, func(t *semver.Version) string { return t.String() })
+	sort.Sort(versions)
+	versionStrings := enumerable.Map(versions, func(t *semver.Version) string { return t.String() })
+	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings}.Build(), nil
 }
 
 func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {

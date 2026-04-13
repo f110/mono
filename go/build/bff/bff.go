@@ -206,8 +206,12 @@ func (b *BFF) GetLogs(ctx context.Context, req *connect.Request[RequestGetLogs])
 	return connect.NewResponse(ResponseGetLogs_builder{Body: new(string(buf))}.Build()), nil
 }
 
-func (b *BFF) GetServerInfo(_ context.Context, _ *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {
-	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: nil}.Build()), nil
+func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {
+	res, err := b.apiClient.GetServerInfo(ctx, api.RequestGetServerInfo_builder{}.Build())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions()}.Build()), nil
 }
 
 func (b *BFF) ListJobs(ctx context.Context, req *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {

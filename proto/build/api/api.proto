@@ -17,6 +17,7 @@ service API {
   rpc ListJobs(RequestListJobs) returns (ResponseListJobs);
   rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
+  rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
 }
 
 message RequestListTasks {
@@ -86,3 +87,9 @@ message RequestForceStopTask {
 }
 
 message ResponseForceStopTask {}
+
+message RequestGetServerInfo {}
+
+message ResponseGetServerInfo {
+  repeated string supported_bazel_versions = 1;
+}

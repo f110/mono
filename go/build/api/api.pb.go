@@ -1235,6 +1235,106 @@ func (b0 ResponseForceStopTask_builder) Build() *ResponseForceStopTask {
 	return m0
 }
 
+type RequestGetServerInfo struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestGetServerInfo) Reset() {
+	*x = RequestGetServerInfo{}
+	mi := &file_proto_build_api_api_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestGetServerInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetServerInfo) ProtoMessage() {}
+
+func (x *RequestGetServerInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type RequestGetServerInfo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 RequestGetServerInfo_builder) Build() *RequestGetServerInfo {
+	m0 := &RequestGetServerInfo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type ResponseGetServerInfo struct {
+	state                             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_SupportedBazelVersions []string               `protobuf:"bytes,1,rep,name=supported_bazel_versions,json=supportedBazelVersions"`
+	unknownFields                     protoimpl.UnknownFields
+	sizeCache                         protoimpl.SizeCache
+}
+
+func (x *ResponseGetServerInfo) Reset() {
+	*x = ResponseGetServerInfo{}
+	mi := &file_proto_build_api_api_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseGetServerInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetServerInfo) ProtoMessage() {}
+
+func (x *ResponseGetServerInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseGetServerInfo) GetSupportedBazelVersions() []string {
+	if x != nil {
+		return x.xxx_hidden_SupportedBazelVersions
+	}
+	return nil
+}
+
+func (x *ResponseGetServerInfo) SetSupportedBazelVersions(v []string) {
+	x.xxx_hidden_SupportedBazelVersions = v
+}
+
+type ResponseGetServerInfo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	SupportedBazelVersions []string
+}
+
+func (b0 ResponseGetServerInfo_builder) Build() *ResponseGetServerInfo {
+	m0 := &ResponseGetServerInfo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_SupportedBazelVersions = b.SupportedBazelVersions
+	return m0
+}
+
 var File_proto_build_api_api_proto protoreflect.FileDescriptor
 
 const file_proto_build_api_api_proto_rawDesc = "" +
@@ -1280,7 +1380,10 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"/\n" +
 	"\x14RequestForceStopTask\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"\x17\n" +
-	"\x15ResponseForceStopTask2\xe6\x05\n" +
+	"\x15ResponseForceStopTask\"\x16\n" +
+	"\x14RequestGetServerInfo\"Q\n" +
+	"\x15ResponseGetServerInfo\x128\n" +
+	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions2\xc4\x06\n" +
 	"\x03API\x12P\n" +
 	"\tListTasks\x12 .mono.build.api.RequestListTasks\x1a!.mono.build.api.ResponseListTasks\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.api.RequestListRepositories\x1a(.mono.build.api.ResponseListRepositories\x12_\n" +
@@ -1289,9 +1392,10 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x0eSyncRepository\x12%.mono.build.api.RequestSyncRepository\x1a&.mono.build.api.ResponseSyncRepository\x12M\n" +
 	"\bListJobs\x12\x1f.mono.build.api.RequestListJobs\x1a .mono.build.api.ResponseListJobs\x12P\n" +
 	"\tInvokeJob\x12 .mono.build.api.RequestInvokeJob\x1a!.mono.build.api.ResponseInvokeJob\x12\\\n" +
-	"\rForceStopTask\x12$.mono.build.api.RequestForceStopTask\x1a%.mono.build.api.ResponseForceStopTaskB'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\rForceStopTask\x12$.mono.build.api.RequestForceStopTask\x1a%.mono.build.api.ResponseForceStopTask\x12\\\n" +
+	"\rGetServerInfo\x12$.mono.build.api.RequestGetServerInfo\x1a%.mono.build.api.ResponseGetServerInfoB'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_build_api_api_proto_goTypes = []any{
 	(*RequestListTasks)(nil),         // 0: mono.build.api.RequestListTasks
 	(*ResponseListTasks)(nil),        // 1: mono.build.api.ResponseListTasks
@@ -1309,16 +1413,18 @@ var file_proto_build_api_api_proto_goTypes = []any{
 	(*ResponseInvokeJob)(nil),        // 13: mono.build.api.ResponseInvokeJob
 	(*RequestForceStopTask)(nil),     // 14: mono.build.api.RequestForceStopTask
 	(*ResponseForceStopTask)(nil),    // 15: mono.build.api.ResponseForceStopTask
-	(*model.Task)(nil),               // 16: mono.build.model.Task
-	(*model.Repository)(nil),         // 17: mono.build.model.Repository
-	(*model.Job)(nil),                // 18: mono.build.model.Job
+	(*RequestGetServerInfo)(nil),     // 16: mono.build.api.RequestGetServerInfo
+	(*ResponseGetServerInfo)(nil),    // 17: mono.build.api.ResponseGetServerInfo
+	(*model.Task)(nil),               // 18: mono.build.model.Task
+	(*model.Repository)(nil),         // 19: mono.build.model.Repository
+	(*model.Job)(nil),                // 20: mono.build.model.Job
 }
 var file_proto_build_api_api_proto_depIdxs = []int32{
-	16, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
-	17, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	17, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	17, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	18, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	18, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
+	19, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	19, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	19, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	20, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
 	0,  // 5: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
 	2,  // 6: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
 	4,  // 7: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
@@ -1327,16 +1433,18 @@ var file_proto_build_api_api_proto_depIdxs = []int32{
 	8,  // 10: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
 	12, // 11: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
 	14, // 12: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
-	1,  // 13: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
-	3,  // 14: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
-	5,  // 15: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
-	7,  // 16: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
-	11, // 17: mono.build.api.API.SyncRepository:output_type -> mono.build.api.ResponseSyncRepository
-	9,  // 18: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
-	13, // 19: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
-	15, // 20: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
-	13, // [13:21] is the sub-list for method output_type
-	5,  // [5:13] is the sub-list for method input_type
+	16, // 13: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
+	1,  // 14: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
+	3,  // 15: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
+	5,  // 16: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
+	7,  // 17: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
+	11, // 18: mono.build.api.API.SyncRepository:output_type -> mono.build.api.ResponseSyncRepository
+	9,  // 19: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
+	13, // 20: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
+	15, // 21: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
+	17, // 22: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
+	14, // [14:23] is the sub-list for method output_type
+	5,  // [5:14] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -1353,7 +1461,7 @@ func file_proto_build_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_api_api_proto_rawDesc), len(file_proto_build_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -27,6 +27,7 @@ const (
 	API_ListJobs_FullMethodName         = "/mono.build.api.API/ListJobs"
 	API_InvokeJob_FullMethodName        = "/mono.build.api.API/InvokeJob"
 	API_ForceStopTask_FullMethodName    = "/mono.build.api.API/ForceStopTask"
+	API_GetServerInfo_FullMethodName    = "/mono.build.api.API/GetServerInfo"
 )
 
 // APIClient is the client API for API service.
@@ -41,6 +42,7 @@ type APIClient interface {
 	ListJobs(ctx context.Context, in *RequestListJobs, opts ...grpc.CallOption) (*ResponseListJobs, error)
 	InvokeJob(ctx context.Context, in *RequestInvokeJob, opts ...grpc.CallOption) (*ResponseInvokeJob, error)
 	ForceStopTask(ctx context.Context, in *RequestForceStopTask, opts ...grpc.CallOption) (*ResponseForceStopTask, error)
+	GetServerInfo(ctx context.Context, in *RequestGetServerInfo, opts ...grpc.CallOption) (*ResponseGetServerInfo, error)
 }
 
 type aPIClient struct {
@@ -131,6 +133,16 @@ func (c *aPIClient) ForceStopTask(ctx context.Context, in *RequestForceStopTask,
 	return out, nil
 }
 
+func (c *aPIClient) GetServerInfo(ctx context.Context, in *RequestGetServerInfo, opts ...grpc.CallOption) (*ResponseGetServerInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseGetServerInfo)
+	err := c.cc.Invoke(ctx, API_GetServerInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations should embed UnimplementedAPIServer
 // for forward compatibility.
@@ -143,6 +155,7 @@ type APIServer interface {
 	ListJobs(context.Context, *RequestListJobs) (*ResponseListJobs, error)
 	InvokeJob(context.Context, *RequestInvokeJob) (*ResponseInvokeJob, error)
 	ForceStopTask(context.Context, *RequestForceStopTask) (*ResponseForceStopTask, error)
+	GetServerInfo(context.Context, *RequestGetServerInfo) (*ResponseGetServerInfo, error)
 }
 
 // UnimplementedAPIServer should be embedded to have
@@ -175,6 +188,9 @@ func (UnimplementedAPIServer) InvokeJob(context.Context, *RequestInvokeJob) (*Re
 }
 func (UnimplementedAPIServer) ForceStopTask(context.Context, *RequestForceStopTask) (*ResponseForceStopTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ForceStopTask not implemented")
+}
+func (UnimplementedAPIServer) GetServerInfo(context.Context, *RequestGetServerInfo) (*ResponseGetServerInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServerInfo not implemented")
 }
 func (UnimplementedAPIServer) testEmbeddedByValue() {}
 
@@ -340,6 +356,24 @@ func _API_ForceStopTask_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_GetServerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestGetServerInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).GetServerInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_GetServerInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).GetServerInfo(ctx, req.(*RequestGetServerInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -378,6 +412,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ForceStopTask",
 			Handler:    _API_ForceStopTask_Handler,
+		},
+		{
+			MethodName: "GetServerInfo",
+			Handler:    _API_GetServerInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
