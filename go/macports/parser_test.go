@@ -28,6 +28,7 @@ long_description kubecfg allows you to express the patterns across your infrastr
     as files in version control. The more complex your infrastructure is, the more you will \
     gain from using kubecfg. objects through ownersReferences on them.
 license          Apache-2.0
+maintainers      {gmail.com:fmhrit @f110}
 
 checksums           rmd160  f0dfa68de7f98847399f064aa8930d39483db97e \
                     sha256  322ed2b6d4214bafac63ee3d666aa240b077a0949d68bc97e5b6dfc484345b7e \
@@ -82,12 +83,9 @@ func TestParsePortfile(t *testing.T) {
 func TestParseAsTokens(t *testing.T) {
 	tokens, err := ParseAsTokens(strings.NewReader(portfile))
 	require.NoError(t, err)
-	assert.Len(t, tokens, 80)
+	assert.Len(t, tokens, 85)
 
-	for _, v := range tokens {
-		t.Logf("%#v", v)
-	}
-	assert.Len(t, enumerable.FindAll(tokens, func(token *PortfileToken) bool { return token.Type == PortfileTokenLineBreak }), 34)
+	assert.Len(t, enumerable.FindAll(tokens, func(token *PortfileToken) bool { return token.Type == PortfileTokenLineBreak }), 35)
 }
 
 func TestTokenize(t *testing.T) {
@@ -133,6 +131,11 @@ func TestTokenize(t *testing.T) {
 		{Type: PortfileTokenLineBreak},
 		{Type: PortfileTokenIdent, Value: "license"},
 		{Type: PortfileTokenIdent, Value: "Apache-2.0", StartPos: 17},
+		{Type: PortfileTokenLineBreak},
+		{Type: PortfileTokenIdent, Value: "maintainers"},
+		{Type: PortfileTokenLBracket, StartPos: 17},
+		{Type: PortfileTokenIdent, Value: "gmail.com:fmhrit @f110", StartPos: 18},
+		{Type: PortfileTokenRBracket, StartPos: 40},
 		{Type: PortfileTokenLineBreak},
 		{Type: PortfileTokenLineBreak},
 		{Type: PortfileTokenIdent, Value: "checksums"},

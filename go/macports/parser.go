@@ -9,13 +9,13 @@ import (
 )
 
 type Portfile struct {
-	PortSystem      string   `portfile:"PortSystem"`
+	PortSystem      string `portfile:"PortSystem"`
 	PortGroup       []string
-	Name            string   `portfile:"name"`
-	Homepage        string   `portfile:"homepage"`
-	Description     string   `portfile:"description"`
-	LongDescription string   `portfile:"long_description"`
-	License         string   `portfile:"license"`
+	Name            string `portfile:"name"`
+	Homepage        string `portfile:"homepage"`
+	Description     string `portfile:"description"`
+	LongDescription string `portfile:"long_description"`
+	License         string `portfile:"license"`
 	Checksum        map[string]string
 	Size            int64
 
@@ -136,8 +136,9 @@ const (
 type lexerCtx struct {
 	Pos int
 
-	State   lexerState
-	Builder *strings.Builder
+	State         lexerState
+	Builder       *strings.Builder
+	LBracketCount int
 
 	r *bufio.Reader
 }
@@ -210,6 +211,7 @@ func (l *Lexer) Scan() (*PortfileToken, error) {
 		pos := l.ctx.Pos
 		l.ctx.discard()
 		l.ctx.State = lexerStateInBracket
+		l.ctx.LBracketCount = 1
 		return &PortfileToken{Type: PortfileTokenLBracket, StartPos: pos}, nil
 	case '}':
 		pos := l.ctx.Pos
@@ -256,6 +258,15 @@ Loop:
 				continue
 			}
 		case lexerStateInBracket:
+			switch b {
+			case '{':
+				l.ctx.LBracketCount++
+			case '}':
+				l.ctx.LBracketCount--
+				if l.ctx.LBracketCount == 0 {
+					break Loop
+				}
+			}
 		default:
 			if isWhiteSpace(b) {
 				break Loop
