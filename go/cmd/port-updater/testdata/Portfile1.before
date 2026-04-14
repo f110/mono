@@ -1,0 +1,35 @@
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
+
+PortSystem 1.0
+PortGroup  golang 1.0
+
+go.setup   github.com/kubecfg/kubecfg 0.35.2 v
+revision   0
+github.tarball_from archive
+
+name             kubecfg
+homepage         https://github.com/kubecfg/kubecfg
+description      A tool for managing complex enterprise Kubernetes environments as code.
+long_description kubecfg allows you to express the patterns across your infrastructure and \
+    reuse these powerful "templates" across many services, and then manage those templates \
+    as files in version control. The more complex your infrastructure is, the more you will \
+    gain from using kubecfg.
+license          Apache-2.0
+
+checksums           rmd160  97adc74b0894ea87af31846f8946b62474fa6198 \
+                    sha256  a59fe54d60230eebed172a2e72459234e3dfe5da5182608b4e824b023fec878a \
+                    size    445396
+
+categories      sysutils
+platforms       darwin
+supported_archs x86_64 arm64
+installs_libs   no
+
+build.cmd        make
+build.target     kubecfg
+build.post_args  VERSION=v${version}
+build.env-delete GO111MODULE=off GOPROXY=off
+
+destroot {
+    xinstall -m 0755 ${worksrcpath}/${name} ${destroot}${prefix}/bin/
+}
