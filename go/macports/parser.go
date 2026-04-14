@@ -2,6 +2,7 @@ package macports
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"reflect"
 	"strconv"
@@ -234,6 +235,12 @@ func (l *Lexer) scanStatement() (*PortfileToken, error) {
 Loop:
 	for {
 		b, err := l.ctx.peek()
+		if errors.Is(err, io.EOF) {
+			if l.ctx.State == lexerStateValue {
+				return &PortfileToken{Type: PortfileTokenIdent, Value: l.ctx.Builder.String(), StartPos: startPos}, nil
+			}
+			return nil, err
+		}
 		if err != nil {
 			return nil, err
 		}

@@ -48,16 +48,19 @@ func Output(tokens []*PortfileToken) (string, error) {
 				if err != nil {
 					return "", err
 				}
+				cursor = v.StartPos
 			}
 			_, err := out.WriteString("{")
 			if err != nil {
 				return "", err
 			}
+			cursor++
 		case PortfileTokenRBracket:
 			_, err := out.WriteString("}")
 			if err != nil {
 				return "", err
 			}
+			cursor++
 		}
 	}
 	return out.String(), nil
