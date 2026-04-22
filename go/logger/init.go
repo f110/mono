@@ -17,6 +17,7 @@ var (
 	Log *zap.Logger
 
 	logLevel         string
+	logEncoding      string
 	output           = "stdout"
 	registerSinkOnce sync.Once
 )
@@ -25,6 +26,7 @@ var (
 // We can't receive *cli.FlagSet directly due to avoid cycle dependency.
 func Flags(fs *pflag.FlagSet) {
 	fs.StringVar(&logLevel, "log-level", "info", "Log level")
+	fs.StringVar(&logEncoding, "log-encoding", "console", "Log encoding")
 }
 
 func SetLogLevel(level string) {
@@ -142,13 +144,12 @@ func initLogger() error {
 	case "error":
 		level = zap.ErrorLevel
 	}
-	encoding := "console"
 
 	zapConf := &zap.Config{
 		Level:            zap.NewAtomicLevelAt(level),
 		Development:      false,
 		Sampling:         nil, // disable sampling
-		Encoding:         encoding,
+		Encoding:         logEncoding,
 		EncoderConfig:    encoderConf,
 		OutputPaths:      []string{output},
 		ErrorOutputPaths: []string{"stderr"},
