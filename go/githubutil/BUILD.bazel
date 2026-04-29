@@ -4,7 +4,6 @@ go_library(
     name = "githubutil",
     srcs = [
         "integration.go",
-        "testing.go",
         "token.go",
     ],
     importpath = "go.f110.dev/mono/go/githubutil",
@@ -21,17 +20,5 @@ go_library(
         "@com_github_stretchr_testify//assert",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_x_oauth2//:oauth2",
-    ],
-)
-
-go_test(
-    name = "githubutil_test",
-    srcs = ["testing_test.go"],
-    embed = [":githubutil"],
-    deps = [
-        "//go/testing/assertion",
-        "@com_github_google_go_github_v73//github",
-        "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
     ],
 )
