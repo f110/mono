@@ -242,8 +242,8 @@
   "moduleExtensions": {
     "//build/rules/toolset:module.bzl%toolset_extension": {
       "general": {
-        "bzlTransitiveDigest": "5LJbWulfBQuZwRnMCXUyBpUlAiOTA/4w294bU5x/PfE=",
-        "usagesDigest": "jlX415/reD3X25wmePkreN6URPcnb2brnOg/dRopuZo=",
+        "bzlTransitiveDigest": "Nc6NRw6MijJVA0MPJRhD4gUp/LXQm6E1sOAn5NutvAw=",
+        "usagesDigest": "6jX0ETiMte1wS6EjuLu6k0lAigWDAfHpWsxGOR64ca4=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -276,6 +276,12 @@
             "repoRuleId": "@@//build/private/vault:repository.bzl%vault_binary",
             "attributes": {
               "version": "1.11.4"
+            }
+          },
+          "jj": {
+            "repoRuleId": "@@//build/private/jj:repository.bzl%jj_binary",
+            "attributes": {
+              "version": "0.40.0"
             }
           }
         },

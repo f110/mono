@@ -37,6 +37,10 @@ go_deps.gazelle_override(
 )
 go_deps.gazelle_override(
     build_file_generation = "clean",
+    path = "go.f110.dev/githubmock",
+)
+go_deps.gazelle_override(
+    build_file_generation = "clean",
     path = "cel.dev/expr",
 )
 go_deps.gazelle_override(
@@ -193,9 +197,10 @@ toolset_ext.k8s(
     minio = "RELEASE.2022-12-02T19-19-22Z",
 )
 toolset_ext.test_tool(
+    jj = "0.40.0",
     vault = "1.11.4",
 )
-use_repo(toolset_ext, "etcd", "kind", "kustomize", "minio", "vault")
+use_repo(toolset_ext, "etcd", "jj", "kind", "kustomize", "minio", "vault")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(

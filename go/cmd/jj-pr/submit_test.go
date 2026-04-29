@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
 	"net/http"
-	"os/exec"
 	"testing"
 
 	"github.com/google/go-github/v85/github"
@@ -12,9 +12,15 @@ import (
 	"go.f110.dev/githubmock"
 )
 
+var jjBinaryPath *string
+
+func init() {
+	jjBinaryPath = flag.String("test.jj-binary", "", "")
+}
+
 func TestJujutsuPRSubmitCommand(t *testing.T) {
-	if _, err := exec.LookPath("jj"); err != nil {
-		t.Skipf("Skip %s because jj is not found", t.Name())
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
 	}
 
 	t.Run("StateCreatePR", func(t *testing.T) {

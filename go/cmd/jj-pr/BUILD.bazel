@@ -32,6 +32,12 @@ go_test(
         "main_test.go",
         "submit_test.go",
     ],
+    args = [
+        "-test.jj-binary=../../../$(location @jj//:bin)",
+    ],
+    data = [
+        "@jj//:bin",
+    ],
     embed = [":jj-pr_lib"],
     deps = [
         "//go/logger",
