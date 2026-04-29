@@ -12,7 +12,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/logger"

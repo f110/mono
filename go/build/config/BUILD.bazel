@@ -15,7 +15,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logger",
-        "@com_github_google_go_github_v73//github",
+        "@com_github_google_go_github_v85//github",
         "@dev_f110_go_xerrors//:xerrors",
         "@net_starlark_go//starlark",
         "@org_cuelang_go//cue",
@@ -34,7 +34,7 @@ go_test(
     deps = [
         "//go/logger",
         "//go/testing/assertion",
-        "@com_github_google_go_github_v73//github",
+        "@com_github_google_go_github_v85//github",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@dev_f110_go_githubmock//:githubmock",

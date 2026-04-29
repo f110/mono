@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -328,7 +328,7 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
 		validateConfigState = "success"
 	}
-	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -388,7 +388,7 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	if _, _, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true); err == nil {
 		validateConfigState = "success"
 	}
-	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, &github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
+	_, _, err = a.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, github.RepoStatus{State: new(validateConfigState), Context: new("Validate config")})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

@@ -10,7 +10,7 @@ go_library(
         "//go/enumerable",
         "//go/logger",
         "@com_github_bazelbuild_buildtools//build",
-        "@com_github_google_go_github_v73//github",
+        "@com_github_google_go_github_v85//github",
         "@com_github_masterminds_semver_v3//:semver",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_uber_go_zap//:zap",

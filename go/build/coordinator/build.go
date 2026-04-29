@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
@@ -872,7 +872,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 		owner,
 		repoName,
 		task.Revision,
-		&github.RepoStatus{
+		github.RepoStatus{
 			State:     new(state),
 			Context:   new(fmt.Sprintf("%s %s", task.Command, job.Name)),
 			TargetURL: new(targetUrl),

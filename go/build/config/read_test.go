@@ -6,7 +6,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"github.com/stretchr/testify/require"
 	"go.f110.dev/githubmock"
 

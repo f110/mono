@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

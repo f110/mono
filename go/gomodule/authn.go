@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.f110.dev/go-memcached/client"

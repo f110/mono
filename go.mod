@@ -25,7 +25,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.4.0
-	github.com/google/go-github/v73 v73.0.0
+	github.com/google/go-github/v85 v85.0.0
 	github.com/google/nixery v0.0.0-20230429114902-a85d61307c16
 	github.com/google/uuid v1.6.0
 	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5

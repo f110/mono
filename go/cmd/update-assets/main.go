@@ -20,7 +20,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/bazelbuild/buildtools/build"
-	"github.com/google/go-github/v73/github"
+	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 
