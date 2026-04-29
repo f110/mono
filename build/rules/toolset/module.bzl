@@ -1,6 +1,7 @@
 load("//build/private/kustomize:repository.bzl", "kustomize_binary")
 load("//build/private/kind:repository.bzl", "kind_binary")
 load("//build/private/etcd:repository.bzl", "etcd_binary")
+load("//build/private/jj:repository.bzl", "jj_binary")
 load("//build/private/minio:repository.bzl", "minio_binary")
 load("//build/private/vault:repository.bzl", "vault_binary")
 
@@ -19,6 +20,8 @@ def _toolset_impl(module_ctx):
         for tools in mod.tags.test_tool:
             if tools.vault:
                 vault_binary(name = "vault", version = tools.vault)
+            if tools.jj:
+                jj_binary(name = "jj", version = tools.jj)
 
 toolset_extension = module_extension(
     tag_classes = {
@@ -30,6 +33,7 @@ toolset_extension = module_extension(
         }),
         "test_tool": tag_class(attrs = {
             "vault": attr.string(),
+            "jj": attr.string(),
         }),
     },
     implementation = _toolset_impl,

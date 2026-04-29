@@ -17,7 +17,7 @@ var (
 	Log *zap.Logger
 
 	logLevel         string
-	logEncoding      string
+	logEncoding      = "console"
 	output           = "stdout"
 	registerSinkOnce sync.Once
 )
