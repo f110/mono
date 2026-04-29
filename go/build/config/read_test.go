@@ -2,12 +2,14 @@ package config
 
 import (
 	"io"
+	"net/http"
 	"testing"
 	"testing/fstest"
 
+	"github.com/google/go-github/v73/github"
 	"github.com/stretchr/testify/require"
+	"go.f110.dev/githubmock"
 
-	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -136,20 +138,21 @@ func TestParseFile(t *testing.T) {
 }
 
 func TestGithubProvider(t *testing.T) {
-	ghMock := githubutil.NewMock()
+	ghMock := githubmock.NewMock()
 	repo := ghMock.Repository("f110/gh-test")
-	err := repo.Commits(&githubutil.Commit{
-		IsHead: true,
-		Files: []*githubutil.File{
-			{Name: ".build/test.cue", Body: []byte(`jobs: test_all: {}`)},
-			{Name: ".build/mirror.cue"},
-		},
-	})
+	err := repo.Commits(githubmock.NewCommit().
+		IsHead().
+		Files(
+			&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: test_all: {}`)},
+			&githubmock.File{Name: ".build/mirror.cue"},
+		),
+	)
 	require.NoError(t, err)
 
-	commit, _, err := ghMock.Client().Git.GetCommit(t.Context(), "f110", "gh-test", "HEAD")
+	ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+	commit, _, err := ghClient.Git.GetCommit(t.Context(), "f110", "gh-test", "HEAD")
 	require.NoError(t, err)
-	provider, err := newGitHubProvider(t.Context(), ghMock.Client(), "f110", "gh-test", commit.GetTree().GetSHA())
+	provider, err := newGitHubProvider(t.Context(), ghClient, "f110", "gh-test", commit.GetTree().GetSHA())
 	assertion.MustNoError(t, err)
 	entries, err := provider.ReadDir(".build")
 	assertion.MustNoError(t, err)

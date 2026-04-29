@@ -16,12 +16,12 @@ import (
 	"github.com/google/go-github/v73/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.f110.dev/githubmock"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
-	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -172,13 +172,13 @@ func TestGithubWebHook(t *testing.T) {
 				nil,
 			)
 
-			ghMock := githubutil.NewMock()
+			ghMock := githubmock.NewMock()
 			repo := ghMock.Repository("f110/ops")
-			err := repo.Commits(&githubutil.Commit{
-				Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
-				IsHead: true,
-				Files: []*githubutil.File{
-					{Name: ".build/test.cue", Body: []byte(`jobs: {
+			err := repo.Commits(githubmock.NewCommit().
+				SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
+				IsHead().
+				Files(
+					&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {
 	test_all: {
 		command: "test"
 		targets: ["//..."]
@@ -191,11 +191,11 @@ func TestGithubWebHook(t *testing.T) {
 	}
 }
 `)},
-					{Name: ".bazelversion", Body: []byte("8.4.1")},
-				},
-			})
+					&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
+				),
+			)
 			require.NoError(t, err)
-			s.githubClient = ghMock.Client()
+			s.githubClient = github.NewClient(&http.Client{Transport: ghMock.Transport()})
 
 			s.handleWebHook(w, req)
 
@@ -208,13 +208,13 @@ func TestGithubWebHook(t *testing.T) {
 
 			mock, s, builder, w, req := setup(t)
 
-			ghMock := githubutil.NewMock()
+			ghMock := githubmock.NewMock()
 			repo := ghMock.Repository("f110/ops")
-			err := repo.Commits(&githubutil.Commit{
-				Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
-				IsHead: true,
-				Files: []*githubutil.File{
-					{Name: ".build/test.cue", Body: []byte(`jobs: {
+			err := repo.Commits(githubmock.NewCommit().
+				SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
+				IsHead().
+				Files(
+					&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {
 	test_all: {
 		command: "test"
 		targets: ["//..."]
@@ -227,11 +227,11 @@ func TestGithubWebHook(t *testing.T) {
 	}
 }
 `)},
-					{Name: ".bazelversion", Body: []byte("8.4.1")},
-				},
-			})
+					&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
+				),
+			)
 			require.NoError(t, err)
-			s.githubClient = ghMock.Client()
+			s.githubClient = github.NewClient(&http.Client{Transport: ghMock.Transport()})
 
 			mock.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, nil, sql.ErrNoRows)
 			mock.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/ops", 28,
@@ -275,13 +275,13 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		ghMock := githubutil.NewMock()
+		ghMock := githubmock.NewMock()
 		repo := ghMock.Repository("f110/ops")
-		err := repo.Commits(&githubutil.Commit{
-			Hash:   "5bd79ba34f1d860afc697c15830c80e2e63edfbf",
-			IsHead: true,
-			Files: []*githubutil.File{
-				{
+		err := repo.Commits(githubmock.NewCommit().
+			SHA("5bd79ba34f1d860afc697c15830c80e2e63edfbf").
+			IsHead().
+			Files(
+				&githubmock.File{
 					Name: ".build/test.cue",
 					Body: []byte(`jobs: {
 	test_all: {
@@ -297,12 +297,12 @@ func TestGithubWebHook(t *testing.T) {
 }
 `),
 				},
-				{Name: ".bazelversion", Body: []byte("8.4.1")},
-			},
-		})
+				&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
+			),
+		)
 		require.NoError(t, err)
 
-		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/pull_request_synchronize.json")
 		require.NoError(t, err)
@@ -369,19 +369,18 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		ghMock := githubutil.NewMock()
+		ghMock := githubmock.NewMock()
 		repo := ghMock.Repository("f110/ops")
-		repo.PullRequests(&github.PullRequest{
-			Number: new(28),
-			Head: &github.PullRequestBranch{
-				SHA: new("69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
-			},
-		})
-		err := repo.Commits(&githubutil.Commit{
-			Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
-			IsHead: true,
-			Files: []*githubutil.File{
-				{
+		repo.PullRequests(
+			githubmock.NewPullRequest().
+				Number(28).
+				Head(nil, "", "69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
+		)
+		err := repo.Commits(githubmock.NewCommit().
+			SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
+			IsHead().
+			Files(
+				&githubmock.File{
 					Name: ".build/test.cue",
 					Body: []byte(`jobs: {
 	test_all: {
@@ -397,14 +396,14 @@ func TestGithubWebHook(t *testing.T) {
 }
 `),
 				},
-				{
+				&githubmock.File{
 					Name: ".bazelversion", Body: []byte("8.4.1"),
 				},
-			},
-		})
+			),
+		)
 		require.NoError(t, err)
 
-		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/issue_comment.json")
 		require.NoError(t, err)
@@ -439,19 +438,18 @@ func TestGithubWebHook(t *testing.T) {
 
 		builder := &MockBuilder{}
 
-		ghMock := githubutil.NewMock()
+		ghMock := githubmock.NewMock()
 		repo := ghMock.Repository("f110/sandbox")
-		repo.PullRequests(&github.PullRequest{
-			Number: new(28),
-			Head: &github.PullRequestBranch{
-				SHA: new("69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
-			},
-		})
-		commit := &githubutil.Commit{
-			Hash:   "69f2c2703436688cb49bdcf858e8cf59a9b06e08",
-			IsHead: true,
-			Files: []*githubutil.File{
-				{
+		repo.PullRequests(
+			githubmock.NewPullRequest().
+				Number(28).
+				Head(nil, "", "69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
+		)
+		commit := githubmock.NewCommit().
+			SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
+			IsHead().
+			Files(
+				&githubmock.File{
 					Name: ".build/release.cue",
 					Body: []byte(`jobs: {
 	release: {
@@ -467,17 +465,16 @@ func TestGithubWebHook(t *testing.T) {
 }
 `),
 				},
-				{
+				&githubmock.File{
 					Name: ".bazelversion",
 					Body: []byte("8.4.1"),
 				},
-			},
-		}
+			)
 		err := repo.Commits(commit)
 		require.NoError(t, err)
-		repo.Tags(&githubutil.Tag{Name: "1605187034", Commit: commit})
+		repo.Tags(githubmock.NewTag().Name("1605187034").Commit(commit))
 
-		s, err := NewApi("", builder, daos, ghMock.Client(), nil, "")
+		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
 		require.NoError(t, err)
 		body, err := os.ReadFile("testdata/release_published.json")
 		require.NoError(t, err)

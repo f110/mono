@@ -25,11 +25,10 @@ go_test(
     data = glob(["testdata/**"]),
     embed = [":port-updater_lib"],
     deps = [
-        "//go/githubutil",
         "//go/macports",
-        "@com_github_jarcoal_httpmock//:httpmock",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
+        "@dev_f110_go_githubmock//:githubmock",
         "@org_golang_x_crypto//ripemd160",
     ],
 )

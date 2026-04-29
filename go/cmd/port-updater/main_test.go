@@ -8,17 +8,18 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.f110.dev/githubmock"
 	"golang.org/x/crypto/ripemd160"
 
-	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/macports"
 )
 
@@ -64,14 +65,29 @@ func computeTestChecksums(data []byte) checksums {
 	}
 }
 
-func setupMockTransport(t *testing.T, url string, body []byte) http.RoundTripper {
+func setupMockTransport(t *testing.T, rawURL string, body []byte) http.RoundTripper {
 	t.Helper()
 
-	m := githubutil.NewMock()
-	transport := m.RegisteredTransport()
-	transport.RegisterResponder("GET", url, httpmock.NewBytesResponder(http.StatusOK, body))
+	u, err := url.Parse(rawURL)
+	require.NoError(t, err)
 
-	return transport
+	mux := http.NewServeMux()
+	githubmock.NewMock().RegisterHandler(mux)
+	mux.HandleFunc(fmt.Sprintf("GET %s%s", u.Host, u.Path), func(w http.ResponseWriter, _ *http.Request) {
+		w.Write(body)
+	})
+
+	return &muxTransport{mux: mux}
+}
+
+type muxTransport struct {
+	mux *http.ServeMux
+}
+
+func (t *muxTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	rec := httptest.NewRecorder()
+	t.mux.ServeHTTP(rec, req)
+	return rec.Result(), nil
 }
 
 func TestUpdateGolang(t *testing.T) {

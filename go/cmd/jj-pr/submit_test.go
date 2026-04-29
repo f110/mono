@@ -9,8 +9,7 @@ import (
 	"github.com/google/go-github/v73/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/githubmock"
 )
 
 func TestJujutsuPRSubmitCommand(t *testing.T) {
@@ -19,9 +18,9 @@ func TestJujutsuPRSubmitCommand(t *testing.T) {
 	}
 
 	t.Run("StateCreatePR", func(t *testing.T) {
-		ghMock := githubutil.NewMock()
-		repo := ghMock.Repository("f110/mono")
-		ghClient := github.NewClient(&http.Client{Transport: ghMock.RegisteredTransport()})
+		ghMock := githubmock.NewMock()
+		ghMock.Repository("f110/mono")
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
 
 		c := newSubmitCommand()
 		c.ghClient = ghClient
@@ -52,50 +51,54 @@ This PR contains fixing some security issues.`,
 		nextState, err := c.createPR(context.Background())
 		require.NoError(t, err)
 		assert.Equal(t, c.stateUpdatePR, nextState)
-		if pr := repo.AssertPullRequest(t, 1); pr != nil {
-			assert.Equal(t, "push-wlkxotovqzqn", pr.Head.GetRef())
-			assert.Equal(t, "master", pr.Base.GetRef())
+		if pr, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1); assert.NoError(t, err) {
+			assert.Equal(t, "push-wlkxotovqzqn", pr.GetHead().GetRef())
+			assert.Equal(t, "master", pr.GetBase().GetRef())
 			assert.Equal(t, "crypto: Fix security issue", pr.GetTitle())
 		}
-		if pr := repo.AssertPullRequest(t, 2); pr != nil {
-			assert.Equal(t, "push-ulplmwrqqxyx", pr.Head.GetRef())
-			assert.Equal(t, "push-wlkxotovqzqn", pr.Base.GetRef())
+		if pr, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 2); assert.NoError(t, err) {
+			assert.Equal(t, "push-ulplmwrqqxyx", pr.GetHead().GetRef())
+			assert.Equal(t, "push-wlkxotovqzqn", pr.GetBase().GetRef())
 			assert.Equal(t, "math: Add", pr.GetTitle())
 		}
-		if pr := repo.AssertPullRequest(t, 3); pr != nil {
-			assert.Equal(t, "push-ylsnsuvootnp", pr.Head.GetRef())
-			assert.Equal(t, "push-ulplmwrqqxyx", pr.Base.GetRef())
+		if pr, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 3); assert.NoError(t, err) {
+			assert.Equal(t, "push-ylsnsuvootnp", pr.GetHead().GetRef())
+			assert.Equal(t, "push-ulplmwrqqxyx", pr.GetBase().GetRef())
 			assert.Equal(t, "util: Fix", pr.GetTitle())
 		}
 	})
 
 	t.Run("StateUpdatePR", func(t *testing.T) {
-		ghMock := githubutil.NewMock()
+		ghMock := githubmock.NewMock()
 		repo := ghMock.Repository("f110/mono")
-		ghClient := ghMock.Client()
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
 		repo.PullRequests(
-			&github.PullRequest{
-				Number: new(1),
-				Base:   &github.PullRequestBranch{Ref: new("master")},
-				Head:   &github.PullRequestBranch{Ref: new("push-wlkxotovqzqn")},
-				Title:  new("crypto: Fix security issue"),
-				Body:   new("This PR contains fixing some security issues."),
-			},
-			&github.PullRequest{
-				Number: new(2),
-				Base:   &github.PullRequestBranch{Ref: new("push-wlkxotovqzqn")},
-				Head:   &github.PullRequestBranch{Ref: new("push-ulplmwrqqxyx")},
-				Title:  new("math: Add"),
-				Body:   new("This PR improves math package."),
-			},
-			&github.PullRequest{
-				Number: new(3),
-				Base:   &github.PullRequestBranch{Ref: new("push-ulplmwrqqxyx")},
-				Head:   &github.PullRequestBranch{Ref: new("push-ylsnsuvootnp")},
-				Title:  new("util: Fix"),
-				Body:   new("This PR fixes the bug."),
-			},
+			githubmock.NewPullRequest().
+				Number(1).
+				Base("master").
+				Head(nil, "push-wlkxotovqzqn", "").
+				Title("crypto: Fix security issue").
+				Body("This PR contains fixing some security issues."),
+			githubmock.NewPullRequest().
+				Number(2).
+				Base("push-wlkxotovqzqn").
+				Head(nil, "push-ulplmwrqqxyx", "").
+				Title("math: Add").
+				Body("This PR improves math package."),
+			githubmock.NewPullRequest().
+				Number(3).
+				Base("push-ulplmwrqqxyx").
+				Head(nil, "push-ylsnsuvootnp", "").
+				Title("util: Fix").
+				Body("This PR fixes the bug."),
 		)
+
+		pr1, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1)
+		require.NoError(t, err)
+		pr2, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 2)
+		require.NoError(t, err)
+		pr3, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 3)
+		require.NoError(t, err)
 
 		c := newSubmitCommand()
 		c.ghClient = ghClient
@@ -107,21 +110,21 @@ This PR contains fixing some security issues.`,
 				Description: `util: Fix
 
 This PR fixes the bug.`,
-				PullRequest: newPullRequest(&repo.GetPullRequest(3).PullRequest),
+				PullRequest: newPullRequest(pr3),
 			},
 			{
 				ChangeID: "ulplmwrqqxyxszouwwopptsttrlsnnsk", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-ulplmwrqqxyx"}},
 				Description: `math: Add
 
 This PR improves math package.`,
-				PullRequest: newPullRequest(&repo.GetPullRequest(2).PullRequest),
+				PullRequest: newPullRequest(pr2),
 			},
 			{
 				ChangeID: "wlkxotovqzqnpvsowvwknyzwvqokqlko", CommitID: "a505cb91edb706ac06c6fb6667adeb4502f6c346", Bookmarks: []*bookmark{{Name: "push-wlkxotovqzqn"}},
 				Description: `crypto: Fix security issue
 
 This PR contains fixing some security issues.`,
-				PullRequest: newPullRequest(&repo.GetPullRequest(1).PullRequest),
+				PullRequest: newPullRequest(pr1),
 			},
 		}
 
