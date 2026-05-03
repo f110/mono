@@ -41,6 +41,22 @@ func Enabled() bool {
 	return Log != nil
 }
 
+// LogLevel returns the configured log level string ("debug", "info", "warn", "error", or empty for default).
+// Exposed to allow sibling packages (e.g. logger/slogger) to share the same flag-driven configuration.
+func LogLevel() string {
+	return logLevel
+}
+
+// LogEncoding returns the configured log encoding ("console" or "json").
+func LogEncoding() string {
+	return logEncoding
+}
+
+// Output returns the configured output target ("stdout" or "stderr").
+func Output() string {
+	return output
+}
+
 func Init() error {
 	if err := initLogger(); err != nil {
 		return err

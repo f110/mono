@@ -2,6 +2,7 @@ package logger
 
 import (
 	"errors"
+	"log/slog"
 
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
@@ -35,4 +36,11 @@ func StackTrace(err error) zap.Field {
 	}
 
 	return zap.Array("stacktrace", frames)
+}
+
+func XError(err error) slog.Attr {
+	if err == nil {
+		return slog.Attr{}
+	}
+	return slog.Any("error", err)
 }
