@@ -139,8 +139,6 @@ go_deps.module_override(
     path = "github.com/minio/minio-operator",
 )
 
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
 git_override(
     module_name = "protoc_ddl",
     commit = "6ef36e8a9aafa2f2a329b3aa23e3ca91288d383b",
