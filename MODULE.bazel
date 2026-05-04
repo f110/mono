@@ -17,6 +17,7 @@ bazel_dep(name = "protoc_ddl", version = "0.0.0")
 bazel_dep(name = "aspect_rules_js", version = "2.9.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.8.8")
 bazel_dep(name = "rules_nodejs", version = "6.7.4")
+bazel_dep(name = "dev_f110_kubeproto", version = "0.0.0")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(go_mod = "//:go.mod")
@@ -148,9 +149,9 @@ git_override(
     remote = "https://github.com/f110/protoc-ddl",
 )
 
-git_repository(
-    name = "dev_f110_kubeproto",
-    commit = "4993655b87e3ee877420469e47d26460050161a4",
+git_override(
+    module_name = "dev_f110_kubeproto",
+    commit = "381a513ebcab31174372e4eb8cb2dad5c53fb5e2",
     remote = "https://github.com/f110/kubeproto",
 )
 
