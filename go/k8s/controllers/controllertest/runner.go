@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.f110.dev/kubeproto/go/k8sclient"
+	"go.f110.dev/kubeproto/go/k8stestingclient"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	kubeinformers "k8s.io/client-go/informers"
-	corefake "k8s.io/client-go/kubernetes/fake"
-	kubernetesscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
@@ -23,14 +23,19 @@ import (
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/client/testingclient"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient/testingthirdpartyclient"
 	"go.f110.dev/mono/go/logger"
 )
 
 type TestRunner struct {
 	Client                    *testingclient.Set
-	CoreClient                *corefake.Clientset
+	K8sClient                 *fake.Clientset
+	CoreClient                *k8stestingclient.Set
+	ThirdPartyClient          *testingthirdpartyclient.Set
 	Factory                   *client.InformerFactory
-	CoreSharedInformerFactory kubeinformers.SharedInformerFactory
+	CoreSharedInformerFactory *k8sclient.InformerFactory
+	ThirdPartyInformerFactory *thirdpartyclient.InformerFactory
 	Actions                   []*Action
 }
 
@@ -38,15 +43,18 @@ func NewTestRunner() *TestRunner {
 	logger.Init()
 
 	apiClient := testingclient.NewSet()
-	coreClient := corefake.NewSimpleClientset()
-
-	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(coreClient, 30*time.Second)
+	coreClient := k8stestingclient.NewSet()
+	k8sClient := fake.NewClientset()
+	tpClient := testingthirdpartyclient.NewSet()
 
 	return &TestRunner{
 		Client:                    apiClient,
+		K8sClient:                 k8sClient,
 		CoreClient:                coreClient,
-		CoreSharedInformerFactory: coreSharedInformerFactory,
+		ThirdPartyClient:          tpClient,
 		Factory:                   client.NewInformerFactory(&apiClient.Set, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second),
+		CoreSharedInformerFactory: k8sclient.NewInformerFactory(&coreClient.Set, k8sclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second),
+		ThirdPartyInformerFactory: thirdpartyclient.NewInformerFactory(&tpClient.Set, thirdpartyclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second),
 	}
 }
 
@@ -229,7 +237,7 @@ func (r *TestRunner) AssertNoUnexpectedAction(t *testing.T) {
 
 func (r *TestRunner) RegisterFixture(objs ...runtime.Object) {
 	for _, obj := range objs {
-		gvks, _, err := kubernetesscheme.Scheme.ObjectKinds(obj)
+		gvks, _, err := k8sclient.Scheme.ObjectKinds(obj)
 		if err == nil && len(gvks) == 1 {
 			r.registerCoreObjectFixture(obj, gvks[0])
 			continue
@@ -240,6 +248,12 @@ func (r *TestRunner) RegisterFixture(objs ...runtime.Object) {
 			r.registerObjectFixture(obj, gvks[0])
 			continue
 		}
+
+		gvks, _, err = thirdpartyclient.Scheme.ObjectKinds(obj)
+		if err == nil && len(gvks) == 1 {
+			r.registerThirdPartyObjectFixture(obj, gvks[0])
+			continue
+		}
 	}
 }
 
@@ -248,11 +262,11 @@ func (r *TestRunner) registerCoreObjectFixture(obj runtime.Object, gvk schema.Gr
 		return
 	}
 	gvr := gvk.GroupVersion().WithResource(resourceName(obj))
-	informer, err := r.CoreSharedInformerFactory.ForResource(gvr)
-	if err != nil {
+	informer := r.CoreSharedInformerFactory.InformerForResource(gvr)
+	if informer == nil {
 		return
 	}
-	if err := informer.Informer().GetIndexer().Add(obj); err != nil {
+	if err := informer.GetIndexer().Add(obj); err != nil {
 		return
 	}
 }
@@ -263,6 +277,20 @@ func (r *TestRunner) registerObjectFixture(obj runtime.Object, gvk schema.GroupV
 	}
 	gvr := gvk.GroupVersion().WithResource(resourceName(obj))
 	informer := r.Factory.InformerForResource(gvr)
+	if informer == nil {
+		return
+	}
+	if err := informer.GetIndexer().Add(obj); err != nil {
+		return
+	}
+}
+
+func (r *TestRunner) registerThirdPartyObjectFixture(obj runtime.Object, gvk schema.GroupVersionKind) {
+	if err := r.ThirdPartyClient.Tracker().Add(obj); err != nil {
+		return
+	}
+	gvr := gvk.GroupVersion().WithResource(resourceName(obj))
+	informer := r.ThirdPartyInformerFactory.InformerForResource(gvr)
 	if informer == nil {
 		return
 	}

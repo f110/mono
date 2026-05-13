@@ -1,8 +1,7 @@
 package k8sfactory
 
 import (
-	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -26,8 +25,6 @@ func CronJobFactory(base *batchv1.CronJob, traits ...Trait) *batchv1.CronJob {
 func Schedule(v string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
-		case *batchv1beta1.CronJob:
-			obj.Spec.Schedule = v
 		case *batchv1.CronJob:
 			obj.Spec.Schedule = v
 		}
@@ -37,14 +34,9 @@ func Schedule(v string) Trait {
 func Job(j *batchv1.Job) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
-		case *batchv1beta1.CronJob:
-			obj.Spec.JobTemplate = batchv1beta1.JobTemplateSpec{
-				ObjectMeta: j.ObjectMeta,
-				Spec:       j.Spec,
-			}
 		case *batchv1.CronJob:
 			obj.Spec.JobTemplate = batchv1.JobTemplateSpec{
-				ObjectMeta: j.ObjectMeta,
+				ObjectMeta: &j.ObjectMeta,
 				Spec:       j.Spec,
 			}
 		}
@@ -80,11 +72,14 @@ func PodFailurePolicy(v batchv1.PodFailurePolicyRule) Trait {
 	}
 }
 
-func BackoffLimit(limit int32) Trait {
+func BackoffLimit(limit int) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *batchv1.Job:
-			obj.Spec.BackoffLimit = &limit
+			if obj.Spec == nil {
+				obj.Spec = &batchv1.JobSpec{}
+			}
+			obj.Spec.BackoffLimit = limit
 		}
 	}
 }
@@ -92,8 +87,11 @@ func BackoffLimit(limit int32) Trait {
 func JobComplete(object any) {
 	switch obj := object.(type) {
 	case *batchv1.Job:
+		if obj.Status == nil {
+			obj.Status = &batchv1.JobStatus{}
+		}
 		obj.Status.Conditions = append(obj.Status.Conditions, batchv1.JobCondition{
-			Type: batchv1.JobComplete,
+			Type: batchv1.JobConditionTypeComplete,
 		})
 	}
 }

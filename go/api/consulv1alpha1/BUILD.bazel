@@ -32,8 +32,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/api/consulv1alpha1",
     visibility = ["//visibility:public"],
     deps = [
-        "@io_k8s_api//core/v1:core",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@dev_f110_kubeproto//go/apis/corev1",
+        "@dev_f110_kubeproto//go/apis/metav1",
         "@io_k8s_apimachinery//pkg/runtime",
         "@io_k8s_apimachinery//pkg/runtime/schema",
     ],

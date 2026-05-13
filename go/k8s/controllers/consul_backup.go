@@ -11,14 +11,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
@@ -31,13 +29,12 @@ type ConsulBackupController struct {
 	*controllerutil.ControllerBase
 
 	client            *client.ConsulV1alpha1
-	coreClient        kubernetes.Interface
-	config            *rest.Config
+	coreClient        *k8sclient.Set
 	runOutsideCluster bool
 
 	backupLister  *client.ConsulV1alpha1ConsulBackupLister
-	serviceLister corev1listers.ServiceLister
-	secretLister  corev1listers.SecretLister
+	serviceLister *k8sclient.CoreV1ServiceLister
+	secretLister  *k8sclient.CoreV1SecretLister
 
 	// for testing
 	transport http.RoundTripper
@@ -46,15 +43,16 @@ type ConsulBackupController struct {
 var _ controllerutil.Controller = &ConsulBackupController{}
 
 func NewConsulBackupController(
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
+	coreSharedInformerFactory *k8sclient.InformerFactory,
 	factory *client.InformerFactory,
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
-	config *rest.Config,
 	runOutsideCluster bool,
 ) (*ConsulBackupController, error) {
-	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
-	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
+	coreInformer := k8sclient.NewCoreV1Informer(coreSharedInformerFactory.Cache(), coreClient.CoreV1, metav1.NamespaceAll, 30*time.Second)
+	serviceInformer := coreInformer.ServiceInformer()
+	secretInformer := coreInformer.SecretInformer()
 
 	informers := client.NewConsulV1alpha1Informer(factory.Cache(), apiClient.ConsulV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	backupInformer := informers.ConsulBackupInformer()
@@ -62,18 +60,17 @@ func NewConsulBackupController(
 	b := &ConsulBackupController{
 		client:            apiClient.ConsulV1alpha1,
 		coreClient:        coreClient,
-		config:            config,
 		runOutsideCluster: runOutsideCluster,
 		backupLister:      informers.ConsulBackupLister(),
-		serviceLister:     serviceInformer.Lister(),
-		secretLister:      secretInformer.Lister(),
+		serviceLister:     coreInformer.ServiceLister(),
+		secretLister:      coreInformer.SecretLister(),
 	}
 	b.ControllerBase = controllerutil.NewBase(
 		"consul-backup-controller",
 		b,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{backupInformer},
-		[]cache.SharedIndexInformer{serviceInformer.Informer(), secretInformer.Informer()},
+		[]cache.SharedIndexInformer{serviceInformer, secretInformer},
 		[]string{},
 	)
 
@@ -131,7 +128,7 @@ func (b *ConsulBackupController) Reconcile(ctx context.Context, obj runtime.Obje
 
 	if backup.Status.Succeeded && backup.Status.LastSucceededTime != nil {
 		nextBackupTime := backup.Status.LastSucceededTime.Add(time.Duration(backup.Spec.IntervalInSeconds) * time.Second)
-		if now.Before(&metav1.Time{Time: nextBackupTime}) {
+		if now.Before(nextBackupTime) {
 			return nil
 		}
 	}
@@ -206,7 +203,7 @@ func (b *ConsulBackupController) storeBackupFile(
 	case backup.Spec.Storage.MinIO != nil:
 		spec := backup.Spec.Storage.MinIO
 
-		accessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.AccessKeyID.Name)
+		accessKeySecret, err := b.secretLister.Get(backup.Namespace, spec.Credential.AccessKeyID.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -214,7 +211,7 @@ func (b *ConsulBackupController) storeBackupFile(
 		if !ok {
 			return xerrors.Definef("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
-		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
+		secretAccessKeySecret, err := b.secretLister.Get(backup.Namespace, spec.Credential.SecretAccessKey.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -223,7 +220,7 @@ func (b *ConsulBackupController) storeBackupFile(
 			return xerrors.Definef("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 
-		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
+		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
 		mcOpt.Transport = b.transport
 		mc := storage.NewMinIOStorage(spec.Bucket, mcOpt)
 		filename := fmt.Sprintf("%s_%d", backup.Name, t.Unix())
@@ -240,7 +237,7 @@ func (b *ConsulBackupController) storeBackupFile(
 		return nil
 	case backup.Spec.Storage.GCS != nil:
 		spec := backup.Spec.Storage.GCS
-		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
+		credential, err := b.secretLister.Get(backup.Namespace, spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -273,7 +270,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 	case backup.Spec.Storage.MinIO != nil:
 		spec := backup.Spec.Storage.MinIO
 
-		accessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.AccessKeyID.Name)
+		accessKeySecret, err := b.secretLister.Get(backup.Namespace, spec.Credential.AccessKeyID.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -281,7 +278,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 		if !ok {
 			return xerrors.Definef("access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
-		secretAccessKeySecret, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.SecretAccessKey.Name)
+		secretAccessKeySecret, err := b.secretLister.Get(backup.Namespace, spec.Credential.SecretAccessKey.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -290,7 +287,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 			return xerrors.Definef("secret access key %s not found in %s", spec.Credential.AccessKeyID.Key, accessKeySecret.Name).WithStack()
 		}
 
-		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, b.config, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
+		mcOpt := storage.NewMinIOOptionsViaService(b.coreClient, spec.Service.Name, spec.Service.Namespace, 9000, string(accessKey), string(secretAccessKey), b.runOutsideCluster)
 		mcOpt.Transport = b.transport
 		mc := storage.NewMinIOStorage(spec.Bucket, mcOpt)
 
@@ -315,7 +312,7 @@ func (b *ConsulBackupController) rotateBackupFiles(ctx context.Context, backup *
 		}
 	case backup.Spec.Storage.GCS != nil:
 		spec := backup.Spec.Storage.GCS
-		credential, err := b.secretLister.Secrets(backup.Namespace).Get(spec.Credential.ServiceAccountJSON.Name)
+		credential, err := b.secretLister.Get(backup.Namespace, spec.Credential.ServiceAccountJSON.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}

@@ -1,7 +1,7 @@
 package k8sfactory
 
 import (
-	policyv1 "k8s.io/api/policy/v1"
+	"go.f110.dev/kubeproto/go/apis/policyv1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 )

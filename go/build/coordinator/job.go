@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"strings"
 
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
 
@@ -75,7 +75,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string, excludeNodes []string) *JobBu
 		workDirVolume: workDir,
 		mainContainer: k8sfactory.ContainerFactory(nil,
 			k8sfactory.Name("main"),
-			k8sfactory.PullPolicy(corev1.PullIfNotPresent),
+			k8sfactory.PullPolicy(corev1.PullPolicyIfNotPresent),
 			k8sfactory.WorkDir(workDir.Mount.MountPath),
 			k8sfactory.Volume(workDir),
 			k8sfactory.EnvVar("WORKSPACE", workDir.Mount.MountPath),
@@ -83,7 +83,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string, excludeNodes []string) *JobBu
 		preProcessContainer: k8sfactory.ContainerFactory(nil,
 			k8sfactory.Name("pre-process"),
 			k8sfactory.Image(sidecar, nil),
-			k8sfactory.PullPolicy(corev1.PullIfNotPresent),
+			k8sfactory.PullPolicy(corev1.PullPolicyIfNotPresent),
 			k8sfactory.Volume(workDir),
 		),
 		buildPod: k8sfactory.PodFactory(nil,
@@ -118,8 +118,8 @@ func (j *JobBuilder) UseBazelisk() {
 
 func (j *JobBuilder) PullAlways() {
 	j.pullAlways = true
-	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.PullPolicy(corev1.PullAlways))
-	j.preProcessContainer = k8sfactory.ContainerFactory(j.preProcessContainer, k8sfactory.PullPolicy(corev1.PullAlways))
+	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.PullPolicy(corev1.PullPolicyAlways))
+	j.preProcessContainer = k8sfactory.ContainerFactory(j.preProcessContainer, k8sfactory.PullPolicy(corev1.PullPolicyAlways))
 }
 
 func (j *JobBuilder) GitHubApp(appId, installationId int64, secretName string) {
@@ -365,9 +365,9 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 		k8sfactory.PodFailurePolicy(batchv1.PodFailurePolicyRule{
 			Action: batchv1.PodFailurePolicyActionFailJob,
 			OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{
-				ContainerName: new(j.BuildContainerName),
-				Operator:      batchv1.PodFailurePolicyOnExitCodesOpNotIn,
-				Values:        []int32{0},
+				ContainerName: j.BuildContainerName,
+				Operator:      batchv1.PodFailurePolicyOnExitCodesOperatorNotIn,
+				Values:        []int{0},
 			},
 		}),
 		k8sfactory.Pod(
@@ -395,7 +395,7 @@ func (j *JobBuilder) makeReportContainer() {
 	j.reportContainer = k8sfactory.ContainerFactory(nil,
 		k8sfactory.Name(j.ReportContainerName),
 		k8sfactory.Image(j.sidecarImage, nil),
-		k8sfactory.PullPolicy(corev1.PullIfNotPresent),
+		k8sfactory.PullPolicy(corev1.PullPolicyIfNotPresent),
 		k8sfactory.Volume(j.commDirVolume),
 		k8sfactory.Args("report", fmt.Sprintf("--event-binary-file=%s/bep", j.commDirVolume.Mount.MountPath), "--startup-timeout=10m"),
 	)
@@ -427,7 +427,7 @@ func (j *JobBuilder) injectSecret() {
 			name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(s.MountPath[1:], "/", "-", -1))
 			if c, ok := secretProviderClasses[s.MountPath]; !ok {
 				secretProviderClasses[s.MountPath] = &secretsstorev1.SecretProviderClass{
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      name,
 						Namespace: j.namespace,
 						Labels: map[string]string{
@@ -461,7 +461,7 @@ func (j *JobBuilder) injectSecret() {
 			if _, ok := registrySecretProviderClass[s.Host]; !ok {
 				name := fmt.Sprintf("%s-%d%s-%s", j.job.RepositoryName, j.task.Id, platformName, strings.Replace(s.Host, ".", "-", -1))
 				registrySecretProviderClass[s.Host] = &secretsstorev1.SecretProviderClass{
-					ObjectMeta: metav1.ObjectMeta{
+					ObjectMeta: k8smetav1.ObjectMeta{
 						Name:      name,
 						Namespace: j.namespace,
 						Labels: map[string]string{

@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/jarcoal/httpmock"
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
+	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
 )
 
 func TestMinIOUserController(t *testing.T) {

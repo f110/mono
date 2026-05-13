@@ -2,16 +2,27 @@ load("@dev_f110_kubeproto//bazel:def.bzl", "go_client")
 load("@rules_go//go:def.bzl", "go_library")
 load("//build/rules:vendor.bzl", "vendor_kubeproto")
 
+go_client(
+    name = "go_client",
+    srcs = [
+        "//proto/minio-operator/v1beta1",
+    ],
+    importpath = "go.f110.dev/mono/go/k8s/thirdpartyclient",
+    visibility = ["//visibility:public"],
+)
+
+vendor_kubeproto(
+    name = "vendor_client",
+    src = ":go_client",
+)
+
 go_library(
-    name = "client",
+    name = "thirdpartyclient",
     srcs = ["go_client.generated.client.go"],
-    importpath = "go.f110.dev/mono/go/k8s/client",
+    importpath = "go.f110.dev/mono/go/k8s/thirdpartyclient",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/api/consulv1alpha1",
-        "//go/api/grafanav1alpha1",
-        "//go/api/harborv1alpha1",
-        "//go/api/miniov1alpha1",
+        "//go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1",
         "@dev_f110_kubeproto//go/apis/metav1",
         "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
@@ -23,21 +34,4 @@ go_library(
         "@io_k8s_client_go//rest",
         "@io_k8s_client_go//tools/cache",
     ],
-)
-
-go_client(
-    name = "go_client",
-    srcs = [
-        "//go/api/consulv1alpha1:consul_proto",
-        "//go/api/grafanav1alpha1:grafana_proto",
-        "//go/api/harborv1alpha1:harbor_proto",
-        "//go/api/miniov1alpha1:minio_proto",
-    ],
-    importpath = "go.f110.dev/mono/go/k8s/client",
-    visibility = ["//visibility:public"],
-)
-
-vendor_kubeproto(
-    name = "vendor_client",
-    src = ":go_client",
 )

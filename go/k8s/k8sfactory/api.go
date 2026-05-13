@@ -3,8 +3,8 @@ package k8sfactory
 import (
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
 
 	"go.f110.dev/mono/go/api/consulv1alpha1"
@@ -169,7 +169,7 @@ func SecretAccessKey(ref *corev1.SecretKeySelector) Trait {
 }
 
 func ObjectReference(obj metav1.Object) *consulv1alpha1.ObjectReference {
-	return &consulv1alpha1.ObjectReference{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+	return &consulv1alpha1.ObjectReference{Name: obj.GetObjectMeta().GetName(), Namespace: obj.GetObjectMeta().GetNamespace()}
 }
 
 func MinIOBucketFactory(base *miniov1alpha1.MinIOBucket, traits ...Trait) *miniov1alpha1.MinIOBucket {

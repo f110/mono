@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	batchv1 "k8s.io/api/batch/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	fakesecretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake"
 
 	"go.f110.dev/mono/go/build/database"
@@ -20,8 +21,8 @@ import (
 
 func TestBazelBuilder_SyncJob(t *testing.T) {
 	runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
-	podInformer := runner.CoreSharedInformerFactory.Core().V1().Pods()
-	jobInformer := runner.CoreSharedInformerFactory.Batch().V1().Jobs()
+	coreInformer := k8sclient.NewCoreV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.CoreV1, metav1.NamespaceDefault, 30*time.Second)
+	batchInformer := k8sclient.NewBatchV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.BatchV1, metav1.NamespaceDefault, 30*time.Second)
 	mockDAO := struct {
 		Repository *daotest.SourceRepository
 		Task       *daotest.Task
@@ -33,9 +34,9 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	b, err := NewBazelBuilder(
 		"",
 		KubernetesOptions{
-			JobInformer:       jobInformer,
-			PodInformer:       podInformer,
-			Client:            runner.CoreClient,
+			BatchInformer:     batchInformer,
+			CoreInformer:      coreInformer,
+			Client:            &runner.CoreClient.Set,
 			SecretStoreClient: fakesecretstoreclient.NewSimpleClientset(),
 		},
 		dao.Options{
@@ -179,8 +180,8 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 
 func TestBazelBuilder_ForceStop(t *testing.T) {
 	runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
-	podInformer := runner.CoreSharedInformerFactory.Core().V1().Pods()
-	jobInformer := runner.CoreSharedInformerFactory.Batch().V1().Jobs()
+	coreInformer := k8sclient.NewCoreV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.CoreV1, metav1.NamespaceDefault, 30*time.Second)
+	batchInformer := k8sclient.NewBatchV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.BatchV1, metav1.NamespaceDefault, 30*time.Second)
 	mockDAO := struct {
 		Repository *daotest.SourceRepository
 		Task       *daotest.Task
@@ -192,9 +193,9 @@ func TestBazelBuilder_ForceStop(t *testing.T) {
 	b, err := NewBazelBuilder(
 		"",
 		KubernetesOptions{
-			JobInformer:       jobInformer,
-			PodInformer:       podInformer,
-			Client:            runner.CoreClient,
+			BatchInformer:     batchInformer,
+			CoreInformer:      coreInformer,
+			Client:            &runner.CoreClient.Set,
 			SecretStoreClient: fakesecretstoreclient.NewSimpleClientset(),
 		},
 		dao.Options{
@@ -227,7 +228,7 @@ func TestBazelBuilder_ForceStop(t *testing.T) {
 	err = b.ForceStop(t.Context(), 1)
 	require.NoError(t, err)
 
-	updatedJob, err := runner.CoreClient.BatchV1().Jobs(metav1.NamespaceDefault).Get(t.Context(), t.Name(), metav1.GetOptions{})
+	updatedJob, err := runner.CoreClient.BatchV1.GetJob(t.Context(), metav1.NamespaceDefault, t.Name(), metav1.GetOptions{})
 	require.NoError(t, err)
 	assertion.Contains(t, updatedJob.GetLabels(), labelKeyForceStop)
 }

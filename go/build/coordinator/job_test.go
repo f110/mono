@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/build/config"
@@ -22,7 +22,6 @@ import (
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
-	"go.f110.dev/mono/go/varptr"
 )
 
 func TestMain(m *testing.M) {
@@ -198,7 +197,7 @@ func TestJobBuilder(t *testing.T) {
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "example-100-linux-amd64-etc-job-secret", ReadOnly: true, MountPath: "/etc/job/secret"}})),
-					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: new(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id)}}),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: true, VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-etc-job-secret", job.RepositoryName, task.Id)}}),
 					k8sfactory.SortVolume(),
 				},
 			},
@@ -229,7 +228,7 @@ func TestJobBuilder(t *testing.T) {
 						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), ReadOnly: true, MountPath: "/etc/registry/registry.example.com"}}),
 					)),
 					k8sfactory.OnContainer("main", k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "containerregistry", MountPath: "/root/.docker"}})),
-					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: new(true), VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
+					AddCSIVolume(fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id), &corev1.CSIVolumeSource{Driver: "secrets-store.csi.k8s.io", ReadOnly: true, VolumeAttributes: map[string]string{"secretProviderClass": fmt.Sprintf("%s-%d-linux-amd64-registry-example-com", job.RepositoryName, task.Id)}}),
 					AddEmptyVolume("containerregistry"),
 					k8sfactory.SortVolume(),
 				},
@@ -374,7 +373,7 @@ func RemoveVolume(name string) k8sfactory.Trait {
 				}
 			}
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -401,7 +400,7 @@ func AddSecretVolume(containerName, volName, secretName, mountPath string) k8sfa
 			}
 			v.Volumes = append(v.Volumes, corev1.Volume{Name: volName, VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName}}})
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -414,7 +413,7 @@ func AddCSIVolume(name string, csi *corev1.CSIVolumeSource) k8sfactory.Trait {
 		case *corev1.PodSpec:
 			v.Volumes = append(v.Volumes, corev1.Volume{Name: name, VolumeSource: corev1.VolumeSource{CSI: csi}})
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -427,7 +426,7 @@ func AddEmptyVolume(name string) k8sfactory.Trait {
 		case *corev1.PodSpec:
 			v.Volumes = append(v.Volumes, corev1.Volume{Name: name, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -451,7 +450,7 @@ func RemoveContainer(name string) k8sfactory.Trait {
 				}
 			}
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -545,19 +544,19 @@ func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *datab
 			},
 			Finalizers: []string{bazelBuilderControllerFinalizerName},
 		},
-		Spec: batchv1.JobSpec{
+		Spec: &batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
+				ObjectMeta: &metav1.ObjectMeta{
 					Labels: map[string]string{labelKeyCtrlBy: "bazel-build", labelKeyTaskId: fmt.Sprintf("%d", task.Id)},
 				},
-				Spec: corev1.PodSpec{
+				Spec: &corev1.PodSpec{
 					ServiceAccountName: "build-" + job.RepositoryName,
 					RestartPolicy:      corev1.RestartPolicyNever,
 					InitContainers: []corev1.Container{
 						{
 							Name:            "pre-process",
 							Image:           "registry/sidecar",
-							ImagePullPolicy: corev1.PullAlways,
+							ImagePullPolicy: corev1.PullPolicyAlways,
 							Args:            []string{"clone", "--work-dir=/work", "--url=https://github.com/f110/example.git", "--commit=e192aef54cb0d31afd7cae64b079be2a12a56a74"},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -571,16 +570,16 @@ func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *datab
 						{
 							Name:            "main",
 							Image:           "registry/bazel:bazelisk",
-							ImagePullPolicy: corev1.PullAlways,
+							ImagePullPolicy: corev1.PullPolicyAlways,
 							Args: []string{
 								"test", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64",
 								"--build_event_binary_file=/comm/bep", "--cache_test_results=no",
 								"--", job.Targets[0],
 							},
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1000m"),
-									corev1.ResourceMemory: resource.MustParse("1024Mi"),
+							Resources: &corev1.ResourceRequirements{
+								Limits: map[string]resource.Quantity{
+									string(corev1.ResourceNameCpu):    resource.MustParse("1000m"),
+									string(corev1.ResourceNameMemory): resource.MustParse("1024Mi"),
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -602,7 +601,7 @@ func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *datab
 						{
 							Name:            "report",
 							Image:           "registry/sidecar",
-							ImagePullPolicy: corev1.PullIfNotPresent,
+							ImagePullPolicy: corev1.PullPolicyIfNotPresent,
 							Args:            []string{"report", "--event-binary-file=/comm/bep", "--startup-timeout=10m"},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -630,10 +629,10 @@ func testJobBuilderFixtures() (*config.JobV2, *database.SourceRepository, *datab
 			},
 			PodFailurePolicy: &batchv1.PodFailurePolicy{
 				Rules: []batchv1.PodFailurePolicyRule{
-					{Action: batchv1.PodFailurePolicyActionFailJob, OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{ContainerName: new("main"), Operator: batchv1.PodFailurePolicyOnExitCodesOpNotIn, Values: []int32{0}}},
+					{Action: batchv1.PodFailurePolicyActionFailJob, OnExitCodes: &batchv1.PodFailurePolicyOnExitCodesRequirement{ContainerName: "main", Operator: batchv1.PodFailurePolicyOnExitCodesOperatorNotIn, Values: []int{0}}},
 				},
 			},
-			BackoffLimit: varptr.Ptr[int32](0),
+			BackoffLimit: 0,
 		},
 	})
 

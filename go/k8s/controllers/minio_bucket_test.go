@@ -9,7 +9,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/minio/minio-go/v7"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"

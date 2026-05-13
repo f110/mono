@@ -1,8 +1,8 @@
 package k8sfactory
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/networkingv1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -53,7 +53,7 @@ func IngressClass(v *networkingv1.IngressClass) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *networkingv1.Ingress:
-			obj.Spec.IngressClassName = &v.Name
+			obj.Spec.IngressClassName = v.Name
 		}
 	}
 }
@@ -116,11 +116,11 @@ func Path(path string, pt networkingv1.PathType, svc *corev1.Service, port strin
 			obj.IngressRuleValue.HTTP.Paths = append(obj.IngressRuleValue.HTTP.Paths,
 				networkingv1.HTTPIngressPath{
 					Path:     path,
-					PathType: &pt,
+					PathType: pt,
 					Backend: networkingv1.IngressBackend{
 						Service: &networkingv1.IngressServiceBackend{
 							Name: svc.Name,
-							Port: networkingv1.ServiceBackendPort{
+							Port: &networkingv1.ServiceBackendPort{
 								Name: port,
 							},
 						},

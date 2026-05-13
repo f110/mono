@@ -19,8 +19,8 @@ import (
 
 func newRunner() *controllertest.TestRunner {
 	runner := controllertest.NewTestRunner()
-	runner.CoreClient.Resources = append(
-		runner.CoreClient.Resources, &metav1.APIResourceList{
+	runner.K8sClient.Resources = append(
+		runner.K8sClient.Resources, &metav1.APIResourceList{
 			GroupVersion: miniocontrollerv1beta1.SchemeGroupVersion.String(),
 			APIResources: []metav1.APIResource{
 				{Kind: "MinIOInstance"},
@@ -32,7 +32,16 @@ func newRunner() *controllertest.TestRunner {
 }
 
 func newMinIOBucketController(t *testing.T, runner *controllertest.TestRunner) *MinIOBucketController {
-	controller, err := NewMinIOBucketController(runner.CoreClient, &runner.Client.Set, nil, runner.CoreSharedInformerFactory, runner.Factory, false)
+	controller, err := NewMinIOBucketController(
+		&runner.CoreClient.Set,
+		runner.K8sClient,
+		&runner.Client.Set,
+		&runner.ThirdPartyClient.Set,
+		runner.CoreSharedInformerFactory,
+		runner.Factory,
+		runner.ThirdPartyInformerFactory,
+		false,
+	)
 	require.NoError(t, err)
 
 	return controller
@@ -44,11 +53,13 @@ func newMinIOUserController(t *testing.T, runner *controllertest.GenericTestRunn
 	require.NoError(t, err)
 
 	controller, err := NewMinIOUserController(
-		runner.CoreClient,
+		&runner.CoreClient.Set,
+		runner.K8sClient,
 		&runner.Client.Set,
-		nil,
+		&runner.ThirdPartyClient.Set,
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
+		runner.ThirdPartyInformerFactory,
 		vaultClient,
 		false,
 	)
@@ -63,9 +74,9 @@ func newConsulBackupController(t *testing.T) (*controllertest.TestRunner, *Consu
 	controller, err := NewConsulBackupController(
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
-		runner.CoreClient,
+		&runner.CoreClient.Set,
+		runner.K8sClient,
 		&runner.Client.Set,
-		nil,
 		false,
 	)
 	require.NoError(t, err)
@@ -78,7 +89,8 @@ func newGrafanaUserController(t *testing.T) (*controllertest.GenericTestRunner[*
 	controller, err := NewGrafanaController(
 		runner.CoreSharedInformerFactory,
 		runner.Factory,
-		runner.CoreClient,
+		&runner.CoreClient.Set,
+		runner.K8sClient,
 		&runner.Client.Set,
 	)
 	require.NoError(t, err)
@@ -105,9 +117,9 @@ func newHarborProjectController(t *testing.T) (*controllertest.TestRunner, *Harb
 	runner.RegisterFixture(secret, service, configMap)
 	controller, err := NewHarborProjectController(
 		context.Background(),
-		runner.CoreClient,
+		&runner.CoreClient.Set,
+		runner.K8sClient,
 		&runner.Client.Set,
-		nil,
 		runner.Factory,
 		metav1.NamespaceDefault,
 		service.Name,
@@ -134,7 +146,8 @@ func newHarborRobotAccountController(t *testing.T) (*controllertest.TestRunner, 
 	runner.RegisterFixture(secret, service)
 	controller, err := NewHarborRobotAccountController(
 		context.Background(),
-		runner.CoreClient,
+		&runner.CoreClient.Set,
+		runner.K8sClient,
 		&runner.Client.Set,
 		nil,
 		runner.Factory,

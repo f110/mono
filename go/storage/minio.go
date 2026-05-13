@@ -11,14 +11,12 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 	pf "k8s.io/client-go/tools/portforward"
 
 	"go.f110.dev/mono/go/k8s/portforward"
@@ -38,16 +36,15 @@ type MinIOOptions struct {
 	Dev bool
 
 	// PodLister is an optional value.
-	PodLister corev1listers.PodLister
+	PodLister *k8sclient.CoreV1PodLister
 	// ServiceLister is an optional value.
-	ServiceLister corev1listers.ServiceLister
+	ServiceLister *k8sclient.CoreV1ServiceLister
 	// Transport is an optional value.
 	Transport http.RoundTripper
 
 	client *minio.Client
 
-	k8sClient     kubernetes.Interface
-	restConfig    *rest.Config
+	k8sClient     *k8sclient.Set
 	portForwarder *pf.PortForwarder
 }
 
@@ -114,8 +111,8 @@ func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace str
 	var endpoint string
 	var svc *corev1.Service
 	if m.ServiceLister != nil {
-		if s, err := m.ServiceLister.Services(namespace).Get(name); apierrors.IsNotFound(err) {
-			if s, err := m.ServiceLister.Services(namespace).Get(fmt.Sprintf("%s-hl-svc", name)); err == nil {
+		if s, err := m.ServiceLister.Get(namespace, name); apierrors.IsNotFound(err) {
+			if s, err := m.ServiceLister.Get(namespace, fmt.Sprintf("%s-hl-svc", name)); err == nil {
 				svc = s
 				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
 			} else {
@@ -128,8 +125,8 @@ func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace str
 			endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
 		}
 	} else {
-		if s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); apierrors.IsNotFound(err) {
-			if s, err := m.k8sClient.CoreV1().Services(namespace).Get(ctx, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{}); err == nil {
+		if s, err := m.k8sClient.CoreV1.GetService(ctx, namespace, name, metav1.GetOptions{}); apierrors.IsNotFound(err) {
+			if s, err := m.k8sClient.CoreV1.GetService(ctx, namespace, fmt.Sprintf("%s-hl-svc", name), metav1.GetOptions{}); err == nil {
 				svc = s
 				endpoint = fmt.Sprintf("%s-hl-svc.%s.svc:%d", name, namespace, port)
 			} else {
@@ -143,7 +140,7 @@ func (m *MinIOOptions) getMinIOEndpoint(ctx context.Context, name, namespace str
 		}
 	}
 	if m.Dev {
-		f, port, err := portforward.PortForward(ctx, svc, int(svc.Spec.Ports[0].Port), m.restConfig, m.k8sClient, m.PodLister)
+		f, port, err := portforward.PortForward(ctx, svc, svc.Spec.Ports[0].Port, m.k8sClient, m.PodLister)
 		if err != nil {
 			return "", nil, xerrors.WithStack(err)
 		}
@@ -160,8 +157,7 @@ func (m *MinIOOptions) Close() {
 	}
 }
 func NewMinIOOptionsViaService(
-	client kubernetes.Interface,
-	config *rest.Config,
+	client *k8sclient.Set,
 	name, namespace string,
 	port int,
 	accessKey, secretAccessKey string,
@@ -175,7 +171,6 @@ func NewMinIOOptionsViaService(
 		SecretAccessKey: secretAccessKey,
 		Dev:             dev,
 		k8sClient:       client,
-		restConfig:      config,
 	}
 }
 

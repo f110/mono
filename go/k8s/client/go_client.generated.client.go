@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -36,7 +36,6 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	grafanav1alpha1.AddToScheme,
 	harborv1alpha1.AddToScheme,
 	miniov1alpha1.AddToScheme,
-	v1beta1.AddToScheme,
 }
 
 func init() {
@@ -45,7 +44,6 @@ func init() {
 		grafanav1alpha1.AddToScheme,
 		harborv1alpha1.AddToScheme,
 		miniov1alpha1.AddToScheme,
-		v1beta1.AddToScheme,
 	} {
 		if err := v(Scheme); err != nil {
 			panic(err)
@@ -54,20 +52,29 @@ func init() {
 }
 
 type Backend interface {
-	Get(ctx context.Context, resourceName, kindName, namespace, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error)
-	List(ctx context.Context, resourceName, kindName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error)
-	Create(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
-	Update(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
-	UpdateStatus(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	Get(ctx context.Context, resourceName, namespace, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error)
+	List(ctx context.Context, resourceName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error)
+	Create(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
+	Update(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	UpdateStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
 	Delete(ctx context.Context, gvr schema.GroupVersionResource, namespace, name string, opts metav1.DeleteOptions) error
 	Watch(ctx context.Context, gvr schema.GroupVersionResource, namespace string, opts metav1.ListOptions) (watch.Interface, error)
+	GetClusterScoped(ctx context.Context, resourceName, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error)
+	ListClusterScoped(ctx context.Context, resourceName string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error)
+	CreateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error)
+	UpdateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	UpdateStatusClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error)
+	DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error
+	WatchClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, opts metav1.ListOptions) (watch.Interface, error)
+
+	RESTClient() *rest.RESTClient
 }
+
 type Set struct {
-	ConsulV1alpha1         *ConsulV1alpha1
-	GrafanaV1alpha1        *GrafanaV1alpha1
-	HarborV1alpha1         *HarborV1alpha1
-	MinioV1alpha1          *MinioV1alpha1
-	MiniocontrollerV1beta1 *MiniocontrollerV1beta1
+	ConsulV1alpha1  *ConsulV1alpha1
+	GrafanaV1alpha1 *GrafanaV1alpha1
+	HarborV1alpha1  *HarborV1alpha1
+	MinioV1alpha1   *MinioV1alpha1
 }
 
 func NewSet(cfg *rest.Config) (*Set, error) {
@@ -81,7 +88,7 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.ConsulV1alpha1 = NewConsulV1alpha1Client(&restBackend{client: c})
+		s.ConsulV1alpha1 = NewConsulV1alpha1Client(&restBackend{client: c}, &conf)
 	}
 	{
 		conf := *cfg
@@ -92,7 +99,7 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.GrafanaV1alpha1 = NewGrafanaV1alpha1Client(&restBackend{client: c})
+		s.GrafanaV1alpha1 = NewGrafanaV1alpha1Client(&restBackend{client: c}, &conf)
 	}
 	{
 		conf := *cfg
@@ -103,7 +110,7 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.HarborV1alpha1 = NewHarborV1alpha1Client(&restBackend{client: c})
+		s.HarborV1alpha1 = NewHarborV1alpha1Client(&restBackend{client: c}, &conf)
 	}
 	{
 		conf := *cfg
@@ -114,18 +121,7 @@ func NewSet(cfg *rest.Config) (*Set, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.MinioV1alpha1 = NewMinioV1alpha1Client(&restBackend{client: c})
-	}
-	{
-		conf := *cfg
-		conf.GroupVersion = &v1beta1.SchemeGroupVersion
-		conf.APIPath = "/apis"
-		conf.NegotiatedSerializer = Codecs.WithoutConversion()
-		c, err := rest.RESTClientFor(&conf)
-		if err != nil {
-			return nil, err
-		}
-		s.MiniocontrollerV1beta1 = NewMiniocontrollerV1beta1Client(&restBackend{client: c})
+		s.MinioV1alpha1 = NewMinioV1alpha1Client(&restBackend{client: c}, &conf)
 	}
 
 	return s, nil
@@ -135,7 +131,7 @@ type restBackend struct {
 	client *rest.RESTClient
 }
 
-func (r *restBackend) Get(ctx context.Context, resourceName, kindName, namespace, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error) {
+func (r *restBackend) Get(ctx context.Context, resourceName, namespace, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error) {
 	return result, r.client.Get().
 		Namespace(namespace).
 		Resource(resourceName).
@@ -145,10 +141,10 @@ func (r *restBackend) Get(ctx context.Context, resourceName, kindName, namespace
 		Into(result)
 }
 
-func (r *restBackend) List(ctx context.Context, resourceName, kindName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
+func (r *restBackend) List(ctx context.Context, resourceName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
 	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
 	}
 	return result, r.client.Get().
 		Namespace(namespace).
@@ -159,13 +155,14 @@ func (r *restBackend) List(ctx context.Context, resourceName, kindName, namespac
 		Into(result)
 }
 
-func (r *restBackend) Create(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error) {
+func (r *restBackend) Create(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error) {
 	m := obj.(metav1.Object)
 	if m == nil {
 		return nil, errors.New("obj is not implement metav1.Object")
 	}
+	meta := m.GetObjectMeta()
 	return result, r.client.Post().
-		Namespace(m.GetNamespace()).
+		Namespace(meta.Namespace).
 		Resource(resourceName).
 		VersionedParams(&opts, ParameterCodec).
 		Body(obj).
@@ -173,30 +170,32 @@ func (r *restBackend) Create(ctx context.Context, resourceName, kindName string,
 		Into(result)
 }
 
-func (r *restBackend) Update(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+func (r *restBackend) Update(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
 	m := obj.(metav1.Object)
 	if m == nil {
 		return nil, errors.New("obj is not implement metav1.Object")
 	}
+	meta := m.GetObjectMeta()
 	return result, r.client.Put().
-		Namespace(m.GetNamespace()).
+		Namespace(meta.Namespace).
 		Resource(resourceName).
-		Name(m.GetName()).
+		Name(meta.Name).
 		VersionedParams(&opts, ParameterCodec).
 		Body(obj).
 		Do(ctx).
 		Into(result)
 }
 
-func (r *restBackend) UpdateStatus(ctx context.Context, resourceName, kindName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+func (r *restBackend) UpdateStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
 	m := obj.(metav1.Object)
 	if m == nil {
 		return nil, errors.New("obj is not implement metav1.Object")
 	}
+	meta := m.GetObjectMeta()
 	return result, r.client.Put().
-		Namespace(m.GetNamespace()).
+		Namespace(meta.Namespace).
 		Resource(resourceName).
-		Name(m.GetName()).
+		Name(meta.Name).
 		SubResource("status").
 		VersionedParams(&opts, ParameterCodec).
 		Body(obj).
@@ -216,8 +215,8 @@ func (r *restBackend) Delete(ctx context.Context, gvr schema.GroupVersionResourc
 
 func (r *restBackend) Watch(ctx context.Context, gvr schema.GroupVersionResource, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
-	if opts.TimeoutSeconds != nil {
-		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
 	}
 	opts.Watch = true
 	return r.client.Get().
@@ -228,16 +227,105 @@ func (r *restBackend) Watch(ctx context.Context, gvr schema.GroupVersionResource
 		Watch(ctx)
 }
 
-type ConsulV1alpha1 struct {
-	backend Backend
+func (r *restBackend) GetClusterScoped(ctx context.Context, resourceName, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error) {
+	return result, r.client.Get().
+		Resource(resourceName).
+		Name(name).
+		VersionedParams(&opts, ParameterCodec).
+		Do(ctx).
+		Into(result)
 }
 
-func NewConsulV1alpha1Client(b Backend) *ConsulV1alpha1 {
-	return &ConsulV1alpha1{backend: b}
+func (r *restBackend) ListClusterScoped(ctx context.Context, resourceName string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
+	}
+	return result, r.client.Get().
+		Resource(resourceName).
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) CreateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error) {
+	return result, r.client.Post().
+		Resource(resourceName).
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) UpdateClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	return result, r.client.Put().
+		Resource(resourceName).
+		Name(meta.Name).
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) UpdateStatusClusterScoped(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
+	m := obj.(metav1.Object)
+	if m == nil {
+		return nil, errors.New("obj is not implement metav1.Object")
+	}
+	meta := m.GetObjectMeta()
+	return result, r.client.Put().
+		Resource(resourceName).
+		Name(meta.Name).
+		SubResource("status").
+		VersionedParams(&opts, ParameterCodec).
+		Body(obj).
+		Do(ctx).
+		Into(result)
+}
+
+func (r *restBackend) DeleteClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, name string, opts metav1.DeleteOptions) error {
+	return r.client.Delete().
+		Resource(gvr.Resource).
+		Name(name).
+		Body(&opts).
+		Do(ctx).
+		Error()
+}
+
+func (r *restBackend) WatchClusterScoped(ctx context.Context, gvr schema.GroupVersionResource, opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds > 0 {
+		timeout = time.Duration(opts.TimeoutSeconds) * time.Second
+	}
+	opts.Watch = true
+	return r.client.Get().
+		Resource(gvr.Resource).
+		VersionedParams(&opts, ParameterCodec).
+		Timeout(timeout).
+		Watch(ctx)
+}
+
+func (r *restBackend) RESTClient() *rest.RESTClient {
+	return r.client
+}
+
+type ConsulV1alpha1 struct {
+	backend Backend
+	config  *rest.Config
+}
+
+func NewConsulV1alpha1Client(b Backend, config *rest.Config) *ConsulV1alpha1 {
+	return &ConsulV1alpha1{backend: b, config: config}
 }
 
 func (c *ConsulV1alpha1) GetConsulBackup(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result, err := c.backend.Get(ctx, "consulbackups", "ConsulBackup", namespace, name, opts, &consulv1alpha1.ConsulBackup{})
+	result, err := c.backend.Get(ctx, "consulbackups", namespace, name, opts, &consulv1alpha1.ConsulBackup{})
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +333,7 @@ func (c *ConsulV1alpha1) GetConsulBackup(ctx context.Context, namespace, name st
 }
 
 func (c *ConsulV1alpha1) CreateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.CreateOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result, err := c.backend.Create(ctx, "consulbackups", "ConsulBackup", v, opts, &consulv1alpha1.ConsulBackup{})
+	result, err := c.backend.Create(ctx, "consulbackups", v, opts, &consulv1alpha1.ConsulBackup{})
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +341,7 @@ func (c *ConsulV1alpha1) CreateConsulBackup(ctx context.Context, v *consulv1alph
 }
 
 func (c *ConsulV1alpha1) UpdateConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.UpdateOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result, err := c.backend.Update(ctx, "consulbackups", "ConsulBackup", v, opts, &consulv1alpha1.ConsulBackup{})
+	result, err := c.backend.Update(ctx, "consulbackups", v, opts, &consulv1alpha1.ConsulBackup{})
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +349,7 @@ func (c *ConsulV1alpha1) UpdateConsulBackup(ctx context.Context, v *consulv1alph
 }
 
 func (c *ConsulV1alpha1) UpdateStatusConsulBackup(ctx context.Context, v *consulv1alpha1.ConsulBackup, opts metav1.UpdateOptions) (*consulv1alpha1.ConsulBackup, error) {
-	result, err := c.backend.UpdateStatus(ctx, "consulbackups", "ConsulBackup", v, opts, &consulv1alpha1.ConsulBackup{})
+	result, err := c.backend.UpdateStatus(ctx, "consulbackups", v, opts, &consulv1alpha1.ConsulBackup{})
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +361,7 @@ func (c *ConsulV1alpha1) DeleteConsulBackup(ctx context.Context, namespace, name
 }
 
 func (c *ConsulV1alpha1) ListConsulBackup(ctx context.Context, namespace string, opts metav1.ListOptions) (*consulv1alpha1.ConsulBackupList, error) {
-	result, err := c.backend.List(ctx, "consulbackups", "ConsulBackup", namespace, opts, &consulv1alpha1.ConsulBackupList{})
+	result, err := c.backend.List(ctx, "consulbackups", namespace, opts, &consulv1alpha1.ConsulBackupList{})
 	if err != nil {
 		return nil, err
 	}
@@ -286,14 +374,15 @@ func (c *ConsulV1alpha1) WatchConsulBackup(ctx context.Context, namespace string
 
 type GrafanaV1alpha1 struct {
 	backend Backend
+	config  *rest.Config
 }
 
-func NewGrafanaV1alpha1Client(b Backend) *GrafanaV1alpha1 {
-	return &GrafanaV1alpha1{backend: b}
+func NewGrafanaV1alpha1Client(b Backend, config *rest.Config) *GrafanaV1alpha1 {
+	return &GrafanaV1alpha1{backend: b, config: config}
 }
 
 func (c *GrafanaV1alpha1) GetGrafana(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.Grafana, error) {
-	result, err := c.backend.Get(ctx, "grafanas", "Grafana", namespace, name, opts, &grafanav1alpha1.Grafana{})
+	result, err := c.backend.Get(ctx, "grafanas", namespace, name, opts, &grafanav1alpha1.Grafana{})
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +390,7 @@ func (c *GrafanaV1alpha1) GetGrafana(ctx context.Context, namespace, name string
 }
 
 func (c *GrafanaV1alpha1) CreateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.CreateOptions) (*grafanav1alpha1.Grafana, error) {
-	result, err := c.backend.Create(ctx, "grafanas", "Grafana", v, opts, &grafanav1alpha1.Grafana{})
+	result, err := c.backend.Create(ctx, "grafanas", v, opts, &grafanav1alpha1.Grafana{})
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +398,7 @@ func (c *GrafanaV1alpha1) CreateGrafana(ctx context.Context, v *grafanav1alpha1.
 }
 
 func (c *GrafanaV1alpha1) UpdateGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.UpdateOptions) (*grafanav1alpha1.Grafana, error) {
-	result, err := c.backend.Update(ctx, "grafanas", "Grafana", v, opts, &grafanav1alpha1.Grafana{})
+	result, err := c.backend.Update(ctx, "grafanas", v, opts, &grafanav1alpha1.Grafana{})
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +406,7 @@ func (c *GrafanaV1alpha1) UpdateGrafana(ctx context.Context, v *grafanav1alpha1.
 }
 
 func (c *GrafanaV1alpha1) UpdateStatusGrafana(ctx context.Context, v *grafanav1alpha1.Grafana, opts metav1.UpdateOptions) (*grafanav1alpha1.Grafana, error) {
-	result, err := c.backend.UpdateStatus(ctx, "grafanas", "Grafana", v, opts, &grafanav1alpha1.Grafana{})
+	result, err := c.backend.UpdateStatus(ctx, "grafanas", v, opts, &grafanav1alpha1.Grafana{})
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +418,7 @@ func (c *GrafanaV1alpha1) DeleteGrafana(ctx context.Context, namespace, name str
 }
 
 func (c *GrafanaV1alpha1) ListGrafana(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaList, error) {
-	result, err := c.backend.List(ctx, "grafanas", "Grafana", namespace, opts, &grafanav1alpha1.GrafanaList{})
+	result, err := c.backend.List(ctx, "grafanas", namespace, opts, &grafanav1alpha1.GrafanaList{})
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +430,7 @@ func (c *GrafanaV1alpha1) WatchGrafana(ctx context.Context, namespace string, op
 }
 
 func (c *GrafanaV1alpha1) GetGrafanaUser(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result, err := c.backend.Get(ctx, "grafanausers", "GrafanaUser", namespace, name, opts, &grafanav1alpha1.GrafanaUser{})
+	result, err := c.backend.Get(ctx, "grafanausers", namespace, name, opts, &grafanav1alpha1.GrafanaUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +438,7 @@ func (c *GrafanaV1alpha1) GetGrafanaUser(ctx context.Context, namespace, name st
 }
 
 func (c *GrafanaV1alpha1) CreateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.CreateOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result, err := c.backend.Create(ctx, "grafanausers", "GrafanaUser", v, opts, &grafanav1alpha1.GrafanaUser{})
+	result, err := c.backend.Create(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +446,7 @@ func (c *GrafanaV1alpha1) CreateGrafanaUser(ctx context.Context, v *grafanav1alp
 }
 
 func (c *GrafanaV1alpha1) UpdateGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.UpdateOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result, err := c.backend.Update(ctx, "grafanausers", "GrafanaUser", v, opts, &grafanav1alpha1.GrafanaUser{})
+	result, err := c.backend.Update(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +454,7 @@ func (c *GrafanaV1alpha1) UpdateGrafanaUser(ctx context.Context, v *grafanav1alp
 }
 
 func (c *GrafanaV1alpha1) UpdateStatusGrafanaUser(ctx context.Context, v *grafanav1alpha1.GrafanaUser, opts metav1.UpdateOptions) (*grafanav1alpha1.GrafanaUser, error) {
-	result, err := c.backend.UpdateStatus(ctx, "grafanausers", "GrafanaUser", v, opts, &grafanav1alpha1.GrafanaUser{})
+	result, err := c.backend.UpdateStatus(ctx, "grafanausers", v, opts, &grafanav1alpha1.GrafanaUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +466,7 @@ func (c *GrafanaV1alpha1) DeleteGrafanaUser(ctx context.Context, namespace, name
 }
 
 func (c *GrafanaV1alpha1) ListGrafanaUser(ctx context.Context, namespace string, opts metav1.ListOptions) (*grafanav1alpha1.GrafanaUserList, error) {
-	result, err := c.backend.List(ctx, "grafanausers", "GrafanaUser", namespace, opts, &grafanav1alpha1.GrafanaUserList{})
+	result, err := c.backend.List(ctx, "grafanausers", namespace, opts, &grafanav1alpha1.GrafanaUserList{})
 	if err != nil {
 		return nil, err
 	}
@@ -390,14 +479,15 @@ func (c *GrafanaV1alpha1) WatchGrafanaUser(ctx context.Context, namespace string
 
 type HarborV1alpha1 struct {
 	backend Backend
+	config  *rest.Config
 }
 
-func NewHarborV1alpha1Client(b Backend) *HarborV1alpha1 {
-	return &HarborV1alpha1{backend: b}
+func NewHarborV1alpha1Client(b Backend, config *rest.Config) *HarborV1alpha1 {
+	return &HarborV1alpha1{backend: b, config: config}
 }
 
 func (c *HarborV1alpha1) GetHarborProject(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*harborv1alpha1.HarborProject, error) {
-	result, err := c.backend.Get(ctx, "harborprojects", "HarborProject", namespace, name, opts, &harborv1alpha1.HarborProject{})
+	result, err := c.backend.Get(ctx, "harborprojects", namespace, name, opts, &harborv1alpha1.HarborProject{})
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +495,7 @@ func (c *HarborV1alpha1) GetHarborProject(ctx context.Context, namespace, name s
 }
 
 func (c *HarborV1alpha1) CreateHarborProject(ctx context.Context, v *harborv1alpha1.HarborProject, opts metav1.CreateOptions) (*harborv1alpha1.HarborProject, error) {
-	result, err := c.backend.Create(ctx, "harborprojects", "HarborProject", v, opts, &harborv1alpha1.HarborProject{})
+	result, err := c.backend.Create(ctx, "harborprojects", v, opts, &harborv1alpha1.HarborProject{})
 	if err != nil {
 		return nil, err
 	}
@@ -413,7 +503,7 @@ func (c *HarborV1alpha1) CreateHarborProject(ctx context.Context, v *harborv1alp
 }
 
 func (c *HarborV1alpha1) UpdateHarborProject(ctx context.Context, v *harborv1alpha1.HarborProject, opts metav1.UpdateOptions) (*harborv1alpha1.HarborProject, error) {
-	result, err := c.backend.Update(ctx, "harborprojects", "HarborProject", v, opts, &harborv1alpha1.HarborProject{})
+	result, err := c.backend.Update(ctx, "harborprojects", v, opts, &harborv1alpha1.HarborProject{})
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +511,7 @@ func (c *HarborV1alpha1) UpdateHarborProject(ctx context.Context, v *harborv1alp
 }
 
 func (c *HarborV1alpha1) UpdateStatusHarborProject(ctx context.Context, v *harborv1alpha1.HarborProject, opts metav1.UpdateOptions) (*harborv1alpha1.HarborProject, error) {
-	result, err := c.backend.UpdateStatus(ctx, "harborprojects", "HarborProject", v, opts, &harborv1alpha1.HarborProject{})
+	result, err := c.backend.UpdateStatus(ctx, "harborprojects", v, opts, &harborv1alpha1.HarborProject{})
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +523,7 @@ func (c *HarborV1alpha1) DeleteHarborProject(ctx context.Context, namespace, nam
 }
 
 func (c *HarborV1alpha1) ListHarborProject(ctx context.Context, namespace string, opts metav1.ListOptions) (*harborv1alpha1.HarborProjectList, error) {
-	result, err := c.backend.List(ctx, "harborprojects", "HarborProject", namespace, opts, &harborv1alpha1.HarborProjectList{})
+	result, err := c.backend.List(ctx, "harborprojects", namespace, opts, &harborv1alpha1.HarborProjectList{})
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +535,7 @@ func (c *HarborV1alpha1) WatchHarborProject(ctx context.Context, namespace strin
 }
 
 func (c *HarborV1alpha1) GetHarborRobotAccount(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*harborv1alpha1.HarborRobotAccount, error) {
-	result, err := c.backend.Get(ctx, "harborrobotaccounts", "HarborRobotAccount", namespace, name, opts, &harborv1alpha1.HarborRobotAccount{})
+	result, err := c.backend.Get(ctx, "harborrobotaccounts", namespace, name, opts, &harborv1alpha1.HarborRobotAccount{})
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +543,7 @@ func (c *HarborV1alpha1) GetHarborRobotAccount(ctx context.Context, namespace, n
 }
 
 func (c *HarborV1alpha1) CreateHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.CreateOptions) (*harborv1alpha1.HarborRobotAccount, error) {
-	result, err := c.backend.Create(ctx, "harborrobotaccounts", "HarborRobotAccount", v, opts, &harborv1alpha1.HarborRobotAccount{})
+	result, err := c.backend.Create(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
 	if err != nil {
 		return nil, err
 	}
@@ -461,7 +551,7 @@ func (c *HarborV1alpha1) CreateHarborRobotAccount(ctx context.Context, v *harbor
 }
 
 func (c *HarborV1alpha1) UpdateHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.UpdateOptions) (*harborv1alpha1.HarborRobotAccount, error) {
-	result, err := c.backend.Update(ctx, "harborrobotaccounts", "HarborRobotAccount", v, opts, &harborv1alpha1.HarborRobotAccount{})
+	result, err := c.backend.Update(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +559,7 @@ func (c *HarborV1alpha1) UpdateHarborRobotAccount(ctx context.Context, v *harbor
 }
 
 func (c *HarborV1alpha1) UpdateStatusHarborRobotAccount(ctx context.Context, v *harborv1alpha1.HarborRobotAccount, opts metav1.UpdateOptions) (*harborv1alpha1.HarborRobotAccount, error) {
-	result, err := c.backend.UpdateStatus(ctx, "harborrobotaccounts", "HarborRobotAccount", v, opts, &harborv1alpha1.HarborRobotAccount{})
+	result, err := c.backend.UpdateStatus(ctx, "harborrobotaccounts", v, opts, &harborv1alpha1.HarborRobotAccount{})
 	if err != nil {
 		return nil, err
 	}
@@ -481,7 +571,7 @@ func (c *HarborV1alpha1) DeleteHarborRobotAccount(ctx context.Context, namespace
 }
 
 func (c *HarborV1alpha1) ListHarborRobotAccount(ctx context.Context, namespace string, opts metav1.ListOptions) (*harborv1alpha1.HarborRobotAccountList, error) {
-	result, err := c.backend.List(ctx, "harborrobotaccounts", "HarborRobotAccount", namespace, opts, &harborv1alpha1.HarborRobotAccountList{})
+	result, err := c.backend.List(ctx, "harborrobotaccounts", namespace, opts, &harborv1alpha1.HarborRobotAccountList{})
 	if err != nil {
 		return nil, err
 	}
@@ -494,14 +584,15 @@ func (c *HarborV1alpha1) WatchHarborRobotAccount(ctx context.Context, namespace 
 
 type MinioV1alpha1 struct {
 	backend Backend
+	config  *rest.Config
 }
 
-func NewMinioV1alpha1Client(b Backend) *MinioV1alpha1 {
-	return &MinioV1alpha1{backend: b}
+func NewMinioV1alpha1Client(b Backend, config *rest.Config) *MinioV1alpha1 {
+	return &MinioV1alpha1{backend: b, config: config}
 }
 
 func (c *MinioV1alpha1) GetMinIOBucket(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*miniov1alpha1.MinIOBucket, error) {
-	result, err := c.backend.Get(ctx, "miniobuckets", "MinIOBucket", namespace, name, opts, &miniov1alpha1.MinIOBucket{})
+	result, err := c.backend.Get(ctx, "miniobuckets", namespace, name, opts, &miniov1alpha1.MinIOBucket{})
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +600,7 @@ func (c *MinioV1alpha1) GetMinIOBucket(ctx context.Context, namespace, name stri
 }
 
 func (c *MinioV1alpha1) CreateMinIOBucket(ctx context.Context, v *miniov1alpha1.MinIOBucket, opts metav1.CreateOptions) (*miniov1alpha1.MinIOBucket, error) {
-	result, err := c.backend.Create(ctx, "miniobuckets", "MinIOBucket", v, opts, &miniov1alpha1.MinIOBucket{})
+	result, err := c.backend.Create(ctx, "miniobuckets", v, opts, &miniov1alpha1.MinIOBucket{})
 	if err != nil {
 		return nil, err
 	}
@@ -517,7 +608,7 @@ func (c *MinioV1alpha1) CreateMinIOBucket(ctx context.Context, v *miniov1alpha1.
 }
 
 func (c *MinioV1alpha1) UpdateMinIOBucket(ctx context.Context, v *miniov1alpha1.MinIOBucket, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOBucket, error) {
-	result, err := c.backend.Update(ctx, "miniobuckets", "MinIOBucket", v, opts, &miniov1alpha1.MinIOBucket{})
+	result, err := c.backend.Update(ctx, "miniobuckets", v, opts, &miniov1alpha1.MinIOBucket{})
 	if err != nil {
 		return nil, err
 	}
@@ -525,7 +616,7 @@ func (c *MinioV1alpha1) UpdateMinIOBucket(ctx context.Context, v *miniov1alpha1.
 }
 
 func (c *MinioV1alpha1) UpdateStatusMinIOBucket(ctx context.Context, v *miniov1alpha1.MinIOBucket, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOBucket, error) {
-	result, err := c.backend.UpdateStatus(ctx, "miniobuckets", "MinIOBucket", v, opts, &miniov1alpha1.MinIOBucket{})
+	result, err := c.backend.UpdateStatus(ctx, "miniobuckets", v, opts, &miniov1alpha1.MinIOBucket{})
 	if err != nil {
 		return nil, err
 	}
@@ -537,7 +628,7 @@ func (c *MinioV1alpha1) DeleteMinIOBucket(ctx context.Context, namespace, name s
 }
 
 func (c *MinioV1alpha1) ListMinIOBucket(ctx context.Context, namespace string, opts metav1.ListOptions) (*miniov1alpha1.MinIOBucketList, error) {
-	result, err := c.backend.List(ctx, "miniobuckets", "MinIOBucket", namespace, opts, &miniov1alpha1.MinIOBucketList{})
+	result, err := c.backend.List(ctx, "miniobuckets", namespace, opts, &miniov1alpha1.MinIOBucketList{})
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +640,7 @@ func (c *MinioV1alpha1) WatchMinIOBucket(ctx context.Context, namespace string, 
 }
 
 func (c *MinioV1alpha1) GetMinIOCluster(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*miniov1alpha1.MinIOCluster, error) {
-	result, err := c.backend.Get(ctx, "minioclusters", "MinIOCluster", namespace, name, opts, &miniov1alpha1.MinIOCluster{})
+	result, err := c.backend.Get(ctx, "minioclusters", namespace, name, opts, &miniov1alpha1.MinIOCluster{})
 	if err != nil {
 		return nil, err
 	}
@@ -557,7 +648,7 @@ func (c *MinioV1alpha1) GetMinIOCluster(ctx context.Context, namespace, name str
 }
 
 func (c *MinioV1alpha1) CreateMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.CreateOptions) (*miniov1alpha1.MinIOCluster, error) {
-	result, err := c.backend.Create(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	result, err := c.backend.Create(ctx, "minioclusters", v, opts, &miniov1alpha1.MinIOCluster{})
 	if err != nil {
 		return nil, err
 	}
@@ -565,7 +656,7 @@ func (c *MinioV1alpha1) CreateMinIOCluster(ctx context.Context, v *miniov1alpha1
 }
 
 func (c *MinioV1alpha1) UpdateMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOCluster, error) {
-	result, err := c.backend.Update(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	result, err := c.backend.Update(ctx, "minioclusters", v, opts, &miniov1alpha1.MinIOCluster{})
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +664,7 @@ func (c *MinioV1alpha1) UpdateMinIOCluster(ctx context.Context, v *miniov1alpha1
 }
 
 func (c *MinioV1alpha1) UpdateStatusMinIOCluster(ctx context.Context, v *miniov1alpha1.MinIOCluster, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOCluster, error) {
-	result, err := c.backend.UpdateStatus(ctx, "minioclusters", "MinIOCluster", v, opts, &miniov1alpha1.MinIOCluster{})
+	result, err := c.backend.UpdateStatus(ctx, "minioclusters", v, opts, &miniov1alpha1.MinIOCluster{})
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +676,7 @@ func (c *MinioV1alpha1) DeleteMinIOCluster(ctx context.Context, namespace, name 
 }
 
 func (c *MinioV1alpha1) ListMinIOCluster(ctx context.Context, namespace string, opts metav1.ListOptions) (*miniov1alpha1.MinIOClusterList, error) {
-	result, err := c.backend.List(ctx, "minioclusters", "MinIOCluster", namespace, opts, &miniov1alpha1.MinIOClusterList{})
+	result, err := c.backend.List(ctx, "minioclusters", namespace, opts, &miniov1alpha1.MinIOClusterList{})
 	if err != nil {
 		return nil, err
 	}
@@ -597,7 +688,7 @@ func (c *MinioV1alpha1) WatchMinIOCluster(ctx context.Context, namespace string,
 }
 
 func (c *MinioV1alpha1) GetMinIOUser(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*miniov1alpha1.MinIOUser, error) {
-	result, err := c.backend.Get(ctx, "miniousers", "MinIOUser", namespace, name, opts, &miniov1alpha1.MinIOUser{})
+	result, err := c.backend.Get(ctx, "miniousers", namespace, name, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -605,7 +696,7 @@ func (c *MinioV1alpha1) GetMinIOUser(ctx context.Context, namespace, name string
 }
 
 func (c *MinioV1alpha1) CreateMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.CreateOptions) (*miniov1alpha1.MinIOUser, error) {
-	result, err := c.backend.Create(ctx, "miniousers", "MinIOUser", v, opts, &miniov1alpha1.MinIOUser{})
+	result, err := c.backend.Create(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -613,7 +704,7 @@ func (c *MinioV1alpha1) CreateMinIOUser(ctx context.Context, v *miniov1alpha1.Mi
 }
 
 func (c *MinioV1alpha1) UpdateMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOUser, error) {
-	result, err := c.backend.Update(ctx, "miniousers", "MinIOUser", v, opts, &miniov1alpha1.MinIOUser{})
+	result, err := c.backend.Update(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -621,7 +712,7 @@ func (c *MinioV1alpha1) UpdateMinIOUser(ctx context.Context, v *miniov1alpha1.Mi
 }
 
 func (c *MinioV1alpha1) UpdateStatusMinIOUser(ctx context.Context, v *miniov1alpha1.MinIOUser, opts metav1.UpdateOptions) (*miniov1alpha1.MinIOUser, error) {
-	result, err := c.backend.UpdateStatus(ctx, "miniousers", "MinIOUser", v, opts, &miniov1alpha1.MinIOUser{})
+	result, err := c.backend.UpdateStatus(ctx, "miniousers", v, opts, &miniov1alpha1.MinIOUser{})
 	if err != nil {
 		return nil, err
 	}
@@ -633,7 +724,7 @@ func (c *MinioV1alpha1) DeleteMinIOUser(ctx context.Context, namespace, name str
 }
 
 func (c *MinioV1alpha1) ListMinIOUser(ctx context.Context, namespace string, opts metav1.ListOptions) (*miniov1alpha1.MinIOUserList, error) {
-	result, err := c.backend.List(ctx, "miniousers", "MinIOUser", namespace, opts, &miniov1alpha1.MinIOUserList{})
+	result, err := c.backend.List(ctx, "miniousers", namespace, opts, &miniov1alpha1.MinIOUserList{})
 	if err != nil {
 		return nil, err
 	}
@@ -642,94 +733,6 @@ func (c *MinioV1alpha1) ListMinIOUser(ctx context.Context, namespace string, opt
 
 func (c *MinioV1alpha1) WatchMinIOUser(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
 	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "minio.f110.dev", Version: "v1alpha1", Resource: "miniousers"}, namespace, opts)
-}
-
-type MiniocontrollerV1beta1 struct {
-	backend Backend
-}
-
-func NewMiniocontrollerV1beta1Client(b Backend) *MiniocontrollerV1beta1 {
-	return &MiniocontrollerV1beta1{backend: b}
-}
-
-func (c *MiniocontrollerV1beta1) GetMinIOInstance(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*v1beta1.MinIOInstance, error) {
-	result, err := c.backend.Get(ctx, "minioinstances", "MinIOInstance", namespace, name, opts, &v1beta1.MinIOInstance{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.MinIOInstance), nil
-}
-
-func (c *MiniocontrollerV1beta1) CreateMinIOInstance(ctx context.Context, v *v1beta1.MinIOInstance, opts metav1.CreateOptions) (*v1beta1.MinIOInstance, error) {
-	result, err := c.backend.Create(ctx, "minioinstances", "MinIOInstance", v, opts, &v1beta1.MinIOInstance{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.MinIOInstance), nil
-}
-
-func (c *MiniocontrollerV1beta1) UpdateMinIOInstance(ctx context.Context, v *v1beta1.MinIOInstance, opts metav1.UpdateOptions) (*v1beta1.MinIOInstance, error) {
-	result, err := c.backend.Update(ctx, "minioinstances", "MinIOInstance", v, opts, &v1beta1.MinIOInstance{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.MinIOInstance), nil
-}
-
-func (c *MiniocontrollerV1beta1) DeleteMinIOInstance(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "minioinstances"}, namespace, name, opts)
-}
-
-func (c *MiniocontrollerV1beta1) ListMinIOInstance(ctx context.Context, namespace string, opts metav1.ListOptions) (*v1beta1.MinIOInstanceList, error) {
-	result, err := c.backend.List(ctx, "minioinstances", "MinIOInstance", namespace, opts, &v1beta1.MinIOInstanceList{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.MinIOInstanceList), nil
-}
-
-func (c *MiniocontrollerV1beta1) WatchMinIOInstance(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "minioinstances"}, namespace, opts)
-}
-
-func (c *MiniocontrollerV1beta1) GetMirror(ctx context.Context, namespace, name string, opts metav1.GetOptions) (*v1beta1.Mirror, error) {
-	result, err := c.backend.Get(ctx, "mirrors", "Mirror", namespace, name, opts, &v1beta1.Mirror{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.Mirror), nil
-}
-
-func (c *MiniocontrollerV1beta1) CreateMirror(ctx context.Context, v *v1beta1.Mirror, opts metav1.CreateOptions) (*v1beta1.Mirror, error) {
-	result, err := c.backend.Create(ctx, "mirrors", "Mirror", v, opts, &v1beta1.Mirror{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.Mirror), nil
-}
-
-func (c *MiniocontrollerV1beta1) UpdateMirror(ctx context.Context, v *v1beta1.Mirror, opts metav1.UpdateOptions) (*v1beta1.Mirror, error) {
-	result, err := c.backend.Update(ctx, "mirrors", "Mirror", v, opts, &v1beta1.Mirror{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.Mirror), nil
-}
-
-func (c *MiniocontrollerV1beta1) DeleteMirror(ctx context.Context, namespace, name string, opts metav1.DeleteOptions) error {
-	return c.backend.Delete(ctx, schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "mirrors"}, namespace, name, opts)
-}
-
-func (c *MiniocontrollerV1beta1) ListMirror(ctx context.Context, namespace string, opts metav1.ListOptions) (*v1beta1.MirrorList, error) {
-	result, err := c.backend.List(ctx, "mirrors", "Mirror", namespace, opts, &v1beta1.MirrorList{})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*v1beta1.MirrorList), nil
-}
-
-func (c *MiniocontrollerV1beta1) WatchMirror(ctx context.Context, namespace string, opts metav1.ListOptions) (watch.Interface, error) {
-	return c.backend.Watch(ctx, schema.GroupVersionResource{Group: "miniocontroller.min.io", Version: "v1beta1", Resource: "mirrors"}, namespace, opts)
 }
 
 type InformerCache struct {
@@ -801,10 +804,6 @@ func (f *InformerFactory) InformerFor(obj runtime.Object) cache.SharedIndexInfor
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case *miniov1alpha1.MinIOUser:
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
-	case *v1beta1.MinIOInstance:
-		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MinIOInstanceInformer()
-	case *v1beta1.Mirror:
-		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MirrorInformer()
 	default:
 		return nil
 	}
@@ -828,10 +827,6 @@ func (f *InformerFactory) InformerForResource(gvr schema.GroupVersionResource) c
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOClusterInformer()
 	case miniov1alpha1.SchemaGroupVersion.WithResource("miniousers"):
 		return NewMinioV1alpha1Informer(f.cache, f.set.MinioV1alpha1, f.namespace, f.resyncPeriod).MinIOUserInformer()
-	case v1beta1.SchemeGroupVersion.WithResource("minioinstances"):
-		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MinIOInstanceInformer()
-	case v1beta1.SchemeGroupVersion.WithResource("mirrors"):
-		return NewMiniocontrollerV1beta1Informer(f.cache, f.set.MiniocontrollerV1beta1, f.namespace, f.resyncPeriod).MirrorInformer()
 	default:
 		return nil
 	}
@@ -865,10 +860,10 @@ func (f *ConsulV1alpha1Informer) ConsulBackupInformer() cache.SharedIndexInforme
 	return f.cache.Write(&consulv1alpha1.ConsulBackup{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -905,10 +900,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaInformer() cache.SharedIndexInformer {
 	return f.cache.Write(&grafanav1alpha1.Grafana{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -927,10 +922,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaUserInformer() cache.SharedIndexInforme
 	return f.cache.Write(&grafanav1alpha1.GrafanaUser{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -967,10 +962,10 @@ func (f *HarborV1alpha1Informer) HarborProjectInformer() cache.SharedIndexInform
 	return f.cache.Write(&harborv1alpha1.HarborProject{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -989,10 +984,10 @@ func (f *HarborV1alpha1Informer) HarborRobotAccountInformer() cache.SharedIndexI
 	return f.cache.Write(&harborv1alpha1.HarborRobotAccount{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1029,10 +1024,10 @@ func (f *MinioV1alpha1Informer) MinIOBucketInformer() cache.SharedIndexInformer 
 	return f.cache.Write(&miniov1alpha1.MinIOBucket{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1051,10 +1046,10 @@ func (f *MinioV1alpha1Informer) MinIOClusterInformer() cache.SharedIndexInformer
 	return f.cache.Write(&miniov1alpha1.MinIOCluster{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1073,10 +1068,10 @@ func (f *MinioV1alpha1Informer) MinIOUserInformer() cache.SharedIndexInformer {
 	return f.cache.Write(&miniov1alpha1.MinIOUser{}, func() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
 					return f.client.ListMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
 					return f.client.WatchMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
 				},
 			},
@@ -1089,68 +1084,6 @@ func (f *MinioV1alpha1Informer) MinIOUserInformer() cache.SharedIndexInformer {
 
 func (f *MinioV1alpha1Informer) MinIOUserLister() *MinioV1alpha1MinIOUserLister {
 	return NewMinioV1alpha1MinIOUserLister(f.MinIOUserInformer().GetIndexer())
-}
-
-type MiniocontrollerV1beta1Informer struct {
-	cache        *InformerCache
-	client       *MiniocontrollerV1beta1
-	namespace    string
-	resyncPeriod time.Duration
-	indexers     cache.Indexers
-}
-
-func NewMiniocontrollerV1beta1Informer(c *InformerCache, client *MiniocontrollerV1beta1, namespace string, resyncPeriod time.Duration) *MiniocontrollerV1beta1Informer {
-	return &MiniocontrollerV1beta1Informer{
-		cache:        c,
-		client:       client,
-		namespace:    namespace,
-		resyncPeriod: resyncPeriod,
-		indexers:     cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
-	}
-}
-
-func (f *MiniocontrollerV1beta1Informer) MinIOInstanceInformer() cache.SharedIndexInformer {
-	return f.cache.Write(&v1beta1.MinIOInstance{}, func() cache.SharedIndexInformer {
-		return cache.NewSharedIndexInformer(
-			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
-				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
-				},
-			},
-			&v1beta1.MinIOInstance{},
-			f.resyncPeriod,
-			f.indexers,
-		)
-	})
-}
-
-func (f *MiniocontrollerV1beta1Informer) MinIOInstanceLister() *MiniocontrollerV1beta1MinIOInstanceLister {
-	return NewMiniocontrollerV1beta1MinIOInstanceLister(f.MinIOInstanceInformer().GetIndexer())
-}
-
-func (f *MiniocontrollerV1beta1Informer) MirrorInformer() cache.SharedIndexInformer {
-	return f.cache.Write(&v1beta1.Mirror{}, func() cache.SharedIndexInformer {
-		return cache.NewSharedIndexInformer(
-			&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMirror(context.TODO(), f.namespace, metav1.ListOptions{})
-				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMirror(context.TODO(), f.namespace, metav1.ListOptions{})
-				},
-			},
-			&v1beta1.Mirror{},
-			f.resyncPeriod,
-			f.indexers,
-		)
-	})
-}
-
-func (f *MiniocontrollerV1beta1Informer) MirrorLister() *MiniocontrollerV1beta1MirrorLister {
-	return NewMiniocontrollerV1beta1MirrorLister(f.MirrorInformer().GetIndexer())
 }
 
 type ConsulV1alpha1ConsulBackupLister struct {
@@ -1367,58 +1300,4 @@ func (x *MinioV1alpha1MinIOUserLister) Get(namespace, name string) (*miniov1alph
 		return nil, k8serrors.NewNotFound(miniov1alpha1.SchemaGroupVersion.WithResource("miniouser").GroupResource(), name)
 	}
 	return obj.(*miniov1alpha1.MinIOUser).DeepCopy(), nil
-}
-
-type MiniocontrollerV1beta1MinIOInstanceLister struct {
-	indexer cache.Indexer
-}
-
-func NewMiniocontrollerV1beta1MinIOInstanceLister(indexer cache.Indexer) *MiniocontrollerV1beta1MinIOInstanceLister {
-	return &MiniocontrollerV1beta1MinIOInstanceLister{indexer: indexer}
-}
-
-func (x *MiniocontrollerV1beta1MinIOInstanceLister) List(namespace string, selector labels.Selector) ([]*v1beta1.MinIOInstance, error) {
-	var ret []*v1beta1.MinIOInstance
-	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.MinIOInstance).DeepCopy())
-	})
-	return ret, err
-}
-
-func (x *MiniocontrollerV1beta1MinIOInstanceLister) Get(namespace, name string) (*v1beta1.MinIOInstance, error) {
-	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, k8serrors.NewNotFound(v1beta1.SchemeGroupVersion.WithResource("minioinstance").GroupResource(), name)
-	}
-	return obj.(*v1beta1.MinIOInstance).DeepCopy(), nil
-}
-
-type MiniocontrollerV1beta1MirrorLister struct {
-	indexer cache.Indexer
-}
-
-func NewMiniocontrollerV1beta1MirrorLister(indexer cache.Indexer) *MiniocontrollerV1beta1MirrorLister {
-	return &MiniocontrollerV1beta1MirrorLister{indexer: indexer}
-}
-
-func (x *MiniocontrollerV1beta1MirrorLister) List(namespace string, selector labels.Selector) ([]*v1beta1.Mirror, error) {
-	var ret []*v1beta1.Mirror
-	err := cache.ListAllByNamespace(x.indexer, namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1beta1.Mirror).DeepCopy())
-	})
-	return ret, err
-}
-
-func (x *MiniocontrollerV1beta1MirrorLister) Get(namespace, name string) (*v1beta1.Mirror, error) {
-	obj, exists, err := x.indexer.GetByKey(namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, k8serrors.NewNotFound(v1beta1.SchemeGroupVersion.WithResource("mirror").GroupResource(), name)
-	}
-	return obj.(*v1beta1.Mirror).DeepCopy(), nil
 }

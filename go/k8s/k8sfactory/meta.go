@@ -6,11 +6,11 @@ import (
 	"slices"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	policyv1 "k8s.io/api/policy/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.f110.dev/kubeproto/go/apis/appsv1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/apis/policyv1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
@@ -45,8 +45,11 @@ func DefaultNamespace(object any) {
 
 func Namespace(v string) Trait {
 	return func(object any) {
-		m, ok := object.(metav1.Object)
-		if ok {
+		if m, ok := object.(metav1.Object); ok {
+			m.GetObjectMeta().SetNamespace(v)
+			return
+		}
+		if m, ok := object.(interface{ SetNamespace(string) }); ok {
 			m.SetNamespace(v)
 			return
 		}
@@ -57,7 +60,7 @@ func Generation(v int64) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			m.SetGeneration(v)
+			m.GetObjectMeta().SetGeneration(v)
 		}
 	}
 }
@@ -66,7 +69,7 @@ func UID() Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			m.SetUID(uuid.NewUUID())
+			m.GetObjectMeta().SetUID(uuid.NewUUID())
 		}
 	}
 }
@@ -74,10 +77,10 @@ func UID() Trait {
 func Created(object any) {
 	m, ok := object.(metav1.Object)
 	if ok {
-		m.SetCreationTimestamp(metav1.Now())
-		m.SetUID(uuid.NewUUID())
-		if m.GetGenerateName() != "" && m.GetName() == "" {
-			m.SetName(m.GetGenerateName() + stringsutil.RandomString(5))
+		m.GetObjectMeta().CreationTimestamp = new(metav1.Now())
+		m.GetObjectMeta().SetUID(uuid.NewUUID())
+		if m.GetObjectMeta().GetGenerateName() != "" && m.GetObjectMeta().GetName() == "" {
+			m.GetObjectMeta().SetName(m.GetObjectMeta().GetGenerateName() + stringsutil.RandomString(5))
 		}
 	}
 }
@@ -87,7 +90,7 @@ func CreatedAt(now time.Time) Trait {
 		Created(object)
 		m, ok := object.(metav1.Object)
 		if ok {
-			m.SetCreationTimestamp(metav1.Time{Time: now})
+			m.GetObjectMeta().CreationTimestamp = new(metav1.NewTime(now))
 		}
 	}
 }
@@ -95,8 +98,7 @@ func CreatedAt(now time.Time) Trait {
 func Delete(object any) {
 	m, ok := object.(metav1.Object)
 	if ok {
-		n := metav1.Now()
-		m.SetDeletionTimestamp(&n)
+		m.GetObjectMeta().DeletionTimestamp = new(metav1.Now())
 	}
 }
 
@@ -104,7 +106,7 @@ func Annotation(k, v string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			a := m.GetAnnotations()
+			a := m.GetObjectMeta().GetAnnotations()
 			if a == nil {
 				a = make(map[string]string)
 			}
@@ -113,7 +115,7 @@ func Annotation(k, v string) Trait {
 			} else {
 				a[k] = v
 			}
-			m.SetAnnotations(a)
+			m.GetObjectMeta().SetAnnotations(a)
 			return
 		}
 	}
@@ -123,13 +125,13 @@ func Annotations(annotations map[string]string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			a := m.GetAnnotations()
+			a := m.GetObjectMeta().GetAnnotations()
 			if a != nil {
 				maps.Copy(a, annotations)
 			} else {
 				a = annotations
 			}
-			m.SetAnnotations(a)
+			m.GetObjectMeta().SetAnnotations(a)
 			return
 		}
 	}
@@ -139,14 +141,14 @@ func Label(v ...string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			a := m.GetLabels()
+			a := m.GetObjectMeta().GetLabels()
 			if a == nil {
 				a = make(map[string]string)
 			}
 			for i := 0; i < len(v); i += 2 {
 				a[v[i]] = v[i+1]
 			}
-			m.SetLabels(a)
+			m.GetObjectMeta().SetLabels(a)
 			return
 		}
 	}
@@ -154,8 +156,20 @@ func Label(v ...string) Trait {
 
 func Labels(label map[string]string) Trait {
 	return func(object any) {
-		m, ok := object.(metav1.Object)
-		if ok {
+		if m, ok := object.(metav1.Object); ok {
+			a := m.GetObjectMeta().GetLabels()
+			if a != nil {
+				maps.Copy(a, label)
+			} else {
+				a = label
+			}
+			m.GetObjectMeta().SetLabels(a)
+			return
+		}
+		if m, ok := object.(interface {
+			GetLabels() map[string]string
+			SetLabels(map[string]string)
+		}); ok {
 			a := m.GetLabels()
 			if a != nil {
 				maps.Copy(a, label)
@@ -193,8 +207,8 @@ func ControlledBy(v runtime.Object, s *runtime.Scheme) Trait {
 				return
 			}
 
-			ref := append(m.GetOwnerReferences(), *metav1.NewControllerRef(objectMeta, gvks[0]))
-			m.SetOwnerReferences(ref)
+			ref := append(m.GetObjectMeta().OwnerReferences, metav1.NewControllerRef(*objectMeta.GetObjectMeta(), gvks[0]))
+			m.GetObjectMeta().OwnerReferences = ref
 		}
 	}
 }
@@ -204,7 +218,7 @@ func ClearOwnerReference(object any) {
 	if !ok {
 		return
 	}
-	objMeta.SetOwnerReferences(make([]metav1.OwnerReference, 0))
+	objMeta.GetObjectMeta().OwnerReferences = make([]metav1.OwnerReference, 0)
 }
 
 func MatchLabel(v map[string]string) metav1.LabelSelector {
@@ -223,12 +237,24 @@ func MatchLabelSelector(label map[string]string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Service:
+			if obj.Spec == nil {
+				obj.Spec = &corev1.ServiceSpec{}
+			}
 			obj.Spec.Selector = label
 		case *appsv1.Deployment:
+			if obj.Spec == nil {
+				obj.Spec = &appsv1.DeploymentSpec{}
+			}
 			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
 		case *policyv1.PodDisruptionBudget:
+			if obj.Spec == nil {
+				obj.Spec = &policyv1.PodDisruptionBudgetSpec{}
+			}
 			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
 		case *batchv1.Job:
+			if obj.Spec == nil {
+				obj.Spec = &batchv1.JobSpec{}
+			}
 			obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: label}
 		}
 	}
@@ -238,12 +264,12 @@ func Finalizer(v string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			found := slices.Contains(m.GetFinalizers(), v)
+			found := slices.Contains(m.GetObjectMeta().GetFinalizers(), v)
 			if found {
 				return
 			}
 
-			m.SetFinalizers(append(m.GetFinalizers(), v))
+			m.GetObjectMeta().SetFinalizers(append(m.GetObjectMeta().GetFinalizers(), v))
 		}
 	}
 }
@@ -252,7 +278,7 @@ func RemoveFinalizer(v string) Trait {
 	return func(object any) {
 		m, ok := object.(metav1.Object)
 		if ok {
-			m.SetFinalizers(enumerable.Delete(m.GetFinalizers(), v))
+			m.GetObjectMeta().SetFinalizers(enumerable.Delete(m.GetObjectMeta().GetFinalizers(), v))
 		}
 	}
 }

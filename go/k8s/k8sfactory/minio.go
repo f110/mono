@@ -1,9 +1,10 @@
 package k8sfactory
 
 import (
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
 )
 
 func MinIOInstanceFactory(base *miniocontrollerv1beta1.MinIOInstance, traits ...Trait) *miniocontrollerv1beta1.MinIOInstance {

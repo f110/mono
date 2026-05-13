@@ -3,12 +3,12 @@ package k8sfactory
 import (
 	"path/filepath"
 
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	policyv1 "k8s.io/api/policy/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
+	"go.f110.dev/kubeproto/go/apis/appsv1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/networkingv1"
+	"go.f110.dev/kubeproto/go/apis/policyv1"
+	"go.f110.dev/kubeproto/go/apis/rbacv1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -100,7 +100,7 @@ func OnContainer(name string, t ...Trait) Trait {
 				}
 			}
 		case *batchv1.Job:
-			fn(&v.Spec.Template.Spec)
+			fn(v.Spec.Template.Spec)
 		}
 	}
 	return fn
@@ -197,7 +197,7 @@ func NewSecretStoreVolumeSource(name, path string) *VolumeSource {
 			VolumeSource: corev1.VolumeSource{
 				CSI: &corev1.CSIVolumeSource{
 					Driver:   "secrets-store.csi.k8s.io",
-					ReadOnly: new(true),
+					ReadOnly: true,
 					VolumeAttributes: map[string]string{
 						"secretProviderClass": name,
 					},

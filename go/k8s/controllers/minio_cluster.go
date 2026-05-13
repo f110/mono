@@ -16,19 +16,17 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/policy"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
@@ -50,52 +48,51 @@ const (
 type MinIOClusterController struct {
 	*controllerutil.GenericControllerBase[*miniov1alpha1.MinIOCluster]
 
-	config        *rest.Config
-	coreClient    kubernetes.Interface
+	coreClient    *k8sclient.Set
 	vaultClient   *vault.Client
 	mClient       *client.MinioV1alpha1
-	podLister     corev1listers.PodLister
-	pvcLister     corev1listers.PersistentVolumeClaimLister
-	serviceLister corev1listers.ServiceLister
-	secretLister  corev1listers.SecretLister
+	podLister     *k8sclient.CoreV1PodLister
+	pvcLister     *k8sclient.CoreV1PersistentVolumeClaimLister
+	serviceLister *k8sclient.CoreV1ServiceLister
+	secretLister  *k8sclient.CoreV1SecretLister
 
 	runOutsideCluster bool
 }
 
 func NewMinIOClusterController(
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
-	cfg *rest.Config,
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
+	coreSharedInformerFactory *k8sclient.InformerFactory,
 	factory *client.InformerFactory,
 	vaultClient *vault.Client,
 	runOutsideCluster bool,
 ) *MinIOClusterController {
-	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
-	podInformer := coreSharedInformerFactory.Core().V1().Pods()
-	pvcInformer := coreSharedInformerFactory.Core().V1().PersistentVolumeClaims()
-	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
+	coreInformers := k8sclient.NewCoreV1Informer(coreSharedInformerFactory.Cache(), coreClient.CoreV1, metav1.NamespaceAll, 30*time.Second)
+	serviceInformer := coreInformers.ServiceInformer()
+	podInformer := coreInformers.PodInformer()
+	pvcInformer := coreInformers.PersistentVolumeClaimInformer()
+	secretInformer := coreInformers.SecretInformer()
 	informers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	mcInformer := informers.MinIOClusterInformer()
 	mcLister := informers.MinIOClusterLister()
 
 	c := &MinIOClusterController{
 		runOutsideCluster: runOutsideCluster,
-		config:            cfg,
 		coreClient:        coreClient,
 		vaultClient:       vaultClient,
 		mClient:           apiClient.MinioV1alpha1,
-		podLister:         podInformer.Lister(),
-		pvcLister:         pvcInformer.Lister(),
-		serviceLister:     serviceInformer.Lister(),
-		secretLister:      secretInformer.Lister(),
+		podLister:         coreInformers.PodLister(),
+		pvcLister:         coreInformers.PersistentVolumeClaimLister(),
+		serviceLister:     coreInformers.ServiceLister(),
+		secretLister:      coreInformers.SecretLister(),
 	}
 	c.GenericControllerBase = controllerutil.NewGenericControllerBase[*miniov1alpha1.MinIOCluster](
 		"minio-cluster-controller",
 		c.newReconciler,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{mcInformer},
-		[]cache.SharedIndexInformer{serviceInformer.Informer(), podInformer.Informer(), secretInformer.Informer(), pvcInformer.Informer()},
+		[]cache.SharedIndexInformer{serviceInformer, podInformer, secretInformer, pvcInformer},
 		[]string{minIOClusterControllerFinalizerName},
 		mcLister.Get,
 		apiClient.MinioV1alpha1.UpdateMinIOCluster,
@@ -106,7 +103,6 @@ func NewMinIOClusterController(
 
 func (c *MinIOClusterController) newReconciler() controllerutil.GenericReconciler[*miniov1alpha1.MinIOCluster] {
 	return &minIOClusterReconciler{
-		config:            c.config,
 		coreClient:        c.coreClient,
 		vaultClient:       c.vaultClient,
 		mClient:           c.mClient,
@@ -121,14 +117,13 @@ func (c *MinIOClusterController) newReconciler() controllerutil.GenericReconcile
 }
 
 type minIOClusterReconciler struct {
-	config        *rest.Config
-	coreClient    kubernetes.Interface
+	coreClient    *k8sclient.Set
 	vaultClient   *vault.Client
 	mClient       *client.MinioV1alpha1
-	podLister     corev1listers.PodLister
-	pvcLister     corev1listers.PersistentVolumeClaimLister
-	serviceLister corev1listers.ServiceLister
-	secretLister  corev1listers.SecretLister
+	podLister     *k8sclient.CoreV1PodLister
+	pvcLister     *k8sclient.CoreV1PersistentVolumeClaimLister
+	serviceLister *k8sclient.CoreV1ServiceLister
+	secretLister  *k8sclient.CoreV1SecretLister
 
 	logger            *zap.Logger
 	recorder          record.EventRecorder
@@ -160,7 +155,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 		if existPVC == nil {
 			pvc := m.pvc(rCtx.Obj, i+1)
 			m.changed = true
-			if _, err := m.coreClient.CoreV1().PersistentVolumeClaims(pvc.Namespace).Create(ctx, pvc, metav1.CreateOptions{}); err != nil {
+			if _, err := m.coreClient.CoreV1.CreatePersistentVolumeClaim(ctx, pvc, metav1.CreateOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		}
@@ -175,15 +170,15 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 		pod := m.pod(rCtx.Obj, i+1)
 		if existPod == nil {
 			m.changed = true
-			if _, err := m.coreClient.CoreV1().Pods(pod.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
+			if _, err := m.coreClient.CoreV1.CreatePod(ctx, pod, metav1.CreateOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		} else if reflect.DeepEqual(existPod.Spec, pod.Spec) {
 			m.changed = true
-			if err := m.coreClient.CoreV1().Pods(existPod.Namespace).Delete(ctx, existPod.Name, metav1.DeleteOptions{}); err != nil {
+			if err := m.coreClient.CoreV1.DeletePod(ctx, existPod.Namespace, existPod.Name, metav1.DeleteOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
-			if _, err := m.coreClient.CoreV1().Pods(existPod.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
+			if _, err := m.coreClient.CoreV1.CreatePod(ctx, existPod, metav1.CreateOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		}
@@ -197,12 +192,12 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	for _, svc := range svcs {
 		if oldSvc, ok := existSvc[svc.Name]; !ok {
 			m.changed = true
-			if _, err := m.coreClient.CoreV1().Services(svc.Namespace).Create(ctx, svc, metav1.CreateOptions{}); err != nil {
+			if _, err := m.coreClient.CoreV1.CreateService(ctx, svc, metav1.CreateOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		} else if !reflect.DeepEqual(svc, oldSvc) {
 			m.changed = true
-			if _, err := m.coreClient.CoreV1().Services(svc.Namespace).Update(ctx, svc, metav1.UpdateOptions{}); err != nil {
+			if _, err := m.coreClient.CoreV1.UpdateService(ctx, svc, metav1.UpdateOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		}
@@ -211,7 +206,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	if rCtx.secret == nil {
 		secret := m.secret(rCtx.Obj)
 		m.changed = true
-		if _, err := m.coreClient.CoreV1().Secrets(secret.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+		if _, err := m.coreClient.CoreV1.CreateSecret(ctx, secret, metav1.CreateOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
 	}
@@ -224,13 +219,13 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	if rCtx.Obj.Spec.Nodes == len(rCtx.pods) {
 		ready := true
 		for _, pod := range rCtx.pods {
-			if pod.Status.Phase != corev1.PodRunning {
+			if pod.Status.Phase != corev1.PodPhaseRunning {
 				ready = false
 			}
 
-			idx := enumerable.Index(pod.Status.Conditions, func(cond corev1.PodCondition) bool { return cond.Type == corev1.PodReady })
+			idx := enumerable.Index(pod.Status.Conditions, func(cond corev1.PodCondition) bool { return cond.Type == corev1.PodConditionTypeReady })
 			if idx != -1 {
-				if pod.Status.Conditions[idx].Status != corev1.ConditionTrue {
+				if pod.Status.Conditions[idx].Status != corev1.ConditionStatusTrue {
 					ready = false
 				}
 			} else {
@@ -285,27 +280,27 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 
 	for _, p := range rCtx.pods {
 		m.changed = true
-		if err := m.coreClient.CoreV1().Pods(p.Namespace).Delete(ctx, p.Name, metav1.DeleteOptions{}); err != nil {
+		if err := m.coreClient.CoreV1.DeletePod(ctx, p.Namespace, p.Name, metav1.DeleteOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
 	}
 	for _, pvc := range rCtx.pvc {
 		m.changed = true
-		if err := m.coreClient.CoreV1().PersistentVolumeClaims(pvc.Namespace).Delete(ctx, pvc.Name, metav1.DeleteOptions{}); err != nil {
+		if err := m.coreClient.CoreV1.DeletePersistentVolumeClaim(ctx, pvc.Namespace, pvc.Name, metav1.DeleteOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
 	}
 	if rCtx.svcs != nil {
 		m.changed = true
 		for _, svc := range rCtx.svcs {
-			if err := m.coreClient.CoreV1().Services(svc.Namespace).Delete(ctx, svc.Name, metav1.DeleteOptions{}); err != nil {
+			if err := m.coreClient.CoreV1.DeleteService(ctx, svc.Namespace, svc.Name, metav1.DeleteOptions{}); err != nil {
 				return controllerutil.WrapRetryError(xerrors.WithStack(err))
 			}
 		}
 	}
 	if rCtx.secret != nil {
 		m.changed = true
-		if err := m.coreClient.CoreV1().Secrets(rCtx.secret.Namespace).Delete(ctx, rCtx.secret.Name, metav1.DeleteOptions{}); err != nil {
+		if err := m.coreClient.CoreV1.DeleteSecret(ctx, rCtx.secret.Namespace, rCtx.secret.Name, metav1.DeleteOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
 	}
@@ -334,7 +329,7 @@ func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
 
 	instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", ctx.Obj.Name, ctx.Obj.Namespace)
 	if m.runOutsideCluster {
-		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
+		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.coreClient, m.podLister)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -429,7 +424,7 @@ func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
 
 	instanceEndpoint := fmt.Sprintf("%s.%s.svc:9000", ctx.Obj.Name, ctx.Obj.Namespace)
 	if m.runOutsideCluster {
-		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.config, m.coreClient, m.podLister)
+		forwarder, port, err := portforward.PortForward(ctx, ctx.svcs[0], 9000, m.coreClient, m.podLister)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -462,7 +457,7 @@ func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
 
 	var clientSecret string
 	if ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret != nil {
-		secret, err := m.secretLister.Secrets(ctx.Obj.Namespace).Get(ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret.Name)
+		secret, err := m.secretLister.Get(ctx.Obj.Namespace, ctx.Obj.Spec.IdentityProvider.ClientSecret.Secret.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -512,7 +507,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	pods, err := m.podLister.Pods(ctx.Obj.Namespace).List(labels.NewSelector().Add(*r))
+	pods, err := m.podLister.List(ctx.Obj.Namespace, labels.NewSelector().Add(*r))
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -534,7 +529,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	sort.Slice(owned, func(i, j int) bool { return owned[i].Name < owned[j].Name })
 	ctx.pods = owned
 
-	p, err := m.pvcLister.PersistentVolumeClaims(ctx.Obj.Namespace).List(labels.NewSelector().Add(*r))
+	p, err := m.pvcLister.List(ctx.Obj.Namespace, labels.NewSelector().Add(*r))
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -555,7 +550,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 	}
 	ctx.pvc = pvcs
 
-	svc, err := m.serviceLister.Services(ctx.Obj.Namespace).Get(ctx.Obj.Name)
+	svc, err := m.serviceLister.Get(ctx.Obj.Namespace, ctx.Obj.Name)
 	if err != nil && !kerrors.IsNotFound(err) {
 		return xerrors.WithStack(err)
 	} else if svc != nil {
@@ -564,7 +559,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 		ctx.svcs = nil
 	}
 	if ctx.Obj.Spec.Nodes > 1 {
-		svc, err = m.serviceLister.Services(ctx.Obj.Namespace).Get(fmt.Sprintf("%s-hl", ctx.Obj.Name))
+		svc, err = m.serviceLister.Get(ctx.Obj.Namespace, fmt.Sprintf("%s-hl", ctx.Obj.Name))
 		if err != nil && !kerrors.IsNotFound(err) {
 			return xerrors.WithStack(err)
 		} else if svc != nil {
@@ -572,7 +567,7 @@ func (m *minIOClusterReconciler) reloadContext(ctx *reconcileContext) error {
 		}
 	}
 
-	secret, err := m.secretLister.Secrets(ctx.Obj.Namespace).Get(ctx.Obj.Name)
+	secret, err := m.secretLister.Get(ctx.Obj.Namespace, ctx.Obj.Name)
 	if err != nil && !kerrors.IsNotFound(err) {
 		return xerrors.WithStack(err)
 	}
@@ -634,7 +629,7 @@ func (m *minIOClusterReconciler) pod(obj *miniov1alpha1.MinIOCluster, index int)
 				100,
 				k8sfactory.MatchExpression(metav1.LabelSelectorRequirement{
 					Key:      miniov1alpha1.LabelNameMinIOName,
-					Operator: metav1.LabelSelectorOpIn,
+					Operator: metav1.LabelSelectorOperatorIn,
 					Values:   []string{obj.Name},
 				}),
 				"kubernetes.io/hostname",
@@ -666,10 +661,10 @@ func (m *minIOClusterReconciler) pvc(obj *miniov1alpha1.MinIOCluster, index int)
 		k8sfactory.Namef("%s-data-%d", obj.Name, index),
 		k8sfactory.Namespace(obj.Namespace),
 		k8sfactory.Labels(map[string]string{miniov1alpha1.LabelNameMinIOName: obj.Name}),
-		k8sfactory.Requests(corev1.ResourceList{
-			corev1.ResourceStorage: resource.MustParse(fmt.Sprintf("%dGi", nodeSize)),
+		k8sfactory.Requests(map[string]resource.Quantity{
+			string(corev1.ResourceNameStorage): resource.MustParse(fmt.Sprintf("%dGi", nodeSize)),
 		}),
-		k8sfactory.AccessModes(corev1.ReadWriteOnce),
+		k8sfactory.AccessModes(corev1.PersistentVolumeAccessModeReadWriteOnce),
 		k8sfactory.ControlledBy(obj, client.Scheme),
 	)
 	if obj.Spec.StorageClassName != "" {
@@ -745,12 +740,12 @@ func (c *reconcileContext) CurrentPhase() miniov1alpha1.ClusterPhase {
 	}
 
 	for _, pod := range c.pods {
-		if pod.Status.Phase != corev1.PodRunning {
+		if pod.Status.Phase != corev1.PodPhaseRunning {
 			return miniov1alpha1.ClusterPhaseCreating
 		}
 		for _, v := range pod.Status.Conditions {
-			if v.Type == corev1.PodReady {
-				if v.Status != corev1.ConditionTrue {
+			if v.Type == corev1.PodConditionTypeReady {
+				if v.Status != corev1.ConditionStatusTrue {
 					return miniov1alpha1.ClusterPhaseCreating
 				}
 			}

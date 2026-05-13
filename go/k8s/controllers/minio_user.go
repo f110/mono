@@ -9,27 +9,25 @@ import (
 
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
+	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/stringsutil"
 	"go.f110.dev/mono/go/vault"
 )
@@ -43,15 +41,14 @@ const (
 type MinIOUserController struct {
 	*controllerutil.GenericControllerBase[*miniov1alpha1.MinIOUser]
 
-	config      *rest.Config
-	coreClient  kubernetes.Interface
+	coreClient  *k8sclient.Set
 	vaultClient *vault.Client
 	mClient     *client.MinioV1alpha1
 
-	configMapLister corev1listers.ConfigMapLister
-	secretLister    corev1listers.SecretLister
-	serviceLister   corev1listers.ServiceLister
-	instanceLister  *client.MiniocontrollerV1beta1MinIOInstanceLister
+	configMapLister *k8sclient.CoreV1ConfigMapLister
+	secretLister    *k8sclient.CoreV1SecretLister
+	serviceLister   *k8sclient.CoreV1ServiceLister
+	instanceLister  *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister
 	clusterLister   *client.MinioV1alpha1MinIOClusterLister
 
 	transport         http.RoundTripper
@@ -59,11 +56,13 @@ type MinIOUserController struct {
 }
 
 func NewMinIOUserController(
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
-	cfg *rest.Config,
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
+	tpClient *thirdpartyclient.Set,
+	coreSharedInformerFactory *k8sclient.InformerFactory,
 	factory *client.InformerFactory,
+	tpFactory *thirdpartyclient.InformerFactory,
 	vaultClient *vault.Client,
 	runOutsideCluster bool,
 ) (*MinIOUserController, error) {
@@ -71,23 +70,23 @@ func NewMinIOUserController(
 	minioUserInformer := minioInformers.MinIOUserInformer()
 	minioUserLister := minioInformers.MinIOUserLister()
 
-	controllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceAll, 30*time.Second)
+	controllerInformers := thirdpartyclient.NewMiniocontrollerMinV1beta1Informer(tpFactory.Cache(), tpClient.MiniocontrollerMinV1beta1, metav1.NamespaceAll, 30*time.Second)
 	instanceInformer := controllerInformers.MinIOInstanceInformer()
 	instanceLister := controllerInformers.MinIOInstanceLister()
 	clusterLister := minioInformers.MinIOClusterLister()
 
-	configMapInformer := coreSharedInformerFactory.Core().V1().ConfigMaps()
-	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
-	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
+	coreInformer := k8sclient.NewCoreV1Informer(coreSharedInformerFactory.Cache(), coreClient.CoreV1, metav1.NamespaceAll, 30*time.Second)
+	configMapInformer := coreInformer.ConfigMapInformer()
+	serviceInformer := coreInformer.ServiceInformer()
+	secretInformer := coreInformer.SecretInformer()
 
 	c := &MinIOUserController{
-		config:            cfg,
 		coreClient:        coreClient,
 		vaultClient:       vaultClient,
 		mClient:           apiClient.MinioV1alpha1,
-		configMapLister:   configMapInformer.Lister(),
-		secretLister:      secretInformer.Lister(),
-		serviceLister:     serviceInformer.Lister(),
+		configMapLister:   coreInformer.ConfigMapLister(),
+		secretLister:      coreInformer.SecretLister(),
+		serviceLister:     coreInformer.ServiceLister(),
 		instanceLister:    instanceLister,
 		clusterLister:     clusterLister,
 		runOutsideCluster: runOutsideCluster,
@@ -95,9 +94,9 @@ func NewMinIOUserController(
 	c.GenericControllerBase = controllerutil.NewGenericControllerBase[*miniov1alpha1.MinIOUser](
 		"minio-user-controller",
 		c.newReconciler,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{minioUserInformer},
-		[]cache.SharedIndexInformer{instanceInformer, configMapInformer.Informer(), serviceInformer.Informer(), secretInformer.Informer()},
+		[]cache.SharedIndexInformer{instanceInformer, configMapInformer, serviceInformer, secretInformer},
 		[]string{minIOUserControllerFinalizerName},
 		minioUserLister.Get,
 		apiClient.MinioV1alpha1.UpdateMinIOUser,
@@ -108,7 +107,6 @@ func NewMinIOUserController(
 
 func (c *MinIOUserController) newReconciler() controllerutil.GenericReconciler[*miniov1alpha1.MinIOUser] {
 	return &minIOUserReconciler{
-		config:            c.config,
 		coreClient:        c.coreClient,
 		mClient:           c.mClient,
 		vaultClient:       c.vaultClient,
@@ -124,15 +122,14 @@ func (c *MinIOUserController) newReconciler() controllerutil.GenericReconciler[*
 }
 
 type minIOUserReconciler struct {
-	config      *rest.Config
 	mClient     *client.MinioV1alpha1
-	coreClient  kubernetes.Interface
+	coreClient  *k8sclient.Set
 	vaultClient *vault.Client
 
-	configMapLister corev1listers.ConfigMapLister
-	secretLister    corev1listers.SecretLister
-	serviceLister   corev1listers.ServiceLister
-	instanceLister  *client.MiniocontrollerV1beta1MinIOInstanceLister
+	configMapLister *k8sclient.CoreV1ConfigMapLister
+	secretLister    *k8sclient.CoreV1SecretLister
+	serviceLister   *k8sclient.CoreV1ServiceLister
+	instanceLister  *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister
 	clusterLister   *client.MinioV1alpha1MinIOClusterLister
 
 	logger            *zap.Logger
@@ -210,7 +207,7 @@ StatusUpdate:
 }
 
 func (u *minIOUserReconciler) makeUserForMinIOInstance(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, instance *miniocontrollerv1beta1.MinIOInstance) error {
-	creds, err := u.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
+	creds, err := u.secretLister.Get(instance.Namespace, instance.Spec.CredsSecret.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -256,7 +253,7 @@ func (u *minIOUserReconciler) makeUserForMinIOInstance(ctx context.Context, mini
 }
 
 func (u *minIOUserReconciler) makeUserForCluster(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, cluster *miniov1alpha1.MinIOCluster) error {
-	sc, err := u.secretLister.Secrets(cluster.Namespace).Get(cluster.Name)
+	sc, err := u.secretLister.Get(cluster.Namespace, cluster.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -305,10 +302,10 @@ func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1
 	)
 	controllerutil.SetOwner(cm, user, client.Scheme)
 
-	oldCM, err := u.configMapLister.ConfigMaps(cm.Namespace).Get(cm.Name)
+	oldCM, err := u.configMapLister.Get(cm.Namespace, cm.Name)
 	if apierrors.IsNotFound(err) {
 		u.logger.Info("Create ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
-		u.coreClient.CoreV1().ConfigMaps(cm.Namespace).Create(ctx, cm, metav1.CreateOptions{})
+		u.coreClient.CoreV1.CreateConfigMap(ctx, cm, metav1.CreateOptions{})
 	} else if err != nil {
 		return xerrors.WithStack(err)
 	} else {
@@ -316,7 +313,7 @@ func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1
 			newCM := oldCM.DeepCopy()
 			newCM.Data = cm.Data
 			u.logger.Info("Update ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
-			if _, err := u.coreClient.CoreV1().ConfigMaps(cm.Namespace).Update(ctx, newCM, metav1.UpdateOptions{}); err != nil {
+			if _, err := u.coreClient.CoreV1.UpdateConfigMap(ctx, newCM, metav1.UpdateOptions{}); err != nil {
 				return xerrors.WithStack(err)
 			}
 		}
@@ -325,7 +322,7 @@ func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1
 }
 
 func (u *minIOUserReconciler) setStatus(user *miniov1alpha1.MinIOUser) error {
-	secret, err := u.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
+	secret, err := u.secretLister.Get(user.Namespace, fmt.Sprintf("%s-accesskey", user.Name))
 	if apierrors.IsNotFound(err) {
 		return nil
 	}
@@ -342,7 +339,7 @@ func (u *minIOUserReconciler) setStatus(user *miniov1alpha1.MinIOUser) error {
 }
 
 func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmin.AdminClient, user *miniov1alpha1.MinIOUser) (*corev1.Secret, error) {
-	secret, err := u.secretLister.Secrets(user.Namespace).Get(fmt.Sprintf("%s-accesskey", user.Name))
+	secret, err := u.secretLister.Get(user.Namespace, fmt.Sprintf("%s-accesskey", user.Name))
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, xerrors.WithStack(err)
 	}
@@ -373,7 +370,7 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 		k8sfactory.Data("secretkey", []byte(secretKey)),
 	)
 	controllerutil.SetOwner(secret, user, client.Scheme)
-	secret, err = u.coreClient.CoreV1().Secrets(user.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+	secret, err = u.coreClient.CoreV1.CreateSecret(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -446,7 +443,7 @@ StatusUpdate:
 }
 
 func (u *minIOUserReconciler) deleteUserFromInstance(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, instance *miniocontrollerv1beta1.MinIOInstance) error {
-	creds, err := u.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
+	creds, err := u.secretLister.Get(instance.Namespace, instance.Spec.CredsSecret.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -459,7 +456,7 @@ func (u *minIOUserReconciler) deleteUserFromInstance(ctx context.Context, minioU
 		defer forwarder.Close()
 	}
 
-	secret, err := u.secretLister.Secrets(minioUser.Namespace).Get(fmt.Sprintf("%s-accesskey", minioUser.Name))
+	secret, err := u.secretLister.Get(minioUser.Namespace, fmt.Sprintf("%s-accesskey", minioUser.Name))
 	if apierrors.IsNotFound(err) {
 		return nil
 	}
@@ -477,14 +474,14 @@ func (u *minIOUserReconciler) deleteUserFromInstance(ctx context.Context, minioU
 	}
 	u.logger.Debug("Remove minio user", zap.String("name", minioUser.Name))
 
-	if err := u.coreClient.CoreV1().Secrets(secret.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); err != nil {
+	if err := u.coreClient.CoreV1.DeleteSecret(ctx, secret.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
 func (u *minIOUserReconciler) deleteUserFromCluster(ctx context.Context, minioUser *miniov1alpha1.MinIOUser, cluster *miniov1alpha1.MinIOCluster) error {
-	sc, err := u.secretLister.Secrets(cluster.Namespace).Get(cluster.Name)
+	sc, err := u.secretLister.Get(cluster.Namespace, cluster.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -497,7 +494,7 @@ func (u *minIOUserReconciler) deleteUserFromCluster(ctx context.Context, minioUs
 		defer forwarder.Close()
 	}
 
-	accessKeySecret, err := u.secretLister.Secrets(minioUser.Namespace).Get(fmt.Sprintf("%s-accesskey", minioUser.Name))
+	accessKeySecret, err := u.secretLister.Get(minioUser.Namespace, fmt.Sprintf("%s-accesskey", minioUser.Name))
 	if apierrors.IsNotFound(err) {
 		return nil
 	}
@@ -518,14 +515,14 @@ func (u *minIOUserReconciler) deleteUserFromCluster(ctx context.Context, minioUs
 	}
 	u.logger.Debug("Remove minio user", zap.String("name", minioUser.Name))
 
-	if err := u.coreClient.CoreV1().Secrets(accessKeySecret.Namespace).Delete(ctx, accessKeySecret.Name, metav1.DeleteOptions{}); err != nil {
+	if err := u.coreClient.CoreV1.DeleteSecret(ctx, accessKeySecret.Namespace, accessKeySecret.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.WithStack(err)
 	}
 	return nil
 }
 
 func (u *minIOUserReconciler) getMinIOInstanceEndpoint(ctx context.Context, instance *miniocontrollerv1beta1.MinIOInstance) (string, *portforward.PortForwarder, error) {
-	svc, err := u.serviceLister.Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name))
+	svc, err := u.serviceLister.Get(instance.Namespace, fmt.Sprintf("%s-hl-svc", instance.Name))
 	if err != nil {
 		return "", nil, xerrors.WithStack(err)
 	}
@@ -549,7 +546,7 @@ func (u *minIOUserReconciler) getMinIOInstanceEndpoint(ctx context.Context, inst
 }
 
 func (u *minIOUserReconciler) getMinIOClusterEndpoint(ctx context.Context, cluster *miniov1alpha1.MinIOCluster) (string, *portforward.PortForwarder, error) {
-	svc, err := u.serviceLister.Services(cluster.Namespace).Get(cluster.Name)
+	svc, err := u.serviceLister.Get(cluster.Namespace, cluster.Name)
 	if err != nil {
 		return "", nil, xerrors.WithStack(err)
 	}
@@ -573,16 +570,13 @@ func (u *minIOUserReconciler) getMinIOClusterEndpoint(ctx context.Context, clust
 
 func (u *minIOUserReconciler) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := u.coreClient.CoreV1().Pods(svc.Namespace).List(
-		ctx,
-		metav1.ListOptions{LabelSelector: selector.String()},
-	)
+	podList, err := u.coreClient.CoreV1.ListPod(ctx, svc.Namespace, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, err
 	}
 	var pod *corev1.Pod
 	for i, v := range podList.Items {
-		if v.Status.Phase == corev1.PodRunning {
+		if v.Status.Phase == corev1.PodPhaseRunning {
 			pod = &podList.Items[i]
 			break
 		}
@@ -591,41 +585,9 @@ func (u *minIOUserReconciler) portForward(ctx context.Context, svc *corev1.Servi
 		return nil, xerrors.New("all pods are not running yet")
 	}
 
-	req := u.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
-	transport, upgrader, err := spdy.RoundTripperFor(u.config)
+	pf, _, err := u.coreClient.CoreV1.PortForward(ctx, pod, port)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.WithStack(err)
 	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
-
-	readyCh := make(chan struct{})
-	pf, err := portforward.New(
-		dialer,
-		[]string{fmt.Sprintf(":%d", port)},
-		context.Background().Done(),
-		readyCh,
-		nil,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	go func() {
-		err := pf.ForwardPorts()
-		if err != nil {
-			switch v := err.(type) {
-			case *apierrors.StatusError:
-				u.logger.Debug("StatusError", zap.Error(v))
-			}
-			u.logger.Error("Failed port forwarding", zap.Error(err))
-		}
-	}()
-
-	select {
-	case <-readyCh:
-	case <-time.After(5 * time.Second):
-		return nil, xerrors.New("timed out")
-	}
-
 	return pf, nil
 }

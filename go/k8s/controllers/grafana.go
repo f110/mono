@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
@@ -33,8 +33,8 @@ type GrafanaController struct {
 
 	client *client.GrafanaV1alpha1
 
-	secretLister  corev1listers.SecretLister
-	serviceLister corev1listers.ServiceLister
+	secretLister  *k8sclient.CoreV1SecretLister
+	serviceLister *k8sclient.CoreV1ServiceLister
 	appLister     *client.GrafanaV1alpha1GrafanaLister
 	userLister    *client.GrafanaV1alpha1GrafanaUserLister
 
@@ -43,30 +43,32 @@ type GrafanaController struct {
 }
 
 func NewGrafanaController(
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
+	coreSharedInformerFactory *k8sclient.InformerFactory,
 	factory *client.InformerFactory,
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
 ) (*GrafanaController, error) {
-	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
-	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
+	secretInformer := coreSharedInformerFactory.InformerFor(&corev1.Secret{})
+	serviceInformer := coreSharedInformerFactory.InformerFor(&corev1.Service{})
 	grafanaInformers := client.NewGrafanaV1alpha1Informer(factory.Cache(), apiClient.GrafanaV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	appInformer := grafanaInformers.GrafanaInformer()
 	userInformer := grafanaInformers.GrafanaUserInformer()
 
+	coreInformers := k8sclient.NewCoreV1Informer(coreSharedInformerFactory.Cache(), coreClient.CoreV1, metav1.NamespaceAll, 30*time.Second)
 	a := &GrafanaController{
 		client:        apiClient.GrafanaV1alpha1,
-		secretLister:  secretInformer.Lister(),
-		serviceLister: serviceInformer.Lister(),
+		secretLister:  coreInformers.SecretLister(),
+		serviceLister: coreInformers.ServiceLister(),
 		appLister:     grafanaInformers.GrafanaLister(),
 		userLister:    grafanaInformers.GrafanaUserLister(),
 	}
 	a.GenericControllerBase = controllerutil.NewGenericControllerBase[*grafanav1alpha1.Grafana](
 		"grafana-controller",
 		a.newReconciler,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{appInformer, userInformer},
-		[]cache.SharedIndexInformer{secretInformer.Informer(), serviceInformer.Informer()},
+		[]cache.SharedIndexInformer{secretInformer, serviceInformer},
 		[]string{grafanaControllerFinalizerName},
 		grafanaInformers.GrafanaLister().Get,
 		apiClient.GrafanaV1alpha1.UpdateGrafana,
@@ -87,8 +89,8 @@ func (u *GrafanaController) newReconciler() controllerutil.GenericReconciler[*gr
 }
 
 type grafanaReconciler struct {
-	serviceLister corev1listers.ServiceLister
-	secretLister  corev1listers.SecretLister
+	serviceLister *k8sclient.CoreV1ServiceLister
+	secretLister  *k8sclient.CoreV1SecretLister
 	userLister    *client.GrafanaV1alpha1GrafanaUserLister
 	client        *client.GrafanaV1alpha1
 
@@ -130,7 +132,7 @@ func (u *grafanaReconciler) Finalize(ctx context.Context, obj *grafanav1alpha1.G
 
 func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
 	u.logger.Debug("users", zap.Int("len", len(users)))
-	secret, err := u.secretLister.Secrets(app.Namespace).Get(app.Spec.AdminPasswordSecret.Name)
+	secret, err := u.secretLister.Get(app.Namespace, app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -138,7 +140,7 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 	if !ok {
 		return xerrors.Definef("%s is not found in %s", app.Spec.AdminPasswordSecret.Key, app.Spec.AdminPasswordSecret.Name).WithStack()
 	}
-	svc, err := u.serviceLister.Services(app.Namespace).Get(app.Spec.Service.Name)
+	svc, err := u.serviceLister.Get(app.Namespace, app.Spec.Service.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}

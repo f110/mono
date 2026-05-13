@@ -1,4 +1,4 @@
-package testingclient
+package testingthirdpartyclient
 
 import (
 	"context"
@@ -15,15 +15,15 @@ import (
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
 
-	"go.f110.dev/mono/go/k8s/client"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 )
 
 var (
-	codecs = serializer.NewCodecFactory(client.Scheme)
+	codecs = serializer.NewCodecFactory(thirdpartyclient.Scheme)
 )
 
 type Set struct {
-	client.Set
+	thirdpartyclient.Set
 
 	fake    k8stesting.Fake
 	tracker k8stesting.ObjectTracker
@@ -31,7 +31,7 @@ type Set struct {
 
 func NewSet() *Set {
 	s := &Set{}
-	s.tracker = k8stesting.NewObjectTracker(client.Scheme, codecs.UniversalDecoder())
+	s.tracker = k8stesting.NewObjectTracker(thirdpartyclient.Scheme, codecs.UniversalDecoder())
 	s.fake.AddReactor("*", "*", k8stesting.ObjectReaction(s.tracker))
 	s.fake.AddWatchReactor("*", func(action k8stesting.Action) (handled bool, ret watch.Interface, err error) {
 		w, err := s.tracker.Watch(action.GetResource(), action.GetNamespace())
@@ -41,10 +41,7 @@ func NewSet() *Set {
 		return true, w, nil
 	})
 
-	s.ConsulV1alpha1 = client.NewConsulV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
-	s.GrafanaV1alpha1 = client.NewGrafanaV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
-	s.HarborV1alpha1 = client.NewHarborV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
-	s.MinioV1alpha1 = client.NewMinioV1alpha1Client(&fakerBackend{fake: &s.fake}, nil)
+	s.MiniocontrollerMinV1beta1 = thirdpartyclient.NewMiniocontrollerMinV1beta1Client(&fakerBackend{fake: &s.fake}, nil)
 	return s
 }
 
@@ -61,7 +58,7 @@ type fakerBackend struct {
 }
 
 func (f *fakerBackend) Get(ctx context.Context, resourceName, namespace, name string, opts metav1.GetOptions, result runtime.Object) (runtime.Object, error) {
-	gvks, _, err := client.Scheme.ObjectKinds(result)
+	gvks, _, err := thirdpartyclient.Scheme.ObjectKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +71,7 @@ func (f *fakerBackend) Get(ctx context.Context, resourceName, namespace, name st
 }
 
 func (f *fakerBackend) List(ctx context.Context, resourceName, namespace string, opts metav1.ListOptions, result runtime.Object) (runtime.Object, error) {
-	gvks, _, err := client.Scheme.ObjectKinds(result)
+	gvks, _, err := thirdpartyclient.Scheme.ObjectKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +113,7 @@ func (f *fakerBackend) List(ctx context.Context, resourceName, namespace string,
 }
 
 func (f *fakerBackend) Create(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.CreateOptions, result runtime.Object) (runtime.Object, error) {
-	gvks, _, err := client.Scheme.ObjectKinds(result)
+	gvks, _, err := thirdpartyclient.Scheme.ObjectKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +129,7 @@ func (f *fakerBackend) Create(ctx context.Context, resourceName string, obj runt
 }
 
 func (f *fakerBackend) Update(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
-	gvks, _, err := client.Scheme.ObjectKinds(result)
+	gvks, _, err := thirdpartyclient.Scheme.ObjectKinds(result)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +144,7 @@ func (f *fakerBackend) Update(ctx context.Context, resourceName string, obj runt
 	return obj.DeepCopyObject(), err
 }
 func (f *fakerBackend) UpdateStatus(ctx context.Context, resourceName string, obj runtime.Object, opts metav1.UpdateOptions, result runtime.Object) (runtime.Object, error) {
-	gvks, _, err := client.Scheme.ObjectKinds(result)
+	gvks, _, err := thirdpartyclient.Scheme.ObjectKinds(result)
 	if err != nil {
 		return nil, err
 	}

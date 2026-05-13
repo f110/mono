@@ -3,11 +3,11 @@ package k8sfactory
 import (
 	"sort"
 
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
+	"go.f110.dev/kubeproto/go/apis/appsv1"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -34,21 +34,21 @@ func Ready(v any) {
 	if !ok {
 		return
 	}
-	p.Status.Phase = corev1.PodRunning
+	p.Status.Phase = corev1.PodPhaseRunning
 	containerStatus := make([]corev1.ContainerStatus, 0)
 	for _, v := range p.Spec.Containers {
 		containerStatus = append(containerStatus, corev1.ContainerStatus{
 			Name:    v.Name,
 			Ready:   true,
 			Image:   v.Image,
-			Started: new(true),
+			Started: true,
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
 	p.Status.Conditions = append(p.Status.Conditions, corev1.PodCondition{
-		Type:               corev1.PodReady,
-		Status:             corev1.ConditionTrue,
-		LastTransitionTime: metav1.Now(),
+		Type:               corev1.PodConditionTypeReady,
+		Status:             corev1.ConditionStatusTrue,
+		LastTransitionTime: new(metav1.Now()),
 	})
 }
 
@@ -60,11 +60,11 @@ func NotReady(v any) {
 		return
 	}
 
-	p.Status.Phase = corev1.PodRunning
+	p.Status.Phase = corev1.PodPhaseRunning
 	p.Status.Conditions = append(p.Status.Conditions, corev1.PodCondition{
-		Type:               corev1.PodReady,
-		Status:             corev1.ConditionFalse,
-		LastTransitionTime: metav1.Now(),
+		Type:               corev1.PodConditionTypeReady,
+		Status:             corev1.ConditionStatusFalse,
+		LastTransitionTime: new(metav1.Now()),
 	})
 	containerStatus := make([]corev1.ContainerStatus, 0)
 	for _, v := range p.Spec.Containers {
@@ -72,7 +72,7 @@ func NotReady(v any) {
 			Name:    v.Name,
 			Image:   v.Image,
 			Ready:   false,
-			Started: new(true),
+			Started: true,
 		})
 	}
 	p.Status.ContainerStatuses = containerStatus
@@ -83,7 +83,7 @@ func PodSucceeded(v any) {
 	if !ok {
 		return
 	}
-	p.Status.Phase = corev1.PodSucceeded
+	p.Status.Phase = corev1.PodPhaseSucceeded
 }
 
 func PodFailed(v any) {
@@ -91,7 +91,7 @@ func PodFailed(v any) {
 	if !ok {
 		return
 	}
-	p.Status.Phase = corev1.PodFailed
+	p.Status.Phase = corev1.PodPhaseFailed
 }
 
 func RestartPolicy(policy corev1.RestartPolicy) Trait {
@@ -99,6 +99,9 @@ func RestartPolicy(policy corev1.RestartPolicy) Trait {
 		p, ok := object.(*corev1.Pod)
 		if !ok {
 			return
+		}
+		if p.Spec == nil {
+			p.Spec = &corev1.PodSpec{}
 		}
 		p.Spec.RestartPolicy = policy
 	}
@@ -112,6 +115,9 @@ func Container(c *corev1.Container) Trait {
 
 		switch obj := object.(type) {
 		case *corev1.Pod:
+			if obj.Spec == nil {
+				obj.Spec = &corev1.PodSpec{}
+			}
 			obj.Spec.Containers = append(obj.Spec.Containers, *c)
 		}
 	}
@@ -132,7 +138,7 @@ func InitContainer(c *corev1.Container) Trait {
 	}
 }
 
-func PreferredInterPodAntiAffinity(weight int32, selector *metav1.LabelSelector, key string) Trait {
+func PreferredInterPodAntiAffinity(weight int, selector *metav1.LabelSelector, key string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Pod:
@@ -178,7 +184,7 @@ func AntiNodeAffinity(key string, nodes []string) Trait {
 			obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(
 				obj.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms,
 				corev1.NodeSelectorTerm{MatchExpressions: []corev1.NodeSelectorRequirement{
-					{Key: key, Operator: corev1.NodeSelectorOpNotIn, Values: nodes},
+					{Key: key, Operator: corev1.NodeSelectorOperatorNotIn, Values: nodes},
 				}},
 			)
 		}
@@ -368,7 +374,7 @@ func InitialDelay(s int) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Probe:
-			obj.InitialDelaySeconds = int32(s)
+			obj.InitialDelaySeconds = s
 		}
 	}
 }
@@ -377,7 +383,7 @@ func Timeout(s int) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Probe:
-			obj.TimeoutSeconds = int32(s)
+			obj.TimeoutSeconds = s
 		}
 	}
 }
@@ -424,6 +430,9 @@ func Volume(vol *VolumeSource) Trait {
 		case *corev1.Container:
 			obj.VolumeMounts = append(obj.VolumeMounts, vol.Mount)
 		case *corev1.Pod:
+			if obj.Spec == nil {
+				obj.Spec = &corev1.PodSpec{}
+			}
 			obj.Spec.Volumes = append(obj.Spec.Volumes, vol.Source)
 		}
 	}
@@ -438,9 +447,9 @@ func SortVolume() Trait {
 				return obj.Volumes[i].Name < obj.Volumes[j].Name
 			})
 		case *corev1.Pod:
-			t(&obj.Spec)
+			t(obj.Spec)
 		case *batchv1.Job:
-			t(&obj.Spec.Template.Spec)
+			t(obj.Spec.Template.Spec)
 		}
 	}
 	return t
@@ -450,11 +459,14 @@ func ResourceLimit(cpu, mem resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
-			if obj.Resources.Limits == nil {
-				obj.Resources.Limits = make(corev1.ResourceList)
+			if obj.Resources == nil {
+				obj.Resources = &corev1.ResourceRequirements{}
 			}
-			obj.Resources.Limits[corev1.ResourceCPU] = cpu
-			obj.Resources.Limits[corev1.ResourceMemory] = mem
+			if obj.Resources.Limits == nil {
+				obj.Resources.Limits = make(map[string]resource.Quantity)
+			}
+			obj.Resources.Limits[string(corev1.ResourceNameCpu)] = cpu
+			obj.Resources.Limits[string(corev1.ResourceNameMemory)] = mem
 		}
 	}
 }
@@ -463,11 +475,14 @@ func ResourceRequest(cpu, mem resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
-			if obj.Resources.Requests == nil {
-				obj.Resources.Requests = make(corev1.ResourceList)
+			if obj.Resources == nil {
+				obj.Resources = &corev1.ResourceRequirements{}
 			}
-			obj.Resources.Requests[corev1.ResourceCPU] = cpu
-			obj.Resources.Requests[corev1.ResourceMemory] = mem
+			if obj.Resources.Requests == nil {
+				obj.Resources.Requests = make(map[string]resource.Quantity)
+			}
+			obj.Resources.Requests[string(corev1.ResourceNameCpu)] = cpu
+			obj.Resources.Requests[string(corev1.ResourceNameMemory)] = mem
 		}
 	}
 }
@@ -532,14 +547,14 @@ func LoadBalancerIP(ip string) Trait {
 func TrafficPolicyLocal(object any) {
 	switch obj := object.(type) {
 	case *corev1.Service:
-		obj.Spec.ExternalTrafficPolicy = corev1.ServiceExternalTrafficPolicyTypeLocal
+		obj.Spec.ExternalTrafficPolicy = corev1.ServiceExternalTrafficPolicyLocal
 	}
 }
 
 func IPNone(object any) {
 	switch obj := object.(type) {
 	case *corev1.Service:
-		obj.Spec.ClusterIP = corev1.ClusterIPNone
+		obj.Spec.ClusterIP = "None"
 	}
 }
 
@@ -563,10 +578,13 @@ func Selector(v ...string) Trait {
 	}
 }
 
-func Port(name string, protocol corev1.Protocol, port int32) Trait {
+func Port(name string, protocol corev1.Protocol, port int) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Service:
+			if obj.Spec == nil {
+				obj.Spec = &corev1.ServiceSpec{}
+			}
 			obj.Spec.Ports = append(obj.Spec.Ports, corev1.ServicePort{
 				Name:     name,
 				Protocol: protocol,
@@ -582,7 +600,7 @@ func Port(name string, protocol corev1.Protocol, port int32) Trait {
 	}
 }
 
-func TargetPort(name string, protocol corev1.Protocol, port int32, targetPort intstr.IntOrString) Trait {
+func TargetPort(name string, protocol corev1.Protocol, port int, targetPort intstr.IntOrString) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Service:
@@ -590,7 +608,7 @@ func TargetPort(name string, protocol corev1.Protocol, port int32, targetPort in
 				Name:       name,
 				Protocol:   protocol,
 				Port:       port,
-				TargetPort: targetPort,
+				TargetPort: &targetPort,
 			})
 		}
 	}
@@ -647,18 +665,27 @@ func ConfigMapFactory(base *corev1.ConfigMap, traits ...Trait) *corev1.ConfigMap
 	return cm
 }
 
-func Requests(req corev1.ResourceList) Trait {
+func Requests(req map[string]resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
+			if obj.Resources == nil {
+				obj.Resources = &corev1.ResourceRequirements{}
+			}
 			obj.Resources.Requests = req
 		case *corev1.PersistentVolumeClaim:
+			if obj.Spec == nil {
+				obj.Spec = &corev1.PersistentVolumeClaimSpec{}
+			}
+			if obj.Spec.Resources == nil {
+				obj.Spec.Resources = &corev1.VolumeResourceRequirements{}
+			}
 			obj.Spec.Resources.Requests = req
 		}
 	}
 }
 
-func Limits(lim corev1.ResourceList) Trait {
+func Limits(lim map[string]resource.Quantity) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.Container:
@@ -703,7 +730,7 @@ func SecretKeySelector(secret *corev1.Secret, key string) *corev1.SecretKeySelec
 }
 
 func LocalObjectReference(obj metav1.Object) corev1.LocalObjectReference {
-	return corev1.LocalObjectReference{Name: obj.GetName()}
+	return corev1.LocalObjectReference{Name: obj.GetObjectMeta().GetName()}
 }
 
 func Pod(p *corev1.Pod) Trait {
@@ -711,12 +738,12 @@ func Pod(p *corev1.Pod) Trait {
 		switch obj := object.(type) {
 		case *batchv1.Job:
 			obj.Spec.Template = corev1.PodTemplateSpec{
-				ObjectMeta: p.ObjectMeta,
+				ObjectMeta: &p.ObjectMeta,
 				Spec:       p.Spec,
 			}
 		case *appsv1.Deployment:
 			obj.Spec.Template = corev1.PodTemplateSpec{
-				ObjectMeta: p.ObjectMeta,
+				ObjectMeta: &p.ObjectMeta,
 				Spec:       p.Spec,
 			}
 		}
@@ -744,7 +771,7 @@ func StorageClassName(name string) Trait {
 	return func(object any) {
 		switch obj := object.(type) {
 		case *corev1.PersistentVolumeClaim:
-			obj.Spec.StorageClassName = new(name)
+			obj.Spec.StorageClassName = name
 		}
 	}
 }

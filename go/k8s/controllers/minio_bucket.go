@@ -12,27 +12,24 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/policy"
-	miniocontrollerv1beta1 "github.com/minio/minio-operator/pkg/apis/miniocontroller/v1beta1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	corev1listers "k8s.io/client-go/listers/core/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/miniov1alpha1"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
+	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -43,14 +40,13 @@ const (
 type MinIOBucketController struct {
 	*controllerutil.ControllerBase
 
-	config         *rest.Config
-	coreClient     kubernetes.Interface
+	coreClient     *k8sclient.Set
 	mClient        *client.MinioV1alpha1
-	secretLister   corev1listers.SecretLister
-	serviceLister  corev1listers.ServiceLister
-	podLister      corev1listers.PodLister
+	secretLister   *k8sclient.CoreV1SecretLister
+	serviceLister  *k8sclient.CoreV1ServiceLister
+	podLister      *k8sclient.CoreV1PodLister
 	mbLister       *client.MinioV1alpha1MinIOBucketLister
-	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
+	instanceLister *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister
 
 	queue *controllerutil.WorkQueue
 
@@ -61,43 +57,45 @@ type MinIOBucketController struct {
 var _ controllerutil.Controller = &MinIOBucketController{}
 
 func NewMinIOBucketController(
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
-	cfg *rest.Config,
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory,
+	tpClient *thirdpartyclient.Set,
+	coreSharedInformerFactory *k8sclient.InformerFactory,
 	factory *client.InformerFactory,
+	tpFactory *thirdpartyclient.InformerFactory,
 	runOutsideCluster bool,
 ) (*MinIOBucketController, error) {
-	serviceInformer := coreSharedInformerFactory.Core().V1().Services()
-	secretInformer := coreSharedInformerFactory.Core().V1().Secrets()
-	podInformer := coreSharedInformerFactory.Core().V1().Pods()
+	coreInformers := k8sclient.NewCoreV1Informer(coreSharedInformerFactory.Cache(), coreClient.CoreV1, metav1.NamespaceAll, 30*time.Second)
+	serviceInformer := coreInformers.ServiceInformer()
+	secretInformer := coreInformers.SecretInformer()
+	podInformer := coreInformers.PodInformer()
 
 	informers := client.NewMinioV1alpha1Informer(factory.Cache(), apiClient.MinioV1alpha1, metav1.NamespaceAll, 30*time.Second)
 	mbInformer := informers.MinIOBucketInformer()
-	minioControllerInformers := client.NewMiniocontrollerV1beta1Informer(factory.Cache(), apiClient.MiniocontrollerV1beta1, metav1.NamespaceNone, 30*time.Second)
+	minioControllerInformers := thirdpartyclient.NewMiniocontrollerMinV1beta1Informer(tpFactory.Cache(), tpClient.MiniocontrollerMinV1beta1, metav1.NamespaceNone, 30*time.Second)
 	miInformer := minioControllerInformers.MinIOInstanceInformer()
 
 	c := &MinIOBucketController{
-		config:            cfg,
 		coreClient:        coreClient,
 		mClient:           apiClient.MinioV1alpha1,
 		mbLister:          informers.MinIOBucketLister(),
-		serviceLister:     serviceInformer.Lister(),
-		secretLister:      secretInformer.Lister(),
-		podLister:         podInformer.Lister(),
+		serviceLister:     coreInformers.ServiceLister(),
+		secretLister:      coreInformers.SecretLister(),
+		podLister:         coreInformers.PodLister(),
 		instanceLister:    minioControllerInformers.MinIOInstanceLister(),
 		runOutsideCluster: runOutsideCluster,
 	}
 	c.ControllerBase = controllerutil.NewBase(
 		"minio-bucket-controller",
 		c,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{mbInformer},
 		[]cache.SharedIndexInformer{
 			miInformer,
-			serviceInformer.Informer(),
-			secretInformer.Informer(),
-			podInformer.Informer(),
+			serviceInformer,
+			secretInformer,
+			podInformer,
 		},
 		[]string{minIOBucketControllerFinalizerName},
 	)
@@ -146,7 +144,6 @@ func (c *MinIOBucketController) NewReconciler(log *zap.Logger) controllerutil.Re
 	return NewBucketReconciler(
 		c.coreClient,
 		c.mClient,
-		c.config,
 		c.serviceLister,
 		c.podLister,
 		c.secretLister,
@@ -166,16 +163,15 @@ func (c *MinIOBucketController) Finalize(ctx context.Context, obj runtime.Object
 }
 
 type BucketReconciler struct {
-	CoreClient     kubernetes.Interface
+	CoreClient     *k8sclient.Set
 	Client         *client.MinioV1alpha1
-	secretLister   corev1listers.SecretLister
-	serviceLister  corev1listers.ServiceLister
-	podLister      corev1listers.PodLister
-	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister
+	secretLister   *k8sclient.CoreV1SecretLister
+	serviceLister  *k8sclient.CoreV1ServiceLister
+	podLister      *k8sclient.CoreV1PodLister
+	instanceLister *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister
 
 	ctx               context.Context
 	runOutsideCluster bool
-	config            *rest.Config
 	transport         http.RoundTripper
 	logger            *zap.Logger
 
@@ -198,13 +194,12 @@ const (
 )
 
 func NewBucketReconciler(
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
 	client *client.MinioV1alpha1,
-	config *rest.Config,
-	serviceLister corev1listers.ServiceLister,
-	podLister corev1listers.PodLister,
-	secretLister corev1listers.SecretLister,
-	instanceLister *client.MiniocontrollerV1beta1MinIOInstanceLister,
+	serviceLister *k8sclient.CoreV1ServiceLister,
+	podLister *k8sclient.CoreV1PodLister,
+	secretLister *k8sclient.CoreV1SecretLister,
+	instanceLister *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister,
 	runOutsideCluster bool,
 	transport http.RoundTripper,
 	log *zap.Logger,
@@ -212,7 +207,6 @@ func NewBucketReconciler(
 	r := &BucketReconciler{
 		CoreClient:        coreClient,
 		Client:            client,
-		config:            config,
 		instanceLister:    instanceLister,
 		serviceLister:     serviceLister,
 		podLister:         podLister,
@@ -269,7 +263,7 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 	}
 
 	for _, instance := range instances {
-		creds, err := r.secretLister.Secrets(instance.Namespace).Get(instance.Spec.CredsSecret.Name)
+		creds, err := r.secretLister.Get(instance.Namespace, instance.Spec.CredsSecret.Name)
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -333,7 +327,7 @@ func (r *BucketReconciler) init(_ context.Context) (fsm.State, error) {
 	}
 	r.MinIOInstances = instances
 
-	creds, err := r.secretLister.Secrets(instances[0].Namespace).Get(instances[0].Spec.CredsSecret.Name)
+	creds, err := r.secretLister.Get(instances[0].Namespace, instances[0].Spec.CredsSecret.Name)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -484,7 +478,7 @@ func (r *BucketReconciler) getMinIOInstanceEndpoint(
 	ctx context.Context,
 	instance *miniocontrollerv1beta1.MinIOInstance,
 ) (string, *portforward.PortForwarder, error) {
-	svc, err := r.serviceLister.Services(instance.Namespace).Get(fmt.Sprintf("%s-hl-svc", instance.Name))
+	svc, err := r.serviceLister.Get(instance.Namespace, fmt.Sprintf("%s-hl-svc", instance.Name))
 	if err != nil {
 		return "", nil, xerrors.WithStack(err)
 	}
@@ -507,15 +501,15 @@ func (r *BucketReconciler) getMinIOInstanceEndpoint(
 	return instanceEndpoint, forwarder, nil
 }
 
-func (r *BucketReconciler) portForward(_ context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
+func (r *BucketReconciler) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := r.podLister.Pods(svc.Namespace).List(selector)
+	podList, err := r.podLister.List(svc.Namespace, selector)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	var pod *corev1.Pod
 	for _, v := range podList {
-		if v.Status.Phase == corev1.PodRunning {
+		if v.Status.Phase == corev1.PodPhaseRunning {
 			pod = v
 			break
 		}
@@ -524,41 +518,9 @@ func (r *BucketReconciler) portForward(_ context.Context, svc *corev1.Service, p
 		return nil, xerrors.New("all pods are not running yet")
 	}
 
-	req := r.CoreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
-	transport, upgrader, err := spdy.RoundTripperFor(r.config)
+	pf, _, err := r.CoreClient.CoreV1.PortForward(ctx, pod, port)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
-
-	readyCh := make(chan struct{})
-	pf, err := portforward.New(
-		dialer,
-		[]string{fmt.Sprintf(":%d", port)},
-		context.Background().Done(),
-		readyCh,
-		nil,
-		nil,
-	)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	go func() {
-		err := pf.ForwardPorts()
-		if err != nil {
-			switch v := err.(type) {
-			case *apierrors.StatusError:
-				r.logger.Info("StatusError", zap.Error(v))
-			}
-			r.logger.Error("Failed port forwarding", zap.Error(err))
-		}
-	}()
-
-	select {
-	case <-readyCh:
-	case <-time.After(5 * time.Second):
-		return nil, xerrors.New("timed out")
-	}
-
 	return pf, nil
 }

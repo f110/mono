@@ -14,20 +14,17 @@ import (
 	"time"
 
 	"github.com/google/go-github/v85/github"
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	batchv1informers "k8s.io/client-go/informers/batch/v1"
-	corev1informers "k8s.io/client-go/informers/core/v1"
-	"k8s.io/client-go/kubernetes"
-	batchv1listers "k8s.io/client-go/listers/batch/v1"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/rest"
 	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
 	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
@@ -71,9 +68,9 @@ var (
 )
 
 type KubernetesOptions struct {
-	JobInformer        batchv1informers.JobInformer
-	PodInformer        corev1informers.PodInformer
-	Client             kubernetes.Interface
+	BatchInformer      *k8sclient.BatchV1Informer
+	CoreInformer       *k8sclient.CoreV1Informer
+	Client             *k8sclient.Set
 	SecretStoreClient  secretstoreclient.Interface
 	RESTConfig         *rest.Config
 	DefaultCPULimit    string
@@ -81,16 +78,16 @@ type KubernetesOptions struct {
 }
 
 func NewKubernetesOptions(
-	jInformer batchv1informers.JobInformer,
-	podI corev1informers.PodInformer,
-	c kubernetes.Interface,
+	batchInformer *k8sclient.BatchV1Informer,
+	coreInformer *k8sclient.CoreV1Informer,
+	c *k8sclient.Set,
 	ssc secretstoreclient.Interface,
 	cfg *rest.Config,
 	cpuLimit, memoryLimit string,
 ) KubernetesOptions {
 	return KubernetesOptions{
-		JobInformer:        jInformer,
-		PodInformer:        podI,
+		BatchInformer:      batchInformer,
+		CoreInformer:       coreInformer,
 		Client:             c,
 		SecretStoreClient:  ssc,
 		RESTConfig:         cfg,
@@ -180,10 +177,10 @@ type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
 
-	client            kubernetes.Interface
+	client            *k8sclient.Set
 	secretStoreClient secretstoreclient.Interface
-	jobLister         batchv1listers.JobLister
-	podLister         corev1listers.PodLister
+	jobLister         *k8sclient.BatchV1JobLister
+	podLister         *k8sclient.CoreV1PodLister
 	config            *rest.Config
 	vaultClient       *vault.Client
 	jobBuilder        *JobBuilder
@@ -237,11 +234,11 @@ func NewBazelBuilder(
 		taskQueue:         newTaskQueue(),
 		jobBuilder:        NewJobBuilder(namespace, bazelImage, sidecarImage, excludeNodes),
 	}
-	if kOpt.JobInformer != nil {
-		b.jobLister = kOpt.JobInformer.Lister()
+	if kOpt.BatchInformer != nil {
+		b.jobLister = kOpt.BatchInformer.JobLister()
 	}
-	if kOpt.PodInformer != nil {
-		b.podLister = kOpt.PodInformer.Lister()
+	if kOpt.CoreInformer != nil {
+		b.podLister = kOpt.CoreInformer.PodLister()
 	}
 
 	if bazelOpt.DefaultVersion != "" {
@@ -392,12 +389,12 @@ func (b *BazelBuilder) ForceStop(ctx context.Context, taskId int32) error {
 		}
 	}
 
-	job, err := b.jobLister.Jobs(b.Namespace).Get(task.JobObjectName)
+	job, err := b.jobLister.Get(b.Namespace, task.JobObjectName)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	job = k8sfactory.JobFactory(job, k8sfactory.Label(labelKeyForceStop, "true"))
-	_, err = b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{})
+	_, err = b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -483,7 +480,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
 		}
-		if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
+		if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
 		return nil
@@ -496,12 +493,12 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if err := b.dao.Task.Update(context.Background(), task); err != nil {
 			return xerrors.WithStack(err)
 		}
-		if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
+		if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
 
-	if len(job.Status.Conditions) == 0 {
+	if job.Status == nil || len(job.Status.Conditions) == 0 {
 		logger.Log.Debug("Skip job due to the job doesn't have Conditions")
 		return nil
 	}
@@ -509,7 +506,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	now := time.Now()
 	for _, v := range job.Status.Conditions {
 		switch v.Type {
-		case batchv1.JobComplete:
+		case batchv1.JobConditionTypeComplete:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(ctx, job, repo, jobConfiguration, task, true); err != nil {
 					return xerrors.WithStack(err)
@@ -518,7 +515,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			task.Success = true
 			task.FinishedAt = &now
 			logger.Log.Info("Job was finished successfully", zap.String("job.name", job.Name), zap.Int32("task_id", task.Id))
-		case batchv1.JobFailed:
+		case batchv1.JobConditionTypeFailed:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(ctx, job, repo, jobConfiguration, task, false); err != nil {
 					return xerrors.WithStack(err)
@@ -533,7 +530,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	if err := b.dao.Task.Update(context.Background(), task); err != nil {
 		return xerrors.WithStack(err)
 	}
-	if _, err := b.client.BatchV1().Jobs(job.Namespace).Update(ctx, job, metav1.UpdateOptions{}); err != nil {
+	if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -552,15 +549,15 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 }
 
 func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error {
-	if err := b.client.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{}); err != nil {
+	if err := b.client.BatchV1.DeleteJob(ctx, job.Namespace, job.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.WithStack(err)
 	}
-	pods, err := b.client.CoreV1().Pods(job.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	pods, err := b.client.CoreV1.ListPod(ctx, job.Namespace, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	for _, v := range pods.Items {
-		if err := b.client.CoreV1().Pods(v.Namespace).Delete(ctx, v.Name, metav1.DeleteOptions{}); err != nil {
+		if err := b.client.CoreV1.DeletePod(ctx, v.Namespace, v.Name, metav1.DeleteOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
@@ -572,7 +569,7 @@ func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error 
 		if v.CSI.Driver != "secrets-store.csi.k8s.io" {
 			continue
 		}
-		err = b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(job.Namespace).Delete(ctx, v.CSI.VolumeAttributes["secretProviderClass"], metav1.DeleteOptions{})
+		err = b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(job.Namespace).Delete(ctx, v.CSI.VolumeAttributes["secretProviderClass"], k8smetav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -585,7 +582,7 @@ func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error 
 		if v.SecretRef.Name != job.Name {
 			continue
 		}
-		err = b.client.CoreV1().Secrets(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+		err = b.client.CoreV1.DeleteSecret(ctx, job.Namespace, job.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -624,7 +621,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 				m, _ := k8smanifest.Marshal(obj)
 				logger.Log.Info("Create Job", zap.String("manifest", string(m)))
 			} else {
-				createdJob, err = b.client.BatchV1().Jobs(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				createdJob, err = b.client.BatchV1.CreateJob(ctx, obj, metav1.CreateOptions{})
 				if err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -634,7 +631,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 				m, _ := k8smanifest.Marshal(obj)
 				logger.Log.Info("Create Secret", zap.String("manifest", string(m)))
 			} else {
-				_, err := b.client.CoreV1().Secrets(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				_, err := b.client.CoreV1.CreateSecret(ctx, obj, metav1.CreateOptions{})
 				if err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -644,9 +641,9 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 				m, _ := k8smanifest.Marshal(obj)
 				logger.Log.Info("Create ServiceAccount", zap.String("manifest", string(m)))
 			} else {
-				_, err := b.client.CoreV1().ServiceAccounts(b.Namespace).Get(ctx, obj.Name, metav1.GetOptions{})
+				_, err := b.client.CoreV1.GetServiceAccount(ctx, b.Namespace, obj.Name, metav1.GetOptions{})
 				if kerrors.IsNotFound(err) {
-					if _, err := b.client.CoreV1().ServiceAccounts(b.Namespace).Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+					if _, err := b.client.CoreV1.CreateServiceAccount(ctx, obj, metav1.CreateOptions{}); err != nil {
 						return xerrors.WithStack(err)
 					}
 				}
@@ -656,7 +653,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 				m, _ := k8smanifest.Marshal(obj)
 				logger.Log.Info("Create SecretProviderClass", zap.String("manifest", string(m)))
 			} else {
-				_, err := b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(b.Namespace).Create(ctx, obj, metav1.CreateOptions{})
+				_, err := b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(b.Namespace).Create(ctx, obj, k8smetav1.CreateOptions{})
 				if err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -689,10 +686,10 @@ func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
 		return false
 	}
 
-	jobs, err := b.jobLister.List(labels.Everything())
+	jobs, err := b.jobLister.List(b.Namespace, labels.Everything())
 	if err != nil {
 		logger.Log.Warn("Could not get a job's list from kube-apiserver.", zap.Error(err))
-		// Can not detect a status of job.
+		// Cannot detect the status of the job.
 		// In this situation, we assume that the job is running.
 		return true
 	}
@@ -713,7 +710,7 @@ func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
 }
 
 func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *database.SourceRepository, jobConfiguration *config.JobV2, task *database.Task, success bool) error {
-	podList, err := b.client.CoreV1().Pods(b.Namespace).List(ctx, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
+	podList, err := b.client.CoreV1.ListPod(ctx, b.Namespace, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -733,16 +730,14 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	buildPod := podList.Items[0]
 
 	buf := new(bytes.Buffer)
-	logReq := b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.PreProcessContainerName})
-	rawLog, err := logReq.DoRaw(ctx)
+	rawLog, err := b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.PreProcessContainerName})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	buf.WriteString("----- pre-process -----\n")
 	buf.Write(rawLog)
 
-	logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.BuildContainerName})
-	rawLog, err = logReq.DoRaw(ctx)
+	rawLog, err = b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.BuildContainerName})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -752,8 +747,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 
 	var testReport []byte
 	if jobConfiguration.Command == "test" && task.IsTrunk {
-		logReq = b.client.CoreV1().Pods(b.Namespace).GetLogs(buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.ReportContainerName})
-		rawLog, err = logReq.DoRaw(ctx)
+		rawLog, err = b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.ReportContainerName})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -769,19 +763,19 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	pods, err := b.podLister.Pods(b.Namespace).List(s)
+	pods, err := b.podLister.List(b.Namespace, s)
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	if len(pods) > 0 {
-		nodeList, err := b.client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		nodeList, err := b.client.CoreV1.ListNode(ctx, metav1.ListOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
 	NodeList:
 		for _, v := range nodeList.Items {
 			for _, a := range v.Status.Addresses {
-				if a.Type == corev1.NodeInternalIP &&
+				if a.Type == corev1.NodeAddressTypeInternalIP &&
 					a.Address == pods[0].Status.HostIP {
 					task.Node = v.Name
 					break NodeList

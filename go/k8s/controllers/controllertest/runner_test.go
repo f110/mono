@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.f110.dev/kubeproto/go/apis/appsv1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"go.f110.dev/mono/go/api/grafanav1alpha1"
@@ -48,11 +49,12 @@ func TestRegisterFixture(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, fromList, 1)
 
-	deploy, err := r.CoreClient.AppsV1().Deployments(metav1.NamespaceDefault).Get(context.Background(), "baz", metav1.GetOptions{})
+	deploy, err := r.CoreClient.AppsV1.GetDeployment(t.Context(), metav1.NamespaceDefault, "baz", metav1.GetOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, "baz", deploy.Name)
 
-	deploy, err = r.CoreSharedInformerFactory.Apps().V1().Deployments().Lister().Deployments(metav1.NamespaceDefault).Get("baz")
+	appsInformers := k8sclient.NewAppsV1Informer(r.CoreSharedInformerFactory.Cache(), r.CoreClient.AppsV1, metav1.NamespaceDefault, 0)
+	deploy, err = appsInformers.DeploymentLister().Get(metav1.NamespaceDefault, "baz")
 	require.NoError(t, err)
 	assert.Equal(t, "baz", deploy.Name)
 }

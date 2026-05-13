@@ -259,11 +259,11 @@ func (u *UpdaterCommand) newStorageClient() (StorageClient, error) {
 		}
 		var opt storage.MinIOOptions
 		if u.MinIOName != "" && u.MinIONamespace != "" {
-			k8sClient, k8sConf, err := newK8sClient(u.Dev)
+			k8sClient, err := newK8sClient(u.Dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
-			opt = storage.NewMinIOOptionsViaService(k8sClient, k8sConf, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, secretAccessKey, u.Dev)
+			opt = storage.NewMinIOOptionsViaService(k8sClient, u.MinIOName, u.MinIONamespace, u.MinIOPort, u.MinIOAccessKey, secretAccessKey, u.Dev)
 		} else if u.MinIOEndpoint != "" {
 			opt = storage.NewMinIOOptionsViaEndpoint(u.MinIOEndpoint, u.MinIORegion, u.MinIOAccessKey, u.MinIOSecretAccessKey)
 		}

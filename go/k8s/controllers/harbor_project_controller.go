@@ -8,18 +8,16 @@ import (
 	"reflect"
 	"time"
 
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 
 	"go.f110.dev/mono/go/api/harborv1alpha1"
 	"go.f110.dev/mono/go/enumerable"
@@ -36,7 +34,7 @@ type HarborProjectController struct {
 	*controllerutil.ControllerBase
 
 	config     *rest.Config
-	coreClient kubernetes.Interface
+	coreClient *k8sclient.Set
 	hpClient   *client.HarborV1alpha1
 	hpLister   *client.HarborV1alpha1HarborProjectLister
 
@@ -51,9 +49,9 @@ var _ controllerutil.Controller = &HarborProjectController{}
 
 func NewHarborProjectController(
 	ctx context.Context,
-	coreClient kubernetes.Interface,
+	coreClient *k8sclient.Set,
+	k8sClient kubernetes.Interface,
 	apiClient *client.Set,
-	cfg *rest.Config,
 	factory *client.InformerFactory,
 	harborNamespace,
 	harborName,
@@ -61,15 +59,15 @@ func NewHarborProjectController(
 	coreConfigMapName string,
 	runOutsideCluster bool,
 ) (*HarborProjectController, error) {
-	adminSecret, err := coreClient.CoreV1().Secrets(harborNamespace).Get(ctx, adminSecretName, metav1.GetOptions{})
+	adminSecret, err := coreClient.CoreV1.GetSecret(ctx, harborNamespace, adminSecretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	svc, err := coreClient.CoreV1().Services(harborNamespace).Get(ctx, harborName, metav1.GetOptions{})
+	svc, err := coreClient.CoreV1.GetService(ctx, harborNamespace, harborName, metav1.GetOptions{})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	cm, err := coreClient.CoreV1().ConfigMaps(harborNamespace).Get(ctx, coreConfigMapName, metav1.GetOptions{})
+	cm, err := coreClient.CoreV1.GetConfigMap(ctx, harborNamespace, coreConfigMapName, metav1.GetOptions{})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -82,7 +80,6 @@ func NewHarborProjectController(
 	hpInformer := informers.HarborProjectInformer()
 
 	c := &HarborProjectController{
-		config:            cfg,
 		coreClient:        coreClient,
 		hpClient:          apiClient.HarborV1alpha1,
 		hpLister:          informers.HarborProjectLister(),
@@ -94,7 +91,7 @@ func NewHarborProjectController(
 	c.ControllerBase = controllerutil.NewBase(
 		"harbor-project-controller",
 		c,
-		coreClient,
+		k8sClient,
 		[]cache.SharedIndexInformer{hpInformer},
 		[]cache.SharedIndexInformer{hpInformer},
 		[]string{harborProjectControllerFinalizerName},
@@ -198,13 +195,13 @@ func (c *HarborProjectController) Finalize(ctx context.Context, obj runtime.Obje
 
 func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.Service, port int) (*portforward.PortForwarder, error) {
 	selector := labels.SelectorFromSet(svc.Spec.Selector)
-	podList, err := c.coreClient.CoreV1().Pods(svc.Namespace).List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
+	podList, err := c.coreClient.CoreV1.ListPod(ctx, svc.Namespace, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
 	var pod *corev1.Pod
 	for i, v := range podList.Items {
-		if v.Status.Phase == corev1.PodRunning {
+		if v.Status.Phase == corev1.PodPhaseRunning {
 			pod = &podList.Items[i]
 			break
 		}
@@ -213,35 +210,10 @@ func (c *HarborProjectController) portForward(ctx context.Context, svc *corev1.S
 		return nil, xerrors.New("all pods are not running yet")
 	}
 
-	req := c.coreClient.CoreV1().RESTClient().Post().Resource("pods").Namespace(svc.Namespace).Name(pod.Name).SubResource("portforward")
-	transport, upgrader, err := spdy.RoundTripperFor(c.config)
+	pf, _, err := c.coreClient.CoreV1.PortForward(ctx, pod, port)
 	if err != nil {
-		return nil, xerrors.WithStack(err)
+		return nil, err
 	}
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, req.URL())
-
-	readyCh := make(chan struct{})
-	pf, err := portforward.New(dialer, []string{fmt.Sprintf(":%d", port)}, context.Background().Done(), readyCh, nil, nil)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	go func() {
-		err := pf.ForwardPorts()
-		if err != nil {
-			c.Log().Warn("Failed port forwarding", zap.Error(err))
-			switch err.(type) {
-			case *apierrors.StatusError:
-				c.Log().Info("Got error", zap.Error(err))
-			}
-		}
-	}()
-
-	select {
-	case <-readyCh:
-	case <-time.After(5 * time.Second):
-		return nil, xerrors.New("timed out")
-	}
-
 	return pf, nil
 }
 

@@ -7,12 +7,12 @@ import (
 	"slices"
 	"time"
 
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -54,7 +54,7 @@ type ControllerBase struct {
 func NewBase(
 	name string,
 	v Controller,
-	coreClient kubernetes.Interface,
+	k8sClient kubernetes.Interface,
 	eventSource []cache.SharedIndexInformer,
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
@@ -64,7 +64,7 @@ func NewBase(
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		logger.Info(fmt.Sprintf(format, args...))
 	})
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
 
 	var r Reconciler
@@ -290,7 +290,7 @@ type GenericControllerBase[T runtime.Object] struct {
 func NewGenericControllerBase[T runtime.Object](
 	name string,
 	newReconciler func() GenericReconciler[T],
-	coreClient kubernetes.Interface,
+	k8sClient kubernetes.Interface,
 	eventSource []cache.SharedIndexInformer,
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
@@ -302,7 +302,7 @@ func NewGenericControllerBase[T runtime.Object](
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		l.Info(fmt.Sprintf(format, args...))
 	})
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: coreClient.CoreV1().Events("")})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
 
 	return &GenericControllerBase[T]{

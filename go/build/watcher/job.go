@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
+	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	batchv1 "k8s.io/api/batch/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
-	batchv1informers "k8s.io/client-go/informers/batch/v1"
-	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -44,19 +43,19 @@ func (r *router) Dispatch(jobType string, job *batchv1.Job) error {
 }
 
 type JobWatcher struct {
-	jobInformer batchv1informers.JobInformer
-	jobLister   batchv1listers.JobLister
-	queue       workqueue.RateLimitingInterface
+	batchInformer *k8sclient.BatchV1Informer
+	jobLister     *k8sclient.BatchV1JobLister
+	queue         workqueue.RateLimitingInterface
 }
 
-func NewJobWatcher(jobInformer batchv1informers.JobInformer) *JobWatcher {
+func NewJobWatcher(jobInformer *k8sclient.BatchV1Informer) *JobWatcher {
 	j := &JobWatcher{
-		jobInformer: jobInformer,
-		jobLister:   jobInformer.Lister(),
-		queue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "job-watcher"),
+		batchInformer: jobInformer,
+		jobLister:     jobInformer.JobLister(),
+		queue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "job-watcher"),
 	}
 
-	jobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	jobInformer.JobInformer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    j.addJob,
 		UpdateFunc: j.updateJob,
 		DeleteFunc: j.deleteJob,
@@ -66,7 +65,7 @@ func NewJobWatcher(jobInformer batchv1informers.JobInformer) *JobWatcher {
 }
 
 func (j *JobWatcher) Run(ctx context.Context, workers int) error {
-	if !cache.WaitForCacheSync(ctx.Done(), j.jobInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), j.batchInformer.JobInformer().HasSynced) {
 		return xerrors.Define("failed to sync informer's cache").WithStack()
 	}
 
@@ -90,7 +89,7 @@ func (j *JobWatcher) dispatch(key string) error {
 		return xerrors.WithStack(err)
 	}
 
-	job, err := j.jobLister.Jobs(namespace).Get(name)
+	job, err := j.jobLister.Get(namespace, name)
 	if apierrors.IsNotFound(err) {
 		return nil
 	}

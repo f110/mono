@@ -1,21 +1,11 @@
 load("@dev_f110_kubeproto//bazel:def.bzl", "kubeproto_go_api")
-load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_go//go:def.bzl", "go_library")
 load("//build/rules:vendor.bzl", "vendor_kubeproto")
 
-proto_library(
-    name = "harbor_proto",
-    srcs = ["harbor.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "@dev_f110_kubeproto//:kubeproto",
-    ],
-)
-
 kubeproto_go_api(
     name = "go_api",
-    srcs = [":harbor_proto"],
-    importpath = "go.f110.dev/mono/go/api/harborv1alpha1",
+    srcs = ["//proto/minio-operator/v1beta1"],
+    importpath = "go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1",
 )
 
 vendor_kubeproto(
@@ -24,11 +14,13 @@ vendor_kubeproto(
 )
 
 go_library(
-    name = "harborv1alpha1",
+    name = "miniocontrollerv1beta1",
     srcs = ["go_api.generated.object.go"],
-    importpath = "go.f110.dev/mono/go/api/harborv1alpha1",
+    importpath = "go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1",
     visibility = ["//visibility:public"],
     deps = [
+        "@dev_f110_kubeproto//go/apis/appsv1",
+        "@dev_f110_kubeproto//go/apis/corev1",
         "@dev_f110_kubeproto//go/apis/metav1",
         "@io_k8s_apimachinery//pkg/runtime",
         "@io_k8s_apimachinery//pkg/runtime/schema",

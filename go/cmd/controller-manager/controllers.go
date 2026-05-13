@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -25,6 +25,7 @@ import (
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers"
 	"go.f110.dev/mono/go/k8s/probe"
+	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/vault"
 )
@@ -41,7 +42,7 @@ const (
 
 type ChildController struct {
 	Name   string
-	New    func(context.Context, *Controllers, kubeinformers.SharedInformerFactory, *client.InformerFactory) (controller, error)
+	New    func(context.Context, *Controllers, *k8sclient.InformerFactory, *client.InformerFactory, *thirdpartyclient.InformerFactory) (controller, error)
 	Enable bool
 }
 
@@ -50,10 +51,10 @@ type ChildControllers []*ChildController
 var AllChildControllers = ChildControllers{
 	{
 		Name: ControllerGrafanaUser,
-		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			gu, err := controllers.NewGrafanaController(core, factory, p.coreClient, p.client)
+		New: func(_ context.Context, p *Controllers, core *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
+			gu, err := controllers.NewGrafanaController(core, factory, p.coreClient, p.k8sClient, p.client)
 			if err != nil {
-				return nil, xerrors.WithStack(err)
+				return nil, err
 			}
 			return gu, nil
 		},
@@ -61,12 +62,12 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborProject,
-		New: func(ctx context.Context, p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(ctx context.Context, p *Controllers, _ *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
 			hpc, err := controllers.NewHarborProjectController(
 				ctx,
 				p.coreClient,
+				p.k8sClient,
 				p.client,
-				p.config,
 				factory,
 				p.harborNamespace,
 				p.harborServiceName,
@@ -75,7 +76,7 @@ var AllChildControllers = ChildControllers{
 				p.dev,
 			)
 			if err != nil {
-				return nil, xerrors.WithStack(err)
+				return nil, err
 			}
 			return hpc, nil
 		},
@@ -83,10 +84,11 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerHarborRobotAccount,
-		New: func(ctx context.Context, p *Controllers, _ kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(ctx context.Context, p *Controllers, _ *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
 			hrac, err := controllers.NewHarborRobotAccountController(
 				ctx,
 				p.coreClient,
+				p.k8sClient,
 				p.client,
 				p.config,
 				factory,
@@ -96,7 +98,7 @@ var AllChildControllers = ChildControllers{
 				p.dev,
 			)
 			if err != nil {
-				return nil, xerrors.WithStack(err)
+				return nil, err
 			}
 			return hrac, nil
 		},
@@ -104,16 +106,16 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOCluster,
-		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			mcc := controllers.NewMinIOClusterController(p.coreClient, p.client, p.config, core, factory, p.vaultClient, p.dev)
+		New: func(_ context.Context, p *Controllers, core *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
+			mcc := controllers.NewMinIOClusterController(p.coreClient, p.k8sClient, p.client, core, factory, p.vaultClient, p.dev)
 			return mcc, nil
 		},
 		Enable: true,
 	},
 	{
 		Name: ControllerMinIOBucket,
-		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			mbc, err := controllers.NewMinIOBucketController(p.coreClient, p.client, p.config, core, factory, p.dev)
+		New: func(_ context.Context, p *Controllers, core *k8sclient.InformerFactory, factory *client.InformerFactory, tpFactory *thirdpartyclient.InformerFactory) (controller, error) {
+			mbc, err := controllers.NewMinIOBucketController(p.coreClient, p.k8sClient, p.client, p.tpClient, core, factory, tpFactory, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
@@ -123,13 +125,15 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerMinIOUser,
-		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
+		New: func(_ context.Context, p *Controllers, core *k8sclient.InformerFactory, factory *client.InformerFactory, tpFactory *thirdpartyclient.InformerFactory) (controller, error) {
 			muc, err := controllers.NewMinIOUserController(
 				p.coreClient,
+				p.k8sClient,
 				p.client,
-				p.config,
+				p.tpClient,
 				core,
 				factory,
+				tpFactory,
 				p.vaultClient,
 				p.dev,
 			)
@@ -142,8 +146,8 @@ var AllChildControllers = ChildControllers{
 	},
 	{
 		Name: ControllerConsulBackup,
-		New: func(_ context.Context, p *Controllers, core kubeinformers.SharedInformerFactory, factory *client.InformerFactory) (controller, error) {
-			b, err := controllers.NewConsulBackupController(core, factory, p.coreClient, p.client, p.config, p.dev)
+		New: func(_ context.Context, p *Controllers, core *k8sclient.InformerFactory, factory *client.InformerFactory, _ *thirdpartyclient.InformerFactory) (controller, error) {
+			b, err := controllers.NewConsulBackupController(core, factory, p.coreClient, p.k8sClient, p.client, p.dev)
 			if err != nil {
 				return nil, xerrors.WithStack(err)
 			}
@@ -193,8 +197,10 @@ type Controllers struct {
 	vaultK8sAuthRole        string
 
 	config      *rest.Config
-	coreClient  *kubernetes.Clientset
+	coreClient  *k8sclient.Set
+	k8sClient   kubernetes.Interface
 	client      *client.Set
+	tpClient    *thirdpartyclient.Set
 	vaultClient *vault.Client
 }
 
@@ -265,16 +271,26 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 	}
 	p.config = cfg
 
-	coreClient, err := kubernetes.NewForConfig(cfg)
+	coreClient, err := k8sclient.NewSet(cfg)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.coreClient = coreClient
+	k8sClient, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	p.k8sClient = k8sClient
 	apiClientset, err := client.NewSet(cfg)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.client = apiClientset
+	thirdpartyClient, err := thirdpartyclient.NewSet(cfg)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	p.tpClient = thirdpartyClient
 
 	p.probe = probe.NewProbe(p.metricsAddr)
 
@@ -320,7 +336,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 
 func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 	logger.Log.Info("Check custom resource definitions")
-	_, apiList, err := p.coreClient.Discovery().ServerGroupsAndResources()
+	_, apiList, err := p.k8sClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -379,7 +395,7 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 			Name:      p.leaseLockName,
 			Namespace: p.leaseLockNamespace,
 		},
-		Client: p.coreClient.CoordinationV1(),
+		Client: p.k8sClient.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: p.id,
 		},
@@ -417,23 +433,25 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 
 func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
 	logger.Log.Info("Start workers")
-	coreSharedInformerFactory := kubeinformers.NewSharedInformerFactory(p.coreClient, 30*time.Second)
+	coreSharedInformerFactory := k8sclient.NewInformerFactory(p.coreClient, k8sclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
+	tpFactory := thirdpartyclient.NewInformerFactory(p.tpClient, thirdpartyclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 
 	for _, v := range AllChildControllers {
 		if !v.Enable {
 			continue
 		}
 
-		cont, err := v.New(ctx, p, coreSharedInformerFactory, factory)
+		cont, err := v.New(ctx, p, coreSharedInformerFactory, factory, tpFactory)
 		if err != nil {
 			return fsm.Error(xerrors.WithMessagef(err, "Failed create %s controller", v.Name))
 		}
 		p.controllers = append(p.controllers, cont)
 	}
 
-	coreSharedInformerFactory.Start(ctx.Done())
+	coreSharedInformerFactory.Run(ctx)
 	factory.Run(ctx)
+	tpFactory.Run(ctx)
 
 	for _, v := range p.controllers {
 		v.StartWorkers(ctx, p.workers)

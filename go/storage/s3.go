@@ -18,12 +18,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"go.f110.dev/kubeproto/go/apis/corev1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	pf "k8s.io/client-go/tools/portforward"
 
 	"go.f110.dev/mono/go/k8s/portforward"
@@ -45,8 +44,7 @@ type S3Options struct {
 	Port      int
 	Dev       bool
 
-	k8sClient    kubernetes.Interface
-	restConfig   *rest.Config
+	coreClient   *k8sclient.Set
 	withInsecure bool
 
 	client *s3.Client
@@ -69,7 +67,7 @@ func NewS3OptionToExternal(endpoint, region, accessKey, secretAccessKey string) 
 	}
 }
 
-func NewS3OptionViaService(client kubernetes.Interface, config *rest.Config, name, namespace string, port int, accessKey, secretAccessKey string, dev bool) S3Options {
+func NewS3OptionViaService(client *k8sclient.Set, name, namespace string, port int, accessKey, secretAccessKey string, dev bool) S3Options {
 	return S3Options{
 		Name:            name,
 		Namespace:       namespace,
@@ -78,8 +76,7 @@ func NewS3OptionViaService(client kubernetes.Interface, config *rest.Config, nam
 		SecretAccessKey: secretAccessKey,
 		Dev:             dev,
 		withInsecure:    true,
-		k8sClient:       client,
-		restConfig:      config,
+		coreClient:      client,
 	}
 }
 
@@ -88,7 +85,7 @@ func (s *S3Options) Client(ctx context.Context) (*s3.Client, error) {
 		return s.client, nil
 	}
 
-	if s.k8sClient != nil && s.Endpoint == "" {
+	if s.coreClient != nil && s.Endpoint == "" {
 		endpoint, forwarder, err := s.getS3Endpoint(ctx, s.Name, s.Namespace, s.Port)
 		if err != nil {
 			if forwarder != nil {
@@ -145,14 +142,14 @@ func (s *S3Options) getS3Endpoint(ctx context.Context, name, namespace string, p
 	var forwarder *pf.PortForwarder
 	var endpoint string
 	var endpointService *corev1.Service
-	if svc, err := s.k8sClient.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
+	if svc, err := s.coreClient.CoreV1.GetService(ctx, namespace, name, metav1.GetOptions{}); err != nil {
 		return "", nil, xerrors.WithStack(err)
 	} else {
 		endpointService = svc
 		endpoint = fmt.Sprintf("%s.%s.svc:%d", name, namespace, port)
 	}
 	if s.Dev {
-		f, port, err := portforward.PortForward(ctx, endpointService, int(endpointService.Spec.Ports[0].Port), s.restConfig, s.k8sClient, nil)
+		f, port, err := portforward.PortForward(ctx, endpointService, endpointService.Spec.Ports[0].Port, s.coreClient, nil)
 		if err != nil {
 			return "", nil, err
 		}

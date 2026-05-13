@@ -1,7 +1,7 @@
 package controllerutil
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.f110.dev/kubeproto/go/apis/metav1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -25,6 +25,6 @@ func SetOwner(obj runtime.Object, owner runtime.Object, scheme *runtime.Scheme) 
 	if len(gvks) != 1 {
 		return
 	}
-	ref := metav1.NewControllerRef(ownerMeta, gvks[0])
-	objMeta.SetOwnerReferences(append(objMeta.GetOwnerReferences(), *ref))
+	ref := metav1.NewControllerRef(*ownerMeta.GetObjectMeta(), gvks[0])
+	objMeta.GetObjectMeta().OwnerReferences = append(objMeta.GetObjectMeta().OwnerReferences, ref)
 }

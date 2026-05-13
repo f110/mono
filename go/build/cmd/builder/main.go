@@ -12,11 +12,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v85/github"
 	"github.com/google/uuid"
+	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -112,15 +112,16 @@ type process struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	ghClient                  *github.Client
-	kubeClient                *kubernetes.Clientset
-	secretStoreClient         *secretstoreclient.Clientset
-	restCfg                   *rest.Config
-	coreSharedInformerFactory kubeinformers.SharedInformerFactory
-	dao                       dao.Options
-	storageOpt                storage.S3Options
-	bazelMirrorStorageOpt     storage.S3Options
-	vaultClient               *vault.Client
+	ghClient              *github.Client
+	coreClient            *k8sclient.Set
+	k8sClient             kubernetes.Interface
+	secretStoreClient     *secretstoreclient.Clientset
+	restCfg               *rest.Config
+	coreInformerFactory   *k8sclient.InformerFactory
+	dao                   dao.Options
+	storageOpt            storage.S3Options
+	bazelMirrorStorageOpt storage.S3Options
+	vaultClient           *vault.Client
 
 	bazelBuilder *coordinator.BazelBuilder
 	apiServer    *api.Api
@@ -169,12 +170,13 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 		if err != nil {
 			return fsm.Error(xerrors.WithStack(err))
 		}
-		p.kubeClient = kubeClient
-		p.coreSharedInformerFactory = kubeinformers.NewSharedInformerFactoryWithOptions(
-			kubeClient,
-			30*time.Second,
-			kubeinformers.WithNamespace(p.opt.Namespace),
-		)
+		p.k8sClient = kubeClient
+		coreClient, err := k8sclient.NewSet(cfg)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.coreClient = coreClient
+		p.coreInformerFactory = k8sclient.NewInformerFactory(coreClient, k8sclient.NewInformerCache(), p.opt.Namespace, 30*time.Second)
 
 		ssClient, err := secretstoreclient.NewForConfig(cfg)
 		if err != nil {
@@ -266,8 +268,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		storageOpt = storage.NewS3OptionToExternal(p.opt.MinIOEndpoint, "", p.opt.MinIOAccessKey, p.opt.MinIOSecretAccessKey)
 	} else {
 		storageOpt = storage.NewS3OptionViaService(
-			p.kubeClient,
-			p.restCfg,
+			p.coreClient,
 			p.opt.MinIOName,
 			p.opt.MinIONamespace,
 			p.opt.MinIOPort,
@@ -284,8 +285,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		bazelMirrorStorageOpt = storage.NewS3OptionToExternal(p.opt.BazelMirrorEndpoint, "", p.opt.BazelMirrorAccessKey, p.opt.BazelMirrorSecretAccessKey)
 	} else {
 		bazelMirrorStorageOpt = storage.NewS3OptionViaService(
-			p.kubeClient,
-			p.restCfg,
+			p.coreClient,
 			p.opt.BazelMirrorName,
 			p.opt.BazelMirrorNamespace,
 			p.opt.BazelMirrorPort,
@@ -298,11 +298,13 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 	p.bazelMirrorStorageOpt = bazelMirrorStorageOpt
 
 	var kubernetesOpt coordinator.KubernetesOptions
-	if p.coreSharedInformerFactory != nil && p.kubeClient != nil {
+	if p.coreInformerFactory != nil && p.coreClient != nil {
+		batchInformerFactory := k8sclient.NewBatchV1Informer(p.coreInformerFactory.Cache(), p.coreClient.BatchV1, p.opt.Namespace, 30*time.Second)
+		coreInformerFactory := k8sclient.NewCoreV1Informer(p.coreInformerFactory.Cache(), p.coreClient.CoreV1, p.opt.Namespace, 30*time.Second)
 		kubernetesOpt = coordinator.NewKubernetesOptions(
-			p.coreSharedInformerFactory.Batch().V1().Jobs(),
-			p.coreSharedInformerFactory.Core().V1().Pods(),
-			p.kubeClient,
+			batchInformerFactory,
+			coreInformerFactory,
+			p.coreClient,
 			p.secretStoreClient,
 			p.restCfg,
 			p.opt.TaskCPULimit,
@@ -363,7 +365,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 // leaderElection will get the lock.
 // Next state: stateStartWorker
 func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
-	if p.kubeClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
+	if p.k8sClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
 		logger.Log.Info("Skip leader election")
 		return fsm.Next(stateStartWorker)
 	}
@@ -373,7 +375,7 @@ func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 			Name:      p.opt.LeaseLockName,
 			Namespace: p.opt.LeaseLockNamespace,
 		},
-		Client: p.kubeClient.CoordinationV1(),
+		Client: p.k8sClient.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: p.opt.Id,
 		},
@@ -411,10 +413,11 @@ func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) startWorker(_ context.Context) (fsm.State, error) {
-	if p.coreSharedInformerFactory != nil {
-		jobWatcher := watcher.NewJobWatcher(p.coreSharedInformerFactory.Batch().V1().Jobs())
+	if p.coreInformerFactory != nil {
+		batchInformerFactory := k8sclient.NewBatchV1Informer(p.coreInformerFactory.Cache(), p.coreClient.BatchV1, p.opt.Namespace, 30*time.Second)
+		jobWatcher := watcher.NewJobWatcher(batchInformerFactory)
 
-		p.coreSharedInformerFactory.Start(p.ctx.Done())
+		p.coreInformerFactory.Run(p.ctx)
 
 		go func() {
 			logger.Log.Info("Start JobWatcher")
