@@ -543,11 +543,13 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
 		logger.Log.Info("Initialize data directory")
+		if err := os.MkdirAll(dataDir, 0755); err != nil {
+			logger.Log.Error("Failed to make directory", logger.Error(err), zap.String("path", dataDir))
+		}
 		cmd := exec.CommandContext(ctx,
-			"mysqld",
-			"--initialize-insecure",
-			"--user=mysql",
+			"mysql_install_db",
 			"--datadir="+dataDir,
+			"--auth-root-authentication-method=normal",
 		)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -564,8 +566,6 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 
 	mysql := exec.CommandContext(context.Background(),
 		"mysqld_safe",
-		"--mysqld="+mysqldPath,
-		"--user=mysql",
 		"--basedir="+baseDir,
 		"--datadir="+dataDir,
 		"--socket="+filepath.Join(baseDir, "mysqld.sock"),
@@ -574,6 +574,7 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 		fmt.Sprintf("--port=%d", c.Port.Number),
 		"--skip-networking=0",
 		fmt.Sprintf("--lc-messages-dir=%s", filepath.Clean(filepath.Join(filepath.Dir(mysqldPath), "../share/mysql8"))),
+		"--log-error="+filepath.Join(baseDir, "error.log"),
 	)
 	mysql.Stdout = os.Stdout
 	mysql.Stderr = os.Stderr
@@ -702,7 +703,7 @@ func (c *mysqlUser) Run(ctx context.Context) {
 	port := c.MySQL.(*mysqlComponent).Port.Number
 	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/", port))
 	if err != nil {
-		logger.Log.Error("Failed to connecto mysql", logger.Error(err))
+		logger.Log.Error("Failed to connect mysql", logger.Error(err))
 		return
 	}
 	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", c.Name, c.Password))
