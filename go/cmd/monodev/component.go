@@ -550,6 +550,7 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 			"mysql_install_db",
 			"--datadir="+dataDir,
 			"--auth-root-authentication-method=normal",
+			"--skip-test-db",
 		)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
