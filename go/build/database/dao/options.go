@@ -5,24 +5,28 @@ import (
 )
 
 type Options struct {
-	Repository        SourceRepositoryInterface
-	Task              TaskInterface
-	TrustedUser       TrustedUserInterface
-	PermitPullRequest PermitPullRequestInterface
-	TestReport        TestReportInterface
-	Job               JobInterface
+	Repository             SourceRepositoryInterface
+	Task                   TaskInterface
+	TrustedUser            TrustedUserInterface
+	PermitPullRequest      PermitPullRequestInterface
+	TestReport             TestReportInterface
+	Job                    JobInterface
+	ExternalReleaseTrigger ExternalReleaseTriggerInterface
+	ExternalReleaseHistory ExternalReleaseHistoryInterface
 
 	RawConnection *sql.DB
 }
 
 func NewOptions(conn *sql.DB) Options {
 	return Options{
-		Repository:        NewSourceRepository(conn),
-		Task:              NewTask(conn),
-		TrustedUser:       NewTrustedUser(conn),
-		PermitPullRequest: NewPermitPullRequest(conn),
-		TestReport:        NewTestReport(conn),
-		Job:               NewJob(conn),
-		RawConnection:     conn,
+		Repository:             NewSourceRepository(conn),
+		Task:                   NewTask(conn),
+		TrustedUser:            NewTrustedUser(conn),
+		PermitPullRequest:      NewPermitPullRequest(conn),
+		TestReport:             NewTestReport(conn),
+		Job:                    NewJob(conn),
+		ExternalReleaseTrigger: NewExternalReleaseTrigger(conn),
+		ExternalReleaseHistory: NewExternalReleaseHistory(conn),
+		RawConnection:          conn,
 	}
 }

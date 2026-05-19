@@ -90,4 +90,34 @@ CREATE TABLE `job` (
 	PRIMARY KEY(`repository_id`,`name`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `external_release_trigger`;
+CREATE TABLE `external_release_trigger` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`repository_id` INTEGER NOT NULL,
+	`job_name` VARCHAR(255) NOT NULL,
+	`provider` VARCHAR(32) NOT NULL,
+	`external_repo` VARCHAR(255) NOT NULL,
+	`kind` VARCHAR(16) NOT NULL,
+	`tag_pattern` VARCHAR(255) NOT NULL,
+	`include_prerelease` TINYINT(1) NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_repo_job` (`repository_id`, `job_name`),
+	INDEX `idx_external` (`provider`, `external_repo`, `kind`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `external_release_history`;
+CREATE TABLE `external_release_history` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`repository_id` INTEGER NOT NULL,
+	`job_name` VARCHAR(255) NOT NULL,
+	`external_repo` VARCHAR(255) NOT NULL,
+	`tag` VARCHAR(255) NOT NULL,
+	`task_id` INTEGER NOT NULL,
+	`processed_at` DATETIME NOT NULL,
+	UNIQUE `uniq_dispatch` (`repository_id`, `job_name`, `external_repo`, `tag`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 SET foreign_key_checks=1;

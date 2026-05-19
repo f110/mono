@@ -22,6 +22,7 @@ service BFF {
   rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
   rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
+  rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
 }
 
 message RequestListRepositories {}
@@ -105,6 +106,14 @@ message RequestForceStopTask {
 }
 
 message ResponseForceStopTask {}
+
+message RequestListExternalReleaseTriggers {
+  int32 repository_id = 1;
+}
+
+message ResponseListExternalReleaseTriggers {
+  repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
+}
 
 message BFFTask {
   int32                       id                       = 1;

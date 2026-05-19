@@ -194,3 +194,82 @@ message Job {
     }
   };
 }
+
+// ExternalReleaseTrigger caches a job definition that subscribes to a third-party
+// repository's release/tag stream. The cue file in the source repository is the
+// source of truth; this table is reconciled on push and used as a fast index
+// on startup.
+message ExternalReleaseTrigger {
+  int32            id                 = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository repository         = 2;
+  string           job_name           = 3 [(dev.f110.ddl.column) = { size: 255 }];
+  string           provider           = 4 [(dev.f110.ddl.column) = { size: 32 }];
+  string           external_repo      = 5 [(dev.f110.ddl.column) = { size: 255 }];
+  string           kind               = 6 [(dev.f110.ddl.column) = { size: 16 }];
+  string           tag_pattern        = 7 [(dev.f110.ddl.column) = { size: 255 }];
+  bool             include_prerelease = 8;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_repo_job"
+      columns: "repository"
+      columns: "job_name"
+      unique: true
+    }
+    indexes: {
+      name: "idx_external"
+      columns: "provider"
+      columns: "external_repo"
+      columns: "kind"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+    queries: {
+      name: "ByRepositoryId"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+  };
+}
+
+// ExternalReleaseHistory records each (trigger, tag) that has been observed and
+// dispatched. The UNIQUE constraint guarantees idempotency across leader
+// hand-off when in-memory polling state is lost.
+message ExternalReleaseHistory {
+  int32                      id            = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  SourceRepository           repository    = 2;
+  string                     job_name      = 3 [(dev.f110.ddl.column) = { size: 255 }];
+  string                     external_repo = 4 [(dev.f110.ddl.column) = { size: 255 }];
+  string                     tag           = 5 [(dev.f110.ddl.column) = { size: 255 }];
+  int32                      task_id       = 6;
+  .google.protobuf.Timestamp processed_at  = 7;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    indexes: {
+      name: "uniq_dispatch"
+      columns: "repository"
+      columns: "job_name"
+      columns: "external_repo"
+      columns: "tag"
+      unique: true
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByRepositoryAndJob"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `job_name` = ? ORDER BY `id` DESC"
+    }
+    queries: {
+      name: "Processed"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `job_name` = ? AND `external_repo` = ? AND `tag` = ?"
+    }
+  };
+}

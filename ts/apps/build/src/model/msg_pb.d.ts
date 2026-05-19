@@ -251,6 +251,72 @@ export declare type TestReport = Message<"mono.build.model.TestReport"> & {
 export declare const TestReportSchema: GenMessage<TestReport>;
 
 /**
+ * @generated from message mono.build.model.ExternalReleaseTrigger
+ */
+export declare type ExternalReleaseTrigger = Message<"mono.build.model.ExternalReleaseTrigger"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: int32 repository_id = 2;
+   */
+  repositoryId: number;
+
+  /**
+   * @generated from field: string repository_name = 3;
+   */
+  repositoryName: string;
+
+  /**
+   * @generated from field: string repository_url = 4;
+   */
+  repositoryUrl: string;
+
+  /**
+   * @generated from field: string job_name = 5;
+   */
+  jobName: string;
+
+  /**
+   * @generated from field: string provider = 6;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: string external_repo = 7;
+   */
+  externalRepo: string;
+
+  /**
+   * @generated from field: string external_repo_url = 8;
+   */
+  externalRepoUrl: string;
+
+  /**
+   * @generated from field: string kind = 9;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string tag_pattern = 10;
+   */
+  tagPattern: string;
+
+  /**
+   * @generated from field: bool include_prerelease = 11;
+   */
+  includePrerelease: boolean;
+};
+
+/**
+ * Describes the message mono.build.model.ExternalReleaseTrigger.
+ * Use `create(ExternalReleaseTriggerSchema)` to create a new message.
+ */
+export declare const ExternalReleaseTriggerSchema: GenMessage<ExternalReleaseTrigger>;
+
+/**
  * @generated from enum mono.build.model.RepositoryStatus
  */
 export enum RepositoryStatus {

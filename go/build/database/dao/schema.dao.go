@@ -1396,18 +1396,11 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	}
 
 	if len(res) > 0 {
-		taskPrimaryKeys := make([]int32, len(res))
 		repositoryPrimaryKeys := make([]int32, len(res))
+		taskPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			taskPrimaryKeys[i] = v.TaskId
 			repositoryPrimaryKeys[i] = v.RepositoryId
-		}
-		taskData := make(map[int32]*database.Task)
-		{
-			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
-			for _, v := range rels {
-				taskData[v.Id] = v
-			}
+			taskPrimaryKeys[i] = v.TaskId
 		}
 		repositoryData := make(map[int32]*database.SourceRepository)
 		{
@@ -1416,9 +1409,16 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 				repositoryData[v.Id] = v
 			}
 		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Task = taskData[v.TaskId]
 			v.Repository = repositoryData[v.RepositoryId]
+			v.Task = taskData[v.TaskId]
 		}
 	}
 	return res, nil
@@ -1458,18 +1458,11 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		taskPrimaryKeys := make([]int32, len(res))
 		repositoryPrimaryKeys := make([]int32, len(res))
+		taskPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			taskPrimaryKeys[i] = v.TaskId
 			repositoryPrimaryKeys[i] = v.RepositoryId
-		}
-		taskData := make(map[int32]*database.Task)
-		{
-			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
-			for _, v := range rels {
-				taskData[v.Id] = v
-			}
+			taskPrimaryKeys[i] = v.TaskId
 		}
 		repositoryData := make(map[int32]*database.SourceRepository)
 		{
@@ -1478,9 +1471,16 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 				repositoryData[v.Id] = v
 			}
 		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Task = taskData[v.TaskId]
 			v.Repository = repositoryData[v.RepositoryId]
+			v.Task = taskData[v.TaskId]
 		}
 	}
 
@@ -1789,5 +1789,590 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) 
 	}
 
 	job.ResetMark()
+	return nil
+}
+
+type ExternalReleaseTrigger struct {
+	conn *sql.DB
+
+	sourceRepository *SourceRepository
+}
+
+type ExternalReleaseTriggerInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.ExternalReleaseTrigger, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseTrigger, error)
+	ListAll(ctx context.Context, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error)
+	ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error)
+	Create(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) (*database.ExternalReleaseTrigger, error)
+	Update(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ ExternalReleaseTriggerInterface = &ExternalReleaseTrigger{}
+
+func NewExternalReleaseTrigger(conn *sql.DB) *ExternalReleaseTrigger {
+	return &ExternalReleaseTrigger{
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
+	}
+}
+
+func (d *ExternalReleaseTrigger) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *ExternalReleaseTrigger) Select(ctx context.Context, id int32) (*database.ExternalReleaseTrigger, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `external_release_trigger` WHERE `id` = ?", id)
+
+	v := &database.ExternalReleaseTrigger{}
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.Provider, &v.ExternalRepo, &v.Kind, &v.TagPattern, &v.IncludePrerelease, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *ExternalReleaseTrigger) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseTrigger, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `external_release_trigger` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.ExternalReleaseTrigger, 0, len(id))
+	for rows.Next() {
+		r := &database.ExternalReleaseTrigger{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.Provider, &r.ExternalRepo, &r.Kind, &r.TagPattern, &r.IncludePrerelease, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+	return res, nil
+}
+
+func (d *ExternalReleaseTrigger) ListAll(ctx context.Context, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `provider`, `external_repo`, `kind`, `tag_pattern`, `include_prerelease`, `created_at`, `updated_at` FROM `external_release_trigger`"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.ExternalReleaseTrigger, 0)
+	for rows.Next() {
+		r := &database.ExternalReleaseTrigger{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.Provider, &r.ExternalRepo, &r.Kind, &r.TagPattern, &r.IncludePrerelease, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *ExternalReleaseTrigger) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.ExternalReleaseTrigger, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `provider`, `external_repo`, `kind`, `tag_pattern`, `include_prerelease`, `created_at`, `updated_at` FROM `external_release_trigger` WHERE `repository_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.ExternalReleaseTrigger, 0)
+	for rows.Next() {
+		r := &database.ExternalReleaseTrigger{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.Provider, &r.ExternalRepo, &r.Kind, &r.TagPattern, &r.IncludePrerelease, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *ExternalReleaseTrigger) Create(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) (*database.ExternalReleaseTrigger, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `external_release_trigger` (`repository_id`, `job_name`, `provider`, `external_repo`, `kind`, `tag_pattern`, `include_prerelease`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		externalReleaseTrigger.RepositoryId, externalReleaseTrigger.JobName, externalReleaseTrigger.Provider, externalReleaseTrigger.ExternalRepo, externalReleaseTrigger.Kind, externalReleaseTrigger.TagPattern, externalReleaseTrigger.IncludePrerelease, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	externalReleaseTrigger = externalReleaseTrigger.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	externalReleaseTrigger.Id = int32(insertedId)
+
+	externalReleaseTrigger.ResetMark()
+	return externalReleaseTrigger, nil
+}
+
+func (d *ExternalReleaseTrigger) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `external_release_trigger` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...ExecOption) error {
+	if !externalReleaseTrigger.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := externalReleaseTrigger.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]interface{}, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `external_release_trigger` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, externalReleaseTrigger.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	externalReleaseTrigger.ResetMark()
+	return nil
+}
+
+type ExternalReleaseHistory struct {
+	conn *sql.DB
+
+	sourceRepository *SourceRepository
+}
+
+type ExternalReleaseHistoryInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.ExternalReleaseHistory, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseHistory, error)
+	ListByRepositoryAndJob(ctx context.Context, repositoryId int32, jobName string, opt ...ListOption) ([]*database.ExternalReleaseHistory, error)
+	SelectProcessed(ctx context.Context, repositoryId int32, jobName string, externalRepo string, tag string) (*database.ExternalReleaseHistory, error)
+	Create(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) (*database.ExternalReleaseHistory, error)
+	Update(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ ExternalReleaseHistoryInterface = &ExternalReleaseHistory{}
+
+func NewExternalReleaseHistory(conn *sql.DB) *ExternalReleaseHistory {
+	return &ExternalReleaseHistory{
+		conn:             conn,
+		sourceRepository: NewSourceRepository(conn),
+	}
+}
+
+func (d *ExternalReleaseHistory) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *ExternalReleaseHistory) Select(ctx context.Context, id int32) (*database.ExternalReleaseHistory, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `external_release_history` WHERE `id` = ?", id)
+
+	v := &database.ExternalReleaseHistory{}
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.ExternalRepo, &v.Tag, &v.TaskId, &v.ProcessedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *ExternalReleaseHistory) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseHistory, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `external_release_history` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.ExternalReleaseHistory, 0, len(id))
+	for rows.Next() {
+		r := &database.ExternalReleaseHistory{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.ExternalRepo, &r.Tag, &r.TaskId, &r.ProcessedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+	return res, nil
+}
+
+func (d *ExternalReleaseHistory) ListByRepositoryAndJob(ctx context.Context, repositoryId int32, jobName string, opt ...ListOption) ([]*database.ExternalReleaseHistory, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `repository_id`, `job_name`, `external_repo`, `tag`, `task_id`, `processed_at` FROM `external_release_history` WHERE `repository_id` = ? AND `job_name` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+		jobName,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.ExternalReleaseHistory, 0)
+	for rows.Next() {
+		r := &database.ExternalReleaseHistory{}
+		if err := rows.Scan(&r.Id, &r.RepositoryId, &r.JobName, &r.ExternalRepo, &r.Tag, &r.TaskId, &r.ProcessedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		repositoryPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			repositoryPrimaryKeys[i] = v.RepositoryId
+		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Repository = repositoryData[v.RepositoryId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *ExternalReleaseHistory) SelectProcessed(ctx context.Context, repositoryId int32, jobName string, externalRepo string, tag string) (*database.ExternalReleaseHistory, error) {
+	row := d.conn.QueryRowContext(
+		ctx,
+		"SELECT `id`, `repository_id`, `job_name`, `external_repo`, `tag`, `task_id`, `processed_at` FROM `external_release_history` WHERE `repository_id` = ? AND `job_name` = ? AND `external_repo` = ? AND `tag` = ?",
+		repositoryId,
+		jobName,
+		externalRepo,
+		tag,
+	)
+	v := &database.ExternalReleaseHistory{}
+	if err := row.Scan(&v.Id, &v.RepositoryId, &v.JobName, &v.ExternalRepo, &v.Tag, &v.TaskId, &v.ProcessedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.sourceRepository.Select(ctx, v.RepositoryId); rel != nil {
+			v.Repository = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *ExternalReleaseHistory) Create(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) (*database.ExternalReleaseHistory, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `external_release_history` (`repository_id`, `job_name`, `external_repo`, `tag`, `task_id`, `processed_at`) VALUES (?, ?, ?, ?, ?, ?)",
+		externalReleaseHistory.RepositoryId, externalReleaseHistory.JobName, externalReleaseHistory.ExternalRepo, externalReleaseHistory.Tag, externalReleaseHistory.TaskId, externalReleaseHistory.ProcessedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	externalReleaseHistory = externalReleaseHistory.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	externalReleaseHistory.Id = int32(insertedId)
+
+	externalReleaseHistory.ResetMark()
+	return externalReleaseHistory, nil
+}
+
+func (d *ExternalReleaseHistory) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `external_release_history` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *ExternalReleaseHistory) Update(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...ExecOption) error {
+	if !externalReleaseHistory.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := externalReleaseHistory.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]interface{}, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+
+	query := fmt.Sprintf("UPDATE `external_release_history` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, externalReleaseHistory.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	externalReleaseHistory.ResetMark()
 	return nil
 }

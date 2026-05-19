@@ -70,3 +70,17 @@ message TestReport {
   TestStatus status   = 2;
   int64      duration = 3;
 }
+
+message ExternalReleaseTrigger {
+  int32  id                 = 1;
+  int32  repository_id      = 2;
+  string repository_name    = 3;
+  string repository_url     = 4;
+  string job_name           = 5;
+  string provider           = 6;
+  string external_repo      = 7;
+  string external_repo_url  = 8;
+  string kind               = 9;
+  string tag_pattern        = 10;
+  bool   include_prerelease = 11;
+}

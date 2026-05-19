@@ -44,19 +44,21 @@ func repoDoc(cmd *cli.Command) {
 func build(cmd *cli.Command) {
 	buildCmd := &cli.Command{
 		Use:   "build",
-		Short: "Start MySQL",
+		Short: "Start MySQL, MinIO and a GitHub API mock",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(buildDatabase)
 			m.AddComponent(buildMySQLUSER)
 			m.AddComponent(minio)
 			m.AddComponent(buildBucket)
+			m.AddComponent(githubmock)
 
 			return m.Run(ctx)
 		},
 	}
 	etcd.Flags(buildCmd.Flags())
 	minio.Flags(buildCmd.Flags())
+	githubmock.Flags(buildCmd.Flags())
 
 	cmd.AddCommand(buildCmd)
 }

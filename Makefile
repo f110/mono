@@ -27,7 +27,7 @@ deb_packages.bzl: deb_packages.yaml
 push-unifibackup:
 	bazel run --platforms=@rules_go//go/toolchain:linux_arm64 //containers/unifibackup:push
 
-DATABASE_HOST     = localhost
+DATABASE_HOST     = 127.0.0.1
 DATABASE_PORT     = 13306
 DATABASE_USER     = build
 DATABASE_NAME     = build

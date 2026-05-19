@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make update-deps)",
+      "Bash(make gen)"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+# Seed data for githubmock-server consumed by `monodev env build`.
+#
+# githubmock's yaml schema does not model a `private` flag; the public/private
+# distinction is encoded in the repository name and propagated through the
+# build app's SourceRepository.Private column when each repo is registered.
+kind: User
+login: octocat
+name: The Octocat
+---
+name: example/public-app
+default_branch: main
+commits:
+  - sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    files:
+      - name: .bazelversion
+        content: |
+          7.4.0
+      - name: .build/test.cue
+        content: |
+          package config
+
+          jobs: test_public: {
+            command: "test"
+            targets: ["//..."]
+            platforms: ["@rules_go//go/toolchain:linux_amd64"]
+            event: ["push"]
+          }
+  - sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    parents:
+      - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    files:
+      - name: .bazelversion
+        content: |
+          7.4.0
+      - name: .build/test.cue
+        content: |
+          package config
+
+          jobs: test_public: {
+            command: "test"
+            targets: ["//..."]
+            platforms: ["@rules_go//go/toolchain:linux_amd64"]
+            event: ["push"]
+          }
+tags:
+  - name: v1.0.0
+    commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  - name: v1.1.0
+    commit: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+---
+name: example/private-app
+default_branch: main
+commits:
+  - sha: cccccccccccccccccccccccccccccccccccccccc
+    files:
+      - name: .bazelversion
+        content: |
+          7.4.0
+      - name: .build/test.cue
+        content: |
+          package config
+
+          jobs: track_public: {
+            command: "run"
+            targets: ["//cmd/notify:notify"]
+            platforms: ["@rules_go//go/toolchain:linux_amd64"]
+            event: ["external_release"]
+            external_source: {
+              provider: "github"
+              repo:     "example/public-app"
+              kind:     "release"
+            }
+          }
+tags:
+  - name: v0.1.0
+    commit: cccccccccccccccccccccccccccccccccccccccc

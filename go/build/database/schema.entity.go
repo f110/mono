@@ -13,20 +13,20 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type SourceRepositoryStatus uint32
-
-const (
-	SourceRepositoryStatusUnknown            SourceRepositoryStatus = 0
-	SourceRepositoryStatusReady              SourceRepositoryStatus = 1
-	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
-)
-
 type TestStatus uint32
 
 const (
 	TestStatusPassed TestStatus = 0
 	TestStatusFlaky  TestStatus = 1
 	TestStatusFailed TestStatus = 2
+)
+
+type SourceRepositoryStatus uint32
+
+const (
+	SourceRepositoryStatusUnknown            SourceRepositoryStatus = 0
+	SourceRepositoryStatusReady              SourceRepositoryStatus = 1
+	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
 )
 
 type SourceRepository struct {
@@ -601,6 +601,196 @@ func (e *Job) Copy() *Job {
 	n := &Job{
 		RepositoryId: e.RepositoryId,
 		Name:         e.Name,
+	}
+
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
+	}
+
+	return n
+}
+
+// ExternalReleaseTrigger caches a job definition that subscribes to a third-party
+// repository's release/tag stream. The cue file in the source repository is the
+// source of truth; this table is reconciled on push and used as a fast index
+// on startup.
+type ExternalReleaseTrigger struct {
+	Id                int32
+	RepositoryId      int32
+	JobName           string
+	Provider          string
+	ExternalRepo      string
+	Kind              string
+	TagPattern        string
+	IncludePrerelease bool
+	CreatedAt         time.Time
+	UpdatedAt         *time.Time
+
+	Repository *SourceRepository
+
+	mu   sync.Mutex
+	mark *ExternalReleaseTrigger
+}
+
+func (e *ExternalReleaseTrigger) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *ExternalReleaseTrigger) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.RepositoryId != e.mark.RepositoryId ||
+		e.JobName != e.mark.JobName ||
+		e.Provider != e.mark.Provider ||
+		e.ExternalRepo != e.mark.ExternalRepo ||
+		e.Kind != e.mark.Kind ||
+		e.TagPattern != e.mark.TagPattern ||
+		e.IncludePrerelease != e.mark.IncludePrerelease ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *ExternalReleaseTrigger) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.JobName != e.mark.JobName {
+		res = append(res, ddl.Column{Name: "job_name", Value: e.JobName})
+	}
+	if e.Provider != e.mark.Provider {
+		res = append(res, ddl.Column{Name: "provider", Value: e.Provider})
+	}
+	if e.ExternalRepo != e.mark.ExternalRepo {
+		res = append(res, ddl.Column{Name: "external_repo", Value: e.ExternalRepo})
+	}
+	if e.Kind != e.mark.Kind {
+		res = append(res, ddl.Column{Name: "kind", Value: e.Kind})
+	}
+	if e.TagPattern != e.mark.TagPattern {
+		res = append(res, ddl.Column{Name: "tag_pattern", Value: e.TagPattern})
+	}
+	if e.IncludePrerelease != e.mark.IncludePrerelease {
+		res = append(res, ddl.Column{Name: "include_prerelease", Value: e.IncludePrerelease})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *ExternalReleaseTrigger) Copy() *ExternalReleaseTrigger {
+	n := &ExternalReleaseTrigger{
+		Id:                e.Id,
+		RepositoryId:      e.RepositoryId,
+		JobName:           e.JobName,
+		Provider:          e.Provider,
+		ExternalRepo:      e.ExternalRepo,
+		Kind:              e.Kind,
+		TagPattern:        e.TagPattern,
+		IncludePrerelease: e.IncludePrerelease,
+		CreatedAt:         e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	if e.Repository != nil {
+		n.Repository = e.Repository.Copy()
+	}
+
+	return n
+}
+
+// ExternalReleaseHistory records each (trigger, tag) that has been observed and
+// dispatched. The UNIQUE constraint guarantees idempotency across leader
+// hand-off when in-memory polling state is lost.
+type ExternalReleaseHistory struct {
+	Id           int32
+	RepositoryId int32
+	JobName      string
+	ExternalRepo string
+	Tag          string
+	TaskId       int32
+	ProcessedAt  time.Time
+
+	Repository *SourceRepository
+
+	mu   sync.Mutex
+	mark *ExternalReleaseHistory
+}
+
+func (e *ExternalReleaseHistory) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *ExternalReleaseHistory) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.RepositoryId != e.mark.RepositoryId ||
+		e.JobName != e.mark.JobName ||
+		e.ExternalRepo != e.mark.ExternalRepo ||
+		e.Tag != e.mark.Tag ||
+		e.TaskId != e.mark.TaskId ||
+		!e.ProcessedAt.Equal(e.mark.ProcessedAt)
+}
+
+func (e *ExternalReleaseHistory) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.JobName != e.mark.JobName {
+		res = append(res, ddl.Column{Name: "job_name", Value: e.JobName})
+	}
+	if e.ExternalRepo != e.mark.ExternalRepo {
+		res = append(res, ddl.Column{Name: "external_repo", Value: e.ExternalRepo})
+	}
+	if e.Tag != e.mark.Tag {
+		res = append(res, ddl.Column{Name: "tag", Value: e.Tag})
+	}
+	if e.TaskId != e.mark.TaskId {
+		res = append(res, ddl.Column{Name: "task_id", Value: e.TaskId})
+	}
+	if !e.ProcessedAt.Equal(e.mark.ProcessedAt) {
+		res = append(res, ddl.Column{Name: "processed_at", Value: e.ProcessedAt})
+	}
+
+	return res
+}
+
+func (e *ExternalReleaseHistory) Copy() *ExternalReleaseHistory {
+	n := &ExternalReleaseHistory{
+		Id:           e.Id,
+		RepositoryId: e.RepositoryId,
+		JobName:      e.JobName,
+		ExternalRepo: e.ExternalRepo,
+		Tag:          e.Tag,
+		TaskId:       e.TaskId,
+		ProcessedAt:  e.ProcessedAt,
 	}
 
 	if e.Repository != nil {

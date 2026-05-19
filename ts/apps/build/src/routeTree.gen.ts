@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TaskRouteImport } from './routes/task'
 import { Route as RepositoriesRouteImport } from './routes/repositories'
 import { Route as InfoRouteImport } from './routes/info'
+import { Route as External_releasesRouteImport } from './routes/external_releases'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TaskTaskIdRouteImport } from './routes/task.$taskId'
 
@@ -30,6 +31,11 @@ const InfoRoute = InfoRouteImport.update({
   path: '/info',
   getParentRoute: () => rootRouteImport,
 } as any)
+const External_releasesRoute = External_releasesRouteImport.update({
+  id: '/external_releases',
+  path: '/external_releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const TaskTaskIdRoute = TaskTaskIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -65,14 +74,34 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/info' | '/repositories' | '/task' | '/task/$taskId'
+  fullPaths:
+    | '/'
+    | '/external_releases'
+    | '/info'
+    | '/repositories'
+    | '/task'
+    | '/task/$taskId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/info' | '/repositories' | '/task' | '/task/$taskId'
-  id: '__root__' | '/' | '/info' | '/repositories' | '/task' | '/task/$taskId'
+  to:
+    | '/'
+    | '/external_releases'
+    | '/info'
+    | '/repositories'
+    | '/task'
+    | '/task/$taskId'
+  id:
+    | '__root__'
+    | '/'
+    | '/external_releases'
+    | '/info'
+    | '/repositories'
+    | '/task'
+    | '/task/$taskId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  External_releasesRoute: typeof External_releasesRoute
   InfoRoute: typeof InfoRoute
   RepositoriesRoute: typeof RepositoriesRoute
   TaskRoute: typeof TaskRouteWithChildren
@@ -99,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/info'
       fullPath: '/info'
       preLoaderRoute: typeof InfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/external_releases': {
+      id: '/external_releases'
+      path: '/external_releases'
+      fullPath: '/external_releases'
+      preLoaderRoute: typeof External_releasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -130,6 +166,7 @@ const TaskRouteWithChildren = TaskRoute._addFileChildren(TaskRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  External_releasesRoute: External_releasesRoute,
   InfoRoute: InfoRoute,
   RepositoriesRoute: RepositoriesRoute,
   TaskRoute: TaskRouteWithChildren,

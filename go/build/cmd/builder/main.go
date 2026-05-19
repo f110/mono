@@ -29,6 +29,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/gc"
+	"go.f110.dev/mono/go/build/releasewatcher"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
@@ -91,6 +92,7 @@ type Options struct {
 	TaskMemoryLimit                string
 	WithGC                         bool
 	ExcludeNodes                   []string
+	ExternalReleasePollInterval    time.Duration
 
 	Dev   bool
 	Debug bool
@@ -436,6 +438,13 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 		}()
 	}
 
+	interval := p.opt.ExternalReleasePollInterval
+	if interval <= 0 {
+		interval = 1 * time.Hour
+	}
+	manager := releasewatcher.NewManager(p.bazelBuilder, p.dao, p.ghClient, nil, interval)
+	go manager.Start(p.ctx)
+
 	return fsm.Wait()
 }
 
@@ -538,6 +547,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("task-memory-limit", "Task memory limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskMemoryLimit).Default("4096Mi")
 	fs.Bool("with-gc", "Enable GC for the job").Var(&opt.WithGC)
 	fs.StringArray("exclude-nodes", "THe list of node to not assigned job").Var(&opt.ExcludeNodes)
+	fs.Duration("external-release-poll-interval", "Interval between polls of third-party repositories for external_release triggers").Var(&opt.ExternalReleasePollInterval).Default(1 * time.Hour)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)

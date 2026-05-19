@@ -339,6 +339,60 @@ func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo)
 	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings}.Build(), nil
 }
 
+func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error) {
+	var rows []*database.ExternalReleaseTrigger
+	var err error
+	if req.GetRepositoryId() > 0 {
+		rows, err = s.dao.ExternalReleaseTrigger.ListByRepositoryId(ctx, req.GetRepositoryId())
+	} else {
+		rows, err = s.dao.ExternalReleaseTrigger.ListAll(ctx)
+	}
+	if err != nil {
+		logger.Log.Warn("Failed to list external_release_trigger", logger.Error(err))
+		return nil, status.Error(codes.Internal, "failed to list external_release_trigger")
+	}
+
+	repoCache := make(map[int32]*database.SourceRepository)
+	triggers := make([]*model.ExternalReleaseTrigger, 0, len(rows))
+	for _, r := range rows {
+		repo, ok := repoCache[r.RepositoryId]
+		if !ok {
+			sr, err := s.dao.Repository.Select(ctx, r.RepositoryId)
+			if err != nil {
+				logger.Log.Warn("Failed to load source_repository for trigger",
+					logger.Error(err))
+				continue
+			}
+			repoCache[r.RepositoryId] = sr
+			repo = sr
+		}
+		externalURL := externalRepoURL(r.Provider, r.ExternalRepo)
+		triggers = append(triggers, model.ExternalReleaseTrigger_builder{
+			Id:                new(r.Id),
+			RepositoryId:      new(r.RepositoryId),
+			RepositoryName:    new(repo.Name),
+			RepositoryUrl:     new(repo.Url),
+			JobName:           new(r.JobName),
+			Provider:          new(r.Provider),
+			ExternalRepo:      new(r.ExternalRepo),
+			ExternalRepoUrl:   new(externalURL),
+			Kind:              new(r.Kind),
+			TagPattern:        new(r.TagPattern),
+			IncludePrerelease: new(r.IncludePrerelease),
+		}.Build())
+	}
+	return ResponseListExternalReleaseTriggers_builder{Triggers: triggers}.Build(), nil
+}
+
+func externalRepoURL(provider, repo string) string {
+	switch provider {
+	case "github":
+		return "https://github.com/" + repo
+	default:
+		return ""
+	}
+}
+
 func (*apiService) dbTaskToAPITask(task *database.Task) *model.Task {
 	var startAt, finishedAt *timestamppb.Timestamp
 	if task.StartAt != nil {

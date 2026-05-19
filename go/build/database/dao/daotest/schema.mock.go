@@ -389,3 +389,129 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...dao.ExecOpti
 	_, _ = d.Call("Update", map[string]interface{}{"job": job})
 	return nil
 }
+
+type ExternalReleaseTrigger struct {
+	*mock.Mock
+}
+
+func NewExternalReleaseTrigger() *ExternalReleaseTrigger {
+	return &ExternalReleaseTrigger{Mock: mock.New()}
+}
+
+func (d *ExternalReleaseTrigger) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *ExternalReleaseTrigger) Select(ctx context.Context, id int32) (*database.ExternalReleaseTrigger, error) {
+	v, err := d.Call("Select", map[string]interface{}{"id": id})
+	return v.(*database.ExternalReleaseTrigger), err
+}
+
+func (d *ExternalReleaseTrigger) RegisterSelect(id int32, value *database.ExternalReleaseTrigger) {
+	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *ExternalReleaseTrigger) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseTrigger, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.ExternalReleaseTrigger), err
+}
+
+func (d *ExternalReleaseTrigger) RegisterSelectMulti(id []int32, value []*database.ExternalReleaseTrigger) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *ExternalReleaseTrigger) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.ExternalReleaseTrigger, error) {
+	v, err := d.Call("ListAll", map[string]interface{}{})
+	return v.([]*database.ExternalReleaseTrigger), err
+}
+
+func (d *ExternalReleaseTrigger) RegisterListAll(value []*database.ExternalReleaseTrigger, err error) {
+	d.Register("ListAll", map[string]interface{}{}, value, err)
+}
+
+func (d *ExternalReleaseTrigger) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.ExternalReleaseTrigger, error) {
+	v, err := d.Call("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId})
+	return v.([]*database.ExternalReleaseTrigger), err
+}
+
+func (d *ExternalReleaseTrigger) RegisterListByRepositoryId(repositoryId int32, value []*database.ExternalReleaseTrigger, err error) {
+	d.Register("ListByRepositoryId", map[string]interface{}{"repositoryId": repositoryId}, value, err)
+}
+
+func (d *ExternalReleaseTrigger) Create(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...dao.ExecOption) (*database.ExternalReleaseTrigger, error) {
+	_, _ = d.Call("Create", map[string]interface{}{"externalReleaseTrigger": externalReleaseTrigger})
+	return externalReleaseTrigger, nil
+}
+
+func (d *ExternalReleaseTrigger) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
+	return nil
+}
+
+func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrigger *database.ExternalReleaseTrigger, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]interface{}{"externalReleaseTrigger": externalReleaseTrigger})
+	return nil
+}
+
+type ExternalReleaseHistory struct {
+	*mock.Mock
+}
+
+func NewExternalReleaseHistory() *ExternalReleaseHistory {
+	return &ExternalReleaseHistory{Mock: mock.New()}
+}
+
+func (d *ExternalReleaseHistory) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *ExternalReleaseHistory) Select(ctx context.Context, id int32) (*database.ExternalReleaseHistory, error) {
+	v, err := d.Call("Select", map[string]interface{}{"id": id})
+	return v.(*database.ExternalReleaseHistory), err
+}
+
+func (d *ExternalReleaseHistory) RegisterSelect(id int32, value *database.ExternalReleaseHistory) {
+	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *ExternalReleaseHistory) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseHistory, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.ExternalReleaseHistory), err
+}
+
+func (d *ExternalReleaseHistory) RegisterSelectMulti(id []int32, value []*database.ExternalReleaseHistory) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *ExternalReleaseHistory) ListByRepositoryAndJob(ctx context.Context, repositoryId int32, jobName string, opt ...dao.ListOption) ([]*database.ExternalReleaseHistory, error) {
+	v, err := d.Call("ListByRepositoryAndJob", map[string]interface{}{"repositoryId": repositoryId, "jobName": jobName})
+	return v.([]*database.ExternalReleaseHistory), err
+}
+
+func (d *ExternalReleaseHistory) RegisterListByRepositoryAndJob(repositoryId int32, jobName string, value []*database.ExternalReleaseHistory, err error) {
+	d.Register("ListByRepositoryAndJob", map[string]interface{}{"repositoryId": repositoryId, "jobName": jobName}, value, err)
+}
+
+func (d *ExternalReleaseHistory) SelectProcessed(ctx context.Context, repositoryId int32, jobName string, externalRepo string, tag string) (*database.ExternalReleaseHistory, error) {
+	v, err := d.Call("SelectProcessed", map[string]interface{}{"repositoryId": repositoryId, "jobName": jobName, "externalRepo": externalRepo})
+	return v.(*database.ExternalReleaseHistory), err
+}
+
+func (d *ExternalReleaseHistory) RegisterSelectProcessed(repositoryId int32, jobName string, externalRepo string, value *database.ExternalReleaseHistory, err error) {
+	d.Register("SelectProcessed", map[string]interface{}{"repositoryId": repositoryId, "jobName": jobName, "externalRepo": externalRepo}, value, err)
+}
+
+func (d *ExternalReleaseHistory) Create(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...dao.ExecOption) (*database.ExternalReleaseHistory, error) {
+	_, _ = d.Call("Create", map[string]interface{}{"externalReleaseHistory": externalReleaseHistory})
+	return externalReleaseHistory, nil
+}
+
+func (d *ExternalReleaseHistory) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
+	return nil
+}
+
+func (d *ExternalReleaseHistory) Update(ctx context.Context, externalReleaseHistory *database.ExternalReleaseHistory, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]interface{}{"externalReleaseHistory": externalReleaseHistory})
+	return nil
+}

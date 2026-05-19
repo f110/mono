@@ -298,10 +298,90 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceReposit
 		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
 		return nil
 	}
+	if isMainBranch && repo != nil {
+		if err := a.reconcileExternalReleaseTriggers(ctx, repo, conf.Jobs); err != nil {
+			logger.Log.Warn("Failed to reconcile external_release triggers", zap.String("repo", repoName), logger.Error(err))
+		}
+	}
 	jobs := conf.Job(config.EventPush)
 
 	if err := a.build(ctx, owner, repoName, repo, jobs, bazelVersion, revision, "push", isMainBranch); err != nil {
 		return xerrors.WithStack(err)
+	}
+
+	return nil
+}
+
+// reconcileExternalReleaseTriggers rewrites the external_release_trigger rows
+// for repo to match the external_release jobs in the freshly-parsed cue
+// config. The leader's releasewatcher reads these rows on every tick.
+func (a *Api) reconcileExternalReleaseTriggers(ctx context.Context, repo *database.SourceRepository, jobs []*config.JobV2) error {
+	want := make(map[string]*config.JobV2)
+	for _, j := range jobs {
+		hasEvent := false
+		for _, e := range j.Event {
+			if e == config.EventExternalRelease {
+				hasEvent = true
+				break
+			}
+		}
+		if !hasEvent {
+			continue
+		}
+		if j.ExternalSource == nil {
+			logger.Log.Warn("external_release job without external_source", zap.String("job", j.Name))
+			continue
+		}
+		want[j.Name] = j
+	}
+
+	existing, err := a.dao.ExternalReleaseTrigger.ListByRepositoryId(ctx, repo.Id)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	existingByName := make(map[string]*database.ExternalReleaseTrigger, len(existing))
+	for _, e := range existing {
+		existingByName[e.JobName] = e
+	}
+
+	for name, e := range existingByName {
+		if _, keep := want[name]; keep {
+			continue
+		}
+		if err := a.dao.ExternalReleaseTrigger.Delete(ctx, e.Id); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	for name, j := range want {
+		src := j.ExternalSource
+		kind := src.Kind
+		if kind == "" {
+			kind = config.ExternalReleaseKindRelease
+		}
+		if e, ok := existingByName[name]; ok {
+			e.Provider = src.Provider
+			e.ExternalRepo = src.Repo
+			e.Kind = string(kind)
+			e.TagPattern = src.TagPattern
+			e.IncludePrerelease = src.IncludePrerelease
+			if err := a.dao.ExternalReleaseTrigger.Update(ctx, e); err != nil {
+				return xerrors.WithStack(err)
+			}
+		} else {
+			_, err := a.dao.ExternalReleaseTrigger.Create(ctx, &database.ExternalReleaseTrigger{
+				RepositoryId:      repo.Id,
+				JobName:           name,
+				Provider:          src.Provider,
+				ExternalRepo:      src.Repo,
+				Kind:              string(kind),
+				TagPattern:        src.TagPattern,
+				IncludePrerelease: src.IncludePrerelease,
+			})
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
 	}
 
 	return nil

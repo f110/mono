@@ -296,3 +296,16 @@ func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[RequestFor
 	}
 	return connect.NewResponse(ResponseForceStopTask_builder{}.Build()), nil
 }
+
+func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {
+	apiReq := api.RequestListExternalReleaseTriggers_builder{}
+	if req.Msg.HasRepositoryId() {
+		apiReq.RepositoryId = new(req.Msg.GetRepositoryId())
+	}
+	res, err := b.apiClient.ListExternalReleaseTriggers(ctx, apiReq.Build())
+	if err != nil {
+		logger.Log.Warn("Failed to list external_release_trigger", logger.Error(err))
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(ResponseListExternalReleaseTriggers_builder{Triggers: res.GetTriggers()}.Build()), nil
+}

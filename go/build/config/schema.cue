@@ -16,9 +16,17 @@ import "list"
 		mount_path?: _|_
 	})
 
-#EventType: "push" | "manual" | "pull_request" | "release"
+#EventType: "push" | "manual" | "pull_request" | "release" | "external_release"
 
 #Command: "test" | "run" | "build"
+
+#ExternalReleaseSource: {
+	provider:            "github"
+	repo!:               =~"^[^/]+/[^/]+$"
+	kind:                "release" | "tag" | *"release"
+	tag_pattern?:        string
+	include_prerelease?: bool | *false
+}
 
 #Job: {
 	name?:   string
@@ -39,6 +47,7 @@ import "list"
 	env?: {
 		[string]: string
 	}
+	external_source?: #ExternalReleaseSource
 }
 
 #Job: {
@@ -54,6 +63,10 @@ import "list"
 
 	if command == "run" {
 		targets: list.MaxItems(1)
+	}
+
+	if list.Contains(event, "external_release") {
+		external_source: #ExternalReleaseSource
 	}
 }
 

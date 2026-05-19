@@ -18,6 +18,7 @@ service API {
   rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
   rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
+  rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
 }
 
 message RequestListTasks {
@@ -92,4 +93,12 @@ message RequestGetServerInfo {}
 
 message ResponseGetServerInfo {
   repeated string supported_bazel_versions = 1;
+}
+
+message RequestListExternalReleaseTriggers {
+  int32 repository_id = 1;
+}
+
+message ResponseListExternalReleaseTriggers {
+  repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
 }

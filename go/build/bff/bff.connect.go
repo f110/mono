@@ -54,6 +54,9 @@ const (
 	BFFRestartTaskProcedure = "/mono.build.bff.BFF/RestartTask"
 	// BFFForceStopTaskProcedure is the fully-qualified name of the BFF's ForceStopTask RPC.
 	BFFForceStopTaskProcedure = "/mono.build.bff.BFF/ForceStopTask"
+	// BFFListExternalReleaseTriggersProcedure is the fully-qualified name of the BFF's
+	// ListExternalReleaseTriggers RPC.
+	BFFListExternalReleaseTriggersProcedure = "/mono.build.bff.BFF/ListExternalReleaseTriggers"
 )
 
 // BFFClient is a client for the mono.build.bff.BFF service.
@@ -69,6 +72,7 @@ type BFFClient interface {
 	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
+	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
 }
 
 // NewBFFClient constructs a client for the mono.build.bff.BFF service. By default, it uses the
@@ -148,22 +152,29 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 			connect.WithSchema(bFFMethods.ByName("ForceStopTask")),
 			connect.WithClientOptions(opts...),
 		),
+		listExternalReleaseTriggers: connect.NewClient[RequestListExternalReleaseTriggers, ResponseListExternalReleaseTriggers](
+			httpClient,
+			baseURL+BFFListExternalReleaseTriggersProcedure,
+			connect.WithSchema(bFFMethods.ByName("ListExternalReleaseTriggers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // bFFClient implements BFFClient.
 type bFFClient struct {
-	listRepositories *connect.Client[RequestListRepositories, ResponseListRepositories]
-	listTasks        *connect.Client[RequestListTasks, ResponseListTasks]
-	getLogs          *connect.Client[RequestGetLogs, ResponseGetLogs]
-	getServerInfo    *connect.Client[RequestGetServerInfo, ResponseGetServerInfo]
-	listJobs         *connect.Client[RequestListJobs, ResponseListJobs]
-	invokeJob        *connect.Client[RequestInvokeJob, ResponseInvokeJob]
-	saveRepository   *connect.Client[RequestSaveRepository, ResponseSaveRepository]
-	removeRepository *connect.Client[RequestRemoveRepository, ResponseRemoveRepository]
-	syncRepository   *connect.Client[RequestSyncRepository, ResponseSyncRepository]
-	restartTask      *connect.Client[RequestRestartTask, ResponseRestartTask]
-	forceStopTask    *connect.Client[RequestForceStopTask, ResponseForceStopTask]
+	listRepositories            *connect.Client[RequestListRepositories, ResponseListRepositories]
+	listTasks                   *connect.Client[RequestListTasks, ResponseListTasks]
+	getLogs                     *connect.Client[RequestGetLogs, ResponseGetLogs]
+	getServerInfo               *connect.Client[RequestGetServerInfo, ResponseGetServerInfo]
+	listJobs                    *connect.Client[RequestListJobs, ResponseListJobs]
+	invokeJob                   *connect.Client[RequestInvokeJob, ResponseInvokeJob]
+	saveRepository              *connect.Client[RequestSaveRepository, ResponseSaveRepository]
+	removeRepository            *connect.Client[RequestRemoveRepository, ResponseRemoveRepository]
+	syncRepository              *connect.Client[RequestSyncRepository, ResponseSyncRepository]
+	restartTask                 *connect.Client[RequestRestartTask, ResponseRestartTask]
+	forceStopTask               *connect.Client[RequestForceStopTask, ResponseForceStopTask]
+	listExternalReleaseTriggers *connect.Client[RequestListExternalReleaseTriggers, ResponseListExternalReleaseTriggers]
 }
 
 // ListRepositories calls mono.build.bff.BFF.ListRepositories.
@@ -221,6 +232,11 @@ func (c *bFFClient) ForceStopTask(ctx context.Context, req *connect.Request[Requ
 	return c.forceStopTask.CallUnary(ctx, req)
 }
 
+// ListExternalReleaseTriggers calls mono.build.bff.BFF.ListExternalReleaseTriggers.
+func (c *bFFClient) ListExternalReleaseTriggers(ctx context.Context, req *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {
+	return c.listExternalReleaseTriggers.CallUnary(ctx, req)
+}
+
 // BFFHandler is an implementation of the mono.build.bff.BFF service.
 type BFFHandler interface {
 	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
@@ -234,6 +250,7 @@ type BFFHandler interface {
 	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
+	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
 }
 
 // NewBFFHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -309,6 +326,12 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 		connect.WithSchema(bFFMethods.ByName("ForceStopTask")),
 		connect.WithHandlerOptions(opts...),
 	)
+	bFFListExternalReleaseTriggersHandler := connect.NewUnaryHandler(
+		BFFListExternalReleaseTriggersProcedure,
+		svc.ListExternalReleaseTriggers,
+		connect.WithSchema(bFFMethods.ByName("ListExternalReleaseTriggers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.build.bff.BFF/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BFFListRepositoriesProcedure:
@@ -333,6 +356,8 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 			bFFRestartTaskHandler.ServeHTTP(w, r)
 		case BFFForceStopTaskProcedure:
 			bFFForceStopTaskHandler.ServeHTTP(w, r)
+		case BFFListExternalReleaseTriggersProcedure:
+			bFFListExternalReleaseTriggersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -384,4 +409,8 @@ func (UnimplementedBFFHandler) RestartTask(context.Context, *connect.Request[Req
 
 func (UnimplementedBFFHandler) ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ForceStopTask is not implemented"))
+}
+
+func (UnimplementedBFFHandler) ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListExternalReleaseTriggers is not implemented"))
 }

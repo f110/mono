@@ -28,11 +28,27 @@ var configModule string
 type EventType string
 
 const (
-	EventPush        EventType = "push"
-	EventPullRequest EventType = "pull_request"
-	EventRelease     EventType = "release"
-	EventManual      EventType = "manual"
+	EventPush            EventType = "push"
+	EventPullRequest     EventType = "pull_request"
+	EventRelease         EventType = "release"
+	EventManual          EventType = "manual"
+	EventExternalRelease EventType = "external_release"
 )
+
+type ExternalReleaseSourceKind string
+
+const (
+	ExternalReleaseKindRelease ExternalReleaseSourceKind = "release"
+	ExternalReleaseKindTag     ExternalReleaseSourceKind = "tag"
+)
+
+type ExternalReleaseSource struct {
+	Provider          string                    `yaml:"provider" json:"provider"`
+	Repo              string                    `yaml:"repo" json:"repo"`
+	Kind              ExternalReleaseSourceKind `yaml:"kind,omitempty" json:"kind,omitempty"`
+	TagPattern        string                    `yaml:"tag_pattern,omitempty" json:"tag_pattern,omitempty"`
+	IncludePrerelease bool                      `yaml:"include_prerelease,omitempty" json:"include_prerelease,omitempty"`
+}
 
 type Config struct {
 	Jobs            []*JobV2
@@ -499,9 +515,10 @@ type JobV2 struct {
 	// The name of config
 	ConfigName string `yaml:"config_name,omitempty" json:"config_name,omitempty"`
 	// Job schedule
-	Schedule string         `yaml:"schedule,omitempty" json:"schedule,omitempty"`
-	Secrets  []*Secret      `yaml:"secrets,omitempty" json:"secrets,omitempty"`
-	Env      map[string]any `yaml:"env,omitempty" json:"env,omitempty"`
+	Schedule       string                 `yaml:"schedule,omitempty" json:"schedule,omitempty"`
+	Secrets        []*Secret              `yaml:"secrets,omitempty" json:"secrets,omitempty"`
+	Env            map[string]any         `yaml:"env,omitempty" json:"env,omitempty"`
+	ExternalSource *ExternalReleaseSource `yaml:"external_source,omitempty" json:"external_source,omitempty"`
 
 	RepositoryOwner string `yaml:"-" json:"-"`
 	RepositoryName  string `yaml:"-" json:"-"`
