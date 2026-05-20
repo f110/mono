@@ -103,3 +103,10 @@ func newHandler(w io.Writer, level slog.Level, encoding string) slog.Handler {
 		return slog.NewTextHandler(w, opts)
 	}
 }
+
+func E(err error) slog.Attr {
+	if err == nil {
+		return slog.Attr{}
+	}
+	return slog.Any("error", err)
+}
