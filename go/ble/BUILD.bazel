@@ -17,10 +17,9 @@ go_library(
         "@dev_f110_go_xerrors//:xerrors",
     ] + select({
         "@rules_go//go/platform:android": [
-            "//go/logger",
+            "//go/logger/slogger",
             "@com_github_go_ble_ble//:ble",
             "@com_github_go_ble_ble//linux",
-            "@org_uber_go_zap//:zap",
         ],
         "@rules_go//go/platform:darwin": [
             "@com_github_juullabs_oss_cbgo//:cbgo",
@@ -29,10 +28,9 @@ go_library(
             "@com_github_juullabs_oss_cbgo//:cbgo",
         ],
         "@rules_go//go/platform:linux": [
-            "//go/logger",
+            "//go/logger/slogger",
             "@com_github_go_ble_ble//:ble",
             "@com_github_go_ble_ble//linux",
-            "@org_uber_go_zap//:zap",
         ],
         "//conditions:default": [],
     }),
