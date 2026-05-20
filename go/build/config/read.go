@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +16,7 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 )
 
 func ReadFromRepository(ctx context.Context, githubClient *github.Client, owner, repoName string) (*Config, error) {
-	logger.Log.Debug("GetCommit", logger.String("owner", owner), logger.String("repo", repoName))
+	slogger.Log.Debug("GetCommit", slog.String("owner", owner), slog.String("repo", repoName))
 	commit, _, err := githubClient.Repositories.GetCommit(ctx, owner, repoName, "HEAD", nil)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to get HEAD commit")
@@ -101,7 +102,7 @@ func (p *githubProvider) ReadDir(path string) ([]fs.DirEntry, error) {
 	var entries []*github.TreeEntry
 GetTree:
 	for sha != "" {
-		logger.Log.Debug("GetTree", logger.String("sha", sha))
+		slogger.Log.Debug("GetTree", slog.String("sha", sha))
 		tree, _, err := p.githubClient.Git.GetTree(p.ctx, p.owner, p.name, sha, false)
 		if err != nil {
 			return nil, xerrors.WithStack(err)

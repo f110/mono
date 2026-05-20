@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/build/watcher",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger",
+        "//go/logger/slogger",
         "@dev_f110_go_xerrors//:xerrors",
         "@dev_f110_kubeproto//go/apis/batchv1",
         "@dev_f110_kubeproto//go/k8sclient",
@@ -14,6 +14,5 @@ go_library(
         "@io_k8s_apimachinery//pkg/util/wait",
         "@io_k8s_client_go//tools/cache",
         "@io_k8s_client_go//util/workqueue",
-        "@org_uber_go_zap//:zap",
     ],
 )

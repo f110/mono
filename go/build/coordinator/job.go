@@ -2,13 +2,13 @@ package coordinator
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
 	"go.f110.dev/kubeproto/go/apis/batchv1"
 	"go.f110.dev/kubeproto/go/apis/corev1"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/resource"
 	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type JobBuilder struct {
@@ -178,7 +178,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 		return j
 	}
 	if job.RepositoryName == "" {
-		logger.Log.Warn("RepositoryName is required", zap.String("name", job.Name))
+		slogger.Log.Warn("RepositoryName is required", slog.String("name", job.Name))
 		return j
 	}
 	j.job = job
@@ -197,7 +197,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 	if j.job.CPULimit != "" {
 		q, err := resource.ParseQuantity(j.job.CPULimit)
 		if err != nil {
-			logger.Log.Info("Invalid limit syntax", zap.String("job", j.job.Name), logger.Error(err))
+			slogger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), slogger.E(err))
 		} else {
 			cpuLimit = q
 		}
@@ -206,7 +206,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 	if j.job.MemoryLimit != "" {
 		q, err := resource.ParseQuantity(j.job.MemoryLimit)
 		if err != nil {
-			logger.Log.Info("Invalid limit syntax", zap.String("job", j.job.Name), logger.Error(err))
+			slogger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), slogger.E(err))
 		} else {
 			memoryLimit = q
 		}
@@ -218,7 +218,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 		case string:
 			j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.EnvVar(k, val))
 		default:
-			logger.Log.Warn("Not supported value type", zap.String("key", k))
+			slogger.Log.Warn("Not supported value type", slog.String("key", k))
 		}
 	}
 
@@ -249,7 +249,7 @@ func (j *JobBuilder) Task(task *database.Task) *JobBuilder {
 		return j
 	}
 	if j.job == nil {
-		logger.Log.Error("Job is not set")
+		slogger.Log.Error("Job is not set")
 		return j
 	}
 	j.task = task
@@ -409,7 +409,7 @@ func (j *JobBuilder) injectSecret() {
 	}
 
 	if len(j.job.Secrets) > 0 && j.vaultAddr == "" {
-		logger.Log.Warn("Secret injection is not supported", zap.String("repo", j.repo.Name), zap.String("job", j.job.Name))
+		slogger.Log.Warn("Secret injection is not supported", slog.String("repo", j.repo.Name), slog.String("job", j.job.Name))
 		return
 	}
 

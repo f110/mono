@@ -3,6 +3,7 @@ package bff
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -15,7 +16,7 @@ import (
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/build/bff"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -44,9 +45,9 @@ func bffCmd(ctx context.Context, opts options) error {
 	var wg sync.WaitGroup
 	wg.Go(func() {
 
-		logger.Log.Info("Listen", logger.String("addr", opts.Addr))
+		slogger.Log.Info("Listen", slog.String("addr", opts.Addr))
 		if err := b.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Error("Error", logger.Error(err))
+			slogger.Log.Error("Error", slogger.E(err))
 			return
 		}
 	})

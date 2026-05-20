@@ -23,6 +23,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type MockBuilder struct {
@@ -76,7 +77,7 @@ func newMock() *mockDAO {
 
 func TestGithubWebHook(t *testing.T) {
 	logger.SetLogLevel("debug")
-	logger.Init()
+	slogger.Init()
 
 	trustedUser := &database.TrustedUser{
 		Id:        1,

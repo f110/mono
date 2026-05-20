@@ -26,6 +26,7 @@ import (
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient/testingthirdpartyclient"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type TestRunner struct {
@@ -41,6 +42,7 @@ type TestRunner struct {
 
 func NewTestRunner() *TestRunner {
 	logger.Init()
+	slogger.Init()
 
 	apiClient := testingclient.NewSet()
 	coreClient := k8stestingclient.NewSet()

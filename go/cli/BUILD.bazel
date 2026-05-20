@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logger",
+        "//go/logger/slogger",
         "@com_github_mattn_go_shellwords//:go-shellwords",
         "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",

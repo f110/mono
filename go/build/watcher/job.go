@@ -2,18 +2,18 @@ package watcher
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"go.f110.dev/kubeproto/go/apis/batchv1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -106,7 +106,7 @@ func (j *JobWatcher) dispatch(key string) error {
 }
 
 func (j *JobWatcher) worker() {
-	defer logger.Log.Debug("Finish worker")
+	defer slogger.Log.Debug("Finish worker")
 
 	for j.processNextItem() {
 	}
@@ -117,13 +117,13 @@ func (j *JobWatcher) processNextItem() bool {
 	if shutdown {
 		return false
 	}
-	logger.Log.Debug("Got next queue", zap.String("key", obj.(string)))
+	slogger.Log.Debug("Got next queue", slog.String("key", obj.(string)))
 
 	func(obj any) {
 		defer j.queue.Done(obj)
 
 		if err := j.dispatch(obj.(string)); err != nil {
-			logger.Log.Info("syncJob returns an error", zap.Error(err))
+			slogger.Log.Info("syncJob returns an error", slogger.E(err))
 			j.queue.AddRateLimited(obj)
 			return
 		}
@@ -160,12 +160,12 @@ func (j *JobWatcher) deleteJob(obj any) {
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			logger.Log.Info("Object is not DeletedFinalStateUnknown")
+			slogger.Log.Info("Object is not DeletedFinalStateUnknown")
 			return
 		}
 		job, ok = tombstone.Obj.(*batchv1.Job)
 		if !ok {
-			logger.Log.Info("Object is DeletedFinalStateUnknown but Obj is not Pod")
+			slogger.Log.Info("Object is DeletedFinalStateUnknown but Obj is not Pod")
 			return
 		}
 	}

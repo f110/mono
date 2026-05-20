@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -36,7 +36,7 @@ import (
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/vault"
 )
@@ -160,7 +160,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	p.ghClient = github.NewClient(&http.Client{Transport: githubutil.NewTransportWithApp(http.DefaultTransport, app)})
 
 	if p.opt.Dev {
-		logger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
+		slogger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
 	} else {
 		cfg, err := clientcmd.BuildConfigFromFlags("", "")
 		if err != nil {
@@ -199,7 +199,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	parsedDSN.Loc = loc
 	p.opt.DSN = parsedDSN.FormatDSN()
 
-	logger.Log.Debug("Open sql connection", zap.String("dsn", p.opt.DSN))
+	slogger.Log.Debug("Open sql connection", slog.String("dsn", p.opt.DSN))
 	conn, err := sql.Open("querylog", p.opt.DSN)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -220,7 +220,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 		} else if _, err := os.Stat(p.opt.ServiceAccountTokenFile); err == nil {
 			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, p.opt.ServiceAccountTokenFile)
 			if err != nil {
-				logger.Log.Debug("Can not log in", logger.Verbose(err))
+				slogger.Log.Debug("Can not log in", slogger.Verbose(err))
 				return fsm.Error(err)
 			}
 			p.vaultClient = vc
@@ -246,7 +246,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *process) checkMigrate(ctx context.Context) (fsm.State, error) {
-	logger.Log.Debug("Check migration")
+	slogger.Log.Debug("Check migration")
 	pr := probe.NewProbe(p.dao.RawConnection)
 	ticker := time.NewTicker(1 * time.Second)
 	timeout := time.After(5 * time.Minute)
@@ -341,7 +341,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.Dev,
 	)
 	if err != nil {
-		logger.Log.Error("Failed create BazelBuilder", zap.Error(err))
+		slogger.Log.Error("Failed create BazelBuilder", slogger.E(err))
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	p.bazelBuilder = c
@@ -357,7 +357,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	p.apiServer = apiServer
 
 	go func() {
-		logger.Log.Info("Start API Server", zap.String("addr", p.apiServer.Addr))
+		slogger.Log.Info("Start API Server", slog.String("addr", p.apiServer.Addr))
 		p.apiServer.ListenAndServe()
 	}()
 
@@ -368,7 +368,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 // Next state: stateStartWorker
 func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 	if p.k8sClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
-		logger.Log.Info("Skip leader election")
+		slogger.Log.Info("Skip leader election")
 		return fsm.Next(stateStartWorker)
 	}
 
@@ -422,9 +422,9 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 		p.coreInformerFactory.Run(p.ctx)
 
 		go func() {
-			logger.Log.Info("Start JobWatcher")
+			slogger.Log.Info("Start JobWatcher")
 			if err := jobWatcher.Run(p.ctx, 1); err != nil {
-				logger.Log.Error("Error occurred at JobWatcher", zap.Error(err))
+				slogger.Log.Error("Error occurred at JobWatcher", slogger.E(err))
 				return
 			}
 		}()
@@ -433,7 +433,7 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	if p.opt.WithGC {
 		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.storageOpt)
 		go func() {
-			logger.Log.Info("Start GC")
+			slogger.Log.Info("Start GC")
 			g.Start()
 		}()
 	}
@@ -449,10 +449,10 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
-	logger.Log.Info("Shutting down")
+	slogger.Log.Info("Shutting down")
 	if p.apiServer != nil {
 		p.apiServer.Shutdown(ctx)
-		logger.Log.Info("Shutdown API Server")
+		slogger.Log.Info("Shutdown API Server")
 	}
 
 	return fsm.Finish()

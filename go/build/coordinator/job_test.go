@@ -22,11 +22,12 @@ import (
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func TestMain(m *testing.M) {
 	logger.SetLogLevel("debug")
-	logger.Init()
+	slogger.Init()
 	m.Run()
 }
 
@@ -266,7 +267,7 @@ func TestJobBuilder(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, logger.Init())
+	require.NoError(t, slogger.Init())
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			b := NewJobBuilder(metav1.NamespaceDefault, "registry/bazel", "registry/sidecar", nil)

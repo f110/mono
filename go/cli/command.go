@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type Command struct {
@@ -141,6 +142,9 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		return xerrors.New("command not found")
 	}
 	if err := logger.Init(); err != nil {
+		return err
+	}
+	if err := slogger.Init(); err != nil {
 		return err
 	}
 	return c.Run(ctx, c, fs.Args())

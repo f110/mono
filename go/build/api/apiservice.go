@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -20,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -41,7 +42,7 @@ func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	allRepo, err := s.dao.Repository.ListAll(ctx)
 	if err != nil {
-		logger.Log.Warn("Failed to list repositories", logger.Error(err))
+		slogger.Log.Warn("Failed to list repositories", slogger.E(err))
 		return nil, status.Error(codes.Internal, "Failed to list repositories")
 	}
 	repositories := enumerable.Map(allRepo, s.dbRepoToAPIRepo)
@@ -90,14 +91,14 @@ func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*Res
 		}
 		t, err := s.dao.Task.ListOffsetAll(ctx, int32(boundary), dao.Limit(pageSize+1), dao.Sort("id"), dao.Desc)
 		if err != nil {
-			logger.Log.Warn("Failed to list all tasks", logger.Error(err))
+			slogger.Log.Warn("Failed to list all tasks", slogger.E(err))
 			return nil, status.Error(codes.Internal, "failed to list all tasks")
 		}
 		receivedTasks = t
 	} else {
 		t, err := s.dao.Task.ListAll(ctx, dao.Desc, dao.Limit(pageSize+1), dao.Desc)
 		if err != nil {
-			logger.Log.Warn("Failed to list all tasks", logger.Error(err))
+			slogger.Log.Warn("Failed to list all tasks", slogger.E(err))
 			return nil, status.Error(codes.Internal, "failed to list all tasks")
 		}
 		receivedTasks = t
@@ -128,7 +129,7 @@ func (s *apiService) SaveRepository(ctx context.Context, req *RequestSaveReposit
 		Private:  req.GetRepository().GetPrivate(),
 	})
 	if err != nil {
-		logger.Log.Error("Failed to create repository", logger.Error(err))
+		slogger.Log.Error("Failed to create repository", slogger.E(err))
 		return nil, status.Error(codes.Internal, "failed to save repository")
 	}
 	return ResponseSaveRepository_builder{Repository: s.dbRepoToAPIRepo(repo)}.Build(), nil
@@ -209,7 +210,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	if req.HasTaskId() {
 		task, err := s.dao.Task.Select(ctx, req.GetTaskId())
 		if err != nil {
-			logger.Log.Info("Task is not found", logger.Error(err))
+			slogger.Log.Info("Task is not found", slogger.E(err))
 			return nil, status.Error(codes.NotFound, "Task not found")
 		}
 		u, err := url.Parse(task.Repository.Url)
@@ -252,11 +253,11 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 			false,
 		)
 		if err != nil {
-			logger.Log.Warn("Failed build job", logger.Error(err))
+			slogger.Log.Warn("Failed build job", slogger.E(err))
 			return nil, status.Error(codes.Internal, "Failed to build job")
 		}
 
-		logger.Log.Info("Success enqueue redo-job", logger.Int32("task_id", task.Id), logger.Int32("new_task_id", newTasks[len(newTasks)-1].Id))
+		slogger.Log.Info("Success enqueue redo-job", slog.Int("task_id", int(task.Id)), slog.Int("new_task_id", int(newTasks[len(newTasks)-1].Id)))
 		return ResponseInvokeJob_builder{TaskId: new(newTasks[len(newTasks)-1].Id)}.Build(), nil
 	}
 
@@ -348,7 +349,7 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 		rows, err = s.dao.ExternalReleaseTrigger.ListAll(ctx)
 	}
 	if err != nil {
-		logger.Log.Warn("Failed to list external_release_trigger", logger.Error(err))
+		slogger.Log.Warn("Failed to list external_release_trigger", slogger.E(err))
 		return nil, status.Error(codes.Internal, "failed to list external_release_trigger")
 	}
 
@@ -359,8 +360,7 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 		if !ok {
 			sr, err := s.dao.Repository.Select(ctx, r.RepositoryId)
 			if err != nil {
-				logger.Log.Warn("Failed to load source_repository for trigger",
-					logger.Error(err))
+				slogger.Log.Warn("Failed to load source_repository for trigger", slogger.E(err))
 				continue
 			}
 			repoCache[r.RepositoryId] = sr
@@ -454,7 +454,7 @@ func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *
 		task := s.dbTaskToAPITask(v)
 		tr, err := s.dao.TestReport.ListByTaskId(ctx, task.GetId())
 		if err != nil {
-			logger.Log.Warn("Failed to get test report by task id", logger.Int32("task_id", task.GetId()))
+			slogger.Log.Warn("Failed to get test report by task id", slog.Int("task_id", int(task.GetId())))
 			return task
 		}
 		testReports := enumerable.Map(tr, s.dbTestReportToAPITestReport)

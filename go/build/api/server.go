@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -16,14 +17,13 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/enumerable"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -90,7 +90,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	// Skip validate payload. Because validating body was done by the upstream proxy.
 	payload, err := io.ReadAll(req.Body)
 	if err != nil {
-		logger.Log.Warn("Failed read body", logger.Error(err))
+		slogger.Log.Warn("Failed read body", slogger.E(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -98,7 +98,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 	messageType := github.WebHookType(req)
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
-		logger.Log.Warn("Failed parse webhook's payload", logger.Error(err))
+		slogger.Log.Warn("Failed parse webhook's payload", slogger.E(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -109,11 +109,11 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 
 		if isMainBranch(event.GetRef(), event.Repo.GetMasterBranch()) {
 			if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
-				logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.String("commit", event.GetHead()))
+				slogger.Log.Info("Skip build", slog.String("repo", event.Repo.GetFullName()), slog.String("commit", event.GetHead()))
 				return
 			}
 			if err := a.buildByPushEvent(req.Context(), repo, event, true); err != nil {
-				logger.Log.Warn("Failed to build", zap.String("repo", repo.Name), logger.Error(err))
+				slogger.Log.Warn("Failed to build", slog.String("repo", repo.Name), slogger.E(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -123,7 +123,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 		switch event.GetAction() {
 		case "opened":
 			if ok, err := a.allowPullRequest(req.Context(), event); err != nil {
-				logger.Log.Info("Failed check the build permission", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+				slogger.Log.Info("Failed check the build permission", slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()))
 				return
 			} else if !ok {
 				body := "Sorry, We could not build this pull request. Because building this pull request is not allowed due to security reason.\n\n" +
@@ -137,30 +137,30 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 					&github.IssueComment{Body: new(body)},
 				)
 				if err != nil {
-					logger.Log.Warn("Failed create the comment", logger.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					slogger.Log.Warn("Failed create the comment", slogger.E(err), slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 				return
 			}
 			if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
-				logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()), logger.Error(err), logger.StackTrace(err))
+				slogger.Log.Info("Skip build", slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()), slogger.E(err))
 				return
 			}
 			repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 			if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-				logger.Log.Warn("Failed build the pull request", logger.Error(err))
+				slogger.Log.Warn("Failed build the pull request", slogger.E(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		case "synchronize":
 			if ok, _ := a.allowPullRequest(req.Context(), event); ok {
 				if ok, err := a.skipCI(req.Context(), event); ok || err != nil {
-					logger.Log.Info("Skip build", zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					slogger.Log.Info("Skip build", slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()))
 					return
 				}
 				repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 				if err := a.buildByPullRequest(req.Context(), repo, event); err != nil {
-					logger.Log.Warn("Failed build the pull request", logger.Error(err), logger.StackTrace(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+					slogger.Log.Warn("Failed build the pull request", slogger.E(err), slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -175,14 +175,14 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			}
 			permit := permits[0]
 			if err := a.dao.PermitPullRequest.Delete(req.Context(), permit.Id); err != nil {
-				logger.Log.Warn("Failed delete PermitPullRequest", logger.Error(err))
+				slogger.Log.Warn("Failed delete PermitPullRequest", slogger.E(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
 	case *github.IssueCommentEvent:
 		if err := a.issueComment(req.Context(), event); err != nil {
-			logger.Log.Warn("Failed handle comment", logger.Error(err), logger.StackTrace(err))
+			slogger.Log.Warn("Failed handle comment", slogger.E(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -192,7 +192,7 @@ func (a *Api) handleWebHook(w http.ResponseWriter, req *http.Request) {
 			repo := a.findRepository(req.Context(), event.Repo.GetHTMLURL())
 
 			if err := a.buildByRelease(req.Context(), repo, event); err != nil {
-				logger.Log.Warn("Failed to build", zap.String("repo", repo.Name), logger.Error(err))
+				slogger.Log.Warn("Failed to build", slog.String("repo", repo.Name), slogger.E(err))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -225,7 +225,7 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 		return nil, "", err
 	}
 	if len(conf.Jobs) == 0 {
-		logger.Log.Info("Skip build because there is no job", zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		slogger.Log.Info("Skip build because there is no job", slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		return nil, "", nil
 	}
 
@@ -235,11 +235,11 @@ func (a *Api) fetchBuildConfig(ctx context.Context, owner, repoName, revision st
 func (a *Api) findRepository(ctx context.Context, repoURL string) *database.SourceRepository {
 	repos, err := a.dao.Repository.ListByUrl(ctx, repoURL)
 	if err != nil {
-		logger.Log.Warn("Could not find repository", zap.Error(err))
+		slogger.Log.Warn("Could not find repository", slogger.E(err))
 		return nil
 	}
 	if len(repos) != 1 {
-		logger.Log.Warn("Can not decide the repository by url", zap.String("url", repoURL))
+		slogger.Log.Warn("Can not decide the repository by url", slog.String("url", repoURL))
 		return nil
 	}
 	return repos[0]
@@ -247,13 +247,13 @@ func (a *Api) findRepository(ctx context.Context, repoURL string) *database.Sour
 
 func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEvent) (bool, error) {
 	if event.Repo.Owner.GetLogin() == event.Sender.GetLogin() {
-		logger.Log.Info("The sender of PushRequestEvent is the repository owner", zap.String("owner", event.Repo.Owner.GetLogin()), zap.String("sender", event.Sender.GetLogin()))
+		slogger.Log.Info("The sender of PushRequestEvent is the repository owner", slog.String("owner", event.Repo.Owner.GetLogin()), slog.String("sender", event.Sender.GetLogin()))
 		return true, nil
 	}
 
 	users, err := a.dao.TrustedUser.ListByGithubId(ctx, event.Sender.GetID())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		logger.Log.Warn("Could not get trusted user", zap.Error(err), zap.Int64("sender.id", event.Sender.GetID()))
+		slogger.Log.Warn("Could not get trusted user", slogger.E(err), slog.Int64("sender.id", event.Sender.GetID()))
 		return false, err
 	}
 	if users != nil && len(users) == 1 {
@@ -262,7 +262,7 @@ func (a *Api) allowPullRequest(ctx context.Context, event *github.PullRequestEve
 
 	permitPullRequest, err := a.dao.PermitPullRequest.ListByRepositoryAndNumber(ctx, event.Repo.GetFullName(), int32(event.PullRequest.GetNumber()))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		logger.Log.Warn("Could not get permit pull request", zap.Error(err), zap.String("repo", event.Repo.GetFullName()), zap.Int("number", event.PullRequest.GetNumber()))
+		slogger.Log.Warn("Could not get permit pull request", slogger.E(err), slog.String("repo", event.Repo.GetFullName()), slog.Int("number", event.PullRequest.GetNumber()))
 		return false, err
 	}
 	if permitPullRequest != nil {
@@ -291,16 +291,16 @@ func (a *Api) buildByPushEvent(ctx context.Context, repo *database.SourceReposit
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.HeadCommit.GetID()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, isMainBranch)
 	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		return nil
 	}
 	if conf == nil {
-		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		slogger.Log.Info("Skip build because build file is not found", slog.String("owner", owner), slog.String("repo", repoName))
 		return nil
 	}
 	if isMainBranch && repo != nil {
 		if err := a.reconcileExternalReleaseTriggers(ctx, repo, conf.Jobs); err != nil {
-			logger.Log.Warn("Failed to reconcile external_release triggers", zap.String("repo", repoName), logger.Error(err))
+			slogger.Log.Warn("Failed to reconcile external_release triggers", slog.String("repo", repoName), slogger.E(err))
 		}
 	}
 	jobs := conf.Job(config.EventPush)
@@ -329,7 +329,7 @@ func (a *Api) reconcileExternalReleaseTriggers(ctx context.Context, repo *databa
 			continue
 		}
 		if j.ExternalSource == nil {
-			logger.Log.Warn("external_release job without external_source", zap.String("job", j.Name))
+			slogger.Log.Warn("external_release job without external_source", slog.String("job", j.Name))
 			continue
 		}
 		want[j.Name] = j
@@ -391,11 +391,11 @@ func (a *Api) buildByPullRequest(ctx context.Context, repo *database.SourceRepos
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), event.PullRequest.Head.GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
 	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), logger.StackTrace(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		return nil
 	}
 	if conf == nil {
-		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		slogger.Log.Info("Skip build because build file is not found", slog.String("owner", owner), slog.String("repo", repoName))
 		return nil
 	}
 	jobs := conf.Job(config.EventPullRequest)
@@ -425,11 +425,11 @@ func (a *Api) buildByRelease(ctx context.Context, repo *database.SourceRepositor
 	owner, repoName, revision := event.Repo.Owner.GetLogin(), event.Repo.GetName(), ref.Object.GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, true)
 	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		return nil
 	}
 	if conf == nil {
-		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		slogger.Log.Info("Skip build because build file is not found", slog.String("owner", owner), slog.String("repo", repoName))
 		return nil
 	}
 	jobs := conf.Job(config.EventRelease)
@@ -451,11 +451,11 @@ func (a *Api) buildPullRequest(ctx context.Context, repo *database.SourceReposit
 	revision := pr.GetHead().GetSHA()
 	conf, bazelVersion, err := a.fetchBuildConfig(ctx, owner, repoName, revision, false)
 	if err != nil {
-		logger.Log.Info("Skip build", logger.Error(err), zap.String("owner", owner), zap.String("repo", repoName), zap.String("revision", revision))
+		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		return nil
 	}
 	if conf == nil {
-		logger.Log.Info("Skip build because build file is not found", zap.String("owner", owner), zap.String("repo", repoName))
+		slogger.Log.Info("Skip build because build file is not found", slog.String("owner", owner), slog.String("repo", repoName))
 		return nil
 	}
 	jobs := conf.Job(config.EventPullRequest)
@@ -482,17 +482,17 @@ func (a *Api) build(ctx context.Context, owner, repoName string, repo *database.
 		switch v.Command {
 		case "build", "test", "run":
 		default:
-			logger.Log.Warn("Skip creating job", zap.String("command", v.Command))
+			slogger.Log.Warn("Skip creating job", slog.String("command", v.Command))
 			continue
 		}
 
 		if _, err := a.builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via, isMainBranch); err != nil {
-			logger.Log.Warn("Failed start job", zap.Error(err), zap.String("owner", owner), zap.String("repo", repoName))
+			slogger.Log.Warn("Failed start job", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName))
 			return xerrors.WithStack(err)
 		}
 	}
 
-	logger.Log.Debug("Successfully create build task", zap.String("repo", repo.Name), zap.String("revision", revision))
+	slogger.Log.Debug("Successfully create build task", slog.String("repo", repo.Name), slog.String("revision", revision))
 	return nil
 }
 
@@ -509,7 +509,7 @@ func (a *Api) issueComment(ctx context.Context, event *github.IssueCommentEvent)
 			}
 			user := users[0]
 			if user == nil {
-				logger.Log.Info("Skip handling comment due to user is not trusted user", zap.String("user", event.Sender.GetLogin()))
+				slogger.Log.Info("Skip handling comment due to user is not trusted user", slog.String("user", event.Sender.GetLogin()))
 				return nil
 			}
 
@@ -555,7 +555,7 @@ func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 	}
 	objs, err := a.stClient.List(req.Context(), a.bazelMirrorPrefix)
 	if err != nil {
-		logger.Log.Error("Failed to get the list of the file from the object storage", logger.Error(err), logger.StackTrace(err), zap.String("prefix", a.bazelMirrorPrefix))
+		slogger.Log.Error("Failed to get the list of the file from the object storage", slogger.E(err), slog.String("prefix", a.bazelMirrorPrefix))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -578,7 +578,7 @@ func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 
 	res := &ReadinessResponse{Versions: enumerable.Map(versions, func(t *semver.Version) string { return t.String() })}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		logger.Log.Error("Failed to encode to json", zap.Error(err))
+		slogger.Log.Error("Failed to encode to json", slogger.E(err))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

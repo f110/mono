@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"regexp"
 	"strings"
@@ -12,13 +13,12 @@ import (
 
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 // Builder is the subset of coordinator.BazelBuilder used to dispatch a task.
@@ -90,7 +90,7 @@ func NewManager(builder Builder, daoOpt dao.Options, githubClient *github.Client
 // Start runs the polling loop until ctx is cancelled. Intended to be invoked
 // in its own goroutine after leader election.
 func (m *Manager) Start(ctx context.Context) {
-	logger.Log.Info("Start releasewatcher", zap.Duration("interval", m.interval))
+	slogger.Log.Info("Start releasewatcher", slog.Duration("interval", m.interval))
 	t := time.NewTicker(m.interval)
 	defer t.Stop()
 
@@ -114,7 +114,7 @@ func (m *Manager) tickWithTimeout(parent context.Context) {
 func (m *Manager) tick(ctx context.Context) {
 	rows, err := m.dao.ExternalReleaseTrigger.ListAll(ctx)
 	if err != nil {
-		logger.Log.Warn("Failed to list external_release_trigger", zap.Error(err))
+		slogger.Log.Warn("Failed to list external_release_trigger", slogger.E(err))
 		return
 	}
 	groups := groupTriggers(rows)
@@ -127,10 +127,10 @@ func (m *Manager) tick(ctx context.Context) {
 	for key, triggers := range groups {
 		items, err := m.source.List(ctx, key.externalRepo, key.kind)
 		if err != nil {
-			logger.Log.Warn("Failed to list external releases",
-				zap.String("repo", key.externalRepo),
-				zap.String("kind", string(key.kind)),
-				zap.Error(err))
+			slogger.Log.Warn("Failed to list external releases",
+				slog.String("repo", key.externalRepo),
+				slog.String("kind", string(key.kind)),
+				slogger.E(err))
 			continue
 		}
 		if len(items) == 0 {
@@ -145,11 +145,11 @@ func (m *Manager) tick(ctx context.Context) {
 					continue
 				}
 				if processed, err := m.dao.ExternalReleaseHistory.SelectProcessed(ctx, t.SourceRepoID, t.JobName, t.ExternalRepo, item.Tag); err != nil && !errors.Is(err, sql.ErrNoRows) {
-					logger.Log.Warn("Failed to query external_release_history",
-						zap.Int32("repo_id", t.SourceRepoID),
-						zap.String("job", t.JobName),
-						zap.String("tag", item.Tag),
-						zap.Error(err))
+					slogger.Log.Warn("Failed to query external_release_history",
+						slog.Int("repo_id", int(t.SourceRepoID)),
+						slog.String("job", t.JobName),
+						slog.String("tag", item.Tag),
+						slogger.E(err))
 					continue
 				} else if processed != nil {
 					continue
@@ -158,19 +158,19 @@ func (m *Manager) tick(ctx context.Context) {
 				if !ok {
 					r, err := m.dao.Repository.Select(ctx, t.SourceRepoID)
 					if err != nil {
-						logger.Log.Warn("Failed to load source_repository",
-							zap.Int32("id", t.SourceRepoID), zap.Error(err))
+						slogger.Log.Warn("Failed to load source_repository",
+							slog.Int("id", int(t.SourceRepoID)), slogger.E(err))
 						continue
 					}
 					repoCache[t.SourceRepoID] = r
 					repo = r
 				}
 				if err := m.dispatch(ctx, repo, t, item); err != nil {
-					logger.Log.Warn("Failed to dispatch external release task",
-						zap.Int32("repo_id", t.SourceRepoID),
-						zap.String("job", t.JobName),
-						zap.String("tag", item.Tag),
-						zap.Error(err))
+					slogger.Log.Warn("Failed to dispatch external release task",
+						slog.Int("repo_id", int(t.SourceRepoID)),
+						slog.String("job", t.JobName),
+						slog.String("tag", item.Tag),
+						slogger.E(err))
 				}
 			}
 		}
@@ -232,15 +232,15 @@ func (m *Manager) dispatch(ctx context.Context, repo *database.SourceRepository,
 	if len(tasks) > 0 {
 		history.TaskId = tasks[0].Id
 		if err := m.dao.ExternalReleaseHistory.Update(ctx, history); err != nil {
-			logger.Log.Warn("Failed to update external_release_history.task_id",
-				zap.Int32("history_id", history.Id), zap.Error(err))
+			slogger.Log.Warn("Failed to update external_release_history.task_id",
+				slog.Int("history_id", int(history.Id)), slogger.E(err))
 		}
 	}
-	logger.Log.Info("Dispatched external release build",
-		zap.String("external_repo", t.ExternalRepo),
-		zap.String("tag", item.Tag),
-		zap.String("job", t.JobName),
-		zap.Int32("repo_id", repo.Id))
+	slogger.Log.Info("Dispatched external release build",
+		slog.String("external_repo", t.ExternalRepo),
+		slog.String("tag", item.Tag),
+		slog.String("job", t.JobName),
+		slog.Int("repo_id", int(repo.Id)))
 	return nil
 }
 
@@ -249,7 +249,7 @@ func groupTriggers(rows []*database.ExternalReleaseTrigger) map[pollKey][]*trigg
 	for _, r := range rows {
 		t, err := triggerFromRow(r)
 		if err != nil {
-			logger.Log.Warn("Skip invalid external_release_trigger", zap.Int32("id", r.Id), zap.Error(err))
+			slogger.Log.Warn("Skip invalid external_release_trigger", slog.Int("id", int(r.Id)), slogger.E(err))
 			continue
 		}
 		k := pollKey{provider: t.Provider, externalRepo: t.ExternalRepo, kind: t.Kind}

@@ -19,7 +19,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -72,7 +72,7 @@ func (b *BFF) Start() error {
 func (b *BFF) ListRepositories(ctx context.Context, _ *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	allRepo, err := b.apiClient.ListRepositories(ctx, api.RequestListRepositories_builder{}.Build())
 	if err != nil {
-		logger.Log.Warn("Failed to list repositories", logger.Error(err))
+		slogger.Log.Warn("Failed to list repositories", slogger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	repositories := enumerable.Map(allRepo.GetRepositories(), func(v *model.Repository) *model.Repository {
@@ -280,7 +280,7 @@ func (b *BFF) SyncRepository(ctx context.Context, req *connect.Request[RequestSy
 func (b *BFF) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{TaskId: new(req.Msg.GetTaskId())}.Build())
 	if err != nil {
-		logger.Log.Error("Failed to restart task", logger.Error(err))
+		slogger.Log.Error("Failed to restart task", slogger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseRestartTask_builder{}.Build()), nil
@@ -304,7 +304,7 @@ func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Requ
 	}
 	res, err := b.apiClient.ListExternalReleaseTriggers(ctx, apiReq.Build())
 	if err != nil {
-		logger.Log.Warn("Failed to list external_release_trigger", logger.Error(err))
+		slogger.Log.Warn("Failed to list external_release_trigger", slogger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseListExternalReleaseTriggers_builder{Triggers: res.GetTriggers()}.Build()), nil

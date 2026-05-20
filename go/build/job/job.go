@@ -1,9 +1,5 @@
 package job
 
-import (
-	"go.uber.org/zap"
-)
-
 const (
 	TypeCommit  = "commit"
 	TypeRelease = "release"
@@ -24,18 +20,4 @@ type Job struct {
 	ConfigName   string   `attr:"config_name"`
 	Type         string   `attr:"type"`
 	Schedule     string   `attr:"schedule"`
-}
-
-func (j *Job) ZapFields() []zap.Field {
-	return []zap.Field{
-		zap.String("package", j.Package),
-		zap.String("name", j.Name),
-		zap.String("command", j.Command),
-		zap.String("target", j.Target),
-		zap.Strings("targets", j.Targets),
-		zap.Strings("platforms", j.Platforms),
-		zap.Bool("all_revision", j.AllRevision),
-		zap.Bool("github_status", j.GithubStatus),
-		zap.String("schedule", j.Schedule),
-	}
 }
