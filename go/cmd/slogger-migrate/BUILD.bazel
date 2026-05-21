@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "slogger-migrate_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/slogger-migrate",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_x_tools//go/ast/astutil",
+        "@org_golang_x_tools//imports",
+    ],
+)
+
+go_binary(
+    name = "slogger-migrate",
+    embed = [":slogger-migrate_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "slogger-migrate_test",
+    srcs = ["main_test.go"],
+    embed = [":slogger-migrate_lib"],
+    deps = ["//go/testing/assertion"],
+)

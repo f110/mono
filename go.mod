@@ -69,6 +69,7 @@ require (
 	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.32.0
 	golang.org/x/term v0.37.0
+	golang.org/x/tools v0.38.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
 	google.golang.org/api v0.247.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c
