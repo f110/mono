@@ -11,12 +11,11 @@ go_library(
         "//go/enumerable",
         "//go/fsm",
         "//go/jma",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/prometheus/exporter",
         "//go/ucl",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/promhttp",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

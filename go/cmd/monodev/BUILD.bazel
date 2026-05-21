@@ -22,6 +22,7 @@ go_library(
         "//go/grpcutil",
         "//go/k8s/kind",
         "//go/logger",
+        "//go/logger/slogger",
         "//go/parallel",
         "//go/storage",
         "@com_github_blang_semver_v4//:semver",
@@ -42,7 +43,6 @@ go_library(
         "@io_k8s_client_go//kubernetes",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials/insecure",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

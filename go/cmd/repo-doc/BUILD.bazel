@@ -24,7 +24,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/grpcutil",
-        "//go/logger",
+        "//go/logger/slogger",
         "@com_github_go_git_go_git_v5//plumbing",
         "@com_github_go_git_go_git_v5//plumbing/filemode",
         "@com_github_yuin_goldmark//:goldmark",
@@ -41,7 +41,6 @@ go_library(
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials/insecure",
-        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -62,7 +61,7 @@ go_test(
     deps = [
         "//go/docutil",
         "//go/git",
-        "//go/logger",
+        "//go/logger/slogger",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@org_golang_google_grpc//:grpc",

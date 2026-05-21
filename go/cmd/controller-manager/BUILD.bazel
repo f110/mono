@@ -30,6 +30,7 @@ go_library(
         "//go/k8s/probe",
         "//go/k8s/thirdpartyclient",
         "//go/logger",
+        "//go/logger/slogger",
         "//go/vault",
         "@com_github_google_uuid//:uuid",
         "@dev_f110_go_xerrors//:xerrors",
@@ -41,7 +42,6 @@ go_library(
         "@io_k8s_client_go//tools/leaderelection",
         "@io_k8s_client_go//tools/leaderelection/resourcelock",
         "@io_k8s_component_base//metrics/legacyregistry",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

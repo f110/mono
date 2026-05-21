@@ -15,7 +15,7 @@ import (
 
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -114,7 +114,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	pathStat, err := h.gitData.Stat(req.Context(), &git.RequestStat{Repo: repoName, Ref: plumbing.NewBranchReferenceName(repo.DefaultBranch).String(), Path: requestFilePath})
 	if err != nil {
-		logger.Log.Error("Failed to get stat", logger.Error(err))
+		slogger.Log.Error("Failed to get stat", slogger.E(err))
 		http.Error(w, "Failed to get stat", http.StatusInternalServerError)
 		return
 	}
@@ -127,7 +127,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if _, ok := h.metadataAvailableFileExtensions[filepath.Ext(requestFilePath)]; !ok {
 		file, err := h.gitData.GetFile(req.Context(), &git.RequestGetFile{Repo: repoName, Ref: repo.DefaultBranch, Path: requestFilePath})
 		if err != nil {
-			logger.Log.Error("Failed to get file", logger.Error(err))
+			slogger.Log.Error("Failed to get file", slogger.E(err))
 			http.Error(w, "Failed to get file", http.StatusInternalServerError)
 			return
 		}
@@ -135,7 +135,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", v)
 		}
 		if _, err := w.Write(file.Content); err != nil {
-			logger.Log.Warn("Failed write content", logger.Error(err))
+			slogger.Log.Warn("Failed write content", slogger.E(err))
 			http.Error(w, "Failed write content", http.StatusInternalServerError)
 			return
 		}
@@ -150,7 +150,7 @@ func (h *httpHandler) readiness(w http.ResponseWriter, req *http.Request) {}
 func (h *httpHandler) serveRepositoryIndex(w http.ResponseWriter, req *http.Request) {
 	repositories, err := h.gitData.ListRepositories(req.Context(), &git.RequestListRepositories{})
 	if err != nil {
-		logger.Log.Error("Failed to get repositories", logger.Error(err))
+		slogger.Log.Error("Failed to get repositories", slogger.E(err))
 		http.Error(w, "Failed to get repositories", http.StatusInternalServerError)
 		return
 	}
@@ -164,7 +164,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 	case ".md":
 		d, err := h.makeDocument(file, blobPath)
 		if err != nil {
-			logger.Log.Error("Failed to convert document", logger.Error(err))
+			slogger.Log.Error("Failed to convert document", slogger.E(err))
 			http.Error(w, "Failed to convert document", http.StatusInternalServerError)
 			return
 		}
@@ -174,7 +174,7 @@ func (h *httpHandler) serveDocumentFile(ctx context.Context, w http.ResponseWrit
 			w.Header().Set("Content-Type", v)
 		}
 		if _, err := w.Write(file.Content); err != nil {
-			logger.Log.Warn("Failed write content", logger.Error(err))
+			slogger.Log.Warn("Failed write content", slogger.E(err))
 			http.Error(w, "Failed write content", http.StatusInternalServerError)
 			return
 		}
@@ -189,7 +189,7 @@ func (h *httpHandler) serveDocumentPage(ctx context.Context, w http.ResponseWrit
 	if _, ok := h.metadataAvailableFileExtensions[filepath.Ext(requestFilePath)]; ok {
 		p, err := h.docSearch.GetPage(ctx, &docutil.RequestGetPage{Repo: repo.Name, Path: requestFilePath})
 		if err != nil {
-			logger.Log.Error("Failed to get page from service", logger.Error(err))
+			slogger.Log.Error("Failed to get page from service", slogger.E(err))
 			http.Error(w, "Failed to get page", http.StatusInternalServerError)
 			return
 		}
@@ -201,7 +201,7 @@ func (h *httpHandler) serveDocumentPage(ctx context.Context, w http.ResponseWrit
 	case ".md":
 		d, err := h.markdown.Parse([]byte(page.Doc))
 		if err != nil {
-			logger.Log.Error("Failed to convert document body", logger.Error(err))
+			slogger.Log.Error("Failed to convert document body", slogger.E(err))
 			http.Error(w, "Failed to convert document body", http.StatusInternalServerError)
 			return
 		}
@@ -241,7 +241,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		Path: dirPath,
 	})
 	if err != nil {
-		logger.Log.Error("Failed to get tree", logger.Error(err))
+		slogger.Log.Error("Failed to get tree", slogger.E(err))
 		http.Error(w, "Failed to get tree", http.StatusInternalServerError)
 		return
 	}
@@ -286,7 +286,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 			Path: foundIndexFile,
 		})
 		if err != nil {
-			logger.Log.Error("Failed to get index content", logger.Error(err))
+			slogger.Log.Error("Failed to get index content", slogger.E(err))
 			http.Error(w, "Failed to get index content", http.StatusInternalServerError)
 			return
 		}
@@ -296,7 +296,7 @@ func (h *httpHandler) serveDirectoryIndex(ctx context.Context, w http.ResponseWr
 		case ".md":
 			d, err := h.markdown.Parse([]byte(page.Doc))
 			if err != nil {
-				logger.Log.Error("Failed to convert document body", logger.Error(err))
+				slogger.Log.Error("Failed to convert document body", slogger.E(err))
 				http.Error(w, "Failed to convert document body", http.StatusInternalServerError)
 				return
 			}

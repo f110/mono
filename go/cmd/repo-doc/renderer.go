@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 //go:embed doc.tmpl directory.tmpl index.tmpl
@@ -59,7 +59,7 @@ func (r *Renderer) RenderRepositories(w http.ResponseWriter, repos []*git.Reposi
 		Repositories:  repos,
 	})
 	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
+		slogger.Log.Error("Failed to render page", slogger.E(err))
 		http.Error(w, "Failed to render page", http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +70,7 @@ func (r *Renderer) RenderFile(ctx context.Context, w http.ResponseWriter, repo *
 	if _, ok := r.metadataAvailableFileExtensions[filepath.Ext(doc.Path)]; ok {
 		pageLink, err := r.docSearch.PageLink(ctx, &docutil.RequestPageLink{Repo: repo.Name, Sha: doc.Path})
 		if err != nil {
-			logger.Log.Error("Failed to get page link", logger.Error(err))
+			slogger.Log.Error("Failed to get page link", slogger.E(err))
 			http.Error(w, "Failed to get page link", http.StatusInternalServerError)
 			return
 		}
@@ -95,7 +95,7 @@ func (r *Renderer) RenderFile(ctx context.Context, w http.ResponseWriter, repo *
 		Cited:               cited,
 	})
 	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
+		slogger.Log.Error("Failed to render page", slogger.E(err))
 		http.Error(w, "Failed render page", http.StatusInternalServerError)
 		return
 	}
@@ -119,7 +119,7 @@ func (r *Renderer) RenderPage(w http.ResponseWriter, repo *docutil.Repository, p
 		Cited:               page.In,
 	})
 	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
+		slogger.Log.Error("Failed to render page", slogger.E(err))
 		http.Error(w, "Failed to render page", http.StatusInternalServerError)
 		return
 	}
@@ -151,7 +151,7 @@ func (r *Renderer) RenderDirectoryIndex(w http.ResponseWriter, repo *docutil.Rep
 		Entry:               entry,
 	})
 	if err != nil {
-		logger.Log.Error("Failed to render page", logger.Error(err))
+		slogger.Log.Error("Failed to render page", slogger.E(err))
 		http.Error(w, "Failed render page", http.StatusInternalServerError)
 		return
 	}

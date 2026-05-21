@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -13,10 +14,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 var defaultArch = []string{"amd64"}
@@ -57,7 +57,7 @@ func gantryCrane(args []string) error {
 
 	Tags:
 		for _, tag := range v.Tags {
-			logger.Log.Info("Synchronize %s:%s", zap.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
+			slogger.Log.Info("Synchronize %s:%s", slog.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
 			oldDigest, dstIM, err := getIndexManifest(fmt.Sprintf("%s:%s", v.Dst, tag))
 			if err != nil {
 				return xerrors.WithStack(err)
@@ -79,9 +79,9 @@ func gantryCrane(args []string) error {
 				return xerrors.WithStack(err)
 			}
 
-			logger.Log.Info(fmt.Sprintf("Old digest: %s, Src digest: %s", oldDigest.String(), srcDescriptor.Digest.String()))
+			slogger.Log.Info(fmt.Sprintf("Old digest: %s, Src digest: %s", oldDigest.String(), srcDescriptor.Digest.String()))
 			if srcDescriptor.Digest.String() == oldDigest.String() {
-				logger.Log.Info("The image has been synced", zap.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
+				slogger.Log.Info("The image has been synced", slog.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
 				continue
 			}
 
@@ -90,7 +90,7 @@ func gantryCrane(args []string) error {
 				if dstIM != nil && dstIM.MediaType == types.DockerManifestList {
 					for _, d := range dstIM.Manifests {
 						if d.Digest == srcDescriptor.Digest {
-							logger.Log.Info("The image has been synced", zap.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
+							slogger.Log.Info("The image has been synced", slog.String("tag", fmt.Sprintf("%s:%s", v.Dst, tag)))
 							continue Tags
 						}
 					}
@@ -98,7 +98,7 @@ func gantryCrane(args []string) error {
 			}
 
 			if !execute {
-				logger.Log.Info("Image will be synchronized", zap.String("tag", fmt.Sprintf("%s:%s", v.Src, tag)), zap.Int("number_of_images", len(platform)-exists))
+				slogger.Log.Info("Image will be synchronized", slog.String("tag", fmt.Sprintf("%s:%s", v.Src, tag)), slog.Int("number_of_images", len(platform)-exists))
 				continue
 			}
 
@@ -124,7 +124,7 @@ func gantryCrane(args []string) error {
 			}
 
 			dstRef, err := name.ParseReference(fmt.Sprintf("%s:%s", v.Dst, tag))
-			logger.Log.Info("Write index", zap.String("index", dstRef.String()))
+			slogger.Log.Info("Write index", slog.String("index", dstRef.String()))
 			if err := remote.WriteIndex(dstRef, newIndex, remote.WithAuthFromKeychain(authn.DefaultKeychain)); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -171,12 +171,12 @@ func getIndexManifest(ref string) (v1.Hash, *v1.IndexManifest, error) {
 			for _, dErr := range tErr.Errors {
 				// Manifest not found
 				if dErr.Code == transport.ManifestUnknownErrorCode {
-					logger.Log.Debug("Not found", zap.String("ref", ref))
+					slogger.Log.Debug("Not found", slog.String("ref", ref))
 					return emptyHash, nil, nil
 				}
 				// Harbor will return "NOT_FOUND"
 				if dErr.Code == "NOT_FOUND" {
-					logger.Log.Debug("NOT_FOUND", zap.String("ref", ref))
+					slogger.Log.Debug("NOT_FOUND", slog.String("ref", ref))
 					return emptyHash, nil, nil
 				}
 			}

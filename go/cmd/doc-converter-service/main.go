@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/text/converter"
 )
 
@@ -27,7 +27,7 @@ func docConverterService(args []string) error {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			logger.Log.Info("Listen", zap.Int("port", port))
+			slogger.Log.Info("Listen", slog.Int("port", port))
 			if err := s.Serve(l); err != nil {
 				return xerrors.WithStack(err)
 			}

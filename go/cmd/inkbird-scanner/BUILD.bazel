@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/ble/inkbird",
-        "//go/logger",
+        "//go/logger/slogger",
         "@dev_f110_go_xerrors//:xerrors",
     ],
 )

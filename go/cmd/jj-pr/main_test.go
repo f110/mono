@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func TestMain(m *testing.M) {
-	logger.Init()
+	slogger.Init()
 	m.Run()
 }
 

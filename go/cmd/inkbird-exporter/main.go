@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,9 +15,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 )
 
@@ -37,7 +38,7 @@ func inkbirdExporter(args []string) error {
 		ids[i] = strings.ToLower(ids[i])
 	}
 
-	if err := logger.Init(); err != nil {
+	if err := slogger.Init(); err != nil {
 		return err
 	}
 
@@ -54,7 +55,7 @@ func inkbirdExporter(args []string) error {
 		<-ctx.Done()
 		cancel()
 		if err := inkbirdExporter.Shutdown(); err != nil {
-			logger.Log.Warn("Failed shutdown exporter", zap.Error(err))
+			slogger.Log.Warn("Failed shutdown exporter", slogger.E(err))
 		}
 	}()
 
@@ -68,7 +69,7 @@ func inkbirdExporter(args []string) error {
  </body>
  </html>`))
 	})
-	logger.Log.Info("Start inkbird exporter", zap.Int("port", port))
+	slogger.Log.Info("Start inkbird exporter", slog.Int("port", port))
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil

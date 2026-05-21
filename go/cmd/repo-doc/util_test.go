@@ -3,11 +3,11 @@ package main
 import (
 	"testing"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func TestMain(m *testing.M) {
-	logger.Init()
+	slogger.Init()
 
 	m.Run()
 }

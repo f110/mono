@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"sort"
@@ -13,13 +14,12 @@ import (
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -70,7 +70,7 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 		return nil, xerrors.Define("could not found capacity in metrics").WithStack()
 	}
 
-	logger.Log.Debug("Got cluster info from metrics endpoint", zap.Float64("capacity", capacity))
+	slogger.Log.Debug("Got cluster info from metrics endpoint", slog.Float64("capacity", capacity))
 	return &fifoObjectGarbageCollector{
 		client:         client,
 		prefix:         prefix,
@@ -83,16 +83,16 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 }
 
 func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) error {
-	defer logger.Log.Info("Finish garbage collector")
+	defer slogger.Log.Info("Finish garbage collector")
 	t := time.NewTicker(gc.interval)
 	defer t.Stop()
 
 	go func() {
 		if err := gc.startInvokeServer(execute); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Error("Something happen", zap.Error(err))
+			slogger.Log.Error("Something happen", slogger.E(err))
 		}
 	}()
-	logger.Log.Info("Start garbage collector")
+	slogger.Log.Info("Start garbage collector")
 	for {
 		select {
 		case <-t.C:
@@ -118,13 +118,13 @@ func (gc *fifoObjectGarbageCollector) startInvokeServer(execute bool) error {
 				ctx, cancel := ctxutil.WithTimeout(context.Background(), gc.interval/2)
 				defer cancel()
 				if err := gc.gc(ctx, execute); err != nil {
-					logger.Log.Error("Failed garbage collecting", zap.Error(err))
+					slogger.Log.Error("Failed garbage collecting", slogger.E(err))
 				}
 			}()
 		}),
 	}
 
-	logger.Log.Info("Start invoke server", zap.String("addr", s.Addr))
+	slogger.Log.Info("Start invoke server", slog.String("addr", s.Addr))
 	return s.ListenAndServe()
 }
 
@@ -136,18 +136,18 @@ func (gc *fifoObjectGarbageCollector) Shutdown() {
 }
 
 func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) error {
-	logger.Log.Debug("Run GC")
-	defer logger.Log.Debug("Finish GC")
+	slogger.Log.Debug("Run GC")
+	defer slogger.Log.Debug("Finish GC")
 	objects, err := gc.client.List(ctx, gc.prefix)
 	if err != nil {
 		return err
 	}
-	logger.Log.Debug("Found objects", zap.Int("num", len(objects)))
+	slogger.Log.Debug("Found objects", slog.Int("num", len(objects)))
 
 	totalSize := enumerable.Sum(objects, func(obj *storage.Object) int64 { return obj.Size })
 	maxUsedSize := int64(gc.capacity * gc.maxUsedPercent)
 	if totalSize < maxUsedSize {
-		logger.Log.Debug("Current used size is less than max used size", zap.Int64("current", totalSize), zap.Int64("max_used_size", maxUsedSize), zap.Float64("usage", float64(totalSize)/float64(maxUsedSize)))
+		slogger.Log.Debug("Current used size is less than max used size", slog.Int64("current", totalSize), slog.Int64("max_used_size", maxUsedSize), slog.Float64("usage", float64(totalSize)/float64(maxUsedSize)))
 		return nil
 	}
 
@@ -165,14 +165,14 @@ func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) erro
 		}
 	}
 
-	logger.Log.Info("Delete some objects", zap.Int("num", len(deleteObjects)), zap.Int64("size", size))
+	slogger.Log.Info("Delete some objects", slog.Int("num", len(deleteObjects)), slog.Int64("size", size))
 	for _, v := range deleteObjects {
 		if execute {
 			if err := gc.client.Delete(ctx, v.Name); err != nil {
 				return err
 			}
 		} else {
-			logger.Log.Info("Delete", zap.String("name", v.Name), zap.Int64("size", v.Size), zap.Time("created_at", v.LastModified))
+			slogger.Log.Info("Delete", slog.String("name", v.Name), slog.Int64("size", v.Size), slog.Time("created_at", v.LastModified))
 		}
 	}
 
@@ -258,7 +258,7 @@ func (c *fifoObjectGarbageCollectorCommand) startGC(ctx context.Context) (fsm.St
 	} else {
 		go func() {
 			if err := c.gc.Run(ctx, !c.DryRun); err != nil {
-				logger.Log.Error("GC error", logger.Error(err))
+				slogger.Log.Error("GC error", slogger.E(err))
 				c.FSM.Shutdown()
 			}
 		}()

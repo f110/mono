@@ -8,12 +8,12 @@ go_library(
     deps = [
         "//go/ctxutil",
         "//go/logger",
+        "//go/logger/slogger",
         "@com_github_fsnotify_fsnotify//:fsnotify",
         "@com_github_spf13_pflag//:pflag",
         "@com_google_cloud_go_storage//:storage",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_api//option",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

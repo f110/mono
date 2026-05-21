@@ -10,14 +10,13 @@ import (
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/clipboard"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/opvault"
 )
 
@@ -75,7 +74,7 @@ func NewVault() (*vault, error) {
 	go func() {
 		err := v.server.Serve(listener)
 		if err != nil {
-			logger.Log.Error("Failed serve grpc", zap.Error(err))
+			slogger.Log.Error("Failed serve grpc", slogger.E(err))
 		}
 	}()
 

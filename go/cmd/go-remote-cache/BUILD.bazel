@@ -10,9 +10,9 @@ go_library(
         "//go/ctxutil",
         "//go/fsm",
         "//go/logger",
+        "//go/logger/slogger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

@@ -19,7 +19,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/gomodule"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type goModuleProxyCommand struct {
@@ -144,7 +144,7 @@ func (c *goModuleProxyCommand) init(_ context.Context) (fsm.State, error) {
 		}
 		c.cache = gomodule.NewModuleCache(cachePool, c.StorageEndpoint, c.StorageRegion, c.StorageBucket, c.StorageAccessKey, c.StorageSecretAccessKey, c.StorageCACertFile)
 	} else {
-		logger.Log.Debug("Disable cache")
+		slogger.Log.Debug("Disable cache")
 	}
 
 	var proxyOpts []gomodule.ProxyServerOption
@@ -176,7 +176,7 @@ func (c *goModuleProxyCommand) init(_ context.Context) (fsm.State, error) {
 func (c *goModuleProxyCommand) startServer(_ context.Context) (fsm.State, error) {
 	go func() {
 		if err := c.server.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Warn("Server returns error", logger.Error(err))
+			slogger.Log.Warn("Server returns error", slogger.E(err))
 		}
 	}()
 
@@ -185,7 +185,7 @@ func (c *goModuleProxyCommand) startServer(_ context.Context) (fsm.State, error)
 
 func (c *goModuleProxyCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.server != nil {
-		logger.Log.Info("Shutting down proxy")
+		slogger.Log.Info("Shutting down proxy")
 		if err := c.server.Stop(ctx); err != nil {
 			return fsm.Error(err)
 		}

@@ -9,7 +9,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/httplogger"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/vault"
 )
 
@@ -27,7 +27,7 @@ func vaultClientSample() error {
 			for {
 				select {
 				case <-time.After(1 * time.Minute):
-					logger.Log.Info("Waiting...")
+					slogger.Log.Info("Waiting...")
 				case <-ctx.Done():
 					return nil
 				}

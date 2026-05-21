@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,12 +17,12 @@ import (
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -115,33 +116,33 @@ func (c *GoRemoteCache) startListen(_ context.Context) (fsm.State, error) {
 				c.FSM.Shutdown()
 				break
 			}
-			logger.Log.Debug("Got request", zap.String("command", req.Command), zap.String("action_id", fmt.Sprintf("%x", req.ActionID)))
+			slogger.Log.Debug("Got request", slog.String("command", req.Command), slog.String("action_id", fmt.Sprintf("%x", req.ActionID)))
 			if req.Command == "put" && req.BodySize > 0 {
 				var buf []byte
 				if err := jd.Decode(&buf); err != nil {
 					c.FSM.Shutdown()
 					break
 				}
-				logger.Log.Debug("Read body", zap.Int("len", len(buf)))
+				slogger.Log.Debug("Read body", slog.Int("len", len(buf)))
 				req.body = buf
 			}
 
 			go func() {
 				res, err := c.handleRequest(&req)
 				if err != nil {
-					logger.Log.Warn("handle error", logger.Error(err), logger.StackTrace(err))
+					slogger.Log.Warn("handle error", slogger.E(err))
 				}
 				if res == nil {
-					logger.Log.Debug("empty response")
+					slogger.Log.Debug("empty response")
 					return
 				}
 				mu.Lock()
 				defer mu.Unlock()
 				if err := je.Encode(res); err != nil {
-					logger.Log.Error("Failed to encode json", logger.Error(err))
+					slogger.Log.Error("Failed to encode json", slogger.E(err))
 				}
 				if err := w.Flush(); err != nil {
-					logger.Log.Error("Failed to flush write buffer", logger.Error(err))
+					slogger.Log.Error("Failed to flush write buffer", slogger.E(err))
 				}
 			}()
 		}
@@ -212,7 +213,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 			return nil, err
 		}
 
-		logger.Log.Debug("Make local file", zap.Int("len", len(req.body)))
+		slogger.Log.Debug("Make local file", slog.Int("len", len(req.body)))
 		size, err := saveFile(filepath.Join(c.BaseDir, objectFileName), bytes.NewReader(req.body))
 		if err != nil {
 			return nil, err
@@ -220,7 +221,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 		res.Size = size
 		res.DiskPath = filepath.Join(c.BaseDir, objectFileName)
 	case "close":
-		logger.Log.Debug("Shutdown requested", zap.Int64("id", req.ID))
+		slogger.Log.Debug("Shutdown requested", slog.Int64("id", req.ID))
 		c.Shutdown()
 	default:
 		return nil, xerrors.Definef("unknown command %s", req.Command).WithStack()
@@ -230,7 +231,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 }
 
 func (c *GoRemoteCache) stateShuttingDown(_ context.Context) (fsm.State, error) {
-	logger.Log.Debug("Shutting down")
+	slogger.Log.Debug("Shutting down")
 	return fsm.Finish()
 }
 

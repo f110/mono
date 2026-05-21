@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"os/exec"
@@ -13,11 +14,10 @@ import (
 
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func getToken(ctx context.Context) (string, error) {
@@ -30,19 +30,19 @@ func getToken(ctx context.Context) (string, error) {
 }
 
 func getDefaultBranch(ctx context.Context, ghClient *github.Client, owner, name string) (string, error) {
-	logger.Log.Debug("Retrieve repository metadata")
+	slogger.Log.Debug("Retrieve repository metadata")
 	cmd := exec.CommandContext(ctx, "jj", "show", "trunk()", "--template", "remote_bookmarks")
 	buf, err := cmd.CombinedOutput()
 	if err == nil {
 		if before, _, ok := bytes.Cut(buf, []byte("@")); ok {
-			logger.Log.Debug("Get default branch from local repository")
+			slogger.Log.Debug("Get default branch from local repository")
 			return string(before), nil
 		}
 	}
 
 	repo, _, err := ghClient.Repositories.Get(ctx, owner, name)
 	if err != nil {
-		logger.Log.Error("Could not get repository metadata from api.github.com", logger.Error(err))
+		slogger.Log.Error("Could not get repository metadata from api.github.com", slogger.E(err))
 		return "", err
 	}
 	return repo.GetDefaultBranch(), nil
@@ -76,7 +76,7 @@ func getStack(ctx context.Context, withoutNoSend bool, dir, defaultBranch, chang
 			return nil, xerrors.WithStack(err)
 		}
 		if !(withoutNoSend && (strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag))) {
-			logger.Log.Debug("Stack", zap.String("change_id", c.ChangeID), zap.Any("bookmarks", c.Bookmarks))
+			slogger.Log.Debug("Stack", slog.String("change_id", c.ChangeID), slog.Any("bookmarks", c.Bookmarks))
 			commits = append(commits, c)
 		}
 	}

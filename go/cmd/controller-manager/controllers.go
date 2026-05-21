@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -27,6 +27,7 @@ import (
 	"go.f110.dev/mono/go/k8s/probe"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/vault"
 )
 
@@ -256,7 +257,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 	if p.dev {
 		if v := os.Getenv("BUILD_WORKSPACE_DIRECTORY"); v != "" {
 			kubeconfigPath = filepath.Join(v, ".kubeconfig")
-			logger.Log.Info("Use local kubeconfig", zap.String("path", kubeconfigPath))
+			slogger.Log.Info("Use local kubeconfig", slog.String("path", kubeconfigPath))
 		} else {
 			h, err := os.UserHomeDir()
 			if err != nil {
@@ -302,7 +303,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 			}
 			p.vaultClient = vc
 		} else if _, err := os.Stat(p.serviceAccountTokenFile); err == nil {
-			logger.Log.Info("Using a service account for Vault authentication")
+			slogger.Log.Info("Using a service account for Vault authentication")
 			ctx, cancel := ctxutil.WithTimeout(ctx, 5*time.Second)
 			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.vaultAddr, p.vaultK8sAuthPath, p.vaultK8sAuthRole, p.serviceAccountTokenFile)
 			if err != nil {
@@ -327,7 +328,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 				continue
 			}
 
-			logger.Log.Debug("Enable controller", zap.String("name", cont.Name))
+			slogger.Log.Debug("Enable controller", slog.String("name", cont.Name))
 			cont.Enable = true
 		}
 	}
@@ -335,7 +336,7 @@ func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
-	logger.Log.Info("Check custom resource definitions")
+	slogger.Log.Info("Check custom resource definitions")
 	_, apiList, err := p.k8sClient.Discovery().ServerGroupsAndResources()
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -368,7 +369,7 @@ func (p *Controllers) checkResources(_ context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) startMetricsServer(_ context.Context) (fsm.State, error) {
-	logger.Log.Info("Start metrics server")
+	slogger.Log.Info("Start metrics server")
 	http.Handle("/metrics", legacyregistry.HandlerWithReset())
 	go http.ListenAndServe(":9300", nil)
 
@@ -389,7 +390,7 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 		return fsm.Next(stateStartWorkers)
 	}
 
-	logger.Log.Info("Start leader election")
+	slogger.Log.Info("Start leader election")
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      p.leaseLockName,
@@ -432,7 +433,7 @@ func (p *Controllers) leaderElection(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *Controllers) startWorkers(ctx context.Context) (fsm.State, error) {
-	logger.Log.Info("Start workers")
+	slogger.Log.Info("Start workers")
 	coreSharedInformerFactory := k8sclient.NewInformerFactory(p.coreClient, k8sclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 	factory := client.NewInformerFactory(p.client, client.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)
 	tpFactory := thirdpartyclient.NewInformerFactory(p.tpClient, thirdpartyclient.NewInformerCache(), metav1.NamespaceAll, 30*time.Second)

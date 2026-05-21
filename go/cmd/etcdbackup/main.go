@@ -14,6 +14,7 @@ import (
 
 	etcd2 "go.f110.dev/mono/go/etcd"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -39,7 +40,7 @@ func etcdBackup(args []string) error {
 		return xerrors.WithStack(err)
 	}
 
-	if err := logger.Init(); err != nil {
+	if err := slogger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
 

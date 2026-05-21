@@ -9,7 +9,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/gantry-crane",
     visibility = ["//visibility:private"],
     deps = [
-        "//go/logger",
+        "//go/logger/slogger",
         "@com_github_google_go_containerregistry//pkg/authn",
         "@com_github_google_go_containerregistry//pkg/logs",
         "@com_github_google_go_containerregistry//pkg/name",
@@ -20,7 +20,6 @@ go_library(
         "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
         "@in_gopkg_yaml_v3//:yaml_v3",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

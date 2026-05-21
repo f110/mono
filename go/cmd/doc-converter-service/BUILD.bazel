@@ -7,11 +7,10 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/text/converter",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

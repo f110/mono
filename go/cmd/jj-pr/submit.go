@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/url"
 	"os"
 	"os/exec"
@@ -14,13 +15,11 @@ import (
 
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"golang.org/x/oauth2"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -173,10 +172,10 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	}
 
 	wg.Go(func() {
-		logger.Log.Debug("Retrieve the branch list")
+		slogger.Log.Debug("Retrieve the branch list")
 		branches, _, err := c.ghClient.Repositories.ListBranches(ctx, c.repositoryOwner, c.repositoryName, &github.BranchListOptions{})
 		if err != nil {
-			logger.Log.Error("Could not get the branch list of the remote repository", logger.Error(err))
+			slogger.Log.Error("Could not get the branch list of the remote repository", slogger.E(err))
 			gotError = true
 			return
 		}
@@ -184,10 +183,10 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	})
 
 	wg.Go(func() {
-		logger.Log.Debug("Retrieve pull requests")
+		slogger.Log.Debug("Retrieve pull requests")
 		pullRequests, _, err := c.ghClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{})
 		if err != nil {
-			logger.Log.Error("Could not get pull requests", logger.Error(err))
+			slogger.Log.Error("Could not get pull requests", slogger.E(err))
 			gotError = true
 			return
 		}
@@ -259,7 +258,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 			break
 		}
 		if len(v.Bookmarks) == 0 {
-			logger.Log.Debug("Will create branch", zap.String("change_id", v.ChangeID))
+			slogger.Log.Debug("Will create branch", slog.String("change_id", v.ChangeID))
 			pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", v.ChangeID)})
 		} else {
 			var found bool
@@ -289,7 +288,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		commitID := v.GetCommit().GetSHA()
 		for _, h := range c.stack {
 			if strings.HasPrefix(h.ChangeID, shortChangeID) && commitID != h.CommitID {
-				logger.Log.Debug("Will update branch", zap.String("change_id", h.ChangeID))
+				slogger.Log.Debug("Will update branch", slog.String("change_id", h.ChangeID))
 				pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", h.ChangeID)})
 				changedPR = append(changedPR, h)
 				break
@@ -299,14 +298,14 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	if len(pushArgs) > 0 {
 		for _, v := range pushArgs {
 			args := append([]string{"git", "push"}, v...)
-			logger.Log.Debug("Push commits to create branches")
+			slogger.Log.Debug("Push commits to create branches")
 			cmd := exec.CommandContext(ctx, "jj", args...)
 			cmd.Dir = c.Dir
 			if c.DryRun {
 				cmd.Args = append(cmd.Args, "--dry-run")
 			}
 			cmd.Stdout = os.Stdout
-			if logger.Log.Level() == zapcore.DebugLevel {
+			if slogger.Log.Enabled(ctx, slog.LevelDebug) {
 				cmd.Stderr = os.Stderr
 			}
 			if err = cmd.Run(); err != nil {
@@ -315,7 +314,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		}
 
 		// Get all commits because the stack has been changed.
-		logger.Log.Debug("Re-fetch commits from jj")
+		slogger.Log.Debug("Re-fetch commits from jj")
 		stack, err := c.getStack(ctx, true)
 		if err != nil {
 			return fsm.Error(err)
@@ -334,7 +333,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				}
 
 				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
-				logger.Log.Debug("Make a new comment", zap.Int("number", pr.PullRequest.ID))
+				slogger.Log.Debug("Make a new comment", slog.Int("number", pr.PullRequest.ID))
 				_, _, err = c.ghClient.Issues.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.IssueComment{Body: &body})
 				if err != nil {
 					return fsm.Error(xerrors.WithStack(err))
@@ -514,7 +513,7 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 	}
 	var template string
 	if templateFile != "" {
-		logger.Log.Debug("Read template", zap.String("path", templateFile))
+		slogger.Log.Debug("Read template", slog.String("path", templateFile))
 		buf, err := os.ReadFile(templateFile)
 		if err != nil {
 			return "", xerrors.WithStack(err)
@@ -564,11 +563,11 @@ func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, e
 		}
 		filename := filepath.Base(path)
 		if strings.ToLower(filename) == "pull_request_template.md" {
-			logger.Log.Debug("Template found", zap.String("path", path))
+			slogger.Log.Debug("Template found", slog.String("path", path))
 			templates = append(templates, path)
 		}
 		if strings.Contains(path, ".github/PULL_REQUEST_TEMPLATE/") {
-			logger.Log.Debug("Template found", zap.String("path", path))
+			slogger.Log.Debug("Template found", slog.String("path", path))
 			templates = append(templates, path)
 		}
 		return nil
@@ -589,9 +588,9 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		v := c.stack[i]
 		if v.PullRequest == nil {
 			if !c.DryRun {
-				logger.Log.Error("BUG: The pull request must update. but we can't find the pull request.")
+				slogger.Log.Error("BUG: The pull request must update. but we can't find the pull request.")
 			}
-			logger.Log.Info("Skip to update the pull request")
+			slogger.Log.Info("Skip to update the pull request")
 			continue
 		}
 		var updatedPR github.PullRequest
@@ -641,7 +640,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		if !v.PullRequest.Draft && needUpdateBaseBranch || needUpdateTitle || needUpdateBody {
 			// Update the pull request
 			fmt.Printf("Update pull request: %s\n", v.PullRequest.URL)
-			logger.Log.Debug("Update pull request reason", zap.Bool("base_branch", needUpdateBaseBranch), zap.Bool("title", needUpdateTitle), zap.Bool("body", needUpdateBody))
+			slogger.Log.Debug("Update pull request reason", slog.Bool("base_branch", needUpdateBaseBranch), slog.Bool("title", needUpdateTitle), slog.Bool("body", needUpdateBody))
 			if !c.DryRun {
 				pr, _, err := c.ghClient.PullRequests.Edit(ctx, c.repositoryOwner, c.repositoryName, v.PullRequest.ID, &updatedPR)
 				if err != nil {
@@ -658,7 +657,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 func (c *jujutsuPRSubmitCommand) updateSinglePR(_ context.Context) (fsm.State, error) {
 	if c.stack[0].PullRequest == nil {
 		if !c.DryRun {
-			logger.Log.Error("BUG: Couldn't find the pull request.")
+			slogger.Log.Error("BUG: Couldn't find the pull request.")
 		}
 		return fsm.Next(c.stateClose)
 	}

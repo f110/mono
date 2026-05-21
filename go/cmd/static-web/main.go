@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
-	"go.uber.org/zap"
-
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/httpserver"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type Mode string
@@ -41,10 +40,10 @@ func staticWeb() error {
 			}
 			go func() {
 				<-ctx.Done()
-				logger.Log.Info("Shutdown")
+				slogger.Log.Info("Shutdown")
 				s.Shutdown(context.Background())
 			}()
-			logger.Log.Info("Start server", zap.String("addr", listenAddr), zap.String("root", documentRoot), zap.String("mode", mode))
+			slogger.Log.Info("Start server", slog.String("addr", listenAddr), slog.String("root", documentRoot), slog.String("mode", mode))
 			if err := s.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
 				return nil
 			} else if err != nil {

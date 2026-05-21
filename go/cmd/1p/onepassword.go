@@ -22,7 +22,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/opvault"
 )
 
@@ -125,7 +125,7 @@ func Daemon(rootCmd *cli.Command) {
 						os.Remove(socketFile)
 					} else {
 						// Already running
-						logger.Log.Debug("The daemon is already running")
+						slogger.Log.Debug("The daemon is already running")
 						return nil
 					}
 				}

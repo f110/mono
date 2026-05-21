@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -10,9 +11,8 @@ import (
 
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -53,13 +53,13 @@ func copyFile(from, to string) error {
 	if err := os.Chown(to, int(st.Uid), int(st.Gid)); err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Info("Copy file", zap.String("from", from), zap.String("to", to), zap.Uint32("mode", uint32(s.Mode())), zap.Int("uid", int(st.Uid)), zap.Int("gid", int(st.Gid)))
+	slogger.Log.Info("Copy file", slog.String("from", from), slog.String("to", to), slog.Uint64("mode", uint64(s.Mode())), slog.Int("uid", int(st.Uid)), slog.Int("gid", int(st.Gid)))
 
 	return nil
 }
 
 func copyDirectory(from, to string) error {
-	logger.Log.Info("Copy directory", zap.String("from", from), zap.String("to", to))
+	slogger.Log.Info("Copy directory", slog.String("from", from), slog.String("to", to))
 	entries, err := os.ReadDir(from)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -113,7 +113,7 @@ func migrateDirectory(from, to string) error {
 			return xerrors.WithStack(err)
 		}
 
-		logger.Log.Info("Already migrated", zap.String("locked_at", string(b)))
+		slogger.Log.Info("Already migrated", slog.String("locked_at", string(b)))
 		return nil
 	}
 	from = filepath.Clean(from)
@@ -127,7 +127,7 @@ func migrateDirectory(from, to string) error {
 }
 
 func main() {
-	logger.Init()
+	slogger.Init()
 
 	sourceDir := ""
 	destinationDir := ""

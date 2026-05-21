@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -21,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -173,7 +173,7 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		if ok, err := storer.Exist(); !ok && err == nil {
 			ctx, cancel := ctxutil.WithTimeout(ctx, c.RepositoryInitTimeout)
 
-			logger.Log.Info("Init repository", zap.String("name", r.Name), zap.String("url", r.URL), zap.String("prefix", r.Prefix))
+			slogger.Log.Info("Init repository", slog.String("name", r.Name), slog.String("url", r.URL), slog.String("prefix", r.Prefix))
 			var auth *http.BasicAuth
 			if v, err := c.GitHubClient.TokenProvider.Token(ctx); err == nil {
 				auth = &http.BasicAuth{
@@ -198,7 +198,7 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		r.GoGit = gitRepo
 
 		if !c.DisableInflatePackFile && storer.IncludePackFile(ctx) {
-			logger.Log.Info("Inflate packfile", zap.String("name", r.Name))
+			slogger.Log.Info("Inflate packfile", slog.String("name", r.Name))
 			if err := git.InflatePackFile(ctx, storageClient, r.Prefix, gitRepo); err != nil {
 				return fsm.Error(err)
 			}
@@ -235,7 +235,7 @@ func (c *gitDataServiceCommand) startUpdater(ctx context.Context) (fsm.State, er
 	if err != nil {
 		return fsm.Error(err)
 	}
-	logger.Log.Info("Start updater", zap.Duration("refresh_interval", c.RefreshInterval), zap.Int("workers", c.RefreshWorkers))
+	slogger.Log.Info("Start updater", slog.Duration("refresh_interval", c.RefreshInterval), slog.Int("workers", c.RefreshWorkers))
 	go updater.Run(ctx, c.RefreshInterval)
 
 	c.updater = updater
@@ -257,10 +257,10 @@ func (c *gitDataServiceCommand) startServer(_ context.Context) (fsm.State, error
 		return fsm.Error(xerrors.WithStack(err))
 	}
 
-	logger.Log.Info("Start listen", zap.String("addr", c.Listen))
+	slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
 	go func() {
 		if err := c.s.Serve(lis); err != nil {
-			logger.Log.Error("gRPC server returns error", logger.Error(err))
+			slogger.Log.Error("gRPC server returns error", slogger.E(err))
 		}
 	}()
 
@@ -269,12 +269,12 @@ func (c *gitDataServiceCommand) startServer(_ context.Context) (fsm.State, error
 
 func (c *gitDataServiceCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.s != nil {
-		logger.Log.Debug("Graceful stopping gRPC server")
+		slogger.Log.Debug("Graceful stopping gRPC server")
 		c.s.GracefulStop()
-		logger.Log.Info("Stop gRPC server")
+		slogger.Log.Info("Stop gRPC server")
 	}
 	if c.updater != nil {
-		logger.Log.Debug("Stopping updater")
+		slogger.Log.Debug("Stopping updater")
 		c.updater.Stop(ctx)
 
 	}

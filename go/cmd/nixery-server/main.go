@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"regexp"
@@ -33,12 +34,12 @@ import (
 	nstorage "github.com/google/nixery/storage"
 	"github.com/im7mortal/kmutex"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/nixery"
 )
 
@@ -113,14 +114,14 @@ type registryHandler struct {
 // Serve a manifest by tag, building it via Nix and populating caches
 // if necessary.
 func (h *registryHandler) serveManifestTag(w http.ResponseWriter, req *http.Request, name string, tag string) {
-	logger.Log.Debug("Requesting image manifest", zap.String("image", name), zap.String("tag", tag))
+	slogger.Log.Debug("Requesting image manifest", slog.String("image", name), slog.String("tag", tag))
 
 	image := builder.ImageFromName(name, tag)
 	buildResult, err := builder.BuildImage(req.Context(), h.state, &image)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "UNKNOWN", "image build failure")
 
-		logger.Log.Error("Failed to build image manifest", zap.String("image", name), zap.String("tag", tag))
+		slogger.Log.Error("Failed to build image manifest", slog.String("image", name), slog.String("tag", tag))
 		return
 	}
 
@@ -130,7 +131,7 @@ func (h *registryHandler) serveManifestTag(w http.ResponseWriter, req *http.Requ
 		s := fmt.Sprintf("Could not find Nix packages: %v", buildResult.Pkgs)
 		writeError(w, http.StatusNotFound, "MANIFEST_UNKNOWN", s)
 
-		logger.Log.Warn("Could not find nix packages", zap.String("image", name), zap.String("tag", tag), zap.Strings("packages", buildResult.Pkgs))
+		slogger.Log.Warn("Could not find nix packages", slog.String("image", name), slog.String("tag", tag), slog.Any("packages", buildResult.Pkgs))
 		return
 	}
 
@@ -160,7 +161,7 @@ func (h *registryHandler) serveManifestTag(w http.ResponseWriter, req *http.Requ
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "MANIFEST_UPLOAD", "could not upload manifest to blob store")
 
-		logger.Log.Error("Could not upload manifest", zap.String("image", name), zap.String("tag", tag))
+		slogger.Log.Error("Could not upload manifest", slog.String("image", name), slog.String("tag", tag))
 		return
 	}
 
@@ -170,7 +171,7 @@ func (h *registryHandler) serveManifestTag(w http.ResponseWriter, req *http.Requ
 // serveBlob serves a blob from storage by digest
 func (h *registryHandler) serveBlob(w http.ResponseWriter, req *http.Request, blobType, digest string) {
 	if err := h.state.Storage.Serve(digest, req, w); err != nil {
-		logger.Log.Error("failed to serve blob", logger.Error(err), zap.String("type", blobType), zap.String("digest", digest))
+		slogger.Log.Error("failed to serve blob", slogger.E(err), slog.String("type", blobType), slog.String("digest", digest))
 	}
 }
 
@@ -195,7 +196,7 @@ func (h *registryHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Log.Info("Unsupported registry route", zap.String("uri", req.RequestURI))
+	slogger.Log.Info("Unsupported registry route", slog.String("uri", req.RequestURI))
 	w.WriteHeader(http.StatusNotFound)
 }
 
@@ -313,9 +314,9 @@ func (c *nixeryServerCmd) startServer(_ context.Context) (fsm.State, error) {
 		Handler: mux,
 	}
 	go func() {
-		logger.Log.Info("Start nixery", zap.String("addr", c.server.Addr))
+		slogger.Log.Info("Start nixery", slog.String("addr", c.server.Addr))
 		if err := c.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Error("http server returns error", logger.Error(err))
+			slogger.Log.Error("http server returns error", slogger.E(err))
 		}
 	}()
 	return fsm.Wait()
@@ -323,9 +324,9 @@ func (c *nixeryServerCmd) startServer(_ context.Context) (fsm.State, error) {
 
 func (c *nixeryServerCmd) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.server != nil {
-		logger.Log.Debug("Shutting down http server")
+		slogger.Log.Debug("Shutting down http server")
 		if err := c.server.Shutdown(ctx); err != nil {
-			logger.Log.Error("Failed to shutting down server", logger.Error(err))
+			slogger.Log.Error("Failed to shutting down server", slogger.E(err))
 		}
 	}
 

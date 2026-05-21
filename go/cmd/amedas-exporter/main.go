@@ -6,20 +6,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/jma"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 	"go.f110.dev/mono/go/ucl"
 )
@@ -111,9 +111,9 @@ func (c *command) startServer(_ context.Context) (fsm.State, error) {
 
 	c.s = server
 	go func() {
-		logger.Log.Info("Start amedas exporter", zap.String("addr", c.s.Addr))
+		slogger.Log.Info("Start amedas exporter", slog.String("addr", c.s.Addr))
 		if err := c.s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Error("http server error", logger.Error(err))
+			slogger.Log.Error("http server error", slogger.E(err))
 		}
 	}()
 	return fsm.Wait()

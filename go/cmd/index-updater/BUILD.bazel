@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//go/codesearch",
         "//go/logger",
+        "//go/logger/slogger",
         "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
     ],

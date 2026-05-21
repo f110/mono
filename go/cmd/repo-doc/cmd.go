@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type repoDocCommand struct {
@@ -95,16 +95,16 @@ func (c *repoDocCommand) init(ctx context.Context) (fsm.State, error) {
 
 	c.s = &http.Server{
 		Handler:  handler,
-		ErrorLog: logger.StandardLogger("http"),
+		ErrorLog: slogger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	go func() {
-		logger.Log.Info("Start listen", zap.String("addr", c.Listen))
+		slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
 		if err := c.s.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Warn("Serve returns error", logger.Error(err))
+			slogger.Log.Warn("Serve returns error", slogger.E(err))
 		}
 	}()
 

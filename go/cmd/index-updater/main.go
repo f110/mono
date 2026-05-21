@@ -9,6 +9,7 @@ import (
 
 	"go.f110.dev/mono/go/codesearch"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func indexUpdater(args []string) error {
@@ -19,7 +20,7 @@ func indexUpdater(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return xerrors.WithStack(err)
 	}
-	if err := logger.Init(); err != nil {
+	if err := slogger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
 

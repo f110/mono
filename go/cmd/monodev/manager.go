@@ -3,15 +3,15 @@ package main
 import (
 	"container/list"
 	"context"
+	"log/slog"
 	"sync/atomic"
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/parallel"
 )
 
@@ -63,14 +63,14 @@ func (m *componentManager) Run(ctx context.Context) error {
 	// Wait for interrupts
 	<-ctx.Done()
 
-	logger.Log.Debug("Shutting down")
+	slogger.Log.Debug("Shutting down")
 	ctx, cFunc := ctxutil.WithTimeout(context.Background(), 5*time.Second)
 	if err := m.supervisor.Shutdown(ctx); err != nil {
 		cFunc()
 		return xerrors.WithStack(err)
 	}
 	cFunc()
-	logger.Log.Info("All subprocesses finished")
+	slogger.Log.Info("All subprocesses finished")
 
 	return nil
 }
@@ -124,11 +124,11 @@ func (m *componentManager) execute(ctx context.Context, inFlight *int32, sigCh c
 
 	switch n.component.GetType() {
 	case componentTypeOneshot:
-		logger.Log.Info("Run oneshot script", zap.String("name", n.component.GetName()))
+		slogger.Log.Info("Run oneshot script", slog.String("name", n.component.GetName()))
 		n.component.Run(ctx)
 		n.status = nodeStatusFinished
 	case componentTypeService:
-		logger.Log.Info("Start service", zap.String("name", n.component.GetName()))
+		slogger.Log.Info("Start service", slog.String("name", n.component.GetName()))
 		m.supervisor.Add(n.component.Run)
 
 		go func(n *componentNode) {
@@ -142,7 +142,7 @@ func (m *componentManager) execute(ctx context.Context, inFlight *int32, sigCh c
 			r, ok := n.component.(interface{ Ready() bool })
 			if !ok {
 				n.status = nodeStatusRunning
-				logger.Log.Info("The service is ready (without readiness probe)", zap.String("name", n.component.GetName()))
+				slogger.Log.Info("The service is ready (without readiness probe)", slog.String("name", n.component.GetName()))
 				return
 			}
 
@@ -150,7 +150,7 @@ func (m *componentManager) execute(ctx context.Context, inFlight *int32, sigCh c
 			for {
 				if r.Ready() {
 					n.status = nodeStatusRunning
-					logger.Log.Info("The service is ready", zap.String("name", n.component.GetName()))
+					slogger.Log.Info("The service is ready", slog.String("name", n.component.GetName()))
 					break
 				}
 				if time.Now().After(deadline) {

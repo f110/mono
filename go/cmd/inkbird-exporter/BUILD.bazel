@@ -7,12 +7,12 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/logger",
+        "//go/logger/slogger",
         "//go/prometheus/exporter",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/promhttp",
         "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

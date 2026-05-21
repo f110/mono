@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"io"
+	"log/slog"
 	"maps"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/blang/semver/v4"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/kind"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -82,7 +82,7 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 			return xerrors.WithStack(err)
 		}
 	} else {
-		logger.Log.Info("Cluster is already exist. Only apply the manifest.")
+		slogger.Log.Info("Cluster is already exist. Only apply the manifest.")
 	}
 	if manifestFile == "" {
 		return nil
@@ -235,7 +235,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 	}
 
 	for _, v := range restartPods {
-		logger.Log.Info("Delete Pod", zap.String("name", v.Name))
+		slogger.Log.Info("Delete Pod", slog.String("name", v.Name))
 		err := client.CoreV1().Pods(namespace).Delete(context.Background(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
