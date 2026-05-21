@@ -14,7 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/githubutil",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/regexp/regexputil",
         "//go/storage",
         "//go/stringsutil",
@@ -36,7 +36,6 @@ go_library(
         "@org_golang_x_mod//semver",
         "@org_golang_x_mod//zip",
         "@org_golang_x_tools_go_vcs//:vcs",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

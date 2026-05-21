@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -22,11 +23,10 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	pf "k8s.io/client-go/tools/portforward"
 
 	"go.f110.dev/mono/go/k8s/portforward"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type S3Options struct {
@@ -206,7 +206,7 @@ func (s *S3) Get(ctx context.Context, name string) (*Object, error) {
 		})
 		if err != nil {
 			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
-				logger.Log.Info("Retrying get a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				slogger.Log.Info("Retrying get a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}
@@ -249,7 +249,7 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 			p, err := paginator.NextPage(ctx)
 			if err != nil {
 				if s.opt.Retries > 0 && retryCount < s.opt.Retries {
-					logger.Log.Info("Retrying get a next page", zap.Int("retryCount", retryCount), zap.String("prefix", prefix))
+					slogger.Log.Info("Retrying get a next page", slog.Int("retryCount", retryCount), slog.String("prefix", prefix))
 					retryCount++
 					continue
 				}
@@ -290,7 +290,7 @@ func (s *S3) ListIter(ctx context.Context, prefix string) (iter.Seq[*Object], er
 				p, err := paginator.NextPage(ctx)
 				if err != nil {
 					if s.opt.Retries > 0 && retryCount < s.opt.Retries {
-						logger.Log.Info("Retrying get a next page", zap.Int("retryCount", retryCount), zap.String("prefix", prefix))
+						slogger.Log.Info("Retrying get a next page", slog.Int("retryCount", retryCount), slog.String("prefix", prefix))
 						retryCount++
 						continue
 					}
@@ -334,7 +334,7 @@ func (s *S3) PutReader(ctx context.Context, name string, r io.Reader) error {
 		})
 		if err != nil {
 			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
-				logger.Log.Info("Retrying put a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				slogger.Log.Info("Retrying put a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}
@@ -359,7 +359,7 @@ func (s *S3) Delete(ctx context.Context, name string) error {
 		})
 		if err != nil {
 			if s.opt.Retries > 0 && retryCount < s.opt.Retries {
-				logger.Log.Info("Retrying delete a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				slogger.Log.Info("Retrying delete a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}

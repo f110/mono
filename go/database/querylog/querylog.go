@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"log/slog"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"go.uber.org/zap"
 )
 
 type Logger interface {
@@ -23,7 +23,7 @@ func init() {
 	sql.Register("querylog", Driver{})
 }
 
-func Init(l *zap.Logger) {
+func Init(l *slog.Logger) {
 	log = &loggerWithZap{Logger: l}
 }
 
@@ -32,11 +32,11 @@ func SetMinimumDuration(d time.Duration) {
 }
 
 type loggerWithZap struct {
-	*zap.Logger
+	*slog.Logger
 }
 
 func (l *loggerWithZap) Log(d time.Duration, v string) {
-	l.Info("QueryLog", zap.Duration("duration", d), zap.String("query", v))
+	l.Info("QueryLog", slog.Duration("duration", d), slog.String("query", v))
 }
 
 type Driver struct{}

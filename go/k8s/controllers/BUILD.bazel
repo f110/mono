@@ -30,7 +30,7 @@ go_library(
         "//go/k8s/portforward",
         "//go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1",
         "//go/k8s/thirdpartyclient",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/storage",
         "//go/stringsutil",
         "//go/vault",

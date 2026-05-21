@@ -2,13 +2,13 @@ package codesearch
 
 import (
 	"context"
+	"log/slog"
 	"net/url"
 	"strings"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type IndexGC struct {
@@ -64,12 +64,12 @@ GC:
 	}
 
 	for _, v := range unusedFiles {
-		logger.Log.Debug("Delete file", zap.String("name", v))
+		slogger.Log.Debug("Delete file", slog.String("name", v))
 		if err := g.backend.Delete(ctx, v); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
 
-	logger.Log.Info("Finish garbage collection", zap.Int("files", len(unusedFiles)), zap.Int64("deleted_bytes", totalSize))
+	slogger.Log.Info("Finish garbage collection", slog.Int("files", len(unusedFiles)), slog.Int64("deleted_bytes", totalSize))
 	return nil
 }

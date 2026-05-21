@@ -3,6 +3,7 @@ package codesearch
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"sync"
 
@@ -10,9 +11,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/google/go-github/v85/github"
 	"github.com/shurcooL/githubv4"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type Repository struct {
@@ -69,7 +69,7 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 		if rule.Owner != "" && rule.Name != "" {
 			repo, _, err := x.githubClient.Repositories.Get(ctx, rule.Owner, rule.Name)
 			if err != nil {
-				logger.Log.Info("Repository is not found", zap.String("owner", rule.Owner), zap.String("name", rule.Name), zap.Error(err))
+				slogger.Log.Info("Repository is not found", slog.String("owner", rule.Owner), slog.String("name", rule.Name), slogger.E(err))
 				continue
 			}
 
@@ -98,27 +98,27 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 			}
 			err := x.githubGraphQLClient.Query(ctx, &listRepositoriesQuery, vars)
 			if err != nil {
-				logger.Log.Info("Failed execute query", zap.Error(err))
+				slogger.Log.Info("Failed execute query", slogger.E(err))
 				continue
 			}
-			logger.Log.Debug(
+			slogger.Log.Debug(
 				"Found some repository candidates",
-				zap.String("query", rule.Query),
-				zap.Int32("count", listRepositoriesQuery.Search.RepositoryCount),
+				slog.String("query", rule.Query),
+				slog.Int("count", int(listRepositoriesQuery.Search.RepositoryCount)),
 			)
 			for _, v := range listRepositoriesQuery.Search.Nodes {
 				if v.Type != "Repository" {
-					logger.Log.Debug("Skip because the type is not Repository", zap.String("type", v.Type))
+					slogger.Log.Debug("Skip because the type is not Repository", slog.String("type", v.Type))
 					continue
 				}
 				if v.Repository.IsArchived {
-					logger.Log.Debug("Skip because the repository is archived",
-						zap.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
+					slogger.Log.Debug("Skip because the repository is archived",
+						slog.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
 					continue
 				}
 				if _, ok := repos[fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)]; ok {
-					logger.Log.Debug("Skip because already listed",
-						zap.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
+					slogger.Log.Debug("Skip because already listed",
+						slog.String("repo", fmt.Sprintf("%s/%s", v.Repository.Owner.Login, v.Repository.Name)))
 					continue
 				}
 
@@ -145,7 +145,7 @@ func (x *RepositoryLister) List(ctx context.Context) []*Repository {
 		}
 	}
 	if len(repos) == 0 {
-		logger.Log.Warn("Not found any repository")
+		slogger.Log.Warn("Not found any repository")
 	}
 
 	repositories := make([]*Repository, 0)

@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"time"
@@ -170,7 +171,7 @@ func (u *minIOUserReconciler) Reconcile(ctx context.Context, obj *miniov1alpha1.
 			return xerrors.WithStack(err)
 		}
 		if len(instances) == 0 {
-			u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
+			u.logger.Debug("MinIO instance not found", slog.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
 			return nil
 		}
 		if len(instances) > 1 {
@@ -304,7 +305,7 @@ func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1
 
 	oldCM, err := u.configMapLister.Get(cm.Namespace, cm.Name)
 	if apierrors.IsNotFound(err) {
-		u.logger.Info("Create ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
+		u.logger.Info("Create ConfigMap", slog.String("name", cm.Name), slog.String("namespace", cm.Namespace))
 		u.coreClient.CoreV1.CreateConfigMap(ctx, cm, metav1.CreateOptions{})
 	} else if err != nil {
 		return xerrors.WithStack(err)
@@ -312,7 +313,7 @@ func (u *minIOUserReconciler) ensureConfigMap(ctx context.Context, user *miniov1
 		if v, ok := oldCM.Data["accesskey"]; !ok || v != string(secret.Data["accesskey"]) {
 			newCM := oldCM.DeepCopy()
 			newCM.Data = cm.Data
-			u.logger.Info("Update ConfigMap", zap.String("name", cm.Name), zap.String("namespace", cm.Namespace))
+			u.logger.Info("Update ConfigMap", slog.String("name", cm.Name), slog.String("namespace", cm.Namespace))
 			if _, err := u.coreClient.CoreV1.UpdateConfigMap(ctx, newCM, metav1.UpdateOptions{}); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -349,7 +350,7 @@ func (u *minIOUserReconciler) ensureUser(ctx context.Context, adminClient *madmi
 
 	accessKey := stringsutil.RandomString(accessKeyLength)
 	secretKey := stringsutil.RandomString(secretKeyLength)
-	u.logger.Info("Create user", zap.String("accesskey", accessKey))
+	u.logger.Info("Create user", slog.String("accesskey", accessKey))
 	if err := adminClient.AddUser(ctx, accessKey, secretKey); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
@@ -425,7 +426,7 @@ func (u *minIOUserReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.M
 	}
 	switch len(instances) {
 	case 0:
-		u.logger.Debug("MinIO instance not found", zap.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
+		u.logger.Debug("MinIO instance not found", slog.String("selector", metav1.FormatLabelSelector(minioUser.Spec.Selector)))
 		return nil
 	case 1:
 		if err := u.deleteUserFromInstance(ctx, minioUser, instances[0]); err != nil {
@@ -472,7 +473,7 @@ func (u *minIOUserReconciler) deleteUserFromInstance(ctx context.Context, minioU
 	if err := adminClient.RemoveUser(ctx, string(secret.Data["accesskey"])); err != nil {
 		return xerrors.WithStack(err)
 	}
-	u.logger.Debug("Remove minio user", zap.String("name", minioUser.Name))
+	u.logger.Debug("Remove minio user", slog.String("name", minioUser.Name))
 
 	if err := u.coreClient.CoreV1.DeleteSecret(ctx, secret.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.WithStack(err)
@@ -513,7 +514,7 @@ func (u *minIOUserReconciler) deleteUserFromCluster(ctx context.Context, minioUs
 	if err := adminClient.RemoveUser(ctx, string(accessKeySecret.Data["accesskey"])); err != nil {
 		return xerrors.WithStack(err)
 	}
-	u.logger.Debug("Remove minio user", zap.String("name", minioUser.Name))
+	u.logger.Debug("Remove minio user", slog.String("name", minioUser.Name))
 
 	if err := u.coreClient.CoreV1.DeleteSecret(ctx, accessKeySecret.Namespace, accessKeySecret.Name, metav1.DeleteOptions{}); err != nil {
 		return xerrors.WithStack(err)

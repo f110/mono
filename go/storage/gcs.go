@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"log/slog"
 
 	"cloud.google.com/go/storage"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type GCSOptions struct {
@@ -50,7 +50,7 @@ func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) err
 		w := obj.NewWriter(ctx)
 		if _, err := io.Copy(w, data); err != nil {
 			if g.opt.Retries > 0 && retryCount < g.opt.Retries {
-				logger.Log.Info("Retrying to write a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				slogger.Log.Info("Retrying to write a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}
@@ -60,7 +60,7 @@ func (g *Google) PutReader(ctx context.Context, name string, data io.Reader) err
 			return xerrors.WithStack(err)
 		}
 
-		logger.Log.Info("Succeeded upload", zap.String("object_name", obj.ObjectName()), zap.String("bucket", obj.BucketName()))
+		slogger.Log.Info("Succeeded upload", slog.String("object_name", obj.ObjectName()), slog.String("bucket", obj.BucketName()))
 		return nil
 	}
 }
@@ -101,7 +101,7 @@ func (g *Google) Delete(ctx context.Context, key string) error {
 	for {
 		if err := obj.Delete(ctx); err != nil {
 			if g.opt.Retries > 0 && retryCount < g.opt.Retries {
-				logger.Log.Info("Retrying to delete a object", zap.Int("retryCount", retryCount), zap.String("key", key))
+				slogger.Log.Info("Retrying to delete a object", slog.Int("retryCount", retryCount), slog.String("key", key))
 				retryCount++
 				continue
 			}
@@ -128,7 +128,7 @@ func (g *Google) Get(ctx context.Context, name string) (*Object, error) {
 		r, err := obj.NewReader(ctx)
 		if err != nil {
 			if g.opt.Retries > 0 && retryCount < g.opt.Retries {
-				logger.Log.Info("Retrying to get a object", zap.Int("retryCount", retryCount), zap.String("key", name))
+				slogger.Log.Info("Retrying to get a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}

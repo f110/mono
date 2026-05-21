@@ -2,6 +2,7 @@ package codesearch
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,13 +12,12 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/k8s/volume"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -184,7 +184,7 @@ func (r *IndexerCommand) Run() error {
 		}
 	}
 	if r.enableUpload() && r.NATSURL != "" {
-		logger.Log.Debug("Start notifier")
+		slogger.Log.Debug("Start notifier")
 		n, err := NewNotify(r.NATSURL, r.NATSStreamName, r.NATSSubject)
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -239,7 +239,7 @@ func (r *IndexerCommand) run() error {
 			}
 		}
 	} else {
-		logger.Log.Debug("Disable upload", zap.Bool("can_use_minio", r.canUseMinIO()), zap.Bool("can_use_s3", r.canUseS3()))
+		slogger.Log.Debug("Disable upload", slog.Bool("can_use_minio", r.canUseMinIO()), slog.Bool("can_use_s3", r.canUseS3()))
 	}
 	if !r.DisableCleanup {
 		if err := r.indexer.Cleanup(ctx); err != nil {
@@ -260,25 +260,25 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
-		logger.Log.Debug("Watch config file changes")
+		slogger.Log.Debug("Watch config file changes")
 	}
 
 	r.cron = cron.New()
 	_, err := r.cron.AddFunc("0 0 * * *", func() {
 		if err := r.gc(); err != nil {
-			logger.Log.Info("Failed garbage collection", zap.Error(err))
+			slogger.Log.Info("Failed garbage collection", slogger.E(err))
 		}
 	})
 	e, err := r.cron.AddFunc(schedule, func() {
 		if err := r.run(); err != nil {
-			logger.Log.Info("Failed indexing", zap.Error(err))
+			slogger.Log.Info("Failed indexing", slogger.E(err))
 		}
 	})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 	r.entryId = e
-	logger.Log.Info("Start scheduler")
+	slogger.Log.Info("Start scheduler")
 	r.cron.Start()
 
 	r.readyMu.Lock()
@@ -293,11 +293,11 @@ func (r *IndexerCommand) scheduler(schedule string) error {
 	defer stopFunc()
 
 	<-ctx.Done()
-	logger.Log.Debug("Got signal")
+	slogger.Log.Debug("Got signal")
 
 	ctx = r.cron.Stop()
 
-	logger.Log.Info("Waiting for stop scheduler")
+	slogger.Log.Info("Waiting for stop scheduler")
 	<-ctx.Done()
 
 	return nil
@@ -308,14 +308,14 @@ func (r *IndexerCommand) webEndpoint(addr string) error {
 	mux.HandleFunc("/run", func(w http.ResponseWriter, req *http.Request) {
 		go func() {
 			if err := r.run(); err != nil {
-				logger.Log.Info("Failed indexing", zap.Error(err))
+				slogger.Log.Info("Failed indexing", slogger.E(err))
 			}
 		}()
 	})
 	mux.HandleFunc("/gc", func(w http.ResponseWriter, req *http.Request) {
 		go func() {
 			if err := r.gc(); err != nil {
-				logger.Log.Info("Failed to garbage collection", logger.Error(err), logger.StackTrace(err))
+				slogger.Log.Info("Failed to garbage collection", slogger.E(err))
 			}
 		}()
 	})
@@ -335,7 +335,7 @@ func (r *IndexerCommand) webEndpoint(addr string) error {
 		Handler: mux,
 	}
 
-	logger.Log.Info("Listen web endpoint", zap.String("addr", addr))
+	slogger.Log.Info("Listen web endpoint", slog.String("addr", addr))
 	go srv.ListenAndServe()
 
 	return nil
@@ -348,7 +348,7 @@ func (r *IndexerCommand) gc() error {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	logger.Log.Info("Start garbage collection")
+	slogger.Log.Info("Start garbage collection")
 
 	s, err := r.newStorageClient()
 	if err != nil {
@@ -413,10 +413,10 @@ func (r *IndexerCommand) newStorageClient() (StorageClient, error) {
 }
 
 func (r *IndexerCommand) reloadConfig() {
-	logger.Log.Debug("Detect change config file")
+	slogger.Log.Debug("Detect change config file")
 	config, err := ReadConfigFile(r.ConfigFile)
 	if err != nil {
-		logger.Log.Warn("Failed to read a config file", zap.Error(err))
+		slogger.Log.Warn("Failed to read a config file", slogger.E(err))
 		return
 	}
 	indexer := NewIndexer(
@@ -436,7 +436,7 @@ func (r *IndexerCommand) reloadConfig() {
 		r.cron.Remove(r.entryId)
 		e, err := r.cron.AddFunc(config.RefreshSchedule, func() {
 			if err := r.run(); err != nil {
-				logger.Log.Info("Failed indexing", zap.Error(err))
+				slogger.Log.Info("Failed indexing", slogger.E(err))
 				return
 			}
 		})
@@ -450,14 +450,14 @@ func (r *IndexerCommand) reloadConfig() {
 	if r.cancel != nil {
 		r.cancel()
 	}
-	logger.Log.Info("Reload configuration was finished")
+	slogger.Log.Info("Reload configuration was finished")
 
-	logger.Log.Info("Build the index with new configuration")
+	slogger.Log.Info("Build the index with new configuration")
 	if err := r.run(); err != nil {
-		logger.Log.Warn("Failed to create index", zap.Error(err))
+		slogger.Log.Warn("Failed to create index", slogger.E(err))
 		return
 	}
-	logger.Log.Info("Finished reload configuration file")
+	slogger.Log.Info("Finished reload configuration file")
 }
 
 func (r *IndexerCommand) uploadIndex(
@@ -477,7 +477,7 @@ func (r *IndexerCommand) uploadIndex(
 		uploadDir, size, err := manager.Add(ctx, v.Name, v.Files)
 		if err != nil {
 			if err := manager.CleanUploadedFiles(ctx); err != nil {
-				logger.Log.Warn("Failed cleanup uploaded files", zap.Error(err))
+				slogger.Log.Warn("Failed cleanup uploaded files", slogger.E(err))
 			}
 			return nil, xerrors.WithStack(err)
 		}
@@ -489,7 +489,7 @@ func (r *IndexerCommand) uploadIndex(
 	mm := NewManifestManager(s)
 	if err := mm.Update(ctx, manifest); err != nil {
 		if err := manager.CleanUploadedFiles(ctx); err != nil {
-			logger.Log.Warn("Failed cleanup loaded files", zap.Error(err))
+			slogger.Log.Warn("Failed cleanup loaded files", slogger.E(err))
 		}
 		return nil, xerrors.WithStack(err)
 	}

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"maps"
 	"net/http"
 	"net/url"
@@ -24,7 +25,6 @@ import (
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -33,7 +33,7 @@ import (
 
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/queue"
 	"go.f110.dev/mono/go/storage"
 )
@@ -225,7 +225,7 @@ func (d *DocSearchService) Initialize(ctx context.Context, workers, maxConns int
 	q := queue.NewSimple[*pageLinkItem]()
 
 	for i := range maxConns {
-		logger.Log.Debug("Start fetching page title worker", zap.Int("thread", i+1))
+		slogger.Log.Debug("Start fetching page title worker", slog.Int("thread", i+1))
 		go func() {
 			d.gettingExternalLinkTitleWorker(ctx, q)
 		}()
@@ -376,20 +376,20 @@ func (d *DocSearchService) gettingExternalLinkTitleWorker(ctx context.Context, q
 			}
 
 			if !errors.Is(err, context.Canceled) {
-				logger.Log.Info("Failed to fetch page title", logger.Error(err), zap.String("url", link.Destination))
+				slogger.Log.Info("Failed to fetch page title", slogger.E(err), slog.String("url", link.Destination))
 			}
 		}
 	}
-	logger.Log.Debug("Fetched external link title",
-		zap.Int("cached", cached),
-		zap.Int("remote", remote),
-		zap.Int("failed", failed),
-		zap.Int("skipped", skipped),
+	slogger.Log.Debug("Fetched external link title",
+		slog.Int("cached", cached),
+		slog.Int("remote", remote),
+		slog.Int("failed", failed),
+		slog.Int("skipped", skipped),
 	)
 }
 
 func (d *DocSearchService) updateTitleCacheOnPeriodically() {
-	logger.Log.Debug("Updating title cache file on periodically")
+	slogger.Log.Debug("Updating title cache file on periodically")
 
 	t := time.NewTicker(1 * time.Minute)
 	for {
@@ -398,7 +398,7 @@ func (d *DocSearchService) updateTitleCacheOnPeriodically() {
 			d.mu.Lock()
 			for _, c := range d.titleCaches {
 				if err := c.Save(); err != nil {
-					logger.Log.Warn("Failed to save title cache", logger.Error(err), zap.String("repo", c.docs.Repository.Name))
+					slogger.Log.Warn("Failed to save title cache", slogger.E(err), slog.String("repo", c.docs.Repository.Name))
 				}
 			}
 			d.mu.Unlock()
@@ -441,10 +441,10 @@ func (d *DocSearchService) scanRepositories(ctx context.Context, workers int) er
 		if err := d.scanRepository(ctx, v, workers); err != nil {
 			return xerrors.WithMessagef(err, "Failed to scan the repository: %s", v.Name)
 		}
-		logger.Log.Debug("ScanRepository", zap.String("repo", v.Name), zap.Duration("duration", time.Since(t1)))
+		slogger.Log.Debug("ScanRepository", slog.String("repo", v.Name), slog.Duration("duration", time.Since(t1)))
 	}
 
-	logger.Log.Debug("ScanRepositories", zap.Duration("duration", time.Since(t1)), zap.Int("num", len(d.repositories)))
+	slogger.Log.Debug("ScanRepositories", slog.Duration("duration", time.Since(t1)), slog.Int("num", len(d.repositories)))
 	return nil
 }
 
@@ -465,7 +465,7 @@ func (d *DocSearchService) scanRepository(ctx context.Context, repo *git.Reposit
 				}
 				page, err := d.makePage(ctx, repo, entry.Path, entry.Sha)
 				if err != nil {
-					logger.Log.Error("Failed to make page", logger.Error(err))
+					slogger.Log.Error("Failed to make page", slogger.E(err))
 				} else {
 					mu.Lock()
 					docs.Pages[entry.Path] = page
@@ -656,7 +656,7 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 		return "", xerrors.New("page not found")
 	default:
 		cancel()
-		logger.Log.Warn("The web page doesn't returns status 200", zap.Int("status", res.StatusCode), zap.String("url", u))
+		slogger.Log.Warn("The web page doesn't returns status 200", slog.Int("status", res.StatusCode), slog.String("url", u))
 		return "", xerrors.New("failed to fetch the url")
 	}
 
@@ -688,7 +688,7 @@ func (d *DocSearchService) fetchExternalPageTitle(ctx context.Context, u string)
 			stack.PushBack(c)
 		}
 	}
-	logger.Log.Debug("Fetch page title", zap.String("title", title), zap.String("url", u))
+	slogger.Log.Debug("Fetch page title", slog.String("title", title), slog.String("url", u))
 
 	if title == "" {
 		return "", xerrors.New("title is not found")
@@ -713,10 +713,10 @@ func newTitleCache(ctx context.Context, storage ObjectStorageInterface, docs *do
 	)
 	if err == nil {
 		if err := json.NewDecoder(buf.Body).Decode(&externalLinkTitleCache); err != nil {
-			logger.Log.Error("Failed to decode external link cache file", logger.Error(err))
+			slogger.Log.Error("Failed to decode external link cache file", slogger.E(err))
 		}
 		if err := buf.Body.Close(); err != nil {
-			logger.Log.Error("Failed to close buffer", logger.Error(err))
+			slogger.Log.Error("Failed to close buffer", slogger.E(err))
 		}
 	}
 
@@ -739,7 +739,7 @@ func (c *titleCache) Get(u string) (string, bool) {
 
 func (c *titleCache) Close() {
 	if err := c.Save(); err != nil {
-		logger.Log.Error("Failed to put external link cache file", logger.Error(err))
+		slogger.Log.Error("Failed to put external link cache file", slogger.E(err))
 	}
 }
 
@@ -761,7 +761,7 @@ func (c *titleCache) Save() error {
 		defer cancel()
 
 		key := fmt.Sprintf("external_links/%s/%s.json", c.docs.Repository.Name, c.docs.Ref.String())
-		logger.Log.Debug("Update title cache file", zap.String("key", key))
+		slogger.Log.Debug("Update title cache file", slog.String("key", key))
 		if err := c.storage.PutReader(ctx, key, cacheBuf); err != nil {
 			return err
 		}

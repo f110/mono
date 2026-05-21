@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.f110.dev/mono/go/database/dbtestutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func TestQueryLog(t *testing.T) {
@@ -21,7 +21,7 @@ func TestQueryLog(t *testing.T) {
 		return
 	}
 
-	logger.Init()
+	slogger.Init()
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	mysql, err := dbtestutil.NewTemporaryMySQL(ctx)
@@ -54,7 +54,7 @@ func TestQueryLog(t *testing.T) {
 
 	t.Run("zap", func(t *testing.T) {
 		var buf bytes.Buffer
-		log := logger.NewBufferLogger(&buf)
+		log := slogger.NewBufferLogger(&buf)
 		Init(log)
 
 		execQuery(t)
@@ -63,7 +63,7 @@ func TestQueryLog(t *testing.T) {
 
 	t.Run("SetMinimumDuration", func(t *testing.T) {
 		var buf bytes.Buffer
-		log := logger.NewBufferLogger(&buf)
+		log := slogger.NewBufferLogger(&buf)
 		Init(log)
 		SetMinimumDuration(1 * time.Millisecond)
 

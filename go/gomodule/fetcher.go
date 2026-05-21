@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,13 +21,12 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	gogitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/semver"
 	"golang.org/x/tools/go/vcs"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type ModuleRoot struct {
@@ -78,16 +78,16 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	var repoRoot *vcs.RepoRoot
 	if f.cache != nil {
 		if root, u, err := f.cache.GetRepoRoot(importPath); err == nil {
-			logger.Log.Debug("RepoRoot was found in cache",
-				zap.String("importPath", importPath),
-				zap.String("RepoRoot", root),
-				zap.String("url", u),
+			slogger.Log.Debug("RepoRoot was found in cache",
+				slog.String("importPath", importPath),
+				slog.String("RepoRoot", root),
+				slog.String("url", u),
 			)
 			repoRoot = &vcs.RepoRoot{Root: root, Repo: u}
 		}
 	}
 	if repoRoot == nil {
-		logger.Log.Debug("Not found RepoRoot in cache", zap.String("importPath", importPath))
+		slogger.Log.Debug("Not found RepoRoot in cache", slog.String("importPath", importPath))
 		r, err := vcs.RepoRootForImportPath(importPath, false)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
@@ -108,12 +108,12 @@ func (f *ModuleFetcher) Get(ctx context.Context, importPath string, setting *Mod
 	var moduleRoot *ModuleRoot
 	if f.cache != nil {
 		if mr, err := f.cache.GetModuleRoot(repoRoot.Root, f.baseDir, vcsRepo); err == nil {
-			logger.Log.Debug("Found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
+			slogger.Log.Debug("Found ModuleRoot in cache", slog.String("repoRoot", repoRoot.Root))
 			moduleRoot = mr
 		}
 	}
 	if moduleRoot == nil {
-		logger.Log.Debug("Not found ModuleRoot in cache", zap.String("repoRoot", repoRoot.Root))
+		slogger.Log.Debug("Not found ModuleRoot in cache", slog.String("repoRoot", repoRoot.Root))
 		dir := filepath.Join(f.baseDir, repoRoot.Root)
 		mr, err := NewModuleRoot(ctx, repoRoot.Root, vcsRepo, f.cache, dir)
 		if err != nil {
@@ -218,7 +218,7 @@ func (m *ModuleRoot) Archive(ctx context.Context, w io.Writer, module, version s
 	if isTag {
 		if m.cache != nil {
 			if err := m.cache.Archive(ctx, module, version, w); err == nil {
-				logger.Log.Debug("Use cache", zap.String("mod", module), zap.String("ver", version))
+				slogger.Log.Debug("Use cache", slog.String("mod", module), slog.String("ver", version))
 				return nil
 			} else if !errors.Is(err, CacheMiss) {
 				return xerrors.WithStack(err)
@@ -463,17 +463,17 @@ func (m *ModuleRoot) findVersions() error {
 					modVer.Time = v.Author.When.In(time.UTC)
 				}
 			} else {
-				logger.Log.Debug("Failed to get tag object",
-					zap.String("ver", ver),
-					zap.String("hash", ref.Hash().String()),
-					zap.Error(err),
+				slogger.Log.Debug("Failed to get tag object",
+					slog.String("ver", ver),
+					slog.String("hash", ref.Hash().String()),
+					slogger.E(err),
 				)
 			}
 		} else {
-			logger.Log.Debug("Failed ref", zap.String("ver", ver), zap.Error(err))
+			slogger.Log.Debug("Failed ref", slog.String("ver", ver), slogger.E(err))
 		}
 		if modVer.Time.IsZero() {
-			logger.Log.Debug("Failed to get time", zap.String("ver", ver))
+			slogger.Log.Debug("Failed to get time", slog.String("ver", ver))
 		}
 		allVer = append(allVer, modVer)
 	}
@@ -522,7 +522,7 @@ func (m *Module) ModuleFile(version string) ([]byte, error) {
 	if isTag {
 		if m.cache != nil {
 			if buf, err := m.cache.GetModFile(m.Path, version); err == nil {
-				logger.Log.Debug("Got the go.mod from cache", zap.String("path", m.Path), zap.String("version", version))
+				slogger.Log.Debug("Got the go.mod from cache", slog.String("path", m.Path), slog.String("version", version))
 				return buf, nil
 			}
 		}
@@ -643,7 +643,7 @@ func (vcs *VCS) Sync(ctx context.Context, dir string) error {
 }
 
 func (vcs *VCS) Create(ctx context.Context, dir string) error {
-	logger.Log.Debug("Clone repository", zap.String("url", vcs.CloneURL))
+	slogger.Log.Debug("Clone repository", slog.String("url", vcs.CloneURL))
 	repo, err := git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 		URL:        vcs.CloneURL,
 		NoCheckout: true,

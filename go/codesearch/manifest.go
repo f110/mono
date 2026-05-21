@@ -5,15 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type Manifest struct {
@@ -54,7 +54,7 @@ func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Info("Successfully upload the manifest", zap.String("name", manifest.filename))
+	slogger.Log.Info("Successfully upload the manifest", slog.String("name", manifest.filename))
 
 	return nil
 }
@@ -173,7 +173,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 		timestamps = append(timestamps, ts)
 	}
 	if len(timestamps) < 3 {
-		logger.Log.Debug("Not need cleanup the manifest")
+		slogger.Log.Debug("Not need cleanup the manifest")
 		return nil, nil
 	}
 

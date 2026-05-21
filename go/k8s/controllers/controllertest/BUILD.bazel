@@ -11,7 +11,6 @@ go_library(
         "//go/k8s/controllers/controllerutil",
         "//go/k8s/thirdpartyclient",
         "//go/k8s/thirdpartyclient/testingthirdpartyclient",
-        "//go/logger",
         "//go/logger/slogger",
         "@com_github_stretchr_testify//assert",
         "@dev_f110_kubeproto//go/k8sclient",

@@ -14,6 +14,7 @@ go_library(
         "//go/ctxutil",
         "//go/k8s/client",
         "//go/logger",
+        "//go/logger/slogger",
         "//go/parallel",
         "@dev_f110_go_xerrors//:xerrors",
         "@dev_f110_kubeproto//go/apis/metav1",

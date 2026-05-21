@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/parallel"
 )
 
@@ -59,7 +61,7 @@ func NewBase(
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
 ) *ControllerBase {
-	logger := logger.Log.Named(name)
+	logger := slogger.Log.Named(name)
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		logger.Info(fmt.Sprintf(format, args...))
@@ -153,11 +155,11 @@ func (b *ControllerBase) worker(ctx context.Context) {
 			}
 			obj = v
 		}
-		b.log.Debug("Get next queue", zap.Any("queue", obj))
+		b.log.Debug("Get next queue", slog.Any("queue", obj))
 
 		err := b.process(obj.(string))
 		if err != nil {
-			b.log.Info("Failed sync", zap.String("key", obj.(string)), zap.Error(err))
+			b.log.Info("Failed sync", slog.String("key", obj.(string)), slogger.E(err))
 		}
 	}
 }
@@ -297,7 +299,7 @@ func NewGenericControllerBase[T runtime.Object](
 	getObjectFn func(namespace, name string) (T, error),
 	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error),
 ) *GenericControllerBase[T] {
-	l := logger.Log.Named(name)
+	l := slogger.Log.Named(name)
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		l.Info(fmt.Sprintf(format, args...))
@@ -379,13 +381,13 @@ func (b *GenericControllerBase[T]) worker(ctx context.Context) {
 			}
 			key = v.(string)
 		}
-		b.log.Debug("Get next queue", zap.String("key", key))
+		b.log.Debug("Get next queue", slog.String("key", key))
 
 		err := b.process(ctx, key)
 		if err != nil {
-			b.log.Info("Failed sync", zap.String("key", key), zap.Error(err))
+			b.log.Info("Failed sync", slog.String("key", key), slogger.E(err))
 		}
-		b.log.Debug("Finished process", zap.String("key", key))
+		b.log.Debug("Finished process", slog.String("key", key))
 	}
 }
 
@@ -435,7 +437,7 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 			}
 		}
 		if !finalizing {
-			logger.Log.Debug("Skip finalize because all finalizers are removed", zap.String("key", key))
+			slogger.Log.Debug("Skip finalize because all finalizers are removed", slog.String("key", key))
 			return nil
 		}
 	}
@@ -448,7 +450,7 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 	}
 	if err != nil {
 		if errors.Is(err, &RetryError{}) {
-			logger.Log.Debug("Retry queue", zap.Error(err), zap.String("name", objMeta.GetName()), zap.String("namespace", objMeta.GetNamespace()))
+			slogger.Log.Debug("Retry queue", slogger.E(err), slog.String("name", objMeta.GetName()), slog.String("namespace", objMeta.GetNamespace()))
 			b.queue.AddRateLimited(obj)
 			return nil
 		}
@@ -500,6 +502,6 @@ func (b *GenericControllerBase[T]) enqueue(obj any) {
 	if err != nil {
 		return
 	}
-	b.Log().Debug("Enqueue", zap.String("key", key))
+	b.Log().Debug("Enqueue", slog.String("key", key))
 	b.queue.Add(key)
 }

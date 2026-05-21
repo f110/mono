@@ -21,7 +21,7 @@ go_library(
         "//go/ctxutil",
         "//go/githubutil",
         "//go/k8s/volume",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/regexp/regexputil",
         "//go/storage",
         "@com_github_go_git_go_git_v5//:go-git",
@@ -43,7 +43,6 @@ go_library(
         "@in_gopkg_yaml_v3//:yaml_v3",
         "@io_k8s_client_go//rest",
         "@io_k8s_client_go//tools/clientcmd",
-        "@org_uber_go_zap//:zap",
     ],
 )
 
@@ -56,7 +55,7 @@ go_test(
     ],
     embed = [":codesearch"],
     deps = [
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/regexp/regexputil",
         "//go/storage",
         "@com_github_stretchr_testify//assert",

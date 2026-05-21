@@ -13,7 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/k8s/portforward",
-        "//go/logger",
+        "//go/logger/slogger",
         "@com_github_aws_aws_sdk_go_v2//aws",
         "@com_github_aws_aws_sdk_go_v2_credentials//:credentials",
         "@com_github_aws_aws_sdk_go_v2_feature_s3_manager//:manager",
@@ -31,7 +31,6 @@ go_library(
         "@io_k8s_client_go//tools/portforward",
         "@org_golang_google_api//iterator",
         "@org_golang_google_api//option",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

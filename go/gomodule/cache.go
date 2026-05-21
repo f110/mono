@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"path/filepath"
 	"slices"
 	"time"
@@ -14,9 +15,8 @@ import (
 	"go.f110.dev/go-memcached/client"
 	merrors "go.f110.dev/go-memcached/errors"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -50,7 +50,7 @@ func (c *ModuleCache) Invalidate(module string) error {
 		return xerrors.WithStack(err)
 	}
 	key := fmt.Sprintf("moduleRoot/%s", moduleRoot.RootPath)
-	logger.Log.Debug("Delete cache", zap.String("key", key))
+	slogger.Log.Debug("Delete cache", slog.String("key", key))
 	if err := c.cachePool.Delete(key); err != nil {
 		return xerrors.WithStack(err)
 	}
@@ -65,9 +65,9 @@ func (c *ModuleCache) Invalidate(module string) error {
 		}
 		for _, v := range cachedModFiles {
 			key = fmt.Sprintf("goModFile/%s/%s", mod.Path, v)
-			logger.Log.Debug("Delete cache", zap.String("key", key))
+			slogger.Log.Debug("Delete cache", slog.String("key", key))
 			if err := c.cachePool.Delete(key); err != nil {
-				logger.Log.Info("Failed invalidate mod file cache", zap.Error(err), zap.String("version", v))
+				slogger.Log.Info("Failed invalidate mod file cache", slogger.E(err), slog.String("version", v))
 			}
 		}
 		if err := c.cachePool.Delete(fmt.Sprintf("goModFiles/%s", mod.Path)); err != nil {
@@ -80,9 +80,9 @@ func (c *ModuleCache) Invalidate(module string) error {
 		}
 		for _, v := range cachedModInfos {
 			key = fmt.Sprintf("modInfo/%s/%s", mod.Path, v)
-			logger.Log.Debug("Delete cached", zap.String("key", key))
+			slogger.Log.Debug("Delete cached", slog.String("key", key))
 			if err := c.cachePool.Delete(key); err != nil {
-				logger.Log.Info("Failed invalidate mod info", zap.Error(err), zap.String("version", v))
+				slogger.Log.Info("Failed invalidate mod info", slogger.E(err), slog.String("version", v))
 			}
 		}
 		if err := c.cachePool.Delete(fmt.Sprintf("goModInfos/%s", mod.Path)); err != nil {
@@ -362,7 +362,7 @@ func (c *ModuleCache) addCachedModuleRoot(repoRoot string) error {
 		}
 		found := slices.Contains(cachedModules, repoRoot)
 		if found {
-			logger.Log.Debug("The module already cached", zap.String("repoRoot", repoRoot))
+			slogger.Log.Debug("The module already cached", slog.String("repoRoot", repoRoot))
 			return nil
 		}
 	} else {
@@ -407,7 +407,7 @@ func (c *ModuleCache) deleteCachedModuleRoot(moduleRoot string) error {
 		}
 	}
 	if !found {
-		logger.Log.Debug("The module root not found", zap.String("module_root", moduleRoot))
+		slogger.Log.Debug("The module root not found", slog.String("module_root", moduleRoot))
 		return nil
 	}
 

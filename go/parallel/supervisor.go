@@ -2,6 +2,7 @@ package parallel
 
 import (
 	"context"
+	"log/slog"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -11,7 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type supervisorState int
@@ -41,7 +42,7 @@ type Supervisor struct {
 
 func NewSupervisor(ctx context.Context) *Supervisor {
 	c, cancel := ctxutil.WithCancel(ctx)
-	return &Supervisor{Log: logger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
+	return &Supervisor{Log: slogger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
 }
 
 func (s *Supervisor) Add(f func(ctx context.Context)) {
@@ -51,7 +52,7 @@ func (s *Supervisor) Add(f func(ctx context.Context)) {
 	s.children = append(s.children, child)
 	s.mu.Unlock()
 
-	s.Log.Info("Add new process", zap.Int("num", s.Len()))
+	s.Log.Info("Add new process", slog.Int("num", s.Len()))
 
 	s.wg.Add(1)
 	go child.Run(s.ctx, s.wg.Done)
@@ -110,7 +111,7 @@ type childProcess struct {
 
 func newChildProcess(id int, fn func(ctx context.Context)) *childProcess {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: logger.Log, rand: r, fn: fn}
+	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: slogger.Log, rand: r, fn: fn}
 }
 
 func (c *childProcess) Run(ctx context.Context, done func()) {
@@ -133,7 +134,7 @@ func (c *childProcess) Run(ctx context.Context, done func()) {
 		}
 
 		backoff := c.calculateNextBackoff()
-		c.Log.Info("Wait restart", zap.Duration("backoff", backoff), zap.Int("id", c.Id), zap.Int("count", c.restart))
+		c.Log.Info("Wait restart", slog.Duration("backoff", backoff), slog.Int("id", c.Id), slog.Int("count", c.restart))
 		select {
 		case <-ctx.Done():
 			return
@@ -150,7 +151,7 @@ func (c *childProcess) run(ctx context.Context) {
 			const size = 64 << 10
 			stacktrace := make([]byte, size)
 			stacktrace = stacktrace[:runtime.Stack(stacktrace, false)]
-			c.Log.Warn("Panic", zap.String("stacktrace", string(stacktrace)))
+			c.Log.Warn("Panic", slog.String("stacktrace", string(stacktrace)))
 		}
 	}()
 

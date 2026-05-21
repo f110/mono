@@ -4,18 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"sync"
 
 	"go.f110.dev/notion-api/v3"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/k8s/volume"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type databaseDocServerConfig struct {
@@ -70,10 +70,10 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		}{}
 
 		if err := json.NewDecoder(req.Body).Decode(&b); err != nil {
-			logger.Log.Warn("Failed parse request body", zap.Error(err))
+			slogger.Log.Warn("Failed parse request body", slogger.E(err))
 			return
 		}
-		logger.Log.Info("Input data", zap.Any("body", b))
+		slogger.Log.Info("Input data", slog.Any("body", b))
 
 		var c *databaseDocServerConfig
 		s.mu.RLock()
@@ -93,26 +93,26 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		tc := oauth2.NewClient(context.Background(), ts)
 		client, err := notion.New(tc, notion.BaseURL)
 		if err != nil {
-			logger.Log.Warn("Failed to create notion client", zap.Error(err), zap.String("id", c.Id))
+			slogger.Log.Warn("Failed to create notion client", slogger.E(err), slog.String("id", c.Id))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		db, err := client.GetDatabase(req.Context(), c.DatabaseID)
 		if err != nil {
-			logger.Log.Warn("Failed to get database", zap.Error(err), zap.String("id", c.Id), zap.String("database_id", c.DatabaseID))
+			slogger.Log.Warn("Failed to get database", slogger.E(err), slog.String("id", c.Id), slog.String("database_id", c.DatabaseID))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		page, err := notion.NewPage(db, b.Title, nil)
 		if err != nil {
-			logger.Log.Warn("Failed to initialize new page", zap.Error(err), zap.String("id", c.Id))
+			slogger.Log.Warn("Failed to initialize new page", slogger.E(err), slog.String("id", c.Id))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		for k, v := range b.Data {
 			prop, ok := db.Properties[k]
 			if !ok {
-				logger.Log.Warn("Property not found", zap.String("key", k))
+				slogger.Log.Warn("Property not found", slog.String("key", k))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -121,7 +121,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 			case "number":
 				num, ok := v.(float64)
 				if !ok {
-					logger.Log.Info("The value is not float64", zap.Any("value", v), zap.Any("type", fmt.Sprintf("%T", v)))
+					slogger.Log.Info("The value is not float64", slog.Any("value", v), slog.Any("type", fmt.Sprintf("%T", v)))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -135,23 +135,23 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 
 		_, err = client.CreatePage(req.Context(), page)
 		if err != nil {
-			logger.Log.Warn("Failed to create a page", zap.Error(err))
+			slogger.Log.Warn("Failed to create a page", slogger.E(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		logger.Log.Info("Creating page was successfully")
+		slogger.Log.Info("Creating page was successfully")
 	}
 }
 
 func (s *DatabaseDocServer) loadConfig() {
 	f, err := os.Open(s.configFile)
 	if err != nil {
-		logger.Log.Error("Failed to open config file", zap.Error(err), zap.String("path", s.configFile))
+		slogger.Log.Error("Failed to open config file", slogger.E(err), slog.String("path", s.configFile))
 		return
 	}
 	var conf []*databaseDocServerConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		logger.Log.Error("Decode failure", zap.Error(err))
+		slogger.Log.Error("Decode failure", slogger.E(err))
 		return
 	}
 	s.mu.Lock()
@@ -160,12 +160,12 @@ func (s *DatabaseDocServer) loadConfig() {
 }
 
 func (s *DatabaseDocServer) Start() error {
-	logger.Log.Info("Listen", zap.String("addr", s.s.Addr))
+	slogger.Log.Info("Listen", slog.String("addr", s.s.Addr))
 	return s.s.ListenAndServe()
 }
 
 func (s *DatabaseDocServer) Stop(ctx context.Context) error {
-	logger.Log.Info("Stopping server")
+	slogger.Log.Info("Stopping server")
 	if s.w != nil {
 		s.w.Stop()
 	}

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -13,10 +14,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type ProxyServer struct {
@@ -94,7 +94,7 @@ func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy, ghClient
 }
 
 func (s *ProxyServer) Start() error {
-	logger.Log.Info("Start proxy", zap.String("addr", s.s.Addr))
+	slogger.Log.Info("Start proxy", slog.String("addr", s.s.Addr))
 	if err := s.s.ListenAndServe(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
@@ -129,7 +129,7 @@ func (s *ProxyServer) handle(h func(w http.ResponseWriter, req *http.Request, mo
 func (s *ProxyServer) index(w http.ResponseWriter, _ *http.Request) {
 	cachedModuleRoots, err := s.proxy.CachedModuleRoots()
 	if err != nil {
-		logger.Log.Info("failed to get a list of modules", zap.Error(err))
+		slogger.Log.Info("failed to get a list of modules", slogger.E(err))
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -152,7 +152,7 @@ func (s *ProxyServer) index(w http.ResponseWriter, _ *http.Request) {
 
 func (s *ProxyServer) invalidate(w http.ResponseWriter, req *http.Request, module, _ string) {
 	if err := s.proxy.InvalidateCache(module); err != nil {
-		logger.Log.Info("Failed invalidate cache", zap.Error(err), zap.String("module", module))
+		slogger.Log.Info("Failed invalidate cache", slogger.E(err), slog.String("module", module))
 		http.Error(w, "failed invalidate cache", http.StatusInternalServerError)
 		return
 	}
@@ -169,7 +169,7 @@ func (s *ProxyServer) flushAll(w http.ResponseWriter, _ *http.Request) {
 func (s *ProxyServer) list(w http.ResponseWriter, req *http.Request, module, _ string) {
 	vers, err := s.proxy.Versions(req.Context(), module)
 	if err != nil {
-		logger.Log.Info("Failed to get version list", zap.Error(err))
+		slogger.Log.Info("Failed to get version list", slogger.E(err))
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
@@ -182,12 +182,12 @@ func (s *ProxyServer) list(w http.ResponseWriter, req *http.Request, module, _ s
 func (s *ProxyServer) info(w http.ResponseWriter, req *http.Request, module, version string) {
 	info, err := s.proxy.GetInfo(req.Context(), module, version)
 	if err != nil {
-		logger.Log.Info("Failed to get module info", zap.Error(err))
+		slogger.Log.Info("Failed to get module info", slogger.E(err))
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 	if err := json.NewEncoder(w).Encode(info); err != nil {
-		logger.Log.Info("Failed to encode to json", zap.Error(err))
+		slogger.Log.Info("Failed to encode to json", slogger.E(err))
 		return
 	}
 }
@@ -195,20 +195,20 @@ func (s *ProxyServer) info(w http.ResponseWriter, req *http.Request, module, ver
 func (s *ProxyServer) mod(w http.ResponseWriter, req *http.Request, module, version string) {
 	mod, err := s.proxy.GetGoMod(req.Context(), module, version)
 	if err != nil {
-		logger.Log.Info("Failed to get go.mod", zap.Error(err))
+		slogger.Log.Info("Failed to get go.mod", slogger.E(err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 	_, err = io.WriteString(w, mod)
 	if err != nil {
-		logger.Log.Info("Failed to write a buffer to ResponseWriter", zap.Error(err))
+		slogger.Log.Info("Failed to write a buffer to ResponseWriter", slogger.E(err))
 	}
 }
 
 func (s *ProxyServer) zip(w http.ResponseWriter, req *http.Request, module, version string) {
 	err := s.proxy.GetZip(req.Context(), w, module, version)
 	if err != nil {
-		logger.Log.Info("Failed to create zip", zap.Error(err))
+		slogger.Log.Info("Failed to create zip", slogger.E(err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -217,12 +217,12 @@ func (s *ProxyServer) zip(w http.ResponseWriter, req *http.Request, module, vers
 func (s *ProxyServer) latest(w http.ResponseWriter, req *http.Request, module, _ string) {
 	info, err := s.proxy.GetLatestVersion(req.Context(), module)
 	if err != nil {
-		logger.Log.Info("Failed to get latest module version", zap.Error(err))
+		slogger.Log.Info("Failed to get latest module version", slogger.E(err))
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 	if err := json.NewEncoder(w).Encode(info); err != nil {
-		logger.Log.Info("Failed to encode to json", zap.Error(err))
+		slogger.Log.Info("Failed to encode to json", slogger.E(err))
 		return
 	}
 }
@@ -240,14 +240,14 @@ func middlewareAccessLog(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, req)
 
-		logger.Log.Info("access",
-			zap.String("host", req.Host),
-			zap.String("protocol", req.Proto),
-			zap.String("method", req.Method),
-			zap.String("path", req.URL.Path),
-			zap.String("remote_addr", req.RemoteAddr),
-			zap.String("ua", req.Header.Get("User-Agent")),
-			zap.Duration("response_time", time.Since(t1)),
+		slogger.Log.Info("access",
+			slog.String("host", req.Host),
+			slog.String("protocol", req.Proto),
+			slog.String("method", req.Method),
+			slog.String("path", req.URL.Path),
+			slog.String("remote_addr", req.RemoteAddr),
+			slog.String("ua", req.Header.Get("User-Agent")),
+			slog.Duration("response_time", time.Since(t1)),
 		)
 	})
 }
@@ -256,7 +256,7 @@ func middlewareDebugInfo(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		if len(vars) != 0 {
-			logger.Log.Debug("Debug info", zap.Any("vars", vars))
+			slogger.Log.Debug("Debug info", slog.Any("vars", vars))
 		}
 
 		next.ServeHTTP(w, req)

@@ -2,6 +2,7 @@ package notion
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -10,11 +11,10 @@ import (
 	"github.com/robfig/cron/v3"
 	"go.f110.dev/notion-api/v3"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 var maxProcessingTime = 1 * time.Minute
@@ -77,7 +77,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			nil,
 		)
 		if err != nil {
-			logger.Log.Info("Failed to get pages", zap.Error(err))
+			slogger.Log.Info("Failed to get pages", slogger.E(err))
 			return err
 		}
 
@@ -93,13 +93,13 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			}
 			e, err := s.parseSchedule(v.RichText[0].PlainText)
 			if err != nil {
-				logger.Log.Warn("Failed parse schedule spec", zap.Error(err))
+				slogger.Log.Warn("Failed parse schedule spec", slogger.E(err))
 				continue
 			}
 			e.ID = page.ID
 			e.Title = page.Properties["Name"].Title[0].PlainText
 			schedules = append(schedules, e)
-			logger.Log.Debug("Found schedule event", zap.Int("interval", int(e.Interval)), zap.String("id", e.ID), zap.String("title", e.Title))
+			slogger.Log.Debug("Found schedule event", slog.Int("interval", int(e.Interval)), slog.String("id", e.ID), slog.String("title", e.Title))
 			pageMap[page.ID] = page
 		}
 
@@ -112,10 +112,10 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 					}
 				case intervalMonthly:
 					if time.Now().Day() != spec.Day {
-						logger.Log.Debug("Skip because the day is mismatch",
-							zap.Int("now", time.Now().Day()),
-							zap.Int("spec", spec.Day),
-							zap.String("id", spec.ID),
+						slogger.Log.Debug("Skip because the day is mismatch",
+							slog.Int("now", time.Now().Day()),
+							slog.Int("spec", spec.Day),
+							slog.String("id", spec.ID),
 						)
 						continue
 					}
@@ -125,7 +125,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			lastPage := s.findLastPage(pages, config.ScheduleColumn, spec)
 			var shouldCreateNewPage bool
 			if lastPage != nil {
-				logger.Log.Debug("Found last page", zap.String("id", lastPage.ID), zap.String("spec_id", spec.ID))
+				slogger.Log.Debug("Found last page", slog.String("id", lastPage.ID), slog.String("spec_id", spec.ID))
 				var interval time.Duration
 				switch spec.Interval {
 				case intervalDaily:
@@ -136,7 +136,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 					interval = 7 * 24 * time.Hour
 				}
 
-				logger.Log.Debug("Last page created at", zap.Time("created", lastPage.CreatedTime.Time), zap.Duration("interval", interval))
+				slogger.Log.Debug("Last page created at", slog.Time("created", lastPage.CreatedTime.Time), slog.Duration("interval", interval))
 				if time.Now().After(lastPage.CreatedTime.Add(interval)) {
 					shouldCreateNewPage = true
 				}
@@ -165,11 +165,11 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				},
 			}
 			if dryRun {
-				logger.Log.Info("Create page")
+				slogger.Log.Info("Create page")
 			} else {
 				_, err = s.client.CreatePage(context.TODO(), newPage)
 				if err != nil {
-					logger.Log.Warn("Failed to create new page", zap.Error(err))
+					slogger.Log.Warn("Failed to create new page", slogger.E(err))
 					return err
 				}
 			}
@@ -300,15 +300,15 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 func (s *ToDoScheduler) Start(c string) error {
 	s.cron = cron.New()
 	_, err := s.cron.AddFunc(c, func() {
-		logger.Log.Debug("Schedule check")
+		slogger.Log.Debug("Schedule check")
 		if err := s.run(false); err != nil {
-			logger.Log.Warn("Failed to run", zap.Error(err))
+			slogger.Log.Warn("Failed to run", slogger.E(err))
 		}
 	})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Info("Start cron")
+	slogger.Log.Info("Start cron")
 	s.cron.Start()
 
 	return nil

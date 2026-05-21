@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -65,7 +65,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 		if err != nil {
 			return "", 0, xerrors.WithStack(err)
 		}
-		logger.Log.Info("Successfully upload", zap.String("name", objectPath), zap.String("bucket", s.bucket), zap.Int64("size", info.Size()))
+		slogger.Log.Info("Successfully upload", slog.String("name", objectPath), slog.String("bucket", s.bucket), slog.Int64("size", info.Size()))
 		s.uploadedFiles = append(s.uploadedFiles, objectPath)
 		totalSize += uint64(info.Size())
 	}
@@ -77,7 +77,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir string, manifest Manifest) error {
 	tmpDir := filepath.Join(indexDir, ".tmp")
 	if _, err := os.Stat(tmpDir); err == nil {
-		logger.Log.Debug("Remove tmp directory", zap.String("dir", tmpDir))
+		slogger.Log.Debug("Remove tmp directory", slog.String("dir", tmpDir))
 		if err := os.RemoveAll(tmpDir); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -108,7 +108,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
 				return xerrors.WithStack(err)
 			}
-			logger.Log.Debug("Download file", zap.String("path", filePath))
+			slogger.Log.Debug("Download file", slog.String("path", filePath))
 		}
 	}
 
@@ -116,7 +116,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Debug("Remove old index files", zap.Int("len", len(entry)-1))
+	slogger.Log.Debug("Remove old index files", slog.Int("len", len(entry)-1))
 	for _, v := range entry {
 		if v.Name() == ".tmp" {
 			continue
@@ -130,9 +130,9 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 		return xerrors.WithStack(err)
 	}
 	for _, v := range entry {
-		logger.Log.Debug("Move index file",
-			zap.String("from", filepath.Join(tmpDir, v.Name())),
-			zap.String("to", filepath.Join(indexDir, v.Name())),
+		slogger.Log.Debug("Move index file",
+			slog.String("from", filepath.Join(tmpDir, v.Name())),
+			slog.String("to", filepath.Join(indexDir, v.Name())),
 		)
 		if err := os.Rename(filepath.Join(tmpDir, v.Name()), filepath.Join(indexDir, v.Name())); err != nil {
 			return xerrors.WithStack(err)

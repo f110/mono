@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"go.f110.dev/mono/go/grafana"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/stringsutil"
 )
 
@@ -131,7 +133,7 @@ func (u *grafanaReconciler) Finalize(ctx context.Context, obj *grafanav1alpha1.G
 }
 
 func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*grafanav1alpha1.GrafanaUser) error {
-	u.logger.Debug("users", zap.Int("len", len(users)))
+	u.logger.Debug("users", slog.Int("len", len(users)))
 	secret, err := u.secretLister.Get(app.Namespace, app.Spec.AdminPasswordSecret.Name)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -179,9 +181,9 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 		grafanaUser := allUsers[email]
 		s := strings.Split(grafanaUser.Spec.Email, "@")
 		name := s[0]
-		u.logger.Info("Add User", zap.String("email", grafanaUser.Spec.Email), zap.String("name", name))
+		u.logger.Info("Add User", slog.String("email", grafanaUser.Spec.Email), slog.String("name", name))
 		if err := grafanaClient.AddUser(&grafana.User{Name: name, Login: name, Email: grafanaUser.Spec.Email, Password: stringsutil.RandomString(32)}); err != nil {
-			u.logger.Warn("Failed add user", zap.String("email", email), zap.Error(err))
+			u.logger.Warn("Failed add user", slog.String("email", email), slogger.E(err))
 		}
 	}
 
@@ -192,9 +194,9 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 			continue
 		}
 		grafanaUser := currentUsersMap[email]
-		u.logger.Info("Delete User", zap.Int("id", grafanaUser.Id))
+		u.logger.Info("Delete User", slog.Int("id", grafanaUser.Id))
 		if err := grafanaClient.DeleteUser(grafanaUser.Id); err != nil {
-			u.logger.Warn("Failed delete user", zap.String("email", grafanaUser.Email), zap.Int("id", grafanaUser.Id), zap.Error(err))
+			u.logger.Warn("Failed delete user", slog.String("email", grafanaUser.Email), slog.Int("id", grafanaUser.Id), slogger.E(err))
 		}
 	}
 
@@ -208,9 +210,9 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 			continue
 		}
 		if grafanaUser.Spec.Admin != v.IsAdmin {
-			u.logger.Info("Change user permission", zap.Int("id", v.Id), zap.String("email", v.Email), zap.Bool("admin", grafanaUser.Spec.Admin))
+			u.logger.Info("Change user permission", slog.Int("id", v.Id), slog.String("email", v.Email), slog.Bool("admin", grafanaUser.Spec.Admin))
 			if err := grafanaClient.ChangeUserPermission(v.Id, grafanaUser.Spec.Admin); err != nil {
-				u.logger.Warn("Failed change user permission", zap.String("email", v.Email), zap.Bool("admin", v.IsAdmin))
+				u.logger.Warn("Failed change user permission", slog.String("email", v.Email), slog.Bool("admin", v.IsAdmin))
 			}
 		}
 	}

@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/githubutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/stringsutil"
 )
 
@@ -133,7 +133,7 @@ func (a *UserAuthentication) start(w http.ResponseWriter, _ *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		logger.Log.Info("failed to encode json", logger.Error(err))
+		slogger.Log.Info("failed to encode json", slogger.E(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -141,7 +141,7 @@ func (a *UserAuthentication) start(w http.ResponseWriter, _ *http.Request) {
 
 func (a *UserAuthentication) token(w http.ResponseWriter, req *http.Request) {
 	if err := req.ParseForm(); err != nil {
-		logger.Log.Info("failed to parse form", logger.Error(err))
+		slogger.Log.Info("failed to parse form", slogger.E(err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
@@ -174,7 +174,7 @@ func (a *UserAuthentication) token(w http.ResponseWriter, req *http.Request) {
 			AccessToken: token,
 		}
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			logger.Log.Info("failed to encode json", logger.Error(err))
+			slogger.Log.Info("failed to encode json", slogger.E(err))
 			http.Error(w, "", http.StatusInternalServerError)
 			return
 		}
@@ -211,14 +211,14 @@ func (a *UserAuthentication) loginCallback(w http.ResponseWriter, req *http.Requ
 	}
 	token, err := a.ghClientFactory.OAuthConfig.Exchange(req.Context(), req.URL.Query().Get("code"))
 	if err != nil {
-		logger.Log.Info("Failed exchange token", logger.StackTrace(err))
+		slogger.Log.Info("Failed exchange token", slogger.E(err))
 		http.Error(w, "failed exchange token", http.StatusInternalServerError)
 		return
 	}
 	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
 	myself, _, err := ghClient.Users.Get(req.Context(), "")
 	if err != nil {
-		logger.Log.Info("Failed get user info", logger.StackTrace(err))
+		slogger.Log.Info("Failed get user info", slogger.E(err))
 		http.Error(w, "failed get user info", http.StatusInternalServerError)
 		return
 	}
@@ -234,7 +234,7 @@ func (a *UserAuthentication) loginCallback(w http.ResponseWriter, req *http.Requ
 		Value: fmt.Appendf(nil, "%d,%s", myself.GetID(), myself.GetLogin()),
 	})
 	if err != nil {
-		logger.Log.Info("Failed to set the value", logger.StackTrace(err))
+		slogger.Log.Info("Failed to set the value", slogger.E(err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}

@@ -3,6 +3,7 @@ package notion
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"sync"
@@ -11,13 +12,12 @@ import (
 	"github.com/shurcooL/githubv4"
 	"go.f110.dev/notion-api/v3"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/k8s/volume"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type githubTaskConfig struct {
@@ -109,15 +109,15 @@ func newGithubTask(client *githubv4.Client, notionClient *notion.Client, configF
 func (g *GitHubTask) Start(schedule string) error {
 	g.cron = cron.New()
 	_, err := g.cron.AddFunc(schedule, func() {
-		logger.Log.Debug("Schedule check")
+		slogger.Log.Debug("Schedule check")
 		if err := g.Execute(); err != nil {
-			logger.Log.Warn("Failed to run", zap.Error(err))
+			slogger.Log.Warn("Failed to run", slogger.E(err))
 		}
 	})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Info("Start cron")
+	slogger.Log.Info("Start cron")
 	g.cron.Start()
 
 	if err := g.Execute(); err != nil {
@@ -193,7 +193,7 @@ func (g *GitHubTask) Execute() error {
 			}
 		}
 		newPage.SetProperty(g.config.URLProperty, &notion.PropertyData{Type: "url", URL: v.URL.String()})
-		logger.Log.Info("Create page", zap.String("title", v.Title), zap.String("url", v.URL.String()))
+		slogger.Log.Info("Create page", slog.String("title", v.Title), slog.String("url", v.URL.String()))
 		_, err = g.NotionClient.CreatePage(context.TODO(), newPage)
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -209,12 +209,12 @@ func (g *GitHubTask) Execute() error {
 func (g *GitHubTask) loadConfig() {
 	f, err := os.Open(g.configFile)
 	if err != nil {
-		logger.Log.Error("Failed to open config file", zap.Error(err), zap.String("path", g.configFile))
+		slogger.Log.Error("Failed to open config file", slogger.E(err), slog.String("path", g.configFile))
 		return
 	}
 	var conf githubTaskConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		logger.Log.Error("Decode failure", zap.Error(err))
+		slogger.Log.Error("Decode failure", slogger.E(err))
 		return
 	}
 	g.confMu.Lock()

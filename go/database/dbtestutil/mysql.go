@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/netutil"
 )
 
@@ -45,10 +45,10 @@ func NewTemporaryMySQL(ctx context.Context) (*TemporaryMySQL, error) {
 	dataDir := filepath.Join(baseDir, "data")
 
 	cmd := exec.CommandContext(ctx,
-		"mysqld",
-		"--initialize-insecure",
-		"--user=mysql",
+		"mysql_install_db",
 		"--datadir="+dataDir,
+		"--auth-root-authentication-method=normal",
+		"--skip-test-db",
 	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -58,16 +58,15 @@ func NewTemporaryMySQL(ctx context.Context) (*TemporaryMySQL, error) {
 
 	mysql := exec.CommandContext(context.Background(),
 		"mysqld_safe",
-		"--mysqld="+mysqldPath,
-		"--user=mysql",
 		"--basedir="+baseDir,
-		"--datadir="+filepath.Join(baseDir, "data"),
+		"--datadir="+dataDir,
 		"--socket="+filepath.Join(baseDir, "mysqld.sock"),
 		"--secure-file-priv="+filepath.Join(baseDir, "secure"),
 		"--bind-address=127.0.0.1",
 		fmt.Sprintf("--port=%d", port),
 		"--skip-networking=0",
 		fmt.Sprintf("--lc-messages-dir=%s", filepath.Clean(filepath.Join(filepath.Dir(mysqldPath), "../share/mysql8"))),
+		"--log-error="+filepath.Join(baseDir, "error.log"),
 	)
 	tempMySQL := &TemporaryMySQL{Port: port, mysqldPath: mysqldPath, baseDir: baseDir, cmd: mysql}
 	runtime.SetFinalizer(tempMySQL, func(x *TemporaryMySQL) { x.Close() })
@@ -76,7 +75,7 @@ func NewTemporaryMySQL(ctx context.Context) (*TemporaryMySQL, error) {
 
 func (t *TemporaryMySQL) Start() error {
 	if err := t.cmd.Start(); err != nil {
-		logger.Log.Warn("Some error was occurred", logger.Error(err))
+		slogger.Log.Warn("Some error was occurred", slogger.E(err))
 	}
 	if err := netutil.WaitListen(fmt.Sprintf(":%d", t.Port), 10*time.Second); err != nil {
 		return err

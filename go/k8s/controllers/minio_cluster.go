@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"reflect"
 	"sort"
@@ -236,7 +237,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 	}
 	rCtx.Obj.Status.Phase = rCtx.CurrentPhase()
 	if rCtx.StatusChanged() {
-		m.logger.Debug("Update MinIOCluster status", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace), zap.Any("status", rCtx.Obj.Status))
+		m.logger.Debug("Update MinIOCluster status", slog.String("name", rCtx.Obj.Name), slog.String("namespace", rCtx.Obj.Namespace), slog.Any("status", rCtx.Obj.Status))
 		if _, err := m.mClient.UpdateStatusMinIOCluster(ctx, rCtx.Obj, metav1.UpdateOptions{}); err != nil {
 			return controllerutil.WrapRetryError(xerrors.WithStack(err))
 		}
@@ -247,7 +248,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			var uErr *url.Error
 			if errors.As(err, &uErr) {
 				if strings.Contains(uErr.Error(), "Connection closed") {
-					m.logger.Info("The instance is not ready yet", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					m.logger.Info("The instance is not ready yet", slog.String("name", rCtx.Obj.Name), slog.String("namespace", rCtx.Obj.Namespace))
 					return nil
 				}
 			}
@@ -258,7 +259,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 			var uErr *url.Error
 			if errors.As(err, &uErr) {
 				if strings.Contains(uErr.Error(), "Connection closed") {
-					m.logger.Info("The instance is not ready yet", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+					m.logger.Info("The instance is not ready yet", slog.String("name", rCtx.Obj.Name), slog.String("namespace", rCtx.Obj.Namespace))
 					return nil
 				}
 			}
@@ -313,7 +314,7 @@ func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha
 	}
 	if rCtx.NoResources() {
 		rCtx.Obj.Finalizers = enumerable.Delete(rCtx.Obj.Finalizers, minIOClusterControllerFinalizerName)
-		m.logger.Debug("Update MinIOCluster", zap.String("name", rCtx.Obj.Name), zap.String("namespace", rCtx.Obj.Namespace))
+		m.logger.Debug("Update MinIOCluster", slog.String("name", rCtx.Obj.Name), slog.String("namespace", rCtx.Obj.Namespace))
 		_, err = m.mClient.UpdateMinIOCluster(ctx, rCtx.Obj, metav1.UpdateOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -349,7 +350,7 @@ func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
 		if exists, err := mc.BucketExists(ctx, bucket.Name); err != nil {
 			return xerrors.WithStack(err)
 		} else if !exists {
-			m.logger.Info("Make bucket", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			m.logger.Info("Make bucket", slog.String("bucket", bucket.Name), slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 			if err := mc.MakeBucket(ctx, bucket.Name, minio.MakeBucketOptions{}); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -372,7 +373,7 @@ func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
 		}
 		switch bucket.Policy {
 		case "", miniov1alpha1.BucketPolicyPrivate:
-			m.logger.Debug("Set bucket policy to private", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			m.logger.Debug("Set bucket policy to private", slog.String("bucket", bucket.Name), slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 			if err := mc.SetBucketPolicy(ctx, bucket.Name, ""); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -386,7 +387,7 @@ func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
 			if err != nil {
 				return xerrors.WithStack(err)
 			}
-			m.logger.Debug("Set bucket policy", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+			m.logger.Debug("Set bucket policy", slog.String("bucket", bucket.Name), slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 			if err := mc.SetBucketPolicy(ctx, bucket.Name, string(b)); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -406,7 +407,7 @@ func (m *minIOClusterReconciler) ensureBuckets(ctx *reconcileContext) error {
 				}
 			}
 			if stat.Key == "" {
-				m.logger.Debug("Create index file", zap.String("bucket", bucket.Name), zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+				m.logger.Debug("Create index file", slog.String("bucket", bucket.Name), slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 				if _, err := mc.PutObject(ctx, bucket.Name, "index.html", strings.NewReader(""), 0, minio.PutObjectOptions{}); err != nil {
 					return xerrors.WithStack(err)
 				}
@@ -451,7 +452,7 @@ func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
 		}
 	}
 	if enabled {
-		m.logger.Debug("Already set up OIDC", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+		m.logger.Debug("Already set up OIDC", slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 		return nil
 	}
 
@@ -480,13 +481,13 @@ func (m *minIOClusterReconciler) setupOIDC(ctx *reconcileContext) error {
 		fmt.Sprintf("scopes=%s", strings.Join(ctx.Obj.Spec.IdentityProvider.Scopes, ",")),
 		fmt.Sprintf("redirect_uri=%s/oauth_callback", ctx.Obj.Spec.ExternalUrl),
 	}
-	m.logger.Debug("Setting up OIDC", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+	m.logger.Debug("Setting up OIDC", slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 	_, err = adminClient.SetConfigKV(ctx, strings.Join(input, " "))
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
 
-	m.logger.Info("Restart minio service", zap.String("name", ctx.Obj.Name), zap.String("namespace", ctx.Obj.Namespace))
+	m.logger.Info("Restart minio service", slog.String("name", ctx.Obj.Name), slog.String("namespace", ctx.Obj.Namespace))
 	_, err = adminClient.ServiceAction(ctx, madmin.ServiceActionOpts{Action: madmin.ServiceActionRestart})
 	if err != nil {
 		return xerrors.WithStack(err)

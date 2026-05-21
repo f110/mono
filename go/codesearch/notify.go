@@ -5,13 +5,13 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type Notify struct {
@@ -37,7 +37,7 @@ func NewNotify(u, streamName, subject string) (*Notify, error) {
 			return nil, xerrors.WithStack(err)
 		}
 	} else {
-		logger.Log.Debug("Exist stream", zap.Any("stream_info", si))
+		slogger.Log.Debug("Exist stream", slog.Any("stream_info", si))
 	}
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -63,7 +63,7 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 
 	select {
 	case <-n.js.PublishAsyncComplete():
-		logger.Log.Debug("Notify", zap.String("subject", n.subject))
+		slogger.Log.Debug("Notify", slog.String("subject", n.subject))
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -76,12 +76,12 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 		executionKey := binary.LittleEndian.Uint64(msg.Data)
 		manifest, err := manifestManager.Get(context.TODO(), executionKey)
 		if err != nil {
-			logger.Log.Info("Failed get manifest", zap.Error(err), zap.Uint64("key", executionKey))
+			slogger.Log.Info("Failed get manifest", slogger.E(err), slog.Uint64("key", executionKey))
 			return
 		}
 		ch <- manifest
 		if err := msg.Ack(); err != nil {
-			logger.Log.Warn("Something occurred when acknowledge", zap.Error(err), zap.Uint64("key", executionKey))
+			slogger.Log.Warn("Something occurred when acknowledge", slogger.E(err), slog.Uint64("key", executionKey))
 		}
 	})
 	if err != nil {
@@ -92,7 +92,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 		select {
 		case <-subscription.done:
 			if err := sub.Unsubscribe(); err != nil {
-				logger.Log.Info("Failed unsubscribe", zap.Error(err))
+				slogger.Log.Info("Failed unsubscribe", slogger.E(err))
 			}
 		}
 	}()
@@ -101,7 +101,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 }
 
 func (n *Notify) setupStream(streamName string) error {
-	logger.Log.Info("Add stream", zap.String("subject", streamName+".*"))
+	slogger.Log.Info("Add stream", slog.String("subject", streamName+".*"))
 	_, err := n.js.AddStream(&nats.StreamConfig{
 		Name:      streamName,
 		Subjects:  []string{streamName + ".*"},

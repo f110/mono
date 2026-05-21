@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"strings"
@@ -30,7 +31,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -291,13 +292,13 @@ func (r *BucketReconciler) Finalize(ctx context.Context, obj runtime.Object) err
 			if err := mc.RemoveObject(ctx, r.Obj.Name, v.Key, minio.RemoveObjectOptions{}); err != nil {
 				return xerrors.WithStack(err)
 			}
-			r.logger.Info("Object removed", zap.String("name", r.Obj.Name))
+			r.logger.Info("Object removed", slog.String("name", r.Obj.Name))
 		}
 
 		if err := mc.RemoveBucket(ctx, r.Obj.Name); err != nil {
 			return xerrors.WithStack(err)
 		}
-		r.logger.Debug("Remove bucket", zap.String("name", r.Obj.Name))
+		r.logger.Debug("Remove bucket", slog.String("name", r.Obj.Name))
 	}
 
 	r.Obj.Finalizers = enumerable.Delete(r.Obj.Finalizers, minIOBucketControllerFinalizerName)
@@ -319,7 +320,7 @@ func (r *BucketReconciler) init(_ context.Context) (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	if len(instances) == 0 {
-		r.logger.Debug("MinIO instance is not found", zap.String("selector", metav1.FormatLabelSelector(&r.Obj.Spec.Selector)))
+		r.logger.Debug("MinIO instance is not found", slog.String("selector", metav1.FormatLabelSelector(&r.Obj.Spec.Selector)))
 		return fsm.Next(bucketStateUpdateStatus)
 	}
 	if len(instances) > 1 {
@@ -357,10 +358,10 @@ func (r *BucketReconciler) ensureBucket(_ context.Context) (fsm.State, error) {
 	if exists, err := r.MinIOClient.BucketExists(r.ctx, r.Obj.Name); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	} else if exists {
-		r.logger.Debug("Already exists", zap.String("name", r.Obj.Name))
+		r.logger.Debug("Already exists", slog.String("name", r.Obj.Name))
 		return fsm.Next(bucketStateEnsureBucketPolicy)
 	}
-	r.logger.Debug("Created", zap.String("name", r.Obj.Name))
+	r.logger.Debug("Created", slog.String("name", r.Obj.Name))
 
 	if err := r.MinIOClient.MakeBucket(r.ctx, r.Obj.Name, minio.MakeBucketOptions{}); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -400,7 +401,7 @@ func (r *BucketReconciler) ensureBucketPolicy(ctx context.Context) (fsm.State, e
 	}
 	if len(p.Statements) > 0 && currentPolicy != nil {
 		if reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
-			logger.Log.Debug("Skip set bucket policy because already set same policy")
+			slogger.Log.Debug("Skip set bucket policy because already set same policy")
 			return fsm.Next(bucketStateEnsureIndexFile)
 		}
 	}
@@ -409,7 +410,7 @@ func (r *BucketReconciler) ensureBucketPolicy(ctx context.Context) (fsm.State, e
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	r.logger.Debug("SetBucketPolicy", zap.String("name", r.Obj.Name), zap.String("policy", string(b)))
+	r.logger.Debug("SetBucketPolicy", slog.String("name", r.Obj.Name), slog.String("policy", string(b)))
 	if err := r.MinIOClient.SetBucketPolicy(r.ctx, r.Obj.Name, string(b)); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -434,11 +435,11 @@ func (r *BucketReconciler) ensureIndexFile(_ context.Context) (fsm.State, error)
 		}
 	}
 	if stat.Key != "" {
-		r.logger.Debug("Skip create index file", zap.String("name", r.Obj.Name))
+		r.logger.Debug("Skip create index file", slog.String("name", r.Obj.Name))
 		return fsm.Next(bucketStateUpdateStatus)
 	}
 
-	r.logger.Debug("Create index.html", zap.String("name", r.Obj.Name))
+	r.logger.Debug("Create index.html", slog.String("name", r.Obj.Name))
 	_, err = r.MinIOClient.PutObject(
 		r.ctx,
 		r.Obj.Name,

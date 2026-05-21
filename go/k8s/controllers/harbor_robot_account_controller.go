@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +28,7 @@ import (
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 const (
@@ -139,7 +139,7 @@ func (c *HarborRobotAccountController) Reconcile(ctx context.Context, obj runtim
 		return err
 	}
 	if project.Status.ProjectId == 0 {
-		c.Log().Info("Project is not shipped yet", logger.KubernetesObject("project", project))
+		c.Log().Info("Project is not shipped yet", slogger.KubernetesObject("project", project))
 		return nil
 	}
 
@@ -159,7 +159,7 @@ func (c *HarborRobotAccountController) Reconcile(ctx context.Context, obj runtim
 	created := false
 	for _, v := range accounts {
 		if strings.HasSuffix(v.Name, "$"+harborRobotAccount.Name) {
-			c.Log().Info("Account already exists", zap.String("name", v.Name))
+			c.Log().Info("Account already exists", slog.String("name", v.Name))
 			created = true
 		}
 	}
@@ -195,7 +195,7 @@ func (c *HarborRobotAccountController) Reconcile(ctx context.Context, obj runtim
 func (c *HarborRobotAccountController) getProject(ctx context.Context, hra *harborv1alpha1.HarborRobotAccount) (*harborv1alpha1.HarborProject, error) {
 	project, err := c.hClient.GetHarborProject(ctx, hra.Spec.ProjectNamespace, hra.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
-		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
+		c.Log().Info("Project not found", slogger.KubernetesObject("project", hra))
 		return nil, xerrors.Define("project not found").WithStack()
 	} else if err != nil {
 		return nil, xerrors.WithStack(err)
