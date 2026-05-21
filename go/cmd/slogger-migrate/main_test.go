@@ -1,7 +1,12 @@
 package main
 
 import (
+	"errors"
+	"io/fs"
+	"path/filepath"
 	"testing"
+
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/testing/assertion"
 )
@@ -601,4 +606,46 @@ func f(id int32) { logger.Log.Debug("m", zap.Int32("id", id)) }
 		assertion.False(t, changed)
 		assertion.Equal(t, string(first), string(second))
 	}
+}
+
+// TestMigratorWalk_MissingPath exercises the CLI entry point with a
+// non-existent path. The tool should surface a clean fs.ErrNotExist (no
+// runtime panic, no stack trace), so callers can present a friendly
+// message.
+func TestMigratorWalk_MissingPath(t *testing.T) {
+	m := &migrator{}
+	missing := filepath.Join(t.TempDir(), "does-not-exist.go")
+	err := m.walk(missing)
+	assertion.MustError(t, err)
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("expected fs.ErrNotExist, got %v", err)
+	}
+	// xerrors.WithStack prepends a stack trace that the main printer
+	// (%+v) dumps to stderr — for "user gave a bad path" we don't want
+	// that noise. Verify the error has no stack frames attached.
+	if hasStack(err) {
+		t.Errorf("error for missing path carries a stack trace: %+v", err)
+	}
+}
+
+// TestMigratorWalk_MissingDirectory is the directory variant of
+// MissingPath. Same expectation: a clean error, no stack dump.
+func TestMigratorWalk_MissingDirectory(t *testing.T) {
+	m := &migrator{}
+	missing := filepath.Join(t.TempDir(), "does-not-exist")
+	err := m.walk(missing)
+	assertion.MustError(t, err)
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("expected fs.ErrNotExist, got %v", err)
+	}
+	if hasStack(err) {
+		t.Errorf("error for missing directory carries a stack trace: %+v", err)
+	}
+}
+
+// hasStack reports whether err (or any error it wraps) carries an xerrors
+// stack trace. Used to assert that user-facing errors don't dump developer
+// frames when printed with %+v.
+func hasStack(err error) bool {
+	return len(xerrors.StackTrace(err)) > 0
 }
