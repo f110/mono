@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/consul/api v1.34.3
 	github.com/im7mortal/kmutex v1.0.2
 	github.com/jarcoal/httpmock v1.4.1
-	github.com/mattn/go-shellwords v1.0.12
+	github.com/mattn/go-shellwords v1.0.13
 	github.com/minio/madmin-go/v3 v3.0.70
 	github.com/minio/minio-go/v7 v7.0.76
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
