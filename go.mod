@@ -32,7 +32,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/consul/api v1.34.3
 	github.com/im7mortal/kmutex v1.0.2
-	github.com/jarcoal/httpmock v1.3.1
+	github.com/jarcoal/httpmock v1.4.1
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/minio/madmin-go/v3 v3.0.70
 	github.com/minio/minio-go/v7 v7.0.76
