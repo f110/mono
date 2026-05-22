@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.18
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
 	github.com/aws/smithy-go v1.25.1
-	github.com/bazelbuild/buildtools v0.0.0-20250826111327-4006b543a694
+	github.com/bazelbuild/buildtools v0.0.0-20260319080235-05d2ebe49b0f
 	github.com/blang/semver/v4 v4.0.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
