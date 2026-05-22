@@ -28,7 +28,7 @@ require (
 	github.com/google/go-github/v85 v85.0.0
 	github.com/google/nixery v0.0.0-20260314092029-7eb6caf6c9de
 	github.com/google/uuid v1.6.0
-	github.com/google/zoekt v0.0.0-20210819084712-fcc0c9ab67c5
+	github.com/google/zoekt v0.0.0-20240115160024-62cfd87a6d2f
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.29.2
 	github.com/im7mortal/kmutex v1.0.2
