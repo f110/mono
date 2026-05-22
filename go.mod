@@ -60,7 +60,7 @@ require (
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/kubeproto v0.0.0-20260513142254-78f606d8db65
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
-	go.f110.dev/protoc-ddl v0.0.0-20250922014825-0d4d02686e47
+	go.f110.dev/protoc-ddl v0.0.0-20260214032202-d14e8eabec0b
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.27.0
