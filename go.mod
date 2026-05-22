@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.62.2
 	connectrpc.com/connect v1.20.0
 	cuelang.org/go v0.16.1
-	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
+	github.com/BurntSushi/xgb v0.0.0-20210121224620-deaf085860bc
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/ProtonMail/go-crypto v1.1.6
