@@ -53,7 +53,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/yuin/goldmark v1.8.2
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
-	github.com/zitadel/oidc/v3 v3.34.1
+	github.com/zitadel/oidc/v3 v3.47.5
 	go.abhg.dev/goldmark/mermaid v0.5.0
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.f110.dev/githubmock v0.0.0-20260429052527-6037990fca25
@@ -274,8 +274,8 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
-	github.com/zitadel/logging v0.6.1 // indirect
-	github.com/zitadel/schema v1.3.0 // indirect
+	github.com/zitadel/logging v0.7.0 // indirect
+	github.com/zitadel/schema v1.3.2 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.13 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.13 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
