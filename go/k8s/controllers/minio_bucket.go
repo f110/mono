@@ -17,7 +17,6 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -141,7 +140,7 @@ func (c *MinIOBucketController) UpdateObject(ctx context.Context, obj runtime.Ob
 	return b, nil
 }
 
-func (c *MinIOBucketController) NewReconciler(log *zap.Logger) controllerutil.Reconciler {
+func (c *MinIOBucketController) NewReconciler(log *slog.Logger) controllerutil.Reconciler {
 	return NewBucketReconciler(
 		c.coreClient,
 		c.mClient,
@@ -174,7 +173,7 @@ type BucketReconciler struct {
 	ctx               context.Context
 	runOutsideCluster bool
 	transport         http.RoundTripper
-	logger            *zap.Logger
+	logger            *slog.Logger
 
 	Original *miniov1alpha1.MinIOBucket
 	Obj      *miniov1alpha1.MinIOBucket
@@ -203,7 +202,7 @@ func NewBucketReconciler(
 	instanceLister *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister,
 	runOutsideCluster bool,
 	transport http.RoundTripper,
-	log *zap.Logger,
+	log *slog.Logger,
 ) *BucketReconciler {
 	r := &BucketReconciler{
 		CoreClient:        coreClient,

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger/slogger"
@@ -29,7 +28,7 @@ const (
 )
 
 type Supervisor struct {
-	Log *zap.Logger
+	Log *slog.Logger
 
 	ctx        context.Context
 	cancelFunc context.CancelFunc
@@ -98,7 +97,7 @@ func (s *Supervisor) Shutdown(ctx context.Context) error {
 type childProcess struct {
 	Id       int
 	Interval time.Duration
-	Log      *zap.Logger
+	Log      *slog.Logger
 
 	restart         int
 	c               int

@@ -13,7 +13,6 @@ go_library(
     deps = [
         "//go/ctxutil",
         "//go/k8s/client",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/parallel",
         "@dev_f110_go_xerrors//:xerrors",
@@ -28,6 +27,5 @@ go_library(
         "@io_k8s_client_go//tools/record",
         "@io_k8s_client_go//util/workqueue",
         "@io_k8s_component_base//metrics/prometheus/workqueue",
-        "@org_uber_go_zap//:zap",
     ],
 )

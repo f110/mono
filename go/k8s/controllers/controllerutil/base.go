@@ -10,7 +10,6 @@ import (
 
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -22,7 +21,6 @@ import (
 
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/client"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/parallel"
 )
@@ -44,7 +42,7 @@ type ControllerBase struct {
 	queue      *WorkQueue
 	supervisor *parallel.Supervisor
 	recorder   record.EventRecorder
-	log        *zap.Logger
+	log        *slog.Logger
 
 	impl        Controller
 	reconciler  Reconciler
@@ -61,7 +59,7 @@ func NewBase(
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
 ) *ControllerBase {
-	logger := slogger.Log.Named(name)
+	logger := slogger.Log.With(slog.String("logger", name))
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		logger.Info(fmt.Sprintf(format, args...))
@@ -71,7 +69,7 @@ func NewBase(
 
 	var r Reconciler
 	if fn, ok := v.(interface {
-		NewReconciler(log *zap.Logger) Reconciler
+		NewReconciler(log *slog.Logger) Reconciler
 	}); ok {
 		r = fn.NewReconciler(logger)
 	}
@@ -141,7 +139,7 @@ func (b *ControllerBase) EventRecorder() record.EventRecorder {
 	return b.recorder
 }
 
-func (b *ControllerBase) Log() *zap.Logger {
+func (b *ControllerBase) Log() *slog.Logger {
 	return b.log
 }
 
@@ -277,7 +275,7 @@ type GenericReconciler[T runtime.Object] interface {
 }
 
 type GenericControllerBase[T runtime.Object] struct {
-	log            *zap.Logger
+	log            *slog.Logger
 	recorder       record.EventRecorder
 	queue          *WorkQueue
 	supervisor     *parallel.Supervisor
@@ -299,7 +297,7 @@ func NewGenericControllerBase[T runtime.Object](
 	getObjectFn func(namespace, name string) (T, error),
 	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error),
 ) *GenericControllerBase[T] {
-	l := slogger.Log.Named(name)
+	l := slogger.Log.With(slog.String("logger", name))
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		l.Info(fmt.Sprintf(format, args...))
@@ -367,7 +365,7 @@ func (b *GenericControllerBase[T]) EventRecorder() record.EventRecorder {
 	return b.recorder
 }
 
-func (b *GenericControllerBase[T]) Log() *zap.Logger {
+func (b *GenericControllerBase[T]) Log() *slog.Logger {
 	return b.log
 }
 

@@ -13,7 +13,6 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
@@ -96,7 +95,7 @@ type grafanaReconciler struct {
 	userLister    *client.GrafanaV1alpha1GrafanaUserLister
 	client        *client.GrafanaV1alpha1
 
-	logger    *zap.Logger
+	logger    *slog.Logger
 	transport http.RoundTripper
 }
 

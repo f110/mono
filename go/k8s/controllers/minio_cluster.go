@@ -21,8 +21,6 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/labels"
@@ -126,7 +124,7 @@ type minIOClusterReconciler struct {
 	serviceLister *k8sclient.CoreV1ServiceLister
 	secretLister  *k8sclient.CoreV1SecretLister
 
-	logger            *zap.Logger
+	logger            *slog.Logger
 	recorder          record.EventRecorder
 	runOutsideCluster bool
 
@@ -137,7 +135,7 @@ var _ controllerutil.GenericReconciler[*miniov1alpha1.MinIOCluster] = (*minIOClu
 
 func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
 	m.logger.Debug("Start reconciling MinIOCluster")
-	if m.logger.Level() == zapcore.DebugLevel {
+	if m.logger.Enabled(ctx, slog.LevelDebug) {
 		defer m.logger.Debug("Finished reconciling MinIOCluster")
 	}
 	rCtx, err := m.newContext(ctx, obj)
@@ -271,7 +269,7 @@ func (m *minIOClusterReconciler) Reconcile(ctx context.Context, obj *miniov1alph
 
 func (m *minIOClusterReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.MinIOCluster) error {
 	m.logger.Debug("Start finalizing MinIOCluster")
-	if m.logger.Level() == zapcore.DebugLevel {
+	if m.logger.Enabled(ctx, slog.LevelDebug) {
 		defer m.logger.Debug("Finished finalizing MinIOCluster")
 	}
 	rCtx, err := m.newContext(ctx, obj)

@@ -14,8 +14,6 @@ import (
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -133,7 +131,7 @@ type minIOUserReconciler struct {
 	instanceLister  *thirdpartyclient.MiniocontrollerMinV1beta1MinIOInstanceLister
 	clusterLister   *client.MinioV1alpha1MinIOClusterLister
 
-	logger            *zap.Logger
+	logger            *slog.Logger
 	transport         http.RoundTripper
 	runOutsideCluster bool
 }
@@ -396,7 +394,7 @@ func (u *minIOUserReconciler) saveAccessKeyToVault(user *miniov1alpha1.MinIOUser
 func (u *minIOUserReconciler) Finalize(ctx context.Context, obj *miniov1alpha1.MinIOUser) error {
 	minioUser := obj
 	u.logger.Debug("Start finalizing MinIOUser")
-	if u.logger.Level() == zapcore.DebugLevel {
+	if u.logger.Enabled(ctx, slog.LevelDebug) {
 		defer u.logger.Debug("Finished finalizing MinIOUser")
 	}
 	var instances []*miniocontrollerv1beta1.MinIOInstance

@@ -3,6 +3,7 @@ package controllertest
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/kubeproto/go/k8stestingclient"
-	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -66,7 +66,7 @@ func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) er
 	defer cancel()
 
 	if fn, ok := c.(interface {
-		NewReconciler(*zap.Logger) controllerutil.Reconciler
+		NewReconciler(*slog.Logger) controllerutil.Reconciler
 	}); ok {
 		return fn.NewReconciler(slogger.Log).Reconcile(ctx, v)
 	} else {
