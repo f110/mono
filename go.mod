@@ -37,7 +37,7 @@ require (
 	github.com/minio/madmin-go/v3 v3.0.110
 	github.com/minio/minio-go/v7 v7.1.0
 	github.com/minio/minio-operator v0.0.0-20200214151316-3c7e5ae1c8a5
-	github.com/nats-io/nats.go v1.37.0
+	github.com/nats-io/nats.go v1.52.0
 	github.com/nissy/bon v1.3.0
 	github.com/olekukonko/tablewriter v1.1.2
 	github.com/peco/peco v0.5.8
@@ -223,7 +223,7 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/nats-io/nkeys v0.4.7 // indirect
+	github.com/nats-io/nkeys v0.4.15 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
