@@ -80,7 +80,7 @@ require (
 	k8s.io/apimachinery v0.36.1
 	k8s.io/client-go v0.36.1
 	k8s.io/component-base v0.36.1
-	k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01
+	k8s.io/gengo v0.0.0-20260408192533-25e2208e0dc3
 	k8s.io/klog/v2 v2.140.0
 	sigs.k8s.io/kind v0.30.0
 	sigs.k8s.io/secrets-store-csi-driver v1.5.3
