@@ -223,7 +223,7 @@ func (s *S3) Get(ctx context.Context, name string) (*Object, error) {
 
 		return &Object{
 			Name:         name,
-			Size:         obj.ContentLength,
+			Size:         aws.ToInt64(obj.ContentLength),
 			LastModified: *obj.LastModified,
 			Body:         obj.Body,
 		}, nil
@@ -262,7 +262,7 @@ func (s *S3) List(ctx context.Context, prefix string) ([]*Object, error) {
 		for _, v := range page.Contents {
 			objs = append(objs, &Object{
 				Name:         aws.ToString(v.Key),
-				Size:         v.Size,
+				Size:         aws.ToInt64(v.Size),
 				LastModified: aws.ToTime(v.LastModified),
 			})
 		}
@@ -305,7 +305,7 @@ func (s *S3) ListIter(ctx context.Context, prefix string) (iter.Seq[*Object], er
 			for _, v := range page.Contents {
 				obj := &Object{
 					Name:         aws.ToString(v.Key),
-					Size:         v.Size,
+					Size:         aws.ToInt64(v.Size),
 					LastModified: aws.ToTime(v.LastModified),
 				}
 				if !yield(obj) {
