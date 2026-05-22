@@ -63,7 +63,7 @@ require (
 	go.f110.dev/protoc-ddl v0.0.0-20260214032202-d14e8eabec0b
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
 	go.starlark.net v0.0.0-20260521175807-f5d928020cb8
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.51.0
 	golang.org/x/mod v0.36.0
 	golang.org/x/net v0.54.0
