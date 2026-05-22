@@ -18,7 +18,7 @@ require (
 	github.com/bazelbuild/buildtools v0.0.0-20260319080235-05d2ebe49b0f
 	github.com/blang/semver/v4 v4.0.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/go-ble/ble v0.0.0-20210519192345-b055c211937b
+	github.com/go-ble/ble v0.0.0-20240122180141-8c5522f54333
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.5
 	github.com/go-sql-driver/mysql v1.9.3
