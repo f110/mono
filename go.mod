@@ -62,7 +62,7 @@ require (
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
 	go.f110.dev/protoc-ddl v0.0.0-20260214032202-d14e8eabec0b
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
-	go.starlark.net v0.0.0-20220817180228-f738f5508c12
+	go.starlark.net v0.0.0-20260521175807-f5d928020cb8
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.51.0
 	golang.org/x/mod v0.36.0
