@@ -54,7 +54,7 @@ require (
 	github.com/yuin/goldmark v1.8.2
 	github.com/yuin/goldmark-highlighting v0.0.0-20220208100518-594be1970594
 	github.com/zitadel/oidc/v3 v3.47.5
-	go.abhg.dev/goldmark/mermaid v0.5.0
+	go.abhg.dev/goldmark/mermaid v0.6.0
 	go.etcd.io/etcd/client/v3 v3.5.13
 	go.f110.dev/githubmock v0.0.0-20260429052527-6037990fca25
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
