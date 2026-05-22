@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	cloud.google.com/go/storage v1.62.2
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.20.0
 	cuelang.org/go v0.15.4
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
