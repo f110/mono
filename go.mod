@@ -30,7 +30,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/google/zoekt v0.0.0-20240115160024-62cfd87a6d2f
 	github.com/gorilla/mux v1.8.1
-	github.com/hashicorp/consul/api v1.29.2
+	github.com/hashicorp/consul/api v1.34.3
 	github.com/im7mortal/kmutex v1.0.2
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/mattn/go-shellwords v1.0.12
@@ -167,6 +167,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
@@ -214,7 +215,6 @@ require (
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/spdystream v0.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
