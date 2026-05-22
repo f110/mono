@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	cloud.google.com/go/storage v1.62.2
 	connectrpc.com/connect v1.20.0
-	cuelang.org/go v0.15.4
+	cuelang.org/go v0.16.1
 	github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
 	github.com/JuulLabs-OSS/cbgo v0.0.2
 	github.com/Masterminds/semver/v3 v3.3.0
@@ -65,11 +65,11 @@ require (
 	go.starlark.net v0.0.0-20220817180228-f738f5508c12
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.49.0
-	golang.org/x/mod v0.33.0
+	golang.org/x/mod v0.34.0
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/term v0.41.0
-	golang.org/x/tools v0.42.0
+	golang.org/x/tools v0.43.0
 	golang.org/x/tools/go/vcs v0.1.0-deprecated
 	google.golang.org/api v0.274.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9
@@ -145,7 +145,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.6.0-alpha.5 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
-	github.com/emicklei/proto v1.14.2 // indirect
+	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
@@ -244,7 +244,7 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/prometheus/prom2json v1.4.0 // indirect
 	github.com/prometheus/prometheus v0.54.1 // indirect
-	github.com/protocolbuffers/txtpbfmt v0.0.0-20251016062345-16587c79cd91 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20260217160748-a481f6a22f94 // indirect
 	github.com/richardartoul/molecule v1.0.1-0.20240531184615-7ca0df43c0b3 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/safchain/ethtool v0.4.1 // indirect
