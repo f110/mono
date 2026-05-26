@@ -14,6 +14,7 @@ import TaskIcon from '@mui/icons-material/Task'
 import StorageIcon from '@mui/icons-material/Storage'
 import InfoIcon from '@mui/icons-material/Info'
 import RssFeedIcon from '@mui/icons-material/RssFeed'
+import CallReceivedIcon from '@mui/icons-material/CallReceived'
 import { Link } from "@tanstack/react-router"
 
 interface ListItemLinkProps {
@@ -60,6 +61,9 @@ export const SideBar: React.FC = () => {
                 </ListItem>
                 <ListItem key='ExternalReleases' disablePadding>
                     <ListItemLink to='/external_releases' primary='External Releases' icon={<RssFeedIcon/>}></ListItemLink>
+                </ListItem>
+                <ListItem key='Events' disablePadding>
+                    <ListItemLink to='/events' primary='Events' icon={<CallReceivedIcon/>}></ListItemLink>
                 </ListItem>
                 <ListItem key='Info' disablePadding>
                     <ListItemLink primary='Info' to='/info' icon={<InfoIcon/>}></ListItemLink>

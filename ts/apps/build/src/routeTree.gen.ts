@@ -13,6 +13,7 @@ import { Route as TaskRouteImport } from './routes/task'
 import { Route as RepositoriesRouteImport } from './routes/repositories'
 import { Route as InfoRouteImport } from './routes/info'
 import { Route as External_releasesRouteImport } from './routes/external_releases'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TaskTaskIdRouteImport } from './routes/task.$taskId'
 
@@ -36,6 +37,11 @@ const External_releasesRoute = External_releasesRouteImport.update({
   path: '/external_releases',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const TaskTaskIdRoute = TaskTaskIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/events'
     | '/external_releases'
     | '/info'
     | '/repositories'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/events'
     | '/external_releases'
     | '/info'
     | '/repositories'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/events'
     | '/external_releases'
     | '/info'
     | '/repositories'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventsRoute: typeof EventsRoute
   External_releasesRoute: typeof External_releasesRoute
   InfoRoute: typeof InfoRoute
   RepositoriesRoute: typeof RepositoriesRoute
@@ -137,6 +150,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof External_releasesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -166,6 +186,7 @@ const TaskRouteWithChildren = TaskRoute._addFileChildren(TaskRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventsRoute: EventsRoute,
   External_releasesRoute: External_releasesRoute,
   InfoRoute: InfoRoute,
   RepositoriesRoute: RepositoriesRoute,

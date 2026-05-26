@@ -2,489 +2,57 @@ package api
 
 import (
 	"bytes"
-	"context"
-	"database/sql"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
-	"time"
 
-	"github.com/google/go-github/v85/github"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.f110.dev/githubmock"
-
-	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/testing/assertion"
 )
 
-type MockBuilder struct {
-	jobs   []*config.JobV2
-	called bool
-}
+// TestWebhookEndpoint verifies that the /webhook HTTP endpoint persists a
+// PENDING github_event row and returns 200 without touching the Builder.
+// All business logic lives in the eventbus reconcilers (tested separately),
+// so the api layer only needs to confirm the wiring.
+func TestWebhookEndpoint(t *testing.T) {
+	logger.SetLogLevel("debug")
+	slogger.Init()
 
-var _ Builder = &MockBuilder{}
-
-func (m *MockBuilder) Build(_ context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
-	m.jobs = append(m.jobs, job)
-	m.called = true
-	return []*database.Task{}, nil
-}
-
-func (m *MockBuilder) ForceStop(_ context.Context, _ int32) error {
-	return nil
-}
-
-type MockTransport struct {
-	req   []*http.Request
-	res   []*http.Response
-	index int
-}
-
-func (m *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if len(m.res) <= m.index {
-		return nil, nil
-	}
-	m.req = append(m.req, req)
-	res := m.res[m.index]
-	m.index++
-	return res, nil
-}
-
-type mockDAO struct {
-	Repository        *daotest.SourceRepository
-	Task              *daotest.Task
-	TrustedUser       *daotest.TrustedUser
-	PermitPullRequest *daotest.PermitPullRequest
-}
-
-func newMock() *mockDAO {
-	return &mockDAO{
+	ghEvent := daotest.NewGithubEvent()
+	daos := dao.Options{
 		Repository:        daotest.NewSourceRepository(),
 		Task:              daotest.NewTask(),
 		TrustedUser:       daotest.NewTrustedUser(),
 		PermitPullRequest: daotest.NewPermitPullRequest(),
-	}
-}
-
-func TestGithubWebHook(t *testing.T) {
-	logger.SetLogLevel("debug")
-	slogger.Init()
-
-	trustedUser := &database.TrustedUser{
-		Id:        1,
-		GithubId:  2178441,
-		Username:  "octocat",
-		CreatedAt: time.Now(),
-	}
-	opsRepository := &database.SourceRepository{
-		Id:        1,
-		Url:       "https://github.com/f110/ops",
-		CloneUrl:  "https://github.com/f110/ops.git",
-		Name:      "ops",
-		Private:   false,
-		CreatedAt: time.Now(),
-		UpdatedAt: nil,
-	}
-	sandboxRepository := &database.SourceRepository{
-		Id:        2,
-		Url:       "https://github.com/f110/sandbox",
-		CloneUrl:  "https://github.com/f110/sandbox.git",
-		Name:      "sandbox",
-		Private:   false,
-		CreatedAt: time.Now(),
-		UpdatedAt: nil,
+		GithubEvent:       ghEvent,
 	}
 
-	t.Run("OpenedPullRequest", func(t *testing.T) {
-		t.Parallel()
+	notifier := webhook.NewNotifier()
+	s, err := NewApi("", nil, daos, nil, nil, "", notifier)
+	assertion.MustNoError(t, err)
 
-		setup := func(t *testing.T) (*mockDAO, *Api, *MockBuilder, http.ResponseWriter, *http.Request) {
-			builder := &MockBuilder{}
-			d := newMock()
-			daos := dao.Options{
-				Repository:        d.Repository,
-				Task:              d.Task,
-				TrustedUser:       d.TrustedUser,
-				PermitPullRequest: d.PermitPullRequest,
-			}
+	body, err := os.ReadFile("testdata/pull_request_opened.json")
+	assertion.MustNoError(t, err)
 
-			s, err := NewApi("", builder, daos, nil, nil, "")
-			require.NoError(t, err)
-			body, err := os.ReadFile("testdata/pull_request_opened.json")
-			require.NoError(t, err)
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
+	req.Header.Set("X-Github-Event", "pull_request")
+	req.Header.Set("X-Github-Delivery", "test-delivery-1")
+	s.Server.Handler.ServeHTTP(w, req)
 
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
-			req.Header.Set("X-Github-Event", "pull_request")
+	assertion.Equal(t, w.Code, http.StatusOK)
 
-			return d, s, builder, w, req
-		}
-
-		t.Run("NotTrustedUser", func(t *testing.T) {
-			t.Parallel()
-
-			mock, s, builder, w, req := setup(t)
-
-			mockTransport := &MockTransport{res: []*http.Response{
-				{
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(strings.NewReader("{}")),
-				},
-			}}
-			s.githubClient = github.NewClient(&http.Client{Transport: mockTransport})
-
-			mock.TrustedUser.RegisterListByGithubId(2178441, nil, sql.ErrNoRows)
-			mock.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/ops", 28, nil, sql.ErrNoRows)
-
-			s.handleWebHook(w, req)
-
-			assert.False(t, builder.called)
-			reqBody, err := io.ReadAll(mockTransport.req[0].Body)
-			require.NoError(t, err)
-			apiReq := &github.IssueComment{}
-			err = json.Unmarshal(reqBody, apiReq)
-			require.NoError(t, err)
-			assert.Greater(t, len(apiReq.GetBody()), 10)
-			assert.Contains(t, apiReq.GetBody(), AllowCommand)
-		})
-
-		t.Run("TrustedUser", func(t *testing.T) {
-			t.Parallel()
-
-			mock, s, builder, w, req := setup(t)
-
-			mock.TrustedUser.RegisterListByGithubId(
-				trustedUser.GithubId,
-				[]*database.TrustedUser{trustedUser},
-				nil,
-			)
-			mock.Repository.RegisterListByUrl(
-				opsRepository.Url,
-				[]*database.SourceRepository{opsRepository},
-				nil,
-			)
-
-			ghMock := githubmock.NewMock()
-			repo := ghMock.Repository("f110/ops")
-			err := repo.Commits(githubmock.NewCommit().
-				SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
-				IsHead().
-				Files(
-					&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {
-	test_all: {
-		command: "test"
-		targets: ["//..."]
-		platforms: ["@rules_go//go/toolchain:linux_amd64"]
-		all_revision:  true
-		github_status: true
-		cpu_limit:     "2000m"
-		memory_limit:  "8192Mi"
-		event: ["pull_request"]
-	}
-}
-`)},
-					&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
-				),
-			)
-			require.NoError(t, err)
-			s.githubClient = github.NewClient(&http.Client{Transport: ghMock.Transport()})
-
-			s.handleWebHook(w, req)
-
-			assert.True(t, builder.called)
-			assert.Len(t, builder.jobs, 1)
-		})
-
-		t.Run("PermitPullRequest", func(t *testing.T) {
-			t.Parallel()
-
-			mock, s, builder, w, req := setup(t)
-
-			ghMock := githubmock.NewMock()
-			repo := ghMock.Repository("f110/ops")
-			err := repo.Commits(githubmock.NewCommit().
-				SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
-				IsHead().
-				Files(
-					&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {
-	test_all: {
-		command: "test"
-		targets: ["//..."]
-		platforms: ["@rules_go//go/toolchain:linux_amd64"]
-		all_revision:  true
-		github_status: true
-		cpu_limit:     "2000m"
-		memory_limit:  "8192Mi"
-		event: ["pull_request"]
-	}
-}
-`)},
-					&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
-				),
-			)
-			require.NoError(t, err)
-			s.githubClient = github.NewClient(&http.Client{Transport: ghMock.Transport()})
-
-			mock.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, nil, sql.ErrNoRows)
-			mock.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/ops", 28,
-				[]*database.PermitPullRequest{{Id: 1, Repository: "f110/ops", Number: 28, CreatedAt: time.Now()}},
-				nil,
-			)
-			mock.Repository.RegisterListByUrl(
-				opsRepository.Url,
-				[]*database.SourceRepository{opsRepository},
-				nil,
-			)
-
-			s.handleWebHook(w, req)
-
-			assert.True(t, builder.called)
-			assert.Len(t, builder.jobs, 1)
-		})
-	})
-
-	t.Run("SynchronizePullRequest", func(t *testing.T) {
-		t.Parallel()
-
-		mock := newMock()
-		daos := dao.Options{
-			Repository:        mock.Repository,
-			Task:              mock.Task,
-			TrustedUser:       mock.TrustedUser,
-			PermitPullRequest: mock.PermitPullRequest,
-		}
-
-		mock.TrustedUser.RegisterListByGithubId(
-			trustedUser.GithubId,
-			[]*database.TrustedUser{trustedUser},
-			nil,
-		)
-		mock.Repository.RegisterListByUrl(
-			opsRepository.Url,
-			[]*database.SourceRepository{opsRepository},
-			nil,
-		)
-
-		builder := &MockBuilder{}
-
-		ghMock := githubmock.NewMock()
-		repo := ghMock.Repository("f110/ops")
-		err := repo.Commits(githubmock.NewCommit().
-			SHA("5bd79ba34f1d860afc697c15830c80e2e63edfbf").
-			IsHead().
-			Files(
-				&githubmock.File{
-					Name: ".build/test.cue",
-					Body: []byte(`jobs: {
-	test_all: {
-		command: "test"
-		targets: ["//..."]
-		platforms: ["@rules_go//go/toolchain:linux_amd64"]
-		all_revision:  true
-		github_status: true
-		cpu_limit:     "2000m"
-		memory_limit:  "8192Mi"
-		event: ["pull_request"]
-	}
-}
-`),
-				},
-				&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
-			),
-		)
-		require.NoError(t, err)
-
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
-		require.NoError(t, err)
-		body, err := os.ReadFile("testdata/pull_request_synchronize.json")
-		require.NoError(t, err)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
-		req.Header.Set("X-Github-Event", "pull_request")
-		s.handleWebHook(w, req)
-
-		assert.True(t, builder.called)
-	})
-
-	t.Run("ClosedPullRequest", func(t *testing.T) {
-		t.Parallel()
-
-		mock := newMock()
-		daos := dao.Options{
-			Repository:        mock.Repository,
-			Task:              mock.Task,
-			TrustedUser:       mock.TrustedUser,
-			PermitPullRequest: mock.PermitPullRequest,
-		}
-
-		mock.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, nil, sql.ErrNoRows)
-		mock.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/sandbox", 2,
-			[]*database.PermitPullRequest{{Id: 1, Repository: "f110/sandbox", Number: 2, CreatedAt: time.Now()}},
-			nil,
-		)
-
-		builder := &MockBuilder{}
-
-		s, err := NewApi("", builder, daos, nil, nil, "")
-		require.NoError(t, err)
-		body, err := os.ReadFile("testdata/pull_request_closed.json")
-		require.NoError(t, err)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
-		req.Header.Set("X-Github-Event", "pull_request")
-		s.handleWebHook(w, req)
-
-		called := mock.PermitPullRequest.Called("Delete")
-		assert.Len(t, called, 1)
-		assert.Equal(t, int32(1), called[0].Args["id"])
-	})
-
-	t.Run("CommentIssue", func(t *testing.T) {
-		t.Parallel()
-
-		mock := newMock()
-		daos := dao.Options{
-			Repository:        mock.Repository,
-			Task:              mock.Task,
-			TrustedUser:       mock.TrustedUser,
-			PermitPullRequest: mock.PermitPullRequest,
-		}
-
-		mock.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, []*database.TrustedUser{trustedUser}, nil)
-		mock.Repository.RegisterListByUrl(
-			opsRepository.Url,
-			[]*database.SourceRepository{opsRepository},
-			nil,
-		)
-
-		builder := &MockBuilder{}
-
-		ghMock := githubmock.NewMock()
-		repo := ghMock.Repository("f110/ops")
-		repo.PullRequests(
-			githubmock.NewPullRequest().
-				Number(28).
-				Head(nil, "", "69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
-		)
-		err := repo.Commits(githubmock.NewCommit().
-			SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
-			IsHead().
-			Files(
-				&githubmock.File{
-					Name: ".build/test.cue",
-					Body: []byte(`jobs: {
-	test_all: {
-		command: "test"
-		targets: ["//..."]
-		platforms: ["@rules_go//go/toolchain:linux_amd64"]
-		all_revision:  true
-		github_status: true
-		cpu_limit:     "2000m"
-		memory_limit:  "8192Mi"
-		event: ["pull_request"]
-	}
-}
-`),
-				},
-				&githubmock.File{
-					Name: ".bazelversion", Body: []byte("8.4.1"),
-				},
-			),
-		)
-		require.NoError(t, err)
-
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
-		require.NoError(t, err)
-		body, err := os.ReadFile("testdata/issue_comment.json")
-		require.NoError(t, err)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
-		req.Header.Set("X-Github-Event", "issue_comment")
-		s.handleWebHook(w, req)
-
-		assert.True(t, builder.called)
-		called := mock.PermitPullRequest.Called("Create")
-		require.Len(t, called, 1)
-		assert.Equal(t, "f110/ops", called[0].Args["permitPullRequest"].(*database.PermitPullRequest).Repository)
-	})
-
-	t.Run("PublishRelease", func(t *testing.T) {
-		t.Parallel()
-
-		mock := newMock()
-		daos := dao.Options{
-			Repository:        mock.Repository,
-			Task:              mock.Task,
-			TrustedUser:       mock.TrustedUser,
-			PermitPullRequest: mock.PermitPullRequest,
-		}
-
-		mock.Repository.RegisterListByUrl(
-			sandboxRepository.Url,
-			[]*database.SourceRepository{sandboxRepository},
-			nil,
-		)
-
-		builder := &MockBuilder{}
-
-		ghMock := githubmock.NewMock()
-		repo := ghMock.Repository("f110/sandbox")
-		repo.PullRequests(
-			githubmock.NewPullRequest().
-				Number(28).
-				Head(nil, "", "69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
-		)
-		commit := githubmock.NewCommit().
-			SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
-			IsHead().
-			Files(
-				&githubmock.File{
-					Name: ".build/release.cue",
-					Body: []byte(`jobs: {
-	release: {
-		command: "test"
-		targets: ["//..."]
-		platforms: ["@rules_go//go/toolchain:linux_amd64"]
-		all_revision:  true
-		github_status: true
-		cpu_limit:     "2000m"
-		memory_limit:  "8192Mi"
-		event: ["release"]
-	}
-}
-`),
-				},
-				&githubmock.File{
-					Name: ".bazelversion",
-					Body: []byte("8.4.1"),
-				},
-			)
-		err := repo.Commits(commit)
-		require.NoError(t, err)
-		repo.Tags(githubmock.NewTag().Name("1605187034").Commit(commit))
-
-		s, err := NewApi("", builder, daos, github.NewClient(&http.Client{Transport: ghMock.Transport()}), nil, "")
-		require.NoError(t, err)
-		body, err := os.ReadFile("testdata/release_published.json")
-		require.NoError(t, err)
-
-		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:8080/webhook", bytes.NewReader(body))
-		req.Header.Set("X-Github-Event", "release")
-		s.handleWebHook(w, req)
-
-		assert.True(t, builder.called)
-	})
+	called := ghEvent.Called("Create")
+	assertion.MustLen(t, called, 1)
+	ev := called[0].Args["githubEvent"].(*database.GithubEvent)
+	assertion.Equal(t, ev.EventType, "pull_request")
+	assertion.Equal(t, ev.Action, "opened")
+	assertion.Equal(t, ev.DeliveryId, "test-delivery-1")
+	assertion.Equal(t, ev.State, database.GithubEventStatePending)
 }

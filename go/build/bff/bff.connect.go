@@ -57,6 +57,8 @@ const (
 	// BFFListExternalReleaseTriggersProcedure is the fully-qualified name of the BFF's
 	// ListExternalReleaseTriggers RPC.
 	BFFListExternalReleaseTriggersProcedure = "/mono.build.bff.BFF/ListExternalReleaseTriggers"
+	// BFFListGithubEventsProcedure is the fully-qualified name of the BFF's ListGithubEvents RPC.
+	BFFListGithubEventsProcedure = "/mono.build.bff.BFF/ListGithubEvents"
 )
 
 // BFFClient is a client for the mono.build.bff.BFF service.
@@ -73,6 +75,7 @@ type BFFClient interface {
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
+	ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error)
 }
 
 // NewBFFClient constructs a client for the mono.build.bff.BFF service. By default, it uses the
@@ -158,6 +161,12 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 			connect.WithSchema(bFFMethods.ByName("ListExternalReleaseTriggers")),
 			connect.WithClientOptions(opts...),
 		),
+		listGithubEvents: connect.NewClient[RequestListGithubEvents, ResponseListGithubEvents](
+			httpClient,
+			baseURL+BFFListGithubEventsProcedure,
+			connect.WithSchema(bFFMethods.ByName("ListGithubEvents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -175,6 +184,7 @@ type bFFClient struct {
 	restartTask                 *connect.Client[RequestRestartTask, ResponseRestartTask]
 	forceStopTask               *connect.Client[RequestForceStopTask, ResponseForceStopTask]
 	listExternalReleaseTriggers *connect.Client[RequestListExternalReleaseTriggers, ResponseListExternalReleaseTriggers]
+	listGithubEvents            *connect.Client[RequestListGithubEvents, ResponseListGithubEvents]
 }
 
 // ListRepositories calls mono.build.bff.BFF.ListRepositories.
@@ -237,6 +247,11 @@ func (c *bFFClient) ListExternalReleaseTriggers(ctx context.Context, req *connec
 	return c.listExternalReleaseTriggers.CallUnary(ctx, req)
 }
 
+// ListGithubEvents calls mono.build.bff.BFF.ListGithubEvents.
+func (c *bFFClient) ListGithubEvents(ctx context.Context, req *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
+	return c.listGithubEvents.CallUnary(ctx, req)
+}
+
 // BFFHandler is an implementation of the mono.build.bff.BFF service.
 type BFFHandler interface {
 	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
@@ -251,6 +266,7 @@ type BFFHandler interface {
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
+	ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error)
 }
 
 // NewBFFHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -332,6 +348,12 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 		connect.WithSchema(bFFMethods.ByName("ListExternalReleaseTriggers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	bFFListGithubEventsHandler := connect.NewUnaryHandler(
+		BFFListGithubEventsProcedure,
+		svc.ListGithubEvents,
+		connect.WithSchema(bFFMethods.ByName("ListGithubEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.build.bff.BFF/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BFFListRepositoriesProcedure:
@@ -358,6 +380,8 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 			bFFForceStopTaskHandler.ServeHTTP(w, r)
 		case BFFListExternalReleaseTriggersProcedure:
 			bFFListExternalReleaseTriggersHandler.ServeHTTP(w, r)
+		case BFFListGithubEventsProcedure:
+			bFFListGithubEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -413,4 +437,8 @@ func (UnimplementedBFFHandler) ForceStopTask(context.Context, *connect.Request[R
 
 func (UnimplementedBFFHandler) ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListExternalReleaseTriggers is not implemented"))
+}
+
+func (UnimplementedBFFHandler) ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListGithubEvents is not implemented"))
 }

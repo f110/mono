@@ -19,6 +19,7 @@ service API {
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
   rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
+  rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
 }
 
 message RequestListTasks {
@@ -101,4 +102,10 @@ message RequestListExternalReleaseTriggers {
 
 message ResponseListExternalReleaseTriggers {
   repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
+}
+
+message RequestListGithubEvents {}
+
+message ResponseListGithubEvents {
+  repeated mono.build.model.GithubEvent events = 1;
 }

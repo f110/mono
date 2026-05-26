@@ -10,6 +10,8 @@ CREATE TABLE `source_repository` (
 	`clone_url` VARCHAR(255) NOT NULL,
 	`name` VARCHAR(100) NOT NULL,
 	`private` TINYINT(1) NOT NULL,
+	`status` INTEGER UNSIGNED NOT NULL,
+	`default_branch` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
@@ -34,6 +36,7 @@ CREATE TABLE `task` (
 	`via` VARCHAR(255) NOT NULL,
 	`config_name` VARCHAR(255) NOT NULL,
 	`node` VARCHAR(255) NOT NULL,
+	`job_object_name` VARCHAR(255) NOT NULL,
 	`manifest` TEXT NOT NULL,
 	`container` VARCHAR(255) NOT NULL,
 	`executed_tests_count` INTEGER NOT NULL,
@@ -77,6 +80,60 @@ CREATE TABLE `test_report` (
 	`start_at` DATETIME NOT NULL,
 	INDEX `idx_label` (`label`),
 	INDEX `idx_task_id` (`task_id`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `job`;
+CREATE TABLE `job` (
+	`repository_id` INTEGER NOT NULL,
+	`name` VARCHAR(255) NOT NULL,
+	PRIMARY KEY(`repository_id`,`name`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `external_release_trigger`;
+CREATE TABLE `external_release_trigger` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`repository_id` INTEGER NOT NULL,
+	`job_name` VARCHAR(255) NOT NULL,
+	`provider` VARCHAR(32) NOT NULL,
+	`external_repo` VARCHAR(255) NOT NULL,
+	`kind` VARCHAR(16) NOT NULL,
+	`tag_pattern` VARCHAR(255) NOT NULL,
+	`include_prerelease` TINYINT(1) NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_repo_job` (`repository_id`, `job_name`),
+	INDEX `idx_external` (`provider`, `external_repo`, `kind`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `github_event`;
+CREATE TABLE `github_event` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`delivery_id` VARCHAR(64) NOT NULL,
+	`event_type` VARCHAR(64) NOT NULL,
+	`action` VARCHAR(64) NOT NULL,
+	`payload` MEDIUMBLOB NOT NULL,
+	`state` INTEGER UNSIGNED NOT NULL,
+	`status` BLOB NOT NULL,
+	`last_error` TEXT NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_delivery_id` (`delivery_id`),
+	INDEX `idx_state` (`state`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `external_release_history`;
+CREATE TABLE `external_release_history` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`repository_id` INTEGER NOT NULL,
+	`job_name` VARCHAR(255) NOT NULL,
+	`external_repo` VARCHAR(255) NOT NULL,
+	`tag` VARCHAR(255) NOT NULL,
+	`task_id` INTEGER NOT NULL,
+	`processed_at` DATETIME NOT NULL,
+	UNIQUE `uniq_dispatch` (`repository_id`, `job_name`, `external_repo`, `tag`),
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 

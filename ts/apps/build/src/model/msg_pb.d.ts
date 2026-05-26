@@ -251,6 +251,68 @@ export declare type TestReport = Message<"mono.build.model.TestReport"> & {
 export declare const TestReportSchema: GenMessage<TestReport>;
 
 /**
+ * GithubEvent surfaces a row from the `github_event` table for the dashboard.
+ * The `state` field carries the proto enum name ("PENDING", "SUCCEEDED", …)
+ * so the frontend does not have to know the numeric mapping. `status` is the
+ * reconciler's progress JSON serialized as a string — the dashboard renders
+ * it raw, since the document's shape depends on event_type.
+ *
+ * @generated from message mono.build.model.GithubEvent
+ */
+export declare type GithubEvent = Message<"mono.build.model.GithubEvent"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string delivery_id = 2;
+   */
+  deliveryId: string;
+
+  /**
+   * @generated from field: string event_type = 3;
+   */
+  eventType: string;
+
+  /**
+   * @generated from field: string action = 4;
+   */
+  action: string;
+
+  /**
+   * @generated from field: string state = 5;
+   */
+  state: string;
+
+  /**
+   * @generated from field: string status = 6;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string last_error = 7;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 8;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 9;
+   */
+  updatedAt?: Timestamp;
+};
+
+/**
+ * Describes the message mono.build.model.GithubEvent.
+ * Use `create(GithubEventSchema)` to create a new message.
+ */
+export declare const GithubEventSchema: GenMessage<GithubEvent>;
+
+/**
  * @generated from message mono.build.model.ExternalReleaseTrigger
  */
 export declare type ExternalReleaseTrigger = Message<"mono.build.model.ExternalReleaseTrigger"> & {

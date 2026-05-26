@@ -71,6 +71,23 @@ message TestReport {
   int64      duration = 3;
 }
 
+// GithubEvent surfaces a row from the `github_event` table for the dashboard.
+// The `state` field carries the proto enum name ("PENDING", "SUCCEEDED", …)
+// so the frontend does not have to know the numeric mapping. `status` is the
+// reconciler's progress JSON serialized as a string — the dashboard renders
+// it raw, since the document's shape depends on event_type.
+message GithubEvent {
+  int32                     id          = 1;
+  string                    delivery_id = 2;
+  string                    event_type  = 3;
+  string                    action      = 4;
+  string                    state       = 5;
+  string                    status      = 6;
+  string                    last_error  = 7;
+  google.protobuf.Timestamp created_at  = 8;
+  google.protobuf.Timestamp updated_at  = 9;
+}
+
 message ExternalReleaseTrigger {
   int32  id                 = 1;
   int32  repository_id      = 2;

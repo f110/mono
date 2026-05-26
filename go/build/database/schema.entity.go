@@ -29,6 +29,17 @@ const (
 	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
 )
 
+type GithubEventState uint32
+
+const (
+	GithubEventStatePending    GithubEventState = 0
+	GithubEventStateProcessing GithubEventState = 1
+	GithubEventStateSucceeded  GithubEventState = 2
+	GithubEventStateFailed     GithubEventState = 3
+	GithubEventStateExpired    GithubEventState = 4
+	GithubEventStateSkipped    GithubEventState = 5
+)
+
 type SourceRepository struct {
 	Id            int32
 	Url           string
@@ -713,6 +724,111 @@ func (e *ExternalReleaseTrigger) Copy() *ExternalReleaseTrigger {
 
 	if e.Repository != nil {
 		n.Repository = e.Repository.Copy()
+	}
+
+	return n
+}
+
+// GithubEvent records a single webhook delivery from GitHub. The HTTP handler
+// inserts a row with state=PENDING and returns 200 immediately; an asynchronous
+// scheduler picks up PENDING/FAILED rows and dispatches them to a Reconciler
+// keyed by event_type. The payload is stored raw so any GitHub webhook event
+// type can be persisted without schema changes. The status column holds a
+// per-event-type JSON document describing reconcile progress, allowing each
+// Reconciler to be idempotent across restarts.
+type GithubEvent struct {
+	Id         int32
+	DeliveryId string
+	EventType  string
+	Action     string
+	Payload    []byte
+	State      GithubEventState
+	Status     []byte
+	LastError  string
+	CreatedAt  time.Time
+	UpdatedAt  *time.Time
+
+	mu   sync.Mutex
+	mark *GithubEvent
+}
+
+func (e *GithubEvent) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *GithubEvent) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.DeliveryId != e.mark.DeliveryId ||
+		e.EventType != e.mark.EventType ||
+		e.Action != e.mark.Action ||
+		!bytes.Equal(e.Payload, e.mark.Payload) ||
+		e.State != e.mark.State ||
+		!bytes.Equal(e.Status, e.mark.Status) ||
+		e.LastError != e.mark.LastError ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *GithubEvent) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.DeliveryId != e.mark.DeliveryId {
+		res = append(res, ddl.Column{Name: "delivery_id", Value: e.DeliveryId})
+	}
+	if e.EventType != e.mark.EventType {
+		res = append(res, ddl.Column{Name: "event_type", Value: e.EventType})
+	}
+	if e.Action != e.mark.Action {
+		res = append(res, ddl.Column{Name: "action", Value: e.Action})
+	}
+	if !bytes.Equal(e.Payload, e.mark.Payload) {
+		res = append(res, ddl.Column{Name: "payload", Value: e.Payload})
+	}
+	if e.State != e.mark.State {
+		res = append(res, ddl.Column{Name: "state", Value: e.State})
+	}
+	if !bytes.Equal(e.Status, e.mark.Status) {
+		res = append(res, ddl.Column{Name: "status", Value: e.Status})
+	}
+	if e.LastError != e.mark.LastError {
+		res = append(res, ddl.Column{Name: "last_error", Value: e.LastError})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *GithubEvent) Copy() *GithubEvent {
+	n := &GithubEvent{
+		Id:         e.Id,
+		DeliveryId: e.DeliveryId,
+		EventType:  e.EventType,
+		Action:     e.Action,
+		Payload:    e.Payload,
+		State:      e.State,
+		Status:     e.Status,
+		LastError:  e.LastError,
+		CreatedAt:  e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
 	}
 
 	return n

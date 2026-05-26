@@ -453,6 +453,78 @@ func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrig
 	return nil
 }
 
+type GithubEvent struct {
+	*mock.Mock
+}
+
+func NewGithubEvent() *GithubEvent {
+	return &GithubEvent{Mock: mock.New()}
+}
+
+func (d *GithubEvent) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *GithubEvent) Select(ctx context.Context, id int32) (*database.GithubEvent, error) {
+	v, err := d.Call("Select", map[string]interface{}{"id": id})
+	return v.(*database.GithubEvent), err
+}
+
+func (d *GithubEvent) RegisterSelect(id int32, value *database.GithubEvent) {
+	d.Register("Select", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error) {
+	v, err := d.Call("SelectMulti", map[string]interface{}{"id": id})
+	return v.([]*database.GithubEvent), err
+}
+
+func (d *GithubEvent) RegisterSelectMulti(id []int32, value []*database.GithubEvent) {
+	d.Register("SelectMulti", map[string]interface{}{"id": id}, value, nil)
+}
+
+func (d *GithubEvent) ListAll(ctx context.Context, opt ...dao.ListOption) ([]*database.GithubEvent, error) {
+	v, err := d.Call("ListAll", map[string]interface{}{})
+	return v.([]*database.GithubEvent), err
+}
+
+func (d *GithubEvent) RegisterListAll(value []*database.GithubEvent, err error) {
+	d.Register("ListAll", map[string]interface{}{}, value, err)
+}
+
+func (d *GithubEvent) SelectByDeliveryId(ctx context.Context, deliveryId string) (*database.GithubEvent, error) {
+	v, err := d.Call("SelectByDeliveryId", map[string]interface{}{})
+	return v.(*database.GithubEvent), err
+}
+
+func (d *GithubEvent) RegisterSelectByDeliveryId(value *database.GithubEvent, err error) {
+	d.Register("SelectByDeliveryId", map[string]interface{}{}, value, err)
+}
+
+func (d *GithubEvent) ListByState(ctx context.Context, state uint32, opt ...dao.ListOption) ([]*database.GithubEvent, error) {
+	v, err := d.Call("ListByState", map[string]interface{}{"state": state})
+	return v.([]*database.GithubEvent), err
+}
+
+func (d *GithubEvent) RegisterListByState(state uint32, value []*database.GithubEvent, err error) {
+	d.Register("ListByState", map[string]interface{}{"state": state}, value, err)
+}
+
+func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...dao.ExecOption) (*database.GithubEvent, error) {
+	_, _ = d.Call("Create", map[string]interface{}{"githubEvent": githubEvent})
+	return githubEvent, nil
+}
+
+func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]interface{}{"id": id})
+	return nil
+}
+
+func (d *GithubEvent) Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]interface{}{"githubEvent": githubEvent})
+	return nil
+}
+
 type ExternalReleaseHistory struct {
 	*mock.Mock
 }

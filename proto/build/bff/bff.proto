@@ -23,6 +23,7 @@ service BFF {
   rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
+  rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
 }
 
 message RequestListRepositories {}
@@ -113,6 +114,12 @@ message RequestListExternalReleaseTriggers {
 
 message ResponseListExternalReleaseTriggers {
   repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
+}
+
+message RequestListGithubEvents {}
+
+message ResponseListGithubEvents {
+  repeated mono.build.model.GithubEvent events = 1;
 }
 
 message BFFTask {

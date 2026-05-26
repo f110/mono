@@ -107,6 +107,23 @@ CREATE TABLE `external_release_trigger` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `github_event`;
+CREATE TABLE `github_event` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`delivery_id` VARCHAR(64) NOT NULL,
+	`event_type` VARCHAR(64) NOT NULL,
+	`action` VARCHAR(64) NOT NULL,
+	`payload` MEDIUMBLOB NOT NULL,
+	`state` INTEGER UNSIGNED NOT NULL,
+	`status` BLOB NOT NULL,
+	`last_error` TEXT NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_delivery_id` (`delivery_id`),
+	INDEX `idx_state` (`state`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `external_release_history`;
 CREATE TABLE `external_release_history` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,

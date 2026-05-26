@@ -1,0 +1,52 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "webhook",
+    srcs = [
+        "handler.go",
+        "helpers.go",
+        "issue_comment.go",
+        "pull_request.go",
+        "push.go",
+        "release.go",
+        "scheduler.go",
+        "status.go",
+        "webhook.go",
+    ],
+    importpath = "go.f110.dev/mono/go/build/webhook",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/database/dao",
+        "//go/logger/slogger",
+        "@com_github_go_sql_driver_mysql//:mysql",
+        "@com_github_google_go_github_v85//github",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "webhook_test",
+    srcs = [
+        "handler_test.go",
+        "issue_comment_test.go",
+        "pull_request_test.go",
+        "push_test.go",
+        "release_test.go",
+        "support_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":webhook"],
+    deps = [
+        "//go/build/config",
+        "//go/build/database",
+        "//go/build/database/dao",
+        "//go/build/database/dao/daotest",
+        "//go/logger",
+        "//go/logger/slogger",
+        "//go/testing/assertion",
+        "@com_github_google_go_github_v85//github",
+        "@dev_f110_go_githubmock//:githubmock",
+    ],
+)

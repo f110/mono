@@ -384,6 +384,60 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 	return ResponseListExternalReleaseTriggers_builder{Triggers: triggers}.Build(), nil
 }
 
+func (s *apiService) ListGithubEvents(ctx context.Context, _ *RequestListGithubEvents) (*ResponseListGithubEvents, error) {
+	rows, err := s.dao.GithubEvent.ListAll(ctx, dao.Sort("created_at"), dao.Desc)
+	if err != nil {
+		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
+		return nil, status.Error(codes.Internal, "failed to list github_event")
+	}
+
+	events := make([]*model.GithubEvent, 0, len(rows))
+	for _, r := range rows {
+		events = append(events, dbGithubEventToModel(r))
+	}
+	return ResponseListGithubEvents_builder{Events: events}.Build(), nil
+}
+
+// dbGithubEventToModel projects the on-disk row into the wire format the
+// dashboard consumes. The proto enum name (e.g. "PENDING") is more useful
+// than the integer to a human reader, and status is sent as a raw JSON
+// string since its schema varies by event_type.
+func dbGithubEventToModel(r *database.GithubEvent) *model.GithubEvent {
+	b := model.GithubEvent_builder{
+		Id:         new(r.Id),
+		DeliveryId: new(r.DeliveryId),
+		EventType:  new(r.EventType),
+		Action:     new(r.Action),
+		State:      new(githubEventStateName(r.State)),
+		Status:     new(string(r.Status)),
+		LastError:  new(r.LastError),
+		CreatedAt:  timestamppb.New(r.CreatedAt),
+	}
+	if r.UpdatedAt != nil {
+		b.UpdatedAt = timestamppb.New(*r.UpdatedAt)
+	}
+	return b.Build()
+}
+
+func githubEventStateName(s database.GithubEventState) string {
+	switch s {
+	case database.GithubEventStatePending:
+		return "PENDING"
+	case database.GithubEventStateProcessing:
+		return "PROCESSING"
+	case database.GithubEventStateSucceeded:
+		return "SUCCEEDED"
+	case database.GithubEventStateFailed:
+		return "FAILED"
+	case database.GithubEventStateExpired:
+		return "EXPIRED"
+	case database.GithubEventStateSkipped:
+		return "SKIPPED"
+	default:
+		return fmt.Sprintf("UNKNOWN(%d)", s)
+	}
+}
+
 func externalRepoURL(provider, repo string) string {
 	switch provider {
 	case "github":

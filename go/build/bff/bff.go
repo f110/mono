@@ -297,6 +297,15 @@ func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[RequestFor
 	return connect.NewResponse(ResponseForceStopTask_builder{}.Build()), nil
 }
 
+func (b *BFF) ListGithubEvents(ctx context.Context, _ *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
+	res, err := b.apiClient.ListGithubEvents(ctx, api.RequestListGithubEvents_builder{}.Build())
+	if err != nil {
+		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(ResponseListGithubEvents_builder{Events: res.GetEvents()}.Build()), nil
+}
+
 func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {
 	apiReq := api.RequestListExternalReleaseTriggers_builder{}
 	if req.Msg.HasRepositoryId() {

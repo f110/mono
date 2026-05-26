@@ -13,6 +13,7 @@ type Options struct {
 	Job                    JobInterface
 	ExternalReleaseTrigger ExternalReleaseTriggerInterface
 	ExternalReleaseHistory ExternalReleaseHistoryInterface
+	GithubEvent            GithubEventInterface
 
 	RawConnection *sql.DB
 }
@@ -27,6 +28,7 @@ func NewOptions(conn *sql.DB) Options {
 		Job:                    NewJob(conn),
 		ExternalReleaseTrigger: NewExternalReleaseTrigger(conn),
 		ExternalReleaseHistory: NewExternalReleaseHistory(conn),
+		GithubEvent:            NewGithubEvent(conn),
 		RawConnection:          conn,
 	}
 }

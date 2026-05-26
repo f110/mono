@@ -31,6 +31,7 @@ import (
 	"go.f110.dev/mono/go/build/gc"
 	"go.f110.dev/mono/go/build/releasewatcher"
 	"go.f110.dev/mono/go/build/watcher"
+	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
@@ -93,6 +94,8 @@ type Options struct {
 	WithGC                         bool
 	ExcludeNodes                   []string
 	ExternalReleasePollInterval    time.Duration
+	EventReconcileInterval         time.Duration
+	EventMaxProcessingDuration     time.Duration
 
 	Dev   bool
 	Debug bool
@@ -127,6 +130,8 @@ type process struct {
 
 	bazelBuilder *coordinator.BazelBuilder
 	apiServer    *api.Api
+	notifier     *webhook.Notifier
+	reconcilers  webhook.Reconcilers
 }
 
 func newProcess(opt Options) *process {
@@ -350,7 +355,14 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix)
+	p.notifier = webhook.NewNotifier()
+	p.reconcilers = webhook.Reconcilers{}
+	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder))
+	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder))
+	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder))
+	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder))
+
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -444,6 +456,9 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	}
 	manager := releasewatcher.NewManager(p.bazelBuilder, p.dao, p.ghClient, nil, interval)
 	go manager.Start(p.ctx)
+
+	scheduler := webhook.NewScheduler(p.dao, p.reconcilers, p.notifier, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
+	go scheduler.Run(p.ctx)
 
 	return fsm.Wait()
 }
@@ -548,6 +563,8 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Bool("with-gc", "Enable GC for the job").Var(&opt.WithGC)
 	fs.StringArray("exclude-nodes", "THe list of node to not assigned job").Var(&opt.ExcludeNodes)
 	fs.Duration("external-release-poll-interval", "Interval between polls of third-party repositories for external_release triggers").Var(&opt.ExternalReleasePollInterval).Default(1 * time.Hour)
+	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&opt.EventReconcileInterval).Default(30 * time.Second)
+	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)

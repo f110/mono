@@ -19,6 +19,15 @@ enum SourceRepositoryStatus {
   SOURCE_REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
 }
 
+enum GithubEventState {
+  GITHUB_EVENT_STATE_PENDING    = 0;
+  GITHUB_EVENT_STATE_PROCESSING = 1;
+  GITHUB_EVENT_STATE_SUCCEEDED  = 2;
+  GITHUB_EVENT_STATE_FAILED     = 3;
+  GITHUB_EVENT_STATE_EXPIRED    = 4;
+  GITHUB_EVENT_STATE_SKIPPED    = 5;
+}
+
 message SourceRepository {
   int32  id                             = 1 [(dev.f110.ddl.column) = { sequence: true }];
   string url                            = 2;
@@ -234,6 +243,53 @@ message ExternalReleaseTrigger {
     queries: {
       name: "ByRepositoryId"
       query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ?"
+    }
+  };
+}
+
+// GithubEvent records a single webhook delivery from GitHub. The HTTP handler
+// inserts a row with state=PENDING and returns 200 immediately; an asynchronous
+// scheduler picks up PENDING/FAILED rows and dispatches them to a Reconciler
+// keyed by event_type. The payload is stored raw so any GitHub webhook event
+// type can be persisted without schema changes. The status column holds a
+// per-event-type JSON document describing reconcile progress, allowing each
+// Reconciler to be idempotent across restarts.
+message GithubEvent {
+  int32            id          = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string           delivery_id = 2 [(dev.f110.ddl.column) = { size: 64 }];
+  string           event_type  = 3 [(dev.f110.ddl.column) = { size: 64 }];
+  string           action      = 4 [(dev.f110.ddl.column) = { size: 64 }];
+  bytes            payload     = 5 [(dev.f110.ddl.column) = { type: "medium" }];
+  GithubEventState state       = 6;
+  bytes            status      = 7;
+  string           last_error  = 8 [(dev.f110.ddl.column) = { type: "text" }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_delivery_id"
+      columns: "delivery_id"
+      unique: true
+    }
+    indexes: {
+      name: "idx_state"
+      columns: "state"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+    queries: {
+      name: "ByDeliveryId"
+      query: "SELECT * FROM `:table_name:` WHERE `delivery_id` = ?"
+    }
+    queries: {
+      name: "ByState"
+      query: "SELECT * FROM `:table_name:` WHERE `state` = ? ORDER BY `id`"
     }
   };
 }

@@ -2099,6 +2099,272 @@ func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrig
 	return nil
 }
 
+type GithubEvent struct {
+	conn *sql.DB
+}
+
+type GithubEventInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.GithubEvent, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error)
+	ListAll(ctx context.Context, opt ...ListOption) ([]*database.GithubEvent, error)
+	SelectByDeliveryId(ctx context.Context, deliveryId string) (*database.GithubEvent, error)
+	ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error)
+	Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error)
+	Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ GithubEventInterface = &GithubEvent{}
+
+func NewGithubEvent(conn *sql.DB) *GithubEvent {
+	return &GithubEvent{
+		conn: conn,
+	}
+}
+
+func (d *GithubEvent) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *GithubEvent) Select(ctx context.Context, id int32) (*database.GithubEvent, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `github_event` WHERE `id` = ?", id)
+
+	v := &database.GithubEvent{}
+	if err := row.Scan(&v.Id, &v.DeliveryId, &v.EventType, &v.Action, &v.Payload, &v.State, &v.Status, &v.LastError, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `github_event` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.GithubEvent, 0, len(id))
+	for rows.Next() {
+		r := &database.GithubEvent{}
+		if err := rows.Scan(&r.Id, &r.DeliveryId, &r.EventType, &r.Action, &r.Payload, &r.State, &r.Status, &r.LastError, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *GithubEvent) ListAll(ctx context.Context, opt ...ListOption) ([]*database.GithubEvent, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` FROM `github_event`"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.GithubEvent, 0)
+	for rows.Next() {
+		r := &database.GithubEvent{}
+		if err := rows.Scan(&r.Id, &r.DeliveryId, &r.EventType, &r.Action, &r.Payload, &r.State, &r.Status, &r.LastError, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *GithubEvent) SelectByDeliveryId(ctx context.Context, deliveryId string) (*database.GithubEvent, error) {
+	row := d.conn.QueryRowContext(
+		ctx,
+		"SELECT `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` FROM `github_event` WHERE `delivery_id` = ?",
+		deliveryId,
+	)
+	v := &database.GithubEvent{}
+	if err := row.Scan(&v.Id, &v.DeliveryId, &v.EventType, &v.Action, &v.Payload, &v.State, &v.Status, &v.LastError, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *GithubEvent) ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` FROM `github_event` WHERE `state` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		state,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*database.GithubEvent, 0)
+	for rows.Next() {
+		r := &database.GithubEvent{}
+		if err := rows.Scan(&r.Id, &r.DeliveryId, &r.EventType, &r.Action, &r.Payload, &r.State, &r.Status, &r.LastError, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `github_event` (`delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		githubEvent.DeliveryId, githubEvent.EventType, githubEvent.Action, githubEvent.Payload, githubEvent.State, githubEvent.Status, githubEvent.LastError, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	githubEvent = githubEvent.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	githubEvent.Id = int32(insertedId)
+
+	githubEvent.ResetMark()
+	return githubEvent, nil
+}
+
+func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `github_event` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *GithubEvent) Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error {
+	if !githubEvent.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := githubEvent.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]interface{}, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `github_event` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, githubEvent.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	githubEvent.ResetMark()
+	return nil
+}
+
 type ExternalReleaseHistory struct {
 	conn *sql.DB
 

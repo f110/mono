@@ -10,6 +10,7 @@ go_library(
         "//go/build/coordinator",
         "//go/build/database",
         "//go/build/database/dao",
+        "//go/build/webhook",
         "//go/build/gc",
         "//go/build/releasewatcher",
         "//go/build/watcher",
