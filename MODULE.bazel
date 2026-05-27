@@ -142,7 +142,7 @@ go_deps.module_override(
 
 git_override(
     module_name = "protoc_ddl",
-    commit = "6ef36e8a9aafa2f2a329b3aa23e3ca91288d383b",
+    commit = "f70015de279b01df6214fd665ce5950ff94cd948",
     patch_strip = 1,
     patches = ["//patch:protoc-ddl.patch"],
     remote = "https://github.com/f110/protoc-ddl",
@@ -150,7 +150,7 @@ git_override(
 
 git_override(
     module_name = "dev_f110_kubeproto",
-    commit = "aae9e43810a56fc0b1ceadd82e78ae4a8c5b9503",
+    commit = "e93878f34057d409d5d90c71453077ce4e4a87f4",
     remote = "https://github.com/f110/kubeproto",
 )
 
