@@ -1,0 +1,32 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "jj-trailer_lib",
+    srcs = [
+        "main.go",
+        "trailer.go",
+    ],
+    importpath = "go.f110.dev/mono/go/cmd/jj-trailer",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_x_term//:term",
+    ],
+)
+
+go_binary(
+    name = "jj-trailer",
+    embed = [":jj-trailer_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "jj-trailer_test",
+    srcs = [
+        "main_test.go",
+        "trailer_test.go",
+    ],
+    embed = [":jj-trailer_lib"],
+    deps = ["//go/testing/assertion"],
+)
