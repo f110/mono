@@ -25,11 +25,14 @@ func TestHandler(t *testing.T) {
 		state      database.GithubEventState
 	}
 
+	const opsURL = "https://github.com/f110/ops"
+
 	cases := []struct {
 		name       string
 		eventType  string
 		deliveryID string
 		body       []byte
+		setup      func(d *testDAO)
 		wantStatus int
 		wantInsert *wantInsert
 		wantKick   bool
@@ -39,6 +42,9 @@ func TestHandler(t *testing.T) {
 			eventType:  "pull_request",
 			deliveryID: "abc-123",
 			body:       loadPayload(t, "pull_request_opened.json"),
+			setup: func(d *testDAO) {
+				d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+			},
 			wantStatus: http.StatusOK,
 			wantInsert: &wantInsert{
 				eventType:  "pull_request",
@@ -47,6 +53,23 @@ func TestHandler(t *testing.T) {
 				state:      database.GithubEventStatePending,
 			},
 			wantKick: true,
+		},
+		{
+			name:       "delivery from an unmanaged repository is dropped and returns 200",
+			eventType:  "pull_request",
+			deliveryID: "abc-124",
+			body:       loadPayload(t, "pull_request_opened.json"),
+			setup: func(d *testDAO) {
+				d.Repository.RegisterListByUrl(opsURL, nil, nil)
+			},
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:       "delivery with no repository field is dropped and returns 200",
+			eventType:  "ping",
+			deliveryID: "abc-125",
+			body:       []byte(`{"zen":"hi"}`),
+			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "request missing both webhook headers is rejected with 400",
@@ -64,6 +87,9 @@ func TestHandler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			d := newTestDAO()
+			if tc.setup != nil {
+				tc.setup(d)
+			}
 			notifier := NewNotifier()
 			kick := make(chan struct{}, 1)
 			notifier.Register(kick)

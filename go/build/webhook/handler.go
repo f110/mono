@@ -76,7 +76,10 @@ func NewHandler(daoOptions dao.Options, notifier *Notifier) *Handler {
 // minimalPayload pulls only the fields the handler itself needs out of the
 // webhook payload. The full payload is persisted raw for the reconciler.
 type minimalPayload struct {
-	Action string `json:"action"`
+	Action     string `json:"action"`
+	Repository struct {
+		HTMLURL string `json:"html_url"`
+	} `json:"repository"`
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -104,6 +107,27 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Ignore JSON errors — `action` is optional and absent for some events
 	// (e.g. push). We still record the row with empty action.
 	_ = json.Unmarshal(payload, &m)
+
+	// Drop deliveries from repositories we don't manage so the github_event
+	// table only carries actionable rows. Empty html_url covers events like
+	// `ping` that have no repository field at all.
+	repoURL := m.Repository.HTMLURL
+	if repoURL == "" {
+		slogger.Log.Info("Ignoring webhook with no repository", slog.String("delivery_id", deliveryID), slog.String("event_type", eventType))
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	repo, err := FindRepository(req.Context(), h.dao, repoURL)
+	if err != nil {
+		slogger.Log.Error("Failed to look up repository for webhook", slogger.E(err), slog.String("delivery_id", deliveryID), slog.String("repository", repoURL))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if repo == nil {
+		slogger.Log.Info("Ignoring webhook from unmanaged repository", slog.String("delivery_id", deliveryID), slog.String("repository", repoURL))
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	if err := h.insert(req.Context(), deliveryID, eventType, m.Action, payload); err != nil {
 		if isDuplicateEntry(err) {

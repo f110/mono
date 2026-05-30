@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
@@ -24,9 +25,13 @@ func TestWebhookEndpoint(t *testing.T) {
 	logger.SetLogLevel("debug")
 	slogger.Init()
 
+	const repoURL = "https://github.com/f110/ops"
+
+	repo := daotest.NewSourceRepository()
+	repo.RegisterListByUrl(repoURL, []*database.SourceRepository{{Id: 1, Url: repoURL, Name: "ops", CreatedAt: time.Now()}}, nil)
 	ghEvent := daotest.NewGithubEvent()
 	daos := dao.Options{
-		Repository:        daotest.NewSourceRepository(),
+		Repository:        repo,
 		Task:              daotest.NewTask(),
 		TrustedUser:       daotest.NewTrustedUser(),
 		PermitPullRequest: daotest.NewPermitPullRequest(),
