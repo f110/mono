@@ -304,6 +304,20 @@ export declare type GithubEvent = Message<"mono.build.model.GithubEvent"> & {
    * @generated from field: google.protobuf.Timestamp updated_at = 9;
    */
   updatedAt?: Timestamp;
+
+  /**
+   * Repository is the full_name (e.g. "owner/repo") parsed out of the
+   * webhook payload at read time. Empty when the payload has no
+   * repository field or is malformed.
+   *
+   * @generated from field: string repository = 10;
+   */
+  repository: string;
+
+  /**
+   * @generated from field: string repository_url = 11;
+   */
+  repositoryUrl: string;
 };
 
 /**

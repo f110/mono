@@ -36,7 +36,10 @@ go_library(
 
 go_test(
     name = "api_test",
-    srcs = ["server_test.go"],
+    srcs = [
+        "apiservice_test.go",
+        "server_test.go",
+    ],
     data = glob(["testdata/**"]),
     embed = [":api"],
     deps = [

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/url"
@@ -403,20 +404,43 @@ func (s *apiService) ListGithubEvents(ctx context.Context, _ *RequestListGithubE
 // than the integer to a human reader, and status is sent as a raw JSON
 // string since its schema varies by event_type.
 func dbGithubEventToModel(r *database.GithubEvent) *model.GithubEvent {
+	repo, repoURL := extractRepositoryFromPayload(r.Payload)
 	b := model.GithubEvent_builder{
-		Id:         new(r.Id),
-		DeliveryId: new(r.DeliveryId),
-		EventType:  new(r.EventType),
-		Action:     new(r.Action),
-		State:      new(githubEventStateName(r.State)),
-		Status:     new(string(r.Status)),
-		LastError:  new(r.LastError),
-		CreatedAt:  timestamppb.New(r.CreatedAt),
+		Id:            new(r.Id),
+		DeliveryId:    new(r.DeliveryId),
+		EventType:     new(r.EventType),
+		Action:        new(r.Action),
+		State:         new(githubEventStateName(r.State)),
+		Status:        new(string(r.Status)),
+		LastError:     new(r.LastError),
+		CreatedAt:     timestamppb.New(r.CreatedAt),
+		Repository:    &repo,
+		RepositoryUrl: &repoURL,
 	}
 	if r.UpdatedAt != nil {
 		b.UpdatedAt = timestamppb.New(*r.UpdatedAt)
 	}
 	return b.Build()
+}
+
+// extractRepositoryFromPayload pulls repository.full_name / html_url out of a
+// GitHub webhook payload. Every GitHub event payload includes a `repository`
+// object, so this works uniformly across event_type. Returns empty strings on
+// any parse failure so the API row is still renderable.
+func extractRepositoryFromPayload(payload []byte) (name, htmlURL string) {
+	if len(payload) == 0 {
+		return "", ""
+	}
+	var p struct {
+		Repository struct {
+			FullName string `json:"full_name"`
+			HTMLURL  string `json:"html_url"`
+		} `json:"repository"`
+	}
+	if err := json.Unmarshal(payload, &p); err != nil {
+		return "", ""
+	}
+	return p.Repository.FullName, p.Repository.HTMLURL
 }
 
 func githubEventStateName(s database.GithubEventState) string {

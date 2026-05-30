@@ -3,6 +3,7 @@ import {
   Box,
   Chip,
   Container,
+  Link,
   Paper,
   Stack,
   Table,
@@ -65,6 +66,7 @@ export const EventsPage: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
+                    <TableCell>Repository</TableCell>
                     <TableCell>Event</TableCell>
                     <TableCell>Action</TableCell>
                     <TableCell>State</TableCell>
@@ -78,6 +80,24 @@ export const EventsPage: React.FC = () => {
                   {events.map((ev) => (
                     <TableRow key={ev.id}>
                       <TableCell>{ev.id}</TableCell>
+                      <TableCell>
+                        {ev.repository ? (
+                          ev.repositoryUrl ? (
+                            <Link
+                              href={ev.repositoryUrl}
+                              target="_blank"
+                              rel="noopener"
+                              underline="hover"
+                            >
+                              {ev.repository}
+                            </Link>
+                          ) : (
+                            ev.repository
+                          )
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
                       <TableCell>{ev.eventType}</TableCell>
                       <TableCell>{ev.action || '—'}</TableCell>
                       <TableCell>

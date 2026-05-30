@@ -1478,20 +1478,22 @@ func (b0 TestReport_builder) Build() *TestReport {
 }
 
 type GithubEvent struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id          int32                  `protobuf:"varint,1,opt,name=id"`
-	xxx_hidden_DeliveryId  *string                `protobuf:"bytes,2,opt,name=delivery_id,json=deliveryId"`
-	xxx_hidden_EventType   *string                `protobuf:"bytes,3,opt,name=event_type,json=eventType"`
-	xxx_hidden_Action      *string                `protobuf:"bytes,4,opt,name=action"`
-	xxx_hidden_State       *string                `protobuf:"bytes,5,opt,name=state"`
-	xxx_hidden_Status      *string                `protobuf:"bytes,6,opt,name=status"`
-	xxx_hidden_LastError   *string                `protobuf:"bytes,7,opt,name=last_error,json=lastError"`
-	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt"`
-	xxx_hidden_UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id            int32                  `protobuf:"varint,1,opt,name=id"`
+	xxx_hidden_DeliveryId    *string                `protobuf:"bytes,2,opt,name=delivery_id,json=deliveryId"`
+	xxx_hidden_EventType     *string                `protobuf:"bytes,3,opt,name=event_type,json=eventType"`
+	xxx_hidden_Action        *string                `protobuf:"bytes,4,opt,name=action"`
+	xxx_hidden_State         *string                `protobuf:"bytes,5,opt,name=state"`
+	xxx_hidden_Status        *string                `protobuf:"bytes,6,opt,name=status"`
+	xxx_hidden_LastError     *string                `protobuf:"bytes,7,opt,name=last_error,json=lastError"`
+	xxx_hidden_CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt"`
+	xxx_hidden_UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt"`
+	xxx_hidden_Repository    *string                `protobuf:"bytes,10,opt,name=repository"`
+	xxx_hidden_RepositoryUrl *string                `protobuf:"bytes,11,opt,name=repository_url,json=repositoryUrl"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *GithubEvent) Reset() {
@@ -1600,39 +1602,59 @@ func (x *GithubEvent) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *GithubEvent) GetRepository() string {
+	if x != nil {
+		if x.xxx_hidden_Repository != nil {
+			return *x.xxx_hidden_Repository
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GithubEvent) GetRepositoryUrl() string {
+	if x != nil {
+		if x.xxx_hidden_RepositoryUrl != nil {
+			return *x.xxx_hidden_RepositoryUrl
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *GithubEvent) SetId(v int32) {
 	x.xxx_hidden_Id = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 11)
 }
 
 func (x *GithubEvent) SetDeliveryId(v string) {
 	x.xxx_hidden_DeliveryId = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 11)
 }
 
 func (x *GithubEvent) SetEventType(v string) {
 	x.xxx_hidden_EventType = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 11)
 }
 
 func (x *GithubEvent) SetAction(v string) {
 	x.xxx_hidden_Action = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 11)
 }
 
 func (x *GithubEvent) SetState(v string) {
 	x.xxx_hidden_State = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 11)
 }
 
 func (x *GithubEvent) SetStatus(v string) {
 	x.xxx_hidden_Status = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 11)
 }
 
 func (x *GithubEvent) SetLastError(v string) {
 	x.xxx_hidden_LastError = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 9)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 11)
 }
 
 func (x *GithubEvent) SetCreatedAt(v *timestamppb.Timestamp) {
@@ -1641,6 +1663,16 @@ func (x *GithubEvent) SetCreatedAt(v *timestamppb.Timestamp) {
 
 func (x *GithubEvent) SetUpdatedAt(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdatedAt = v
+}
+
+func (x *GithubEvent) SetRepository(v string) {
+	x.xxx_hidden_Repository = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 11)
+}
+
+func (x *GithubEvent) SetRepositoryUrl(v string) {
+	x.xxx_hidden_RepositoryUrl = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 11)
 }
 
 func (x *GithubEvent) HasId() bool {
@@ -1706,6 +1738,20 @@ func (x *GithubEvent) HasUpdatedAt() bool {
 	return x.xxx_hidden_UpdatedAt != nil
 }
 
+func (x *GithubEvent) HasRepository() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *GithubEvent) HasRepositoryUrl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
 func (x *GithubEvent) ClearId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Id = 0
@@ -1749,18 +1795,30 @@ func (x *GithubEvent) ClearUpdatedAt() {
 	x.xxx_hidden_UpdatedAt = nil
 }
 
+func (x *GithubEvent) ClearRepository() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Repository = nil
+}
+
+func (x *GithubEvent) ClearRepositoryUrl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_RepositoryUrl = nil
+}
+
 type GithubEvent_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id         *int32
-	DeliveryId *string
-	EventType  *string
-	Action     *string
-	State      *string
-	Status     *string
-	LastError  *string
-	CreatedAt  *timestamppb.Timestamp
-	UpdatedAt  *timestamppb.Timestamp
+	Id            *int32
+	DeliveryId    *string
+	EventType     *string
+	Action        *string
+	State         *string
+	Status        *string
+	LastError     *string
+	CreatedAt     *timestamppb.Timestamp
+	UpdatedAt     *timestamppb.Timestamp
+	Repository    *string
+	RepositoryUrl *string
 }
 
 func (b0 GithubEvent_builder) Build() *GithubEvent {
@@ -1768,35 +1826,43 @@ func (b0 GithubEvent_builder) Build() *GithubEvent {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 11)
 		x.xxx_hidden_Id = *b.Id
 	}
 	if b.DeliveryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 11)
 		x.xxx_hidden_DeliveryId = b.DeliveryId
 	}
 	if b.EventType != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 11)
 		x.xxx_hidden_EventType = b.EventType
 	}
 	if b.Action != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 11)
 		x.xxx_hidden_Action = b.Action
 	}
 	if b.State != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 11)
 		x.xxx_hidden_State = b.State
 	}
 	if b.Status != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 11)
 		x.xxx_hidden_Status = b.Status
 	}
 	if b.LastError != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 9)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 11)
 		x.xxx_hidden_LastError = b.LastError
 	}
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	x.xxx_hidden_UpdatedAt = b.UpdatedAt
+	if b.Repository != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 11)
+		x.xxx_hidden_Repository = b.Repository
+	}
+	if b.RepositoryUrl != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 11)
+		x.xxx_hidden_RepositoryUrl = b.RepositoryUrl
+	}
 	return m0
 }
 
@@ -2253,7 +2319,7 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"TestReport\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x124\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.mono.build.model.TestStatusR\x06status\x12\x1a\n" +
-	"\bduration\x18\x03 \x01(\x03R\bduration\"\xb8\x02\n" +
+	"\bduration\x18\x03 \x01(\x03R\bduration\"\xff\x02\n" +
 	"\vGithubEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1f\n" +
 	"\vdelivery_id\x18\x02 \x01(\tR\n" +
@@ -2268,7 +2334,12 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x89\x03\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1e\n" +
+	"\n" +
+	"repository\x18\n" +
+	" \x01(\tR\n" +
+	"repository\x12%\n" +
+	"\x0erepository_url\x18\v \x01(\tR\rrepositoryUrl\"\x89\x03\n" +
 	"\x16ExternalReleaseTrigger\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12'\n" +

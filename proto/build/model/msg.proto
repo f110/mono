@@ -86,6 +86,11 @@ message GithubEvent {
   string                    last_error  = 7;
   google.protobuf.Timestamp created_at  = 8;
   google.protobuf.Timestamp updated_at  = 9;
+  // Repository is the full_name (e.g. "owner/repo") parsed out of the
+  // webhook payload at read time. Empty when the payload has no
+  // repository field or is malformed.
+  string repository     = 10;
+  string repository_url = 11;
 }
 
 message ExternalReleaseTrigger {
