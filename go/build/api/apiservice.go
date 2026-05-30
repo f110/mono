@@ -386,7 +386,7 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 }
 
 func (s *apiService) ListGithubEvents(ctx context.Context, _ *RequestListGithubEvents) (*ResponseListGithubEvents, error) {
-	rows, err := s.dao.GithubEvent.ListAll(ctx, dao.Sort("created_at"), dao.Desc)
+	rows, err := s.dao.GithubEvent.ListAll(ctx, dao.Sort("id"), dao.Desc)
 	if err != nil {
 		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
 		return nil, status.Error(codes.Internal, "failed to list github_event")
