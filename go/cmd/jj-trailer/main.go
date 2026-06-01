@@ -313,27 +313,51 @@ func decodeKey(b []byte) keyAction {
 	return actionNone
 }
 
-// selectInteractive renders a vertical list on stderr and lets the user move
-// with arrow keys (also j/k, Ctrl-N/Ctrl-P) and confirm with Enter. Returns
-// the chosen index. Aborts on Ctrl-C, ESC, or q.
+// openSelectIO returns the files to use as the interactive prompt's input and
+// output. /dev/tty is preferred when available so the prompt works under
+// wrappers (e.g. jjui invoking `jj util exec`) that pipe stderr/stdout even
+// when stdin is still hooked to the terminal — writing to stderr in that case
+// disappears into the wrapper's capture buffer instead of the screen.
+// Falls back to stdin+stderr when /dev/tty is unavailable.
+func openSelectIO() (in, out *os.File, cleanup func(), err error) {
+	if f, err := os.OpenFile("/dev/tty", os.O_RDWR, 0); err == nil {
+		if term.IsTerminal(int(f.Fd())) {
+			return f, f, func() { f.Close() }, nil
+		}
+		f.Close()
+	}
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return nil, nil, nil, xerrors.New("no terminal available: /dev/tty not usable and stdin is not a tty")
+	}
+	return os.Stdin, os.Stderr, func() {}, nil
+}
+
+// selectInteractive renders a vertical list and lets the user move with arrow
+// keys (also j/k, Ctrl-N/Ctrl-P) and confirm with Enter. Returns the chosen
+// index. Aborts on Ctrl-C, ESC, or q.
 //
-// Stdin must be a terminal; otherwise an error is returned.
+// Uses stdin/stderr when stdin is a terminal; otherwise falls back to
+// /dev/tty so the prompt works when invoked through wrappers (e.g. jjui's
+// jj util exec) that don't pass a tty through.
 func selectInteractive(prompt string, items []string) (int, error) {
 	if len(items) == 0 {
 		return 0, xerrors.New("no items to select from")
 	}
 
-	fd := int(os.Stdin.Fd())
-	if !term.IsTerminal(fd) {
-		return 0, xerrors.New("stdin is not a terminal")
+	in, out, closeTTY, err := openSelectIO()
+	if err != nil {
+		return 0, err
 	}
+	defer closeTTY()
+
+	fd := int(in.Fd())
 	oldState, err := term.MakeRaw(fd)
 	if err != nil {
 		return 0, xerrors.WithStack(err)
 	}
 	defer term.Restore(fd, oldState) //nolint:errcheck
 
-	w := os.Stderr
+	w := out
 	fmt.Fprint(w, "\x1b[?25l")
 	defer fmt.Fprint(w, "\x1b[?25h")
 
@@ -363,7 +387,7 @@ func selectInteractive(prompt string, items []string) (int, error) {
 
 	buf := make([]byte, 8)
 	for {
-		n, err := os.Stdin.Read(buf)
+		n, err := in.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				clear()
