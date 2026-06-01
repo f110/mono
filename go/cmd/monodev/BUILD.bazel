@@ -9,6 +9,7 @@ go_library(
         "graph.go",
         "main.go",
         "manager.go",
+        "seed.go",
     ],
     importpath = "go.f110.dev/mono/go/cmd/monodev",
     visibility = ["//visibility:private"],
@@ -33,6 +34,7 @@ go_library(
         "@com_github_go_sql_driver_mysql//:mysql",
         "@dev_f110_go_go_memcached//client",
         "@dev_f110_go_xerrors//:xerrors",
+        "@in_gopkg_yaml_v3//:yaml_v3",
         "@io_k8s_api//apps/v1:apps",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
@@ -54,7 +56,13 @@ go_binary(
 
 go_test(
     name = "monodev_test",
-    srcs = ["devenv_test.go"],
+    srcs = [
+        "devenv_test.go",
+        "seed_test.go",
+    ],
     embed = [":monodev_lib"],
-    deps = ["@com_github_stretchr_testify//assert"],
+    deps = [
+        "//go/testing/assertion",
+        "@com_github_stretchr_testify//assert",
+    ],
 )

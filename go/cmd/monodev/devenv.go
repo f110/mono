@@ -49,6 +49,7 @@ func build(cmd *cli.Command) {
 			m := newComponentManager()
 			m.AddComponent(buildDatabase)
 			m.AddComponent(buildMySQLUSER)
+			m.AddComponent(buildSeed)
 			m.AddComponent(minio)
 			m.AddComponent(buildBucket)
 			m.AddComponent(githubmock)

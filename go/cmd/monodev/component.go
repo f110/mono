@@ -200,6 +200,13 @@ var githubmock = &simpleCommandComponent{
 	VerboseOutput: true,
 }
 
+var buildSeed = &mysqlSeedDirectory{
+	Name:     "build-seed",
+	Dir:      "go/build/dev/seed",
+	MySQL:    mysql,
+	Database: buildDatabase,
+}
+
 type simpleCommandComponent struct {
 	Name               string
 	Type               componentType
