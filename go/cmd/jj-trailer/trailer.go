@@ -27,10 +27,11 @@ func hasTrailer(desc, key string) bool {
 	return false
 }
 
-// appendTrailer appends "key: value" to desc unconditionally. When desc's last
-// paragraph already looks like a trailer block (every line matches
-// "Key: value"), the new trailer is appended to it; otherwise a blank line is
-// inserted before the trailer to start a new block.
+// appendTrailer appends "key: value" to desc unconditionally. The contiguous
+// run of "Key: value" lines at the end of desc is treated as the trailer
+// block (whether or not it was separated from the body by a blank line); the
+// new trailer joins that block, and exactly one blank line is guaranteed
+// between the body and the block.
 func appendTrailer(desc, key, value string) string {
 	body := strings.TrimRight(desc, "\n")
 	newTrailer := fmt.Sprintf("%s: %s", key, value)
@@ -38,20 +39,28 @@ func appendTrailer(desc, key, value string) string {
 		return newTrailer
 	}
 
-	paragraphs := strings.Split(body, "\n\n")
-	last := paragraphs[len(paragraphs)-1]
-	isTrailerBlock := true
-	for _, line := range strings.Split(last, "\n") {
-		if !trailerLineRe.MatchString(line) {
-			isTrailerBlock = false
+	lines := strings.Split(body, "\n")
+	trailerStart := len(lines)
+	for i := len(lines) - 1; i >= 0; i-- {
+		if lines[i] == "" || !trailerLineRe.MatchString(lines[i]) {
 			break
 		}
+		trailerStart = i
 	}
 
-	if isTrailerBlock {
-		return body + "\n" + newTrailer
+	if trailerStart == 0 {
+		return strings.Join(append(lines, newTrailer), "\n")
 	}
-	return body + "\n\n" + newTrailer
+	if trailerStart == len(lines) {
+		return body + "\n\n" + newTrailer
+	}
+
+	bodyLines := lines[:trailerStart]
+	for len(bodyLines) > 0 && bodyLines[len(bodyLines)-1] == "" {
+		bodyLines = bodyLines[:len(bodyLines)-1]
+	}
+	trailerLines := append(lines[trailerStart:], newTrailer)
+	return strings.Join(bodyLines, "\n") + "\n\n" + strings.Join(trailerLines, "\n")
 }
 
 // addTrailer is like appendTrailer but skips when a line with the same key

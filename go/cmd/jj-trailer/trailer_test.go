@@ -81,11 +81,19 @@ func TestAddTrailer(t *testing.T) {
 			wantChanged: true,
 		},
 		{
-			name:        "last paragraph mixes prose and Key: value is not a trailer block",
+			name:        "trailing Key: value line jammed onto body is pulled into trailer block",
 			desc:        "Subject\n\nSome body text.\nAssisted-by-ish: note",
 			key:         "Assisted-by",
 			value:       "Claude:claude-opus-4-7",
-			want:        "Subject\n\nSome body text.\nAssisted-by-ish: note\n\nAssisted-by: Claude:claude-opus-4-7",
+			want:        "Subject\n\nSome body text.\n\nAssisted-by-ish: note\nAssisted-by: Claude:claude-opus-4-7",
+			wantChanged: true,
+		},
+		{
+			name:        "existing trailer jammed onto subject gets blank line inserted",
+			desc:        "Subject\nSigned-off-by: Someone <a@example.com>",
+			key:         "Assisted-by",
+			value:       "Claude:claude-opus-4-7",
+			want:        "Subject\n\nSigned-off-by: Someone <a@example.com>\nAssisted-by: Claude:claude-opus-4-7",
 			wantChanged: true,
 		},
 	}
