@@ -861,10 +861,10 @@ func (f *ConsulV1alpha1Informer) ConsulBackupInformer() cache.SharedIndexInforme
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListConsulBackup(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchConsulBackup(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchConsulBackup(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&consulv1alpha1.ConsulBackup{},
@@ -901,10 +901,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaInformer() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListGrafana(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchGrafana(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchGrafana(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&grafanav1alpha1.Grafana{},
@@ -923,10 +923,10 @@ func (f *GrafanaV1alpha1Informer) GrafanaUserInformer() cache.SharedIndexInforme
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListGrafanaUser(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchGrafanaUser(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchGrafanaUser(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&grafanav1alpha1.GrafanaUser{},
@@ -963,10 +963,10 @@ func (f *HarborV1alpha1Informer) HarborProjectInformer() cache.SharedIndexInform
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListHarborProject(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchHarborProject(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchHarborProject(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&harborv1alpha1.HarborProject{},
@@ -985,10 +985,10 @@ func (f *HarborV1alpha1Informer) HarborRobotAccountInformer() cache.SharedIndexI
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchHarborRobotAccount(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&harborv1alpha1.HarborRobotAccount{},
@@ -1025,10 +1025,10 @@ func (f *MinioV1alpha1Informer) MinIOBucketInformer() cache.SharedIndexInformer 
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListMinIOBucket(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMinIOBucket(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchMinIOBucket(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&miniov1alpha1.MinIOBucket{},
@@ -1047,10 +1047,10 @@ func (f *MinioV1alpha1Informer) MinIOClusterInformer() cache.SharedIndexInformer
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListMinIOCluster(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMinIOCluster(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchMinIOCluster(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&miniov1alpha1.MinIOCluster{},
@@ -1069,10 +1069,10 @@ func (f *MinioV1alpha1Informer) MinIOUserInformer() cache.SharedIndexInformer {
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListMinIOUser(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMinIOUser(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchMinIOUser(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&miniov1alpha1.MinIOUser{},

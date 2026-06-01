@@ -14,8 +14,7 @@ gen:
 	bazel query 'kind(vendor_ddl, //go/...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_grpc_source, //go/...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_proto_source, //go/...)' | xargs -n1 bazel run
-	# FIXME: temporary
-	#bazel query 'kind(vendor_kubeproto, //go/...)' | xargs -n1 bazel run
+	bazel query 'kind(vendor_kubeproto, //go/...)' | xargs -n1 bazel run
 	bazel run //ts/apps/build/src/connect:vendor_bff
 	bazel run //ts/apps/build/src/model:vendor_model
 

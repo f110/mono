@@ -477,10 +477,10 @@ func (f *MiniocontrollerMinV1beta1Informer) MinIOInstanceInformer() cache.Shared
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListMinIOInstance(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMinIOInstance(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchMinIOInstance(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&v1beta1.MinIOInstance{},
@@ -499,10 +499,10 @@ func (f *MiniocontrollerMinV1beta1Informer) MirrorInformer() cache.SharedIndexIn
 		return cache.NewSharedIndexInformer(
 			&cache.ListWatch{
 				ListFunc: func(options k8smetav1.ListOptions) (runtime.Object, error) {
-					return f.client.ListMirror(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.ListMirror(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 				WatchFunc: func(options k8smetav1.ListOptions) (watch.Interface, error) {
-					return f.client.WatchMirror(context.TODO(), f.namespace, metav1.ListOptions{})
+					return f.client.WatchMirror(context.TODO(), f.namespace, metav1.ListOptionsFromUpstream(options))
 				},
 			},
 			&v1beta1.Mirror{},
