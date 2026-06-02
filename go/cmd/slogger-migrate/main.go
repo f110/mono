@@ -76,7 +76,7 @@ func (m *migrator) Run(_ context.Context, _ *cli.Command, args []string) error {
 func (m *migrator) walk(root string) error {
 	info, err := os.Stat(root)
 	if err != nil {
-		return xerrors.WithStack(err)
+		return err
 	}
 	if !info.IsDir() {
 		return m.migrateFile(root)
