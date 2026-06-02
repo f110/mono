@@ -35,9 +35,9 @@ import { useState } from 'react'
 import { LogModal } from '../../components/LogModal.tsx'
 import { ManifestModal } from '../../components/ManifestModal.tsx'
 import { BFF } from '../../connect/bff_pb'
+import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { TestStatus } from '../../model/msg_pb'
-import { formatDuration } from '../../utils/duration.ts'
 
 const DefinitionTableCell = styled(TableCell)(({ theme }) => ({
   '&:first-child': {
@@ -72,6 +72,11 @@ export const TaskPage: React.FC = () => {
   const start = task?.startAt
     ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss')
     : ''
+  const duration = useLiveDuration({
+    startAt: task?.startAt,
+    finishedAt: task?.finishedAt,
+    duration: task?.duration,
+  })
   const [manifestModal, setManifestModal] = useState<boolean>(false)
   const [manifest, setManifest] = useState<string>('')
   const manifestModalClose = () => {
@@ -180,9 +185,7 @@ export const TaskPage: React.FC = () => {
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Duration</DefinitionTableCell>
-                  <DefinitionTableCell>
-                    {formatDuration(task?.duration)}
-                  </DefinitionTableCell>
+                  <DefinitionTableCell>{duration}</DefinitionTableCell>
                 </TableRow>
                 <TableRow>
                   <DefinitionTableCell>Node</DefinitionTableCell>

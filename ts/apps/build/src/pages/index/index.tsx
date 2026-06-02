@@ -37,9 +37,9 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { BFF, type BFFTask } from '../../connect/bff_pb'
 import { useListRepositories } from '../../hooks/useListRepositories.ts'
 import dayjs from 'dayjs'
+import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { Route } from '../../routes'
-import { formatDuration } from '../../utils/duration.ts'
 
 type TaskResultRowProps = {
   task: BFFTask
@@ -57,6 +57,11 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
   const start = task.startAt
     ? dayjs(timestampDate(task.startAt)).format('YYYY-MM-DD HH:mm:ss')
     : ''
+  const duration = useLiveDuration({
+    startAt: task.startAt,
+    finishedAt: task.finishedAt,
+    duration: task.duration,
+  })
 
   return (
     <StyledTableRow>
@@ -118,7 +123,7 @@ const TaskResultRow: React.FC<TaskResultRowProps> = ({
       </StyledTableCell>
       <StyledTableCell>{task.via}</StyledTableCell>
       <StyledTableCell>{start}</StyledTableCell>
-      <StyledTableCell>{formatDuration(task.duration)}</StyledTableCell>
+      <StyledTableCell>{duration}</StyledTableCell>
       <StyledTableCell>
         <IconButton onClick={() => onRestart(task.id)}>
           <RefreshIcon color="warning" />
