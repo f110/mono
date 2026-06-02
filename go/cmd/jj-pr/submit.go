@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -21,6 +22,63 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger/slogger"
 )
+
+var trailerLineRe = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*:\s`)
+
+// stripTrailers returns desc with the trailing trailer block removed. A
+// paragraph (a run of non-blank lines preceded by a blank line) is considered
+// a trailer paragraph only when every line in it matches the "Key: value"
+// pattern. Everything from the first trailer paragraph to the end of desc
+// (and the blank line(s) before it) is dropped.
+func stripTrailers(desc string) string {
+	lines := strings.Split(desc, "\n")
+	paraStart := -1
+	cut := 0
+	for i := 0; i <= len(lines); i++ {
+		if i == len(lines) || lines[i] == "" {
+			if paraStart > 0 && isTrailerParagraph(lines[paraStart:i]) {
+				return strings.Join(lines[:cut], "\n")
+			}
+			if paraStart != -1 {
+				cut = i
+			}
+			paraStart = -1
+			continue
+		}
+		if paraStart == -1 {
+			paraStart = i
+		}
+	}
+	return desc
+}
+
+func isTrailerParagraph(lines []string) bool {
+	if len(lines) == 0 {
+		return false
+	}
+	for _, l := range lines {
+		if !trailerLineRe.MatchString(l) {
+			return false
+		}
+	}
+	return true
+}
+
+// splitDescription splits a jj commit description into a subject (the first
+// line) and a body (the remainder with trailers stripped). The body is empty
+// when desc has no body content or contains only trailers after the subject.
+func splitDescription(desc string) (title, body string) {
+	desc = stripTrailers(desc)
+	if i := strings.Index(desc, "\n"); i > 0 {
+		title = desc[:i]
+		if len(desc) > i+2 {
+			body = desc[i+2:]
+		}
+		return
+	}
+	title = desc
+	return
+}
 
 const (
 	stackRevsets           = "ancestors(latest(%s@origin) & remote_bookmarks())..change_id(%s) ~ empty()"
@@ -403,17 +461,10 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 
 		fmt.Println("Create pull request")
 		if !c.DryRun {
-			var title, description string
-			if i := strings.Index(c.stack[0].Description, "\n"); i > 0 {
-				title = c.stack[0].Description[:i]
-				if len(c.stack[0].Description) > i+2 {
-					description = c.stack[0].Description[i+2:] + "\n" + template
-				} else {
-					description = template
-				}
-			} else {
-				title = c.stack[0].Description
-				description = template
+			title, body := splitDescription(c.stack[0].Description)
+			description := template
+			if body != "" {
+				description = body + "\n" + template
 			}
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
 				Title: new(title),
@@ -452,17 +503,10 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 			if i != len(c.stack)-1 {
 				baseBranch = c.stack[i+1].Bookmarks[0].Name
 			}
-			var title, description string
-			if i := strings.Index(v.Description, "\n"); i > 0 {
-				title = v.Description[:i]
-				if len(v.Description) > i+2 {
-					description = v.Description[i+2:] + "\n" + template
-				} else {
-					description = template
-				}
-			} else {
-				title = v.Description
-				description = template
+			title, body := splitDescription(v.Description)
+			description := template
+			if body != "" {
+				description = body + "\n" + template
 			}
 
 			pr, _, err := c.ghClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
@@ -606,6 +650,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 				needUpdateTitle = true
 			}
 		}
+		_, descBody := splitDescription(v.Description)
 		body := v.PullRequest.Body
 		if len(c.stack) > 1 {
 			var stackNav strings.Builder
@@ -630,7 +675,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 			body += stackNav.String()
 		}
 		if body == "" {
-			body = v.Description
+			body = descBody
 		}
 		if body != v.PullRequest.Body {
 			updatedPR.Body = new(body)

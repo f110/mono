@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.f110.dev/githubmock"
+
+	"go.f110.dev/mono/go/testing/assertion"
 )
 
 var jjBinaryPath *string
@@ -138,4 +140,74 @@ This PR contains fixing some security issues.`,
 		require.NoError(t, err)
 		assert.Equal(t, c.stateClose, nextState)
 	})
+}
+
+func TestSplitDescription(t *testing.T) {
+	cases := []struct {
+		name      string
+		desc      string
+		wantTitle string
+		wantBody  string
+	}{
+		{
+			name:      "subject only",
+			desc:      "fix: nothing",
+			wantTitle: "fix: nothing",
+		},
+		{
+			name:      "subject and body, no trailers",
+			desc:      "fix: bug\n\nThis fixes the bug.",
+			wantTitle: "fix: bug",
+			wantBody:  "This fixes the bug.",
+		},
+		{
+			name:      "single trailer line is stripped",
+			desc:      "fix: bug\n\nThis fixes the bug.\n\nFixes: #123",
+			wantTitle: "fix: bug",
+			wantBody:  "This fixes the bug.",
+		},
+		{
+			name:      "paragraph containing a non-trailer line is not treated as a trailer",
+			desc:      "fix: bug\n\nThis fixes the bug.\n\nNot: foo\nbar",
+			wantTitle: "fix: bug",
+			wantBody:  "This fixes the bug.\n\nNot: foo\nbar",
+		},
+		{
+			name:      "multi-line trailer block is stripped",
+			desc:      "fix: bug\n\nThis fixes the bug.\n\nFixes: #123\nCo-Authored-By: Foo <foo@example.com>",
+			wantTitle: "fix: bug",
+			wantBody:  "This fixes the bug.",
+		},
+		{
+			name:      "body is empty when only trailers are present",
+			desc:      "fix: bug\n\nFixes: #123",
+			wantTitle: "fix: bug",
+			wantBody:  "",
+		},
+		{
+			name:      "everything after the first trailer paragraph is dropped",
+			desc:      "fix: bug\n\nBody paragraph.\n\nFirst: trailer\n\nSecond: paragraph after trailer",
+			wantTitle: "fix: bug",
+			wantBody:  "Body paragraph.",
+		},
+		{
+			name:      "multi-paragraph body without trailers is preserved",
+			desc:      "fix: bug\n\nFirst paragraph.\n\nSecond paragraph.",
+			wantTitle: "fix: bug",
+			wantBody:  "First paragraph.\n\nSecond paragraph.",
+		},
+		{
+			name:      "body line containing a URL is not mistaken for a trailer",
+			desc:      "fix: bug\n\nSee https://example.com for details.",
+			wantTitle: "fix: bug",
+			wantBody:  "See https://example.com for details.",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			title, body := splitDescription(tc.desc)
+			assertion.Equal(t, title, tc.wantTitle)
+			assertion.Equal(t, body, tc.wantBody)
+		})
+	}
 }
