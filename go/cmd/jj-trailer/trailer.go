@@ -41,16 +41,13 @@ func appendTrailer(desc, key, value string) string {
 
 	lines := strings.Split(body, "\n")
 	trailerStart := len(lines)
-	for i := len(lines) - 1; i >= 0; i-- {
+	for i := len(lines) - 1; i >= 1; i-- {
 		if lines[i] == "" || !trailerLineRe.MatchString(lines[i]) {
 			break
 		}
 		trailerStart = i
 	}
 
-	if trailerStart == 0 {
-		return strings.Join(append(lines, newTrailer), "\n")
-	}
 	if trailerStart == len(lines) {
 		return body + "\n\n" + newTrailer
 	}

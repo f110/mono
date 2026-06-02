@@ -96,6 +96,14 @@ func TestAddTrailer(t *testing.T) {
 			want:        "Subject\n\nSigned-off-by: Someone <a@example.com>\nAssisted-by: Claude:claude-opus-4-7",
 			wantChanged: true,
 		},
+		{
+			name:        "subject-only that looks like a trailer line still gets a blank line",
+			desc:        "fix: handle error",
+			key:         "Assisted-by",
+			value:       "Claude:claude-opus-4-7",
+			want:        "fix: handle error\n\nAssisted-by: Claude:claude-opus-4-7",
+			wantChanged: true,
+		},
 	}
 
 	for _, tc := range cases {
