@@ -385,7 +385,16 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 	return ResponseListExternalReleaseTriggers_builder{Triggers: triggers}.Build(), nil
 }
 
-func (s *apiService) ListGithubEvents(ctx context.Context, _ *RequestListGithubEvents) (*ResponseListGithubEvents, error) {
+func (s *apiService) ListGithubEvents(ctx context.Context, req *RequestListGithubEvents) (*ResponseListGithubEvents, error) {
+	if req.HasEventId() {
+		row, err := s.dao.GithubEvent.Select(ctx, req.GetEventId())
+		if err != nil {
+			slogger.Log.Info("github_event is not found", slogger.E(err))
+			return nil, status.Error(codes.NotFound, "github_event not found")
+		}
+		return ResponseListGithubEvents_builder{Events: []*model.GithubEvent{dbGithubEventToModel(row)}}.Build(), nil
+	}
+
 	rows, err := s.dao.GithubEvent.ListAll(ctx, dao.Sort("id"), dao.Desc)
 	if err != nil {
 		slogger.Log.Warn("Failed to list github_event", slogger.E(err))

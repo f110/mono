@@ -15,7 +15,9 @@ import { Route as InfoRouteImport } from './routes/info'
 import { Route as External_releasesRouteImport } from './routes/external_releases'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as TaskTaskIdRouteImport } from './routes/task.$taskId'
+import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 
 const TaskRoute = TaskRouteImport.update({
   id: '/task',
@@ -47,39 +49,54 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EventsRoute,
+} as any)
 const TaskTaskIdRoute = TaskTaskIdRouteImport.update({
   id: '/$taskId',
   path: '/$taskId',
   getParentRoute: () => TaskRoute,
 } as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => EventsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
+  '/events/$eventId': typeof EventsEventIdRoute
   '/task/$taskId': typeof TaskTaskIdRoute
+  '/events/': typeof EventsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/events': typeof EventsRoute
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
+  '/events/$eventId': typeof EventsEventIdRoute
   '/task/$taskId': typeof TaskTaskIdRoute
+  '/events': typeof EventsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/external_releases': typeof External_releasesRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
+  '/events/$eventId': typeof EventsEventIdRoute
   '/task/$taskId': typeof TaskTaskIdRoute
+  '/events/': typeof EventsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,16 +107,19 @@ export interface FileRouteTypes {
     | '/info'
     | '/repositories'
     | '/task'
+    | '/events/$eventId'
     | '/task/$taskId'
+    | '/events/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/events'
     | '/external_releases'
     | '/info'
     | '/repositories'
     | '/task'
+    | '/events/$eventId'
     | '/task/$taskId'
+    | '/events'
   id:
     | '__root__'
     | '/'
@@ -108,12 +128,14 @@ export interface FileRouteTypes {
     | '/info'
     | '/repositories'
     | '/task'
+    | '/events/$eventId'
     | '/task/$taskId'
+    | '/events/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  EventsRoute: typeof EventsRoute
+  EventsRoute: typeof EventsRouteWithChildren
   External_releasesRoute: typeof External_releasesRoute
   InfoRoute: typeof InfoRoute
   RepositoriesRoute: typeof RepositoriesRoute
@@ -164,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events/': {
+      id: '/events/'
+      path: '/'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof EventsRoute
+    }
     '/task/$taskId': {
       id: '/task/$taskId'
       path: '/$taskId'
@@ -171,8 +200,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TaskTaskIdRouteImport
       parentRoute: typeof TaskRoute
     }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof EventsRoute
+    }
   }
 }
+
+interface EventsRouteChildren {
+  EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+}
+
+const EventsRouteChildren: EventsRouteChildren = {
+  EventsEventIdRoute: EventsEventIdRoute,
+  EventsIndexRoute: EventsIndexRoute,
+}
+
+const EventsRouteWithChildren =
+  EventsRoute._addFileChildren(EventsRouteChildren)
 
 interface TaskRouteChildren {
   TaskTaskIdRoute: typeof TaskTaskIdRoute
@@ -186,7 +235,7 @@ const TaskRouteWithChildren = TaskRoute._addFileChildren(TaskRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  EventsRoute: EventsRoute,
+  EventsRoute: EventsRouteWithChildren,
   External_releasesRoute: External_releasesRoute,
   InfoRoute: InfoRoute,
   RepositoriesRoute: RepositoriesRoute,

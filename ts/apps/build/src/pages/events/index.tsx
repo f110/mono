@@ -3,7 +3,7 @@ import {
   Box,
   Chip,
   Container,
-  Link,
+  Link as MuiLink,
   Paper,
   Stack,
   Table,
@@ -15,38 +15,15 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import * as React from 'react'
 import type { GithubEvent } from '../../model/msg_pb'
 import { useListGithubEvents } from '../../hooks/useListGithubEvents'
-
-// stateColor maps the reconciler state name to a MUI palette color. Falls
-// back to "default" for terminal states that the user does not need to act on.
-const stateColor: Record<
-  string,
-  'default' | 'primary' | 'info' | 'success' | 'error' | 'warning'
-> = {
-  PENDING: 'info',
-  PROCESSING: 'primary',
-  SUCCEEDED: 'success',
-  FAILED: 'error',
-  EXPIRED: 'warning',
-  SKIPPED: 'default',
-}
+import { stateColor } from './stateColor'
 
 const formatTime = (ts?: GithubEvent['createdAt']): string =>
   ts ? dayjs(timestampDate(ts)).format('YYYY-MM-DD HH:mm:ss') : ''
-
-// prettyJSON returns status pretty-printed for the tooltip. Invalid JSON is
-// returned unchanged so we never throw inside a render path.
-const prettyJSON = (raw: string): string => {
-  if (!raw) return ''
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2)
-  } catch {
-    return raw
-  }
-}
 
 export const EventsPage: React.FC = () => {
   const events = useListGithubEvents()
@@ -70,7 +47,6 @@ export const EventsPage: React.FC = () => {
                     <TableCell>Event</TableCell>
                     <TableCell>Action</TableCell>
                     <TableCell>State</TableCell>
-                    <TableCell>Status</TableCell>
                     <TableCell>Delivery ID</TableCell>
                     <TableCell>Created</TableCell>
                     <TableCell>Updated</TableCell>
@@ -79,18 +55,25 @@ export const EventsPage: React.FC = () => {
                 <TableBody>
                   {events.map((ev) => (
                     <TableRow key={ev.id}>
-                      <TableCell>{ev.id}</TableCell>
+                      <TableCell>
+                        <Link
+                          to="/events/$eventId"
+                          params={{ eventId: String(ev.id) }}
+                        >
+                          {ev.id}
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         {ev.repository ? (
                           ev.repositoryUrl ? (
-                            <Link
+                            <MuiLink
                               href={ev.repositoryUrl}
                               target="_blank"
                               rel="noopener"
                               underline="hover"
                             >
                               {ev.repository}
-                            </Link>
+                            </MuiLink>
                           ) : (
                             ev.repository
                           )
@@ -108,34 +91,6 @@ export const EventsPage: React.FC = () => {
                             color={stateColor[ev.state] ?? 'default'}
                           />
                         </Tooltip>
-                      </TableCell>
-                      <TableCell sx={{ maxWidth: 320 }}>
-                        {ev.status ? (
-                          <Tooltip
-                            title={
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                                {prettyJSON(ev.status)}
-                              </pre>
-                            }
-                            placement="top"
-                            arrow
-                          >
-                            <Box
-                              component="code"
-                              sx={{
-                                display: 'block',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              {ev.status}
-                            </Box>
-                          </Tooltip>
-                        ) : (
-                          '—'
-                        )}
                       </TableCell>
                       <TableCell>
                         <code style={{ fontSize: '0.75rem' }}>{ev.deliveryId}</code>

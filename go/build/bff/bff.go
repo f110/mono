@@ -2,6 +2,7 @@ package bff
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,8 +12,11 @@ import (
 	"github.com/rs/cors"
 	"go.f110.dev/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/build/config"
@@ -297,13 +301,45 @@ func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[RequestFor
 	return connect.NewResponse(ResponseForceStopTask_builder{}.Build()), nil
 }
 
-func (b *BFF) ListGithubEvents(ctx context.Context, _ *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
-	res, err := b.apiClient.ListGithubEvents(ctx, api.RequestListGithubEvents_builder{}.Build())
+func (b *BFF) ListGithubEvents(ctx context.Context, req *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
+	apiReq := api.RequestListGithubEvents_builder{}
+	if req.Msg.HasEventId() {
+		apiReq.EventId = new(req.Msg.GetEventId())
+	}
+	res, err := b.apiClient.ListGithubEvents(ctx, apiReq.Build())
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, connect.NewError(connect.CodeNotFound, err)
+		}
 		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return connect.NewResponse(ResponseListGithubEvents_builder{Events: res.GetEvents()}.Build()), nil
+	events := res.GetEvents()
+	for _, ev := range events {
+		if y := jsonStatusToYAML(ev.GetStatus()); y != "" {
+			ev.SetStatus(y)
+		}
+	}
+	return connect.NewResponse(ResponseListGithubEvents_builder{Events: events}.Build()), nil
+}
+
+// jsonStatusToYAML converts the reconciler's status JSON to a YAML document
+// for the dashboard, which renders the field as preformatted text. Returns
+// the empty string when the input is empty or not parseable as JSON; the
+// caller leaves the original value in place in that case.
+func jsonStatusToYAML(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	var v any
+	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+		return ""
+	}
+	out, err := yaml.Marshal(v)
+	if err != nil {
+		return ""
+	}
+	return string(out)
 }
 
 func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error) {

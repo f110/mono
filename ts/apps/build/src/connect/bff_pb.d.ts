@@ -397,6 +397,10 @@ export declare const ResponseListExternalReleaseTriggersSchema: GenMessage<Respo
  * @generated from message mono.build.bff.RequestListGithubEvents
  */
 export declare type RequestListGithubEvents = Message<"mono.build.bff.RequestListGithubEvents"> & {
+  /**
+   * @generated from field: int32 event_id = 1;
+   */
+  eventId: number;
 };
 
 /**

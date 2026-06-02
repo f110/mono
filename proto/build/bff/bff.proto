@@ -116,7 +116,9 @@ message ResponseListExternalReleaseTriggers {
   repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
 }
 
-message RequestListGithubEvents {}
+message RequestListGithubEvents {
+  int32 event_id = 1;
+}
 
 message ResponseListGithubEvents {
   repeated mono.build.model.GithubEvent events = 1;

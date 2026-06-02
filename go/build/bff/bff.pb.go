@@ -1669,9 +1669,12 @@ func (b0 ResponseListExternalReleaseTriggers_builder) Build() *ResponseListExter
 }
 
 type RequestListGithubEvents struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_EventId     int32                  `protobuf:"varint,1,opt,name=event_id,json=eventId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *RequestListGithubEvents) Reset() {
@@ -1699,15 +1702,44 @@ func (x *RequestListGithubEvents) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
+func (x *RequestListGithubEvents) GetEventId() int32 {
+	if x != nil {
+		return x.xxx_hidden_EventId
+	}
+	return 0
+}
+
+func (x *RequestListGithubEvents) SetEventId(v int32) {
+	x.xxx_hidden_EventId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestListGithubEvents) HasEventId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestListGithubEvents) ClearEventId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_EventId = 0
+}
+
 type RequestListGithubEvents_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
+	EventId *int32
 }
 
 func (b0 RequestListGithubEvents_builder) Build() *RequestListGithubEvents {
 	m0 := &RequestListGithubEvents{}
 	b, x := &b0, m0
 	_, _ = b, x
+	if b.EventId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_EventId = *b.EventId
+	}
 	return m0
 }
 
@@ -2728,8 +2760,9 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\"RequestListExternalReleaseTriggers\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"k\n" +
 	"#ResponseListExternalReleaseTriggers\x12D\n" +
-	"\btriggers\x18\x01 \x03(\v2(.mono.build.model.ExternalReleaseTriggerR\btriggers\"\x19\n" +
-	"\x17RequestListGithubEvents\"Q\n" +
+	"\btriggers\x18\x01 \x03(\v2(.mono.build.model.ExternalReleaseTriggerR\btriggers\"4\n" +
+	"\x17RequestListGithubEvents\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\x05R\aeventId\"Q\n" +
 	"\x18ResponseListGithubEvents\x125\n" +
 	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"\xe0\b\n" +
 	"\aBFFTask\x12\x0e\n" +

@@ -194,6 +194,7 @@ var githubmock = &simpleCommandComponent{
 	Name: "githubmock-server",
 	Args: []string{
 		"-listen", "127.0.0.1:5620",
+		"-github-url", "http://127.0.0.1:5620",
 		filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), "go/build/dev/githubmock-seed.yaml"),
 	},
 	Ports:         ports{{Name: "githubmock", Number: 5620}},

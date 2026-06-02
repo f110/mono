@@ -9,6 +9,13 @@ name: The Octocat
 ---
 name: example/public-app
 default_branch: main
+webhooks:
+  - url: http://127.0.0.1:8081/webhook
+    events:
+      - push
+      - pull_request
+      - release
+      - issue_comment
 commits:
   - sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     files:
@@ -50,6 +57,13 @@ tags:
 ---
 name: example/private-app
 default_branch: main
+webhooks:
+  - url: http://127.0.0.1:8081/webhook
+    events:
+      - push
+      - pull_request
+      - release
+      - issue_comment
 commits:
   - sha: cccccccccccccccccccccccccccccccccccccccc
     files:
