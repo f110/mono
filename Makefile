@@ -17,6 +17,7 @@ gen:
 	bazel query 'kind(vendor_kubeproto, //go/...)' | xargs -n1 bazel run
 	bazel run //ts/apps/build/src/connect:vendor_bff
 	bazel run //ts/apps/build/src/model:vendor_model
+	bazel query 'kind("_write_source_file", //...)' | xargs -n1 bazel run
 
 deb_packages.bzl: deb_packages.yaml
 	bazel run //build/private/deb_manager -- -conf $(CURDIR)/deb_packages.yaml -macro $(CURDIR)/build/rules/deb/deb_pkg.bzl $(CURDIR)/deb_packages.bzl

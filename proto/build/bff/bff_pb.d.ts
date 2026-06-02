@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
-import type { Job, Repository, TestReport } from "../model/msg_pb";
+import type { ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 
 /**
@@ -362,6 +362,66 @@ export declare type ResponseForceStopTask = Message<"mono.build.bff.ResponseForc
 export declare const ResponseForceStopTaskSchema: GenMessage<ResponseForceStopTask>;
 
 /**
+ * @generated from message mono.build.bff.RequestListExternalReleaseTriggers
+ */
+export declare type RequestListExternalReleaseTriggers = Message<"mono.build.bff.RequestListExternalReleaseTriggers"> & {
+  /**
+   * @generated from field: int32 repository_id = 1;
+   */
+  repositoryId: number;
+};
+
+/**
+ * Describes the message mono.build.bff.RequestListExternalReleaseTriggers.
+ * Use `create(RequestListExternalReleaseTriggersSchema)` to create a new message.
+ */
+export declare const RequestListExternalReleaseTriggersSchema: GenMessage<RequestListExternalReleaseTriggers>;
+
+/**
+ * @generated from message mono.build.bff.ResponseListExternalReleaseTriggers
+ */
+export declare type ResponseListExternalReleaseTriggers = Message<"mono.build.bff.ResponseListExternalReleaseTriggers"> & {
+  /**
+   * @generated from field: repeated mono.build.model.ExternalReleaseTrigger triggers = 1;
+   */
+  triggers: ExternalReleaseTrigger[];
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseListExternalReleaseTriggers.
+ * Use `create(ResponseListExternalReleaseTriggersSchema)` to create a new message.
+ */
+export declare const ResponseListExternalReleaseTriggersSchema: GenMessage<ResponseListExternalReleaseTriggers>;
+
+/**
+ * @generated from message mono.build.bff.RequestListGithubEvents
+ */
+export declare type RequestListGithubEvents = Message<"mono.build.bff.RequestListGithubEvents"> & {
+};
+
+/**
+ * Describes the message mono.build.bff.RequestListGithubEvents.
+ * Use `create(RequestListGithubEventsSchema)` to create a new message.
+ */
+export declare const RequestListGithubEventsSchema: GenMessage<RequestListGithubEvents>;
+
+/**
+ * @generated from message mono.build.bff.ResponseListGithubEvents
+ */
+export declare type ResponseListGithubEvents = Message<"mono.build.bff.ResponseListGithubEvents"> & {
+  /**
+   * @generated from field: repeated mono.build.model.GithubEvent events = 1;
+   */
+  events: GithubEvent[];
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseListGithubEvents.
+ * Use `create(ResponseListGithubEventsSchema)` to create a new message.
+ */
+export declare const ResponseListGithubEventsSchema: GenMessage<ResponseListGithubEvents>;
+
+/**
  * @generated from message mono.build.bff.BFFTask
  */
 export declare type BFFTask = Message<"mono.build.bff.BFFTask"> & {
@@ -608,6 +668,22 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestForceStopTaskSchema;
     output: typeof ResponseForceStopTaskSchema;
+  },
+  /**
+   * @generated from rpc mono.build.bff.BFF.ListExternalReleaseTriggers
+   */
+  listExternalReleaseTriggers: {
+    methodKind: "unary";
+    input: typeof RequestListExternalReleaseTriggersSchema;
+    output: typeof ResponseListExternalReleaseTriggersSchema;
+  },
+  /**
+   * @generated from rpc mono.build.bff.BFF.ListGithubEvents
+   */
+  listGithubEvents: {
+    methodKind: "unary";
+    input: typeof RequestListGithubEventsSchema;
+    output: typeof ResponseListGithubEventsSchema;
   },
 }>;
 

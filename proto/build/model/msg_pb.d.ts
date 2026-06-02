@@ -251,6 +251,148 @@ export declare type TestReport = Message<"mono.build.model.TestReport"> & {
 export declare const TestReportSchema: GenMessage<TestReport>;
 
 /**
+ * GithubEvent surfaces a row from the `github_event` table for the dashboard.
+ * The `state` field carries the proto enum name ("PENDING", "SUCCEEDED", …)
+ * so the frontend does not have to know the numeric mapping. `status` is the
+ * reconciler's progress JSON serialized as a string — the dashboard renders
+ * it raw, since the document's shape depends on event_type.
+ *
+ * @generated from message mono.build.model.GithubEvent
+ */
+export declare type GithubEvent = Message<"mono.build.model.GithubEvent"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string delivery_id = 2;
+   */
+  deliveryId: string;
+
+  /**
+   * @generated from field: string event_type = 3;
+   */
+  eventType: string;
+
+  /**
+   * @generated from field: string action = 4;
+   */
+  action: string;
+
+  /**
+   * @generated from field: string state = 5;
+   */
+  state: string;
+
+  /**
+   * @generated from field: string status = 6;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string last_error = 7;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 8;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 9;
+   */
+  updatedAt?: Timestamp;
+
+  /**
+   * Repository is the full_name (e.g. "owner/repo") parsed out of the
+   * webhook payload at read time. Empty when the payload has no
+   * repository field or is malformed.
+   *
+   * @generated from field: string repository = 10;
+   */
+  repository: string;
+
+  /**
+   * @generated from field: string repository_url = 11;
+   */
+  repositoryUrl: string;
+};
+
+/**
+ * Describes the message mono.build.model.GithubEvent.
+ * Use `create(GithubEventSchema)` to create a new message.
+ */
+export declare const GithubEventSchema: GenMessage<GithubEvent>;
+
+/**
+ * @generated from message mono.build.model.ExternalReleaseTrigger
+ */
+export declare type ExternalReleaseTrigger = Message<"mono.build.model.ExternalReleaseTrigger"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: int32 repository_id = 2;
+   */
+  repositoryId: number;
+
+  /**
+   * @generated from field: string repository_name = 3;
+   */
+  repositoryName: string;
+
+  /**
+   * @generated from field: string repository_url = 4;
+   */
+  repositoryUrl: string;
+
+  /**
+   * @generated from field: string job_name = 5;
+   */
+  jobName: string;
+
+  /**
+   * @generated from field: string provider = 6;
+   */
+  provider: string;
+
+  /**
+   * @generated from field: string external_repo = 7;
+   */
+  externalRepo: string;
+
+  /**
+   * @generated from field: string external_repo_url = 8;
+   */
+  externalRepoUrl: string;
+
+  /**
+   * @generated from field: string kind = 9;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string tag_pattern = 10;
+   */
+  tagPattern: string;
+
+  /**
+   * @generated from field: bool include_prerelease = 11;
+   */
+  includePrerelease: boolean;
+};
+
+/**
+ * Describes the message mono.build.model.ExternalReleaseTrigger.
+ * Use `create(ExternalReleaseTriggerSchema)` to create a new message.
+ */
+export declare const ExternalReleaseTriggerSchema: GenMessage<ExternalReleaseTrigger>;
+
+/**
  * @generated from enum mono.build.model.RepositoryStatus
  */
 export enum RepositoryStatus {
