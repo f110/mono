@@ -7,13 +7,13 @@ import {
   Chip,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TableRow,
   Paper,
   Typography,
 } from '@mui/material'
+import { StyledTableCell, StyledTableRow } from '../../components/Table.tsx'
 import { useListExternalReleaseTriggers } from '../../hooks/useListExternalReleaseTriggers.ts'
 
 export const ExternalReleaseTriggersPage: React.FC = () => {
@@ -33,40 +33,42 @@ export const ExternalReleaseTriggersPage: React.FC = () => {
               <Table size="small" aria-label="external release triggers">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Source Repository</TableCell>
-                    <TableCell>Job</TableCell>
-                    <TableCell>Watched Repository</TableCell>
-                    <TableCell>Kind</TableCell>
-                    <TableCell>Tag Pattern</TableCell>
-                    <TableCell>Pre-release</TableCell>
+                    <StyledTableCell>Source Repository</StyledTableCell>
+                    <StyledTableCell>Job</StyledTableCell>
+                    <StyledTableCell>Watched Repository</StyledTableCell>
+                    <StyledTableCell>Kind</StyledTableCell>
+                    <StyledTableCell>Tag Pattern</StyledTableCell>
+                    <StyledTableCell>Pre-release</StyledTableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {triggers.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>
+                    <StyledTableRow key={t.id}>
+                      <StyledTableCell>
                         {t.repositoryUrl ? (
                           <Link href={t.repositoryUrl}>{t.repositoryName}</Link>
                         ) : (
                           t.repositoryName
                         )}
-                      </TableCell>
-                      <TableCell>{t.jobName}</TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>{t.jobName}</StyledTableCell>
+                      <StyledTableCell>
                         {t.externalRepoUrl ? (
                           <Link href={t.externalRepoUrl}>{t.externalRepo}</Link>
                         ) : (
                           t.externalRepo
                         )}
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         <Chip label={t.kind || 'release'} size="small" />
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         <code>{t.tagPattern || '*'}</code>
-                      </TableCell>
-                      <TableCell>{t.includePrerelease ? 'yes' : 'no'}</TableCell>
-                    </TableRow>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        {t.includePrerelease ? 'yes' : 'no'}
+                      </StyledTableCell>
+                    </StyledTableRow>
                   ))}
                 </TableBody>
               </Table>

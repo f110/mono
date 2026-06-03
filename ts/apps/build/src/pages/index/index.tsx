@@ -269,7 +269,11 @@ export const IndexPage: React.FC = () => {
           </Stack>
 
           <TableContainer component={Paper}>
-            <Table sx={{ width: '100%' }} aria-label="customized table">
+            <Table
+              size="small"
+              sx={{ width: '100%' }}
+              aria-label="customized table"
+            >
               <TableHead>
                 <TableRow>
                   <StyledTableCell></StyledTableCell>

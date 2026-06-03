@@ -8,7 +8,6 @@ import {
   Stack,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TableRow,
@@ -18,6 +17,7 @@ import {
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import * as React from 'react'
+import { StyledTableCell, StyledTableRow } from '../../components/Table.tsx'
 import type { GithubEvent } from '../../model/msg_pb'
 import { useListGithubEvents } from '../../hooks/useListGithubEvents'
 import { stateColor } from './stateColor'
@@ -42,28 +42,28 @@ export const EventsPage: React.FC = () => {
               <Table size="small" aria-label="github events">
                 <TableHead>
                   <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Repository</TableCell>
-                    <TableCell>Event</TableCell>
-                    <TableCell>Action</TableCell>
-                    <TableCell>State</TableCell>
-                    <TableCell>Delivery ID</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell>Updated</TableCell>
+                    <StyledTableCell>ID</StyledTableCell>
+                    <StyledTableCell>Repository</StyledTableCell>
+                    <StyledTableCell>Event</StyledTableCell>
+                    <StyledTableCell>Action</StyledTableCell>
+                    <StyledTableCell>State</StyledTableCell>
+                    <StyledTableCell>Delivery ID</StyledTableCell>
+                    <StyledTableCell>Created</StyledTableCell>
+                    <StyledTableCell>Updated</StyledTableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {events.map((ev) => (
-                    <TableRow key={ev.id}>
-                      <TableCell>
+                    <StyledTableRow key={ev.id}>
+                      <StyledTableCell>
                         <Link
                           to="/events/$eventId"
                           params={{ eventId: String(ev.id) }}
                         >
                           {ev.id}
                         </Link>
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         {ev.repository ? (
                           ev.repositoryUrl ? (
                             <MuiLink
@@ -80,10 +80,10 @@ export const EventsPage: React.FC = () => {
                         ) : (
                           '—'
                         )}
-                      </TableCell>
-                      <TableCell>{ev.eventType}</TableCell>
-                      <TableCell>{ev.action || '—'}</TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>{ev.eventType}</StyledTableCell>
+                      <StyledTableCell>{ev.action || '—'}</StyledTableCell>
+                      <StyledTableCell>
                         <Tooltip title={ev.lastError || ''} placement="top" arrow>
                           <Chip
                             label={ev.state}
@@ -91,13 +91,13 @@ export const EventsPage: React.FC = () => {
                             color={stateColor[ev.state] ?? 'default'}
                           />
                         </Tooltip>
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         <code style={{ fontSize: '0.75rem' }}>{ev.deliveryId}</code>
-                      </TableCell>
-                      <TableCell>{formatTime(ev.createdAt)}</TableCell>
-                      <TableCell>{formatTime(ev.updatedAt)}</TableCell>
-                    </TableRow>
+                      </StyledTableCell>
+                      <StyledTableCell>{formatTime(ev.createdAt)}</StyledTableCell>
+                      <StyledTableCell>{formatTime(ev.updatedAt)}</StyledTableCell>
+                    </StyledTableRow>
                   ))}
                 </TableBody>
               </Table>
