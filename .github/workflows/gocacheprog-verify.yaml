@@ -1,0 +1,34 @@
+name: gocacheprog-verify
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Install gobuildcache
+        run: |
+          go install github.com/richardartoul/gobuildcache@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: go build ./...
+        env:
+          GOCACHEPROG: gobuildcache
+          GOBUILDCACHE_BACKEND_TYPE: gcs
+          GOBUILDCACHE_GCS_BUCKET: gocacheprog-benchmark-test
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+        run: go build ./...
