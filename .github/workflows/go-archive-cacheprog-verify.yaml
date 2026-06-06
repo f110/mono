@@ -12,6 +12,11 @@ on:
           - deflate
           - zstd
           - store
+      tmpdir:
+        description: "Scratch directory parent (GO_ARCHIVE_CACHE_TMPDIR). Empty = OS default."
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build:
@@ -40,4 +45,5 @@ jobs:
           GOCACHEPROG: go-archive-cacheprog
           GO_ARCHIVE_CACHE_FILE: /tmp/go-archive-cache.zip
           GO_ARCHIVE_CACHE_COMPRESSION: ${{ inputs.compression }}
+          GO_ARCHIVE_CACHE_TMPDIR: ${{ inputs.tmpdir }}
         run: go build ./go/cmd/...
