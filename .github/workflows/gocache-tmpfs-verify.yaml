@@ -2,6 +2,12 @@ name: gocache-tmpfs-verify
 
 on:
   workflow_dispatch:
+    inputs:
+      tmpfs:
+        description: "Place GOCACHE on /dev/shm (tmpfs). false = on disk."
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -15,15 +21,26 @@ jobs:
           go-version-file: go.mod
           cache: false
 
-      - name: Prepare GOCACHE on tmpfs
-        run: mkdir -p /dev/shm/go-build
+      - name: Configure GOCACHE
+        id: cfg
+        run: |
+          if [ "${{ inputs.tmpfs }}" = "true" ]; then
+            echo "gocache=/dev/shm/go-build" >> "$GITHUB_OUTPUT"
+            echo "key=gocache-tmpfs" >> "$GITHUB_OUTPUT"
+          else
+            echo "gocache=$HOME/go-build" >> "$GITHUB_OUTPUT"
+            echo "key=gocache-disk" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare GOCACHE
+        run: mkdir -p "${{ steps.cfg.outputs.gocache }}"
 
       - uses: actions/cache@v4
         with:
-          path: /dev/shm/go-build
-          key: gocache-tmpfs
+          path: ${{ steps.cfg.outputs.gocache }}
+          key: ${{ steps.cfg.outputs.key }}
 
       - name: go build ./go/cmd/...
         env:
-          GOCACHE: /dev/shm/go-build
+          GOCACHE: ${{ steps.cfg.outputs.gocache }}
         run: go build ./go/cmd/...
