@@ -2,6 +2,12 @@ name: gocacheprog-verify
 
 on:
   workflow_dispatch:
+    inputs:
+      gcs_prefix:
+        description: "GCS object prefix (used to isolate runs for averaging)"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build:
@@ -30,5 +36,6 @@ jobs:
           GOCACHEPROG: gobuildcache
           GOBUILDCACHE_BACKEND_TYPE: gcs
           GOBUILDCACHE_GCS_BUCKET: gocacheprog-benchmark-test
+          GOBUILDCACHE_GCS_PREFIX: ${{ inputs.gcs_prefix }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: go build ./go/cmd/...

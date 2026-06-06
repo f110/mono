@@ -2,6 +2,16 @@ name: go-archive-cacheprog-verify
 
 on:
   workflow_dispatch:
+    inputs:
+      compression:
+        description: "Archive compression method"
+        required: true
+        type: choice
+        default: deflate
+        options:
+          - deflate
+          - zstd
+          - store
 
 jobs:
   build:
@@ -23,10 +33,11 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: /tmp/go-archive-cache.zip
-          key: go-archive-cacheprog
+          key: go-archive-cacheprog-${{ inputs.compression }}
 
       - name: go build ./go/cmd/...
         env:
           GOCACHEPROG: go-archive-cacheprog
           GO_ARCHIVE_CACHE_FILE: /tmp/go-archive-cache.zip
+          GO_ARCHIVE_CACHE_COMPRESSION: ${{ inputs.compression }}
         run: go build ./go/cmd/...
