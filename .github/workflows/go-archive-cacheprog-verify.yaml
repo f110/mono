@@ -1,0 +1,32 @@
+name: go-archive-cacheprog-verify
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Install go-archive-cacheprog
+        run: |
+          go install go.f110.dev/go-archive-cacheprog@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/cache@v4
+        with:
+          path: /tmp/go-archive-cache.zip
+          key: go-archive-cacheprog
+
+      - name: go build ./go/cmd/...
+        env:
+          GOCACHEPROG: go-archive-cacheprog
+          GO_ARCHIVE_CACHE_FILE: /tmp/go-archive-cache.zip
+        run: go build ./go/cmd/...
