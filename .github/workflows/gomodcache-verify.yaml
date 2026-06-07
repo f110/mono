@@ -1,0 +1,27 @@
+name: gomodcache-verify
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Prepare GOMODCACHE/cache
+        run: mkdir -p ~/go/pkg/mod/cache
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod/cache
+          key: gomodcache-cache
+
+      - name: go build ./go/cmd/...
+        run: go build ./go/cmd/...
