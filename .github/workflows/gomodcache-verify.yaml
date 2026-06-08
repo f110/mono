@@ -2,6 +2,12 @@ name: gomodcache-verify
 
 on:
   workflow_dispatch:
+    inputs:
+      full:
+        description: "Cache entire GOMODCACHE. false = only $GOMODCACHE/cache."
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -15,13 +21,24 @@ jobs:
           go-version-file: go.mod
           cache: false
 
-      - name: Prepare GOMODCACHE/cache
-        run: mkdir -p ~/go/pkg/mod/cache
+      - name: Configure GOMODCACHE path
+        id: cfg
+        run: |
+          if [ "${{ inputs.full }}" = "true" ]; then
+            echo "path=$HOME/go/pkg/mod" >> "$GITHUB_OUTPUT"
+            echo "key=gomodcache-full" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=$HOME/go/pkg/mod/cache" >> "$GITHUB_OUTPUT"
+            echo "key=gomodcache-cache" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare GOMODCACHE
+        run: mkdir -p "${{ steps.cfg.outputs.path }}"
 
       - uses: actions/cache@v4
         with:
-          path: ~/go/pkg/mod/cache
-          key: gomodcache-cache
+          path: ${{ steps.cfg.outputs.path }}
+          key: ${{ steps.cfg.outputs.key }}
 
       - name: go build ./go/cmd/...
         run: go build ./go/cmd/...
