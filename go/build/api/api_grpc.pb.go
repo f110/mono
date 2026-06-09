@@ -23,7 +23,6 @@ const (
 	API_ListRepositories_FullMethodName            = "/mono.build.api.API/ListRepositories"
 	API_SaveRepository_FullMethodName              = "/mono.build.api.API/SaveRepository"
 	API_DeleteRepository_FullMethodName            = "/mono.build.api.API/DeleteRepository"
-	API_SyncRepository_FullMethodName              = "/mono.build.api.API/SyncRepository"
 	API_ListJobs_FullMethodName                    = "/mono.build.api.API/ListJobs"
 	API_InvokeJob_FullMethodName                   = "/mono.build.api.API/InvokeJob"
 	API_ForceStopTask_FullMethodName               = "/mono.build.api.API/ForceStopTask"
@@ -40,7 +39,6 @@ type APIClient interface {
 	ListRepositories(ctx context.Context, in *RequestListRepositories, opts ...grpc.CallOption) (*ResponseListRepositories, error)
 	SaveRepository(ctx context.Context, in *RequestSaveRepository, opts ...grpc.CallOption) (*ResponseSaveRepository, error)
 	DeleteRepository(ctx context.Context, in *RequestDeleteRepository, opts ...grpc.CallOption) (*ResponseDeleteRepository, error)
-	SyncRepository(ctx context.Context, in *RequestSyncRepository, opts ...grpc.CallOption) (*ResponseSyncRepository, error)
 	ListJobs(ctx context.Context, in *RequestListJobs, opts ...grpc.CallOption) (*ResponseListJobs, error)
 	InvokeJob(ctx context.Context, in *RequestInvokeJob, opts ...grpc.CallOption) (*ResponseInvokeJob, error)
 	ForceStopTask(ctx context.Context, in *RequestForceStopTask, opts ...grpc.CallOption) (*ResponseForceStopTask, error)
@@ -91,16 +89,6 @@ func (c *aPIClient) DeleteRepository(ctx context.Context, in *RequestDeleteRepos
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResponseDeleteRepository)
 	err := c.cc.Invoke(ctx, API_DeleteRepository_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *aPIClient) SyncRepository(ctx context.Context, in *RequestSyncRepository, opts ...grpc.CallOption) (*ResponseSyncRepository, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResponseSyncRepository)
-	err := c.cc.Invoke(ctx, API_SyncRepository_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +163,6 @@ type APIServer interface {
 	ListRepositories(context.Context, *RequestListRepositories) (*ResponseListRepositories, error)
 	SaveRepository(context.Context, *RequestSaveRepository) (*ResponseSaveRepository, error)
 	DeleteRepository(context.Context, *RequestDeleteRepository) (*ResponseDeleteRepository, error)
-	SyncRepository(context.Context, *RequestSyncRepository) (*ResponseSyncRepository, error)
 	ListJobs(context.Context, *RequestListJobs) (*ResponseListJobs, error)
 	InvokeJob(context.Context, *RequestInvokeJob) (*ResponseInvokeJob, error)
 	ForceStopTask(context.Context, *RequestForceStopTask) (*ResponseForceStopTask, error)
@@ -202,9 +189,6 @@ func (UnimplementedAPIServer) SaveRepository(context.Context, *RequestSaveReposi
 }
 func (UnimplementedAPIServer) DeleteRepository(context.Context, *RequestDeleteRepository) (*ResponseDeleteRepository, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRepository not implemented")
-}
-func (UnimplementedAPIServer) SyncRepository(context.Context, *RequestSyncRepository) (*ResponseSyncRepository, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SyncRepository not implemented")
 }
 func (UnimplementedAPIServer) ListJobs(context.Context, *RequestListJobs) (*ResponseListJobs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListJobs not implemented")
@@ -312,24 +296,6 @@ func _API_DeleteRepository_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).DeleteRepository(ctx, req.(*RequestDeleteRepository))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _API_SyncRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestSyncRepository)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).SyncRepository(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: API_SyncRepository_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).SyncRepository(ctx, req.(*RequestSyncRepository))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -464,10 +430,6 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteRepository",
 			Handler:    _API_DeleteRepository_Handler,
-		},
-		{
-			MethodName: "SyncRepository",
-			Handler:    _API_SyncRepository_Handler,
 		},
 		{
 			MethodName: "ListJobs",

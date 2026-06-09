@@ -19,7 +19,6 @@ service BFF {
   rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
   rpc SaveRepository(RequestSaveRepository) returns (ResponseSaveRepository);
   rpc RemoveRepository(RequestRemoveRepository) returns (ResponseRemoveRepository);
-  rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
   rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
@@ -95,12 +94,6 @@ message RequestRestartTask {
 }
 
 message ResponseRestartTask {}
-
-message RequestSyncRepository {
-  int32 repository_id = 1;
-}
-
-message ResponseSyncRepository {}
 
 message RequestForceStopTask {
   int32 task_id = 1;

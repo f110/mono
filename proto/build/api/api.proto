@@ -13,7 +13,6 @@ service API {
   rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
   rpc SaveRepository(RequestSaveRepository) returns (ResponseSaveRepository);
   rpc DeleteRepository(RequestDeleteRepository) returns (ResponseDeleteRepository);
-  rpc SyncRepository(RequestSyncRepository) returns (ResponseSyncRepository);
   rpc ListJobs(RequestListJobs) returns (ResponseListJobs);
   rpc InvokeJob(RequestInvokeJob) returns (ResponseInvokeJob);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
@@ -66,13 +65,6 @@ message RequestListJobs {
 message ResponseListJobs {
   repeated mono.build.model.Job jobs = 1;
 }
-
-message RequestSyncRepository {
-  int32 repository_id = 1;
-  bool  async         = 2;
-}
-
-message ResponseSyncRepository {}
 
 message RequestInvokeJob {
   int32  task_id       = 1;

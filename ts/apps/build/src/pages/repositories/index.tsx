@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf'
-import { useMutation, useQuery } from '@connectrpc/connect-query'
+import { useQuery } from '@connectrpc/connect-query'
 import { useState } from 'react'
 import * as React from 'react'
 import {
@@ -15,13 +15,11 @@ import {
   IconButton,
   Container,
   Badge,
-  CircularProgress,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SourceIcon from '@mui/icons-material/Source'
 import LockIcon from '@mui/icons-material/Lock'
-import SyncIcon from '@mui/icons-material/Sync'
 import { useForm } from 'react-hook-form'
 import { NewRepositoryModal } from '../../components/NewRepositoryModal.tsx'
 import { BFF } from '../../connect/bff_pb'
@@ -74,11 +72,6 @@ export const RepositoriesPage: React.FC = () => {
       repositoryId: result,
     })
   }
-  const { mutate: syncRepository, isPending: isSyncing, variables: syncVariables } = useMutation(BFF.method.syncRepository)
-  const onSyncRepository = (id: number) => {
-    syncRepository({ repositoryId: id })
-  }
-
   return (
     <Container>
       <Box sx={{ width: '100%' }}>
@@ -99,26 +92,13 @@ export const RepositoriesPage: React.FC = () => {
               <ListItem
                 key={repository.name}
                 secondaryAction={
-                  <Stack direction="row">
-                    <IconButton
-                      aria-label="sync"
-                      onClick={() => onSyncRepository(repository.id)}
-                      disabled={isSyncing && syncVariables?.repositoryId === repository.id}
-                    >
-                      {isSyncing && syncVariables?.repositoryId === repository.id ? (
-                        <CircularProgress size={24} />
-                      ) : (
-                        <SyncIcon color="primary" />
-                      )}
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={() => openDialog(repository)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => openDialog(repository)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
                 }
               >
                 <ListItemAvatar>

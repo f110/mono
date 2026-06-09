@@ -12,6 +12,7 @@ CREATE TABLE `source_repository` (
 	`private` TINYINT(1) NOT NULL,
 	`status` INTEGER UNSIGNED NOT NULL,
 	`default_branch` VARCHAR(255) NOT NULL,
+	`bazel_version` VARCHAR(255) NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	PRIMARY KEY(`id`)
@@ -87,6 +88,7 @@ DROP TABLE IF EXISTS `job`;
 CREATE TABLE `job` (
 	`repository_id` INTEGER NOT NULL,
 	`name` VARCHAR(255) NOT NULL,
+	`configuration` BLOB NOT NULL,
 	PRIMARY KEY(`repository_id`,`name`)
 ) Engine=InnoDB;
 

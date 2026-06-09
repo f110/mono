@@ -13,14 +13,6 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type TestStatus uint32
-
-const (
-	TestStatusPassed TestStatus = 0
-	TestStatusFlaky  TestStatus = 1
-	TestStatusFailed TestStatus = 2
-)
-
 type SourceRepositoryStatus uint32
 
 const (
@@ -40,6 +32,14 @@ const (
 	GithubEventStateSkipped    GithubEventState = 5
 )
 
+type TestStatus uint32
+
+const (
+	TestStatusPassed TestStatus = 0
+	TestStatusFlaky  TestStatus = 1
+	TestStatusFailed TestStatus = 2
+)
+
 type SourceRepository struct {
 	Id            int32
 	Url           string
@@ -48,8 +48,12 @@ type SourceRepository struct {
 	Private       bool
 	Status        SourceRepositoryStatus
 	DefaultBranch string
-	CreatedAt     time.Time
-	UpdatedAt     *time.Time
+	// bazel_version mirrors the .bazelversion file at the tip of default_branch.
+	// Refreshed by the push reconciler so InvokeJob does not need to fetch it
+	// from GitHub.
+	BazelVersion string
+	CreatedAt    time.Time
+	UpdatedAt    *time.Time
 
 	mu   sync.Mutex
 	mark *SourceRepository
@@ -72,6 +76,7 @@ func (e *SourceRepository) IsChanged() bool {
 		e.Private != e.mark.Private ||
 		e.Status != e.mark.Status ||
 		e.DefaultBranch != e.mark.DefaultBranch ||
+		e.BazelVersion != e.mark.BazelVersion ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -99,6 +104,9 @@ func (e *SourceRepository) ChangedColumn() []ddl.Column {
 	if e.DefaultBranch != e.mark.DefaultBranch {
 		res = append(res, ddl.Column{Name: "default_branch", Value: e.DefaultBranch})
 	}
+	if e.BazelVersion != e.mark.BazelVersion {
+		res = append(res, ddl.Column{Name: "bazel_version", Value: e.BazelVersion})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -122,6 +130,7 @@ func (e *SourceRepository) Copy() *SourceRepository {
 		Private:       e.Private,
 		Status:        e.Status,
 		DefaultBranch: e.DefaultBranch,
+		BazelVersion:  e.BazelVersion,
 		CreatedAt:     e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {
@@ -574,10 +583,19 @@ func (e *TestReport) Copy() *TestReport {
 	return n
 }
 
-// Job table stores the job definition for manually triggerable jobs defined in the default branch.
+// Job lists the manually-triggerable jobs (i.e. those whose Event includes
+// EventManual) defined in the default branch of the source repository. Jobs
+// that are not manually triggerable (push-only, external_release, etc.) are
+// NOT stored here. The push reconciler refreshes this table whenever the
+// default branch is updated so InvokeJob can dispatch a build without
+// re-reading the cue files from GitHub.
+//
+// `configuration` is the JSON produced by config.MarshalJob for the matching
+// JobV2; InvokeJob decodes it with config.UnmarshalJobV2.
 type Job struct {
-	RepositoryId int32
-	Name         string
+	RepositoryId  int32
+	Name          string
+	Configuration []byte
 
 	Repository *SourceRepository
 
@@ -596,7 +614,7 @@ func (e *Job) IsChanged() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return false
+	return !bytes.Equal(e.Configuration, e.mark.Configuration)
 }
 
 func (e *Job) ChangedColumn() []ddl.Column {
@@ -604,14 +622,18 @@ func (e *Job) ChangedColumn() []ddl.Column {
 	defer e.mu.Unlock()
 
 	res := make([]ddl.Column, 0)
+	if !bytes.Equal(e.Configuration, e.mark.Configuration) {
+		res = append(res, ddl.Column{Name: "configuration", Value: e.Configuration})
+	}
 
 	return res
 }
 
 func (e *Job) Copy() *Job {
 	n := &Job{
-		RepositoryId: e.RepositoryId,
-		Name:         e.Name,
+		RepositoryId:  e.RepositoryId,
+		Name:          e.Name,
+		Configuration: e.Configuration,
 	}
 
 	if e.Repository != nil {

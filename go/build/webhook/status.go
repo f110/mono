@@ -10,6 +10,7 @@ type PushStatus struct {
 	SkipReason           string     `json:"skip_reason,omitempty"`
 	ConfigFetchedAt      *time.Time `json:"config_fetched_at,omitempty"`
 	ExternalReconciledAt *time.Time `json:"external_reconciled_at,omitempty"`
+	JobsReconciledAt     *time.Time `json:"jobs_reconciled_at,omitempty"`
 	DispatchedTaskIDs    []int32    `json:"dispatched_task_ids,omitempty"`
 }
 

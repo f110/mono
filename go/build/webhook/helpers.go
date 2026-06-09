@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -79,6 +80,61 @@ func dispatchBuilds(ctx context.Context, builder Builder, owner, repoName string
 		dispatched = append(dispatched, tasks...)
 	}
 	return dispatched, nil
+}
+
+// reconcileJobs syncs the `job` table for repo with the manually-triggerable
+// jobs in the freshly-parsed config. The `job` table is the cache InvokeJob
+// reads from, so non-manual jobs are intentionally excluded. Each row's
+// `configuration` column stores the JSON returned by config.MarshalJob so the
+// API handler can hydrate a JobV2 without going back to GitHub.
+func reconcileJobs(ctx context.Context, daos dao.Options, repo *database.SourceRepository, jobs []*config.JobV2) error {
+	want := make(map[string]*config.JobV2)
+	for _, j := range jobs {
+		if !enumerable.IsInclude(j.Event, config.EventManual) {
+			continue
+		}
+		want[j.Name] = j
+	}
+
+	existing, err := daos.Job.ListByRepositoryId(ctx, repo.Id)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	existingByName := make(map[string]*database.Job, len(existing))
+	for _, e := range existing {
+		existingByName[e.Name] = e
+	}
+
+	for name, e := range existingByName {
+		if _, keep := want[name]; keep {
+			continue
+		}
+		if err := daos.Job.Delete(ctx, e.RepositoryId, e.Name); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+
+	for name, j := range want {
+		conf, err := config.MarshalJob(j)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if e, ok := existingByName[name]; ok {
+			e.Configuration = conf
+			if err := daos.Job.Update(ctx, e); err != nil {
+				return xerrors.WithStack(err)
+			}
+		} else {
+			if _, err := daos.Job.Create(ctx, &database.Job{
+				RepositoryId:  repo.Id,
+				Name:          name,
+				Configuration: conf,
+			}); err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
+	}
+	return nil
 }
 
 // reconcileExternalReleaseTriggers writes the external_release_trigger rows

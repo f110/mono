@@ -306,34 +306,6 @@ export declare type ResponseRestartTask = Message<"mono.build.bff.ResponseRestar
 export declare const ResponseRestartTaskSchema: GenMessage<ResponseRestartTask>;
 
 /**
- * @generated from message mono.build.bff.RequestSyncRepository
- */
-export declare type RequestSyncRepository = Message<"mono.build.bff.RequestSyncRepository"> & {
-  /**
-   * @generated from field: int32 repository_id = 1;
-   */
-  repositoryId: number;
-};
-
-/**
- * Describes the message mono.build.bff.RequestSyncRepository.
- * Use `create(RequestSyncRepositorySchema)` to create a new message.
- */
-export declare const RequestSyncRepositorySchema: GenMessage<RequestSyncRepository>;
-
-/**
- * @generated from message mono.build.bff.ResponseSyncRepository
- */
-export declare type ResponseSyncRepository = Message<"mono.build.bff.ResponseSyncRepository"> & {
-};
-
-/**
- * Describes the message mono.build.bff.ResponseSyncRepository.
- * Use `create(ResponseSyncRepositorySchema)` to create a new message.
- */
-export declare const ResponseSyncRepositorySchema: GenMessage<ResponseSyncRepository>;
-
-/**
  * @generated from message mono.build.bff.RequestForceStopTask
  */
 export declare type RequestForceStopTask = Message<"mono.build.bff.RequestForceStopTask"> & {
@@ -648,14 +620,6 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestRemoveRepositorySchema;
     output: typeof ResponseRemoveRepositorySchema;
-  },
-  /**
-   * @generated from rpc mono.build.bff.BFF.SyncRepository
-   */
-  syncRepository: {
-    methodKind: "unary";
-    input: typeof RequestSyncRepositorySchema;
-    output: typeof ResponseSyncRepositorySchema;
   },
   /**
    * @generated from rpc mono.build.bff.BFF.RestartTask

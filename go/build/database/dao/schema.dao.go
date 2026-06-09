@@ -66,7 +66,7 @@ func newExecOpt(opts ...ExecOption) *execOpt {
 }
 
 type execConn interface {
-	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
 type SourceRepository struct {
@@ -84,7 +84,7 @@ type SourceRepositoryInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ SourceRepositoryInterface = &SourceRepository{}
+var _ SourceRepositoryInterface = (*SourceRepository)(nil)
 
 func NewSourceRepository(conn *sql.DB) *SourceRepository {
 	return &SourceRepository{
@@ -115,7 +115,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `source_repository` WHERE `id` = ?", id)
 
 	v := &database.SourceRepository{}
-	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.Status, &v.DefaultBranch, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.Status, &v.DefaultBranch, &v.BazelVersion, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -133,11 +133,12 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.SourceRepository, 0, len(id))
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
@@ -148,7 +149,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`, `updated_at` FROM `source_repository`"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository`"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -168,11 +169,12 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -184,7 +186,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -205,11 +207,12 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -230,8 +233,8 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, sourceRepository.Status, sourceRepository.DefaultBranch, time.Now(),
+		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, sourceRepository.Status, sourceRepository.DefaultBranch, sourceRepository.BazelVersion, time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -292,7 +295,7 @@ func (d *SourceRepository) Update(ctx context.Context, sourceRepository *databas
 
 	changedColumn := sourceRepository.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -340,7 +343,7 @@ type TaskInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ TaskInterface = &Task{}
+var _ TaskInterface = (*Task)(nil)
 
 func NewTask(conn *sql.DB) *Task {
 	return &Task{
@@ -396,6 +399,7 @@ func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0, len(id))
 	for rows.Next() {
@@ -447,6 +451,7 @@ func (d *Task) ListAll(ctx context.Context, opt ...ListOption) ([]*database.Task
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -500,6 +505,7 @@ func (d *Task) ListOffsetAll(ctx context.Context, id int32, opt ...ListOption) (
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -553,6 +559,7 @@ func (d *Task) ListByRepositoryId(ctx context.Context, repositoryId int32, opt .
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -605,6 +612,7 @@ func (d *Task) ListPending(ctx context.Context, opt ...ListOption) ([]*database.
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -658,6 +666,7 @@ func (d *Task) ListUniqJobName(ctx context.Context, repositoryId int32, opt ...L
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -712,6 +721,7 @@ func (d *Task) ListByRevision(ctx context.Context, repositoryId int32, revision 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Task, 0)
 	for rows.Next() {
@@ -815,7 +825,7 @@ func (d *Task) Update(ctx context.Context, task *database.Task, opt ...ExecOptio
 
 	changedColumn := task.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -857,7 +867,7 @@ type TrustedUserInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ TrustedUserInterface = &TrustedUser{}
+var _ TrustedUserInterface = (*TrustedUser)(nil)
 
 func NewTrustedUser(conn *sql.DB) *TrustedUser {
 	return &TrustedUser{
@@ -906,6 +916,7 @@ func (d *TrustedUser) SelectMulti(ctx context.Context, id ...int32) ([]*database
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.TrustedUser, 0, len(id))
 	for rows.Next() {
@@ -941,6 +952,7 @@ func (d *TrustedUser) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.TrustedUser, 0)
 	for rows.Next() {
@@ -978,6 +990,7 @@ func (d *TrustedUser) ListByGithubId(ctx context.Context, githubId int64, opt ..
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.TrustedUser, 0)
 	for rows.Next() {
@@ -1065,7 +1078,7 @@ func (d *TrustedUser) Update(ctx context.Context, trustedUser *database.TrustedU
 
 	changedColumn := trustedUser.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -1106,7 +1119,7 @@ type PermitPullRequestInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ PermitPullRequestInterface = &PermitPullRequest{}
+var _ PermitPullRequestInterface = (*PermitPullRequest)(nil)
 
 func NewPermitPullRequest(conn *sql.DB) *PermitPullRequest {
 	return &PermitPullRequest{
@@ -1155,6 +1168,7 @@ func (d *PermitPullRequest) SelectMulti(ctx context.Context, id ...int32) ([]*da
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.PermitPullRequest, 0, len(id))
 	for rows.Next() {
@@ -1192,6 +1206,7 @@ func (d *PermitPullRequest) ListByRepositoryAndNumber(ctx context.Context, repos
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.PermitPullRequest, 0)
 	for rows.Next() {
@@ -1279,7 +1294,7 @@ func (d *PermitPullRequest) Update(ctx context.Context, permitPullRequest *datab
 
 	changedColumn := permitPullRequest.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -1323,7 +1338,7 @@ type TestReportInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ TestReportInterface = &TestReport{}
+var _ TestReportInterface = (*TestReport)(nil)
 
 func NewTestReport(conn *sql.DB) *TestReport {
 	return &TestReport{
@@ -1385,6 +1400,7 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.TestReport, 0, len(id))
 	for rows.Next() {
@@ -1447,6 +1463,7 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.TestReport, 0)
 	for rows.Next() {
@@ -1560,7 +1577,7 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 
 	changedColumn := testReport.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -1600,7 +1617,7 @@ type JobInterface interface {
 	Delete(ctx context.Context, repositoryId int32, name string, opt ...ExecOption) error
 }
 
-var _ JobInterface = &Job{}
+var _ JobInterface = (*Job)(nil)
 
 func NewJob(conn *sql.DB) *Job {
 	return &Job{
@@ -1632,7 +1649,7 @@ func (d *Job) Select(ctx context.Context, repositoryId int32, name string) (*dat
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `job` WHERE `repository_id` = ? AND `name` = ?", repositoryId, name)
 
 	v := &database.Job{}
-	if err := row.Scan(&v.RepositoryId, &v.Name); err != nil {
+	if err := row.Scan(&v.RepositoryId, &v.Name, &v.Configuration); err != nil {
 		return nil, err
 	}
 
@@ -1648,7 +1665,7 @@ func (d *Job) Select(ctx context.Context, repositoryId int32, name string) (*dat
 
 func (d *Job) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ...ListOption) ([]*database.Job, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `repository_id`, `name` FROM `job` WHERE `repository_id` = ?"
+	query := "SELECT `repository_id`, `name`, `configuration` FROM `job` WHERE `repository_id` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`repository_id`,`name`"
@@ -1669,11 +1686,12 @@ func (d *Job) ListByRepositoryId(ctx context.Context, repositoryId int32, opt ..
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.Job, 0)
 	for rows.Next() {
 		r := &database.Job{}
-		if err := rows.Scan(&r.RepositoryId, &r.Name); err != nil {
+		if err := rows.Scan(&r.RepositoryId, &r.Name, &r.Configuration); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -1710,8 +1728,8 @@ func (d *Job) Create(ctx context.Context, job *database.Job, opt ...ExecOption) 
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `job` (`repository_id`, `name`) VALUES (?, ?)",
-		job.RepositoryId, job.Name,
+		"INSERT INTO `job` (`repository_id`, `name`, `configuration`) VALUES (?, ?, ?)",
+		job.RepositoryId, job.Name, job.Configuration,
 	)
 	if err != nil {
 		return nil, err
@@ -1767,7 +1785,7 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) 
 
 	changedColumn := job.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -1809,7 +1827,7 @@ type ExternalReleaseTriggerInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ ExternalReleaseTriggerInterface = &ExternalReleaseTrigger{}
+var _ ExternalReleaseTriggerInterface = (*ExternalReleaseTrigger)(nil)
 
 func NewExternalReleaseTrigger(conn *sql.DB) *ExternalReleaseTrigger {
 	return &ExternalReleaseTrigger{
@@ -1865,6 +1883,7 @@ func (d *ExternalReleaseTrigger) SelectMulti(ctx context.Context, id ...int32) (
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.ExternalReleaseTrigger, 0, len(id))
 	for rows.Next() {
@@ -1916,6 +1935,7 @@ func (d *ExternalReleaseTrigger) ListAll(ctx context.Context, opt ...ListOption)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.ExternalReleaseTrigger, 0)
 	for rows.Next() {
@@ -1969,6 +1989,7 @@ func (d *ExternalReleaseTrigger) ListByRepositoryId(ctx context.Context, reposit
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.ExternalReleaseTrigger, 0)
 	for rows.Next() {
@@ -2072,7 +2093,7 @@ func (d *ExternalReleaseTrigger) Update(ctx context.Context, externalReleaseTrig
 
 	changedColumn := externalReleaseTrigger.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -2115,7 +2136,7 @@ type GithubEventInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ GithubEventInterface = &GithubEvent{}
+var _ GithubEventInterface = (*GithubEvent)(nil)
 
 func NewGithubEvent(conn *sql.DB) *GithubEvent {
 	return &GithubEvent{
@@ -2164,6 +2185,7 @@ func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.GithubEvent, 0, len(id))
 	for rows.Next() {
@@ -2199,6 +2221,7 @@ func (d *GithubEvent) ListAll(ctx context.Context, opt ...ListOption) ([]*databa
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.GithubEvent, 0)
 	for rows.Next() {
@@ -2251,6 +2274,7 @@ func (d *GithubEvent) ListByState(ctx context.Context, state uint32, opt ...List
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.GithubEvent, 0)
 	for rows.Next() {
@@ -2338,7 +2362,7 @@ func (d *GithubEvent) Update(ctx context.Context, githubEvent *database.GithubEv
 
 	changedColumn := githubEvent.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -2382,7 +2406,7 @@ type ExternalReleaseHistoryInterface interface {
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
 }
 
-var _ ExternalReleaseHistoryInterface = &ExternalReleaseHistory{}
+var _ ExternalReleaseHistoryInterface = (*ExternalReleaseHistory)(nil)
 
 func NewExternalReleaseHistory(conn *sql.DB) *ExternalReleaseHistory {
 	return &ExternalReleaseHistory{
@@ -2438,6 +2462,7 @@ func (d *ExternalReleaseHistory) SelectMulti(ctx context.Context, id ...int32) (
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.ExternalReleaseHistory, 0, len(id))
 	for rows.Next() {
@@ -2491,6 +2516,7 @@ func (d *ExternalReleaseHistory) ListByRepositoryAndJob(ctx context.Context, rep
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	res := make([]*database.ExternalReleaseHistory, 0)
 	for rows.Next() {
@@ -2618,7 +2644,7 @@ func (d *ExternalReleaseHistory) Update(ctx context.Context, externalReleaseHist
 
 	changedColumn := externalReleaseHistory.ChangedColumn()
 	cols := make([]string, len(changedColumn)+1)
-	values := make([]interface{}, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value

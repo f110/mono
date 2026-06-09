@@ -143,61 +143,6 @@ func (s *apiService) DeleteRepository(ctx context.Context, req *RequestDeleteRep
 	return ResponseDeleteRepository_builder{}.Build(), nil
 }
 
-func (s *apiService) SyncRepository(ctx context.Context, req *RequestSyncRepository) (*ResponseSyncRepository, error) {
-	repository, err := s.dao.Repository.Select(ctx, req.GetRepositoryId())
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "repository not found")
-	}
-	u, err := url.Parse(repository.Url)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to parse repository url")
-	}
-	p := strings.Split(u.Path, "/")
-	owner, repoName := p[1], p[2]
-
-	// Update job configurations
-	c, err := config.ReadFromRepository(ctx, s.githubClient, owner, repoName)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to read config")
-	}
-	if c == nil {
-		return ResponseSyncRepository_builder{}.Build(), nil
-	}
-
-	manuallyTriggerableJobs := enumerable.FindAll(c.Jobs, func(job *config.JobV2) bool { return enumerable.IsInclude(job.Event, config.EventManual) })
-	if len(manuallyTriggerableJobs) == 0 {
-		return ResponseSyncRepository_builder{}.Build(), nil
-	}
-	jobs, err := s.dao.Job.ListByRepositoryId(ctx, repository.Id)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to list jobs")
-	}
-	for _, v := range jobs {
-		if err := s.dao.Job.Delete(ctx, v.RepositoryId, v.Name); err != nil {
-			return nil, status.Error(codes.Internal, "failed to delete job")
-		}
-	}
-	for _, v := range manuallyTriggerableJobs {
-		if _, err := s.dao.Job.Create(ctx, &database.Job{RepositoryId: repository.Id, Name: v.Name}); err != nil {
-			return nil, status.Error(codes.Internal, "failed to create job")
-		}
-	}
-
-	repo, _, err := s.githubClient.Repositories.Get(ctx, owner, repoName)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to get repository")
-	}
-	if repo.GetDefaultBranch() != repository.DefaultBranch {
-		repository.DefaultBranch = repo.GetDefaultBranch()
-	}
-
-	repository.Status = database.SourceRepositoryStatusReady
-	if err := s.dao.Repository.Update(ctx, repository); err != nil {
-		return nil, status.Error(codes.Internal, "failed to update repository")
-	}
-	return ResponseSyncRepository_builder{}.Build(), nil
-}
-
 func (s *apiService) ListJobs(ctx context.Context, req *RequestListJobs) (*ResponseListJobs, error) {
 	j, err := s.dao.Job.ListByRepositoryId(ctx, req.GetRepositoryId())
 	if err != nil {
@@ -266,7 +211,6 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 		return nil, status.Error(codes.InvalidArgument, "no repository or job name specified")
 	}
 
-	var taskID int32
 	repo, err := s.dao.Repository.Select(ctx, req.GetRepositoryId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "repository not found")
@@ -277,21 +221,23 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	}
 	p := strings.Split(u.Path, "/")
 	owner, repoName := p[1], p[2]
-	conf, err := config.ReadFromRepository(ctx, s.githubClient, owner, repoName)
+	jobRow, err := s.dao.Job.Select(ctx, repo.Id, req.GetJobName())
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to read config")
+		return nil, status.Error(codes.NotFound, "job not found")
 	}
-	if conf == nil {
-		return nil, status.Error(codes.Internal, "failed to read config")
+	if len(jobRow.Configuration) == 0 {
+		return nil, status.Error(codes.FailedPrecondition, "job configuration is not cached yet")
 	}
-	i := enumerable.Index(conf.Jobs, func(job *config.JobV2) bool { return job.Name == req.GetJobName() })
-	job := conf.Jobs[i]
+	job := &config.JobV2{}
+	if err := config.UnmarshalJobV2(jobRow.Configuration, job, owner, repoName); err != nil {
+		return nil, status.Error(codes.Internal, "failed to decode job configuration")
+	}
 	newTasks, err := s.builder.Build(
 		ctx,
 		repo,
 		job,
 		repo.DefaultBranch,
-		conf.BazelVersion,
+		repo.BazelVersion,
 		job.Command,
 		job.Targets,
 		job.Platforms,
@@ -304,9 +250,8 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	if newTasks == nil {
 		return nil, status.Error(codes.Internal, "failed to invoke job")
 	}
-	taskID = newTasks[0].Id
 
-	return ResponseInvokeJob_builder{TaskId: new(taskID)}.Build(), nil
+	return ResponseInvokeJob_builder{TaskId: new(newTasks[0].Id)}.Build(), nil
 }
 
 func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {

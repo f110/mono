@@ -107,6 +107,24 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 		}
 	}
 
+	if repo != nil && status.JobsReconciledAt == nil {
+		if err := reconcileJobs(ctx, r.dao, repo, conf.Jobs); err != nil {
+			// Failing to refresh the manual-job cache is non-fatal: InvokeJob
+			// can still fall back to reading from GitHub. Log and continue
+			// so a transient DB hiccup doesn't block the build dispatch.
+			slogger.Log.Warn("Failed to reconcile jobs", slog.String("repo", repoName), slogger.E(err))
+		} else {
+			n := time.Now()
+			status.JobsReconciledAt = &n
+		}
+		if repo.BazelVersion != conf.BazelVersion {
+			repo.BazelVersion = conf.BazelVersion
+			if err := r.dao.Repository.Update(ctx, repo); err != nil {
+				slogger.Log.Warn("Failed to update bazel_version", slog.String("repo", repoName), slogger.E(err))
+			}
+		}
+	}
+
 	if status.DispatchedTaskIDs == nil {
 		jobs := conf.Job(config.EventPush)
 		tasks, err := dispatchBuilds(ctx, r.builder, owner, repoName, repo, jobs, conf.BazelVersion, revision, "push", true)

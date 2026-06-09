@@ -274,13 +274,6 @@ func (b *BFF) RemoveRepository(ctx context.Context, req *connect.Request[Request
 	return connect.NewResponse(ResponseRemoveRepository_builder{}.Build()), nil
 }
 
-func (b *BFF) SyncRepository(ctx context.Context, req *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
-	if _, err := b.apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: new(req.Msg.GetRepositoryId())}.Build()); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	return connect.NewResponse(ResponseSyncRepository_builder{}.Build()), nil
-}
-
 func (b *BFF) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{TaskId: new(req.Msg.GetTaskId())}.Build())
 	if err != nil {

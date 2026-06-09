@@ -36,6 +36,10 @@ message SourceRepository {
   bool private                          = 5;
   SourceRepositoryStatus status         = 6;
   string                 default_branch = 7;
+  // bazel_version mirrors the .bazelversion file at the tip of default_branch.
+  // Refreshed by the push reconciler so InvokeJob does not need to fetch it
+  // from GitHub.
+  string bazel_version = 8;
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"
@@ -186,10 +190,19 @@ message TestReport {
   };
 }
 
-// Job table stores the job definition for manually triggerable jobs defined in the default branch.
+// Job lists the manually-triggerable jobs (i.e. those whose Event includes
+// EventManual) defined in the default branch of the source repository. Jobs
+// that are not manually triggerable (push-only, external_release, etc.) are
+// NOT stored here. The push reconciler refreshes this table whenever the
+// default branch is updated so InvokeJob can dispatch a build without
+// re-reading the cue files from GitHub.
+//
+// `configuration` is the JSON produced by config.MarshalJob for the matching
+// JobV2; InvokeJob decodes it with config.UnmarshalJobV2.
 message Job {
-  SourceRepository repository = 1;
-  string           name       = 2;
+  SourceRepository repository    = 1;
+  string           name          = 2;
+  bytes            configuration = 3;
 
   option (dev.f110.ddl.table) = {
     primary_key: "repository"

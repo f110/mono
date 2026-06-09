@@ -39,24 +39,4 @@ func Repositories(rootCmd *cli.Command, endpoint *string) {
 		},
 	}
 	repo.AddCommand(list)
-
-	var repositoryID int
-	sync := &cli.Command{
-		Use: "sync",
-		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			apiClient, err := newClient(endpoint)
-			if err != nil {
-				return err
-			}
-
-			_, err = apiClient.SyncRepository(ctx, api.RequestSyncRepository_builder{RepositoryId: new(int32(repositoryID))}.Build())
-			if err != nil {
-				return xerrors.WithStack(err)
-			}
-			fmt.Println("OK")
-			return nil
-		},
-	}
-	sync.Flags().Int("repository-id", "Repository ID").Var(&repositoryID).Required()
-	repo.AddCommand(sync)
 }

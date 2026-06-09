@@ -48,8 +48,6 @@ const (
 	BFFSaveRepositoryProcedure = "/mono.build.bff.BFF/SaveRepository"
 	// BFFRemoveRepositoryProcedure is the fully-qualified name of the BFF's RemoveRepository RPC.
 	BFFRemoveRepositoryProcedure = "/mono.build.bff.BFF/RemoveRepository"
-	// BFFSyncRepositoryProcedure is the fully-qualified name of the BFF's SyncRepository RPC.
-	BFFSyncRepositoryProcedure = "/mono.build.bff.BFF/SyncRepository"
 	// BFFRestartTaskProcedure is the fully-qualified name of the BFF's RestartTask RPC.
 	BFFRestartTaskProcedure = "/mono.build.bff.BFF/RestartTask"
 	// BFFForceStopTaskProcedure is the fully-qualified name of the BFF's ForceStopTask RPC.
@@ -71,7 +69,6 @@ type BFFClient interface {
 	InvokeJob(context.Context, *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error)
 	SaveRepository(context.Context, *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error)
 	RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error)
-	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
@@ -137,12 +134,6 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 			connect.WithSchema(bFFMethods.ByName("RemoveRepository")),
 			connect.WithClientOptions(opts...),
 		),
-		syncRepository: connect.NewClient[RequestSyncRepository, ResponseSyncRepository](
-			httpClient,
-			baseURL+BFFSyncRepositoryProcedure,
-			connect.WithSchema(bFFMethods.ByName("SyncRepository")),
-			connect.WithClientOptions(opts...),
-		),
 		restartTask: connect.NewClient[RequestRestartTask, ResponseRestartTask](
 			httpClient,
 			baseURL+BFFRestartTaskProcedure,
@@ -180,7 +171,6 @@ type bFFClient struct {
 	invokeJob                   *connect.Client[RequestInvokeJob, ResponseInvokeJob]
 	saveRepository              *connect.Client[RequestSaveRepository, ResponseSaveRepository]
 	removeRepository            *connect.Client[RequestRemoveRepository, ResponseRemoveRepository]
-	syncRepository              *connect.Client[RequestSyncRepository, ResponseSyncRepository]
 	restartTask                 *connect.Client[RequestRestartTask, ResponseRestartTask]
 	forceStopTask               *connect.Client[RequestForceStopTask, ResponseForceStopTask]
 	listExternalReleaseTriggers *connect.Client[RequestListExternalReleaseTriggers, ResponseListExternalReleaseTriggers]
@@ -227,11 +217,6 @@ func (c *bFFClient) RemoveRepository(ctx context.Context, req *connect.Request[R
 	return c.removeRepository.CallUnary(ctx, req)
 }
 
-// SyncRepository calls mono.build.bff.BFF.SyncRepository.
-func (c *bFFClient) SyncRepository(ctx context.Context, req *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
-	return c.syncRepository.CallUnary(ctx, req)
-}
-
 // RestartTask calls mono.build.bff.BFF.RestartTask.
 func (c *bFFClient) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	return c.restartTask.CallUnary(ctx, req)
@@ -262,7 +247,6 @@ type BFFHandler interface {
 	InvokeJob(context.Context, *connect.Request[RequestInvokeJob]) (*connect.Response[ResponseInvokeJob], error)
 	SaveRepository(context.Context, *connect.Request[RequestSaveRepository]) (*connect.Response[ResponseSaveRepository], error)
 	RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error)
-	SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error)
 	RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error)
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
@@ -324,12 +308,6 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 		connect.WithSchema(bFFMethods.ByName("RemoveRepository")),
 		connect.WithHandlerOptions(opts...),
 	)
-	bFFSyncRepositoryHandler := connect.NewUnaryHandler(
-		BFFSyncRepositoryProcedure,
-		svc.SyncRepository,
-		connect.WithSchema(bFFMethods.ByName("SyncRepository")),
-		connect.WithHandlerOptions(opts...),
-	)
 	bFFRestartTaskHandler := connect.NewUnaryHandler(
 		BFFRestartTaskProcedure,
 		svc.RestartTask,
@@ -372,8 +350,6 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 			bFFSaveRepositoryHandler.ServeHTTP(w, r)
 		case BFFRemoveRepositoryProcedure:
 			bFFRemoveRepositoryHandler.ServeHTTP(w, r)
-		case BFFSyncRepositoryProcedure:
-			bFFSyncRepositoryHandler.ServeHTTP(w, r)
 		case BFFRestartTaskProcedure:
 			bFFRestartTaskHandler.ServeHTTP(w, r)
 		case BFFForceStopTaskProcedure:
@@ -421,10 +397,6 @@ func (UnimplementedBFFHandler) SaveRepository(context.Context, *connect.Request[
 
 func (UnimplementedBFFHandler) RemoveRepository(context.Context, *connect.Request[RequestRemoveRepository]) (*connect.Response[ResponseRemoveRepository], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.RemoveRepository is not implemented"))
-}
-
-func (UnimplementedBFFHandler) SyncRepository(context.Context, *connect.Request[RequestSyncRepository]) (*connect.Response[ResponseSyncRepository], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.SyncRepository is not implemented"))
 }
 
 func (UnimplementedBFFHandler) RestartTask(context.Context, *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {

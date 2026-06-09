@@ -756,154 +756,6 @@ func (b0 ResponseListJobs_builder) Build() *ResponseListJobs {
 	return m0
 }
 
-type RequestSyncRepository struct {
-	state                   protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_RepositoryId int32                  `protobuf:"varint,1,opt,name=repository_id,json=repositoryId"`
-	xxx_hidden_Async        bool                   `protobuf:"varint,2,opt,name=async"`
-	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
-	XXX_presence            [1]uint32
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
-}
-
-func (x *RequestSyncRepository) Reset() {
-	*x = RequestSyncRepository{}
-	mi := &file_proto_build_api_api_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RequestSyncRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RequestSyncRepository) ProtoMessage() {}
-
-func (x *RequestSyncRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-func (x *RequestSyncRepository) GetRepositoryId() int32 {
-	if x != nil {
-		return x.xxx_hidden_RepositoryId
-	}
-	return 0
-}
-
-func (x *RequestSyncRepository) GetAsync() bool {
-	if x != nil {
-		return x.xxx_hidden_Async
-	}
-	return false
-}
-
-func (x *RequestSyncRepository) SetRepositoryId(v int32) {
-	x.xxx_hidden_RepositoryId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
-}
-
-func (x *RequestSyncRepository) SetAsync(v bool) {
-	x.xxx_hidden_Async = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
-}
-
-func (x *RequestSyncRepository) HasRepositoryId() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
-}
-
-func (x *RequestSyncRepository) HasAsync() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
-}
-
-func (x *RequestSyncRepository) ClearRepositoryId() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
-	x.xxx_hidden_RepositoryId = 0
-}
-
-func (x *RequestSyncRepository) ClearAsync() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
-	x.xxx_hidden_Async = false
-}
-
-type RequestSyncRepository_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-	RepositoryId *int32
-	Async        *bool
-}
-
-func (b0 RequestSyncRepository_builder) Build() *RequestSyncRepository {
-	m0 := &RequestSyncRepository{}
-	b, x := &b0, m0
-	_, _ = b, x
-	if b.RepositoryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
-		x.xxx_hidden_RepositoryId = *b.RepositoryId
-	}
-	if b.Async != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
-		x.xxx_hidden_Async = *b.Async
-	}
-	return m0
-}
-
-type ResponseSyncRepository struct {
-	state         protoimpl.MessageState `protogen:"opaque.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ResponseSyncRepository) Reset() {
-	*x = ResponseSyncRepository{}
-	mi := &file_proto_build_api_api_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ResponseSyncRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ResponseSyncRepository) ProtoMessage() {}
-
-func (x *ResponseSyncRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-type ResponseSyncRepository_builder struct {
-	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
-
-}
-
-func (b0 ResponseSyncRepository_builder) Build() *ResponseSyncRepository {
-	m0 := &ResponseSyncRepository{}
-	b, x := &b0, m0
-	_, _ = b, x
-	return m0
-}
-
 type RequestInvokeJob struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_TaskId       int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
@@ -917,7 +769,7 @@ type RequestInvokeJob struct {
 
 func (x *RequestInvokeJob) Reset() {
 	*x = RequestInvokeJob{}
-	mi := &file_proto_build_api_api_proto_msgTypes[12]
+	mi := &file_proto_build_api_api_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -929,7 +781,7 @@ func (x *RequestInvokeJob) String() string {
 func (*RequestInvokeJob) ProtoMessage() {}
 
 func (x *RequestInvokeJob) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[12]
+	mi := &file_proto_build_api_api_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1053,7 +905,7 @@ type ResponseInvokeJob struct {
 
 func (x *ResponseInvokeJob) Reset() {
 	*x = ResponseInvokeJob{}
-	mi := &file_proto_build_api_api_proto_msgTypes[13]
+	mi := &file_proto_build_api_api_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +917,7 @@ func (x *ResponseInvokeJob) String() string {
 func (*ResponseInvokeJob) ProtoMessage() {}
 
 func (x *ResponseInvokeJob) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[13]
+	mi := &file_proto_build_api_api_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1128,7 +980,7 @@ type RequestForceStopTask struct {
 
 func (x *RequestForceStopTask) Reset() {
 	*x = RequestForceStopTask{}
-	mi := &file_proto_build_api_api_proto_msgTypes[14]
+	mi := &file_proto_build_api_api_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1140,7 +992,7 @@ func (x *RequestForceStopTask) String() string {
 func (*RequestForceStopTask) ProtoMessage() {}
 
 func (x *RequestForceStopTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[14]
+	mi := &file_proto_build_api_api_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1200,7 +1052,7 @@ type ResponseForceStopTask struct {
 
 func (x *ResponseForceStopTask) Reset() {
 	*x = ResponseForceStopTask{}
-	mi := &file_proto_build_api_api_proto_msgTypes[15]
+	mi := &file_proto_build_api_api_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1212,7 +1064,7 @@ func (x *ResponseForceStopTask) String() string {
 func (*ResponseForceStopTask) ProtoMessage() {}
 
 func (x *ResponseForceStopTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[15]
+	mi := &file_proto_build_api_api_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1095,7 @@ type RequestGetServerInfo struct {
 
 func (x *RequestGetServerInfo) Reset() {
 	*x = RequestGetServerInfo{}
-	mi := &file_proto_build_api_api_proto_msgTypes[16]
+	mi := &file_proto_build_api_api_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1255,7 +1107,7 @@ func (x *RequestGetServerInfo) String() string {
 func (*RequestGetServerInfo) ProtoMessage() {}
 
 func (x *RequestGetServerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[16]
+	mi := &file_proto_build_api_api_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1139,7 @@ type ResponseGetServerInfo struct {
 
 func (x *ResponseGetServerInfo) Reset() {
 	*x = ResponseGetServerInfo{}
-	mi := &file_proto_build_api_api_proto_msgTypes[17]
+	mi := &file_proto_build_api_api_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1299,7 +1151,7 @@ func (x *ResponseGetServerInfo) String() string {
 func (*ResponseGetServerInfo) ProtoMessage() {}
 
 func (x *ResponseGetServerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[17]
+	mi := &file_proto_build_api_api_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1346,7 +1198,7 @@ type RequestListExternalReleaseTriggers struct {
 
 func (x *RequestListExternalReleaseTriggers) Reset() {
 	*x = RequestListExternalReleaseTriggers{}
-	mi := &file_proto_build_api_api_proto_msgTypes[18]
+	mi := &file_proto_build_api_api_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1358,7 +1210,7 @@ func (x *RequestListExternalReleaseTriggers) String() string {
 func (*RequestListExternalReleaseTriggers) ProtoMessage() {}
 
 func (x *RequestListExternalReleaseTriggers) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[18]
+	mi := &file_proto_build_api_api_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1419,7 +1271,7 @@ type ResponseListExternalReleaseTriggers struct {
 
 func (x *ResponseListExternalReleaseTriggers) Reset() {
 	*x = ResponseListExternalReleaseTriggers{}
-	mi := &file_proto_build_api_api_proto_msgTypes[19]
+	mi := &file_proto_build_api_api_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1431,7 +1283,7 @@ func (x *ResponseListExternalReleaseTriggers) String() string {
 func (*ResponseListExternalReleaseTriggers) ProtoMessage() {}
 
 func (x *ResponseListExternalReleaseTriggers) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[19]
+	mi := &file_proto_build_api_api_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1480,7 +1332,7 @@ type RequestListGithubEvents struct {
 
 func (x *RequestListGithubEvents) Reset() {
 	*x = RequestListGithubEvents{}
-	mi := &file_proto_build_api_api_proto_msgTypes[20]
+	mi := &file_proto_build_api_api_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1492,7 +1344,7 @@ func (x *RequestListGithubEvents) String() string {
 func (*RequestListGithubEvents) ProtoMessage() {}
 
 func (x *RequestListGithubEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[20]
+	mi := &file_proto_build_api_api_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1553,7 +1405,7 @@ type ResponseListGithubEvents struct {
 
 func (x *ResponseListGithubEvents) Reset() {
 	*x = ResponseListGithubEvents{}
-	mi := &file_proto_build_api_api_proto_msgTypes[21]
+	mi := &file_proto_build_api_api_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1565,7 +1417,7 @@ func (x *ResponseListGithubEvents) String() string {
 func (*ResponseListGithubEvents) ProtoMessage() {}
 
 func (x *ResponseListGithubEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[21]
+	mi := &file_proto_build_api_api_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1635,11 +1487,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x0fRequestListJobs\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"=\n" +
 	"\x10ResponseListJobs\x12)\n" +
-	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"R\n" +
-	"\x15RequestSyncRepository\x12#\n" +
-	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\x12\x14\n" +
-	"\x05async\x18\x02 \x01(\bR\x05async\"\x18\n" +
-	"\x16ResponseSyncRepository\"k\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"k\n" +
 	"\x10RequestInvokeJob\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x19\n" +
@@ -1659,13 +1507,12 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x17RequestListGithubEvents\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\x05R\aeventId\"Q\n" +
 	"\x18ResponseListGithubEvents\x125\n" +
-	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events2\xb4\b\n" +
+	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events2\xd3\a\n" +
 	"\x03API\x12P\n" +
 	"\tListTasks\x12 .mono.build.api.RequestListTasks\x1a!.mono.build.api.ResponseListTasks\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.api.RequestListRepositories\x1a(.mono.build.api.ResponseListRepositories\x12_\n" +
 	"\x0eSaveRepository\x12%.mono.build.api.RequestSaveRepository\x1a&.mono.build.api.ResponseSaveRepository\x12e\n" +
-	"\x10DeleteRepository\x12'.mono.build.api.RequestDeleteRepository\x1a(.mono.build.api.ResponseDeleteRepository\x12_\n" +
-	"\x0eSyncRepository\x12%.mono.build.api.RequestSyncRepository\x1a&.mono.build.api.ResponseSyncRepository\x12M\n" +
+	"\x10DeleteRepository\x12'.mono.build.api.RequestDeleteRepository\x1a(.mono.build.api.ResponseDeleteRepository\x12M\n" +
 	"\bListJobs\x12\x1f.mono.build.api.RequestListJobs\x1a .mono.build.api.ResponseListJobs\x12P\n" +
 	"\tInvokeJob\x12 .mono.build.api.RequestInvokeJob\x1a!.mono.build.api.ResponseInvokeJob\x12\\\n" +
 	"\rForceStopTask\x12$.mono.build.api.RequestForceStopTask\x1a%.mono.build.api.ResponseForceStopTask\x12\\\n" +
@@ -1673,7 +1520,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x1bListExternalReleaseTriggers\x122.mono.build.api.RequestListExternalReleaseTriggers\x1a3.mono.build.api.ResponseListExternalReleaseTriggers\x12e\n" +
 	"\x10ListGithubEvents\x12'.mono.build.api.RequestListGithubEvents\x1a(.mono.build.api.ResponseListGithubEventsB'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_proto_build_api_api_proto_goTypes = []any{
 	(*RequestListTasks)(nil),                    // 0: mono.build.api.RequestListTasks
 	(*ResponseListTasks)(nil),                   // 1: mono.build.api.ResponseListTasks
@@ -1685,56 +1532,52 @@ var file_proto_build_api_api_proto_goTypes = []any{
 	(*ResponseDeleteRepository)(nil),            // 7: mono.build.api.ResponseDeleteRepository
 	(*RequestListJobs)(nil),                     // 8: mono.build.api.RequestListJobs
 	(*ResponseListJobs)(nil),                    // 9: mono.build.api.ResponseListJobs
-	(*RequestSyncRepository)(nil),               // 10: mono.build.api.RequestSyncRepository
-	(*ResponseSyncRepository)(nil),              // 11: mono.build.api.ResponseSyncRepository
-	(*RequestInvokeJob)(nil),                    // 12: mono.build.api.RequestInvokeJob
-	(*ResponseInvokeJob)(nil),                   // 13: mono.build.api.ResponseInvokeJob
-	(*RequestForceStopTask)(nil),                // 14: mono.build.api.RequestForceStopTask
-	(*ResponseForceStopTask)(nil),               // 15: mono.build.api.ResponseForceStopTask
-	(*RequestGetServerInfo)(nil),                // 16: mono.build.api.RequestGetServerInfo
-	(*ResponseGetServerInfo)(nil),               // 17: mono.build.api.ResponseGetServerInfo
-	(*RequestListExternalReleaseTriggers)(nil),  // 18: mono.build.api.RequestListExternalReleaseTriggers
-	(*ResponseListExternalReleaseTriggers)(nil), // 19: mono.build.api.ResponseListExternalReleaseTriggers
-	(*RequestListGithubEvents)(nil),             // 20: mono.build.api.RequestListGithubEvents
-	(*ResponseListGithubEvents)(nil),            // 21: mono.build.api.ResponseListGithubEvents
-	(*model.Task)(nil),                          // 22: mono.build.model.Task
-	(*model.Repository)(nil),                    // 23: mono.build.model.Repository
-	(*model.Job)(nil),                           // 24: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 25: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 26: mono.build.model.GithubEvent
+	(*RequestInvokeJob)(nil),                    // 10: mono.build.api.RequestInvokeJob
+	(*ResponseInvokeJob)(nil),                   // 11: mono.build.api.ResponseInvokeJob
+	(*RequestForceStopTask)(nil),                // 12: mono.build.api.RequestForceStopTask
+	(*ResponseForceStopTask)(nil),               // 13: mono.build.api.ResponseForceStopTask
+	(*RequestGetServerInfo)(nil),                // 14: mono.build.api.RequestGetServerInfo
+	(*ResponseGetServerInfo)(nil),               // 15: mono.build.api.ResponseGetServerInfo
+	(*RequestListExternalReleaseTriggers)(nil),  // 16: mono.build.api.RequestListExternalReleaseTriggers
+	(*ResponseListExternalReleaseTriggers)(nil), // 17: mono.build.api.ResponseListExternalReleaseTriggers
+	(*RequestListGithubEvents)(nil),             // 18: mono.build.api.RequestListGithubEvents
+	(*ResponseListGithubEvents)(nil),            // 19: mono.build.api.ResponseListGithubEvents
+	(*model.Task)(nil),                          // 20: mono.build.model.Task
+	(*model.Repository)(nil),                    // 21: mono.build.model.Repository
+	(*model.Job)(nil),                           // 22: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 23: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 24: mono.build.model.GithubEvent
 }
 var file_proto_build_api_api_proto_depIdxs = []int32{
-	22, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
-	23, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	23, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	23, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	24, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	25, // 5: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	26, // 6: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	20, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
+	21, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	21, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	21, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	22, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	23, // 5: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	24, // 6: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
 	0,  // 7: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
 	2,  // 8: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
 	4,  // 9: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
 	6,  // 10: mono.build.api.API.DeleteRepository:input_type -> mono.build.api.RequestDeleteRepository
-	10, // 11: mono.build.api.API.SyncRepository:input_type -> mono.build.api.RequestSyncRepository
-	8,  // 12: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
-	12, // 13: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
-	14, // 14: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
-	16, // 15: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
-	18, // 16: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
-	20, // 17: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
-	1,  // 18: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
-	3,  // 19: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
-	5,  // 20: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
-	7,  // 21: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
-	11, // 22: mono.build.api.API.SyncRepository:output_type -> mono.build.api.ResponseSyncRepository
-	9,  // 23: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
-	13, // 24: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
-	15, // 25: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
-	17, // 26: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
-	19, // 27: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
-	21, // 28: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
-	18, // [18:29] is the sub-list for method output_type
-	7,  // [7:18] is the sub-list for method input_type
+	8,  // 11: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
+	10, // 12: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
+	12, // 13: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
+	14, // 14: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
+	16, // 15: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
+	18, // 16: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
+	1,  // 17: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
+	3,  // 18: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
+	5,  // 19: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
+	7,  // 20: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
+	9,  // 21: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
+	11, // 22: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
+	13, // 23: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
+	15, // 24: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
+	17, // 25: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
+	19, // 26: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
+	17, // [17:27] is the sub-list for method output_type
+	7,  // [7:17] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -1751,7 +1594,7 @@ func file_proto_build_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_api_api_proto_rawDesc), len(file_proto_build_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
