@@ -20,6 +20,7 @@ go_library(
         "//go/build/database",
         "//go/build/database/dao",
         "//go/enumerable",
+        "//go/git",
         "//go/logger/slogger",
         "@com_github_go_sql_driver_mysql//:mysql",
         "@com_github_google_go_github_v85//github",

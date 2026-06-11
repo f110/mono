@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"net/http"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -13,9 +13,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v85/github"
 	"github.com/google/uuid"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -33,9 +37,11 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
@@ -49,9 +55,7 @@ type Options struct {
 	EnableLeaderElection     bool
 	LeaseLockName            string
 	LeaseLockNamespace       string
-	GithubAppId              int64
-	GithubInstallationId     int64
-	GithubPrivateKeyFile     string
+	GitHubClient             *githubutil.GitHubClientFactory
 	GithubAppSecretName      string
 	MinIOEndpoint            string
 	MinIOName                string
@@ -97,6 +101,23 @@ type Options struct {
 	EventReconcileInterval         time.Duration
 	EventMaxProcessingDuration     time.Duration
 
+	GitDataListen                     string
+	GitDataStorageEndpoint            string
+	GitDataStorageRegion              string
+	GitDataStorageAccessKey           string
+	GitDataStorageSecretAccessKey     string
+	GitDataStorageSecretAccessKeyFile string
+	GitDataStorageCAFile              string
+	GitDataBucket                     string
+	GitDataMemcachedEndpoint          string
+	GitDataExternalRepositories       []string
+	GitDataLockFilePath               string
+	GitDataRefreshInterval            time.Duration
+	GitDataRefreshTimeout             time.Duration
+	GitDataRefreshWorkers             int
+	GitDataDisableInflatePackFile     bool
+	GitDataRepositoryInitTimeout      time.Duration
+
 	Dev   bool
 	Debug bool
 }
@@ -105,6 +126,7 @@ const (
 	stateInit fsm.State = iota
 	stateCheckMigrate
 	stateSetup
+	stateStartGitDataService
 	stateStartApiServer
 	stateLeaderElection
 	stateStartWorker
@@ -128,10 +150,12 @@ type process struct {
 	bazelMirrorStorageOpt storage.S3Options
 	vaultClient           *vault.Client
 
-	bazelBuilder *coordinator.BazelBuilder
-	apiServer    *api.Api
-	notifier     *webhook.Notifier
-	reconcilers  webhook.Reconcilers
+	bazelBuilder      *coordinator.BazelBuilder
+	apiServer         *api.Api
+	notifier          *webhook.Notifier
+	reconcilers       webhook.Reconcilers
+	gitDataGRPCServer *grpc.Server
+	gitDataUpdater    *git.Updater
 }
 
 func newProcess(opt Options) *process {
@@ -139,13 +163,14 @@ func newProcess(opt Options) *process {
 	p := &process{ctx: ctx, cancel: cancel, opt: opt}
 	p.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:           p.init,
-			stateCheckMigrate:   p.checkMigrate,
-			stateSetup:          p.setup,
-			stateStartApiServer: p.startApiServer,
-			stateLeaderElection: p.leaderElection,
-			stateStartWorker:    p.startWorker,
-			stateShutdown:       p.shutdown,
+			stateInit:                p.init,
+			stateCheckMigrate:        p.checkMigrate,
+			stateSetup:               p.setup,
+			stateStartGitDataService: p.startGitDataService,
+			stateStartApiServer:      p.startApiServer,
+			stateLeaderElection:      p.leaderElection,
+			stateStartWorker:         p.startWorker,
+			stateShutdown:            p.shutdown,
 		},
 		stateInit,
 		stateShutdown,
@@ -158,11 +183,10 @@ func newProcess(opt Options) *process {
 }
 
 func (p *process) init(ctx context.Context) (fsm.State, error) {
-	app, err := githubutil.NewApp(p.opt.GithubAppId, p.opt.GithubInstallationId, p.opt.GithubPrivateKeyFile)
-	if err != nil {
+	if err := p.opt.GitHubClient.Init(); err != nil {
 		return fsm.Error(err)
 	}
-	p.ghClient = github.NewClient(&http.Client{Transport: githubutil.NewTransportWithApp(http.DefaultTransport, app)})
+	p.ghClient = p.opt.GitHubClient.REST
 
 	if p.opt.Dev {
 		slogger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
@@ -328,8 +352,8 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.BazelMirrorURL,
 		p.opt.CentralRegistryMirrorURL,
 		p.opt.PullAlways,
-		p.opt.GithubAppId,
-		p.opt.GithubInstallationId,
+		p.opt.GitHubClient.AppID,
+		p.opt.GitHubClient.InstallationID,
 		p.opt.GithubAppSecretName,
 	)
 	c, err := coordinator.NewBazelBuilder(
@@ -351,18 +375,154 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 	}
 	p.bazelBuilder = c
 
+	if p.opt.GitDataListen == "" {
+		return fsm.Next(stateStartApiServer)
+	}
+	return fsm.Next(stateStartGitDataService)
+}
+
+func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
+	if p.opt.GitDataStorageEndpoint == "" || p.opt.GitDataBucket == "" {
+		return fsm.Error(xerrors.Define("--git-data-storage-endpoint and --git-data-bucket are required when --git-data-listen is set").WithStack())
+	}
+
+	secretAccessKey := p.opt.GitDataStorageSecretAccessKey
+	if p.opt.GitDataStorageSecretAccessKeyFile != "" {
+		b, err := os.ReadFile(p.opt.GitDataStorageSecretAccessKeyFile)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		secretAccessKey = strings.TrimSpace(string(b))
+	}
+	storageOpt := storage.NewS3OptionToExternal(p.opt.GitDataStorageEndpoint, p.opt.GitDataStorageRegion, p.opt.GitDataStorageAccessKey, secretAccessKey)
+	storageOpt.PathStyle = true
+	storageOpt.CACertFile = p.opt.GitDataStorageCAFile
+	storageClient := storage.NewS3(p.opt.GitDataBucket, storageOpt)
+
+	var cachePool *client.SinglePool
+	if p.opt.GitDataMemcachedEndpoint != "" {
+		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", p.opt.GitDataMemcachedEndpoint)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		cachePool, err = client.NewSinglePool(cacheServer)
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+	}
+
+	repositories, err := p.collectGitDataRepositories(ctx)
+	if err != nil {
+		return fsm.Error(err)
+	}
+
+	tokenProvider := p.opt.GitHubClient.TokenProvider
+
+	repos := make(map[string]*git.RepositoryConfig)
+	for _, v := range repositories {
+		if err := v.Open(ctx, storageClient, cachePool, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile); err != nil {
+			return fsm.Error(err)
+		}
+		repos[v.Name] = v
+	}
+
+	service, err := git.NewDataService(repos)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	grpcServer := grpc.NewServer()
+	git.RegisterGitDataServer(grpcServer, service)
+	healthSvc := health.NewServer()
+	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)
+	healthpb.RegisterHealthServer(grpcServer, healthSvc)
+	p.gitDataGRPCServer = grpcServer
+
+	lis, err := net.Listen("tcp", p.opt.GitDataListen)
+	if err != nil {
+		return fsm.Error(xerrors.WithStack(err))
+	}
+	slogger.Log.Info("Start git-data-service", slog.String("addr", p.opt.GitDataListen))
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			slogger.Log.Error("git-data-service returns error", slogger.E(err))
+		}
+	}()
+
+	updater, err := git.NewUpdater(storageClient, tokenProvider, repositories, p.opt.GitDataLockFilePath, p.opt.GitDataRefreshWorkers)
+	if err != nil {
+		return fsm.Error(err)
+	}
+	updater.SetCachePool(cachePool).
+		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
+		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile).
+		SetDataService(service)
+	if p.opt.GitDataRefreshInterval > 0 {
+		updater.SetInterval(p.opt.GitDataRefreshInterval).
+			SetTimeout(p.opt.GitDataRefreshTimeout)
+	}
+	p.gitDataUpdater = updater
+
 	return fsm.Next(stateStartApiServer)
+}
+
+func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.RepositoryConfig, error) {
+	repos, err := p.dao.Repository.ListAll(ctx)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	seen := set.New[string]()
+	var out []*git.RepositoryConfig
+	for _, r := range repos {
+		if r.Status != database.SourceRepositoryStatusReady {
+			continue
+		}
+		if r.CloneUrl == "" || r.Name == "" {
+			continue
+		}
+		if seen.Has(r.Name) {
+			slogger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", r.Name))
+			continue
+		}
+		seen.Add(r.Name)
+		out = append(out, &git.RepositoryConfig{Name: r.Name, URL: r.CloneUrl, Prefix: r.Name})
+	}
+
+	for _, v := range p.opt.GitDataExternalRepositories {
+		if strings.Index(v, "|") == -1 {
+			return nil, xerrors.Definef("--git-data-external-repository=%s is invalid", v).WithStack()
+		}
+		parts := strings.Split(v, "|")
+		if len(parts) != 3 {
+			return nil, xerrors.Definef("--git-data-external-repository=%s must be 'name|url|prefix'", v).WithStack()
+		}
+		name := parts[0]
+		if seen.Has(name) {
+			slogger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", name))
+			continue
+		}
+		seen.Add(name)
+		out = append(out, &git.RepositoryConfig{Name: name, URL: parts[1], Prefix: parts[2]})
+	}
+
+	return out, nil
 }
 
 func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	p.notifier = webhook.NewNotifier()
 	p.reconcilers = webhook.Reconcilers{}
-	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder))
+	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataUpdater))
 	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder))
 	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder))
 	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder))
 
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier)
+	addRepo := make(chan *git.RepositoryConfig, 1)
+	go func() {
+		for {
+			repo := <-addRepo
+			p.gitDataUpdater.AddRepo(context.Background(), repo)
+		}
+	}()
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -460,6 +620,10 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	scheduler := webhook.NewScheduler(p.dao, p.reconcilers, p.notifier, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
 	go scheduler.Run(p.ctx)
 
+	if p.gitDataUpdater != nil && p.opt.GitDataRefreshInterval > 0 {
+		go p.gitDataUpdater.Run(p.ctx)
+	}
+
 	return fsm.Wait()
 }
 
@@ -468,6 +632,10 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	if p.apiServer != nil {
 		p.apiServer.Shutdown(ctx)
 		slogger.Log.Info("Shutdown API Server")
+	}
+	if p.gitDataGRPCServer != nil {
+		p.gitDataGRPCServer.GracefulStop()
+		slogger.Log.Info("Shutdown Git Data GRPC Server")
 	}
 
 	return fsm.Finish()
@@ -484,7 +652,7 @@ func builder(ctx context.Context, opt Options) error {
 }
 
 func AddCommand(rootCmd *cli.Command) {
-	opt := Options{}
+	opt := Options{GitHubClient: githubutil.NewGitHubClientFactory("", true)}
 
 	cmd := &cli.Command{
 		Use: "builder",
@@ -494,17 +662,17 @@ func AddCommand(rootCmd *cli.Command) {
 				if err != nil {
 					return err
 				}
-				opt.GithubAppId = appId
+				opt.GitHubClient.AppID = appId
 			}
 			if v := os.Getenv("GITHUB_INSTALLATION_ID"); v != "" {
 				installationId, err := strconv.ParseInt(v, 10, 64)
 				if err != nil {
 					return err
 				}
-				opt.GithubInstallationId = installationId
+				opt.GitHubClient.InstallationID = installationId
 			}
 			if v := os.Getenv("GITHUB_PRIVATEKEY_FILE"); v != "" {
-				opt.GithubPrivateKeyFile = v
+				opt.GitHubClient.PrivateKeyFile = v
 			}
 
 			return builder(ctx, opt)
@@ -519,9 +687,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("lease-lock-namespace", "the lease lock resource namespace").Var(&opt.LeaseLockNamespace)
 	fs.String("namespace", "The namespace which will be created the job").Var(&opt.Namespace)
 	fs.String("github-app-secret-name", "The name of Secret which contains github app id, installation id and private key.").Var(&opt.GithubAppSecretName)
-	fs.Int64("github-app-id", "GitHub App id").Var(&opt.GithubAppId)
-	fs.Int64("github-installation-id", "GitHub Installation id").Var(&opt.GithubInstallationId)
-	fs.String("github-private-key-file", "PrivateKey file path of GitHub App").Var(&opt.GithubPrivateKeyFile)
+	opt.GitHubClient.Flags(fs)
 	fs.String("addr", "Listen addr which will be served API").Var(&opt.Addr).Default("127.0.0.1:8081")
 	fs.String("dashboard", "URL of dashboard").Var(&opt.DashboardUrl).Default("http://localhost")
 	fs.String("builder-api", "URL of the api of builder").Var(&opt.BuilderApiUrl).Default("http://localhost")
@@ -565,6 +731,22 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Duration("external-release-poll-interval", "Interval between polls of third-party repositories for external_release triggers").Var(&opt.ExternalReleasePollInterval).Default(1 * time.Hour)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&opt.EventReconcileInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
+	fs.String("git-data-listen", "Listen addr of the embedded git-data-service. If empty, the service is disabled.").Var(&opt.GitDataListen)
+	fs.String("git-data-storage-endpoint", "The endpoint of the object storage for git-data-service").Var(&opt.GitDataStorageEndpoint)
+	fs.String("git-data-storage-region", "The region name of the object storage for git-data-service").Var(&opt.GitDataStorageRegion)
+	fs.String("git-data-storage-access-key", "The access key for the git-data-service object storage").Var(&opt.GitDataStorageAccessKey)
+	fs.String("git-data-storage-secret-access-key", "The secret access key for the git-data-service object storage").Var(&opt.GitDataStorageSecretAccessKey)
+	fs.String("git-data-storage-secret-access-key-file", "The file path that contains the secret access key for the git-data-service object storage").Var(&opt.GitDataStorageSecretAccessKeyFile)
+	fs.String("git-data-storage-ca-file", "CA certificate file path for the git-data-service object storage").Var(&opt.GitDataStorageCAFile)
+	fs.String("git-data-bucket", "The bucket name used by git-data-service").Var(&opt.GitDataBucket)
+	fs.String("git-data-memcached-endpoint", "The endpoint of memcached used by git-data-service").Var(&opt.GitDataMemcachedEndpoint)
+	fs.StringArray("git-data-external-repository", "External repository to be synced by the embedded git-data-service. Format: name|url|prefix (e.g. go|https://github.com/golang/go.git|golang/go)").Var(&opt.GitDataExternalRepositories)
+	fs.String("git-data-lock-file-path", "The path of the git-data-service updater lock file").Var(&opt.GitDataLockFilePath)
+	fs.Duration("git-data-refresh-interval", "Interval for refreshing repositories in git-data-service. Zero disables periodic refresh.").Var(&opt.GitDataRefreshInterval)
+	fs.Duration("git-data-refresh-timeout", "Timeout for refreshing a repository in git-data-service").Var(&opt.GitDataRefreshTimeout).Default(1 * time.Minute)
+	fs.Int("git-data-refresh-workers", "Number of workers for refreshing repositories in git-data-service").Var(&opt.GitDataRefreshWorkers).Default(1)
+	fs.Bool("git-data-disable-inflate-packfile", "Disable inflating packfile in git-data-service").Var(&opt.GitDataDisableInflatePackFile)
+	fs.Duration("git-data-repository-init-timeout", "Timeout for initializing a repository in git-data-service").Var(&opt.GitDataRepositoryInitTimeout).Default(5 * time.Minute)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)

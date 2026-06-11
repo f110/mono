@@ -52,6 +52,7 @@ func build(cmd *cli.Command) {
 			m.AddComponent(buildSeed)
 			m.AddComponent(minio)
 			m.AddComponent(buildBucket)
+			m.AddComponent(buildGitDataBucket)
 			m.AddComponent(githubmock)
 
 			return m.Run(ctx)

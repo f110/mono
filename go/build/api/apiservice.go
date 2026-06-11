@@ -22,6 +22,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -32,12 +33,13 @@ type apiService struct {
 	githubClient      *github.Client
 	stClient          *storage.S3
 	bazelMirrorPrefix string
+	addRepo           chan<- *git.RepositoryConfig
 }
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -132,6 +134,9 @@ func (s *apiService) SaveRepository(ctx context.Context, req *RequestSaveReposit
 	if err != nil {
 		slogger.Log.Error("Failed to create repository", slogger.E(err))
 		return nil, status.Error(codes.Internal, "failed to save repository")
+	}
+	if s.addRepo != nil {
+		s.addRepo <- &git.RepositoryConfig{Name: repo.Name, URL: repo.CloneUrl, Prefix: repo.Name}
 	}
 	return ResponseSaveRepository_builder{Repository: s.dbRepoToAPIRepo(repo)}.Build(), nil
 }

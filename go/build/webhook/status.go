@@ -11,6 +11,8 @@ type PushStatus struct {
 	ConfigFetchedAt      *time.Time `json:"config_fetched_at,omitempty"`
 	ExternalReconciledAt *time.Time `json:"external_reconciled_at,omitempty"`
 	JobsReconciledAt     *time.Time `json:"jobs_reconciled_at,omitempty"`
+	GitSyncedAt          *time.Time `json:"git_synced_at,omitempty"`
+	GitSyncError         string     `json:"git_sync_error,omitempty"`
 	DispatchedTaskIDs    []int32    `json:"dispatched_task_ids,omitempty"`
 }
 

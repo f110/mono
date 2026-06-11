@@ -19,6 +19,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -50,7 +51,7 @@ type Api struct {
 // webhook.Handler, which records the delivery and returns 200 without doing
 // any business logic — reconciliation runs asynchronously inside the leader's
 // Scheduler.
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string, notifier *webhook.Notifier) (*Api, error) {
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string, notifier *webhook.Notifier, addRepo chan<- *git.RepositoryConfig) (*Api, error) {
 	api := &Api{
 		dao:               dao,
 		stClient:          stClient,
@@ -63,7 +64,7 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.Handle("/webhook", api.webhookHandler)
 
-	bs := newAPIService(builder, dao, ghClient, stClient, bazelMirrorPrefix)
+	bs := newAPIService(builder, dao, ghClient, stClient, bazelMirrorPrefix, addRepo)
 	grpcServer := grpc.NewServer()
 	RegisterAPIServer(grpcServer, bs)
 	s := &http.Server{

@@ -49,8 +49,9 @@ DSN = $(DATABASE_USER):$(DATABASE_PASSWORD)@tcp($(DATABASE_HOST):$(DATABASE_PORT
 GITHUB = --github-app-id $(APP_ID) --github-installation-id $(INSTALLATION_ID) --github-private-key-file $(PRIVATEKEY_FILE)
 MINIO = --minio-endpoint http://127.0.0.1:9000 --minio-port $(MINIO_PORT) --minio-bucket $(MINIO_BUCKET) --minio-access-key $(MINIO_ACCESS_KEY) --minio-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirror-bucket build --bazel-mirror-access-key $(MINIO_ACCESS_KEY) --bazel-mirror-secret-access-key $(MINIO_SECRET_ACCESS_KEY) --bazel-mirror-prefix releases.bazel.build/
+GIT_DATA = --git-data-listen 127.0.0.1:8056 --git-data-storage-endpoint http://127.0.0.1:9000 --git-data-bucket git-data --git-data-storage-access-key $(MINIO_ACCESS_KEY) --git-data-storage-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 
-APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO)
+APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO) $(GIT_DATA)
 BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --log-level debug --storage-endpoint http://127.0.0.1:9000 --bucket prod-build-logs --access-key EO29Xq9mOsCsjhGL --secret-access-key sgFRis2oGsGigsKeIVRu58P2
 
 .PHONY: run-bff

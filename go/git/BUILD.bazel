@@ -10,11 +10,13 @@ go_library(
         "objectstorage.go",
         "packfile.go",
         "service.go",
+        "updater.go",
     ],
     importpath = "go.f110.dev/mono/go/git",
     visibility = ["//visibility:public"],
     deps = [
         "//go/collections/set",
+        "//go/ctxutil",
         "//go/enumerable",
         "//go/githubutil",
         "//go/logger/slogger",
@@ -52,9 +54,12 @@ go_test(
     srcs = [
         "objectstorage_test.go",
         "service_test.go",
+        "updater_test.go",
     ],
     embed = [":git"],
     deps = [
+        "//go/logger",
+        "//go/logger/slogger",
         "//go/storage",
         "@com_github_go_git_go_git_v5//:go-git",
         "@com_github_go_git_go_git_v5//config",

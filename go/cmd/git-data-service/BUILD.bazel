@@ -1,11 +1,10 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
 
 go_library(
     name = "git-data-service_lib",
     srcs = [
         "cmd.go",
         "main.go",
-        "updater.go",
     ],
     importpath = "go.f110.dev/mono/go/cmd/git-data-service",
     visibility = ["//visibility:private"],
@@ -17,10 +16,6 @@ go_library(
         "//go/githubutil",
         "//go/logger/slogger",
         "//go/storage",
-        "@com_github_go_git_go_git_v5//:go-git",
-        "@com_github_go_git_go_git_v5//plumbing",
-        "@com_github_go_git_go_git_v5//plumbing/transport/http",
-        "@com_github_google_go_github_v85//github",
         "@dev_f110_go_go_memcached//client",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",
@@ -40,22 +35,4 @@ go_cross_binary(
     platform = "@rules_go//go/toolchain:linux_amd64",
     target = ":git-data-service",
     visibility = ["//visibility:public"],
-)
-
-go_test(
-    name = "git-data-service_test",
-    srcs = ["updater_test.go"],
-    embed = [":git-data-service_lib"],
-    deps = [
-        "//go/git",
-        "//go/logger",
-        "//go/logger/slogger",
-        "//go/storage",
-        "@com_github_go_git_go_git_v5//:go-git",
-        "@com_github_go_git_go_git_v5//plumbing",
-        "@com_github_go_git_go_git_v5//plumbing/object",
-        "@com_github_go_git_go_git_v5//storage/filesystem",
-        "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
-    ],
 )

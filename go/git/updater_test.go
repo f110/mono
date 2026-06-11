@@ -1,4 +1,4 @@
-package main
+package git
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
@@ -25,17 +24,15 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	logger.Init()
 	slogger.Init()
 
-	// Set up the repository both local and on object storage
-	sourceRepo := makeSourceRepository(t)
+	sourceRepo := makeUpdaterSourceRepository(t)
 	mockStorage := storage.NewMock()
 	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
-	_, err := git.InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
+	_, err := InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
 	require.NoError(t, err)
 
-	updater, err := newRepositoryUpdater(nil, nil, time.Minute, "", nil, 1)
+	updater, err := NewUpdater(nil, nil, nil, "", 1)
 	require.NoError(t, err)
 
-	// Mutate local repository
 	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
 	require.NoError(t, err)
 	err = sourceRepo.Storer.SetReference(plumbing.NewHashReference(plumbing.NewBranchReferenceName("foobar"), masterRef.Hash()))
@@ -43,7 +40,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	_, err = sourceRepo.CreateTag("baz", masterRef.Hash(), nil)
 	require.NoError(t, err)
 
-	s := git.NewObjectStorageStorer(mockStorage, "test", nil)
+	s := NewObjectStorageStorer(mockStorage, "test", nil)
 	repo, err := goGit.Open(s, nil)
 	require.NoError(t, err)
 
@@ -58,8 +55,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	assert.Equal(t, masterRef.Hash(), n.Hash())
 }
 
-func makeSourceRepository(t *testing.T) *goGit.Repository {
-	// Make new git repository
+func makeUpdaterSourceRepository(t *testing.T) *goGit.Repository {
 	repoDir := t.TempDir()
 	repo, err := goGit.PlainInit(repoDir, false)
 	require.NoError(t, err)

@@ -56,7 +56,7 @@ require (
 	github.com/zitadel/oidc/v3 v3.47.5
 	go.abhg.dev/goldmark/mermaid v0.6.0
 	go.etcd.io/etcd/client/v3 v3.6.11
-	go.f110.dev/githubmock v0.0.0-20260429052527-6037990fca25
+	go.f110.dev/githubmock v0.0.0-20260611113103-94e13050b58c
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/kubeproto v0.0.0-20260601163938-55a1a18121b9
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0

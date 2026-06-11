@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	goGit "github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"google.golang.org/grpc"
@@ -27,9 +27,9 @@ import (
 
 type gitDataServiceCommand struct {
 	*fsm.FSM
-	s             *grpc.Server
-	updater       *repositoryUpdater
-	storageClient *storage.S3
+	grpcServer    *grpc.Server
+	updater       *git.Updater
+	webhookServer *http.Server
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
@@ -53,22 +53,12 @@ type gitDataServiceCommand struct {
 	RefreshWorkers         int
 	DisableInflatePackFile bool
 
-	repositories []*Repository
-}
-
-type Repository struct {
-	Name   string
-	URL    string
-	Prefix string
-
-	GoGit *goGit.Repository
+	repositories []*git.RepositoryConfig
 }
 
 const (
 	stateInit fsm.State = iota
-	stateStartUpdater
-	stateStartWebhookReceiver
-	stateStartServer
+	stateStartService
 	stateShuttingDown
 )
 
@@ -76,11 +66,9 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 	c := &gitDataServiceCommand{GitHubClient: githubutil.NewGitHubClientFactory("", false)}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
-			stateInit:                 c.init,
-			stateStartUpdater:         c.startUpdater,
-			stateStartWebhookReceiver: c.startWebhookReceiver,
-			stateStartServer:          c.startServer,
-			stateShuttingDown:         c.shuttingDown,
+			stateInit:         c.init,
+			stateStartService: c.startService,
+			stateShuttingDown: c.shuttingDown,
 		},
 		stateInit,
 		stateShuttingDown,
@@ -122,13 +110,13 @@ func (c *gitDataServiceCommand) ValidateFlagValue() error {
 	if len(c.Repositories) == 0 {
 		return xerrors.Define("--repository is mandatory").WithStack()
 	}
-	var repositories []*Repository
+	var repositories []*git.RepositoryConfig
 	for _, v := range c.Repositories {
 		if strings.Index(v, "|") == -1 {
 			return xerrors.Definef("--repository=%s is invalid", v).WithStack()
 		}
 		s := strings.Split(v, "|")
-		repositories = append(repositories, &Repository{Name: s[0], URL: s[1], Prefix: s[2]})
+		repositories = append(repositories, &git.RepositoryConfig{Name: s[0], URL: s[1], Prefix: s[2]})
 	}
 	c.repositories = repositories
 
@@ -152,7 +140,6 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 	opt.PathStyle = true
 	opt.CACertFile = c.StorageCAFile
 	storageClient := storage.NewS3(c.Bucket, opt)
-	c.storageClient = storageClient
 
 	var cachePool *client.SinglePool
 	if c.MemcachedEndpoint != "" {
@@ -166,118 +153,82 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		}
 	}
 
-	repo := make(map[string]*goGit.Repository)
-	for _, r := range c.repositories {
-		storer := git.NewObjectStorageStorer(storageClient, r.Prefix, cachePool)
-
-		if ok, err := storer.Exist(); !ok && err == nil {
-			ctx, cancel := ctxutil.WithTimeout(ctx, c.RepositoryInitTimeout)
-
-			slogger.Log.Info("Init repository", slog.String("name", r.Name), slog.String("url", r.URL), slog.String("prefix", r.Prefix))
-			var auth *http.BasicAuth
-			if v, err := c.GitHubClient.TokenProvider.Token(ctx); err == nil {
-				auth = &http.BasicAuth{
-					Username: "octocat",
-					Password: v,
-				}
-			}
-			if _, err := git.InitObjectStorageRepository(ctx, storageClient, r.URL, r.Prefix, auth); err != nil {
-				cancel()
-				return fsm.Error(err)
-			}
-			cancel()
-		} else if err != nil {
+	repoMap := make(map[string]*git.RepositoryConfig)
+	for _, v := range c.repositories {
+		if err := v.Open(ctx, storageClient, cachePool, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout, c.DisableInflatePackFile); err != nil {
 			return fsm.Error(err)
 		}
-
-		gitRepo, err := goGit.Open(storer, nil)
-		if err != nil {
-			return fsm.Error(xerrors.WithStack(err))
-		}
-		repo[r.Name] = gitRepo
-		r.GoGit = gitRepo
-
-		if !c.DisableInflatePackFile && storer.IncludePackFile(ctx) {
-			slogger.Log.Info("Inflate packfile", slog.String("name", r.Name))
-			if err := git.InflatePackFile(ctx, storageClient, r.Prefix, gitRepo); err != nil {
-				return fsm.Error(err)
-			}
-		}
+		repoMap[v.Name] = v
 	}
 
-	s := grpc.NewServer()
-	service, err := git.NewDataService(repo)
+	service, err := git.NewDataService(repoMap)
 	if err != nil {
 		return fsm.Error(err)
 	}
+	s := grpc.NewServer()
 	git.RegisterGitDataServer(s, service)
 	healthSvc := health.NewServer()
 	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)
 	healthpb.RegisterHealthServer(s, healthSvc)
-	c.s = s
+	c.grpcServer = s
 
-	return fsm.Next(stateStartUpdater)
-}
-
-func (c *gitDataServiceCommand) startUpdater(ctx context.Context) (fsm.State, error) {
-	if c.RefreshInterval == 0 {
-		return fsm.Next(stateStartWebhookReceiver)
+	if c.RefreshInterval > 0 {
+		u, err := git.NewUpdater(storageClient, c.GitHubClient.TokenProvider, c.repositories, c.LockFilePath, c.RefreshWorkers)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		u.SetInterval(c.RefreshInterval).
+			SetTimeout(c.RefreshTimeout).
+			SetCachePool(cachePool).
+			SetInitTimeout(c.RepositoryInitTimeout).
+			SetDisableInflatePackFile(c.DisableInflatePackFile).
+			SetDataService(service)
+		c.updater = u
 	}
 
-	updater, err := newRepositoryUpdater(
-		c.storageClient,
-		c.repositories,
-		c.RefreshTimeout,
-		c.LockFilePath,
-		c.GitHubClient.TokenProvider,
-		c.RefreshWorkers,
-	)
-	if err != nil {
-		return fsm.Error(err)
-	}
-	slogger.Log.Info("Start updater", slog.Duration("refresh_interval", c.RefreshInterval), slog.Int("workers", c.RefreshWorkers))
-	go updater.Run(ctx, c.RefreshInterval)
-
-	c.updater = updater
-	return fsm.Next(stateStartWebhookReceiver)
+	return fsm.Next(stateStartService)
 }
 
-func (c *gitDataServiceCommand) startWebhookReceiver(_ context.Context) (fsm.State, error) {
-	if c.ListenWebhookReceiver == "" {
-		return fsm.Next(stateStartServer)
-	}
-
-	go c.updater.ListenWebhookReceiver(c.ListenWebhookReceiver)
-	return fsm.Next(stateStartServer)
-}
-
-func (c *gitDataServiceCommand) startServer(_ context.Context) (fsm.State, error) {
+func (c *gitDataServiceCommand) startService(ctx context.Context) (fsm.State, error) {
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-
 	slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
 	go func() {
-		if err := c.s.Serve(lis); err != nil {
+		if err := c.grpcServer.Serve(lis); err != nil {
 			slogger.Log.Error("gRPC server returns error", slogger.E(err))
 		}
 	}()
+
+	if c.updater != nil {
+		go c.updater.Run(ctx)
+
+		if c.ListenWebhookReceiver != "" {
+			c.webhookServer = &http.Server{
+				Addr:    c.ListenWebhookReceiver,
+				Handler: c.updater,
+			}
+			slogger.Log.Info("Start webhook receiver", slog.String("addr", c.ListenWebhookReceiver))
+			go func() {
+				if err := c.webhookServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					slogger.Log.Info("Stop webhook receiver", slogger.E(err))
+				}
+			}()
+		}
+	}
 
 	return fsm.Wait()
 }
 
 func (c *gitDataServiceCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
-	if c.s != nil {
+	if c.grpcServer != nil {
 		slogger.Log.Debug("Graceful stopping gRPC server")
-		c.s.GracefulStop()
+		c.grpcServer.GracefulStop()
 		slogger.Log.Info("Stop gRPC server")
 	}
-	if c.updater != nil {
-		slogger.Log.Debug("Stopping updater")
-		c.updater.Stop(ctx)
-
+	if c.webhookServer != nil {
+		c.webhookServer.Shutdown(ctx)
 	}
-
 	return fsm.Finish()
 }

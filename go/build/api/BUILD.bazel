@@ -19,6 +19,7 @@ go_library(
         "//go/build/model",
         "//go/build/webhook",
         "//go/enumerable",
+        "//go/git",
         "//go/logger/slogger",
         "//go/storage",
         "@com_github_google_go_github_v85//github",

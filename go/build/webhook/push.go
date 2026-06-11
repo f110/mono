@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -22,10 +24,11 @@ type PushReconciler struct {
 	dao          dao.Options
 	githubClient *github.Client
 	builder      Builder
+	gitUpdater   *git.Updater
 }
 
-func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder) *PushReconciler {
-	return &PushReconciler{dao: daos, githubClient: gh, builder: builder}
+func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, gitUpdater *git.Updater) *PushReconciler {
+	return &PushReconciler{dao: daos, githubClient: gh, builder: builder, gitUpdater: gitUpdater}
 }
 
 func (*PushReconciler) EventType() string { return "push" }
@@ -44,6 +47,24 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 	var status PushStatus
 	if err := readStatus(ev, &status); err != nil {
 		return xerrors.WithStack(err)
+	}
+
+	if r.gitUpdater != nil && status.GitSyncedAt == nil {
+		cloneURL := event.GetRepo().GetCloneURL()
+		err := r.gitUpdater.Sync(ctx, cloneURL)
+		switch {
+		case err == nil:
+			status.GitSyncedAt = new(time.Now())
+			status.GitSyncError = ""
+		case errors.Is(err, git.ErrRepositoryNotTracked):
+			status.GitSyncError = "repository is not tracked by git-data-service"
+			slogger.Log.Info("Skip git sync: repository not tracked", slog.String("repo", cloneURL))
+		default:
+			status.GitSyncError = err.Error()
+			slogger.Log.Warn("Failed to sync repository", slogger.E(err), slog.String("repo", cloneURL))
+			_ = WriteStatus(ev, &status)
+			return err
+		}
 	}
 
 	if status.Skipped {
@@ -89,9 +110,8 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 		ev.State = database.GithubEventStateSkipped
 		return nil
 	}
-	now := time.Now()
 	if status.ConfigFetchedAt == nil {
-		status.ConfigFetchedAt = &now
+		status.ConfigFetchedAt = new(time.Now())
 	}
 
 	if repo != nil && status.ExternalReconciledAt == nil {
@@ -99,11 +119,9 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 			// External release reconcile errors are non-fatal in the legacy
 			// flow — they were logged and skipped. Mirror that here so
 			// transient DB hiccups don't block the build dispatch.
-			slogger.Log.Warn("Failed to reconcile external_release triggers",
-				slog.String("repo", repoName), slogger.E(err))
+			slogger.Log.Warn("Failed to reconcile external_release triggers", slog.String("repo", repoName), slogger.E(err))
 		} else {
-			n := time.Now()
-			status.ExternalReconciledAt = &n
+			status.ExternalReconciledAt = new(time.Now())
 		}
 	}
 
@@ -114,8 +132,7 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 			// so a transient DB hiccup doesn't block the build dispatch.
 			slogger.Log.Warn("Failed to reconcile jobs", slog.String("repo", repoName), slogger.E(err))
 		} else {
-			n := time.Now()
-			status.JobsReconciledAt = &n
+			status.JobsReconciledAt = new(time.Now())
 		}
 		if repo.BazelVersion != conf.BazelVersion {
 			repo.BazelVersion = conf.BazelVersion

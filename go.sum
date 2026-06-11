@@ -912,8 +912,8 @@ go.etcd.io/etcd/client/pkg/v3 v3.6.11 h1:e41mp315Yn3QMGPmEzCyLsMINgJXTY/dX8kM++1
 go.etcd.io/etcd/client/pkg/v3 v3.6.11/go.mod h1:DysuMe/inqRyC/1tjRR6hReH/VV9Lufs27YKSKBWWJg=
 go.etcd.io/etcd/client/v3 v3.6.11 h1:LAByD96VmmeuairkvdAcE0RZnrmGz/q3ceeWePo9bwc=
 go.etcd.io/etcd/client/v3 v3.6.11/go.mod h1:vOTDMCo+fGPEClJqcFEFSqZ+8e7WKV7AyqJjX//HR2w=
-go.f110.dev/githubmock v0.0.0-20260429052527-6037990fca25 h1:ai0IionAaSvG/hVBdq5KTkQjL8efeBVdKi26HmXew1o=
-go.f110.dev/githubmock v0.0.0-20260429052527-6037990fca25/go.mod h1:b/e5uPfhpTzjExN7ztcYRMVQ31Qf1Pe2jGwG6uy/ti0=
+go.f110.dev/githubmock v0.0.0-20260611113103-94e13050b58c h1:ZgKaIFPc5j7h3MG24RfPe1AoJ0bJqo9C+B41d5Eq2G0=
+go.f110.dev/githubmock v0.0.0-20260611113103-94e13050b58c/go.mod h1:bEjZJSGhp4EqZsKtdAEQ1JtTJsXDYRcgL5XSD10RkPE=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c h1:9rI3TfcM1tJs5J6YT8OQPnFsmdfsxXWL14oHnIFD3iY=
 go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c/go.mod h1:qsC70AjhvI2KStwgacc3f+cLy7o5SB04H4zKA3e1W7o=
 go.f110.dev/kubeproto v0.0.0-20260601163938-55a1a18121b9 h1:jh4jbTryNBWMLvPC/GwYbcEe8jGhfq7xfukbnWjfMTM=

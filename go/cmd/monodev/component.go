@@ -107,7 +107,7 @@ var gitDataService = &grpcServerComponent{
 			}
 			repo[v.Name] = r
 		}
-		service, err := git.NewDataService(repo)
+		service, err := git.NewDataServiceWithGoGit(repo)
 		if err != nil {
 			return
 		}
@@ -190,14 +190,24 @@ var buildBucket = &minioBucket{
 	Instance: minio,
 }
 
+var buildGitDataBucket = &minioBucket{
+	Name:     "build-git-data",
+	Bucket:   "git-data",
+	Instance: minio,
+}
+
 var githubmock = &simpleCommandComponent{
 	Name: "githubmock-server",
 	Args: []string{
 		"-listen", "127.0.0.1:5620",
 		"-github-url", "http://127.0.0.1:5620",
+		"-git-listen", "127.0.0.1:5621",
 		filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), "go/build/dev/githubmock-seed.yaml"),
 	},
-	Ports:         ports{{Name: "githubmock", Number: 5620}},
+	Ports: ports{
+		{Name: "githubmock", Number: 5620},
+		{Name: "githubmock-git", Number: 5621},
+	},
 	VerboseOutput: true,
 }
 

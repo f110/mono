@@ -271,7 +271,7 @@ func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Reposit
 
 	lis := bufconn.Listen(1024 * 1024)
 	s := grpc.NewServer()
-	svc, err := NewDataService(repo)
+	svc, err := NewDataServiceWithGoGit(repo)
 	require.NoError(t, err)
 	RegisterGitDataServer(s, svc)
 	go func() {

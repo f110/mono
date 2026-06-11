@@ -67,7 +67,7 @@ func TestPushReconciler(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			d := newTestDAO()
 			builder := &recBuilder{}
-			r := NewPushReconciler(d.toOptions(), nil, builder)
+			r := NewPushReconciler(d.toOptions(), nil, builder, nil)
 
 			ev := &database.GithubEvent{
 				EventType: "push",

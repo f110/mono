@@ -5,7 +5,7 @@
 # encoded in each repository name.
 - id: 1
   url: http://127.0.0.1:5620/example/public-app
-  clone_url: http://127.0.0.1:5620/example/public-app.git
+  clone_url: http://127.0.0.1:5621/example/public-app.git
   name: example/public-app
   private: false
   status: 1
@@ -13,7 +13,7 @@
   created_at: 2026-01-01 00:00:00
 - id: 2
   url: http://127.0.0.1:5620/example/private-app
-  clone_url: http://127.0.0.1:5620/example/private-app.git
+  clone_url: http://127.0.0.1:5621/example/private-app.git
   name: example/private-app
   private: true
   status: 1
