@@ -154,7 +154,7 @@ func TestPullRequestReconciler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.setup(t)
-			r := NewPullRequestReconciler(f.dao.toOptions(), f.gh, f.builder)
+			r := NewPullRequestReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "pull_request", tc.payload)
 
 			err := r.Reconcile(context.Background(), ev)

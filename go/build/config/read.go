@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -38,6 +40,19 @@ func ReadFromSpecifiedCommit(ctx context.Context, githubClient *github.Client, o
 	if err != nil {
 		return nil, err
 	}
+	return readFromProvider(provider, owner, repoName)
+}
+
+// ReadFromGitDataService reads the build configuration via the git-data-service
+// gRPC client. repoName must match the repository name registered with the
+// service. ref may be a commit SHA or a fully-qualified ref name
+// (e.g. "refs/heads/master").
+func ReadFromGitDataService(ctx context.Context, client git.GitDataClient, owner, repoName, ref string) (*Config, error) {
+	provider := newGitDataServiceProvider(ctx, client, repoName, ref)
+	return readFromProvider(provider, owner, repoName)
+}
+
+func readFromProvider(provider Provider, owner, repoName string) (*Config, error) {
 	jobs, err := ReadJobsFromBuildDir(provider)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to read build dir")
@@ -230,6 +245,80 @@ type githubFile struct {
 func (f *githubFile) Stat() (fs.FileInfo, error) { return nil, nil }
 func (f *githubFile) Read(v []byte) (int, error) { return f.buf.Read(v) }
 func (f *githubFile) Close() error               { return nil }
+
+type gitDataServiceProvider struct {
+	ctx    context.Context
+	client git.GitDataClient
+	repo   string
+	ref    string
+}
+
+func newGitDataServiceProvider(ctx context.Context, client git.GitDataClient, repo, ref string) Provider {
+	return &gitDataServiceProvider{ctx: ctx, client: client, repo: repo, ref: ref}
+}
+
+func (p *gitDataServiceProvider) ReadDir(name string) ([]fs.DirEntry, error) {
+	pathStr := normalizeGitPath(name)
+	if pathStr == "" {
+		pathStr = "/"
+	}
+	resp, err := p.client.GetTree(p.ctx, &git.RequestGetTree{Repo: p.repo, Ref: p.ref, Path: pathStr})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	entries := make([]fs.DirEntry, 0, len(resp.GetTree()))
+	for _, e := range resp.GetTree() {
+		entries = append(entries, &gitDataServiceEntry{
+			name:  path.Base(e.GetPath()),
+			isDir: e.GetMode() == "0040000",
+			size:  e.GetSize(),
+		})
+	}
+	return entries, nil
+}
+
+func (p *gitDataServiceProvider) Open(name string) (fs.File, error) {
+	pathStr := normalizeGitPath(name)
+	if pathStr == "" {
+		return nil, fs.ErrNotExist
+	}
+	resp, err := p.client.GetFile(p.ctx, &git.RequestGetFile{Repo: p.repo, Ref: p.ref, Path: pathStr})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &githubFile{buf: bytes.NewReader(resp.GetContent())}, nil
+}
+
+func normalizeGitPath(name string) string {
+	name = filepath.Clean(name)
+	if name == "." {
+		return ""
+	}
+	if name == "" || name[0] != '/' {
+		name = "/" + name
+	}
+	return name
+}
+
+type gitDataServiceEntry struct {
+	name  string
+	isDir bool
+	size  int64
+}
+
+func (e *gitDataServiceEntry) Name() string               { return e.name }
+func (e *gitDataServiceEntry) IsDir() bool                { return e.isDir }
+func (e *gitDataServiceEntry) Type() fs.FileMode          { return 0 }
+func (e *gitDataServiceEntry) Info() (fs.FileInfo, error) { return e, nil }
+func (e *gitDataServiceEntry) Size() int64                { return e.size }
+func (e *gitDataServiceEntry) Mode() fs.FileMode {
+	if e.isDir {
+		return fs.ModeDir
+	}
+	return 0
+}
+func (e *gitDataServiceEntry) ModTime() time.Time { return time.Time{} }
+func (e *gitDataServiceEntry) Sys() any           { return nil }
 
 func ReadJobsFromBuildDir(fileProvider Provider) ([]*JobV2, error) {
 	entries, err := fileProvider.ReadDir(BuildFileDir)

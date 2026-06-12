@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,6 +102,7 @@ type Options struct {
 	EventReconcileInterval         time.Duration
 	EventMaxProcessingDuration     time.Duration
 
+	GitDataServiceURL                 string
 	GitDataListen                     string
 	GitDataStorageEndpoint            string
 	GitDataStorageRegion              string
@@ -156,6 +158,8 @@ type process struct {
 	reconcilers       webhook.Reconcilers
 	gitDataGRPCServer *grpc.Server
 	gitDataUpdater    *git.Updater
+	gitDataConn       *grpc.ClientConn
+	gitDataClient     git.GitDataClient
 }
 
 func newProcess(opt Options) *process {
@@ -508,12 +512,22 @@ func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.Reposi
 }
 
 func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
+	if p.opt.GitDataServiceURL != "" {
+		conn, err := grpc.NewClient(p.opt.GitDataServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
+		p.gitDataConn = conn
+		p.gitDataClient = git.NewGitDataClient(conn)
+		slogger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
+	}
+
 	p.notifier = webhook.NewNotifier()
 	p.reconcilers = webhook.Reconcilers{}
-	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataUpdater))
-	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder))
-	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder))
-	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder))
+	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataUpdater, p.gitDataClient))
+	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
+	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
+	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
 
 	addRepo := make(chan *git.RepositoryConfig, 1)
 	go func() {
@@ -637,6 +651,9 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 		p.gitDataGRPCServer.GracefulStop()
 		slogger.Log.Info("Shutdown Git Data GRPC Server")
 	}
+	if p.gitDataConn != nil {
+		p.gitDataConn.Close()
+	}
 
 	return fsm.Finish()
 }
@@ -731,6 +748,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Duration("external-release-poll-interval", "Interval between polls of third-party repositories for external_release triggers").Var(&opt.ExternalReleasePollInterval).Default(1 * time.Hour)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&opt.EventReconcileInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
+	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint used by reconcilers to read repository data. If empty, reconcilers read from GitHub instead.").Var(&opt.GitDataServiceURL)
 	fs.String("git-data-listen", "Listen addr of the embedded git-data-service. If empty, the service is disabled.").Var(&opt.GitDataListen)
 	fs.String("git-data-storage-endpoint", "The endpoint of the object storage for git-data-service").Var(&opt.GitDataStorageEndpoint)
 	fs.String("git-data-storage-region", "The region name of the object storage for git-data-service").Var(&opt.GitDataStorageRegion)

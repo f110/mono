@@ -12,6 +12,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -25,32 +26,34 @@ func unmarshalPayload(ev *database.GithubEvent, out any) error {
 }
 
 // fetchConfig reads the build configuration for owner/repoName at revision.
-// useCommittedConfig=true reads the config of revision itself (used for
-// pushes/releases); =false reads HEAD of the default branch (used for pull
-// requests where revision lives outside the trusted branch). Returns
-// (nil, nil) when the repository has no jobs configured.
+// Returns (nil, nil) when the repository has no jobs configured.
 func (r *PushReconciler) fetchConfig(ctx context.Context, owner, repoName, revision string) (*config.Config, error) {
-	return fetchBuildConfig(ctx, r.githubClient, owner, repoName, revision, true)
+	return fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision)
 }
 
-func fetchBuildConfig(ctx context.Context, gh *github.Client, owner, repoName, revision string, useCommittedConfig bool) (*config.Config, error) {
-	var sha string
-	if useCommittedConfig {
-		c, _, err := gh.Repositories.GetCommit(ctx, owner, repoName, revision, nil)
+// fetchBuildConfig reads the build configuration at ref. ref may be a commit
+// SHA, "HEAD", or a fully-qualified ref name. When gitDataClient is non-nil,
+// the config is read from the git-data-service mirror; otherwise it falls
+// back to the GitHub API.
+func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, owner, repoName, ref string) (*config.Config, error) {
+	var conf *config.Config
+	if gitDataClient != nil {
+		c, err := config.ReadFromGitDataService(ctx, gitDataClient, owner, repoName, ref)
 		if err != nil {
-			return nil, xerrors.WithMessagef(err, "failed to get the commit: %s", revision)
+			return nil, xerrors.WithStack(err)
 		}
-		sha = c.GetCommit().GetTree().GetSHA()
+		conf = c
 	} else {
-		c, _, err := gh.Repositories.GetCommit(ctx, owner, repoName, "HEAD", nil)
+		c, _, err := gh.Repositories.GetCommit(ctx, owner, repoName, ref, nil)
 		if err != nil {
-			return nil, xerrors.WithMessage(err, "failed to get HEAD commit")
+			return nil, xerrors.WithMessagef(err, "failed to get the commit: %s", ref)
 		}
-		sha = c.GetCommit().GetTree().GetSHA()
-	}
-	conf, err := config.ReadFromSpecifiedCommit(ctx, gh, owner, repoName, sha)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
+		sha := c.GetCommit().GetTree().GetSHA()
+		c2, err := config.ReadFromSpecifiedCommit(ctx, gh, owner, repoName, sha)
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		conf = c2
 	}
 	if len(conf.Jobs) == 0 {
 		return nil, nil
@@ -211,7 +214,3 @@ func reconcileExternalReleaseTriggers(ctx context.Context, daos dao.Options, rep
 	}
 	return nil
 }
-
-// stringPtr is a small helper used when posting strings to the GitHub API
-// (which takes *string fields).
-func stringPtr(s string) *string { return &s }

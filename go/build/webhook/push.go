@@ -21,14 +21,15 @@ import (
 // main-branch pushes), and dispatches the build tasks for jobs subscribed to
 // EventPush.
 type PushReconciler struct {
-	dao          dao.Options
-	githubClient *github.Client
-	builder      Builder
-	gitUpdater   *git.Updater
+	dao           dao.Options
+	githubClient  *github.Client
+	builder       Builder
+	gitUpdater    *git.Updater
+	gitDataClient git.GitDataClient
 }
 
-func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, gitUpdater *git.Updater) *PushReconciler {
-	return &PushReconciler{dao: daos, githubClient: gh, builder: builder, gitUpdater: gitUpdater}
+func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, gitUpdater *git.Updater, gitDataClient git.GitDataClient) *PushReconciler {
+	return &PushReconciler{dao: daos, githubClient: gh, builder: builder, gitUpdater: gitUpdater, gitDataClient: gitDataClient}
 }
 
 func (*PushReconciler) EventType() string { return "push" }

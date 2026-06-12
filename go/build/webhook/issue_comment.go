@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/git"
 )
 
 // IssueCommentReconciler implements the `/allow-build` flow: a trusted user
@@ -18,13 +19,14 @@ import (
 // PermitPullRequest row and immediately re-runs the build pipeline against
 // the PR head.
 type IssueCommentReconciler struct {
-	dao          dao.Options
-	githubClient *github.Client
-	builder      Builder
+	dao           dao.Options
+	githubClient  *github.Client
+	builder       Builder
+	gitDataClient git.GitDataClient
 }
 
-func NewIssueCommentReconciler(daos dao.Options, gh *github.Client, builder Builder) *IssueCommentReconciler {
-	return &IssueCommentReconciler{dao: daos, githubClient: gh, builder: builder}
+func NewIssueCommentReconciler(daos dao.Options, gh *github.Client, builder Builder, gitDataClient git.GitDataClient) *IssueCommentReconciler {
+	return &IssueCommentReconciler{dao: daos, githubClient: gh, builder: builder, gitDataClient: gitDataClient}
 }
 
 func (*IssueCommentReconciler) EventType() string { return "issue_comment" }
@@ -88,7 +90,7 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 			event.GetRepo().GetOwner().GetLogin(),
 			event.GetRepo().GetName(),
 			event.GetIssue().GetNumber(),
-			&github.IssueComment{Body: stringPtr(body)},
+			&github.IssueComment{Body: new(body)},
 		); err != nil {
 			_ = WriteStatus(ev, &status)
 			return xerrors.WithStack(err)
@@ -118,7 +120,7 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 			return err
 		}
 
-		conf, err := fetchBuildConfig(ctx, r.githubClient, owner, repoName, revision, false)
+		conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, "HEAD")
 		if err != nil {
 			status.Skipped = true
 			status.SkipReason = "failed to fetch build config"

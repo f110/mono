@@ -77,7 +77,7 @@ func TestReleaseReconciler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.setup(t)
-			r := NewReleaseReconciler(f.dao.toOptions(), f.gh, f.builder)
+			r := NewReleaseReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "release", tc.payload)
 
 			err := r.Reconcile(context.Background(), ev)

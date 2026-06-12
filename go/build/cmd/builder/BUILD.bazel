@@ -38,6 +38,7 @@ go_library(
         "@io_k8s_client_go//tools/leaderelection/resourcelock",
         "@io_k8s_sigs_secrets_store_csi_driver//pkg/client/clientset/versioned",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
         "@org_golang_google_grpc//health",
         "@org_golang_google_grpc//health/grpc_health_v1",
         "@protoc_ddl//probe",

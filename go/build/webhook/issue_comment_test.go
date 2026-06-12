@@ -89,7 +89,7 @@ func TestIssueCommentReconciler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := tc.setup(t)
-			r := NewIssueCommentReconciler(f.dao.toOptions(), f.gh, f.builder)
+			r := NewIssueCommentReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "issue_comment", tc.payload)
 
 			err := r.Reconcile(context.Background(), ev)

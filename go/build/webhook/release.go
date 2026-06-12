@@ -10,18 +10,20 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/git"
 )
 
 // ReleaseReconciler handles `release` deliveries. Only the `published`
 // action triggers a build, matching the legacy behavior.
 type ReleaseReconciler struct {
-	dao          dao.Options
-	githubClient *github.Client
-	builder      Builder
+	dao           dao.Options
+	githubClient  *github.Client
+	builder       Builder
+	gitDataClient git.GitDataClient
 }
 
-func NewReleaseReconciler(daos dao.Options, gh *github.Client, builder Builder) *ReleaseReconciler {
-	return &ReleaseReconciler{dao: daos, githubClient: gh, builder: builder}
+func NewReleaseReconciler(daos dao.Options, gh *github.Client, builder Builder, gitDataClient git.GitDataClient) *ReleaseReconciler {
+	return &ReleaseReconciler{dao: daos, githubClient: gh, builder: builder, gitDataClient: gitDataClient}
 }
 
 func (*ReleaseReconciler) EventType() string { return "release" }
@@ -72,7 +74,7 @@ func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEv
 		return err
 	}
 
-	conf, err := fetchBuildConfig(ctx, r.githubClient, owner, repoName, revision, true)
+	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision)
 	if err != nil {
 		// Mirrors legacy: log + skip rather than fail.
 		status.Skipped = true

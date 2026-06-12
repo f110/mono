@@ -12,19 +12,21 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
 // PullRequestReconciler dispatches the pull_request action set: opened,
 // synchronize, closed.
 type PullRequestReconciler struct {
-	dao          dao.Options
-	githubClient *github.Client
-	builder      Builder
+	dao           dao.Options
+	githubClient  *github.Client
+	builder       Builder
+	gitDataClient git.GitDataClient
 }
 
-func NewPullRequestReconciler(daos dao.Options, gh *github.Client, builder Builder) *PullRequestReconciler {
-	return &PullRequestReconciler{dao: daos, githubClient: gh, builder: builder}
+func NewPullRequestReconciler(daos dao.Options, gh *github.Client, builder Builder, gitDataClient git.GitDataClient) *PullRequestReconciler {
+	return &PullRequestReconciler{dao: daos, githubClient: gh, builder: builder, gitDataClient: gitDataClient}
 }
 
 func (*PullRequestReconciler) EventType() string { return "pull_request" }
@@ -81,7 +83,7 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 				event.GetRepo().GetOwner().GetLogin(),
 				event.GetRepo().GetName(),
 				event.GetPullRequest().GetNumber(),
-				&github.IssueComment{Body: stringPtr(body)},
+				&github.IssueComment{Body: new(body)},
 			); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -112,7 +114,7 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 		return err
 	}
 
-	conf, err := fetchBuildConfig(ctx, r.githubClient, owner, repoName, revision, false)
+	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, "HEAD")
 	if err != nil {
 		// Treat as "no config found" — legacy code logged + skipped rather
 		// than failing. Same here.
@@ -143,10 +145,10 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 
 	if !status.ConfigValidated {
 		validateState := "failure"
-		if _, err := fetchBuildConfig(ctx, r.githubClient, owner, repoName, revision, true); err == nil {
+		if _, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision); err == nil {
 			validateState = "success"
 		}
-		if _, _, err := r.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, github.RepoStatus{State: stringPtr(validateState), Context: stringPtr("Validate config")}); err != nil {
+		if _, _, err := r.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, github.RepoStatus{State: new(validateState), Context: new("Validate config")}); err != nil {
 			_ = WriteStatus(ev, status)
 			return xerrors.WithStack(err)
 		}

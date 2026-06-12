@@ -14,6 +14,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/build/config",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/git",
         "//go/logger/slogger",
         "@com_github_google_go_github_v85//github",
         "@dev_f110_go_xerrors//:xerrors",
