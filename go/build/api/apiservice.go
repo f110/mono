@@ -31,6 +31,7 @@ type apiService struct {
 	builder           Builder
 	dao               dao.Options
 	githubClient      *github.Client
+	gitDataClient     git.GitDataClient
 	stClient          *storage.S3
 	bazelMirrorPrefix string
 	addRepo           chan<- *git.RepositoryConfig
@@ -38,8 +39,8 @@ type apiService struct {
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -237,11 +238,16 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	if err := config.UnmarshalJobV2(jobRow.Configuration, job, owner, repoName); err != nil {
 		return nil, status.Error(codes.Internal, "failed to decode job configuration")
 	}
+	revision, err := s.resolveDefaultBranchRevision(ctx, owner, repoName, repo.DefaultBranch)
+	if err != nil {
+		slogger.Log.Warn("Failed to resolve default branch revision", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("branch", repo.DefaultBranch))
+		return nil, status.Error(codes.Internal, "failed to resolve default branch revision")
+	}
 	newTasks, err := s.builder.Build(
 		ctx,
 		repo,
 		job,
-		repo.DefaultBranch,
+		revision,
 		repo.BazelVersion,
 		job.Command,
 		job.Targets,
@@ -257,6 +263,24 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	}
 
 	return ResponseInvokeJob_builder{TaskId: new(newTasks[0].Id)}.Build(), nil
+}
+
+// resolveDefaultBranchRevision returns the commit SHA at the tip of branch.
+// Prefers git-data-service when configured, otherwise falls back to the
+// GitHub API.
+func (s *apiService) resolveDefaultBranchRevision(ctx context.Context, owner, repoName, branch string) (string, error) {
+	if s.gitDataClient != nil {
+		resp, err := s.gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: repoName, Ref: "refs/heads/" + branch})
+		if err != nil {
+			return "", err
+		}
+		return resp.GetRef().GetHash(), nil
+	}
+	c, _, err := s.githubClient.Repositories.GetCommit(ctx, owner, repoName, branch, nil)
+	if err != nil {
+		return "", err
+	}
+	return c.GetSHA(), nil
 }
 
 func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTask) (*ResponseForceStopTask, error) {

@@ -536,7 +536,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 			p.gitDataUpdater.AddRepo(context.Background(), repo)
 		}
 	}()
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
