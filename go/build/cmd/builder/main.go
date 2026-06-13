@@ -45,6 +45,7 @@ import (
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/vault"
 )
@@ -405,6 +406,9 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 
 	var cachePool *client.SinglePool
 	if p.opt.GitDataMemcachedEndpoint != "" {
+		if err := netutil.WaitListen(p.opt.GitDataMemcachedEndpoint, 5*time.Minute); err != nil {
+			return fsm.Error(xerrors.WithStack(err))
+		}
 		cacheServer, err := client.NewServerWithMetaProtocol(ctx, "cache-1", "tcp", p.opt.GitDataMemcachedEndpoint)
 		if err != nil {
 			return fsm.Error(xerrors.WithStack(err))
