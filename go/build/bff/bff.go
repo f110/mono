@@ -81,10 +81,11 @@ func (b *BFF) ListRepositories(ctx context.Context, _ *connect.Request[RequestLi
 	}
 	repositories := enumerable.Map(allRepo.GetRepositories(), func(v *model.Repository) *model.Repository {
 		return model.Repository_builder{
-			Id:      new(v.GetId()),
-			Name:    new(v.GetName()),
-			Url:     new(v.GetUrl()),
-			Private: new(v.GetPrivate()),
+			Id:           new(v.GetId()),
+			Name:         new(v.GetName()),
+			Url:          new(v.GetUrl()),
+			Private:      new(v.GetPrivate()),
+			HeadRevision: new(v.GetHeadRevision()),
 		}.Build()
 	})
 	return connect.NewResponse(ResponseListRepositories_builder{Repositories: repositories}.Build()), nil

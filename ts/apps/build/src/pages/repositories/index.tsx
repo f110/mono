@@ -119,7 +119,27 @@ export const RepositoriesPage: React.FC = () => {
                   )}
                 </ListItemAvatar>
                 <ListItemText
-                  primary={repository.name}
+                  primary={
+                    repository.headRevision ? (
+                      <>
+                        {repository.name}{' '}
+                        <Box
+                          component="span"
+                          sx={{
+                            fontFamily: 'monospace',
+                            color: 'text.secondary',
+                            fontSize: '0.85em',
+                          }}
+                        >
+                          {repository.headRevision.length === 40
+                            ? repository.headRevision.slice(0, 8)
+                            : repository.headRevision}
+                        </Box>
+                      </>
+                    ) : (
+                      repository.name
+                    )
+                  }
                   secondary={
                     <Link href={repository.url}>{repository.url}</Link>
                   }

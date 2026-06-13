@@ -50,6 +50,19 @@ func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListReposit
 		return nil, status.Error(codes.Internal, "Failed to list repositories")
 	}
 	repositories := enumerable.Map(allRepo, s.dbRepoToAPIRepo)
+	if s.gitDataClient != nil {
+		for i, repo := range allRepo {
+			if repo.DefaultBranch == "" {
+				continue
+			}
+			resp, err := s.gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: repo.Name, Ref: "refs/heads/" + repo.DefaultBranch})
+			if err != nil {
+				slogger.Log.Warn("Failed to get HEAD revision from git-data-service", slogger.E(err), slog.String("repo", repo.Name))
+				continue
+			}
+			repositories[i].SetHeadRevision(resp.GetRef().GetHash())
+		}
+	}
 	return ResponseListRepositories_builder{Repositories: repositories}.Build(), nil
 }
 

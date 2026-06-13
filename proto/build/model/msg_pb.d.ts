@@ -44,6 +44,15 @@ export declare type Repository = Message<"mono.build.model.Repository"> & {
    * @generated from field: mono.build.model.RepositoryStatus status = 6;
    */
   status: RepositoryStatus;
+
+  /**
+   * Full commit SHA at the tip of default_branch. Populated only when the API
+   * server has access to git-data-service; empty otherwise. Clients shorten
+   * this for display.
+   *
+   * @generated from field: string head_revision = 7;
+   */
+  headRevision: string;
 };
 
 /**

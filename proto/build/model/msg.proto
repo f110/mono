@@ -27,6 +27,10 @@ message Repository {
   string clone_url        = 4;
   bool private            = 5;
   RepositoryStatus status = 6;
+  // Full commit SHA at the tip of default_branch. Populated only when the API
+  // server has access to git-data-service; empty otherwise. Clients shorten
+  // this for display.
+  string head_revision = 7;
 }
 
 message Task {

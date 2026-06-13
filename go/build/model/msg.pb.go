@@ -111,17 +111,18 @@ func (x TestStatus) Number() protoreflect.EnumNumber {
 }
 
 type Repository struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Id          int32                  `protobuf:"varint,1,opt,name=id"`
-	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
-	xxx_hidden_Url         *string                `protobuf:"bytes,3,opt,name=url"`
-	xxx_hidden_CloneUrl    *string                `protobuf:"bytes,4,opt,name=clone_url,json=cloneUrl"`
-	xxx_hidden_Private     bool                   `protobuf:"varint,5,opt,name=private"`
-	xxx_hidden_Status      RepositoryStatus       `protobuf:"varint,6,opt,name=status,enum=mono.build.model.RepositoryStatus"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id           int32                  `protobuf:"varint,1,opt,name=id"`
+	xxx_hidden_Name         *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Url          *string                `protobuf:"bytes,3,opt,name=url"`
+	xxx_hidden_CloneUrl     *string                `protobuf:"bytes,4,opt,name=clone_url,json=cloneUrl"`
+	xxx_hidden_Private      bool                   `protobuf:"varint,5,opt,name=private"`
+	xxx_hidden_Status       RepositoryStatus       `protobuf:"varint,6,opt,name=status,enum=mono.build.model.RepositoryStatus"`
+	xxx_hidden_HeadRevision *string                `protobuf:"bytes,7,opt,name=head_revision,json=headRevision"`
+	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
+	XXX_presence            [1]uint32
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *Repository) Reset() {
@@ -202,34 +203,49 @@ func (x *Repository) GetStatus() RepositoryStatus {
 	return RepositoryStatus_REPOSITORY_STATUS_UNKNOWN
 }
 
+func (x *Repository) GetHeadRevision() string {
+	if x != nil {
+		if x.xxx_hidden_HeadRevision != nil {
+			return *x.xxx_hidden_HeadRevision
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *Repository) SetId(v int32) {
 	x.xxx_hidden_Id = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 7)
 }
 
 func (x *Repository) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 7)
 }
 
 func (x *Repository) SetUrl(v string) {
 	x.xxx_hidden_Url = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
 }
 
 func (x *Repository) SetCloneUrl(v string) {
 	x.xxx_hidden_CloneUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 7)
 }
 
 func (x *Repository) SetPrivate(v bool) {
 	x.xxx_hidden_Private = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 7)
 }
 
 func (x *Repository) SetStatus(v RepositoryStatus) {
 	x.xxx_hidden_Status = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 6)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 7)
+}
+
+func (x *Repository) SetHeadRevision(v string) {
+	x.xxx_hidden_HeadRevision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 7)
 }
 
 func (x *Repository) HasId() bool {
@@ -274,6 +290,13 @@ func (x *Repository) HasStatus() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
 }
 
+func (x *Repository) HasHeadRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
 func (x *Repository) ClearId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Id = 0
@@ -304,15 +327,21 @@ func (x *Repository) ClearStatus() {
 	x.xxx_hidden_Status = RepositoryStatus_REPOSITORY_STATUS_UNKNOWN
 }
 
+func (x *Repository) ClearHeadRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_HeadRevision = nil
+}
+
 type Repository_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Id       *int32
-	Name     *string
-	Url      *string
-	CloneUrl *string
-	Private  *bool
-	Status   *RepositoryStatus
+	Id           *int32
+	Name         *string
+	Url          *string
+	CloneUrl     *string
+	Private      *bool
+	Status       *RepositoryStatus
+	HeadRevision *string
 }
 
 func (b0 Repository_builder) Build() *Repository {
@@ -320,28 +349,32 @@ func (b0 Repository_builder) Build() *Repository {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 7)
 		x.xxx_hidden_Id = *b.Id
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 7)
 		x.xxx_hidden_Name = b.Name
 	}
 	if b.Url != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
 		x.xxx_hidden_Url = b.Url
 	}
 	if b.CloneUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 7)
 		x.xxx_hidden_CloneUrl = b.CloneUrl
 	}
 	if b.Private != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 7)
 		x.xxx_hidden_Private = *b.Private
 	}
 	if b.Status != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 6)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 7)
 		x.xxx_hidden_Status = *b.Status
+	}
+	if b.HeadRevision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 7)
+		x.xxx_hidden_HeadRevision = b.HeadRevision
 	}
 	return m0
 }
@@ -2269,7 +2302,7 @@ var File_proto_build_model_msg_proto protoreflect.FileDescriptor
 
 const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/build/model/msg.proto\x12\x10mono.build.model\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb5\x01\n" +
+	"\x1bproto/build/model/msg.proto\x12\x10mono.build.model\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\x01\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
@@ -2277,7 +2310,8 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1b\n" +
 	"\tclone_url\x18\x04 \x01(\tR\bcloneUrl\x12\x18\n" +
 	"\aprivate\x18\x05 \x01(\bR\aprivate\x12:\n" +
-	"\x06status\x18\x06 \x01(\x0e2\".mono.build.model.RepositoryStatusR\x06status\"\x8d\b\n" +
+	"\x06status\x18\x06 \x01(\x0e2\".mono.build.model.RepositoryStatusR\x06status\x12#\n" +
+	"\rhead_revision\x18\a \x01(\tR\fheadRevision\"\x8d\b\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x19\n" +
