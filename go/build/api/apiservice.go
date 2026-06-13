@@ -325,7 +325,8 @@ func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo)
 	versions = enumerable.Uniq(versions, func(t *semver.Version) string { return t.String() })
 	sort.Sort(versions)
 	versionStrings := enumerable.Map(versions, func(t *semver.Version) string { return t.String() })
-	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings}.Build(), nil
+	schemaVersion := database.SchemaHash
+	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings, SchemaVersion: &schemaVersion}.Build(), nil
 }
 
 func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error) {

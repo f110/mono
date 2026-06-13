@@ -144,6 +144,11 @@ export declare type ResponseGetServerInfo = Message<"mono.build.bff.ResponseGetS
    * @generated from field: repeated string supported_bazel_versions = 1;
    */
   supportedBazelVersions: string[];
+
+  /**
+   * @generated from field: string schema_version = 2;
+   */
+  schemaVersion: string;
 };
 
 /**

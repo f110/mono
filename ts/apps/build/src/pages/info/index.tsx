@@ -20,7 +20,7 @@ const DefinitionTableCell = styled(TableCell)(({ theme }) => ({
 }))
 
 export const InfoPage: React.FC = () => {
-  const supportedVersions = useGetServerInfo()
+  const { supportedBazelVersions, schemaVersion } = useGetServerInfo()
 
   return (
     <Container maxWidth="xl">
@@ -44,7 +44,7 @@ export const InfoPage: React.FC = () => {
                       },
                     }}
                   >
-                    {supportedVersions.map((version) => (
+                    {supportedBazelVersions.map((version) => (
                       <ListItem>{version}</ListItem>
                     ))}
                   </List>
@@ -56,7 +56,9 @@ export const InfoPage: React.FC = () => {
               </TableRow>
               <TableRow>
                 <DefinitionTableCell>Schema version</DefinitionTableCell>
-                <DefinitionTableCell></DefinitionTableCell>
+                <DefinitionTableCell sx={{ fontFamily: 'monospace' }}>
+                  {schemaVersion}
+                </DefinitionTableCell>
               </TableRow>
             </TableBody>
           </Table>

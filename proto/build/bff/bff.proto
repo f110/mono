@@ -58,6 +58,7 @@ message RequestGetServerInfo {
 
 message ResponseGetServerInfo {
   repeated string supported_bazel_versions = 1;
+  string          schema_version           = 2;
 }
 
 message RequestListJobs {

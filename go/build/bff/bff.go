@@ -216,7 +216,8 @@ func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetSe
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions()}.Build()), nil
+	schemaVersion := res.GetSchemaVersion()
+	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: &schemaVersion}.Build()), nil
 }
 
 func (b *BFF) ListJobs(ctx context.Context, req *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {

@@ -1133,6 +1133,9 @@ func (b0 RequestGetServerInfo_builder) Build() *RequestGetServerInfo {
 type ResponseGetServerInfo struct {
 	state                             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_SupportedBazelVersions []string               `protobuf:"bytes,1,rep,name=supported_bazel_versions,json=supportedBazelVersions"`
+	xxx_hidden_SchemaVersion          *string                `protobuf:"bytes,2,opt,name=schema_version,json=schemaVersion"`
+	XXX_raceDetectHookData            protoimpl.RaceDetectHookData
+	XXX_presence                      [1]uint32
 	unknownFields                     protoimpl.UnknownFields
 	sizeCache                         protoimpl.SizeCache
 }
@@ -1169,14 +1172,42 @@ func (x *ResponseGetServerInfo) GetSupportedBazelVersions() []string {
 	return nil
 }
 
+func (x *ResponseGetServerInfo) GetSchemaVersion() string {
+	if x != nil {
+		if x.xxx_hidden_SchemaVersion != nil {
+			return *x.xxx_hidden_SchemaVersion
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ResponseGetServerInfo) SetSupportedBazelVersions(v []string) {
 	x.xxx_hidden_SupportedBazelVersions = v
+}
+
+func (x *ResponseGetServerInfo) SetSchemaVersion(v string) {
+	x.xxx_hidden_SchemaVersion = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ResponseGetServerInfo) HasSchemaVersion() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseGetServerInfo) ClearSchemaVersion() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_SchemaVersion = nil
 }
 
 type ResponseGetServerInfo_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	SupportedBazelVersions []string
+	SchemaVersion          *string
 }
 
 func (b0 ResponseGetServerInfo_builder) Build() *ResponseGetServerInfo {
@@ -1184,6 +1215,10 @@ func (b0 ResponseGetServerInfo_builder) Build() *ResponseGetServerInfo {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_SupportedBazelVersions = b.SupportedBazelVersions
+	if b.SchemaVersion != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_SchemaVersion = b.SchemaVersion
+	}
 	return m0
 }
 
@@ -1497,9 +1532,10 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x14RequestForceStopTask\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"\x17\n" +
 	"\x15ResponseForceStopTask\"\x16\n" +
-	"\x14RequestGetServerInfo\"Q\n" +
+	"\x14RequestGetServerInfo\"x\n" +
 	"\x15ResponseGetServerInfo\x128\n" +
-	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions\"I\n" +
+	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions\x12%\n" +
+	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\"I\n" +
 	"\"RequestListExternalReleaseTriggers\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"k\n" +
 	"#ResponseListExternalReleaseTriggers\x12D\n" +
