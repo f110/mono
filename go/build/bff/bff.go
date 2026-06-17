@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -237,6 +238,7 @@ func (b *BFF) InvokeJob(ctx context.Context, req *connect.Request[RequestInvokeJ
 	}
 	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: new(req.Msg.GetRepositoryId()), JobName: new(req.Msg.GetJobName())}.Build())
 	if err != nil {
+		slogger.Log.Info("failed to invoke job", slog.Int("repository_id", int(req.Msg.GetRepositoryId())), slog.String("job_name", req.Msg.GetJobName()))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseInvokeJob_builder{}.Build()), nil
