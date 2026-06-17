@@ -137,6 +137,31 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
+func TestNormalizeGitPath(t *testing.T) {
+	// git-data-service expects tree paths without a leading slash and "" for
+	// the repository root (ReadDir maps "" to "/"). Anything else makes
+	// go-git's Tree/FindEntry fail with "path is not found".
+	cases := []struct {
+		In   string
+		Want string
+	}{
+		{In: "", Want: ""},
+		{In: ".", Want: ""},
+		{In: "/", Want: ""},
+		{In: ".build", Want: ".build"},
+		{In: "/.build", Want: ".build"},
+		{In: ".bazelversion", Want: ".bazelversion"},
+		{In: ".build/config.cue", Want: ".build/config.cue"},
+		{In: "/.build/config.cue", Want: ".build/config.cue"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.In, func(t *testing.T) {
+			assertion.Equal(t, normalizeGitPath(tc.In), tc.Want)
+		})
+	}
+}
+
 func TestGithubProvider(t *testing.T) {
 	ghMock := githubmock.NewMock()
 	repo := ghMock.Repository("f110/gh-test")

@@ -289,15 +289,16 @@ func (p *gitDataServiceProvider) Open(name string) (fs.File, error) {
 	return &githubFile{buf: bytes.NewReader(resp.GetContent())}, nil
 }
 
+// normalizeGitPath converts an fs path into the form git-data-service expects:
+// a tree path without a leading slash, or "" for the repository root. The
+// service feeds the path straight into go-git's Tree/FindEntry, which reject a
+// leading slash with "path is not found".
 func normalizeGitPath(name string) string {
 	name = filepath.Clean(name)
-	if name == "." {
+	if name == "." || name == "/" {
 		return ""
 	}
-	if name == "" || name[0] != '/' {
-		name = "/" + name
-	}
-	return name
+	return strings.TrimPrefix(name, "/")
 }
 
 type gitDataServiceEntry struct {
