@@ -269,6 +269,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 		false,
 	)
 	if err != nil {
+		slogger.Log.Warn("Failed to invoke job", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("job_name", job.Name))
 		return nil, status.Error(codes.Internal, "failed to invoke job")
 	}
 	if newTasks == nil {
