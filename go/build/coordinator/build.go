@@ -317,14 +317,9 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	for _, v := range taskList {
-		if time.Since(v.CreatedAt) > jobTimeout {
-			break
-		}
-		if v.FinishedAt == nil {
-			slogger.Log.Warn("Other task is still running", slog.Int("task_id", int(v.Id)))
-			return nil, nil
-		}
+	if running := runningSameJob(taskList, job.Name); running != nil {
+		slogger.Log.Warn("Same job is still running", slog.Int("task_id", int(running.Id)), slog.String("job_name", job.Name))
+		return nil, nil
 	}
 
 	jobConfiguration, err := config.MarshalJob(job)
@@ -371,6 +366,24 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 	}
 
 	return tasks, nil
+}
+
+// runningSameJob returns the unfinished task of jobName if it is still running.
+// taskList must be ordered by CreatedAt in descending order. Tasks older than
+// jobTimeout are regarded as not running.
+func runningSameJob(taskList []*database.Task, jobName string) *database.Task {
+	for _, v := range taskList {
+		if time.Since(v.CreatedAt) > jobTimeout {
+			break
+		}
+		if v.JobName != jobName {
+			continue
+		}
+		if v.FinishedAt == nil {
+			return v
+		}
+	}
+	return nil
 }
 
 func (b *BazelBuilder) ForceStop(ctx context.Context, taskId int32) error {

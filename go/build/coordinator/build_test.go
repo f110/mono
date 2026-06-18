@@ -178,6 +178,70 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	})
 }
 
+func TestRunningSameJob(t *testing.T) {
+	now := time.Now()
+	cases := []struct {
+		name     string
+		taskList []*database.Task
+		jobName  string
+		want     int32 // task id of the running task, 0 means not running
+	}{
+		{
+			name: "Same job is still running",
+			taskList: []*database.Task{
+				{Id: 1, JobName: "test", CreatedAt: now},
+			},
+			jobName: "test",
+			want:    1,
+		},
+		{
+			name: "Only a different job is running",
+			taskList: []*database.Task{
+				{Id: 1, JobName: "other", CreatedAt: now},
+			},
+			jobName: "test",
+			want:    0,
+		},
+		{
+			name: "Same job has already finished",
+			taskList: []*database.Task{
+				{Id: 1, JobName: "test", CreatedAt: now, FinishedAt: &now},
+			},
+			jobName: "test",
+			want:    0,
+		},
+		{
+			name: "Same job started but timed out",
+			taskList: []*database.Task{
+				{Id: 1, JobName: "test", CreatedAt: now.Add(-2 * jobTimeout)},
+			},
+			jobName: "test",
+			want:    0,
+		},
+		{
+			name: "Different job is running but the same job has finished",
+			taskList: []*database.Task{
+				{Id: 2, JobName: "other", CreatedAt: now},
+				{Id: 1, JobName: "test", CreatedAt: now, FinishedAt: &now},
+			},
+			jobName: "test",
+			want:    0,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := runningSameJob(tc.taskList, tc.jobName)
+			if tc.want == 0 {
+				assertion.Nil(t, got)
+				return
+			}
+			assertion.NotNil(t, got)
+			assertion.Equal(t, tc.want, got.Id)
+		})
+	}
+}
+
 func TestBazelBuilder_ForceStop(t *testing.T) {
 	runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
 	coreInformer := k8sclient.NewCoreV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.CoreV1, metav1.NamespaceDefault, 30*time.Second)
