@@ -119,7 +119,7 @@ func TestJobBuilder(t *testing.T) {
 				jobObject: {
 					RemoveContainer("report"),
 					RemoveVolume("comm"),
-					k8sfactory.OnContainer("main", RemoveArgs("--build_event_binary_file=/comm/bep", "--cache_test_results=no"), AddArgsBefore("--", "--remote_upload_local_results=false")),
+					k8sfactory.OnContainer("main", RemoveArgs("--build_event_binary_file=/comm/bep"), AddArgsBefore("--", "--remote_upload_local_results=false")),
 				},
 			},
 		},
