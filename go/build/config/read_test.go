@@ -46,6 +46,35 @@ func TestParseFile(t *testing.T) {
 			},
 		},
 		{
+			Name: "Valid: test with cache_test_results",
+			File: `jobs: test: {
+	command: "test"
+	targets: ["//..."]
+	event: ["manual"]
+	platforms: ["linux_amd64"]
+	cache_test_results: true
+}`,
+			Job: &JobV2{
+				Name:             "test",
+				Command:          "test",
+				Targets:          []string{"//..."},
+				Event:            []EventType{EventManual},
+				Platforms:        []string{"linux_amd64"},
+				Args:             []string{},
+				CacheTestResults: true,
+			},
+		},
+		{
+			Name: "Invalid: run with cache_test_results",
+			File: `jobs: test: {
+	command: "run"
+	targets: ["//..."]
+	event: ["manual"]
+	platforms: ["linux_amd64"]
+	cache_test_results: true
+}`,
+		},
+		{
 			Name: "Invalid: test with args",
 			File: `jobs: test: {
 	command: "test"

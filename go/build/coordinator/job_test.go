@@ -181,6 +181,19 @@ func TestJobBuilder(t *testing.T) {
 		},
 		{
 			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
+				j.CacheTestResults = true
+				return j, r, ta
+			},
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					k8sfactory.OnContainer("main", RemoveArgs("--cache_test_results=no")),
+				},
+			},
+		},
+		{
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
 				j.Secrets = []*config.Secret{{MountPath: "/etc/job/secret", VaultMount: "secrets", VaultPath: "login", VaultKey: "password"}}
 				return j, r, ta
 			},

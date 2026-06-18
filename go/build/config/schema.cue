@@ -44,6 +44,7 @@ import "list"
 	all_revision?:  bool
 	github_status?: bool
 	exclusive?: bool
+	cache_test_results?: bool
 	env?: {
 		[string]: string
 	}
@@ -63,6 +64,8 @@ import "list"
 
 	if command == "run" {
 		targets: list.MaxItems(1)
+		// cache_test_results is only meaningful for the test command.
+		cache_test_results?: _|_
 	}
 
 	if list.Contains(event, "external_release") {

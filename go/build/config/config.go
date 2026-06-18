@@ -131,6 +131,9 @@ func (s *RegistrySecret) Hash() (uint32, error) {
 	return crc32.ChecksumIEEE(buf.Bytes()), nil
 }
 
+// Job is the Starlark-facing job definition.
+//
+// Deprecated: The Starlark configuration is deprecated. Use JobV2 instead.
 type Job struct {
 	// Name is a job name
 	Name  string      `attr:"name"`
@@ -492,6 +495,11 @@ func argPairs(obj any) []any {
 	return pairs
 }
 
+// JobV2 is the current job definition read from CUE configuration files.
+//
+// The fields here must be kept in sync with the CUE schema in schema.cue, which validates
+// the configuration (including field-level constraints such as which commands accept a field).
+// When you add or change a field, update schema.cue as well.
 type JobV2 struct {
 	SchemaVersion string `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
 
@@ -514,6 +522,9 @@ type JobV2 struct {
 	Exclusive bool `yaml:"exclusive,omitempty" json:"exclusive,omitempty"`
 	// The name of config
 	ConfigName string `yaml:"config_name,omitempty" json:"config_name,omitempty"`
+	// CacheTestResults allows reusing cached test results. By default the builder passes --cache_test_results=no.
+	// This option is only valid when the command is test.
+	CacheTestResults bool `yaml:"cache_test_results,omitempty" json:"cache_test_results,omitempty"`
 	// Job schedule
 	Schedule       string                 `yaml:"schedule,omitempty" json:"schedule,omitempty"`
 	Secrets        []*Secret              `yaml:"secrets,omitempty" json:"secrets,omitempty"`

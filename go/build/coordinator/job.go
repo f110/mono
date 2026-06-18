@@ -327,10 +327,11 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 		}
 	}
 	if j.commDirVolume != nil {
-		args = append(args,
-			fmt.Sprintf("--build_event_binary_file=%s/bep", j.commDirVolume.Mount.MountPath),
-			"--cache_test_results=no",
-		)
+		args = append(args, fmt.Sprintf("--build_event_binary_file=%s/bep", j.commDirVolume.Mount.MountPath))
+	}
+	if j.job.Command == "test" && !j.job.CacheTestResults {
+		// By default we disable the test result cache. A job can opt in to reuse cached results.
+		args = append(args, "--cache_test_results=no")
 	}
 	if j.job.Command == "test" && !j.task.IsTrunk {
 		args = append(args, "--remote_upload_local_results=false")
