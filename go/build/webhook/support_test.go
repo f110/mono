@@ -24,6 +24,7 @@ type testDAO struct {
 	PermitPullRequest      *daotest.PermitPullRequest
 	GithubEvent            *daotest.GithubEvent
 	ExternalReleaseTrigger *daotest.ExternalReleaseTrigger
+	Job                    *daotest.Job
 }
 
 func newTestDAO() *testDAO {
@@ -34,6 +35,7 @@ func newTestDAO() *testDAO {
 		PermitPullRequest:      daotest.NewPermitPullRequest(),
 		GithubEvent:            daotest.NewGithubEvent(),
 		ExternalReleaseTrigger: daotest.NewExternalReleaseTrigger(),
+		Job:                    daotest.NewJob(),
 	}
 }
 
@@ -45,14 +47,19 @@ func (d *testDAO) toOptions() dao.Options {
 		PermitPullRequest:      d.PermitPullRequest,
 		GithubEvent:            d.GithubEvent,
 		ExternalReleaseTrigger: d.ExternalReleaseTrigger,
+		Job:                    d.Job,
 	}
 }
 
 // recBuilder records each Build invocation and returns a single fake Task.
+// When err is set it returns that error alongside the created task, mirroring
+// coordinator.BazelBuilder.Build which persists the task row before it may fail
+// to launch the underlying job.
 type recBuilder struct {
 	called   bool
 	jobNames []string
 	tasks    []*database.Task
+	err      error
 }
 
 var _ Builder = (*recBuilder)(nil)
@@ -62,7 +69,7 @@ func (m *recBuilder) Build(_ context.Context, _ *database.SourceRepository, job 
 	m.jobNames = append(m.jobNames, job.Name)
 	t := &database.Task{Id: int32(len(m.jobNames))}
 	m.tasks = append(m.tasks, t)
-	return []*database.Task{t}, nil
+	return []*database.Task{t}, m.err
 }
 
 // recTransport captures every request it sees so tests can assert on the

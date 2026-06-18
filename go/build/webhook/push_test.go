@@ -3,8 +3,12 @@ package webhook
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"testing"
 	"time"
+
+	"github.com/google/go-github/v85/github"
+	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/logger"
@@ -86,4 +90,38 @@ func TestPushReconciler(t *testing.T) {
 			assertion.Equal(t, st.SkipReason, tc.wantSkipReason)
 		})
 	}
+}
+
+// When a build is dispatched but the builder fails after creating the task
+// row, the created task id must still be recorded in the status so the retry
+// does not create a duplicate task for the same commit.
+func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
+	logger.SetLogLevel("debug")
+	slogger.Init()
+
+	const opsURL = "https://github.com/f110/ops"
+	const headSHA = "deadbeef"
+
+	d := newTestDAO()
+	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+	d.Job.RegisterListByRepositoryId(1, nil, nil)
+	d.ExternalReleaseTrigger.RegisterListByRepositoryId(1, nil, nil)
+	builder := &recBuilder{err: xerrors.Define("failed to launch job").WithStack()}
+	gh := github.NewClient(&http.Client{Transport: configTransport(t, "f110/ops", headSHA, "push")})
+	r := NewPushReconciler(d.toOptions(), gh, builder, nil, nil)
+
+	ev := &database.GithubEvent{
+		Id:        1,
+		EventType: "push",
+		Payload:   pushPayload(t, "master", "a change"),
+		State:     database.GithubEventStateProcessing,
+		CreatedAt: time.Now(),
+	}
+	err := r.Reconcile(context.Background(), ev)
+	assertion.Error(t, err)
+	assertion.Equal(t, ev.State, database.GithubEventStateFailed)
+
+	var st PushStatus
+	assertion.MustNoError(t, readStatus(ev, &st))
+	assertion.Equal(t, len(st.DispatchedTaskIDs), 1)
 }

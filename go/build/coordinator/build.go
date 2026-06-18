@@ -355,7 +355,10 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 
 			task.Success = false
 			task.FinishedAt = new(time.Now())
-			return nil, xerrors.WithStack(err)
+			// Return the tasks created so far (including this one) so the caller
+			// can record their ids. The row is already persisted; dropping it
+			// here would let a retry create a duplicate for the same revision.
+			return tasks, xerrors.WithStack(err)
 		}
 
 		if job.GitHubStatus {

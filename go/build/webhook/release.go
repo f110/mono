@@ -94,11 +94,15 @@ func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEv
 	if status.DispatchedTaskIDs == nil {
 		jobs := conf.Job(config.EventRelease)
 		tasks, err := dispatchBuilds(ctx, r.builder, owner, repoName, repo, jobs, conf.BazelVersion, revision, "release", false)
+		// Checkpoint the created task ids even on a partial failure so a retry
+		// resumes instead of dispatching the same jobs again.
+		if ids := TaskIDs(tasks); len(ids) > 0 {
+			status.DispatchedTaskIDs = ids
+		}
 		if err != nil {
 			_ = WriteStatus(ev, &status)
 			return err
 		}
-		status.DispatchedTaskIDs = TaskIDs(tasks)
 	}
 
 	_ = WriteStatus(ev, &status)

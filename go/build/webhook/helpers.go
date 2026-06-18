@@ -77,10 +77,13 @@ func dispatchBuilds(ctx context.Context, builder Builder, owner, repoName string
 			continue
 		}
 		tasks, err := builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via, isMainBranch)
+		// Build persists the task rows before it may fail to launch the
+		// underlying job, so record whatever it created even on error. The
+		// caller checkpoints these ids so a retry does not duplicate them.
+		dispatched = append(dispatched, tasks...)
 		if err != nil {
 			return dispatched, xerrors.WithMessagef(err, "failed to start job %s for %s/%s", v.Name, owner, repoName)
 		}
-		dispatched = append(dispatched, tasks...)
 	}
 	return dispatched, nil
 }
