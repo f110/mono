@@ -1412,18 +1412,11 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	}
 
 	if len(res) > 0 {
-		repositoryPrimaryKeys := make([]int32, len(res))
 		taskPrimaryKeys := make([]int32, len(res))
+		repositoryPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			repositoryPrimaryKeys[i] = v.RepositoryId
 			taskPrimaryKeys[i] = v.TaskId
-		}
-		repositoryData := make(map[int32]*database.SourceRepository)
-		{
-			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
-			for _, v := range rels {
-				repositoryData[v.Id] = v
-			}
+			repositoryPrimaryKeys[i] = v.RepositoryId
 		}
 		taskData := make(map[int32]*database.Task)
 		{
@@ -1432,9 +1425,16 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 				taskData[v.Id] = v
 			}
 		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Repository = repositoryData[v.RepositoryId]
 			v.Task = taskData[v.TaskId]
+			v.Repository = repositoryData[v.RepositoryId]
 		}
 	}
 	return res, nil
@@ -1576,8 +1576,8 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 	}
 
 	changedColumn := testReport.ChangedColumn()
-	cols := make([]string, len(changedColumn)+1)
-	values := make([]any, len(changedColumn)+1)
+	cols := make([]string, len(changedColumn))
+	values := make([]any, len(changedColumn))
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -1784,8 +1784,8 @@ func (d *Job) Update(ctx context.Context, job *database.Job, opt ...ExecOption) 
 	}
 
 	changedColumn := job.ChangedColumn()
-	cols := make([]string, len(changedColumn)+1)
-	values := make([]any, len(changedColumn)+1)
+	cols := make([]string, len(changedColumn))
+	values := make([]any, len(changedColumn))
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
@@ -2643,8 +2643,8 @@ func (d *ExternalReleaseHistory) Update(ctx context.Context, externalReleaseHist
 	}
 
 	changedColumn := externalReleaseHistory.ChangedColumn()
-	cols := make([]string, len(changedColumn)+1)
-	values := make([]any, len(changedColumn)+1)
+	cols := make([]string, len(changedColumn))
+	values := make([]any, len(changedColumn))
 	for i := range changedColumn {
 		cols[i] = "`" + changedColumn[i].Name + "` = ?"
 		values[i] = changedColumn[i].Value
