@@ -7,6 +7,7 @@ jobs: {
 			"-//containers/zoekt-webserver/...",
 			"-//py/...",
 		]
+		cache_test_results: true
 		platforms: ["@rules_go//go/toolchain:linux_amd64"]
 		all_revision:  true
 		github_status: true
