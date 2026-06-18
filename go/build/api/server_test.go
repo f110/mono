@@ -39,7 +39,7 @@ func TestWebhookEndpoint(t *testing.T) {
 	}
 
 	notifier := webhook.NewNotifier()
-	s, err := NewApi("", nil, daos, nil, nil, nil, "", notifier, nil)
+	s, err := NewApi("", nil, daos, nil, nil, nil, "", notifier, nil, nil)
 	assertion.MustNoError(t, err)
 
 	body, err := os.ReadFile("testdata/pull_request_opened.json")

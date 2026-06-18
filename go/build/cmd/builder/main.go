@@ -540,7 +540,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 			p.gitDataUpdater.AddRepo(context.Background(), repo)
 		}
 	}()
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo, buildServerConfig(p.opt))
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -660,6 +660,58 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	}
 
 	return fsm.Finish()
+}
+
+// buildServerConfig converts the runtime Options into a curated, human-meaningful
+// view shown on the info page. Secrets (credentials, tokens, DSN) are intentionally
+// excluded. Durations are formatted to strings; a zero duration becomes an empty
+// string so the frontend can render it as disabled/unset.
+func buildServerConfig(opt Options) *api.ServerConfig {
+	dev := opt.Dev
+	leaderElection := opt.EnableLeaderElection
+	namespace := opt.Namespace
+	useBazelisk := opt.UseBazelisk
+	defaultBazelVersion := opt.DefaultBazelVersion
+	remoteCache := opt.RemoteCache
+	taskCPULimit := opt.TaskCPULimit
+	taskMemoryLimit := opt.TaskMemoryLimit
+	gcEnabled := opt.WithGC
+	gitDataServiceListen := opt.GitDataListen
+	gitDataServiceURL := opt.GitDataServiceURL
+	gitDataRefreshInterval := formatConfigDuration(opt.GitDataRefreshInterval)
+	gitDataRefreshWorkers := int32(opt.GitDataRefreshWorkers)
+	externalReleasePollInterval := formatConfigDuration(opt.ExternalReleasePollInterval)
+	eventReconcileInterval := formatConfigDuration(opt.EventReconcileInterval)
+	githubAppID := opt.GitHubClient.AppID
+	vaultAddr := opt.VaultAddr
+	dashboardURL := opt.DashboardUrl
+	return api.ServerConfig_builder{
+		Dev:                         &dev,
+		LeaderElection:              &leaderElection,
+		Namespace:                   &namespace,
+		UseBazelisk:                 &useBazelisk,
+		DefaultBazelVersion:         &defaultBazelVersion,
+		RemoteCache:                 &remoteCache,
+		TaskCpuLimit:                &taskCPULimit,
+		TaskMemoryLimit:             &taskMemoryLimit,
+		GcEnabled:                   &gcEnabled,
+		GitDataServiceListen:        &gitDataServiceListen,
+		GitDataServiceUrl:           &gitDataServiceURL,
+		GitDataRefreshInterval:      &gitDataRefreshInterval,
+		GitDataRefreshWorkers:       &gitDataRefreshWorkers,
+		ExternalReleasePollInterval: &externalReleasePollInterval,
+		EventReconcileInterval:      &eventReconcileInterval,
+		GithubAppId:                 &githubAppID,
+		VaultAddr:                   &vaultAddr,
+		DashboardUrl:                &dashboardURL,
+	}.Build()
+}
+
+func formatConfigDuration(d time.Duration) string {
+	if d <= 0 {
+		return ""
+	}
+	return d.String()
 }
 
 func builder(ctx context.Context, opt Options) error {

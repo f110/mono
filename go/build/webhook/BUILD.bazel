@@ -50,5 +50,6 @@ go_test(
         "//go/testing/assertion",
         "@com_github_google_go_github_v85//github",
         "@dev_f110_go_githubmock//:githubmock",
+        "@dev_f110_go_xerrors//:xerrors",
     ],
 )

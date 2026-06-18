@@ -35,12 +35,13 @@ type apiService struct {
 	stClient          *storage.S3
 	bazelMirrorPrefix string
 	addRepo           chan<- *git.RepositoryConfig
+	serverConfig      *ServerConfig
 }
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -328,7 +329,7 @@ func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo)
 	sort.Sort(versions)
 	versionStrings := enumerable.Map(versions, func(t *semver.Version) string { return t.String() })
 	schemaVersion := database.SchemaHash
-	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings, SchemaVersion: &schemaVersion}.Build(), nil
+	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings, SchemaVersion: &schemaVersion, Config: s.serverConfig}.Build(), nil
 }
 
 func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error) {

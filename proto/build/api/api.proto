@@ -87,6 +87,31 @@ message RequestGetServerInfo {}
 message ResponseGetServerInfo {
   repeated string supported_bazel_versions = 1;
   string          schema_version           = 2;
+  ServerConfig    config                   = 3;
+}
+
+// ServerConfig is a curated, human-meaningful view of the builder's runtime
+// configuration shown on the info page. It intentionally omits secrets
+// (credentials, tokens, DSN). Durations are pre-formatted strings.
+message ServerConfig {
+  bool dev                              = 1;  // development mode (no kube-apiserver integration)
+  bool leader_election                  = 2;
+  string namespace                      = 3;
+  bool   use_bazelisk                   = 4;
+  string default_bazel_version          = 5;
+  string remote_cache                   = 6;
+  string task_cpu_limit                 = 7;
+  string task_memory_limit              = 8;
+  bool   gc_enabled                     = 9;
+  string git_data_service_listen        = 10;  // listen addr of the embedded git-data-service
+  string git_data_service_url           = 11;  // URL of an external git-data-service
+  string git_data_refresh_interval      = 12;
+  int32  git_data_refresh_workers       = 13;
+  string external_release_poll_interval = 14;
+  string event_reconcile_interval       = 15;
+  int64  github_app_id                  = 16;
+  string vault_addr                     = 17;
+  string dashboard_url                  = 18;
 }
 
 message RequestListExternalReleaseTriggers {

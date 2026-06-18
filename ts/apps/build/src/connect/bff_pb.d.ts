@@ -149,6 +149,11 @@ export declare type ResponseGetServerInfo = Message<"mono.build.bff.ResponseGetS
    * @generated from field: string schema_version = 2;
    */
   schemaVersion: string;
+
+  /**
+   * @generated from field: mono.build.bff.ServerConfig config = 3;
+   */
+  config?: ServerConfig;
 };
 
 /**
@@ -156,6 +161,117 @@ export declare type ResponseGetServerInfo = Message<"mono.build.bff.ResponseGetS
  * Use `create(ResponseGetServerInfoSchema)` to create a new message.
  */
 export declare const ResponseGetServerInfoSchema: GenMessage<ResponseGetServerInfo>;
+
+/**
+ * ServerConfig is a curated, human-meaningful view of the builder's runtime
+ * configuration shown on the info page. It intentionally omits secrets
+ * (credentials, tokens, DSN). Durations are pre-formatted strings.
+ *
+ * @generated from message mono.build.bff.ServerConfig
+ */
+export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
+  /**
+   * development mode (no kube-apiserver integration)
+   *
+   * @generated from field: bool dev = 1;
+   */
+  dev: boolean;
+
+  /**
+   * @generated from field: bool leader_election = 2;
+   */
+  leaderElection: boolean;
+
+  /**
+   * @generated from field: string namespace = 3;
+   */
+  namespace: string;
+
+  /**
+   * @generated from field: bool use_bazelisk = 4;
+   */
+  useBazelisk: boolean;
+
+  /**
+   * @generated from field: string default_bazel_version = 5;
+   */
+  defaultBazelVersion: string;
+
+  /**
+   * @generated from field: string remote_cache = 6;
+   */
+  remoteCache: string;
+
+  /**
+   * @generated from field: string task_cpu_limit = 7;
+   */
+  taskCpuLimit: string;
+
+  /**
+   * @generated from field: string task_memory_limit = 8;
+   */
+  taskMemoryLimit: string;
+
+  /**
+   * @generated from field: bool gc_enabled = 9;
+   */
+  gcEnabled: boolean;
+
+  /**
+   * listen addr of the embedded git-data-service
+   *
+   * @generated from field: string git_data_service_listen = 10;
+   */
+  gitDataServiceListen: string;
+
+  /**
+   * URL of an external git-data-service
+   *
+   * @generated from field: string git_data_service_url = 11;
+   */
+  gitDataServiceUrl: string;
+
+  /**
+   * @generated from field: string git_data_refresh_interval = 12;
+   */
+  gitDataRefreshInterval: string;
+
+  /**
+   * @generated from field: int32 git_data_refresh_workers = 13;
+   */
+  gitDataRefreshWorkers: number;
+
+  /**
+   * @generated from field: string external_release_poll_interval = 14;
+   */
+  externalReleasePollInterval: string;
+
+  /**
+   * @generated from field: string event_reconcile_interval = 15;
+   */
+  eventReconcileInterval: string;
+
+  /**
+   * @generated from field: int64 github_app_id = 16;
+   */
+  githubAppId: bigint;
+
+  /**
+   * @generated from field: string vault_addr = 17;
+   */
+  vaultAddr: string;
+
+  /**
+   * @generated from field: string dashboard_url = 18;
+   */
+  dashboardUrl: string;
+};
+
+/**
+ * Describes the message mono.build.bff.ServerConfig.
+ * Use `create(ServerConfigSchema)` to create a new message.
+ */
+export declare const ServerConfigSchema: GenMessage<ServerConfig>;
 
 /**
  * @generated from message mono.build.bff.RequestListJobs

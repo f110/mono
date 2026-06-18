@@ -51,7 +51,7 @@ type Api struct {
 // webhook.Handler, which records the delivery and returns 200 without doing
 // any business logic — reconciliation runs asynchronously inside the leader's
 // Scheduler.
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, notifier *webhook.Notifier, addRepo chan<- *git.RepositoryConfig) (*Api, error) {
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, notifier *webhook.Notifier, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig) (*Api, error) {
 	api := &Api{
 		dao:               dao,
 		stClient:          stClient,
@@ -64,7 +64,7 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.Handle("/webhook", api.webhookHandler)
 
-	bs := newAPIService(builder, dao, ghClient, gitDataClient, stClient, bazelMirrorPrefix, addRepo)
+	bs := newAPIService(builder, dao, ghClient, gitDataClient, stClient, bazelMirrorPrefix, addRepo, serverConfig)
 	grpcServer := grpc.NewServer()
 	RegisterAPIServer(grpcServer, bs)
 	s := &http.Server{

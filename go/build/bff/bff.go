@@ -218,7 +218,53 @@ func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetSe
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	schemaVersion := res.GetSchemaVersion()
-	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: &schemaVersion}.Build()), nil
+	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: &schemaVersion, Config: convertServerConfig(res.GetConfig())}.Build()), nil
+}
+
+// convertServerConfig maps the api ServerConfig into the bff ServerConfig. Both
+// messages share the same shape; they differ only by proto package.
+func convertServerConfig(c *api.ServerConfig) *ServerConfig {
+	if c == nil {
+		return nil
+	}
+	dev := c.GetDev()
+	leaderElection := c.GetLeaderElection()
+	namespace := c.GetNamespace()
+	useBazelisk := c.GetUseBazelisk()
+	defaultBazelVersion := c.GetDefaultBazelVersion()
+	remoteCache := c.GetRemoteCache()
+	taskCPULimit := c.GetTaskCpuLimit()
+	taskMemoryLimit := c.GetTaskMemoryLimit()
+	gcEnabled := c.GetGcEnabled()
+	gitDataServiceListen := c.GetGitDataServiceListen()
+	gitDataServiceURL := c.GetGitDataServiceUrl()
+	gitDataRefreshInterval := c.GetGitDataRefreshInterval()
+	gitDataRefreshWorkers := c.GetGitDataRefreshWorkers()
+	externalReleasePollInterval := c.GetExternalReleasePollInterval()
+	eventReconcileInterval := c.GetEventReconcileInterval()
+	githubAppID := c.GetGithubAppId()
+	vaultAddr := c.GetVaultAddr()
+	dashboardURL := c.GetDashboardUrl()
+	return ServerConfig_builder{
+		Dev:                         &dev,
+		LeaderElection:              &leaderElection,
+		Namespace:                   &namespace,
+		UseBazelisk:                 &useBazelisk,
+		DefaultBazelVersion:         &defaultBazelVersion,
+		RemoteCache:                 &remoteCache,
+		TaskCpuLimit:                &taskCPULimit,
+		TaskMemoryLimit:             &taskMemoryLimit,
+		GcEnabled:                   &gcEnabled,
+		GitDataServiceListen:        &gitDataServiceListen,
+		GitDataServiceUrl:           &gitDataServiceURL,
+		GitDataRefreshInterval:      &gitDataRefreshInterval,
+		GitDataRefreshWorkers:       &gitDataRefreshWorkers,
+		ExternalReleasePollInterval: &externalReleasePollInterval,
+		EventReconcileInterval:      &eventReconcileInterval,
+		GithubAppId:                 &githubAppID,
+		VaultAddr:                   &vaultAddr,
+		DashboardUrl:                &dashboardURL,
+	}.Build()
 }
 
 func (b *BFF) ListJobs(ctx context.Context, req *connect.Request[RequestListJobs]) (*connect.Response[ResponseListJobs], error) {
