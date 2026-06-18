@@ -303,7 +303,7 @@ func (u *Updater) setLock(ctx context.Context) error {
 	if err := u.storageClient.Put(ctx, u.lockFilePath, buf); err != nil {
 		return err
 	}
-	slogger.Log.Info("Got lock", slog.String("id", u.id))
+	slogger.Log.Debug("Got lock", slog.String("id", u.id))
 
 	go func() {
 		t := time.NewTicker(9 * time.Minute)
