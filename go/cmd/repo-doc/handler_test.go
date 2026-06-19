@@ -134,6 +134,11 @@ func (s *stubGitDataClient) ListBranch(ctx context.Context, in *git.RequestListB
 	panic("implement me")
 }
 
+func (s *stubGitDataClient) GetRepositoryStatistics(ctx context.Context, in *git.RequestGetRepositoryStatistics, opts ...grpc.CallOption) (*git.ResponseGetRepositoryStatistics, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 type stubDocSearchClient struct{}
 
 var _ docutil.DocSearchClient = &stubDocSearchClient{}
