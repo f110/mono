@@ -16,6 +16,7 @@ import (
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/build/bff"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -34,9 +35,20 @@ func bffCmd(ctx context.Context, opts options) error {
 		return xerrors.WithStack(err)
 	}
 	apiClient := api.NewAPIClient(conn)
+
+	var gitDataClient git.GitDataClient
+	if opts.GitDataServiceURL != "" {
+		gitDataConn, err := grpc.NewClient(opts.GitDataServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		gitDataClient = git.NewGitDataClient(gitDataConn)
+		slogger.Log.Info("Use git-data-service", slog.String("addr", opts.GitDataServiceURL))
+	}
+
 	s3Opt := storage.NewS3OptionToExternal(opts.StorageEndpoint, opts.StorageRegion, opts.AccessKey, opts.SecretAccessKey)
 	s3Opt.PathStyle = true
-	b := bff.NewBFF(opts.Addr, conn, apiClient, opts.Bucket, s3Opt)
+	b := bff.NewBFF(opts.Addr, conn, apiClient, gitDataClient, opts.Bucket, s3Opt)
 	go func() {
 		<-ctx.Done()
 		b.Shutdown(context.Background())
@@ -59,6 +71,7 @@ func bffCmd(ctx context.Context, opts options) error {
 type options struct {
 	Addr                string
 	APIHost             string
+	GitDataServiceURL   string
 	Bucket              string
 	StorageEndpoint     string
 	StorageRegion       string
@@ -79,6 +92,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs := cmd.Flags()
 	fs.String("addr", "Listen address").Var(&opt.Addr)
 	fs.String("api", "API Host which user's browser can access").Var(&opt.APIHost)
+	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint. If empty, the Git Data page is disabled.").Var(&opt.GitDataServiceURL)
 	fs.String("storage-endpoint", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.").Var(&opt.StorageEndpoint)
 	fs.String("storage-region", "The region name of MinIO.").Var(&opt.StorageRegion)
 	fs.String("bucket", "The bucket name that will be used a log storage").Var(&opt.Bucket).Default("logs")

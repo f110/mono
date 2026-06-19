@@ -23,6 +23,8 @@ service BFF {
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
   rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
+  rpc ListGitData(RequestListGitData) returns (ResponseListGitData);
+  rpc GetGitDataStatistics(RequestGetGitDataStatistics) returns (ResponseGetGitDataStatistics);
 }
 
 message RequestListRepositories {}
@@ -141,6 +143,36 @@ message RequestListGithubEvents {
 
 message ResponseListGithubEvents {
   repeated mono.build.model.GithubEvent events = 1;
+}
+
+// GitDataRepository is a lightweight view of a repository served by the
+// git-data-service, used for the list on the Git Data page. Heavier per-repo
+// statistics are fetched lazily via GetGitDataStatistics.
+message GitDataRepository {
+  string name           = 1;
+  string default_branch = 2;
+  string url            = 3;
+}
+
+message RequestListGitData {}
+
+message ResponseListGitData {
+  repeated GitDataRepository repositories = 1;
+}
+
+message RequestGetGitDataStatistics {
+  string repo = 1;
+}
+
+// ResponseGetGitDataStatistics flattens the git-data-service statistics for a
+// single repository. head_commit_when is the committer time of the HEAD commit
+// and represents the last update time of the repository.
+message ResponseGetGitDataStatistics {
+  string                    head_commit_sha     = 1;
+  string                    head_commit_message = 2;
+  string                    head_commit_author  = 3;
+  google.protobuf.Timestamp head_commit_when    = 4;
+  int64                     commit_count        = 5;
 }
 
 message BFFTask {

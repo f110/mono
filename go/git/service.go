@@ -452,6 +452,56 @@ func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, 
 	return &ResponseStat{Name: path.Join(path.Dir(req.Path), treeEntry.Name), Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
 }
 
+func (g *DataService) GetRepositoryStatistics(_ context.Context, req *RequestGetRepositoryStatistics) (*ResponseGetRepositoryStatistics, error) {
+	repo, ok := g.lookup(req.Repo)
+	if !ok {
+		return nil, xerrors.New("repository not found")
+	}
+
+	head, err := repo.Head()
+	if err != nil {
+		return nil, err
+	}
+	commit, err := repo.CommitObject(head.Hash())
+	if err != nil {
+		return nil, err
+	}
+
+	headCommit := &Commit{
+		Sha:     commit.Hash.String(),
+		Message: commit.Message,
+		Committer: &Signature{
+			Name:  commit.Committer.Name,
+			Email: commit.Committer.Email,
+			When:  timestamppb.New(commit.Committer.When),
+		},
+		Author: &Signature{
+			Name:  commit.Author.Name,
+			Email: commit.Author.Email,
+			When:  timestamppb.New(commit.Author.When),
+		},
+		Tree: commit.TreeHash.String(),
+	}
+	if len(commit.ParentHashes) > 0 {
+		headCommit.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
+	}
+
+	iter, err := repo.Log(&goGit.LogOptions{From: head.Hash()})
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+	var commitCount int64
+	if err := iter.ForEach(func(*object.Commit) error {
+		commitCount++
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &ResponseGetRepositoryStatistics{HeadCommit: headCommit, CommitCount: commitCount}, nil
+}
+
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
 	repo, ok := g.lookup(req.Repo)
 	if !ok {

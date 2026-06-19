@@ -2365,6 +2365,529 @@ func (b0 ResponseListGithubEvents_builder) Build() *ResponseListGithubEvents {
 	return m0
 }
 
+type GitDataRepository struct {
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name          *string                `protobuf:"bytes,1,opt,name=name"`
+	xxx_hidden_DefaultBranch *string                `protobuf:"bytes,2,opt,name=default_branch,json=defaultBranch"`
+	xxx_hidden_Url           *string                `protobuf:"bytes,3,opt,name=url"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *GitDataRepository) Reset() {
+	*x = GitDataRepository{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GitDataRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GitDataRepository) ProtoMessage() {}
+
+func (x *GitDataRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GitDataRepository) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GitDataRepository) GetDefaultBranch() string {
+	if x != nil {
+		if x.xxx_hidden_DefaultBranch != nil {
+			return *x.xxx_hidden_DefaultBranch
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GitDataRepository) GetUrl() string {
+	if x != nil {
+		if x.xxx_hidden_Url != nil {
+			return *x.xxx_hidden_Url
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GitDataRepository) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *GitDataRepository) SetDefaultBranch(v string) {
+	x.xxx_hidden_DefaultBranch = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *GitDataRepository) SetUrl(v string) {
+	x.xxx_hidden_Url = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *GitDataRepository) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *GitDataRepository) HasDefaultBranch() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *GitDataRepository) HasUrl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *GitDataRepository) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *GitDataRepository) ClearDefaultBranch() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_DefaultBranch = nil
+}
+
+func (x *GitDataRepository) ClearUrl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Url = nil
+}
+
+type GitDataRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Name          *string
+	DefaultBranch *string
+	Url           *string
+}
+
+func (b0 GitDataRepository_builder) Build() *GitDataRepository {
+	m0 := &GitDataRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.DefaultBranch != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_DefaultBranch = b.DefaultBranch
+	}
+	if b.Url != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Url = b.Url
+	}
+	return m0
+}
+
+type RequestListGitData struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestListGitData) Reset() {
+	*x = RequestListGitData{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListGitData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListGitData) ProtoMessage() {}
+
+func (x *RequestListGitData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type RequestListGitData_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 RequestListGitData_builder) Build() *RequestListGitData {
+	m0 := &RequestListGitData{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type ResponseListGitData struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Repositories *[]*GitDataRepository  `protobuf:"bytes,1,rep,name=repositories"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *ResponseListGitData) Reset() {
+	*x = ResponseListGitData{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListGitData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListGitData) ProtoMessage() {}
+
+func (x *ResponseListGitData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListGitData) GetRepositories() []*GitDataRepository {
+	if x != nil {
+		if x.xxx_hidden_Repositories != nil {
+			return *x.xxx_hidden_Repositories
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListGitData) SetRepositories(v []*GitDataRepository) {
+	x.xxx_hidden_Repositories = &v
+}
+
+type ResponseListGitData_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repositories []*GitDataRepository
+}
+
+func (b0 ResponseListGitData_builder) Build() *ResponseListGitData {
+	m0 := &ResponseListGitData{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Repositories = &b.Repositories
+	return m0
+}
+
+type RequestGetGitDataStatistics struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Repo        *string                `protobuf:"bytes,1,opt,name=repo"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestGetGitDataStatistics) Reset() {
+	*x = RequestGetGitDataStatistics{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestGetGitDataStatistics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetGitDataStatistics) ProtoMessage() {}
+
+func (x *RequestGetGitDataStatistics) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestGetGitDataStatistics) GetRepo() string {
+	if x != nil {
+		if x.xxx_hidden_Repo != nil {
+			return *x.xxx_hidden_Repo
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestGetGitDataStatistics) SetRepo(v string) {
+	x.xxx_hidden_Repo = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestGetGitDataStatistics) HasRepo() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestGetGitDataStatistics) ClearRepo() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Repo = nil
+}
+
+type RequestGetGitDataStatistics_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repo *string
+}
+
+func (b0 RequestGetGitDataStatistics_builder) Build() *RequestGetGitDataStatistics {
+	m0 := &RequestGetGitDataStatistics{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Repo != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Repo = b.Repo
+	}
+	return m0
+}
+
+type ResponseGetGitDataStatistics struct {
+	state                        protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_HeadCommitSha     *string                `protobuf:"bytes,1,opt,name=head_commit_sha,json=headCommitSha"`
+	xxx_hidden_HeadCommitMessage *string                `protobuf:"bytes,2,opt,name=head_commit_message,json=headCommitMessage"`
+	xxx_hidden_HeadCommitAuthor  *string                `protobuf:"bytes,3,opt,name=head_commit_author,json=headCommitAuthor"`
+	xxx_hidden_HeadCommitWhen    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=head_commit_when,json=headCommitWhen"`
+	xxx_hidden_CommitCount       int64                  `protobuf:"varint,5,opt,name=commit_count,json=commitCount"`
+	XXX_raceDetectHookData       protoimpl.RaceDetectHookData
+	XXX_presence                 [1]uint32
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
+}
+
+func (x *ResponseGetGitDataStatistics) Reset() {
+	*x = ResponseGetGitDataStatistics{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseGetGitDataStatistics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetGitDataStatistics) ProtoMessage() {}
+
+func (x *ResponseGetGitDataStatistics) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseGetGitDataStatistics) GetHeadCommitSha() string {
+	if x != nil {
+		if x.xxx_hidden_HeadCommitSha != nil {
+			return *x.xxx_hidden_HeadCommitSha
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseGetGitDataStatistics) GetHeadCommitMessage() string {
+	if x != nil {
+		if x.xxx_hidden_HeadCommitMessage != nil {
+			return *x.xxx_hidden_HeadCommitMessage
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseGetGitDataStatistics) GetHeadCommitAuthor() string {
+	if x != nil {
+		if x.xxx_hidden_HeadCommitAuthor != nil {
+			return *x.xxx_hidden_HeadCommitAuthor
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseGetGitDataStatistics) GetHeadCommitWhen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_HeadCommitWhen
+	}
+	return nil
+}
+
+func (x *ResponseGetGitDataStatistics) GetCommitCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_CommitCount
+	}
+	return 0
+}
+
+func (x *ResponseGetGitDataStatistics) SetHeadCommitSha(v string) {
+	x.xxx_hidden_HeadCommitSha = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+}
+
+func (x *ResponseGetGitDataStatistics) SetHeadCommitMessage(v string) {
+	x.xxx_hidden_HeadCommitMessage = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+}
+
+func (x *ResponseGetGitDataStatistics) SetHeadCommitAuthor(v string) {
+	x.xxx_hidden_HeadCommitAuthor = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+}
+
+func (x *ResponseGetGitDataStatistics) SetHeadCommitWhen(v *timestamppb.Timestamp) {
+	x.xxx_hidden_HeadCommitWhen = v
+}
+
+func (x *ResponseGetGitDataStatistics) SetCommitCount(v int64) {
+	x.xxx_hidden_CommitCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
+}
+
+func (x *ResponseGetGitDataStatistics) HasHeadCommitSha() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseGetGitDataStatistics) HasHeadCommitMessage() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseGetGitDataStatistics) HasHeadCommitAuthor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ResponseGetGitDataStatistics) HasHeadCommitWhen() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_HeadCommitWhen != nil
+}
+
+func (x *ResponseGetGitDataStatistics) HasCommitCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *ResponseGetGitDataStatistics) ClearHeadCommitSha() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_HeadCommitSha = nil
+}
+
+func (x *ResponseGetGitDataStatistics) ClearHeadCommitMessage() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_HeadCommitMessage = nil
+}
+
+func (x *ResponseGetGitDataStatistics) ClearHeadCommitAuthor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_HeadCommitAuthor = nil
+}
+
+func (x *ResponseGetGitDataStatistics) ClearHeadCommitWhen() {
+	x.xxx_hidden_HeadCommitWhen = nil
+}
+
+func (x *ResponseGetGitDataStatistics) ClearCommitCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_CommitCount = 0
+}
+
+type ResponseGetGitDataStatistics_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	HeadCommitSha     *string
+	HeadCommitMessage *string
+	HeadCommitAuthor  *string
+	HeadCommitWhen    *timestamppb.Timestamp
+	CommitCount       *int64
+}
+
+func (b0 ResponseGetGitDataStatistics_builder) Build() *ResponseGetGitDataStatistics {
+	m0 := &ResponseGetGitDataStatistics{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.HeadCommitSha != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		x.xxx_hidden_HeadCommitSha = b.HeadCommitSha
+	}
+	if b.HeadCommitMessage != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		x.xxx_hidden_HeadCommitMessage = b.HeadCommitMessage
+	}
+	if b.HeadCommitAuthor != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		x.xxx_hidden_HeadCommitAuthor = b.HeadCommitAuthor
+	}
+	x.xxx_hidden_HeadCommitWhen = b.HeadCommitWhen
+	if b.CommitCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
+		x.xxx_hidden_CommitCount = *b.CommitCount
+	}
+	return m0
+}
+
 type BFFTask struct {
 	state                             protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id                     int32                  `protobuf:"varint,1,opt,name=id"`
@@ -2404,7 +2927,7 @@ type BFFTask struct {
 
 func (x *BFFTask) Reset() {
 	*x = BFFTask{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2416,7 +2939,7 @@ func (x *BFFTask) String() string {
 func (*BFFTask) ProtoMessage() {}
 
 func (x *BFFTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3348,7 +3871,22 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x17RequestListGithubEvents\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\x05R\aeventId\"Q\n" +
 	"\x18ResponseListGithubEvents\x125\n" +
-	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"\xe0\b\n" +
+	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"`\n" +
+	"\x11GitDataRepository\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
+	"\x0edefault_branch\x18\x02 \x01(\tR\rdefaultBranch\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\"\x14\n" +
+	"\x12RequestListGitData\"\\\n" +
+	"\x13ResponseListGitData\x12E\n" +
+	"\frepositories\x18\x01 \x03(\v2!.mono.build.bff.GitDataRepositoryR\frepositories\"1\n" +
+	"\x1bRequestGetGitDataStatistics\x12\x12\n" +
+	"\x04repo\x18\x01 \x01(\tR\x04repo\"\x8d\x02\n" +
+	"\x1cResponseGetGitDataStatistics\x12&\n" +
+	"\x0fhead_commit_sha\x18\x01 \x01(\tR\rheadCommitSha\x12.\n" +
+	"\x13head_commit_message\x18\x02 \x01(\tR\x11headCommitMessage\x12,\n" +
+	"\x12head_commit_author\x18\x03 \x01(\tR\x10headCommitAuthor\x12D\n" +
+	"\x10head_commit_when\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eheadCommitWhen\x12!\n" +
+	"\fcommit_count\x18\x05 \x01(\x03R\vcommitCount\"\xe0\b\n" +
 	"\aBFFTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12<\n" +
 	"\n" +
@@ -3385,7 +3923,8 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\tcpu_limit\x18\x1a \x01(\tR\bcpuLimit\x12!\n" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
 	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x125\n" +
-	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\xf7\b\n" +
+	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\xc2\n" +
+	"\n" +
 	"\x03BFF\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.bff.RequestListRepositories\x1a(.mono.build.bff.ResponseListRepositories\x12P\n" +
 	"\tListTasks\x12 .mono.build.bff.RequestListTasks\x1a!.mono.build.bff.ResponseListTasks\x12J\n" +
@@ -3398,9 +3937,11 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\vRestartTask\x12\".mono.build.bff.RequestRestartTask\x1a#.mono.build.bff.ResponseRestartTask\x12\\\n" +
 	"\rForceStopTask\x12$.mono.build.bff.RequestForceStopTask\x1a%.mono.build.bff.ResponseForceStopTask\x12\x86\x01\n" +
 	"\x1bListExternalReleaseTriggers\x122.mono.build.bff.RequestListExternalReleaseTriggers\x1a3.mono.build.bff.ResponseListExternalReleaseTriggers\x12e\n" +
-	"\x10ListGithubEvents\x12'.mono.build.bff.RequestListGithubEvents\x1a(.mono.build.bff.ResponseListGithubEventsB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x10ListGithubEvents\x12'.mono.build.bff.RequestListGithubEvents\x1a(.mono.build.bff.ResponseListGithubEvents\x12V\n" +
+	"\vListGitData\x12\".mono.build.bff.RequestListGitData\x1a#.mono.build.bff.ResponseListGitData\x12q\n" +
+	"\x14GetGitDataStatistics\x12+.mono.build.bff.RequestGetGitDataStatistics\x1a,.mono.build.bff.ResponseGetGitDataStatisticsB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestListRepositories)(nil),             // 0: mono.build.bff.RequestListRepositories
 	(*ResponseListRepositories)(nil),            // 1: mono.build.bff.ResponseListRepositories
@@ -3427,60 +3968,71 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*ResponseListExternalReleaseTriggers)(nil), // 22: mono.build.bff.ResponseListExternalReleaseTriggers
 	(*RequestListGithubEvents)(nil),             // 23: mono.build.bff.RequestListGithubEvents
 	(*ResponseListGithubEvents)(nil),            // 24: mono.build.bff.ResponseListGithubEvents
-	(*BFFTask)(nil),                             // 25: mono.build.bff.BFFTask
-	(*model.Repository)(nil),                    // 26: mono.build.model.Repository
-	(*model.Job)(nil),                           // 27: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 28: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 29: mono.build.model.GithubEvent
-	(*timestamppb.Timestamp)(nil),               // 30: google.protobuf.Timestamp
-	(*model.TestReport)(nil),                    // 31: mono.build.model.TestReport
-	(*durationpb.Duration)(nil),                 // 32: google.protobuf.Duration
+	(*GitDataRepository)(nil),                   // 25: mono.build.bff.GitDataRepository
+	(*RequestListGitData)(nil),                  // 26: mono.build.bff.RequestListGitData
+	(*ResponseListGitData)(nil),                 // 27: mono.build.bff.ResponseListGitData
+	(*RequestGetGitDataStatistics)(nil),         // 28: mono.build.bff.RequestGetGitDataStatistics
+	(*ResponseGetGitDataStatistics)(nil),        // 29: mono.build.bff.ResponseGetGitDataStatistics
+	(*BFFTask)(nil),                             // 30: mono.build.bff.BFFTask
+	(*model.Repository)(nil),                    // 31: mono.build.model.Repository
+	(*model.Job)(nil),                           // 32: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 33: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 34: mono.build.model.GithubEvent
+	(*timestamppb.Timestamp)(nil),               // 35: google.protobuf.Timestamp
+	(*model.TestReport)(nil),                    // 36: mono.build.model.TestReport
+	(*durationpb.Duration)(nil),                 // 37: google.protobuf.Duration
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
-	26, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	25, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
+	31, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	30, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
 	8,  // 2: mono.build.bff.ResponseGetServerInfo.config:type_name -> mono.build.bff.ServerConfig
-	27, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	26, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	26, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	28, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	29, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	26, // 8: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
-	30, // 9: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
-	30, // 10: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
-	30, // 11: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
-	30, // 12: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
-	31, // 13: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
-	32, // 14: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
-	0,  // 15: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
-	2,  // 16: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
-	4,  // 17: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
-	6,  // 18: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
-	9,  // 19: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
-	11, // 20: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
-	13, // 21: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
-	15, // 22: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
-	17, // 23: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
-	19, // 24: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
-	21, // 25: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
-	23, // 26: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
-	1,  // 27: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 28: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 29: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 30: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	10, // 31: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	12, // 32: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	14, // 33: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	16, // 34: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	18, // 35: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	20, // 36: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
-	22, // 37: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
-	24, // 38: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
-	27, // [27:39] is the sub-list for method output_type
-	15, // [15:27] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	32, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	31, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	31, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	33, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	34, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	25, // 8: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
+	35, // 9: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
+	31, // 10: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
+	35, // 11: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
+	35, // 12: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
+	35, // 13: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
+	35, // 14: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 15: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
+	37, // 16: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
+	0,  // 17: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
+	2,  // 18: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
+	4,  // 19: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
+	6,  // 20: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
+	9,  // 21: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
+	11, // 22: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
+	13, // 23: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
+	15, // 24: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
+	17, // 25: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
+	19, // 26: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
+	21, // 27: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
+	23, // 28: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
+	26, // 29: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
+	28, // 30: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
+	1,  // 31: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 32: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 33: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 34: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	10, // 35: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	12, // 36: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	14, // 37: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	16, // 38: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	18, // 39: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	20, // 40: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	22, // 41: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
+	24, // 42: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
+	27, // 43: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
+	29, // 44: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
+	31, // [31:45] is the sub-list for method output_type
+	17, // [17:31] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_bff_bff_proto_init() }
@@ -3494,7 +4046,7 @@ func file_proto_build_bff_bff_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_bff_bff_proto_rawDesc), len(file_proto_build_bff_bff_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

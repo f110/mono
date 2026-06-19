@@ -74,6 +74,25 @@ func TestGetCommit(t *testing.T) {
 	assert.NotNil(t, commit.Commit.Committer)
 }
 
+func TestGetRepositoryStatistics(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := NewGitDataClient(conn)
+
+	ref, err := repo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+
+	res, err := gitData.GetRepositoryStatistics(context.Background(), &RequestGetRepositoryStatistics{Repo: "test1"})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), res.CommitCount)
+	require.NotNil(t, res.HeadCommit)
+	assert.Equal(t, ref.Hash().String(), res.HeadCommit.Sha)
+	assert.Equal(t, "Init", res.HeadCommit.Message)
+	require.NotNil(t, res.HeadCommit.Committer)
+	assert.NotNil(t, res.HeadCommit.Committer.When)
+}
+
 func TestGetTree(t *testing.T) {
 	mockStorage := storage.NewMock()
 	repo := makeSourceRepository(t)

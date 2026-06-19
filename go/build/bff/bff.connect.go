@@ -57,6 +57,11 @@ const (
 	BFFListExternalReleaseTriggersProcedure = "/mono.build.bff.BFF/ListExternalReleaseTriggers"
 	// BFFListGithubEventsProcedure is the fully-qualified name of the BFF's ListGithubEvents RPC.
 	BFFListGithubEventsProcedure = "/mono.build.bff.BFF/ListGithubEvents"
+	// BFFListGitDataProcedure is the fully-qualified name of the BFF's ListGitData RPC.
+	BFFListGitDataProcedure = "/mono.build.bff.BFF/ListGitData"
+	// BFFGetGitDataStatisticsProcedure is the fully-qualified name of the BFF's GetGitDataStatistics
+	// RPC.
+	BFFGetGitDataStatisticsProcedure = "/mono.build.bff.BFF/GetGitDataStatistics"
 )
 
 // BFFClient is a client for the mono.build.bff.BFF service.
@@ -73,6 +78,8 @@ type BFFClient interface {
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
 	ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error)
+	ListGitData(context.Context, *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error)
+	GetGitDataStatistics(context.Context, *connect.Request[RequestGetGitDataStatistics]) (*connect.Response[ResponseGetGitDataStatistics], error)
 }
 
 // NewBFFClient constructs a client for the mono.build.bff.BFF service. By default, it uses the
@@ -158,6 +165,18 @@ func NewBFFClient(httpClient connect.HTTPClient, baseURL string, opts ...connect
 			connect.WithSchema(bFFMethods.ByName("ListGithubEvents")),
 			connect.WithClientOptions(opts...),
 		),
+		listGitData: connect.NewClient[RequestListGitData, ResponseListGitData](
+			httpClient,
+			baseURL+BFFListGitDataProcedure,
+			connect.WithSchema(bFFMethods.ByName("ListGitData")),
+			connect.WithClientOptions(opts...),
+		),
+		getGitDataStatistics: connect.NewClient[RequestGetGitDataStatistics, ResponseGetGitDataStatistics](
+			httpClient,
+			baseURL+BFFGetGitDataStatisticsProcedure,
+			connect.WithSchema(bFFMethods.ByName("GetGitDataStatistics")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -175,6 +194,8 @@ type bFFClient struct {
 	forceStopTask               *connect.Client[RequestForceStopTask, ResponseForceStopTask]
 	listExternalReleaseTriggers *connect.Client[RequestListExternalReleaseTriggers, ResponseListExternalReleaseTriggers]
 	listGithubEvents            *connect.Client[RequestListGithubEvents, ResponseListGithubEvents]
+	listGitData                 *connect.Client[RequestListGitData, ResponseListGitData]
+	getGitDataStatistics        *connect.Client[RequestGetGitDataStatistics, ResponseGetGitDataStatistics]
 }
 
 // ListRepositories calls mono.build.bff.BFF.ListRepositories.
@@ -237,6 +258,16 @@ func (c *bFFClient) ListGithubEvents(ctx context.Context, req *connect.Request[R
 	return c.listGithubEvents.CallUnary(ctx, req)
 }
 
+// ListGitData calls mono.build.bff.BFF.ListGitData.
+func (c *bFFClient) ListGitData(ctx context.Context, req *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error) {
+	return c.listGitData.CallUnary(ctx, req)
+}
+
+// GetGitDataStatistics calls mono.build.bff.BFF.GetGitDataStatistics.
+func (c *bFFClient) GetGitDataStatistics(ctx context.Context, req *connect.Request[RequestGetGitDataStatistics]) (*connect.Response[ResponseGetGitDataStatistics], error) {
+	return c.getGitDataStatistics.CallUnary(ctx, req)
+}
+
 // BFFHandler is an implementation of the mono.build.bff.BFF service.
 type BFFHandler interface {
 	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
@@ -251,6 +282,8 @@ type BFFHandler interface {
 	ForceStopTask(context.Context, *connect.Request[RequestForceStopTask]) (*connect.Response[ResponseForceStopTask], error)
 	ListExternalReleaseTriggers(context.Context, *connect.Request[RequestListExternalReleaseTriggers]) (*connect.Response[ResponseListExternalReleaseTriggers], error)
 	ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error)
+	ListGitData(context.Context, *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error)
+	GetGitDataStatistics(context.Context, *connect.Request[RequestGetGitDataStatistics]) (*connect.Response[ResponseGetGitDataStatistics], error)
 }
 
 // NewBFFHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -332,6 +365,18 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 		connect.WithSchema(bFFMethods.ByName("ListGithubEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	bFFListGitDataHandler := connect.NewUnaryHandler(
+		BFFListGitDataProcedure,
+		svc.ListGitData,
+		connect.WithSchema(bFFMethods.ByName("ListGitData")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bFFGetGitDataStatisticsHandler := connect.NewUnaryHandler(
+		BFFGetGitDataStatisticsProcedure,
+		svc.GetGitDataStatistics,
+		connect.WithSchema(bFFMethods.ByName("GetGitDataStatistics")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.build.bff.BFF/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BFFListRepositoriesProcedure:
@@ -358,6 +403,10 @@ func NewBFFHandler(svc BFFHandler, opts ...connect.HandlerOption) (string, http.
 			bFFListExternalReleaseTriggersHandler.ServeHTTP(w, r)
 		case BFFListGithubEventsProcedure:
 			bFFListGithubEventsHandler.ServeHTTP(w, r)
+		case BFFListGitDataProcedure:
+			bFFListGitDataHandler.ServeHTTP(w, r)
+		case BFFGetGitDataStatisticsProcedure:
+			bFFGetGitDataStatisticsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -413,4 +462,12 @@ func (UnimplementedBFFHandler) ListExternalReleaseTriggers(context.Context, *con
 
 func (UnimplementedBFFHandler) ListGithubEvents(context.Context, *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListGithubEvents is not implemented"))
+}
+
+func (UnimplementedBFFHandler) ListGitData(context.Context, *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.ListGitData is not implemented"))
+}
+
+func (UnimplementedBFFHandler) GetGitDataStatistics(context.Context, *connect.Request[RequestGetGitDataStatistics]) (*connect.Response[ResponseGetGitDataStatistics], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.build.bff.BFF.GetGitDataStatistics is not implemented"))
 }

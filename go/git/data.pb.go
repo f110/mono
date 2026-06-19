@@ -1502,6 +1502,102 @@ func (x *ResponseListBranch) GetBranches() []*Reference {
 	return nil
 }
 
+type RequestGetRepositoryStatistics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Repo          string                 `protobuf:"bytes,1,opt,name=repo,proto3" json:"repo,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestGetRepositoryStatistics) Reset() {
+	*x = RequestGetRepositoryStatistics{}
+	mi := &file_proto_git_data_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestGetRepositoryStatistics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetRepositoryStatistics) ProtoMessage() {}
+
+func (x *RequestGetRepositoryStatistics) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestGetRepositoryStatistics.ProtoReflect.Descriptor instead.
+func (*RequestGetRepositoryStatistics) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *RequestGetRepositoryStatistics) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+type ResponseGetRepositoryStatistics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HeadCommit    *Commit                `protobuf:"bytes,1,opt,name=head_commit,json=headCommit,proto3" json:"head_commit,omitempty"`
+	CommitCount   int64                  `protobuf:"varint,2,opt,name=commit_count,json=commitCount,proto3" json:"commit_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseGetRepositoryStatistics) Reset() {
+	*x = ResponseGetRepositoryStatistics{}
+	mi := &file_proto_git_data_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseGetRepositoryStatistics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetRepositoryStatistics) ProtoMessage() {}
+
+func (x *ResponseGetRepositoryStatistics) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_git_data_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResponseGetRepositoryStatistics.ProtoReflect.Descriptor instead.
+func (*ResponseGetRepositoryStatistics) Descriptor() ([]byte, []int) {
+	return file_proto_git_data_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ResponseGetRepositoryStatistics) GetHeadCommit() *Commit {
+	if x != nil {
+		return x.HeadCommit
+	}
+	return nil
+}
+
+func (x *ResponseGetRepositoryStatistics) GetCommitCount() int64 {
+	if x != nil {
+		return x.CommitCount
+	}
+	return 0
+}
+
 var File_proto_git_data_proto protoreflect.FileDescriptor
 
 const file_proto_git_data_proto_rawDesc = "" +
@@ -1597,7 +1693,13 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\x11RequestListBranch\x12\x12\n" +
 	"\x04repo\x18\x01 \x01(\tR\x04repo\"E\n" +
 	"\x12ResponseListBranch\x12/\n" +
-	"\bbranches\x18\x01 \x03(\v2\x13.mono.git.ReferenceR\bbranches2\xa0\x06\n" +
+	"\bbranches\x18\x01 \x03(\v2\x13.mono.git.ReferenceR\bbranches\"4\n" +
+	"\x1eRequestGetRepositoryStatistics\x12\x12\n" +
+	"\x04repo\x18\x01 \x01(\tR\x04repo\"w\n" +
+	"\x1fResponseGetRepositoryStatistics\x121\n" +
+	"\vhead_commit\x18\x01 \x01(\v2\x10.mono.git.CommitR\n" +
+	"headCommit\x12!\n" +
+	"\fcommit_count\x18\x02 \x01(\x03R\vcommitCount2\x90\a\n" +
 	"\aGitData\x12Y\n" +
 	"\x10ListRepositories\x12!.mono.git.RequestListRepositories\x1a\".mono.git.ResponseListRepositories\x12S\n" +
 	"\x0eListReferences\x12\x1f.mono.git.RequestListReferences\x1a .mono.git.ResponseListReferences\x12P\n" +
@@ -1610,7 +1712,8 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\x04Stat\x12\x15.mono.git.RequestStat\x1a\x16.mono.git.ResponseStat\x12>\n" +
 	"\aListTag\x12\x18.mono.git.RequestListTag\x1a\x19.mono.git.ResponseListTag\x12G\n" +
 	"\n" +
-	"ListBranch\x12\x1b.mono.git.RequestListBranch\x1a\x1c.mono.git.ResponseListBranchB\x19Z\x17go.f110.dev/mono/go/gitb\x06proto3"
+	"ListBranch\x12\x1b.mono.git.RequestListBranch\x1a\x1c.mono.git.ResponseListBranch\x12n\n" +
+	"\x17GetRepositoryStatistics\x12(.mono.git.RequestGetRepositoryStatistics\x1a).mono.git.ResponseGetRepositoryStatisticsB\x19Z\x17go.f110.dev/mono/go/gitb\x06proto3"
 
 var (
 	file_proto_git_data_proto_rawDescOnce sync.Once
@@ -1624,41 +1727,43 @@ func file_proto_git_data_proto_rawDescGZIP() []byte {
 	return file_proto_git_data_proto_rawDescData
 }
 
-var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_proto_git_data_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_proto_git_data_proto_goTypes = []any{
-	(*Reference)(nil),                // 0: mono.git.Reference
-	(*TreeEntry)(nil),                // 1: mono.git.TreeEntry
-	(*Commit)(nil),                   // 2: mono.git.Commit
-	(*Signature)(nil),                // 3: mono.git.Signature
-	(*Repository)(nil),               // 4: mono.git.Repository
-	(*RequestListRepositories)(nil),  // 5: mono.git.RequestListRepositories
-	(*ResponseListRepositories)(nil), // 6: mono.git.ResponseListRepositories
-	(*RequestListReferences)(nil),    // 7: mono.git.RequestListReferences
-	(*ResponseListReferences)(nil),   // 8: mono.git.ResponseListReferences
-	(*RequestGetRepository)(nil),     // 9: mono.git.RequestGetRepository
-	(*ResponseGetRepository)(nil),    // 10: mono.git.ResponseGetRepository
-	(*RequestGetReference)(nil),      // 11: mono.git.RequestGetReference
-	(*ResponseGetReference)(nil),     // 12: mono.git.ResponseGetReference
-	(*RequestGetCommit)(nil),         // 13: mono.git.RequestGetCommit
-	(*ResponseGetCommit)(nil),        // 14: mono.git.ResponseGetCommit
-	(*RequestGetTree)(nil),           // 15: mono.git.RequestGetTree
-	(*ResponseGetTree)(nil),          // 16: mono.git.ResponseGetTree
-	(*RequestGetBlob)(nil),           // 17: mono.git.RequestGetBlob
-	(*ResponseGetBlob)(nil),          // 18: mono.git.ResponseGetBlob
-	(*RequestGetFile)(nil),           // 19: mono.git.RequestGetFile
-	(*ResponseGetFile)(nil),          // 20: mono.git.ResponseGetFile
-	(*RequestStat)(nil),              // 21: mono.git.RequestStat
-	(*ResponseStat)(nil),             // 22: mono.git.ResponseStat
-	(*RequestListTag)(nil),           // 23: mono.git.RequestListTag
-	(*ResponseListTag)(nil),          // 24: mono.git.ResponseListTag
-	(*RequestListBranch)(nil),        // 25: mono.git.RequestListBranch
-	(*ResponseListBranch)(nil),       // 26: mono.git.ResponseListBranch
-	(*timestamppb.Timestamp)(nil),    // 27: google.protobuf.Timestamp
+	(*Reference)(nil),                       // 0: mono.git.Reference
+	(*TreeEntry)(nil),                       // 1: mono.git.TreeEntry
+	(*Commit)(nil),                          // 2: mono.git.Commit
+	(*Signature)(nil),                       // 3: mono.git.Signature
+	(*Repository)(nil),                      // 4: mono.git.Repository
+	(*RequestListRepositories)(nil),         // 5: mono.git.RequestListRepositories
+	(*ResponseListRepositories)(nil),        // 6: mono.git.ResponseListRepositories
+	(*RequestListReferences)(nil),           // 7: mono.git.RequestListReferences
+	(*ResponseListReferences)(nil),          // 8: mono.git.ResponseListReferences
+	(*RequestGetRepository)(nil),            // 9: mono.git.RequestGetRepository
+	(*ResponseGetRepository)(nil),           // 10: mono.git.ResponseGetRepository
+	(*RequestGetReference)(nil),             // 11: mono.git.RequestGetReference
+	(*ResponseGetReference)(nil),            // 12: mono.git.ResponseGetReference
+	(*RequestGetCommit)(nil),                // 13: mono.git.RequestGetCommit
+	(*ResponseGetCommit)(nil),               // 14: mono.git.ResponseGetCommit
+	(*RequestGetTree)(nil),                  // 15: mono.git.RequestGetTree
+	(*ResponseGetTree)(nil),                 // 16: mono.git.ResponseGetTree
+	(*RequestGetBlob)(nil),                  // 17: mono.git.RequestGetBlob
+	(*ResponseGetBlob)(nil),                 // 18: mono.git.ResponseGetBlob
+	(*RequestGetFile)(nil),                  // 19: mono.git.RequestGetFile
+	(*ResponseGetFile)(nil),                 // 20: mono.git.ResponseGetFile
+	(*RequestStat)(nil),                     // 21: mono.git.RequestStat
+	(*ResponseStat)(nil),                    // 22: mono.git.ResponseStat
+	(*RequestListTag)(nil),                  // 23: mono.git.RequestListTag
+	(*ResponseListTag)(nil),                 // 24: mono.git.ResponseListTag
+	(*RequestListBranch)(nil),               // 25: mono.git.RequestListBranch
+	(*ResponseListBranch)(nil),              // 26: mono.git.ResponseListBranch
+	(*RequestGetRepositoryStatistics)(nil),  // 27: mono.git.RequestGetRepositoryStatistics
+	(*ResponseGetRepositoryStatistics)(nil), // 28: mono.git.ResponseGetRepositoryStatistics
+	(*timestamppb.Timestamp)(nil),           // 29: google.protobuf.Timestamp
 }
 var file_proto_git_data_proto_depIdxs = []int32{
 	3,  // 0: mono.git.Commit.author:type_name -> mono.git.Signature
 	3,  // 1: mono.git.Commit.committer:type_name -> mono.git.Signature
-	27, // 2: mono.git.Signature.when:type_name -> google.protobuf.Timestamp
+	29, // 2: mono.git.Signature.when:type_name -> google.protobuf.Timestamp
 	4,  // 3: mono.git.ResponseListRepositories.repositories:type_name -> mono.git.Repository
 	0,  // 4: mono.git.ResponseListReferences.refs:type_name -> mono.git.Reference
 	0,  // 5: mono.git.ResponseGetReference.ref:type_name -> mono.git.Reference
@@ -1666,33 +1771,36 @@ var file_proto_git_data_proto_depIdxs = []int32{
 	1,  // 7: mono.git.ResponseGetTree.tree:type_name -> mono.git.TreeEntry
 	0,  // 8: mono.git.ResponseListTag.tags:type_name -> mono.git.Reference
 	0,  // 9: mono.git.ResponseListBranch.branches:type_name -> mono.git.Reference
-	5,  // 10: mono.git.GitData.ListRepositories:input_type -> mono.git.RequestListRepositories
-	7,  // 11: mono.git.GitData.ListReferences:input_type -> mono.git.RequestListReferences
-	9,  // 12: mono.git.GitData.GetRepository:input_type -> mono.git.RequestGetRepository
-	11, // 13: mono.git.GitData.GetReference:input_type -> mono.git.RequestGetReference
-	13, // 14: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
-	15, // 15: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
-	17, // 16: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
-	19, // 17: mono.git.GitData.GetFile:input_type -> mono.git.RequestGetFile
-	21, // 18: mono.git.GitData.Stat:input_type -> mono.git.RequestStat
-	23, // 19: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
-	25, // 20: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
-	6,  // 21: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
-	8,  // 22: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
-	10, // 23: mono.git.GitData.GetRepository:output_type -> mono.git.ResponseGetRepository
-	12, // 24: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
-	14, // 25: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
-	16, // 26: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
-	18, // 27: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
-	20, // 28: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
-	22, // 29: mono.git.GitData.Stat:output_type -> mono.git.ResponseStat
-	24, // 30: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
-	26, // 31: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
-	21, // [21:32] is the sub-list for method output_type
-	10, // [10:21] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	2,  // 10: mono.git.ResponseGetRepositoryStatistics.head_commit:type_name -> mono.git.Commit
+	5,  // 11: mono.git.GitData.ListRepositories:input_type -> mono.git.RequestListRepositories
+	7,  // 12: mono.git.GitData.ListReferences:input_type -> mono.git.RequestListReferences
+	9,  // 13: mono.git.GitData.GetRepository:input_type -> mono.git.RequestGetRepository
+	11, // 14: mono.git.GitData.GetReference:input_type -> mono.git.RequestGetReference
+	13, // 15: mono.git.GitData.GetCommit:input_type -> mono.git.RequestGetCommit
+	15, // 16: mono.git.GitData.GetTree:input_type -> mono.git.RequestGetTree
+	17, // 17: mono.git.GitData.GetBlob:input_type -> mono.git.RequestGetBlob
+	19, // 18: mono.git.GitData.GetFile:input_type -> mono.git.RequestGetFile
+	21, // 19: mono.git.GitData.Stat:input_type -> mono.git.RequestStat
+	23, // 20: mono.git.GitData.ListTag:input_type -> mono.git.RequestListTag
+	25, // 21: mono.git.GitData.ListBranch:input_type -> mono.git.RequestListBranch
+	27, // 22: mono.git.GitData.GetRepositoryStatistics:input_type -> mono.git.RequestGetRepositoryStatistics
+	6,  // 23: mono.git.GitData.ListRepositories:output_type -> mono.git.ResponseListRepositories
+	8,  // 24: mono.git.GitData.ListReferences:output_type -> mono.git.ResponseListReferences
+	10, // 25: mono.git.GitData.GetRepository:output_type -> mono.git.ResponseGetRepository
+	12, // 26: mono.git.GitData.GetReference:output_type -> mono.git.ResponseGetReference
+	14, // 27: mono.git.GitData.GetCommit:output_type -> mono.git.ResponseGetCommit
+	16, // 28: mono.git.GitData.GetTree:output_type -> mono.git.ResponseGetTree
+	18, // 29: mono.git.GitData.GetBlob:output_type -> mono.git.ResponseGetBlob
+	20, // 30: mono.git.GitData.GetFile:output_type -> mono.git.ResponseGetFile
+	22, // 31: mono.git.GitData.Stat:output_type -> mono.git.ResponseStat
+	24, // 32: mono.git.GitData.ListTag:output_type -> mono.git.ResponseListTag
+	26, // 33: mono.git.GitData.ListBranch:output_type -> mono.git.ResponseListBranch
+	28, // 34: mono.git.GitData.GetRepositoryStatistics:output_type -> mono.git.ResponseGetRepositoryStatistics
+	23, // [23:35] is the sub-list for method output_type
+	11, // [11:23] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_proto_git_data_proto_init() }
@@ -1706,7 +1814,7 @@ func file_proto_git_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_git_data_proto_rawDesc), len(file_proto_git_data_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -1742,6 +1850,7 @@ type GitDataClient interface {
 	Stat(ctx context.Context, in *RequestStat, opts ...grpc.CallOption) (*ResponseStat, error)
 	ListTag(ctx context.Context, in *RequestListTag, opts ...grpc.CallOption) (*ResponseListTag, error)
 	ListBranch(ctx context.Context, in *RequestListBranch, opts ...grpc.CallOption) (*ResponseListBranch, error)
+	GetRepositoryStatistics(ctx context.Context, in *RequestGetRepositoryStatistics, opts ...grpc.CallOption) (*ResponseGetRepositoryStatistics, error)
 }
 
 type gitDataClient struct {
@@ -1851,6 +1960,15 @@ func (c *gitDataClient) ListBranch(ctx context.Context, in *RequestListBranch, o
 	return out, nil
 }
 
+func (c *gitDataClient) GetRepositoryStatistics(ctx context.Context, in *RequestGetRepositoryStatistics, opts ...grpc.CallOption) (*ResponseGetRepositoryStatistics, error) {
+	out := new(ResponseGetRepositoryStatistics)
+	err := c.cc.Invoke(ctx, "/mono.git.GitData/GetRepositoryStatistics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GitDataServer is the server API for GitData service.
 type GitDataServer interface {
 	ListRepositories(context.Context, *RequestListRepositories) (*ResponseListRepositories, error)
@@ -1864,6 +1982,7 @@ type GitDataServer interface {
 	Stat(context.Context, *RequestStat) (*ResponseStat, error)
 	ListTag(context.Context, *RequestListTag) (*ResponseListTag, error)
 	ListBranch(context.Context, *RequestListBranch) (*ResponseListBranch, error)
+	GetRepositoryStatistics(context.Context, *RequestGetRepositoryStatistics) (*ResponseGetRepositoryStatistics, error)
 }
 
 // UnimplementedGitDataServer can be embedded to have forward compatible implementations.
@@ -1902,6 +2021,9 @@ func (*UnimplementedGitDataServer) ListTag(context.Context, *RequestListTag) (*R
 }
 func (*UnimplementedGitDataServer) ListBranch(context.Context, *RequestListBranch) (*ResponseListBranch, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBranch not implemented")
+}
+func (*UnimplementedGitDataServer) GetRepositoryStatistics(context.Context, *RequestGetRepositoryStatistics) (*ResponseGetRepositoryStatistics, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRepositoryStatistics not implemented")
 }
 
 func RegisterGitDataServer(s *grpc.Server, srv GitDataServer) {
@@ -2106,6 +2228,24 @@ func _GitData_ListBranch_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitData_GetRepositoryStatistics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestGetRepositoryStatistics)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitDataServer).GetRepositoryStatistics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mono.git.GitData/GetRepositoryStatistics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitDataServer).GetRepositoryStatistics(ctx, req.(*RequestGetRepositoryStatistics))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _GitData_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "mono.git.GitData",
 	HandlerType: (*GitDataServer)(nil),
@@ -2153,6 +2293,10 @@ var _GitData_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListBranch",
 			Handler:    _GitData_ListBranch_Handler,
+		},
+		{
+			MethodName: "GetRepositoryStatistics",
+			Handler:    _GitData_GetRepositoryStatistics_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -9,6 +9,7 @@ go_library(
         "//go/build/api",
         "//go/build/bff",
         "//go/cli",
+        "//go/git",
         "//go/logger/slogger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",

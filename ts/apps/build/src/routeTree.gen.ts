@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TaskRouteImport } from './routes/task'
 import { Route as RepositoriesRouteImport } from './routes/repositories'
 import { Route as InfoRouteImport } from './routes/info'
+import { Route as Git_dataRouteImport } from './routes/git_data'
 import { Route as External_releasesRouteImport } from './routes/external_releases'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const RepositoriesRoute = RepositoriesRouteImport.update({
 const InfoRoute = InfoRouteImport.update({
   id: '/info',
   path: '/info',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Git_dataRoute = Git_dataRouteImport.update({
+  id: '/git_data',
+  path: '/git_data',
   getParentRoute: () => rootRouteImport,
 } as any)
 const External_releasesRoute = External_releasesRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/events': typeof EventsRouteWithChildren
   '/external_releases': typeof External_releasesRoute
+  '/git_data': typeof Git_dataRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/external_releases': typeof External_releasesRoute
+  '/git_data': typeof Git_dataRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/events': typeof EventsRouteWithChildren
   '/external_releases': typeof External_releasesRoute
+  '/git_data': typeof Git_dataRoute
   '/info': typeof InfoRoute
   '/repositories': typeof RepositoriesRoute
   '/task': typeof TaskRouteWithChildren
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/'
     | '/events'
     | '/external_releases'
+    | '/git_data'
     | '/info'
     | '/repositories'
     | '/task'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/external_releases'
+    | '/git_data'
     | '/info'
     | '/repositories'
     | '/task'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/events'
     | '/external_releases'
+    | '/git_data'
     | '/info'
     | '/repositories'
     | '/task'
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EventsRoute: typeof EventsRouteWithChildren
   External_releasesRoute: typeof External_releasesRoute
+  Git_dataRoute: typeof Git_dataRoute
   InfoRoute: typeof InfoRoute
   RepositoriesRoute: typeof RepositoriesRoute
   TaskRoute: typeof TaskRouteWithChildren
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       path: '/info'
       fullPath: '/info'
       preLoaderRoute: typeof InfoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/git_data': {
+      id: '/git_data'
+      path: '/git_data'
+      fullPath: '/git_data'
+      preLoaderRoute: typeof Git_dataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/external_releases': {
@@ -237,6 +257,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EventsRoute: EventsRouteWithChildren,
   External_releasesRoute: External_releasesRoute,
+  Git_dataRoute: Git_dataRoute,
   InfoRoute: InfoRoute,
   RepositoriesRoute: RepositoriesRoute,
   TaskRoute: TaskRouteWithChildren,

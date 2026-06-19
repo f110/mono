@@ -24,6 +24,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -35,14 +36,16 @@ type Builder interface {
 type BFF struct {
 	*http.Server
 
-	apiClient api.APIClient
-	s3        *storage.S3
+	apiClient     api.APIClient
+	gitDataClient git.GitDataClient
+	s3            *storage.S3
 }
 
-func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, bucket string, s3Opt storage.S3Options) *BFF {
+func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, gitDataClient git.GitDataClient, bucket string, s3Opt storage.S3Options) *BFF {
 	b := &BFF{
-		apiClient: apiClient,
-		s3:        storage.NewS3(bucket, s3Opt),
+		apiClient:     apiClient,
+		gitDataClient: gitDataClient,
+		s3:            storage.NewS3(bucket, s3Opt),
 	}
 	mux := http.NewServeMux()
 	mux.Handle(NewBFFHandler(b, connect.WithInterceptors(newAccessLogInterceptor())))
@@ -396,4 +399,46 @@ func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseListExternalReleaseTriggers_builder{Triggers: res.GetTriggers()}.Build()), nil
+}
+
+func (b *BFF) ListGitData(ctx context.Context, _ *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error) {
+	if b.gitDataClient == nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, xerrors.New("git-data-service is not configured"))
+	}
+	res, err := b.gitDataClient.ListRepositories(ctx, &git.RequestListRepositories{})
+	if err != nil {
+		slogger.Log.Warn("Failed to list git-data repositories", slogger.E(err))
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	repositories := enumerable.Map(res.GetRepositories(), func(v *git.Repository) *GitDataRepository {
+		return GitDataRepository_builder{
+			Name:          new(v.GetName()),
+			DefaultBranch: new(v.GetDefaultBranch()),
+			Url:           new(v.GetUrl()),
+		}.Build()
+	})
+	return connect.NewResponse(ResponseListGitData_builder{Repositories: repositories}.Build()), nil
+}
+
+func (b *BFF) GetGitDataStatistics(ctx context.Context, req *connect.Request[RequestGetGitDataStatistics]) (*connect.Response[ResponseGetGitDataStatistics], error) {
+	if b.gitDataClient == nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, xerrors.New("git-data-service is not configured"))
+	}
+	res, err := b.gitDataClient.GetRepositoryStatistics(ctx, &git.RequestGetRepositoryStatistics{Repo: req.Msg.GetRepo()})
+	if err != nil {
+		slogger.Log.Warn("Failed to get git-data statistics", slog.String("repo", req.Msg.GetRepo()), slogger.E(err))
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	out := ResponseGetGitDataStatistics_builder{CommitCount: new(res.GetCommitCount())}
+	if commit := res.GetHeadCommit(); commit != nil {
+		out.HeadCommitSha = new(commit.GetSha())
+		out.HeadCommitMessage = new(commit.GetMessage())
+		if author := commit.GetAuthor(); author != nil {
+			out.HeadCommitAuthor = new(author.GetName())
+		}
+		if committer := commit.GetCommitter(); committer != nil {
+			out.HeadCommitWhen = committer.GetWhen()
+		}
+	}
+	return connect.NewResponse(out.Build()), nil
 }
