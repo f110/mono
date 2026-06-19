@@ -140,3 +140,8 @@ func (m *mockGitClient) Stat(ctx context.Context, in *git.RequestStat, opts ...g
 	// TODO: implement me
 	panic("implement me")
 }
+
+func (m *mockGitClient) GetRepositoryStatistics(ctx context.Context, in *git.RequestGetRepositoryStatistics, opts ...grpc.CallOption) (*git.ResponseGetRepositoryStatistics, error) {
+	//TODO implement me
+	panic("implement me")
+}
