@@ -519,6 +519,120 @@ export declare type ResponseListGithubEvents = Message<"mono.build.bff.ResponseL
 export declare const ResponseListGithubEventsSchema: GenMessage<ResponseListGithubEvents>;
 
 /**
+ * GitDataRepository is a lightweight view of a repository served by the
+ * git-data-service, used for the list on the Git Data page. Heavier per-repo
+ * statistics are fetched lazily via GetGitDataStatistics.
+ *
+ * @generated from message mono.build.bff.GitDataRepository
+ */
+export declare type GitDataRepository = Message<"mono.build.bff.GitDataRepository"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string default_branch = 2;
+   */
+  defaultBranch: string;
+
+  /**
+   * @generated from field: string url = 3;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message mono.build.bff.GitDataRepository.
+ * Use `create(GitDataRepositorySchema)` to create a new message.
+ */
+export declare const GitDataRepositorySchema: GenMessage<GitDataRepository>;
+
+/**
+ * @generated from message mono.build.bff.RequestListGitData
+ */
+export declare type RequestListGitData = Message<"mono.build.bff.RequestListGitData"> & {
+};
+
+/**
+ * Describes the message mono.build.bff.RequestListGitData.
+ * Use `create(RequestListGitDataSchema)` to create a new message.
+ */
+export declare const RequestListGitDataSchema: GenMessage<RequestListGitData>;
+
+/**
+ * @generated from message mono.build.bff.ResponseListGitData
+ */
+export declare type ResponseListGitData = Message<"mono.build.bff.ResponseListGitData"> & {
+  /**
+   * @generated from field: repeated mono.build.bff.GitDataRepository repositories = 1;
+   */
+  repositories: GitDataRepository[];
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseListGitData.
+ * Use `create(ResponseListGitDataSchema)` to create a new message.
+ */
+export declare const ResponseListGitDataSchema: GenMessage<ResponseListGitData>;
+
+/**
+ * @generated from message mono.build.bff.RequestGetGitDataStatistics
+ */
+export declare type RequestGetGitDataStatistics = Message<"mono.build.bff.RequestGetGitDataStatistics"> & {
+  /**
+   * @generated from field: string repo = 1;
+   */
+  repo: string;
+};
+
+/**
+ * Describes the message mono.build.bff.RequestGetGitDataStatistics.
+ * Use `create(RequestGetGitDataStatisticsSchema)` to create a new message.
+ */
+export declare const RequestGetGitDataStatisticsSchema: GenMessage<RequestGetGitDataStatistics>;
+
+/**
+ * ResponseGetGitDataStatistics flattens the git-data-service statistics for a
+ * single repository. head_commit_when is the committer time of the HEAD commit
+ * and represents the last update time of the repository.
+ *
+ * @generated from message mono.build.bff.ResponseGetGitDataStatistics
+ */
+export declare type ResponseGetGitDataStatistics = Message<"mono.build.bff.ResponseGetGitDataStatistics"> & {
+  /**
+   * @generated from field: string head_commit_sha = 1;
+   */
+  headCommitSha: string;
+
+  /**
+   * @generated from field: string head_commit_message = 2;
+   */
+  headCommitMessage: string;
+
+  /**
+   * @generated from field: string head_commit_author = 3;
+   */
+  headCommitAuthor: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp head_commit_when = 4;
+   */
+  headCommitWhen?: Timestamp;
+
+  /**
+   * @generated from field: int64 commit_count = 5;
+   */
+  commitCount: bigint;
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseGetGitDataStatistics.
+ * Use `create(ResponseGetGitDataStatisticsSchema)` to create a new message.
+ */
+export declare const ResponseGetGitDataStatisticsSchema: GenMessage<ResponseGetGitDataStatistics>;
+
+/**
  * @generated from message mono.build.bff.BFFTask
  */
 export declare type BFFTask = Message<"mono.build.bff.BFFTask"> & {
@@ -773,6 +887,22 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestListGithubEventsSchema;
     output: typeof ResponseListGithubEventsSchema;
+  },
+  /**
+   * @generated from rpc mono.build.bff.BFF.ListGitData
+   */
+  listGitData: {
+    methodKind: "unary";
+    input: typeof RequestListGitDataSchema;
+    output: typeof ResponseListGitDataSchema;
+  },
+  /**
+   * @generated from rpc mono.build.bff.BFF.GetGitDataStatistics
+   */
+  getGitDataStatistics: {
+    methodKind: "unary";
+    input: typeof RequestGetGitDataStatisticsSchema;
+    output: typeof ResponseGetGitDataStatisticsSchema;
   },
 }>;
 
