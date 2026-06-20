@@ -484,6 +484,13 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return nil
 	}
 
+	// Record the fields that become known once the Pod is scheduled (the assigned
+	// node and the container image actually used) without waiting for the job to
+	// finish. The following terminal paths persist them via Task.Update.
+	if err := b.updateAssignedInfo(ctx, job, task); err != nil {
+		return xerrors.WithStack(err)
+	}
+
 	// Timed out or force stop
 	if job.CreationTimestamp.Add(jobTimeout).Before(time.Now()) || job.GetLabels()[labelKeyForceStop] != "" {
 		if job.GetLabels()[labelKeyForceStop] == "" {
@@ -512,10 +519,16 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
+		return nil
 	}
 
 	if job.Status == nil || len(job.Status.Conditions) == 0 {
 		slogger.Log.Debug("Skip job due to the job doesn't have Conditions")
+		if task.IsChanged() {
+			if err := b.dao.Task.Update(ctx, task); err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
 		return nil
 	}
 
@@ -725,6 +738,55 @@ func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
 	return false
 }
 
+// updateAssignedInfo records the fields of task that become known once the Pod
+// is scheduled and started: the node the Pod was assigned to and the container
+// image actually used. It only fills empty fields, so it is idempotent and can
+// be called on every reconcile.
+func (b *BazelBuilder) updateAssignedInfo(ctx context.Context, job *batchv1.Job, task *database.Task) error {
+	if task.Node != "" && task.Container != "" {
+		return nil
+	}
+
+	s, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	pods, err := b.podLister.List(b.Namespace, s)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if len(pods) == 0 {
+		return nil
+	}
+	pod := pods[0]
+
+	if task.Container == "" && len(pod.Status.ContainerStatuses) > 0 {
+		image := pod.Status.ContainerStatuses[0].Image
+		if i := strings.Index(pod.Status.ContainerStatuses[0].ImageID, "@"); i > 0 {
+			image += pod.Status.ContainerStatuses[0].ImageID[i:]
+		}
+		task.Container = image
+	}
+
+	if task.Node == "" && pod.Status.HostIP != "" {
+		nodeList, err := b.client.CoreV1.ListNode(ctx, metav1.ListOptions{})
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+	NodeList:
+		for _, n := range nodeList.Items {
+			for _, a := range n.Status.Addresses {
+				if a.Type == corev1.NodeAddressTypeInternalIP && a.Address == pod.Status.HostIP {
+					task.Node = n.Name
+					break NodeList
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *database.SourceRepository, jobConfiguration *config.JobV2, task *database.Task, success bool) error {
 	podList, err := b.client.CoreV1.ListPod(ctx, b.Namespace, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})
 	if err != nil {
@@ -735,13 +797,6 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	}
 	if len(podList.Items) != 1 {
 		return xerrors.Define("Target pods not found or found more than 1").WithStack()
-	}
-	if len(podList.Items[0].Status.ContainerStatuses) > 0 {
-		image := podList.Items[0].Status.ContainerStatuses[0].Image
-		if i := strings.Index(podList.Items[0].Status.ContainerStatuses[0].ImageID, "@"); i > 0 {
-			image += podList.Items[0].Status.ContainerStatuses[0].ImageID[i:]
-		}
-		task.Container = image
 	}
 	buildPod := podList.Items[0]
 
@@ -774,31 +829,6 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 		return xerrors.WithStack(err)
 	}
 	task.LogFile = job.Name
-
-	s, err := metav1.LabelSelectorAsSelector(job.Spec.Selector)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	pods, err := b.podLister.List(b.Namespace, s)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	if len(pods) > 0 {
-		nodeList, err := b.client.CoreV1.ListNode(ctx, metav1.ListOptions{})
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-	NodeList:
-		for _, v := range nodeList.Items {
-			for _, a := range v.Status.Addresses {
-				if a.Type == corev1.NodeAddressTypeInternalIP &&
-					a.Address == pods[0].Status.HostIP {
-					task.Node = v.Name
-					break NodeList
-				}
-			}
-		}
-	}
 
 	if len(testReport) > 0 {
 		if err := b.updateTestReport(ctx, testReport, repo, task); err != nil {

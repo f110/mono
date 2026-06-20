@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.f110.dev/kubeproto/go/apis/batchv1"
+	"go.f110.dev/kubeproto/go/apis/corev1"
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
 	fakesecretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake"
@@ -91,6 +92,43 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		assertion.True(t, updated.Success)
 		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
 		runner.AssertNoUnexpectedAction(t)
+	})
+
+	t.Run("Update node and container while running", func(t *testing.T) {
+		t.Cleanup(func() {
+			mockDAO.Task.Reset()
+			runner.Reset()
+		})
+
+		runningTask := &database.Task{Id: 1}
+		runningTask.ResetMark()
+		mockDAO.Task.RegisterSelect(1, runningTask)
+		pod := k8sfactory.PodFactory(nil,
+			k8sfactory.Name("running-pod"),
+			k8sfactory.Namespace(metav1.NamespaceDefault),
+			k8sfactory.Labels(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "1"}),
+		)
+		pod.Status = &corev1.PodStatus{
+			HostIP: "10.0.0.1",
+			ContainerStatuses: []corev1.ContainerStatus{
+				{Name: "main", Image: "registry.f110.dev/build/bazel:latest", ImageID: "registry.f110.dev/build/bazel@sha256:abcdef"},
+			},
+		}
+		node := &corev1.Node{}
+		node.SetName("node-a")
+		node.Status = &corev1.NodeStatus{Addresses: []corev1.NodeAddress{{Type: corev1.NodeAddressTypeInternalIP, Address: "10.0.0.1"}}}
+
+		target := k8sfactory.JobFactory(target, k8sfactory.Name("running"))
+		runner.RegisterFixture(target, pod, node)
+		err = b.syncJob(target)
+		require.NoError(t, err)
+
+		called := mockDAO.Task.Called("Update")
+		require.Len(t, called, 1)
+		updated := called[0].Args["task"].(*database.Task)
+		assertion.Nil(t, updated.FinishedAt)
+		assertion.Equal(t, "node-a", updated.Node)
+		assertion.Equal(t, "registry.f110.dev/build/bazel:latest@sha256:abcdef", updated.Container)
 	})
 
 	t.Run("Timed out", func(t *testing.T) {
