@@ -84,35 +84,11 @@ func (s *SimpleHTTPServer) readConfig() error {
 				if !ok {
 					continue
 				}
-				var proxy, root, accessLog string
-				var gitBackend *GitBackend
-				if v, ok := val["proxy"]; ok {
-					proxy = v.(string)
+				pc, err := parsePathConfig(p, val)
+				if err != nil {
+					return err
 				}
-				if v, ok := val["root"]; ok {
-					root = v.(string)
-				}
-				if v, ok := val["access_log"]; ok {
-					accessLog = v.(string)
-				}
-				if v, ok := val["git"]; ok {
-					buf, err := json.Marshal(v)
-					if err != nil {
-						return xerrors.WithStack(err)
-					}
-					var backend GitBackend
-					if err := json.Unmarshal(buf, &backend); err != nil {
-						return xerrors.WithStack(err)
-					}
-					gitBackend = &backend
-				}
-				v.path = append(v.path, &PathConfig{
-					Path:       p,
-					Proxy:      proxy,
-					Root:       root,
-					AccessLog:  accessLog,
-					GitBackend: gitBackend,
-				})
+				v.path = append(v.path, pc)
 			}
 		case []any:
 			for _, e := range c {
@@ -122,35 +98,11 @@ func (s *SimpleHTTPServer) readConfig() error {
 				}
 				for p, va := range entry {
 					val := va.(map[string]any)
-					var proxy, root, accessLog string
-					var gitBackend *GitBackend
-					if v, ok := val["proxy"]; ok {
-						proxy = v.(string)
+					pc, err := parsePathConfig(p, val)
+					if err != nil {
+						return err
 					}
-					if v, ok := val["root"]; ok {
-						root = v.(string)
-					}
-					if v, ok := val["access_log"]; ok {
-						accessLog = v.(string)
-					}
-					if v, ok := val["git"]; ok {
-						buf, err := json.Marshal(v)
-						if err != nil {
-							return xerrors.WithStack(err)
-						}
-						var backend GitBackend
-						if err := json.Unmarshal(buf, &backend); err != nil {
-							return xerrors.WithStack(err)
-						}
-						gitBackend = &backend
-					}
-					v.path = append(v.path, &PathConfig{
-						Path:       p,
-						Proxy:      proxy,
-						Root:       root,
-						AccessLog:  accessLog,
-						GitBackend: gitBackend,
-					})
+					v.path = append(v.path, pc)
 				}
 			}
 		default:
@@ -160,6 +112,37 @@ func (s *SimpleHTTPServer) readConfig() error {
 	s.config = conf
 
 	return nil
+}
+
+func parsePathConfig(path string, val map[string]any) (*PathConfig, error) {
+	pc := &PathConfig{Path: path}
+	if v, ok := val["proxy"]; ok {
+		pc.Proxy = v.(string)
+	}
+	if v, ok := val["root"]; ok {
+		pc.Root = v.(string)
+	}
+	if v, ok := val["access_log"]; ok {
+		pc.AccessLog = v.(string)
+	}
+	if v, ok := val["disable_access_log"]; ok {
+		pc.DisableAccessLog = v.(bool)
+	}
+	if v, ok := val["status"]; ok {
+		pc.Status = int(v.(float64))
+	}
+	if v, ok := val["git"]; ok {
+		buf, err := json.Marshal(v)
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		var backend GitBackend
+		if err := json.Unmarshal(buf, &backend); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		pc.GitBackend = &backend
+	}
+	return pc, nil
 }
 
 var allMethods = []string{
@@ -212,8 +195,17 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 				}
 				handler = h
 			}
+			if p.Status != 0 {
+				status := p.Status
+				handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(status)
+				})
+			}
 			var middlewares []bon.Middleware
-			if p.AccessLog != "" {
+			switch {
+			case p.DisableAccessLog:
+				// アクセスログを出さない (ヘルスチェック用のパスなど)
+			case p.AccessLog != "":
 				l, ok := accessLogger[p.AccessLog]
 				if !ok {
 					newLogger, err := NewMiddlewareAccessLog(p.AccessLog)
@@ -224,8 +216,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 					accessLogger[p.AccessLog] = newLogger
 				}
 				middlewares = append(middlewares, l)
-			}
-			if middle != nil && p.AccessLog == "" {
+			case middle != nil:
 				middlewares = append(middlewares, middle)
 			}
 

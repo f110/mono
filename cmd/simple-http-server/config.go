@@ -28,11 +28,13 @@ type ConfigServer struct {
 }
 
 type PathConfig struct {
-	Path       string
-	Proxy      string
-	Root       string
-	AccessLog  string
-	GitBackend *GitBackend
+	Path             string
+	Proxy            string
+	Root             string
+	AccessLog        string
+	DisableAccessLog bool
+	Status           int
+	GitBackend       *GitBackend
 }
 
 type GitBackend struct {

@@ -125,3 +125,64 @@ server {
 	case <-closeCh:
 	}
 }
+
+func TestSimpleHTTPServer_HealthCheckPath(t *testing.T) {
+	logger.Init()
+	documentRoot := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(documentRoot, "foo"), []byte("file ok"), 0644))
+	logFile := filepath.Join(t.TempDir(), "access.log")
+	require.NoError(t, os.WriteFile(logFile, nil, 0644))
+
+	port, err := netutil.FindUnusedPort()
+	require.NoError(t, err)
+
+	conf := `
+server {
+	listen = "127.0.0.1:%d"
+	access_log = "%s"
+
+	path "/healthz" {
+		status = 200
+		disable_access_log = true
+	}
+
+	path "/*" {
+		root = "%s";
+	}
+}`
+	renderedConf := fmt.Sprintf(conf, port, logFile, documentRoot)
+	f, err := os.CreateTemp(t.TempDir(), "")
+	require.NoError(t, err)
+	_, err = f.WriteString(renderedConf)
+	require.NoError(t, err)
+
+	s := NewSimpleHTTPServer()
+	s.configFile = f.Name()
+	closeCh := make(chan struct{})
+	go func() {
+		require.NoError(t, s.LoopContext(context.Background()))
+		close(closeCh)
+	}()
+	require.NoError(t, netutil.WaitListen(fmt.Sprintf("127.0.0.1:%d", port), time.Second))
+
+	res, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/healthz", port))
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	res, err = http.Get(fmt.Sprintf("http://127.0.0.1:%d/foo", port))
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+
+	s.FSM.Shutdown()
+	select {
+	case <-time.After(time.Second):
+		require.Fail(t, "timed out")
+	case <-closeCh:
+	}
+
+	buf, err := os.ReadFile(logFile)
+	require.NoError(t, err)
+	assert.NotContains(t, string(buf), "/healthz", "health check path must not be logged")
+	assert.Contains(t, string(buf), "/foo", "normal request must be logged")
+}
