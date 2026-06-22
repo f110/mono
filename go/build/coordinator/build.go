@@ -109,9 +109,10 @@ type BazelOptions struct {
 	GithubAppId              int64
 	GithubInstallationId     int64
 	GithubAppSecretName      string
+	GitDataServiceURL        string
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName string) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName, gitDataServiceURL string) BazelOptions {
 	return BazelOptions{
 		RemoteCache:              remoteCache,
 		EnableRemoteAssetApi:     enableRemoteAssetApi,
@@ -125,6 +126,7 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 		GithubAppId:              githubAppId,
 		GithubInstallationId:     githubInstallationId,
 		GithubAppSecretName:      githubAppSecretName,
+		GitDataServiceURL:        gitDataServiceURL,
 	}
 }
 
@@ -264,6 +266,9 @@ func NewBazelBuilder(
 	}
 	if bazelOpt.CentralRegistryMirrorURL != "" {
 		b.jobBuilder.CentralRegistryMirror(bazelOpt.CentralRegistryMirrorURL)
+	}
+	if bazelOpt.GitDataServiceURL != "" {
+		b.jobBuilder.GitDataService(bazelOpt.GitDataServiceURL)
 	}
 	defaultCPULimit := resource.MustParse(defaultCPULimit)
 	defaultMemoryLimit := resource.MustParse(defaultMemoryLimit)

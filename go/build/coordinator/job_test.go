@@ -44,11 +44,12 @@ func TestJobBuilder(t *testing.T) {
 	job, repo, task, saObject, jobObject := testJobBuilderFixtures()
 
 	cases := []struct {
-		Platform       string
-		Mutation       func(*config.JobV2, *database.SourceRepository, *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task)
-		Error          string
-		ExpectObjects  []runtime.Object
-		ObjectMutation map[runtime.Object][]k8sfactory.Trait
+		Platform        string
+		Mutation        func(*config.JobV2, *database.SourceRepository, *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task)
+		BuilderMutation func(*JobBuilder)
+		Error           string
+		ExpectObjects   []runtime.Object
+		ObjectMutation  map[runtime.Object][]k8sfactory.Trait
 	}{
 		{
 			Mutation: func(_ *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
@@ -158,6 +159,27 @@ func TestJobBuilder(t *testing.T) {
 					AddSecretVolume("pre-process", "github-secret", "githubapp-secret", "/etc/github"),
 					k8sfactory.SortVolume(),
 					k8sfactory.OnContainer("pre-process", AddArgs("--github-app-id=2", "--github-installation-id=20", "--private-key-file=/etc/github/privatekey.pem")),
+				},
+			},
+		},
+		{
+			Mutation: func(j *config.JobV2, r *database.SourceRepository, ta *database.Task) (*config.JobV2, *database.SourceRepository, *database.Task) {
+				r.Name = "f110/example"
+				return j, r, ta
+			},
+			BuilderMutation: func(b *JobBuilder) {
+				b.GitDataService("git-data.default.svc:9020")
+			},
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					k8sfactory.OnContainer("pre-process", k8sfactory.Args(
+						"clone", "--work-dir=/work",
+						"--git-data-service-url=git-data.default.svc:9020",
+						"--git-data-repo=f110/example",
+						"--commit=e192aef54cb0d31afd7cae64b079be2a12a56a74",
+					)),
 				},
 			},
 		},
@@ -293,6 +315,9 @@ func TestJobBuilder(t *testing.T) {
 			b.EnableRemoteCache("127.0.0.1:4567")
 			b.EnableRemoteAssetAPI()
 			b.Vault("https://127.0.0.1:7000")
+			if tc.BuilderMutation != nil {
+				tc.BuilderMutation(b)
+			}
 
 			var j *config.JobV2
 			var r *database.SourceRepository

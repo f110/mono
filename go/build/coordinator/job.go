@@ -42,6 +42,7 @@ type JobBuilder struct {
 	remoteCache              string
 	remoteAssetAPI           bool
 	vaultAddr                string
+	gitDataServiceURL        string
 	excludeNodes             []string
 
 	PreProcessContainerName string
@@ -145,6 +146,12 @@ func (j *JobBuilder) Vault(addr string) {
 	j.vaultAddr = addr
 }
 
+// GitDataService configures the pre-process container to fetch the source tree
+// from the git-data-service at url instead of cloning the repository.
+func (j *JobBuilder) GitDataService(url string) {
+	j.gitDataServiceURL = url
+}
+
 func (j *JobBuilder) Clone() *JobBuilder {
 	return &JobBuilder{
 		namespace:               j.namespace,
@@ -165,6 +172,7 @@ func (j *JobBuilder) Clone() *JobBuilder {
 		remoteCache:             j.remoteCache,
 		remoteAssetAPI:          j.remoteAssetAPI,
 		vaultAddr:               j.vaultAddr,
+		gitDataServiceURL:       j.gitDataServiceURL,
 
 		workDirVolume:       j.workDirVolume,
 		mainContainer:       j.mainContainer,
@@ -292,16 +300,27 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 
 	builtObjects := []runtime.Object{j.sa}
 
-	preProcessArgs := []string{"clone", fmt.Sprintf("--work-dir=%s", j.workDirVolume.Mount.MountPath), fmt.Sprintf("--url=%s", j.repo.CloneUrl)}
-	if j.task.Revision != "" {
-		preProcessArgs = append(preProcessArgs, "--commit="+j.task.Revision)
-	}
-	if j.repo.Private {
+	preProcessArgs := []string{"clone", fmt.Sprintf("--work-dir=%s", j.workDirVolume.Mount.MountPath)}
+	if j.gitDataServiceURL != "" && j.task.Revision != "" {
+		// git-data-service already holds the repository objects, so fetch the
+		// source tree from it instead of cloning from the origin.
 		preProcessArgs = append(preProcessArgs,
-			fmt.Sprintf("--github-app-id=%d", j.githubAppId),
-			fmt.Sprintf("--github-installation-id=%d", j.githubInstallationId),
-			"--private-key-file=/etc/github/privatekey.pem",
+			fmt.Sprintf("--git-data-service-url=%s", j.gitDataServiceURL),
+			fmt.Sprintf("--git-data-repo=%s", j.repo.Name),
+			"--commit="+j.task.Revision,
 		)
+	} else {
+		preProcessArgs = append(preProcessArgs, fmt.Sprintf("--url=%s", j.repo.CloneUrl))
+		if j.task.Revision != "" {
+			preProcessArgs = append(preProcessArgs, "--commit="+j.task.Revision)
+		}
+		if j.repo.Private {
+			preProcessArgs = append(preProcessArgs,
+				fmt.Sprintf("--github-app-id=%d", j.githubAppId),
+				fmt.Sprintf("--github-installation-id=%d", j.githubInstallationId),
+				"--private-key-file=/etc/github/privatekey.pem",
+			)
+		}
 	}
 	preProcessContainer := k8sfactory.ContainerFactory(j.preProcessContainer, k8sfactory.Args(preProcessArgs...))
 

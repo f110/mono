@@ -149,9 +149,6 @@ func (s *Scheduler) process(ctx context.Context, ev *database.GithubEvent) {
 	}
 
 	if err := rec.Reconcile(ctx, ev); err != nil {
-		slogger.Log.Warn("Reconcile failed",
-			slog.Int("id", int(ev.Id)),
-			slog.String("event_type", ev.EventType),
-			slogger.E(err))
+		slogger.Log.Warn("Reconcile failed", slog.Int("id", int(ev.Id)), slog.String("event_type", ev.EventType), slogger.E(err))
 	}
 }

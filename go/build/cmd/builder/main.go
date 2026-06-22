@@ -360,6 +360,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.GitHubClient.AppID,
 		p.opt.GitHubClient.InstallationID,
 		p.opt.GithubAppSecretName,
+		p.opt.GitDataServiceURL,
 	)
 	c, err := coordinator.NewBazelBuilder(
 		p.opt.DashboardUrl,

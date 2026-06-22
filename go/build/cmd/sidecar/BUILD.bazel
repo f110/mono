@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "sidecar",
@@ -15,7 +15,26 @@ go_library(
         "//go/file",
         "//go/git",
         "@com_github_fsnotify_fsnotify//:fsnotify",
+        "@com_github_go_git_go_git_v5//plumbing/filemode",
         "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
         "@org_golang_google_protobuf//encoding/protodelim",
+    ],
+)
+
+go_test(
+    name = "sidecar_test",
+    srcs = ["clone_test.go"],
+    embed = [":sidecar"],
+    deps = [
+        "//go/git",
+        "@com_github_go_git_go_git_v5//:go-git",
+        "@com_github_go_git_go_git_v5//plumbing/object",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_grpc//test/bufconn",
     ],
 )
