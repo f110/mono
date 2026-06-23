@@ -49,7 +49,7 @@ func NewBFF(addr string, grpcConn *grpc.ClientConn, apiClient api.APIClient, git
 	}
 	mux := http.NewServeMux()
 	mux.Handle(NewBFFHandler(b, connect.WithInterceptors(newAccessLogInterceptor())))
-	mux.HandleFunc("GET /liveness", func(_ http.ResponseWriter, _ *http.Request) { return })
+	mux.HandleFunc("GET /liveness", func(_ http.ResponseWriter, _ *http.Request) {})
 	mux.HandleFunc("GET /readiness", func(w http.ResponseWriter, _ *http.Request) {
 		switch grpcConn.GetState() {
 		case connectivity.Idle, connectivity.Connecting, connectivity.Ready:
