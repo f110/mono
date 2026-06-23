@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 
@@ -87,6 +88,8 @@ func (g *DataService) ListRepositories(_ context.Context, _ *RequestListReposito
 			GitUrl:        gitURL,
 		})
 	}
+	// Sort by name so the order is stable regardless of map iteration order.
+	sort.Slice(list, func(i, j int) bool { return list[i].Name < list[j].Name })
 
 	return &ResponseListRepositories{Repositories: list}, nil
 }

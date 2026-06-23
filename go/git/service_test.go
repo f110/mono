@@ -28,6 +28,9 @@ func TestListRepositories(t *testing.T) {
 	res, err := gitData.ListRepositories(context.Background(), &RequestListRepositories{})
 	require.NoError(t, err)
 	assert.Len(t, res.Repositories, 2)
+	// The order of repositories must be stable (sorted by name) regardless of map iteration order.
+	assert.Equal(t, "test1", res.Repositories[0].Name)
+	assert.Equal(t, "test2", res.Repositories[1].Name)
 }
 
 func TestListReferences(t *testing.T) {
