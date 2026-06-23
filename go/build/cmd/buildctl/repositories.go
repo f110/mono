@@ -31,9 +31,9 @@ func Repositories(rootCmd *cli.Command, endpoint *string) {
 				return xerrors.WithStack(err)
 			}
 			table := tablewriter.NewWriter(os.Stdout)
-			table.Header("Id", "Name", "URL", "Status")
+			table.Header("Id", "Name", "URL")
 			for _, v := range repos.GetRepositories() {
-				table.Append([]string{fmt.Sprintf("%d", v.GetId()), v.GetName(), v.GetUrl(), v.GetStatus().String()})
+				table.Append([]string{fmt.Sprintf("%d", v.GetId()), v.GetName(), v.GetUrl()})
 			}
 			return table.Render()
 		},

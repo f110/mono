@@ -556,7 +556,6 @@ func (*apiService) dbRepoToAPIRepo(repo *database.SourceRepository) *model.Repos
 		Url:      new(repo.Url),
 		CloneUrl: new(repo.CloneUrl),
 		Private:  new(repo.Private),
-		Status:   new(model.RepositoryStatus(repo.Status)),
 	}.Build()
 }
 

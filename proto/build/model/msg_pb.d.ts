@@ -41,11 +41,6 @@ export declare type Repository = Message<"mono.build.model.Repository"> & {
   private: boolean;
 
   /**
-   * @generated from field: mono.build.model.RepositoryStatus status = 6;
-   */
-  status: RepositoryStatus;
-
-  /**
    * Full commit SHA at the tip of default_branch. Populated only when the API
    * server has access to git-data-service; empty otherwise. Clients shorten
    * this for display.
@@ -400,31 +395,6 @@ export declare type ExternalReleaseTrigger = Message<"mono.build.model.ExternalR
  * Use `create(ExternalReleaseTriggerSchema)` to create a new message.
  */
 export declare const ExternalReleaseTriggerSchema: GenMessage<ExternalReleaseTrigger>;
-
-/**
- * @generated from enum mono.build.model.RepositoryStatus
- */
-export enum RepositoryStatus {
-  /**
-   * @generated from enum value: REPOSITORY_STATUS_UNKNOWN = 0;
-   */
-  UNKNOWN = 0,
-
-  /**
-   * @generated from enum value: REPOSITORY_STATUS_READY = 1;
-   */
-  READY = 1,
-
-  /**
-   * @generated from enum value: REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
-   */
-  INVALID_BUILD_CONFIG = 2,
-}
-
-/**
- * Describes the enum mono.build.model.RepositoryStatus.
- */
-export declare const RepositoryStatusSchema: GenEnum<RepositoryStatus>;
 
 /**
  * @generated from enum mono.build.model.TestStatus

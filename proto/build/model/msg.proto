@@ -8,12 +8,6 @@ import "google/protobuf/timestamp.proto";
 option features.(pb.go).api_level = API_OPAQUE;
 option go_package                 = "go.f110.dev/mono/go/build/model";
 
-enum RepositoryStatus {
-  REPOSITORY_STATUS_UNKNOWN              = 0;
-  REPOSITORY_STATUS_READY                = 1;
-  REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
-}
-
 enum TestStatus {
   TEST_STATUS_PASSED = 0;
   TEST_STATUS_FLAKY  = 1;
@@ -21,12 +15,11 @@ enum TestStatus {
 }
 
 message Repository {
-  int32  id               = 1;
-  string name             = 2;
-  string url              = 3;
-  string clone_url        = 4;
-  bool private            = 5;
-  RepositoryStatus status = 6;
+  int32  id        = 1;
+  string name      = 2;
+  string url       = 3;
+  string clone_url = 4;
+  bool private     = 5;
   // Full commit SHA at the tip of default_branch. Populated only when the API
   // server has access to git-data-service; empty otherwise. Clients shorten
   // this for display.

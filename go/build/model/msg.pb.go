@@ -22,50 +22,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type RepositoryStatus int32
-
-const (
-	RepositoryStatus_REPOSITORY_STATUS_UNKNOWN              RepositoryStatus = 0
-	RepositoryStatus_REPOSITORY_STATUS_READY                RepositoryStatus = 1
-	RepositoryStatus_REPOSITORY_STATUS_INVALID_BUILD_CONFIG RepositoryStatus = 2
-)
-
-// Enum value maps for RepositoryStatus.
-var (
-	RepositoryStatus_name = map[int32]string{
-		0: "REPOSITORY_STATUS_UNKNOWN",
-		1: "REPOSITORY_STATUS_READY",
-		2: "REPOSITORY_STATUS_INVALID_BUILD_CONFIG",
-	}
-	RepositoryStatus_value = map[string]int32{
-		"REPOSITORY_STATUS_UNKNOWN":              0,
-		"REPOSITORY_STATUS_READY":                1,
-		"REPOSITORY_STATUS_INVALID_BUILD_CONFIG": 2,
-	}
-)
-
-func (x RepositoryStatus) Enum() *RepositoryStatus {
-	p := new(RepositoryStatus)
-	*p = x
-	return p
-}
-
-func (x RepositoryStatus) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (RepositoryStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_build_model_msg_proto_enumTypes[0].Descriptor()
-}
-
-func (RepositoryStatus) Type() protoreflect.EnumType {
-	return &file_proto_build_model_msg_proto_enumTypes[0]
-}
-
-func (x RepositoryStatus) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
 type TestStatus int32
 
 const (
@@ -99,11 +55,11 @@ func (x TestStatus) String() string {
 }
 
 func (TestStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_build_model_msg_proto_enumTypes[1].Descriptor()
+	return file_proto_build_model_msg_proto_enumTypes[0].Descriptor()
 }
 
 func (TestStatus) Type() protoreflect.EnumType {
-	return &file_proto_build_model_msg_proto_enumTypes[1]
+	return &file_proto_build_model_msg_proto_enumTypes[0]
 }
 
 func (x TestStatus) Number() protoreflect.EnumNumber {
@@ -117,7 +73,6 @@ type Repository struct {
 	xxx_hidden_Url          *string                `protobuf:"bytes,3,opt,name=url"`
 	xxx_hidden_CloneUrl     *string                `protobuf:"bytes,4,opt,name=clone_url,json=cloneUrl"`
 	xxx_hidden_Private      bool                   `protobuf:"varint,5,opt,name=private"`
-	xxx_hidden_Status       RepositoryStatus       `protobuf:"varint,6,opt,name=status,enum=mono.build.model.RepositoryStatus"`
 	xxx_hidden_HeadRevision *string                `protobuf:"bytes,7,opt,name=head_revision,json=headRevision"`
 	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
 	XXX_presence            [1]uint32
@@ -194,15 +149,6 @@ func (x *Repository) GetPrivate() bool {
 	return false
 }
 
-func (x *Repository) GetStatus() RepositoryStatus {
-	if x != nil {
-		if protoimpl.X.Present(&(x.XXX_presence[0]), 5) {
-			return x.xxx_hidden_Status
-		}
-	}
-	return RepositoryStatus_REPOSITORY_STATUS_UNKNOWN
-}
-
 func (x *Repository) GetHeadRevision() string {
 	if x != nil {
 		if x.xxx_hidden_HeadRevision != nil {
@@ -215,37 +161,32 @@ func (x *Repository) GetHeadRevision() string {
 
 func (x *Repository) SetId(v int32) {
 	x.xxx_hidden_Id = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 6)
 }
 
 func (x *Repository) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 6)
 }
 
 func (x *Repository) SetUrl(v string) {
 	x.xxx_hidden_Url = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
 }
 
 func (x *Repository) SetCloneUrl(v string) {
 	x.xxx_hidden_CloneUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 6)
 }
 
 func (x *Repository) SetPrivate(v bool) {
 	x.xxx_hidden_Private = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 7)
-}
-
-func (x *Repository) SetStatus(v RepositoryStatus) {
-	x.xxx_hidden_Status = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 6)
 }
 
 func (x *Repository) SetHeadRevision(v string) {
 	x.xxx_hidden_HeadRevision = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 7)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 6)
 }
 
 func (x *Repository) HasId() bool {
@@ -283,18 +224,11 @@ func (x *Repository) HasPrivate() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
 }
 
-func (x *Repository) HasStatus() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
-}
-
 func (x *Repository) HasHeadRevision() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
 }
 
 func (x *Repository) ClearId() {
@@ -322,13 +256,8 @@ func (x *Repository) ClearPrivate() {
 	x.xxx_hidden_Private = false
 }
 
-func (x *Repository) ClearStatus() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
-	x.xxx_hidden_Status = RepositoryStatus_REPOSITORY_STATUS_UNKNOWN
-}
-
 func (x *Repository) ClearHeadRevision() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
 	x.xxx_hidden_HeadRevision = nil
 }
 
@@ -340,7 +269,6 @@ type Repository_builder struct {
 	Url          *string
 	CloneUrl     *string
 	Private      *bool
-	Status       *RepositoryStatus
 	HeadRevision *string
 }
 
@@ -349,31 +277,27 @@ func (b0 Repository_builder) Build() *Repository {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 6)
 		x.xxx_hidden_Id = *b.Id
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 6)
 		x.xxx_hidden_Name = b.Name
 	}
 	if b.Url != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
 		x.xxx_hidden_Url = b.Url
 	}
 	if b.CloneUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 6)
 		x.xxx_hidden_CloneUrl = b.CloneUrl
 	}
 	if b.Private != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 6)
 		x.xxx_hidden_Private = *b.Private
 	}
-	if b.Status != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 7)
-		x.xxx_hidden_Status = *b.Status
-	}
 	if b.HeadRevision != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 7)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 6)
 		x.xxx_hidden_HeadRevision = b.HeadRevision
 	}
 	return m0
@@ -2302,15 +2226,14 @@ var File_proto_build_model_msg_proto protoreflect.FileDescriptor
 
 const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/build/model/msg.proto\x12\x10mono.build.model\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\x01\n" +
+	"\x1bproto/build/model/msg.proto\x12\x10mono.build.model\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
 	"\n" +
 	"Repository\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1b\n" +
 	"\tclone_url\x18\x04 \x01(\tR\bcloneUrl\x12\x18\n" +
-	"\aprivate\x18\x05 \x01(\bR\aprivate\x12:\n" +
-	"\x06status\x18\x06 \x01(\x0e2\".mono.build.model.RepositoryStatusR\x06status\x12#\n" +
+	"\aprivate\x18\x05 \x01(\bR\aprivate\x12#\n" +
 	"\rhead_revision\x18\a \x01(\tR\fheadRevision\"\x8d\b\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12#\n" +
@@ -2387,45 +2310,39 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\vtag_pattern\x18\n" +
 	" \x01(\tR\n" +
 	"tagPattern\x12-\n" +
-	"\x12include_prerelease\x18\v \x01(\bR\x11includePrerelease*z\n" +
-	"\x10RepositoryStatus\x12\x1d\n" +
-	"\x19REPOSITORY_STATUS_UNKNOWN\x10\x00\x12\x1b\n" +
-	"\x17REPOSITORY_STATUS_READY\x10\x01\x12*\n" +
-	"&REPOSITORY_STATUS_INVALID_BUILD_CONFIG\x10\x02*S\n" +
+	"\x12include_prerelease\x18\v \x01(\bR\x11includePrerelease*S\n" +
 	"\n" +
 	"TestStatus\x12\x16\n" +
 	"\x12TEST_STATUS_PASSED\x10\x00\x12\x15\n" +
 	"\x11TEST_STATUS_FLAKY\x10\x01\x12\x16\n" +
 	"\x12TEST_STATUS_FAILED\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_proto_build_model_msg_proto_goTypes = []any{
-	(RepositoryStatus)(0),          // 0: mono.build.model.RepositoryStatus
-	(TestStatus)(0),                // 1: mono.build.model.TestStatus
-	(*Repository)(nil),             // 2: mono.build.model.Repository
-	(*Task)(nil),                   // 3: mono.build.model.Task
-	(*Job)(nil),                    // 4: mono.build.model.Job
-	(*TestReport)(nil),             // 5: mono.build.model.TestReport
-	(*GithubEvent)(nil),            // 6: mono.build.model.GithubEvent
-	(*ExternalReleaseTrigger)(nil), // 7: mono.build.model.ExternalReleaseTrigger
-	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
+	(TestStatus)(0),                // 0: mono.build.model.TestStatus
+	(*Repository)(nil),             // 1: mono.build.model.Repository
+	(*Task)(nil),                   // 2: mono.build.model.Task
+	(*Job)(nil),                    // 3: mono.build.model.Job
+	(*TestReport)(nil),             // 4: mono.build.model.TestReport
+	(*GithubEvent)(nil),            // 5: mono.build.model.GithubEvent
+	(*ExternalReleaseTrigger)(nil), // 6: mono.build.model.ExternalReleaseTrigger
+	(*timestamppb.Timestamp)(nil),  // 7: google.protobuf.Timestamp
 }
 var file_proto_build_model_msg_proto_depIdxs = []int32{
-	0, // 0: mono.build.model.Repository.status:type_name -> mono.build.model.RepositoryStatus
-	8, // 1: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
-	8, // 2: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
-	8, // 3: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
-	8, // 4: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
-	5, // 5: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
-	1, // 6: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
-	8, // 7: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
-	8, // 8: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	7, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
+	7, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
+	7, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
+	7, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
+	4, // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
+	0, // 5: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
+	7, // 6: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
+	7, // 7: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_model_msg_proto_init() }
@@ -2438,7 +2355,7 @@ func file_proto_build_model_msg_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_model_msg_proto_rawDesc), len(file_proto_build_model_msg_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      1,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,

@@ -13,12 +13,6 @@ enum TestStatus {
   TEST_STATUS_FAILED = 2;
 }
 
-enum SourceRepositoryStatus {
-  SOURCE_REPOSITORY_STATUS_UNKNOWN              = 0;
-  SOURCE_REPOSITORY_STATUS_READY                = 1;
-  SOURCE_REPOSITORY_STATUS_INVALID_BUILD_CONFIG = 2;
-}
-
 enum GithubEventState {
   GITHUB_EVENT_STATE_PENDING    = 0;
   GITHUB_EVENT_STATE_PROCESSING = 1;
@@ -29,13 +23,12 @@ enum GithubEventState {
 }
 
 message SourceRepository {
-  int32  id                             = 1 [(dev.f110.ddl.column) = { sequence: true }];
-  string url                            = 2;
-  string clone_url                      = 3;
-  string name                           = 4 [(dev.f110.ddl.column) = { size: 100 }];
-  bool private                          = 5;
-  SourceRepositoryStatus status         = 6;
-  string                 default_branch = 7;
+  int32  id             = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string url            = 2;
+  string clone_url      = 3;
+  string name           = 4 [(dev.f110.ddl.column) = { size: 100 }];
+  bool private          = 5;
+  string default_branch = 7;
   // bazel_version mirrors the .bazelversion file at the tip of default_branch.
   // Refreshed by the push reconciler so InvokeJob does not need to fetch it
   // from GitHub.

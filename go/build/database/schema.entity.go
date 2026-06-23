@@ -21,14 +21,6 @@ const (
 	TestStatusFailed TestStatus = 2
 )
 
-type SourceRepositoryStatus uint32
-
-const (
-	SourceRepositoryStatusUnknown            SourceRepositoryStatus = 0
-	SourceRepositoryStatusReady              SourceRepositoryStatus = 1
-	SourceRepositoryStatusInvalidBuildConfig SourceRepositoryStatus = 2
-)
-
 type GithubEventState uint32
 
 const (
@@ -46,7 +38,6 @@ type SourceRepository struct {
 	CloneUrl      string
 	Name          string
 	Private       bool
-	Status        SourceRepositoryStatus
 	DefaultBranch string
 	// bazel_version mirrors the .bazelversion file at the tip of default_branch.
 	// Refreshed by the push reconciler so InvokeJob does not need to fetch it
@@ -74,7 +65,6 @@ func (e *SourceRepository) IsChanged() bool {
 		e.CloneUrl != e.mark.CloneUrl ||
 		e.Name != e.mark.Name ||
 		e.Private != e.mark.Private ||
-		e.Status != e.mark.Status ||
 		e.DefaultBranch != e.mark.DefaultBranch ||
 		e.BazelVersion != e.mark.BazelVersion ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
@@ -97,9 +87,6 @@ func (e *SourceRepository) ChangedColumn() []ddl.Column {
 	}
 	if e.Private != e.mark.Private {
 		res = append(res, ddl.Column{Name: "private", Value: e.Private})
-	}
-	if e.Status != e.mark.Status {
-		res = append(res, ddl.Column{Name: "status", Value: e.Status})
 	}
 	if e.DefaultBranch != e.mark.DefaultBranch {
 		res = append(res, ddl.Column{Name: "default_branch", Value: e.DefaultBranch})
@@ -128,7 +115,6 @@ func (e *SourceRepository) Copy() *SourceRepository {
 		CloneUrl:      e.CloneUrl,
 		Name:          e.Name,
 		Private:       e.Private,
-		Status:        e.Status,
 		DefaultBranch: e.DefaultBranch,
 		BazelVersion:  e.BazelVersion,
 		CreatedAt:     e.CreatedAt,

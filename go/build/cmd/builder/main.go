@@ -482,9 +482,6 @@ func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.Reposi
 	seen := set.New[string]()
 	var out []*git.RepositoryConfig
 	for _, r := range repos {
-		if r.Status != database.SourceRepositoryStatusReady {
-			continue
-		}
 		if r.CloneUrl == "" || r.Name == "" {
 			continue
 		}

@@ -115,7 +115,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `source_repository` WHERE `id` = ?", id)
 
 	v := &database.SourceRepository{}
-	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.Status, &v.DefaultBranch, &v.BazelVersion, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Url, &v.CloneUrl, &v.Name, &v.Private, &v.DefaultBranch, &v.BazelVersion, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -138,7 +138,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 	res := make([]*database.SourceRepository, 0, len(id))
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
@@ -149,7 +149,7 @@ func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*dat
 
 func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository`"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository`"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -174,7 +174,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -186,7 +186,7 @@ func (d *SourceRepository) ListAll(ctx context.Context, opt ...ListOption) ([]*d
 
 func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...ListOption) ([]*database.SourceRepository, error) {
 	listOpts := newListOpt(opt...)
-	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
+	query := "SELECT `id`, `url`, `clone_url`, `name`, `private`, `default_branch`, `bazel_version`, `created_at`, `updated_at` FROM `source_repository` WHERE `url` = ?"
 	orderCol := "`" + listOpts.sort + "`"
 	if listOpts.sort == "" {
 		orderCol = "`id`"
@@ -212,7 +212,7 @@ func (d *SourceRepository) ListByUrl(ctx context.Context, url string, opt ...Lis
 	res := make([]*database.SourceRepository, 0)
 	for rows.Next() {
 		r := &database.SourceRepository{}
-		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.Status, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Url, &r.CloneUrl, &r.Name, &r.Private, &r.DefaultBranch, &r.BazelVersion, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		r.ResetMark()
@@ -233,8 +233,8 @@ func (d *SourceRepository) Create(ctx context.Context, sourceRepository *databas
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `status`, `default_branch`, `bazel_version`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, sourceRepository.Status, sourceRepository.DefaultBranch, sourceRepository.BazelVersion, time.Now(),
+		"INSERT INTO `source_repository` (`url`, `clone_url`, `name`, `private`, `default_branch`, `bazel_version`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		sourceRepository.Url, sourceRepository.CloneUrl, sourceRepository.Name, sourceRepository.Private, sourceRepository.DefaultBranch, sourceRepository.BazelVersion, time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -1412,18 +1412,11 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 	}
 
 	if len(res) > 0 {
-		taskPrimaryKeys := make([]int32, len(res))
 		repositoryPrimaryKeys := make([]int32, len(res))
+		taskPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			taskPrimaryKeys[i] = v.TaskId
 			repositoryPrimaryKeys[i] = v.RepositoryId
-		}
-		taskData := make(map[int32]*database.Task)
-		{
-			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
-			for _, v := range rels {
-				taskData[v.Id] = v
-			}
+			taskPrimaryKeys[i] = v.TaskId
 		}
 		repositoryData := make(map[int32]*database.SourceRepository)
 		{
@@ -1432,9 +1425,16 @@ func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.
 				repositoryData[v.Id] = v
 			}
 		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Task = taskData[v.TaskId]
 			v.Repository = repositoryData[v.RepositoryId]
+			v.Task = taskData[v.TaskId]
 		}
 	}
 	return res, nil
@@ -1475,18 +1475,11 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		repositoryPrimaryKeys := make([]int32, len(res))
 		taskPrimaryKeys := make([]int32, len(res))
+		repositoryPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			repositoryPrimaryKeys[i] = v.RepositoryId
 			taskPrimaryKeys[i] = v.TaskId
-		}
-		repositoryData := make(map[int32]*database.SourceRepository)
-		{
-			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
-			for _, v := range rels {
-				repositoryData[v.Id] = v
-			}
+			repositoryPrimaryKeys[i] = v.RepositoryId
 		}
 		taskData := make(map[int32]*database.Task)
 		{
@@ -1495,9 +1488,16 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 				taskData[v.Id] = v
 			}
 		}
+		repositoryData := make(map[int32]*database.SourceRepository)
+		{
+			rels, _ := d.sourceRepository.SelectMulti(ctx, repositoryPrimaryKeys...)
+			for _, v := range rels {
+				repositoryData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Repository = repositoryData[v.RepositoryId]
 			v.Task = taskData[v.TaskId]
+			v.Repository = repositoryData[v.RepositoryId]
 		}
 	}
 
