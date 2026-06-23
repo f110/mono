@@ -172,7 +172,6 @@ message ResponseGetGitDataStatistics {
   string                    head_commit_message = 2;
   string                    head_commit_author  = 3;
   google.protobuf.Timestamp head_commit_when    = 4;
-  int64                     commit_count        = 5;
 }
 
 message BFFTask {

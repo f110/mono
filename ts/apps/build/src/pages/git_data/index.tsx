@@ -61,10 +61,6 @@ const RepositoryRow: React.FC<{ repository: GitDataRepository }> = ({
                 <Table size="small">
                   <TableBody>
                     <TableRow>
-                      <TableCell variant="head">Commit count</TableCell>
-                      <TableCell>{data.commitCount.toString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
                       <TableCell variant="head">Last update</TableCell>
                       <TableCell>{lastUpdate}</TableCell>
                     </TableRow>

@@ -85,7 +85,6 @@ func TestGetRepositoryStatistics(t *testing.T) {
 
 	res, err := gitData.GetRepositoryStatistics(context.Background(), &RequestGetRepositoryStatistics{Repo: "test1"})
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), res.CommitCount)
 	require.NotNil(t, res.HeadCommit)
 	assert.Equal(t, ref.Hash().String(), res.HeadCommit.Sha)
 	assert.Equal(t, "Init", res.HeadCommit.Message)

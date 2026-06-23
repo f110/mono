@@ -172,6 +172,5 @@ message RequestGetRepositoryStatistics {
 message ResponseGetRepositoryStatistics {
   // head_commit is the commit pointed by HEAD. The last update time of the
   // repository can be derived from head_commit.committer.when.
-  Commit head_commit  = 1;
-  int64  commit_count = 2;
+  Commit head_commit = 1;
 }

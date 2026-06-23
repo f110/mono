@@ -429,7 +429,7 @@ func (b *BFF) GetGitDataStatistics(ctx context.Context, req *connect.Request[Req
 		slogger.Log.Warn("Failed to get git-data statistics", slog.String("repo", req.Msg.GetRepo()), slogger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	out := ResponseGetGitDataStatistics_builder{CommitCount: new(res.GetCommitCount())}
+	out := ResponseGetGitDataStatistics_builder{}
 	if commit := res.GetHeadCommit(); commit != nil {
 		out.HeadCommitSha = new(commit.GetSha())
 		out.HeadCommitMessage = new(commit.GetMessage())

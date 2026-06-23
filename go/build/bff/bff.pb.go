@@ -2695,7 +2695,6 @@ type ResponseGetGitDataStatistics struct {
 	xxx_hidden_HeadCommitMessage *string                `protobuf:"bytes,2,opt,name=head_commit_message,json=headCommitMessage"`
 	xxx_hidden_HeadCommitAuthor  *string                `protobuf:"bytes,3,opt,name=head_commit_author,json=headCommitAuthor"`
 	xxx_hidden_HeadCommitWhen    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=head_commit_when,json=headCommitWhen"`
-	xxx_hidden_CommitCount       int64                  `protobuf:"varint,5,opt,name=commit_count,json=commitCount"`
 	XXX_raceDetectHookData       protoimpl.RaceDetectHookData
 	XXX_presence                 [1]uint32
 	unknownFields                protoimpl.UnknownFields
@@ -2764,35 +2763,23 @@ func (x *ResponseGetGitDataStatistics) GetHeadCommitWhen() *timestamppb.Timestam
 	return nil
 }
 
-func (x *ResponseGetGitDataStatistics) GetCommitCount() int64 {
-	if x != nil {
-		return x.xxx_hidden_CommitCount
-	}
-	return 0
-}
-
 func (x *ResponseGetGitDataStatistics) SetHeadCommitSha(v string) {
 	x.xxx_hidden_HeadCommitSha = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *ResponseGetGitDataStatistics) SetHeadCommitMessage(v string) {
 	x.xxx_hidden_HeadCommitMessage = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
 }
 
 func (x *ResponseGetGitDataStatistics) SetHeadCommitAuthor(v string) {
 	x.xxx_hidden_HeadCommitAuthor = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
 }
 
 func (x *ResponseGetGitDataStatistics) SetHeadCommitWhen(v *timestamppb.Timestamp) {
 	x.xxx_hidden_HeadCommitWhen = v
-}
-
-func (x *ResponseGetGitDataStatistics) SetCommitCount(v int64) {
-	x.xxx_hidden_CommitCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
 }
 
 func (x *ResponseGetGitDataStatistics) HasHeadCommitSha() bool {
@@ -2823,13 +2810,6 @@ func (x *ResponseGetGitDataStatistics) HasHeadCommitWhen() bool {
 	return x.xxx_hidden_HeadCommitWhen != nil
 }
 
-func (x *ResponseGetGitDataStatistics) HasCommitCount() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
 func (x *ResponseGetGitDataStatistics) ClearHeadCommitSha() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_HeadCommitSha = nil
@@ -2849,11 +2829,6 @@ func (x *ResponseGetGitDataStatistics) ClearHeadCommitWhen() {
 	x.xxx_hidden_HeadCommitWhen = nil
 }
 
-func (x *ResponseGetGitDataStatistics) ClearCommitCount() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_CommitCount = 0
-}
-
 type ResponseGetGitDataStatistics_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -2861,7 +2836,6 @@ type ResponseGetGitDataStatistics_builder struct {
 	HeadCommitMessage *string
 	HeadCommitAuthor  *string
 	HeadCommitWhen    *timestamppb.Timestamp
-	CommitCount       *int64
 }
 
 func (b0 ResponseGetGitDataStatistics_builder) Build() *ResponseGetGitDataStatistics {
@@ -2869,22 +2843,18 @@ func (b0 ResponseGetGitDataStatistics_builder) Build() *ResponseGetGitDataStatis
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.HeadCommitSha != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_HeadCommitSha = b.HeadCommitSha
 	}
 	if b.HeadCommitMessage != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
 		x.xxx_hidden_HeadCommitMessage = b.HeadCommitMessage
 	}
 	if b.HeadCommitAuthor != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
 		x.xxx_hidden_HeadCommitAuthor = b.HeadCommitAuthor
 	}
 	x.xxx_hidden_HeadCommitWhen = b.HeadCommitWhen
-	if b.CommitCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
-		x.xxx_hidden_CommitCount = *b.CommitCount
-	}
 	return m0
 }
 
@@ -3880,13 +3850,12 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x13ResponseListGitData\x12E\n" +
 	"\frepositories\x18\x01 \x03(\v2!.mono.build.bff.GitDataRepositoryR\frepositories\"1\n" +
 	"\x1bRequestGetGitDataStatistics\x12\x12\n" +
-	"\x04repo\x18\x01 \x01(\tR\x04repo\"\x8d\x02\n" +
+	"\x04repo\x18\x01 \x01(\tR\x04repo\"\xea\x01\n" +
 	"\x1cResponseGetGitDataStatistics\x12&\n" +
 	"\x0fhead_commit_sha\x18\x01 \x01(\tR\rheadCommitSha\x12.\n" +
 	"\x13head_commit_message\x18\x02 \x01(\tR\x11headCommitMessage\x12,\n" +
 	"\x12head_commit_author\x18\x03 \x01(\tR\x10headCommitAuthor\x12D\n" +
-	"\x10head_commit_when\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eheadCommitWhen\x12!\n" +
-	"\fcommit_count\x18\x05 \x01(\x03R\vcommitCount\"\xe0\b\n" +
+	"\x10head_commit_when\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eheadCommitWhen\"\xe0\b\n" +
 	"\aBFFTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12<\n" +
 	"\n" +

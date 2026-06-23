@@ -1549,7 +1549,6 @@ func (x *RequestGetRepositoryStatistics) GetRepo() string {
 type ResponseGetRepositoryStatistics struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	HeadCommit    *Commit                `protobuf:"bytes,1,opt,name=head_commit,json=headCommit,proto3" json:"head_commit,omitempty"`
-	CommitCount   int64                  `protobuf:"varint,2,opt,name=commit_count,json=commitCount,proto3" json:"commit_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1589,13 +1588,6 @@ func (x *ResponseGetRepositoryStatistics) GetHeadCommit() *Commit {
 		return x.HeadCommit
 	}
 	return nil
-}
-
-func (x *ResponseGetRepositoryStatistics) GetCommitCount() int64 {
-	if x != nil {
-		return x.CommitCount
-	}
-	return 0
 }
 
 var File_proto_git_data_proto protoreflect.FileDescriptor
@@ -1695,11 +1687,10 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\x12ResponseListBranch\x12/\n" +
 	"\bbranches\x18\x01 \x03(\v2\x13.mono.git.ReferenceR\bbranches\"4\n" +
 	"\x1eRequestGetRepositoryStatistics\x12\x12\n" +
-	"\x04repo\x18\x01 \x01(\tR\x04repo\"w\n" +
+	"\x04repo\x18\x01 \x01(\tR\x04repo\"T\n" +
 	"\x1fResponseGetRepositoryStatistics\x121\n" +
 	"\vhead_commit\x18\x01 \x01(\v2\x10.mono.git.CommitR\n" +
-	"headCommit\x12!\n" +
-	"\fcommit_count\x18\x02 \x01(\x03R\vcommitCount2\x90\a\n" +
+	"headCommit2\x90\a\n" +
 	"\aGitData\x12Y\n" +
 	"\x10ListRepositories\x12!.mono.git.RequestListRepositories\x1a\".mono.git.ResponseListRepositories\x12S\n" +
 	"\x0eListReferences\x12\x1f.mono.git.RequestListReferences\x1a .mono.git.ResponseListReferences\x12P\n" +

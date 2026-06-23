@@ -486,20 +486,7 @@ func (g *DataService) GetRepositoryStatistics(_ context.Context, req *RequestGet
 		headCommit.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
 	}
 
-	iter, err := repo.Log(&goGit.LogOptions{From: head.Hash()})
-	if err != nil {
-		return nil, err
-	}
-	defer iter.Close()
-	var commitCount int64
-	if err := iter.ForEach(func(*object.Commit) error {
-		commitCount++
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return &ResponseGetRepositoryStatistics{HeadCommit: headCommit, CommitCount: commitCount}, nil
+	return &ResponseGetRepositoryStatistics{HeadCommit: headCommit}, nil
 }
 
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {

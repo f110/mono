@@ -619,11 +619,6 @@ export declare type ResponseGetGitDataStatistics = Message<"mono.build.bff.Respo
    * @generated from field: google.protobuf.Timestamp head_commit_when = 4;
    */
   headCommitWhen?: Timestamp;
-
-  /**
-   * @generated from field: int64 commit_count = 5;
-   */
-  commitCount: bigint;
 };
 
 /**
