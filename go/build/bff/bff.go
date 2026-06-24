@@ -220,8 +220,7 @@ func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetSe
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	schemaVersion := res.GetSchemaVersion()
-	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: &schemaVersion, Config: convertServerConfig(res.GetConfig())}.Build()), nil
+	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: new(res.GetSchemaVersion()), Config: convertServerConfig(res.GetConfig())}.Build()), nil
 }
 
 // convertServerConfig maps the api ServerConfig into the bff ServerConfig. Both
@@ -230,43 +229,25 @@ func convertServerConfig(c *api.ServerConfig) *ServerConfig {
 	if c == nil {
 		return nil
 	}
-	dev := c.GetDev()
-	leaderElection := c.GetLeaderElection()
-	namespace := c.GetNamespace()
-	useBazelisk := c.GetUseBazelisk()
-	defaultBazelVersion := c.GetDefaultBazelVersion()
-	remoteCache := c.GetRemoteCache()
-	taskCPULimit := c.GetTaskCpuLimit()
-	taskMemoryLimit := c.GetTaskMemoryLimit()
-	gcEnabled := c.GetGcEnabled()
-	gitDataServiceListen := c.GetGitDataServiceListen()
-	gitDataServiceURL := c.GetGitDataServiceUrl()
-	gitDataRefreshInterval := c.GetGitDataRefreshInterval()
-	gitDataRefreshWorkers := c.GetGitDataRefreshWorkers()
-	externalReleasePollInterval := c.GetExternalReleasePollInterval()
-	eventReconcileInterval := c.GetEventReconcileInterval()
-	githubAppID := c.GetGithubAppId()
-	vaultAddr := c.GetVaultAddr()
-	dashboardURL := c.GetDashboardUrl()
 	return ServerConfig_builder{
-		Dev:                         &dev,
-		LeaderElection:              &leaderElection,
-		Namespace:                   &namespace,
-		UseBazelisk:                 &useBazelisk,
-		DefaultBazelVersion:         &defaultBazelVersion,
-		RemoteCache:                 &remoteCache,
-		TaskCpuLimit:                &taskCPULimit,
-		TaskMemoryLimit:             &taskMemoryLimit,
-		GcEnabled:                   &gcEnabled,
-		GitDataServiceListen:        &gitDataServiceListen,
-		GitDataServiceUrl:           &gitDataServiceURL,
-		GitDataRefreshInterval:      &gitDataRefreshInterval,
-		GitDataRefreshWorkers:       &gitDataRefreshWorkers,
-		ExternalReleasePollInterval: &externalReleasePollInterval,
-		EventReconcileInterval:      &eventReconcileInterval,
-		GithubAppId:                 &githubAppID,
-		VaultAddr:                   &vaultAddr,
-		DashboardUrl:                &dashboardURL,
+		Dev:                         new(c.GetDev()),
+		LeaderElection:              new(c.GetLeaderElection()),
+		Namespace:                   new(c.GetNamespace()),
+		UseBazelisk:                 new(c.GetUseBazelisk()),
+		DefaultBazelVersion:         new(c.GetDefaultBazelVersion()),
+		RemoteCache:                 new(c.GetRemoteCache()),
+		TaskCpuLimit:                new(c.GetTaskCpuLimit()),
+		TaskMemoryLimit:             new(c.GetTaskMemoryLimit()),
+		GcEnabled:                   new(c.GetGcEnabled()),
+		GitDataServiceListen:        new(c.GetGitDataServiceListen()),
+		GitDataServiceUrl:           new(c.GetGitDataServiceUrl()),
+		GitDataRefreshInterval:      new(c.GetGitDataRefreshInterval()),
+		GitDataRefreshWorkers:       new(c.GetGitDataRefreshWorkers()),
+		ExternalReleasePollInterval: new(c.GetExternalReleasePollInterval()),
+		EventReconcileInterval:      new(c.GetEventReconcileInterval()),
+		GithubAppId:                 new(c.GetGithubAppId()),
+		VaultAddr:                   new(c.GetVaultAddr()),
+		DashboardUrl:                new(c.GetDashboardUrl()),
 	}.Build()
 }
 

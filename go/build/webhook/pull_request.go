@@ -114,7 +114,7 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 		return err
 	}
 
-	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, "HEAD")
+	conf, err := fetchDefaultBranchConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, event.GetRepo().GetDefaultBranch())
 	if err != nil {
 		// Treat as "no config found" — legacy code logged + skipped rather
 		// than failing. Same here.

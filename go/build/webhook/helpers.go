@@ -61,6 +61,28 @@ func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.
 	return conf, nil
 }
 
+// fetchDefaultBranchConfig reads the build configuration from the tip of the
+// repository's default branch. Pull requests are built with the base
+// (default-branch) configuration rather than the PR head so that untrusted
+// contributors cannot alter the build definition through their PR.
+//
+// git-data-service cannot resolve the symbolic ref "HEAD" — GetTree/GetFile
+// look the ref up without dereferencing, so a symbolic ref yields a zero hash
+// and the read fails. The default branch is therefore resolved to a concrete
+// commit first. The GitHub API resolves "HEAD" to the default branch itself,
+// so the fallback path keeps using it.
+func fetchDefaultBranchConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, owner, repoName, defaultBranch string) (*config.Config, error) {
+	ref := "HEAD"
+	if gitDataClient != nil {
+		resp, err := gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: repoName, Ref: "refs/heads/" + defaultBranch})
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		ref = resp.GetRef().GetHash()
+	}
+	return fetchBuildConfig(ctx, gh, gitDataClient, owner, repoName, ref)
+}
+
 // dispatchBuilds runs the legacy a.build loop: filters jobs to known commands
 // and asks the Builder to schedule each one. Returns the tasks the builder
 // produced so the caller can checkpoint them.

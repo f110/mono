@@ -526,7 +526,13 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 
 	p.notifier = webhook.NewNotifier()
 	p.reconcilers = webhook.Reconcilers{}
-	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataUpdater, p.gitDataClient))
+	// Avoid handing the push reconciler a typed-nil *git.Updater: that would
+	// satisfy the GitSyncer interface as a non-nil value and panic when called.
+	var gitSyncer webhook.GitSyncer
+	if p.gitDataUpdater != nil {
+		gitSyncer = p.gitDataUpdater
+	}
+	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, gitSyncer, p.gitDataClient))
 	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
 	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
 	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))

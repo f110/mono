@@ -31,6 +31,7 @@ func pushPayload(t *testing.T, branch, message string) []byte {
 			"name":          "ops",
 			"full_name":     "f110/ops",
 			"html_url":      "https://github.com/f110/ops",
+			"clone_url":     "https://github.com/f110/ops.git",
 			"master_branch": "master",
 			"owner":         map[string]any{"login": "f110"},
 		},
@@ -90,6 +91,56 @@ func TestPushReconciler(t *testing.T) {
 			assertion.Equal(t, st.SkipReason, tc.wantSkipReason)
 		})
 	}
+}
+
+// recSyncer records the URLs it was asked to sync so tests can assert that the
+// push reconciler triggered a git-data fetch.
+type recSyncer struct {
+	urls []string
+	err  error
+}
+
+var _ GitSyncer = (*recSyncer)(nil)
+
+func (s *recSyncer) Sync(_ context.Context, url string) error {
+	s.urls = append(s.urls, url)
+	return s.err
+}
+
+// A push to a non-main branch must still sync git-data before it is skipped
+// for dispatch: when the branch backs a pull request, the PR reconciler later
+// needs that revision available in git-data-service. The branch is not built
+// (state stays SKIPPED with reason "non-main branch"), but the fetch must have
+// run.
+func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
+	logger.SetLogLevel("debug")
+	slogger.Init()
+
+	d := newTestDAO()
+	builder := &recBuilder{}
+	syncer := &recSyncer{}
+	r := NewPushReconciler(d.toOptions(), nil, builder, syncer, nil)
+
+	ev := &database.GithubEvent{
+		EventType: "push",
+		Payload:   pushPayload(t, "feature", "normal commit"),
+		State:     database.GithubEventStateProcessing,
+		CreatedAt: time.Now(),
+	}
+	err := r.Reconcile(context.Background(), ev)
+	assertion.MustNoError(t, err)
+
+	// git-data was synced for the pushed clone URL even though the branch is
+	// not built.
+	assertion.MustLen(t, syncer.urls, 1)
+	assertion.Equal(t, syncer.urls[0], "https://github.com/f110/ops.git")
+	assertion.Equal(t, builder.called, false)
+	assertion.Equal(t, ev.State, database.GithubEventStateSkipped)
+
+	var st PushStatus
+	assertion.MustNoError(t, readStatus(ev, &st))
+	assertion.True(t, st.GitSyncedAt != nil)
+	assertion.Equal(t, st.SkipReason, "non-main branch")
 }
 
 // When a build is dispatched but the builder fails after creating the task

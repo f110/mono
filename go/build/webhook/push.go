@@ -16,6 +16,14 @@ import (
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
+// GitSyncer triggers an immediate fetch of a tracked repository so that a
+// pushed revision becomes retrievable through git-data-service. *git.Updater
+// implements it; it is declared as an interface so reconcilers can be tested
+// without a real repository.
+type GitSyncer interface {
+	Sync(ctx context.Context, url string) error
+}
+
 // PushReconciler handles `push` deliveries. It fetches the build config at
 // the pushed revision, reconciles external_release_trigger rows (only for
 // main-branch pushes), and dispatches the build tasks for jobs subscribed to
@@ -24,11 +32,11 @@ type PushReconciler struct {
 	dao           dao.Options
 	githubClient  *github.Client
 	builder       Builder
-	gitUpdater    *git.Updater
+	gitUpdater    GitSyncer
 	gitDataClient git.GitDataClient
 }
 
-func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, gitUpdater *git.Updater, gitDataClient git.GitDataClient) *PushReconciler {
+func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, gitUpdater GitSyncer, gitDataClient git.GitDataClient) *PushReconciler {
 	return &PushReconciler{dao: daos, githubClient: gh, builder: builder, gitUpdater: gitUpdater, gitDataClient: gitDataClient}
 }
 

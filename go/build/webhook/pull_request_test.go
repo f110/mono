@@ -30,10 +30,10 @@ func TestPullRequestReconciler(t *testing.T) {
 	// fixture captures everything a case needs to assert against after
 	// Reconcile returns. Cases without a mockTransport leave it nil.
 	type fixture struct {
-		dao         *testDAO
-		gh          *github.Client
-		recTrans    *recTransport
-		builder     *recBuilder
+		dao      *testDAO
+		gh       *github.Client
+		recTrans *recTransport
+		builder  *recBuilder
 	}
 
 	cases := []struct {
