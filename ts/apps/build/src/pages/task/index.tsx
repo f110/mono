@@ -35,6 +35,7 @@ import { useState } from 'react'
 import { LogModal } from '../../components/LogModal.tsx'
 import { ManifestModal } from '../../components/ManifestModal.tsx'
 import { BFF } from '../../connect/bff_pb'
+import { useForceStopTask } from '../../hooks/useForceStopTask.ts'
 import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { TestStatus } from '../../model/msg_pb'
@@ -93,7 +94,11 @@ export const TaskPage: React.FC = () => {
   const handleRerun = () => {
     restartTask({ taskId: Number(taskId) })
   }
-  const handleForceStop = () => {}
+  const { mutate: forceStopTask, isPending: isForceStopping } =
+    useForceStopTask()
+  const handleForceStop = () => {
+    forceStopTask({ taskId: Number(taskId) })
+  }
 
   if (!isSuccess) {
     return <></>
@@ -253,6 +258,8 @@ export const TaskPage: React.FC = () => {
                 variant="contained"
                 color="error"
                 onClick={handleForceStop}
+                loading={isForceStopping}
+                loadingPosition="end"
               >
                 Force Stop
               </Button>
