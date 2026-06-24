@@ -3,7 +3,10 @@ load("//build/rules/ts:vendor.bzl", "vendor_ts")
 
 js_library(
     name = "model",
-    srcs = ["msg_pb.js"],
+    srcs = [
+        "msg_pb.d.ts",
+        "msg_pb.js",
+    ],
     visibility = ["//visibility:public"],
 )
 

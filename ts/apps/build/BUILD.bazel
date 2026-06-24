@@ -110,3 +110,41 @@ js_run_binary(
     tool = ":vite",
     visibility = ["//visibility:public"],
 )
+
+ts_project(
+    name = "typecheck_app",
+    srcs = glob(
+        include = ["src/**/*.ts", "src/**/*.tsx"],
+        exclude = TEST_PATTERNS,
+    ),
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    tsconfig = "tsconfig.app.json",
+    deps = GENERATED_PACKAGES + NPM_DEPS,
+)
+
+ts_project(
+    name = "typecheck_node",
+    srcs = ["vite.config.ts"],
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    tsconfig = "tsconfig.node.json",
+    deps = [
+        "//ts/apps/build:node_modules/@tanstack/router-plugin",
+        "//ts/apps/build:node_modules/@types/node",
+        "//ts/apps/build:node_modules/@vitejs/plugin-react",
+        "//ts/apps/build:node_modules/vite",
+    ],
+)
+
+filegroup(
+    name = "typecheck",
+    srcs = [
+        ":typecheck_app_typecheck",
+        ":typecheck_node_typecheck",
+    ],
+)

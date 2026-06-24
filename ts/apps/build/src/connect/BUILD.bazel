@@ -3,7 +3,10 @@ load("//build/rules/ts:vendor.bzl", "vendor_ts")
 
 js_library(
     name = "connect",
-    srcs = ["bff_pb.js"],
+    srcs = [
+        "bff_pb.d.ts",
+        "bff_pb.js",
+    ],
     visibility = ["//visibility:public"],
 )
 
