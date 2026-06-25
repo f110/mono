@@ -709,11 +709,9 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	if err := file.Body.Close(); err != nil {
 		return nil, err
 	}
-	packfileReader, err := NewPackfile(packIndex, nopCloser(bytes.NewReader(buf)))
-	if err != nil {
-		return nil, err
-	}
+	packfileReader := packfile.NewPackfile(packIndex, nil, newBufferedFile(fmt.Sprintf("objects/pack/pack-%s.pack", packHash.String()), buf), 0)
 	obj, err := packfileReader.Get(h)
+	_ = packfileReader.Close()
 	if err == nil {
 		if b.EnabledCache() &&
 			(obj.Type() == plumbing.TreeObject ||
@@ -735,16 +733,6 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 
 	return nil, plumbing.ErrObjectNotFound
 }
-
-type nopSeekCloser struct {
-	io.ReadSeeker
-}
-
-func nopCloser(r io.ReadSeeker) io.ReadSeekCloser {
-	return nopSeekCloser{ReadSeeker: r}
-}
-
-func (nopSeekCloser) Close() error { return nil }
 
 func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbing.EncodedObject, error) {
 	if b.EnabledCache() {

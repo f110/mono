@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -62,6 +63,39 @@ func TestObjectStorageStorerWorkWithRemoteRepository(t *testing.T) {
 	err = repo.FetchContext(ctx, &git.FetchOptions{RemoteName: "origin"})
 	cancel()
 	require.NoError(t, err)
+}
+
+func TestObjectStorageStorerReadDeltaObject(t *testing.T) {
+	// Regression test: a blob stored as an OFS_DELTA inside a packfile must be
+	// delta-applied when served straight from the pack. The fixture pack was
+	// extracted from a real repository; dcc85ca is an OFS_DELTA of depth 2.
+	const (
+		prefix   = "repo"
+		packName = "pack-b6ae1dd35be667fe13654be48e9c17e8e6c4aad6"
+		blobHash = "dcc85ca6908c0e6c9bcf9a7637935a2a98bab8e6"
+	)
+	packData, err := os.ReadFile(filepath.Join("testdata", "delta_pack", packName+".pack"))
+	require.NoError(t, err)
+	idxData, err := os.ReadFile(filepath.Join("testdata", "delta_pack", packName+".idx"))
+	require.NoError(t, err)
+
+	mockStorage := storage.NewMock()
+	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".pack"), packData)
+	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".idx"), idxData)
+
+	s := NewObjectStorageStorer(mockStorage, prefix, nil)
+	obj, err := s.EncodedObject(plumbing.BlobObject, plumbing.NewHash(blobHash))
+	require.NoError(t, err)
+
+	r, err := obj.Reader()
+	require.NoError(t, err)
+	content, err := io.ReadAll(r)
+	require.NoError(t, err)
+
+	// The reconstructed content must hash back to the requested object, and its
+	// length must match the reported size.
+	assert.Equal(t, blobHash, plumbing.ComputeHash(plumbing.BlobObject, content).String())
+	assert.Equal(t, int64(len(content)), obj.Size())
 }
 
 func TestEncodedObjectJSON(t *testing.T) {
