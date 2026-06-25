@@ -118,6 +118,8 @@ func (r *TestRunner) editActions() []*Action {
 			actions = append(actions, &Action{
 				Verb:        ActionVerb(v.GetVerb()),
 				Subresource: v.GetSubresource(),
+				Name:        a.GetName(),
+				Namespace:   a.GetNamespace(),
 			})
 		}
 	}
@@ -190,6 +192,12 @@ Match:
 				}
 			case ActionUpdate:
 				if reflect.DeepEqual(v.Object, e.Object) {
+					matchObj = true
+					v.Visited = true
+					break Match
+				}
+			case ActionDelete:
+				if v.Name == e.Name && v.Namespace == e.Namespace {
 					matchObj = true
 					v.Visited = true
 					break Match
