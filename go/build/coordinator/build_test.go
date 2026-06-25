@@ -142,6 +142,7 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 			k8sfactory.Name("timed-out"),
 			k8sfactory.CreatedAt(time.Now().Add(-2*time.Hour)),
 			k8sfactory.Label(labelKeyTaskId, "2"),
+			k8sfactory.MatchLabelSelector(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "2"}),
 			k8sfactory.Pod(
 				k8sfactory.PodFactory(nil,
 					k8sfactory.Container(k8sfactory.ContainerFactory(nil)),
@@ -156,7 +157,9 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		require.Len(t, called, 1)
 		updated := called[0].Args["task"].(*database.Task)
 		assertion.NotNil(t, updated.FinishedAt)
-		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
+		finalizerRemoved := k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName))
+		runner.AssertUpdateAction(t, "", finalizerRemoved)
+		runner.AssertDeleteAction(t, finalizerRemoved)
 		runner.AssertNoUnexpectedAction(t)
 	})
 
@@ -172,6 +175,7 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 			k8sfactory.CreatedAt(time.Now().Add(-2*time.Hour)),
 			k8sfactory.Label(labelKeyTaskId, "4"),
 			k8sfactory.Label(labelKeyForceStop, "true"),
+			k8sfactory.MatchLabelSelector(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "4"}),
 			k8sfactory.Pod(
 				k8sfactory.PodFactory(nil,
 					k8sfactory.Container(k8sfactory.ContainerFactory(nil)),
@@ -186,7 +190,9 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		require.Len(t, called, 1)
 		updated := called[0].Args["task"].(*database.Task)
 		assertion.NotNil(t, updated.FinishedAt)
-		runner.AssertUpdateAction(t, "", k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName)))
+		finalizerRemoved := k8sfactory.JobFactory(target, k8sfactory.RemoveFinalizer(bazelBuilderControllerFinalizerName))
+		runner.AssertUpdateAction(t, "", finalizerRemoved)
+		runner.AssertDeleteAction(t, finalizerRemoved)
 		runner.AssertNoUnexpectedAction(t)
 	})
 

@@ -511,6 +511,10 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
+		// The job is still running, so delete it (and its pods) to actually stop the build.
+		if err := b.teardownJob(ctx, job); err != nil {
+			return xerrors.WithStack(err)
+		}
 		return nil
 	}
 
@@ -583,7 +587,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 }
 
 func (b *BazelBuilder) teardownJob(ctx context.Context, job *batchv1.Job) error {
-	if err := b.client.BatchV1.DeleteJob(ctx, job.Namespace, job.Name, metav1.DeleteOptions{}); err != nil {
+	if err := b.client.BatchV1.DeleteJob(ctx, job.Namespace, job.Name, metav1.DeleteOptions{}); err != nil && !kerrors.IsNotFound(err) {
 		return xerrors.WithStack(err)
 	}
 	pods, err := b.client.CoreV1.ListPod(ctx, job.Namespace, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(job.Spec.Selector)})

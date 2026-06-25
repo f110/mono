@@ -114,7 +114,10 @@ js_run_binary(
 ts_project(
     name = "typecheck_app",
     srcs = glob(
-        include = ["src/**/*.ts", "src/**/*.tsx"],
+        include = [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+        ],
         exclude = TEST_PATTERNS,
     ),
     declaration = True,
