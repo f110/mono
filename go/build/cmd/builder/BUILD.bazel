@@ -21,6 +21,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/githubutil",
+        "//go/grpcutil",
         "//go/logger/slogger",
         "//go/netutil",
         "//go/storage",

@@ -44,6 +44,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/storage"
@@ -439,7 +440,7 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
 	git.RegisterGitDataServer(grpcServer, service)
 	healthSvc := health.NewServer()
 	healthSvc.SetServingStatus("git-data", healthpb.HealthCheckResponse_SERVING)

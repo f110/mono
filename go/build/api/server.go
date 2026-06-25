@@ -20,6 +20,7 @@ import (
 	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
+	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -65,7 +66,7 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.Handle("/webhook", api.webhookHandler)
 
 	bs := newAPIService(builder, dao, ghClient, gitDataClient, stClient, bazelMirrorPrefix, addRepo, serverConfig)
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
 	RegisterAPIServer(grpcServer, bs)
 	s := &http.Server{
 		Addr: addr,

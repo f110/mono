@@ -8,5 +8,6 @@ go_library(
     deps = [
         "//go/logger/slogger",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//status",
     ],
 )
