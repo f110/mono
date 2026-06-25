@@ -110,9 +110,10 @@ type BazelOptions struct {
 	GithubInstallationId     int64
 	GithubAppSecretName      string
 	GitDataServiceURL        string
+	CloneFromGitDataService  bool
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName, gitDataServiceURL string) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName, gitDataServiceURL string, cloneFromGitDataService bool) BazelOptions {
 	return BazelOptions{
 		RemoteCache:              remoteCache,
 		EnableRemoteAssetApi:     enableRemoteAssetApi,
@@ -127,6 +128,7 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 		GithubInstallationId:     githubInstallationId,
 		GithubAppSecretName:      githubAppSecretName,
 		GitDataServiceURL:        gitDataServiceURL,
+		CloneFromGitDataService:  cloneFromGitDataService,
 	}
 }
 
@@ -267,7 +269,7 @@ func NewBazelBuilder(
 	if bazelOpt.CentralRegistryMirrorURL != "" {
 		b.jobBuilder.CentralRegistryMirror(bazelOpt.CentralRegistryMirrorURL)
 	}
-	if bazelOpt.GitDataServiceURL != "" {
+	if bazelOpt.CloneFromGitDataService && bazelOpt.GitDataServiceURL != "" {
 		b.jobBuilder.GitDataService(bazelOpt.GitDataServiceURL)
 	}
 	defaultCPULimit := resource.MustParse(defaultCPULimit)

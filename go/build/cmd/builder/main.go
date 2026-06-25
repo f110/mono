@@ -105,6 +105,7 @@ type Options struct {
 	EventMaxProcessingDuration     time.Duration
 
 	GitDataServiceURL                 string
+	CloneFromGitDataService           bool
 	GitDataListen                     string
 	GitDataStorageEndpoint            string
 	GitDataStorageRegion              string
@@ -362,6 +363,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.GitHubClient.InstallationID,
 		p.opt.GithubAppSecretName,
 		p.opt.GitDataServiceURL,
+		p.opt.CloneFromGitDataService,
 	)
 	c, err := coordinator.NewBazelBuilder(
 		p.opt.DashboardUrl,
@@ -810,6 +812,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&opt.EventReconcileInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
 	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint used by reconcilers to read repository data. If empty, reconcilers read from GitHub instead.").Var(&opt.GitDataServiceURL)
+	fs.Bool("clone-from-git-data-service", "Fetch the source tree from git-data-service (--git-data-service-url) in the pre-process container instead of cloning from GitHub. If not set, the source is always cloned from GitHub.").Var(&opt.CloneFromGitDataService)
 	fs.String("git-data-listen", "Listen addr of the embedded git-data-service. If empty, the service is disabled.").Var(&opt.GitDataListen)
 	fs.String("git-data-storage-endpoint", "The endpoint of the object storage for git-data-service").Var(&opt.GitDataStorageEndpoint)
 	fs.String("git-data-storage-region", "The region name of the object storage for git-data-service").Var(&opt.GitDataStorageRegion)

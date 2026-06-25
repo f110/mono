@@ -222,6 +222,38 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 	})
 }
 
+func TestNewBazelBuilder_CloneFromGitDataService(t *testing.T) {
+	newBuilder := func(opt BazelOptions) *BazelBuilder {
+		mockTask := daotest.NewTask()
+		mockTask.RegisterListPending([]*database.Task{}, nil)
+		b, err := NewBazelBuilder(
+			"",
+			KubernetesOptions{},
+			dao.Options{Task: mockTask},
+			metav1.NamespaceDefault,
+			nil,
+			"foo",
+			storage.S3Options{},
+			opt,
+			nil,
+			nil,
+			true, // dev mode to skip watcher registration
+		)
+		require.NoError(t, err)
+		return b
+	}
+
+	t.Run("Clone from GitHub by default even if git-data-service-url is set", func(t *testing.T) {
+		b := newBuilder(BazelOptions{GitDataServiceURL: "git-data.default.svc:9020"})
+		assertion.Equal(t, "", b.jobBuilder.gitDataServiceURL)
+	})
+
+	t.Run("Clone from git-data-service when the flag is set", func(t *testing.T) {
+		b := newBuilder(BazelOptions{GitDataServiceURL: "git-data.default.svc:9020", CloneFromGitDataService: true})
+		assertion.Equal(t, "git-data.default.svc:9020", b.jobBuilder.gitDataServiceURL)
+	})
+}
+
 func TestRunningSameJob(t *testing.T) {
 	now := time.Now()
 	cases := []struct {
