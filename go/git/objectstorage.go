@@ -633,6 +633,90 @@ func (b *ObjectStorageStorer) SetEncodedObject(e plumbing.EncodedObject) (plumbi
 	return e.Hash(), nil
 }
 
+// PackfileWriter implements storer.PackfileWriter. When this is present go-git
+// streams a received packfile straight into the returned writer instead of
+// exploding it into individual loose objects. That turns a fetch of N objects
+// from N backend writes (one PutReader per object) into a single pack upload,
+// which is what keeps a large fetch within the updater's fetch timeout.
+func (b *ObjectStorageStorer) PackfileWriter() (io.WriteCloser, error) {
+	tmp, err := os.CreateTemp("", "objectstorage-pack-")
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &packfileWriter{backend: b.backend, rootPath: b.rootPath, tmp: tmp}, nil
+}
+
+// packfileWriter buffers the incoming packfile on local disk, then on Close
+// builds its index and uploads the pack/idx pair to the backend.
+type packfileWriter struct {
+	backend  ObjectStorageInterface
+	rootPath string
+	tmp      *os.File
+}
+
+func (w *packfileWriter) Write(p []byte) (int, error) {
+	return w.tmp.Write(p)
+}
+
+func (w *packfileWriter) Close() error {
+	name := w.tmp.Name()
+	defer func() {
+		_ = w.tmp.Close()
+		_ = os.Remove(name)
+	}()
+
+	info, err := w.tmp.Stat()
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	// go-git opens a packfile writer even when the fetch transfers nothing.
+	if info.Size() == 0 {
+		return nil
+	}
+
+	if _, err := w.tmp.Seek(0, io.SeekStart); err != nil {
+		return xerrors.WithStack(err)
+	}
+	idxWriter := new(idxfile.Writer)
+	parser, err := packfile.NewParser(packfile.NewScanner(w.tmp), idxWriter)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	checksum, err := parser.Parse()
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	idx, err := idxWriter.Index()
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if count, err := idx.Count(); err != nil {
+		return xerrors.WithStack(err)
+	} else if count == 0 {
+		return nil
+	}
+
+	var idxBuf bytes.Buffer
+	if _, err := idxfile.NewEncoder(&idxBuf).Encode(idx); err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	base := path.Join(w.rootPath, "objects/pack", fmt.Sprintf("pack-%s", checksum.String()))
+	// Store the pack before the idx: getEncodedObjectFromPackFile keys off the
+	// idx, so a crash between the two writes leaves an orphan pack that is simply
+	// ignored rather than an index pointing at a missing pack.
+	if _, err := w.tmp.Seek(0, io.SeekStart); err != nil {
+		return xerrors.WithStack(err)
+	}
+	if err := w.backend.PutReader(context.Background(), base+".pack", w.tmp); err != nil {
+		return xerrors.WithStack(err)
+	}
+	if err := w.backend.PutReader(context.Background(), base+".idx", &idxBuf); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
 func (b *ObjectStorageStorer) EncodedObject(objectType plumbing.ObjectType, hash plumbing.Hash) (plumbing.EncodedObject, error) {
 	obj, err := b.getUnpackedEncodedObject(hash)
 	if errors.Is(err, plumbing.ErrObjectNotFound) {

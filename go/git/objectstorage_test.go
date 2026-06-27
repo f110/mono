@@ -98,6 +98,59 @@ func TestObjectStorageStorerReadDeltaObject(t *testing.T) {
 	assert.Equal(t, int64(len(content)), obj.Size())
 }
 
+func TestObjectStorageStorerPackfileWriter(t *testing.T) {
+	// PackfileWriter must persist a received packfile as a pack/idx pair under
+	// objects/pack instead of exploding it into one loose object per entry, and
+	// every object inside the pack must remain readable afterwards.
+	const (
+		prefix   = "repo"
+		packName = "pack-b6ae1dd35be667fe13654be48e9c17e8e6c4aad6"
+		blobHash = "dcc85ca6908c0e6c9bcf9a7637935a2a98bab8e6"
+	)
+	packData, err := os.ReadFile(filepath.Join("testdata", "delta_pack", packName+".pack"))
+	require.NoError(t, err)
+
+	mockStorage := storage.NewMock()
+	s := NewObjectStorageStorer(mockStorage, prefix, nil)
+
+	w, err := s.PackfileWriter()
+	require.NoError(t, err)
+	_, err = w.Write(packData)
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+
+	// The pack and a freshly built index were stored under objects/pack.
+	_, err = mockStorage.Get(context.Background(), path.Join(prefix, "objects/pack", packName+".pack"))
+	require.NoError(t, err)
+	_, err = mockStorage.Get(context.Background(), path.Join(prefix, "objects/pack", packName+".idx"))
+	require.NoError(t, err)
+
+	// No loose object was written for the pack entries.
+	loose, err := mockStorage.List(context.Background(), path.Join(prefix, "objects", blobHash[0:2]))
+	require.NoError(t, err)
+	assert.Empty(t, loose)
+
+	// An object inside the pack is still readable through the storer.
+	obj, err := s.EncodedObject(plumbing.BlobObject, plumbing.NewHash(blobHash))
+	require.NoError(t, err)
+	assert.Equal(t, blobHash, obj.Hash().String())
+}
+
+func TestObjectStorageStorerPackfileWriterEmpty(t *testing.T) {
+	// go-git may open a packfile writer even when there is nothing to transfer.
+	// Closing an empty writer must not store anything or error.
+	mockStorage := storage.NewMock()
+	s := NewObjectStorageStorer(mockStorage, "repo", nil)
+
+	w, err := s.PackfileWriter()
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+
+	objs, err := mockStorage.List(context.Background(), "repo/objects/pack")
+	require.NoError(t, err)
+	assert.Empty(t, objs)
+}
+
 func TestEncodedObjectJSON(t *testing.T) {
 	obj := &EncodedObject{
 		hash: plumbing.NewHash("51f74bc12156490c6a51a5f53b7bc2fb4aa1b310"),
