@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 
+	corek8sclient "go.f110.dev/kubeproto/go/k8sclient"
 	"go.f110.dev/xerrors"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -15,6 +16,9 @@ var sc = runtime.NewScheme()
 
 func init() {
 	if err := k8sclient.AddToScheme(sc); err != nil {
+		panic(err)
+	}
+	if err := corek8sclient.AddToScheme(sc); err != nil {
 		panic(err)
 	}
 }

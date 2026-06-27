@@ -33,6 +33,6 @@ func Test(rootCmd *cli.Command) {
 			return nil
 		},
 	}
-	test.Flags().String("config", "Config directory").Shorthand("c").Default(".build").Var(&dir)
+	test.Flags().String("config", "Repository root that contains the .build directory").Shorthand("c").Default(".").Var(&dir)
 	rootCmd.AddCommand(test)
 }

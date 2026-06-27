@@ -30,6 +30,12 @@ func TestBuildServerConfig(t *testing.T) {
 		EventReconcileInterval:      30 * time.Second,
 		VaultAddr:                   "https://vault:8200",
 		DashboardUrl:                "http://localhost",
+		BazelImage:                  "registry.f110.dev/build/bazel",
+		SidecarImage:                "registry.f110.dev/build/sidecar",
+		BazelMirrorURL:              "https://mirror.example.com",
+		CentralRegistryMirrorURL:    "https://registry.example.com",
+		RemoteAssetApi:              true,
+		PullAlways:                  true,
 	}
 
 	c := buildServerConfig(opt)
@@ -52,6 +58,12 @@ func TestBuildServerConfig(t *testing.T) {
 	assertion.Equal(t, c.GetGithubAppId(), int64(12345))
 	assertion.Equal(t, c.GetVaultAddr(), "https://vault:8200")
 	assertion.Equal(t, c.GetDashboardUrl(), "http://localhost")
+	assertion.Equal(t, c.GetBazelImage(), "registry.f110.dev/build/bazel")
+	assertion.Equal(t, c.GetSidecarImage(), "registry.f110.dev/build/sidecar")
+	assertion.Equal(t, c.GetBazelMirrorUrl(), "https://mirror.example.com")
+	assertion.Equal(t, c.GetCentralRegistryMirrorUrl(), "https://registry.example.com")
+	assertion.True(t, c.GetRemoteAssetApi())
+	assertion.True(t, c.GetPullAlways())
 }
 
 func TestFormatConfigDuration(t *testing.T) {

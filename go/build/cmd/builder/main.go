@@ -690,8 +690,16 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	externalReleasePollInterval := formatConfigDuration(opt.ExternalReleasePollInterval)
 	eventReconcileInterval := formatConfigDuration(opt.EventReconcileInterval)
 	githubAppID := opt.GitHubClient.AppID
+	githubInstallationID := opt.GitHubClient.InstallationID
+	githubAppSecretName := opt.GithubAppSecretName
 	vaultAddr := opt.VaultAddr
 	dashboardURL := opt.DashboardUrl
+	bazelImage := opt.BazelImage
+	sidecarImage := opt.SidecarImage
+	bazelMirrorURL := opt.BazelMirrorURL
+	centralRegistryMirrorURL := opt.CentralRegistryMirrorURL
+	remoteAssetAPI := opt.RemoteAssetApi
+	pullAlways := opt.PullAlways
 	return api.ServerConfig_builder{
 		Dev:                         &dev,
 		LeaderElection:              &leaderElection,
@@ -709,8 +717,16 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 		ExternalReleasePollInterval: &externalReleasePollInterval,
 		EventReconcileInterval:      &eventReconcileInterval,
 		GithubAppId:                 &githubAppID,
+		GithubInstallationId:        &githubInstallationID,
+		GithubAppSecretName:         &githubAppSecretName,
 		VaultAddr:                   &vaultAddr,
 		DashboardUrl:                &dashboardURL,
+		BazelImage:                  &bazelImage,
+		SidecarImage:                &sidecarImage,
+		BazelMirrorUrl:              &bazelMirrorURL,
+		CentralRegistryMirrorUrl:    &centralRegistryMirrorURL,
+		RemoteAssetApi:              &remoteAssetAPI,
+		PullAlways:                  &pullAlways,
 	}.Build()
 }
 

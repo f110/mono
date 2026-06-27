@@ -112,6 +112,16 @@ message ServerConfig {
   int64  github_app_id                  = 16;
   string vault_addr                     = 17;
   string dashboard_url                  = 18;
+  // The following fields expose the runtime configuration required to render a
+  // runnable Job manifest (e.g. by buildctl jobs manifest). They are not secrets.
+  string bazel_image                 = 19;
+  string sidecar_image               = 20;
+  string bazel_mirror_url            = 21;
+  string central_registry_mirror_url = 22;
+  bool   remote_asset_api            = 23;
+  bool   pull_always                 = 24;
+  int64  github_installation_id      = 25;
+  string github_app_secret_name      = 26;
 }
 
 message RequestListExternalReleaseTriggers {

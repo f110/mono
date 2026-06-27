@@ -65,4 +65,6 @@ func Jobs(rootCmd *cli.Command, endpoint *string) {
 	invoke.Flags().Int("repository-id", "Repository ID").Var(&repositoryID).Required()
 	invoke.Flags().String("name", "Job name").Var(&jobName)
 	jobs.AddCommand(invoke)
+
+	jobs.AddCommand(manifestCommand(endpoint))
 }

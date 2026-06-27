@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "k8smanifest",
@@ -8,7 +8,18 @@ go_library(
     deps = [
         "//go/k8s/client",
         "@dev_f110_go_xerrors//:xerrors",
+        "@dev_f110_kubeproto//go/k8sclient",
         "@io_k8s_apimachinery//pkg/runtime",
         "@io_k8s_apimachinery//pkg/runtime/serializer/json",
+    ],
+)
+
+go_test(
+    name = "k8smanifest_test",
+    srcs = ["encoder_test.go"],
+    embed = [":k8smanifest"],
+    deps = [
+        "//go/testing/assertion",
+        "@dev_f110_kubeproto//go/apis/batchv1",
     ],
 )

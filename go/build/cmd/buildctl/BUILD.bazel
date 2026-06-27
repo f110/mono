@@ -1,9 +1,10 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "buildctl",
     srcs = [
         "jobs.go",
+        "manifest.go",
         "repositories.go",
         "tasks.go",
         "test.go",
@@ -14,11 +15,31 @@ go_library(
     deps = [
         "//go/build/api",
         "//go/build/config",
+        "//go/build/coordinator",
+        "//go/build/database",
         "//go/cli",
+        "//go/k8s/k8smanifest",
         "@com_github_olekukonko_tablewriter//:tablewriter",
         "@dev_f110_go_xerrors//:xerrors",
+        "@dev_f110_kubeproto//go/apis/batchv1",
+        "@dev_f110_kubeproto//go/apis/corev1",
         "@in_gopkg_yaml_v3//:yaml_v3",
+        "@io_k8s_apimachinery//pkg/runtime",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials/insecure",
+    ],
+)
+
+go_test(
+    name = "buildctl_test",
+    srcs = ["manifest_test.go"],
+    embed = [":buildctl"],
+    deps = [
+        "//go/build/api",
+        "//go/build/config",
+        "//go/testing/assertion",
+        "@dev_f110_kubeproto//go/apis/batchv1",
+        "@dev_f110_kubeproto//go/apis/corev1",
+        "@io_k8s_apimachinery//pkg/runtime",
     ],
 )
