@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dict",
+    srcs = ["ttlcache.go"],
+    importpath = "go.f110.dev/mono/go/collections/dict",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "dict_test",
+    srcs = ["ttlcache_test.go"],
+    embed = [":dict"],
+    deps = ["//go/testing/assertion"],
+)
