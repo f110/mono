@@ -20,6 +20,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/githubutil"
 	"go.f110.dev/mono/go/logger/slogger"
@@ -39,8 +40,8 @@ type RepositoryConfig struct {
 }
 
 // Open opens the repository from object storage, cloning from the configured URL if it does not yet exist.
-func (r *RepositoryConfig) Open(ctx context.Context, stClient *storage.S3, cachePool *client.SinglePool, tokenProvider *githubutil.TokenProvider, timeout time.Duration, disableInflatePackFile bool) error {
-	storer := NewObjectStorageStorer(stClient, r.Prefix, cachePool)
+func (r *RepositoryConfig) Open(ctx context.Context, stClient *storage.S3, cachePool *client.SinglePool, packCache *PackfileCache, tokenProvider *githubutil.TokenProvider, timeout time.Duration, disableInflatePackFile bool) error {
+	storer := NewObjectStorageStorer(stClient, r.Prefix, cachePool, packCache)
 
 	if ok, err := storer.Exist(); !ok && err == nil {
 		initCtx, cancel := ctxutil.WithTimeout(ctx, timeout)
@@ -90,6 +91,7 @@ type Updater struct {
 	id                     string
 	storageClient          *storage.S3
 	cachePool              *client.SinglePool
+	packCache              *dict.TTLCache[string, *packEntry]
 	lockFilePath           string
 	tokenProvider          *githubutil.TokenProvider
 	initTimeout            time.Duration
@@ -131,6 +133,11 @@ func (u *Updater) SetTimeout(d time.Duration) *Updater {
 
 func (u *Updater) SetCachePool(c *client.SinglePool) *Updater {
 	u.cachePool = c
+	return u
+}
+
+func (u *Updater) SetPackCache(c *PackfileCache) *Updater {
+	u.packCache = c
 	return u
 }
 
@@ -177,7 +184,7 @@ func (u *Updater) Run(ctx context.Context) {
 // the linked DataService if any. Triggers an immediate fetch in the
 // background.
 func (u *Updater) AddRepo(ctx context.Context, repo *RepositoryConfig) error {
-	if err := repo.Open(ctx, u.storageClient, u.cachePool, u.tokenProvider, u.initTimeout, u.disableInflatePackFile); err != nil {
+	if err := repo.Open(ctx, u.storageClient, u.cachePool, u.packCache, u.tokenProvider, u.initTimeout, u.disableInflatePackFile); err != nil {
 		return err
 	}
 	u.mu.Lock()

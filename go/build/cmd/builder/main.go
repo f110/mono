@@ -122,6 +122,9 @@ type Options struct {
 	GitDataRefreshWorkers             int
 	GitDataDisableInflatePackFile     bool
 	GitDataRepositoryInitTimeout      time.Duration
+	GitDataPackfileCacheSize          int64
+	GitDataPackfileCacheTTL           time.Duration
+	GitDataPackfileCacheSweepInterval time.Duration
 
 	Dev   bool
 	Debug bool
@@ -161,6 +164,7 @@ type process struct {
 	reconcilers       webhook.Reconcilers
 	gitDataGRPCServer *grpc.Server
 	gitDataUpdater    *git.Updater
+	gitDataPackCache  *git.PackfileCache
 	gitDataConn       *grpc.ClientConn
 	gitDataClient     git.GitDataClient
 }
@@ -430,9 +434,14 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 
 	tokenProvider := p.opt.GitHubClient.TokenProvider
 
+	// A zero cache size disables the in-memory packfile cache.
+	if p.opt.GitDataPackfileCacheSize > 0 {
+		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
+	}
+
 	repos := make(map[string]*git.RepositoryConfig)
 	for _, v := range repositories {
-		if err := v.Open(ctx, storageClient, cachePool, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile); err != nil {
+		if err := v.Open(ctx, storageClient, cachePool, p.gitDataPackCache, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile); err != nil {
 			return fsm.Error(err)
 		}
 		repos[v.Name] = v
@@ -465,6 +474,7 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		return fsm.Error(err)
 	}
 	updater.SetCachePool(cachePool).
+		SetPackCache(p.gitDataPackCache).
 		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
 		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile).
 		SetDataService(service)
@@ -665,6 +675,9 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	if p.gitDataConn != nil {
 		p.gitDataConn.Close()
 	}
+	if p.gitDataPackCache != nil {
+		p.gitDataPackCache.Close()
+	}
 
 	return fsm.Finish()
 }
@@ -845,6 +858,10 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.Int("git-data-refresh-workers", "Number of workers for refreshing repositories in git-data-service").Var(&opt.GitDataRefreshWorkers).Default(1)
 	fs.Bool("git-data-disable-inflate-packfile", "Disable inflating packfile in git-data-service").Var(&opt.GitDataDisableInflatePackFile)
 	fs.Duration("git-data-repository-init-timeout", "Timeout for initializing a repository in git-data-service").Var(&opt.GitDataRepositoryInitTimeout).Default(5 * time.Minute)
+	fs.Int64("git-data-packfile-cache-size", "Maximum total bytes of packfiles cached in memory by git-data-service. "+
+		"If set zero, the in-memory packfile cache is disabled.").Var(&opt.GitDataPackfileCacheSize).Default(256 * 1024 * 1024)
+	fs.Duration("git-data-packfile-cache-ttl", "Lifetime of an in-memory cached packfile in git-data-service").Var(&opt.GitDataPackfileCacheTTL).Default(1 * time.Hour)
+	fs.Duration("git-data-packfile-cache-sweep-interval", "Interval for reclaiming expired in-memory packfiles in git-data-service").Var(&opt.GitDataPackfileCacheSweepInterval).Default(6 * time.Hour)
 	fs.Bool("debug", "Enable debugging mode").Var(&opt.Debug)
 
 	rootCmd.AddCommand(cmd)

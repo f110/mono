@@ -14,6 +14,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/git",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/collections/dict",
         "//go/collections/set",
         "//go/ctxutil",
         "//go/enumerable",

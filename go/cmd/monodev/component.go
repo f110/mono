@@ -99,7 +99,7 @@ var gitDataService = &grpcServerComponent{
 		}
 		repo := make(map[string]*goGit.Repository)
 		for _, v := range repositories {
-			storer := git.NewObjectStorageStorer(storageClient, v.Prefix, cachePool)
+			storer := git.NewObjectStorageStorer(storageClient, v.Prefix, cachePool, nil)
 			r, err := goGit.Open(storer, nil)
 			if err != nil {
 				slogger.Log.Error("Failed to open the repository", slogger.E(err))

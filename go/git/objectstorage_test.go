@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -30,7 +31,7 @@ func TestObjectStorageStorer(t *testing.T) {
 	mockStorage := storage.NewMock()
 	registerToStorage(t, mockStorage, originalRepo, storagePrefix)
 
-	s := NewObjectStorageStorer(mockStorage, storagePrefix, nil)
+	s := NewObjectStorageStorer(mockStorage, storagePrefix, nil, nil)
 	repo, err := git.Open(s, nil)
 	require.NoError(t, err)
 	commitIter, err := repo.Log(&git.LogOptions{All: true})
@@ -50,7 +51,7 @@ func TestObjectStorageStorerWorkWithRemoteRepository(t *testing.T) {
 	originalRepo := makeSourceRepository(t)
 
 	mockStorage := storage.NewMock()
-	s := NewObjectStorageStorer(mockStorage, "test", nil)
+	s := NewObjectStorageStorer(mockStorage, "test", nil, nil)
 	repo, err := git.Init(s, nil)
 	require.NoError(t, err)
 	_, err = repo.CreateRemote(&config.RemoteConfig{
@@ -83,7 +84,7 @@ func TestObjectStorageStorerReadDeltaObject(t *testing.T) {
 	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".pack"), packData)
 	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".idx"), idxData)
 
-	s := NewObjectStorageStorer(mockStorage, prefix, nil)
+	s := NewObjectStorageStorer(mockStorage, prefix, nil, nil)
 	obj, err := s.EncodedObject(plumbing.BlobObject, plumbing.NewHash(blobHash))
 	require.NoError(t, err)
 
@@ -96,6 +97,59 @@ func TestObjectStorageStorerReadDeltaObject(t *testing.T) {
 	// length must match the reported size.
 	assert.Equal(t, blobHash, plumbing.ComputeHash(plumbing.BlobObject, content).String())
 	assert.Equal(t, int64(len(content)), obj.Size())
+}
+
+func TestObjectStorageStorerPackCache(t *testing.T) {
+	// With a PackfileCache configured, resolving the same packed object multiple
+	// times must download the .pack from the backend only once.
+	const (
+		prefix   = "repo"
+		packName = "pack-b6ae1dd35be667fe13654be48e9c17e8e6c4aad6"
+		blobHash = "dcc85ca6908c0e6c9bcf9a7637935a2a98bab8e6"
+	)
+	packData, err := os.ReadFile(filepath.Join("testdata", "delta_pack", packName+".pack"))
+	require.NoError(t, err)
+	idxData, err := os.ReadFile(filepath.Join("testdata", "delta_pack", packName+".idx"))
+	require.NoError(t, err)
+
+	mockStorage := storage.NewMock()
+	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".pack"), packData)
+	mockStorage.AddTree(path.Join(prefix, "objects/pack", packName+".idx"), idxData)
+	counter := &countingBackend{ObjectStorageInterface: mockStorage, count: make(map[string]int)}
+
+	cache := NewPackfileCache(time.Minute, 0, 1<<20)
+	defer cache.Close()
+	s := NewObjectStorageStorer(counter, prefix, nil, cache)
+
+	for range 3 {
+		obj, err := s.EncodedObject(plumbing.BlobObject, plumbing.NewHash(blobHash))
+		require.NoError(t, err)
+		assert.Equal(t, blobHash, obj.Hash().String())
+	}
+
+	packPath := path.Join(prefix, "objects/pack", packName+".pack")
+	assert.Equal(t, 1, counter.getCount(packPath))
+}
+
+// countingBackend records how many times Get is called for each name.
+type countingBackend struct {
+	ObjectStorageInterface
+
+	mu    sync.Mutex
+	count map[string]int
+}
+
+func (b *countingBackend) Get(ctx context.Context, name string) (*storage.Object, error) {
+	b.mu.Lock()
+	b.count[name]++
+	b.mu.Unlock()
+	return b.ObjectStorageInterface.Get(ctx, name)
+}
+
+func (b *countingBackend) getCount(name string) int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.count[name]
 }
 
 func TestObjectStorageStorerPackfileWriter(t *testing.T) {
@@ -111,7 +165,7 @@ func TestObjectStorageStorerPackfileWriter(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStorage := storage.NewMock()
-	s := NewObjectStorageStorer(mockStorage, prefix, nil)
+	s := NewObjectStorageStorer(mockStorage, prefix, nil, nil)
 
 	w, err := s.PackfileWriter()
 	require.NoError(t, err)
@@ -140,7 +194,7 @@ func TestObjectStorageStorerPackfileWriterEmpty(t *testing.T) {
 	// go-git may open a packfile writer even when there is nothing to transfer.
 	// Closing an empty writer must not store anything or error.
 	mockStorage := storage.NewMock()
-	s := NewObjectStorageStorer(mockStorage, "repo", nil)
+	s := NewObjectStorageStorer(mockStorage, "repo", nil, nil)
 
 	w, err := s.PackfileWriter()
 	require.NoError(t, err)

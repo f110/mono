@@ -30,6 +30,7 @@ type gitDataServiceCommand struct {
 	grpcServer    *grpc.Server
 	updater       *git.Updater
 	webhookServer *http.Server
+	packCache     *git.PackfileCache
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
@@ -52,6 +53,9 @@ type gitDataServiceCommand struct {
 	RefreshTimeout         time.Duration
 	RefreshWorkers         int
 	DisableInflatePackFile bool
+
+	PackfileCacheSize int64
+	PackfileCacheTTL  time.Duration
 
 	repositories []*git.RepositoryConfig
 }
@@ -103,6 +107,10 @@ func (c *gitDataServiceCommand) Flags(fs *cli.FlagSet) {
 	fs.Int("refresh-workers", "The number of workers for updating repository").Var(&c.RefreshWorkers).Default(1)
 	fs.Bool("disable-inflate-packfile", "Disable inflating packfile").Var(&c.DisableInflatePackFile)
 
+	fs.Int64("packfile-cache-size", "Maximum total bytes of packfiles cached in process memory. "+
+		"If set zero, the in-memory packfile cache is disabled.").Var(&c.PackfileCacheSize)
+	fs.Duration("packfile-cache-ttl", "TTL for in-memory cached packfiles").Var(&c.PackfileCacheTTL).Default(10 * time.Minute)
+
 	fs.Duration("repository-init-timeout", "The duration for timeout to initializing repository").Var(&c.RepositoryInitTimeout).Default(5 * time.Minute)
 }
 
@@ -153,9 +161,13 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		}
 	}
 
+	if c.PackfileCacheSize > 0 {
+		c.packCache = git.NewPackfileCache(c.PackfileCacheTTL, c.PackfileCacheTTL/2, c.PackfileCacheSize)
+	}
+
 	repoMap := make(map[string]*git.RepositoryConfig)
 	for _, v := range c.repositories {
-		if err := v.Open(ctx, storageClient, cachePool, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout, c.DisableInflatePackFile); err != nil {
+		if err := v.Open(ctx, storageClient, cachePool, c.packCache, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout, c.DisableInflatePackFile); err != nil {
 			return fsm.Error(err)
 		}
 		repoMap[v.Name] = v
@@ -180,6 +192,7 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		u.SetInterval(c.RefreshInterval).
 			SetTimeout(c.RefreshTimeout).
 			SetCachePool(cachePool).
+			SetPackCache(c.packCache).
 			SetInitTimeout(c.RepositoryInitTimeout).
 			SetDisableInflatePackFile(c.DisableInflatePackFile).
 			SetDataService(service)
@@ -229,6 +242,9 @@ func (c *gitDataServiceCommand) shuttingDown(ctx context.Context) (fsm.State, er
 	}
 	if c.webhookServer != nil {
 		c.webhookServer.Shutdown(ctx)
+	}
+	if c.packCache != nil {
+		c.packCache.Close()
 	}
 	return fsm.Finish()
 }

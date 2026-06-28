@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
@@ -30,6 +31,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
@@ -80,7 +82,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 		return nil, xerrors.WithMessage(err, "failed to walk .git dir")
 	}
 
-	s := NewObjectStorageStorer(b, prefix, nil)
+	s := NewObjectStorageStorer(b, prefix, nil, nil)
 	repo, err := git.Open(s, nil)
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
@@ -168,12 +170,38 @@ type ObjectStorageStorer struct {
 	backend   ObjectStorageInterface
 	rootPath  string
 	cachePool *client.SinglePool
+	// packCache keeps fetched packfiles (idx + raw pack bytes) in process memory so
+	// that resolving many objects out of the same pack does not re-download it from
+	// the backend for every single object. It is shared across the storers created
+	// for sub-modules. It may be nil, in which case packs are fetched every time.
+	packCache *PackfileCache
+}
+
+// packEntry is a fetched packfile held in a PackfileCache. pack is the raw .pack
+// bytes and bounds the cached size; idx is its decoded index.
+type packEntry struct {
+	idx  *idxfile.MemoryIndex
+	pack []byte
+}
+
+func packEntrySize(e *packEntry) int64 { return int64(len(e.pack)) }
+
+// PackfileCache is the process-level cache of fetched packfiles shared across the
+// ObjectStorageStorer instances of one process.
+type PackfileCache = dict.TTLCache[string, *packEntry]
+
+// NewPackfileCache creates a PackfileCache. maxBytes bounds the total size of the
+// cached pack bytes, which is what lets the caller cap the memory it uses. A
+// positive sweepInterval starts a background goroutine that reclaims expired
+// packs; call Close to stop it.
+func NewPackfileCache(ttl, sweepInterval time.Duration, maxBytes int64) *PackfileCache {
+	return dict.NewTTLCache[string, *packEntry](ttl, sweepInterval, maxBytes, packEntrySize)
 }
 
 var _ gitStorage.Storer = &ObjectStorageStorer{}
 
-func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string, cachePool *client.SinglePool) *ObjectStorageStorer {
-	return &ObjectStorageStorer{backend: b, rootPath: rootPath, cachePool: cachePool}
+func NewObjectStorageStorer(b ObjectStorageInterface, rootPath string, cachePool *client.SinglePool, packCache *PackfileCache) *ObjectStorageStorer {
+	return &ObjectStorageStorer{backend: b, rootPath: rootPath, cachePool: cachePool, packCache: packCache}
 }
 
 func (b *ObjectStorageStorer) EnabledCache() bool {
@@ -193,7 +221,7 @@ func (b *ObjectStorageStorer) Exist() (bool, error) {
 }
 
 func (b *ObjectStorageStorer) Module(name string) (gitStorage.Storer, error) {
-	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name), b.cachePool), nil
+	return NewObjectStorageStorer(b.backend, path.Join(b.rootPath, name), b.cachePool, b.packCache), nil
 }
 
 func (b *ObjectStorageStorer) IncludePackFile(ctx context.Context) bool {
@@ -756,44 +784,26 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 		packs = append(packs, h)
 	}
 
-	var packIndex *idxfile.MemoryIndex
+	var entry *packEntry
 	var packHash plumbing.Hash
-	// Find object in the index file
+	// Find the pack that contains the object via its index.
 	for _, v := range packs {
-		file, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
+		e, err := b.loadPack(v)
 		if err != nil {
 			return nil, err
 		}
-		idx := idxfile.NewMemoryIndex()
-		if err := idxfile.NewDecoder(file.Body).Decode(idx); err != nil {
-			return nil, err
-		}
-		if err := file.Body.Close(); err != nil {
-			return nil, err
-		}
-		if _, err := idx.FindOffset(h); err == nil {
-			packIndex = idx
+		if _, err := e.idx.FindOffset(h); err == nil {
+			entry = e
 			packHash = v
 			break
 		}
 	}
-	if packIndex == nil {
+	if entry == nil {
 		return nil, plumbing.ErrObjectNotFound
 	}
 
-	// Fetch the object from packfile
-	file, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", packHash.String())))
-	if err != nil {
-		return nil, err
-	}
-	buf, err := io.ReadAll(file.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err := file.Body.Close(); err != nil {
-		return nil, err
-	}
-	packfileReader := packfile.NewPackfile(packIndex, nil, newBufferedFile(fmt.Sprintf("objects/pack/pack-%s.pack", packHash.String()), buf), 0)
+	// Fetch the object from the (cached) packfile bytes.
+	packfileReader := packfile.NewPackfile(entry.idx, nil, newBufferedFile(fmt.Sprintf("objects/pack/pack-%s.pack", packHash.String()), entry.pack), 0)
 	obj, err := packfileReader.Get(h)
 	_ = packfileReader.Close()
 	if err == nil {
@@ -816,6 +826,43 @@ func (b *ObjectStorageStorer) getEncodedObjectFromPackFile(h plumbing.Hash) (plu
 	}
 
 	return nil, plumbing.ErrObjectNotFound
+}
+
+// loadPack fetches a packfile (its index and raw bytes) from the backend. When a
+// packCache is configured the result is cached in process memory and concurrent
+// loads of the same pack are coalesced into a single fetch.
+func (b *ObjectStorageStorer) loadPack(v plumbing.Hash) (*packEntry, error) {
+	load := func() (*packEntry, error) {
+		idxFile, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
+		if err != nil {
+			return nil, err
+		}
+		idx := idxfile.NewMemoryIndex()
+		if err := idxfile.NewDecoder(idxFile.Body).Decode(idx); err != nil {
+			return nil, err
+		}
+		if err := idxFile.Body.Close(); err != nil {
+			return nil, err
+		}
+
+		packFile, err := b.backend.Get(context.Background(), filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String())))
+		if err != nil {
+			return nil, err
+		}
+		buf, err := io.ReadAll(packFile.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err := packFile.Body.Close(); err != nil {
+			return nil, err
+		}
+		return &packEntry{idx: idx, pack: buf}, nil
+	}
+
+	if b.packCache == nil {
+		return load()
+	}
+	return b.packCache.GetOrLoad(filepath.Join(b.rootPath, fmt.Sprintf("objects/pack/pack-%s", v.String())), load)
 }
 
 func (b *ObjectStorageStorer) getUnpackedEncodedObject(h plumbing.Hash) (plumbing.EncodedObject, error) {
