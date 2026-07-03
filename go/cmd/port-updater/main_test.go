@@ -125,6 +125,46 @@ func TestUpdateGolang(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestReformatCargoCrates(t *testing.T) {
+	// cargo2port right-aligns the version column, but sizes it from a value that
+	// does not cover the longest version. A long middle column ("shorter" below)
+	// therefore overflows and pushes the checksum column out of alignment.
+	in := "cargo.crates \\\n" +
+		"    libc                           0.2.155  1111111111111111111111111111111111111111111111111111111111111111 \\\n" +
+		"    shorter                       1.2.3-alpha.1+build.longversion  2222222222222222222222222222222222222222222222222222222222222222 \\\n" +
+		"    some-crate-with-a-very-long-name-here     0.1.0  3333333333333333333333333333333333333333333333333333333333333333"
+
+	got := reformatCargoCrates(in)
+	lines := strings.Split(got, "\n")
+	require.Len(t, lines, 4)
+
+	// The header line is passed through untouched.
+	assert.Equal(t, "cargo.crates \\", lines[0])
+
+	// Every crate line must share the same checksum column, and each version must
+	// be right-aligned so its right edge is exactly two columns before it.
+	checksumCol := -1
+	for i, line := range lines[1:] {
+		fields := strings.Fields(strings.TrimRight(line, " \\"))
+		require.Len(t, fields, 3, "line %d: %q", i, line)
+		name, version, checksum := fields[0], fields[1], fields[2]
+		ci := strings.Index(line, checksum)
+		if checksumCol < 0 {
+			checksumCol = ci
+		}
+		assert.Equal(t, checksumCol, ci, "checksum column differs on crate line %d", i)
+		assert.Equal(t, checksumCol-2, strings.Index(line, version)+len(version), "version not right-aligned on crate line %d", i)
+		assert.True(t, strings.HasPrefix(line, "    "+name), "name not left-aligned on crate line %d", i)
+	}
+
+	// The last crate line keeps no continuation backslash.
+	assert.False(t, strings.HasSuffix(lines[3], "\\"))
+
+	// The result is still valid Portfile syntax.
+	_, err := macports.ParseAsTokens(strings.NewReader(got + "\n"))
+	require.NoError(t, err)
+}
+
 func TestUpdateRust(t *testing.T) {
 	if _, err := exec.LookPath("cargo2port"); err != nil {
 		t.Skip("cargo2port not found")

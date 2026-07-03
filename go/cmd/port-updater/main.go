@@ -371,6 +371,7 @@ func updateCargoCrates(tokens []*macports.PortfileToken, tarballPath string) ([]
 	if cratesOutput == "" {
 		return tokens, nil
 	}
+	cratesOutput = reformatCargoCrates(cratesOutput)
 
 	// Parse cargo2port output as tokens (append \n so parser doesn't lose the last token at EOF)
 	cargoTokens, err := macports.ParseAsTokens(strings.NewReader(cratesOutput + "\n"))
@@ -412,6 +413,66 @@ func updateCargoCrates(tokens []*macports.PortfileToken, tarballPath string) ([]
 	result = append(result, tokens[valEnd:]...)
 
 	return result, nil
+}
+
+// reformatCargoCrates re-aligns the three columns of cargo2port's output. cargo2port
+// prints "name version checksum" per crate with the name left-aligned, the version
+// right-aligned and the checksum left-aligned, but it sizes the version column from a
+// value that does not always cover the longest version. A long version therefore
+// overflows and pushes the checksum column out of alignment. This recomputes the
+// column widths from the actual longest name and version so every row lines up.
+// The header line ("cargo.crates \") and any line that is not a name/version/checksum
+// triple are passed through unchanged.
+func reformatCargoCrates(raw string) string {
+	lines := strings.Split(raw, "\n")
+
+	type crate struct {
+		lineIndex int
+		cont      bool
+		name      string
+		version   string
+		checksum  string
+	}
+	var crates []crate
+	var maxName, maxVersion int
+	for i, line := range lines {
+		body := strings.TrimRight(line, " ")
+		cont := strings.HasSuffix(body, "\\")
+		if cont {
+			body = strings.TrimRight(strings.TrimSuffix(body, "\\"), " ")
+		}
+		fields := strings.Fields(body)
+		if len(fields) != 3 {
+			continue
+		}
+		crates = append(crates, crate{lineIndex: i, cont: cont, name: fields[0], version: fields[1], checksum: fields[2]})
+		if len(fields[0]) > maxName {
+			maxName = len(fields[0])
+		}
+		if len(fields[1]) > maxVersion {
+			maxVersion = len(fields[1])
+		}
+	}
+	if len(crates) == 0 {
+		return raw
+	}
+
+	for _, c := range crates {
+		var b strings.Builder
+		b.WriteString("    ")
+		b.WriteString(c.name)
+		// Pad the name field to maxName, add a two-space gap, then right-align the version to maxVersion.
+		b.WriteString(strings.Repeat(" ", (maxName-len(c.name))+2+(maxVersion-len(c.version))))
+		b.WriteString(c.version)
+		b.WriteString("  ")
+		b.WriteString(c.checksum)
+		if c.cont {
+			b.WriteString(" \\")
+		}
+		lines[c.lineIndex] = b.String()
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func main() {
