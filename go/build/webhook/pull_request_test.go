@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -166,4 +167,67 @@ func TestPullRequestReconciler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPullRequestReconciler_RequeuesUntilHeadRevisionAvailable(t *testing.T) {
+	logger.SetLogLevel("debug")
+	slogger.Init()
+
+	const opsURL = "https://github.com/f110/ops"
+	const headSHA = "69f2c2703436688cb49bdcf858e8cf59a9b06e08"
+	trustedUser := &database.TrustedUser{Id: 1, GithubId: 2178441, Username: "octocat"}
+
+	d := newTestDAO()
+	d.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, []*database.TrustedUser{trustedUser}, nil)
+	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+
+	// gh is only used to post the "Validate config" commit status on the retry.
+	gh := github.NewClient(&http.Client{Transport: &recTransport{res: []*http.Response{
+		{StatusCode: http.StatusCreated, Body: io.NopCloser(strings.NewReader("{}"))},
+	}}})
+	builder := &recBuilder{}
+	// The head is reported missing on the first probe, then available.
+	fakeGit := &fakeGitData{defaultHash: "masterhash", availableAfter: 1}
+
+	r := NewPullRequestReconciler(d.toOptions(), gh, builder, fakeGit)
+	ev := makeEvent(t, "pull_request", "pull_request_opened.json")
+
+	// First loop: the head is not in git-data-service yet, so the reconcile
+	// requeues (returns an error → event FAILED). The build was dispatched and
+	// checkpointed before the validate step.
+	err := r.Reconcile(context.Background(), ev)
+	assertion.Error(t, err)
+	assertion.Equal(t, ev.State, database.GithubEventStateFailed)
+	assertion.MustLen(t, fakeGit.commitSHAs, 1)
+	assertion.MustLen(t, builder.jobNames, 1)
+	assertion.False(t, slices.Contains(fakeGit.treeRefs, headSHA)) // head not read yet
+
+	// Next loop: the revision has landed, so validation reads the head config
+	// and the event succeeds. The build is not dispatched again.
+	err = r.Reconcile(context.Background(), ev)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, ev.State, database.GithubEventStateSucceeded)
+	assertion.True(t, slices.Contains(fakeGit.commitSHAs, headSHA))
+	assertion.True(t, slices.Contains(fakeGit.treeRefs, headSHA))
+	assertion.MustLen(t, builder.jobNames, 1) // no re-dispatch
+}
+
+func TestPullRequestReconciler_ClosedDoesNotQueryGitData(t *testing.T) {
+	logger.SetLogLevel("debug")
+	slogger.Init()
+
+	d := newTestDAO()
+	d.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/sandbox", 2,
+		[]*database.PermitPullRequest{{Id: 7, Repository: "f110/sandbox", Number: 2, CreatedAt: time.Now()}},
+		nil,
+	)
+	fakeGit := &fakeGitData{defaultHash: "masterhash"}
+
+	r := NewPullRequestReconciler(d.toOptions(), nil, &recBuilder{}, fakeGit)
+	ev := makeEvent(t, "pull_request", "pull_request_closed.json")
+
+	err := r.Reconcile(context.Background(), ev)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, ev.State, database.GithubEventStateSucceeded)
+	assertion.MustLen(t, fakeGit.commitSHAs, 0)
 }

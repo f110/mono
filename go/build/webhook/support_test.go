@@ -4,15 +4,19 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"path"
 	"testing"
 	"time"
 
 	"go.f110.dev/githubmock"
+	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -89,6 +93,67 @@ func (m *recTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	r := m.res[m.index]
 	m.index++
 	return r, nil
+}
+
+// prTestCue is a single-job build config subscribed to the pull_request event,
+// served by fakeGitData for the git-data-service read path.
+var prTestCue = []byte(`jobs: {
+	test_all: {
+		command: "test"
+		targets: ["//..."]
+		platforms: ["@rules_go//go/toolchain:linux_amd64"]
+		all_revision:  true
+		github_status: true
+		event: ["pull_request"]
+	}
+}
+`)
+
+// fakeGitData is a minimal git.GitDataClient that serves prTestCue as the
+// repository's .build config for any ref, so reconciler tests can exercise the
+// git-data-service read path without a real service. Only the methods the
+// config reader uses are implemented; the embedded nil interface makes any
+// other call panic, flagging unexpected access.
+type fakeGitData struct {
+	git.GitDataClient
+	defaultHash string
+	treeRefs    []string // refs passed to GetTree, in call order
+	commitSHAs  []string // SHAs probed via GetCommit, in call order
+	// availableAfter is how many GetCommit calls report the commit as missing
+	// before it becomes available, simulating a mirror that has not fetched the
+	// revision yet.
+	availableAfter int
+}
+
+var _ git.GitDataClient = (*fakeGitData)(nil)
+
+func (f *fakeGitData) GetReference(_ context.Context, _ *git.RequestGetReference, _ ...grpc.CallOption) (*git.ResponseGetReference, error) {
+	return &git.ResponseGetReference{Ref: &git.Reference{Hash: f.defaultHash}}, nil
+}
+
+func (f *fakeGitData) GetCommit(_ context.Context, in *git.RequestGetCommit, _ ...grpc.CallOption) (*git.ResponseGetCommit, error) {
+	f.commitSHAs = append(f.commitSHAs, in.GetSha())
+	if len(f.commitSHAs) <= f.availableAfter {
+		return nil, xerrors.New("object not found")
+	}
+	return &git.ResponseGetCommit{Commit: &git.Commit{Sha: in.GetSha()}}, nil
+}
+
+func (f *fakeGitData) GetTree(_ context.Context, in *git.RequestGetTree, _ ...grpc.CallOption) (*git.ResponseGetTree, error) {
+	f.treeRefs = append(f.treeRefs, in.GetRef())
+	return &git.ResponseGetTree{Tree: []*git.TreeEntry{
+		{Path: ".build/test.cue", Mode: "0100644", Size: int64(len(prTestCue))},
+	}}, nil
+}
+
+func (f *fakeGitData) GetFile(_ context.Context, in *git.RequestGetFile, _ ...grpc.CallOption) (*git.ResponseGetFile, error) {
+	switch path.Base(in.GetPath()) {
+	case "test.cue":
+		return &git.ResponseGetFile{Content: prTestCue}, nil
+	case ".bazelversion":
+		return &git.ResponseGetFile{Content: []byte("8.4.1")}, nil
+	}
+	return nil, xerrors.Definef("fakeGitData: unexpected file %q", in.GetPath()).WithStack()
 }
 
 func loadPayload(t *testing.T, name string) []byte {

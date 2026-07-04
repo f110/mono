@@ -148,6 +148,10 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 	}
 
 	if !status.ConfigValidated {
+		if err := r.checkRevisionAvailable(ctx, repoName, revision); err != nil {
+			_ = WriteStatus(ev, status)
+			return err
+		}
 		validateState := "failure"
 		if _, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision); err == nil {
 			validateState = "success"
@@ -161,6 +165,20 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 
 	_ = WriteStatus(ev, status)
 	ev.State = database.GithubEventStateSucceeded
+	return nil
+}
+
+// checkRevisionAvailable confirms the source the head config is read from
+// (git-data-service) has fetched sha, by querying that service directly rather
+// than coupling to whatever component performs the fetch.
+func (r *PullRequestReconciler) checkRevisionAvailable(ctx context.Context, repoName, sha string) error {
+	if r.gitDataClient == nil {
+		return nil
+	}
+	// GetCommit errors while the object is absent from the mirror.
+	if _, err := r.gitDataClient.GetCommit(ctx, &git.RequestGetCommit{Repo: repoName, Sha: sha}); err != nil {
+		return xerrors.WithMessagef(err, "revision %s is not yet available in git-data-service", sha)
+	}
 	return nil
 }
 
