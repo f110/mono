@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"go.f110.dev/xerrors"
@@ -68,6 +69,46 @@ func addTrailer(desc, key, value string) (string, bool) {
 		return desc, false
 	}
 	return appendTrailer(desc, key, value), true
+}
+
+// assistedByModelID extracts the model ID from an Assisted-by trailer value.
+// The value is "Agent:model-id" (e.g. "Claude:claude-opus-4-7"); the part
+// after the first colon is the model ID. A value without a colon is returned
+// as-is.
+func assistedByModelID(value string) string {
+	value = strings.TrimSpace(value)
+	if _, model, ok := strings.Cut(value, ":"); ok {
+		return strings.TrimSpace(model)
+	}
+	return value
+}
+
+// modelUsageCounts counts how many times each model ID appears in Assisted-by
+// trailers across the given commit descriptions.
+func modelUsageCounts(descriptions []string) map[string]int {
+	keyPrefix := strings.ToLower(assistedByKey) + ":"
+	counts := make(map[string]int)
+	for _, desc := range descriptions {
+		for _, line := range strings.Split(desc, "\n") {
+			if !strings.HasPrefix(strings.ToLower(line), keyPrefix) {
+				continue
+			}
+			_, value, _ := strings.Cut(line, ":")
+			if id := assistedByModelID(value); id != "" {
+				counts[id]++
+			}
+		}
+	}
+	return counts
+}
+
+// sortModelsByUsage stably reorders models so that more frequently used models
+// (per counts, keyed by model ID) come first. Models with an equal count keep
+// their original relative order.
+func sortModelsByUsage(models []anthropicModel, counts map[string]int) {
+	sort.SliceStable(models, func(i, j int) bool {
+		return counts[models[i].ID] > counts[models[j].ID]
+	})
 }
 
 const modelsCacheFile = "models.json"

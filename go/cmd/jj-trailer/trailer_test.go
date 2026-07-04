@@ -183,6 +183,38 @@ func TestParseRawTrailers(t *testing.T) {
 	}
 }
 
+func TestModelUsageCounts(t *testing.T) {
+	descriptions := []string{
+		"Subject\n\nAssisted-by: Claude:claude-opus-4-7",
+		"Other\n\nAssisted-by: Claude:claude-opus-4-7\nSigned-off-by: Someone <a@example.com>",
+		"No trailer here",
+		"Sub\n\nassisted-by: Claude:claude-sonnet-4-6",
+		"Bare\n\nAssisted-by: claude-haiku-4-5",
+		"Empty\n\nAssisted-by:",
+	}
+	got := modelUsageCounts(descriptions)
+	want := map[string]int{
+		"claude-opus-4-7":   2,
+		"claude-sonnet-4-6": 1,
+		"claude-haiku-4-5":  1,
+	}
+	assertion.Equal(t, got, want)
+}
+
+func TestSortModelsByUsage(t *testing.T) {
+	models := []anthropicModel{{ID: "a"}, {ID: "b"}, {ID: "c"}, {ID: "d"}}
+	counts := map[string]int{"b": 3, "d": 1}
+
+	sortModelsByUsage(models, counts)
+
+	got := make([]string, len(models))
+	for i, m := range models {
+		got[i] = m.ID
+	}
+	// b(3) > d(1) > a(0) = c(0); ties keep the original order (a before c).
+	assertion.Equal(t, got, []string{"b", "d", "a", "c"})
+}
+
 func TestModelsCache_RoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "models.json")
 	want := []anthropicModel{

@@ -215,11 +215,44 @@ func pickAssistedByValue(ctx context.Context, noCache bool) (string, error) {
 		models = fetched
 	}
 
+	if descs, err := recentOwnDescriptions(ctx, recentCommitLimit); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to read commit history for usage sort: %v\n", err)
+	} else {
+		sortModelsByUsage(models, modelUsageCounts(descs))
+	}
+
 	m, err := promptModel(models)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s:%s", defaultAgentLabel, m.ID), nil
+}
+
+// recentCommitLimit is the number of the user's own commits on the default
+// branch scanned to rank models by usage frequency.
+const recentCommitLimit = 30
+
+// recentOwnDescriptions returns the descriptions of the user's own latest
+// commits on the default branch (up to limit).
+func recentOwnDescriptions(ctx context.Context, limit int) ([]string, error) {
+	revset := fmt.Sprintf("latest(mine() & ::trunk(), %d)", limit)
+	c := exec.CommandContext(ctx, "jj", "log", "-r", revset, "--no-graph", "--template", `json(description) ++ "\n"`)
+	buf, err := c.Output()
+	if err != nil {
+		return nil, xerrors.WithMessage(err, "jj log failed")
+	}
+	var descs []string
+	for _, line := range strings.Split(strings.TrimSpace(string(buf)), "\n") {
+		if line == "" {
+			continue
+		}
+		var desc string
+		if err := json.Unmarshal([]byte(line), &desc); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		descs = append(descs, desc)
+	}
+	return descs, nil
 }
 
 func fetchModels(ctx context.Context, apiKey string) ([]anthropicModel, error) {
