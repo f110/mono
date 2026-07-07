@@ -14,11 +14,10 @@ proto_library(
 
 go_library(
     name = "database",
-    srcs = [],  # keep
-    embed = [
-        ":schema",
-        ":entity",
-    ],  # keep
+    srcs = [
+        "schema.entity.go",
+        "schema.hash.go",
+    ],
     importpath = "go.f110.dev/mono/go/build/database",
     visibility = ["//visibility:public"],
     deps = ["@protoc_ddl//:protoc-ddl"],
