@@ -22,7 +22,7 @@ pkg_tar(
 
 oci_image(
     name = "build_image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_amd64",
     tars = [
         ":build_bin",
         ":schema_files",
@@ -46,7 +46,7 @@ pkg_tar(
 
 oci_image(
     name = "sidecar_image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_amd64",
     entrypoint = ["/usr/local/bin/sidecar"],
     tars = [":sidecar_bin"],
 )
@@ -68,7 +68,7 @@ pkg_tar(
 
 oci_image(
     name = "ctl_image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_amd64",
     entrypoint = ["/usr/local/bin/buildctl"],
     tars = [":ctl_bin"],
 )
@@ -126,7 +126,7 @@ pkg_tar(
 
 oci_image(
     name = "frontend_image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_amd64",
     entrypoint = [
         "/usr/local/bin/simple-http-server",
         "--config",
@@ -160,7 +160,7 @@ pkg_tar(
 
 oci_image(
     name = "frontend_dev_image",
-    base = "@com_google_distroless_base",
+    base = "@com_google_distroless_base_linux_amd64",
     entrypoint = [
         "/usr/local/bin/simple-http-server",
         "--config",
