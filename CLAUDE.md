@@ -52,4 +52,4 @@
 
 ## プロジェクト
 
-- Build: 自作のCIツール @docs/build.md
+- Build: 自作のCIツール docs/build.md
