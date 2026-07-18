@@ -1,0 +1,74 @@
+load("@pypi//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+py_library(
+    name = "panning_scorer_lib",
+    srcs = [
+        "_compat.py",
+        "apply.py",
+        "config.py",
+        "exif.py",
+        "intent.py",
+        "orchestrator.py",
+        "pipeline.py",
+        "preview_extractor.py",
+        "rating_mapper.py",
+        "result.py",
+        "scorer.py",
+        "xmp_writer.py",
+    ],
+    imports = ["."],
+    visibility = ["//visibility:private"],
+    deps = [
+        requirement("exifread"),
+        requirement("numpy"),
+        requirement("opencv-python-headless"),
+        requirement("python-xmp-toolkit"),
+        requirement("pytz"),
+        requirement("rawpy"),
+        requirement("setuptools"),
+    ],
+)
+
+py_binary(
+    name = "panning-scorer",
+    srcs = ["main.py"],
+    imports = ["."],
+    main = "main.py",
+    visibility = ["//visibility:public"],
+    deps = [":panning_scorer_lib"],
+)
+
+py_binary(
+    name = "export-previews",
+    srcs = ["export_previews.py"],
+    imports = ["."],
+    main = "export_previews.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("numpy"),
+        requirement("opencv-python-headless"),
+        requirement("rawpy"),
+    ],
+)
+
+py_test(
+    name = "rating_mapper_test",
+    srcs = ["rating_mapper_test.py"],
+    imports = ["."],
+    deps = [":panning_scorer_lib"],
+)
+
+py_test(
+    name = "intent_test",
+    srcs = ["intent_test.py"],
+    imports = ["."],
+    deps = [":panning_scorer_lib"],
+)
+
+py_test(
+    name = "apply_test",
+    srcs = ["apply_test.py"],
+    imports = ["."],
+    deps = [":panning_scorer_lib"],
+)

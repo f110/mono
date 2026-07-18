@@ -4,3 +4,10 @@ requests == 2.26.0
 beautifulsoup4 == 4.10.0
 docutils == 0.18.1
 grpcio == 1.44.0
+rawpy == 0.22.0
+opencv-python-headless == 4.10.0.84
+numpy == 1.26.1
+python-xmp-toolkit == 2.0.1
+pytz == 2023.3.post1
+setuptools == 69.5.1
+exifread == 3.0.0
