@@ -218,4 +218,5 @@ message BFFTask {
   string                      memory_limit             = 27;
   repeated mono.build.model.TestReport test_reports    = 28;
   google.protobuf.Duration             duration        = 29;
+  mono.build.model.BuildMetrics        build_metrics   = 30;
 }

@@ -191,6 +191,7 @@ func (*BFF) apiTaskToBFFTask(repositories map[int32]*model.Repository) func(*mod
 			MemoryLimit:            new(v.GetMemoryLimit()),
 			TestReports:            v.GetTestReports(),
 			Duration:               durationpb.New(v.GetFinishedAt().AsTime().Sub(v.GetStartAt().AsTime())),
+			BuildMetrics:           v.GetBuildMetrics(),
 		}.Build()
 	}
 }

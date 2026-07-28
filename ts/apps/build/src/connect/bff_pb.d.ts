@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
-import type { ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
+import type { BuildMetrics, ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 
 /**
@@ -817,6 +817,11 @@ export declare type BFFTask = Message<"mono.build.bff.BFFTask"> & {
    * @generated from field: google.protobuf.Duration duration = 29;
    */
   duration?: Duration;
+
+  /**
+   * @generated from field: mono.build.model.BuildMetrics build_metrics = 30;
+   */
+  buildMetrics?: BuildMetrics;
 };
 
 /**

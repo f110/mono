@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
-import type { ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
+import type { BuildMetrics, ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 
 /**
@@ -265,6 +265,15 @@ export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
    * @generated from field: string dashboard_url = 18;
    */
   dashboardUrl: string;
+
+  /**
+   * emulate_job_control is true when the builder runs against a kwok-emulated
+   * kube-apiserver. The dashboard uses it to expose the dev-only "complete
+   * task" action.
+   *
+   * @generated from field: bool emulate_job_control = 19;
+   */
+  emulateJobControl: boolean;
 };
 
 /**
@@ -453,6 +462,39 @@ export declare type ResponseForceStopTask = Message<"mono.build.bff.ResponseForc
  * Use `create(ResponseForceStopTaskSchema)` to create a new message.
  */
 export declare const ResponseForceStopTaskSchema: GenMessage<ResponseForceStopTask>;
+
+/**
+ * @generated from message mono.build.bff.RequestCompleteTask
+ */
+export declare type RequestCompleteTask = Message<"mono.build.bff.RequestCompleteTask"> & {
+  /**
+   * @generated from field: int32 task_id = 1;
+   */
+  taskId: number;
+
+  /**
+   * @generated from field: bool success = 2;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message mono.build.bff.RequestCompleteTask.
+ * Use `create(RequestCompleteTaskSchema)` to create a new message.
+ */
+export declare const RequestCompleteTaskSchema: GenMessage<RequestCompleteTask>;
+
+/**
+ * @generated from message mono.build.bff.ResponseCompleteTask
+ */
+export declare type ResponseCompleteTask = Message<"mono.build.bff.ResponseCompleteTask"> & {
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseCompleteTask.
+ * Use `create(ResponseCompleteTaskSchema)` to create a new message.
+ */
+export declare const ResponseCompleteTaskSchema: GenMessage<ResponseCompleteTask>;
 
 /**
  * @generated from message mono.build.bff.RequestListExternalReleaseTriggers
@@ -775,6 +817,11 @@ export declare type BFFTask = Message<"mono.build.bff.BFFTask"> & {
    * @generated from field: google.protobuf.Duration duration = 29;
    */
   duration?: Duration;
+
+  /**
+   * @generated from field: mono.build.model.BuildMetrics build_metrics = 30;
+   */
+  buildMetrics?: BuildMetrics;
 };
 
 /**
@@ -866,6 +913,17 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestForceStopTaskSchema;
     output: typeof ResponseForceStopTaskSchema;
+  },
+  /**
+   * CompleteTask forces a task's Job into a terminal state. Only available in
+   * the local kwok dev environment (see ServerConfig.emulate_job_control).
+   *
+   * @generated from rpc mono.build.bff.BFF.CompleteTask
+   */
+  completeTask: {
+    methodKind: "unary";
+    input: typeof RequestCompleteTaskSchema;
+    output: typeof ResponseCompleteTaskSchema;
   },
   /**
    * @generated from rpc mono.build.bff.BFF.ListExternalReleaseTriggers

@@ -103,9 +103,7 @@ func TestJobBuilder(t *testing.T) {
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
-					RemoveContainer("report"),
-					RemoveVolume("comm"),
-					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "//...")),
+					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "--build_event_binary_file=/comm/bep", "//...")),
 				},
 			},
 		},
@@ -118,9 +116,7 @@ func TestJobBuilder(t *testing.T) {
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
-					RemoveContainer("report"),
-					RemoveVolume("comm"),
-					k8sfactory.OnContainer("main", RemoveArgs("--build_event_binary_file=/comm/bep"), AddArgsBefore("--", "--remote_upload_local_results=false")),
+					k8sfactory.OnContainer("main", AddArgsBefore("--", "--remote_upload_local_results=false")),
 				},
 			},
 		},
@@ -292,10 +288,8 @@ func TestJobBuilder(t *testing.T) {
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
-					RemoveContainer("report"),
-					RemoveVolume("comm"),
 					k8sfactory.OnContainer("main",
-						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "//...", "--", "--verbose"),
+						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "--build_event_binary_file=/comm/bep", "//...", "--", "--verbose"),
 					),
 				},
 			},
@@ -382,42 +376,6 @@ func TestJobBuilder(t *testing.T) {
 	}
 }
 
-func RemoveVolume(name string) k8sfactory.Trait {
-	var fn k8sfactory.Trait
-	fn = func(obj any) {
-		switch v := obj.(type) {
-		case *corev1.PodSpec:
-			for i, vol := range v.Volumes {
-				if vol.Name == name {
-					v.Volumes = append(v.Volumes[:i], v.Volumes[i+1:]...)
-					break
-				}
-			}
-			for k := range v.InitContainers {
-				con := &v.InitContainers[k]
-				for i, vm := range con.VolumeMounts {
-					if vm.Name == name {
-						con.VolumeMounts = append(con.VolumeMounts[:i], con.VolumeMounts[i+1:]...)
-						break
-					}
-				}
-			}
-			for k := range v.Containers {
-				con := &v.Containers[k]
-				for i, vm := range con.VolumeMounts {
-					if vm.Name == name {
-						con.VolumeMounts = append(con.VolumeMounts[:i], con.VolumeMounts[i+1:]...)
-						break
-					}
-				}
-			}
-		case *batchv1.Job:
-			fn(v.Spec.Template.Spec)
-		}
-	}
-	return fn
-}
-
 func AddSecretVolume(containerName, volName, secretName, mountPath string) k8sfactory.Trait {
 	var fn k8sfactory.Trait
 	fn = func(obj any) {
@@ -464,30 +422,6 @@ func AddEmptyVolume(name string) k8sfactory.Trait {
 		switch v := obj.(type) {
 		case *corev1.PodSpec:
 			v.Volumes = append(v.Volumes, corev1.Volume{Name: name, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
-		case *batchv1.Job:
-			fn(v.Spec.Template.Spec)
-		}
-	}
-	return fn
-}
-
-func RemoveContainer(name string) k8sfactory.Trait {
-	var fn k8sfactory.Trait
-	fn = func(obj any) {
-		switch v := obj.(type) {
-		case *corev1.PodSpec:
-			for i, con := range v.InitContainers {
-				if con.Name == name {
-					v.InitContainers = append(v.InitContainers[:i], v.InitContainers[i+1:]...)
-					break
-				}
-			}
-			for i, con := range v.Containers {
-				if con.Name == name {
-					v.Containers = append(v.Containers[:i], v.Containers[i+1:]...)
-					break
-				}
-			}
 		case *batchv1.Job:
 			fn(v.Spec.Template.Spec)
 		}

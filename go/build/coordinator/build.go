@@ -837,13 +837,13 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	buf.WriteString("----- main -----\n")
 	buf.Write(rawLog)
 
-	var testReport []byte
-	if jobConfiguration.Command == "test" && task.IsTrunk {
-		rawLog, err = b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.ReportContainerName})
-		if err != nil {
-			return xerrors.WithStack(err)
-		}
-		testReport = rawLog
+	// The report sidecar runs for every build and prints a JSON document (test results
+	// and build metrics) to stdout. Read it best-effort: a pod without the container
+	// (e.g. during a rollout) must not fail post-processing.
+	reportLog, err := b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.ReportContainerName})
+	if err != nil {
+		slogger.Log.Warn("Failed to get the report container log", slogger.E(err))
+		reportLog = nil
 	}
 
 	if err := b.storage.Put(context.Background(), job.Name, buf.Bytes()); err != nil {
@@ -851,8 +851,8 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	}
 	task.LogFile = job.Name
 
-	if len(testReport) > 0 {
-		if err := b.updateTestReport(ctx, testReport, repo, task); err != nil {
+	if len(reportLog) > 0 {
+		if err := b.updateReport(ctx, reportLog, repo, task); err != nil {
 			slogger.Log.Warn("Failed to parse the report json", slogger.E(err))
 		}
 	}
@@ -870,39 +870,78 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	return nil
 }
 
-func (b *BazelBuilder) updateTestReport(ctx context.Context, reportJSON []byte, repo *database.SourceRepository, task *database.Task) error {
-	var report sidecar.TestReport
+// updateReport parses the report sidecar's JSON and persists both the per-test
+// results (trunk builds only, preserving the prior behavior) and the build-wide
+// metrics (every build).
+func (b *BazelBuilder) updateReport(ctx context.Context, reportJSON []byte, repo *database.SourceRepository, task *database.Task) error {
+	var report sidecar.Report
 	if err := json.Unmarshal(reportJSON, &report); err != nil {
 		return xerrors.WithStack(err)
 	}
 
-	task.ExecutedTestsCount = int32(len(report.Tests))
-	var succeededCount int32
-	for _, s := range report.Tests {
-		status := database.TestStatusFailed
-		switch s.Status {
-		case sidecar.TestStatusPassed:
-			succeededCount++
-			status = database.TestStatusPassed
-		case sidecar.TestStatusFlaky:
-			succeededCount++
-			status = database.TestStatusFlaky
-		}
+	if task.IsTrunk {
+		task.ExecutedTestsCount = int32(len(report.Tests))
+		var succeededCount int32
+		for _, s := range report.Tests {
+			status := database.TestStatusFailed
+			switch s.Status {
+			case sidecar.TestStatusPassed:
+				succeededCount++
+				status = database.TestStatusPassed
+			case sidecar.TestStatusFlaky:
+				succeededCount++
+				status = database.TestStatusFlaky
+			}
 
-		_, err := b.dao.TestReport.Create(ctx, &database.TestReport{
-			RepositoryId: repo.Id,
-			Label:        s.Label,
-			TaskId:       task.Id,
-			Duration:     s.Duration,
-			Status:       status,
-			StartAt:      s.StartAt,
-		})
-		if err != nil {
-			return xerrors.WithStack(err)
+			_, err := b.dao.TestReport.Create(ctx, &database.TestReport{
+				RepositoryId: repo.Id,
+				Label:        s.Label,
+				TaskId:       task.Id,
+				Duration:     s.Duration,
+				Status:       status,
+				StartAt:      s.StartAt,
+			})
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+		}
+		task.SucceededTestsCount = succeededCount
+	}
+
+	if report.Metrics != nil {
+		if err := b.createBuildMetrics(ctx, task.Id, report.Metrics); err != nil {
+			return err
 		}
 	}
-	task.SucceededTestsCount = succeededCount
 
+	return nil
+}
+
+func (b *BazelBuilder) createBuildMetrics(ctx context.Context, taskID int32, m *sidecar.BuildMetrics) error {
+	_, err := b.dao.BuildMetrics.Create(ctx, &database.BuildMetrics{
+		TaskId:                        taskID,
+		RemoteCacheHits:               m.RemoteCacheHits,
+		WallTimeMs:                    m.WallTimeMs,
+		CpuTimeMs:                     m.CpuTimeMs,
+		AnalysisPhaseTimeMs:           m.AnalysisPhaseTimeMs,
+		ExecutionPhaseTimeMs:          m.ExecutionPhaseTimeMs,
+		ActionsCreated:                m.ActionsCreated,
+		ActionsExecuted:               m.ActionsExecuted,
+		GraphActionCount:              m.GraphActionCount,
+		OutputArtifactCount:           m.OutputArtifactCount,
+		SkyframeNodeCount:             m.SkyframeNodeCount,
+		TargetsConfigured:             m.TargetsConfigured,
+		PackagesLoaded:                m.PackagesLoaded,
+		SourceArtifactsReadBytes:      m.SourceArtifactsReadBytes,
+		SourceArtifactsReadCount:      m.SourceArtifactsReadCount,
+		OutputArtifactsSeenBytes:      m.OutputArtifactsSeenBytes,
+		OutputArtifactsSeenCount:      m.OutputArtifactsSeenCount,
+		OutputArtifactsFromCacheBytes: m.OutputArtifactsFromCacheBytes,
+		OutputArtifactsFromCacheCount: m.OutputArtifactsFromCacheCount,
+	})
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
 	return nil
 }
 

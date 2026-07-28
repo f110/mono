@@ -569,6 +569,160 @@ func (e *TestReport) Copy() *TestReport {
 	return n
 }
 
+// BuildMetrics stores the build-wide statistics extracted from Bazel's
+// BuildMetrics event (via the report sidecar) for a single Task. `task` is the
+// primary key, expressing the 1:1 relationship (one Task has at most one row).
+type BuildMetrics struct {
+	TaskId                        int32
+	RemoteCacheHits               int64
+	WallTimeMs                    int64
+	CpuTimeMs                     int64
+	AnalysisPhaseTimeMs           int64
+	ExecutionPhaseTimeMs          int64
+	ActionsCreated                int64
+	ActionsExecuted               int64
+	GraphActionCount              int64
+	OutputArtifactCount           int64
+	SkyframeNodeCount             int64
+	TargetsConfigured             int64
+	PackagesLoaded                int64
+	SourceArtifactsReadBytes      int64
+	SourceArtifactsReadCount      int64
+	OutputArtifactsSeenBytes      int64
+	OutputArtifactsSeenCount      int64
+	OutputArtifactsFromCacheBytes int64
+	OutputArtifactsFromCacheCount int64
+
+	Task *Task
+
+	mu   sync.Mutex
+	mark *BuildMetrics
+}
+
+func (e *BuildMetrics) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *BuildMetrics) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.RemoteCacheHits != e.mark.RemoteCacheHits ||
+		e.WallTimeMs != e.mark.WallTimeMs ||
+		e.CpuTimeMs != e.mark.CpuTimeMs ||
+		e.AnalysisPhaseTimeMs != e.mark.AnalysisPhaseTimeMs ||
+		e.ExecutionPhaseTimeMs != e.mark.ExecutionPhaseTimeMs ||
+		e.ActionsCreated != e.mark.ActionsCreated ||
+		e.ActionsExecuted != e.mark.ActionsExecuted ||
+		e.GraphActionCount != e.mark.GraphActionCount ||
+		e.OutputArtifactCount != e.mark.OutputArtifactCount ||
+		e.SkyframeNodeCount != e.mark.SkyframeNodeCount ||
+		e.TargetsConfigured != e.mark.TargetsConfigured ||
+		e.PackagesLoaded != e.mark.PackagesLoaded ||
+		e.SourceArtifactsReadBytes != e.mark.SourceArtifactsReadBytes ||
+		e.SourceArtifactsReadCount != e.mark.SourceArtifactsReadCount ||
+		e.OutputArtifactsSeenBytes != e.mark.OutputArtifactsSeenBytes ||
+		e.OutputArtifactsSeenCount != e.mark.OutputArtifactsSeenCount ||
+		e.OutputArtifactsFromCacheBytes != e.mark.OutputArtifactsFromCacheBytes ||
+		e.OutputArtifactsFromCacheCount != e.mark.OutputArtifactsFromCacheCount
+}
+
+func (e *BuildMetrics) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.RemoteCacheHits != e.mark.RemoteCacheHits {
+		res = append(res, ddl.Column{Name: "remote_cache_hits", Value: e.RemoteCacheHits})
+	}
+	if e.WallTimeMs != e.mark.WallTimeMs {
+		res = append(res, ddl.Column{Name: "wall_time_ms", Value: e.WallTimeMs})
+	}
+	if e.CpuTimeMs != e.mark.CpuTimeMs {
+		res = append(res, ddl.Column{Name: "cpu_time_ms", Value: e.CpuTimeMs})
+	}
+	if e.AnalysisPhaseTimeMs != e.mark.AnalysisPhaseTimeMs {
+		res = append(res, ddl.Column{Name: "analysis_phase_time_ms", Value: e.AnalysisPhaseTimeMs})
+	}
+	if e.ExecutionPhaseTimeMs != e.mark.ExecutionPhaseTimeMs {
+		res = append(res, ddl.Column{Name: "execution_phase_time_ms", Value: e.ExecutionPhaseTimeMs})
+	}
+	if e.ActionsCreated != e.mark.ActionsCreated {
+		res = append(res, ddl.Column{Name: "actions_created", Value: e.ActionsCreated})
+	}
+	if e.ActionsExecuted != e.mark.ActionsExecuted {
+		res = append(res, ddl.Column{Name: "actions_executed", Value: e.ActionsExecuted})
+	}
+	if e.GraphActionCount != e.mark.GraphActionCount {
+		res = append(res, ddl.Column{Name: "graph_action_count", Value: e.GraphActionCount})
+	}
+	if e.OutputArtifactCount != e.mark.OutputArtifactCount {
+		res = append(res, ddl.Column{Name: "output_artifact_count", Value: e.OutputArtifactCount})
+	}
+	if e.SkyframeNodeCount != e.mark.SkyframeNodeCount {
+		res = append(res, ddl.Column{Name: "skyframe_node_count", Value: e.SkyframeNodeCount})
+	}
+	if e.TargetsConfigured != e.mark.TargetsConfigured {
+		res = append(res, ddl.Column{Name: "targets_configured", Value: e.TargetsConfigured})
+	}
+	if e.PackagesLoaded != e.mark.PackagesLoaded {
+		res = append(res, ddl.Column{Name: "packages_loaded", Value: e.PackagesLoaded})
+	}
+	if e.SourceArtifactsReadBytes != e.mark.SourceArtifactsReadBytes {
+		res = append(res, ddl.Column{Name: "source_artifacts_read_bytes", Value: e.SourceArtifactsReadBytes})
+	}
+	if e.SourceArtifactsReadCount != e.mark.SourceArtifactsReadCount {
+		res = append(res, ddl.Column{Name: "source_artifacts_read_count", Value: e.SourceArtifactsReadCount})
+	}
+	if e.OutputArtifactsSeenBytes != e.mark.OutputArtifactsSeenBytes {
+		res = append(res, ddl.Column{Name: "output_artifacts_seen_bytes", Value: e.OutputArtifactsSeenBytes})
+	}
+	if e.OutputArtifactsSeenCount != e.mark.OutputArtifactsSeenCount {
+		res = append(res, ddl.Column{Name: "output_artifacts_seen_count", Value: e.OutputArtifactsSeenCount})
+	}
+	if e.OutputArtifactsFromCacheBytes != e.mark.OutputArtifactsFromCacheBytes {
+		res = append(res, ddl.Column{Name: "output_artifacts_from_cache_bytes", Value: e.OutputArtifactsFromCacheBytes})
+	}
+	if e.OutputArtifactsFromCacheCount != e.mark.OutputArtifactsFromCacheCount {
+		res = append(res, ddl.Column{Name: "output_artifacts_from_cache_count", Value: e.OutputArtifactsFromCacheCount})
+	}
+
+	return res
+}
+
+func (e *BuildMetrics) Copy() *BuildMetrics {
+	n := &BuildMetrics{
+		TaskId:                        e.TaskId,
+		RemoteCacheHits:               e.RemoteCacheHits,
+		WallTimeMs:                    e.WallTimeMs,
+		CpuTimeMs:                     e.CpuTimeMs,
+		AnalysisPhaseTimeMs:           e.AnalysisPhaseTimeMs,
+		ExecutionPhaseTimeMs:          e.ExecutionPhaseTimeMs,
+		ActionsCreated:                e.ActionsCreated,
+		ActionsExecuted:               e.ActionsExecuted,
+		GraphActionCount:              e.GraphActionCount,
+		OutputArtifactCount:           e.OutputArtifactCount,
+		SkyframeNodeCount:             e.SkyframeNodeCount,
+		TargetsConfigured:             e.TargetsConfigured,
+		PackagesLoaded:                e.PackagesLoaded,
+		SourceArtifactsReadBytes:      e.SourceArtifactsReadBytes,
+		SourceArtifactsReadCount:      e.SourceArtifactsReadCount,
+		OutputArtifactsSeenBytes:      e.OutputArtifactsSeenBytes,
+		OutputArtifactsSeenCount:      e.OutputArtifactsSeenCount,
+		OutputArtifactsFromCacheBytes: e.OutputArtifactsFromCacheBytes,
+		OutputArtifactsFromCacheCount: e.OutputArtifactsFromCacheCount,
+	}
+
+	if e.Task != nil {
+		n.Task = e.Task.Copy()
+	}
+
+	return n
+}
+
 // Job lists the manually-triggerable jobs (i.e. those whose Event includes
 // EventManual) defined in the default branch of the source repository. Jobs
 // that are not manually triggerable (push-only, external_release, etc.) are

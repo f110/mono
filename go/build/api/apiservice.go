@@ -548,6 +548,15 @@ func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *
 		}
 		testReports := enumerable.Map(tr, s.dbTestReportToAPITestReport)
 		task.SetTestReports(testReports)
+
+		bm, err := s.dao.BuildMetrics.ListByTaskId(ctx, task.GetId())
+		if err != nil {
+			slogger.Log.Warn("Failed to get build metrics by task id", slog.Int("task_id", int(task.GetId())))
+			return task
+		}
+		if len(bm) > 0 {
+			task.SetBuildMetrics(dbBuildMetricsToAPIBuildMetrics(bm[0]))
+		}
 		return task
 	}
 }
@@ -557,6 +566,29 @@ func (*apiService) dbTestReportToAPITestReport(tr *database.TestReport) *model.T
 		Label:    new(tr.Label),
 		Status:   new(model.TestStatus(tr.Status)),
 		Duration: new(tr.Duration),
+	}.Build()
+}
+
+func dbBuildMetricsToAPIBuildMetrics(m *database.BuildMetrics) *model.BuildMetrics {
+	return model.BuildMetrics_builder{
+		RemoteCacheHits:               new(m.RemoteCacheHits),
+		WallTimeMs:                    new(m.WallTimeMs),
+		CpuTimeMs:                     new(m.CpuTimeMs),
+		AnalysisPhaseTimeMs:           new(m.AnalysisPhaseTimeMs),
+		ExecutionPhaseTimeMs:          new(m.ExecutionPhaseTimeMs),
+		ActionsCreated:                new(m.ActionsCreated),
+		ActionsExecuted:               new(m.ActionsExecuted),
+		GraphActionCount:              new(m.GraphActionCount),
+		OutputArtifactCount:           new(m.OutputArtifactCount),
+		SkyframeNodeCount:             new(m.SkyframeNodeCount),
+		TargetsConfigured:             new(m.TargetsConfigured),
+		PackagesLoaded:                new(m.PackagesLoaded),
+		SourceArtifactsReadBytes:      new(m.SourceArtifactsReadBytes),
+		SourceArtifactsReadCount:      new(m.SourceArtifactsReadCount),
+		OutputArtifactsSeenBytes:      new(m.OutputArtifactsSeenBytes),
+		OutputArtifactsSeenCount:      new(m.OutputArtifactsSeenCount),
+		OutputArtifactsFromCacheBytes: new(m.OutputArtifactsFromCacheBytes),
+		OutputArtifactsFromCacheCount: new(m.OutputArtifactsFromCacheCount),
 	}.Build()
 }
 

@@ -10,6 +10,7 @@ type Options struct {
 	TrustedUser            TrustedUserInterface
 	PermitPullRequest      PermitPullRequestInterface
 	TestReport             TestReportInterface
+	BuildMetrics           BuildMetricsInterface
 	Job                    JobInterface
 	ExternalReleaseTrigger ExternalReleaseTriggerInterface
 	ExternalReleaseHistory ExternalReleaseHistoryInterface
@@ -25,6 +26,7 @@ func NewOptions(conn *sql.DB) Options {
 		TrustedUser:            NewTrustedUser(conn),
 		PermitPullRequest:      NewPermitPullRequest(conn),
 		TestReport:             NewTestReport(conn),
+		BuildMetrics:           NewBuildMetrics(conn),
 		Job:                    NewJob(conn),
 		ExternalReleaseTrigger: NewExternalReleaseTrigger(conn),
 		ExternalReleaseHistory: NewExternalReleaseHistory(conn),

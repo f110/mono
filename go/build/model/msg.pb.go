@@ -333,6 +333,7 @@ type Task struct {
 	xxx_hidden_CpuLimit               *string                `protobuf:"bytes,26,opt,name=cpu_limit,json=cpuLimit"`
 	xxx_hidden_MemoryLimit            *string                `protobuf:"bytes,27,opt,name=memory_limit,json=memoryLimit"`
 	xxx_hidden_TestReports            *[]*TestReport         `protobuf:"bytes,28,rep,name=test_reports,json=testReports"`
+	xxx_hidden_BuildMetrics           *BuildMetrics          `protobuf:"bytes,29,opt,name=build_metrics,json=buildMetrics"`
 	XXX_raceDetectHookData            protoimpl.RaceDetectHookData
 	XXX_presence                      [1]uint32
 	unknownFields                     protoimpl.UnknownFields
@@ -610,54 +611,61 @@ func (x *Task) GetTestReports() []*TestReport {
 	return nil
 }
 
+func (x *Task) GetBuildMetrics() *BuildMetrics {
+	if x != nil {
+		return x.xxx_hidden_BuildMetrics
+	}
+	return nil
+}
+
 func (x *Task) SetId(v int32) {
 	x.xxx_hidden_Id = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 29)
 }
 
 func (x *Task) SetRepositoryId(v int32) {
 	x.xxx_hidden_RepositoryId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 29)
 }
 
 func (x *Task) SetJobName(v string) {
 	x.xxx_hidden_JobName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 29)
 }
 
 func (x *Task) SetParsedJobConfiguration(v string) {
 	x.xxx_hidden_ParsedJobConfiguration = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 29)
 }
 
 func (x *Task) SetRevision(v string) {
 	x.xxx_hidden_Revision = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 29)
 }
 
 func (x *Task) SetBazelVersion(v string) {
 	x.xxx_hidden_BazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 29)
 }
 
 func (x *Task) SetCommand(v string) {
 	x.xxx_hidden_Command = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 29)
 }
 
 func (x *Task) SetIsTrunk(v bool) {
 	x.xxx_hidden_IsTrunk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 29)
 }
 
 func (x *Task) SetSuccess(v bool) {
 	x.xxx_hidden_Success = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 29)
 }
 
 func (x *Task) SetLogFile(v string) {
 	x.xxx_hidden_LogFile = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 29)
 }
 
 func (x *Task) SetTargets(v []string) {
@@ -666,42 +674,42 @@ func (x *Task) SetTargets(v []string) {
 
 func (x *Task) SetPlatform(v string) {
 	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 29)
 }
 
 func (x *Task) SetVia(v string) {
 	x.xxx_hidden_Via = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 29)
 }
 
 func (x *Task) SetConfigName(v string) {
 	x.xxx_hidden_ConfigName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 29)
 }
 
 func (x *Task) SetNode(v string) {
 	x.xxx_hidden_Node = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 29)
 }
 
 func (x *Task) SetManifest(v string) {
 	x.xxx_hidden_Manifest = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 29)
 }
 
 func (x *Task) SetContainer(v string) {
 	x.xxx_hidden_Container = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 29)
 }
 
 func (x *Task) SetExecutedTestsCount(v int32) {
 	x.xxx_hidden_ExecutedTestsCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 29)
 }
 
 func (x *Task) SetSucceededTestsCount(v int32) {
 	x.xxx_hidden_SucceededTestsCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 29)
 }
 
 func (x *Task) SetStartAt(v *timestamppb.Timestamp) {
@@ -722,26 +730,30 @@ func (x *Task) SetUpdatedAt(v *timestamppb.Timestamp) {
 
 func (x *Task) SetRepositoryUrl(v string) {
 	x.xxx_hidden_RepositoryUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 29)
 }
 
 func (x *Task) SetRevisionUrl(v string) {
 	x.xxx_hidden_RevisionUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 29)
 }
 
 func (x *Task) SetCpuLimit(v string) {
 	x.xxx_hidden_CpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 29)
 }
 
 func (x *Task) SetMemoryLimit(v string) {
 	x.xxx_hidden_MemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 28)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 29)
 }
 
 func (x *Task) SetTestReports(v []*TestReport) {
 	x.xxx_hidden_TestReports = &v
+}
+
+func (x *Task) SetBuildMetrics(v *BuildMetrics) {
+	x.xxx_hidden_BuildMetrics = v
 }
 
 func (x *Task) HasId() bool {
@@ -926,6 +938,13 @@ func (x *Task) HasMemoryLimit() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 26)
 }
 
+func (x *Task) HasBuildMetrics() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_BuildMetrics != nil
+}
+
 func (x *Task) ClearId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Id = 0
@@ -1052,6 +1071,10 @@ func (x *Task) ClearMemoryLimit() {
 	x.xxx_hidden_MemoryLimit = nil
 }
 
+func (x *Task) ClearBuildMetrics() {
+	x.xxx_hidden_BuildMetrics = nil
+}
+
 type Task_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1083,6 +1106,7 @@ type Task_builder struct {
 	CpuLimit               *string
 	MemoryLimit            *string
 	TestReports            []*TestReport
+	BuildMetrics           *BuildMetrics
 }
 
 func (b0 Task_builder) Build() *Task {
@@ -1090,76 +1114,76 @@ func (b0 Task_builder) Build() *Task {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 29)
 		x.xxx_hidden_Id = *b.Id
 	}
 	if b.RepositoryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 29)
 		x.xxx_hidden_RepositoryId = *b.RepositoryId
 	}
 	if b.JobName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 29)
 		x.xxx_hidden_JobName = b.JobName
 	}
 	if b.ParsedJobConfiguration != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 29)
 		x.xxx_hidden_ParsedJobConfiguration = b.ParsedJobConfiguration
 	}
 	if b.Revision != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 29)
 		x.xxx_hidden_Revision = b.Revision
 	}
 	if b.BazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 29)
 		x.xxx_hidden_BazelVersion = b.BazelVersion
 	}
 	if b.Command != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 29)
 		x.xxx_hidden_Command = b.Command
 	}
 	if b.IsTrunk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 29)
 		x.xxx_hidden_IsTrunk = *b.IsTrunk
 	}
 	if b.Success != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 29)
 		x.xxx_hidden_Success = *b.Success
 	}
 	if b.LogFile != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 29)
 		x.xxx_hidden_LogFile = b.LogFile
 	}
 	x.xxx_hidden_Targets = b.Targets
 	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 29)
 		x.xxx_hidden_Platform = b.Platform
 	}
 	if b.Via != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 29)
 		x.xxx_hidden_Via = b.Via
 	}
 	if b.ConfigName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 29)
 		x.xxx_hidden_ConfigName = b.ConfigName
 	}
 	if b.Node != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 29)
 		x.xxx_hidden_Node = b.Node
 	}
 	if b.Manifest != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 29)
 		x.xxx_hidden_Manifest = b.Manifest
 	}
 	if b.Container != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 29)
 		x.xxx_hidden_Container = b.Container
 	}
 	if b.ExecutedTestsCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 29)
 		x.xxx_hidden_ExecutedTestsCount = *b.ExecutedTestsCount
 	}
 	if b.SucceededTestsCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 29)
 		x.xxx_hidden_SucceededTestsCount = *b.SucceededTestsCount
 	}
 	x.xxx_hidden_StartAt = b.StartAt
@@ -1167,22 +1191,23 @@ func (b0 Task_builder) Build() *Task {
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	x.xxx_hidden_UpdatedAt = b.UpdatedAt
 	if b.RepositoryUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 29)
 		x.xxx_hidden_RepositoryUrl = b.RepositoryUrl
 	}
 	if b.RevisionUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 29)
 		x.xxx_hidden_RevisionUrl = b.RevisionUrl
 	}
 	if b.CpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 29)
 		x.xxx_hidden_CpuLimit = b.CpuLimit
 	}
 	if b.MemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 28)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 29)
 		x.xxx_hidden_MemoryLimit = b.MemoryLimit
 	}
 	x.xxx_hidden_TestReports = &b.TestReports
+	x.xxx_hidden_BuildMetrics = b.BuildMetrics
 	return m0
 }
 
@@ -1434,6 +1459,591 @@ func (b0 TestReport_builder) Build() *TestReport {
 	return m0
 }
 
+type BuildMetrics struct {
+	state                                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_RemoteCacheHits               int64                  `protobuf:"varint,1,opt,name=remote_cache_hits,json=remoteCacheHits"`
+	xxx_hidden_WallTimeMs                    int64                  `protobuf:"varint,2,opt,name=wall_time_ms,json=wallTimeMs"`
+	xxx_hidden_CpuTimeMs                     int64                  `protobuf:"varint,3,opt,name=cpu_time_ms,json=cpuTimeMs"`
+	xxx_hidden_AnalysisPhaseTimeMs           int64                  `protobuf:"varint,4,opt,name=analysis_phase_time_ms,json=analysisPhaseTimeMs"`
+	xxx_hidden_ExecutionPhaseTimeMs          int64                  `protobuf:"varint,5,opt,name=execution_phase_time_ms,json=executionPhaseTimeMs"`
+	xxx_hidden_ActionsCreated                int64                  `protobuf:"varint,6,opt,name=actions_created,json=actionsCreated"`
+	xxx_hidden_ActionsExecuted               int64                  `protobuf:"varint,7,opt,name=actions_executed,json=actionsExecuted"`
+	xxx_hidden_GraphActionCount              int64                  `protobuf:"varint,8,opt,name=graph_action_count,json=graphActionCount"`
+	xxx_hidden_OutputArtifactCount           int64                  `protobuf:"varint,9,opt,name=output_artifact_count,json=outputArtifactCount"`
+	xxx_hidden_SkyframeNodeCount             int64                  `protobuf:"varint,10,opt,name=skyframe_node_count,json=skyframeNodeCount"`
+	xxx_hidden_TargetsConfigured             int64                  `protobuf:"varint,11,opt,name=targets_configured,json=targetsConfigured"`
+	xxx_hidden_PackagesLoaded                int64                  `protobuf:"varint,12,opt,name=packages_loaded,json=packagesLoaded"`
+	xxx_hidden_SourceArtifactsReadBytes      int64                  `protobuf:"varint,13,opt,name=source_artifacts_read_bytes,json=sourceArtifactsReadBytes"`
+	xxx_hidden_SourceArtifactsReadCount      int64                  `protobuf:"varint,14,opt,name=source_artifacts_read_count,json=sourceArtifactsReadCount"`
+	xxx_hidden_OutputArtifactsSeenBytes      int64                  `protobuf:"varint,15,opt,name=output_artifacts_seen_bytes,json=outputArtifactsSeenBytes"`
+	xxx_hidden_OutputArtifactsSeenCount      int64                  `protobuf:"varint,16,opt,name=output_artifacts_seen_count,json=outputArtifactsSeenCount"`
+	xxx_hidden_OutputArtifactsFromCacheBytes int64                  `protobuf:"varint,17,opt,name=output_artifacts_from_cache_bytes,json=outputArtifactsFromCacheBytes"`
+	xxx_hidden_OutputArtifactsFromCacheCount int64                  `protobuf:"varint,18,opt,name=output_artifacts_from_cache_count,json=outputArtifactsFromCacheCount"`
+	XXX_raceDetectHookData                   protoimpl.RaceDetectHookData
+	XXX_presence                             [1]uint32
+	unknownFields                            protoimpl.UnknownFields
+	sizeCache                                protoimpl.SizeCache
+}
+
+func (x *BuildMetrics) Reset() {
+	*x = BuildMetrics{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BuildMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BuildMetrics) ProtoMessage() {}
+
+func (x *BuildMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *BuildMetrics) GetRemoteCacheHits() int64 {
+	if x != nil {
+		return x.xxx_hidden_RemoteCacheHits
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetWallTimeMs() int64 {
+	if x != nil {
+		return x.xxx_hidden_WallTimeMs
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetCpuTimeMs() int64 {
+	if x != nil {
+		return x.xxx_hidden_CpuTimeMs
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetAnalysisPhaseTimeMs() int64 {
+	if x != nil {
+		return x.xxx_hidden_AnalysisPhaseTimeMs
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetExecutionPhaseTimeMs() int64 {
+	if x != nil {
+		return x.xxx_hidden_ExecutionPhaseTimeMs
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetActionsCreated() int64 {
+	if x != nil {
+		return x.xxx_hidden_ActionsCreated
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetActionsExecuted() int64 {
+	if x != nil {
+		return x.xxx_hidden_ActionsExecuted
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetGraphActionCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_GraphActionCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetOutputArtifactCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_OutputArtifactCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetSkyframeNodeCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_SkyframeNodeCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetTargetsConfigured() int64 {
+	if x != nil {
+		return x.xxx_hidden_TargetsConfigured
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetPackagesLoaded() int64 {
+	if x != nil {
+		return x.xxx_hidden_PackagesLoaded
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetSourceArtifactsReadBytes() int64 {
+	if x != nil {
+		return x.xxx_hidden_SourceArtifactsReadBytes
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetSourceArtifactsReadCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_SourceArtifactsReadCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetOutputArtifactsSeenBytes() int64 {
+	if x != nil {
+		return x.xxx_hidden_OutputArtifactsSeenBytes
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetOutputArtifactsSeenCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_OutputArtifactsSeenCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetOutputArtifactsFromCacheBytes() int64 {
+	if x != nil {
+		return x.xxx_hidden_OutputArtifactsFromCacheBytes
+	}
+	return 0
+}
+
+func (x *BuildMetrics) GetOutputArtifactsFromCacheCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_OutputArtifactsFromCacheCount
+	}
+	return 0
+}
+
+func (x *BuildMetrics) SetRemoteCacheHits(v int64) {
+	x.xxx_hidden_RemoteCacheHits = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 18)
+}
+
+func (x *BuildMetrics) SetWallTimeMs(v int64) {
+	x.xxx_hidden_WallTimeMs = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 18)
+}
+
+func (x *BuildMetrics) SetCpuTimeMs(v int64) {
+	x.xxx_hidden_CpuTimeMs = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 18)
+}
+
+func (x *BuildMetrics) SetAnalysisPhaseTimeMs(v int64) {
+	x.xxx_hidden_AnalysisPhaseTimeMs = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 18)
+}
+
+func (x *BuildMetrics) SetExecutionPhaseTimeMs(v int64) {
+	x.xxx_hidden_ExecutionPhaseTimeMs = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 18)
+}
+
+func (x *BuildMetrics) SetActionsCreated(v int64) {
+	x.xxx_hidden_ActionsCreated = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 18)
+}
+
+func (x *BuildMetrics) SetActionsExecuted(v int64) {
+	x.xxx_hidden_ActionsExecuted = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 18)
+}
+
+func (x *BuildMetrics) SetGraphActionCount(v int64) {
+	x.xxx_hidden_GraphActionCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
+}
+
+func (x *BuildMetrics) SetOutputArtifactCount(v int64) {
+	x.xxx_hidden_OutputArtifactCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
+}
+
+func (x *BuildMetrics) SetSkyframeNodeCount(v int64) {
+	x.xxx_hidden_SkyframeNodeCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
+}
+
+func (x *BuildMetrics) SetTargetsConfigured(v int64) {
+	x.xxx_hidden_TargetsConfigured = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
+}
+
+func (x *BuildMetrics) SetPackagesLoaded(v int64) {
+	x.xxx_hidden_PackagesLoaded = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 18)
+}
+
+func (x *BuildMetrics) SetSourceArtifactsReadBytes(v int64) {
+	x.xxx_hidden_SourceArtifactsReadBytes = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 18)
+}
+
+func (x *BuildMetrics) SetSourceArtifactsReadCount(v int64) {
+	x.xxx_hidden_SourceArtifactsReadCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 18)
+}
+
+func (x *BuildMetrics) SetOutputArtifactsSeenBytes(v int64) {
+	x.xxx_hidden_OutputArtifactsSeenBytes = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 18)
+}
+
+func (x *BuildMetrics) SetOutputArtifactsSeenCount(v int64) {
+	x.xxx_hidden_OutputArtifactsSeenCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 18)
+}
+
+func (x *BuildMetrics) SetOutputArtifactsFromCacheBytes(v int64) {
+	x.xxx_hidden_OutputArtifactsFromCacheBytes = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 18)
+}
+
+func (x *BuildMetrics) SetOutputArtifactsFromCacheCount(v int64) {
+	x.xxx_hidden_OutputArtifactsFromCacheCount = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 18)
+}
+
+func (x *BuildMetrics) HasRemoteCacheHits() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *BuildMetrics) HasWallTimeMs() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *BuildMetrics) HasCpuTimeMs() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *BuildMetrics) HasAnalysisPhaseTimeMs() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *BuildMetrics) HasExecutionPhaseTimeMs() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *BuildMetrics) HasActionsCreated() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *BuildMetrics) HasActionsExecuted() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *BuildMetrics) HasGraphActionCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *BuildMetrics) HasOutputArtifactCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *BuildMetrics) HasSkyframeNodeCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *BuildMetrics) HasTargetsConfigured() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *BuildMetrics) HasPackagesLoaded() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *BuildMetrics) HasSourceArtifactsReadBytes() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *BuildMetrics) HasSourceArtifactsReadCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *BuildMetrics) HasOutputArtifactsSeenBytes() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
+}
+
+func (x *BuildMetrics) HasOutputArtifactsSeenCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
+}
+
+func (x *BuildMetrics) HasOutputArtifactsFromCacheBytes() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
+}
+
+func (x *BuildMetrics) HasOutputArtifactsFromCacheCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
+}
+
+func (x *BuildMetrics) ClearRemoteCacheHits() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_RemoteCacheHits = 0
+}
+
+func (x *BuildMetrics) ClearWallTimeMs() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_WallTimeMs = 0
+}
+
+func (x *BuildMetrics) ClearCpuTimeMs() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_CpuTimeMs = 0
+}
+
+func (x *BuildMetrics) ClearAnalysisPhaseTimeMs() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_AnalysisPhaseTimeMs = 0
+}
+
+func (x *BuildMetrics) ClearExecutionPhaseTimeMs() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_ExecutionPhaseTimeMs = 0
+}
+
+func (x *BuildMetrics) ClearActionsCreated() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_ActionsCreated = 0
+}
+
+func (x *BuildMetrics) ClearActionsExecuted() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_ActionsExecuted = 0
+}
+
+func (x *BuildMetrics) ClearGraphActionCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_GraphActionCount = 0
+}
+
+func (x *BuildMetrics) ClearOutputArtifactCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_OutputArtifactCount = 0
+}
+
+func (x *BuildMetrics) ClearSkyframeNodeCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_SkyframeNodeCount = 0
+}
+
+func (x *BuildMetrics) ClearTargetsConfigured() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_TargetsConfigured = 0
+}
+
+func (x *BuildMetrics) ClearPackagesLoaded() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_PackagesLoaded = 0
+}
+
+func (x *BuildMetrics) ClearSourceArtifactsReadBytes() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_SourceArtifactsReadBytes = 0
+}
+
+func (x *BuildMetrics) ClearSourceArtifactsReadCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_SourceArtifactsReadCount = 0
+}
+
+func (x *BuildMetrics) ClearOutputArtifactsSeenBytes() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	x.xxx_hidden_OutputArtifactsSeenBytes = 0
+}
+
+func (x *BuildMetrics) ClearOutputArtifactsSeenCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	x.xxx_hidden_OutputArtifactsSeenCount = 0
+}
+
+func (x *BuildMetrics) ClearOutputArtifactsFromCacheBytes() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
+	x.xxx_hidden_OutputArtifactsFromCacheBytes = 0
+}
+
+func (x *BuildMetrics) ClearOutputArtifactsFromCacheCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	x.xxx_hidden_OutputArtifactsFromCacheCount = 0
+}
+
+type BuildMetrics_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	RemoteCacheHits               *int64
+	WallTimeMs                    *int64
+	CpuTimeMs                     *int64
+	AnalysisPhaseTimeMs           *int64
+	ExecutionPhaseTimeMs          *int64
+	ActionsCreated                *int64
+	ActionsExecuted               *int64
+	GraphActionCount              *int64
+	OutputArtifactCount           *int64
+	SkyframeNodeCount             *int64
+	TargetsConfigured             *int64
+	PackagesLoaded                *int64
+	SourceArtifactsReadBytes      *int64
+	SourceArtifactsReadCount      *int64
+	OutputArtifactsSeenBytes      *int64
+	OutputArtifactsSeenCount      *int64
+	OutputArtifactsFromCacheBytes *int64
+	OutputArtifactsFromCacheCount *int64
+}
+
+func (b0 BuildMetrics_builder) Build() *BuildMetrics {
+	m0 := &BuildMetrics{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.RemoteCacheHits != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 18)
+		x.xxx_hidden_RemoteCacheHits = *b.RemoteCacheHits
+	}
+	if b.WallTimeMs != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 18)
+		x.xxx_hidden_WallTimeMs = *b.WallTimeMs
+	}
+	if b.CpuTimeMs != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 18)
+		x.xxx_hidden_CpuTimeMs = *b.CpuTimeMs
+	}
+	if b.AnalysisPhaseTimeMs != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 18)
+		x.xxx_hidden_AnalysisPhaseTimeMs = *b.AnalysisPhaseTimeMs
+	}
+	if b.ExecutionPhaseTimeMs != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 18)
+		x.xxx_hidden_ExecutionPhaseTimeMs = *b.ExecutionPhaseTimeMs
+	}
+	if b.ActionsCreated != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 18)
+		x.xxx_hidden_ActionsCreated = *b.ActionsCreated
+	}
+	if b.ActionsExecuted != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 18)
+		x.xxx_hidden_ActionsExecuted = *b.ActionsExecuted
+	}
+	if b.GraphActionCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
+		x.xxx_hidden_GraphActionCount = *b.GraphActionCount
+	}
+	if b.OutputArtifactCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
+		x.xxx_hidden_OutputArtifactCount = *b.OutputArtifactCount
+	}
+	if b.SkyframeNodeCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
+		x.xxx_hidden_SkyframeNodeCount = *b.SkyframeNodeCount
+	}
+	if b.TargetsConfigured != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
+		x.xxx_hidden_TargetsConfigured = *b.TargetsConfigured
+	}
+	if b.PackagesLoaded != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 18)
+		x.xxx_hidden_PackagesLoaded = *b.PackagesLoaded
+	}
+	if b.SourceArtifactsReadBytes != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 18)
+		x.xxx_hidden_SourceArtifactsReadBytes = *b.SourceArtifactsReadBytes
+	}
+	if b.SourceArtifactsReadCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 18)
+		x.xxx_hidden_SourceArtifactsReadCount = *b.SourceArtifactsReadCount
+	}
+	if b.OutputArtifactsSeenBytes != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 18)
+		x.xxx_hidden_OutputArtifactsSeenBytes = *b.OutputArtifactsSeenBytes
+	}
+	if b.OutputArtifactsSeenCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 18)
+		x.xxx_hidden_OutputArtifactsSeenCount = *b.OutputArtifactsSeenCount
+	}
+	if b.OutputArtifactsFromCacheBytes != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 18)
+		x.xxx_hidden_OutputArtifactsFromCacheBytes = *b.OutputArtifactsFromCacheBytes
+	}
+	if b.OutputArtifactsFromCacheCount != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 18)
+		x.xxx_hidden_OutputArtifactsFromCacheCount = *b.OutputArtifactsFromCacheCount
+	}
+	return m0
+}
+
 type GithubEvent struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id            int32                  `protobuf:"varint,1,opt,name=id"`
@@ -1455,7 +2065,7 @@ type GithubEvent struct {
 
 func (x *GithubEvent) Reset() {
 	*x = GithubEvent{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1467,7 +2077,7 @@ func (x *GithubEvent) String() string {
 func (*GithubEvent) ProtoMessage() {}
 
 func (x *GithubEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1844,7 +2454,7 @@ type ExternalReleaseTrigger struct {
 
 func (x *ExternalReleaseTrigger) Reset() {
 	*x = ExternalReleaseTrigger{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1856,7 +2466,7 @@ func (x *ExternalReleaseTrigger) String() string {
 func (*ExternalReleaseTrigger) ProtoMessage() {}
 
 func (x *ExternalReleaseTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2234,7 +2844,7 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1b\n" +
 	"\tclone_url\x18\x04 \x01(\tR\bcloneUrl\x12\x18\n" +
 	"\aprivate\x18\x05 \x01(\bR\aprivate\x12#\n" +
-	"\rhead_revision\x18\a \x01(\tR\fheadRevision\"\x8d\b\n" +
+	"\rhead_revision\x18\a \x01(\tR\fheadRevision\"\xd2\b\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x19\n" +
@@ -2268,7 +2878,8 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\frevision_url\x18\x19 \x01(\tR\vrevisionUrl\x12\x1b\n" +
 	"\tcpu_limit\x18\x1a \x01(\tR\bcpuLimit\x12!\n" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
-	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\">\n" +
+	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x12C\n" +
+	"\rbuild_metrics\x18\x1d \x01(\v2\x1e.mono.build.model.BuildMetricsR\fbuildMetrics\">\n" +
 	"\x03Job\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\"t\n" +
@@ -2276,7 +2887,28 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"TestReport\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x124\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1c.mono.build.model.TestStatusR\x06status\x12\x1a\n" +
-	"\bduration\x18\x03 \x01(\x03R\bduration\"\xff\x02\n" +
+	"\bduration\x18\x03 \x01(\x03R\bduration\"\xb6\a\n" +
+	"\fBuildMetrics\x12*\n" +
+	"\x11remote_cache_hits\x18\x01 \x01(\x03R\x0fremoteCacheHits\x12 \n" +
+	"\fwall_time_ms\x18\x02 \x01(\x03R\n" +
+	"wallTimeMs\x12\x1e\n" +
+	"\vcpu_time_ms\x18\x03 \x01(\x03R\tcpuTimeMs\x123\n" +
+	"\x16analysis_phase_time_ms\x18\x04 \x01(\x03R\x13analysisPhaseTimeMs\x125\n" +
+	"\x17execution_phase_time_ms\x18\x05 \x01(\x03R\x14executionPhaseTimeMs\x12'\n" +
+	"\x0factions_created\x18\x06 \x01(\x03R\x0eactionsCreated\x12)\n" +
+	"\x10actions_executed\x18\a \x01(\x03R\x0factionsExecuted\x12,\n" +
+	"\x12graph_action_count\x18\b \x01(\x03R\x10graphActionCount\x122\n" +
+	"\x15output_artifact_count\x18\t \x01(\x03R\x13outputArtifactCount\x12.\n" +
+	"\x13skyframe_node_count\x18\n" +
+	" \x01(\x03R\x11skyframeNodeCount\x12-\n" +
+	"\x12targets_configured\x18\v \x01(\x03R\x11targetsConfigured\x12'\n" +
+	"\x0fpackages_loaded\x18\f \x01(\x03R\x0epackagesLoaded\x12=\n" +
+	"\x1bsource_artifacts_read_bytes\x18\r \x01(\x03R\x18sourceArtifactsReadBytes\x12=\n" +
+	"\x1bsource_artifacts_read_count\x18\x0e \x01(\x03R\x18sourceArtifactsReadCount\x12=\n" +
+	"\x1boutput_artifacts_seen_bytes\x18\x0f \x01(\x03R\x18outputArtifactsSeenBytes\x12=\n" +
+	"\x1boutput_artifacts_seen_count\x18\x10 \x01(\x03R\x18outputArtifactsSeenCount\x12H\n" +
+	"!output_artifacts_from_cache_bytes\x18\x11 \x01(\x03R\x1doutputArtifactsFromCacheBytes\x12H\n" +
+	"!output_artifacts_from_cache_count\x18\x12 \x01(\x03R\x1doutputArtifactsFromCacheCount\"\xff\x02\n" +
 	"\vGithubEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1f\n" +
 	"\vdelivery_id\x18\x02 \x01(\tR\n" +
@@ -2318,31 +2950,33 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\x12TEST_STATUS_FAILED\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_build_model_msg_proto_goTypes = []any{
 	(TestStatus)(0),                // 0: mono.build.model.TestStatus
 	(*Repository)(nil),             // 1: mono.build.model.Repository
 	(*Task)(nil),                   // 2: mono.build.model.Task
 	(*Job)(nil),                    // 3: mono.build.model.Job
 	(*TestReport)(nil),             // 4: mono.build.model.TestReport
-	(*GithubEvent)(nil),            // 5: mono.build.model.GithubEvent
-	(*ExternalReleaseTrigger)(nil), // 6: mono.build.model.ExternalReleaseTrigger
-	(*timestamppb.Timestamp)(nil),  // 7: google.protobuf.Timestamp
+	(*BuildMetrics)(nil),           // 5: mono.build.model.BuildMetrics
+	(*GithubEvent)(nil),            // 6: mono.build.model.GithubEvent
+	(*ExternalReleaseTrigger)(nil), // 7: mono.build.model.ExternalReleaseTrigger
+	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
 }
 var file_proto_build_model_msg_proto_depIdxs = []int32{
-	7, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
-	7, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
-	7, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
-	7, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
+	8, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
+	8, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
+	8, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
+	8, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
 	4, // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
-	0, // 5: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
-	7, // 6: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
-	7, // 7: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	5, // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
+	0, // 6: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
+	8, // 7: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
+	8, // 8: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_model_msg_proto_init() }
@@ -2356,7 +2990,7 @@ func file_proto_build_model_msg_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_model_msg_proto_rawDesc), len(file_proto_build_model_msg_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

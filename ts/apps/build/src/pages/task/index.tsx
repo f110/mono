@@ -40,13 +40,30 @@ import { useForceStopTask } from '../../hooks/useForceStopTask.ts'
 import { useGetServerInfo } from '../../hooks/useGetServerInfo.ts'
 import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
-import { TestStatus } from '../../model/msg_pb'
+import { type BuildMetrics, TestStatus } from '../../model/msg_pb'
 
 const DefinitionTableCell = styled(TableCell)(({ theme }) => ({
   '&:first-child': {
     backgroundColor: theme.palette.action.hover,
   },
 }))
+
+const formatMs = (ms: bigint): string => {
+  const n = Number(ms)
+  return n < 1000 ? `${n} ms` : `${(n / 1000).toFixed(2)} s`
+}
+
+const formatBytes = (b: bigint): string =>
+  `${(Number(b) / (1024 * 1024)).toFixed(1)} MiB`
+
+// cacheHitRate reports the remote cache hit rate. CI jobs always start with a cold
+// local cache, so every action is either a remote cache hit or actually executed.
+const cacheHitRate = (bm: BuildMetrics): string => {
+  const hits = Number(bm.remoteCacheHits)
+  const total = hits + Number(bm.actionsExecuted)
+  const pct = total > 0 ? ((hits / total) * 100).toFixed(1) : '0.0'
+  return `${pct}% (${hits} / ${total})`
+}
 
 export const TaskPage: React.FC = () => {
   const { taskId } = useParams({ strict: false })
@@ -251,6 +268,87 @@ export const TaskPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {task?.buildMetrics && (
+            <>
+              <Typography variant="h6">Build metrics</Typography>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Remote cache hit rate
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {cacheHitRate(task.buildMetrics)}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>Wall / CPU time</DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {formatMs(task.buildMetrics.wallTimeMs)} /{' '}
+                        {formatMs(task.buildMetrics.cpuTimeMs)}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Analysis / Execution phase
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {formatMs(task.buildMetrics.analysisPhaseTimeMs)} /{' '}
+                        {formatMs(task.buildMetrics.executionPhaseTimeMs)}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Actions (created / executed)
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {`${task.buildMetrics.actionsCreated} / ${task.buildMetrics.actionsExecuted}`}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Graph action count
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {`${task.buildMetrics.graphActionCount}`}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Targets / Packages
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {`${task.buildMetrics.targetsConfigured} / ${task.buildMetrics.packagesLoaded}`}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>Skyframe nodes</DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {`${task.buildMetrics.skyframeNodeCount}`}
+                      </DefinitionTableCell>
+                    </TableRow>
+                    <TableRow>
+                      <DefinitionTableCell>
+                        Artifacts read / seen / from cache
+                      </DefinitionTableCell>
+                      <DefinitionTableCell>
+                        {formatBytes(task.buildMetrics.sourceArtifactsReadBytes)}{' '}
+                        /{' '}
+                        {formatBytes(task.buildMetrics.outputArtifactsSeenBytes)}{' '}
+                        /{' '}
+                        {formatBytes(
+                          task.buildMetrics.outputArtifactsFromCacheBytes,
+                        )}
+                      </DefinitionTableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
+
           <Stack direction="row" sx={{ width: '100%' }} spacing={2}>
             <Button
               variant="contained"

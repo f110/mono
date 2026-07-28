@@ -183,6 +183,42 @@ message TestReport {
   };
 }
 
+// BuildMetrics stores the build-wide statistics extracted from Bazel's
+// BuildMetrics event (via the report sidecar) for a single Task. `task` is the
+// primary key, expressing the 1:1 relationship (one Task has at most one row).
+message BuildMetrics {
+  Task  task                              = 1;
+  int64 remote_cache_hits                 = 2;
+  int64 wall_time_ms                      = 3;
+  int64 cpu_time_ms                       = 4;
+  int64 analysis_phase_time_ms            = 5;
+  int64 execution_phase_time_ms           = 6;
+  int64 actions_created                   = 7;
+  int64 actions_executed                  = 8;
+  int64 graph_action_count                = 9;
+  int64 output_artifact_count             = 10;
+  int64 skyframe_node_count               = 11;
+  int64 targets_configured                = 12;
+  int64 packages_loaded                   = 13;
+  int64 source_artifacts_read_bytes       = 14;
+  int64 source_artifacts_read_count       = 15;
+  int64 output_artifacts_seen_bytes       = 16;
+  int64 output_artifacts_seen_count       = 17;
+  int64 output_artifacts_from_cache_bytes = 18;
+  int64 output_artifacts_from_cache_count = 19;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "task"
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTaskId"
+      query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"
+    }
+  };
+}
+
 // Job lists the manually-triggerable jobs (i.e. those whose Event includes
 // EventManual) defined in the default branch of the source repository. Jobs
 // that are not manually triggerable (push-only, external_release, etc.) are

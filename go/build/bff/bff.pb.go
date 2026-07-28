@@ -3067,6 +3067,7 @@ type BFFTask struct {
 	xxx_hidden_MemoryLimit            *string                `protobuf:"bytes,27,opt,name=memory_limit,json=memoryLimit"`
 	xxx_hidden_TestReports            *[]*model.TestReport   `protobuf:"bytes,28,rep,name=test_reports,json=testReports"`
 	xxx_hidden_Duration               *durationpb.Duration   `protobuf:"bytes,29,opt,name=duration"`
+	xxx_hidden_BuildMetrics           *model.BuildMetrics    `protobuf:"bytes,30,opt,name=build_metrics,json=buildMetrics"`
 	XXX_raceDetectHookData            protoimpl.RaceDetectHookData
 	XXX_presence                      [1]uint32
 	unknownFields                     protoimpl.UnknownFields
@@ -3351,9 +3352,16 @@ func (x *BFFTask) GetDuration() *durationpb.Duration {
 	return nil
 }
 
+func (x *BFFTask) GetBuildMetrics() *model.BuildMetrics {
+	if x != nil {
+		return x.xxx_hidden_BuildMetrics
+	}
+	return nil
+}
+
 func (x *BFFTask) SetId(v int32) {
 	x.xxx_hidden_Id = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 30)
 }
 
 func (x *BFFTask) SetRepository(v *model.Repository) {
@@ -3362,42 +3370,42 @@ func (x *BFFTask) SetRepository(v *model.Repository) {
 
 func (x *BFFTask) SetJobName(v string) {
 	x.xxx_hidden_JobName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 30)
 }
 
 func (x *BFFTask) SetParsedJobConfiguration(v string) {
 	x.xxx_hidden_ParsedJobConfiguration = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 30)
 }
 
 func (x *BFFTask) SetRevision(v string) {
 	x.xxx_hidden_Revision = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 30)
 }
 
 func (x *BFFTask) SetBazelVersion(v string) {
 	x.xxx_hidden_BazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 30)
 }
 
 func (x *BFFTask) SetCommand(v string) {
 	x.xxx_hidden_Command = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 30)
 }
 
 func (x *BFFTask) SetIsTrunk(v bool) {
 	x.xxx_hidden_IsTrunk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 30)
 }
 
 func (x *BFFTask) SetSuccess(v bool) {
 	x.xxx_hidden_Success = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 30)
 }
 
 func (x *BFFTask) SetLogFile(v string) {
 	x.xxx_hidden_LogFile = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 30)
 }
 
 func (x *BFFTask) SetTargets(v []string) {
@@ -3406,42 +3414,42 @@ func (x *BFFTask) SetTargets(v []string) {
 
 func (x *BFFTask) SetPlatform(v string) {
 	x.xxx_hidden_Platform = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 30)
 }
 
 func (x *BFFTask) SetVia(v string) {
 	x.xxx_hidden_Via = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 30)
 }
 
 func (x *BFFTask) SetConfigName(v string) {
 	x.xxx_hidden_ConfigName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 30)
 }
 
 func (x *BFFTask) SetNode(v string) {
 	x.xxx_hidden_Node = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 30)
 }
 
 func (x *BFFTask) SetManifest(v string) {
 	x.xxx_hidden_Manifest = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 30)
 }
 
 func (x *BFFTask) SetContainer(v string) {
 	x.xxx_hidden_Container = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 30)
 }
 
 func (x *BFFTask) SetExecutedTestsCount(v int32) {
 	x.xxx_hidden_ExecutedTestsCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 30)
 }
 
 func (x *BFFTask) SetSucceededTestsCount(v int32) {
 	x.xxx_hidden_SucceededTestsCount = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 30)
 }
 
 func (x *BFFTask) SetStartAt(v *timestamppb.Timestamp) {
@@ -3462,22 +3470,22 @@ func (x *BFFTask) SetUpdatedAt(v *timestamppb.Timestamp) {
 
 func (x *BFFTask) SetRepositoryUrl(v string) {
 	x.xxx_hidden_RepositoryUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 30)
 }
 
 func (x *BFFTask) SetRevisionUrl(v string) {
 	x.xxx_hidden_RevisionUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 30)
 }
 
 func (x *BFFTask) SetCpuLimit(v string) {
 	x.xxx_hidden_CpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 30)
 }
 
 func (x *BFFTask) SetMemoryLimit(v string) {
 	x.xxx_hidden_MemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 29)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 30)
 }
 
 func (x *BFFTask) SetTestReports(v []*model.TestReport) {
@@ -3486,6 +3494,10 @@ func (x *BFFTask) SetTestReports(v []*model.TestReport) {
 
 func (x *BFFTask) SetDuration(v *durationpb.Duration) {
 	x.xxx_hidden_Duration = v
+}
+
+func (x *BFFTask) SetBuildMetrics(v *model.BuildMetrics) {
+	x.xxx_hidden_BuildMetrics = v
 }
 
 func (x *BFFTask) HasId() bool {
@@ -3677,6 +3689,13 @@ func (x *BFFTask) HasDuration() bool {
 	return x.xxx_hidden_Duration != nil
 }
 
+func (x *BFFTask) HasBuildMetrics() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_BuildMetrics != nil
+}
+
 func (x *BFFTask) ClearId() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Id = 0
@@ -3806,6 +3825,10 @@ func (x *BFFTask) ClearDuration() {
 	x.xxx_hidden_Duration = nil
 }
 
+func (x *BFFTask) ClearBuildMetrics() {
+	x.xxx_hidden_BuildMetrics = nil
+}
+
 type BFFTask_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3838,6 +3861,7 @@ type BFFTask_builder struct {
 	MemoryLimit            *string
 	TestReports            []*model.TestReport
 	Duration               *durationpb.Duration
+	BuildMetrics           *model.BuildMetrics
 }
 
 func (b0 BFFTask_builder) Build() *BFFTask {
@@ -3845,73 +3869,73 @@ func (b0 BFFTask_builder) Build() *BFFTask {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Id != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 30)
 		x.xxx_hidden_Id = *b.Id
 	}
 	x.xxx_hidden_Repository = b.Repository
 	if b.JobName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 30)
 		x.xxx_hidden_JobName = b.JobName
 	}
 	if b.ParsedJobConfiguration != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 30)
 		x.xxx_hidden_ParsedJobConfiguration = b.ParsedJobConfiguration
 	}
 	if b.Revision != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 30)
 		x.xxx_hidden_Revision = b.Revision
 	}
 	if b.BazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 30)
 		x.xxx_hidden_BazelVersion = b.BazelVersion
 	}
 	if b.Command != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 30)
 		x.xxx_hidden_Command = b.Command
 	}
 	if b.IsTrunk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 30)
 		x.xxx_hidden_IsTrunk = *b.IsTrunk
 	}
 	if b.Success != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 30)
 		x.xxx_hidden_Success = *b.Success
 	}
 	if b.LogFile != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 30)
 		x.xxx_hidden_LogFile = b.LogFile
 	}
 	x.xxx_hidden_Targets = b.Targets
 	if b.Platform != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 30)
 		x.xxx_hidden_Platform = b.Platform
 	}
 	if b.Via != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 30)
 		x.xxx_hidden_Via = b.Via
 	}
 	if b.ConfigName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 30)
 		x.xxx_hidden_ConfigName = b.ConfigName
 	}
 	if b.Node != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 30)
 		x.xxx_hidden_Node = b.Node
 	}
 	if b.Manifest != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 30)
 		x.xxx_hidden_Manifest = b.Manifest
 	}
 	if b.Container != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 30)
 		x.xxx_hidden_Container = b.Container
 	}
 	if b.ExecutedTestsCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 30)
 		x.xxx_hidden_ExecutedTestsCount = *b.ExecutedTestsCount
 	}
 	if b.SucceededTestsCount != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 30)
 		x.xxx_hidden_SucceededTestsCount = *b.SucceededTestsCount
 	}
 	x.xxx_hidden_StartAt = b.StartAt
@@ -3919,23 +3943,24 @@ func (b0 BFFTask_builder) Build() *BFFTask {
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	x.xxx_hidden_UpdatedAt = b.UpdatedAt
 	if b.RepositoryUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 30)
 		x.xxx_hidden_RepositoryUrl = b.RepositoryUrl
 	}
 	if b.RevisionUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 30)
 		x.xxx_hidden_RevisionUrl = b.RevisionUrl
 	}
 	if b.CpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 30)
 		x.xxx_hidden_CpuLimit = b.CpuLimit
 	}
 	if b.MemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 29)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 30)
 		x.xxx_hidden_MemoryLimit = b.MemoryLimit
 	}
 	x.xxx_hidden_TestReports = &b.TestReports
 	x.xxx_hidden_Duration = b.Duration
+	x.xxx_hidden_BuildMetrics = b.BuildMetrics
 	return m0
 }
 
@@ -4038,7 +4063,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x0fhead_commit_sha\x18\x01 \x01(\tR\rheadCommitSha\x12.\n" +
 	"\x13head_commit_message\x18\x02 \x01(\tR\x11headCommitMessage\x12,\n" +
 	"\x12head_commit_author\x18\x03 \x01(\tR\x10headCommitAuthor\x12D\n" +
-	"\x10head_commit_when\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eheadCommitWhen\"\xe0\b\n" +
+	"\x10head_commit_when\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0eheadCommitWhen\"\xa5\t\n" +
 	"\aBFFTask\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12<\n" +
 	"\n" +
@@ -4075,7 +4100,8 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\tcpu_limit\x18\x1a \x01(\tR\bcpuLimit\x12!\n" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
 	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x125\n" +
-	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\x9d\v\n" +
+	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration\x12C\n" +
+	"\rbuild_metrics\x18\x1e \x01(\v2\x1e.mono.build.model.BuildMetricsR\fbuildMetrics2\x9d\v\n" +
 	"\x03BFF\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.bff.RequestListRepositories\x1a(.mono.build.bff.ResponseListRepositories\x12P\n" +
 	"\tListTasks\x12 .mono.build.bff.RequestListTasks\x1a!.mono.build.bff.ResponseListTasks\x12J\n" +
@@ -4135,6 +4161,7 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),               // 37: google.protobuf.Timestamp
 	(*model.TestReport)(nil),                    // 38: mono.build.model.TestReport
 	(*durationpb.Duration)(nil),                 // 39: google.protobuf.Duration
+	(*model.BuildMetrics)(nil),                  // 40: mono.build.model.BuildMetrics
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
 	33, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
@@ -4154,41 +4181,42 @@ var file_proto_build_bff_bff_proto_depIdxs = []int32{
 	37, // 14: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
 	38, // 15: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
 	39, // 16: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
-	0,  // 17: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
-	2,  // 18: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
-	4,  // 19: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
-	6,  // 20: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
-	9,  // 21: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
-	11, // 22: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
-	13, // 23: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
-	15, // 24: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
-	17, // 25: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
-	19, // 26: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
-	21, // 27: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
-	23, // 28: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
-	25, // 29: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
-	28, // 30: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
-	30, // 31: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
-	1,  // 32: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 33: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 34: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 35: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	10, // 36: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	12, // 37: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	14, // 38: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	16, // 39: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	18, // 40: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	20, // 41: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
-	22, // 42: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
-	24, // 43: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
-	26, // 44: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
-	29, // 45: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
-	31, // 46: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
-	32, // [32:47] is the sub-list for method output_type
-	17, // [17:32] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	40, // 17: mono.build.bff.BFFTask.build_metrics:type_name -> mono.build.model.BuildMetrics
+	0,  // 18: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
+	2,  // 19: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
+	4,  // 20: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
+	6,  // 21: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
+	9,  // 22: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
+	11, // 23: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
+	13, // 24: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
+	15, // 25: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
+	17, // 26: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
+	19, // 27: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
+	21, // 28: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
+	23, // 29: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
+	25, // 30: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
+	28, // 31: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
+	30, // 32: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
+	1,  // 33: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 34: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 35: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 36: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	10, // 37: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	12, // 38: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	14, // 39: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	16, // 40: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	18, // 41: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	20, // 42: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	22, // 43: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
+	24, // 44: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
+	26, // 45: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
+	29, // 46: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
+	31, // 47: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
+	33, // [33:48] is the sub-list for method output_type
+	18, // [18:33] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_bff_bff_proto_init() }

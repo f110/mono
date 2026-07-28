@@ -1475,18 +1475,11 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		taskPrimaryKeys := make([]int32, len(res))
 		repositoryPrimaryKeys := make([]int32, len(res))
+		taskPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			taskPrimaryKeys[i] = v.TaskId
 			repositoryPrimaryKeys[i] = v.RepositoryId
-		}
-		taskData := make(map[int32]*database.Task)
-		{
-			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
-			for _, v := range rels {
-				taskData[v.Id] = v
-			}
+			taskPrimaryKeys[i] = v.TaskId
 		}
 		repositoryData := make(map[int32]*database.SourceRepository)
 		{
@@ -1495,9 +1488,16 @@ func (d *TestReport) ListByTaskId(ctx context.Context, taskId int32, opt ...List
 				repositoryData[v.Id] = v
 			}
 		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Task = taskData[v.TaskId]
 			v.Repository = repositoryData[v.RepositoryId]
+			v.Task = taskData[v.TaskId]
 		}
 	}
 
@@ -1599,6 +1599,255 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 	}
 
 	testReport.ResetMark()
+	return nil
+}
+
+type BuildMetrics struct {
+	conn *sql.DB
+
+	task *Task
+}
+
+type BuildMetricsInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, taskId int32) (*database.BuildMetrics, error)
+	SelectMulti(ctx context.Context, taskId ...int32) ([]*database.BuildMetrics, error)
+	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.BuildMetrics, error)
+	Create(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) (*database.BuildMetrics, error)
+	Update(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) error
+	Delete(ctx context.Context, taskId int32, opt ...ExecOption) error
+}
+
+var _ BuildMetricsInterface = (*BuildMetrics)(nil)
+
+func NewBuildMetrics(conn *sql.DB) *BuildMetrics {
+	return &BuildMetrics{
+		conn: conn,
+		task: NewTask(conn),
+	}
+}
+
+func (d *BuildMetrics) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *BuildMetrics) Select(ctx context.Context, taskId int32) (*database.BuildMetrics, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `build_metrics` WHERE `task_id` = ?", taskId)
+
+	v := &database.BuildMetrics{}
+	if err := row.Scan(&v.TaskId, &v.RemoteCacheHits, &v.WallTimeMs, &v.CpuTimeMs, &v.AnalysisPhaseTimeMs, &v.ExecutionPhaseTimeMs, &v.ActionsCreated, &v.ActionsExecuted, &v.GraphActionCount, &v.OutputArtifactCount, &v.SkyframeNodeCount, &v.TargetsConfigured, &v.PackagesLoaded, &v.SourceArtifactsReadBytes, &v.SourceArtifactsReadCount, &v.OutputArtifactsSeenBytes, &v.OutputArtifactsSeenCount, &v.OutputArtifactsFromCacheBytes, &v.OutputArtifactsFromCacheCount); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.task.Select(ctx, v.TaskId); rel != nil {
+			v.Task = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *BuildMetrics) SelectMulti(ctx context.Context, taskId ...int32) ([]*database.BuildMetrics, error) {
+	inCause := strings.Repeat("?, ", len(taskId))
+	args := make([]any, len(taskId))
+	for i := 0; i < len(taskId); i++ {
+		args[i] = taskId[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `build_metrics` WHERE `task_id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.BuildMetrics, 0, len(taskId))
+	for rows.Next() {
+		r := &database.BuildMetrics{}
+		if err := rows.Scan(&r.TaskId, &r.RemoteCacheHits, &r.WallTimeMs, &r.CpuTimeMs, &r.AnalysisPhaseTimeMs, &r.ExecutionPhaseTimeMs, &r.ActionsCreated, &r.ActionsExecuted, &r.GraphActionCount, &r.OutputArtifactCount, &r.SkyframeNodeCount, &r.TargetsConfigured, &r.PackagesLoaded, &r.SourceArtifactsReadBytes, &r.SourceArtifactsReadCount, &r.OutputArtifactsSeenBytes, &r.OutputArtifactsSeenCount, &r.OutputArtifactsFromCacheBytes, &r.OutputArtifactsFromCacheCount); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+	return res, nil
+}
+
+func (d *BuildMetrics) ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.BuildMetrics, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `task_id`, `remote_cache_hits`, `wall_time_ms`, `cpu_time_ms`, `analysis_phase_time_ms`, `execution_phase_time_ms`, `actions_created`, `actions_executed`, `graph_action_count`, `output_artifact_count`, `skyframe_node_count`, `targets_configured`, `packages_loaded`, `source_artifacts_read_bytes`, `source_artifacts_read_count`, `output_artifacts_seen_bytes`, `output_artifacts_seen_count`, `output_artifacts_from_cache_bytes`, `output_artifacts_from_cache_count` FROM `build_metrics` WHERE `task_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`task_id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		taskId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.BuildMetrics, 0)
+	for rows.Next() {
+		r := &database.BuildMetrics{}
+		if err := rows.Scan(&r.TaskId, &r.RemoteCacheHits, &r.WallTimeMs, &r.CpuTimeMs, &r.AnalysisPhaseTimeMs, &r.ExecutionPhaseTimeMs, &r.ActionsCreated, &r.ActionsExecuted, &r.GraphActionCount, &r.OutputArtifactCount, &r.SkyframeNodeCount, &r.TargetsConfigured, &r.PackagesLoaded, &r.SourceArtifactsReadBytes, &r.SourceArtifactsReadCount, &r.OutputArtifactsSeenBytes, &r.OutputArtifactsSeenCount, &r.OutputArtifactsFromCacheBytes, &r.OutputArtifactsFromCacheCount); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *BuildMetrics) Create(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) (*database.BuildMetrics, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `build_metrics` (`task_id`, `remote_cache_hits`, `wall_time_ms`, `cpu_time_ms`, `analysis_phase_time_ms`, `execution_phase_time_ms`, `actions_created`, `actions_executed`, `graph_action_count`, `output_artifact_count`, `skyframe_node_count`, `targets_configured`, `packages_loaded`, `source_artifacts_read_bytes`, `source_artifacts_read_count`, `output_artifacts_seen_bytes`, `output_artifacts_seen_count`, `output_artifacts_from_cache_bytes`, `output_artifacts_from_cache_count`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		buildMetrics.TaskId, buildMetrics.RemoteCacheHits, buildMetrics.WallTimeMs, buildMetrics.CpuTimeMs, buildMetrics.AnalysisPhaseTimeMs, buildMetrics.ExecutionPhaseTimeMs, buildMetrics.ActionsCreated, buildMetrics.ActionsExecuted, buildMetrics.GraphActionCount, buildMetrics.OutputArtifactCount, buildMetrics.SkyframeNodeCount, buildMetrics.TargetsConfigured, buildMetrics.PackagesLoaded, buildMetrics.SourceArtifactsReadBytes, buildMetrics.SourceArtifactsReadCount, buildMetrics.OutputArtifactsSeenBytes, buildMetrics.OutputArtifactsSeenCount, buildMetrics.OutputArtifactsFromCacheBytes, buildMetrics.OutputArtifactsFromCacheCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	buildMetrics = buildMetrics.Copy()
+
+	buildMetrics.ResetMark()
+	return buildMetrics, nil
+}
+
+func (d *BuildMetrics) Delete(ctx context.Context, taskId int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `build_metrics` WHERE `task_id` = ?", taskId)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *BuildMetrics) Update(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...ExecOption) error {
+	if !buildMetrics.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := buildMetrics.ChangedColumn()
+	cols := make([]string, len(changedColumn))
+	values := make([]any, len(changedColumn))
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+
+	query := fmt.Sprintf("UPDATE `build_metrics` SET %s WHERE `task_id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, buildMetrics.TaskId)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	buildMetrics.ResetMark()
 	return nil
 }
 

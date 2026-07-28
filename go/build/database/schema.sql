@@ -83,6 +83,30 @@ CREATE TABLE `test_report` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `build_metrics`;
+CREATE TABLE `build_metrics` (
+	`task_id` INTEGER NOT NULL,
+	`remote_cache_hits` BIGINT NOT NULL,
+	`wall_time_ms` BIGINT NOT NULL,
+	`cpu_time_ms` BIGINT NOT NULL,
+	`analysis_phase_time_ms` BIGINT NOT NULL,
+	`execution_phase_time_ms` BIGINT NOT NULL,
+	`actions_created` BIGINT NOT NULL,
+	`actions_executed` BIGINT NOT NULL,
+	`graph_action_count` BIGINT NOT NULL,
+	`output_artifact_count` BIGINT NOT NULL,
+	`skyframe_node_count` BIGINT NOT NULL,
+	`targets_configured` BIGINT NOT NULL,
+	`packages_loaded` BIGINT NOT NULL,
+	`source_artifacts_read_bytes` BIGINT NOT NULL,
+	`source_artifacts_read_count` BIGINT NOT NULL,
+	`output_artifacts_seen_bytes` BIGINT NOT NULL,
+	`output_artifacts_seen_count` BIGINT NOT NULL,
+	`output_artifacts_from_cache_bytes` BIGINT NOT NULL,
+	`output_artifacts_from_cache_count` BIGINT NOT NULL,
+	PRIMARY KEY(`task_id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `job`;
 CREATE TABLE `job` (
 	`repository_id` INTEGER NOT NULL,

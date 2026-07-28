@@ -199,6 +199,11 @@ export declare type Task = Message<"mono.build.model.Task"> & {
    * @generated from field: repeated mono.build.model.TestReport test_reports = 28;
    */
   testReports: TestReport[];
+
+  /**
+   * @generated from field: mono.build.model.BuildMetrics build_metrics = 29;
+   */
+  buildMetrics?: BuildMetrics;
 };
 
 /**
@@ -253,6 +258,110 @@ export declare type TestReport = Message<"mono.build.model.TestReport"> & {
  * Use `create(TestReportSchema)` to create a new message.
  */
 export declare const TestReportSchema: GenMessage<TestReport>;
+
+/**
+ * BuildMetrics mirrors the build-wide statistics stored for a Task. It is a
+ * scalar-only, flattened view of Bazel's BuildMetrics event.
+ *
+ * @generated from message mono.build.model.BuildMetrics
+ */
+export declare type BuildMetrics = Message<"mono.build.model.BuildMetrics"> & {
+  /**
+   * @generated from field: int64 remote_cache_hits = 1;
+   */
+  remoteCacheHits: bigint;
+
+  /**
+   * @generated from field: int64 wall_time_ms = 2;
+   */
+  wallTimeMs: bigint;
+
+  /**
+   * @generated from field: int64 cpu_time_ms = 3;
+   */
+  cpuTimeMs: bigint;
+
+  /**
+   * @generated from field: int64 analysis_phase_time_ms = 4;
+   */
+  analysisPhaseTimeMs: bigint;
+
+  /**
+   * @generated from field: int64 execution_phase_time_ms = 5;
+   */
+  executionPhaseTimeMs: bigint;
+
+  /**
+   * @generated from field: int64 actions_created = 6;
+   */
+  actionsCreated: bigint;
+
+  /**
+   * @generated from field: int64 actions_executed = 7;
+   */
+  actionsExecuted: bigint;
+
+  /**
+   * @generated from field: int64 graph_action_count = 8;
+   */
+  graphActionCount: bigint;
+
+  /**
+   * @generated from field: int64 output_artifact_count = 9;
+   */
+  outputArtifactCount: bigint;
+
+  /**
+   * @generated from field: int64 skyframe_node_count = 10;
+   */
+  skyframeNodeCount: bigint;
+
+  /**
+   * @generated from field: int64 targets_configured = 11;
+   */
+  targetsConfigured: bigint;
+
+  /**
+   * @generated from field: int64 packages_loaded = 12;
+   */
+  packagesLoaded: bigint;
+
+  /**
+   * @generated from field: int64 source_artifacts_read_bytes = 13;
+   */
+  sourceArtifactsReadBytes: bigint;
+
+  /**
+   * @generated from field: int64 source_artifacts_read_count = 14;
+   */
+  sourceArtifactsReadCount: bigint;
+
+  /**
+   * @generated from field: int64 output_artifacts_seen_bytes = 15;
+   */
+  outputArtifactsSeenBytes: bigint;
+
+  /**
+   * @generated from field: int64 output_artifacts_seen_count = 16;
+   */
+  outputArtifactsSeenCount: bigint;
+
+  /**
+   * @generated from field: int64 output_artifacts_from_cache_bytes = 17;
+   */
+  outputArtifactsFromCacheBytes: bigint;
+
+  /**
+   * @generated from field: int64 output_artifacts_from_cache_count = 18;
+   */
+  outputArtifactsFromCacheCount: bigint;
+};
+
+/**
+ * Describes the message mono.build.model.BuildMetrics.
+ * Use `create(BuildMetricsSchema)` to create a new message.
+ */
+export declare const BuildMetricsSchema: GenMessage<BuildMetrics>;
 
 /**
  * GithubEvent surfaces a row from the `github_event` table for the dashboard.

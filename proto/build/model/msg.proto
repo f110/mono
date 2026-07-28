@@ -55,6 +55,7 @@ message Task {
   string                    cpu_limit                = 26;
   string                    memory_limit             = 27;
   repeated TestReport       test_reports             = 28;
+  BuildMetrics              build_metrics            = 29;
 }
 
 message Job {
@@ -66,6 +67,29 @@ message TestReport {
   string     label    = 1;
   TestStatus status   = 2;
   int64      duration = 3;
+}
+
+// BuildMetrics mirrors the build-wide statistics stored for a Task. It is a
+// scalar-only, flattened view of Bazel's BuildMetrics event.
+message BuildMetrics {
+  int64 remote_cache_hits                 = 1;
+  int64 wall_time_ms                      = 2;
+  int64 cpu_time_ms                       = 3;
+  int64 analysis_phase_time_ms            = 4;
+  int64 execution_phase_time_ms           = 5;
+  int64 actions_created                   = 6;
+  int64 actions_executed                  = 7;
+  int64 graph_action_count                = 8;
+  int64 output_artifact_count             = 9;
+  int64 skyframe_node_count               = 10;
+  int64 targets_configured                = 11;
+  int64 packages_loaded                   = 12;
+  int64 source_artifacts_read_bytes       = 13;
+  int64 source_artifacts_read_count       = 14;
+  int64 output_artifacts_seen_bytes       = 15;
+  int64 output_artifacts_seen_count       = 16;
+  int64 output_artifacts_from_cache_bytes = 17;
+  int64 output_artifacts_from_cache_count = 18;
 }
 
 // GithubEvent surfaces a row from the `github_event` table for the dashboard.

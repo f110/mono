@@ -404,10 +404,10 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 }
 
 func (j *JobBuilder) makeReportContainer() {
-	if j.job == nil || j.job.Command != "test" {
-		return
-	}
-	if j.task == nil || !j.task.IsTrunk {
+	// The report sidecar collects the Build Event Protocol for every build (all
+	// commands, trunk or not) to gather test results and build metrics, so it and
+	// the shared comm volume are created once both the job and task are known.
+	if j.job == nil || j.task == nil {
 		return
 	}
 

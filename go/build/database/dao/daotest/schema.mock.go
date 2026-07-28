@@ -345,6 +345,60 @@ func (d *TestReport) Update(ctx context.Context, testReport *database.TestReport
 	return nil
 }
 
+type BuildMetrics struct {
+	*mock.Mock
+}
+
+func NewBuildMetrics() *BuildMetrics {
+	return &BuildMetrics{Mock: mock.New()}
+}
+
+func (d *BuildMetrics) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *BuildMetrics) Select(ctx context.Context, taskId int32) (*database.BuildMetrics, error) {
+	v, err := d.Call("Select", map[string]any{"taskId": taskId})
+	return v.(*database.BuildMetrics), err
+}
+
+func (d *BuildMetrics) RegisterSelect(taskId int32, value *database.BuildMetrics) {
+	d.Register("Select", map[string]any{"taskId": taskId}, value, nil)
+}
+
+func (d *BuildMetrics) SelectMulti(ctx context.Context, taskId ...int32) ([]*database.BuildMetrics, error) {
+	v, err := d.Call("SelectMulti", map[string]any{"taskId": taskId})
+	return v.([]*database.BuildMetrics), err
+}
+
+func (d *BuildMetrics) RegisterSelectMulti(taskId []int32, value []*database.BuildMetrics) {
+	d.Register("SelectMulti", map[string]any{"taskId": taskId}, value, nil)
+}
+
+func (d *BuildMetrics) ListByTaskId(ctx context.Context, taskId int32, opt ...dao.ListOption) ([]*database.BuildMetrics, error) {
+	v, err := d.Call("ListByTaskId", map[string]any{"taskId": taskId})
+	return v.([]*database.BuildMetrics), err
+}
+
+func (d *BuildMetrics) RegisterListByTaskId(taskId int32, value []*database.BuildMetrics, err error) {
+	d.Register("ListByTaskId", map[string]any{"taskId": taskId}, value, err)
+}
+
+func (d *BuildMetrics) Create(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...dao.ExecOption) (*database.BuildMetrics, error) {
+	_, _ = d.Call("Create", map[string]any{"buildMetrics": buildMetrics})
+	return buildMetrics, nil
+}
+
+func (d *BuildMetrics) Delete(ctx context.Context, taskId int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]any{"taskId": taskId})
+	return nil
+}
+
+func (d *BuildMetrics) Update(ctx context.Context, buildMetrics *database.BuildMetrics, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]any{"buildMetrics": buildMetrics})
+	return nil
+}
+
 type Job struct {
 	*mock.Mock
 }
