@@ -200,6 +200,12 @@ type BazelBuilder struct {
 	defaultTaskMemoryLimit resource.Quantity
 	dev                    bool
 
+	// emulateJobControl enables the dev-only CompleteTask path against a
+	// kwok-emulated kube-apiserver. emulateFixtureDir holds the directory of
+	// fixture logs served as pod logs. See emulate.go.
+	emulateJobControl bool
+	emulateFixtureDir string
+
 	taskQueue *taskQueue
 }
 
@@ -657,6 +663,10 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	for _, v := range builtObjects {
 		switch obj := v.(type) {
 		case *batchv1.Job:
+			if b.emulateJobControl {
+				obj.Spec.ManualSelector = true
+				obj.Spec.Selector = &metav1.LabelSelector{MatchLabels: map[string]string{labelKeyTaskId: strconv.Itoa(int(task.Id))}}
+			}
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
 				slogger.Log.Info("Create Job", slog.String("manifest", string(m)))

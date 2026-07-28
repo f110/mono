@@ -721,6 +721,7 @@ type ServerConfig struct {
 	xxx_hidden_GithubAppId                 int64                  `protobuf:"varint,16,opt,name=github_app_id,json=githubAppId"`
 	xxx_hidden_VaultAddr                   *string                `protobuf:"bytes,17,opt,name=vault_addr,json=vaultAddr"`
 	xxx_hidden_DashboardUrl                *string                `protobuf:"bytes,18,opt,name=dashboard_url,json=dashboardUrl"`
+	xxx_hidden_EmulateJobControl           bool                   `protobuf:"varint,19,opt,name=emulate_job_control,json=emulateJobControl"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -914,94 +915,106 @@ func (x *ServerConfig) GetDashboardUrl() string {
 	return ""
 }
 
+func (x *ServerConfig) GetEmulateJobControl() bool {
+	if x != nil {
+		return x.xxx_hidden_EmulateJobControl
+	}
+	return false
+}
+
 func (x *ServerConfig) SetDev(v bool) {
 	x.xxx_hidden_Dev = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 19)
 }
 
 func (x *ServerConfig) SetLeaderElection(v bool) {
 	x.xxx_hidden_LeaderElection = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 19)
 }
 
 func (x *ServerConfig) SetNamespace(v string) {
 	x.xxx_hidden_Namespace = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 19)
 }
 
 func (x *ServerConfig) SetUseBazelisk(v bool) {
 	x.xxx_hidden_UseBazelisk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 19)
 }
 
 func (x *ServerConfig) SetDefaultBazelVersion(v string) {
 	x.xxx_hidden_DefaultBazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 19)
 }
 
 func (x *ServerConfig) SetRemoteCache(v string) {
 	x.xxx_hidden_RemoteCache = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 19)
 }
 
 func (x *ServerConfig) SetTaskCpuLimit(v string) {
 	x.xxx_hidden_TaskCpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 19)
 }
 
 func (x *ServerConfig) SetTaskMemoryLimit(v string) {
 	x.xxx_hidden_TaskMemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 19)
 }
 
 func (x *ServerConfig) SetGcEnabled(v bool) {
 	x.xxx_hidden_GcEnabled = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 19)
 }
 
 func (x *ServerConfig) SetGitDataServiceListen(v string) {
 	x.xxx_hidden_GitDataServiceListen = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 19)
 }
 
 func (x *ServerConfig) SetGitDataServiceUrl(v string) {
 	x.xxx_hidden_GitDataServiceUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 19)
 }
 
 func (x *ServerConfig) SetGitDataRefreshInterval(v string) {
 	x.xxx_hidden_GitDataRefreshInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 19)
 }
 
 func (x *ServerConfig) SetGitDataRefreshWorkers(v int32) {
 	x.xxx_hidden_GitDataRefreshWorkers = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 19)
 }
 
 func (x *ServerConfig) SetExternalReleasePollInterval(v string) {
 	x.xxx_hidden_ExternalReleasePollInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 19)
 }
 
 func (x *ServerConfig) SetEventReconcileInterval(v string) {
 	x.xxx_hidden_EventReconcileInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 19)
 }
 
 func (x *ServerConfig) SetGithubAppId(v int64) {
 	x.xxx_hidden_GithubAppId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 19)
 }
 
 func (x *ServerConfig) SetVaultAddr(v string) {
 	x.xxx_hidden_VaultAddr = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 19)
 }
 
 func (x *ServerConfig) SetDashboardUrl(v string) {
 	x.xxx_hidden_DashboardUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 18)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 19)
+}
+
+func (x *ServerConfig) SetEmulateJobControl(v bool) {
+	x.xxx_hidden_EmulateJobControl = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 19)
 }
 
 func (x *ServerConfig) HasDev() bool {
@@ -1130,6 +1143,13 @@ func (x *ServerConfig) HasDashboardUrl() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
 }
 
+func (x *ServerConfig) HasEmulateJobControl() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
+}
+
 func (x *ServerConfig) ClearDev() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Dev = false
@@ -1220,6 +1240,11 @@ func (x *ServerConfig) ClearDashboardUrl() {
 	x.xxx_hidden_DashboardUrl = nil
 }
 
+func (x *ServerConfig) ClearEmulateJobControl() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	x.xxx_hidden_EmulateJobControl = false
+}
+
 type ServerConfig_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1241,6 +1266,7 @@ type ServerConfig_builder struct {
 	GithubAppId                 *int64
 	VaultAddr                   *string
 	DashboardUrl                *string
+	EmulateJobControl           *bool
 }
 
 func (b0 ServerConfig_builder) Build() *ServerConfig {
@@ -1248,76 +1274,80 @@ func (b0 ServerConfig_builder) Build() *ServerConfig {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Dev != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 19)
 		x.xxx_hidden_Dev = *b.Dev
 	}
 	if b.LeaderElection != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 19)
 		x.xxx_hidden_LeaderElection = *b.LeaderElection
 	}
 	if b.Namespace != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 19)
 		x.xxx_hidden_Namespace = b.Namespace
 	}
 	if b.UseBazelisk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 19)
 		x.xxx_hidden_UseBazelisk = *b.UseBazelisk
 	}
 	if b.DefaultBazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 19)
 		x.xxx_hidden_DefaultBazelVersion = b.DefaultBazelVersion
 	}
 	if b.RemoteCache != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 19)
 		x.xxx_hidden_RemoteCache = b.RemoteCache
 	}
 	if b.TaskCpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 19)
 		x.xxx_hidden_TaskCpuLimit = b.TaskCpuLimit
 	}
 	if b.TaskMemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 19)
 		x.xxx_hidden_TaskMemoryLimit = b.TaskMemoryLimit
 	}
 	if b.GcEnabled != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 19)
 		x.xxx_hidden_GcEnabled = *b.GcEnabled
 	}
 	if b.GitDataServiceListen != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 19)
 		x.xxx_hidden_GitDataServiceListen = b.GitDataServiceListen
 	}
 	if b.GitDataServiceUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 19)
 		x.xxx_hidden_GitDataServiceUrl = b.GitDataServiceUrl
 	}
 	if b.GitDataRefreshInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 19)
 		x.xxx_hidden_GitDataRefreshInterval = b.GitDataRefreshInterval
 	}
 	if b.GitDataRefreshWorkers != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 19)
 		x.xxx_hidden_GitDataRefreshWorkers = *b.GitDataRefreshWorkers
 	}
 	if b.ExternalReleasePollInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 19)
 		x.xxx_hidden_ExternalReleasePollInterval = b.ExternalReleasePollInterval
 	}
 	if b.EventReconcileInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 19)
 		x.xxx_hidden_EventReconcileInterval = b.EventReconcileInterval
 	}
 	if b.GithubAppId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 19)
 		x.xxx_hidden_GithubAppId = *b.GithubAppId
 	}
 	if b.VaultAddr != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 19)
 		x.xxx_hidden_VaultAddr = b.VaultAddr
 	}
 	if b.DashboardUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 18)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 19)
 		x.xxx_hidden_DashboardUrl = b.DashboardUrl
+	}
+	if b.EmulateJobControl != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 19)
+		x.xxx_hidden_EmulateJobControl = *b.EmulateJobControl
 	}
 	return m0
 }
@@ -2097,6 +2127,154 @@ func (b0 ResponseForceStopTask_builder) Build() *ResponseForceStopTask {
 	return m0
 }
 
+type RequestCompleteTask struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
+	xxx_hidden_Success     bool                   `protobuf:"varint,2,opt,name=success"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestCompleteTask) Reset() {
+	*x = RequestCompleteTask{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestCompleteTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestCompleteTask) ProtoMessage() {}
+
+func (x *RequestCompleteTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestCompleteTask) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *RequestCompleteTask) GetSuccess() bool {
+	if x != nil {
+		return x.xxx_hidden_Success
+	}
+	return false
+}
+
+func (x *RequestCompleteTask) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestCompleteTask) SetSuccess(v bool) {
+	x.xxx_hidden_Success = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestCompleteTask) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestCompleteTask) HasSuccess() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestCompleteTask) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_TaskId = 0
+}
+
+func (x *RequestCompleteTask) ClearSuccess() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Success = false
+}
+
+type RequestCompleteTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TaskId  *int32
+	Success *bool
+}
+
+func (b0 RequestCompleteTask_builder) Build() *RequestCompleteTask {
+	m0 := &RequestCompleteTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.Success != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Success = *b.Success
+	}
+	return m0
+}
+
+type ResponseCompleteTask struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseCompleteTask) Reset() {
+	*x = ResponseCompleteTask{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseCompleteTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseCompleteTask) ProtoMessage() {}
+
+func (x *ResponseCompleteTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ResponseCompleteTask_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ResponseCompleteTask_builder) Build() *ResponseCompleteTask {
+	m0 := &ResponseCompleteTask{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
 type RequestListExternalReleaseTriggers struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_RepositoryId int32                  `protobuf:"varint,1,opt,name=repository_id,json=repositoryId"`
@@ -2108,7 +2286,7 @@ type RequestListExternalReleaseTriggers struct {
 
 func (x *RequestListExternalReleaseTriggers) Reset() {
 	*x = RequestListExternalReleaseTriggers{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2120,7 +2298,7 @@ func (x *RequestListExternalReleaseTriggers) String() string {
 func (*RequestListExternalReleaseTriggers) ProtoMessage() {}
 
 func (x *RequestListExternalReleaseTriggers) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[21]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2181,7 +2359,7 @@ type ResponseListExternalReleaseTriggers struct {
 
 func (x *ResponseListExternalReleaseTriggers) Reset() {
 	*x = ResponseListExternalReleaseTriggers{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2193,7 +2371,7 @@ func (x *ResponseListExternalReleaseTriggers) String() string {
 func (*ResponseListExternalReleaseTriggers) ProtoMessage() {}
 
 func (x *ResponseListExternalReleaseTriggers) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[22]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2242,7 +2420,7 @@ type RequestListGithubEvents struct {
 
 func (x *RequestListGithubEvents) Reset() {
 	*x = RequestListGithubEvents{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[23]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2254,7 +2432,7 @@ func (x *RequestListGithubEvents) String() string {
 func (*RequestListGithubEvents) ProtoMessage() {}
 
 func (x *RequestListGithubEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[23]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2315,7 +2493,7 @@ type ResponseListGithubEvents struct {
 
 func (x *ResponseListGithubEvents) Reset() {
 	*x = ResponseListGithubEvents{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[24]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2327,7 +2505,7 @@ func (x *ResponseListGithubEvents) String() string {
 func (*ResponseListGithubEvents) ProtoMessage() {}
 
 func (x *ResponseListGithubEvents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[24]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2378,7 +2556,7 @@ type GitDataRepository struct {
 
 func (x *GitDataRepository) Reset() {
 	*x = GitDataRepository{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2390,7 +2568,7 @@ func (x *GitDataRepository) String() string {
 func (*GitDataRepository) ProtoMessage() {}
 
 func (x *GitDataRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[25]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2517,7 +2695,7 @@ type RequestListGitData struct {
 
 func (x *RequestListGitData) Reset() {
 	*x = RequestListGitData{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2529,7 +2707,7 @@ func (x *RequestListGitData) String() string {
 func (*RequestListGitData) ProtoMessage() {}
 
 func (x *RequestListGitData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[26]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2561,7 +2739,7 @@ type ResponseListGitData struct {
 
 func (x *ResponseListGitData) Reset() {
 	*x = ResponseListGitData{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2573,7 +2751,7 @@ func (x *ResponseListGitData) String() string {
 func (*ResponseListGitData) ProtoMessage() {}
 
 func (x *ResponseListGitData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2622,7 +2800,7 @@ type RequestGetGitDataStatistics struct {
 
 func (x *RequestGetGitDataStatistics) Reset() {
 	*x = RequestGetGitDataStatistics{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2634,7 +2812,7 @@ func (x *RequestGetGitDataStatistics) String() string {
 func (*RequestGetGitDataStatistics) ProtoMessage() {}
 
 func (x *RequestGetGitDataStatistics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2703,7 +2881,7 @@ type ResponseGetGitDataStatistics struct {
 
 func (x *ResponseGetGitDataStatistics) Reset() {
 	*x = ResponseGetGitDataStatistics{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2715,7 +2893,7 @@ func (x *ResponseGetGitDataStatistics) String() string {
 func (*ResponseGetGitDataStatistics) ProtoMessage() {}
 
 func (x *ResponseGetGitDataStatistics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2897,7 +3075,7 @@ type BFFTask struct {
 
 func (x *BFFTask) Reset() {
 	*x = BFFTask{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2909,7 +3087,7 @@ func (x *BFFTask) String() string {
 func (*BFFTask) ProtoMessage() {}
 
 func (x *BFFTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3786,7 +3964,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x15ResponseGetServerInfo\x128\n" +
 	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions\x12%\n" +
 	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\x124\n" +
-	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.bff.ServerConfigR\x06config\"\x95\x06\n" +
+	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.bff.ServerConfigR\x06config\"\xc5\x06\n" +
 	"\fServerConfig\x12\x10\n" +
 	"\x03dev\x18\x01 \x01(\bR\x03dev\x12'\n" +
 	"\x0fleader_election\x18\x02 \x01(\bR\x0eleaderElection\x12\x1c\n" +
@@ -3808,7 +3986,8 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\rgithub_app_id\x18\x10 \x01(\x03R\vgithubAppId\x12\x1d\n" +
 	"\n" +
 	"vault_addr\x18\x11 \x01(\tR\tvaultAddr\x12#\n" +
-	"\rdashboard_url\x18\x12 \x01(\tR\fdashboardUrl\"6\n" +
+	"\rdashboard_url\x18\x12 \x01(\tR\fdashboardUrl\x12.\n" +
+	"\x13emulate_job_control\x18\x13 \x01(\bR\x11emulateJobControl\"6\n" +
 	"\x0fRequestListJobs\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"=\n" +
 	"\x10ResponseListJobs\x12)\n" +
@@ -3833,7 +4012,11 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x13ResponseRestartTask\"/\n" +
 	"\x14RequestForceStopTask\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"\x17\n" +
-	"\x15ResponseForceStopTask\"I\n" +
+	"\x15ResponseForceStopTask\"H\n" +
+	"\x13RequestCompleteTask\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\"\x16\n" +
+	"\x14ResponseCompleteTask\"I\n" +
 	"\"RequestListExternalReleaseTriggers\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"k\n" +
 	"#ResponseListExternalReleaseTriggers\x12D\n" +
@@ -3892,8 +4075,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\tcpu_limit\x18\x1a \x01(\tR\bcpuLimit\x12!\n" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
 	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x125\n" +
-	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\xc2\n" +
-	"\n" +
+	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration2\x9d\v\n" +
 	"\x03BFF\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.bff.RequestListRepositories\x1a(.mono.build.bff.ResponseListRepositories\x12P\n" +
 	"\tListTasks\x12 .mono.build.bff.RequestListTasks\x1a!.mono.build.bff.ResponseListTasks\x12J\n" +
@@ -3904,13 +4086,14 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x0eSaveRepository\x12%.mono.build.bff.RequestSaveRepository\x1a&.mono.build.bff.ResponseSaveRepository\x12e\n" +
 	"\x10RemoveRepository\x12'.mono.build.bff.RequestRemoveRepository\x1a(.mono.build.bff.ResponseRemoveRepository\x12V\n" +
 	"\vRestartTask\x12\".mono.build.bff.RequestRestartTask\x1a#.mono.build.bff.ResponseRestartTask\x12\\\n" +
-	"\rForceStopTask\x12$.mono.build.bff.RequestForceStopTask\x1a%.mono.build.bff.ResponseForceStopTask\x12\x86\x01\n" +
+	"\rForceStopTask\x12$.mono.build.bff.RequestForceStopTask\x1a%.mono.build.bff.ResponseForceStopTask\x12Y\n" +
+	"\fCompleteTask\x12#.mono.build.bff.RequestCompleteTask\x1a$.mono.build.bff.ResponseCompleteTask\x12\x86\x01\n" +
 	"\x1bListExternalReleaseTriggers\x122.mono.build.bff.RequestListExternalReleaseTriggers\x1a3.mono.build.bff.ResponseListExternalReleaseTriggers\x12e\n" +
 	"\x10ListGithubEvents\x12'.mono.build.bff.RequestListGithubEvents\x1a(.mono.build.bff.ResponseListGithubEvents\x12V\n" +
 	"\vListGitData\x12\".mono.build.bff.RequestListGitData\x1a#.mono.build.bff.ResponseListGitData\x12q\n" +
 	"\x14GetGitDataStatistics\x12+.mono.build.bff.RequestGetGitDataStatistics\x1a,.mono.build.bff.ResponseGetGitDataStatisticsB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestListRepositories)(nil),             // 0: mono.build.bff.RequestListRepositories
 	(*ResponseListRepositories)(nil),            // 1: mono.build.bff.ResponseListRepositories
@@ -3933,42 +4116,44 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*ResponseRestartTask)(nil),                 // 18: mono.build.bff.ResponseRestartTask
 	(*RequestForceStopTask)(nil),                // 19: mono.build.bff.RequestForceStopTask
 	(*ResponseForceStopTask)(nil),               // 20: mono.build.bff.ResponseForceStopTask
-	(*RequestListExternalReleaseTriggers)(nil),  // 21: mono.build.bff.RequestListExternalReleaseTriggers
-	(*ResponseListExternalReleaseTriggers)(nil), // 22: mono.build.bff.ResponseListExternalReleaseTriggers
-	(*RequestListGithubEvents)(nil),             // 23: mono.build.bff.RequestListGithubEvents
-	(*ResponseListGithubEvents)(nil),            // 24: mono.build.bff.ResponseListGithubEvents
-	(*GitDataRepository)(nil),                   // 25: mono.build.bff.GitDataRepository
-	(*RequestListGitData)(nil),                  // 26: mono.build.bff.RequestListGitData
-	(*ResponseListGitData)(nil),                 // 27: mono.build.bff.ResponseListGitData
-	(*RequestGetGitDataStatistics)(nil),         // 28: mono.build.bff.RequestGetGitDataStatistics
-	(*ResponseGetGitDataStatistics)(nil),        // 29: mono.build.bff.ResponseGetGitDataStatistics
-	(*BFFTask)(nil),                             // 30: mono.build.bff.BFFTask
-	(*model.Repository)(nil),                    // 31: mono.build.model.Repository
-	(*model.Job)(nil),                           // 32: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 33: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 34: mono.build.model.GithubEvent
-	(*timestamppb.Timestamp)(nil),               // 35: google.protobuf.Timestamp
-	(*model.TestReport)(nil),                    // 36: mono.build.model.TestReport
-	(*durationpb.Duration)(nil),                 // 37: google.protobuf.Duration
+	(*RequestCompleteTask)(nil),                 // 21: mono.build.bff.RequestCompleteTask
+	(*ResponseCompleteTask)(nil),                // 22: mono.build.bff.ResponseCompleteTask
+	(*RequestListExternalReleaseTriggers)(nil),  // 23: mono.build.bff.RequestListExternalReleaseTriggers
+	(*ResponseListExternalReleaseTriggers)(nil), // 24: mono.build.bff.ResponseListExternalReleaseTriggers
+	(*RequestListGithubEvents)(nil),             // 25: mono.build.bff.RequestListGithubEvents
+	(*ResponseListGithubEvents)(nil),            // 26: mono.build.bff.ResponseListGithubEvents
+	(*GitDataRepository)(nil),                   // 27: mono.build.bff.GitDataRepository
+	(*RequestListGitData)(nil),                  // 28: mono.build.bff.RequestListGitData
+	(*ResponseListGitData)(nil),                 // 29: mono.build.bff.ResponseListGitData
+	(*RequestGetGitDataStatistics)(nil),         // 30: mono.build.bff.RequestGetGitDataStatistics
+	(*ResponseGetGitDataStatistics)(nil),        // 31: mono.build.bff.ResponseGetGitDataStatistics
+	(*BFFTask)(nil),                             // 32: mono.build.bff.BFFTask
+	(*model.Repository)(nil),                    // 33: mono.build.model.Repository
+	(*model.Job)(nil),                           // 34: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 35: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 36: mono.build.model.GithubEvent
+	(*timestamppb.Timestamp)(nil),               // 37: google.protobuf.Timestamp
+	(*model.TestReport)(nil),                    // 38: mono.build.model.TestReport
+	(*durationpb.Duration)(nil),                 // 39: google.protobuf.Duration
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
-	31, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	30, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
+	33, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	32, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
 	8,  // 2: mono.build.bff.ResponseGetServerInfo.config:type_name -> mono.build.bff.ServerConfig
-	32, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	31, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	31, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	33, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	34, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	25, // 8: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
-	35, // 9: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
-	31, // 10: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
-	35, // 11: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
-	35, // 12: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
-	35, // 13: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
-	35, // 14: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
-	36, // 15: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
-	37, // 16: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
+	34, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	33, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	33, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	35, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	36, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	27, // 8: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
+	37, // 9: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
+	33, // 10: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
+	37, // 11: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
+	37, // 12: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
+	37, // 13: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
+	37, // 14: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
+	38, // 15: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
+	39, // 16: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
 	0,  // 17: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
 	2,  // 18: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
 	4,  // 19: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
@@ -3979,26 +4164,28 @@ var file_proto_build_bff_bff_proto_depIdxs = []int32{
 	15, // 24: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
 	17, // 25: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
 	19, // 26: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
-	21, // 27: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
-	23, // 28: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
-	26, // 29: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
-	28, // 30: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
-	1,  // 31: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 32: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 33: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 34: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	10, // 35: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	12, // 36: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	14, // 37: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	16, // 38: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	18, // 39: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	20, // 40: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
-	22, // 41: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
-	24, // 42: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
-	27, // 43: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
-	29, // 44: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
-	31, // [31:45] is the sub-list for method output_type
-	17, // [17:31] is the sub-list for method input_type
+	21, // 27: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
+	23, // 28: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
+	25, // 29: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
+	28, // 30: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
+	30, // 31: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
+	1,  // 32: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 33: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 34: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 35: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	10, // 36: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	12, // 37: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	14, // 38: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	16, // 39: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	18, // 40: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	20, // 41: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	22, // 42: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
+	24, // 43: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
+	26, // 44: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
+	29, // 45: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
+	31, // 46: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
+	32, // [32:47] is the sub-list for method output_type
+	17, // [17:32] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name
@@ -4015,7 +4202,7 @@ func file_proto_build_bff_bff_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_bff_bff_proto_rawDesc), len(file_proto_build_bff_bff_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

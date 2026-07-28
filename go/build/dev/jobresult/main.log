@@ -1,0 +1,7 @@
+Starting local Bazel server and connecting to it...
+INFO: Analyzed 2 targets (0 packages loaded, 0 targets configured).
+INFO: Found 2 test targets...
+//pkg/foo:foo_test                                              PASSED in 0.4s
+//pkg/bar:bar_test                                              FLAKY, failed in 1 out of 2 in 1.2s
+INFO: Build completed successfully, 4 total actions
+Executed 2 out of 2 tests: 2 tests pass.

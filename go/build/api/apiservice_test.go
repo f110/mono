@@ -8,10 +8,10 @@ import (
 
 func TestExtractRepositoryFromPayload(t *testing.T) {
 	cases := []struct {
-		name      string
-		payload   string
-		wantName  string
-		wantURL   string
+		name     string
+		payload  string
+		wantName string
+		wantURL  string
 	}{
 		{
 			name:     "pull_request style payload",

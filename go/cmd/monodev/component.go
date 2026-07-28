@@ -190,6 +190,14 @@ var buildBucket = &minioBucket{
 	Instance: minio,
 }
 
+// buildLogsBucket holds build logs. The builder writes to it (--minio-bucket)
+// and the bff reads from it (--bucket).
+var buildLogsBucket = &minioBucket{
+	Name:     "build-logs",
+	Bucket:   "logs",
+	Instance: minio,
+}
+
 var buildGitDataBucket = &minioBucket{
 	Name:     "build-git-data",
 	Bucket:   "git-data",
@@ -202,6 +210,9 @@ var githubmock = &simpleCommandComponent{
 		"-listen", "127.0.0.1:5620",
 		"-github-url", "http://127.0.0.1:5620",
 		"-git-listen", "127.0.0.1:5621",
+		// clone_url must exactly match source_repository.clone_url so the push
+		// reconciler's on-demand git-data sync (Updater.Sync) finds the repo.
+		"-git-url", "http://127.0.0.1:5621",
 		filepath.Join(os.Getenv("BUILD_WORKING_DIRECTORY"), "go/build/dev/githubmock-seed.yaml"),
 	},
 	Ports: ports{
@@ -227,6 +238,7 @@ type simpleCommandComponent struct {
 	Ports              ports
 	VerboseOutput      bool
 	WithoutLogPrefix   bool
+	Deps               []component
 }
 
 var _ component = &simpleCommandComponent{}
@@ -257,7 +269,7 @@ func (c *simpleCommandComponent) GetType() componentType {
 }
 
 func (c *simpleCommandComponent) GetDeps() []component {
-	return nil
+	return c.Deps
 }
 
 func (c *simpleCommandComponent) Run(ctx context.Context) {

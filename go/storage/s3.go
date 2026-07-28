@@ -116,8 +116,15 @@ func (s *S3Options) Client(ctx context.Context) (*s3.Client, error) {
 	client := &http.Client{Transport: tr}
 
 	credsProvider := credentials.NewStaticCredentialsProvider(s.AccessKey, s.SecretAccessKey, "")
+	region := s.Region
+	if region == "" {
+		// The AWS SDK v2 endpoint rule engine rejects an empty region even when a
+		// custom endpoint (e.g. MinIO) is used, where the region is only a signing
+		// placeholder. Fall back to a valid default so requests resolve.
+		region = "us-east-1"
+	}
 	cfg := aws.Config{
-		Region:      s.Region,
+		Region:      region,
 		HTTPClient:  client,
 		Credentials: credsProvider,
 		EndpointResolver: aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {

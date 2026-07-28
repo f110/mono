@@ -120,7 +120,7 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 			return err
 		}
 
-		conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, "HEAD")
+		conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepoName(repo), owner, repoName, "HEAD")
 		if err != nil {
 			status.Skipped = true
 			status.SkipReason = "failed to fetch build config"

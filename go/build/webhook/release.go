@@ -74,7 +74,7 @@ func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEv
 		return err
 	}
 
-	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision)
+	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepoName(repo), owner, repoName, revision)
 	if err != nil {
 		// Mirrors legacy: log + skip rather than fail.
 		status.Skipped = true

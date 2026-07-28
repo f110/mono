@@ -198,14 +198,16 @@ toolset_ext = use_extension("//build/rules/toolset:module.bzl", "toolset_extensi
 toolset_ext.k8s(
     etcd = "3.5.6",
     kind = "0.27.0",
+    kube_apiserver = "1.29.4",
     kustomize = "v4.5.4",
+    kwok = "v0.6.0",
     minio = "RELEASE.2022-12-02T19-19-22Z",
 )
 toolset_ext.test_tool(
     jj = "0.40.0",
     vault = "1.11.4",
 )
-use_repo(toolset_ext, "etcd", "jj", "kind", "kustomize", "minio", "vault")
+use_repo(toolset_ext, "etcd", "jj", "kind", "kube-apiserver", "kustomize", "kwok", "minio", "vault")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(

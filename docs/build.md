@@ -273,3 +273,39 @@ React + Vite + TanStack Router + TanStack Query + Connect (`@connectrpc/connect-
 1. ブラウザ → bff `BFF.InvokeJob` / `RestartTask`（Connect）。
 2. bff が `api.API.InvokeJob`（gRPC）へ転送。
 3. `apiService.InvokeJob` が Job 設定を解決し `BazelBuilder.Build` を呼ぶ（以降は上記 4〜5 と同じ）。
+
+## ローカル開発環境 (kwok)
+
+依存ミドルウェアのうち kube-apiserver だけはローカル構築が面倒なので、`monodev env build` が
+[kwok](https://kwok.sigs.k8s.io/) で疑似 kube-apiserver を立てる。実ビルドは走らせず、dev 限定の WebUI
+ボタンで Job を完了状態にしてフィクスチャのログ/テストレポートを流し込むことで、JobWatcher→`syncJob`→
+`postProcess` の一連をローカルで確認できる。
+
+### 起動する追加コンポーネント (`go/cmd/monodev/kwok.go`)
+
+- **kwok-pki**（oneshot）: `BUILD_WORKING_DIRECTORY/.kwok` に自己署名サーバ証明書（kwok 用 + apiserver の
+  `--kubelet-certificate-authority`）、SA 署名鍵、static token、kubeconfig を生成。
+- **kube-apiserver**（手組み component、既存の `etcd` を再利用）: `--authorization-mode=AlwaysAllow` の
+  dev 向け設定で secure-port 6443 を待受。
+- **kwok-logs-crd**（oneshot）: kwok の `Logs` CRD を適用する。`--enable-crds=Logs` は CRD を *watch* させる
+  だけで CRD 定義は作らないため、別途 apply が必要（CRD YAML は `go/cmd/monodev/kwok_logs_crd.yaml` に同梱）。
+- **kwok**（component）: `--manage-all-nodes` で fake node を管理し、`--enable-crds=Logs` で Pod ログ配信を担う。
+- **kwok-node**（oneshot）: fake node `kwok-node` を登録。
+
+`etcd` / `minio` と同様に、`kube-apiserver`（envtest 配布物 v1.29.4）と `kwok`（v0.6.0）のバイナリは Bazel の
+toolset extension が取得し、`//:env_build`（`development_environments.bzl`）が `--kube-apiserver` / `--kwok`
+フラグでパスを渡す。したがって `bazel run //:env_build` で一式が起動する（PATH への手動導入は不要）。builder 側は
+`--dev` を付けず、`KUBECONFIG=.kwok/kubeconfig` と `--emulate-job-control` で起動する。
+
+### Job の疑似完了 (`CompleteTask`)
+
+1. ブラウザの dev ボタン → bff `BFF.CompleteTask` → api `API.CompleteTask`（`ServerConfig.emulate_job_control`
+   が真のときのみ有効）。
+2. `BazelBuilder.CompleteTask`（`go/build/coordinator/emulate.go`）が対象 Job に対し、セレクタ一致の Pod
+   （終端 status・image・hostIP）を 1 個作成し、kwok の `Logs` オブジェクトで 3 コンテナを
+   `go/build/dev/jobresult/{pre-process.log,main.log,report.json}` にマッピング、Job の `Complete`/`Failed`
+   condition を書き込む。フィクスチャはプレーンテキストで持ち、kwok が要求する CRI ログ形式
+   （`<RFC3339Nano> stdout F <行>`）へ注入時に変換する（`writeCRILog`）。
+3. 以降は通常の JobWatcher→`syncJob`→`postProcess` 経路が動き、ログを MinIO に、テスト結果を `test_report`
+   に保存する。emulate 時は job-controller が居ないため、`JobBuilder` は `manualSelector` で Job のセレクタを
+   明示し、Pod 抽出が 1 件に定まるようにする。

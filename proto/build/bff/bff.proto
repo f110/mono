@@ -21,6 +21,9 @@ service BFF {
   rpc RemoveRepository(RequestRemoveRepository) returns (ResponseRemoveRepository);
   rpc RestartTask(RequestRestartTask) returns (ResponseRestartTask);
   rpc ForceStopTask(RequestForceStopTask) returns (ResponseForceStopTask);
+  // CompleteTask forces a task's Job into a terminal state. Only available in
+  // the local kwok dev environment (see ServerConfig.emulate_job_control).
+  rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
   rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
   rpc ListGitData(RequestListGitData) returns (ResponseListGitData);
@@ -86,6 +89,10 @@ message ServerConfig {
   int64  github_app_id                  = 16;
   string vault_addr                     = 17;
   string dashboard_url                  = 18;
+  // emulate_job_control is true when the builder runs against a kwok-emulated
+  // kube-apiserver. The dashboard uses it to expose the dev-only "complete
+  // task" action.
+  bool emulate_job_control = 19;
 }
 
 message RequestListJobs {
@@ -128,6 +135,13 @@ message RequestForceStopTask {
 }
 
 message ResponseForceStopTask {}
+
+message RequestCompleteTask {
+  int32 task_id = 1;
+  bool  success = 2;
+}
+
+message ResponseCompleteTask {}
 
 message RequestListExternalReleaseTriggers {
   int32 repository_id = 1;

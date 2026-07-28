@@ -248,6 +248,7 @@ func convertServerConfig(c *api.ServerConfig) *ServerConfig {
 		GithubAppId:                 new(c.GetGithubAppId()),
 		VaultAddr:                   new(c.GetVaultAddr()),
 		DashboardUrl:                new(c.GetDashboardUrl()),
+		EmulateJobControl:           new(c.GetEmulateJobControl()),
 	}.Build()
 }
 
@@ -326,6 +327,19 @@ func (b *BFF) ForceStopTask(ctx context.Context, req *connect.Request[RequestFor
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseForceStopTask_builder{}.Build()), nil
+}
+
+// CompleteTask forces a task's Job into a terminal state. Only usable in the
+// local kwok dev environment; the api server rejects it otherwise.
+func (b *BFF) CompleteTask(ctx context.Context, req *connect.Request[RequestCompleteTask]) (*connect.Response[ResponseCompleteTask], error) {
+	if !req.Msg.HasTaskId() {
+		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("task id must be specified"))
+	}
+	_, err := b.apiClient.CompleteTask(ctx, api.RequestCompleteTask_builder{TaskId: new(req.Msg.GetTaskId()), Success: new(req.Msg.GetSuccess())}.Build())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(ResponseCompleteTask_builder{}.Build()), nil
 }
 
 func (b *BFF) ListGithubEvents(ctx context.Context, req *connect.Request[RequestListGithubEvents]) (*connect.Response[ResponseListGithubEvents], error) {

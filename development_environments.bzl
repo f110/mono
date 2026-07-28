@@ -7,9 +7,13 @@ def register_development_environments():
             "build",
             "--etcd=$(location @etcd//:bin)",
             "--minio=$(location @minio//:file)",
+            "--kube-apiserver=$(location @kube-apiserver//:bin)",
+            "--kwok=$(location @kwok//:file)",
         ],
         data = [
             "@etcd//:bin",
             "@minio//:file",
+            "@kube-apiserver//:bin",
+            "@kwok//:file",
         ],
     )

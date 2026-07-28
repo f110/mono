@@ -44,11 +44,13 @@ func ReadFromSpecifiedCommit(ctx context.Context, githubClient *github.Client, o
 }
 
 // ReadFromGitDataService reads the build configuration via the git-data-service
-// gRPC client. repoName must match the repository name registered with the
-// service. ref may be a commit SHA or a fully-qualified ref name
+// gRPC client. gitDataRepo is the key the repository is registered under in the
+// service (source_repository.Name); resolve it from the repository URL rather
+// than synthesizing it from owner/repoName. owner/repoName only label the
+// resulting jobs. ref may be a commit SHA or a fully-qualified ref name
 // (e.g. "refs/heads/master").
-func ReadFromGitDataService(ctx context.Context, client git.GitDataClient, owner, repoName, ref string) (*Config, error) {
-	provider := newGitDataServiceProvider(ctx, client, repoName, ref)
+func ReadFromGitDataService(ctx context.Context, client git.GitDataClient, gitDataRepo, owner, repoName, ref string) (*Config, error) {
+	provider := newGitDataServiceProvider(ctx, client, gitDataRepo, ref)
 	return readFromProvider(provider, owner, repoName)
 }
 

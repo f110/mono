@@ -4,4 +4,6 @@
 .example_git_data
 .mysql
 .etcd_data
+.kwok
 node_modules
+/docs/working/*

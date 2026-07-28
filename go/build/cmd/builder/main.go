@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -128,6 +129,15 @@ type Options struct {
 
 	Dev   bool
 	Debug bool
+	// Kubeconfig is the path to a kubeconfig file. When empty, the in-cluster
+	// config is used. Set it to point at the local kwok cluster in development.
+	Kubeconfig string
+	// EmulateJobControl enables the dev-only CompleteTask RPC against a
+	// kwok-emulated kube-apiserver. EmulateJobFixtureDir points at the fixture
+	// logs served as pod logs; it defaults to go/build/dev/jobresult under the
+	// bazel workspace.
+	EmulateJobControl    bool
+	EmulateJobFixtureDir string
 }
 
 const (
@@ -202,7 +212,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	if p.opt.Dev {
 		slogger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
 	} else {
-		cfg, err := clientcmd.BuildConfigFromFlags("", "")
+		cfg, err := clientcmd.BuildConfigFromFlags("", p.opt.Kubeconfig)
 		if err != nil {
 			return fsm.Error(xerrors.WithStack(err))
 		}
@@ -318,8 +328,8 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.MinIOSecretAccessKey,
 			p.opt.Dev,
 		)
-		storageOpt.PathStyle = true
 	}
+	storageOpt.PathStyle = true
 	p.storageOpt = storageOpt
 
 	var bazelMirrorStorageOpt storage.S3Options
@@ -335,8 +345,8 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			p.opt.BazelMirrorSecretAccessKey,
 			p.opt.Dev,
 		)
-		bazelMirrorStorageOpt.PathStyle = true
 	}
+	bazelMirrorStorageOpt.PathStyle = true
 	p.bazelMirrorStorageOpt = bazelMirrorStorageOpt
 
 	var kubernetesOpt coordinator.KubernetesOptions
@@ -385,6 +395,14 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 	if err != nil {
 		slogger.Log.Error("Failed create BazelBuilder", slogger.E(err))
 		return fsm.Error(xerrors.WithStack(err))
+	}
+	if p.opt.EmulateJobControl {
+		fixtureDir := p.opt.EmulateJobFixtureDir
+		if fixtureDir == "" {
+			fixtureDir = filepath.Join(os.Getenv("BUILD_WORKSPACE_DIRECTORY"), "go/build/dev/jobresult")
+		}
+		c.EnableEmulateJobControl(fixtureDir)
+		slogger.Log.Info("Emulate job control is enabled", slog.String("fixture_dir", fixtureDir))
 	}
 	p.bazelBuilder = c
 
@@ -713,8 +731,10 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	centralRegistryMirrorURL := opt.CentralRegistryMirrorURL
 	remoteAssetAPI := opt.RemoteAssetApi
 	pullAlways := opt.PullAlways
+	emulateJobControl := opt.EmulateJobControl
 	return api.ServerConfig_builder{
 		Dev:                         &dev,
+		EmulateJobControl:           &emulateJobControl,
 		LeaderElection:              &leaderElection,
 		Namespace:                   &namespace,
 		UseBazelisk:                 &useBazelisk,
@@ -801,6 +821,9 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("dashboard", "URL of dashboard").Var(&opt.DashboardUrl).Default("http://localhost")
 	fs.String("builder-api", "URL of the api of builder").Var(&opt.BuilderApiUrl).Default("http://localhost")
 	fs.Bool("dev", "development mode").Var(&opt.Dev)
+	fs.String("kubeconfig", "Path to a kubeconfig file. If empty, the in-cluster config is used. Set it to the local kwok cluster in development.").Var(&opt.Kubeconfig)
+	fs.Bool("emulate-job-control", "Enable the dev-only CompleteTask RPC against a kwok-emulated kube-apiserver (local development)").Var(&opt.EmulateJobControl)
+	fs.String("emulate-job-fixture-dir", "Directory of fixture logs served as pod logs by kwok. Defaults to go/build/dev/jobresult under the bazel workspace.").Var(&opt.EmulateJobFixtureDir)
 	fs.String("minio-endpoint", "The endpoint of MinIO. If this value is empty, then we find the endpoint from kube-apiserver using incluster config.").Var(&opt.MinIOEndpoint)
 	fs.String("minio-name", "The name of MinIO").Var(&opt.MinIOName)
 	fs.String("minio-namespace", "The namespace of MinIO").Var(&opt.MinIONamespace)

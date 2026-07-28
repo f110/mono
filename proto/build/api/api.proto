@@ -19,6 +19,9 @@ service API {
   rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
   rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
+  // CompleteTask forces a task's Job into a terminal state. It only works when
+  // the builder runs with --emulate-job-control (local kwok dev environment).
+  rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
 }
 
 message RequestListTasks {
@@ -82,6 +85,13 @@ message RequestForceStopTask {
 
 message ResponseForceStopTask {}
 
+message RequestCompleteTask {
+  int32 task_id = 1;
+  bool  success = 2;
+}
+
+message ResponseCompleteTask {}
+
 message RequestGetServerInfo {}
 
 message ResponseGetServerInfo {
@@ -122,6 +132,10 @@ message ServerConfig {
   bool   pull_always                 = 24;
   int64  github_installation_id      = 25;
   string github_app_secret_name      = 26;
+  // emulate_job_control is true when the builder runs against a kwok-emulated
+  // kube-apiserver (--emulate-job-control). The dashboard uses it to expose the
+  // dev-only "complete task" action.
+  bool emulate_job_control = 27;
 }
 
 message RequestListExternalReleaseTriggers {

@@ -35,7 +35,9 @@ import { useState } from 'react'
 import { LogModal } from '../../components/LogModal.tsx'
 import { ManifestModal } from '../../components/ManifestModal.tsx'
 import { BFF } from '../../connect/bff_pb'
+import { useCompleteTask } from '../../hooks/useCompleteTask.ts'
 import { useForceStopTask } from '../../hooks/useForceStopTask.ts'
+import { useGetServerInfo } from '../../hooks/useGetServerInfo.ts'
 import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { TestStatus } from '../../model/msg_pb'
@@ -98,6 +100,11 @@ export const TaskPage: React.FC = () => {
     useForceStopTask()
   const handleForceStop = () => {
     forceStopTask({ taskId: Number(taskId) })
+  }
+  const { config } = useGetServerInfo()
+  const { mutate: completeTask, isPending: isCompleting } = useCompleteTask()
+  const handleComplete = (success: boolean) => {
+    completeTask({ taskId: Number(taskId), success })
   }
 
   if (!isSuccess) {
@@ -263,6 +270,29 @@ export const TaskPage: React.FC = () => {
               >
                 Force Stop
               </Button>
+            )}
+            {/* Dev-only: only shown when the builder emulates the cluster with kwok. */}
+            {config?.emulateJobControl && !task.finishedAt && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={() => handleComplete(true)}
+                  loading={isCompleting}
+                  loadingPosition="end"
+                >
+                  Complete (dev)
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => handleComplete(false)}
+                  loading={isCompleting}
+                  loadingPosition="end"
+                >
+                  Fail (dev)
+                </Button>
+              </>
             )}
           </Stack>
         </Stack>

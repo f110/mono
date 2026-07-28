@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -9,9 +11,32 @@ import (
 	"github.com/google/go-github/v85/github"
 	"github.com/stretchr/testify/require"
 	"go.f110.dev/githubmock"
+	"google.golang.org/grpc"
 
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/testing/assertion"
 )
+
+// fakeGitDataClient captures the repository key GetTree is called with. Every
+// other method is inherited from the embedded interface and panics if used.
+type fakeGitDataClient struct {
+	git.GitDataClient
+	treeRepo string
+}
+
+func (f *fakeGitDataClient) GetTree(_ context.Context, in *git.RequestGetTree, _ ...grpc.CallOption) (*git.ResponseGetTree, error) {
+	f.treeRepo = in.GetRepo()
+	return nil, errors.New("stub: stop here")
+}
+
+// ReadFromGitDataService must query git-data-service with the registered key
+// (gitDataRepo), not the bare repoName.
+func TestReadFromGitDataServiceUsesGitDataRepoKey(t *testing.T) {
+	fake := &fakeGitDataClient{}
+	_, err := ReadFromGitDataService(context.Background(), fake, "example/public-app", "example", "public-app", "HEAD")
+	assertion.MustError(t, err)
+	assertion.Equal(t, fake.treeRepo, "example/public-app")
+}
 
 func TestParseFile(t *testing.T) {
 	cases := []struct {

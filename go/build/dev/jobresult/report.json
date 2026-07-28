@@ -1,0 +1,1 @@
+{"tests":[{"label":"//pkg/foo:foo_test","status":"passed","duration":400,"start_at":"2026-07-27T00:00:00Z"},{"label":"//pkg/bar:bar_test","status":"flaky","duration":1200,"start_at":"2026-07-27T00:00:01Z"}]}

@@ -300,8 +300,8 @@
   "moduleExtensions": {
     "//build/rules/toolset:module.bzl%toolset_extension": {
       "general": {
-        "bzlTransitiveDigest": "Nc6NRw6MijJVA0MPJRhD4gUp/LXQm6E1sOAn5NutvAw=",
-        "usagesDigest": "6jX0ETiMte1wS6EjuLu6k0lAigWDAfHpWsxGOR64ca4=",
+        "bzlTransitiveDigest": "cayby36UifkY//n6R3+6eSePAZrdE8oGezKkg0K1ebo=",
+        "usagesDigest": "fGjOzfAtSpcApxmgWDuQth0De3VRLgCxPDnCSHpXXUw=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -328,6 +328,18 @@
             "repoRuleId": "@@//build/private/minio:repository.bzl%minio_binary",
             "attributes": {
               "version": "RELEASE.2022-12-02T19-19-22Z"
+            }
+          },
+          "kube-apiserver": {
+            "repoRuleId": "@@//build/private/kube-apiserver:repository.bzl%kube_apiserver_binary",
+            "attributes": {
+              "version": "1.29.4"
+            }
+          },
+          "kwok": {
+            "repoRuleId": "@@//build/private/kwok:repository.bzl%kwok_binary",
+            "attributes": {
+              "version": "v0.6.0"
             }
           },
           "vault": {

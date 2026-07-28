@@ -29,6 +29,7 @@ const (
 	API_GetServerInfo_FullMethodName               = "/mono.build.api.API/GetServerInfo"
 	API_ListExternalReleaseTriggers_FullMethodName = "/mono.build.api.API/ListExternalReleaseTriggers"
 	API_ListGithubEvents_FullMethodName            = "/mono.build.api.API/ListGithubEvents"
+	API_CompleteTask_FullMethodName                = "/mono.build.api.API/CompleteTask"
 )
 
 // APIClient is the client API for API service.
@@ -45,6 +46,7 @@ type APIClient interface {
 	GetServerInfo(ctx context.Context, in *RequestGetServerInfo, opts ...grpc.CallOption) (*ResponseGetServerInfo, error)
 	ListExternalReleaseTriggers(ctx context.Context, in *RequestListExternalReleaseTriggers, opts ...grpc.CallOption) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(ctx context.Context, in *RequestListGithubEvents, opts ...grpc.CallOption) (*ResponseListGithubEvents, error)
+	CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error)
 }
 
 type aPIClient struct {
@@ -155,6 +157,16 @@ func (c *aPIClient) ListGithubEvents(ctx context.Context, in *RequestListGithubE
 	return out, nil
 }
 
+func (c *aPIClient) CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseCompleteTask)
+	err := c.cc.Invoke(ctx, API_CompleteTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations should embed UnimplementedAPIServer
 // for forward compatibility.
@@ -169,6 +181,7 @@ type APIServer interface {
 	GetServerInfo(context.Context, *RequestGetServerInfo) (*ResponseGetServerInfo, error)
 	ListExternalReleaseTriggers(context.Context, *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error)
+	CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error)
 }
 
 // UnimplementedAPIServer should be embedded to have
@@ -207,6 +220,9 @@ func (UnimplementedAPIServer) ListExternalReleaseTriggers(context.Context, *Requ
 }
 func (UnimplementedAPIServer) ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListGithubEvents not implemented")
+}
+func (UnimplementedAPIServer) CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteTask not implemented")
 }
 func (UnimplementedAPIServer) testEmbeddedByValue() {}
 
@@ -408,6 +424,24 @@ func _API_ListGithubEvents_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_CompleteTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestCompleteTask)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).CompleteTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_CompleteTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).CompleteTask(ctx, req.(*RequestCompleteTask))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -454,6 +488,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListGithubEvents",
 			Handler:    _API_ListGithubEvents_Handler,
+		},
+		{
+			MethodName: "CompleteTask",
+			Handler:    _API_CompleteTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

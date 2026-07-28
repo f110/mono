@@ -1,0 +1,3 @@
++ sidecar clone --work-dir=/work --url=https://github.com/example/public-app --commit=deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
+Cloning into '/work'...
+Checked out revision deadbeefdeadbeefdeadbeefdeadbeefdeadbeef

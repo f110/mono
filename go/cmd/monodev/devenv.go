@@ -44,7 +44,7 @@ func repoDoc(cmd *cli.Command) {
 func build(cmd *cli.Command) {
 	buildCmd := &cli.Command{
 		Use:   "build",
-		Short: "Start MySQL, MinIO and a GitHub API mock",
+		Short: "Start MySQL, MinIO, a GitHub API mock and a kwok-emulated kube-apiserver",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(buildDatabase)
@@ -52,8 +52,13 @@ func build(cmd *cli.Command) {
 			m.AddComponent(buildSeed)
 			m.AddComponent(minio)
 			m.AddComponent(buildBucket)
+			m.AddComponent(buildLogsBucket)
 			m.AddComponent(buildGitDataBucket)
 			m.AddComponent(githubmock)
+			// kubeAPIServer pulls in etcd and kwokPKI, kwokNode pulls in kwok.
+			m.AddComponent(kubeAPIServer)
+			m.AddComponent(kwok)
+			m.AddComponent(kwokNode)
 
 			return m.Run(ctx)
 		},
@@ -61,6 +66,8 @@ func build(cmd *cli.Command) {
 	etcd.Flags(buildCmd.Flags())
 	minio.Flags(buildCmd.Flags())
 	githubmock.Flags(buildCmd.Flags())
+	kubeAPIServer.Flags(buildCmd.Flags())
+	kwok.Flags(buildCmd.Flags())
 
 	cmd.AddCommand(buildCmd)
 }

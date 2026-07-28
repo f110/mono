@@ -25,20 +25,32 @@ func unmarshalPayload(ev *database.GithubEvent, out any) error {
 	return nil
 }
 
+// gitDataRepoName returns the key the repository is registered under in
+// git-data-service (source_repository.Name). It is resolved from the repository
+// URL via FindRepository rather than synthesized from owner/repoName. Returns
+// "" for an untracked repository.
+func gitDataRepoName(repo *database.SourceRepository) string {
+	if repo == nil {
+		return ""
+	}
+	return repo.Name
+}
+
 // fetchConfig reads the build configuration for owner/repoName at revision.
-// Returns (nil, nil) when the repository has no jobs configured.
-func (r *PushReconciler) fetchConfig(ctx context.Context, owner, repoName, revision string) (*config.Config, error) {
-	return fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, owner, repoName, revision)
+// gitDataRepo is the git-data-service key (see gitDataRepoName). Returns
+// (nil, nil) when the repository has no jobs configured.
+func (r *PushReconciler) fetchConfig(ctx context.Context, gitDataRepo, owner, repoName, revision string) (*config.Config, error) {
+	return fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepo, owner, repoName, revision)
 }
 
 // fetchBuildConfig reads the build configuration at ref. ref may be a commit
 // SHA, "HEAD", or a fully-qualified ref name. When gitDataClient is non-nil,
-// the config is read from the git-data-service mirror; otherwise it falls
-// back to the GitHub API.
-func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, owner, repoName, ref string) (*config.Config, error) {
+// the config is read from the git-data-service mirror (keyed by gitDataRepo);
+// otherwise it falls back to the GitHub API (keyed by owner/repoName).
+func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, gitDataRepo, owner, repoName, ref string) (*config.Config, error) {
 	var conf *config.Config
 	if gitDataClient != nil {
-		c, err := config.ReadFromGitDataService(ctx, gitDataClient, owner, repoName, ref)
+		c, err := config.ReadFromGitDataService(ctx, gitDataClient, gitDataRepo, owner, repoName, ref)
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
@@ -71,16 +83,16 @@ func fetchBuildConfig(ctx context.Context, gh *github.Client, gitDataClient git.
 // and the read fails. The default branch is therefore resolved to a concrete
 // commit first. The GitHub API resolves "HEAD" to the default branch itself,
 // so the fallback path keeps using it.
-func fetchDefaultBranchConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, owner, repoName, defaultBranch string) (*config.Config, error) {
+func fetchDefaultBranchConfig(ctx context.Context, gh *github.Client, gitDataClient git.GitDataClient, gitDataRepo, owner, repoName, defaultBranch string) (*config.Config, error) {
 	ref := "HEAD"
 	if gitDataClient != nil {
-		resp, err := gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: repoName, Ref: "refs/heads/" + defaultBranch})
+		resp, err := gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: gitDataRepo, Ref: "refs/heads/" + defaultBranch})
 		if err != nil {
 			return nil, xerrors.WithStack(err)
 		}
 		ref = resp.GetRef().GetHash()
 	}
-	return fetchBuildConfig(ctx, gh, gitDataClient, owner, repoName, ref)
+	return fetchBuildConfig(ctx, gh, gitDataClient, gitDataRepo, owner, repoName, ref)
 }
 
 // dispatchBuilds runs the legacy a.build loop: filters jobs to known commands

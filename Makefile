@@ -51,14 +51,17 @@ MINIO = --minio-endpoint http://127.0.0.1:9000 --minio-port $(MINIO_PORT) --mini
 BAZEL_MIRROR_MINIO = --bazel-mirror-endpoint http://127.0.0.1:9000 --bazel-mirror-bucket build --bazel-mirror-access-key $(MINIO_ACCESS_KEY) --bazel-mirror-secret-access-key $(MINIO_SECRET_ACCESS_KEY) --bazel-mirror-prefix releases.bazel.build/
 GIT_DATA = --git-data-listen 127.0.0.1:8056 --git-data-service-url 127.0.0.1:8056 --git-data-storage-endpoint http://127.0.0.1:9000 --git-data-bucket git-data --git-data-storage-access-key $(MINIO_ACCESS_KEY) --git-data-storage-secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 
-APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --dev $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO) $(GIT_DATA)
-BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --git-data-service-url 127.0.0.1:8056 --log-level debug --storage-endpoint http://127.0.0.1:9000 --bucket prod-build-logs --access-key EO29Xq9mOsCsjhGL --secret-access-key sgFRis2oGsGigsKeIVRu58P2
+APIFLAGS = --addr 127.0.0.1:8081 --dsn "$(DSN)" --namespace default --lease-lock-name builder --lease-lock-namespace default --log-level debug --emulate-job-control --kubeconfig $(CURDIR)/.kwok/kubeconfig $(GITHUB) $(MINIO) $(BAZEL_MIRROR_MINIO) $(GIT_DATA)
+BFFFLAGS = --addr 127.0.0.1:8082 --api 127.0.0.1:8081 --git-data-service-url 127.0.0.1:8056 --log-level debug --storage-endpoint http://127.0.0.1:9000 --bucket $(MINIO_BUCKET) --access-key $(MINIO_ACCESS_KEY) --secret-access-key $(MINIO_SECRET_ACCESS_KEY)
 
 .PHONY: run-bff
 run-bff:
 	bazel run //go/cmd/build -- bff $(BFFFLAGS)
 
 .PHONY: run-api
+# Runs the builder against the kwok-emulated kube-apiserver started by
+# `bazel run //:env_build`. KUBECONFIG points at the kwok cluster and
+# --emulate-job-control enables the dev-only "complete task" action.
 run-api:
 	bazel run //go/cmd/build -- builder $(APIFLAGS)
 

@@ -306,10 +306,21 @@ func (s *apiService) ForceStopTask(ctx context.Context, req *RequestForceStopTas
 	return ResponseForceStopTask_builder{}.Build(), nil
 }
 
+func (s *apiService) CompleteTask(ctx context.Context, req *RequestCompleteTask) (*ResponseCompleteTask, error) {
+	if s.serverConfig == nil || !s.serverConfig.GetEmulateJobControl() {
+		return nil, status.Error(codes.FailedPrecondition, "emulate job control is disabled")
+	}
+	if err := s.builder.CompleteTask(ctx, req.GetTaskId(), req.GetSuccess()); err != nil {
+		slogger.Log.Warn("Failed to complete task in emulation", slogger.E(err))
+		return nil, status.Error(codes.Internal, "failed to complete task")
+	}
+	return ResponseCompleteTask_builder{}.Build(), nil
+}
+
 func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo) (*ResponseGetServerInfo, error) {
 	objs, err := s.stClient.List(ctx, s.bazelMirrorPrefix)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to list bazel mirror objects")
+		slogger.Log.Warn("Failed to list bazel mirror objects", slogger.E(err))
 	}
 	var versions semver.Collection
 	for _, v := range objs {

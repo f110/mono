@@ -36,6 +36,7 @@ const (
 type Builder interface {
 	Build(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error)
 	ForceStop(ctx context.Context, taskId int32) error
+	CompleteTask(ctx context.Context, taskId int32, success bool) error
 }
 
 type Api struct {

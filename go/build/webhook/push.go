@@ -107,7 +107,7 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 	repoName := event.GetRepo().GetName()
 	revision := event.GetHeadCommit().GetID()
 
-	conf, err := r.fetchConfig(ctx, owner, repoName, revision)
+	conf, err := r.fetchConfig(ctx, gitDataRepoName(repo), owner, repoName, revision)
 	if err != nil {
 		return err
 	}

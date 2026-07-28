@@ -17,7 +17,7 @@ webhooks:
       - release
       - issue_comment
 commits:
-  - sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  - id: c1
     files:
       - name: .bazelversion
         content: |
@@ -32,9 +32,9 @@ commits:
             platforms: ["@rules_go//go/toolchain:linux_amd64"]
             event: ["push"]
           }
-  - sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  - id: c2
     parents:
-      - aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - c1
     files:
       - name: .bazelversion
         content: |
@@ -51,9 +51,9 @@ commits:
           }
 tags:
   - name: v1.0.0
-    commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    commit: c1
   - name: v1.1.0
-    commit: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    commit: c2
 ---
 name: example/private-app
 default_branch: main
@@ -65,7 +65,7 @@ webhooks:
       - release
       - issue_comment
 commits:
-  - sha: cccccccccccccccccccccccccccccccccccccccc
+  - id: c1
     files:
       - name: .bazelversion
         content: |
@@ -87,4 +87,4 @@ commits:
           }
 tags:
   - name: v0.1.0
-    commit: cccccccccccccccccccccccccccccccccccccccc
+    commit: c1

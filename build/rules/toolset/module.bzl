@@ -2,6 +2,8 @@ load("//build/private/kustomize:repository.bzl", "kustomize_binary")
 load("//build/private/kind:repository.bzl", "kind_binary")
 load("//build/private/etcd:repository.bzl", "etcd_binary")
 load("//build/private/jj:repository.bzl", "jj_binary")
+load("//build/private/kube-apiserver:repository.bzl", "kube_apiserver_binary")
+load("//build/private/kwok:repository.bzl", "kwok_binary")
 load("//build/private/minio:repository.bzl", "minio_binary")
 load("//build/private/vault:repository.bzl", "vault_binary")
 
@@ -16,6 +18,10 @@ def _toolset_impl(module_ctx):
                 etcd_binary(name = "etcd", version = tools.etcd)
             if tools.minio:
                 minio_binary(name = "minio", version = tools.minio)
+            if tools.kube_apiserver:
+                kube_apiserver_binary(name = "kube-apiserver", version = tools.kube_apiserver)
+            if tools.kwok:
+                kwok_binary(name = "kwok", version = tools.kwok)
 
         for tools in mod.tags.test_tool:
             if tools.vault:
@@ -30,6 +36,8 @@ toolset_extension = module_extension(
             "kind": attr.string(),
             "etcd": attr.string(),
             "minio": attr.string(),
+            "kube_apiserver": attr.string(),
+            "kwok": attr.string(),
         }),
         "test_tool": tag_class(attrs = {
             "vault": attr.string(),

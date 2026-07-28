@@ -21,6 +21,7 @@ export interface ServerConfig {
   githubAppId: number
   vaultAddr: string
   dashboardUrl: string
+  emulateJobControl: boolean
 }
 
 export interface ServerInfo {
@@ -61,6 +62,7 @@ export function useGetServerInfo(): ServerInfo {
           githubAppId: Number(c.githubAppId),
           vaultAddr: c.vaultAddr,
           dashboardUrl: c.dashboardUrl,
+          emulateJobControl: c.emulateJobControl,
         }
       : undefined,
   }
