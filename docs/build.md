@@ -203,14 +203,22 @@ build システムでは 2 通りの使われ方をする。
    label 順にソートして `TestReport`（`{label, status(passed/flaky/failed), duration, start_at}` の配列）を
    **JSON で stdout に出力**する。
 
+### 実行ノード・使用イメージの記録（`updateAssignedInfo`）
+
+Pod がスケジュールされて初めて判明する情報は、`postProcess` ではなく `syncJob` が reconcile 毎に呼ぶ
+`updateAssignedInfo` が **Job の完了を待たずに** 記録する。空のフィールドだけを埋める冪等処理なので、Pod に
+`HostIP` が付いた最初の reconcile で確定し、以降は再取得しない。
+
+- ビルドに使われたコンテナイメージ（digest 付き）を `task.Container` に記録。
+- Pod の `HostIP` と Node の InternalIP を突き合わせて実行ノードを `task.Node` に記録。
+
 ### コーディネーターによる回収（`postProcess`）
 
 Job が Complete / Failed になると JobWatcher 経由で `BazelBuilder.syncJob` → `postProcess` が呼ばれ、結果を回収する。
 
-- 対象 Pod を 1 つに特定し、ビルドに使われたコンテナイメージ（digest 付き）を `task.Container` に記録。
-- `pre-process` / `main` / `report` の 3 コンテナのログを `GetPodLogs` で取得し、`----- pre-process -----`
-  `----- main -----` の見出しを付けて 1 本に連結 → **MinIO の `logs` バケットに Job 名で保存**（`task.LogFile`）。
-- Pod の `HostIP` と Node の InternalIP を突き合わせて実行ノードを `task.Node` に記録。
+- 対象 Pod を 1 つに特定し、`pre-process` / `main` / `report` の 3 コンテナのログを `GetPodLogs` で取得し、
+  `----- pre-process -----` `----- main -----` の見出しを付けて 1 本に連結 → **MinIO の `logs` バケットに
+  Job 名で保存**（`task.LogFile`）。
 - trunk のテスト時は **`report` コンテナの stdout（＝BEP から作った TestReport JSON）をログとして読み取り**、
   `updateTestReport` がパースして `test_report` 行を作成、`ExecutedTestsCount` / `SucceededTestsCount` を更新。
 - `github_status` 有効時は GitHub のコミットステータスを success/failure に更新。
