@@ -163,18 +163,21 @@ export const IndexPage: React.FC = () => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(50)
   const [pageToken, setPageToken] = useState<string | undefined>(undefined)
-  const [pageTokenHistory, setPageTokenHistory] = useState<string[]>([])
+  const [pageTokenHistory, setPageTokenHistory] = useState<
+    (string | undefined)[]
+  >([])
   const handleChangePage = (
     _: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
-    if (page + 1 == newPage && pageToken !== undefined) {
+    if (page + 1 == newPage) {
       setPageTokenHistory([...pageTokenHistory, pageToken])
       setPageToken(tasks.data?.nextPageToken)
     } else if (page - 1 == newPage) {
-      const token = pageTokenHistory.pop()
+      const history = [...pageTokenHistory]
+      const token = history.pop()
       setPageToken(token)
-      setPageTokenHistory([...pageTokenHistory])
+      setPageTokenHistory(history)
     }
     setPage(newPage)
   }
