@@ -175,6 +175,12 @@ export const TaskPage: React.FC = () => {
                   </DefinitionTableCell>
                 </TableRow>
                 <TableRow>
+                  <DefinitionTableCell>Trunk</DefinitionTableCell>
+                  <DefinitionTableCell>
+                    {task?.isTrunk ? 'Yes' : 'No'}
+                  </DefinitionTableCell>
+                </TableRow>
+                <TableRow>
                   <DefinitionTableCell>Started at</DefinitionTableCell>
                   <DefinitionTableCell>{start}</DefinitionTableCell>
                 </TableRow>
