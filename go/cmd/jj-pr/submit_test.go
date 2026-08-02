@@ -138,8 +138,139 @@ This PR contains fixing some security issues.`,
 
 		nextState, err := c.updatePR(context.Background())
 		require.NoError(t, err)
-		assert.Equal(t, c.stateClose, nextState)
+		assert.Equal(t, c.stateSyncStack, nextState)
 	})
+}
+
+func TestJujutsuPRSubmitCommand_SyncStack(t *testing.T) {
+	// stackFromBottom builds c.stack from an ordered list of pull request
+	// numbers given from the bottom (closest to the trunk) to the top. c.stack
+	// itself is stored from the top to the bottom.
+	stackFromBottom := func(prNumbers ...int) stackedCommit {
+		stack := make(stackedCommit, len(prNumbers))
+		for i, n := range prNumbers {
+			stack[len(prNumbers)-1-i] = &commit{PullRequest: &pullRequest{ID: n}}
+		}
+		return stack
+	}
+	// stackPRNumbers returns the pull request numbers of a remote stack.
+	stackPRNumbers := func(s *githubmock.Stack) []int {
+		prs := s.GetPullRequests()
+		out := make([]int, len(prs))
+		for i, pr := range prs {
+			out[i] = pr.GetNumber()
+		}
+		return out
+	}
+
+	t.Run("AppendOntoExistingStack", func(t *testing.T) {
+		// A part of the local stack (#1, #2) is already stacked on GitHub, and
+		// #3 is newly stacked on top of them.
+		ghMock := githubmock.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		pr1 := githubmock.NewPullRequest().Number(1)
+		pr2 := githubmock.NewPullRequest().Number(2)
+		pr3 := githubmock.NewPullRequest().Number(3)
+		repo.PullRequests(pr1, pr2, pr3)
+		repo.Stacks(githubmock.NewStack().Number(1).Base("master").PullRequests(pr1, pr2))
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+
+		c := newSubmitCommand()
+		c.ghClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.stack = stackFromBottom(1, 2, 3)
+
+		nextState, err := c.syncStack(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, c.stateClose, nextState)
+
+		stacks := repo.GetStacks()
+		require.Len(t, stacks, 1)
+		assert.Equal(t, []int{1, 2, 3}, stackPRNumbers(stacks[0]))
+	})
+
+	t.Run("ReorderSubmittedStack", func(t *testing.T) {
+		// The whole stack (#1, #2, #3) is already stacked on GitHub, and the
+		// order is changed locally to #1, #3, #2. The stack has to be dissolved
+		// and recreated because the Stacks API cannot express a reorder.
+		ghMock := githubmock.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		pr1 := githubmock.NewPullRequest().Number(1)
+		pr2 := githubmock.NewPullRequest().Number(2)
+		pr3 := githubmock.NewPullRequest().Number(3)
+		repo.PullRequests(pr1, pr2, pr3)
+		repo.Stacks(githubmock.NewStack().Number(1).Base("master").PullRequests(pr1, pr2, pr3))
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+
+		c := newSubmitCommand()
+		c.ghClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.stack = stackFromBottom(1, 3, 2)
+
+		nextState, err := c.syncStack(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, c.stateClose, nextState)
+
+		stacks := repo.GetStacks()
+		require.Len(t, stacks, 1)
+		assert.Equal(t, []int{1, 3, 2}, stackPRNumbers(stacks[0]))
+	})
+}
+
+func TestJujutsuPRSubmitCommand_UpdatePRDoesNotWriteChain(t *testing.T) {
+	// The pull request chain is now provided by the Stacks API, so updatePR must
+	// not write it into the description.
+	ghMock := githubmock.NewMock()
+	repo := ghMock.Repository("f110/mono")
+	repo.PullRequests(
+		githubmock.NewPullRequest().
+			Number(1).
+			Base("master").
+			Head(nil, "push-a", "").
+			Title("a: Fix").
+			Body("Body of A."),
+		githubmock.NewPullRequest().
+			Number(2).
+			Base("push-a").
+			Head(nil, "push-b", "").
+			Title("b: Add").
+			Body("Body of B."),
+	)
+	ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+
+	pr1, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1)
+	require.NoError(t, err)
+	pr2, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 2)
+	require.NoError(t, err)
+
+	c := newSubmitCommand()
+	c.ghClient = ghClient
+	c.repositoryOwner, c.repositoryName = "f110", "mono"
+	c.DefaultBranch = "master"
+	c.stack = []*commit{
+		{
+			Description: "b: Add\n\nBody of B.",
+			Bookmarks:   []*bookmark{{Name: "push-b"}},
+			PullRequest: newPullRequest(pr2),
+		},
+		{
+			Description: "a: Fix\n\nBody of A.",
+			Bookmarks:   []*bookmark{{Name: "push-a"}},
+			PullRequest: newPullRequest(pr1),
+		},
+	}
+
+	_, err = c.updatePR(context.Background())
+	require.NoError(t, err)
+
+	got1, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1)
+	require.NoError(t, err)
+	got2, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 2)
+	require.NoError(t, err)
+	assert.Equal(t, "Body of A.", got1.GetBody())
+	assert.Equal(t, "Body of B.", got2.GetBody())
 }
 
 func TestSplitDescription(t *testing.T) {

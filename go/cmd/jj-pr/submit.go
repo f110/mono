@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -82,7 +84,6 @@ func splitDescription(desc string) (title, body string) {
 
 const (
 	stackRevsets           = "ancestors(latest(%s@origin) & remote_bookmarks())..change_id(%s) ~ empty()"
-	stackNavigatorHeader   = "\n---\n\nPull request chain:\n\n"
 	lastPickedTemplateFile = ".last_template_file"
 	noSendTag              = "no-send:"
 	wipTag                 = "WIP:"
@@ -117,6 +118,7 @@ type jujutsuPRSubmitCommand struct {
 	stateCreatePR       fsm.State
 	stateUpdatePR       fsm.State
 	stateUpdateSinglePR fsm.State
+	stateSyncStack      fsm.State
 	stateClose          fsm.State
 }
 
@@ -129,6 +131,7 @@ func newSubmitCommand() *jujutsuPRSubmitCommand {
 		stateCreatePR
 		stateUpdatePR
 		stateUpdateSinglePR
+		stateSyncStack
 		stateClose
 	)
 	c := &jujutsuPRSubmitCommand{
@@ -139,6 +142,7 @@ func newSubmitCommand() *jujutsuPRSubmitCommand {
 		stateCreatePR:       stateCreatePR,
 		stateUpdatePR:       stateUpdatePR,
 		stateUpdateSinglePR: stateUpdateSinglePR,
+		stateSyncStack:      stateSyncStack,
 		stateClose:          stateClose,
 	}
 	c.FSM = fsm.NewFSM(
@@ -150,6 +154,7 @@ func newSubmitCommand() *jujutsuPRSubmitCommand {
 			stateCreatePR:       c.createPR,
 			stateUpdatePR:       c.updatePR,
 			stateUpdateSinglePR: c.updateSinglePR,
+			stateSyncStack:      c.syncStack,
 			stateClose:          c.close,
 		},
 		stateInit,
@@ -652,28 +657,6 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		}
 		_, descBody := splitDescription(v.Description)
 		body := v.PullRequest.Body
-		if len(c.stack) > 1 {
-			var stackNav strings.Builder
-			stackNav.WriteString(stackNavigatorHeader)
-			for i := len(c.stack) - 1; i >= 0; i-- {
-				c := c.stack[i]
-				var arrow string
-				if v == c {
-					arrow = " 👉"
-				}
-				// Sometimes, PullRequest is nil when dry-run is enabled.
-				if c.PullRequest != nil {
-					stackNav.WriteString(fmt.Sprintf("1.%s #%d\n", arrow, c.PullRequest.ID))
-				}
-			}
-			if i := strings.LastIndex(v.PullRequest.Body, stackNavigatorHeader+"1."); i >= 0 {
-				body = v.PullRequest.Body[:i]
-			}
-			if len(body) > 0 && body[len(body)-1] != '\n' {
-				body += "\n"
-			}
-			body += stackNav.String()
-		}
 		if body == "" {
 			body = descBody
 		}
@@ -696,7 +679,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		}
 	}
 
-	return fsm.Next(c.stateClose)
+	return fsm.Next(c.stateSyncStack)
 }
 
 func (c *jujutsuPRSubmitCommand) updateSinglePR(_ context.Context) (fsm.State, error) {
@@ -711,4 +694,179 @@ func (c *jujutsuPRSubmitCommand) updateSinglePR(_ context.Context) (fsm.State, e
 
 func (c *jujutsuPRSubmitCommand) close(_ context.Context) (fsm.State, error) {
 	return fsm.Finish()
+}
+
+// ghStack is a subset of the stack object of the GitHub Stacks API.
+// go-github does not support the Stacks API yet, so we call it directly through
+// the client's request plumbing.
+type ghStack struct {
+	ID           int         `json:"id"`
+	Number       int         `json:"number"`
+	NodeID       string      `json:"node_id"`
+	URL          string      `json:"url"`
+	Open         bool        `json:"open"`
+	PullRequests []ghStackPR `json:"pull_requests"`
+}
+
+type ghStackPR struct {
+	Number int `json:"number"`
+}
+
+// prNumbers returns the ordered pull request numbers in the stack, from the
+// bottom (closest to the base branch) to the top.
+func (s *ghStack) prNumbers() []int {
+	out := make([]int, len(s.PullRequests))
+	for i, v := range s.PullRequests {
+		out[i] = v.Number
+	}
+	return out
+}
+
+type ghStackRequest struct {
+	PullRequests []int `json:"pull_requests"`
+}
+
+func (c *jujutsuPRSubmitCommand) listStacks(ctx context.Context) ([]*ghStack, error) {
+	path := fmt.Sprintf("repos/%s/%s/stacks", c.repositoryOwner, c.repositoryName)
+	req, err := c.ghClient.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var stacks []*ghStack
+	if _, err := c.ghClient.Do(ctx, req, &stacks); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return stacks, nil
+}
+
+func (c *jujutsuPRSubmitCommand) createStack(ctx context.Context, prNumbers []int) (*ghStack, error) {
+	path := fmt.Sprintf("repos/%s/%s/stacks", c.repositoryOwner, c.repositoryName)
+	req, err := c.ghClient.NewRequest(http.MethodPost, path, &ghStackRequest{PullRequests: prNumbers})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var stack ghStack
+	if _, err := c.ghClient.Do(ctx, req, &stack); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &stack, nil
+}
+
+func (c *jujutsuPRSubmitCommand) addToStack(ctx context.Context, number int, prNumbers []int) (*ghStack, error) {
+	path := fmt.Sprintf("repos/%s/%s/stacks/%d/add", c.repositoryOwner, c.repositoryName, number)
+	req, err := c.ghClient.NewRequest(http.MethodPost, path, &ghStackRequest{PullRequests: prNumbers})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var stack ghStack
+	if _, err := c.ghClient.Do(ctx, req, &stack); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return &stack, nil
+}
+
+func (c *jujutsuPRSubmitCommand) unstack(ctx context.Context, number int) error {
+	path := fmt.Sprintf("repos/%s/%s/stacks/%d/unstack", c.repositoryOwner, c.repositoryName, number)
+	req, err := c.ghClient.NewRequest(http.MethodPost, path, nil)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	if _, err := c.ghClient.Do(ctx, req, nil); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+// syncStack reflects the local stack onto GitHub by using the Stacks API. It
+// creates a stack, appends new pull requests to an existing stack, or, when the
+// order changed, recreates the stack in the new order. Failures are logged as a
+// warning and do not fail the command because the pull requests have already
+// been created.
+func (c *jujutsuPRSubmitCommand) syncStack(ctx context.Context) (fsm.State, error) {
+	// Collect the pull request numbers in stack order, from the bottom (closest
+	// to the trunk) to the top.
+	var prNumbers []int
+	for i := len(c.stack) - 1; i >= 0; i-- {
+		if c.stack[i].PullRequest != nil {
+			prNumbers = append(prNumbers, c.stack[i].PullRequest.ID)
+		}
+	}
+
+	// A stack needs at least two pull requests.
+	if len(prNumbers) < 2 || c.DryRun {
+		return fsm.Next(c.stateClose)
+	}
+
+	stacks, err := c.listStacks(ctx)
+	if err != nil {
+		slogger.Log.Warn("Could not list stacks. Skip to make a stack", slogger.E(err))
+		return fsm.Next(c.stateClose)
+	}
+
+	existing := findStackContaining(stacks, prNumbers)
+	if existing == nil {
+		if _, err := c.createStack(ctx, prNumbers); err != nil {
+			slogger.Log.Warn("Could not create a stack", slogger.E(err))
+		} else {
+			fmt.Printf("Created a stack with %d pull requests\n", len(prNumbers))
+		}
+		return fsm.Next(c.stateClose)
+	}
+
+	current := existing.prNumbers()
+	if slices.Equal(current, prNumbers) {
+		// Already in sync.
+		return fsm.Next(c.stateClose)
+	}
+
+	// When the local stack is the remote stack with new pull requests appended
+	// onto the top, the add endpoint can express it.
+	if delta, ok := appendDelta(current, prNumbers); ok {
+		if _, err := c.addToStack(ctx, existing.Number, delta); err != nil {
+			slogger.Log.Warn("Could not add pull requests to the stack", slogger.E(err))
+		} else {
+			fmt.Printf("Added %d pull requests to the stack\n", len(delta))
+		}
+		return fsm.Next(c.stateClose)
+	}
+
+	// The order changed (or a pull request was removed). The Stacks API cannot
+	// express a reorder, so dissolve the stack and recreate it in the new order.
+	if err := c.unstack(ctx, existing.Number); err != nil {
+		slogger.Log.Warn("Could not unstack the existing stack", slogger.E(err))
+		return fsm.Next(c.stateClose)
+	}
+	if _, err := c.createStack(ctx, prNumbers); err != nil {
+		slogger.Log.Warn("Could not recreate the stack", slogger.E(err))
+	} else {
+		fmt.Printf("Recreated the stack with %d pull requests\n", len(prNumbers))
+	}
+	return fsm.Next(c.stateClose)
+}
+
+// findStackContaining returns the stack that already contains any of the given
+// pull request numbers, or nil when none of them are stacked.
+func findStackContaining(stacks []*ghStack, prNumbers []int) *ghStack {
+	for _, s := range stacks {
+		for _, n := range s.prNumbers() {
+			if slices.Contains(prNumbers, n) {
+				return s
+			}
+		}
+	}
+	return nil
+}
+
+// appendDelta returns the pull request numbers that desired adds on top of
+// current when desired is current followed by zero or more new numbers. ok is
+// false when desired is not a clean append onto current, which happens on a
+// reorder or a removal.
+func appendDelta(current, desired []int) (delta []int, ok bool) {
+	if len(desired) <= len(current) {
+		return nil, false
+	}
+	if !slices.Equal(current, desired[:len(current)]) {
+		return nil, false
+	}
+	return desired[len(current):], true
 }
