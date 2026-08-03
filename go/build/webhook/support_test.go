@@ -187,15 +187,15 @@ func repoFixture(url, name string) *database.SourceRepository {
 	}
 }
 
-// configTransport builds a githubmock transport that serves a repository
-// with a single job `.build/test.cue` that subscribes to eventType. Used by
-// any reconciler test where the fetchBuildConfig path must succeed.
-func configTransport(t *testing.T, fullName, sha, eventType string) http.RoundTripper {
+// configTransport builds a githubmock transport that serves a repository with
+// a single job `.build/test.cue` subscribing to eventType. It returns the
+// transport and the git-computed SHA of the head commit so callers can align
+// the webhook payload (PR head / head_commit) with the commit the mock serves.
+func configTransport(t *testing.T, fullName, eventType string) (http.RoundTripper, string) {
 	t.Helper()
 	m := githubmock.NewMock()
 	repo := m.Repository(fullName)
-	err := repo.Commits(githubmock.NewCommit().
-		SHA(sha).
+	commit := githubmock.NewCommit().
 		IsHead().
 		Files(
 			&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {
@@ -212,8 +212,7 @@ func configTransport(t *testing.T, fullName, sha, eventType string) http.RoundTr
 }
 `)},
 			&githubmock.File{Name: ".bazelversion", Body: []byte("8.4.1")},
-		),
-	)
-	assertion.MustNoError(t, err)
-	return m.Transport()
+		)
+	assertion.MustNoError(t, repo.Commits(commit))
+	return m.Transport(), commit.GetSHA()
 }

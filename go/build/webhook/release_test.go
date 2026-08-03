@@ -42,7 +42,6 @@ func TestReleaseReconciler(t *testing.T) {
 				m := githubmock.NewMock()
 				ghRepo := m.Repository("f110/sandbox")
 				commit := githubmock.NewCommit().
-					SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
 					IsHead().
 					Files(
 						&githubmock.File{Name: ".build/release.cue", Body: []byte(`jobs: {

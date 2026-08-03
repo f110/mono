@@ -49,7 +49,6 @@ func TestIssueCommentReconciler(t *testing.T) {
 						Head(nil, "", "69f2c2703436688cb49bdcf858e8cf59a9b06e08"),
 				)
 				err := ghRepo.Commits(githubmock.NewCommit().
-					SHA("69f2c2703436688cb49bdcf858e8cf59a9b06e08").
 					IsHead().
 					Files(
 						&githubmock.File{Name: ".build/test.cue", Body: []byte(`jobs: {

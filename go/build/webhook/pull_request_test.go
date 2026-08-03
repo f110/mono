@@ -24,8 +24,6 @@ func TestPullRequestReconciler(t *testing.T) {
 	slogger.Init()
 
 	const opsURL = "https://github.com/f110/ops"
-	const headSHA = "69f2c2703436688cb49bdcf858e8cf59a9b06e08"
-	const syncSHA = "5bd79ba34f1d860afc697c15830c80e2e63edfbf"
 	trustedUser := &database.TrustedUser{Id: 1, GithubId: 2178441, Username: "octocat"}
 
 	// fixture captures everything a case needs to assert against after
@@ -35,6 +33,9 @@ func TestPullRequestReconciler(t *testing.T) {
 		gh       *github.Client
 		recTrans *recTransport
 		builder  *recBuilder
+		// headSHA, when set, is injected into the payload's pull request head so
+		// it matches the commit the githubmock serves.
+		headSHA string
 	}
 
 	cases := []struct {
@@ -83,9 +84,11 @@ func TestPullRequestReconciler(t *testing.T) {
 				d := newTestDAO()
 				d.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, []*database.TrustedUser{trustedUser}, nil)
 				d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+				tr, sha := configTransport(t, "f110/ops", "pull_request")
 				return &fixture{
 					dao:     d,
-					gh:      github.NewClient(&http.Client{Transport: configTransport(t, "f110/ops", headSHA, "pull_request")}),
+					gh:      github.NewClient(&http.Client{Transport: tr}),
+					headSHA: sha,
 					builder: &recBuilder{},
 				}
 			},
@@ -106,9 +109,11 @@ func TestPullRequestReconciler(t *testing.T) {
 					nil,
 				)
 				d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+				tr, sha := configTransport(t, "f110/ops", "pull_request")
 				return &fixture{
 					dao:     d,
-					gh:      github.NewClient(&http.Client{Transport: configTransport(t, "f110/ops", headSHA, "pull_request")}),
+					gh:      github.NewClient(&http.Client{Transport: tr}),
+					headSHA: sha,
 					builder: &recBuilder{},
 				}
 			},
@@ -122,9 +127,11 @@ func TestPullRequestReconciler(t *testing.T) {
 				d := newTestDAO()
 				d.TrustedUser.RegisterListByGithubId(trustedUser.GithubId, []*database.TrustedUser{trustedUser}, nil)
 				d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
+				tr, sha := configTransport(t, "f110/ops", "pull_request")
 				return &fixture{
 					dao:     d,
-					gh:      github.NewClient(&http.Client{Transport: configTransport(t, "f110/ops", syncSHA, "pull_request")}),
+					gh:      github.NewClient(&http.Client{Transport: tr}),
+					headSHA: sha,
 					builder: &recBuilder{},
 				}
 			},
@@ -157,6 +164,9 @@ func TestPullRequestReconciler(t *testing.T) {
 			f := tc.setup(t)
 			r := NewPullRequestReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "pull_request", tc.payload)
+			if f.headSHA != "" {
+				ev.Payload = setPullRequestHeadSHA(t, ev.Payload, f.headSHA)
+			}
 
 			err := r.Reconcile(context.Background(), ev)
 			assertion.MustNoError(t, err)
@@ -167,6 +177,25 @@ func TestPullRequestReconciler(t *testing.T) {
 			}
 		})
 	}
+}
+
+// setPullRequestHeadSHA overrides the pull request head SHA in a webhook
+// payload so it matches the commit the githubmock serves (whose SHA is
+// git-computed and cannot be hard-coded).
+func setPullRequestHeadSHA(t *testing.T, payload []byte, sha string) []byte {
+	t.Helper()
+	var ev github.PullRequestEvent
+	assertion.MustNoError(t, json.Unmarshal(payload, &ev))
+	if ev.PullRequest == nil {
+		ev.PullRequest = &github.PullRequest{}
+	}
+	if ev.PullRequest.Head == nil {
+		ev.PullRequest.Head = &github.PullRequestBranch{}
+	}
+	ev.PullRequest.Head.SHA = &sha
+	b, err := json.Marshal(&ev)
+	assertion.MustNoError(t, err)
+	return b
 }
 
 func TestPullRequestReconciler_RequeuesUntilHeadRevisionAvailable(t *testing.T) {

@@ -18,13 +18,15 @@ import (
 
 // pushPayload builds a minimal PushEvent JSON. branch is the short branch
 // name (e.g. "master" or "feature"); message is the head_commit message used
-// for [skip ci] detection.
-func pushPayload(t *testing.T, branch, message string) []byte {
+// for [skip ci] detection; headSHA is the head_commit id the reconciler reads
+// config from (must match the commit the githubmock serves when config is
+// fetched).
+func pushPayload(t *testing.T, branch, message, headSHA string) []byte {
 	t.Helper()
 	p := map[string]any{
 		"ref": "refs/heads/" + branch,
 		"head_commit": map[string]any{
-			"id":      "deadbeef",
+			"id":      headSHA,
 			"message": message,
 		},
 		"repository": map[string]any{
@@ -76,7 +78,7 @@ func TestPushReconciler(t *testing.T) {
 
 			ev := &database.GithubEvent{
 				EventType: "push",
-				Payload:   pushPayload(t, tc.branch, tc.commitMessage),
+				Payload:   pushPayload(t, tc.branch, tc.commitMessage, "deadbeef"),
 				State:     database.GithubEventStateProcessing,
 				CreatedAt: time.Now(),
 			}
@@ -123,7 +125,7 @@ func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
 
 	ev := &database.GithubEvent{
 		EventType: "push",
-		Payload:   pushPayload(t, "feature", "normal commit"),
+		Payload:   pushPayload(t, "feature", "normal commit", "deadbeef"),
 		State:     database.GithubEventStateProcessing,
 		CreatedAt: time.Now(),
 	}
@@ -151,20 +153,20 @@ func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
 	slogger.Init()
 
 	const opsURL = "https://github.com/f110/ops"
-	const headSHA = "deadbeef"
 
 	d := newTestDAO()
 	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 	d.Job.RegisterListByRepositoryId(1, nil, nil)
 	d.ExternalReleaseTrigger.RegisterListByRepositoryId(1, nil, nil)
 	builder := &recBuilder{err: xerrors.Define("failed to launch job").WithStack()}
-	gh := github.NewClient(&http.Client{Transport: configTransport(t, "f110/ops", headSHA, "push")})
+	transport, headSHA := configTransport(t, "f110/ops", "push")
+	gh := github.NewClient(&http.Client{Transport: transport})
 	r := NewPushReconciler(d.toOptions(), gh, builder, nil, nil)
 
 	ev := &database.GithubEvent{
 		Id:        1,
 		EventType: "push",
-		Payload:   pushPayload(t, "master", "a change"),
+		Payload:   pushPayload(t, "master", "a change", headSHA),
 		State:     database.GithubEventStateProcessing,
 		CreatedAt: time.Now(),
 	}
