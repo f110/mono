@@ -456,6 +456,13 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 		if c.stack[0].PullRequest != nil {
 			return fsm.Next(c.stateUpdateSinglePR)
 		}
+		if pr, err := c.findExistingPR(ctx, c.stack[0].Bookmarks[0].Name); err != nil {
+			return fsm.Error(err)
+		} else if pr != nil {
+			fmt.Printf("Pull request already exists for %s: %s\n", c.stack[0].ChangeID, pr.URL)
+			c.stack[0].PullRequest = pr
+			return fsm.Next(c.stateUpdateSinglePR)
+		}
 
 		if template == "" && len(templates) > 0 {
 			template, err = c.pickTemplate(templates, c.RootDir)
@@ -491,6 +498,13 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	for i := len(c.stack) - 1; i >= 0; i-- {
 		v := c.stack[i]
 		if v.PullRequest != nil {
+			continue
+		}
+		if pr, err := c.findExistingPR(ctx, v.Bookmarks[0].Name); err != nil {
+			return fsm.Error(err)
+		} else if pr != nil {
+			fmt.Printf("Pull request already exists for %s: %s\n", v.ChangeID, pr.URL)
+			v.PullRequest = pr
 			continue
 		}
 		if template == "" && len(templates) > 0 {
@@ -530,6 +544,26 @@ func (c *jujutsuPRSubmitCommand) createPR(ctx context.Context) (fsm.State, error
 	}
 
 	return fsm.Next(c.stateUpdatePR)
+}
+
+// findExistingPR returns the open pull request whose head is branch, or nil
+// when none exists. The pre-fetched pull request list can miss a pull request
+// (for example when it is not on the first page), so we query GitHub directly
+// before creating a new one to avoid a "pull request already exists" error.
+func (c *jujutsuPRSubmitCommand) findExistingPR(ctx context.Context, branch string) (*pullRequest, error) {
+	prs, _, err := c.ghClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{
+		State: "open",
+		Head:  fmt.Sprintf("%s:%s", c.repositoryOwner, branch),
+	})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	for _, pr := range prs {
+		if pr.GetHead().GetRef() == branch {
+			return newPullRequest(pr), nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot string) (string, error) {

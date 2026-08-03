@@ -76,6 +76,51 @@ This PR contains fixing some security issues.`,
 		}
 	})
 
+	t.Run("StateCreatePRSkipsExistingPR", func(t *testing.T) {
+		ghMock := githubmock.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		repo.PullRequests(
+			githubmock.NewPullRequest().
+				Number(1).
+				State(githubmock.PullRequestStateOpen).
+				Base("master").
+				Head(nil, "push-a", "").
+				Title("a: Fix").
+				Body("Body of A."),
+		)
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+
+		c := newSubmitCommand()
+		c.ghClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.RootDir = t.TempDir()
+		c.stack = []*commit{
+			{
+				ChangeID:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+				Description: "b: Add\n\nBody of B.",
+				Bookmarks:   []*bookmark{{Name: "push-b"}},
+			},
+			{
+				ChangeID:    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				Description: "a: Fix\n\nBody of A.",
+				Bookmarks:   []*bookmark{{Name: "push-a"}},
+			},
+		}
+
+		nextState, err := c.createPR(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, c.stateUpdatePR, nextState)
+
+		require.NotNil(t, c.stack[1].PullRequest)
+		assert.Equal(t, 1, c.stack[1].PullRequest.ID)
+
+		require.NotNil(t, c.stack[0].PullRequest)
+		assert.Equal(t, 2, c.stack[0].PullRequest.ID)
+		assert.Equal(t, "push-b", c.stack[0].PullRequest.Head)
+		assert.Equal(t, "push-a", c.stack[0].PullRequest.Base)
+	})
+
 	t.Run("StateUpdatePR", func(t *testing.T) {
 		ghMock := githubmock.NewMock()
 		repo := ghMock.Repository("f110/mono")
