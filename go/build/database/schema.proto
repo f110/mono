@@ -22,6 +22,12 @@ enum GithubEventState {
   GITHUB_EVENT_STATE_SKIPPED    = 5;
 }
 
+enum ArtifactType {
+  ARTIFACT_TYPE_CONTAINER_IMAGE = 0;
+  ARTIFACT_TYPE_BINARY          = 1;
+  ARTIFACT_TYPE_K8S_MANIFEST    = 2;
+}
+
 message SourceRepository {
   int32  id             = 1 [(dev.f110.ddl.column) = { sequence: true }];
   string url            = 2;
@@ -212,6 +218,52 @@ message BuildMetrics {
   };
 
   option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTaskId"
+      query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"
+    }
+  };
+}
+
+// Artifact records a deliverable produced by a build (container image, binary or
+// k8s manifest). There is one row per production: every Task that produces an
+// artifact gets its own row, so `ByTaskId` answers "which artifacts did this
+// commit generate" even when the content is byte-identical to a previous build.
+// `hash` is the content hash (image manifest digest, or sha256 of the file) and
+// is NOT unique: it is only an existence key to avoid re-uploading bytes for
+// content already in the registry (zot). The unique (task, hash) index keeps the
+// recording idempotent. `reference` points at where the content lives in zot.
+// See docs/working/artifact-collection.md.
+message Artifact {
+  int32        id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Task         task       = 2;
+  ArtifactType type       = 3;
+  string       hash       = 4 [(dev.f110.ddl.column) = { size: 128 }];
+  string       name       = 5;
+  string       repository = 6 [(dev.f110.ddl.column) = { size: 255 }];
+  string       reference  = 7 [(dev.f110.ddl.column) = { size: 128 }];
+  int64        size       = 8;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_hash"
+      columns: "hash"
+    }
+    indexes: {
+      name: "uniq_task_hash"
+      columns: "task"
+      columns: "hash"
+      unique: true
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByHash"
+      query: "SELECT * FROM `:table_name:` WHERE `hash` = ? LIMIT 1"
+    }
     queries: {
       name: "ByTaskId"
       query: "SELECT * FROM `:table_name:` WHERE `task_id` = ?"

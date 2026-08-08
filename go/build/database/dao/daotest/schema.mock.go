@@ -399,6 +399,69 @@ func (d *BuildMetrics) Update(ctx context.Context, buildMetrics *database.BuildM
 	return nil
 }
 
+type Artifact struct {
+	*mock.Mock
+}
+
+func NewArtifact() *Artifact {
+	return &Artifact{Mock: mock.New()}
+}
+
+func (d *Artifact) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	return nil
+}
+
+func (d *Artifact) Select(ctx context.Context, id int32) (*database.Artifact, error) {
+	v, err := d.Call("Select", map[string]any{"id": id})
+	return v.(*database.Artifact), err
+}
+
+func (d *Artifact) RegisterSelect(id int32, value *database.Artifact) {
+	d.Register("Select", map[string]any{"id": id}, value, nil)
+}
+
+func (d *Artifact) SelectMulti(ctx context.Context, id ...int32) ([]*database.Artifact, error) {
+	v, err := d.Call("SelectMulti", map[string]any{"id": id})
+	return v.([]*database.Artifact), err
+}
+
+func (d *Artifact) RegisterSelectMulti(id []int32, value []*database.Artifact) {
+	d.Register("SelectMulti", map[string]any{"id": id}, value, nil)
+}
+
+func (d *Artifact) ListByHash(ctx context.Context, hash string, opt ...dao.ListOption) ([]*database.Artifact, error) {
+	v, err := d.Call("ListByHash", map[string]any{"hash": hash})
+	return v.([]*database.Artifact), err
+}
+
+func (d *Artifact) RegisterListByHash(hash string, value []*database.Artifact, err error) {
+	d.Register("ListByHash", map[string]any{"hash": hash}, value, err)
+}
+
+func (d *Artifact) ListByTaskId(ctx context.Context, taskId int32, opt ...dao.ListOption) ([]*database.Artifact, error) {
+	v, err := d.Call("ListByTaskId", map[string]any{"taskId": taskId})
+	return v.([]*database.Artifact), err
+}
+
+func (d *Artifact) RegisterListByTaskId(taskId int32, value []*database.Artifact, err error) {
+	d.Register("ListByTaskId", map[string]any{"taskId": taskId}, value, err)
+}
+
+func (d *Artifact) Create(ctx context.Context, artifact *database.Artifact, opt ...dao.ExecOption) (*database.Artifact, error) {
+	_, _ = d.Call("Create", map[string]any{"artifact": artifact})
+	return artifact, nil
+}
+
+func (d *Artifact) Delete(ctx context.Context, id int32, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Delete", map[string]any{"id": id})
+	return nil
+}
+
+func (d *Artifact) Update(ctx context.Context, artifact *database.Artifact, opt ...dao.ExecOption) error {
+	_, _ = d.Call("Update", map[string]any{"artifact": artifact})
+	return nil
+}
+
 type Job struct {
 	*mock.Mock
 }

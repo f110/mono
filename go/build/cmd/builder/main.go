@@ -94,6 +94,8 @@ type Options struct {
 	BazelMirrorSecretAccessKey     string
 	BazelMirrorSecretAccessKeyFile string
 	CentralRegistryMirrorURL       string
+	ArtifactRegistry               string // Host of the OCI registry (zot) that stores collected build artifacts.
+	ArtifactBuilderAddr            string // gRPC address of the builder API the collect sidecar uploads to.
 	SidecarImage                   string
 	CLIImage                       string
 	PullAlways                     bool
@@ -378,6 +380,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.GithubAppSecretName,
 		p.opt.GitDataServiceURL,
 		p.opt.CloneFromGitDataService,
+		p.opt.ArtifactBuilderAddr,
 	)
 	c, err := coordinator.NewBazelBuilder(
 		p.opt.DashboardUrl,
@@ -575,7 +578,11 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 			p.gitDataUpdater.AddRepo(context.Background(), repo)
 		}
 	}()
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo, buildServerConfig(p.opt))
+	var artifactRegistry api.ArtifactRegistry
+	if p.opt.ArtifactRegistry != "" {
+		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry)
+	}
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo, buildServerConfig(p.opt), artifactRegistry)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -853,6 +860,8 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("bazel-mirror-secret-access-key", "The secret access key for bazel mirror").Var(&opt.BazelMirrorSecretAccessKey)
 	fs.String("bazel-mirror-secret-access-key-file", "The file path that contains secret access key").Var(&opt.BazelMirrorSecretAccessKeyFile)
 	fs.String("central-registry-mirror-url", "The URL of Bazel Central Registry mirror").Var(&opt.CentralRegistryMirrorURL)
+	fs.String("artifact-registry", "Host of the OCI registry (zot) that stores collected build artifacts. When empty, artifact upload is disabled").Var(&opt.ArtifactRegistry)
+	fs.String("artifact-builder-addr", "gRPC address of the builder API the collect sidecar uploads to. When empty, artifact collection is disabled").Var(&opt.ArtifactBuilderAddr)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
 	fs.Bool("pull-always", "Pull always").Var(&opt.PullAlways)

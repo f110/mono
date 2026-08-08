@@ -32,6 +32,14 @@ const (
 	GithubEventStateSkipped    GithubEventState = 5
 )
 
+type ArtifactType uint32
+
+const (
+	ArtifactTypeContainerImage ArtifactType = 0
+	ArtifactTypeBinary         ArtifactType = 1
+	ArtifactTypeK8sManifest    ArtifactType = 2
+)
+
 type SourceRepository struct {
 	Id            int32
 	Url           string
@@ -714,6 +722,119 @@ func (e *BuildMetrics) Copy() *BuildMetrics {
 		OutputArtifactsSeenCount:      e.OutputArtifactsSeenCount,
 		OutputArtifactsFromCacheBytes: e.OutputArtifactsFromCacheBytes,
 		OutputArtifactsFromCacheCount: e.OutputArtifactsFromCacheCount,
+	}
+
+	if e.Task != nil {
+		n.Task = e.Task.Copy()
+	}
+
+	return n
+}
+
+// Artifact records a deliverable produced by a build (container image, binary or
+// k8s manifest). There is one row per production: every Task that produces an
+// artifact gets its own row, so `ByTaskId` answers "which artifacts did this
+// commit generate" even when the content is byte-identical to a previous build.
+// `hash` is the content hash (image manifest digest, or sha256 of the file) and
+// is NOT unique: it is only an existence key to avoid re-uploading bytes for
+// content already in the registry (zot). The unique (task, hash) index keeps the
+// recording idempotent. `reference` points at where the content lives in zot.
+// See docs/working/artifact-collection.md.
+type Artifact struct {
+	Id         int32
+	TaskId     int32
+	Type       ArtifactType
+	Hash       string
+	Name       string
+	Repository string
+	Reference  string
+	Size       int64
+	CreatedAt  time.Time
+	UpdatedAt  *time.Time
+
+	Task *Task
+
+	mu   sync.Mutex
+	mark *Artifact
+}
+
+func (e *Artifact) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *Artifact) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.TaskId != e.mark.TaskId ||
+		e.Type != e.mark.Type ||
+		e.Hash != e.mark.Hash ||
+		e.Name != e.mark.Name ||
+		e.Repository != e.mark.Repository ||
+		e.Reference != e.mark.Reference ||
+		e.Size != e.mark.Size ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *Artifact) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.TaskId != e.mark.TaskId {
+		res = append(res, ddl.Column{Name: "task_id", Value: e.TaskId})
+	}
+	if e.Type != e.mark.Type {
+		res = append(res, ddl.Column{Name: "type", Value: e.Type})
+	}
+	if e.Hash != e.mark.Hash {
+		res = append(res, ddl.Column{Name: "hash", Value: e.Hash})
+	}
+	if e.Name != e.mark.Name {
+		res = append(res, ddl.Column{Name: "name", Value: e.Name})
+	}
+	if e.Repository != e.mark.Repository {
+		res = append(res, ddl.Column{Name: "repository", Value: e.Repository})
+	}
+	if e.Reference != e.mark.Reference {
+		res = append(res, ddl.Column{Name: "reference", Value: e.Reference})
+	}
+	if e.Size != e.mark.Size {
+		res = append(res, ddl.Column{Name: "size", Value: e.Size})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *Artifact) Copy() *Artifact {
+	n := &Artifact{
+		Id:         e.Id,
+		TaskId:     e.TaskId,
+		Type:       e.Type,
+		Hash:       e.Hash,
+		Name:       e.Name,
+		Repository: e.Repository,
+		Reference:  e.Reference,
+		Size:       e.Size,
+		CreatedAt:  e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
 	}
 
 	if e.Task != nil {

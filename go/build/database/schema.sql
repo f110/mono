@@ -107,6 +107,23 @@ CREATE TABLE `build_metrics` (
 	PRIMARY KEY(`task_id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `artifact`;
+CREATE TABLE `artifact` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`task_id` INTEGER NOT NULL,
+	`type` INTEGER UNSIGNED NOT NULL,
+	`hash` VARCHAR(128) NOT NULL,
+	`name` VARCHAR(255) NOT NULL,
+	`repository` VARCHAR(255) NOT NULL,
+	`reference` VARCHAR(128) NOT NULL,
+	`size` BIGINT NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	INDEX `idx_hash` (`hash`),
+	UNIQUE `uniq_task_hash` (`task_id`, `hash`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `job`;
 CREATE TABLE `job` (
 	`repository_id` INTEGER NOT NULL,

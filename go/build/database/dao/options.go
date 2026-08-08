@@ -11,6 +11,7 @@ type Options struct {
 	PermitPullRequest      PermitPullRequestInterface
 	TestReport             TestReportInterface
 	BuildMetrics           BuildMetricsInterface
+	Artifact               ArtifactInterface
 	Job                    JobInterface
 	ExternalReleaseTrigger ExternalReleaseTriggerInterface
 	ExternalReleaseHistory ExternalReleaseHistoryInterface
@@ -27,6 +28,7 @@ func NewOptions(conn *sql.DB) Options {
 		PermitPullRequest:      NewPermitPullRequest(conn),
 		TestReport:             NewTestReport(conn),
 		BuildMetrics:           NewBuildMetrics(conn),
+		Artifact:               NewArtifact(conn),
 		Job:                    NewJob(conn),
 		ExternalReleaseTrigger: NewExternalReleaseTrigger(conn),
 		ExternalReleaseHistory: NewExternalReleaseHistory(conn),

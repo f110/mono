@@ -36,6 +36,16 @@ func buildSidecar(args []string) error {
 	report.SetFlags(reportCmd.Flags())
 	root.AddCommand(reportCmd)
 
+	collect := sidecar.NewCollectCommand()
+	collectCmd := &cli.Command{
+		Use: collect.Name(),
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return collect.Run(ctx)
+		},
+	}
+	collect.SetFlags(collectCmd.Flags())
+	root.AddCommand(collectCmd)
+
 	credential := sidecar.NewCredentialCommand()
 	credentialCmd := &cli.Command{
 		Use: "credential",

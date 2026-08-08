@@ -3,18 +3,14 @@ package sidecar
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"io"
 	"os"
 	"sort"
 	"time"
 
-	"go.f110.dev/xerrors"
 	"google.golang.org/protobuf/encoding/protodelim"
 
 	"go.f110.dev/mono/go/bazel/buildeventstream"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/file"
 )
 
 // Report is the JSON document the report sidecar writes to stdout. Tests carries the
@@ -90,29 +86,11 @@ type testDuration struct {
 }
 
 func (b *TestReportCommand) Run(_ context.Context) error {
-	ch := make(chan struct{})
-	go func() {
-		for {
-			if _, err := os.Lstat(b.eventBinaryFile); err == nil {
-				close(ch)
-				break
-			}
-		}
-	}()
-	select {
-	case <-ch:
-	case <-time.After(b.startUpTimeout):
-		return xerrors.Definef("could not find event binary file in %v", b.startUpTimeout).WithStack()
-	}
-
-	f, err := os.Open(b.eventBinaryFile)
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	r, err := file.NewTailReader(f)
+	f, r, err := waitAndOpenBEP(b.eventBinaryFile, b.startUpTimeout)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	report, err := parseReport(r)
 	if err != nil {
@@ -131,16 +109,7 @@ func (b *TestReportCommand) Run(_ context.Context) error {
 func parseReport(r protodelim.Reader) (*Report, error) {
 	summaries := make(map[string]*testDuration)
 	var metrics *BuildMetrics
-	for {
-		msg := &buildeventstream.BuildEvent{}
-		err := protodelim.UnmarshalFrom(r, msg)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-
+	err := iterateBuildEvents(r, func(msg *buildeventstream.BuildEvent) error {
 		switch v := msg.Id.Id.(type) {
 		case *buildeventstream.BuildEventId_TestResult:
 			label := v.TestResult.Label
@@ -160,10 +129,10 @@ func parseReport(r protodelim.Reader) (*Report, error) {
 		case *buildeventstream.BuildEventId_BuildMetrics:
 			metrics = extractBuildMetrics(msg.GetBuildMetrics())
 		}
-
-		if msg.GetLastMessage() {
-			break
-		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	result := make([]*testDuration, 0, len(summaries))

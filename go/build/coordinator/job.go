@@ -43,16 +43,24 @@ type JobBuilder struct {
 	remoteAssetAPI           bool
 	vaultAddr                string
 	gitDataServiceURL        string
+	artifactBuilderAddr      string
 	excludeNodes             []string
 
 	PreProcessContainerName string
 	BuildContainerName      string
 	ReportContainerName     string
+	CollectContainerName    string
 
-	reportContainer *corev1.Container
-	workDirVolume   *k8sfactory.VolumeSource
+	reportContainer  *corev1.Container
+	collectContainer *corev1.Container
+	workDirVolume    *k8sfactory.VolumeSource
 	// commDirVolume is a empty dir volume for sharing Build Event protocol file between main and report container.
 	commDirVolume *k8sfactory.VolumeSource
+	// outputVolume is an empty dir volume holding the Bazel output base, shared
+	// between the main container and the collect sidecar so the sidecar can read
+	// the built artifacts. Created only for trunk builds when artifact collection
+	// is enabled.
+	outputVolume *k8sfactory.VolumeSource
 
 	sa                       *corev1.ServiceAccount
 	mainContainer            *corev1.Container
@@ -71,6 +79,7 @@ func NewJobBuilder(ns, bazelImage, sidecar string, excludeNodes []string) *JobBu
 		PreProcessContainerName: "pre-process",
 		BuildContainerName:      "main",
 		ReportContainerName:     "report",
+		CollectContainerName:    "collect",
 		excludeNodes:            excludeNodes,
 
 		workDirVolume: workDir,
@@ -152,6 +161,12 @@ func (j *JobBuilder) GitDataService(url string) {
 	j.gitDataServiceURL = url
 }
 
+// EnableArtifactCollection makes trunk builds collect cd_artifact outputs. addr
+// is the gRPC address of the builder API the collect sidecar uploads to.
+func (j *JobBuilder) EnableArtifactCollection(addr string) {
+	j.artifactBuilderAddr = addr
+}
+
 func (j *JobBuilder) Clone() *JobBuilder {
 	return &JobBuilder{
 		namespace:               j.namespace,
@@ -162,6 +177,7 @@ func (j *JobBuilder) Clone() *JobBuilder {
 		PreProcessContainerName: j.PreProcessContainerName,
 		BuildContainerName:      j.BuildContainerName,
 		ReportContainerName:     j.ReportContainerName,
+		CollectContainerName:    j.CollectContainerName,
 		useBazelisk:             j.useBazelisk,
 		pullAlways:              j.pullAlways,
 		githubAppId:             j.githubAppId,
@@ -173,6 +189,7 @@ func (j *JobBuilder) Clone() *JobBuilder {
 		remoteAssetAPI:          j.remoteAssetAPI,
 		vaultAddr:               j.vaultAddr,
 		gitDataServiceURL:       j.gitDataServiceURL,
+		artifactBuilderAddr:     j.artifactBuilderAddr,
 
 		workDirVolume:       j.workDirVolume,
 		mainContainer:       j.mainContainer,
@@ -262,6 +279,7 @@ func (j *JobBuilder) Task(task *database.Task) *JobBuilder {
 	}
 	j.task = task
 	j.makeReportContainer()
+	j.makeArtifactCollector()
 	j.injectSecret()
 
 	if j.mainContainer.Image == "" {
@@ -324,7 +342,13 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 	}
 	preProcessContainer := k8sfactory.ContainerFactory(j.preProcessContainer, k8sfactory.Args(preProcessArgs...))
 
-	args := []string{j.task.Command}
+	var args []string
+	// --output_base is a startup flag and must precede the command. It points
+	// Bazel at the volume the collect sidecar reads (trunk collection only).
+	if j.outputVolume != nil {
+		args = append(args, "--output_base="+j.outputVolume.Mount.MountPath)
+	}
+	args = append(args, j.task.Command)
 	if j.remoteCache != "" {
 		args = append(args, fmt.Sprintf("--remote_cache=%s", j.remoteCache))
 		if j.remoteAssetAPI {
@@ -396,6 +420,7 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 				k8sfactory.InitContainer(j.credentialSetupContainer),
 				k8sfactory.Container(mainContainer),
 				k8sfactory.Container(j.reportContainer),
+				k8sfactory.Container(j.collectContainer),
 				k8sfactory.SortVolume(),
 			),
 		),
@@ -421,6 +446,36 @@ func (j *JobBuilder) makeReportContainer() {
 	)
 	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Volume(j.commDirVolume))
 	j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Volume(j.commDirVolume))
+}
+
+// makeArtifactCollector adds the collect sidecar and the shared Bazel output
+// volume for trunk builds when artifact collection is enabled. The sidecar reads
+// the built artifacts from the shared output base (main runs bazel with
+// --output_base pointed at it, see Build) and uploads new ones to the builder.
+func (j *JobBuilder) makeArtifactCollector() {
+	if j.job == nil || j.task == nil || j.artifactBuilderAddr == "" || !j.task.IsTrunk {
+		return
+	}
+	// The output base is shared between main and the collect sidecar. Its size is
+	// a full Bazel output tree, so it is created only when actually collecting.
+	j.outputVolume = k8sfactory.NewEmptyDirVolumeSource("output", "/out")
+	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.Volume(j.outputVolume))
+	j.buildPod = k8sfactory.PodFactory(j.buildPod, k8sfactory.Volume(j.outputVolume))
+
+	j.collectContainer = k8sfactory.ContainerFactory(nil,
+		k8sfactory.Name(j.CollectContainerName),
+		k8sfactory.Image(j.sidecarImage, nil),
+		k8sfactory.PullPolicy(corev1.PullPolicyIfNotPresent),
+		k8sfactory.Volume(j.commDirVolume),
+		k8sfactory.Volume(j.outputVolume),
+		k8sfactory.Args("collect",
+			"--output-base="+j.outputVolume.Mount.MountPath,
+			fmt.Sprintf("--event-binary-file=%s/bep", j.commDirVolume.Mount.MountPath),
+			fmt.Sprintf("--task-id=%d", j.task.Id),
+			"--builder-addr="+j.artifactBuilderAddr,
+			"--startup-timeout=10m",
+		),
+	)
 }
 
 func (j *JobBuilder) injectSecret() {

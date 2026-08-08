@@ -22,6 +22,17 @@ service API {
   // CompleteTask forces a task's Job into a terminal state. It only works when
   // the builder runs with --emulate-job-control (local kwok dev environment).
   rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
+
+  // SyncArtifacts records, for the given task, every produced artifact whose
+  // content already exists (copying the existing storage reference, no bytes
+  // needed) and returns the content hashes that are NOT yet stored. The collect
+  // sidecar uploads only those, so transmission per commit is minimal while the
+  // DB still records which artifacts each commit produced.
+  rpc SyncArtifacts(RequestSyncArtifacts) returns (ResponseSyncArtifacts);
+  // UploadArtifact streams a single new artifact (first message is the metadata,
+  // the rest are the content chunks). The builder verifies the hash, pushes the
+  // content to the OCI registry (zot) and records a row in the artifact table.
+  rpc UploadArtifact(stream RequestUploadArtifact) returns (ResponseUploadArtifact);
 }
 
 message RequestListTasks {
@@ -152,4 +163,57 @@ message RequestListGithubEvents {
 
 message ResponseListGithubEvents {
   repeated mono.build.model.GithubEvent events = 1;
+}
+
+// ArtifactType classifies a deliverable. The values match the DB enum
+// (build.schema.ArtifactType) so the mapping in Go is a direct cast.
+enum ArtifactType {
+  ARTIFACT_TYPE_CONTAINER_IMAGE = 0;
+  ARTIFACT_TYPE_BINARY          = 1;
+  ARTIFACT_TYPE_K8S_MANIFEST    = 2;
+}
+
+// ArtifactRef identifies an artifact by its content and its intended
+// destination in the OCI registry (zot).
+message ArtifactRef {
+  ArtifactType type = 1;
+  // hash is the content hash: image manifest digest for container images,
+  // sha256 of the file bytes for binaries and k8s manifests.
+  string hash       = 2;
+  string name       = 3;
+  string repository = 4;  // destination repository (from cd_artifact)
+  string tag        = 5;  // optional; empty means store under the content digest
+}
+
+message RequestSyncArtifacts {
+  int32                task_id   = 1;
+  repeated ArtifactRef artifacts = 2;
+}
+
+message ResponseSyncArtifacts {
+  // Hashes of artifacts whose content is not yet stored, i.e. the ones the
+  // sidecar should upload. Artifacts with already-stored content are recorded
+  // for the task by SyncArtifacts itself and are not returned here.
+  repeated string new_hashes = 1;
+}
+
+message RequestUploadArtifact {
+  oneof payload {
+    ArtifactUploadMeta meta  = 1;  // first message
+    bytes              chunk = 2;  // subsequent messages
+  }
+}
+
+// ArtifactUploadMeta is the leading message of an UploadArtifact stream. For
+// container images the following chunks are a tar of the OCI layout; for
+// binaries and k8s manifests they are the raw file bytes.
+message ArtifactUploadMeta {
+  int32       task_id  = 1;
+  ArtifactRef artifact = 2;
+  int64       size     = 3;
+}
+
+message ResponseUploadArtifact {
+  string repository = 1;
+  string reference  = 2;  // tag or digest actually stored
 }

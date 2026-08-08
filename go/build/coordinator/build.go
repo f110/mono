@@ -111,9 +111,10 @@ type BazelOptions struct {
 	GithubAppSecretName      string
 	GitDataServiceURL        string
 	CloneFromGitDataService  bool
+	ArtifactBuilderAddr      string
 }
 
-func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName, gitDataServiceURL string, cloneFromGitDataService bool) BazelOptions {
+func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage, bazelImage string, useBazelisk bool, defaultVersion, bazelMirrorURL, centralRegistryMirrorURL string, pullAlways bool, githubAppId, githubInstallationId int64, githubAppSecretName, gitDataServiceURL string, cloneFromGitDataService bool, artifactBuilderAddr string) BazelOptions {
 	return BazelOptions{
 		RemoteCache:              remoteCache,
 		EnableRemoteAssetApi:     enableRemoteAssetApi,
@@ -129,6 +130,7 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 		GithubAppSecretName:      githubAppSecretName,
 		GitDataServiceURL:        gitDataServiceURL,
 		CloneFromGitDataService:  cloneFromGitDataService,
+		ArtifactBuilderAddr:      artifactBuilderAddr,
 	}
 }
 
@@ -277,6 +279,9 @@ func NewBazelBuilder(
 	}
 	if bazelOpt.CloneFromGitDataService && bazelOpt.GitDataServiceURL != "" {
 		b.jobBuilder.GitDataService(bazelOpt.GitDataServiceURL)
+	}
+	if bazelOpt.ArtifactBuilderAddr != "" {
+		b.jobBuilder.EnableArtifactCollection(bazelOpt.ArtifactBuilderAddr)
 	}
 	defaultCPULimit := resource.MustParse(defaultCPULimit)
 	defaultMemoryLimit := resource.MustParse(defaultMemoryLimit)
@@ -836,6 +841,14 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	buf.WriteString("\n")
 	buf.WriteString("----- main -----\n")
 	buf.Write(rawLog)
+
+	// The collect sidecar only runs on trunk builds when artifact collection is
+	// enabled; append its summary when present. Absence is expected, so skip it
+	// silently rather than warning on every build.
+	if collectLog, err := b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.CollectContainerName}); err == nil && len(collectLog) > 0 {
+		buf.WriteString("\n----- collect -----\n")
+		buf.Write(collectLog)
+	}
 
 	// The report sidecar runs for every build and prints a JSON document (test results
 	// and build metrics) to stdout. Read it best-effort: a pod without the container

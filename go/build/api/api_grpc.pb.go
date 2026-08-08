@@ -30,6 +30,8 @@ const (
 	API_ListExternalReleaseTriggers_FullMethodName = "/mono.build.api.API/ListExternalReleaseTriggers"
 	API_ListGithubEvents_FullMethodName            = "/mono.build.api.API/ListGithubEvents"
 	API_CompleteTask_FullMethodName                = "/mono.build.api.API/CompleteTask"
+	API_SyncArtifacts_FullMethodName               = "/mono.build.api.API/SyncArtifacts"
+	API_UploadArtifact_FullMethodName              = "/mono.build.api.API/UploadArtifact"
 )
 
 // APIClient is the client API for API service.
@@ -47,6 +49,8 @@ type APIClient interface {
 	ListExternalReleaseTriggers(ctx context.Context, in *RequestListExternalReleaseTriggers, opts ...grpc.CallOption) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(ctx context.Context, in *RequestListGithubEvents, opts ...grpc.CallOption) (*ResponseListGithubEvents, error)
 	CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error)
+	SyncArtifacts(ctx context.Context, in *RequestSyncArtifacts, opts ...grpc.CallOption) (*ResponseSyncArtifacts, error)
+	UploadArtifact(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RequestUploadArtifact, ResponseUploadArtifact], error)
 }
 
 type aPIClient struct {
@@ -167,6 +171,29 @@ func (c *aPIClient) CompleteTask(ctx context.Context, in *RequestCompleteTask, o
 	return out, nil
 }
 
+func (c *aPIClient) SyncArtifacts(ctx context.Context, in *RequestSyncArtifacts, opts ...grpc.CallOption) (*ResponseSyncArtifacts, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseSyncArtifacts)
+	err := c.cc.Invoke(ctx, API_SyncArtifacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) UploadArtifact(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RequestUploadArtifact, ResponseUploadArtifact], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &API_ServiceDesc.Streams[0], API_UploadArtifact_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[RequestUploadArtifact, ResponseUploadArtifact]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type API_UploadArtifactClient = grpc.ClientStreamingClient[RequestUploadArtifact, ResponseUploadArtifact]
+
 // APIServer is the server API for API service.
 // All implementations should embed UnimplementedAPIServer
 // for forward compatibility.
@@ -182,6 +209,8 @@ type APIServer interface {
 	ListExternalReleaseTriggers(context.Context, *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error)
 	CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error)
+	SyncArtifacts(context.Context, *RequestSyncArtifacts) (*ResponseSyncArtifacts, error)
+	UploadArtifact(grpc.ClientStreamingServer[RequestUploadArtifact, ResponseUploadArtifact]) error
 }
 
 // UnimplementedAPIServer should be embedded to have
@@ -223,6 +252,12 @@ func (UnimplementedAPIServer) ListGithubEvents(context.Context, *RequestListGith
 }
 func (UnimplementedAPIServer) CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteTask not implemented")
+}
+func (UnimplementedAPIServer) SyncArtifacts(context.Context, *RequestSyncArtifacts) (*ResponseSyncArtifacts, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncArtifacts not implemented")
+}
+func (UnimplementedAPIServer) UploadArtifact(grpc.ClientStreamingServer[RequestUploadArtifact, ResponseUploadArtifact]) error {
+	return status.Errorf(codes.Unimplemented, "method UploadArtifact not implemented")
 }
 func (UnimplementedAPIServer) testEmbeddedByValue() {}
 
@@ -442,6 +477,31 @@ func _API_CompleteTask_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_SyncArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestSyncArtifacts)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).SyncArtifacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_SyncArtifacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).SyncArtifacts(ctx, req.(*RequestSyncArtifacts))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_UploadArtifact_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(APIServer).UploadArtifact(&grpc.GenericServerStream[RequestUploadArtifact, ResponseUploadArtifact]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type API_UploadArtifactServer = grpc.ClientStreamingServer[RequestUploadArtifact, ResponseUploadArtifact]
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -493,7 +553,17 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "CompleteTask",
 			Handler:    _API_CompleteTask_Handler,
 		},
+		{
+			MethodName: "SyncArtifacts",
+			Handler:    _API_SyncArtifacts_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadArtifact",
+			Handler:       _API_UploadArtifact_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/build/api/api.proto",
 }

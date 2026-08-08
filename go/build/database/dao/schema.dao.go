@@ -1851,6 +1851,317 @@ func (d *BuildMetrics) Update(ctx context.Context, buildMetrics *database.BuildM
 	return nil
 }
 
+type Artifact struct {
+	conn *sql.DB
+
+	task *Task
+}
+
+type ArtifactInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.Artifact, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.Artifact, error)
+	ListByHash(ctx context.Context, hash string, opt ...ListOption) ([]*database.Artifact, error)
+	ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.Artifact, error)
+	Create(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) (*database.Artifact, error)
+	Update(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ ArtifactInterface = (*Artifact)(nil)
+
+func NewArtifact(conn *sql.DB) *Artifact {
+	return &Artifact{
+		conn: conn,
+		task: NewTask(conn),
+	}
+}
+
+func (d *Artifact) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Artifact) Select(ctx context.Context, id int32) (*database.Artifact, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `artifact` WHERE `id` = ?", id)
+
+	v := &database.Artifact{}
+	if err := row.Scan(&v.Id, &v.TaskId, &v.Type, &v.Hash, &v.Name, &v.Repository, &v.Reference, &v.Size, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.task.Select(ctx, v.TaskId); rel != nil {
+			v.Task = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *Artifact) SelectMulti(ctx context.Context, id ...int32) ([]*database.Artifact, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `artifact` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Artifact, 0, len(id))
+	for rows.Next() {
+		r := &database.Artifact{}
+		if err := rows.Scan(&r.Id, &r.TaskId, &r.Type, &r.Hash, &r.Name, &r.Repository, &r.Reference, &r.Size, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+	return res, nil
+}
+
+func (d *Artifact) ListByHash(ctx context.Context, hash string, opt ...ListOption) ([]*database.Artifact, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `task_id`, `type`, `hash`, `name`, `repository`, `reference`, `size`, `created_at`, `updated_at` FROM `artifact` WHERE `hash` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Artifact, 0)
+	for rows.Next() {
+		r := &database.Artifact{}
+		if err := rows.Scan(&r.Id, &r.TaskId, &r.Type, &r.Hash, &r.Name, &r.Repository, &r.Reference, &r.Size, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Artifact) ListByTaskId(ctx context.Context, taskId int32, opt ...ListOption) ([]*database.Artifact, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `task_id`, `type`, `hash`, `name`, `repository`, `reference`, `size`, `created_at`, `updated_at` FROM `artifact` WHERE `task_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		taskId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Artifact, 0)
+	for rows.Next() {
+		r := &database.Artifact{}
+		if err := rows.Scan(&r.Id, &r.TaskId, &r.Type, &r.Hash, &r.Name, &r.Repository, &r.Reference, &r.Size, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		taskPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			taskPrimaryKeys[i] = v.TaskId
+		}
+		taskData := make(map[int32]*database.Task)
+		{
+			rels, _ := d.task.SelectMulti(ctx, taskPrimaryKeys...)
+			for _, v := range rels {
+				taskData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Task = taskData[v.TaskId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Artifact) Create(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) (*database.Artifact, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `artifact` (`task_id`, `type`, `hash`, `name`, `repository`, `reference`, `size`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		artifact.TaskId, artifact.Type, artifact.Hash, artifact.Name, artifact.Repository, artifact.Reference, artifact.Size, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	artifact = artifact.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	artifact.Id = int32(insertedId)
+
+	artifact.ResetMark()
+	return artifact, nil
+}
+
+func (d *Artifact) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `artifact` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *Artifact) Update(ctx context.Context, artifact *database.Artifact, opt ...ExecOption) error {
+	if !artifact.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := artifact.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `artifact` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, artifact.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	artifact.ResetMark()
+	return nil
+}
+
 type Job struct {
 	conn *sql.DB
 

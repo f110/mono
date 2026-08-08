@@ -1,9 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/url"
 	"path/filepath"
@@ -13,6 +18,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v85/github"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,6 +27,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/model"
+	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
@@ -36,12 +43,16 @@ type apiService struct {
 	bazelMirrorPrefix string
 	addRepo           chan<- *git.RepositoryConfig
 	serverConfig      *ServerConfig
+	artifactRegistry  ArtifactRegistry
 }
+
+// maxArtifactSize caps the total bytes accepted for a single artifact upload.
+const maxArtifactSize = 2 << 30 // 2 GiB
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -607,4 +618,166 @@ func dbJobToAPIJob(job *database.Job) *model.Job {
 		Name:         new(job.Name),
 		RepositoryId: new(job.RepositoryId),
 	}.Build()
+}
+
+// SyncArtifacts records a production row for the task for every artifact whose
+// content is already stored (reusing the existing storage location, no bytes
+// needed) and returns the content hashes not yet stored, which the sidecar then
+// uploads. This keeps per-commit transmission minimal while still recording which
+// artifacts each commit produced.
+func (s *apiService) SyncArtifacts(ctx context.Context, req *RequestSyncArtifacts) (*ResponseSyncArtifacts, error) {
+	var newHashes []string
+	seen := set.New[string]()
+	for _, a := range req.GetArtifacts() {
+		h := a.GetHash()
+		if h == "" {
+			continue
+		}
+		if seen.Has(h) {
+			continue
+		}
+		seen.Add(h)
+
+		existing, err := s.dao.Artifact.ListByHash(ctx, h)
+		if err != nil {
+			slogger.Log.Warn("Failed to look up artifact by hash", slogger.E(err))
+			return nil, status.Error(codes.Internal, "failed to look up artifact")
+		}
+		if len(existing) == 0 {
+			newHashes = append(newHashes, h) // content not stored yet: needs upload
+			continue
+		}
+		if _, err := s.dao.Artifact.Create(ctx, &database.Artifact{
+			TaskId:     req.GetTaskId(),
+			Type:       database.ArtifactType(a.GetType()),
+			Hash:       h,
+			Name:       a.GetName(),
+			Repository: existing[0].Repository,
+			Reference:  existing[0].Reference,
+			Size:       existing[0].Size,
+		}); err != nil {
+			slogger.Log.Warn("Failed to record existing artifact", slogger.E(err), slog.String("hash", h))
+		}
+	}
+	return ResponseSyncArtifacts_builder{NewHashes: newHashes}.Build(), nil
+}
+
+// UploadArtifact receives a single artifact (metadata first, then content
+// chunks), verifies its declared hash, pushes the content to the OCI registry
+// and records a row in the artifact table. It is disabled when the builder has
+// no artifact registry configured.
+func (s *apiService) UploadArtifact(stream grpc.ClientStreamingServer[RequestUploadArtifact, ResponseUploadArtifact]) error {
+	if s.artifactRegistry == nil {
+		return status.Error(codes.FailedPrecondition, "artifact registry is not configured")
+	}
+	meta, data, err := collectUpload(stream.Recv)
+	if err != nil {
+		return err
+	}
+	res, err := s.storeArtifact(stream.Context(), meta, data)
+	if err != nil {
+		return err
+	}
+	return stream.SendAndClose(res)
+}
+
+// storeArtifact verifies the declared hash, pushes the content to the OCI
+// registry and records a row in the artifact table. It is separated from the
+// stream handling so it can be unit-tested without a fake gRPC stream.
+func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta, data []byte) (*ResponseUploadArtifact, error) {
+	if !meta.HasArtifact() {
+		return nil, status.Error(codes.InvalidArgument, "missing artifact metadata")
+	}
+	ref := meta.GetArtifact()
+	if ref.GetHash() == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing artifact hash")
+	}
+
+	var reference string
+	var err error
+	switch ref.GetType() {
+	case ArtifactType_ARTIFACT_TYPE_BINARY, ArtifactType_ARTIFACT_TYPE_K8S_MANIFEST:
+		sum := sha256.Sum256(data)
+		if got := hex.EncodeToString(sum[:]); got != ref.GetHash() {
+			return nil, status.Errorf(codes.InvalidArgument, "content hash mismatch: got %s, declared %s", got, ref.GetHash())
+		}
+		reference, err = s.artifactRegistry.PushFile(ctx, ref.GetRepository(), ref.GetTag(), artifactMediaType(ref.GetType()), ref.GetName(), data)
+	case ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE:
+		reference, err = s.artifactRegistry.PushImage(ctx, ref.GetRepository(), ref.GetTag(), ref.GetHash(), bytes.NewReader(data))
+	default:
+		return nil, status.Error(codes.InvalidArgument, "unknown artifact type")
+	}
+	if err != nil {
+		slogger.Log.Warn("Failed to push artifact to registry", slogger.E(err))
+		return nil, status.Error(codes.Internal, "failed to store artifact")
+	}
+
+	if _, err := s.dao.Artifact.Create(ctx, &database.Artifact{
+		TaskId:     meta.GetTaskId(),
+		Type:       database.ArtifactType(ref.GetType()),
+		Hash:       ref.GetHash(),
+		Name:       ref.GetName(),
+		Repository: ref.GetRepository(),
+		Reference:  reference,
+		Size:       int64(len(data)),
+	}); err != nil {
+		// A retry races on the unique (task, hash) index. Treat a duplicate as
+		// success: the content is stored either way.
+		if rows, e := s.dao.Artifact.ListByHash(ctx, ref.GetHash()); e == nil && len(rows) > 0 {
+			return ResponseUploadArtifact_builder{Repository: new(rows[0].Repository), Reference: new(rows[0].Reference)}.Build(), nil
+		}
+		slogger.Log.Warn("Failed to record artifact", slogger.E(err))
+		return nil, status.Error(codes.Internal, "failed to record artifact")
+	}
+	return ResponseUploadArtifact_builder{Repository: new(ref.GetRepository()), Reference: new(reference)}.Build(), nil
+}
+
+// collectUpload assembles an UploadArtifact stream: the first message must carry
+// the metadata, the rest the content bytes. Split out from the RPC method so the
+// assembly logic is unit-testable with a fake recv.
+func collectUpload(recv func() (*RequestUploadArtifact, error)) (*ArtifactUploadMeta, []byte, error) {
+	var meta *ArtifactUploadMeta
+	var buf bytes.Buffer
+	for {
+		msg, err := recv()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+		switch {
+		case msg.HasMeta():
+			if meta != nil {
+				return nil, nil, status.Error(codes.InvalidArgument, "duplicate metadata message")
+			}
+			meta = msg.GetMeta()
+		case msg.HasChunk():
+			if meta == nil {
+				return nil, nil, status.Error(codes.InvalidArgument, "metadata must be the first message")
+			}
+			if buf.Len()+len(msg.GetChunk()) > maxArtifactSize {
+				return nil, nil, status.Error(codes.InvalidArgument, "artifact exceeds maximum size")
+			}
+			buf.Write(msg.GetChunk())
+		}
+	}
+	if meta == nil {
+		return nil, nil, status.Error(codes.InvalidArgument, "no metadata received")
+	}
+	return meta, buf.Bytes(), nil
+}
+
+// artifactMediaTypes maps an artifact type to the OCI artifactType/config media
+// type used when storing file artifacts.
+var artifactMediaTypes = map[ArtifactType]string{
+	ArtifactType_ARTIFACT_TYPE_BINARY:       "application/vnd.mono.build.binary",
+	ArtifactType_ARTIFACT_TYPE_K8S_MANIFEST: "application/vnd.mono.build.k8s-manifest",
+}
+
+func artifactMediaType(t ArtifactType) string {
+	if mt, ok := artifactMediaTypes[t]; ok {
+		return mt
+	}
+	return "application/octet-stream"
 }
