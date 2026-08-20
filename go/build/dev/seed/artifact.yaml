@@ -1,0 +1,67 @@
+# Seed for the build app's `artifact` table.
+#
+# Deliverables produced by the seeded trunk build in task.yaml (task_id 9001 =
+# linux_amd64, 9002 = linux_arm64). Covers all three ArtifactType values
+# (0=container_image, 1=binary, 2=k8s_manifest).
+#
+# Storage conventions mirror what the collect sidecar records, so the dashboard
+# renders realistically: container images carry the `sha256:` manifest digest in
+# `hash` and a mutable tag ("latest") in `reference`; binaries and k8s manifests
+# store a bare hex sha256 in `hash` (the BFF normalizes it to `sha256:` for the
+# digest-first display) and are addressed by a content digest in `reference`
+# (untagged). `repository` is the registry path; the host comes from the
+# builder's --artifact-registry (ServerConfig.artifact_registry_host).
+- id: 9001
+  task_id: 9001
+  type: 0
+  hash: "sha256:5f8a1c3e9b2d4a6f8c0e2a4b6d8f0a1c3e5b7d9f1a3c5e7b9d0f2a4c6e8b0d2f"
+  name: builder
+  repository: build/builder
+  reference: latest
+  size: 88700000
+  created_at: 2026-08-08 14:13:05
+- id: 9002
+  task_id: 9001
+  type: 0
+  hash: "sha256:2b6d4a8c0e2f4a6b8d0c2e4f6a8b0d2c4e6f8a0b2d4c6e8f0a2b4d6c8e0f2a4b"
+  name: bff
+  repository: build/bff
+  reference: latest
+  size: 75400000
+  created_at: 2026-08-08 14:13:05
+- id: 9003
+  task_id: 9001
+  type: 1
+  hash: "3a7d0b1c5e9f2a4b6d8c0e2f4a6b8d0c2e4f6a8b0d2c4e6f8a0b2d4c6e8f0a2b"
+  name: buildctl
+  repository: build/buildctl
+  reference: "sha256:aa11bb22cc33dd44ee55ff6600112233445566778899aabbccddeeff00112233"
+  size: 29150000
+  created_at: 2026-08-08 14:13:05
+- id: 9004
+  task_id: 9002
+  type: 0
+  hash: "sha256:7c0e2f4a6b8d0c2e4f6a8b0d2c4e6f8a0b2d4c6e8f0a2b4d6c8e0f2a4b6d8c0e"
+  name: builder
+  repository: build/builder
+  reference: latest
+  size: 84600000
+  created_at: 2026-08-08 14:13:12
+- id: 9005
+  task_id: 9002
+  type: 2
+  hash: "8a0b2c4e6f8a0b2d4c6e8f0a2b4d6c8e0f2a4b6d8c0e2f4a6b8d0c2e4f6a8b0d"
+  name: deploy.yaml
+  repository: build/manifests
+  reference: "sha256:cc33dd44ee55ff6600112233445566778899aabbccddeeff001122334455aabb"
+  size: 6554
+  created_at: 2026-08-08 14:13:12
+- id: 9006
+  task_id: 9002
+  type: 1
+  hash: "5e1b9c3d7f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c"
+  name: sidecar
+  repository: build/sidecar
+  reference: "sha256:dd44ee55ff6600112233445566778899aabbccddeeff00112233445566aabbcc"
+  size: 14150000
+  created_at: 2026-08-08 14:13:12

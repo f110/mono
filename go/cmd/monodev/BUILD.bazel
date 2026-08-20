@@ -67,6 +67,7 @@ go_test(
         "devenv_test.go",
         "kwok_test.go",
         "seed_test.go",
+        "seed_validate_tmp_test.go",
     ],
     embed = [":monodev_lib"],
     deps = [

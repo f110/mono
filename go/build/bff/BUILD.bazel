@@ -70,9 +70,13 @@ go_library(
 
 go_test(
     name = "bff_test",
-    srcs = ["interceptor_test.go"],
+    srcs = [
+        "bff_test.go",
+        "interceptor_test.go",
+    ],
     embed = [":bff"],
     deps = [
+        "//go/build/model",
         "//go/testing/assertion",
         "@com_connectrpc_connect//:connect",
         "@dev_f110_go_xerrors//:xerrors",

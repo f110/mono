@@ -1468,6 +1468,7 @@ type ServerConfig struct {
 	xxx_hidden_GithubInstallationId        int64                  `protobuf:"varint,25,opt,name=github_installation_id,json=githubInstallationId"`
 	xxx_hidden_GithubAppSecretName         *string                `protobuf:"bytes,26,opt,name=github_app_secret_name,json=githubAppSecretName"`
 	xxx_hidden_EmulateJobControl           bool                   `protobuf:"varint,27,opt,name=emulate_job_control,json=emulateJobControl"`
+	xxx_hidden_ArtifactRegistryHost        *string                `protobuf:"bytes,28,opt,name=artifact_registry_host,json=artifactRegistryHost"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -1739,139 +1740,154 @@ func (x *ServerConfig) GetEmulateJobControl() bool {
 	return false
 }
 
+func (x *ServerConfig) GetArtifactRegistryHost() string {
+	if x != nil {
+		if x.xxx_hidden_ArtifactRegistryHost != nil {
+			return *x.xxx_hidden_ArtifactRegistryHost
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ServerConfig) SetDev(v bool) {
 	x.xxx_hidden_Dev = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 28)
 }
 
 func (x *ServerConfig) SetLeaderElection(v bool) {
 	x.xxx_hidden_LeaderElection = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 28)
 }
 
 func (x *ServerConfig) SetNamespace(v string) {
 	x.xxx_hidden_Namespace = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 28)
 }
 
 func (x *ServerConfig) SetUseBazelisk(v bool) {
 	x.xxx_hidden_UseBazelisk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 28)
 }
 
 func (x *ServerConfig) SetDefaultBazelVersion(v string) {
 	x.xxx_hidden_DefaultBazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 28)
 }
 
 func (x *ServerConfig) SetRemoteCache(v string) {
 	x.xxx_hidden_RemoteCache = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 28)
 }
 
 func (x *ServerConfig) SetTaskCpuLimit(v string) {
 	x.xxx_hidden_TaskCpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 28)
 }
 
 func (x *ServerConfig) SetTaskMemoryLimit(v string) {
 	x.xxx_hidden_TaskMemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 28)
 }
 
 func (x *ServerConfig) SetGcEnabled(v bool) {
 	x.xxx_hidden_GcEnabled = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 28)
 }
 
 func (x *ServerConfig) SetGitDataServiceListen(v string) {
 	x.xxx_hidden_GitDataServiceListen = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 28)
 }
 
 func (x *ServerConfig) SetGitDataServiceUrl(v string) {
 	x.xxx_hidden_GitDataServiceUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 28)
 }
 
 func (x *ServerConfig) SetGitDataRefreshInterval(v string) {
 	x.xxx_hidden_GitDataRefreshInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 28)
 }
 
 func (x *ServerConfig) SetGitDataRefreshWorkers(v int32) {
 	x.xxx_hidden_GitDataRefreshWorkers = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 28)
 }
 
 func (x *ServerConfig) SetExternalReleasePollInterval(v string) {
 	x.xxx_hidden_ExternalReleasePollInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 28)
 }
 
 func (x *ServerConfig) SetEventReconcileInterval(v string) {
 	x.xxx_hidden_EventReconcileInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 28)
 }
 
 func (x *ServerConfig) SetGithubAppId(v int64) {
 	x.xxx_hidden_GithubAppId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 28)
 }
 
 func (x *ServerConfig) SetVaultAddr(v string) {
 	x.xxx_hidden_VaultAddr = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 28)
 }
 
 func (x *ServerConfig) SetDashboardUrl(v string) {
 	x.xxx_hidden_DashboardUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 28)
 }
 
 func (x *ServerConfig) SetBazelImage(v string) {
 	x.xxx_hidden_BazelImage = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 28)
 }
 
 func (x *ServerConfig) SetSidecarImage(v string) {
 	x.xxx_hidden_SidecarImage = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 28)
 }
 
 func (x *ServerConfig) SetBazelMirrorUrl(v string) {
 	x.xxx_hidden_BazelMirrorUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 28)
 }
 
 func (x *ServerConfig) SetCentralRegistryMirrorUrl(v string) {
 	x.xxx_hidden_CentralRegistryMirrorUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 28)
 }
 
 func (x *ServerConfig) SetRemoteAssetApi(v bool) {
 	x.xxx_hidden_RemoteAssetApi = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 28)
 }
 
 func (x *ServerConfig) SetPullAlways(v bool) {
 	x.xxx_hidden_PullAlways = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 28)
 }
 
 func (x *ServerConfig) SetGithubInstallationId(v int64) {
 	x.xxx_hidden_GithubInstallationId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 28)
 }
 
 func (x *ServerConfig) SetGithubAppSecretName(v string) {
 	x.xxx_hidden_GithubAppSecretName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 25, 28)
 }
 
 func (x *ServerConfig) SetEmulateJobControl(v bool) {
 	x.xxx_hidden_EmulateJobControl = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 27)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 26, 28)
+}
+
+func (x *ServerConfig) SetArtifactRegistryHost(v string) {
+	x.xxx_hidden_ArtifactRegistryHost = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 27, 28)
 }
 
 func (x *ServerConfig) HasDev() bool {
@@ -2063,6 +2079,13 @@ func (x *ServerConfig) HasEmulateJobControl() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 26)
 }
 
+func (x *ServerConfig) HasArtifactRegistryHost() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 27)
+}
+
 func (x *ServerConfig) ClearDev() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Dev = false
@@ -2198,6 +2221,11 @@ func (x *ServerConfig) ClearEmulateJobControl() {
 	x.xxx_hidden_EmulateJobControl = false
 }
 
+func (x *ServerConfig) ClearArtifactRegistryHost() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 27)
+	x.xxx_hidden_ArtifactRegistryHost = nil
+}
+
 type ServerConfig_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -2228,6 +2256,7 @@ type ServerConfig_builder struct {
 	GithubInstallationId        *int64
 	GithubAppSecretName         *string
 	EmulateJobControl           *bool
+	ArtifactRegistryHost        *string
 }
 
 func (b0 ServerConfig_builder) Build() *ServerConfig {
@@ -2235,112 +2264,116 @@ func (b0 ServerConfig_builder) Build() *ServerConfig {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Dev != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 28)
 		x.xxx_hidden_Dev = *b.Dev
 	}
 	if b.LeaderElection != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 28)
 		x.xxx_hidden_LeaderElection = *b.LeaderElection
 	}
 	if b.Namespace != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 28)
 		x.xxx_hidden_Namespace = b.Namespace
 	}
 	if b.UseBazelisk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 28)
 		x.xxx_hidden_UseBazelisk = *b.UseBazelisk
 	}
 	if b.DefaultBazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 28)
 		x.xxx_hidden_DefaultBazelVersion = b.DefaultBazelVersion
 	}
 	if b.RemoteCache != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 28)
 		x.xxx_hidden_RemoteCache = b.RemoteCache
 	}
 	if b.TaskCpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 28)
 		x.xxx_hidden_TaskCpuLimit = b.TaskCpuLimit
 	}
 	if b.TaskMemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 28)
 		x.xxx_hidden_TaskMemoryLimit = b.TaskMemoryLimit
 	}
 	if b.GcEnabled != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 28)
 		x.xxx_hidden_GcEnabled = *b.GcEnabled
 	}
 	if b.GitDataServiceListen != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 28)
 		x.xxx_hidden_GitDataServiceListen = b.GitDataServiceListen
 	}
 	if b.GitDataServiceUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 28)
 		x.xxx_hidden_GitDataServiceUrl = b.GitDataServiceUrl
 	}
 	if b.GitDataRefreshInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 28)
 		x.xxx_hidden_GitDataRefreshInterval = b.GitDataRefreshInterval
 	}
 	if b.GitDataRefreshWorkers != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 28)
 		x.xxx_hidden_GitDataRefreshWorkers = *b.GitDataRefreshWorkers
 	}
 	if b.ExternalReleasePollInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 28)
 		x.xxx_hidden_ExternalReleasePollInterval = b.ExternalReleasePollInterval
 	}
 	if b.EventReconcileInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 28)
 		x.xxx_hidden_EventReconcileInterval = b.EventReconcileInterval
 	}
 	if b.GithubAppId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 28)
 		x.xxx_hidden_GithubAppId = *b.GithubAppId
 	}
 	if b.VaultAddr != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 28)
 		x.xxx_hidden_VaultAddr = b.VaultAddr
 	}
 	if b.DashboardUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 28)
 		x.xxx_hidden_DashboardUrl = b.DashboardUrl
 	}
 	if b.BazelImage != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 28)
 		x.xxx_hidden_BazelImage = b.BazelImage
 	}
 	if b.SidecarImage != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 28)
 		x.xxx_hidden_SidecarImage = b.SidecarImage
 	}
 	if b.BazelMirrorUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 28)
 		x.xxx_hidden_BazelMirrorUrl = b.BazelMirrorUrl
 	}
 	if b.CentralRegistryMirrorUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 28)
 		x.xxx_hidden_CentralRegistryMirrorUrl = b.CentralRegistryMirrorUrl
 	}
 	if b.RemoteAssetApi != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 28)
 		x.xxx_hidden_RemoteAssetApi = *b.RemoteAssetApi
 	}
 	if b.PullAlways != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 28)
 		x.xxx_hidden_PullAlways = *b.PullAlways
 	}
 	if b.GithubInstallationId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 28)
 		x.xxx_hidden_GithubInstallationId = *b.GithubInstallationId
 	}
 	if b.GithubAppSecretName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 25, 28)
 		x.xxx_hidden_GithubAppSecretName = b.GithubAppSecretName
 	}
 	if b.EmulateJobControl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 27)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 26, 28)
 		x.xxx_hidden_EmulateJobControl = *b.EmulateJobControl
+	}
+	if b.ArtifactRegistryHost != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 27, 28)
+		x.xxx_hidden_ArtifactRegistryHost = b.ArtifactRegistryHost
 	}
 	return m0
 }
@@ -2613,6 +2646,203 @@ func (b0 ResponseListGithubEvents_builder) Build() *ResponseListGithubEvents {
 	return m0
 }
 
+type RequestListArtifacts struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TaskId       int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
+	xxx_hidden_RepositoryId int32                  `protobuf:"varint,2,opt,name=repository_id,json=repositoryId"`
+	xxx_hidden_Revision     *string                `protobuf:"bytes,3,opt,name=revision"`
+	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
+	XXX_presence            [1]uint32
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *RequestListArtifacts) Reset() {
+	*x = RequestListArtifacts{}
+	mi := &file_proto_build_api_api_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListArtifacts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListArtifacts) ProtoMessage() {}
+
+func (x *RequestListArtifacts) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestListArtifacts) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *RequestListArtifacts) GetRepositoryId() int32 {
+	if x != nil {
+		return x.xxx_hidden_RepositoryId
+	}
+	return 0
+}
+
+func (x *RequestListArtifacts) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestListArtifacts) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestListArtifacts) SetRepositoryId(v int32) {
+	x.xxx_hidden_RepositoryId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestListArtifacts) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestListArtifacts) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestListArtifacts) HasRepositoryId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestListArtifacts) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestListArtifacts) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_TaskId = 0
+}
+
+func (x *RequestListArtifacts) ClearRepositoryId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_RepositoryId = 0
+}
+
+func (x *RequestListArtifacts) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestListArtifacts_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TaskId       *int32
+	RepositoryId *int32
+	Revision     *string
+}
+
+func (b0 RequestListArtifacts_builder) Build() *RequestListArtifacts {
+	m0 := &RequestListArtifacts{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.RepositoryId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_RepositoryId = *b.RepositoryId
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseListArtifacts struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Artifacts *[]*model.Artifact     `protobuf:"bytes,1,rep,name=artifacts"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ResponseListArtifacts) Reset() {
+	*x = ResponseListArtifacts{}
+	mi := &file_proto_build_api_api_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListArtifacts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListArtifacts) ProtoMessage() {}
+
+func (x *ResponseListArtifacts) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_api_api_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListArtifacts) GetArtifacts() []*model.Artifact {
+	if x != nil {
+		if x.xxx_hidden_Artifacts != nil {
+			return *x.xxx_hidden_Artifacts
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListArtifacts) SetArtifacts(v []*model.Artifact) {
+	x.xxx_hidden_Artifacts = &v
+}
+
+type ResponseListArtifacts_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Artifacts []*model.Artifact
+}
+
+func (b0 ResponseListArtifacts_builder) Build() *ResponseListArtifacts {
+	m0 := &ResponseListArtifacts{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Artifacts = &b.Artifacts
+	return m0
+}
+
 type ArtifactRef struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Type        ArtifactType           `protobuf:"varint,1,opt,name=type,enum=mono.build.api.ArtifactType"`
@@ -2628,7 +2858,7 @@ type ArtifactRef struct {
 
 func (x *ArtifactRef) Reset() {
 	*x = ArtifactRef{}
-	mi := &file_proto_build_api_api_proto_msgTypes[23]
+	mi := &file_proto_build_api_api_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2640,7 +2870,7 @@ func (x *ArtifactRef) String() string {
 func (*ArtifactRef) ProtoMessage() {}
 
 func (x *ArtifactRef) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[23]
+	mi := &file_proto_build_api_api_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2834,7 +3064,7 @@ type RequestSyncArtifacts struct {
 
 func (x *RequestSyncArtifacts) Reset() {
 	*x = RequestSyncArtifacts{}
-	mi := &file_proto_build_api_api_proto_msgTypes[24]
+	mi := &file_proto_build_api_api_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2846,7 +3076,7 @@ func (x *RequestSyncArtifacts) String() string {
 func (*RequestSyncArtifacts) ProtoMessage() {}
 
 func (x *RequestSyncArtifacts) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[24]
+	mi := &file_proto_build_api_api_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2922,7 +3152,7 @@ type ResponseSyncArtifacts struct {
 
 func (x *ResponseSyncArtifacts) Reset() {
 	*x = ResponseSyncArtifacts{}
-	mi := &file_proto_build_api_api_proto_msgTypes[25]
+	mi := &file_proto_build_api_api_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2934,7 +3164,7 @@ func (x *ResponseSyncArtifacts) String() string {
 func (*ResponseSyncArtifacts) ProtoMessage() {}
 
 func (x *ResponseSyncArtifacts) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[25]
+	mi := &file_proto_build_api_api_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2979,7 +3209,7 @@ type RequestUploadArtifact struct {
 
 func (x *RequestUploadArtifact) Reset() {
 	*x = RequestUploadArtifact{}
-	mi := &file_proto_build_api_api_proto_msgTypes[26]
+	mi := &file_proto_build_api_api_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2991,7 +3221,7 @@ func (x *RequestUploadArtifact) String() string {
 func (*RequestUploadArtifact) ProtoMessage() {}
 
 func (x *RequestUploadArtifact) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[26]
+	mi := &file_proto_build_api_api_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3117,7 +3347,7 @@ func (b0 RequestUploadArtifact_builder) Build() *RequestUploadArtifact {
 type case_RequestUploadArtifact_Payload protoreflect.FieldNumber
 
 func (x case_RequestUploadArtifact_Payload) String() string {
-	md := file_proto_build_api_api_proto_msgTypes[26].Descriptor()
+	md := file_proto_build_api_api_proto_msgTypes[28].Descriptor()
 	if x == 0 {
 		return "not set"
 	}
@@ -3153,7 +3383,7 @@ type ArtifactUploadMeta struct {
 
 func (x *ArtifactUploadMeta) Reset() {
 	*x = ArtifactUploadMeta{}
-	mi := &file_proto_build_api_api_proto_msgTypes[27]
+	mi := &file_proto_build_api_api_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3165,7 +3395,7 @@ func (x *ArtifactUploadMeta) String() string {
 func (*ArtifactUploadMeta) ProtoMessage() {}
 
 func (x *ArtifactUploadMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[27]
+	mi := &file_proto_build_api_api_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3282,7 +3512,7 @@ type ResponseUploadArtifact struct {
 
 func (x *ResponseUploadArtifact) Reset() {
 	*x = ResponseUploadArtifact{}
-	mi := &file_proto_build_api_api_proto_msgTypes[28]
+	mi := &file_proto_build_api_api_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3294,7 +3524,7 @@ func (x *ResponseUploadArtifact) String() string {
 func (*ResponseUploadArtifact) ProtoMessage() {}
 
 func (x *ResponseUploadArtifact) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_api_api_proto_msgTypes[28]
+	mi := &file_proto_build_api_api_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3431,7 +3661,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x15ResponseGetServerInfo\x128\n" +
 	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions\x12%\n" +
 	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\x124\n" +
-	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.api.ServerConfigR\x06config\"\xaa\t\n" +
+	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.api.ServerConfigR\x06config\"\xe0\t\n" +
 	"\fServerConfig\x12\x10\n" +
 	"\x03dev\x18\x01 \x01(\bR\x03dev\x12'\n" +
 	"\x0fleader_election\x18\x02 \x01(\bR\x0eleaderElection\x12\x1c\n" +
@@ -3464,7 +3694,8 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"pullAlways\x124\n" +
 	"\x16github_installation_id\x18\x19 \x01(\x03R\x14githubInstallationId\x123\n" +
 	"\x16github_app_secret_name\x18\x1a \x01(\tR\x13githubAppSecretName\x12.\n" +
-	"\x13emulate_job_control\x18\x1b \x01(\bR\x11emulateJobControl\"I\n" +
+	"\x13emulate_job_control\x18\x1b \x01(\bR\x11emulateJobControl\x124\n" +
+	"\x16artifact_registry_host\x18\x1c \x01(\tR\x14artifactRegistryHost\"I\n" +
 	"\"RequestListExternalReleaseTriggers\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"k\n" +
 	"#ResponseListExternalReleaseTriggers\x12D\n" +
@@ -3472,7 +3703,13 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x17RequestListGithubEvents\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\x05R\aeventId\"Q\n" +
 	"\x18ResponseListGithubEvents\x125\n" +
-	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"\x99\x01\n" +
+	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"p\n" +
+	"\x14RequestListArtifacts\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x12#\n" +
+	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x1a\n" +
+	"\brevision\x18\x03 \x01(\tR\brevision\"Q\n" +
+	"\x15ResponseListArtifacts\x128\n" +
+	"\tartifacts\x18\x01 \x03(\v2\x1a.mono.build.model.ArtifactR\tartifacts\"\x99\x01\n" +
 	"\vArtifactRef\x120\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1c.mono.build.api.ArtifactTypeR\x04type\x12\x12\n" +
 	"\x04hash\x18\x02 \x01(\tR\x04hash\x12\x12\n" +
@@ -3503,7 +3740,8 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\fArtifactType\x12!\n" +
 	"\x1dARTIFACT_TYPE_CONTAINER_IMAGE\x10\x00\x12\x18\n" +
 	"\x14ARTIFACT_TYPE_BINARY\x10\x01\x12\x1e\n" +
-	"\x1aARTIFACT_TYPE_K8S_MANIFEST\x10\x022\xef\t\n" +
+	"\x1aARTIFACT_TYPE_K8S_MANIFEST\x10\x022\xcd\n" +
+	"\n" +
 	"\x03API\x12P\n" +
 	"\tListTasks\x12 .mono.build.api.RequestListTasks\x1a!.mono.build.api.ResponseListTasks\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.api.RequestListRepositories\x1a(.mono.build.api.ResponseListRepositories\x12_\n" +
@@ -3514,13 +3752,14 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\rForceStopTask\x12$.mono.build.api.RequestForceStopTask\x1a%.mono.build.api.ResponseForceStopTask\x12\\\n" +
 	"\rGetServerInfo\x12$.mono.build.api.RequestGetServerInfo\x1a%.mono.build.api.ResponseGetServerInfo\x12\x86\x01\n" +
 	"\x1bListExternalReleaseTriggers\x122.mono.build.api.RequestListExternalReleaseTriggers\x1a3.mono.build.api.ResponseListExternalReleaseTriggers\x12e\n" +
-	"\x10ListGithubEvents\x12'.mono.build.api.RequestListGithubEvents\x1a(.mono.build.api.ResponseListGithubEvents\x12Y\n" +
+	"\x10ListGithubEvents\x12'.mono.build.api.RequestListGithubEvents\x1a(.mono.build.api.ResponseListGithubEvents\x12\\\n" +
+	"\rListArtifacts\x12$.mono.build.api.RequestListArtifacts\x1a%.mono.build.api.ResponseListArtifacts\x12Y\n" +
 	"\fCompleteTask\x12#.mono.build.api.RequestCompleteTask\x1a$.mono.build.api.ResponseCompleteTask\x12\\\n" +
 	"\rSyncArtifacts\x12$.mono.build.api.RequestSyncArtifacts\x1a%.mono.build.api.ResponseSyncArtifacts\x12a\n" +
 	"\x0eUploadArtifact\x12%.mono.build.api.RequestUploadArtifact\x1a&.mono.build.api.ResponseUploadArtifact(\x01B'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_build_api_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_proto_build_api_api_proto_goTypes = []any{
 	(ArtifactType)(0),                           // 0: mono.build.api.ArtifactType
 	(*RequestListTasks)(nil),                    // 1: mono.build.api.RequestListTasks
@@ -3546,62 +3785,68 @@ var file_proto_build_api_api_proto_goTypes = []any{
 	(*ResponseListExternalReleaseTriggers)(nil), // 21: mono.build.api.ResponseListExternalReleaseTriggers
 	(*RequestListGithubEvents)(nil),             // 22: mono.build.api.RequestListGithubEvents
 	(*ResponseListGithubEvents)(nil),            // 23: mono.build.api.ResponseListGithubEvents
-	(*ArtifactRef)(nil),                         // 24: mono.build.api.ArtifactRef
-	(*RequestSyncArtifacts)(nil),                // 25: mono.build.api.RequestSyncArtifacts
-	(*ResponseSyncArtifacts)(nil),               // 26: mono.build.api.ResponseSyncArtifacts
-	(*RequestUploadArtifact)(nil),               // 27: mono.build.api.RequestUploadArtifact
-	(*ArtifactUploadMeta)(nil),                  // 28: mono.build.api.ArtifactUploadMeta
-	(*ResponseUploadArtifact)(nil),              // 29: mono.build.api.ResponseUploadArtifact
-	(*model.Task)(nil),                          // 30: mono.build.model.Task
-	(*model.Repository)(nil),                    // 31: mono.build.model.Repository
-	(*model.Job)(nil),                           // 32: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 33: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 34: mono.build.model.GithubEvent
+	(*RequestListArtifacts)(nil),                // 24: mono.build.api.RequestListArtifacts
+	(*ResponseListArtifacts)(nil),               // 25: mono.build.api.ResponseListArtifacts
+	(*ArtifactRef)(nil),                         // 26: mono.build.api.ArtifactRef
+	(*RequestSyncArtifacts)(nil),                // 27: mono.build.api.RequestSyncArtifacts
+	(*ResponseSyncArtifacts)(nil),               // 28: mono.build.api.ResponseSyncArtifacts
+	(*RequestUploadArtifact)(nil),               // 29: mono.build.api.RequestUploadArtifact
+	(*ArtifactUploadMeta)(nil),                  // 30: mono.build.api.ArtifactUploadMeta
+	(*ResponseUploadArtifact)(nil),              // 31: mono.build.api.ResponseUploadArtifact
+	(*model.Task)(nil),                          // 32: mono.build.model.Task
+	(*model.Repository)(nil),                    // 33: mono.build.model.Repository
+	(*model.Job)(nil),                           // 34: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 35: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 36: mono.build.model.GithubEvent
+	(*model.Artifact)(nil),                      // 37: mono.build.model.Artifact
 }
 var file_proto_build_api_api_proto_depIdxs = []int32{
-	30, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
-	31, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	31, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	31, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	32, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	32, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
+	33, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	33, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	33, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	34, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
 	19, // 5: mono.build.api.ResponseGetServerInfo.config:type_name -> mono.build.api.ServerConfig
-	33, // 6: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	34, // 7: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	0,  // 8: mono.build.api.ArtifactRef.type:type_name -> mono.build.api.ArtifactType
-	24, // 9: mono.build.api.RequestSyncArtifacts.artifacts:type_name -> mono.build.api.ArtifactRef
-	28, // 10: mono.build.api.RequestUploadArtifact.meta:type_name -> mono.build.api.ArtifactUploadMeta
-	24, // 11: mono.build.api.ArtifactUploadMeta.artifact:type_name -> mono.build.api.ArtifactRef
-	1,  // 12: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
-	3,  // 13: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
-	5,  // 14: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
-	7,  // 15: mono.build.api.API.DeleteRepository:input_type -> mono.build.api.RequestDeleteRepository
-	9,  // 16: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
-	11, // 17: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
-	13, // 18: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
-	17, // 19: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
-	20, // 20: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
-	22, // 21: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
-	15, // 22: mono.build.api.API.CompleteTask:input_type -> mono.build.api.RequestCompleteTask
-	25, // 23: mono.build.api.API.SyncArtifacts:input_type -> mono.build.api.RequestSyncArtifacts
-	27, // 24: mono.build.api.API.UploadArtifact:input_type -> mono.build.api.RequestUploadArtifact
-	2,  // 25: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
-	4,  // 26: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
-	6,  // 27: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
-	8,  // 28: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
-	10, // 29: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
-	12, // 30: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
-	14, // 31: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
-	18, // 32: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
-	21, // 33: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
-	23, // 34: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
-	16, // 35: mono.build.api.API.CompleteTask:output_type -> mono.build.api.ResponseCompleteTask
-	26, // 36: mono.build.api.API.SyncArtifacts:output_type -> mono.build.api.ResponseSyncArtifacts
-	29, // 37: mono.build.api.API.UploadArtifact:output_type -> mono.build.api.ResponseUploadArtifact
-	25, // [25:38] is the sub-list for method output_type
-	12, // [12:25] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	35, // 6: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	36, // 7: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	37, // 8: mono.build.api.ResponseListArtifacts.artifacts:type_name -> mono.build.model.Artifact
+	0,  // 9: mono.build.api.ArtifactRef.type:type_name -> mono.build.api.ArtifactType
+	26, // 10: mono.build.api.RequestSyncArtifacts.artifacts:type_name -> mono.build.api.ArtifactRef
+	30, // 11: mono.build.api.RequestUploadArtifact.meta:type_name -> mono.build.api.ArtifactUploadMeta
+	26, // 12: mono.build.api.ArtifactUploadMeta.artifact:type_name -> mono.build.api.ArtifactRef
+	1,  // 13: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
+	3,  // 14: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
+	5,  // 15: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
+	7,  // 16: mono.build.api.API.DeleteRepository:input_type -> mono.build.api.RequestDeleteRepository
+	9,  // 17: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
+	11, // 18: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
+	13, // 19: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
+	17, // 20: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
+	20, // 21: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
+	22, // 22: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
+	24, // 23: mono.build.api.API.ListArtifacts:input_type -> mono.build.api.RequestListArtifacts
+	15, // 24: mono.build.api.API.CompleteTask:input_type -> mono.build.api.RequestCompleteTask
+	27, // 25: mono.build.api.API.SyncArtifacts:input_type -> mono.build.api.RequestSyncArtifacts
+	29, // 26: mono.build.api.API.UploadArtifact:input_type -> mono.build.api.RequestUploadArtifact
+	2,  // 27: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
+	4,  // 28: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
+	6,  // 29: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
+	8,  // 30: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
+	10, // 31: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
+	12, // 32: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
+	14, // 33: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
+	18, // 34: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
+	21, // 35: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
+	23, // 36: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
+	25, // 37: mono.build.api.API.ListArtifacts:output_type -> mono.build.api.ResponseListArtifacts
+	16, // 38: mono.build.api.API.CompleteTask:output_type -> mono.build.api.ResponseCompleteTask
+	28, // 39: mono.build.api.API.SyncArtifacts:output_type -> mono.build.api.ResponseSyncArtifacts
+	31, // 40: mono.build.api.API.UploadArtifact:output_type -> mono.build.api.ResponseUploadArtifact
+	27, // [27:41] is the sub-list for method output_type
+	13, // [13:27] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_api_api_proto_init() }
@@ -3609,7 +3854,7 @@ func file_proto_build_api_api_proto_init() {
 	if File_proto_build_api_api_proto != nil {
 		return
 	}
-	file_proto_build_api_api_proto_msgTypes[26].OneofWrappers = []any{
+	file_proto_build_api_api_proto_msgTypes[28].OneofWrappers = []any{
 		(*requestUploadArtifact_Meta)(nil),
 		(*requestUploadArtifact_Chunk)(nil),
 	}
@@ -3619,7 +3864,7 @@ func file_proto_build_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_api_api_proto_rawDesc), len(file_proto_build_api_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   29,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

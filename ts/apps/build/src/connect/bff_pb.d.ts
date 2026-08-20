@@ -4,7 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
-import type { BuildMetrics, ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
+import type { ArtifactType, BuildMetrics, ExternalReleaseTrigger, GithubEvent, Job, Repository, TestReport } from "../model/msg_pb";
 import type { Duration, Timestamp } from "@bufbuild/protobuf/wkt";
 
 /**
@@ -274,6 +274,15 @@ export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
    * @generated from field: bool emulate_job_control = 19;
    */
   emulateJobControl: boolean;
+
+  /**
+   * artifact_registry_host is the OCI registry (zot) host that stores collected
+   * artifacts. Empty when artifact collection is disabled. The dashboard
+   * prefixes it to an artifact's registry path to form a pull reference.
+   *
+   * @generated from field: string artifact_registry_host = 20;
+   */
+  artifactRegistryHost: string;
 };
 
 /**
@@ -559,6 +568,118 @@ export declare type ResponseListGithubEvents = Message<"mono.build.bff.ResponseL
  * Use `create(ResponseListGithubEventsSchema)` to create a new message.
  */
 export declare const ResponseListGithubEventsSchema: GenMessage<ResponseListGithubEvents>;
+
+/**
+ * RequestListArtifacts selects artifacts either by task_id, or by a commit
+ * (repository_id + revision). Exactly one of the two forms is expected.
+ *
+ * @generated from message mono.build.bff.RequestListArtifacts
+ */
+export declare type RequestListArtifacts = Message<"mono.build.bff.RequestListArtifacts"> & {
+  /**
+   * @generated from field: int32 task_id = 1;
+   */
+  taskId: number;
+
+  /**
+   * @generated from field: int32 repository_id = 2;
+   */
+  repositoryId: number;
+
+  /**
+   * @generated from field: string revision = 3;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.build.bff.RequestListArtifacts.
+ * Use `create(RequestListArtifactsSchema)` to create a new message.
+ */
+export declare const RequestListArtifactsSchema: GenMessage<RequestListArtifacts>;
+
+/**
+ * @generated from message mono.build.bff.ResponseListArtifacts
+ */
+export declare type ResponseListArtifacts = Message<"mono.build.bff.ResponseListArtifacts"> & {
+  /**
+   * @generated from field: repeated mono.build.bff.BFFArtifact artifacts = 1;
+   */
+  artifacts: BFFArtifact[];
+};
+
+/**
+ * Describes the message mono.build.bff.ResponseListArtifacts.
+ * Use `create(ResponseListArtifactsSchema)` to create a new message.
+ */
+export declare const ResponseListArtifactsSchema: GenMessage<ResponseListArtifacts>;
+
+/**
+ * BFFArtifact is the browser-shaped view of an artifact. The mutable/immutable
+ * split of the storage `reference` is resolved here: `digest` is the immutable
+ * content digest (normalized to sha256:...) and is always present; `tag` is set
+ * only when the content is addressed by a tag, and is empty otherwise.
+ *
+ * @generated from message mono.build.bff.BFFArtifact
+ */
+export declare type BFFArtifact = Message<"mono.build.bff.BFFArtifact"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: int32 task_id = 2;
+   */
+  taskId: number;
+
+  /**
+   * @generated from field: mono.build.model.ArtifactType type = 3;
+   */
+  type: ArtifactType;
+
+  /**
+   * @generated from field: string name = 4;
+   */
+  name: string;
+
+  /**
+   * registry repository path (no host)
+   *
+   * @generated from field: string registry = 5;
+   */
+  registry: string;
+
+  /**
+   * immutable content digest, sha256:...
+   *
+   * @generated from field: string digest = 6;
+   */
+  digest: string;
+
+  /**
+   * empty when addressed by digest (untagged)
+   *
+   * @generated from field: string tag = 7;
+   */
+  tag: string;
+
+  /**
+   * @generated from field: int64 size = 8;
+   */
+  size: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 9;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message mono.build.bff.BFFArtifact.
+ * Use `create(BFFArtifactSchema)` to create a new message.
+ */
+export declare const BFFArtifactSchema: GenMessage<BFFArtifact>;
 
 /**
  * GitDataRepository is a lightweight view of a repository served by the
@@ -940,6 +1061,17 @@ export declare const BFF: GenService<{
     methodKind: "unary";
     input: typeof RequestListGithubEventsSchema;
     output: typeof ResponseListGithubEventsSchema;
+  },
+  /**
+   * ListArtifacts lists the artifacts produced by a task (task_id) or by a
+   * commit (repository_id + revision).
+   *
+   * @generated from rpc mono.build.bff.BFF.ListArtifacts
+   */
+  listArtifacts: {
+    methodKind: "unary";
+    input: typeof RequestListArtifactsSchema;
+    output: typeof ResponseListArtifactsSchema;
   },
   /**
    * @generated from rpc mono.build.bff.BFF.ListGitData

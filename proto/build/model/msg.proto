@@ -14,6 +14,14 @@ enum TestStatus {
   TEST_STATUS_FAILED = 2;
 }
 
+// ArtifactType classifies a deliverable. The values match the DB enum
+// (build.schema.ArtifactType) so the mapping in Go is a direct cast.
+enum ArtifactType {
+  ARTIFACT_TYPE_CONTAINER_IMAGE = 0;
+  ARTIFACT_TYPE_BINARY          = 1;
+  ARTIFACT_TYPE_K8S_MANIFEST    = 2;
+}
+
 message Repository {
   int32  id        = 1;
   string name      = 2;
@@ -61,6 +69,22 @@ message Task {
 message Job {
   string name          = 1;
   int32  repository_id = 2;
+}
+
+// Artifact is a deliverable produced by a Task and stored in the OCI registry
+// (zot). `hash` is the immutable content digest (image manifest digest, or the
+// sha256 of a file). `reference` is where the content is addressable in the
+// registry: a tag, or the content digest when untagged. See docs/build.md.
+message Artifact {
+  int32                     id         = 1;
+  int32                     task_id    = 2;
+  ArtifactType              type       = 3;
+  string                    hash       = 4;
+  string                    name       = 5;
+  string                    repository = 6;
+  string                    reference  = 7;
+  int64                     size       = 8;
+  google.protobuf.Timestamp created_at = 9;
 }
 
 message TestReport {

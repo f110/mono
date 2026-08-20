@@ -620,6 +620,52 @@ func dbJobToAPIJob(job *database.Job) *model.Job {
 	}.Build()
 }
 
+// ListArtifacts returns the artifacts recorded for a single task (task_id), or
+// aggregated over a commit's tasks (repository_id + revision). A commit can be
+// built by several tasks (platforms/jobs), so the commit form unions them.
+func (s *apiService) ListArtifacts(ctx context.Context, req *RequestListArtifacts) (*ResponseListArtifacts, error) {
+	if req.GetTaskId() > 0 {
+		rows, err := s.dao.Artifact.ListByTaskId(ctx, req.GetTaskId(), dao.Sort("id"))
+		if err != nil {
+			slogger.Log.Warn("Failed to list artifacts by task", slogger.E(err), slog.Int("task_id", int(req.GetTaskId())))
+			return nil, status.Error(codes.Internal, "failed to list artifacts")
+		}
+		return ResponseListArtifacts_builder{Artifacts: enumerable.Map(rows, dbArtifactToAPIArtifact)}.Build(), nil
+	}
+	if req.GetRepositoryId() > 0 && req.GetRevision() != "" {
+		tasks, err := s.dao.Task.ListByRevision(ctx, req.GetRepositoryId(), req.GetRevision(), dao.Sort("id"))
+		if err != nil {
+			slogger.Log.Warn("Failed to list tasks by revision", slogger.E(err), slog.String("revision", req.GetRevision()))
+			return nil, status.Error(codes.Internal, "failed to list artifacts")
+		}
+		var artifacts []*model.Artifact
+		for _, t := range tasks {
+			rows, err := s.dao.Artifact.ListByTaskId(ctx, t.Id, dao.Sort("id"))
+			if err != nil {
+				slogger.Log.Warn("Failed to list artifacts by task", slogger.E(err), slog.Int("task_id", int(t.Id)))
+				return nil, status.Error(codes.Internal, "failed to list artifacts")
+			}
+			artifacts = append(artifacts, enumerable.Map(rows, dbArtifactToAPIArtifact)...)
+		}
+		return ResponseListArtifacts_builder{Artifacts: artifacts}.Build(), nil
+	}
+	return nil, status.Error(codes.InvalidArgument, "task_id or repository_id+revision must be specified")
+}
+
+func dbArtifactToAPIArtifact(a *database.Artifact) *model.Artifact {
+	return model.Artifact_builder{
+		Id:         new(a.Id),
+		TaskId:     new(a.TaskId),
+		Type:       new(model.ArtifactType(a.Type)),
+		Hash:       new(a.Hash),
+		Name:       new(a.Name),
+		Repository: new(a.Repository),
+		Reference:  new(a.Reference),
+		Size:       new(a.Size),
+		CreatedAt:  timestamppb.New(a.CreatedAt),
+	}.Build()
+}
+
 // SyncArtifacts records a production row for the task for every artifact whose
 // content is already stored (reusing the existing storage location, no bytes
 // needed) and returns the content hashes not yet stored, which the sidecar then

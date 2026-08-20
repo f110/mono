@@ -739,6 +739,7 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	remoteAssetAPI := opt.RemoteAssetApi
 	pullAlways := opt.PullAlways
 	emulateJobControl := opt.EmulateJobControl
+	artifactRegistryHost := opt.ArtifactRegistry
 	return api.ServerConfig_builder{
 		Dev:                         &dev,
 		EmulateJobControl:           &emulateJobControl,
@@ -767,6 +768,7 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 		CentralRegistryMirrorUrl:    &centralRegistryMirrorURL,
 		RemoteAssetApi:              &remoteAssetAPI,
 		PullAlways:                  &pullAlways,
+		ArtifactRegistryHost:        &artifactRegistryHost,
 	}.Build()
 }
 

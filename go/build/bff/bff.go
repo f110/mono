@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/rs/cors"
@@ -250,6 +251,7 @@ func convertServerConfig(c *api.ServerConfig) *ServerConfig {
 		VaultAddr:                   new(c.GetVaultAddr()),
 		DashboardUrl:                new(c.GetDashboardUrl()),
 		EmulateJobControl:           new(c.GetEmulateJobControl()),
+		ArtifactRegistryHost:        new(c.GetArtifactRegistryHost()),
 	}.Build()
 }
 
@@ -395,6 +397,59 @@ func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseListExternalReleaseTriggers_builder{Triggers: res.GetTriggers()}.Build()), nil
+}
+
+func (b *BFF) ListArtifacts(ctx context.Context, req *connect.Request[RequestListArtifacts]) (*connect.Response[ResponseListArtifacts], error) {
+	apiReq := api.RequestListArtifacts_builder{}
+	if req.Msg.HasTaskId() {
+		apiReq.TaskId = new(req.Msg.GetTaskId())
+	}
+	if req.Msg.HasRepositoryId() {
+		apiReq.RepositoryId = new(req.Msg.GetRepositoryId())
+	}
+	if req.Msg.HasRevision() {
+		apiReq.Revision = new(req.Msg.GetRevision())
+	}
+	res, err := b.apiClient.ListArtifacts(ctx, apiReq.Build())
+	if err != nil {
+		slogger.Log.Warn("Failed to list artifacts", slogger.E(err))
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	artifacts := enumerable.Map(res.GetArtifacts(), apiArtifactToBFFArtifact)
+	return connect.NewResponse(ResponseListArtifacts_builder{Artifacts: artifacts}.Build()), nil
+}
+
+func apiArtifactToBFFArtifact(a *model.Artifact) *BFFArtifact {
+	return BFFArtifact_builder{
+		Id:        new(a.GetId()),
+		TaskId:    new(a.GetTaskId()),
+		Type:      new(a.GetType()),
+		Name:      new(a.GetName()),
+		Registry:  new(a.GetRepository()),
+		Digest:    new(normalizeDigest(a.GetHash())),
+		Tag:       new(artifactTag(a.GetReference())),
+		Size:      new(a.GetSize()),
+		CreatedAt: a.GetCreatedAt(),
+	}.Build()
+}
+
+// normalizeDigest returns the content digest in the canonical "sha256:<hex>"
+// form. File artifacts store a bare hex sha256; image artifacts already carry
+// the algorithm prefix.
+func normalizeDigest(hash string) string {
+	if hash == "" || strings.Contains(hash, ":") {
+		return hash
+	}
+	return "sha256:" + hash
+}
+
+// artifactTag reports the tag an artifact is addressed by, or "" when it is
+// stored under its content digest (the reference is a digest, not a tag).
+func artifactTag(reference string) string {
+	if strings.HasPrefix(reference, "sha256:") {
+		return ""
+	}
+	return reference
 }
 
 func (b *BFF) ListGitData(ctx context.Context, _ *connect.Request[RequestListGitData]) (*connect.Response[ResponseListGitData], error) {

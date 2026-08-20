@@ -22,6 +22,7 @@ export interface ServerConfig {
   vaultAddr: string
   dashboardUrl: string
   emulateJobControl: boolean
+  artifactRegistryHost: string
 }
 
 export interface ServerInfo {
@@ -63,6 +64,7 @@ export function useGetServerInfo(): ServerInfo {
           vaultAddr: c.vaultAddr,
           dashboardUrl: c.dashboardUrl,
           emulateJobControl: c.emulateJobControl,
+          artifactRegistryHost: c.artifactRegistryHost,
         }
       : undefined,
   }

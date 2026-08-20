@@ -26,6 +26,9 @@ service BFF {
   rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
   rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
+  // ListArtifacts lists the artifacts produced by a task (task_id) or by a
+  // commit (repository_id + revision).
+  rpc ListArtifacts(RequestListArtifacts) returns (ResponseListArtifacts);
   rpc ListGitData(RequestListGitData) returns (ResponseListGitData);
   rpc GetGitDataStatistics(RequestGetGitDataStatistics) returns (ResponseGetGitDataStatistics);
 }
@@ -93,6 +96,10 @@ message ServerConfig {
   // kube-apiserver. The dashboard uses it to expose the dev-only "complete
   // task" action.
   bool emulate_job_control = 19;
+  // artifact_registry_host is the OCI registry (zot) host that stores collected
+  // artifacts. Empty when artifact collection is disabled. The dashboard
+  // prefixes it to an artifact's registry path to form a pull reference.
+  string artifact_registry_host = 20;
 }
 
 message RequestListJobs {
@@ -157,6 +164,34 @@ message RequestListGithubEvents {
 
 message ResponseListGithubEvents {
   repeated mono.build.model.GithubEvent events = 1;
+}
+
+// RequestListArtifacts selects artifacts either by task_id, or by a commit
+// (repository_id + revision). Exactly one of the two forms is expected.
+message RequestListArtifacts {
+  int32  task_id       = 1;
+  int32  repository_id = 2;
+  string revision      = 3;
+}
+
+message ResponseListArtifacts {
+  repeated BFFArtifact artifacts = 1;
+}
+
+// BFFArtifact is the browser-shaped view of an artifact. The mutable/immutable
+// split of the storage `reference` is resolved here: `digest` is the immutable
+// content digest (normalized to sha256:...) and is always present; `tag` is set
+// only when the content is addressed by a tag, and is empty otherwise.
+message BFFArtifact {
+  int32                         id         = 1;
+  int32                         task_id    = 2;
+  mono.build.model.ArtifactType type       = 3;
+  string                        name       = 4;
+  string                        registry   = 5;  // registry repository path (no host)
+  string                        digest     = 6;  // immutable content digest, sha256:...
+  string                        tag        = 7;  // empty when addressed by digest (untagged)
+  int64                         size       = 8;
+  google.protobuf.Timestamp     created_at = 9;
 }
 
 // GitDataRepository is a lightweight view of a repository served by the

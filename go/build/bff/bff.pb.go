@@ -722,6 +722,7 @@ type ServerConfig struct {
 	xxx_hidden_VaultAddr                   *string                `protobuf:"bytes,17,opt,name=vault_addr,json=vaultAddr"`
 	xxx_hidden_DashboardUrl                *string                `protobuf:"bytes,18,opt,name=dashboard_url,json=dashboardUrl"`
 	xxx_hidden_EmulateJobControl           bool                   `protobuf:"varint,19,opt,name=emulate_job_control,json=emulateJobControl"`
+	xxx_hidden_ArtifactRegistryHost        *string                `protobuf:"bytes,20,opt,name=artifact_registry_host,json=artifactRegistryHost"`
 	XXX_raceDetectHookData                 protoimpl.RaceDetectHookData
 	XXX_presence                           [1]uint32
 	unknownFields                          protoimpl.UnknownFields
@@ -922,99 +923,114 @@ func (x *ServerConfig) GetEmulateJobControl() bool {
 	return false
 }
 
+func (x *ServerConfig) GetArtifactRegistryHost() string {
+	if x != nil {
+		if x.xxx_hidden_ArtifactRegistryHost != nil {
+			return *x.xxx_hidden_ArtifactRegistryHost
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ServerConfig) SetDev(v bool) {
 	x.xxx_hidden_Dev = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 20)
 }
 
 func (x *ServerConfig) SetLeaderElection(v bool) {
 	x.xxx_hidden_LeaderElection = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 20)
 }
 
 func (x *ServerConfig) SetNamespace(v string) {
 	x.xxx_hidden_Namespace = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 20)
 }
 
 func (x *ServerConfig) SetUseBazelisk(v bool) {
 	x.xxx_hidden_UseBazelisk = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 20)
 }
 
 func (x *ServerConfig) SetDefaultBazelVersion(v string) {
 	x.xxx_hidden_DefaultBazelVersion = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 20)
 }
 
 func (x *ServerConfig) SetRemoteCache(v string) {
 	x.xxx_hidden_RemoteCache = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 20)
 }
 
 func (x *ServerConfig) SetTaskCpuLimit(v string) {
 	x.xxx_hidden_TaskCpuLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 20)
 }
 
 func (x *ServerConfig) SetTaskMemoryLimit(v string) {
 	x.xxx_hidden_TaskMemoryLimit = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 20)
 }
 
 func (x *ServerConfig) SetGcEnabled(v bool) {
 	x.xxx_hidden_GcEnabled = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 20)
 }
 
 func (x *ServerConfig) SetGitDataServiceListen(v string) {
 	x.xxx_hidden_GitDataServiceListen = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 20)
 }
 
 func (x *ServerConfig) SetGitDataServiceUrl(v string) {
 	x.xxx_hidden_GitDataServiceUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 20)
 }
 
 func (x *ServerConfig) SetGitDataRefreshInterval(v string) {
 	x.xxx_hidden_GitDataRefreshInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 20)
 }
 
 func (x *ServerConfig) SetGitDataRefreshWorkers(v int32) {
 	x.xxx_hidden_GitDataRefreshWorkers = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 20)
 }
 
 func (x *ServerConfig) SetExternalReleasePollInterval(v string) {
 	x.xxx_hidden_ExternalReleasePollInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 20)
 }
 
 func (x *ServerConfig) SetEventReconcileInterval(v string) {
 	x.xxx_hidden_EventReconcileInterval = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 20)
 }
 
 func (x *ServerConfig) SetGithubAppId(v int64) {
 	x.xxx_hidden_GithubAppId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 20)
 }
 
 func (x *ServerConfig) SetVaultAddr(v string) {
 	x.xxx_hidden_VaultAddr = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 20)
 }
 
 func (x *ServerConfig) SetDashboardUrl(v string) {
 	x.xxx_hidden_DashboardUrl = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 20)
 }
 
 func (x *ServerConfig) SetEmulateJobControl(v bool) {
 	x.xxx_hidden_EmulateJobControl = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 19)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 20)
+}
+
+func (x *ServerConfig) SetArtifactRegistryHost(v string) {
+	x.xxx_hidden_ArtifactRegistryHost = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 20)
 }
 
 func (x *ServerConfig) HasDev() bool {
@@ -1150,6 +1166,13 @@ func (x *ServerConfig) HasEmulateJobControl() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
 }
 
+func (x *ServerConfig) HasArtifactRegistryHost() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
+}
+
 func (x *ServerConfig) ClearDev() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Dev = false
@@ -1245,6 +1268,11 @@ func (x *ServerConfig) ClearEmulateJobControl() {
 	x.xxx_hidden_EmulateJobControl = false
 }
 
+func (x *ServerConfig) ClearArtifactRegistryHost() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	x.xxx_hidden_ArtifactRegistryHost = nil
+}
+
 type ServerConfig_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -1267,6 +1295,7 @@ type ServerConfig_builder struct {
 	VaultAddr                   *string
 	DashboardUrl                *string
 	EmulateJobControl           *bool
+	ArtifactRegistryHost        *string
 }
 
 func (b0 ServerConfig_builder) Build() *ServerConfig {
@@ -1274,80 +1303,84 @@ func (b0 ServerConfig_builder) Build() *ServerConfig {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Dev != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 20)
 		x.xxx_hidden_Dev = *b.Dev
 	}
 	if b.LeaderElection != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 20)
 		x.xxx_hidden_LeaderElection = *b.LeaderElection
 	}
 	if b.Namespace != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 20)
 		x.xxx_hidden_Namespace = b.Namespace
 	}
 	if b.UseBazelisk != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 20)
 		x.xxx_hidden_UseBazelisk = *b.UseBazelisk
 	}
 	if b.DefaultBazelVersion != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 20)
 		x.xxx_hidden_DefaultBazelVersion = b.DefaultBazelVersion
 	}
 	if b.RemoteCache != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 20)
 		x.xxx_hidden_RemoteCache = b.RemoteCache
 	}
 	if b.TaskCpuLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 20)
 		x.xxx_hidden_TaskCpuLimit = b.TaskCpuLimit
 	}
 	if b.TaskMemoryLimit != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 20)
 		x.xxx_hidden_TaskMemoryLimit = b.TaskMemoryLimit
 	}
 	if b.GcEnabled != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 20)
 		x.xxx_hidden_GcEnabled = *b.GcEnabled
 	}
 	if b.GitDataServiceListen != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 20)
 		x.xxx_hidden_GitDataServiceListen = b.GitDataServiceListen
 	}
 	if b.GitDataServiceUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 20)
 		x.xxx_hidden_GitDataServiceUrl = b.GitDataServiceUrl
 	}
 	if b.GitDataRefreshInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 20)
 		x.xxx_hidden_GitDataRefreshInterval = b.GitDataRefreshInterval
 	}
 	if b.GitDataRefreshWorkers != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 20)
 		x.xxx_hidden_GitDataRefreshWorkers = *b.GitDataRefreshWorkers
 	}
 	if b.ExternalReleasePollInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 20)
 		x.xxx_hidden_ExternalReleasePollInterval = b.ExternalReleasePollInterval
 	}
 	if b.EventReconcileInterval != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 20)
 		x.xxx_hidden_EventReconcileInterval = b.EventReconcileInterval
 	}
 	if b.GithubAppId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 20)
 		x.xxx_hidden_GithubAppId = *b.GithubAppId
 	}
 	if b.VaultAddr != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 20)
 		x.xxx_hidden_VaultAddr = b.VaultAddr
 	}
 	if b.DashboardUrl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 20)
 		x.xxx_hidden_DashboardUrl = b.DashboardUrl
 	}
 	if b.EmulateJobControl != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 19)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 20)
 		x.xxx_hidden_EmulateJobControl = *b.EmulateJobControl
+	}
+	if b.ArtifactRegistryHost != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 20)
+		x.xxx_hidden_ArtifactRegistryHost = b.ArtifactRegistryHost
 	}
 	return m0
 }
@@ -2543,6 +2576,527 @@ func (b0 ResponseListGithubEvents_builder) Build() *ResponseListGithubEvents {
 	return m0
 }
 
+type RequestListArtifacts struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_TaskId       int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
+	xxx_hidden_RepositoryId int32                  `protobuf:"varint,2,opt,name=repository_id,json=repositoryId"`
+	xxx_hidden_Revision     *string                `protobuf:"bytes,3,opt,name=revision"`
+	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
+	XXX_presence            [1]uint32
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *RequestListArtifacts) Reset() {
+	*x = RequestListArtifacts{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListArtifacts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListArtifacts) ProtoMessage() {}
+
+func (x *RequestListArtifacts) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestListArtifacts) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *RequestListArtifacts) GetRepositoryId() int32 {
+	if x != nil {
+		return x.xxx_hidden_RepositoryId
+	}
+	return 0
+}
+
+func (x *RequestListArtifacts) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestListArtifacts) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestListArtifacts) SetRepositoryId(v int32) {
+	x.xxx_hidden_RepositoryId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestListArtifacts) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestListArtifacts) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestListArtifacts) HasRepositoryId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestListArtifacts) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestListArtifacts) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_TaskId = 0
+}
+
+func (x *RequestListArtifacts) ClearRepositoryId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_RepositoryId = 0
+}
+
+func (x *RequestListArtifacts) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestListArtifacts_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	TaskId       *int32
+	RepositoryId *int32
+	Revision     *string
+}
+
+func (b0 RequestListArtifacts_builder) Build() *RequestListArtifacts {
+	m0 := &RequestListArtifacts{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.RepositoryId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_RepositoryId = *b.RepositoryId
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseListArtifacts struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Artifacts *[]*BFFArtifact        `protobuf:"bytes,1,rep,name=artifacts"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ResponseListArtifacts) Reset() {
+	*x = ResponseListArtifacts{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListArtifacts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListArtifacts) ProtoMessage() {}
+
+func (x *ResponseListArtifacts) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListArtifacts) GetArtifacts() []*BFFArtifact {
+	if x != nil {
+		if x.xxx_hidden_Artifacts != nil {
+			return *x.xxx_hidden_Artifacts
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListArtifacts) SetArtifacts(v []*BFFArtifact) {
+	x.xxx_hidden_Artifacts = &v
+}
+
+type ResponseListArtifacts_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Artifacts []*BFFArtifact
+}
+
+func (b0 ResponseListArtifacts_builder) Build() *ResponseListArtifacts {
+	m0 := &ResponseListArtifacts{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Artifacts = &b.Artifacts
+	return m0
+}
+
+type BFFArtifact struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          int32                  `protobuf:"varint,1,opt,name=id"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,2,opt,name=task_id,json=taskId"`
+	xxx_hidden_Type        model.ArtifactType     `protobuf:"varint,3,opt,name=type,enum=mono.build.model.ArtifactType"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,4,opt,name=name"`
+	xxx_hidden_Registry    *string                `protobuf:"bytes,5,opt,name=registry"`
+	xxx_hidden_Digest      *string                `protobuf:"bytes,6,opt,name=digest"`
+	xxx_hidden_Tag         *string                `protobuf:"bytes,7,opt,name=tag"`
+	xxx_hidden_Size        int64                  `protobuf:"varint,8,opt,name=size"`
+	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *BFFArtifact) Reset() {
+	*x = BFFArtifact{}
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BFFArtifact) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BFFArtifact) ProtoMessage() {}
+
+func (x *BFFArtifact) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *BFFArtifact) GetId() int32 {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return 0
+}
+
+func (x *BFFArtifact) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *BFFArtifact) GetType() model.ArtifactType {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 2) {
+			return x.xxx_hidden_Type
+		}
+	}
+	return model.ArtifactType(0)
+}
+
+func (x *BFFArtifact) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *BFFArtifact) GetRegistry() string {
+	if x != nil {
+		if x.xxx_hidden_Registry != nil {
+			return *x.xxx_hidden_Registry
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *BFFArtifact) GetDigest() string {
+	if x != nil {
+		if x.xxx_hidden_Digest != nil {
+			return *x.xxx_hidden_Digest
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *BFFArtifact) GetTag() string {
+	if x != nil {
+		if x.xxx_hidden_Tag != nil {
+			return *x.xxx_hidden_Tag
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *BFFArtifact) GetSize() int64 {
+	if x != nil {
+		return x.xxx_hidden_Size
+	}
+	return 0
+}
+
+func (x *BFFArtifact) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return nil
+}
+
+func (x *BFFArtifact) SetId(v int32) {
+	x.xxx_hidden_Id = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 9)
+}
+
+func (x *BFFArtifact) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 9)
+}
+
+func (x *BFFArtifact) SetType(v model.ArtifactType) {
+	x.xxx_hidden_Type = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 9)
+}
+
+func (x *BFFArtifact) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 9)
+}
+
+func (x *BFFArtifact) SetRegistry(v string) {
+	x.xxx_hidden_Registry = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 9)
+}
+
+func (x *BFFArtifact) SetDigest(v string) {
+	x.xxx_hidden_Digest = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 9)
+}
+
+func (x *BFFArtifact) SetTag(v string) {
+	x.xxx_hidden_Tag = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 9)
+}
+
+func (x *BFFArtifact) SetSize(v int64) {
+	x.xxx_hidden_Size = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 9)
+}
+
+func (x *BFFArtifact) SetCreatedAt(v *timestamppb.Timestamp) {
+	x.xxx_hidden_CreatedAt = v
+}
+
+func (x *BFFArtifact) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *BFFArtifact) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *BFFArtifact) HasType() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *BFFArtifact) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *BFFArtifact) HasRegistry() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *BFFArtifact) HasDigest() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *BFFArtifact) HasTag() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *BFFArtifact) HasSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *BFFArtifact) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_CreatedAt != nil
+}
+
+func (x *BFFArtifact) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = 0
+}
+
+func (x *BFFArtifact) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_TaskId = 0
+}
+
+func (x *BFFArtifact) ClearType() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Type = model.ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE
+}
+
+func (x *BFFArtifact) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *BFFArtifact) ClearRegistry() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Registry = nil
+}
+
+func (x *BFFArtifact) ClearDigest() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Digest = nil
+}
+
+func (x *BFFArtifact) ClearTag() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Tag = nil
+}
+
+func (x *BFFArtifact) ClearSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Size = 0
+}
+
+func (x *BFFArtifact) ClearCreatedAt() {
+	x.xxx_hidden_CreatedAt = nil
+}
+
+type BFFArtifact_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id        *int32
+	TaskId    *int32
+	Type      *model.ArtifactType
+	Name      *string
+	Registry  *string
+	Digest    *string
+	Tag       *string
+	Size      *int64
+	CreatedAt *timestamppb.Timestamp
+}
+
+func (b0 BFFArtifact_builder) Build() *BFFArtifact {
+	m0 := &BFFArtifact{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 9)
+		x.xxx_hidden_Id = *b.Id
+	}
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 9)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.Type != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 9)
+		x.xxx_hidden_Type = *b.Type
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 9)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Registry != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 9)
+		x.xxx_hidden_Registry = b.Registry
+	}
+	if b.Digest != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 9)
+		x.xxx_hidden_Digest = b.Digest
+	}
+	if b.Tag != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 9)
+		x.xxx_hidden_Tag = b.Tag
+	}
+	if b.Size != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 9)
+		x.xxx_hidden_Size = *b.Size
+	}
+	x.xxx_hidden_CreatedAt = b.CreatedAt
+	return m0
+}
+
 type GitDataRepository struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Name          *string                `protobuf:"bytes,1,opt,name=name"`
@@ -2556,7 +3110,7 @@ type GitDataRepository struct {
 
 func (x *GitDataRepository) Reset() {
 	*x = GitDataRepository{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2568,7 +3122,7 @@ func (x *GitDataRepository) String() string {
 func (*GitDataRepository) ProtoMessage() {}
 
 func (x *GitDataRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[27]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2695,7 +3249,7 @@ type RequestListGitData struct {
 
 func (x *RequestListGitData) Reset() {
 	*x = RequestListGitData{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2707,7 +3261,7 @@ func (x *RequestListGitData) String() string {
 func (*RequestListGitData) ProtoMessage() {}
 
 func (x *RequestListGitData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[28]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2739,7 +3293,7 @@ type ResponseListGitData struct {
 
 func (x *ResponseListGitData) Reset() {
 	*x = ResponseListGitData{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2751,7 +3305,7 @@ func (x *ResponseListGitData) String() string {
 func (*ResponseListGitData) ProtoMessage() {}
 
 func (x *ResponseListGitData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[29]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2800,7 +3354,7 @@ type RequestGetGitDataStatistics struct {
 
 func (x *RequestGetGitDataStatistics) Reset() {
 	*x = RequestGetGitDataStatistics{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2812,7 +3366,7 @@ func (x *RequestGetGitDataStatistics) String() string {
 func (*RequestGetGitDataStatistics) ProtoMessage() {}
 
 func (x *RequestGetGitDataStatistics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[30]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2881,7 +3435,7 @@ type ResponseGetGitDataStatistics struct {
 
 func (x *ResponseGetGitDataStatistics) Reset() {
 	*x = ResponseGetGitDataStatistics{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2893,7 +3447,7 @@ func (x *ResponseGetGitDataStatistics) String() string {
 func (*ResponseGetGitDataStatistics) ProtoMessage() {}
 
 func (x *ResponseGetGitDataStatistics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[31]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3076,7 +3630,7 @@ type BFFTask struct {
 
 func (x *BFFTask) Reset() {
 	*x = BFFTask{}
-	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3088,7 +3642,7 @@ func (x *BFFTask) String() string {
 func (*BFFTask) ProtoMessage() {}
 
 func (x *BFFTask) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_bff_bff_proto_msgTypes[32]
+	mi := &file_proto_build_bff_bff_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3989,7 +4543,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x15ResponseGetServerInfo\x128\n" +
 	"\x18supported_bazel_versions\x18\x01 \x03(\tR\x16supportedBazelVersions\x12%\n" +
 	"\x0eschema_version\x18\x02 \x01(\tR\rschemaVersion\x124\n" +
-	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.bff.ServerConfigR\x06config\"\xc5\x06\n" +
+	"\x06config\x18\x03 \x01(\v2\x1c.mono.build.bff.ServerConfigR\x06config\"\xfb\x06\n" +
 	"\fServerConfig\x12\x10\n" +
 	"\x03dev\x18\x01 \x01(\bR\x03dev\x12'\n" +
 	"\x0fleader_election\x18\x02 \x01(\bR\x0eleaderElection\x12\x1c\n" +
@@ -4012,7 +4566,8 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\n" +
 	"vault_addr\x18\x11 \x01(\tR\tvaultAddr\x12#\n" +
 	"\rdashboard_url\x18\x12 \x01(\tR\fdashboardUrl\x12.\n" +
-	"\x13emulate_job_control\x18\x13 \x01(\bR\x11emulateJobControl\"6\n" +
+	"\x13emulate_job_control\x18\x13 \x01(\bR\x11emulateJobControl\x124\n" +
+	"\x16artifact_registry_host\x18\x14 \x01(\tR\x14artifactRegistryHost\"6\n" +
 	"\x0fRequestListJobs\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"=\n" +
 	"\x10ResponseListJobs\x12)\n" +
@@ -4049,7 +4604,24 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x17RequestListGithubEvents\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\x05R\aeventId\"Q\n" +
 	"\x18ResponseListGithubEvents\x125\n" +
-	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"`\n" +
+	"\x06events\x18\x01 \x03(\v2\x1d.mono.build.model.GithubEventR\x06events\"p\n" +
+	"\x14RequestListArtifacts\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x12#\n" +
+	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x1a\n" +
+	"\brevision\x18\x03 \x01(\tR\brevision\"R\n" +
+	"\x15ResponseListArtifacts\x129\n" +
+	"\tartifacts\x18\x01 \x03(\v2\x1b.mono.build.bff.BFFArtifactR\tartifacts\"\x93\x02\n" +
+	"\vBFFArtifact\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x17\n" +
+	"\atask_id\x18\x02 \x01(\x05R\x06taskId\x122\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x1e.mono.build.model.ArtifactTypeR\x04type\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x1a\n" +
+	"\bregistry\x18\x05 \x01(\tR\bregistry\x12\x16\n" +
+	"\x06digest\x18\x06 \x01(\tR\x06digest\x12\x10\n" +
+	"\x03tag\x18\a \x01(\tR\x03tag\x12\x12\n" +
+	"\x04size\x18\b \x01(\x03R\x04size\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"`\n" +
 	"\x11GitDataRepository\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
 	"\x0edefault_branch\x18\x02 \x01(\tR\rdefaultBranch\x12\x10\n" +
@@ -4101,7 +4673,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\fmemory_limit\x18\x1b \x01(\tR\vmemoryLimit\x12?\n" +
 	"\ftest_reports\x18\x1c \x03(\v2\x1c.mono.build.model.TestReportR\vtestReports\x125\n" +
 	"\bduration\x18\x1d \x01(\v2\x19.google.protobuf.DurationR\bduration\x12C\n" +
-	"\rbuild_metrics\x18\x1e \x01(\v2\x1e.mono.build.model.BuildMetricsR\fbuildMetrics2\x9d\v\n" +
+	"\rbuild_metrics\x18\x1e \x01(\v2\x1e.mono.build.model.BuildMetricsR\fbuildMetrics2\xfb\v\n" +
 	"\x03BFF\x12e\n" +
 	"\x10ListRepositories\x12'.mono.build.bff.RequestListRepositories\x1a(.mono.build.bff.ResponseListRepositories\x12P\n" +
 	"\tListTasks\x12 .mono.build.bff.RequestListTasks\x1a!.mono.build.bff.ResponseListTasks\x12J\n" +
@@ -4115,11 +4687,12 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\rForceStopTask\x12$.mono.build.bff.RequestForceStopTask\x1a%.mono.build.bff.ResponseForceStopTask\x12Y\n" +
 	"\fCompleteTask\x12#.mono.build.bff.RequestCompleteTask\x1a$.mono.build.bff.ResponseCompleteTask\x12\x86\x01\n" +
 	"\x1bListExternalReleaseTriggers\x122.mono.build.bff.RequestListExternalReleaseTriggers\x1a3.mono.build.bff.ResponseListExternalReleaseTriggers\x12e\n" +
-	"\x10ListGithubEvents\x12'.mono.build.bff.RequestListGithubEvents\x1a(.mono.build.bff.ResponseListGithubEvents\x12V\n" +
+	"\x10ListGithubEvents\x12'.mono.build.bff.RequestListGithubEvents\x1a(.mono.build.bff.ResponseListGithubEvents\x12\\\n" +
+	"\rListArtifacts\x12$.mono.build.bff.RequestListArtifacts\x1a%.mono.build.bff.ResponseListArtifacts\x12V\n" +
 	"\vListGitData\x12\".mono.build.bff.RequestListGitData\x1a#.mono.build.bff.ResponseListGitData\x12q\n" +
 	"\x14GetGitDataStatistics\x12+.mono.build.bff.RequestGetGitDataStatistics\x1a,.mono.build.bff.ResponseGetGitDataStatisticsB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestListRepositories)(nil),             // 0: mono.build.bff.RequestListRepositories
 	(*ResponseListRepositories)(nil),            // 1: mono.build.bff.ResponseListRepositories
@@ -4148,75 +4721,84 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*ResponseListExternalReleaseTriggers)(nil), // 24: mono.build.bff.ResponseListExternalReleaseTriggers
 	(*RequestListGithubEvents)(nil),             // 25: mono.build.bff.RequestListGithubEvents
 	(*ResponseListGithubEvents)(nil),            // 26: mono.build.bff.ResponseListGithubEvents
-	(*GitDataRepository)(nil),                   // 27: mono.build.bff.GitDataRepository
-	(*RequestListGitData)(nil),                  // 28: mono.build.bff.RequestListGitData
-	(*ResponseListGitData)(nil),                 // 29: mono.build.bff.ResponseListGitData
-	(*RequestGetGitDataStatistics)(nil),         // 30: mono.build.bff.RequestGetGitDataStatistics
-	(*ResponseGetGitDataStatistics)(nil),        // 31: mono.build.bff.ResponseGetGitDataStatistics
-	(*BFFTask)(nil),                             // 32: mono.build.bff.BFFTask
-	(*model.Repository)(nil),                    // 33: mono.build.model.Repository
-	(*model.Job)(nil),                           // 34: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 35: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 36: mono.build.model.GithubEvent
-	(*timestamppb.Timestamp)(nil),               // 37: google.protobuf.Timestamp
-	(*model.TestReport)(nil),                    // 38: mono.build.model.TestReport
-	(*durationpb.Duration)(nil),                 // 39: google.protobuf.Duration
-	(*model.BuildMetrics)(nil),                  // 40: mono.build.model.BuildMetrics
+	(*RequestListArtifacts)(nil),                // 27: mono.build.bff.RequestListArtifacts
+	(*ResponseListArtifacts)(nil),               // 28: mono.build.bff.ResponseListArtifacts
+	(*BFFArtifact)(nil),                         // 29: mono.build.bff.BFFArtifact
+	(*GitDataRepository)(nil),                   // 30: mono.build.bff.GitDataRepository
+	(*RequestListGitData)(nil),                  // 31: mono.build.bff.RequestListGitData
+	(*ResponseListGitData)(nil),                 // 32: mono.build.bff.ResponseListGitData
+	(*RequestGetGitDataStatistics)(nil),         // 33: mono.build.bff.RequestGetGitDataStatistics
+	(*ResponseGetGitDataStatistics)(nil),        // 34: mono.build.bff.ResponseGetGitDataStatistics
+	(*BFFTask)(nil),                             // 35: mono.build.bff.BFFTask
+	(*model.Repository)(nil),                    // 36: mono.build.model.Repository
+	(*model.Job)(nil),                           // 37: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 38: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 39: mono.build.model.GithubEvent
+	(model.ArtifactType)(0),                     // 40: mono.build.model.ArtifactType
+	(*timestamppb.Timestamp)(nil),               // 41: google.protobuf.Timestamp
+	(*model.TestReport)(nil),                    // 42: mono.build.model.TestReport
+	(*durationpb.Duration)(nil),                 // 43: google.protobuf.Duration
+	(*model.BuildMetrics)(nil),                  // 44: mono.build.model.BuildMetrics
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
-	33, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	32, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
+	36, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	35, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
 	8,  // 2: mono.build.bff.ResponseGetServerInfo.config:type_name -> mono.build.bff.ServerConfig
-	34, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	33, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	33, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	35, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	36, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	27, // 8: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
-	37, // 9: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
-	33, // 10: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
-	37, // 11: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
-	37, // 12: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
-	37, // 13: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
-	37, // 14: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
-	38, // 15: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
-	39, // 16: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
-	40, // 17: mono.build.bff.BFFTask.build_metrics:type_name -> mono.build.model.BuildMetrics
-	0,  // 18: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
-	2,  // 19: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
-	4,  // 20: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
-	6,  // 21: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
-	9,  // 22: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
-	11, // 23: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
-	13, // 24: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
-	15, // 25: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
-	17, // 26: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
-	19, // 27: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
-	21, // 28: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
-	23, // 29: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
-	25, // 30: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
-	28, // 31: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
-	30, // 32: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
-	1,  // 33: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 34: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 35: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 36: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	10, // 37: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	12, // 38: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	14, // 39: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	16, // 40: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	18, // 41: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	20, // 42: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
-	22, // 43: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
-	24, // 44: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
-	26, // 45: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
-	29, // 46: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
-	31, // 47: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
-	33, // [33:48] is the sub-list for method output_type
-	18, // [18:33] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	37, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	36, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	36, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	38, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	39, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	29, // 8: mono.build.bff.ResponseListArtifacts.artifacts:type_name -> mono.build.bff.BFFArtifact
+	40, // 9: mono.build.bff.BFFArtifact.type:type_name -> mono.build.model.ArtifactType
+	41, // 10: mono.build.bff.BFFArtifact.created_at:type_name -> google.protobuf.Timestamp
+	30, // 11: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
+	41, // 12: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
+	36, // 13: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
+	41, // 14: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
+	41, // 15: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
+	41, // 16: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
+	41, // 17: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
+	42, // 18: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
+	43, // 19: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
+	44, // 20: mono.build.bff.BFFTask.build_metrics:type_name -> mono.build.model.BuildMetrics
+	0,  // 21: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
+	2,  // 22: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
+	4,  // 23: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
+	6,  // 24: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
+	9,  // 25: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
+	11, // 26: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
+	13, // 27: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
+	15, // 28: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
+	17, // 29: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
+	19, // 30: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
+	21, // 31: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
+	23, // 32: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
+	25, // 33: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
+	27, // 34: mono.build.bff.BFF.ListArtifacts:input_type -> mono.build.bff.RequestListArtifacts
+	31, // 35: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
+	33, // 36: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
+	1,  // 37: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 38: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 39: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 40: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	10, // 41: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	12, // 42: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	14, // 43: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	16, // 44: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	18, // 45: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	20, // 46: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	22, // 47: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
+	24, // 48: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
+	26, // 49: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
+	28, // 50: mono.build.bff.BFF.ListArtifacts:output_type -> mono.build.bff.ResponseListArtifacts
+	32, // 51: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
+	34, // 52: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
+	37, // [37:53] is the sub-list for method output_type
+	21, // [21:37] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_bff_bff_proto_init() }
@@ -4230,7 +4812,7 @@ func file_proto_build_bff_bff_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_bff_bff_proto_rawDesc), len(file_proto_build_bff_bff_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

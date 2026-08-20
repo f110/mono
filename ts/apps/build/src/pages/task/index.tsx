@@ -271,6 +271,17 @@ export const TaskPage: React.FC = () => {
                     )}
                   </DefinitionTableCell>
                 </TableRow>
+                <TableRow>
+                  <DefinitionTableCell>Artifacts</DefinitionTableCell>
+                  <DefinitionTableCell>
+                    <Link
+                      to="/artifacts"
+                      search={{ task_id: Number(taskId) }}
+                    >
+                      view
+                    </Link>
+                  </DefinitionTableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </TableContainer>

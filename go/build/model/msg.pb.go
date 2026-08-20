@@ -66,6 +66,50 @@ func (x TestStatus) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+type ArtifactType int32
+
+const (
+	ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE ArtifactType = 0
+	ArtifactType_ARTIFACT_TYPE_BINARY          ArtifactType = 1
+	ArtifactType_ARTIFACT_TYPE_K8S_MANIFEST    ArtifactType = 2
+)
+
+// Enum value maps for ArtifactType.
+var (
+	ArtifactType_name = map[int32]string{
+		0: "ARTIFACT_TYPE_CONTAINER_IMAGE",
+		1: "ARTIFACT_TYPE_BINARY",
+		2: "ARTIFACT_TYPE_K8S_MANIFEST",
+	}
+	ArtifactType_value = map[string]int32{
+		"ARTIFACT_TYPE_CONTAINER_IMAGE": 0,
+		"ARTIFACT_TYPE_BINARY":          1,
+		"ARTIFACT_TYPE_K8S_MANIFEST":    2,
+	}
+)
+
+func (x ArtifactType) Enum() *ArtifactType {
+	p := new(ArtifactType)
+	*p = x
+	return p
+}
+
+func (x ArtifactType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ArtifactType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_build_model_msg_proto_enumTypes[1].Descriptor()
+}
+
+func (ArtifactType) Type() protoreflect.EnumType {
+	return &file_proto_build_model_msg_proto_enumTypes[1]
+}
+
+func (x ArtifactType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 type Repository struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Id           int32                  `protobuf:"varint,1,opt,name=id"`
@@ -1319,6 +1363,330 @@ func (b0 Job_builder) Build() *Job {
 	return m0
 }
 
+type Artifact struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          int32                  `protobuf:"varint,1,opt,name=id"`
+	xxx_hidden_TaskId      int32                  `protobuf:"varint,2,opt,name=task_id,json=taskId"`
+	xxx_hidden_Type        ArtifactType           `protobuf:"varint,3,opt,name=type,enum=mono.build.model.ArtifactType"`
+	xxx_hidden_Hash        *string                `protobuf:"bytes,4,opt,name=hash"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,5,opt,name=name"`
+	xxx_hidden_Repository  *string                `protobuf:"bytes,6,opt,name=repository"`
+	xxx_hidden_Reference   *string                `protobuf:"bytes,7,opt,name=reference"`
+	xxx_hidden_Size        int64                  `protobuf:"varint,8,opt,name=size"`
+	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Artifact) Reset() {
+	*x = Artifact{}
+	mi := &file_proto_build_model_msg_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Artifact) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Artifact) ProtoMessage() {}
+
+func (x *Artifact) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_build_model_msg_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Artifact) GetId() int32 {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return 0
+}
+
+func (x *Artifact) GetTaskId() int32 {
+	if x != nil {
+		return x.xxx_hidden_TaskId
+	}
+	return 0
+}
+
+func (x *Artifact) GetType() ArtifactType {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 2) {
+			return x.xxx_hidden_Type
+		}
+	}
+	return ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE
+}
+
+func (x *Artifact) GetHash() string {
+	if x != nil {
+		if x.xxx_hidden_Hash != nil {
+			return *x.xxx_hidden_Hash
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Artifact) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Artifact) GetRepository() string {
+	if x != nil {
+		if x.xxx_hidden_Repository != nil {
+			return *x.xxx_hidden_Repository
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Artifact) GetReference() string {
+	if x != nil {
+		if x.xxx_hidden_Reference != nil {
+			return *x.xxx_hidden_Reference
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Artifact) GetSize() int64 {
+	if x != nil {
+		return x.xxx_hidden_Size
+	}
+	return 0
+}
+
+func (x *Artifact) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return nil
+}
+
+func (x *Artifact) SetId(v int32) {
+	x.xxx_hidden_Id = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 9)
+}
+
+func (x *Artifact) SetTaskId(v int32) {
+	x.xxx_hidden_TaskId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 9)
+}
+
+func (x *Artifact) SetType(v ArtifactType) {
+	x.xxx_hidden_Type = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 9)
+}
+
+func (x *Artifact) SetHash(v string) {
+	x.xxx_hidden_Hash = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 9)
+}
+
+func (x *Artifact) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 9)
+}
+
+func (x *Artifact) SetRepository(v string) {
+	x.xxx_hidden_Repository = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 9)
+}
+
+func (x *Artifact) SetReference(v string) {
+	x.xxx_hidden_Reference = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 9)
+}
+
+func (x *Artifact) SetSize(v int64) {
+	x.xxx_hidden_Size = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 9)
+}
+
+func (x *Artifact) SetCreatedAt(v *timestamppb.Timestamp) {
+	x.xxx_hidden_CreatedAt = v
+}
+
+func (x *Artifact) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Artifact) HasTaskId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Artifact) HasType() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *Artifact) HasHash() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Artifact) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *Artifact) HasRepository() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *Artifact) HasReference() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *Artifact) HasSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *Artifact) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_CreatedAt != nil
+}
+
+func (x *Artifact) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = 0
+}
+
+func (x *Artifact) ClearTaskId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_TaskId = 0
+}
+
+func (x *Artifact) ClearType() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Type = ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE
+}
+
+func (x *Artifact) ClearHash() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Hash = nil
+}
+
+func (x *Artifact) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *Artifact) ClearRepository() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Repository = nil
+}
+
+func (x *Artifact) ClearReference() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Reference = nil
+}
+
+func (x *Artifact) ClearSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Size = 0
+}
+
+func (x *Artifact) ClearCreatedAt() {
+	x.xxx_hidden_CreatedAt = nil
+}
+
+type Artifact_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id         *int32
+	TaskId     *int32
+	Type       *ArtifactType
+	Hash       *string
+	Name       *string
+	Repository *string
+	Reference  *string
+	Size       *int64
+	CreatedAt  *timestamppb.Timestamp
+}
+
+func (b0 Artifact_builder) Build() *Artifact {
+	m0 := &Artifact{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 9)
+		x.xxx_hidden_Id = *b.Id
+	}
+	if b.TaskId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 9)
+		x.xxx_hidden_TaskId = *b.TaskId
+	}
+	if b.Type != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 9)
+		x.xxx_hidden_Type = *b.Type
+	}
+	if b.Hash != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 9)
+		x.xxx_hidden_Hash = b.Hash
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 9)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Repository != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 9)
+		x.xxx_hidden_Repository = b.Repository
+	}
+	if b.Reference != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 9)
+		x.xxx_hidden_Reference = b.Reference
+	}
+	if b.Size != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 9)
+		x.xxx_hidden_Size = *b.Size
+	}
+	x.xxx_hidden_CreatedAt = b.CreatedAt
+	return m0
+}
+
 type TestReport struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Label       *string                `protobuf:"bytes,1,opt,name=label"`
@@ -1332,7 +1700,7 @@ type TestReport struct {
 
 func (x *TestReport) Reset() {
 	*x = TestReport{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[3]
+	mi := &file_proto_build_model_msg_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1344,7 +1712,7 @@ func (x *TestReport) String() string {
 func (*TestReport) ProtoMessage() {}
 
 func (x *TestReport) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[3]
+	mi := &file_proto_build_model_msg_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1487,7 +1855,7 @@ type BuildMetrics struct {
 
 func (x *BuildMetrics) Reset() {
 	*x = BuildMetrics{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1499,7 +1867,7 @@ func (x *BuildMetrics) String() string {
 func (*BuildMetrics) ProtoMessage() {}
 
 func (x *BuildMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[4]
+	mi := &file_proto_build_model_msg_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2065,7 +2433,7 @@ type GithubEvent struct {
 
 func (x *GithubEvent) Reset() {
 	*x = GithubEvent{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2077,7 +2445,7 @@ func (x *GithubEvent) String() string {
 func (*GithubEvent) ProtoMessage() {}
 
 func (x *GithubEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[5]
+	mi := &file_proto_build_model_msg_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2454,7 +2822,7 @@ type ExternalReleaseTrigger struct {
 
 func (x *ExternalReleaseTrigger) Reset() {
 	*x = ExternalReleaseTrigger{}
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2466,7 +2834,7 @@ func (x *ExternalReleaseTrigger) String() string {
 func (*ExternalReleaseTrigger) ProtoMessage() {}
 
 func (x *ExternalReleaseTrigger) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_build_model_msg_proto_msgTypes[6]
+	mi := &file_proto_build_model_msg_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2882,7 +3250,20 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"\rbuild_metrics\x18\x1d \x01(\v2\x1e.mono.build.model.BuildMetricsR\fbuildMetrics\">\n" +
 	"\x03Job\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
-	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\"t\n" +
+	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\"\x9c\x02\n" +
+	"\bArtifact\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x17\n" +
+	"\atask_id\x18\x02 \x01(\x05R\x06taskId\x122\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x1e.mono.build.model.ArtifactTypeR\x04type\x12\x12\n" +
+	"\x04hash\x18\x04 \x01(\tR\x04hash\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x06 \x01(\tR\n" +
+	"repository\x12\x1c\n" +
+	"\treference\x18\a \x01(\tR\treference\x12\x12\n" +
+	"\x04size\x18\b \x01(\x03R\x04size\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"t\n" +
 	"\n" +
 	"TestReport\x12\x14\n" +
 	"\x05label\x18\x01 \x01(\tR\x05label\x124\n" +
@@ -2947,36 +3328,44 @@ const file_proto_build_model_msg_proto_rawDesc = "" +
 	"TestStatus\x12\x16\n" +
 	"\x12TEST_STATUS_PASSED\x10\x00\x12\x15\n" +
 	"\x11TEST_STATUS_FLAKY\x10\x01\x12\x16\n" +
-	"\x12TEST_STATUS_FAILED\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x12TEST_STATUS_FAILED\x10\x02*k\n" +
+	"\fArtifactType\x12!\n" +
+	"\x1dARTIFACT_TYPE_CONTAINER_IMAGE\x10\x00\x12\x18\n" +
+	"\x14ARTIFACT_TYPE_BINARY\x10\x01\x12\x1e\n" +
+	"\x1aARTIFACT_TYPE_K8S_MANIFEST\x10\x02B)Z\x1fgo.f110.dev/mono/go/build/model\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_proto_build_model_msg_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_build_model_msg_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proto_build_model_msg_proto_goTypes = []any{
 	(TestStatus)(0),                // 0: mono.build.model.TestStatus
-	(*Repository)(nil),             // 1: mono.build.model.Repository
-	(*Task)(nil),                   // 2: mono.build.model.Task
-	(*Job)(nil),                    // 3: mono.build.model.Job
-	(*TestReport)(nil),             // 4: mono.build.model.TestReport
-	(*BuildMetrics)(nil),           // 5: mono.build.model.BuildMetrics
-	(*GithubEvent)(nil),            // 6: mono.build.model.GithubEvent
-	(*ExternalReleaseTrigger)(nil), // 7: mono.build.model.ExternalReleaseTrigger
-	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
+	(ArtifactType)(0),              // 1: mono.build.model.ArtifactType
+	(*Repository)(nil),             // 2: mono.build.model.Repository
+	(*Task)(nil),                   // 3: mono.build.model.Task
+	(*Job)(nil),                    // 4: mono.build.model.Job
+	(*Artifact)(nil),               // 5: mono.build.model.Artifact
+	(*TestReport)(nil),             // 6: mono.build.model.TestReport
+	(*BuildMetrics)(nil),           // 7: mono.build.model.BuildMetrics
+	(*GithubEvent)(nil),            // 8: mono.build.model.GithubEvent
+	(*ExternalReleaseTrigger)(nil), // 9: mono.build.model.ExternalReleaseTrigger
+	(*timestamppb.Timestamp)(nil),  // 10: google.protobuf.Timestamp
 }
 var file_proto_build_model_msg_proto_depIdxs = []int32{
-	8, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
-	8, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
-	8, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
-	8, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
-	4, // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
-	5, // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
-	0, // 6: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
-	8, // 7: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
-	8, // 8: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
-	9, // [9:9] is the sub-list for method output_type
-	9, // [9:9] is the sub-list for method input_type
-	9, // [9:9] is the sub-list for extension type_name
-	9, // [9:9] is the sub-list for extension extendee
-	0, // [0:9] is the sub-list for field type_name
+	10, // 0: mono.build.model.Task.start_at:type_name -> google.protobuf.Timestamp
+	10, // 1: mono.build.model.Task.finished_at:type_name -> google.protobuf.Timestamp
+	10, // 2: mono.build.model.Task.created_at:type_name -> google.protobuf.Timestamp
+	10, // 3: mono.build.model.Task.updated_at:type_name -> google.protobuf.Timestamp
+	6,  // 4: mono.build.model.Task.test_reports:type_name -> mono.build.model.TestReport
+	7,  // 5: mono.build.model.Task.build_metrics:type_name -> mono.build.model.BuildMetrics
+	1,  // 6: mono.build.model.Artifact.type:type_name -> mono.build.model.ArtifactType
+	10, // 7: mono.build.model.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 8: mono.build.model.TestReport.status:type_name -> mono.build.model.TestStatus
+	10, // 9: mono.build.model.GithubEvent.created_at:type_name -> google.protobuf.Timestamp
+	10, // 10: mono.build.model.GithubEvent.updated_at:type_name -> google.protobuf.Timestamp
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_model_msg_proto_init() }
@@ -2989,8 +3378,8 @@ func file_proto_build_model_msg_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_model_msg_proto_rawDesc), len(file_proto_build_model_msg_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      2,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

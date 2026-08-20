@@ -18,8 +18,11 @@ import {
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
+import Inventory2Icon from '@mui/icons-material/Inventory2'
 import SourceIcon from '@mui/icons-material/Source'
 import LockIcon from '@mui/icons-material/Lock'
+import { Link as RouterLink } from '@tanstack/react-router'
+import { Tooltip } from '@mui/material'
 import { useForm } from 'react-hook-form'
 import { NewRepositoryModal } from '../../components/NewRepositoryModal.tsx'
 import { BFF } from '../../connect/bff_pb'
@@ -92,13 +95,33 @@ export const RepositoriesPage: React.FC = () => {
               <ListItem
                 key={repository.name}
                 secondaryAction={
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={() => openDialog(repository)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {repository.headRevision && (
+                      <Tooltip title="latest コミットの成果物">
+                        <RouterLink
+                          to="/artifacts"
+                          search={{
+                            repository_id: repository.id,
+                            revision: repository.headRevision,
+                          }}
+                          aria-label="artifacts"
+                          style={{
+                            display: 'inline-flex',
+                            color: 'rgba(0, 0, 0, 0.54)',
+                          }}
+                        >
+                          <Inventory2Icon />
+                        </RouterLink>
+                      </Tooltip>
+                    )}
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() => openDialog(repository)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
                 }
               >
                 <ListItemAvatar>

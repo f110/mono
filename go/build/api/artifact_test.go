@@ -10,8 +10,55 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/testing/assertion"
 )
+
+func TestListArtifacts(t *testing.T) {
+	t.Run("by task id", func(t *testing.T) {
+		t.Parallel()
+		m := daotest.NewArtifact()
+		m.RegisterListByTaskId(7, []*database.Artifact{
+			{Id: 1, TaskId: 7, Type: database.ArtifactTypeBinary, Hash: "aaa", Name: "foo", Repository: "build/foo", Reference: "sha256:aaa", Size: 42},
+		}, nil)
+		s := &apiService{dao: dao.Options{Artifact: m}}
+
+		req := &RequestListArtifacts{}
+		req.SetTaskId(7)
+		res, err := s.ListArtifacts(context.Background(), req)
+		assertion.MustNoError(t, err)
+		assertion.Len(t, res.GetArtifacts(), 1)
+		got := res.GetArtifacts()[0]
+		assertion.Equal(t, int32(7), got.GetTaskId())
+		assertion.Equal(t, "aaa", got.GetHash())
+		assertion.Equal(t, "build/foo", got.GetRepository())
+		assertion.Equal(t, model.ArtifactType_ARTIFACT_TYPE_BINARY, got.GetType())
+	})
+
+	t.Run("by repository and revision aggregates the commit's tasks", func(t *testing.T) {
+		t.Parallel()
+		taskDAO := daotest.NewTask()
+		taskDAO.RegisterListByRevision(3, "rev1", []*database.Task{{Id: 10}, {Id: 11}}, nil)
+		m := daotest.NewArtifact()
+		m.RegisterListByTaskId(10, []*database.Artifact{{Id: 1, TaskId: 10, Hash: "img"}}, nil)
+		m.RegisterListByTaskId(11, []*database.Artifact{{Id: 2, TaskId: 11, Hash: "bin"}}, nil)
+		s := &apiService{dao: dao.Options{Task: taskDAO, Artifact: m}}
+
+		req := &RequestListArtifacts{}
+		req.SetRepositoryId(3)
+		req.SetRevision("rev1")
+		res, err := s.ListArtifacts(context.Background(), req)
+		assertion.MustNoError(t, err)
+		assertion.Len(t, res.GetArtifacts(), 2)
+	})
+
+	t.Run("without a selector is rejected", func(t *testing.T) {
+		t.Parallel()
+		s := &apiService{}
+		_, err := s.ListArtifacts(context.Background(), &RequestListArtifacts{})
+		assertion.Error(t, err)
+	})
+}
 
 func artifactRef(t ArtifactType, hash string) *ArtifactRef {
 	r := &ArtifactRef{}

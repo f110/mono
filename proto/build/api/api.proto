@@ -19,6 +19,9 @@ service API {
   rpc GetServerInfo(RequestGetServerInfo) returns (ResponseGetServerInfo);
   rpc ListExternalReleaseTriggers(RequestListExternalReleaseTriggers) returns (ResponseListExternalReleaseTriggers);
   rpc ListGithubEvents(RequestListGithubEvents) returns (ResponseListGithubEvents);
+  // ListArtifacts returns the artifacts recorded for a task (task_id) or for a
+  // commit (repository_id + revision, aggregated over that commit's tasks).
+  rpc ListArtifacts(RequestListArtifacts) returns (ResponseListArtifacts);
   // CompleteTask forces a task's Job into a terminal state. It only works when
   // the builder runs with --emulate-job-control (local kwok dev environment).
   rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
@@ -147,6 +150,10 @@ message ServerConfig {
   // kube-apiserver (--emulate-job-control). The dashboard uses it to expose the
   // dev-only "complete task" action.
   bool emulate_job_control = 27;
+  // artifact_registry_host is the OCI registry (zot) host that stores collected
+  // artifacts (--artifact-registry). Empty when artifact collection is disabled.
+  // The dashboard prefixes it to an artifact's repository to form a pull ref.
+  string artifact_registry_host = 28;
 }
 
 message RequestListExternalReleaseTriggers {
@@ -163,6 +170,18 @@ message RequestListGithubEvents {
 
 message ResponseListGithubEvents {
   repeated mono.build.model.GithubEvent events = 1;
+}
+
+// RequestListArtifacts selects artifacts either by task_id, or by a commit
+// (repository_id + revision). Exactly one of the two forms is expected.
+message RequestListArtifacts {
+  int32  task_id       = 1;
+  int32  repository_id = 2;
+  string revision      = 3;
+}
+
+message ResponseListArtifacts {
+  repeated mono.build.model.Artifact artifacts = 1;
 }
 
 // ArtifactType classifies a deliverable. The values match the DB enum
