@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "parse",
+    srcs = ["parse.go"],
+    importpath = "go.f110.dev/mono/go/radar/parse",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger/slogger",
+        "//go/radar",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "parse_test",
+    srcs = ["parse_test.go"],
+    embed = [":parse"],
+    deps = [
+        "//go/radar",
+        "//go/testing/assertion",
+    ],
+)

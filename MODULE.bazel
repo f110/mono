@@ -81,6 +81,7 @@ use_repo(
     "com_github_im7mortal_kmutex",
     "com_github_jarcoal_httpmock",
     "com_github_juullabs_oss_cbgo",
+    "com_github_klauspost_compress",
     "com_github_masterminds_semver_v3",
     "com_github_mattn_go_shellwords",
     "com_github_minio_madmin_go_v3",

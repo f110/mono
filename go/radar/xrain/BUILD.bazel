@@ -1,0 +1,28 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "xrain",
+    srcs = ["xrain.go"],
+    importpath = "go.f110.dev/mono/go/radar/xrain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/enumerable",
+        "//go/radar",
+        "//go/radar/fetch",
+        "//go/radar/parse",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "xrain_test",
+    srcs = ["xrain_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":xrain"],
+    deps = [
+        "//go/radar",
+        "//go/radar/fetch",
+        "//go/testing/assertion",
+        "@com_github_jarcoal_httpmock//:httpmock",
+    ],
+)

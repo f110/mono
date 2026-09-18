@@ -1,0 +1,120 @@
+{
+ "type": "xrain",
+ "level": 2,
+ "areaInfo": [
+  {
+   "seq": 1,
+   "areaCd": 82,
+   "meshFrom": 5435,
+   "meshTo": 5436
+  },
+  {
+   "seq": 2,
+   "areaCd": 82,
+   "meshFrom": 5535,
+   "meshTo": 5538
+  },
+  {
+   "seq": 3,
+   "areaCd": 82,
+   "meshFrom": 5635,
+   "meshTo": 5637
+  },
+  {
+   "seq": 4,
+   "areaCd": 82,
+   "meshFrom": 5638,
+   "meshTo": 5641
+  },
+  {
+   "seq": 5,
+   "areaCd": 82,
+   "meshFrom": 5642,
+   "meshTo": 5644
+  },
+  {
+   "seq": 6,
+   "areaCd": 82,
+   "meshFrom": 5735,
+   "meshTo": 5737
+  },
+  {
+   "seq": 7,
+   "areaCd": 82,
+   "meshFrom": 5738,
+   "meshTo": 5741
+  },
+  {
+   "seq": 8,
+   "areaCd": 82,
+   "meshFrom": 5742,
+   "meshTo": 5744
+  },
+  {
+   "seq": 9,
+   "areaCd": 82,
+   "meshFrom": 5835,
+   "meshTo": 5837
+  },
+  {
+   "seq": 10,
+   "areaCd": 82,
+   "meshFrom": 5838,
+   "meshTo": 5841
+  },
+  {
+   "seq": 11,
+   "areaCd": 82,
+   "meshFrom": 5842,
+   "meshTo": 5844
+  },
+  {
+   "seq": 12,
+   "areaCd": 82,
+   "meshFrom": 5935,
+   "meshTo": 5937
+  },
+  {
+   "seq": 13,
+   "areaCd": 82,
+   "meshFrom": 5938,
+   "meshTo": 5941
+  },
+  {
+   "seq": 14,
+   "areaCd": 82,
+   "meshFrom": 5942,
+   "meshTo": 5944
+  },
+  {
+   "seq": 15,
+   "areaCd": 82,
+   "meshFrom": 6036,
+   "meshTo": 6038
+  },
+  {
+   "seq": 16,
+   "areaCd": 82,
+   "meshFrom": 6039,
+   "meshTo": 6042
+  },
+  {
+   "seq": 17,
+   "areaCd": 82,
+   "meshFrom": 6043,
+   "meshTo": 6045
+  },
+  {
+   "seq": 18,
+   "areaCd": 82,
+   "meshFrom": 6139,
+   "meshTo": 6142
+  },
+  {
+   "seq": 19,
+   "areaCd": 82,
+   "meshFrom": 6143,
+   "meshTo": 6146
+  }
+ ]
+}

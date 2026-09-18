@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dayfile",
+    srcs = ["dayfile.go"],
+    importpath = "go.f110.dev/mono/go/radar/dayfile",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/radar",
+        "@com_github_klauspost_compress//zstd",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "dayfile_test",
+    srcs = ["dayfile_test.go"],
+    embed = [":dayfile"],
+    deps = [
+        "//go/radar",
+        "//go/testing/assertion",
+    ],
+)

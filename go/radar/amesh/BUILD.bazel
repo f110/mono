@@ -1,0 +1,29 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "amesh",
+    srcs = ["amesh.go"],
+    importpath = "go.f110.dev/mono/go/radar/amesh",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/enumerable",
+        "//go/radar",
+        "//go/radar/fetch",
+        "//go/radar/parse",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "amesh_test",
+    srcs = ["amesh_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":amesh"],
+    deps = [
+        "//go/radar",
+        "//go/radar/fetch",
+        "//go/radar/parse",
+        "//go/testing/assertion",
+        "@com_github_jarcoal_httpmock//:httpmock",
+    ],
+)

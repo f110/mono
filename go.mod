@@ -33,6 +33,7 @@ require (
 	github.com/hashicorp/consul/api v1.34.3
 	github.com/im7mortal/kmutex v1.0.2
 	github.com/jarcoal/httpmock v1.4.1
+	github.com/klauspost/compress v1.18.6
 	github.com/mattn/go-shellwords v1.0.13
 	github.com/minio/madmin-go/v3 v3.0.110
 	github.com/minio/minio-go/v7 v7.1.0
@@ -202,7 +203,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/keegancsmith/rpc v1.3.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/lestrrat-go/pdebug v0.0.0-20180220043849-39f9a71bcabe // indirect

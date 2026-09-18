@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "wal",
+    srcs = ["wal.go"],
+    importpath = "go.f110.dev/mono/go/radar/wal",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger/slogger",
+        "//go/radar",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "wal_test",
+    srcs = ["wal_test.go"],
+    embed = [":wal"],
+    deps = [
+        "//go/radar",
+        "//go/testing/assertion",
+    ],
+)

@@ -1,0 +1,48 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cmd",
+    srcs = [
+        "archive.go",
+        "cmd.go",
+        "collect.go",
+        "extract.go",
+        "palette.go",
+    ],
+    importpath = "go.f110.dev/mono/go/radar/cmd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/cli",
+        "//go/logger/slogger",
+        "//go/radar",
+        "//go/radar/amesh",
+        "//go/radar/dayfile",
+        "//go/radar/fetch",
+        "//go/radar/parse",
+        "//go/radar/wal",
+        "//go/radar/xrain",
+        "//go/storage",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "cmd_test",
+    srcs = [
+        "archive_test.go",
+        "collect_test.go",
+        "extract_test.go",
+    ],
+    embed = [":cmd"],
+    deps = [
+        "//go/logger/slogger",
+        "//go/radar",
+        "//go/radar/amesh",
+        "//go/radar/dayfile",
+        "//go/radar/fetch",
+        "//go/radar/wal",
+        "//go/storage",
+        "//go/testing/assertion",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)

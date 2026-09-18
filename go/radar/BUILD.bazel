@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "radar",
+    srcs = [
+        "radar.go",
+        "scale.go",
+    ],
+    importpath = "go.f110.dev/mono/go/radar",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "radar_test",
+    srcs = ["radar_test.go"],
+    embed = [":radar"],
+    deps = ["//go/testing/assertion"],
+)

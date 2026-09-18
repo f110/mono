@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "fetch",
+    srcs = ["fetch.go"],
+    importpath = "go.f110.dev/mono/go/radar/fetch",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "fetch_test",
+    srcs = ["fetch_test.go"],
+    embed = [":fetch"],
+    deps = [
+        "//go/testing/assertion",
+        "@com_github_jarcoal_httpmock//:httpmock",
+    ],
+)
