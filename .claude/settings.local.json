@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go test:*)",
+      "Bash(git stash *)",
+      "Bash(go build *)",
+      "Bash(go vet *)",
+      "Bash(bazel mod *)",
+      "Bash(git add *)",
+      "Skill(update-config)",
+      "WebFetch(domain:registry.bazel.build)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:bcr.bazel.build)",
+      "Bash(go list *)",
+      "Bash(go get *)",
+      "Bash(git commit *)",
+      "Bash(wait)",
+      "Bash(gh api *)",
+      "Bash(bazel cquery *)",
+      "Bash(bazel aquery *)",
+      "Bash(bazel info *)",
+      "Bash(bazel help *)",
+      "Bash(bazel query *)",
+      "Bash(curl -fsSL \"https://go.f110.dev/go-archive-cacheprog?go-get=1\")",
+      "Bash(gh workflow *)",
+      "Bash(gh run *)",
+      "Bash(crit comment *)",
+      "Bash(crit *)",
+      "Bash(GORACE=\"halt_on_error=0\" go test -race -run 'TestRace_LateStateFunc' ./...)",
+      "Bash(jj st *)"
+    ]
+  }
+}

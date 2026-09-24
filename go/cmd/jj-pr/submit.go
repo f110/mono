@@ -314,7 +314,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 	c.stack = stack
 
 	// Push all commits of current branch
-	var pushArgs [][]string
+	var pushChanges []string
 	var changedPR []*commit
 	for i, v := range c.stack {
 		if c.SinglePR && i > 0 {
@@ -322,7 +322,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		}
 		if len(v.Bookmarks) == 0 {
 			slogger.Log.Debug("Will create branch", slog.String("change_id", v.ChangeID))
-			pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", v.ChangeID)})
+			pushChanges = append(pushChanges, v.ChangeID)
 		} else {
 			var found bool
 		RemoteBranch:
@@ -335,7 +335,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				}
 			}
 			if !found {
-				pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", v.ChangeID)})
+				pushChanges = append(pushChanges, v.ChangeID)
 			}
 		}
 	}
@@ -352,17 +352,16 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		for _, h := range c.stack {
 			if strings.HasPrefix(h.ChangeID, shortChangeID) && commitID != h.CommitID {
 				slogger.Log.Debug("Will update branch", slog.String("change_id", h.ChangeID))
-				pushArgs = append(pushArgs, []string{fmt.Sprintf("--change=%s", h.ChangeID)})
+				pushChanges = append(pushChanges, h.ChangeID)
 				changedPR = append(changedPR, h)
 				break
 			}
 		}
 	}
-	if len(pushArgs) > 0 {
-		for _, v := range pushArgs {
-			args := append([]string{"git", "push"}, v...)
-			slogger.Log.Debug("Push commits to create branches")
-			cmd := exec.CommandContext(ctx, "jj", args...)
+	if len(pushChanges) > 0 {
+		for _, v := range pushChanges {
+			fmt.Printf("Push %s\n", v)
+			cmd := exec.CommandContext(ctx, "jj", "git", "push", fmt.Sprintf("--change=%s", v))
 			cmd.Dir = c.Dir
 			if c.DryRun {
 				cmd.Args = append(cmd.Args, "--dry-run")
