@@ -300,7 +300,7 @@
   "moduleExtensions": {
     "//build/rules/toolset:module.bzl%toolset_extension": {
       "general": {
-        "bzlTransitiveDigest": "cayby36UifkY//n6R3+6eSePAZrdE8oGezKkg0K1ebo=",
+        "bzlTransitiveDigest": "1/h1Wig0FT8Fu1j2oA7IYH3fsedwwmfcUTQ96RP9fhs=",
         "usagesDigest": "fGjOzfAtSpcApxmgWDuQth0De3VRLgCxPDnCSHpXXUw=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
