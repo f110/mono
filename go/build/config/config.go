@@ -9,6 +9,7 @@ import (
 	"hash/crc32"
 	"io"
 	"log"
+	"maps"
 	"reflect"
 	"slices"
 	"strings"
@@ -530,13 +531,45 @@ type JobV2 struct {
 	Secrets        []*Secret              `yaml:"secrets,omitempty" json:"secrets,omitempty"`
 	Env            map[string]any         `yaml:"env,omitempty" json:"env,omitempty"`
 	ExternalSource *ExternalReleaseSource `yaml:"external_source,omitempty" json:"external_source,omitempty"`
+	// Params declares the parameters which can be given when the job is invoked manually.
+	// The given parameters are passed to the target as --name=value arguments.
+	Params map[string]*Param `yaml:"params,omitempty" json:"params,omitempty"`
 
 	RepositoryOwner string `yaml:"-" json:"-"`
 	RepositoryName  string `yaml:"-" json:"-"`
 }
 
+type Param struct {
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Required    bool   `yaml:"required,omitempty" json:"required,omitempty"`
+}
+
 func (j *JobV2) Identification() string {
 	return fmt.Sprintf("%s-%s-%s", j.RepositoryOwner, j.RepositoryName, j.Name)
+}
+
+// WithParams validates params against the declared parameters and returns a copy of the job
+// whose Args has the params appended as --name=value in the order of the name.
+func (j *JobV2) WithParams(params map[string]string) (*JobV2, error) {
+	for name := range params {
+		if _, ok := j.Params[name]; !ok {
+			return nil, xerrors.Newf("unknown parameter: %s", name)
+		}
+	}
+
+	n := j.Copy()
+	n.Args = slices.Clone(j.Args)
+	for _, name := range slices.Sorted(maps.Keys(j.Params)) {
+		v := params[name]
+		if v == "" {
+			if j.Params[name].Required {
+				return nil, xerrors.Newf("parameter %s is required", name)
+			}
+			continue
+		}
+		n.Args = append(n.Args, fmt.Sprintf("--%s=%s", name, v))
+	}
+	return n, nil
 }
 
 func (j *JobV2) Copy() *JobV2 {

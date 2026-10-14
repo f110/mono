@@ -225,6 +225,11 @@ export declare type Job = Message<"mono.build.model.Job"> & {
    * @generated from field: int32 repository_id = 2;
    */
   repositoryId: number;
+
+  /**
+   * @generated from field: repeated mono.build.model.JobParam params = 3;
+   */
+  params: JobParam[];
 };
 
 /**
@@ -232,6 +237,32 @@ export declare type Job = Message<"mono.build.model.Job"> & {
  * Use `create(JobSchema)` to create a new message.
  */
 export declare const JobSchema: GenMessage<Job>;
+
+/**
+ * @generated from message mono.build.model.JobParam
+ */
+export declare type JobParam = Message<"mono.build.model.JobParam"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: bool required = 3;
+   */
+  required: boolean;
+};
+
+/**
+ * Describes the message mono.build.model.JobParam.
+ * Use `create(JobParamSchema)` to create a new message.
+ */
+export declare const JobParamSchema: GenMessage<JobParam>;
 
 /**
  * Artifact is a deliverable produced by a Task and stored in the OCI registry

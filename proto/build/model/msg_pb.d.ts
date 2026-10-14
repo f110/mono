@@ -225,6 +225,11 @@ export declare type Job = Message<"mono.build.model.Job"> & {
    * @generated from field: int32 repository_id = 2;
    */
   repositoryId: number;
+
+  /**
+   * @generated from field: repeated mono.build.model.JobParam params = 3;
+   */
+  params: JobParam[];
 };
 
 /**
@@ -232,6 +237,93 @@ export declare type Job = Message<"mono.build.model.Job"> & {
  * Use `create(JobSchema)` to create a new message.
  */
 export declare const JobSchema: GenMessage<Job>;
+
+/**
+ * @generated from message mono.build.model.JobParam
+ */
+export declare type JobParam = Message<"mono.build.model.JobParam"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: bool required = 3;
+   */
+  required: boolean;
+};
+
+/**
+ * Describes the message mono.build.model.JobParam.
+ * Use `create(JobParamSchema)` to create a new message.
+ */
+export declare const JobParamSchema: GenMessage<JobParam>;
+
+/**
+ * Artifact is a deliverable produced by a Task and stored in the OCI registry
+ * (zot). `hash` is the immutable content digest (image manifest digest, or the
+ * sha256 of a file). `reference` is where the content is addressable in the
+ * registry: a tag, or the content digest when untagged. See docs/build.md.
+ *
+ * @generated from message mono.build.model.Artifact
+ */
+export declare type Artifact = Message<"mono.build.model.Artifact"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: int32 task_id = 2;
+   */
+  taskId: number;
+
+  /**
+   * @generated from field: mono.build.model.ArtifactType type = 3;
+   */
+  type: ArtifactType;
+
+  /**
+   * @generated from field: string hash = 4;
+   */
+  hash: string;
+
+  /**
+   * @generated from field: string name = 5;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string repository = 6;
+   */
+  repository: string;
+
+  /**
+   * @generated from field: string reference = 7;
+   */
+  reference: string;
+
+  /**
+   * @generated from field: int64 size = 8;
+   */
+  size: bigint;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 9;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message mono.build.model.Artifact.
+ * Use `create(ArtifactSchema)` to create a new message.
+ */
+export declare const ArtifactSchema: GenMessage<Artifact>;
 
 /**
  * @generated from message mono.build.model.TestReport
@@ -529,4 +621,32 @@ export enum TestStatus {
  * Describes the enum mono.build.model.TestStatus.
  */
 export declare const TestStatusSchema: GenEnum<TestStatus>;
+
+/**
+ * ArtifactType classifies a deliverable. The values match the DB enum
+ * (build.schema.ArtifactType) so the mapping in Go is a direct cast.
+ *
+ * @generated from enum mono.build.model.ArtifactType
+ */
+export enum ArtifactType {
+  /**
+   * @generated from enum value: ARTIFACT_TYPE_CONTAINER_IMAGE = 0;
+   */
+  CONTAINER_IMAGE = 0,
+
+  /**
+   * @generated from enum value: ARTIFACT_TYPE_BINARY = 1;
+   */
+  BINARY = 1,
+
+  /**
+   * @generated from enum value: ARTIFACT_TYPE_K8S_MANIFEST = 2;
+   */
+  K8S_MANIFEST = 2,
+}
+
+/**
+ * Describes the enum mono.build.model.ArtifactType.
+ */
+export declare const ArtifactTypeSchema: GenEnum<ArtifactType>;
 

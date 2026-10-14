@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -262,6 +264,10 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	job := &config.JobV2{}
 	if err := config.UnmarshalJobV2(jobRow.Configuration, job, owner, repoName); err != nil {
 		return nil, status.Error(codes.Internal, "failed to decode job configuration")
+	}
+	job, err = job.WithParams(req.GetParams())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	revision, err := s.resolveDefaultBranchRevision(ctx, owner, repoName, repo.DefaultBranch)
 	if err != nil {
@@ -614,9 +620,24 @@ func (*apiService) dbRepoToAPIRepo(repo *database.SourceRepository) *model.Repos
 }
 
 func dbJobToAPIJob(job *database.Job) *model.Job {
+	var params []*model.JobParam
+	if len(job.Configuration) > 0 {
+		conf := &config.JobV2{}
+		if err := config.UnmarshalJobV2(job.Configuration, conf, "", ""); err != nil {
+			slogger.Log.Warn("Failed to decode job configuration", slogger.E(err), slog.String("job_name", job.Name))
+		}
+		for _, name := range slices.Sorted(maps.Keys(conf.Params)) {
+			params = append(params, model.JobParam_builder{
+				Name:        new(name),
+				Description: new(conf.Params[name].Description),
+				Required:    new(conf.Params[name].Required),
+			}.Build())
+		}
+	}
 	return model.Job_builder{
 		Name:         new(job.Name),
 		RepositoryId: new(job.RepositoryId),
+		Params:       params,
 	}.Build()
 }
 

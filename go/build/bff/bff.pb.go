@@ -1523,6 +1523,7 @@ type RequestInvokeJob struct {
 	state                   protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_RepositoryId int32                  `protobuf:"varint,1,opt,name=repository_id,json=repositoryId"`
 	xxx_hidden_JobName      *string                `protobuf:"bytes,2,opt,name=job_name,json=jobName"`
+	xxx_hidden_Params       map[string]string      `protobuf:"bytes,3,rep,name=params" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
 	XXX_presence            [1]uint32
 	unknownFields           protoimpl.UnknownFields
@@ -1571,14 +1572,25 @@ func (x *RequestInvokeJob) GetJobName() string {
 	return ""
 }
 
+func (x *RequestInvokeJob) GetParams() map[string]string {
+	if x != nil {
+		return x.xxx_hidden_Params
+	}
+	return nil
+}
+
 func (x *RequestInvokeJob) SetRepositoryId(v int32) {
 	x.xxx_hidden_RepositoryId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
 }
 
 func (x *RequestInvokeJob) SetJobName(v string) {
 	x.xxx_hidden_JobName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestInvokeJob) SetParams(v map[string]string) {
+	x.xxx_hidden_Params = v
 }
 
 func (x *RequestInvokeJob) HasRepositoryId() bool {
@@ -1610,6 +1622,7 @@ type RequestInvokeJob_builder struct {
 
 	RepositoryId *int32
 	JobName      *string
+	Params       map[string]string
 }
 
 func (b0 RequestInvokeJob_builder) Build() *RequestInvokeJob {
@@ -1617,13 +1630,14 @@ func (b0 RequestInvokeJob_builder) Build() *RequestInvokeJob {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.RepositoryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
 		x.xxx_hidden_RepositoryId = *b.RepositoryId
 	}
 	if b.JobName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
 		x.xxx_hidden_JobName = b.JobName
 	}
+	x.xxx_hidden_Params = b.Params
 	return m0
 }
 
@@ -4571,10 +4585,14 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\x0fRequestListJobs\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"=\n" +
 	"\x10ResponseListJobs\x12)\n" +
-	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"R\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"\xd3\x01\n" +
 	"\x10RequestInvokeJob\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\x12\x19\n" +
-	"\bjob_name\x18\x02 \x01(\tR\ajobName\"\x13\n" +
+	"\bjob_name\x18\x02 \x01(\tR\ajobName\x12D\n" +
+	"\x06params\x18\x03 \x03(\v2,.mono.build.bff.RequestInvokeJob.ParamsEntryR\x06params\x1a9\n" +
+	"\vParamsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x13\n" +
 	"\x11ResponseInvokeJob\"U\n" +
 	"\x15RequestSaveRepository\x12<\n" +
 	"\n" +
@@ -4692,7 +4710,7 @@ const file_proto_build_bff_bff_proto_rawDesc = "" +
 	"\vListGitData\x12\".mono.build.bff.RequestListGitData\x1a#.mono.build.bff.ResponseListGitData\x12q\n" +
 	"\x14GetGitDataStatistics\x12+.mono.build.bff.RequestGetGitDataStatistics\x1a,.mono.build.bff.ResponseGetGitDataStatisticsB'Z\x1dgo.f110.dev/mono/go/build/bff\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_proto_build_bff_bff_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestListRepositories)(nil),             // 0: mono.build.bff.RequestListRepositories
 	(*ResponseListRepositories)(nil),            // 1: mono.build.bff.ResponseListRepositories
@@ -4730,75 +4748,77 @@ var file_proto_build_bff_bff_proto_goTypes = []any{
 	(*RequestGetGitDataStatistics)(nil),         // 33: mono.build.bff.RequestGetGitDataStatistics
 	(*ResponseGetGitDataStatistics)(nil),        // 34: mono.build.bff.ResponseGetGitDataStatistics
 	(*BFFTask)(nil),                             // 35: mono.build.bff.BFFTask
-	(*model.Repository)(nil),                    // 36: mono.build.model.Repository
-	(*model.Job)(nil),                           // 37: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 38: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 39: mono.build.model.GithubEvent
-	(model.ArtifactType)(0),                     // 40: mono.build.model.ArtifactType
-	(*timestamppb.Timestamp)(nil),               // 41: google.protobuf.Timestamp
-	(*model.TestReport)(nil),                    // 42: mono.build.model.TestReport
-	(*durationpb.Duration)(nil),                 // 43: google.protobuf.Duration
-	(*model.BuildMetrics)(nil),                  // 44: mono.build.model.BuildMetrics
+	nil,                                         // 36: mono.build.bff.RequestInvokeJob.ParamsEntry
+	(*model.Repository)(nil),                    // 37: mono.build.model.Repository
+	(*model.Job)(nil),                           // 38: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 39: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 40: mono.build.model.GithubEvent
+	(model.ArtifactType)(0),                     // 41: mono.build.model.ArtifactType
+	(*timestamppb.Timestamp)(nil),               // 42: google.protobuf.Timestamp
+	(*model.TestReport)(nil),                    // 43: mono.build.model.TestReport
+	(*durationpb.Duration)(nil),                 // 44: google.protobuf.Duration
+	(*model.BuildMetrics)(nil),                  // 45: mono.build.model.BuildMetrics
 }
 var file_proto_build_bff_bff_proto_depIdxs = []int32{
-	36, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	37, // 0: mono.build.bff.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
 	35, // 1: mono.build.bff.ResponseListTasks.tasks:type_name -> mono.build.bff.BFFTask
 	8,  // 2: mono.build.bff.ResponseGetServerInfo.config:type_name -> mono.build.bff.ServerConfig
-	37, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	36, // 4: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	36, // 5: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	38, // 6: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	39, // 7: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	29, // 8: mono.build.bff.ResponseListArtifacts.artifacts:type_name -> mono.build.bff.BFFArtifact
-	40, // 9: mono.build.bff.BFFArtifact.type:type_name -> mono.build.model.ArtifactType
-	41, // 10: mono.build.bff.BFFArtifact.created_at:type_name -> google.protobuf.Timestamp
-	30, // 11: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
-	41, // 12: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
-	36, // 13: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
-	41, // 14: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
-	41, // 15: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
-	41, // 16: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
-	41, // 17: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
-	42, // 18: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
-	43, // 19: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
-	44, // 20: mono.build.bff.BFFTask.build_metrics:type_name -> mono.build.model.BuildMetrics
-	0,  // 21: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
-	2,  // 22: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
-	4,  // 23: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
-	6,  // 24: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
-	9,  // 25: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
-	11, // 26: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
-	13, // 27: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
-	15, // 28: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
-	17, // 29: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
-	19, // 30: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
-	21, // 31: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
-	23, // 32: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
-	25, // 33: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
-	27, // 34: mono.build.bff.BFF.ListArtifacts:input_type -> mono.build.bff.RequestListArtifacts
-	31, // 35: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
-	33, // 36: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
-	1,  // 37: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
-	3,  // 38: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
-	5,  // 39: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
-	7,  // 40: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
-	10, // 41: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
-	12, // 42: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
-	14, // 43: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
-	16, // 44: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
-	18, // 45: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
-	20, // 46: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
-	22, // 47: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
-	24, // 48: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
-	26, // 49: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
-	28, // 50: mono.build.bff.BFF.ListArtifacts:output_type -> mono.build.bff.ResponseListArtifacts
-	32, // 51: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
-	34, // 52: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
-	37, // [37:53] is the sub-list for method output_type
-	21, // [21:37] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	38, // 3: mono.build.bff.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	36, // 4: mono.build.bff.RequestInvokeJob.params:type_name -> mono.build.bff.RequestInvokeJob.ParamsEntry
+	37, // 5: mono.build.bff.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	37, // 6: mono.build.bff.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	39, // 7: mono.build.bff.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	40, // 8: mono.build.bff.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	29, // 9: mono.build.bff.ResponseListArtifacts.artifacts:type_name -> mono.build.bff.BFFArtifact
+	41, // 10: mono.build.bff.BFFArtifact.type:type_name -> mono.build.model.ArtifactType
+	42, // 11: mono.build.bff.BFFArtifact.created_at:type_name -> google.protobuf.Timestamp
+	30, // 12: mono.build.bff.ResponseListGitData.repositories:type_name -> mono.build.bff.GitDataRepository
+	42, // 13: mono.build.bff.ResponseGetGitDataStatistics.head_commit_when:type_name -> google.protobuf.Timestamp
+	37, // 14: mono.build.bff.BFFTask.repository:type_name -> mono.build.model.Repository
+	42, // 15: mono.build.bff.BFFTask.start_at:type_name -> google.protobuf.Timestamp
+	42, // 16: mono.build.bff.BFFTask.finished_at:type_name -> google.protobuf.Timestamp
+	42, // 17: mono.build.bff.BFFTask.created_at:type_name -> google.protobuf.Timestamp
+	42, // 18: mono.build.bff.BFFTask.updated_at:type_name -> google.protobuf.Timestamp
+	43, // 19: mono.build.bff.BFFTask.test_reports:type_name -> mono.build.model.TestReport
+	44, // 20: mono.build.bff.BFFTask.duration:type_name -> google.protobuf.Duration
+	45, // 21: mono.build.bff.BFFTask.build_metrics:type_name -> mono.build.model.BuildMetrics
+	0,  // 22: mono.build.bff.BFF.ListRepositories:input_type -> mono.build.bff.RequestListRepositories
+	2,  // 23: mono.build.bff.BFF.ListTasks:input_type -> mono.build.bff.RequestListTasks
+	4,  // 24: mono.build.bff.BFF.GetLogs:input_type -> mono.build.bff.RequestGetLogs
+	6,  // 25: mono.build.bff.BFF.GetServerInfo:input_type -> mono.build.bff.RequestGetServerInfo
+	9,  // 26: mono.build.bff.BFF.ListJobs:input_type -> mono.build.bff.RequestListJobs
+	11, // 27: mono.build.bff.BFF.InvokeJob:input_type -> mono.build.bff.RequestInvokeJob
+	13, // 28: mono.build.bff.BFF.SaveRepository:input_type -> mono.build.bff.RequestSaveRepository
+	15, // 29: mono.build.bff.BFF.RemoveRepository:input_type -> mono.build.bff.RequestRemoveRepository
+	17, // 30: mono.build.bff.BFF.RestartTask:input_type -> mono.build.bff.RequestRestartTask
+	19, // 31: mono.build.bff.BFF.ForceStopTask:input_type -> mono.build.bff.RequestForceStopTask
+	21, // 32: mono.build.bff.BFF.CompleteTask:input_type -> mono.build.bff.RequestCompleteTask
+	23, // 33: mono.build.bff.BFF.ListExternalReleaseTriggers:input_type -> mono.build.bff.RequestListExternalReleaseTriggers
+	25, // 34: mono.build.bff.BFF.ListGithubEvents:input_type -> mono.build.bff.RequestListGithubEvents
+	27, // 35: mono.build.bff.BFF.ListArtifacts:input_type -> mono.build.bff.RequestListArtifacts
+	31, // 36: mono.build.bff.BFF.ListGitData:input_type -> mono.build.bff.RequestListGitData
+	33, // 37: mono.build.bff.BFF.GetGitDataStatistics:input_type -> mono.build.bff.RequestGetGitDataStatistics
+	1,  // 38: mono.build.bff.BFF.ListRepositories:output_type -> mono.build.bff.ResponseListRepositories
+	3,  // 39: mono.build.bff.BFF.ListTasks:output_type -> mono.build.bff.ResponseListTasks
+	5,  // 40: mono.build.bff.BFF.GetLogs:output_type -> mono.build.bff.ResponseGetLogs
+	7,  // 41: mono.build.bff.BFF.GetServerInfo:output_type -> mono.build.bff.ResponseGetServerInfo
+	10, // 42: mono.build.bff.BFF.ListJobs:output_type -> mono.build.bff.ResponseListJobs
+	12, // 43: mono.build.bff.BFF.InvokeJob:output_type -> mono.build.bff.ResponseInvokeJob
+	14, // 44: mono.build.bff.BFF.SaveRepository:output_type -> mono.build.bff.ResponseSaveRepository
+	16, // 45: mono.build.bff.BFF.RemoveRepository:output_type -> mono.build.bff.ResponseRemoveRepository
+	18, // 46: mono.build.bff.BFF.RestartTask:output_type -> mono.build.bff.ResponseRestartTask
+	20, // 47: mono.build.bff.BFF.ForceStopTask:output_type -> mono.build.bff.ResponseForceStopTask
+	22, // 48: mono.build.bff.BFF.CompleteTask:output_type -> mono.build.bff.ResponseCompleteTask
+	24, // 49: mono.build.bff.BFF.ListExternalReleaseTriggers:output_type -> mono.build.bff.ResponseListExternalReleaseTriggers
+	26, // 50: mono.build.bff.BFF.ListGithubEvents:output_type -> mono.build.bff.ResponseListGithubEvents
+	28, // 51: mono.build.bff.BFF.ListArtifacts:output_type -> mono.build.bff.ResponseListArtifacts
+	32, // 52: mono.build.bff.BFF.ListGitData:output_type -> mono.build.bff.ResponseListGitData
+	34, // 53: mono.build.bff.BFF.GetGitDataStatistics:output_type -> mono.build.bff.ResponseGetGitDataStatistics
+	38, // [38:54] is the sub-list for method output_type
+	22, // [22:38] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_bff_bff_proto_init() }
@@ -4812,7 +4832,7 @@ func file_proto_build_bff_bff_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_bff_bff_proto_rawDesc), len(file_proto_build_bff_bff_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

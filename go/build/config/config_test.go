@@ -118,3 +118,41 @@ func TestUnmarshalJob(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "test_all", decodedJobV2.Name)
 }
+
+func TestJobV2WithParams(t *testing.T) {
+	job := &JobV2{
+		Name:    "release",
+		Command: "run",
+		Args:    []string{"--verbose"},
+		Params: map[string]*Param{
+			"version": {Required: true},
+			"branch":  {},
+		},
+	}
+
+	cases := []struct {
+		Name   string
+		Params map[string]string
+		Args   []string
+		Err    bool
+	}{
+		{Name: "All params", Params: map[string]string{"version": "v0.18.0", "branch": "release-v0.18"}, Args: []string{"--verbose", "--branch=release-v0.18", "--version=v0.18.0"}},
+		{Name: "Optional param is omitted", Params: map[string]string{"version": "v0.18.0"}, Args: []string{"--verbose", "--version=v0.18.0"}},
+		{Name: "Required param is missing", Params: map[string]string{"branch": "release-v0.18"}, Err: true},
+		{Name: "Required param is empty", Params: map[string]string{"version": ""}, Err: true},
+		{Name: "Unknown param", Params: map[string]string{"version": "v0.18.0", "unknown": "foo"}, Err: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			j, err := job.WithParams(tc.Params)
+			if tc.Err {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.Args, j.Args)
+			assert.Equal(t, []string{"--verbose"}, job.Args)
+		})
+	}
+}

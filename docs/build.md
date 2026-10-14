@@ -127,7 +127,7 @@ GitHub Webhook は「受信」と「処理」を分離した非同期パイプ�
 
 Task には設定が JSON シリアライズされて保存され、再ビルド時にデコードされる。`UnmarshalJobV2` /
 `UnmarshalJob` は schema_version で世代を判別する。ジョブは `command`（`test` または `run`）、`targets`,
-`platforms`, `exclusive`, `github_status`, `schedule`, `secrets`(Vault 参照), `external_source` などを持つ。
+`platforms`, `exclusive`, `github_status`, `schedule`, `secrets`(Vault 参照), `external_source`, `params` などを持つ。
 
 ### git-data-service 連携
 

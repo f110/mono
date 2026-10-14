@@ -67,8 +67,15 @@ message Task {
 }
 
 message Job {
-  string name          = 1;
-  int32  repository_id = 2;
+  string            name          = 1;
+  int32             repository_id = 2;
+  repeated JobParam params        = 3;
+}
+
+message JobParam {
+  string name        = 1;
+  string description = 2;
+  bool   required    = 3;
 }
 
 // Artifact is a deliverable produced by a Task and stored in the OCI registry

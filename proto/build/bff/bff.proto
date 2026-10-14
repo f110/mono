@@ -111,8 +111,9 @@ message ResponseListJobs {
 }
 
 message RequestInvokeJob {
-  int32  repository_id = 1;
-  string job_name      = 2;
+  int32               repository_id = 1;
+  string              job_name      = 2;
+  map<string, string> params        = 3;
 }
 
 message ResponseInvokeJob {}

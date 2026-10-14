@@ -20,6 +20,11 @@ import "list"
 
 #Command: "test" | "run" | "build"
 
+#Param: {
+	description?: string
+	required?:    bool
+}
+
 #ExternalReleaseSource: {
 	provider:            "github"
 	repo!:               =~"^[^/]+/[^/]+$"
@@ -49,6 +54,9 @@ import "list"
 		[string]: string
 	}
 	external_source?: #ExternalReleaseSource
+	params?: {
+		[=~"^[a-z0-9][a-z0-9_-]*$"]: #Param
+	}
 }
 
 #Job: {
@@ -60,6 +68,7 @@ import "list"
 
 	if command == "test" {
 		args: list.MaxItems(0)
+		params?: _|_
 	}
 
 	if command == "run" {

@@ -14,6 +14,7 @@ import {
   FormControl,
   type SelectChangeEvent,
   Alert,
+  TextField,
 } from '@mui/material'
 import { BFF } from '../connect/bff_pb'
 import { useInvokeJob } from '../hooks/useInvokeJob.ts'
@@ -88,6 +89,14 @@ export const RunTaskModal: React.FC<Props> = ({
     setRepository(selectedRepository)
   }
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined)
+  const [params, setParams] = useState<Record<string, string>>({})
+  const onJobSelected = (job: Job) => {
+    setSelectedJob(job)
+    setParams({})
+  }
+  const missingRequiredParam = selectedJob?.params.some(
+    (param) => param.required && !params[param.name],
+  )
   const [error, setError] = useState<string | undefined>(undefined)
   const { mutate: InvokeJob, isPending } = useInvokeJob()
   const startJob = () => {
@@ -99,6 +108,7 @@ export const RunTaskModal: React.FC<Props> = ({
       {
         repositoryId: repository.id,
         jobName: selectedJob.name,
+        params: params,
       },
       {
         onSuccess: () => {
@@ -142,9 +152,22 @@ export const RunTaskModal: React.FC<Props> = ({
                 <InputLabel id="work">Task</InputLabel>
                 <JobSelect
                   repositoryId={repository?.id}
-                  onSelected={setSelectedJob}
+                  onSelected={onJobSelected}
                 />
               </FormControl>
+
+              {selectedJob?.params.map((param) => (
+                <TextField
+                  key={param.name}
+                  label={param.name}
+                  helperText={param.description}
+                  required={param.required}
+                  value={params[param.name] ?? ''}
+                  onChange={(e) =>
+                    setParams({ ...params, [param.name]: e.target.value })
+                  }
+                />
+              ))}
 
               <Box>
                 <Button
@@ -152,6 +175,7 @@ export const RunTaskModal: React.FC<Props> = ({
                   color="primary"
                   sx={{ textTransform: 'none' }}
                   onClick={startJob}
+                  disabled={missingRequiredParam}
                   loading={isPending}
                   loadingPosition="end"
                 >

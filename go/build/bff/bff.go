@@ -270,7 +270,7 @@ func (b *BFF) InvokeJob(ctx context.Context, req *connect.Request[RequestInvokeJ
 	if !req.Msg.HasRepositoryId() || !req.Msg.HasJobName() {
 		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("repository_id and job_name must be specified"))
 	}
-	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: new(req.Msg.GetRepositoryId()), JobName: new(req.Msg.GetJobName())}.Build())
+	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: new(req.Msg.GetRepositoryId()), JobName: new(req.Msg.GetJobName()), Params: req.Msg.GetParams()}.Build())
 	if err != nil {
 		slogger.Log.Info("failed to invoke job", slog.Int("repository_id", int(req.Msg.GetRepositoryId())), slog.String("job_name", req.Msg.GetJobName()))
 		return nil, connect.NewError(connect.CodeInternal, err)

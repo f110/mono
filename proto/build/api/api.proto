@@ -84,9 +84,12 @@ message ResponseListJobs {
 }
 
 message RequestInvokeJob {
-  int32  task_id       = 1;
-  int32  repository_id = 2;
-  string job_name      = 3;
+  int32               task_id       = 1;
+  int32               repository_id = 2;
+  string              job_name      = 3;
+  // params is given to the job declaring params. It is ignored when task_id is specified
+  // because the task inherits the params of the original task.
+  map<string, string> params        = 4;
 }
 
 message ResponseInvokeJob {

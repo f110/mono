@@ -336,6 +336,11 @@ export declare type RequestInvokeJob = Message<"mono.build.bff.RequestInvokeJob"
    * @generated from field: string job_name = 2;
    */
   jobName: string;
+
+  /**
+   * @generated from field: map<string, string> params = 3;
+   */
+  params: { [key: string]: string };
 };
 
 /**

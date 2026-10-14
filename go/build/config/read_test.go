@@ -90,6 +90,34 @@ func TestParseFile(t *testing.T) {
 			},
 		},
 		{
+			Name: "Valid: run with params",
+			File: `jobs: test: {
+	command: "run"
+	targets: ["//..."]
+	event: ["manual"]
+	platforms: ["linux_amd64"]
+	params: version: {description: "Release version", required: true}
+}`,
+			Job: &JobV2{
+				Name:      "test",
+				Command:   "run",
+				Targets:   []string{"//..."},
+				Event:     []EventType{EventManual},
+				Platforms: []string{"linux_amd64"},
+				Params:    map[string]*Param{"version": {Description: "Release version", Required: true}},
+			},
+		},
+		{
+			Name: "Invalid: test with params",
+			File: `jobs: test: {
+	command: "test"
+	targets: ["//..."]
+	event: ["manual"]
+	platforms: ["linux_amd64"]
+	params: version: {required: true}
+}`,
+		},
+		{
 			Name: "Invalid: run with cache_test_results",
 			File: `jobs: test: {
 	command: "run"

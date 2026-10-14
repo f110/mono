@@ -805,6 +805,7 @@ type RequestInvokeJob struct {
 	xxx_hidden_TaskId       int32                  `protobuf:"varint,1,opt,name=task_id,json=taskId"`
 	xxx_hidden_RepositoryId int32                  `protobuf:"varint,2,opt,name=repository_id,json=repositoryId"`
 	xxx_hidden_JobName      *string                `protobuf:"bytes,3,opt,name=job_name,json=jobName"`
+	xxx_hidden_Params       map[string]string      `protobuf:"bytes,4,rep,name=params" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
 	XXX_presence            [1]uint32
 	unknownFields           protoimpl.UnknownFields
@@ -860,19 +861,30 @@ func (x *RequestInvokeJob) GetJobName() string {
 	return ""
 }
 
+func (x *RequestInvokeJob) GetParams() map[string]string {
+	if x != nil {
+		return x.xxx_hidden_Params
+	}
+	return nil
+}
+
 func (x *RequestInvokeJob) SetTaskId(v int32) {
 	x.xxx_hidden_TaskId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *RequestInvokeJob) SetRepositoryId(v int32) {
 	x.xxx_hidden_RepositoryId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
 }
 
 func (x *RequestInvokeJob) SetJobName(v string) {
 	x.xxx_hidden_JobName = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestInvokeJob) SetParams(v map[string]string) {
+	x.xxx_hidden_Params = v
 }
 
 func (x *RequestInvokeJob) HasTaskId() bool {
@@ -917,6 +929,7 @@ type RequestInvokeJob_builder struct {
 	TaskId       *int32
 	RepositoryId *int32
 	JobName      *string
+	Params       map[string]string
 }
 
 func (b0 RequestInvokeJob_builder) Build() *RequestInvokeJob {
@@ -924,17 +937,18 @@ func (b0 RequestInvokeJob_builder) Build() *RequestInvokeJob {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.TaskId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_TaskId = *b.TaskId
 	}
 	if b.RepositoryId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
 		x.xxx_hidden_RepositoryId = *b.RepositoryId
 	}
 	if b.JobName != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
 		x.xxx_hidden_JobName = b.JobName
 	}
+	x.xxx_hidden_Params = b.Params
 	return m0
 }
 
@@ -3643,11 +3657,15 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x0fRequestListJobs\x12#\n" +
 	"\rrepository_id\x18\x01 \x01(\x05R\frepositoryId\"=\n" +
 	"\x10ResponseListJobs\x12)\n" +
-	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"k\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x15.mono.build.model.JobR\x04jobs\"\xec\x01\n" +
 	"\x10RequestInvokeJob\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x12#\n" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x19\n" +
-	"\bjob_name\x18\x03 \x01(\tR\ajobName\",\n" +
+	"\bjob_name\x18\x03 \x01(\tR\ajobName\x12D\n" +
+	"\x06params\x18\x04 \x03(\v2,.mono.build.api.RequestInvokeJob.ParamsEntryR\x06params\x1a9\n" +
+	"\vParamsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\",\n" +
 	"\x11ResponseInvokeJob\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\"/\n" +
 	"\x14RequestForceStopTask\x12\x17\n" +
@@ -3759,7 +3777,7 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\x0eUploadArtifact\x12%.mono.build.api.RequestUploadArtifact\x1a&.mono.build.api.ResponseUploadArtifact(\x01B'Z\x1dgo.f110.dev/mono/go/build/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_build_api_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_proto_build_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_proto_build_api_api_proto_goTypes = []any{
 	(ArtifactType)(0),                           // 0: mono.build.api.ArtifactType
 	(*RequestListTasks)(nil),                    // 1: mono.build.api.RequestListTasks
@@ -3793,60 +3811,62 @@ var file_proto_build_api_api_proto_goTypes = []any{
 	(*RequestUploadArtifact)(nil),               // 29: mono.build.api.RequestUploadArtifact
 	(*ArtifactUploadMeta)(nil),                  // 30: mono.build.api.ArtifactUploadMeta
 	(*ResponseUploadArtifact)(nil),              // 31: mono.build.api.ResponseUploadArtifact
-	(*model.Task)(nil),                          // 32: mono.build.model.Task
-	(*model.Repository)(nil),                    // 33: mono.build.model.Repository
-	(*model.Job)(nil),                           // 34: mono.build.model.Job
-	(*model.ExternalReleaseTrigger)(nil),        // 35: mono.build.model.ExternalReleaseTrigger
-	(*model.GithubEvent)(nil),                   // 36: mono.build.model.GithubEvent
-	(*model.Artifact)(nil),                      // 37: mono.build.model.Artifact
+	nil,                                         // 32: mono.build.api.RequestInvokeJob.ParamsEntry
+	(*model.Task)(nil),                          // 33: mono.build.model.Task
+	(*model.Repository)(nil),                    // 34: mono.build.model.Repository
+	(*model.Job)(nil),                           // 35: mono.build.model.Job
+	(*model.ExternalReleaseTrigger)(nil),        // 36: mono.build.model.ExternalReleaseTrigger
+	(*model.GithubEvent)(nil),                   // 37: mono.build.model.GithubEvent
+	(*model.Artifact)(nil),                      // 38: mono.build.model.Artifact
 }
 var file_proto_build_api_api_proto_depIdxs = []int32{
-	32, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
-	33, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
-	33, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
-	33, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
-	34, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
-	19, // 5: mono.build.api.ResponseGetServerInfo.config:type_name -> mono.build.api.ServerConfig
-	35, // 6: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
-	36, // 7: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
-	37, // 8: mono.build.api.ResponseListArtifacts.artifacts:type_name -> mono.build.model.Artifact
-	0,  // 9: mono.build.api.ArtifactRef.type:type_name -> mono.build.api.ArtifactType
-	26, // 10: mono.build.api.RequestSyncArtifacts.artifacts:type_name -> mono.build.api.ArtifactRef
-	30, // 11: mono.build.api.RequestUploadArtifact.meta:type_name -> mono.build.api.ArtifactUploadMeta
-	26, // 12: mono.build.api.ArtifactUploadMeta.artifact:type_name -> mono.build.api.ArtifactRef
-	1,  // 13: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
-	3,  // 14: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
-	5,  // 15: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
-	7,  // 16: mono.build.api.API.DeleteRepository:input_type -> mono.build.api.RequestDeleteRepository
-	9,  // 17: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
-	11, // 18: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
-	13, // 19: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
-	17, // 20: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
-	20, // 21: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
-	22, // 22: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
-	24, // 23: mono.build.api.API.ListArtifacts:input_type -> mono.build.api.RequestListArtifacts
-	15, // 24: mono.build.api.API.CompleteTask:input_type -> mono.build.api.RequestCompleteTask
-	27, // 25: mono.build.api.API.SyncArtifacts:input_type -> mono.build.api.RequestSyncArtifacts
-	29, // 26: mono.build.api.API.UploadArtifact:input_type -> mono.build.api.RequestUploadArtifact
-	2,  // 27: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
-	4,  // 28: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
-	6,  // 29: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
-	8,  // 30: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
-	10, // 31: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
-	12, // 32: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
-	14, // 33: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
-	18, // 34: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
-	21, // 35: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
-	23, // 36: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
-	25, // 37: mono.build.api.API.ListArtifacts:output_type -> mono.build.api.ResponseListArtifacts
-	16, // 38: mono.build.api.API.CompleteTask:output_type -> mono.build.api.ResponseCompleteTask
-	28, // 39: mono.build.api.API.SyncArtifacts:output_type -> mono.build.api.ResponseSyncArtifacts
-	31, // 40: mono.build.api.API.UploadArtifact:output_type -> mono.build.api.ResponseUploadArtifact
-	27, // [27:41] is the sub-list for method output_type
-	13, // [13:27] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	33, // 0: mono.build.api.ResponseListTasks.tasks:type_name -> mono.build.model.Task
+	34, // 1: mono.build.api.ResponseListRepositories.repositories:type_name -> mono.build.model.Repository
+	34, // 2: mono.build.api.RequestSaveRepository.repository:type_name -> mono.build.model.Repository
+	34, // 3: mono.build.api.ResponseSaveRepository.repository:type_name -> mono.build.model.Repository
+	35, // 4: mono.build.api.ResponseListJobs.jobs:type_name -> mono.build.model.Job
+	32, // 5: mono.build.api.RequestInvokeJob.params:type_name -> mono.build.api.RequestInvokeJob.ParamsEntry
+	19, // 6: mono.build.api.ResponseGetServerInfo.config:type_name -> mono.build.api.ServerConfig
+	36, // 7: mono.build.api.ResponseListExternalReleaseTriggers.triggers:type_name -> mono.build.model.ExternalReleaseTrigger
+	37, // 8: mono.build.api.ResponseListGithubEvents.events:type_name -> mono.build.model.GithubEvent
+	38, // 9: mono.build.api.ResponseListArtifacts.artifacts:type_name -> mono.build.model.Artifact
+	0,  // 10: mono.build.api.ArtifactRef.type:type_name -> mono.build.api.ArtifactType
+	26, // 11: mono.build.api.RequestSyncArtifacts.artifacts:type_name -> mono.build.api.ArtifactRef
+	30, // 12: mono.build.api.RequestUploadArtifact.meta:type_name -> mono.build.api.ArtifactUploadMeta
+	26, // 13: mono.build.api.ArtifactUploadMeta.artifact:type_name -> mono.build.api.ArtifactRef
+	1,  // 14: mono.build.api.API.ListTasks:input_type -> mono.build.api.RequestListTasks
+	3,  // 15: mono.build.api.API.ListRepositories:input_type -> mono.build.api.RequestListRepositories
+	5,  // 16: mono.build.api.API.SaveRepository:input_type -> mono.build.api.RequestSaveRepository
+	7,  // 17: mono.build.api.API.DeleteRepository:input_type -> mono.build.api.RequestDeleteRepository
+	9,  // 18: mono.build.api.API.ListJobs:input_type -> mono.build.api.RequestListJobs
+	11, // 19: mono.build.api.API.InvokeJob:input_type -> mono.build.api.RequestInvokeJob
+	13, // 20: mono.build.api.API.ForceStopTask:input_type -> mono.build.api.RequestForceStopTask
+	17, // 21: mono.build.api.API.GetServerInfo:input_type -> mono.build.api.RequestGetServerInfo
+	20, // 22: mono.build.api.API.ListExternalReleaseTriggers:input_type -> mono.build.api.RequestListExternalReleaseTriggers
+	22, // 23: mono.build.api.API.ListGithubEvents:input_type -> mono.build.api.RequestListGithubEvents
+	24, // 24: mono.build.api.API.ListArtifacts:input_type -> mono.build.api.RequestListArtifacts
+	15, // 25: mono.build.api.API.CompleteTask:input_type -> mono.build.api.RequestCompleteTask
+	27, // 26: mono.build.api.API.SyncArtifacts:input_type -> mono.build.api.RequestSyncArtifacts
+	29, // 27: mono.build.api.API.UploadArtifact:input_type -> mono.build.api.RequestUploadArtifact
+	2,  // 28: mono.build.api.API.ListTasks:output_type -> mono.build.api.ResponseListTasks
+	4,  // 29: mono.build.api.API.ListRepositories:output_type -> mono.build.api.ResponseListRepositories
+	6,  // 30: mono.build.api.API.SaveRepository:output_type -> mono.build.api.ResponseSaveRepository
+	8,  // 31: mono.build.api.API.DeleteRepository:output_type -> mono.build.api.ResponseDeleteRepository
+	10, // 32: mono.build.api.API.ListJobs:output_type -> mono.build.api.ResponseListJobs
+	12, // 33: mono.build.api.API.InvokeJob:output_type -> mono.build.api.ResponseInvokeJob
+	14, // 34: mono.build.api.API.ForceStopTask:output_type -> mono.build.api.ResponseForceStopTask
+	18, // 35: mono.build.api.API.GetServerInfo:output_type -> mono.build.api.ResponseGetServerInfo
+	21, // 36: mono.build.api.API.ListExternalReleaseTriggers:output_type -> mono.build.api.ResponseListExternalReleaseTriggers
+	23, // 37: mono.build.api.API.ListGithubEvents:output_type -> mono.build.api.ResponseListGithubEvents
+	25, // 38: mono.build.api.API.ListArtifacts:output_type -> mono.build.api.ResponseListArtifacts
+	16, // 39: mono.build.api.API.CompleteTask:output_type -> mono.build.api.ResponseCompleteTask
+	28, // 40: mono.build.api.API.SyncArtifacts:output_type -> mono.build.api.ResponseSyncArtifacts
+	31, // 41: mono.build.api.API.UploadArtifact:output_type -> mono.build.api.ResponseUploadArtifact
+	28, // [28:42] is the sub-list for method output_type
+	14, // [14:28] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_proto_build_api_api_proto_init() }
@@ -3864,7 +3884,7 @@ func file_proto_build_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_build_api_api_proto_rawDesc), len(file_proto_build_api_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
