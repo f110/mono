@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Issue Tracker (mock)</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+</head>
+<body>
+  <header>
+    <a href="#/" class="brand">Issues</a>
+    <a href="#/new" class="button">新規チケット</a>
+    <span class="spacer"></span>
+    <label class="actor-select">操作者 <select id="actor"></select></label>
+    <button type="button" id="reset" class="link">データをリセット</button>
+  </header>
+  <main id="app"></main>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
