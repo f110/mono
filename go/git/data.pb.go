@@ -162,6 +162,7 @@ type Commit struct {
 	Tree          string                 `protobuf:"bytes,4,opt,name=tree,proto3" json:"tree,omitempty"`
 	Message       string                 `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
 	Parents       []string               `protobuf:"bytes,6,rep,name=parents,proto3" json:"parents,omitempty"`
+	ChangeId      string                 `protobuf:"bytes,7,opt,name=change_id,json=changeId,proto3" json:"change_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,6 +237,13 @@ func (x *Commit) GetParents() []string {
 		return x.Parents
 	}
 	return nil
+}
+
+func (x *Commit) GetChangeId() string {
+	if x != nil {
+		return x.ChangeId
+	}
+	return ""
 }
 
 type Signature struct {
@@ -1603,14 +1611,15 @@ const file_proto_git_data_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
 	"\x04mode\x18\x02 \x01(\tR\x04mode\x12\x10\n" +
 	"\x03sha\x18\x03 \x01(\tR\x03sha\x12\x12\n" +
-	"\x04size\x18\x04 \x01(\x03R\x04size\"\xc2\x01\n" +
+	"\x04size\x18\x04 \x01(\x03R\x04size\"\xdf\x01\n" +
 	"\x06Commit\x12\x10\n" +
 	"\x03sha\x18\x01 \x01(\tR\x03sha\x12+\n" +
 	"\x06author\x18\x02 \x01(\v2\x13.mono.git.SignatureR\x06author\x121\n" +
 	"\tcommitter\x18\x03 \x01(\v2\x13.mono.git.SignatureR\tcommitter\x12\x12\n" +
 	"\x04tree\x18\x04 \x01(\tR\x04tree\x12\x18\n" +
 	"\amessage\x18\x05 \x01(\tR\amessage\x12\x18\n" +
-	"\aparents\x18\x06 \x03(\tR\aparents\"e\n" +
+	"\aparents\x18\x06 \x03(\tR\aparents\x12\x1b\n" +
+	"\tchange_id\x18\a \x01(\tR\bchangeId\"e\n" +
 	"\tSignature\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12.\n" +

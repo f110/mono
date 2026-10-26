@@ -39,6 +39,7 @@ message Commit {
   string          tree      = 4;
   string          message   = 5;
   repeated string parents   = 6;
+  string          change_id = 7;
 }
 
 message Signature {

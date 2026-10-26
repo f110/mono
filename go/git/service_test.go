@@ -311,3 +311,29 @@ func startServer(t *testing.T, st *storage.Mock, repos map[string]*goGit.Reposit
 
 	return conn
 }
+
+func TestGetCommitWithChangeId(t *testing.T) {
+	mockStorage := storage.NewMock()
+	repo := makeSourceRepository(t)
+	head, err := repo.Head()
+	require.NoError(t, err)
+	base, err := repo.CommitObject(head.Hash())
+	require.NoError(t, err)
+	c := *base
+	c.ExtraHeaders = []object.ExtraHeader{{Key: "change-id", Value: "zyxwvutsrqponmlkzyxwvutsrqponmlk"}}
+	obj := repo.Storer.NewEncodedObject()
+	require.NoError(t, c.Encode(obj))
+	h, err := repo.Storer.SetEncodedObject(obj)
+	require.NoError(t, err)
+
+	conn := startServer(t, mockStorage, map[string]*goGit.Repository{"test/test1": repo})
+	gitData := NewGitDataClient(conn)
+
+	commit, err := gitData.GetCommit(context.Background(), &RequestGetCommit{Repo: "test1", Sha: h.String()})
+	require.NoError(t, err)
+	assert.Equal(t, "zyxwvutsrqponmlkzyxwvutsrqponmlk", commit.Commit.ChangeId)
+
+	commit, err = gitData.GetCommit(context.Background(), &RequestGetCommit{Repo: "test1", Sha: head.Hash().String()})
+	require.NoError(t, err)
+	assert.Empty(t, commit.Commit.ChangeId)
+}

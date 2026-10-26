@@ -194,28 +194,35 @@ func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*Resp
 		return nil, err
 	}
 
-	res := &ResponseGetCommit{
-		Commit: &Commit{
-			Sha:     commit.Hash.String(),
-			Message: commit.Message,
-			Committer: &Signature{
-				Name:  commit.Committer.Name,
-				Email: commit.Committer.Email,
-				When:  timestamppb.New(commit.Committer.When),
-			},
-			Author: &Signature{
-				Name:  commit.Author.Name,
-				Email: commit.Author.Email,
-				When:  timestamppb.New(commit.Author.When),
-			},
-			Tree: commit.TreeHash.String(),
+	return &ResponseGetCommit{Commit: commitToProto(commit)}, nil
+}
+
+func commitToProto(commit *object.Commit) *Commit {
+	c := &Commit{
+		Sha:     commit.Hash.String(),
+		Message: commit.Message,
+		Committer: &Signature{
+			Name:  commit.Committer.Name,
+			Email: commit.Committer.Email,
+			When:  timestamppb.New(commit.Committer.When),
 		},
+		Author: &Signature{
+			Name:  commit.Author.Name,
+			Email: commit.Author.Email,
+			When:  timestamppb.New(commit.Author.When),
+		},
+		Tree: commit.TreeHash.String(),
 	}
 	if len(commit.ParentHashes) > 0 {
-		res.Commit.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
+		c.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
 	}
-
-	return res, nil
+	for _, h := range commit.ExtraHeaders {
+		if h.Key == "change-id" {
+			c.ChangeId = h.Value
+			break
+		}
+	}
+	return c
 }
 
 func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
@@ -470,26 +477,7 @@ func (g *DataService) GetRepositoryStatistics(_ context.Context, req *RequestGet
 		return nil, err
 	}
 
-	headCommit := &Commit{
-		Sha:     commit.Hash.String(),
-		Message: commit.Message,
-		Committer: &Signature{
-			Name:  commit.Committer.Name,
-			Email: commit.Committer.Email,
-			When:  timestamppb.New(commit.Committer.When),
-		},
-		Author: &Signature{
-			Name:  commit.Author.Name,
-			Email: commit.Author.Email,
-			When:  timestamppb.New(commit.Author.When),
-		},
-		Tree: commit.TreeHash.String(),
-	}
-	if len(commit.ParentHashes) > 0 {
-		headCommit.Parents = enumerable.Map(commit.ParentHashes, func(t plumbing.Hash) string { return t.String() })
-	}
-
-	return &ResponseGetRepositoryStatistics{HeadCommit: headCommit}, nil
+	return &ResponseGetRepositoryStatistics{HeadCommit: commitToProto(commit)}, nil
 }
 
 func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
