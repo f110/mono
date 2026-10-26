@@ -39,8 +39,9 @@ service API {
 }
 
 message RequestListTasks {
-  repeated int32 ids            = 1;
-  repeated int32 repository_ids = 2;
+  repeated int32  ids            = 1;
+  repeated int32  repository_ids = 2;
+  repeated string revisions      = 5;
 
   int32  page_size  = 3;
   string page_token = 4;

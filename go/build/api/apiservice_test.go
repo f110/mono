@@ -146,3 +146,41 @@ func TestListJobs(t *testing.T) {
 	assertion.Equal(t, "Release version", params[1].GetDescription())
 	assertion.True(t, params[1].GetRequired())
 }
+
+func TestListTasks(t *testing.T) {
+	t.Run("by repository and revisions", func(t *testing.T) {
+		t.Parallel()
+		taskDAO := daotest.NewTask()
+		taskDAO.RegisterListByRevision(1, "rev1", []*database.Task{{Id: 10, RepositoryId: 1, Revision: "rev1"}}, nil)
+		taskDAO.RegisterListByRevision(1, "rev2", []*database.Task{{Id: 11, RepositoryId: 1, Revision: "rev2"}}, nil)
+		taskDAO.RegisterListByRevision(2, "rev1", nil, nil)
+		taskDAO.RegisterListByRevision(2, "rev2", []*database.Task{{Id: 12, RepositoryId: 2, Revision: "rev2"}}, nil)
+		testReportDAO := daotest.NewTestReport()
+		buildMetricsDAO := daotest.NewBuildMetrics()
+		for _, id := range []int32{10, 11, 12} {
+			testReportDAO.RegisterListByTaskId(id, nil, nil)
+			buildMetricsDAO.RegisterListByTaskId(id, nil, nil)
+		}
+		s := &apiService{dao: dao.Options{Task: taskDAO, TestReport: testReportDAO, BuildMetrics: buildMetricsDAO}}
+
+		req := &RequestListTasks{}
+		req.SetRepositoryIds([]int32{1, 2})
+		req.SetRevisions([]string{"rev1", "rev2"})
+		res, err := s.ListTasks(context.Background(), req)
+		assertion.MustNoError(t, err)
+		var ids []int32
+		for _, v := range res.GetTasks() {
+			ids = append(ids, v.GetId())
+		}
+		assertion.Equal(t, []int32{10, 11, 12}, ids)
+	})
+
+	t.Run("revisions without repository is rejected", func(t *testing.T) {
+		t.Parallel()
+		s := &apiService{}
+		req := &RequestListTasks{}
+		req.SetRevisions([]string{"rev1"})
+		_, err := s.ListTasks(context.Background(), req)
+		assertion.Error(t, err)
+	})
+}

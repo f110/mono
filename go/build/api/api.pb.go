@@ -70,6 +70,7 @@ type RequestListTasks struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Ids           []int32                `protobuf:"varint,1,rep,packed,name=ids"`
 	xxx_hidden_RepositoryIds []int32                `protobuf:"varint,2,rep,packed,name=repository_ids,json=repositoryIds"`
+	xxx_hidden_Revisions     []string               `protobuf:"bytes,5,rep,name=revisions"`
 	xxx_hidden_PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize"`
 	xxx_hidden_PageToken     *string                `protobuf:"bytes,4,opt,name=page_token,json=pageToken"`
 	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
@@ -117,6 +118,13 @@ func (x *RequestListTasks) GetRepositoryIds() []int32 {
 	return nil
 }
 
+func (x *RequestListTasks) GetRevisions() []string {
+	if x != nil {
+		return x.xxx_hidden_Revisions
+	}
+	return nil
+}
+
 func (x *RequestListTasks) GetPageSize() int32 {
 	if x != nil {
 		return x.xxx_hidden_PageSize
@@ -142,37 +150,41 @@ func (x *RequestListTasks) SetRepositoryIds(v []int32) {
 	x.xxx_hidden_RepositoryIds = v
 }
 
+func (x *RequestListTasks) SetRevisions(v []string) {
+	x.xxx_hidden_Revisions = v
+}
+
 func (x *RequestListTasks) SetPageSize(v int32) {
 	x.xxx_hidden_PageSize = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
 }
 
 func (x *RequestListTasks) SetPageToken(v string) {
 	x.xxx_hidden_PageToken = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
 }
 
 func (x *RequestListTasks) HasPageSize() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
 func (x *RequestListTasks) HasPageToken() bool {
 	if x == nil {
 		return false
 	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
 }
 
 func (x *RequestListTasks) ClearPageSize() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
 	x.xxx_hidden_PageSize = 0
 }
 
 func (x *RequestListTasks) ClearPageToken() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
 	x.xxx_hidden_PageToken = nil
 }
 
@@ -181,6 +193,7 @@ type RequestListTasks_builder struct {
 
 	Ids           []int32
 	RepositoryIds []int32
+	Revisions     []string
 	PageSize      *int32
 	PageToken     *string
 }
@@ -191,12 +204,13 @@ func (b0 RequestListTasks_builder) Build() *RequestListTasks {
 	_, _ = b, x
 	x.xxx_hidden_Ids = b.Ids
 	x.xxx_hidden_RepositoryIds = b.RepositoryIds
+	x.xxx_hidden_Revisions = b.Revisions
 	if b.PageSize != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
 		x.xxx_hidden_PageSize = *b.PageSize
 	}
 	if b.PageToken != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
 		x.xxx_hidden_PageToken = b.PageToken
 	}
 	return m0
@@ -3629,10 +3643,11 @@ var File_proto_build_api_api_proto protoreflect.FileDescriptor
 
 const file_proto_build_api_api_proto_rawDesc = "" +
 	"\n" +
-	"\x19proto/build/api/api.proto\x12\x0emono.build.api\x1a!google/protobuf/go_features.proto\x1a\x1bproto/build/model/msg.proto\"\x87\x01\n" +
+	"\x19proto/build/api/api.proto\x12\x0emono.build.api\x1a!google/protobuf/go_features.proto\x1a\x1bproto/build/model/msg.proto\"\xa5\x01\n" +
 	"\x10RequestListTasks\x12\x10\n" +
 	"\x03ids\x18\x01 \x03(\x05R\x03ids\x12%\n" +
-	"\x0erepository_ids\x18\x02 \x03(\x05R\rrepositoryIds\x12\x1b\n" +
+	"\x0erepository_ids\x18\x02 \x03(\x05R\rrepositoryIds\x12\x1c\n" +
+	"\trevisions\x18\x05 \x03(\tR\trevisions\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"i\n" +

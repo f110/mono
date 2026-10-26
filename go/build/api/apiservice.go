@@ -93,6 +93,25 @@ func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*Res
 		var tasks []*model.Task
 		tasks = enumerable.Map(t, s.dbTaskToAPITaskWithTestReport(ctx))
 		return ResponseListTasks_builder{Tasks: tasks}.Build(), nil
+	} else if len(req.GetRevisions()) > 0 {
+		if len(req.GetRepositoryIds()) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "repository_ids must be specified with revisions")
+		}
+		if len(req.GetRepositoryIds())*len(req.GetRevisions()) > 100 {
+			return nil, status.Error(codes.InvalidArgument, "too many repository_ids and revisions specified")
+		}
+		var allTasks []*model.Task
+		for _, repoId := range req.GetRepositoryIds() {
+			for _, rev := range req.GetRevisions() {
+				t, err := s.dao.Task.ListByRevision(ctx, repoId, rev, dao.Sort("id"))
+				if err != nil {
+					slogger.Log.Warn("Failed to list tasks by revision", slogger.E(err), slog.String("revision", rev))
+					return nil, status.Error(codes.Internal, "Failed to list tasks")
+				}
+				allTasks = append(allTasks, enumerable.Map(t, s.dbTaskToAPITaskWithTestReport(ctx))...)
+			}
+		}
+		return ResponseListTasks_builder{Tasks: allTasks}.Build(), nil
 	} else if len(req.GetRepositoryIds()) > 0 {
 		var allTasks []*model.Task
 		for _, v := range req.GetRepositoryIds() {
