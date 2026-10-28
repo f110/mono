@@ -18,7 +18,7 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 )
 
 func Clone(ctx context.Context, appId, installationId int64, privateKeyFile, dir, repo, commit string) error {

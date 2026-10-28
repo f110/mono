@@ -44,7 +44,7 @@ import (
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/netutil"

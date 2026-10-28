@@ -18,7 +18,7 @@ go_library(
         "//go/collections/set",
         "//go/ctxutil",
         "//go/enumerable",
-        "//go/githubutil",
+        "//go/github",
         "//go/logger/slogger",
         "//go/storage",
         "@com_github_go_git_go_billy_v5//:go-billy",

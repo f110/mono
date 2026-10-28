@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestBuildServerConfig(t *testing.T) {
-	ghClient := githubutil.NewGitHubClientFactory("", true)
+	ghClient := github.NewGitHubClientFactory("", true)
 	ghClient.AppID = 12345
 	opt := Options{
 		GitHubClient:                ghClient,

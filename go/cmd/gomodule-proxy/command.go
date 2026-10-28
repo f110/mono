@@ -17,7 +17,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/gomodule"
 	"go.f110.dev/mono/go/logger/slogger"
 )
@@ -49,7 +49,7 @@ type goModuleProxyCommand struct {
 	signingKey *ecdsa.PrivateKey
 	server     *gomodule.ProxyServer
 
-	githubClientFactory *githubutil.GitHubClientFactory
+	githubClientFactory *github.GitHubClientFactory
 }
 
 const (
@@ -62,7 +62,7 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 	c := &goModuleProxyCommand{
 		Addr:                ":7589",
 		UpstreamURL:         "https://proxy.golang.org",
-		githubClientFactory: githubutil.NewGitHubClientFactory("gomodule-proxy", false),
+		githubClientFactory: github.NewGitHubClientFactory("gomodule-proxy", false),
 	}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{

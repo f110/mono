@@ -13,7 +13,7 @@ go_library(
         "//go/ctxutil",
         "//go/fsm",
         "//go/git",
-        "//go/githubutil",
+        "//go/github",
         "//go/logger/slogger",
         "//go/storage",
         "@dev_f110_go_go_memcached//client",

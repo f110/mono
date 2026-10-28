@@ -1,12 +1,12 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "githubutil",
+    name = "github",
     srcs = [
         "integration.go",
         "token.go",
     ],
-    importpath = "go.f110.dev/mono/go/githubutil",
+    importpath = "go.f110.dev/mono/go/github",
     visibility = ["//visibility:public"],
     deps = [
         "//go/cli",

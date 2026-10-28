@@ -13,7 +13,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/gomodule",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/githubutil",
+        "//go/github",
         "//go/logger/slogger",
         "//go/regexp/regexputil",
         "//go/storage",

@@ -11,7 +11,7 @@ go_library(
     deps = [
         "//go/cli",
         "//go/fsm",
-        "//go/githubutil",
+        "//go/github",
         "//go/logger",
         "//go/storage",
         "@com_github_blang_semver_v4//:semver",

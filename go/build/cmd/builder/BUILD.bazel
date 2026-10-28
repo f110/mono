@@ -20,7 +20,7 @@ go_library(
         "//go/database/querylog",
         "//go/fsm",
         "//go/git",
-        "//go/githubutil",
+        "//go/github",
         "//go/grpcutil",
         "//go/logger/slogger",
         "//go/netutil",
@@ -52,7 +52,7 @@ go_test(
     srcs = ["main_test.go"],
     embed = [":builder"],
     deps = [
-        "//go/githubutil",
+        "//go/github",
         "//go/testing/assertion",
     ],
 )

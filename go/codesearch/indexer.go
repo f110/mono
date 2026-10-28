@@ -29,7 +29,7 @@ import (
 	"github.com/shurcooL/githubv4"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 

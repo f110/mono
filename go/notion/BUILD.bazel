@@ -10,7 +10,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/notion",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/githubutil",
+        "//go/github",
         "//go/k8s/volume",
         "//go/logger/slogger",
         "@com_github_robfig_cron_v3//:cron",

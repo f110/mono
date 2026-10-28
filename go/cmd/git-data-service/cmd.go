@@ -20,7 +20,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -34,7 +34,7 @@ type gitDataServiceCommand struct {
 
 	Listen                string
 	RepositoryInitTimeout time.Duration
-	GitHubClient          *githubutil.GitHubClientFactory
+	GitHubClient          *github.GitHubClientFactory
 
 	StorageEndpoint            string
 	StorageRegion              string
@@ -67,7 +67,7 @@ const (
 )
 
 func newGitDataServiceCommand() *gitDataServiceCommand {
-	c := &gitDataServiceCommand{GitHubClient: githubutil.NewGitHubClientFactory("", false)}
+	c := &gitDataServiceCommand{GitHubClient: github.NewGitHubClientFactory("", false)}
 	c.FSM = fsm.NewFSM(
 		map[fsm.State]fsm.StateFunc{
 			stateInit:         c.init,

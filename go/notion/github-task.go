@@ -15,7 +15,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/k8s/volume"
 	"go.f110.dev/mono/go/logger/slogger"
 )
@@ -43,11 +43,11 @@ type GitHubTask struct {
 }
 
 func NewGitHubTask(appId, installationId int64, privateKeyFile, notionToken, configFile string) (*GitHubTask, error) {
-	app, err := githubutil.NewApp(appId, installationId, privateKeyFile)
+	app, err := github.NewApp(appId, installationId, privateKeyFile)
 	if err != nil {
 		return nil, err
 	}
-	tr := githubutil.NewTransportWithApp(http.DefaultTransport, app)
+	tr := github.NewTransportWithApp(http.DefaultTransport, app)
 	ghClient := githubv4.NewClient(&http.Client{Transport: tr})
 
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: notionToken})

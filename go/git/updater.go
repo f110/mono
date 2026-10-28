@@ -22,7 +22,7 @@ import (
 
 	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )

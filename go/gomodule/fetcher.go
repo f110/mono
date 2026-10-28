@@ -25,7 +25,7 @@ import (
 	"golang.org/x/mod/semver"
 	"golang.org/x/tools/go/vcs"
 
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -61,11 +61,11 @@ type ModuleFetcher struct {
 	cache *ModuleCache
 
 	baseDir       string
-	tokenProvider *githubutil.TokenProvider
+	tokenProvider *github.TokenProvider
 	caBundle      []byte
 }
 
-func NewModuleFetcher(baseDir string, cache *ModuleCache, tokenProvider *githubutil.TokenProvider, caBundle []byte) *ModuleFetcher {
+func NewModuleFetcher(baseDir string, cache *ModuleCache, tokenProvider *github.TokenProvider, caBundle []byte) *ModuleFetcher {
 	return &ModuleFetcher{
 		baseDir:       baseDir,
 		tokenProvider: tokenProvider,
@@ -607,14 +607,14 @@ type VCS struct {
 	mu     sync.Mutex
 	synced bool
 
-	tokenProvider *githubutil.TokenProvider
+	tokenProvider *github.TokenProvider
 	caBundle      []byte
 
 	gitRepo           *git.Repository
 	defaultBranchName string
 }
 
-func NewVCS(typ, cloneURL, originalURL string, tokenProvider *githubutil.TokenProvider, caBundle []byte) *VCS {
+func NewVCS(typ, cloneURL, originalURL string, tokenProvider *github.TokenProvider, caBundle []byte) *VCS {
 	return &VCS{Type: typ, CloneURL: cloneURL, URL: originalURL, tokenProvider: tokenProvider, caBundle: caBundle}
 }
 

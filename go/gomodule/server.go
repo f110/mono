@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -24,7 +24,7 @@ type ProxyServer struct {
 	rr              *httputil.ReverseProxy
 	r               *mux.Router
 	proxy           *ModuleProxy
-	ghClientFactory *githubutil.GitHubClientFactory
+	ghClientFactory *github.GitHubClientFactory
 
 	githubUserAuthentication *UserAuthentication
 }
@@ -37,7 +37,7 @@ func WithGitHubUserAuthentication(module *UserAuthentication) ProxyServerOption 
 	}
 }
 
-func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy, ghClientFactory *githubutil.GitHubClientFactory, opts ...ProxyServerOption) *ProxyServer {
+func NewProxyServer(addr string, upstream *url.URL, proxy *ModuleProxy, ghClientFactory *github.GitHubClientFactory, opts ...ProxyServerOption) *ProxyServer {
 	targetQuery := upstream.RawQuery
 	director := func(req *http.Request) {
 		req.URL.Scheme = upstream.Scheme

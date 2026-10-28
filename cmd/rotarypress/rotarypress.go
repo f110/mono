@@ -17,7 +17,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )

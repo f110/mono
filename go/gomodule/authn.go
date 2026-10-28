@@ -17,7 +17,7 @@ import (
 	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/githubutil"
+	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/stringsutil"
 )

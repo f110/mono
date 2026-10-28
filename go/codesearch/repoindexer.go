@@ -15,7 +15,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/githubutil"
+	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/k8s/volume"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
@@ -57,7 +57,7 @@ type IndexerCommand struct {
 
 	Dev bool
 
-	githubClientFactory *githubutil.GitHubClientFactory
+	githubClientFactory *github.GitHubClientFactory
 	config              *Config
 	indexer             *Indexer
 	cron                *cron.Cron
@@ -85,7 +85,7 @@ func NewIndexerCommand() *IndexerCommand {
 		NATSStreamName:      "repoindexer",
 		NATSSubject:         "notify",
 		S3PartSize:          1 * 1024 * 1024 * 1024, // 1GiB
-		githubClientFactory: githubutil.NewGitHubClientFactory("repo-indexer", false),
+		githubClientFactory: github.NewGitHubClientFactory("repo-indexer", false),
 	}
 }
 
