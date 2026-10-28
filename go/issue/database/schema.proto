@@ -1,0 +1,268 @@
+syntax = "proto3";
+
+package issue.schema;
+
+import "ddl.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.f110.dev/mono/go/issue/database;database";
+
+enum TicketStatus {
+  TICKET_STATUS_OPEN        = 0;
+  TICKET_STATUS_IN_PROGRESS = 1;
+  TICKET_STATUS_DONE        = 2;
+  TICKET_STATUS_WONT_FIX    = 3;
+}
+
+// Priority of the ticket. PRIORITY_NONE means that the priority is not set.
+enum Priority {
+  PRIORITY_NONE = 0;
+  PRIORITY_P0   = 1;
+  PRIORITY_P1   = 2;
+  PRIORITY_P2   = 3;
+  PRIORITY_P3   = 4;
+  PRIORITY_P4   = 5;
+}
+
+enum ActorKind {
+  ACTOR_KIND_HUMAN  = 0;
+  ACTOR_KIND_AGENT  = 1;
+  ACTOR_KIND_SYSTEM = 2;
+}
+
+enum RelationType {
+  RELATION_TYPE_PARENT_OF    = 0;
+  RELATION_TYPE_BLOCKS       = 1;
+  RELATION_TYPE_DUPLICATE_OF = 2;
+  RELATION_TYPE_RELATES_TO   = 3;
+}
+
+enum ActivityKind {
+  ACTIVITY_KIND_CREATE           = 0;
+  ACTIVITY_KIND_TITLE            = 1;
+  ACTIVITY_KIND_STATUS           = 2;
+  ACTIVITY_KIND_PRIORITY         = 3;
+  ACTIVITY_KIND_COMPONENT        = 4;
+  ACTIVITY_KIND_ASSIGNEE         = 5;
+  ACTIVITY_KIND_BODY             = 6;
+  ACTIVITY_KIND_RELATION_ADDED   = 7;
+  ACTIVITY_KIND_RELATION_REMOVED = 8;
+  ACTIVITY_KIND_COMMENT          = 9;
+  ACTIVITY_KIND_COMMENT_EDITED   = 10;
+  ACTIVITY_KIND_COMMENT_DELETED  = 11;
+}
+
+// Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
+message Actor {
+  int32     id   = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  ActorKind kind = 2;
+  string    name = 3;
+  // owner_id is the id of the human actor who owns the agent. Set only for the agent.
+  int32 owner_id = 4 [(dev.f110.ddl.column) = { null: true }];
+  // subject is the user id of heimdallr. Set only for the human.
+  string subject = 5 [(dev.f110.ddl.column) = { null: true, unique: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+    queries: {
+      name: "BySubject"
+      query: "SELECT * FROM `:table_name:` WHERE `subject` = ?"
+    }
+    queries: {
+      name: "ByKind"
+      query: "SELECT * FROM `:table_name:` WHERE `kind` = ?"
+    }
+  };
+}
+
+message Component {
+  int32  id   = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string name = 2 [(dev.f110.ddl.column) = { unique: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+  };
+}
+
+// Ticket is an issue. id is used as the ticket number.
+message Ticket {
+  int32        id           = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string       title        = 2;
+  string       body         = 3 [(dev.f110.ddl.column) = { type: "text" }];
+  TicketStatus status       = 4;
+  Priority     priority     = 5;
+  int32        component_id = 6 [(dev.f110.ddl.column) = { null: true }];
+  int32        assignee_id  = 7 [(dev.f110.ddl.column) = { null: true }];
+  Actor        reporter     = 8;
+  // last_activity_at is the time of the last operation to the ticket including the comments.
+  google.protobuf.Timestamp last_activity_at = 9;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_status"
+      columns: "status"
+    }
+    indexes: {
+      name: "idx_last_activity_at"
+      columns: "last_activity_at"
+    }
+  };
+}
+
+// TicketBodyRevision is the body before an edit. Only the latest body is kept as the full text in Ticket, and patch
+// restores the body before the edit from the body after the edit.
+message TicketBodyRevision {
+  int32  id     = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket ticket = 2;
+  string patch  = 3 [(dev.f110.ddl.column) = { type: "text" }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_ticket"
+      columns: "ticket"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+  };
+}
+
+// Relation is a directed relation between the tickets. The reverse direction is derived at display time.
+// relates_to is stored as from < to because it is symmetric.
+message Relation {
+  int32        id   = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket       from          = 2;
+  RelationType relation_type = 3;
+  Ticket       to            = 4;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_relation"
+      columns: "from"
+      columns: "relation_type"
+      columns: "to"
+      unique: true
+    }
+    indexes: {
+      name: "idx_to"
+      columns: "to"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByFromId"
+      query: "SELECT * FROM `:table_name:` WHERE `from_id` = ?"
+    }
+    queries: {
+      name: "ByToId"
+      query: "SELECT * FROM `:table_name:` WHERE `to_id` = ?"
+    }
+    queries: {
+      name: "ByFromIdAndRelationTypeAndToId"
+      query: "SELECT * FROM `:table_name:` WHERE `from_id` = ? AND `relation_type` = ? AND `to_id` = ?"
+    }
+  };
+}
+
+// Comment is removed logically by deleted_at because the activities keep referring it.
+message Comment {
+  int32                     id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket                    ticket     = 2;
+  Actor                     actor      = 3;
+  string                    body       = 4 [(dev.f110.ddl.column) = { type: "text" }];
+  google.protobuf.Timestamp deleted_at = 5 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_ticket"
+      columns: "ticket"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+  };
+}
+
+// CommentRevision is the comment before an edit. Only the latest body is kept as the full text in Comment, and patch
+// restores the body before the edit from the body after the edit.
+message CommentRevision {
+  int32   id      = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Comment comment = 2;
+  string  patch   = 3 [(dev.f110.ddl.column) = { type: "text" }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_comment"
+      columns: "comment"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByCommentId"
+      query: "SELECT * FROM `:table_name:` WHERE `comment_id` = ?"
+    }
+  };
+}
+
+// Activity is the history of the operations to the ticket.
+message Activity {
+  int32        id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket       ticket     = 2;
+  Actor        actor      = 3;
+  ActivityKind kind       = 4;
+  string       from_value = 5 [(dev.f110.ddl.column) = { type: "text" }];
+  string       to_value   = 6 [(dev.f110.ddl.column) = { type: "text" }];
+  int32        ref_id     = 7 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "idx_ticket"
+      columns: "ticket"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+  };
+}

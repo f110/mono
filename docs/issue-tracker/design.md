@@ -77,15 +77,15 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 
 | テーブル | 主なカラム | 備考 |
 | --- | --- | --- |
-| `ticket` | `id` (sequence), `title`, `body`, `status`, `priority` (null 可), `component_id` (null 可), `assignee_id` (null 可), `reporter_id`, `created_at`, `updated_at` | `id` がそのままチケット番号 |
-| `ticket_body_revision` | `id`, `ticket_id`, `body`, `created_at` | 本文の編集ごとの全文 |
+| `ticket` | `id` (sequence), `title`, `body`, `status`, `priority` (未設定は `PRIORITY_NONE`), `component_id` (null 可), `assignee_id` (null 可), `reporter_id`, `created_at`, `updated_at`, `last_activity_at` | `id` がそのままチケット番号。`last_activity_at` はコメントを含む最後の操作の時刻 |
+| `ticket_body_revision` | `id`, `ticket_id`, `patch`, `created_at` | 編集前の本文を編集後の本文から復元する差分 |
 | `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ), `subject` (human のみ、heimdallr のユーザー ID) | system は固定の 1 行 |
 | `agent_token` | `id`, `actor_id`, `name`, `token_hash`, `created_at`, `last_used_at`, `revoked_at` | トークンは SHA-256 のみ保存 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
 | `repository` | `id`, `name`, `url` | GitHub の URL。webhook とは URL で突き合わせる |
 | `relation` | `from_id`, `type`, `to_id` | UNIQUE(`from_id`, `type`, `to_id`) |
 | `comment` | `id`, `ticket_id`, `actor_id`, `body`, `created_at`, `updated_at`, `deleted_at` | 削除は `deleted_at` を立てる論理削除 |
-| `comment_revision` | `id`, `comment_id`, `body`, `created_at` | コメントの編集ごとの全文 |
+| `comment_revision` | `id`, `comment_id`, `patch`, `created_at` | 編集前のコメントを編集後のコメントから復元する差分 |
 | `attachment` | `id`, `ticket_id`, `actor_id`, `name`, `content_type`, `size`, `object_key`, `created_at` | |
 | `commit_link` | `ticket_id`, `repository_id`, `sha`, `change_id` (null 可), `subject`, `author`, `trailer` (refs / fixes), `committed_at` | UNIQUE(`ticket_id`, `repository_id`, `sha`) |
 | `pull_request_link` | `ticket_id`, `repository_id`, `number`, `title`, `author`, `state` (open / closed / merged), `head_sha` | UNIQUE(`ticket_id`, `repository_id`, `number`) |
@@ -105,16 +105,17 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | --- | --- | --- |
 | create | — | — |
 | title, status, priority, component, assignee | 変更前 / 変更後 | — |
-| body | — | 変更後の本文を保存した `ticket_body_revision.id` |
+| body | — | その編集の `ticket_body_revision.id` |
 | relation_added, relation_removed | — / `<type>:<相手の番号>` | — |
 | comment | — | `comment.id` |
-| comment_edited | — | 変更後のコメントを保存した `comment_revision.id` |
+| comment_edited | — | その編集の `comment_revision.id` |
 | comment_deleted | — | `comment.id` |
 | attachment | — | `attachment.id` |
 | commit_linked, pull_request_linked | — | `commit_link` / `pull_request_link` の行 |
 
-本文とコメントの編集は履歴として差分を追えるよう、編集ごとに全文をそれぞれ `ticket_body_revision` /
-`comment_revision` に保存する。削除したコメントは履歴から参照され続けるため、行は消さずに論理削除にする。
+本文とコメントは最新だけを全文で `ticket.body` / `comment.body` に持ち、編集ごとに編集前の内容を編集後の内容から
+復元する差分を `ticket_body_revision` / `comment_revision` に保存する。過去の版は最新の全文に新しい順に差分を当てて
+復元する。削除したコメントは履歴から参照され続けるため、行は消さずに論理削除にする。
 
 操作主体が人間かエージェントかは `actor.kind` で判定する。actor の `kind` と `owner_id` は作成後に変更しない
 ため、履歴側にコピーしなくても当時の値が復元できる。

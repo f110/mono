@@ -1,0 +1,3 @@
+package database
+
+const SchemaHash = "747abf40f5be8a89dd3dbb2af778c6c21e9f97f5920ecbec59c3f2432a90ba4c"

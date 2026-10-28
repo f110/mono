@@ -1,0 +1,24 @@
+load("@protoc_ddl//rules:def.bzl", "schema_dao", "vendor_ddl")
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dao",
+    srcs = [
+        "options.go",
+        "schema.dao.go",
+    ],
+    importpath = "go.f110.dev/mono/go/issue/database/dao",
+    visibility = ["//visibility:public"],
+    deps = ["//go/issue/database"],
+)
+
+schema_dao(
+    name = "dao_schema",
+    lang = "go",
+    proto = "//go/issue/database:database_proto",
+)
+
+vendor_ddl(
+    name = "vendor_dao",
+    src = ":dao_schema",
+)
