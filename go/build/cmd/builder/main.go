@@ -45,6 +45,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	githubutil "go.f110.dev/mono/go/github"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/netutil"
@@ -172,8 +173,7 @@ type process struct {
 
 	bazelBuilder      *coordinator.BazelBuilder
 	apiServer         *api.Api
-	notifier          *webhook.Notifier
-	reconcilers       webhook.Reconcilers
+	eventProcessor    *ghwebhook.EventProcessor
 	gitDataGRPCServer *grpc.Server
 	gitDataUpdater    *git.Updater
 	gitDataPackCache  *git.PackfileCache
@@ -558,18 +558,13 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 		slogger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
 	}
 
-	p.notifier = webhook.NewNotifier()
-	p.reconcilers = webhook.Reconcilers{}
 	// Avoid handing the push reconciler a typed-nil *git.Updater: that would
 	// satisfy the GitSyncer interface as a non-nil value and panic when called.
 	var gitSyncer webhook.GitSyncer
 	if p.gitDataUpdater != nil {
 		gitSyncer = p.gitDataUpdater
 	}
-	p.reconcilers.Register(webhook.NewPushReconciler(p.dao, p.ghClient, p.bazelBuilder, gitSyncer, p.gitDataClient))
-	p.reconcilers.Register(webhook.NewPullRequestReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
-	p.reconcilers.Register(webhook.NewReleaseReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
-	p.reconcilers.Register(webhook.NewIssueCommentReconciler(p.dao, p.ghClient, p.bazelBuilder, p.gitDataClient))
+	p.eventProcessor = webhook.NewEventProcessor(p.dao, p.ghClient, p.bazelBuilder, gitSyncer, p.gitDataClient, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
 
 	addRepo := make(chan *git.RepositoryConfig, 1)
 	go func() {
@@ -582,7 +577,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	if p.opt.ArtifactRegistry != "" {
 		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry)
 	}
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.notifier, addRepo, buildServerConfig(p.opt), artifactRegistry)
+	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.eventProcessor, addRepo, buildServerConfig(p.opt), artifactRegistry)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -677,8 +672,7 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	manager := releasewatcher.NewManager(p.bazelBuilder, p.dao, p.ghClient, nil, interval)
 	go manager.Start(p.ctx)
 
-	scheduler := webhook.NewScheduler(p.dao, p.reconcilers, p.notifier, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
-	go scheduler.Run(p.ctx)
+	go p.eventProcessor.Run(p.ctx)
 
 	if p.gitDataUpdater != nil && p.opt.GitDataRefreshInterval > 0 {
 		go p.gitDataUpdater.Run(p.ctx)

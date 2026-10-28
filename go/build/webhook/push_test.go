@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/build/database"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -21,6 +22,8 @@ import (
 // for [skip ci] detection; headSHA is the head_commit id the reconciler reads
 // config from (must match the commit the githubmock serves when config is
 // fetched).
+const opsURL = "https://github.com/f110/ops"
+
 func pushPayload(t *testing.T, branch, message, headSHA string) []byte {
 	t.Helper()
 	p := map[string]any{
@@ -51,21 +54,21 @@ func TestPushReconciler(t *testing.T) {
 		name           string
 		branch         string
 		commitMessage  string
-		wantState      database.GithubEventState
+		wantState      ghwebhook.State
 		wantSkipReason string
 	}{
 		{
 			name:           "push to a non-main branch is skipped",
 			branch:         "feature",
 			commitMessage:  "normal commit",
-			wantState:      database.GithubEventStateSkipped,
+			wantState:      ghwebhook.StateSkipped,
 			wantSkipReason: "non-main branch",
 		},
 		{
 			name:           "push to main with [skip ci] is skipped",
 			branch:         "master",
 			commitMessage:  "[skip ci] no-op change",
-			wantState:      database.GithubEventStateSkipped,
+			wantState:      ghwebhook.StateSkipped,
 			wantSkipReason: "skip ci marker",
 		},
 	}
@@ -73,22 +76,23 @@ func TestPushReconciler(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			d := newTestDAO()
+			d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 			builder := &recBuilder{}
 			r := NewPushReconciler(d.toOptions(), nil, builder, nil, nil)
 
-			ev := &database.GithubEvent{
+			ev := &ghwebhook.Event{
 				EventType: "push",
 				Payload:   pushPayload(t, tc.branch, tc.commitMessage, "deadbeef"),
-				State:     database.GithubEventStateProcessing,
+				State:     ghwebhook.StateProcessing,
 				CreatedAt: time.Now(),
 			}
-			err := r.Reconcile(context.Background(), ev)
+			err := reconcile[github.PushEvent](r, ev)
 			assertion.MustNoError(t, err)
 			assertion.Equal(t, ev.State, tc.wantState)
 			assertion.Equal(t, builder.called, false)
 
 			var st PushStatus
-			assertion.MustNoError(t, readStatus(ev, &st))
+			assertion.MustNoError(t, ev.ReadStatus(&st))
 			assertion.Equal(t, st.Skipped, true)
 			assertion.Equal(t, st.SkipReason, tc.wantSkipReason)
 		})
@@ -119,17 +123,18 @@ func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
 	slogger.Init()
 
 	d := newTestDAO()
+	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 	builder := &recBuilder{}
 	syncer := &recSyncer{}
 	r := NewPushReconciler(d.toOptions(), nil, builder, syncer, nil)
 
-	ev := &database.GithubEvent{
+	ev := &ghwebhook.Event{
 		EventType: "push",
 		Payload:   pushPayload(t, "feature", "normal commit", "deadbeef"),
-		State:     database.GithubEventStateProcessing,
+		State:     ghwebhook.StateProcessing,
 		CreatedAt: time.Now(),
 	}
-	err := r.Reconcile(context.Background(), ev)
+	err := reconcile[github.PushEvent](r, ev)
 	assertion.MustNoError(t, err)
 
 	// git-data was synced for the pushed clone URL even though the branch is
@@ -137,10 +142,10 @@ func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
 	assertion.MustLen(t, syncer.urls, 1)
 	assertion.Equal(t, syncer.urls[0], "https://github.com/f110/ops.git")
 	assertion.Equal(t, builder.called, false)
-	assertion.Equal(t, ev.State, database.GithubEventStateSkipped)
+	assertion.Equal(t, ev.State, ghwebhook.StateSkipped)
 
 	var st PushStatus
-	assertion.MustNoError(t, readStatus(ev, &st))
+	assertion.MustNoError(t, ev.ReadStatus(&st))
 	assertion.True(t, st.GitSyncedAt != nil)
 	assertion.Equal(t, st.SkipReason, "non-main branch")
 }
@@ -152,8 +157,6 @@ func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
 	logger.SetLogLevel("debug")
 	slogger.Init()
 
-	const opsURL = "https://github.com/f110/ops"
-
 	d := newTestDAO()
 	d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 	d.Job.RegisterListByRepositoryId(1, nil, nil)
@@ -163,18 +166,18 @@ func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
 	gh := github.NewClient(&http.Client{Transport: transport})
 	r := NewPushReconciler(d.toOptions(), gh, builder, nil, nil)
 
-	ev := &database.GithubEvent{
+	ev := &ghwebhook.Event{
 		Id:        1,
 		EventType: "push",
 		Payload:   pushPayload(t, "master", "a change", headSHA),
-		State:     database.GithubEventStateProcessing,
+		State:     ghwebhook.StateProcessing,
 		CreatedAt: time.Now(),
 	}
-	err := r.Reconcile(context.Background(), ev)
+	err := reconcile[github.PushEvent](r, ev)
 	assertion.Error(t, err)
-	assertion.Equal(t, ev.State, database.GithubEventStateFailed)
+	assertion.Equal(t, ev.State, ghwebhook.StateFailed)
 
 	var st PushStatus
-	assertion.MustNoError(t, readStatus(ev, &st))
+	assertion.MustNoError(t, ev.ReadStatus(&st))
 	assertion.Equal(t, len(st.DispatchedTaskIDs), 1)
 }

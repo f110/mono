@@ -21,6 +21,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/github",
+        "//go/github/webhook",
         "//go/grpcutil",
         "//go/logger/slogger",
         "//go/netutil",

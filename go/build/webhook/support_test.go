@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"path"
@@ -17,6 +18,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/git"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -163,14 +165,14 @@ func loadPayload(t *testing.T, name string) []byte {
 	return b
 }
 
-func makeEvent(t *testing.T, eventType, payloadFile string) *database.GithubEvent {
+func makeEvent(t *testing.T, eventType, payloadFile string) *ghwebhook.Event {
 	t.Helper()
-	return &database.GithubEvent{
+	return &ghwebhook.Event{
 		Id:         1,
 		DeliveryId: "test-delivery",
 		EventType:  eventType,
 		Payload:    loadPayload(t, payloadFile),
-		State:      database.GithubEventStateProcessing,
+		State:      ghwebhook.StateProcessing,
 		CreatedAt:  time.Now(),
 	}
 }
@@ -215,4 +217,16 @@ func configTransport(t *testing.T, fullName, eventType string) (http.RoundTrippe
 		)
 	assertion.MustNoError(t, repo.Commits(commit))
 	return m.Transport(), commit.GetSHA()
+}
+
+// reconcile runs rec against ev in the same way as ghwebhook.Scheduler does.
+func reconcile[T any](rec ghwebhook.Reconciler[T], ev *ghwebhook.Event) error {
+	payload := new(T)
+	if err := json.Unmarshal(ev.Payload, payload); err != nil {
+		return err
+	}
+	ev.State = ghwebhook.StateProcessing
+	err := rec.Reconcile(context.Background(), ev, payload)
+	ev.Finalize(err)
+	return err
 }

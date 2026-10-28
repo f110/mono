@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"github.com/google/go-github/v85/github"
 
 	"go.f110.dev/mono/go/build/database"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -24,6 +24,7 @@ func TestPullRequestReconciler(t *testing.T) {
 	slogger.Init()
 
 	const opsURL = "https://github.com/f110/ops"
+	const sandboxURL = "https://github.com/f110/sandbox"
 	trustedUser := &database.TrustedUser{Id: 1, GithubId: 2178441, Username: "octocat"}
 
 	// fixture captures everything a case needs to assert against after
@@ -42,15 +43,16 @@ func TestPullRequestReconciler(t *testing.T) {
 		name        string
 		payload     string
 		setup       func(t *testing.T) *fixture
-		wantState   database.GithubEventState
+		wantState   ghwebhook.State
 		wantBuilder bool
-		check       func(t *testing.T, f *fixture, ev *database.GithubEvent)
+		check       func(t *testing.T, f *fixture, ev *ghwebhook.Event)
 	}{
 		{
 			name:    "opened by an untrusted user posts the allow-build comment and skips",
 			payload: "pull_request_opened.json",
 			setup: func(t *testing.T) *fixture {
 				d := newTestDAO()
+				d.Repository.RegisterListByUrl(opsURL, []*database.SourceRepository{repoFixture(opsURL, "ops")}, nil)
 				d.TrustedUser.RegisterListByGithubId(2178441, nil, sql.ErrNoRows)
 				d.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/ops", 28, nil, sql.ErrNoRows)
 				tr := &recTransport{res: []*http.Response{{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader("{}"))}}}
@@ -61,9 +63,9 @@ func TestPullRequestReconciler(t *testing.T) {
 					builder:  &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSkipped,
+			wantState:   ghwebhook.StateSkipped,
 			wantBuilder: false,
-			check: func(t *testing.T, f *fixture, ev *database.GithubEvent) {
+			check: func(t *testing.T, f *fixture, ev *ghwebhook.Event) {
 				assertion.MustLen(t, f.recTrans.req, 1)
 				bodyBytes, err := io.ReadAll(f.recTrans.req[0].Body)
 				assertion.MustNoError(t, err)
@@ -72,7 +74,7 @@ func TestPullRequestReconciler(t *testing.T) {
 				assertion.True(t, strings.Contains(apiReq.GetBody(), AllowCommand))
 
 				var st PullRequestStatus
-				assertion.MustNoError(t, readStatus(ev, &st))
+				assertion.MustNoError(t, ev.ReadStatus(&st))
 				assertion.Equal(t, st.NotAllowed, true)
 				assertion.Equal(t, st.CommentPosted, true)
 			},
@@ -92,9 +94,9 @@ func TestPullRequestReconciler(t *testing.T) {
 					builder: &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: true,
-			check: func(t *testing.T, f *fixture, _ *database.GithubEvent) {
+			check: func(t *testing.T, f *fixture, _ *ghwebhook.Event) {
 				assertion.MustLen(t, f.builder.jobNames, 1)
 			},
 		},
@@ -117,7 +119,7 @@ func TestPullRequestReconciler(t *testing.T) {
 					builder: &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: true,
 		},
 		{
@@ -135,7 +137,7 @@ func TestPullRequestReconciler(t *testing.T) {
 					builder: &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: true,
 		},
 		{
@@ -143,15 +145,16 @@ func TestPullRequestReconciler(t *testing.T) {
 			payload: "pull_request_closed.json",
 			setup: func(t *testing.T) *fixture {
 				d := newTestDAO()
+				d.Repository.RegisterListByUrl(sandboxURL, []*database.SourceRepository{repoFixture(sandboxURL, "sandbox")}, nil)
 				d.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/sandbox", 2,
 					[]*database.PermitPullRequest{{Id: 7, Repository: "f110/sandbox", Number: 2, CreatedAt: time.Now()}},
 					nil,
 				)
 				return &fixture{dao: d, builder: &recBuilder{}}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: false,
-			check: func(t *testing.T, f *fixture, _ *database.GithubEvent) {
+			check: func(t *testing.T, f *fixture, _ *ghwebhook.Event) {
 				called := f.dao.PermitPullRequest.Called("Delete")
 				assertion.MustLen(t, called, 1)
 				assertion.Equal[any](t, called[0].Args["id"], int32(7))
@@ -168,7 +171,7 @@ func TestPullRequestReconciler(t *testing.T) {
 				ev.Payload = setPullRequestHeadSHA(t, ev.Payload, f.headSHA)
 			}
 
-			err := r.Reconcile(context.Background(), ev)
+			err := reconcile[github.PullRequestEvent](r, ev)
 			assertion.MustNoError(t, err)
 			assertion.Equal(t, ev.State, tc.wantState)
 			assertion.Equal(t, f.builder.called, tc.wantBuilder)
@@ -224,18 +227,18 @@ func TestPullRequestReconciler_RequeuesUntilHeadRevisionAvailable(t *testing.T) 
 	// First loop: the head is not in git-data-service yet, so the reconcile
 	// requeues (returns an error → event FAILED). The build was dispatched and
 	// checkpointed before the validate step.
-	err := r.Reconcile(context.Background(), ev)
+	err := reconcile[github.PullRequestEvent](r, ev)
 	assertion.Error(t, err)
-	assertion.Equal(t, ev.State, database.GithubEventStateFailed)
+	assertion.Equal(t, ev.State, ghwebhook.StateFailed)
 	assertion.MustLen(t, fakeGit.commitSHAs, 1)
 	assertion.MustLen(t, builder.jobNames, 1)
 	assertion.False(t, slices.Contains(fakeGit.treeRefs, headSHA)) // head not read yet
 
 	// Next loop: the revision has landed, so validation reads the head config
 	// and the event succeeds. The build is not dispatched again.
-	err = r.Reconcile(context.Background(), ev)
+	err = reconcile[github.PullRequestEvent](r, ev)
 	assertion.MustNoError(t, err)
-	assertion.Equal(t, ev.State, database.GithubEventStateSucceeded)
+	assertion.Equal(t, ev.State, ghwebhook.StateSucceeded)
 	assertion.True(t, slices.Contains(fakeGit.commitSHAs, headSHA))
 	assertion.True(t, slices.Contains(fakeGit.treeRefs, headSHA))
 	assertion.MustLen(t, builder.jobNames, 1) // no re-dispatch
@@ -245,7 +248,9 @@ func TestPullRequestReconciler_ClosedDoesNotQueryGitData(t *testing.T) {
 	logger.SetLogLevel("debug")
 	slogger.Init()
 
+	const sandboxURL = "https://github.com/f110/sandbox"
 	d := newTestDAO()
+	d.Repository.RegisterListByUrl(sandboxURL, []*database.SourceRepository{repoFixture(sandboxURL, "sandbox")}, nil)
 	d.PermitPullRequest.RegisterListByRepositoryAndNumber("f110/sandbox", 2,
 		[]*database.PermitPullRequest{{Id: 7, Repository: "f110/sandbox", Number: 2, CreatedAt: time.Now()}},
 		nil,
@@ -255,8 +260,8 @@ func TestPullRequestReconciler_ClosedDoesNotQueryGitData(t *testing.T) {
 	r := NewPullRequestReconciler(d.toOptions(), nil, &recBuilder{}, fakeGit)
 	ev := makeEvent(t, "pull_request", "pull_request_closed.json")
 
-	err := r.Reconcile(context.Background(), ev)
+	err := reconcile[github.PullRequestEvent](r, ev)
 	assertion.MustNoError(t, err)
-	assertion.Equal(t, ev.State, database.GithubEventStateSucceeded)
+	assertion.Equal(t, ev.State, ghwebhook.StateSucceeded)
 	assertion.MustLen(t, fakeGit.commitSHAs, 0)
 }

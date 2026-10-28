@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -9,6 +8,7 @@ import (
 	"go.f110.dev/githubmock"
 
 	"go.f110.dev/mono/go/build/database"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -28,7 +28,7 @@ func TestIssueCommentReconciler(t *testing.T) {
 		name        string
 		payload     string
 		setup       func(t *testing.T) *fixture
-		wantState   database.GithubEventState
+		wantState   ghwebhook.State
 		wantBuilder bool
 		check       func(t *testing.T, f *fixture)
 	}{
@@ -75,7 +75,7 @@ func TestIssueCommentReconciler(t *testing.T) {
 					builder: &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: true,
 			check: func(t *testing.T, f *fixture) {
 				created := f.dao.PermitPullRequest.Called("Create")
@@ -91,7 +91,7 @@ func TestIssueCommentReconciler(t *testing.T) {
 			r := NewIssueCommentReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "issue_comment", tc.payload)
 
-			err := r.Reconcile(context.Background(), ev)
+			err := reconcile[github.IssueCommentEvent](r, ev)
 			assertion.MustNoError(t, err)
 			assertion.Equal(t, ev.State, tc.wantState)
 			assertion.Equal(t, f.builder.called, tc.wantBuilder)

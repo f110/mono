@@ -38,8 +38,8 @@ func TestWebhookEndpoint(t *testing.T) {
 		GithubEvent:       ghEvent,
 	}
 
-	notifier := webhook.NewNotifier()
-	s, err := NewApi("", nil, daos, nil, nil, nil, "", notifier, nil, nil, nil)
+	ep := webhook.NewEventProcessor(daos, nil, nil, nil, nil, time.Minute, time.Hour)
+	s, err := NewApi("", nil, daos, nil, nil, nil, "", ep, nil, nil, nil)
 	assertion.MustNoError(t, err)
 
 	body, err := os.ReadFile("testdata/pull_request_opened.json")

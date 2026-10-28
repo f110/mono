@@ -13,6 +13,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -31,41 +32,43 @@ func NewPullRequestReconciler(daos dao.Options, gh *github.Client, builder Build
 
 func (*PullRequestReconciler) EventType() string { return "pull_request" }
 
-func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent) (retErr error) {
-	if err := Claim(ctx, r.dao, ev); err != nil {
-		return err
-	}
-	defer func() { Finalize(ctx, r.dao, ev, retErr) }()
-
-	var event github.PullRequestEvent
-	if err := unmarshalPayload(ev, &event); err != nil {
-		return err
-	}
-
+func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, event *github.PullRequestEvent) error {
 	var status PullRequestStatus
-	if err := readStatus(ev, &status); err != nil {
+	if err := ev.ReadStatus(&status); err != nil {
 		return xerrors.WithStack(err)
+	}
+
+	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
+	if err != nil {
+		return err
+	}
+	if repo == nil {
+		status.Skipped = true
+		status.SkipReason = "unmanaged repository"
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
+		return nil
 	}
 
 	switch event.GetAction() {
 	case "opened":
-		return r.handleOpenedOrSynchronize(ctx, ev, &event, &status, true)
+		return r.handleOpenedOrSynchronize(ctx, ev, event, repo, &status, true)
 	case "synchronize":
-		return r.handleOpenedOrSynchronize(ctx, ev, &event, &status, false)
+		return r.handleOpenedOrSynchronize(ctx, ev, event, repo, &status, false)
 	case "closed":
-		return r.handleClosed(ctx, ev, &event, &status)
+		return r.handleClosed(ctx, ev, event, &status)
 	default:
 		status.Skipped = true
 		status.SkipReason = "unhandled action: " + event.GetAction()
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 }
 
-func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, ev *database.GithubEvent, event *github.PullRequestEvent, status *PullRequestStatus, postCommentIfDenied bool) error {
+func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, ev *ghwebhook.Event, event *github.PullRequestEvent, repo *database.SourceRepository, status *PullRequestStatus, postCommentIfDenied bool) error {
 	if status.Skipped {
-		ev.State = database.GithubEventStateSkipped
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -92,27 +95,22 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 		status.NotAllowed = true
 		status.Skipped = true
 		status.SkipReason = "pull request not allowed"
-		_ = WriteStatus(ev, status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
 	if SkipCI(event) {
 		status.Skipped = true
 		status.SkipReason = "skip ci marker"
-		_ = WriteStatus(ev, status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
 	owner := event.GetRepo().GetOwner().GetLogin()
 	repoName := event.GetRepo().GetName()
 	revision := event.GetPullRequest().GetHead().GetSHA()
-
-	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
-	if err != nil {
-		return err
-	}
 
 	conf, err := fetchDefaultBranchConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepoName(repo), owner, repoName, event.GetRepo().GetDefaultBranch())
 	if err != nil {
@@ -121,15 +119,15 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		status.Skipped = true
 		status.SkipReason = "failed to fetch build config"
-		_ = WriteStatus(ev, status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	if conf == nil {
 		status.Skipped = true
 		status.SkipReason = "no build config or no jobs"
-		_ = WriteStatus(ev, status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -142,14 +140,14 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 			status.DispatchedTaskIDs = ids
 		}
 		if err != nil {
-			_ = WriteStatus(ev, status)
+			_ = ev.WriteStatus(status)
 			return err
 		}
 	}
 
 	if !status.ConfigValidated {
 		if err := r.checkRevisionAvailable(ctx, gitDataRepoName(repo), revision); err != nil {
-			_ = WriteStatus(ev, status)
+			_ = ev.WriteStatus(status)
 			return err
 		}
 		validateState := "failure"
@@ -157,14 +155,14 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 			validateState = "success"
 		}
 		if _, _, err := r.githubClient.Repositories.CreateStatus(ctx, owner, repoName, revision, github.RepoStatus{State: new(validateState), Context: new("Validate config")}); err != nil {
-			_ = WriteStatus(ev, status)
+			_ = ev.WriteStatus(status)
 			return xerrors.WithStack(err)
 		}
 		status.ConfigValidated = true
 	}
 
-	_ = WriteStatus(ev, status)
-	ev.State = database.GithubEventStateSucceeded
+	_ = ev.WriteStatus(status)
+	ev.State = ghwebhook.StateSucceeded
 	return nil
 }
 
@@ -182,9 +180,9 @@ func (r *PullRequestReconciler) checkRevisionAvailable(ctx context.Context, gitD
 	return nil
 }
 
-func (r *PullRequestReconciler) handleClosed(ctx context.Context, ev *database.GithubEvent, event *github.PullRequestEvent, status *PullRequestStatus) error {
+func (r *PullRequestReconciler) handleClosed(ctx context.Context, ev *ghwebhook.Event, event *github.PullRequestEvent, status *PullRequestStatus) error {
 	if status.PermitDeletedId != 0 {
-		ev.State = database.GithubEventStateSucceeded
+		ev.State = ghwebhook.StateSucceeded
 		return nil
 	}
 	permits, err := r.dao.PermitPullRequest.ListByRepositoryAndNumber(ctx, event.GetRepo().GetFullName(), int32(event.GetPullRequest().GetNumber()))
@@ -194,8 +192,8 @@ func (r *PullRequestReconciler) handleClosed(ctx context.Context, ev *database.G
 	if len(permits) == 0 {
 		status.Skipped = true
 		status.SkipReason = "no permit pull request row"
-		_ = WriteStatus(ev, status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	permit := permits[0]
@@ -203,8 +201,8 @@ func (r *PullRequestReconciler) handleClosed(ctx context.Context, ev *database.G
 		return xerrors.WithStack(err)
 	}
 	status.PermitDeletedId = permit.Id
-	_ = WriteStatus(ev, status)
-	ev.State = database.GithubEventStateSucceeded
+	_ = ev.WriteStatus(status)
+	ev.State = ghwebhook.StateSucceeded
 	return nil
 }
 

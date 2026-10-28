@@ -12,6 +12,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 )
 
 // IssueCommentReconciler implements the `/allow-build` flow: a trusted user
@@ -31,31 +32,33 @@ func NewIssueCommentReconciler(daos dao.Options, gh *github.Client, builder Buil
 
 func (*IssueCommentReconciler) EventType() string { return "issue_comment" }
 
-func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent) (retErr error) {
-	if err := Claim(ctx, r.dao, ev); err != nil {
-		return err
-	}
-	defer func() { Finalize(ctx, r.dao, ev, retErr) }()
-
-	var event github.IssueCommentEvent
-	if err := unmarshalPayload(ev, &event); err != nil {
-		return err
-	}
-
+func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, event *github.IssueCommentEvent) error {
 	var status IssueCommentStatus
-	if err := readStatus(ev, &status); err != nil {
+	if err := ev.ReadStatus(&status); err != nil {
 		return xerrors.WithStack(err)
 	}
 
+	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
+	if err != nil {
+		return err
+	}
+	if repo == nil {
+		status.Skipped = true
+		status.SkipReason = "unmanaged repository"
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
+		return nil
+	}
+
 	if status.Skipped {
-		ev.State = database.GithubEventStateSkipped
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	if event.GetAction() != "created" || !strings.Contains(event.GetComment().GetBody(), AllowCommand) {
 		status.Skipped = true
 		status.SkipReason = "comment is not an allow-build trigger"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -66,8 +69,8 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 	if len(users) != 1 {
 		status.Skipped = true
 		status.SkipReason = "sender is not a trusted user"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -92,7 +95,7 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 			event.GetIssue().GetNumber(),
 			&github.IssueComment{Body: new(body)},
 		); err != nil {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return xerrors.WithStack(err)
 		}
 		status.CommentPosted = true
@@ -105,34 +108,28 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 
 		pr, res, err := r.githubClient.PullRequests.Get(ctx, owner, repoName, number)
 		if err != nil {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return xerrors.WithStack(err)
 		}
 		if res.StatusCode != http.StatusOK {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return xerrors.Define("could not get pr").WithStack()
 		}
 		revision := pr.GetHead().GetSHA()
-
-		repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
-		if err != nil {
-			_ = WriteStatus(ev, &status)
-			return err
-		}
 
 		conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepoName(repo), owner, repoName, "HEAD")
 		if err != nil {
 			status.Skipped = true
 			status.SkipReason = "failed to fetch build config"
-			_ = WriteStatus(ev, &status)
-			ev.State = database.GithubEventStateSkipped
+			_ = ev.WriteStatus(&status)
+			ev.State = ghwebhook.StateSkipped
 			return nil
 		}
 		if conf == nil {
 			status.Skipped = true
 			status.SkipReason = "no build config or no jobs"
-			_ = WriteStatus(ev, &status)
-			ev.State = database.GithubEventStateSkipped
+			_ = ev.WriteStatus(&status)
+			ev.State = ghwebhook.StateSkipped
 			return nil
 		}
 
@@ -144,12 +141,12 @@ func (r *IssueCommentReconciler) Reconcile(ctx context.Context, ev *database.Git
 			status.DispatchedTaskIDs = ids
 		}
 		if err != nil {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return err
 		}
 	}
 
-	_ = WriteStatus(ev, &status)
-	ev.State = database.GithubEventStateSucceeded
+	_ = ev.WriteStatus(&status)
+	ev.State = ghwebhook.StateSucceeded
 	return nil
 }

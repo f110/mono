@@ -18,7 +18,6 @@ go_library(
         "//go/build/database",
         "//go/build/database/dao",
         "//go/build/model",
-        "//go/build/webhook",
         "//go/collections/set",
         "//go/enumerable",
         "//go/git",

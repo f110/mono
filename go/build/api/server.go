@@ -17,7 +17,6 @@ import (
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
-	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
@@ -46,19 +45,16 @@ type Api struct {
 	stClient          *storage.S3
 	bazelMirrorPrefix string
 
-	webhookHandler *webhook.Handler
+	webhookHandler http.Handler
 }
 
-// NewApi wires the HTTP/gRPC mux. The webhook endpoint delegates to
-// webhook.Handler, which records the delivery and returns 200 without doing
-// any business logic — reconciliation runs asynchronously inside the leader's
-// Scheduler.
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, notifier *webhook.Notifier, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) (*Api, error) {
+// NewApi wires the HTTP/gRPC mux. The webhook endpoint is served by webhookHandler.
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, webhookHandler http.Handler, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) (*Api, error) {
 	api := &Api{
 		dao:               dao,
 		stClient:          stClient,
 		bazelMirrorPrefix: bazelMirrorPrefix,
-		webhookHandler:    webhook.NewHandler(dao, notifier),
+		webhookHandler:    webhookHandler,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/favicon.ico", http.NotFoundHandler())

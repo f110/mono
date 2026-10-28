@@ -8,9 +8,9 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/build/config"
-	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 )
 
 // ReleaseReconciler handles `release` deliveries. Only the `published`
@@ -28,31 +28,33 @@ func NewReleaseReconciler(daos dao.Options, gh *github.Client, builder Builder, 
 
 func (*ReleaseReconciler) EventType() string { return "release" }
 
-func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent) (retErr error) {
-	if err := Claim(ctx, r.dao, ev); err != nil {
-		return err
-	}
-	defer func() { Finalize(ctx, r.dao, ev, retErr) }()
-
-	var event github.ReleaseEvent
-	if err := unmarshalPayload(ev, &event); err != nil {
-		return err
-	}
-
+func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, event *github.ReleaseEvent) error {
 	var status ReleaseStatus
-	if err := readStatus(ev, &status); err != nil {
+	if err := ev.ReadStatus(&status); err != nil {
 		return xerrors.WithStack(err)
 	}
 
+	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
+	if err != nil {
+		return err
+	}
+	if repo == nil {
+		status.Skipped = true
+		status.SkipReason = "unmanaged repository"
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
+		return nil
+	}
+
 	if status.Skipped {
-		ev.State = database.GithubEventStateSkipped
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	if event.GetAction() != "published" {
 		status.Skipped = true
 		status.SkipReason = "unhandled action: " + event.GetAction()
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -69,25 +71,20 @@ func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEv
 
 	revision := ref.GetObject().GetSHA()
 
-	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
-	if err != nil {
-		return err
-	}
-
 	conf, err := fetchBuildConfig(ctx, r.githubClient, r.gitDataClient, gitDataRepoName(repo), owner, repoName, revision)
 	if err != nil {
 		// Mirrors legacy: log + skip rather than fail.
 		status.Skipped = true
 		status.SkipReason = "failed to fetch build config"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	if conf == nil {
 		status.Skipped = true
 		status.SkipReason = "no build config or no jobs"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -100,12 +97,12 @@ func (r *ReleaseReconciler) Reconcile(ctx context.Context, ev *database.GithubEv
 			status.DispatchedTaskIDs = ids
 		}
 		if err != nil {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return err
 		}
 	}
 
-	_ = WriteStatus(ev, &status)
-	ev.State = database.GithubEventStateSucceeded
+	_ = ev.WriteStatus(&status)
+	ev.State = ghwebhook.StateSucceeded
 	return nil
 }

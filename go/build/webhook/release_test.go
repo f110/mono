@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -9,6 +8,7 @@ import (
 	"go.f110.dev/githubmock"
 
 	"go.f110.dev/mono/go/build/database"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -28,7 +28,7 @@ func TestReleaseReconciler(t *testing.T) {
 		name        string
 		payload     string
 		setup       func(t *testing.T) *fixture
-		wantState   database.GithubEventState
+		wantState   ghwebhook.State
 		wantBuilder bool
 	}{
 		{
@@ -68,7 +68,7 @@ func TestReleaseReconciler(t *testing.T) {
 					builder: &recBuilder{},
 				}
 			},
-			wantState:   database.GithubEventStateSucceeded,
+			wantState:   ghwebhook.StateSucceeded,
 			wantBuilder: true,
 		},
 	}
@@ -79,7 +79,7 @@ func TestReleaseReconciler(t *testing.T) {
 			r := NewReleaseReconciler(f.dao.toOptions(), f.gh, f.builder, nil)
 			ev := makeEvent(t, "release", tc.payload)
 
-			err := r.Reconcile(context.Background(), ev)
+			err := reconcile[github.ReleaseEvent](r, ev)
 			assertion.MustNoError(t, err)
 			assertion.Equal(t, ev.State, tc.wantState)
 			assertion.Equal(t, f.builder.called, tc.wantBuilder)

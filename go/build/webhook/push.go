@@ -10,9 +10,9 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/build/config"
-	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
+	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -42,20 +42,22 @@ func NewPushReconciler(daos dao.Options, gh *github.Client, builder Builder, git
 
 func (*PushReconciler) EventType() string { return "push" }
 
-func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent) (retErr error) {
-	if err := Claim(ctx, r.dao, ev); err != nil {
-		return err
-	}
-	defer func() { Finalize(ctx, r.dao, ev, retErr) }()
-
-	var event github.PushEvent
-	if err := unmarshalPayload(ev, &event); err != nil {
-		return err
-	}
-
+func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, event *github.PushEvent) error {
 	var status PushStatus
-	if err := readStatus(ev, &status); err != nil {
+	if err := ev.ReadStatus(&status); err != nil {
 		return xerrors.WithStack(err)
+	}
+
+	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
+	if err != nil {
+		return err
+	}
+	if repo == nil {
+		status.Skipped = true
+		status.SkipReason = "unmanaged repository"
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
+		return nil
 	}
 
 	if r.gitUpdater != nil && status.GitSyncedAt == nil {
@@ -71,13 +73,13 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 		default:
 			status.GitSyncError = err.Error()
 			slogger.Log.Warn("Failed to sync repository", slogger.E(err), slog.String("repo", cloneURL))
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return err
 		}
 	}
 
 	if status.Skipped {
-		ev.State = database.GithubEventStateSkipped
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 
@@ -86,21 +88,16 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 		// The legacy handler skipped non-main pushes entirely. Preserve that.
 		status.Skipped = true
 		status.SkipReason = "non-main branch"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
-	if SkipCI(&event) {
+	if SkipCI(event) {
 		status.Skipped = true
 		status.SkipReason = "skip ci marker"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
-	}
-
-	repo, err := FindRepository(ctx, r.dao, event.GetRepo().GetHTMLURL())
-	if err != nil {
-		return err
 	}
 
 	owner := event.GetRepo().GetOwner().GetLogin()
@@ -115,8 +112,8 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 		// Empty config or no jobs — nothing more to do.
 		status.Skipped = true
 		status.SkipReason = "no build config or no jobs"
-		_ = WriteStatus(ev, &status)
-		ev.State = database.GithubEventStateSkipped
+		_ = ev.WriteStatus(&status)
+		ev.State = ghwebhook.StateSkipped
 		return nil
 	}
 	if status.ConfigFetchedAt == nil {
@@ -160,14 +157,14 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *database.GithubEvent
 			status.DispatchedTaskIDs = ids
 		}
 		if err != nil {
-			_ = WriteStatus(ev, &status)
+			_ = ev.WriteStatus(&status)
 			return err
 		}
 	}
 
-	if err := WriteStatus(ev, &status); err != nil {
+	if err := ev.WriteStatus(&status); err != nil {
 		return err
 	}
-	ev.State = database.GithubEventStateSucceeded
+	ev.State = ghwebhook.StateSucceeded
 	return nil
 }

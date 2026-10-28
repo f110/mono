@@ -2,7 +2,6 @@ package webhook
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 
 	"github.com/google/go-github/v85/github"
@@ -15,15 +14,6 @@ import (
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/logger/slogger"
 )
-
-// unmarshalPayload deserializes the raw webhook payload into the supplied
-// event struct. Errors are wrapped so the scheduler can log a clean message.
-func unmarshalPayload(ev *database.GithubEvent, out any) error {
-	if err := json.Unmarshal(ev.Payload, out); err != nil {
-		return xerrors.WithMessagef(err, "failed to decode %s payload", ev.EventType)
-	}
-	return nil
-}
 
 // gitDataRepoName returns the key the repository is registered under in
 // git-data-service (source_repository.Name). It is resolved from the repository
