@@ -1,0 +1,34 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "issue",
+    srcs = [
+        "comment.go",
+        "issue.go",
+        "ticket.go",
+    ],
+    importpath = "go.f110.dev/mono/go/issue",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/enumerable",
+        "//go/issue/database",
+        "//go/issue/database/dao",
+        "//go/issue/filter",
+        "@com_github_sergi_go_diff//diffmatchpatch",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "issue_test",
+    srcs = ["issue_test.go"],
+    embed = [":issue"],
+    deps = [
+        "//go/database/dbtestutil",
+        "//go/issue/database",
+        "//go/issue/database/dao",
+        "//go/logger/slogger",
+        "//go/testing/assertion",
+        "@com_github_go_sql_driver_mysql//:mysql",
+    ],
+)

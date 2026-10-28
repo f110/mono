@@ -31,14 +31,14 @@ Status: Draft / Working
      │  Connect API   MCP endpoint   /webhook          │
      │        └────────┬────┘            │             │
      │                 ▼                 ▼             │
-     │               service ◀── event worker          │
+     │                issue ◀── event worker           │
      └─────────┬───────────────────────┬──────────────┘
                ▼                       ▼
             MariaDB              MinIO (添付)
 
      event worker ──▶ GitHub API (PR のコミット一覧)
                   ──▶ git-data-service (change-id の取得)
-     service      ──▶ Build API (CI 結果)
+     issue        ──▶ Build API (CI 結果)
 ```
 
 サーバーは 1 バイナリで、複数レプリカで動かせる。Webhook は受信と処理を分け、受信時は DB に INSERT して即 200 を
@@ -48,11 +48,13 @@ Status: Draft / Working
 
 ### 2.2 実装上の約束
 
-- チケットに関するすべての書き込みは `service` を経由する。Connect API・MCP・event worker は `service` を
+- チケットに関するすべての書き込みは `issue` パッケージを経由する。Connect API・MCP・event worker は `issue` を
   呼ぶだけで、DB を直接更新しない。これにより「人間とエージェントで同じことができる」ことと
   「すべての操作が履歴に残る」ことを 1 箇所で保証する
-- `service` の各操作は、チケットの更新と操作履歴の INSERT を同一トランザクションで行う
-- 操作主体は `context.Context` で受け渡し、`service` は引数で actor を受け取らない
+- `issue` は標準ライブラリと同じく提供するものの型に操作を持たせる。`Tracker` がチケットの作成・取得・検索を、
+  `Ticket` が更新・関連・コメントの追加を、`Comment` が編集・削除を持つ
+- 各操作は、チケットの更新と操作履歴の INSERT を同一トランザクションで行う
+- 操作主体は `context.Context` で受け渡し、操作は引数で actor を受け取らない
 
 ### 2.3 パッケージ構成
 
@@ -60,7 +62,8 @@ Status: Draft / Working
 | --- | --- |
 | `proto/issue` | Connect API の定義 |
 | `go/issue/database`, `go/issue/database/dao` | DB スキーマ（protoc-ddl の `schema.proto`）と生成コード、DAO |
-| `go/issue/service` | チケット操作と管理操作のビジネスロジック・認可・操作履歴の記録 |
+| `go/issue` | issue tracker 本体。チケット・関連・コメント・分類の操作、認可、操作履歴の記録、検索 |
+| `go/issue/filter` | AIP-160 で書いたチケットのフィルタを SQL の条件に変換する |
 | `go/issue/server` | HTTP サーバー。認証（heimdallr JWT）、Connect・MCP・Webhook・添付のハンドラ |
 | `go/issue/webhook` | push / pull_request の Reconciler と trailer の解釈 |
 | `go/github/webhook` | Webhook の受信・永続化・非同期処理のフレームワーク。Build と共用する（§5.1） |
@@ -146,7 +149,9 @@ human の actor を作成する。heimdallr を通過できた時点で利用を
 | エージェントトークンの発行・失効 | ○（自分が所有するもの） | × | × |
 | リポジトリ・分類の管理 | ○ | × | × |
 
-認可は `service` の入り口で `actor.kind` を見て行う。
+認可は `issue` の各操作の入り口で `actor.kind` を見て行う。
+
+コメントは他人のものも編集・削除できる。編集ごとの差分と削除の履歴が残るため、投稿者に制限しない。
 
 ## 5. 差分との紐づけ
 
@@ -199,7 +204,7 @@ issue tracker では、`repository` に登録されていないリポジトリ�
 - `ref` がペイロードの `repository.default_branch` と一致する push だけを処理する
 - ペイロードの各コミットについて trailer を読み、`commit_link` を作成し `commit_linked` の履歴を残す
 - `Fixes:` を持つコミットがあれば、対象チケットのステータスが Done 以外のとき Done にする
-- これらはすべて system を操作主体として `service` を呼ぶ。コミットの author は `commit_link.author` に入り、表示で使う
+- これらはすべて system を操作主体として `issue` を呼ぶ。コミットの author は `commit_link.author` に入り、表示で使う
 - 同じコミットの再処理は UNIQUE 制約で冪等にする
 
 change-id は GitHub の API からは取れないため、git-data-service から取得する。jj はコミットオブジェクトの
@@ -251,7 +256,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 ### 6.2 MCP
 
 MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチケット操作の RPC と 1 対 1 に対応させ、
-管理・トークン系は公開しない。tool の実装は `service` を呼ぶだけで、Connect API と同じ挙動になる。
+管理・トークン系は公開しない。tool の実装は `issue` を呼ぶだけで、Connect API と同じ挙動になる。
 
 ### 6.3 CLI
 
@@ -264,7 +269,7 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（リポジトリ・分類・トークン）を加える。
 
 - URL は `/<番号>` がチケット詳細、`/` が一覧、`/new` が新規作成。サーバーは未知のパスに `index.html` を返す
-- 一覧の検索条件はすべて URL のクエリに持つ（`?q=&status=&priority=&component=&assignee=`）
+- 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
 - Markdown はクライアントでレンダリングしてサニタイズする。`#123` は `/123` へのリンクに置き換える
 
 ## 7. 添付ファイル
@@ -276,12 +281,24 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 
 ## 8. 一覧と検索
 
-全文検索はタイトル・本文・コメントに対する `LIKE '%...%'` で実装する。内部向けでチケット数は多くても数千程度と
-見込み、日本語の分かち書きが必要になる FULLTEXT インデックスや外部の検索エンジンは持ち込まない。
+検索条件は AIP-160 のフィルタで表し、Web UI・CLI・MCP で共通に使う。Connect API では `ListTickets` の `filter` で受け取る。
+
+```
+(status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build クラッシュ
+```
+
+- フィールドは `status` / `priority` / `component` / `assignee` / `reporter` / `title` / `body`
+- `component` / `assignee` / `reporter` は名前で指定する。`assignee:*` は担当が設定されていること
+- `priority` は比較演算子を使える。P0 が最も高いので、`priority < P2` は P0 と P1
+- フィールドを指定しない値は、タイトル・本文・削除されていないコメントに部分一致させる
+
+フィルタは実行時に条件が決まるので、静的にクエリを宣言する protoc-ddl の DAO では扱わない。
+`go/issue/filter` が einride/aip のパーサーで構文解析し、ticket テーブルに対する WHERE 句に変換する。
+部分一致は `LIKE` で行う。内部向けでチケット数は多くても数千程度と見込み、
+日本語の分かち書きが必要になる FULLTEXT インデックスや外部の検索エンジンは持ち込まない。
 件数が増えて遅くなった時点で見直す。
 
-フィルタ（ステータス・優先度・分類・担当）は AND で組み合わせ、各フィールド内は複数値の OR を許す。
-並び順は `updated_at` の降順。
+並び順は `last_activity_at`（コメントを含む最後の操作の時刻）の降順。
 
 ## 9. デプロイ
 
@@ -291,7 +308,7 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 
 ## 10. 実装順序
 
-1. スキーマ・`service`・Connect API（チケット・関連・コメント・履歴）
+1. スキーマ・`issue`・Connect API（チケット・関連・コメント・履歴）
 2. Web UI（一覧・詳細・新規作成）と heimdallr による人間の認証
 3. `go/github/webhook` の切り出しと Build の移行
 4. Webhook（push / pull_request）と trailer の解釈
@@ -311,4 +328,3 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 未決事項:
 
 - Won't Fix のチケットに `Fixes:` が来たときも Done にするか（本設計では Done にする）
-- 他人のコメントを編集・削除できるか
