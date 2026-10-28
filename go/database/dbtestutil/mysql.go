@@ -44,30 +44,54 @@ func NewTemporaryMySQL(ctx context.Context) (*TemporaryMySQL, error) {
 	}
 	dataDir := filepath.Join(baseDir, "data")
 
-	cmd := exec.CommandContext(ctx,
-		"mysql_install_db",
-		"--datadir="+dataDir,
-		"--auth-root-authentication-method=normal",
-		"--skip-test-db",
-	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return nil, xerrors.WithStack(err)
-	}
+	var mysql *exec.Cmd
+	if _, err := exec.LookPath("mysql_install_db"); err == nil {
+		// MySQL 5.7 or earlier
+		cmd := exec.CommandContext(ctx,
+			"mysql_install_db",
+			"--datadir="+dataDir,
+			"--auth-root-authentication-method=normal",
+			"--skip-test-db",
+		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
 
-	mysql := exec.CommandContext(context.Background(),
-		"mysqld_safe",
-		"--basedir="+baseDir,
-		"--datadir="+dataDir,
-		"--socket="+filepath.Join(baseDir, "mysqld.sock"),
-		"--secure-file-priv="+filepath.Join(baseDir, "secure"),
-		"--bind-address=127.0.0.1",
-		fmt.Sprintf("--port=%d", port),
-		"--skip-networking=0",
-		fmt.Sprintf("--lc-messages-dir=%s", filepath.Clean(filepath.Join(filepath.Dir(mysqldPath), "../share/mysql8"))),
-		"--log-error="+filepath.Join(baseDir, "error.log"),
-	)
+		mysql = exec.CommandContext(context.Background(),
+			"mysqld_safe",
+			"--basedir="+baseDir,
+			"--datadir="+dataDir,
+			"--socket="+filepath.Join(baseDir, "mysqld.sock"),
+			"--secure-file-priv="+filepath.Join(baseDir, "secure"),
+			"--bind-address=127.0.0.1",
+			fmt.Sprintf("--port=%d", port),
+			"--skip-networking=0",
+			fmt.Sprintf("--lc-messages-dir=%s", filepath.Clean(filepath.Join(filepath.Dir(mysqldPath), "../share/mysql8"))),
+			"--log-error="+filepath.Join(baseDir, "error.log"),
+		)
+	} else {
+		// MySQL 8.0 or later
+		cmd := exec.CommandContext(ctx, mysqldPath, "--no-defaults", "--initialize-insecure", "--datadir="+dataDir)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+
+		mysql = exec.CommandContext(context.Background(),
+			mysqldPath,
+			"--no-defaults",
+			"--datadir="+dataDir,
+			"--socket="+filepath.Join(baseDir, "mysqld.sock"),
+			"--secure-file-priv="+filepath.Join(baseDir, "secure"),
+			"--bind-address=127.0.0.1",
+			fmt.Sprintf("--port=%d", port),
+			"--mysqlx=OFF",
+			"--log-error="+filepath.Join(baseDir, "error.log"),
+		)
+	}
 	tempMySQL := &TemporaryMySQL{Port: port, mysqldPath: mysqldPath, baseDir: baseDir, cmd: mysql}
 	runtime.SetFinalizer(tempMySQL, func(x *TemporaryMySQL) { x.Close() })
 	return tempMySQL, nil
