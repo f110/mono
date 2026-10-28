@@ -1,0 +1,47 @@
+load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("//build/rules/go:grpc.bzl", "vendor_grpc_source")
+
+go_proto_library(
+    name = "api_go_proto",
+    compilers = ["@rules_go//proto:go_proto"],
+    importpath = "go.f110.dev/mono/go/issue/api",
+    protos = ["//proto/issue"],
+    visibility = ["//visibility:private"],
+)
+
+vendor_grpc_source(
+    name = "vendor_api_proto_source",
+    src = ":api_go_proto",
+)
+
+go_proto_library(
+    name = "api_proto_connect",
+    compilers = ["//build/rules/proto:connect_go_compiler"],
+    embed = [":api_go_proto"],
+    importpath = "go.f110.dev/mono/go/issue/api",
+    protos = ["//proto/issue"],
+    visibility = ["//visibility:private"],
+)
+
+vendor_grpc_source(
+    name = "vendor_connect_source",
+    src = ":api_proto_connect",
+)
+
+go_library(
+    name = "api",
+    srcs = [
+        "issue.connect.go",
+        "issue.pb.go",
+    ],
+    importpath = "go.f110.dev/mono/go/issue/api",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_connectrpc_connect//:connect",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/gofeaturespb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)

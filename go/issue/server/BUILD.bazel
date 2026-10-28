@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "server",
+    srcs = ["server.go"],
+    importpath = "go.f110.dev/mono/go/issue/server",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/enumerable",
+        "//go/issue",
+        "//go/issue/api",
+        "//go/issue/database",
+        "//go/logger/slogger",
+        "@com_connectrpc_connect//:connect",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)
+
+go_test(
+    name = "server_test",
+    srcs = ["server_test.go"],
+    embed = [":server"],
+    deps = [
+        "//go/database/dbtestutil",
+        "//go/issue",
+        "//go/issue/api",
+        "//go/issue/database",
+        "//go/issue/database/dao",
+        "//go/logger/slogger",
+        "//go/testing/assertion",
+        "@com_connectrpc_connect//:connect",
+        "@com_github_go_sql_driver_mysql//:mysql",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)

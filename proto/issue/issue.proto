@@ -1,0 +1,254 @@
+edition = "2023";
+
+package mono.issue;
+
+import "google/protobuf/go_features.proto";
+import "google/protobuf/timestamp.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package                 = "go.f110.dev/mono/go/issue/api";
+
+service Issue {
+  rpc ListTickets(RequestListTickets) returns (ResponseListTickets);
+  // GetTicket returns the ticket with the relations and the comments.
+  rpc GetTicket(RequestGetTicket) returns (ResponseGetTicket);
+  rpc CreateTicket(RequestCreateTicket) returns (ResponseCreateTicket);
+  // UpdateTicket updates only the fields which are set.
+  rpc UpdateTicket(RequestUpdateTicket) returns (ResponseUpdateTicket);
+  rpc AddRelation(RequestAddRelation) returns (ResponseAddRelation);
+  rpc RemoveRelation(RequestRemoveRelation) returns (ResponseRemoveRelation);
+  rpc AddComment(RequestAddComment) returns (ResponseAddComment);
+  rpc EditComment(RequestEditComment) returns (ResponseEditComment);
+  rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
+  rpc ListActivities(RequestListActivities) returns (ResponseListActivities);
+  rpc ListComponents(RequestListComponents) returns (ResponseListComponents);
+  // SaveComponent creates the component if id is not set, otherwise renames it.
+  rpc SaveComponent(RequestSaveComponent) returns (ResponseSaveComponent);
+  rpc ListActors(RequestListActors) returns (ResponseListActors);
+  rpc WhoAmI(RequestWhoAmI) returns (ResponseWhoAmI);
+}
+
+enum TicketStatus {
+  TICKET_STATUS_UNSPECIFIED = 0;
+  TICKET_STATUS_OPEN        = 1;
+  TICKET_STATUS_IN_PROGRESS = 2;
+  TICKET_STATUS_DONE        = 3;
+  TICKET_STATUS_WONT_FIX    = 4;
+}
+
+enum Priority {
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_P0          = 1;
+  PRIORITY_P1          = 2;
+  PRIORITY_P2          = 3;
+  PRIORITY_P3          = 4;
+  PRIORITY_P4          = 5;
+}
+
+enum ActorKind {
+  ACTOR_KIND_UNSPECIFIED = 0;
+  ACTOR_KIND_HUMAN       = 1;
+  ACTOR_KIND_AGENT       = 2;
+  ACTOR_KIND_SYSTEM      = 3;
+}
+
+enum RelationType {
+  RELATION_TYPE_UNSPECIFIED  = 0;
+  RELATION_TYPE_PARENT_OF    = 1;
+  RELATION_TYPE_BLOCKS       = 2;
+  RELATION_TYPE_DUPLICATE_OF = 3;
+  RELATION_TYPE_RELATES_TO   = 4;
+}
+
+enum ActivityKind {
+  ACTIVITY_KIND_UNSPECIFIED      = 0;
+  ACTIVITY_KIND_CREATE           = 1;
+  ACTIVITY_KIND_TITLE            = 2;
+  ACTIVITY_KIND_STATUS           = 3;
+  ACTIVITY_KIND_PRIORITY         = 4;
+  ACTIVITY_KIND_COMPONENT        = 5;
+  ACTIVITY_KIND_ASSIGNEE         = 6;
+  ACTIVITY_KIND_BODY             = 7;
+  ACTIVITY_KIND_RELATION_ADDED   = 8;
+  ACTIVITY_KIND_RELATION_REMOVED = 9;
+  ACTIVITY_KIND_COMMENT          = 10;
+  ACTIVITY_KIND_COMMENT_EDITED   = 11;
+  ACTIVITY_KIND_COMMENT_DELETED  = 12;
+}
+
+message Ticket {
+  // number is the ticket number.
+  int32                     number       = 1;
+  string                    title        = 2;
+  string                    body         = 3;
+  TicketStatus              status       = 4;
+  // priority is PRIORITY_UNSPECIFIED if the priority is not set.
+  Priority                  priority     = 5;
+  int32                     component_id = 6;
+  int32                     assignee_id  = 7;
+  int32                     reporter_id  = 8;
+  google.protobuf.Timestamp created_at   = 9;
+  google.protobuf.Timestamp updated_at   = 10;
+}
+
+message Actor {
+  int32     id       = 1;
+  ActorKind kind     = 2;
+  string    name     = 3;
+  // owner_id is the human who owns the agent.
+  int32     owner_id = 4;
+}
+
+message Component {
+  int32  id   = 1;
+  string name = 2;
+}
+
+message Relation {
+  int32        from = 1;
+  RelationType type = 2;
+  int32        to   = 3;
+}
+
+message Comment {
+  int32                     id         = 1;
+  int32                     ticket     = 2;
+  int32                     actor_id   = 3;
+  string                    body       = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message Activity {
+  int32                     id         = 1;
+  int32                     ticket     = 2;
+  int32                     actor_id   = 3;
+  ActivityKind              kind       = 4;
+  string                    from_value = 5;
+  string                    to_value   = 6;
+  int32                     ref_id     = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message RequestListTickets {
+  // filter is the filter of the tickets written in AIP-160.
+  // e.g. "(status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"
+  string filter = 1;
+}
+
+message ResponseListTickets {
+  repeated Ticket tickets = 1;
+}
+
+message RequestGetTicket {
+  int32 number = 1;
+}
+
+message ResponseGetTicket {
+  Ticket            ticket    = 1;
+  // relations contains the relations which the ticket is on either side of.
+  repeated Relation relations = 2;
+  repeated Comment  comments  = 3;
+}
+
+message RequestCreateTicket {
+  string   title        = 1;
+  string   body         = 2;
+  Priority priority     = 3;
+  int32    component_id = 4;
+  int32    assignee_id  = 5;
+}
+
+message ResponseCreateTicket {
+  Ticket ticket = 1;
+}
+
+message RequestUpdateTicket {
+  int32        number       = 1;
+  string       title        = 2;
+  string       body         = 3;
+  TicketStatus status       = 4;
+  // PRIORITY_UNSPECIFIED clears the priority.
+  Priority     priority     = 5;
+  // 0 clears the component.
+  int32        component_id = 6;
+  // 0 clears the assignee.
+  int32        assignee_id  = 7;
+}
+
+message ResponseUpdateTicket {
+  Ticket ticket = 1;
+}
+
+message RequestAddRelation {
+  Relation relation = 1;
+}
+
+message ResponseAddRelation {
+  Relation relation = 1;
+}
+
+message RequestRemoveRelation {
+  Relation relation = 1;
+}
+
+message ResponseRemoveRelation {}
+
+message RequestAddComment {
+  int32  ticket = 1;
+  string body   = 2;
+}
+
+message ResponseAddComment {
+  Comment comment = 1;
+}
+
+message RequestEditComment {
+  int32  id   = 1;
+  string body = 2;
+}
+
+message ResponseEditComment {
+  Comment comment = 1;
+}
+
+message RequestDeleteComment {
+  int32 id = 1;
+}
+
+message ResponseDeleteComment {}
+
+message RequestListActivities {
+  int32 ticket = 1;
+}
+
+message ResponseListActivities {
+  repeated Activity activities = 1;
+}
+
+message RequestListComponents {}
+
+message ResponseListComponents {
+  repeated Component components = 1;
+}
+
+message RequestSaveComponent {
+  int32  id   = 1;
+  string name = 2;
+}
+
+message ResponseSaveComponent {
+  Component component = 1;
+}
+
+message RequestListActors {}
+
+message ResponseListActors {
+  repeated Actor actors = 1;
+}
+
+message RequestWhoAmI {}
+
+message ResponseWhoAmI {
+  Actor actor = 1;
+}

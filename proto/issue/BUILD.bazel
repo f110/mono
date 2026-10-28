@@ -1,0 +1,11 @@
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+proto_library(
+    name = "issue",
+    srcs = ["issue.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@protobuf//:go_features_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
