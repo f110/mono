@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "webhook",
+    srcs = ["webhook.go"],
+    importpath = "go.f110.dev/mono/go/github/webhook",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger/slogger",
+        "@com_github_google_go_github_v85//github",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "webhook_test",
+    srcs = ["webhook_test.go"],
+    embed = [":webhook"],
+    deps = [
+        "//go/logger",
+        "//go/logger/slogger",
+        "//go/testing/assertion",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)

@@ -63,7 +63,7 @@ Status: Draft / Working
 | `go/issue/service` | チケット操作と管理操作のビジネスロジック・認可・操作履歴の記録 |
 | `go/issue/server` | HTTP サーバー。認証（heimdallr JWT）、Connect・MCP・Webhook・添付のハンドラ |
 | `go/issue/webhook` | push / pull_request の Reconciler と trailer の解釈 |
-| `go/githubutil/webhook` | Webhook の受信・永続化・非同期処理のフレームワーク。Build と共用する（§5.1） |
+| `go/github/webhook` | Webhook の受信・永続化・非同期処理のフレームワーク。Build と共用する（§5.1） |
 | `go/issue/cmd/server` | サーバーのエントリポイント |
 | `go/cmd/issue` | 人間向け CLI |
 | `ts/apps/issue` | Web UI |
@@ -155,7 +155,7 @@ GitHub に issue tracker 専用の webhook を登録し、`push` / `pull_request
 独立させる。署名検証は Build と同じく前段の heimdallr が行う。
 
 受信と処理の流れは Build の `go/build/webhook` と同じなので、アプリケーションに依存しない部分を
-`go/githubutil/webhook` にフレームワークとして取り出し、Build と issue tracker の両方から使う。
+`go/github/webhook` にフレームワークとして取り出し、Build と issue tracker の両方から使う。
 
 | 区分 | 内容 | 現在の Build での実装 |
 | --- | --- | --- |
@@ -292,7 +292,7 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 
 1. スキーマ・`service`・Connect API（チケット・関連・コメント・履歴）
 2. Web UI（一覧・詳細・新規作成）と heimdallr による人間の認証
-3. `go/githubutil/webhook` の切り出しと Build の移行
+3. `go/github/webhook` の切り出しと Build の移行
 4. Webhook（push / pull_request）と trailer の解釈
 5. Build API への `revisions` 追加と CI 結果の表示
 6. 添付ファイル
