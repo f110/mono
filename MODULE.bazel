@@ -125,6 +125,7 @@ use_repo(
     "net_starlark_go",
     "org_cuelang_go",
     "org_golang_google_api",
+    "org_golang_google_genproto_googleapis_api",
     "org_golang_google_genproto_googleapis_rpc",
     "org_golang_google_grpc",
     "org_golang_google_protobuf",
@@ -136,6 +137,7 @@ use_repo(
     "org_golang_x_tools",
     "org_golang_x_tools_go_vcs",
     "org_uber_go_zap",
+    "tech_einride_go_aip",
 )
 go_deps.module_override(
     patch_strip = 5,

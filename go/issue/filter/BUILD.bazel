@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "filter",
+    srcs = ["filter.go"],
+    importpath = "go.f110.dev/mono/go/issue/filter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/issue/database",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_genproto_googleapis_api//expr/v1alpha1",
+        "@tech_einride_go_aip//filtering",
+    ],
+)
+
+go_test(
+    name = "filter_test",
+    srcs = ["filter_test.go"],
+    embed = [":filter"],
+    deps = [
+        "//go/issue/database",
+        "//go/testing/assertion",
+    ],
+)
