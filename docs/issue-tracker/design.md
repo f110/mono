@@ -334,13 +334,14 @@ make run-issue-ui
 
 1. スキーマ・`issue`・Connect API（チケット・関連・コメント・履歴）
 2. Web UI（一覧・詳細・新規作成）と heimdallr による人間の認証
-3. `go/github/webhook` の切り出しと Build の移行
-4. Webhook（push / pull_request）と trailer の解釈
-5. Build API への `revisions` 追加と CI 結果の表示
-6. 添付ファイル
-7. エージェントトークンと MCP
-8. CLI
-9. git-data-service への `change_id` 追加と backfill
+3. 本文とコメントの編集履歴の表示（Connect API と Web UI）
+4. `go/github/webhook` の切り出しと Build の移行
+5. Webhook（push / pull_request）と trailer の解釈
+6. Build API への `revisions` 追加と CI 結果の表示
+7. 添付ファイル
+8. エージェントトークンと MCP
+9. CLI
+10. git-data-service への `change_id` 追加と backfill
 
 ## 11. 今後の課題と未決事項
 
