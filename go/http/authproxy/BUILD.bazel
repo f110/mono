@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "authproxy",
+    srcs = ["authproxy.go"],
+    importpath = "go.f110.dev/mono/go/http/authproxy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger/slogger",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "authproxy_test",
+    srcs = ["authproxy_test.go"],
+    embed = [":authproxy"],
+    deps = [
+        "//go/logger/slogger",
+        "//go/testing/assertion",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+    ],
+)

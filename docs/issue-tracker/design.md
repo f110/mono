@@ -64,10 +64,11 @@ Status: Draft / Working
 | `go/issue/database`, `go/issue/database/dao` | DB スキーマ（protoc-ddl の `schema.proto`）と生成コード、DAO |
 | `go/issue` | issue tracker 本体。チケット・関連・コメント・分類の操作、認可、操作履歴の記録、検索 |
 | `go/issue/filter` | AIP-160 で書いたチケットのフィルタを SQL の条件に変換する |
-| `go/issue/server` | HTTP サーバー。認証（heimdallr JWT）、Connect・MCP・Webhook・添付のハンドラ |
+| `go/issue/server` | HTTP サーバー。Connect・MCP・Webhook・添付のハンドラ |
 | `go/issue/webhook` | push / pull_request の Reconciler と trailer の解釈 |
 | `go/github/webhook` | Webhook の受信・永続化・非同期処理のフレームワーク。Build と共用する（§5.1） |
-| `go/issue/cmd/server` | サーバーのエントリポイント |
+| `go/http/authproxy` | heimdallr の JWT の検証。issue 以外のアプリケーションと共用する（§4.1） |
+| `go/cmd/issue-server` | サーバーのエントリポイント |
 | `go/cmd/issue` | 人間向け CLI |
 | `ts/apps/issue` | Web UI |
 
@@ -127,10 +128,13 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 
 ### 4.1 人間
 
-heimdallr が付与する `X-Auth-Token` ヘッダーの JWT（ES256 署名）を、heimdallr の公開鍵で検証する
-（`go/cmd/unifi-proxy` と同じ方式）。JWT の `sub` クレームに heimdallr のユーザー ID が入っているので、これを
-`actor.subject` と突き合わせ、初回アクセス時に
-human の actor を作成する。heimdallr を通過できた時点で利用を許可されているとみなし、事前登録は不要とする。
+heimdallr が付与する `X-Auth-Token` ヘッダーの JWT（ES256 署名）を、heimdallr の公開鍵で検証する。公開鍵は起動時に
+heimdallr の internal API（`/internal/publickey`）から取得する。検証は `go/http/authproxy` のミドルウェアが行い、
+検証できたクレームを context に入れる。
+
+JWT の `sub` クレームに heimdallr のユーザー ID が入っているので、これを `actor.subject` と突き合わせる。リクエストごとに
+DB を引かないように、actor は書き込みなど actor が必要な操作で初めて引き、存在しなければその時点で human の actor を
+作成する。heimdallr を通過できた時点で利用を許可されているとみなし、事前登録は不要とする。
 
 ### 4.2 エージェント
 

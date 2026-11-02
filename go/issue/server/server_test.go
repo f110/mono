@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -14,9 +17,11 @@ import (
 
 	"connectrpc.com/connect"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-jwt/jwt/v5"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/database/dbtestutil"
+	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/api"
 	"go.f110.dev/mono/go/issue/database"
@@ -246,5 +251,31 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 		var connectErr *connect.Error
 		assertion.True(t, errors.As(err, &connectErr))
+	})
+}
+
+func TestNew(t *testing.T) {
+	daos := dao.NewOptions(newConn(t))
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	assertion.MustNoError(t, err)
+	s := httptest.NewServer(New(issue.NewTracker(daos), &key.PublicKey))
+	t.Cleanup(s.Close)
+	client := api.NewIssueClient(http.DefaultClient, s.URL)
+
+	t.Run("the human of the subject is the actor", func(t *testing.T) {
+		claims := &authproxy.Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: "alice@example.com", ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute))}}
+		token, err := jwt.NewWithClaims(jwt.SigningMethodES256, claims).SignedString(key)
+		assertion.MustNoError(t, err)
+		req := connect.NewRequest(&api.RequestWhoAmI{})
+		req.Header().Set(authproxy.TokenHeaderName, token)
+		res, err := client.WhoAmI(context.Background(), req)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, res.Msg.GetActor().GetName(), "alice@example.com")
+		assertion.Equal(t, res.Msg.GetActor().GetKind(), api.ActorKind_ACTOR_KIND_HUMAN)
+	})
+
+	t.Run("without the token", func(t *testing.T) {
+		_, err := client.WhoAmI(context.Background(), connect.NewRequest(&api.RequestWhoAmI{}))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeUnauthenticated)
 	})
 }

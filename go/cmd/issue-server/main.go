@@ -1,0 +1,131 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"go.f110.dev/protoc-ddl/probe"
+	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/http/authproxy"
+	"go.f110.dev/mono/go/issue"
+	"go.f110.dev/mono/go/issue/database"
+	"go.f110.dev/mono/go/issue/database/dao"
+	"go.f110.dev/mono/go/issue/server"
+	"go.f110.dev/mono/go/logger/slogger"
+)
+
+type serverCommand struct {
+	Addr         string
+	DSN          string
+	PublicKeyURL string
+}
+
+func (c *serverCommand) Flags(fs *cli.FlagSet) {
+	fs.String("addr", "Listen address").Var(&c.Addr).Default(":8080")
+	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
+	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API").Var(&c.PublicKeyURL).Required()
+}
+
+func (c *serverCommand) Run(ctx context.Context) error {
+	publicKey, err := authproxy.FetchPublicKey(ctx, c.PublicKeyURL)
+	if err != nil {
+		return err
+	}
+	conn, err := openDatabase(c.DSN)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if err := waitMigration(ctx, conn); err != nil {
+		return err
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", server.New(issue.NewTracker(dao.NewOptions(conn)), publicKey))
+	mux.HandleFunc("/_livez", func(w http.ResponseWriter, _ *http.Request) {})
+	mux.HandleFunc("/_readyz", func(w http.ResponseWriter, req *http.Request) {
+		if !probe.NewProbe(conn).Ready(req.Context(), database.SchemaHash) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+	})
+	s := &http.Server{Addr: c.Addr, Handler: mux}
+
+	errCh := make(chan error, 1)
+	go func() {
+		slogger.Log.Info("Start server", slog.String("addr", c.Addr))
+		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- xerrors.WithStack(err)
+		}
+		close(errCh)
+	}()
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+	}
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func openDatabase(dsn string) (*sql.DB, error) {
+	cfg, err := mysql.ParseDSN(dsn)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	cfg.ParseTime = true
+	cfg.Loc = time.Local
+	conn, err := sql.Open("mysql", cfg.FormatDSN())
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return conn, nil
+}
+
+// waitMigration waits for the schema of the database to be migrated by the migrate job.
+func waitMigration(ctx context.Context, conn *sql.DB) error {
+	p := probe.NewProbe(conn)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	timeout := time.After(5 * time.Minute)
+	for !p.Ready(ctx, database.SchemaHash) {
+		slogger.Log.Info("Waiting for the migration")
+		select {
+		case <-ticker.C:
+		case <-timeout:
+			return xerrors.Define("waiting for the migration was timed out").WithStack()
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return nil
+}
+
+func main() {
+	c := &serverCommand{}
+	cmd := &cli.Command{
+		Use:   "issue-server",
+		Short: "Start the server of the issue tracker",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return c.Run(ctx)
+		},
+	}
+	c.Flags(cmd.Flags())
+
+	if err := cmd.Execute(os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
+}

@@ -2,7 +2,7 @@
 //
 // Tracker is the entry point. Ticket and Comment have the operations to themselves. Every operation records the
 // activity to the ticket in the same transaction. The actor of the operations is passed by context.Context with
-// WithActor.
+// WithActor or WithHuman.
 package issue
 
 import (
@@ -31,15 +31,27 @@ const maxNameLength = 255
 
 type actorKey struct{}
 
+type subjectKey struct{}
+
 // WithActor returns the context that carries the actor of the operations.
 func WithActor(ctx context.Context, actor *database.Actor) context.Context {
 	return context.WithValue(ctx, actorKey{}, actor)
 }
 
-// ActorFrom returns the actor carried by ctx.
-func ActorFrom(ctx context.Context) (*database.Actor, bool) {
+// WithHuman returns the context that carries the subject which is the user id of heimdallr. The human actor of the
+// subject is looked up only when the operation needs it, and it is created at the first time.
+func WithHuman(ctx context.Context, subject string) context.Context {
+	return context.WithValue(ctx, subjectKey{}, subject)
+}
+
+func actorFrom(ctx context.Context) (*database.Actor, bool) {
 	a, ok := ctx.Value(actorKey{}).(*database.Actor)
 	return a, ok && a != nil
+}
+
+func subjectFrom(ctx context.Context) (string, bool) {
+	s, ok := ctx.Value(subjectKey{}).(string)
+	return s, ok && s != ""
 }
 
 type Tracker struct {
@@ -53,7 +65,7 @@ func NewTracker(daos dao.Options) *Tracker {
 
 // Create creates the ticket in OPEN. componentID and assigneeID are optional.
 func (t *Tracker) Create(ctx context.Context, title, body string, priority database.Priority, componentID, assigneeID *int32) (*Ticket, error) {
-	actor, err := ticketOperator(ctx)
+	actor, err := t.ticketOperator(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +102,7 @@ func (t *Tracker) Create(ctx context.Context, title, body string, priority datab
 
 // Ticket returns the ticket of the number.
 func (t *Tracker) Ticket(ctx context.Context, number int32) (*Ticket, error) {
-	if _, err := actorOf(ctx); err != nil {
+	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
 	ticket, err := t.dao.Ticket.Select(ctx, number)
@@ -105,7 +117,7 @@ func (t *Tracker) Ticket(ctx context.Context, number int32) (*Ticket, error) {
 // Find returns the tickets which match the filter in the descending order of the last activity. The filter is
 // written in AIP-160. See the package filter for the fields.
 func (t *Tracker) Find(ctx context.Context, f string) ([]*Ticket, error) {
-	if _, err := actorOf(ctx); err != nil {
+	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
 	parsed, err := filter.Parse(f)
@@ -158,7 +170,7 @@ func (t *Tracker) Find(ctx context.Context, f string) ([]*Ticket, error) {
 
 // Comment returns the comment which is not deleted.
 func (t *Tracker) Comment(ctx context.Context, id int32) (*Comment, error) {
-	if _, err := actorOf(ctx); err != nil {
+	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
 	c, err := t.dao.Comment.Select(ctx, id)
@@ -174,7 +186,7 @@ func (t *Tracker) Comment(ctx context.Context, id int32) (*Comment, error) {
 }
 
 func (t *Tracker) Components(ctx context.Context) ([]*database.Component, error) {
-	if _, err := actorOf(ctx); err != nil {
+	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
 	components, err := t.dao.Component.ListAll(ctx)
@@ -186,7 +198,7 @@ func (t *Tracker) Components(ctx context.Context) ([]*database.Component, error)
 
 // SaveComponent creates the component if id is 0, otherwise renames it. Only the human can manage the components.
 func (t *Tracker) SaveComponent(ctx context.Context, id int32, name string) (*database.Component, error) {
-	actor, err := actorOf(ctx)
+	actor, err := t.actor(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -217,8 +229,34 @@ func (t *Tracker) SaveComponent(ctx context.Context, id int32, name string) (*da
 	return c, nil
 }
 
+// Me returns the actor of the operations.
+func (t *Tracker) Me(ctx context.Context) (*database.Actor, error) {
+	return t.actor(ctx)
+}
+
+// human returns the human actor of subject. The actor is created at the first access, so the human does not have to
+// be registered in advance.
+func (t *Tracker) human(ctx context.Context, subject string) (*database.Actor, error) {
+	a, err := t.dao.Actor.SelectBySubject(ctx, subject)
+	if err == nil {
+		return a, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, xerrors.WithStack(err)
+	}
+
+	created, err := t.dao.Actor.Create(ctx, &database.Actor{Kind: database.ActorKindHuman, Name: subject, Subject: &subject})
+	if err == nil {
+		return t.dao.Actor.Select(ctx, created.Id)
+	}
+	a, selectErr := t.dao.Actor.SelectBySubject(ctx, subject)
+	if selectErr != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return a, nil
+}
+
 func (t *Tracker) Actors(ctx context.Context) ([]*database.Actor, error) {
-	if _, err := actorOf(ctx); err != nil {
+	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
 	actors, err := t.dao.Actor.ListAll(ctx)
@@ -292,17 +330,30 @@ func (t *Tracker) validateReferences(ctx context.Context, componentID, assigneeI
 	return nil
 }
 
-func actorOf(ctx context.Context) (*database.Actor, error) {
-	actor, ok := ActorFrom(ctx)
-	if !ok {
-		return nil, ErrUnauthenticated.WithStack()
+// authenticated reports whether ctx carries the actor or the subject without looking up the actor.
+func authenticated(ctx context.Context) error {
+	if _, ok := actorFrom(ctx); ok {
+		return nil
 	}
-	return actor, nil
+	if _, ok := subjectFrom(ctx); ok {
+		return nil
+	}
+	return ErrUnauthenticated.WithStack()
+}
+
+func (t *Tracker) actor(ctx context.Context) (*database.Actor, error) {
+	if actor, ok := actorFrom(ctx); ok {
+		return actor, nil
+	}
+	if subject, ok := subjectFrom(ctx); ok {
+		return t.human(ctx, subject)
+	}
+	return nil, ErrUnauthenticated.WithStack()
 }
 
 // ticketOperator returns the actor who can operate the tickets. The system actor can not.
-func ticketOperator(ctx context.Context) (*database.Actor, error) {
-	actor, err := actorOf(ctx)
+func (t *Tracker) ticketOperator(ctx context.Context) (*database.Actor, error) {
+	actor, err := t.actor(ctx)
 	if err != nil {
 		return nil, err
 	}

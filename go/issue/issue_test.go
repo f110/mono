@@ -441,3 +441,33 @@ func TestSaveComponent(t *testing.T) {
 	_, err = f.tracker.SaveComponent(f.as(f.human), 0, strings.Repeat("a", 256))
 	mustErrorIs(t, err, ErrInvalidArgument)
 }
+
+func TestWithHuman(t *testing.T) {
+	f := newFixture(t)
+	ctx := WithHuman(context.Background(), "alice@example.com")
+
+	_, err := f.tracker.Find(ctx, "")
+	assertion.MustNoError(t, err)
+	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
+	mustErrorIs(t, err, sql.ErrNoRows)
+
+	ticket, err := f.tracker.Create(ctx, "title", "body", database.PriorityNone, nil, nil)
+	assertion.MustNoError(t, err)
+	alice, err := f.tracker.Me(ctx)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, alice.Kind, database.ActorKindHuman)
+	assertion.Equal(t, alice.Name, "alice@example.com")
+	assertion.Equal(t, *alice.Subject, "alice@example.com")
+	assertion.Equal(t, ticket.ReporterId, alice.Id)
+
+	again, err := f.tracker.Me(ctx)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, again.Id, alice.Id)
+
+	existing, err := f.tracker.Me(WithHuman(context.Background(), "human@example.com"))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, existing.Id, f.human.Id)
+
+	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "")
+	mustErrorIs(t, err, ErrUnauthenticated)
+}

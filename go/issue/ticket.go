@@ -25,7 +25,7 @@ type Ticket struct {
 // Update updates the fields which are not nil. 0 for componentID or assigneeID clears the field. The system actor can
 // change only the status.
 func (t *Ticket) Update(ctx context.Context, title, body *string, status *database.TicketStatus, priority *database.Priority, componentID, assigneeID *int32) error {
-	actor, err := actorOf(ctx)
+	actor, err := t.tracker.actor(ctx)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (t *Ticket) Update(ctx context.Context, title, body *string, status *databa
 // Relate adds the relation from the ticket to the ticket of the number to. relates_to is stored with the smaller
 // number as from because it is symmetric.
 func (t *Ticket) Relate(ctx context.Context, relationType database.RelationType, to int32) (*database.Relation, error) {
-	actor, err := ticketOperator(ctx)
+	actor, err := t.tracker.ticketOperator(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (t *Ticket) Relate(ctx context.Context, relationType database.RelationType,
 
 // Unrelate removes the relation from the ticket to the ticket of the number to.
 func (t *Ticket) Unrelate(ctx context.Context, relationType database.RelationType, to int32) error {
-	actor, err := ticketOperator(ctx)
+	actor, err := t.tracker.ticketOperator(ctx)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (t *Ticket) Relations(ctx context.Context) ([]*database.Relation, error) {
 }
 
 func (t *Ticket) AddComment(ctx context.Context, body string) (*Comment, error) {
-	actor, err := ticketOperator(ctx)
+	actor, err := t.tracker.ticketOperator(ctx)
 	if err != nil {
 		return nil, err
 	}

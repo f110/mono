@@ -3,12 +3,15 @@ package server
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
+	"net/http"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/api"
 	"go.f110.dev/mono/go/issue/database"
@@ -210,9 +213,9 @@ func (h *IssueHandler) ListActors(ctx context.Context, _ *connect.Request[api.Re
 }
 
 func (h *IssueHandler) WhoAmI(ctx context.Context, _ *connect.Request[api.RequestWhoAmI]) (*connect.Response[api.ResponseWhoAmI], error) {
-	actor, ok := issue.ActorFrom(ctx)
-	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, issue.ErrUnauthenticated)
+	actor, err := h.tracker.Me(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(api.ResponseWhoAmI_builder{Actor: toActor(actor)}.Build()), nil
 }
@@ -310,4 +313,23 @@ func toActivity(a *database.Activity) *api.Activity {
 		RefId:     a.RefId,
 		CreatedAt: timestamppb.New(a.CreatedAt),
 	}.Build()
+}
+
+// New returns the HTTP handler which serves the Connect API. The requests are authenticated by the token of heimdallr,
+// and the human of the subject of the token is the actor of the operations.
+func New(tracker *issue.Tracker, publicKey *ecdsa.PublicKey) http.Handler {
+	path, handler := api.NewIssueHandler(NewIssueHandler(tracker))
+	mux := http.NewServeMux()
+	mux.Handle(path, authproxy.Authenticate(publicKey, withHuman(handler)))
+	return mux
+}
+
+func withHuman(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		if claims, ok := authproxy.ClaimsFrom(ctx); ok {
+			ctx = issue.WithHuman(ctx, claims.Subject)
+		}
+		next.ServeHTTP(w, req.WithContext(ctx))
+	})
 }

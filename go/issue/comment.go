@@ -27,7 +27,7 @@ type Revision struct {
 }
 
 func (c *Comment) Edit(ctx context.Context, body string) error {
-	actor, err := ticketOperator(ctx)
+	actor, err := c.tracker.ticketOperator(ctx)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (c *Comment) Edit(ctx context.Context, body string) error {
 
 // Delete removes the comment logically.
 func (c *Comment) Delete(ctx context.Context) error {
-	actor, err := ticketOperator(ctx)
+	actor, err := c.tracker.ticketOperator(ctx)
 	if err != nil {
 		return err
 	}
