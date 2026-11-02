@@ -1565,6 +1565,7 @@ func (b0 Activity_builder) Build() *Activity {
 type RequestListTickets struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Filter      *string                `protobuf:"bytes,1,opt,name=filter"`
+	xxx_hidden_OrderBy     *string                `protobuf:"bytes,2,opt,name=order_by,json=orderBy"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -1606,9 +1607,24 @@ func (x *RequestListTickets) GetFilter() string {
 	return ""
 }
 
+func (x *RequestListTickets) GetOrderBy() string {
+	if x != nil {
+		if x.xxx_hidden_OrderBy != nil {
+			return *x.xxx_hidden_OrderBy
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *RequestListTickets) SetFilter(v string) {
 	x.xxx_hidden_Filter = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestListTickets) SetOrderBy(v string) {
+	x.xxx_hidden_OrderBy = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
 }
 
 func (x *RequestListTickets) HasFilter() bool {
@@ -1618,15 +1634,28 @@ func (x *RequestListTickets) HasFilter() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
+func (x *RequestListTickets) HasOrderBy() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
 func (x *RequestListTickets) ClearFilter() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Filter = nil
 }
 
+func (x *RequestListTickets) ClearOrderBy() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_OrderBy = nil
+}
+
 type RequestListTickets_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Filter *string
+	Filter  *string
+	OrderBy *string
 }
 
 func (b0 RequestListTickets_builder) Build() *RequestListTickets {
@@ -1634,8 +1663,12 @@ func (b0 RequestListTickets_builder) Build() *RequestListTickets {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Filter != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
 		x.xxx_hidden_Filter = b.Filter
+	}
+	if b.OrderBy != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_OrderBy = b.OrderBy
 	}
 	return m0
 }
@@ -3873,9 +3906,10 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\bto_value\x18\x06 \x01(\tR\atoValue\x12\x15\n" +
 	"\x06ref_id\x18\a \x01(\x05R\x05refId\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\",\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"G\n" +
 	"\x12RequestListTickets\x12\x16\n" +
-	"\x06filter\x18\x01 \x01(\tR\x06filter\"C\n" +
+	"\x06filter\x18\x01 \x01(\tR\x06filter\x12\x19\n" +
+	"\border_by\x18\x02 \x01(\tR\aorderBy\"C\n" +
 	"\x13ResponseListTickets\x12,\n" +
 	"\atickets\x18\x01 \x03(\v2\x12.mono.issue.TicketR\atickets\"*\n" +
 	"\x10RequestGetTicket\x12\x16\n" +

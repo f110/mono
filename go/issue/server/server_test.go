@@ -240,6 +240,8 @@ func TestIssueHandler(t *testing.T) {
 	t.Run("errors are mapped to the codes", func(t *testing.T) {
 		_, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{Filter: new("status = CLOSED")}.Build()))
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+		_, err = client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{OrderBy: new("title")}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 		_, err = client.GetTicket(ctx, connect.NewRequest(api.RequestGetTicket_builder{Number: new(int32(100))}.Build()))
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 		_, err = client.CreateTicket(ctx, connect.NewRequest(&api.RequestCreateTicket{}))

@@ -381,6 +381,7 @@ func TestFind(t *testing.T) {
 	assertion.MustNoError(t, deleted.Delete(f.as(f.human)))
 	for i, ticket := range []*Ticket{t1, t2, t3} {
 		ticket.LastActivityAt = time.Now().Add(time.Duration(i-3) * time.Hour).Truncate(time.Second)
+		ticket.CreatedAt = time.Now().Add(time.Duration(i-10) * time.Hour).Truncate(time.Second)
 		assertion.MustNoError(t, f.dao.Ticket.Update(context.Background(), ticket.Ticket))
 	}
 
@@ -409,7 +410,7 @@ func TestFind(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.filter, func(t *testing.T) {
-			tickets, err := f.tracker.Find(f.as(f.human), tc.filter)
+			tickets, err := f.tracker.Find(f.as(f.human), tc.filter, "")
 			assertion.MustNoError(t, err)
 			var got []int32
 			for _, v := range tickets {
@@ -419,8 +420,40 @@ func TestFind(t *testing.T) {
 		})
 	}
 
-	_, err = f.tracker.Find(f.as(f.human), "status = CLOSED")
+	_, err = f.tracker.Find(f.as(f.human), "status = CLOSED", "")
 	mustErrorIs(t, err, ErrInvalidArgument)
+
+	orders := []struct {
+		orderBy string
+		want    []int32
+	}{
+		{orderBy: "number", want: []int32{t1.Id, t2.Id, t3.Id}},
+		{orderBy: "number desc", want: []int32{t3.Id, t2.Id, t1.Id}},
+		{orderBy: "status, number", want: []int32{t1.Id, t2.Id, t3.Id}},
+		{orderBy: "priority", want: []int32{t1.Id, t2.Id, t3.Id}},
+		{orderBy: "priority desc", want: []int32{t2.Id, t1.Id, t3.Id}},
+		{orderBy: "component", want: []int32{t1.Id, t3.Id, t2.Id}},
+		{orderBy: "assignee", want: []int32{t1.Id, t3.Id, t2.Id}},
+		{orderBy: "assignee desc", want: []int32{t3.Id, t1.Id, t2.Id}},
+		{orderBy: "created_at", want: []int32{t1.Id, t2.Id, t3.Id}},
+		{orderBy: "created_at desc", want: []int32{t3.Id, t2.Id, t1.Id}},
+		{orderBy: "last_activity_at", want: []int32{t1.Id, t2.Id, t3.Id}},
+	}
+	for _, tc := range orders {
+		t.Run(tc.orderBy, func(t *testing.T) {
+			tickets, err := f.tracker.Find(f.as(f.human), "", tc.orderBy)
+			assertion.MustNoError(t, err)
+			var got []int32
+			for _, v := range tickets {
+				got = append(got, v.Id)
+			}
+			assertion.Equal(t, got, tc.want)
+		})
+	}
+	for _, orderBy := range []string{"title", "number up", "number desc desc"} {
+		_, err = f.tracker.Find(f.as(f.human), "", orderBy)
+		mustErrorIs(t, err, ErrInvalidArgument)
+	}
 }
 
 func TestSaveComponent(t *testing.T) {
@@ -446,7 +479,7 @@ func TestWithHuman(t *testing.T) {
 	f := newFixture(t)
 	ctx := WithHuman(context.Background(), "alice@example.com")
 
-	_, err := f.tracker.Find(ctx, "")
+	_, err := f.tracker.Find(ctx, "", "")
 	assertion.MustNoError(t, err)
 	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
 	mustErrorIs(t, err, sql.ErrNoRows)
@@ -468,6 +501,6 @@ func TestWithHuman(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, existing.Id, f.human.Id)
 
-	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "")
+	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "", "")
 	mustErrorIs(t, err, ErrUnauthenticated)
 }

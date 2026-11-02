@@ -30,7 +30,7 @@ func NewIssueHandler(t *issue.Tracker) *IssueHandler {
 }
 
 func (h *IssueHandler) ListTickets(ctx context.Context, req *connect.Request[api.RequestListTickets]) (*connect.Response[api.ResponseListTickets], error) {
-	tickets, err := h.tracker.Find(ctx, req.Msg.GetFilter())
+	tickets, err := h.tracker.Find(ctx, req.Msg.GetFilter(), req.Msg.GetOrderBy())
 	if err != nil {
 		return nil, toConnectError(err)
 	}

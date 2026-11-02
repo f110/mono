@@ -134,6 +134,9 @@ message RequestListTickets {
   // filter is the filter of the tickets written in AIP-160.
   // e.g. "(status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"
   string filter = 1;
+  // order_by is the order of the tickets written in AIP-132, e.g. "priority, last_activity_at desc". The fields are number,
+  // status, priority, component, assignee, created_at and last_activity_at. The default is "last_activity_at desc".
+  string order_by = 2;
 }
 
 message ResponseListTickets {

@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -114,9 +115,10 @@ func (t *Tracker) Ticket(ctx context.Context, number int32) (*Ticket, error) {
 	return &Ticket{Ticket: ticket, tracker: t}, nil
 }
 
-// Find returns the tickets which match the filter in the descending order of the last activity. The filter is
-// written in AIP-160. See the package filter for the fields.
-func (t *Tracker) Find(ctx context.Context, f string) ([]*Ticket, error) {
+// Find returns the tickets which match the filter in the order of orderBy. The filter is written in AIP-160. See the
+// package filter for the fields. orderBy is written in AIP-132, and the fields are the keys of orderFields. The tickets
+// are ordered by the last activity in the descending order if orderBy is empty.
+func (t *Tracker) Find(ctx context.Context, f, orderBy string) ([]*Ticket, error) {
 	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
@@ -124,13 +126,17 @@ func (t *Tracker) Find(ctx context.Context, f string) ([]*Ticket, error) {
 	if err != nil {
 		return nil, xerrors.WithMessage(ErrInvalidArgument, err.Error())
 	}
+	order, err := orderClause(orderBy)
+	if err != nil {
+		return nil, err
+	}
 
 	query := "SELECT `id` FROM `ticket`"
 	where, args := parsed.Where()
 	if where != "" {
 		query += " WHERE " + where
 	}
-	query += " ORDER BY `last_activity_at` DESC, `id` DESC"
+	query += " ORDER BY " + order
 	rows, err := t.conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -371,4 +377,46 @@ func validateName(field, value string) error {
 		return xerrors.WithMessagef(ErrInvalidArgument, "%s must be at most %d characters", field, maxNameLength)
 	}
 	return nil
+}
+
+// orderFields is the fields which the tickets can be ordered by. absent is the expression which is true if the field is
+// not set, so that the ticket without the field comes last in both directions.
+var orderFields = map[string]struct {
+	expr   string
+	absent string
+}{
+	"number":           {expr: "`id`"},
+	"status":           {expr: "`status`"},
+	"priority":         {expr: "`priority`", absent: "`priority` = 0"},
+	"component":        {expr: "(SELECT `name` FROM `component` WHERE `component`.`id` = `ticket`.`component_id`)", absent: "`component_id` IS NULL"},
+	"assignee":         {expr: "(SELECT `name` FROM `actor` WHERE `actor`.`id` = `ticket`.`assignee_id`)", absent: "`assignee_id` IS NULL"},
+	"created_at":       {expr: "`created_at`"},
+	"last_activity_at": {expr: "`last_activity_at`"},
+}
+
+// orderClause returns ORDER BY clause of orderBy. The ticket number in the descending order breaks the tie.
+func orderClause(orderBy string) (string, error) {
+	if strings.TrimSpace(orderBy) == "" {
+		orderBy = "last_activity_at desc"
+	}
+	var exprs []string
+	for _, v := range strings.Split(orderBy, ",") {
+		terms := strings.Fields(v)
+		if len(terms) == 0 || len(terms) > 2 || (len(terms) == 2 && terms[1] != "desc") {
+			return "", xerrors.WithMessagef(ErrInvalidArgument, "invalid order_by: %s", orderBy)
+		}
+		field, ok := orderFields[terms[0]]
+		if !ok {
+			return "", xerrors.WithMessagef(ErrInvalidArgument, "unknown field of order_by: %s", terms[0])
+		}
+		direction := "ASC"
+		if len(terms) == 2 {
+			direction = "DESC"
+		}
+		if field.absent != "" {
+			exprs = append(exprs, field.absent)
+		}
+		exprs = append(exprs, field.expr+" "+direction)
+	}
+	return strings.Join(append(exprs, "`id` DESC"), ", "), nil
 }
