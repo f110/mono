@@ -17,3 +17,12 @@ def register_development_environments():
             "@kwok//:file",
         ],
     )
+
+    native.sh_binary(
+        name = "env_issue",
+        srcs = ["//go/cmd/monodev"],
+        args = [
+            "env",
+            "issue",
+        ],
+    )

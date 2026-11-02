@@ -68,3 +68,13 @@ run-api:
 .PHONY: run-migrate
 run-migrate:
 	bazel run @protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/build/database/schema.sql --driver mysql --dsn "$(DSN)" --execute
+
+ISSUE_DSN = issue:issue@tcp($(DATABASE_HOST):$(DATABASE_PORT))/issue
+
+.PHONY: run-issue
+run-issue:
+	bazel run //go/cmd/issue-server -- --addr 127.0.0.1:8094 --dsn "$(ISSUE_DSN)" --public-key-url http://127.0.0.1:8095/internal/publickey --log-level debug
+
+.PHONY: run-issue-migrate
+run-issue-migrate:
+	bazel run @protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/issue/database/schema.sql --driver mysql --dsn "$(ISSUE_DSN)" --execute

@@ -229,6 +229,28 @@ var buildSeed = &mysqlSeedDirectory{
 	Database: buildDatabase,
 }
 
+var issueDatabase = &mysqlDatabase{
+	Name:  "issue",
+	MySQL: mysql,
+}
+
+var issueMySQLUser = &mysqlUser{
+	Name:     "issue",
+	Password: "issue",
+	MySQL:    mysql,
+	Database: issueDatabase,
+}
+
+// issueAuthProxy works as heimdallr in front of the server of the issue tracker which listens on Backend. The server
+// fetches the public key to verify the token from PublicKeyPath.
+var issueAuthProxy = &authProxy{
+	Name:    "issue-auth-proxy",
+	Listen:  8095,
+	Backend: 8094,
+	KeyDir:  ".authproxy",
+	Subject: "dev@example.com",
+}
+
 type simpleCommandComponent struct {
 	Name               string
 	Type               componentType

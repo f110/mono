@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 go_library(
     name = "monodev_lib",
     srcs = [
+        "authproxy.go",
         "cluster.go",
         "component.go",
         "devenv.go",
@@ -23,6 +24,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/grpcutil",
+        "//go/http/authproxy",
         "//go/k8s/kind",
         "//go/logger",
         "//go/logger/slogger",
@@ -34,6 +36,7 @@ go_library(
         "@com_github_go_git_go_git_v5//plumbing/transport",
         "@com_github_go_git_go_git_v5//plumbing/transport/http",
         "@com_github_go_sql_driver_mysql//:mysql",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
         "@dev_f110_go_go_memcached//client",
         "@dev_f110_go_xerrors//:xerrors",
         "@in_gopkg_yaml_v3//:yaml_v3",
@@ -64,14 +67,18 @@ go_binary(
 go_test(
     name = "monodev_test",
     srcs = [
+        "authproxy_test.go",
         "devenv_test.go",
         "kwok_test.go",
         "seed_test.go",
     ],
     embed = [":monodev_lib"],
     deps = [
+        "//go/http/authproxy",
         "//go/logger/slogger",
+        "//go/netutil",
         "//go/testing/assertion",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
         "@com_github_stretchr_testify//assert",
         "@io_k8s_client_go//tools/clientcmd",
     ],
