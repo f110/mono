@@ -251,15 +251,16 @@ func toDBRelationType(t api.RelationType) (database.RelationType, error) {
 
 func toTicket(t *issue.Ticket) *api.Ticket {
 	b := api.Ticket_builder{
-		Number:      new(t.Id),
-		Title:       new(t.Title),
-		Body:        new(t.Body),
-		Status:      new(api.TicketStatus(t.Status + 1)),
-		Priority:    new(api.Priority(t.Priority)),
-		ComponentId: t.ComponentId,
-		AssigneeId:  t.AssigneeId,
-		ReporterId:  new(t.ReporterId),
-		CreatedAt:   timestamppb.New(t.CreatedAt),
+		Number:         new(t.Id),
+		Title:          new(t.Title),
+		Body:           new(t.Body),
+		Status:         new(api.TicketStatus(t.Status + 1)),
+		Priority:       new(api.Priority(t.Priority)),
+		ComponentId:    t.ComponentId,
+		AssigneeId:     t.AssigneeId,
+		ReporterId:     new(t.ReporterId),
+		CreatedAt:      timestamppb.New(t.CreatedAt),
+		LastActivityAt: timestamppb.New(t.LastActivityAt),
 	}
 	if t.UpdatedAt != nil {
 		b.UpdatedAt = timestamppb.New(*t.UpdatedAt)

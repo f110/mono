@@ -78,3 +78,9 @@ run-issue:
 .PHONY: run-issue-migrate
 run-issue-migrate:
 	bazel run @protoc_ddl//cmd/migrate -- --schema $(CURDIR)/go/issue/database/schema.sql --driver mysql --dsn "$(ISSUE_DSN)" --execute
+
+.PHONY: run-issue-ui
+# Runs the dev server of the web UI. The requests of the API are proxied to
+# the proxy started by `bazel run //:env_issue`.
+run-issue-ui:
+	bazel run //ts/apps/issue:dev

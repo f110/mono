@@ -1,0 +1,161 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library", "js_run_binary", "js_run_devserver")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//ts/apps/issue:vite/package_json.bzl", "bin")
+
+SRC_PATTERNS = [
+    "**/*.tsx",
+    "**/*.ts",
+]
+
+TEST_PATTERNS = [
+    "*.test.tsx",
+    "*.test.ts",
+    "*.spec.tsx",
+    "*.spec.ts",
+]
+
+ASSET_PATTERNS = [
+    "index.html",
+    "src/*.svg",
+    "src/*.css",
+]
+
+GENERATED_PACKAGES = [
+    "//ts/apps/issue/src/connect",
+]
+
+NPM_DEPS = [
+    "//ts/apps/issue:node_modules/@bufbuild/protobuf",
+    "//ts/apps/issue:node_modules/@connectrpc/connect",
+    "//ts/apps/issue:node_modules/@connectrpc/connect-query",
+    "//ts/apps/issue:node_modules/@connectrpc/connect-web",
+    "//ts/apps/issue:node_modules/@emotion/react",
+    "//ts/apps/issue:node_modules/@emotion/styled",
+    "//ts/apps/issue:node_modules/@mui/material",
+    "//ts/apps/issue:node_modules/@tanstack/react-query",
+    "//ts/apps/issue:node_modules/@tanstack/react-router",
+    "//ts/apps/issue:node_modules/dayjs",
+    "//ts/apps/issue:node_modules/github-markdown-css",
+    "//ts/apps/issue:node_modules/highlight.js",
+    "//ts/apps/issue:node_modules/react",
+    "//ts/apps/issue:node_modules/react-dom",
+    "//ts/apps/issue:node_modules/react-markdown",
+    "//ts/apps/issue:node_modules/rehype-highlight",
+    "//ts/apps/issue:node_modules/rehype-sanitize",
+    "//ts/apps/issue:node_modules/remark-gfm",
+    "//ts/apps/issue:node_modules/@types/react",
+    "//ts/apps/issue:node_modules/@types/react-dom",
+    "//ts/apps/issue:node_modules/@types/node",
+    "//ts/apps/issue:node_modules/@vitejs/plugin-react",
+    "//ts/apps/issue:node_modules/vite",
+]
+
+npm_link_all_packages()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//ts/apps/issue:__subpackages__"],
+    deps = [
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+    ],
+)
+
+bin.vite_binary(
+    name = "vite",
+    chdir = package_name(),
+    data = ["vite.config.ts"],
+)
+
+js_run_binary(
+    name = "vite_build_dev",
+    srcs = glob(
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
+    ) + GENERATED_PACKAGES + NPM_DEPS,
+    args = [
+        "build",
+        "--mode",
+        "dev",
+    ],
+    chdir = package_name(),
+    out_dirs = [
+        "dist_dev",
+    ],
+    tool = ":vite",
+    visibility = ["//visibility:public"],
+)
+
+js_run_binary(
+    name = "vite_build_prod",
+    srcs = glob(
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
+    ) + GENERATED_PACKAGES + NPM_DEPS,
+    args = [
+        "build",
+        "--mode",
+        "prod",
+    ],
+    chdir = package_name(),
+    out_dirs = [
+        "dist_prod",
+    ],
+    tool = ":vite",
+    visibility = ["//visibility:public"],
+)
+
+ts_project(
+    name = "typecheck_app",
+    srcs = glob(
+        include = [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+        ],
+        exclude = TEST_PATTERNS,
+    ),
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    tsconfig = "tsconfig.app.json",
+    deps = GENERATED_PACKAGES + NPM_DEPS,
+)
+
+ts_project(
+    name = "typecheck_node",
+    srcs = ["vite.config.ts"],
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    tsconfig = "tsconfig.node.json",
+    deps = [
+        "//ts/apps/issue:node_modules/@types/node",
+        "//ts/apps/issue:node_modules/@vitejs/plugin-react",
+        "//ts/apps/issue:node_modules/vite",
+    ],
+)
+
+filegroup(
+    name = "typecheck",
+    srcs = [
+        ":typecheck_app_typecheck",
+        ":typecheck_node_typecheck",
+    ],
+)
+
+js_run_devserver(
+    name = "dev",
+    args = ["dev"],
+    data = glob(
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
+    ) + GENERATED_PACKAGES + NPM_DEPS + ["package.json"],
+    tool = ":vite",
+)

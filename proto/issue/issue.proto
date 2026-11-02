@@ -78,17 +78,19 @@ enum ActivityKind {
 
 message Ticket {
   // number is the ticket number.
-  int32                     number       = 1;
-  string                    title        = 2;
-  string                    body         = 3;
-  TicketStatus              status       = 4;
+  int32                     number           = 1;
+  string                    title            = 2;
+  string                    body             = 3;
+  TicketStatus              status           = 4;
   // priority is PRIORITY_UNSPECIFIED if the priority is not set.
-  Priority                  priority     = 5;
-  int32                     component_id = 6;
-  int32                     assignee_id  = 7;
-  int32                     reporter_id  = 8;
-  google.protobuf.Timestamp created_at   = 9;
-  google.protobuf.Timestamp updated_at   = 10;
+  Priority                  priority         = 5;
+  int32                     component_id     = 6;
+  int32                     assignee_id      = 7;
+  int32                     reporter_id      = 8;
+  google.protobuf.Timestamp created_at       = 9;
+  google.protobuf.Timestamp updated_at       = 10;
+  // last_activity_at is the time of the last operation to the ticket including the comments.
+  google.protobuf.Timestamp last_activity_at = 11;
 }
 
 message Actor {

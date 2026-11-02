@@ -310,6 +310,26 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 - MariaDB と MinIO は既存のものに DB とバケットを追加して使う
 - heimdallr にバックエンドを登録する。`/webhook` は GitHub の署名検証、それ以外は人間の認証を通す
 
+### 9.1 ローカル開発
+
+`bazel run //:env_issue`（monodev）が MySQL と、heimdallr の代わりになる認証プロキシを起動する。
+認証プロキシは `.authproxy` に鍵を生成し、開発用ユーザーのトークンを付けてサーバーへ転送する。公開鍵は heimdallr の
+internal API と同じ `/internal/publickey` で返す。サーバーは本番と同じく公開鍵でトークンを検証するので、認証を省略する
+仕組みは持たない。
+
+```
+bazel run //:env_issue
+make run-issue-migrate
+make run-issue
+make run-issue-ui
+```
+
+| ポート | 内容 |
+| --- | --- |
+| 8094 | サーバー |
+| 8095 | 認証プロキシ |
+| 8302 | Web UI の開発サーバー。API へのリクエストは認証プロキシに中継する |
+
 ## 10. 実装順序
 
 1. スキーマ・`issue`・Connect API（チケット・関連・コメント・履歴）

@@ -297,21 +297,22 @@ func (x ActivityKind) Number() protoreflect.EnumNumber {
 }
 
 type Ticket struct {
-	state                  protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Number      int32                  `protobuf:"varint,1,opt,name=number"`
-	xxx_hidden_Title       *string                `protobuf:"bytes,2,opt,name=title"`
-	xxx_hidden_Body        *string                `protobuf:"bytes,3,opt,name=body"`
-	xxx_hidden_Status      TicketStatus           `protobuf:"varint,4,opt,name=status,enum=mono.issue.TicketStatus"`
-	xxx_hidden_Priority    Priority               `protobuf:"varint,5,opt,name=priority,enum=mono.issue.Priority"`
-	xxx_hidden_ComponentId int32                  `protobuf:"varint,6,opt,name=component_id,json=componentId"`
-	xxx_hidden_AssigneeId  int32                  `protobuf:"varint,7,opt,name=assignee_id,json=assigneeId"`
-	xxx_hidden_ReporterId  int32                  `protobuf:"varint,8,opt,name=reporter_id,json=reporterId"`
-	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt"`
-	xxx_hidden_UpdatedAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt"`
-	XXX_raceDetectHookData protoimpl.RaceDetectHookData
-	XXX_presence           [1]uint32
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Number         int32                  `protobuf:"varint,1,opt,name=number"`
+	xxx_hidden_Title          *string                `protobuf:"bytes,2,opt,name=title"`
+	xxx_hidden_Body           *string                `protobuf:"bytes,3,opt,name=body"`
+	xxx_hidden_Status         TicketStatus           `protobuf:"varint,4,opt,name=status,enum=mono.issue.TicketStatus"`
+	xxx_hidden_Priority       Priority               `protobuf:"varint,5,opt,name=priority,enum=mono.issue.Priority"`
+	xxx_hidden_ComponentId    int32                  `protobuf:"varint,6,opt,name=component_id,json=componentId"`
+	xxx_hidden_AssigneeId     int32                  `protobuf:"varint,7,opt,name=assignee_id,json=assigneeId"`
+	xxx_hidden_ReporterId     int32                  `protobuf:"varint,8,opt,name=reporter_id,json=reporterId"`
+	xxx_hidden_CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt"`
+	xxx_hidden_UpdatedAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt"`
+	xxx_hidden_LastActivityAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_activity_at,json=lastActivityAt"`
+	XXX_raceDetectHookData    protoimpl.RaceDetectHookData
+	XXX_presence              [1]uint32
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -419,44 +420,51 @@ func (x *Ticket) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Ticket) GetLastActivityAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_LastActivityAt
+	}
+	return nil
+}
+
 func (x *Ticket) SetNumber(v int32) {
 	x.xxx_hidden_Number = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 11)
 }
 
 func (x *Ticket) SetTitle(v string) {
 	x.xxx_hidden_Title = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 11)
 }
 
 func (x *Ticket) SetBody(v string) {
 	x.xxx_hidden_Body = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 11)
 }
 
 func (x *Ticket) SetStatus(v TicketStatus) {
 	x.xxx_hidden_Status = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 11)
 }
 
 func (x *Ticket) SetPriority(v Priority) {
 	x.xxx_hidden_Priority = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 11)
 }
 
 func (x *Ticket) SetComponentId(v int32) {
 	x.xxx_hidden_ComponentId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 11)
 }
 
 func (x *Ticket) SetAssigneeId(v int32) {
 	x.xxx_hidden_AssigneeId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 11)
 }
 
 func (x *Ticket) SetReporterId(v int32) {
 	x.xxx_hidden_ReporterId = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 10)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 11)
 }
 
 func (x *Ticket) SetCreatedAt(v *timestamppb.Timestamp) {
@@ -465,6 +473,10 @@ func (x *Ticket) SetCreatedAt(v *timestamppb.Timestamp) {
 
 func (x *Ticket) SetUpdatedAt(v *timestamppb.Timestamp) {
 	x.xxx_hidden_UpdatedAt = v
+}
+
+func (x *Ticket) SetLastActivityAt(v *timestamppb.Timestamp) {
+	x.xxx_hidden_LastActivityAt = v
 }
 
 func (x *Ticket) HasNumber() bool {
@@ -537,6 +549,13 @@ func (x *Ticket) HasUpdatedAt() bool {
 	return x.xxx_hidden_UpdatedAt != nil
 }
 
+func (x *Ticket) HasLastActivityAt() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_LastActivityAt != nil
+}
+
 func (x *Ticket) ClearNumber() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Number = 0
@@ -585,19 +604,24 @@ func (x *Ticket) ClearUpdatedAt() {
 	x.xxx_hidden_UpdatedAt = nil
 }
 
+func (x *Ticket) ClearLastActivityAt() {
+	x.xxx_hidden_LastActivityAt = nil
+}
+
 type Ticket_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Number      *int32
-	Title       *string
-	Body        *string
-	Status      *TicketStatus
-	Priority    *Priority
-	ComponentId *int32
-	AssigneeId  *int32
-	ReporterId  *int32
-	CreatedAt   *timestamppb.Timestamp
-	UpdatedAt   *timestamppb.Timestamp
+	Number         *int32
+	Title          *string
+	Body           *string
+	Status         *TicketStatus
+	Priority       *Priority
+	ComponentId    *int32
+	AssigneeId     *int32
+	ReporterId     *int32
+	CreatedAt      *timestamppb.Timestamp
+	UpdatedAt      *timestamppb.Timestamp
+	LastActivityAt *timestamppb.Timestamp
 }
 
 func (b0 Ticket_builder) Build() *Ticket {
@@ -605,39 +629,40 @@ func (b0 Ticket_builder) Build() *Ticket {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Number != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 11)
 		x.xxx_hidden_Number = *b.Number
 	}
 	if b.Title != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 11)
 		x.xxx_hidden_Title = b.Title
 	}
 	if b.Body != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 11)
 		x.xxx_hidden_Body = b.Body
 	}
 	if b.Status != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 11)
 		x.xxx_hidden_Status = *b.Status
 	}
 	if b.Priority != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 11)
 		x.xxx_hidden_Priority = *b.Priority
 	}
 	if b.ComponentId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 11)
 		x.xxx_hidden_ComponentId = *b.ComponentId
 	}
 	if b.AssigneeId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 11)
 		x.xxx_hidden_AssigneeId = *b.AssigneeId
 	}
 	if b.ReporterId != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 10)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 11)
 		x.xxx_hidden_ReporterId = *b.ReporterId
 	}
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	x.xxx_hidden_UpdatedAt = b.UpdatedAt
+	x.xxx_hidden_LastActivityAt = b.LastActivityAt
 	return m0
 }
 
@@ -3858,7 +3883,7 @@ var File_proto_issue_issue_proto protoreflect.FileDescriptor
 const file_proto_issue_issue_proto_rawDesc = "" +
 	"\n" +
 	"\x17proto/issue/issue.proto\x12\n" +
-	"mono.issue\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x89\x03\n" +
+	"mono.issue\x1a!google/protobuf/go_features.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcf\x03\n" +
 	"\x06Ticket\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x05R\x06number\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -3874,7 +3899,8 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"q\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12D\n" +
+	"\x10last_activity_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActivityAt\"q\n" +
 	"\x05Actor\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12)\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x15.mono.issue.ActorKindR\x04kind\x12\x12\n" +
@@ -4086,64 +4112,65 @@ var file_proto_issue_issue_proto_depIdxs = []int32{
 	1,  // 1: mono.issue.Ticket.priority:type_name -> mono.issue.Priority
 	39, // 2: mono.issue.Ticket.created_at:type_name -> google.protobuf.Timestamp
 	39, // 3: mono.issue.Ticket.updated_at:type_name -> google.protobuf.Timestamp
-	2,  // 4: mono.issue.Actor.kind:type_name -> mono.issue.ActorKind
-	3,  // 5: mono.issue.Relation.type:type_name -> mono.issue.RelationType
-	39, // 6: mono.issue.Comment.created_at:type_name -> google.protobuf.Timestamp
-	39, // 7: mono.issue.Comment.updated_at:type_name -> google.protobuf.Timestamp
-	4,  // 8: mono.issue.Activity.kind:type_name -> mono.issue.ActivityKind
-	39, // 9: mono.issue.Activity.created_at:type_name -> google.protobuf.Timestamp
-	5,  // 10: mono.issue.ResponseListTickets.tickets:type_name -> mono.issue.Ticket
-	5,  // 11: mono.issue.ResponseGetTicket.ticket:type_name -> mono.issue.Ticket
-	8,  // 12: mono.issue.ResponseGetTicket.relations:type_name -> mono.issue.Relation
-	9,  // 13: mono.issue.ResponseGetTicket.comments:type_name -> mono.issue.Comment
-	1,  // 14: mono.issue.RequestCreateTicket.priority:type_name -> mono.issue.Priority
-	5,  // 15: mono.issue.ResponseCreateTicket.ticket:type_name -> mono.issue.Ticket
-	0,  // 16: mono.issue.RequestUpdateTicket.status:type_name -> mono.issue.TicketStatus
-	1,  // 17: mono.issue.RequestUpdateTicket.priority:type_name -> mono.issue.Priority
-	5,  // 18: mono.issue.ResponseUpdateTicket.ticket:type_name -> mono.issue.Ticket
-	8,  // 19: mono.issue.RequestAddRelation.relation:type_name -> mono.issue.Relation
-	8,  // 20: mono.issue.ResponseAddRelation.relation:type_name -> mono.issue.Relation
-	8,  // 21: mono.issue.RequestRemoveRelation.relation:type_name -> mono.issue.Relation
-	9,  // 22: mono.issue.ResponseAddComment.comment:type_name -> mono.issue.Comment
-	9,  // 23: mono.issue.ResponseEditComment.comment:type_name -> mono.issue.Comment
-	10, // 24: mono.issue.ResponseListActivities.activities:type_name -> mono.issue.Activity
-	7,  // 25: mono.issue.ResponseListComponents.components:type_name -> mono.issue.Component
-	7,  // 26: mono.issue.ResponseSaveComponent.component:type_name -> mono.issue.Component
-	6,  // 27: mono.issue.ResponseListActors.actors:type_name -> mono.issue.Actor
-	6,  // 28: mono.issue.ResponseWhoAmI.actor:type_name -> mono.issue.Actor
-	11, // 29: mono.issue.Issue.ListTickets:input_type -> mono.issue.RequestListTickets
-	13, // 30: mono.issue.Issue.GetTicket:input_type -> mono.issue.RequestGetTicket
-	15, // 31: mono.issue.Issue.CreateTicket:input_type -> mono.issue.RequestCreateTicket
-	17, // 32: mono.issue.Issue.UpdateTicket:input_type -> mono.issue.RequestUpdateTicket
-	19, // 33: mono.issue.Issue.AddRelation:input_type -> mono.issue.RequestAddRelation
-	21, // 34: mono.issue.Issue.RemoveRelation:input_type -> mono.issue.RequestRemoveRelation
-	23, // 35: mono.issue.Issue.AddComment:input_type -> mono.issue.RequestAddComment
-	25, // 36: mono.issue.Issue.EditComment:input_type -> mono.issue.RequestEditComment
-	27, // 37: mono.issue.Issue.DeleteComment:input_type -> mono.issue.RequestDeleteComment
-	29, // 38: mono.issue.Issue.ListActivities:input_type -> mono.issue.RequestListActivities
-	31, // 39: mono.issue.Issue.ListComponents:input_type -> mono.issue.RequestListComponents
-	33, // 40: mono.issue.Issue.SaveComponent:input_type -> mono.issue.RequestSaveComponent
-	35, // 41: mono.issue.Issue.ListActors:input_type -> mono.issue.RequestListActors
-	37, // 42: mono.issue.Issue.WhoAmI:input_type -> mono.issue.RequestWhoAmI
-	12, // 43: mono.issue.Issue.ListTickets:output_type -> mono.issue.ResponseListTickets
-	14, // 44: mono.issue.Issue.GetTicket:output_type -> mono.issue.ResponseGetTicket
-	16, // 45: mono.issue.Issue.CreateTicket:output_type -> mono.issue.ResponseCreateTicket
-	18, // 46: mono.issue.Issue.UpdateTicket:output_type -> mono.issue.ResponseUpdateTicket
-	20, // 47: mono.issue.Issue.AddRelation:output_type -> mono.issue.ResponseAddRelation
-	22, // 48: mono.issue.Issue.RemoveRelation:output_type -> mono.issue.ResponseRemoveRelation
-	24, // 49: mono.issue.Issue.AddComment:output_type -> mono.issue.ResponseAddComment
-	26, // 50: mono.issue.Issue.EditComment:output_type -> mono.issue.ResponseEditComment
-	28, // 51: mono.issue.Issue.DeleteComment:output_type -> mono.issue.ResponseDeleteComment
-	30, // 52: mono.issue.Issue.ListActivities:output_type -> mono.issue.ResponseListActivities
-	32, // 53: mono.issue.Issue.ListComponents:output_type -> mono.issue.ResponseListComponents
-	34, // 54: mono.issue.Issue.SaveComponent:output_type -> mono.issue.ResponseSaveComponent
-	36, // 55: mono.issue.Issue.ListActors:output_type -> mono.issue.ResponseListActors
-	38, // 56: mono.issue.Issue.WhoAmI:output_type -> mono.issue.ResponseWhoAmI
-	43, // [43:57] is the sub-list for method output_type
-	29, // [29:43] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	39, // 4: mono.issue.Ticket.last_activity_at:type_name -> google.protobuf.Timestamp
+	2,  // 5: mono.issue.Actor.kind:type_name -> mono.issue.ActorKind
+	3,  // 6: mono.issue.Relation.type:type_name -> mono.issue.RelationType
+	39, // 7: mono.issue.Comment.created_at:type_name -> google.protobuf.Timestamp
+	39, // 8: mono.issue.Comment.updated_at:type_name -> google.protobuf.Timestamp
+	4,  // 9: mono.issue.Activity.kind:type_name -> mono.issue.ActivityKind
+	39, // 10: mono.issue.Activity.created_at:type_name -> google.protobuf.Timestamp
+	5,  // 11: mono.issue.ResponseListTickets.tickets:type_name -> mono.issue.Ticket
+	5,  // 12: mono.issue.ResponseGetTicket.ticket:type_name -> mono.issue.Ticket
+	8,  // 13: mono.issue.ResponseGetTicket.relations:type_name -> mono.issue.Relation
+	9,  // 14: mono.issue.ResponseGetTicket.comments:type_name -> mono.issue.Comment
+	1,  // 15: mono.issue.RequestCreateTicket.priority:type_name -> mono.issue.Priority
+	5,  // 16: mono.issue.ResponseCreateTicket.ticket:type_name -> mono.issue.Ticket
+	0,  // 17: mono.issue.RequestUpdateTicket.status:type_name -> mono.issue.TicketStatus
+	1,  // 18: mono.issue.RequestUpdateTicket.priority:type_name -> mono.issue.Priority
+	5,  // 19: mono.issue.ResponseUpdateTicket.ticket:type_name -> mono.issue.Ticket
+	8,  // 20: mono.issue.RequestAddRelation.relation:type_name -> mono.issue.Relation
+	8,  // 21: mono.issue.ResponseAddRelation.relation:type_name -> mono.issue.Relation
+	8,  // 22: mono.issue.RequestRemoveRelation.relation:type_name -> mono.issue.Relation
+	9,  // 23: mono.issue.ResponseAddComment.comment:type_name -> mono.issue.Comment
+	9,  // 24: mono.issue.ResponseEditComment.comment:type_name -> mono.issue.Comment
+	10, // 25: mono.issue.ResponseListActivities.activities:type_name -> mono.issue.Activity
+	7,  // 26: mono.issue.ResponseListComponents.components:type_name -> mono.issue.Component
+	7,  // 27: mono.issue.ResponseSaveComponent.component:type_name -> mono.issue.Component
+	6,  // 28: mono.issue.ResponseListActors.actors:type_name -> mono.issue.Actor
+	6,  // 29: mono.issue.ResponseWhoAmI.actor:type_name -> mono.issue.Actor
+	11, // 30: mono.issue.Issue.ListTickets:input_type -> mono.issue.RequestListTickets
+	13, // 31: mono.issue.Issue.GetTicket:input_type -> mono.issue.RequestGetTicket
+	15, // 32: mono.issue.Issue.CreateTicket:input_type -> mono.issue.RequestCreateTicket
+	17, // 33: mono.issue.Issue.UpdateTicket:input_type -> mono.issue.RequestUpdateTicket
+	19, // 34: mono.issue.Issue.AddRelation:input_type -> mono.issue.RequestAddRelation
+	21, // 35: mono.issue.Issue.RemoveRelation:input_type -> mono.issue.RequestRemoveRelation
+	23, // 36: mono.issue.Issue.AddComment:input_type -> mono.issue.RequestAddComment
+	25, // 37: mono.issue.Issue.EditComment:input_type -> mono.issue.RequestEditComment
+	27, // 38: mono.issue.Issue.DeleteComment:input_type -> mono.issue.RequestDeleteComment
+	29, // 39: mono.issue.Issue.ListActivities:input_type -> mono.issue.RequestListActivities
+	31, // 40: mono.issue.Issue.ListComponents:input_type -> mono.issue.RequestListComponents
+	33, // 41: mono.issue.Issue.SaveComponent:input_type -> mono.issue.RequestSaveComponent
+	35, // 42: mono.issue.Issue.ListActors:input_type -> mono.issue.RequestListActors
+	37, // 43: mono.issue.Issue.WhoAmI:input_type -> mono.issue.RequestWhoAmI
+	12, // 44: mono.issue.Issue.ListTickets:output_type -> mono.issue.ResponseListTickets
+	14, // 45: mono.issue.Issue.GetTicket:output_type -> mono.issue.ResponseGetTicket
+	16, // 46: mono.issue.Issue.CreateTicket:output_type -> mono.issue.ResponseCreateTicket
+	18, // 47: mono.issue.Issue.UpdateTicket:output_type -> mono.issue.ResponseUpdateTicket
+	20, // 48: mono.issue.Issue.AddRelation:output_type -> mono.issue.ResponseAddRelation
+	22, // 49: mono.issue.Issue.RemoveRelation:output_type -> mono.issue.ResponseRemoveRelation
+	24, // 50: mono.issue.Issue.AddComment:output_type -> mono.issue.ResponseAddComment
+	26, // 51: mono.issue.Issue.EditComment:output_type -> mono.issue.ResponseEditComment
+	28, // 52: mono.issue.Issue.DeleteComment:output_type -> mono.issue.ResponseDeleteComment
+	30, // 53: mono.issue.Issue.ListActivities:output_type -> mono.issue.ResponseListActivities
+	32, // 54: mono.issue.Issue.ListComponents:output_type -> mono.issue.ResponseListComponents
+	34, // 55: mono.issue.Issue.SaveComponent:output_type -> mono.issue.ResponseSaveComponent
+	36, // 56: mono.issue.Issue.ListActors:output_type -> mono.issue.ResponseListActors
+	38, // 57: mono.issue.Issue.WhoAmI:output_type -> mono.issue.ResponseWhoAmI
+	44, // [44:58] is the sub-list for method output_type
+	30, // [30:44] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_proto_issue_issue_proto_init() }
