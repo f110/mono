@@ -230,6 +230,10 @@ func toConnectError(err error) error {
 		return connect.NewError(connect.CodeNotFound, err)
 	case errors.Is(err, issue.ErrInvalidArgument):
 		return connect.NewError(connect.CodeInvalidArgument, err)
+	case errors.Is(err, context.Canceled):
+		return connect.NewError(connect.CodeCanceled, err)
+	case errors.Is(err, context.DeadlineExceeded):
+		return connect.NewError(connect.CodeDeadlineExceeded, err)
 	}
 	slogger.Log.Error("Failed to handle the request", slogger.E(err))
 	return connect.NewError(connect.CodeInternal, errors.New("internal error"))

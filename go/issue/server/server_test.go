@@ -142,6 +142,8 @@ func TestToConnectError(t *testing.T) {
 		{err: issue.ErrPermissionDenied.WithStack(), want: connect.CodePermissionDenied},
 		{err: issue.ErrNotFound.WithStack(), want: connect.CodeNotFound},
 		{err: xerrors.WithMessage(issue.ErrInvalidArgument, "title is required"), want: connect.CodeInvalidArgument},
+		{err: xerrors.WithStack(context.Canceled), want: connect.CodeCanceled},
+		{err: xerrors.WithStack(context.DeadlineExceeded), want: connect.CodeDeadlineExceeded},
 		{err: xerrors.New("unexpected"), want: connect.CodeInternal},
 	}
 	for _, tc := range cases {
