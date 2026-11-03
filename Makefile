@@ -72,7 +72,7 @@ ISSUE_DSN = issue:issue@tcp($(DATABASE_HOST):$(DATABASE_PORT))/issue
 
 .PHONY: run-issue
 run-issue:
-	bazel run //go/cmd/issue-server -- --addr 127.0.0.1:8094 --dsn "$(ISSUE_DSN)" --public-key-url http://127.0.0.1:8095/internal/publickey --build-api 127.0.0.1:8081 --log-level debug
+	bazel run //go/cmd/issue-server -- --addr 127.0.0.1:8094 --dsn "$(ISSUE_DSN)" --public-key-url http://127.0.0.1:8095/internal/publickey --build-api 127.0.0.1:8081 $(GITHUB) --log-level debug
 
 .PHONY: run-issue-migrate
 run-issue-migrate:

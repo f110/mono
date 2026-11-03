@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,9 +53,10 @@ func (r *BuildRepositories) Find(ctx context.Context, url string) (int32, bool, 
 }
 
 // NewEventProcessor returns the EventProcessor that dispatches the events to the reconcilers of the issue tracker.
-func NewEventProcessor(daos dao.Options, tracker *issue.Tracker, repositories Repositories, interval, maxProcessingDuration time.Duration) *ghwebhook.EventProcessor {
+func NewEventProcessor(daos dao.Options, tracker *issue.Tracker, repositories Repositories, gh *github.Client, interval, maxProcessingDuration time.Duration) *ghwebhook.EventProcessor {
 	p := ghwebhook.NewEventProcessor(newStore(daos.GithubEvent), interval, maxProcessingDuration)
 	p.Register(NewPushReconciler(tracker, repositories))
+	p.Register(NewPullRequestReconciler(tracker, repositories, gh))
 	return p
 }
 
@@ -111,6 +113,101 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 		}
 	}
 	return nil
+}
+
+// PullRequestReconciler links the pull request to the tickets which the trailers of the commits of the pull request refer
+// to, and follows the title, the state and the head of the pull request. The status of the ticket is not changed by the
+// pull request. The link is not removed even if the trailer is removed from the commits.
+type PullRequestReconciler struct {
+	tracker      *issue.Tracker
+	repositories Repositories
+	github       *github.Client
+}
+
+var _ ghwebhook.Reconciler[github.PullRequestEvent] = (*PullRequestReconciler)(nil)
+
+func NewPullRequestReconciler(tracker *issue.Tracker, repositories Repositories, gh *github.Client) *PullRequestReconciler {
+	return &PullRequestReconciler{tracker: tracker, repositories: repositories, github: gh}
+}
+
+func (*PullRequestReconciler) EventType() string { return "pull_request" }
+
+func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, event *github.PullRequestEvent) error {
+	switch event.GetAction() {
+	case "opened", "reopened", "synchronize", "edited", "closed":
+	default:
+		ev.State = ghwebhook.StateSkipped
+		return nil
+	}
+	repositoryID, ok, err := r.repositories.Find(ctx, event.GetRepo().GetHTMLURL())
+	if err != nil {
+		return err
+	}
+	if !ok {
+		ev.State = ghwebhook.StateSkipped
+		return nil
+	}
+	ctx, err = asSystem(ctx, r.tracker)
+	if err != nil {
+		return err
+	}
+
+	pr := event.GetPullRequest()
+	number := int32(pr.GetNumber())
+	state := database.PullRequestStateOpen
+	if event.GetAction() == "closed" {
+		state = database.PullRequestStateClosed
+		if pr.GetMerged() {
+			state = database.PullRequestStateMerged
+		}
+	}
+	if err := r.tracker.UpdatePullRequest(ctx, repositoryID, number, pr.GetTitle(), state, pr.GetHead().GetSHA()); err != nil {
+		return err
+	}
+	if event.GetAction() == "closed" {
+		return nil
+	}
+
+	numbers, err := r.referredTickets(ctx, event.GetRepo().GetOwner().GetLogin(), event.GetRepo().GetName(), pr.GetNumber())
+	if err != nil {
+		return err
+	}
+	for _, n := range numbers {
+		ticket, err := r.tracker.Ticket(ctx, n)
+		if errors.Is(err, issue.ErrNotFound) {
+			slogger.Log.Info("The ticket referred by the pull request is not found", slog.Int("number", int(n)), slog.Int("pull_request", pr.GetNumber()))
+			continue
+		} else if err != nil {
+			return err
+		}
+		if err := ticket.LinkPullRequest(ctx, repositoryID, number, pr.GetTitle(), pr.GetUser().GetLogin(), state, pr.GetHead().GetSHA()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// referredTickets returns the numbers of the tickets which the trailers of the commits of the pull request refer to.
+func (r *PullRequestReconciler) referredTickets(ctx context.Context, owner, repo string, number int) ([]int32, error) {
+	var numbers []int32
+	opt := &github.ListOptions{PerPage: 100}
+	for {
+		commits, res, err := r.github.PullRequests.ListCommits(ctx, owner, repo, number, opt)
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		for _, c := range commits {
+			for _, ref := range issue.ParseTrailer(c.GetCommit().GetMessage()) {
+				if !slices.Contains(numbers, ref.Number) {
+					numbers = append(numbers, ref.Number)
+				}
+			}
+		}
+		if res.NextPage == 0 {
+			return numbers, nil
+		}
+		opt.Page = res.NextPage
+	}
 }
 
 func asSystem(ctx context.Context, tracker *issue.Tracker) (context.Context, error) {

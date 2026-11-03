@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"os"
 	"sync/atomic"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v85/github"
+	"go.f110.dev/githubmock"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/database/dbtestutil"
@@ -190,5 +192,117 @@ func TestPushReconciler(t *testing.T) {
 		r := NewPushReconciler(tracker, fakeRepositories{})
 		e := &ghwebhook.Event{State: ghwebhook.StateProcessing}
 		assertion.MustError(t, r.Reconcile(context.Background(), e, pushEvent("error", "refs/heads/main")))
+	})
+}
+
+func pullRequestEvent(action string, number int, title, head string, merged bool) *github.PullRequestEvent {
+	return &github.PullRequestEvent{
+		Action: new(action),
+		Repo:   &github.Repository{HTMLURL: new(repositoryURL), Name: new("mono"), Owner: &github.User{Login: new("f110")}},
+		PullRequest: &github.PullRequest{
+			Number: new(number),
+			Title:  new(title),
+			Merged: new(merged),
+			Head:   &github.PullRequestBranch{SHA: new(head)},
+			User:   &github.User{Login: new("alice")},
+		},
+	}
+}
+
+func TestPullRequestReconciler(t *testing.T) {
+	setup := func(t *testing.T) (*issue.Tracker, dao.Options, *githubmock.Repository, *github.Client) {
+		tracker, daos := newTracker(t)
+		mock := githubmock.NewMock()
+		repo := mock.Repository("f110/mono")
+		return tracker, daos, repo, github.NewClient(&http.Client{Transport: mock.Transport()})
+	}
+	reconcile := func(t *testing.T, r *PullRequestReconciler, ev *github.PullRequestEvent) *ghwebhook.Event {
+		t.Helper()
+		e := &ghwebhook.Event{State: ghwebhook.StateProcessing}
+		assertion.MustNoError(t, r.Reconcile(context.Background(), e, ev))
+		return e
+	}
+	linksOf := func(t *testing.T, ticket *issue.Ticket) []*database.PullRequestLink {
+		t.Helper()
+		links, err := ticket.PullRequestLinks(context.Background())
+		assertion.MustNoError(t, err)
+		return links
+	}
+
+	t.Run("link the pull request and follow the state", func(t *testing.T) {
+		tracker, daos, repo, gh := setup(t)
+		refs := createTicket(t, tracker, daos, "refs")
+		fixes := createTicket(t, tracker, daos, "fixes")
+		root := githubmock.NewCommit().Message(fmt.Sprintf("subject 1\n\nRefs: %d", refs.Id))
+		child := githubmock.NewCommit().Message(fmt.Sprintf("subject 2\n\nFixes: #%d\nRefs: 1000", fixes.Id)).Parents(root)
+		assertion.MustNoError(t, repo.Commits(root, child))
+		pr := githubmock.NewPullRequest().Number(5).Commits(root, child)
+		repo.PullRequests(pr)
+		r := NewPullRequestReconciler(tracker, fakeRepositories{repositoryURL: 10}, gh)
+
+		for range 2 {
+			e := reconcile(t, r, pullRequestEvent("opened", 5, "title", child.GetSHA(), false))
+			assertion.Equal(t, e.State, ghwebhook.StateProcessing)
+		}
+		system, err := tracker.System(context.Background())
+		assertion.MustNoError(t, err)
+		for _, ticket := range []*issue.Ticket{refs, fixes} {
+			links := linksOf(t, ticket)
+			assertion.MustLen(t, links, 1)
+			assertion.Equal(t, links[0].RepositoryId, int32(10))
+			assertion.Equal(t, links[0].Number, int32(5))
+			assertion.Equal(t, links[0].Title, "title")
+			assertion.Equal(t, links[0].Author, "alice")
+			assertion.Equal(t, links[0].State, database.PullRequestStateOpen)
+			assertion.Equal(t, links[0].HeadSha, child.GetSHA())
+			activities, err := ticket.Activities(context.Background())
+			assertion.MustNoError(t, err)
+			assertion.MustLen(t, activities, 2)
+			assertion.Equal(t, activities[1].Kind, database.ActivityKindPullRequestLinked)
+			assertion.Equal(t, activities[1].ActorId, system.Id)
+		}
+		got, err := tracker.Ticket(issue.WithActor(context.Background(), system), fixes.Id)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, got.Status, database.TicketStatusOpen)
+
+		reconcile(t, r, pullRequestEvent("synchronize", 5, "new title", "3333333333333333333333333333333333333333", false))
+		for _, ticket := range []*issue.Ticket{refs, fixes} {
+			links := linksOf(t, ticket)
+			assertion.MustLen(t, links, 1)
+			assertion.Equal(t, links[0].Title, "new title")
+			assertion.Equal(t, links[0].HeadSha, "3333333333333333333333333333333333333333")
+		}
+
+		reconcile(t, r, pullRequestEvent("closed", 5, "new title", "3333333333333333333333333333333333333333", true))
+		for _, ticket := range []*issue.Ticket{refs, fixes} {
+			assertion.Equal(t, linksOf(t, ticket)[0].State, database.PullRequestStateMerged)
+		}
+	})
+
+	t.Run("closed without merging", func(t *testing.T) {
+		tracker, daos, repo, gh := setup(t)
+		ticket := createTicket(t, tracker, daos, "ticket")
+		c := githubmock.NewCommit().Message(fmt.Sprintf("subject\n\nRefs: %d", ticket.Id))
+		assertion.MustNoError(t, repo.Commits(c))
+		repo.PullRequests(githubmock.NewPullRequest().Number(1).Commits(c))
+		r := NewPullRequestReconciler(tracker, fakeRepositories{repositoryURL: 10}, gh)
+
+		reconcile(t, r, pullRequestEvent("opened", 1, "title", c.GetSHA(), false))
+		reconcile(t, r, pullRequestEvent("closed", 1, "title", c.GetSHA(), false))
+		assertion.Equal(t, linksOf(t, ticket)[0].State, database.PullRequestStateClosed)
+	})
+
+	t.Run("skipped", func(t *testing.T) {
+		tracker, daos, repo, gh := setup(t)
+		ticket := createTicket(t, tracker, daos, "ticket")
+		c := githubmock.NewCommit().Message(fmt.Sprintf("subject\n\nRefs: %d", ticket.Id))
+		assertion.MustNoError(t, repo.Commits(c))
+		repo.PullRequests(githubmock.NewPullRequest().Number(1).Commits(c))
+
+		e := reconcile(t, NewPullRequestReconciler(tracker, fakeRepositories{repositoryURL: 10}, gh), pullRequestEvent("labeled", 1, "title", c.GetSHA(), false))
+		assertion.Equal(t, e.State, ghwebhook.StateSkipped)
+		e = reconcile(t, NewPullRequestReconciler(tracker, fakeRepositories{}, gh), pullRequestEvent("opened", 1, "title", c.GetSHA(), false))
+		assertion.Equal(t, e.State, ghwebhook.StateSkipped)
+		assertion.Len(t, linksOf(t, ticket), 0)
 	})
 }

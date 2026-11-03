@@ -334,7 +334,8 @@ make run-issue-ui
 
 webhook の処理ではリポジトリを Build の API で判定するので、`make run-api` で起動した Build（127.0.0.1:8081）に
 接続する。Build が起動していなくてもサーバーは動き、受け取った event は `--event-max-processing-duration`（既定は
-30 分）を過ぎるまで再試行される。
+30 分）を過ぎるまで再試行される。pull_request の処理では PR のコミットを GitHub API で取得するので、Build と同じ
+GitHub App の認証情報（Makefile の `GITHUB`）を渡す。
 
 ## 10. 実装順序
 
