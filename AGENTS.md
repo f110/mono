@@ -5,6 +5,7 @@
 - このリポジトリはモノレポになっていて複数のプロジェクトが1つのリポジトリになっている
 - リポジトリの構造はlanguage agnosticになっているのでプロジェクトごとの明確なディレクトリはない
 - BUILD.bazel ファイルの更新は `make update-deps` で行う
+- ファイルが自動生成される場合は `make gen` で行う
 - ビルドは `bazel build` で行う
 
 ## ディレクトリ構造
@@ -53,3 +54,4 @@
 ## プロジェクト
 
 - Build: 自作のCIツール docs/build.md
+- Issue: 自作のIssue Tracker docs/issue-tracker/design.md
