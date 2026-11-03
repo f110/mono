@@ -206,6 +206,8 @@ func TestTicketUpdate(t *testing.T) {
 		assertion.Equal(t, revs[1].Body, "new body")
 		assertion.Equal(t, *a[6].RefId, revs[0].Id)
 		assertion.Equal(t, *a[7].RefId, revs[1].Id)
+		assertion.Equal(t, revs[0].ActorId, f.agent.Id)
+		assertion.Equal(t, revs[1].ActorId, f.human.Id)
 	})
 
 	t.Run("0 clears the component and the assignee", func(t *testing.T) {
@@ -321,6 +323,8 @@ func TestComment(t *testing.T) {
 		assertion.MustLen(t, revs, 2)
 		assertion.Equal(t, revs[0].Body, "first")
 		assertion.Equal(t, revs[1].Body, "second")
+		assertion.Equal(t, revs[0].ActorId, f.agent.Id)
+		assertion.Equal(t, revs[1].ActorId, f.human.Id)
 
 		assertion.MustNoError(t, c.Delete(f.as(f.agent)))
 		comments, err := ticket.Comments(context.Background())

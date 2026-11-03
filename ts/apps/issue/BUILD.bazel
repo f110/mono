@@ -36,6 +36,7 @@ NPM_DEPS = [
     "//ts/apps/issue:node_modules/@tanstack/react-query",
     "//ts/apps/issue:node_modules/@tanstack/react-router",
     "//ts/apps/issue:node_modules/dayjs",
+    "//ts/apps/issue:node_modules/diff",
     "//ts/apps/issue:node_modules/github-markdown-css",
     "//ts/apps/issue:node_modules/highlight.js",
     "//ts/apps/issue:node_modules/react",

@@ -244,7 +244,11 @@ func (t *Ticket) Revisions(ctx context.Context) ([]*Revision, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	return restoreRevisions(t.Body, revs, func(r *database.TicketBodyRevision) (int32, string, time.Time) { return r.Id, r.Patch, r.CreatedAt })
+	editors, err := t.tracker.editors(ctx, t.Id, database.ActivityKindBody)
+	if err != nil {
+		return nil, err
+	}
+	return restoreRevisions(t.Body, revs, editors, func(r *database.TicketBodyRevision) (int32, string, time.Time) { return r.Id, r.Patch, r.CreatedAt })
 }
 
 func (t *Ticket) reload(ctx context.Context) error {

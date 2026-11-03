@@ -19,10 +19,11 @@ type Comment struct {
 	tracker *Tracker
 }
 
-// Revision is the body before the edit recorded by the revision Id.
+// Revision is the body before the edit recorded by the revision Id. ActorId is the actor who made the edit.
 type Revision struct {
 	Id        int32
 	Body      string
+	ActorId   int32
 	CreatedAt time.Time
 }
 
@@ -91,7 +92,11 @@ func (c *Comment) Revisions(ctx context.Context) ([]*Revision, error) {
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	return restoreRevisions(c.Body, revs, func(r *database.CommentRevision) (int32, string, time.Time) { return r.Id, r.Patch, r.CreatedAt })
+	editors, err := c.tracker.editors(ctx, c.TicketId, database.ActivityKindCommentEdited)
+	if err != nil {
+		return nil, err
+	}
+	return restoreRevisions(c.Body, revs, editors, func(r *database.CommentRevision) (int32, string, time.Time) { return r.Id, r.Patch, r.CreatedAt })
 }
 
 func (c *Comment) reload(ctx context.Context) error {
@@ -110,8 +115,9 @@ func reversePatch(before, after string) string {
 }
 
 // restoreRevisions restores the body before each edit. revs are in the order of the edits, and latest is the body
-// after the last edit. fields returns the id, the reverse patch and the time of the revision.
-func restoreRevisions[T any](latest string, revs []T, fields func(T) (int32, string, time.Time)) ([]*Revision, error) {
+// after the last edit. editors maps the id of the revision to the actor of the edit. fields returns the id, the reverse
+// patch and the time of the revision.
+func restoreRevisions[T any](latest string, revs []T, editors map[int32]int32, fields func(T) (int32, string, time.Time)) ([]*Revision, error) {
 	dmp := diffmatchpatch.New()
 	res := make([]*Revision, len(revs))
 	body := latest
@@ -126,7 +132,7 @@ func restoreRevisions[T any](latest string, revs []T, fields func(T) (int32, str
 			return nil, xerrors.Define("failed to apply the patch of the revision").WithStack()
 		}
 		body = restored
-		res[i] = &Revision{Id: id, Body: body, CreatedAt: createdAt}
+		res[i] = &Revision{Id: id, Body: body, ActorId: editors[id], CreatedAt: createdAt}
 	}
 	return res, nil
 }

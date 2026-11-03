@@ -21,6 +21,10 @@ service Issue {
   rpc EditComment(RequestEditComment) returns (ResponseEditComment);
   rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
   rpc ListActivities(RequestListActivities) returns (ResponseListActivities);
+  // ListTicketRevisions returns the body of the ticket before each edit in the order of the edits.
+  rpc ListTicketRevisions(RequestListTicketRevisions) returns (ResponseListTicketRevisions);
+  // ListCommentRevisions returns the comment before each edit in the order of the edits.
+  rpc ListCommentRevisions(RequestListCommentRevisions) returns (ResponseListCommentRevisions);
   rpc ListComponents(RequestListComponents) returns (ResponseListComponents);
   // SaveComponent creates the component if id is not set, otherwise renames it.
   rpc SaveComponent(RequestSaveComponent) returns (ResponseSaveComponent);
@@ -132,6 +136,14 @@ message Activity {
   google.protobuf.Timestamp created_at = 8;
 }
 
+// Revision is the body before the edit. actor_id is the actor who made the edit, and created_at is the time of the edit.
+message Revision {
+  int32                     id         = 1;
+  string                    body       = 2;
+  int32                     actor_id   = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
 message RequestListTickets {
   // filter is the filter of the tickets written in AIP-160.
   // e.g. "(status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"
@@ -229,6 +241,22 @@ message RequestListActivities {
 
 message ResponseListActivities {
   repeated Activity activities = 1;
+}
+
+message RequestListTicketRevisions {
+  int32 ticket = 1;
+}
+
+message ResponseListTicketRevisions {
+  repeated Revision revisions = 1;
+}
+
+message RequestListCommentRevisions {
+  int32 id = 1;
+}
+
+message ResponseListCommentRevisions {
+  repeated Revision revisions = 1;
 }
 
 message RequestListComponents {}

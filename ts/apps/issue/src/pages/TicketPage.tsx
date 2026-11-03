@@ -26,6 +26,7 @@ import {
   TicketStatus,
 } from '../connect/issue_pb'
 import { Markdown } from '../components/Markdown.tsx'
+import { EditHistory } from '../components/EditHistory.tsx'
 import { PostCard } from '../components/PostCard.tsx'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
@@ -124,7 +125,11 @@ export const TicketPage = () => {
           <PostCard
             author={actorName(ticket.reporterId)}
             time={fromNow(ticket.createdAt)}
-            edited={(activities?.activities ?? []).some((a) => a.kind === ActivityKind.BODY)}
+            history={
+              (activities?.activities ?? []).some((a) => a.kind === ActivityKind.BODY) && (
+                <EditHistory target={{ ticket: number }} current={ticket.body} authorId={ticket.reporterId} createdAt={ticket.createdAt} />
+              )
+            }
             reporter
             actions={editingBody === null ? [{ label: '編集', onClick: () => setEditingBody(ticket.body) }] : []}
           >
@@ -334,7 +339,11 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
     <PostCard
       author={actorName(comment.actorId)}
       time={fromNow(comment.createdAt)}
-      edited={comment.updatedAt !== undefined}
+      history={
+        comment.updatedAt !== undefined && (
+          <EditHistory target={{ comment: comment.id }} current={comment.body} authorId={comment.actorId} createdAt={comment.createdAt} />
+        )
+      }
       reporter={reporter}
       actions={
         editing === null

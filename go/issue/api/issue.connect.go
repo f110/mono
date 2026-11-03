@@ -52,6 +52,12 @@ const (
 	IssueDeleteCommentProcedure = "/mono.issue.Issue/DeleteComment"
 	// IssueListActivitiesProcedure is the fully-qualified name of the Issue's ListActivities RPC.
 	IssueListActivitiesProcedure = "/mono.issue.Issue/ListActivities"
+	// IssueListTicketRevisionsProcedure is the fully-qualified name of the Issue's ListTicketRevisions
+	// RPC.
+	IssueListTicketRevisionsProcedure = "/mono.issue.Issue/ListTicketRevisions"
+	// IssueListCommentRevisionsProcedure is the fully-qualified name of the Issue's
+	// ListCommentRevisions RPC.
+	IssueListCommentRevisionsProcedure = "/mono.issue.Issue/ListCommentRevisions"
 	// IssueListComponentsProcedure is the fully-qualified name of the Issue's ListComponents RPC.
 	IssueListComponentsProcedure = "/mono.issue.Issue/ListComponents"
 	// IssueSaveComponentProcedure is the fully-qualified name of the Issue's SaveComponent RPC.
@@ -74,6 +80,8 @@ type IssueClient interface {
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
 	ListActivities(context.Context, *connect.Request[RequestListActivities]) (*connect.Response[ResponseListActivities], error)
+	ListTicketRevisions(context.Context, *connect.Request[RequestListTicketRevisions]) (*connect.Response[ResponseListTicketRevisions], error)
+	ListCommentRevisions(context.Context, *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error)
 	ListComponents(context.Context, *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error)
 	SaveComponent(context.Context, *connect.Request[RequestSaveComponent]) (*connect.Response[ResponseSaveComponent], error)
 	ListActors(context.Context, *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error)
@@ -151,6 +159,18 @@ func NewIssueClient(httpClient connect.HTTPClient, baseURL string, opts ...conne
 			connect.WithSchema(issueMethods.ByName("ListActivities")),
 			connect.WithClientOptions(opts...),
 		),
+		listTicketRevisions: connect.NewClient[RequestListTicketRevisions, ResponseListTicketRevisions](
+			httpClient,
+			baseURL+IssueListTicketRevisionsProcedure,
+			connect.WithSchema(issueMethods.ByName("ListTicketRevisions")),
+			connect.WithClientOptions(opts...),
+		),
+		listCommentRevisions: connect.NewClient[RequestListCommentRevisions, ResponseListCommentRevisions](
+			httpClient,
+			baseURL+IssueListCommentRevisionsProcedure,
+			connect.WithSchema(issueMethods.ByName("ListCommentRevisions")),
+			connect.WithClientOptions(opts...),
+		),
 		listComponents: connect.NewClient[RequestListComponents, ResponseListComponents](
 			httpClient,
 			baseURL+IssueListComponentsProcedure,
@@ -180,20 +200,22 @@ func NewIssueClient(httpClient connect.HTTPClient, baseURL string, opts ...conne
 
 // issueClient implements IssueClient.
 type issueClient struct {
-	listTickets    *connect.Client[RequestListTickets, ResponseListTickets]
-	getTicket      *connect.Client[RequestGetTicket, ResponseGetTicket]
-	createTicket   *connect.Client[RequestCreateTicket, ResponseCreateTicket]
-	updateTicket   *connect.Client[RequestUpdateTicket, ResponseUpdateTicket]
-	addRelation    *connect.Client[RequestAddRelation, ResponseAddRelation]
-	removeRelation *connect.Client[RequestRemoveRelation, ResponseRemoveRelation]
-	addComment     *connect.Client[RequestAddComment, ResponseAddComment]
-	editComment    *connect.Client[RequestEditComment, ResponseEditComment]
-	deleteComment  *connect.Client[RequestDeleteComment, ResponseDeleteComment]
-	listActivities *connect.Client[RequestListActivities, ResponseListActivities]
-	listComponents *connect.Client[RequestListComponents, ResponseListComponents]
-	saveComponent  *connect.Client[RequestSaveComponent, ResponseSaveComponent]
-	listActors     *connect.Client[RequestListActors, ResponseListActors]
-	whoAmI         *connect.Client[RequestWhoAmI, ResponseWhoAmI]
+	listTickets          *connect.Client[RequestListTickets, ResponseListTickets]
+	getTicket            *connect.Client[RequestGetTicket, ResponseGetTicket]
+	createTicket         *connect.Client[RequestCreateTicket, ResponseCreateTicket]
+	updateTicket         *connect.Client[RequestUpdateTicket, ResponseUpdateTicket]
+	addRelation          *connect.Client[RequestAddRelation, ResponseAddRelation]
+	removeRelation       *connect.Client[RequestRemoveRelation, ResponseRemoveRelation]
+	addComment           *connect.Client[RequestAddComment, ResponseAddComment]
+	editComment          *connect.Client[RequestEditComment, ResponseEditComment]
+	deleteComment        *connect.Client[RequestDeleteComment, ResponseDeleteComment]
+	listActivities       *connect.Client[RequestListActivities, ResponseListActivities]
+	listTicketRevisions  *connect.Client[RequestListTicketRevisions, ResponseListTicketRevisions]
+	listCommentRevisions *connect.Client[RequestListCommentRevisions, ResponseListCommentRevisions]
+	listComponents       *connect.Client[RequestListComponents, ResponseListComponents]
+	saveComponent        *connect.Client[RequestSaveComponent, ResponseSaveComponent]
+	listActors           *connect.Client[RequestListActors, ResponseListActors]
+	whoAmI               *connect.Client[RequestWhoAmI, ResponseWhoAmI]
 }
 
 // ListTickets calls mono.issue.Issue.ListTickets.
@@ -246,6 +268,16 @@ func (c *issueClient) ListActivities(ctx context.Context, req *connect.Request[R
 	return c.listActivities.CallUnary(ctx, req)
 }
 
+// ListTicketRevisions calls mono.issue.Issue.ListTicketRevisions.
+func (c *issueClient) ListTicketRevisions(ctx context.Context, req *connect.Request[RequestListTicketRevisions]) (*connect.Response[ResponseListTicketRevisions], error) {
+	return c.listTicketRevisions.CallUnary(ctx, req)
+}
+
+// ListCommentRevisions calls mono.issue.Issue.ListCommentRevisions.
+func (c *issueClient) ListCommentRevisions(ctx context.Context, req *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error) {
+	return c.listCommentRevisions.CallUnary(ctx, req)
+}
+
 // ListComponents calls mono.issue.Issue.ListComponents.
 func (c *issueClient) ListComponents(ctx context.Context, req *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error) {
 	return c.listComponents.CallUnary(ctx, req)
@@ -278,6 +310,8 @@ type IssueHandler interface {
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
 	ListActivities(context.Context, *connect.Request[RequestListActivities]) (*connect.Response[ResponseListActivities], error)
+	ListTicketRevisions(context.Context, *connect.Request[RequestListTicketRevisions]) (*connect.Response[ResponseListTicketRevisions], error)
+	ListCommentRevisions(context.Context, *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error)
 	ListComponents(context.Context, *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error)
 	SaveComponent(context.Context, *connect.Request[RequestSaveComponent]) (*connect.Response[ResponseSaveComponent], error)
 	ListActors(context.Context, *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error)
@@ -351,6 +385,18 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 		connect.WithSchema(issueMethods.ByName("ListActivities")),
 		connect.WithHandlerOptions(opts...),
 	)
+	issueListTicketRevisionsHandler := connect.NewUnaryHandler(
+		IssueListTicketRevisionsProcedure,
+		svc.ListTicketRevisions,
+		connect.WithSchema(issueMethods.ByName("ListTicketRevisions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	issueListCommentRevisionsHandler := connect.NewUnaryHandler(
+		IssueListCommentRevisionsProcedure,
+		svc.ListCommentRevisions,
+		connect.WithSchema(issueMethods.ByName("ListCommentRevisions")),
+		connect.WithHandlerOptions(opts...),
+	)
 	issueListComponentsHandler := connect.NewUnaryHandler(
 		IssueListComponentsProcedure,
 		svc.ListComponents,
@@ -397,6 +443,10 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 			issueDeleteCommentHandler.ServeHTTP(w, r)
 		case IssueListActivitiesProcedure:
 			issueListActivitiesHandler.ServeHTTP(w, r)
+		case IssueListTicketRevisionsProcedure:
+			issueListTicketRevisionsHandler.ServeHTTP(w, r)
+		case IssueListCommentRevisionsProcedure:
+			issueListCommentRevisionsHandler.ServeHTTP(w, r)
 		case IssueListComponentsProcedure:
 			issueListComponentsHandler.ServeHTTP(w, r)
 		case IssueSaveComponentProcedure:
@@ -452,6 +502,14 @@ func (UnimplementedIssueHandler) DeleteComment(context.Context, *connect.Request
 
 func (UnimplementedIssueHandler) ListActivities(context.Context, *connect.Request[RequestListActivities]) (*connect.Response[ResponseListActivities], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.ListActivities is not implemented"))
+}
+
+func (UnimplementedIssueHandler) ListTicketRevisions(context.Context, *connect.Request[RequestListTicketRevisions]) (*connect.Response[ResponseListTicketRevisions], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.ListTicketRevisions is not implemented"))
+}
+
+func (UnimplementedIssueHandler) ListCommentRevisions(context.Context, *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.ListCommentRevisions is not implemented"))
 }
 
 func (UnimplementedIssueHandler) ListComponents(context.Context, *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error) {

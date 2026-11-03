@@ -304,6 +304,21 @@ func (t *Tracker) record(ctx context.Context, tx *sql.Tx, ticketID int32, actor 
 	return nil
 }
 
+// editors returns the actors of the edits of the ticket by the id of the revision which the activity of kind refers to.
+func (t *Tracker) editors(ctx context.Context, ticketID int32, kind database.ActivityKind) (map[int32]int32, error) {
+	activities, err := t.dao.Activity.ListByTicketId(ctx, ticketID)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	editors := make(map[int32]int32)
+	for _, v := range activities {
+		if v.Kind == kind && v.RefId != nil {
+			editors[*v.RefId] = v.ActorId
+		}
+	}
+	return editors, nil
+}
+
 // touch updates last_activity_at of the ticket. Update reports sql.ErrNoRows if the time is not changed within the
 // precision of the column, and it is not an error here because the ticket exists.
 func (t *Tracker) touch(ctx context.Context, tx *sql.Tx, ticketID int32) error {

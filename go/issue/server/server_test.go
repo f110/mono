@@ -239,6 +239,35 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, res.Msg.GetTickets()[0].GetNumber(), ticket.GetNumber())
 	})
 
+	t.Run("list the revisions of the body and the comment", func(t *testing.T) {
+		created, err := client.CreateTicket(ctx, connect.NewRequest(api.RequestCreateTicket_builder{Title: new("revisions"), Body: new("first")}.Build()))
+		assertion.MustNoError(t, err)
+		number := created.Msg.GetTicket().GetNumber()
+		_, err = client.UpdateTicket(ctx, connect.NewRequest(api.RequestUpdateTicket_builder{Number: new(number), Body: new("second")}.Build()))
+		assertion.MustNoError(t, err)
+		res, err := client.ListTicketRevisions(ctx, connect.NewRequest(api.RequestListTicketRevisions_builder{Ticket: new(number)}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, res.Msg.GetRevisions(), 1)
+		assertion.Equal(t, res.Msg.GetRevisions()[0].GetBody(), "first")
+		assertion.Equal(t, res.Msg.GetRevisions()[0].GetActorId(), actor.Id)
+
+		comment, err := client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(number), Body: new("comment")}.Build()))
+		assertion.MustNoError(t, err)
+		id := comment.Msg.GetComment().GetId()
+		_, err = client.EditComment(ctx, connect.NewRequest(api.RequestEditComment_builder{Id: new(id), Body: new("edited")}.Build()))
+		assertion.MustNoError(t, err)
+		commentRevs, err := client.ListCommentRevisions(ctx, connect.NewRequest(api.RequestListCommentRevisions_builder{Id: new(id)}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, commentRevs.Msg.GetRevisions(), 1)
+		assertion.Equal(t, commentRevs.Msg.GetRevisions()[0].GetBody(), "comment")
+		assertion.Equal(t, commentRevs.Msg.GetRevisions()[0].GetActorId(), actor.Id)
+
+		_, err = client.ListTicketRevisions(ctx, connect.NewRequest(api.RequestListTicketRevisions_builder{Ticket: new(int32(100))}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
+		_, err = client.ListCommentRevisions(ctx, connect.NewRequest(api.RequestListCommentRevisions_builder{Id: new(int32(100))}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
+	})
+
 	t.Run("errors are mapped to the codes", func(t *testing.T) {
 		_, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{Filter: new("status = CLOSED")}.Build()))
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)

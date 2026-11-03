@@ -11,14 +11,14 @@ export type PostAction = {
 export const PostCard = ({
   author,
   time,
-  edited,
+  history,
   reporter,
   actions,
   children,
 }: {
   author: string
   time: string
-  edited: boolean
+  history?: ReactNode
   reporter: boolean
   actions: PostAction[]
   children: ReactNode
@@ -45,7 +45,7 @@ export const PostCard = ({
           {author}{' '}
           <Typography component="span" variant="body2" color="text.secondary">
             {time}
-            {edited && '（編集済み）'}
+            {history}
           </Typography>
         </Typography>
         {reporter && (

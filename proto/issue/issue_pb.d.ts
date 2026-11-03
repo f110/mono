@@ -256,6 +256,39 @@ export declare type Activity = Message<"mono.issue.Activity"> & {
 export declare const ActivitySchema: GenMessage<Activity>;
 
 /**
+ * Revision is the body before the edit. actor_id is the actor who made the edit, and created_at is the time of the edit.
+ *
+ * @generated from message mono.issue.Revision
+ */
+export declare type Revision = Message<"mono.issue.Revision"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string body = 2;
+   */
+  body: string;
+
+  /**
+   * @generated from field: int32 actor_id = 3;
+   */
+  actorId: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message mono.issue.Revision.
+ * Use `create(RevisionSchema)` to create a new message.
+ */
+export declare const RevisionSchema: GenMessage<Revision>;
+
+/**
  * @generated from message mono.issue.RequestListTickets
  */
 export declare type RequestListTickets = Message<"mono.issue.RequestListTickets"> & {
@@ -655,6 +688,70 @@ export declare type ResponseListActivities = Message<"mono.issue.ResponseListAct
  * Use `create(ResponseListActivitiesSchema)` to create a new message.
  */
 export declare const ResponseListActivitiesSchema: GenMessage<ResponseListActivities>;
+
+/**
+ * @generated from message mono.issue.RequestListTicketRevisions
+ */
+export declare type RequestListTicketRevisions = Message<"mono.issue.RequestListTicketRevisions"> & {
+  /**
+   * @generated from field: int32 ticket = 1;
+   */
+  ticket: number;
+};
+
+/**
+ * Describes the message mono.issue.RequestListTicketRevisions.
+ * Use `create(RequestListTicketRevisionsSchema)` to create a new message.
+ */
+export declare const RequestListTicketRevisionsSchema: GenMessage<RequestListTicketRevisions>;
+
+/**
+ * @generated from message mono.issue.ResponseListTicketRevisions
+ */
+export declare type ResponseListTicketRevisions = Message<"mono.issue.ResponseListTicketRevisions"> & {
+  /**
+   * @generated from field: repeated mono.issue.Revision revisions = 1;
+   */
+  revisions: Revision[];
+};
+
+/**
+ * Describes the message mono.issue.ResponseListTicketRevisions.
+ * Use `create(ResponseListTicketRevisionsSchema)` to create a new message.
+ */
+export declare const ResponseListTicketRevisionsSchema: GenMessage<ResponseListTicketRevisions>;
+
+/**
+ * @generated from message mono.issue.RequestListCommentRevisions
+ */
+export declare type RequestListCommentRevisions = Message<"mono.issue.RequestListCommentRevisions"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+};
+
+/**
+ * Describes the message mono.issue.RequestListCommentRevisions.
+ * Use `create(RequestListCommentRevisionsSchema)` to create a new message.
+ */
+export declare const RequestListCommentRevisionsSchema: GenMessage<RequestListCommentRevisions>;
+
+/**
+ * @generated from message mono.issue.ResponseListCommentRevisions
+ */
+export declare type ResponseListCommentRevisions = Message<"mono.issue.ResponseListCommentRevisions"> & {
+  /**
+   * @generated from field: repeated mono.issue.Revision revisions = 1;
+   */
+  revisions: Revision[];
+};
+
+/**
+ * Describes the message mono.issue.ResponseListCommentRevisions.
+ * Use `create(ResponseListCommentRevisionsSchema)` to create a new message.
+ */
+export declare const ResponseListCommentRevisionsSchema: GenMessage<ResponseListCommentRevisions>;
 
 /**
  * @generated from message mono.issue.RequestListComponents
@@ -1079,6 +1176,26 @@ export declare const Issue: GenService<{
     methodKind: "unary";
     input: typeof RequestListActivitiesSchema;
     output: typeof ResponseListActivitiesSchema;
+  },
+  /**
+   * ListTicketRevisions returns the body of the ticket before each edit in the order of the edits.
+   *
+   * @generated from rpc mono.issue.Issue.ListTicketRevisions
+   */
+  listTicketRevisions: {
+    methodKind: "unary";
+    input: typeof RequestListTicketRevisionsSchema;
+    output: typeof ResponseListTicketRevisionsSchema;
+  },
+  /**
+   * ListCommentRevisions returns the comment before each edit in the order of the edits.
+   *
+   * @generated from rpc mono.issue.Issue.ListCommentRevisions
+   */
+  listCommentRevisions: {
+    methodKind: "unary";
+    input: typeof RequestListCommentRevisionsSchema;
+    output: typeof ResponseListCommentRevisionsSchema;
   },
   /**
    * @generated from rpc mono.issue.Issue.ListComponents

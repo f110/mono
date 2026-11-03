@@ -188,6 +188,30 @@ func (h *IssueHandler) ListActivities(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(api.ResponseListActivities_builder{Activities: enumerable.Map(activities, toActivity)}.Build()), nil
 }
 
+func (h *IssueHandler) ListTicketRevisions(ctx context.Context, req *connect.Request[api.RequestListTicketRevisions]) (*connect.Response[api.ResponseListTicketRevisions], error) {
+	ticket, err := h.tracker.Ticket(ctx, req.Msg.GetTicket())
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	revs, err := ticket.Revisions(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(api.ResponseListTicketRevisions_builder{Revisions: enumerable.Map(revs, toRevision)}.Build()), nil
+}
+
+func (h *IssueHandler) ListCommentRevisions(ctx context.Context, req *connect.Request[api.RequestListCommentRevisions]) (*connect.Response[api.ResponseListCommentRevisions], error) {
+	c, err := h.tracker.Comment(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	revs, err := c.Revisions(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(api.ResponseListCommentRevisions_builder{Revisions: enumerable.Map(revs, toRevision)}.Build()), nil
+}
+
 func (h *IssueHandler) ListComponents(ctx context.Context, _ *connect.Request[api.RequestListComponents]) (*connect.Response[api.ResponseListComponents], error) {
 	components, err := h.tracker.Components(ctx)
 	if err != nil {
@@ -305,6 +329,15 @@ func toComment(c *issue.Comment) *api.Comment {
 		b.UpdatedAt = timestamppb.New(*c.UpdatedAt)
 	}
 	return b.Build()
+}
+
+func toRevision(r *issue.Revision) *api.Revision {
+	return api.Revision_builder{
+		Id:        new(r.Id),
+		Body:      new(r.Body),
+		ActorId:   new(r.ActorId),
+		CreatedAt: timestamppb.New(r.CreatedAt),
+	}.Build()
 }
 
 func toActivity(a *database.Activity) *api.Activity {

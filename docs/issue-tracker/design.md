@@ -250,7 +250,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | 関連 | `AddRelation`, `RemoveRelation` |
 | コメント | `AddComment`, `EditComment`, `DeleteComment` |
 | 添付 | `ListAttachments`（アップロード・ダウンロードは §7 の HTTP エンドポイント） |
-| 履歴 | `ListActivities` |
+| 履歴 | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions`（本文・コメントの編集前の版と編集者） |
 | 管理 | `ListRepositories`, `SaveRepository`, `ListComponents`, `SaveComponent` |
 | トークン | `ListAgentTokens`, `IssueAgentToken`, `RevokeAgentToken` |
 | その他 | `ListActors`, `WhoAmI` |
