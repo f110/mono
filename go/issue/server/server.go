@@ -3,7 +3,6 @@ package server
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"net/http"
 
@@ -353,12 +352,13 @@ func toActivity(a *database.Activity) *api.Activity {
 	}.Build()
 }
 
-// New returns the HTTP handler which serves the Connect API. The requests are authenticated by the token of heimdallr,
-// and the human of the subject of the token is the actor of the operations.
-func New(tracker *issue.Tracker, publicKey *ecdsa.PublicKey) http.Handler {
+// New returns the HTTP handler which serves the Connect API. The requests are authenticated by authenticate which puts
+// the claims of heimdallr to the context (e.g. authproxy.Authenticate), and the human of the subject is the actor of the
+// operations.
+func New(tracker *issue.Tracker, authenticate func(http.Handler) http.Handler) http.Handler {
 	path, handler := api.NewIssueHandler(NewIssueHandler(tracker))
 	mux := http.NewServeMux()
-	mux.Handle(path, authproxy.Authenticate(publicKey, withHuman(handler)))
+	mux.Handle(path, authenticate(withHuman(handler)))
 	return mux
 }
 

@@ -291,7 +291,7 @@ func TestNew(t *testing.T) {
 	daos := dao.NewOptions(newConn(t))
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assertion.MustNoError(t, err)
-	s := httptest.NewServer(New(issue.NewTracker(daos), &key.PublicKey))
+	s := httptest.NewServer(New(issue.NewTracker(daos), func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
 	t.Cleanup(s.Close)
 	client := api.NewIssueClient(http.DefaultClient, s.URL)
 

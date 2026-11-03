@@ -322,8 +322,14 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 
 `bazel run //:env_issue`（monodev）が MySQL と、heimdallr の代わりになる認証プロキシを起動する。
 認証プロキシは `.authproxy` に鍵を生成し、開発用ユーザーのトークンを付けてサーバーへ転送する。公開鍵は heimdallr の
-internal API と同じ `/internal/publickey` で返す。サーバーは本番と同じく公開鍵でトークンを検証するので、認証を省略する
-仕組みは持たない。
+internal API と同じ `/internal/publickey` で返す。サーバーは本番と同じく公開鍵でトークンを検証する。
+
+サーバーは heimdallr・Build・git-data-service・GitHub がない環境（kind での動作確認など）でも動く。
+
+- `--public-key-url` がなければ heimdallr なしで動き、すべてのリクエストを `--subject`（既定は dev@example.com）の人として扱う
+- `--build-api` がなければ webhook を受け付けない。リポジトリは Build が管理しているので、Build なしではリンクを作れない
+- `--git-data-service` がなければ change-id を取得しない（取得には `--build-api` も要る）
+- GitHub の認証情報がなければ認証なしで GitHub API を呼ぶので、公開リポジトリの pull request だけを扱える
 
 ```
 bazel run //:env_issue

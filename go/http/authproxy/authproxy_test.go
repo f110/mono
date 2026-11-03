@@ -105,3 +105,14 @@ func TestFetchPublicKey(t *testing.T) {
 	_, err = FetchPublicKey(t.Context(), s.URL+"/not-found")
 	assertion.MustError(t, err)
 }
+
+func TestWithSubject(t *testing.T) {
+	var got *Claims
+	handler := WithSubject("alice@example.com", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		got, _ = ClaimsFrom(req.Context())
+	}))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+	assertion.Equal(t, w.Code, http.StatusOK)
+	assertion.Equal(t, got.Subject, "alice@example.com")
+}

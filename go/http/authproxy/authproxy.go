@@ -59,6 +59,15 @@ func Authenticate(publicKey *ecdsa.PublicKey, next http.Handler) http.Handler {
 	})
 }
 
+// WithSubject returns the handler which treats every request as the request of the user of subject. It is used instead
+// of Authenticate when the application runs without heimdallr.
+func WithSubject(subject string, next http.Handler) http.Handler {
+	claims := &Claims{RegisteredClaims: jwt.RegisteredClaims{Subject: subject}}
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), claimsKey{}, claims)))
+	})
+}
+
 // FetchPublicKey fetches the public key to verify the token from url which is the internal API of heimdallr
 // (/internal/publickey).
 func FetchPublicKey(ctx context.Context, url string) (*ecdsa.PublicKey, error) {

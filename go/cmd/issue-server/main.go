@@ -33,6 +33,7 @@ type serverCommand struct {
 	Addr           string
 	DSN            string
 	PublicKeyURL   string
+	Subject        string
 	BuildAPI       string
 	GitDataService string
 	GitHub         *githubutil.GitHubClientFactory
@@ -44,9 +45,10 @@ type serverCommand struct {
 func (c *serverCommand) Flags(fs *cli.FlagSet) {
 	fs.String("addr", "Listen address").Var(&c.Addr).Default(":8080")
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
-	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API").Var(&c.PublicKeyURL).Required()
-	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories").Var(&c.BuildAPI).Required()
-	fs.String("git-data-service", "Address of git-data-service to look up the change id of the commits").Var(&c.GitDataService).Required()
+	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API. If not specified, the server runs without heimdallr").Var(&c.PublicKeyURL)
+	fs.String("subject", "Subject of the user of every request when --public-key-url is not specified").Var(&c.Subject).Default("dev@example.com")
+	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories. If not specified, the webhook is not handled").Var(&c.BuildAPI)
+	fs.String("git-data-service", "Address of git-data-service to look up the change id of the commits. If not specified, the change id is not looked up").Var(&c.GitDataService)
 	c.GitHub.Flags(fs)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&c.EventReconcileInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&c.EventMaxProcessingDuration).Default(30 * time.Minute)
@@ -56,7 +58,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 	if err := c.GitHub.Init(); err != nil {
 		return err
 	}
-	publicKey, err := authproxy.FetchPublicKey(ctx, c.PublicKeyURL)
+	authenticate, err := c.authenticator(ctx)
 	if err != nil {
 		return err
 	}
@@ -69,28 +71,36 @@ func (c *serverCommand) Run(ctx context.Context) error {
 		return err
 	}
 
-	buildConn, err := grpc.NewClient(c.BuildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	defer buildConn.Close()
-
 	daos := dao.NewOptions(conn)
 	tracker := issue.NewTracker(daos)
-	repositories := webhook.NewBuildRepositories(buildapi.NewAPIClient(buildConn))
-	eventProcessor := webhook.NewEventProcessor(daos, tracker, repositories, c.GitHub.REST, c.EventReconcileInterval, c.EventMaxProcessingDuration)
-	go eventProcessor.Run(ctx)
-
-	gitDataConn, err := grpc.NewClient(c.GitDataService, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	defer gitDataConn.Close()
-	go webhook.NewChangeIDFiller(tracker, repositories, git.NewGitDataClient(gitDataConn)).Run(ctx)
-
 	mux := http.NewServeMux()
-	mux.Handle("/", server.New(tracker, publicKey))
-	mux.Handle("/webhook", eventProcessor)
+	mux.Handle("/", server.New(tracker, authenticate))
+
+	// The repositories are managed by Build, so the webhook and the change id need Build.
+	if c.BuildAPI == "" {
+		slogger.Log.Info("The webhook is not handled because --build-api is not specified")
+	} else {
+		buildConn, err := grpc.NewClient(c.BuildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		defer buildConn.Close()
+		repositories := webhook.NewBuildRepositories(buildapi.NewAPIClient(buildConn))
+		eventProcessor := webhook.NewEventProcessor(daos, tracker, repositories, c.GitHub.REST, c.EventReconcileInterval, c.EventMaxProcessingDuration)
+		go eventProcessor.Run(ctx)
+		mux.Handle("/webhook", eventProcessor)
+
+		if c.GitDataService == "" {
+			slogger.Log.Info("The change id of the commits is not looked up because --git-data-service is not specified")
+		} else {
+			gitDataConn, err := grpc.NewClient(c.GitDataService, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return xerrors.WithStack(err)
+			}
+			defer gitDataConn.Close()
+			go webhook.NewChangeIDFiller(tracker, repositories, git.NewGitDataClient(gitDataConn)).Run(ctx)
+		}
+	}
 	mux.HandleFunc("/_livez", func(w http.ResponseWriter, _ *http.Request) {})
 	mux.HandleFunc("/_readyz", func(w http.ResponseWriter, req *http.Request) {
 		if !probe.NewProbe(conn).Ready(req.Context(), database.SchemaHash) {
@@ -118,6 +128,20 @@ func (c *serverCommand) Run(ctx context.Context) error {
 		return xerrors.WithStack(err)
 	}
 	return nil
+}
+
+// authenticator returns the middleware which authenticates the requests by the token of heimdallr. Without
+// --public-key-url, the server runs without heimdallr and every request is the request of the user of Subject.
+func (c *serverCommand) authenticator(ctx context.Context) (func(http.Handler) http.Handler, error) {
+	if c.PublicKeyURL == "" {
+		slogger.Log.Info("Run without heimdallr", slog.String("subject", c.Subject))
+		return func(next http.Handler) http.Handler { return authproxy.WithSubject(c.Subject, next) }, nil
+	}
+	publicKey, err := authproxy.FetchPublicKey(ctx, c.PublicKeyURL)
+	if err != nil {
+		return nil, err
+	}
+	return func(next http.Handler) http.Handler { return authproxy.Authenticate(publicKey, next) }, nil
 }
 
 func openDatabase(dsn string) (*sql.DB, error) {
@@ -154,7 +178,7 @@ func waitMigration(ctx context.Context, conn *sql.DB) error {
 }
 
 func main() {
-	c := &serverCommand{GitHub: githubutil.NewGitHubClientFactory("issue-server", true)}
+	c := &serverCommand{GitHub: githubutil.NewGitHubClientFactory("issue-server", false)}
 	cmd := &cli.Command{
 		Use:   "issue-server",
 		Short: "Start the server of the issue tracker",
