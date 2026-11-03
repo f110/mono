@@ -44,6 +44,7 @@ NPM_DEPS = [
     "//ts/apps/issue:node_modules/react-markdown",
     "//ts/apps/issue:node_modules/rehype-highlight",
     "//ts/apps/issue:node_modules/rehype-sanitize",
+    "//ts/apps/issue:node_modules/remark-breaks",
     "//ts/apps/issue:node_modules/remark-gfm",
     "//ts/apps/issue:node_modules/@types/react",
     "//ts/apps/issue:node_modules/@types/react-dom",

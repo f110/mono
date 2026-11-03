@@ -4,6 +4,7 @@ import 'highlight.js/styles/github.css'
 import ReactMarkdown from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize from 'rehype-sanitize'
+import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 
 type Node = {
@@ -46,7 +47,7 @@ function remarkTicketLink() {
 
 export const Markdown = ({ text }: { text: string }) => (
   <Box className="markdown-body">
-    <ReactMarkdown remarkPlugins={[remarkGfm, remarkTicketLink]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
+    <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
       {text}
     </ReactMarkdown>
   </Box>
