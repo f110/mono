@@ -332,6 +332,10 @@ make run-issue-ui
 | 8095 | 認証プロキシ |
 | 8302 | Web UI の開発サーバー。API へのリクエストは認証プロキシに中継する |
 
+webhook の処理ではリポジトリを Build の API で判定するので、`make run-api` で起動した Build（127.0.0.1:8081）に
+接続する。Build が起動していなくてもサーバーは動き、受け取った event は `--event-max-processing-duration`（既定は
+30 分）を過ぎるまで再試行される。
+
 ## 10. 実装順序
 
 1. スキーマ・`issue`・Connect API（チケット・関連・コメント・履歴）

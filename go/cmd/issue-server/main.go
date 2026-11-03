@@ -13,13 +13,17 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"go.f110.dev/protoc-ddl/probe"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
+	buildapi "go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/database"
 	"go.f110.dev/mono/go/issue/database/dao"
 	"go.f110.dev/mono/go/issue/server"
+	"go.f110.dev/mono/go/issue/webhook"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -27,12 +31,19 @@ type serverCommand struct {
 	Addr         string
 	DSN          string
 	PublicKeyURL string
+	BuildAPI     string
+
+	EventReconcileInterval     time.Duration
+	EventMaxProcessingDuration time.Duration
 }
 
 func (c *serverCommand) Flags(fs *cli.FlagSet) {
 	fs.String("addr", "Listen address").Var(&c.Addr).Default(":8080")
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API").Var(&c.PublicKeyURL).Required()
+	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories").Var(&c.BuildAPI).Required()
+	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&c.EventReconcileInterval).Default(30 * time.Second)
+	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&c.EventMaxProcessingDuration).Default(30 * time.Minute)
 }
 
 func (c *serverCommand) Run(ctx context.Context) error {
@@ -49,8 +60,21 @@ func (c *serverCommand) Run(ctx context.Context) error {
 		return err
 	}
 
+	buildConn, err := grpc.NewClient(c.BuildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	defer buildConn.Close()
+
+	daos := dao.NewOptions(conn)
+	tracker := issue.NewTracker(daos)
+	repositories := webhook.NewBuildRepositories(buildapi.NewAPIClient(buildConn))
+	eventProcessor := webhook.NewEventProcessor(daos, tracker, repositories, c.EventReconcileInterval, c.EventMaxProcessingDuration)
+	go eventProcessor.Run(ctx)
+
 	mux := http.NewServeMux()
-	mux.Handle("/", server.New(issue.NewTracker(dao.NewOptions(conn)), publicKey))
+	mux.Handle("/", server.New(tracker, publicKey))
+	mux.Handle("/webhook", eventProcessor)
 	mux.HandleFunc("/_livez", func(w http.ResponseWriter, _ *http.Request) {})
 	mux.HandleFunc("/_readyz", func(w http.ResponseWriter, req *http.Request) {
 		if !probe.NewProbe(conn).Ready(req.Context(), database.SchemaHash) {
