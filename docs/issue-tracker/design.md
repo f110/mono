@@ -23,7 +23,7 @@ Status: Draft / Working
   Agent ────┤ (MCP)                     │
             ▼                           ▼
      ┌─────────────── heimdallr proxy ───────────────┐
-     │  人間: X-Auth-Token (JWT) を付与              │
+     │  人間・Agent: X-Auth-Token (JWT) を付与       │
      │  webhook: 署名検証                            │
      └──────────────────────┬────────────────────────┘
                             ▼
@@ -49,7 +49,7 @@ Status: Draft / Working
 ### 2.2 実装上の約束
 
 - チケットに関するすべての書き込みは `issue` パッケージを経由する。Connect API・MCP・event worker は `issue` を
-  呼ぶだけで、DB を直接更新しない。これにより「人間とエージェントで同じことができる」ことと
+  呼ぶだけで、DB を直接更新しない（MCP は Connect API のハンドラを経由して `issue` を呼ぶ）。これにより「人間とエージェントで同じことができる」ことと
   「すべての操作が履歴に残る」ことを 1 箇所で保証する
 - `issue` は標準ライブラリと同じく提供するものの型に操作を持たせる。`Tracker` がチケットの作成・取得・検索を、
   `Ticket` が更新・関連・コメントの追加を、`Comment` が編集・削除を持つ
@@ -64,7 +64,8 @@ Status: Draft / Working
 | `go/issue/database`, `go/issue/database/dao` | DB スキーマ（protoc-ddl の `schema.proto`）と生成コード、DAO |
 | `go/issue` | issue tracker 本体。チケット・関連・コメント・分類の操作、認可、操作履歴の記録、検索 |
 | `go/issue/filter` | AIP-160 で書いたチケットのフィルタを SQL の条件に変換する |
-| `go/issue/server` | HTTP サーバー。Connect・MCP・Webhook・添付のハンドラ |
+| `go/issue/server` | HTTP サーバー。Connect・Webhook・添付のハンドラ |
+| `go/issue/mcp` | MCP のハンドラ。tool は `go/issue/server` の Connect のハンドラを呼ぶ（§6.2） |
 | `go/issue/webhook` | push / pull_request の Reconciler と trailer の解釈 |
 | `go/github/webhook` | Webhook の受信・永続化・非同期処理のフレームワーク。Build と共用する（§5.1） |
 | `go/http/authproxy` | heimdallr の JWT の検証。issue 以外のアプリケーションと共用する（§4.1） |
@@ -83,8 +84,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | --- | --- | --- |
 | `ticket` | `id` (sequence), `title`, `body`, `status`, `priority` (未設定は `PRIORITY_NONE`), `component_id` (null 可), `assignee_id` (null 可), `reporter_id`, `created_at`, `updated_at`, `last_activity_at` | `id` がそのままチケット番号。`last_activity_at` はコメントを含む最後の操作の時刻 |
 | `ticket_body_revision` | `id`, `ticket_id`, `patch`, `created_at` | 編集前の本文を編集後の本文から復元する差分 |
-| `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ), `subject` (human のみ、heimdallr のユーザー ID) | system は固定の 1 行 |
-| `agent_token` | `id`, `actor_id`, `name`, `token_hash`, `created_at`, `last_used_at`, `revoked_at` | トークンは SHA-256 のみ保存 |
+| `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ、所有者の human の actor), `subject` (human のみ、heimdallr のユーザー ID) | UNIQUE(`subject`), UNIQUE(`owner_id`)。system は固定の 1 行 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
 | `relation` | `from_id`, `type`, `to_id` | UNIQUE(`from_id`, `type`, `to_id`) |
 | `comment` | `id`, `ticket_id`, `actor_id`, `body`, `created_at`, `updated_at`, `deleted_at` | 削除は `deleted_at` を立てる論理削除 |
@@ -138,19 +138,23 @@ DB を引かないように、actor は書き込みなど actor が必要な操�
 
 ### 4.2 エージェント
 
-- エージェントトークンは人間が Web UI から発行する。発行した人間がそのトークンの actor の所有者になる
-- 発行時に `agent` の actor を 1 つ作り、トークンはその actor に紐づく。1 actor に複数トークンを持てる（ローテーション用）
-- トークンは発行時に 1 度だけ表示し、DB には SHA-256 のみ保存する
-- 所有者はトークンを失効でき、失効後は `revoked_at` を立てて拒否する
+エージェントは所有者である人間の資格情報で heimdallr を通過し、人間と同じく `X-Auth-Token` の JWT を受け取る。
+エージェントが heimdallr をどう通過するかは heimdallr 側で扱い、issue tracker は関与しない。issue tracker は独自の
+トークンを持たず、認証は heimdallr に任せる。
 
-リクエストでのトークンの渡し方と、エージェントのリクエストが heimdallr をどう通過するかは今後の課題とする（§11）。
+- `/mcp` へのリクエストはエージェントの操作として扱う。JWT の `sub` の human の actor を所有者とする `agent` の actor を操作主体にする
+- エージェントの actor は人間 1 人につき 1 つで、`owner_id` で所有者を引く。`subject` は持たない
+- 人間と同じく、actor は必要な操作で初めて引き、存在しなければその時点で所有者の human の actor とともに作成する。
+  同時に作成されたときは UNIQUE(`owner_id`) で 1 つに決まる
+- 名前は所有者の名前に ` (agent)` を付けたものにする
+
+同じ `sub` でも Connect API からは human、`/mcp` からは agent として記録されるので、履歴ではどちらの操作かを区別できる。
 
 ### 4.3 権限
 
 | 操作 | human | agent | system |
 | --- | --- | --- | --- |
 | チケットの操作（作成・編集・コメント・関連・添付） | ○ | ○ | ステータス変更と紐づけのみ |
-| エージェントトークンの発行・失効 | ○（自分が所有するもの） | × | × |
 | 分類の管理 | ○ | × | × |
 
 認可は `issue` の各操作の入り口で `actor.kind` を見て行う。
@@ -260,15 +264,33 @@ Web UI と CLI は同じ Connect サービスを使う。
 | 添付 | `ListAttachments`（アップロード・ダウンロードは §7 の HTTP エンドポイント） |
 | 履歴 | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions`（本文・コメントの編集前の版と編集者） |
 | 管理 | `ListComponents`, `SaveComponent` |
-| トークン | `ListAgentTokens`, `IssueAgentToken`, `RevokeAgentToken` |
 | その他 | `ListActors`, `WhoAmI` |
 
 `GetTicket` は関連（逆方向の導出を含む）・紐づいた commit / PR と CI 結果・添付をまとめて返す。
 
 ### 6.2 MCP
 
-MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチケット操作の RPC と 1 対 1 に対応させ、
-管理・トークン系は公開しない。tool の実装は `issue` を呼ぶだけで、Connect API と同じ挙動になる。
+MCP は Streamable HTTP でサーバーの `/mcp` に公開する。実装には公式の Go SDK（`github.com/modelcontextprotocol/go-sdk`）
+を使う。`/mcp` も Connect API と同じく heimdallr の JWT を検証し、操作主体はエージェントになる（§4.2）。
+
+tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の Connect のハンドラを呼ぶ。入力の検証・エラー・
+レスポンスの変換を Connect API と共有するので、挙動が一致する。
+
+| tool | RPC |
+| --- | --- |
+| `list_tickets`, `get_ticket`, `create_ticket`, `update_ticket` | `ListTickets`, `GetTicket`, `CreateTicket`, `UpdateTicket` |
+| `add_relation`, `remove_relation` | `AddRelation`, `RemoveRelation` |
+| `add_comment`, `edit_comment`, `delete_comment` | `AddComment`, `EditComment`, `DeleteComment` |
+| `list_activities`, `list_ticket_revisions`, `list_comment_revisions` | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions` |
+| `list_components`, `list_actors`, `who_am_i` | `ListComponents`, `ListActors`, `WhoAmI` |
+| `list_attachments` | `ListAttachments`（添付の実装後に追加する） |
+
+- `create_ticket` / `update_ticket` は分類と担当を ID で受け取るので、ID を引くために `list_components` / `list_actors` を公開する
+- 分類の変更（`SaveComponent`）は人間だけができる操作なので公開しない
+- 入力は tool ごとの struct で受け取って Connect のリクエストに詰め替える。proto の生成コードの struct は内部の
+  フィールドを持ち、入力のスキーマにそのまま使えないため。ステータスと優先度は §8 のフィルタと同じ `OPEN` や `P1` の文字列で受け取る
+- 結果は Connect のレスポンスを protojson で返す。エラーは tool のエラーとして返し、エージェントが理由を読めるようにする
+- 添付のアップロード・ダウンロードは HTTP エンドポイントで行うので（§7）、tool は持たない
 
 ### 6.3 CLI
 
@@ -278,9 +300,10 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 ### 6.4 Web UI
 
 `ts/apps/issue` に Build のフロントエンドと同じ構成（React + Vite + TanStack Router + TanStack Query + Connect）
-で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（分類・トークン）を加える。
+で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（分類）を加える。
 
 - URL は `/<番号>` がチケット詳細、`/` が一覧、`/new` が新規作成。サーバーは未知のパスに `index.html` を返す
+- 管理画面は `/admin` 以下に置き、左のメニューで管理する対象を切り替える。分類は `/admin/components`
 - 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
 - Markdown はクライアントでレンダリングしてサニタイズする。`#123` は `/123` へのリンクに置き換える
 
@@ -316,7 +339,7 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 
 - サーバーとフロントエンドのコンテナイメージを `containers/` に追加し、マニフェストを `manifests/` に置く
 - MariaDB と MinIO は既存のものに DB とバケットを追加して使う
-- heimdallr にバックエンドを登録する。`/webhook` は GitHub の署名検証、それ以外は人間の認証を通す
+- heimdallr にバックエンドを登録する。`/webhook` は GitHub の署名検証、それ以外は人間（エージェントは所有者の人間）の認証を通す
 
 ### 9.1 ローカル開発
 
@@ -344,6 +367,12 @@ make run-issue-ui
 | 8095 | 認証プロキシ |
 | 8302 | Web UI の開発サーバー。API へのリクエストは認証プロキシに中継する |
 
+MCP も認証プロキシ経由で使う。Claude Code からは次のように登録する。
+
+```
+claude mcp add --transport http issue http://127.0.0.1:8095/mcp
+```
+
 webhook の処理ではリポジトリを Build の API で判定するので、`make run-api` で起動した Build（127.0.0.1:8081）に
 接続する。Build が起動していなくてもサーバーは動き、受け取った event は `--event-max-processing-duration`（既定は
 30 分）を過ぎるまで再試行される。pull_request の処理では PR のコミットを GitHub API で取得するので、Build と同じ
@@ -363,7 +392,7 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 
 - イメージは `containers/issue` で作り、マニフェストはビルド時にイメージの digest で参照する（`kustomization` の `images`）
 - ops の overlay では、namespace、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
-- heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/` と `/webhook` を issue-server に、それ以外を
+- heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/`・`/mcp`・`/webhook` を issue-server に、それ以外を
   Web UI に向ける。GitHub の webhook の登録も `Backend` で行う
 - migrate の Job は、`kustomization` が名前の末尾にイメージの digest の先頭 6 文字を付け、イメージごとに別の Job にする（ops の
   Build と同じ）。終わった Job は `ttlSecondsAfterFinished` で消える
@@ -377,7 +406,7 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 5. Webhook（push / pull_request）と trailer の解釈
 6. Build API への `revisions` 追加と CI 結果の表示
 7. 添付ファイル
-8. エージェントトークンと MCP
+8. MCP とエージェントの actor
 9. CLI
 10. git-data-service への `change_id` 追加と backfill
 
@@ -386,7 +415,6 @@ GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は B
 今後の課題:
 
 - CLI の認証方式
-- エージェントの認証方式（トークンの渡し方と、エージェントのリクエストが heimdallr をどう通過するか）
 
 未決事項:
 
