@@ -1,5 +1,7 @@
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router'
+import { AdminLayout } from './components/AdminLayout.tsx'
 import { Layout } from './components/Layout.tsx'
+import { ComponentsPage } from './pages/ComponentsPage.tsx'
 import { NewTicketPage } from './pages/NewTicketPage.tsx'
 import { TicketListPage } from './pages/TicketListPage.tsx'
 import { TicketPage } from './pages/TicketPage.tsx'
@@ -26,6 +28,26 @@ const newRoute = createRoute({
   component: NewTicketPage,
 })
 
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: AdminLayout,
+})
+
+const adminIndexRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/admin/components' })
+  },
+})
+
+const componentsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/components',
+  component: ComponentsPage,
+})
+
 const ticketRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$number',
@@ -33,7 +55,7 @@ const ticketRoute = createRoute({
 })
 
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([listRoute, newRoute, ticketRoute]),
+  routeTree: rootRoute.addChildren([listRoute, newRoute, adminRoute.addChildren([adminIndexRoute, componentsRoute]), ticketRoute]),
 })
 
 declare module '@tanstack/react-router' {
