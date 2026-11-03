@@ -12,6 +12,7 @@ CREATE TABLE `actor` (
 	`subject` VARCHAR(255) NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
+	UNIQUE `idx_owner_id` (`owner_id`),
 	UNIQUE `idx_subject` (`subject`),
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;

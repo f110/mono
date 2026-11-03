@@ -509,6 +509,42 @@ func TestWithHuman(t *testing.T) {
 	mustErrorIs(t, err, ErrUnauthenticated)
 }
 
+func TestWithAgent(t *testing.T) {
+	f := newFixture(t)
+	ctx := WithAgent(context.Background(), "alice@example.com")
+
+	_, err := f.tracker.Find(ctx, "", "")
+	assertion.MustNoError(t, err)
+	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
+	mustErrorIs(t, err, sql.ErrNoRows)
+
+	ticket, err := f.tracker.Create(ctx, "title", "body", database.PriorityNone, nil, nil)
+	assertion.MustNoError(t, err)
+	agent, err := f.tracker.Me(ctx)
+	assertion.MustNoError(t, err)
+	alice, err := f.tracker.Me(WithHuman(context.Background(), "alice@example.com"))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, agent.Kind, database.ActorKindAgent)
+	assertion.Equal(t, agent.Name, "alice@example.com (agent)")
+	assertion.Equal(t, *agent.OwnerId, alice.Id)
+	assertion.True(t, agent.Subject == nil)
+	assertion.Equal(t, ticket.ReporterId, agent.Id)
+
+	again, err := f.tracker.Me(ctx)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, again.Id, agent.Id)
+
+	existing, err := f.tracker.Me(WithAgent(context.Background(), "human@example.com"))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, existing.Id, f.agent.Id)
+
+	_, err = f.tracker.SaveComponent(ctx, 0, "agent")
+	mustErrorIs(t, err, ErrPermissionDenied)
+
+	_, err = f.tracker.Find(WithAgent(context.Background(), ""), "", "")
+	mustErrorIs(t, err, ErrUnauthenticated)
+}
+
 func TestParseTrailer(t *testing.T) {
 	cases := []struct {
 		name    string

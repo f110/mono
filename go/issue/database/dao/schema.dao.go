@@ -79,6 +79,7 @@ type ActorInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.Actor, error)
 	ListAll(ctx context.Context, opt ...ListOption) ([]*database.Actor, error)
 	SelectBySubject(ctx context.Context, subject string) (*database.Actor, error)
+	SelectByOwner(ctx context.Context, ownerId int32) (*database.Actor, error)
 	ListByKind(ctx context.Context, kind uint32, opt ...ListOption) ([]*database.Actor, error)
 	Create(ctx context.Context, actor *database.Actor, opt ...ExecOption) (*database.Actor, error)
 	Update(ctx context.Context, actor *database.Actor, opt ...ExecOption) error
@@ -190,6 +191,21 @@ func (d *Actor) SelectBySubject(ctx context.Context, subject string) (*database.
 		ctx,
 		"SELECT `id`, `kind`, `name`, `owner_id`, `subject`, `created_at`, `updated_at` FROM `actor` WHERE `subject` = ?",
 		subject,
+	)
+	v := &database.Actor{}
+	if err := row.Scan(&v.Id, &v.Kind, &v.Name, &v.OwnerId, &v.Subject, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *Actor) SelectByOwner(ctx context.Context, ownerId int32) (*database.Actor, error) {
+	row := d.conn.QueryRowContext(
+		ctx,
+		"SELECT `id`, `kind`, `name`, `owner_id`, `subject`, `created_at`, `updated_at` FROM `actor` WHERE `owner_id` = ?",
+		ownerId,
 	)
 	v := &database.Actor{}
 	if err := row.Scan(&v.Id, &v.Kind, &v.Name, &v.OwnerId, &v.Subject, &v.CreatedAt, &v.UpdatedAt); err != nil {
@@ -1163,18 +1179,11 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		fromPrimaryKeys := make([]int32, len(res))
 		toPrimaryKeys := make([]int32, len(res))
+		fromPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			fromPrimaryKeys[i] = v.FromId
 			toPrimaryKeys[i] = v.ToId
-		}
-		fromData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, fromPrimaryKeys...)
-			for _, v := range rels {
-				fromData[v.Id] = v
-			}
+			fromPrimaryKeys[i] = v.FromId
 		}
 		toData := make(map[int32]*database.Ticket)
 		{
@@ -1183,9 +1192,16 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 				toData[v.Id] = v
 			}
 		}
+		fromData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, fromPrimaryKeys...)
+			for _, v := range rels {
+				fromData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.From = fromData[v.FromId]
 			v.To = toData[v.ToId]
+			v.From = fromData[v.FromId]
 		}
 	}
 
@@ -1475,18 +1491,11 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 	}
 
 	if len(res) > 0 {
-		ticketPrimaryKeys := make([]int32, len(res))
 		actorPrimaryKeys := make([]int32, len(res))
+		ticketPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			ticketPrimaryKeys[i] = v.TicketId
 			actorPrimaryKeys[i] = v.ActorId
-		}
-		ticketData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
-			for _, v := range rels {
-				ticketData[v.Id] = v
-			}
+			ticketPrimaryKeys[i] = v.TicketId
 		}
 		actorData := make(map[int32]*database.Actor)
 		{
@@ -1495,9 +1504,16 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 				actorData[v.Id] = v
 			}
 		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Ticket = ticketData[v.TicketId]
 			v.Actor = actorData[v.ActorId]
+			v.Ticket = ticketData[v.TicketId]
 		}
 	}
 	return res, nil

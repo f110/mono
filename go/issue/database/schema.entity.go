@@ -13,6 +13,34 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
+type ActivityKind uint32
+
+const (
+	ActivityKindCreate            ActivityKind = 0
+	ActivityKindTitle             ActivityKind = 1
+	ActivityKindStatus            ActivityKind = 2
+	ActivityKindPriority          ActivityKind = 3
+	ActivityKindComponent         ActivityKind = 4
+	ActivityKindAssignee          ActivityKind = 5
+	ActivityKindBody              ActivityKind = 6
+	ActivityKindRelationAdded     ActivityKind = 7
+	ActivityKindRelationRemoved   ActivityKind = 8
+	ActivityKindComment           ActivityKind = 9
+	ActivityKindCommentEdited     ActivityKind = 10
+	ActivityKindCommentDeleted    ActivityKind = 11
+	ActivityKindCommitLinked      ActivityKind = 12
+	ActivityKindPullRequestLinked ActivityKind = 13
+)
+
+type TicketStatus uint32
+
+const (
+	TicketStatusOpen       TicketStatus = 0
+	TicketStatusInProgress TicketStatus = 1
+	TicketStatusDone       TicketStatus = 2
+	TicketStatusWontFix    TicketStatus = 3
+)
+
 type Priority uint32
 
 const (
@@ -67,40 +95,12 @@ const (
 	GithubEventStateSkipped    GithubEventState = 5
 )
 
-type ActivityKind uint32
-
-const (
-	ActivityKindCreate            ActivityKind = 0
-	ActivityKindTitle             ActivityKind = 1
-	ActivityKindStatus            ActivityKind = 2
-	ActivityKindPriority          ActivityKind = 3
-	ActivityKindComponent         ActivityKind = 4
-	ActivityKindAssignee          ActivityKind = 5
-	ActivityKindBody              ActivityKind = 6
-	ActivityKindRelationAdded     ActivityKind = 7
-	ActivityKindRelationRemoved   ActivityKind = 8
-	ActivityKindComment           ActivityKind = 9
-	ActivityKindCommentEdited     ActivityKind = 10
-	ActivityKindCommentDeleted    ActivityKind = 11
-	ActivityKindCommitLinked      ActivityKind = 12
-	ActivityKindPullRequestLinked ActivityKind = 13
-)
-
-type TicketStatus uint32
-
-const (
-	TicketStatusOpen       TicketStatus = 0
-	TicketStatusInProgress TicketStatus = 1
-	TicketStatusDone       TicketStatus = 2
-	TicketStatusWontFix    TicketStatus = 3
-)
-
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
 type Actor struct {
 	Id   int32
 	Kind ActorKind
 	Name string
-	// owner_id is the id of the human actor who owns the agent. Set only for the agent.
+	// owner_id is the id of the human actor who owns the agent. Set only for the agent. A human owns only one agent.
 	OwnerId *int32
 	// subject is the user id of heimdallr. Set only for the human.
 	Subject   *string

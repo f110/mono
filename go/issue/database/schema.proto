@@ -80,8 +80,8 @@ message Actor {
   int32     id   = 1 [(dev.f110.ddl.column) = { sequence: true }];
   ActorKind kind = 2;
   string    name = 3;
-  // owner_id is the id of the human actor who owns the agent. Set only for the agent.
-  int32 owner_id = 4 [(dev.f110.ddl.column) = { null: true }];
+  // owner_id is the id of the human actor who owns the agent. Set only for the agent. A human owns only one agent.
+  int32 owner_id = 4 [(dev.f110.ddl.column) = { null: true, unique: true }];
   // subject is the user id of heimdallr. Set only for the human.
   string subject = 5 [(dev.f110.ddl.column) = { null: true, unique: true }];
 
@@ -98,6 +98,10 @@ message Actor {
     queries: {
       name: "BySubject"
       query: "SELECT * FROM `:table_name:` WHERE `subject` = ?"
+    }
+    queries: {
+      name: "ByOwner"
+      query: "SELECT * FROM `:table_name:` WHERE `owner_id` = ?"
     }
     queries: {
       name: "ByKind"

@@ -36,6 +36,8 @@ type actorKey struct{}
 
 type subjectKey struct{}
 
+type agentSubjectKey struct{}
+
 // WithActor returns the context that carries the actor of the operations.
 func WithActor(ctx context.Context, actor *database.Actor) context.Context {
 	return context.WithValue(ctx, actorKey{}, actor)
@@ -47,6 +49,12 @@ func WithHuman(ctx context.Context, subject string) context.Context {
 	return context.WithValue(ctx, subjectKey{}, subject)
 }
 
+// WithAgent returns the context that carries the subject of the owner of the agent. The agent actor of the owner is
+// looked up only when the operation needs it, and it is created with the owner at the first time.
+func WithAgent(ctx context.Context, subject string) context.Context {
+	return context.WithValue(ctx, agentSubjectKey{}, subject)
+}
+
 func actorFrom(ctx context.Context) (*database.Actor, bool) {
 	a, ok := ctx.Value(actorKey{}).(*database.Actor)
 	return a, ok && a != nil
@@ -54,6 +62,11 @@ func actorFrom(ctx context.Context) (*database.Actor, bool) {
 
 func subjectFrom(ctx context.Context) (string, bool) {
 	s, ok := ctx.Value(subjectKey{}).(string)
+	return s, ok && s != ""
+}
+
+func agentSubjectFrom(ctx context.Context) (string, bool) {
+	s, ok := ctx.Value(agentSubjectKey{}).(string)
 	return s, ok && s != ""
 }
 
@@ -263,6 +276,31 @@ func (t *Tracker) human(ctx context.Context, subject string) (*database.Actor, e
 	return a, nil
 }
 
+// agent returns the agent actor which the human of subject owns. The agent and the owner are created at the first
+// access.
+func (t *Tracker) agent(ctx context.Context, subject string) (*database.Actor, error) {
+	owner, err := t.human(ctx, subject)
+	if err != nil {
+		return nil, err
+	}
+	a, err := t.dao.Actor.SelectByOwner(ctx, owner.Id)
+	if err == nil {
+		return a, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, xerrors.WithStack(err)
+	}
+
+	created, err := t.dao.Actor.Create(ctx, &database.Actor{Kind: database.ActorKindAgent, Name: owner.Name + " (agent)", OwnerId: &owner.Id})
+	if err == nil {
+		return t.dao.Actor.Select(ctx, created.Id)
+	}
+	a, selectErr := t.dao.Actor.SelectByOwner(ctx, owner.Id)
+	if selectErr != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return a, nil
+}
+
 // System returns the system actor which operates the tickets by the events from GitHub. The actor is created at the
 // first access. If the actors are created concurrently, the actor of the smallest id is the system actor.
 func (t *Tracker) System(ctx context.Context) (*database.Actor, error) {
@@ -430,6 +468,9 @@ func authenticated(ctx context.Context) error {
 	if _, ok := subjectFrom(ctx); ok {
 		return nil
 	}
+	if _, ok := agentSubjectFrom(ctx); ok {
+		return nil
+	}
 	return ErrUnauthenticated.WithStack()
 }
 
@@ -439,6 +480,9 @@ func (t *Tracker) actor(ctx context.Context) (*database.Actor, error) {
 	}
 	if subject, ok := subjectFrom(ctx); ok {
 		return t.human(ctx, subject)
+	}
+	if subject, ok := agentSubjectFrom(ctx); ok {
+		return t.agent(ctx, subject)
 	}
 	return nil, ErrUnauthenticated.WithStack()
 }
