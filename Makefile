@@ -15,8 +15,7 @@ gen:
 	bazel query 'kind(vendor_grpc_source, //go/...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_proto_source, //go/...)' | xargs -n1 bazel run
 	bazel query 'kind(vendor_kubeproto, //go/...)' | xargs -n1 bazel run
-	bazel run //ts/apps/build/src/connect:vendor_bff
-	bazel run //ts/apps/build/src/model:vendor_model
+	bazel query 'kind(_vendor_ts, //ts/...)' | xargs -n1 bazel run
 	bazel query 'kind("_write_source_file", //...)' | xargs -n1 bazel run
 
 deb_packages.bzl: deb_packages.yaml
