@@ -626,3 +626,29 @@ func TestLinkPullRequest(t *testing.T) {
 	}
 	assertion.MustNoError(t, f.tracker.UpdatePullRequest(f.as(f.system), 10, 100, "title", database.PullRequestStateClosed, "sha"))
 }
+
+func TestSetChangeID(t *testing.T) {
+	f := newFixture(t)
+	ticket := f.create(t, "title")
+	committedAt := time.Date(2026, 11, 1, 0, 0, 0, 0, time.Local)
+	assertion.MustNoError(t, ticket.LinkCommit(f.as(f.system), 10, "sha1", "subject", "alice", database.TrailerKindRefs, committedAt))
+	assertion.MustNoError(t, ticket.LinkCommit(f.as(f.system), 10, "sha2", "subject", "alice", database.TrailerKindRefs, committedAt))
+
+	links, err := f.tracker.CommitLinksWithoutChangeID(f.as(f.system))
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, links, 2)
+
+	assertion.MustNoError(t, f.tracker.SetChangeID(f.as(f.system), links[0].Id, "zzzzzzzz"))
+	assertion.MustNoError(t, f.tracker.SetChangeID(f.as(f.system), links[1].Id, ""))
+	links, err = f.tracker.CommitLinksWithoutChangeID(f.as(f.system))
+	assertion.MustNoError(t, err)
+	assertion.Len(t, links, 0)
+	got, err := ticket.CommitLinks(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, *got[0].ChangeId, "zzzzzzzz")
+	assertion.Equal(t, *got[1].ChangeId, "")
+
+	_, err = f.tracker.CommitLinksWithoutChangeID(context.Background())
+	mustErrorIs(t, err, ErrUnauthenticated)
+	mustErrorIs(t, f.tracker.SetChangeID(f.as(f.system), 100, "zzzzzzzz"), ErrNotFound)
+}

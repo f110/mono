@@ -13,8 +13,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	buildapi "go.f110.dev/mono/go/build/api"
+	"go.f110.dev/mono/go/git"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/database"
@@ -26,6 +29,8 @@ import (
 type Repositories interface {
 	// Find returns the id of the repository of url. ok is false if the repository is not registered.
 	Find(ctx context.Context, url string) (id int32, ok bool, err error)
+	// Name returns the name of the repository of id which is also the name in git-data-service.
+	Name(ctx context.Context, id int32) (name string, ok bool, err error)
 }
 
 // BuildRepositories finds the repository by the API of Build.
@@ -50,6 +55,19 @@ func (r *BuildRepositories) Find(ctx context.Context, url string) (int32, bool, 
 		}
 	}
 	return 0, false, nil
+}
+
+func (r *BuildRepositories) Name(ctx context.Context, id int32) (string, bool, error) {
+	res, err := r.client.ListRepositories(ctx, buildapi.RequestListRepositories_builder{Ids: []int32{id}}.Build())
+	if err != nil {
+		return "", false, xerrors.WithStack(err)
+	}
+	for _, v := range res.GetRepositories() {
+		if v.GetId() == id {
+			return v.GetName(), true, nil
+		}
+	}
+	return "", false, nil
 }
 
 // NewEventProcessor returns the EventProcessor that dispatches the events to the reconcilers of the issue tracker.
@@ -208,6 +226,72 @@ func (r *PullRequestReconciler) referredTickets(ctx context.Context, owner, repo
 		}
 		opt.Page = res.NextPage
 	}
+}
+
+// changeIDFillInterval is the interval to look up the change ids of the linked commits.
+const changeIDFillInterval = time.Minute
+
+// ChangeIDFiller fills the change id of the linked commits by git-data-service, because GitHub does not provide the
+// change id. A commit which git-data-service has not fetched yet is retried at the next interval.
+type ChangeIDFiller struct {
+	tracker      *issue.Tracker
+	repositories Repositories
+	gitData      git.GitDataClient
+}
+
+func NewChangeIDFiller(tracker *issue.Tracker, repositories Repositories, gitData git.GitDataClient) *ChangeIDFiller {
+	return &ChangeIDFiller{tracker: tracker, repositories: repositories, gitData: gitData}
+}
+
+// Run fills the change ids until ctx is cancelled.
+func (f *ChangeIDFiller) Run(ctx context.Context) {
+	ticker := time.NewTicker(changeIDFillInterval)
+	defer ticker.Stop()
+	for {
+		if err := f.fill(ctx); err != nil && ctx.Err() == nil {
+			slogger.Log.Warn("Failed to fill the change ids", slogger.E(err))
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+func (f *ChangeIDFiller) fill(ctx context.Context) error {
+	ctx, err := asSystem(ctx, f.tracker)
+	if err != nil {
+		return err
+	}
+	links, err := f.tracker.CommitLinksWithoutChangeID(ctx)
+	if err != nil {
+		return err
+	}
+	names := make(map[int32]string)
+	for _, link := range links {
+		name, ok := names[link.RepositoryId]
+		if !ok {
+			name, _, err = f.repositories.Name(ctx, link.RepositoryId)
+			if err != nil {
+				return err
+			}
+			names[link.RepositoryId] = name
+		}
+		if name == "" {
+			continue
+		}
+		res, err := f.gitData.GetCommit(ctx, &git.RequestGetCommit{Repo: name, Sha: link.Sha})
+		if status.Code(err) == codes.NotFound {
+			continue
+		} else if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := f.tracker.SetChangeID(ctx, link.Id, res.GetCommit().GetChangeId()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func asSystem(ctx context.Context, tracker *issue.Tracker) (context.Context, error) {

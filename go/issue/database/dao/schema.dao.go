@@ -2014,18 +2014,11 @@ func (d *Activity) SelectMulti(ctx context.Context, id ...int32) ([]*database.Ac
 	}
 
 	if len(res) > 0 {
-		actorPrimaryKeys := make([]int32, len(res))
 		ticketPrimaryKeys := make([]int32, len(res))
+		actorPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			actorPrimaryKeys[i] = v.ActorId
 			ticketPrimaryKeys[i] = v.TicketId
-		}
-		actorData := make(map[int32]*database.Actor)
-		{
-			rels, _ := d.actor.SelectMulti(ctx, actorPrimaryKeys...)
-			for _, v := range rels {
-				actorData[v.Id] = v
-			}
+			actorPrimaryKeys[i] = v.ActorId
 		}
 		ticketData := make(map[int32]*database.Ticket)
 		{
@@ -2034,9 +2027,16 @@ func (d *Activity) SelectMulti(ctx context.Context, id ...int32) ([]*database.Ac
 				ticketData[v.Id] = v
 			}
 		}
+		actorData := make(map[int32]*database.Actor)
+		{
+			rels, _ := d.actor.SelectMulti(ctx, actorPrimaryKeys...)
+			for _, v := range rels {
+				actorData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Actor = actorData[v.ActorId]
 			v.Ticket = ticketData[v.TicketId]
+			v.Actor = actorData[v.ActorId]
 		}
 	}
 	return res, nil
@@ -2218,6 +2218,7 @@ type CommitLinkInterface interface {
 	SelectMulti(ctx context.Context, id ...int32) ([]*database.CommitLink, error)
 	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.CommitLink, error)
 	SelectByTicketIdAndRepositoryIdAndSha(ctx context.Context, ticketId int32, repositoryId int32, sha string) (*database.CommitLink, error)
+	ListWithoutChangeId(ctx context.Context, opt ...ListOption) ([]*database.CommitLink, error)
 	Create(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) (*database.CommitLink, error)
 	Update(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) error
 	Delete(ctx context.Context, id int32, opt ...ExecOption) error
@@ -2384,6 +2385,59 @@ func (d *CommitLink) SelectByTicketIdAndRepositoryIdAndSha(ctx context.Context, 
 
 	v.ResetMark()
 	return v, nil
+}
+
+func (d *CommitLink) ListWithoutChangeId(ctx context.Context, opt ...ListOption) ([]*database.CommitLink, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `ticket_id`, `repository_id`, `sha`, `change_id`, `subject`, `author`, `trailer`, `committed_at`, `created_at`, `updated_at` FROM `commit_link` WHERE `change_id` IS NULL"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.CommitLink, 0)
+	for rows.Next() {
+		r := &database.CommitLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Sha, &r.ChangeId, &r.Subject, &r.Author, &r.Trailer, &r.CommittedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+
+	return res, nil
 }
 
 func (d *CommitLink) Create(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) (*database.CommitLink, error) {

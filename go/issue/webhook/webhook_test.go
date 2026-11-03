@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -14,8 +15,12 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/githubmock"
 	"go.f110.dev/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/database/dbtestutil"
+	"go.f110.dev/mono/go/git"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/database"
@@ -82,6 +87,16 @@ func (r fakeRepositories) Find(_ context.Context, url string) (int32, bool, erro
 	}
 	id, ok := r[url]
 	return id, ok, nil
+}
+
+// Name returns the last element of the URL as the name of the repository.
+func (r fakeRepositories) Name(_ context.Context, id int32) (string, bool, error) {
+	for url, v := range r {
+		if v == id {
+			return path.Base(url), true, nil
+		}
+	}
+	return "", false, nil
 }
 
 const repositoryURL = "https://github.com/f110/mono"
@@ -305,4 +320,55 @@ func TestPullRequestReconciler(t *testing.T) {
 		assertion.Equal(t, e.State, ghwebhook.StateSkipped)
 		assertion.Len(t, linksOf(t, ticket), 0)
 	})
+}
+
+type fakeGitData struct {
+	git.GitDataClient
+	changeIDs map[string]string
+}
+
+func (g *fakeGitData) GetCommit(_ context.Context, req *git.RequestGetCommit, _ ...grpc.CallOption) (*git.ResponseGetCommit, error) {
+	changeID, ok := g.changeIDs[req.Repo+"/"+req.Sha]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "commit not found")
+	}
+	return &git.ResponseGetCommit{Commit: &git.Commit{Sha: req.Sha, ChangeId: changeID}}, nil
+}
+
+func TestChangeIDFiller(t *testing.T) {
+	tracker, daos := newTracker(t)
+	ticket := createTicket(t, tracker, daos, "ticket")
+	ctx, err := asSystem(context.Background(), tracker)
+	assertion.MustNoError(t, err)
+	committedAt := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
+	for _, v := range []struct {
+		repositoryID int32
+		sha          string
+	}{{10, "jj"}, {10, "git"}, {10, "not-fetched"}, {20, "unregistered"}} {
+		assertion.MustNoError(t, ticket.LinkCommit(ctx, v.repositoryID, v.sha, "subject", "alice", database.TrailerKindRefs, committedAt))
+	}
+	gitData := &fakeGitData{changeIDs: map[string]string{"mono/jj": "zzzzzzzz", "mono/git": ""}}
+	f := NewChangeIDFiller(tracker, fakeRepositories{repositoryURL: 10}, gitData)
+
+	assertion.MustNoError(t, f.fill(context.Background()))
+	links, err := ticket.CommitLinks(context.Background())
+	assertion.MustNoError(t, err)
+	got := make(map[string]*string)
+	for _, v := range links {
+		got[v.Sha] = v.ChangeId
+	}
+	assertion.Equal(t, *got["jj"], "zzzzzzzz")
+	assertion.Equal(t, *got["git"], "")
+	assertion.True(t, got["not-fetched"] == nil)
+	assertion.True(t, got["unregistered"] == nil)
+
+	gitData.changeIDs["mono/not-fetched"] = "yyyyyyyy"
+	assertion.MustNoError(t, f.fill(context.Background()))
+	links, err = ticket.CommitLinks(context.Background())
+	assertion.MustNoError(t, err)
+	for _, v := range links {
+		if v.Sha == "not-fetched" {
+			assertion.Equal(t, *v.ChangeId, "yyyyyyyy")
+		}
+	}
 }

@@ -324,6 +324,10 @@ message CommitLink {
       name: "ByTicketIdAndRepositoryIdAndSha"
       query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ? AND `repository_id` = ? AND `sha` = ?"
     }
+    queries: {
+      name: "WithoutChangeId"
+      query: "SELECT * FROM `:table_name:` WHERE `change_id` IS NULL"
+    }
   };
 }
 

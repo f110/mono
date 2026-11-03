@@ -18,6 +18,7 @@ import (
 
 	buildapi "go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/git"
 	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/issue"
@@ -29,11 +30,12 @@ import (
 )
 
 type serverCommand struct {
-	Addr         string
-	DSN          string
-	PublicKeyURL string
-	BuildAPI     string
-	GitHub       *githubutil.GitHubClientFactory
+	Addr           string
+	DSN            string
+	PublicKeyURL   string
+	BuildAPI       string
+	GitDataService string
+	GitHub         *githubutil.GitHubClientFactory
 
 	EventReconcileInterval     time.Duration
 	EventMaxProcessingDuration time.Duration
@@ -44,6 +46,7 @@ func (c *serverCommand) Flags(fs *cli.FlagSet) {
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API").Var(&c.PublicKeyURL).Required()
 	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories").Var(&c.BuildAPI).Required()
+	fs.String("git-data-service", "Address of git-data-service to look up the change id of the commits").Var(&c.GitDataService).Required()
 	c.GitHub.Flags(fs)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&c.EventReconcileInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&c.EventMaxProcessingDuration).Default(30 * time.Minute)
@@ -77,6 +80,13 @@ func (c *serverCommand) Run(ctx context.Context) error {
 	repositories := webhook.NewBuildRepositories(buildapi.NewAPIClient(buildConn))
 	eventProcessor := webhook.NewEventProcessor(daos, tracker, repositories, c.GitHub.REST, c.EventReconcileInterval, c.EventMaxProcessingDuration)
 	go eventProcessor.Run(ctx)
+
+	gitDataConn, err := grpc.NewClient(c.GitDataService, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	defer gitDataConn.Close()
+	go webhook.NewChangeIDFiller(tracker, repositories, git.NewGitDataClient(gitDataConn)).Run(ctx)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", server.New(tracker, publicKey))

@@ -302,6 +302,36 @@ func (t *Tracker) UpdatePullRequest(ctx context.Context, repositoryID, number in
 	return nil
 }
 
+// CommitLinksWithoutChangeID returns the commit links whose change id is not looked up yet.
+func (t *Tracker) CommitLinksWithoutChangeID(ctx context.Context) ([]*database.CommitLink, error) {
+	if err := authenticated(ctx); err != nil {
+		return nil, err
+	}
+	links, err := t.dao.CommitLink.ListWithoutChangeId(ctx)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return links, nil
+}
+
+// SetChangeID sets the change id of the commit link of id. changeID is empty if the commit has no change id.
+func (t *Tracker) SetChangeID(ctx context.Context, id int32, changeID string) error {
+	if _, err := t.actor(ctx); err != nil {
+		return err
+	}
+	link, err := t.dao.CommitLink.Select(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound.WithStack()
+	} else if err != nil {
+		return xerrors.WithStack(err)
+	}
+	link.ChangeId = &changeID
+	if err := t.dao.CommitLink.Update(ctx, link); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
 func (t *Tracker) Actors(ctx context.Context) ([]*database.Actor, error) {
 	if err := authenticated(ctx); err != nil {
 		return nil, err

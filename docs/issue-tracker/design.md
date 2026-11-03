@@ -218,6 +218,12 @@ change-id は GitHub の API からは取れないため、git-data-service か�
 `ExtraHeaders` から埋める。push 直後は git-data-service がまだ fetch していない可能性があるので、
 `commit_link.change_id` は null で作り、worker が後から埋める。
 
+worker はサーバーの中で 1 分ごとに `change_id` が null の `commit_link` を取り出し、Build の `ListRepositories` で引いた
+リポジトリ名で git-data-service の `GetCommit` を呼ぶ。git-data-service はリポジトリやコミットが見つからないときに
+`NotFound` を返すので、まだ fetch されていないコミットは null のまま次の回に再試行する。jj 以外で作ったコミットは
+change-id を持たないので空文字を入れ、null（未取得）と区別して再び問い合わせないようにする。既存の行の backfill も
+同じ worker で行う。
+
 ### 5.4 pull_request
 
 - `opened` / `reopened` / `synchronize` / `edited` で、GitHub API (`pulls/{number}/commits`) から PR のコミットを取得し、trailer を読む
@@ -335,7 +341,8 @@ make run-issue-ui
 webhook の処理ではリポジトリを Build の API で判定するので、`make run-api` で起動した Build（127.0.0.1:8081）に
 接続する。Build が起動していなくてもサーバーは動き、受け取った event は `--event-max-processing-duration`（既定は
 30 分）を過ぎるまで再試行される。pull_request の処理では PR のコミットを GitHub API で取得するので、Build と同じ
-GitHub App の認証情報（Makefile の `GITHUB`）を渡す。
+GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は Build と同じ git-data-service（127.0.0.1:8056）
+から取得する。
 
 ## 10. 実装順序
 
