@@ -59,7 +59,7 @@ require (
 	go.abhg.dev/goldmark/mermaid v0.6.0
 	go.einride.tech/aip v0.86.3
 	go.etcd.io/etcd/client/v3 v3.6.11
-	go.f110.dev/githubmock v0.0.0-20260802165057-b01944b9528a
+	go.f110.dev/githubmock v0.0.0-20261103073433-c7537d30aaea
 	go.f110.dev/go-memcached v0.0.0-20231116161756-526e3f3ea54c
 	go.f110.dev/kubeproto v0.0.0-20260601163938-55a1a18121b9
 	go.f110.dev/notion-api/v3 v3.0.0-20241002160255-a0b86c0350f0
