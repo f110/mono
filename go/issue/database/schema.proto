@@ -37,19 +37,42 @@ enum RelationType {
   RELATION_TYPE_RELATES_TO   = 3;
 }
 
+enum TrailerKind {
+  TRAILER_KIND_REFS  = 0;
+  TRAILER_KIND_FIXES = 1;
+}
+
+enum PullRequestState {
+  PULL_REQUEST_STATE_OPEN   = 0;
+  PULL_REQUEST_STATE_CLOSED = 1;
+  PULL_REQUEST_STATE_MERGED = 2;
+}
+
+// GithubEventState is the same as the state of go/github/webhook.
+enum GithubEventState {
+  GITHUB_EVENT_STATE_PENDING    = 0;
+  GITHUB_EVENT_STATE_PROCESSING = 1;
+  GITHUB_EVENT_STATE_SUCCEEDED  = 2;
+  GITHUB_EVENT_STATE_FAILED     = 3;
+  GITHUB_EVENT_STATE_EXPIRED    = 4;
+  GITHUB_EVENT_STATE_SKIPPED    = 5;
+}
+
 enum ActivityKind {
-  ACTIVITY_KIND_CREATE           = 0;
-  ACTIVITY_KIND_TITLE            = 1;
-  ACTIVITY_KIND_STATUS           = 2;
-  ACTIVITY_KIND_PRIORITY         = 3;
-  ACTIVITY_KIND_COMPONENT        = 4;
-  ACTIVITY_KIND_ASSIGNEE         = 5;
-  ACTIVITY_KIND_BODY             = 6;
-  ACTIVITY_KIND_RELATION_ADDED   = 7;
-  ACTIVITY_KIND_RELATION_REMOVED = 8;
-  ACTIVITY_KIND_COMMENT          = 9;
-  ACTIVITY_KIND_COMMENT_EDITED   = 10;
-  ACTIVITY_KIND_COMMENT_DELETED  = 11;
+  ACTIVITY_KIND_CREATE              = 0;
+  ACTIVITY_KIND_TITLE               = 1;
+  ACTIVITY_KIND_STATUS              = 2;
+  ACTIVITY_KIND_PRIORITY            = 3;
+  ACTIVITY_KIND_COMPONENT           = 4;
+  ACTIVITY_KIND_ASSIGNEE            = 5;
+  ACTIVITY_KIND_BODY                = 6;
+  ACTIVITY_KIND_RELATION_ADDED      = 7;
+  ACTIVITY_KIND_RELATION_REMOVED    = 8;
+  ACTIVITY_KIND_COMMENT             = 9;
+  ACTIVITY_KIND_COMMENT_EDITED      = 10;
+  ACTIVITY_KIND_COMMENT_DELETED     = 11;
+  ACTIVITY_KIND_COMMIT_LINKED       = 12;
+  ACTIVITY_KIND_PULL_REQUEST_LINKED = 13;
 }
 
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
@@ -263,6 +286,117 @@ message Activity {
     queries: {
       name: "ByTicketId"
       query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+  };
+}
+
+// CommitLink is the commit which refers to the ticket by the trailer. repository_id is the id of the repository of
+// Build. change_id is filled after git-data-service fetches the commit.
+message CommitLink {
+  int32                     id            = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket                    ticket        = 2;
+  int32                     repository_id = 3;
+  string                    sha           = 4 [(dev.f110.ddl.column) = { size: 40 }];
+  string                    change_id     = 5 [(dev.f110.ddl.column) = { size: 64, null: true }];
+  string                    subject       = 6 [(dev.f110.ddl.column) = { type: "text" }];
+  string                    author        = 7;
+  TrailerKind               trailer       = 8;
+  google.protobuf.Timestamp committed_at  = 9;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_commit"
+      columns: "ticket"
+      columns: "repository_id"
+      columns: "sha"
+      unique: true
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+    queries: {
+      name: "ByTicketIdAndRepositoryIdAndSha"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ? AND `repository_id` = ? AND `sha` = ?"
+    }
+  };
+}
+
+// PullRequestLink is the pull request which has the commit referring to the ticket by the trailer. repository_id is the
+// id of the repository of Build.
+message PullRequestLink {
+  int32            id            = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket           ticket        = 2;
+  int32            repository_id = 3;
+  int32            number        = 4;
+  string           title         = 5 [(dev.f110.ddl.column) = { type: "text" }];
+  string           author        = 6;
+  PullRequestState state         = 7;
+  string           head_sha      = 8 [(dev.f110.ddl.column) = { size: 40 }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_pull_request"
+      columns: "ticket"
+      columns: "repository_id"
+      columns: "number"
+      unique: true
+    }
+    indexes: {
+      name: "idx_repository_number"
+      columns: "repository_id"
+      columns: "number"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+    queries: {
+      name: "ByRepositoryIdAndNumber"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `number` = ?"
+    }
+  };
+}
+
+// GithubEvent is the webhook delivery from GitHub. The columns are the same as github_event of Build.
+message GithubEvent {
+  int32            id          = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string           delivery_id = 2 [(dev.f110.ddl.column) = { size: 64 }];
+  string           event_type  = 3 [(dev.f110.ddl.column) = { size: 64 }];
+  string           action      = 4 [(dev.f110.ddl.column) = { size: 64 }];
+  bytes            payload     = 5 [(dev.f110.ddl.column) = { type: "medium" }];
+  GithubEventState state       = 6;
+  bytes            status      = 7;
+  string           last_error  = 8 [(dev.f110.ddl.column) = { type: "text" }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_delivery_id"
+      columns: "delivery_id"
+      unique: true
+    }
+    indexes: {
+      name: "idx_state"
+      columns: "state"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByState"
+      query: "SELECT * FROM `:table_name:` WHERE `state` = ? ORDER BY `id`"
     }
   };
 }

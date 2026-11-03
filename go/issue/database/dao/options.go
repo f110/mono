@@ -13,6 +13,9 @@ type Options struct {
 	Comment            CommentInterface
 	CommentRevision    CommentRevisionInterface
 	Activity           ActivityInterface
+	CommitLink         CommitLinkInterface
+	PullRequestLink    PullRequestLinkInterface
+	GithubEvent        GithubEventInterface
 
 	RawConnection *sql.DB
 }
@@ -27,6 +30,9 @@ func NewOptions(conn *sql.DB) Options {
 		Comment:            NewComment(conn),
 		CommentRevision:    NewCommentRevision(conn),
 		Activity:           NewActivity(conn),
+		CommitLink:         NewCommitLink(conn),
+		PullRequestLink:    NewPullRequestLink(conn),
+		GithubEvent:        NewGithubEvent(conn),
 		RawConnection:      conn,
 	}
 }

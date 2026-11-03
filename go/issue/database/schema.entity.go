@@ -13,32 +13,6 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type ActivityKind uint32
-
-const (
-	ActivityKindCreate          ActivityKind = 0
-	ActivityKindTitle           ActivityKind = 1
-	ActivityKindStatus          ActivityKind = 2
-	ActivityKindPriority        ActivityKind = 3
-	ActivityKindComponent       ActivityKind = 4
-	ActivityKindAssignee        ActivityKind = 5
-	ActivityKindBody            ActivityKind = 6
-	ActivityKindRelationAdded   ActivityKind = 7
-	ActivityKindRelationRemoved ActivityKind = 8
-	ActivityKindComment         ActivityKind = 9
-	ActivityKindCommentEdited   ActivityKind = 10
-	ActivityKindCommentDeleted  ActivityKind = 11
-)
-
-type TicketStatus uint32
-
-const (
-	TicketStatusOpen       TicketStatus = 0
-	TicketStatusInProgress TicketStatus = 1
-	TicketStatusDone       TicketStatus = 2
-	TicketStatusWontFix    TicketStatus = 3
-)
-
 type Priority uint32
 
 const (
@@ -65,6 +39,60 @@ const (
 	RelationTypeBlocks      RelationType = 1
 	RelationTypeDuplicateOf RelationType = 2
 	RelationTypeRelatesTo   RelationType = 3
+)
+
+type TrailerKind uint32
+
+const (
+	TrailerKindRefs  TrailerKind = 0
+	TrailerKindFixes TrailerKind = 1
+)
+
+type PullRequestState uint32
+
+const (
+	PullRequestStateOpen   PullRequestState = 0
+	PullRequestStateClosed PullRequestState = 1
+	PullRequestStateMerged PullRequestState = 2
+)
+
+type GithubEventState uint32
+
+const (
+	GithubEventStatePending    GithubEventState = 0
+	GithubEventStateProcessing GithubEventState = 1
+	GithubEventStateSucceeded  GithubEventState = 2
+	GithubEventStateFailed     GithubEventState = 3
+	GithubEventStateExpired    GithubEventState = 4
+	GithubEventStateSkipped    GithubEventState = 5
+)
+
+type ActivityKind uint32
+
+const (
+	ActivityKindCreate            ActivityKind = 0
+	ActivityKindTitle             ActivityKind = 1
+	ActivityKindStatus            ActivityKind = 2
+	ActivityKindPriority          ActivityKind = 3
+	ActivityKindComponent         ActivityKind = 4
+	ActivityKindAssignee          ActivityKind = 5
+	ActivityKindBody              ActivityKind = 6
+	ActivityKindRelationAdded     ActivityKind = 7
+	ActivityKindRelationRemoved   ActivityKind = 8
+	ActivityKindComment           ActivityKind = 9
+	ActivityKindCommentEdited     ActivityKind = 10
+	ActivityKindCommentDeleted    ActivityKind = 11
+	ActivityKindCommitLinked      ActivityKind = 12
+	ActivityKindPullRequestLinked ActivityKind = 13
+)
+
+type TicketStatus uint32
+
+const (
+	TicketStatusOpen       TicketStatus = 0
+	TicketStatusInProgress TicketStatus = 1
+	TicketStatusDone       TicketStatus = 2
+	TicketStatusWontFix    TicketStatus = 3
 )
 
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
@@ -793,6 +821,330 @@ func (e *Activity) Copy() *Activity {
 	}
 	if e.Ticket != nil {
 		n.Ticket = e.Ticket.Copy()
+	}
+
+	return n
+}
+
+// CommitLink is the commit which refers to the ticket by the trailer. repository_id is the id of the repository of
+// Build. change_id is filled after git-data-service fetches the commit.
+type CommitLink struct {
+	Id           int32
+	TicketId     int32
+	RepositoryId int32
+	Sha          string
+	ChangeId     *string
+	Subject      string
+	Author       string
+	Trailer      TrailerKind
+	CommittedAt  time.Time
+	CreatedAt    time.Time
+	UpdatedAt    *time.Time
+
+	Ticket *Ticket
+
+	mu   sync.Mutex
+	mark *CommitLink
+}
+
+func (e *CommitLink) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *CommitLink) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.TicketId != e.mark.TicketId ||
+		e.RepositoryId != e.mark.RepositoryId ||
+		e.Sha != e.mark.Sha ||
+		((e.ChangeId != nil && (e.mark.ChangeId == nil || *e.ChangeId != *e.mark.ChangeId)) || e.ChangeId == nil && e.mark.ChangeId != nil) ||
+		e.Subject != e.mark.Subject ||
+		e.Author != e.mark.Author ||
+		e.Trailer != e.mark.Trailer ||
+		!e.CommittedAt.Equal(e.mark.CommittedAt) ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *CommitLink) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.TicketId != e.mark.TicketId {
+		res = append(res, ddl.Column{Name: "ticket_id", Value: e.TicketId})
+	}
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.Sha != e.mark.Sha {
+		res = append(res, ddl.Column{Name: "sha", Value: e.Sha})
+	}
+	if (e.ChangeId != nil && (e.mark.ChangeId == nil || *e.ChangeId != *e.mark.ChangeId)) || (e.ChangeId == nil && e.mark.ChangeId != nil) {
+		if e.ChangeId != nil {
+			res = append(res, ddl.Column{Name: "change_id", Value: *e.ChangeId})
+		} else {
+			res = append(res, ddl.Column{Name: "change_id", Value: nil})
+		}
+	}
+	if e.Subject != e.mark.Subject {
+		res = append(res, ddl.Column{Name: "subject", Value: e.Subject})
+	}
+	if e.Author != e.mark.Author {
+		res = append(res, ddl.Column{Name: "author", Value: e.Author})
+	}
+	if e.Trailer != e.mark.Trailer {
+		res = append(res, ddl.Column{Name: "trailer", Value: e.Trailer})
+	}
+	if !e.CommittedAt.Equal(e.mark.CommittedAt) {
+		res = append(res, ddl.Column{Name: "committed_at", Value: e.CommittedAt})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *CommitLink) Copy() *CommitLink {
+	n := &CommitLink{
+		Id:           e.Id,
+		TicketId:     e.TicketId,
+		RepositoryId: e.RepositoryId,
+		Sha:          e.Sha,
+		Subject:      e.Subject,
+		Author:       e.Author,
+		Trailer:      e.Trailer,
+		CommittedAt:  e.CommittedAt,
+		CreatedAt:    e.CreatedAt,
+	}
+	if e.ChangeId != nil {
+		v := *e.ChangeId
+		n.ChangeId = &v
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	if e.Ticket != nil {
+		n.Ticket = e.Ticket.Copy()
+	}
+
+	return n
+}
+
+// PullRequestLink is the pull request which has the commit referring to the ticket by the trailer. repository_id is the
+// id of the repository of Build.
+type PullRequestLink struct {
+	Id           int32
+	TicketId     int32
+	RepositoryId int32
+	Number       int32
+	Title        string
+	Author       string
+	State        PullRequestState
+	HeadSha      string
+	CreatedAt    time.Time
+	UpdatedAt    *time.Time
+
+	Ticket *Ticket
+
+	mu   sync.Mutex
+	mark *PullRequestLink
+}
+
+func (e *PullRequestLink) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *PullRequestLink) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.TicketId != e.mark.TicketId ||
+		e.RepositoryId != e.mark.RepositoryId ||
+		e.Number != e.mark.Number ||
+		e.Title != e.mark.Title ||
+		e.Author != e.mark.Author ||
+		e.State != e.mark.State ||
+		e.HeadSha != e.mark.HeadSha ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *PullRequestLink) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.TicketId != e.mark.TicketId {
+		res = append(res, ddl.Column{Name: "ticket_id", Value: e.TicketId})
+	}
+	if e.RepositoryId != e.mark.RepositoryId {
+		res = append(res, ddl.Column{Name: "repository_id", Value: e.RepositoryId})
+	}
+	if e.Number != e.mark.Number {
+		res = append(res, ddl.Column{Name: "number", Value: e.Number})
+	}
+	if e.Title != e.mark.Title {
+		res = append(res, ddl.Column{Name: "title", Value: e.Title})
+	}
+	if e.Author != e.mark.Author {
+		res = append(res, ddl.Column{Name: "author", Value: e.Author})
+	}
+	if e.State != e.mark.State {
+		res = append(res, ddl.Column{Name: "state", Value: e.State})
+	}
+	if e.HeadSha != e.mark.HeadSha {
+		res = append(res, ddl.Column{Name: "head_sha", Value: e.HeadSha})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *PullRequestLink) Copy() *PullRequestLink {
+	n := &PullRequestLink{
+		Id:           e.Id,
+		TicketId:     e.TicketId,
+		RepositoryId: e.RepositoryId,
+		Number:       e.Number,
+		Title:        e.Title,
+		Author:       e.Author,
+		State:        e.State,
+		HeadSha:      e.HeadSha,
+		CreatedAt:    e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	if e.Ticket != nil {
+		n.Ticket = e.Ticket.Copy()
+	}
+
+	return n
+}
+
+// GithubEvent is the webhook delivery from GitHub. The columns are the same as github_event of Build.
+type GithubEvent struct {
+	Id         int32
+	DeliveryId string
+	EventType  string
+	Action     string
+	Payload    []byte
+	State      GithubEventState
+	Status     []byte
+	LastError  string
+	CreatedAt  time.Time
+	UpdatedAt  *time.Time
+
+	mu   sync.Mutex
+	mark *GithubEvent
+}
+
+func (e *GithubEvent) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *GithubEvent) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.DeliveryId != e.mark.DeliveryId ||
+		e.EventType != e.mark.EventType ||
+		e.Action != e.mark.Action ||
+		!bytes.Equal(e.Payload, e.mark.Payload) ||
+		e.State != e.mark.State ||
+		!bytes.Equal(e.Status, e.mark.Status) ||
+		e.LastError != e.mark.LastError ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *GithubEvent) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.DeliveryId != e.mark.DeliveryId {
+		res = append(res, ddl.Column{Name: "delivery_id", Value: e.DeliveryId})
+	}
+	if e.EventType != e.mark.EventType {
+		res = append(res, ddl.Column{Name: "event_type", Value: e.EventType})
+	}
+	if e.Action != e.mark.Action {
+		res = append(res, ddl.Column{Name: "action", Value: e.Action})
+	}
+	if !bytes.Equal(e.Payload, e.mark.Payload) {
+		res = append(res, ddl.Column{Name: "payload", Value: e.Payload})
+	}
+	if e.State != e.mark.State {
+		res = append(res, ddl.Column{Name: "state", Value: e.State})
+	}
+	if !bytes.Equal(e.Status, e.mark.Status) {
+		res = append(res, ddl.Column{Name: "status", Value: e.Status})
+	}
+	if e.LastError != e.mark.LastError {
+		res = append(res, ddl.Column{Name: "last_error", Value: e.LastError})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *GithubEvent) Copy() *GithubEvent {
+	n := &GithubEvent{
+		Id:         e.Id,
+		DeliveryId: e.DeliveryId,
+		EventType:  e.EventType,
+		Action:     e.Action,
+		Payload:    e.Payload,
+		State:      e.State,
+		Status:     e.Status,
+		LastError:  e.LastError,
+		CreatedAt:  e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
 	}
 
 	return n

@@ -107,4 +107,55 @@ CREATE TABLE `activity` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `commit_link`;
+CREATE TABLE `commit_link` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`ticket_id` INTEGER NOT NULL,
+	`repository_id` INTEGER NOT NULL,
+	`sha` VARCHAR(40) NOT NULL,
+	`change_id` VARCHAR(64) NULL,
+	`subject` TEXT NOT NULL,
+	`author` VARCHAR(255) NOT NULL,
+	`trailer` INTEGER UNSIGNED NOT NULL,
+	`committed_at` DATETIME NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_commit` (`ticket_id`, `repository_id`, `sha`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `pull_request_link`;
+CREATE TABLE `pull_request_link` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`ticket_id` INTEGER NOT NULL,
+	`repository_id` INTEGER NOT NULL,
+	`number` INTEGER NOT NULL,
+	`title` TEXT NOT NULL,
+	`author` VARCHAR(255) NOT NULL,
+	`state` INTEGER UNSIGNED NOT NULL,
+	`head_sha` VARCHAR(40) NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_pull_request` (`ticket_id`, `repository_id`, `number`),
+	INDEX `idx_repository_number` (`repository_id`, `number`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
+DROP TABLE IF EXISTS `github_event`;
+CREATE TABLE `github_event` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`delivery_id` VARCHAR(64) NOT NULL,
+	`event_type` VARCHAR(64) NOT NULL,
+	`action` VARCHAR(64) NOT NULL,
+	`payload` MEDIUMBLOB NOT NULL,
+	`state` INTEGER UNSIGNED NOT NULL,
+	`status` BLOB NOT NULL,
+	`last_error` TEXT NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_delivery_id` (`delivery_id`),
+	INDEX `idx_state` (`state`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 SET foreign_key_checks=1;

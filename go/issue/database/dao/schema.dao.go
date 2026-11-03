@@ -1163,18 +1163,11 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		toPrimaryKeys := make([]int32, len(res))
 		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			toPrimaryKeys[i] = v.ToId
 			fromPrimaryKeys[i] = v.FromId
-		}
-		toData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
-			for _, v := range rels {
-				toData[v.Id] = v
-			}
+			toPrimaryKeys[i] = v.ToId
 		}
 		fromData := make(map[int32]*database.Ticket)
 		{
@@ -1183,9 +1176,16 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 				fromData[v.Id] = v
 			}
 		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.To = toData[v.ToId]
 			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
 		}
 	}
 
@@ -1227,18 +1227,11 @@ func (d *Relation) ListByToId(ctx context.Context, toId int32, opt ...ListOption
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		toPrimaryKeys := make([]int32, len(res))
 		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			toPrimaryKeys[i] = v.ToId
 			fromPrimaryKeys[i] = v.FromId
-		}
-		toData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
-			for _, v := range rels {
-				toData[v.Id] = v
-			}
+			toPrimaryKeys[i] = v.ToId
 		}
 		fromData := make(map[int32]*database.Ticket)
 		{
@@ -1247,9 +1240,16 @@ func (d *Relation) ListByToId(ctx context.Context, toId int32, opt ...ListOption
 				fromData[v.Id] = v
 			}
 		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.To = toData[v.ToId]
 			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
 		}
 	}
 
@@ -2203,5 +2203,812 @@ func (d *Activity) Update(ctx context.Context, activity *database.Activity, opt 
 	}
 
 	activity.ResetMark()
+	return nil
+}
+
+type CommitLink struct {
+	conn *sql.DB
+
+	ticket *Ticket
+}
+
+type CommitLinkInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.CommitLink, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.CommitLink, error)
+	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.CommitLink, error)
+	SelectByTicketIdAndRepositoryIdAndSha(ctx context.Context, ticketId int32, repositoryId int32, sha string) (*database.CommitLink, error)
+	Create(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) (*database.CommitLink, error)
+	Update(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ CommitLinkInterface = (*CommitLink)(nil)
+
+func NewCommitLink(conn *sql.DB) *CommitLink {
+	return &CommitLink{
+		conn:   conn,
+		ticket: NewTicket(conn),
+	}
+}
+
+func (d *CommitLink) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *CommitLink) Select(ctx context.Context, id int32) (*database.CommitLink, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `commit_link` WHERE `id` = ?", id)
+
+	v := &database.CommitLink{}
+	if err := row.Scan(&v.Id, &v.TicketId, &v.RepositoryId, &v.Sha, &v.ChangeId, &v.Subject, &v.Author, &v.Trailer, &v.CommittedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.TicketId); rel != nil {
+			v.Ticket = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *CommitLink) SelectMulti(ctx context.Context, id ...int32) ([]*database.CommitLink, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `commit_link` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.CommitLink, 0, len(id))
+	for rows.Next() {
+		r := &database.CommitLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Sha, &r.ChangeId, &r.Subject, &r.Author, &r.Trailer, &r.CommittedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+	return res, nil
+}
+
+func (d *CommitLink) ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.CommitLink, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `ticket_id`, `repository_id`, `sha`, `change_id`, `subject`, `author`, `trailer`, `committed_at`, `created_at`, `updated_at` FROM `commit_link` WHERE `ticket_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		ticketId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.CommitLink, 0)
+	for rows.Next() {
+		r := &database.CommitLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Sha, &r.ChangeId, &r.Subject, &r.Author, &r.Trailer, &r.CommittedAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *CommitLink) SelectByTicketIdAndRepositoryIdAndSha(ctx context.Context, ticketId int32, repositoryId int32, sha string) (*database.CommitLink, error) {
+	row := d.conn.QueryRowContext(
+		ctx,
+		"SELECT `id`, `ticket_id`, `repository_id`, `sha`, `change_id`, `subject`, `author`, `trailer`, `committed_at`, `created_at`, `updated_at` FROM `commit_link` WHERE `ticket_id` = ? AND `repository_id` = ? AND `sha` = ?",
+		ticketId,
+		repositoryId,
+		sha,
+	)
+	v := &database.CommitLink{}
+	if err := row.Scan(&v.Id, &v.TicketId, &v.RepositoryId, &v.Sha, &v.ChangeId, &v.Subject, &v.Author, &v.Trailer, &v.CommittedAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.TicketId); rel != nil {
+			v.Ticket = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *CommitLink) Create(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) (*database.CommitLink, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `commit_link` (`ticket_id`, `repository_id`, `sha`, `change_id`, `subject`, `author`, `trailer`, `committed_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		commitLink.TicketId, commitLink.RepositoryId, commitLink.Sha, commitLink.ChangeId, commitLink.Subject, commitLink.Author, commitLink.Trailer, commitLink.CommittedAt, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	commitLink = commitLink.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	commitLink.Id = int32(insertedId)
+
+	commitLink.ResetMark()
+	return commitLink, nil
+}
+
+func (d *CommitLink) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `commit_link` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *CommitLink) Update(ctx context.Context, commitLink *database.CommitLink, opt ...ExecOption) error {
+	if !commitLink.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := commitLink.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `commit_link` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, commitLink.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	commitLink.ResetMark()
+	return nil
+}
+
+type PullRequestLink struct {
+	conn *sql.DB
+
+	ticket *Ticket
+}
+
+type PullRequestLinkInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.PullRequestLink, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.PullRequestLink, error)
+	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.PullRequestLink, error)
+	ListByRepositoryIdAndNumber(ctx context.Context, repositoryId int32, number int32, opt ...ListOption) ([]*database.PullRequestLink, error)
+	Create(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) (*database.PullRequestLink, error)
+	Update(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ PullRequestLinkInterface = (*PullRequestLink)(nil)
+
+func NewPullRequestLink(conn *sql.DB) *PullRequestLink {
+	return &PullRequestLink{
+		conn:   conn,
+		ticket: NewTicket(conn),
+	}
+}
+
+func (d *PullRequestLink) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *PullRequestLink) Select(ctx context.Context, id int32) (*database.PullRequestLink, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `pull_request_link` WHERE `id` = ?", id)
+
+	v := &database.PullRequestLink{}
+	if err := row.Scan(&v.Id, &v.TicketId, &v.RepositoryId, &v.Number, &v.Title, &v.Author, &v.State, &v.HeadSha, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.TicketId); rel != nil {
+			v.Ticket = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *PullRequestLink) SelectMulti(ctx context.Context, id ...int32) ([]*database.PullRequestLink, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `pull_request_link` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.PullRequestLink, 0, len(id))
+	for rows.Next() {
+		r := &database.PullRequestLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Number, &r.Title, &r.Author, &r.State, &r.HeadSha, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+	return res, nil
+}
+
+func (d *PullRequestLink) ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.PullRequestLink, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `ticket_id`, `repository_id`, `number`, `title`, `author`, `state`, `head_sha`, `created_at`, `updated_at` FROM `pull_request_link` WHERE `ticket_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		ticketId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.PullRequestLink, 0)
+	for rows.Next() {
+		r := &database.PullRequestLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Number, &r.Title, &r.Author, &r.State, &r.HeadSha, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *PullRequestLink) ListByRepositoryIdAndNumber(ctx context.Context, repositoryId int32, number int32, opt ...ListOption) ([]*database.PullRequestLink, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `ticket_id`, `repository_id`, `number`, `title`, `author`, `state`, `head_sha`, `created_at`, `updated_at` FROM `pull_request_link` WHERE `repository_id` = ? AND `number` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		repositoryId,
+		number,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.PullRequestLink, 0)
+	for rows.Next() {
+		r := &database.PullRequestLink{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.RepositoryId, &r.Number, &r.Title, &r.Author, &r.State, &r.HeadSha, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *PullRequestLink) Create(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) (*database.PullRequestLink, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `pull_request_link` (`ticket_id`, `repository_id`, `number`, `title`, `author`, `state`, `head_sha`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		pullRequestLink.TicketId, pullRequestLink.RepositoryId, pullRequestLink.Number, pullRequestLink.Title, pullRequestLink.Author, pullRequestLink.State, pullRequestLink.HeadSha, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	pullRequestLink = pullRequestLink.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	pullRequestLink.Id = int32(insertedId)
+
+	pullRequestLink.ResetMark()
+	return pullRequestLink, nil
+}
+
+func (d *PullRequestLink) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `pull_request_link` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *PullRequestLink) Update(ctx context.Context, pullRequestLink *database.PullRequestLink, opt ...ExecOption) error {
+	if !pullRequestLink.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := pullRequestLink.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `pull_request_link` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, pullRequestLink.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	pullRequestLink.ResetMark()
+	return nil
+}
+
+type GithubEvent struct {
+	conn *sql.DB
+}
+
+type GithubEventInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.GithubEvent, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error)
+	ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error)
+	Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error)
+	Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ GithubEventInterface = (*GithubEvent)(nil)
+
+func NewGithubEvent(conn *sql.DB) *GithubEvent {
+	return &GithubEvent{
+		conn: conn,
+	}
+}
+
+func (d *GithubEvent) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *GithubEvent) Select(ctx context.Context, id int32) (*database.GithubEvent, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `github_event` WHERE `id` = ?", id)
+
+	v := &database.GithubEvent{}
+	if err := row.Scan(&v.Id, &v.DeliveryId, &v.EventType, &v.Action, &v.Payload, &v.State, &v.Status, &v.LastError, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `github_event` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.GithubEvent, 0, len(id))
+	for rows.Next() {
+		r := &database.GithubEvent{}
+		if err := rows.Scan(&r.Id, &r.DeliveryId, &r.EventType, &r.Action, &r.Payload, &r.State, &r.Status, &r.LastError, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *GithubEvent) ListByState(ctx context.Context, state uint32, opt ...ListOption) ([]*database.GithubEvent, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` FROM `github_event` WHERE `state` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		state,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.GithubEvent, 0)
+	for rows.Next() {
+		r := &database.GithubEvent{}
+		if err := rows.Scan(&r.Id, &r.DeliveryId, &r.EventType, &r.Action, &r.Payload, &r.State, &r.Status, &r.LastError, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *GithubEvent) Create(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) (*database.GithubEvent, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `github_event` (`delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		githubEvent.DeliveryId, githubEvent.EventType, githubEvent.Action, githubEvent.Payload, githubEvent.State, githubEvent.Status, githubEvent.LastError, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	githubEvent = githubEvent.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	githubEvent.Id = int32(insertedId)
+
+	githubEvent.ResetMark()
+	return githubEvent, nil
+}
+
+func (d *GithubEvent) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `github_event` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *GithubEvent) Update(ctx context.Context, githubEvent *database.GithubEvent, opt ...ExecOption) error {
+	if !githubEvent.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := githubEvent.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `github_event` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, githubEvent.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	githubEvent.ResetMark()
 	return nil
 }
