@@ -2,6 +2,8 @@ load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@protoc_ddl//rules:def.bzl", "schema_entity", "sql_schema", "vendor_ddl")
 load("@rules_go//go:def.bzl", "go_library")
 
+exports_files(["schema.sql"])
+
 proto_library(
     name = "database_proto",
     srcs = ["schema.proto"],

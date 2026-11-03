@@ -1,0 +1,116 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
+
+CONTAINER_REGISTRY = "repo.center.x.f110.dev"
+
+SERVER_REPOSITORY = CONTAINER_REGISTRY + "/issue/server"
+
+FRONTEND_REPOSITORY = CONTAINER_REGISTRY + "/issue/frontend"
+
+pkg_tar(
+    name = "server_bin",
+    files = {
+        "//go/cmd/issue-server:linux_amd64": "/usr/local/bin/issue-server",
+        "@protoc_ddl//cmd/migrate:linux_amd64": "/usr/local/bin/migrate",
+    },
+    mode = "0755",
+)
+
+pkg_tar(
+    name = "schema_files",
+    srcs = ["//go/issue/database:schema.sql"],
+    mode = "0644",
+    package_dir = "/schema",
+)
+
+oci_image(
+    name = "server_image",
+    base = "@com_google_distroless_base_linux_amd64",
+    entrypoint = ["/usr/local/bin/issue-server"],
+    tars = [
+        ":server_bin",
+        ":schema_files",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push_server",
+    image = ":server_image",
+    remote_tags = ["latest"],
+    repository = SERVER_REPOSITORY,
+)
+
+cd_artifact(
+    name = "server_delivery",
+    images = [":server_image"],
+    repository = SERVER_REPOSITORY,
+)
+
+pkg_files(
+    name = "frontend_server_bin",
+    srcs = ["//cmd/simple-http-server:linux_amd64"],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "/usr/local/bin",
+    renames = {
+        "//cmd/simple-http-server:linux_amd64": "simple-http-server",
+    },
+)
+
+pkg_files(
+    name = "frontend_server_conf",
+    srcs = ["issue.conf"],
+    prefix = "/etc/simple-http-server",
+)
+
+pkg_tar(
+    name = "frontend_server",
+    srcs = [
+        ":frontend_server_bin",
+        ":frontend_server_conf",
+    ],
+    mode = "0755",
+)
+
+pkg_files(
+    name = "frontend_assets_files",
+    srcs = ["//ts/apps/issue:vite_build_prod"],
+    prefix = "/assets",
+    strip_prefix = "dist_prod/",
+)
+
+pkg_tar(
+    name = "frontend_assets",
+    srcs = [":frontend_assets_files"],
+    mode = "0644",
+)
+
+oci_image(
+    name = "frontend_image",
+    base = "@com_google_distroless_base_linux_amd64",
+    entrypoint = [
+        "/usr/local/bin/simple-http-server",
+        "--config",
+        "/etc/simple-http-server/issue.conf",
+    ],
+    tars = [
+        ":frontend_assets",
+        ":frontend_server",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push_frontend",
+    image = ":frontend_image",
+    remote_tags = ["latest"],
+    repository = FRONTEND_REPOSITORY,
+)
+
+cd_artifact(
+    name = "frontend_delivery",
+    images = [":frontend_image"],
+    repository = FRONTEND_REPOSITORY,
+)
