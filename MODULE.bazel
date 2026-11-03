@@ -87,6 +87,7 @@ use_repo(
     "com_github_minio_madmin_go_v3",
     "com_github_minio_minio_go_v7",
     "com_github_minio_minio_operator",
+    "com_github_modelcontextprotocol_go_sdk",
     "com_github_nats_io_nats_go",
     "com_github_nissy_bon",
     "com_github_olekukonko_tablewriter",

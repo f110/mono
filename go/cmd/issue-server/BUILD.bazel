@@ -14,6 +14,7 @@ go_library(
         "//go/issue",
         "//go/issue/database",
         "//go/issue/database/dao",
+        "//go/issue/mcp",
         "//go/issue/server",
         "//go/issue/webhook",
         "//go/logger/slogger",

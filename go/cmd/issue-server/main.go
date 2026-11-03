@@ -24,6 +24,7 @@ import (
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/database"
 	"go.f110.dev/mono/go/issue/database/dao"
+	"go.f110.dev/mono/go/issue/mcp"
 	"go.f110.dev/mono/go/issue/server"
 	"go.f110.dev/mono/go/issue/webhook"
 	"go.f110.dev/mono/go/logger/slogger"
@@ -75,6 +76,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 	tracker := issue.NewTracker(daos)
 	mux := http.NewServeMux()
 	mux.Handle("/", server.New(tracker, authenticate))
+	mux.Handle("/mcp", mcp.New(tracker, authenticate))
 
 	// The repositories are managed by Build, so the webhook and the change id need Build.
 	if c.BuildAPI == "" {
