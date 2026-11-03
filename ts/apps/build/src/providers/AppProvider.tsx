@@ -3,11 +3,9 @@ import { TransportProvider } from '@connectrpc/connect-query'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 
+const transport = createConnectTransport({ baseUrl: window.location.origin + '/bff' })
+
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-  const transport = createConnectTransport({
-    baseUrl: import.meta.env.VITE_BFF_URL,
-    fetch: (input, init) => fetch(input, { ...init, credentials: 'include' }),
-  })
   const queryClient = new QueryClient()
 
   return (

@@ -1,17 +1,21 @@
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
-import * as path from 'node:path'
 import { defineConfig } from 'vite'
 
-const envDir = path.join(__dirname, './env')
+const bffURL = 'http://127.0.0.1:8082'
 
 export default defineConfig(({ mode }) => {
   return {
     server: {
       host: '127.0.0.1',
       port: 8301,
+      proxy: {
+        '/bff': {
+          target: bffURL,
+          rewrite: (path) => path.replace(/^\/bff/, ''),
+        },
+      },
     },
-    envDir,
     plugins: [
       tanstackRouter({
         target: 'react',
