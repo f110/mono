@@ -40,13 +40,14 @@ type ArtifactRegistry interface {
 // artifactType carried on the config media type. Switching to the ORAS/OCI-1.1
 // empty-config layout (oras-go) is a follow-up; see docs/working/artifact-collection.md §8.
 type craneArtifactRegistry struct {
-	host string
+	host     string
+	insecure bool
 }
 
 // NewCraneArtifactRegistry returns an ArtifactRegistry that pushes to the OCI
-// registry reachable at host.
-func NewCraneArtifactRegistry(host string) ArtifactRegistry {
-	return &craneArtifactRegistry{host: strings.TrimRight(host, "/")}
+// registry reachable at host. When insecure is true the registry is accessed over plain HTTP.
+func NewCraneArtifactRegistry(host string, insecure bool) ArtifactRegistry {
+	return &craneArtifactRegistry{host: strings.TrimRight(host, "/"), insecure: insecure}
 }
 
 func (r *craneArtifactRegistry) repoPath(repository string) string {
@@ -54,6 +55,14 @@ func (r *craneArtifactRegistry) repoPath(repository string) string {
 		return repository
 	}
 	return r.host + "/" + repository
+}
+
+func (r *craneArtifactRegistry) options(ctx context.Context) []crane.Option {
+	opts := []crane.Option{crane.WithContext(ctx)}
+	if r.insecure {
+		opts = append(opts, crane.Insecure)
+	}
+	return opts
 }
 
 func (r *craneArtifactRegistry) PushImage(ctx context.Context, repository, tag, expectedDigest string, ociLayoutTar io.Reader) (string, error) {
@@ -86,7 +95,7 @@ func (r *craneArtifactRegistry) PushImage(ctx context.Context, repository, tag, 
 	if tag == "" {
 		ref = r.repoPath(repository) + "@" + digest.String()
 	}
-	if err := crane.Push(img, ref, crane.WithContext(ctx)); err != nil {
+	if err := crane.Push(img, ref, r.options(ctx)...); err != nil {
 		return "", xerrors.WithStack(err)
 	}
 	return reference, nil
@@ -117,7 +126,7 @@ func (r *craneArtifactRegistry) PushFile(ctx context.Context, repository, tag, a
 	if tag == "" {
 		ref = r.repoPath(repository) + "@" + digest.String()
 	}
-	if err := crane.Push(img, ref, crane.WithContext(ctx)); err != nil {
+	if err := crane.Push(img, ref, r.options(ctx)...); err != nil {
 		return "", xerrors.WithStack(err)
 	}
 	return reference, nil

@@ -96,6 +96,7 @@ type Options struct {
 	BazelMirrorSecretAccessKeyFile string
 	CentralRegistryMirrorURL       string
 	ArtifactRegistry               string // Host of the OCI registry (zot) that stores collected build artifacts.
+	ArtifactRegistryInsecure       bool   // Access the artifact registry over plain HTTP.
 	ArtifactBuilderAddr            string // gRPC address of the builder API the collect sidecar uploads to.
 	SidecarImage                   string
 	CLIImage                       string
@@ -575,7 +576,7 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	}()
 	var artifactRegistry api.ArtifactRegistry
 	if p.opt.ArtifactRegistry != "" {
-		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry)
+		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry, p.opt.ArtifactRegistryInsecure)
 	}
 	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.eventProcessor, addRepo, buildServerConfig(p.opt), artifactRegistry)
 	if err != nil {
@@ -857,6 +858,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("bazel-mirror-secret-access-key-file", "The file path that contains secret access key").Var(&opt.BazelMirrorSecretAccessKeyFile)
 	fs.String("central-registry-mirror-url", "The URL of Bazel Central Registry mirror").Var(&opt.CentralRegistryMirrorURL)
 	fs.String("artifact-registry", "Host of the OCI registry (zot) that stores collected build artifacts. When empty, artifact upload is disabled").Var(&opt.ArtifactRegistry)
+	fs.Bool("artifact-registry-insecure", "Access the artifact registry over plain HTTP").Var(&opt.ArtifactRegistryInsecure)
 	fs.String("artifact-builder-addr", "gRPC address of the builder API the collect sidecar uploads to. When empty, artifact collection is disabled").Var(&opt.ArtifactBuilderAddr)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")

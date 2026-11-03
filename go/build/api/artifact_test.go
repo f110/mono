@@ -7,6 +7,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
@@ -227,4 +229,20 @@ func uploadChunkMsg(b []byte) *RequestUploadArtifact {
 	r := &RequestUploadArtifact{}
 	r.SetChunk(b)
 	return r
+}
+
+func TestCraneArtifactRegistry_insecure(t *testing.T) {
+	cases := []struct {
+		insecure bool
+		scheme   string
+	}{
+		{insecure: false, scheme: "https"},
+		{insecure: true, scheme: "http"},
+	}
+	for _, tc := range cases {
+		r := NewCraneArtifactRegistry("zot.zot.svc.cluster.local", tc.insecure).(*craneArtifactRegistry)
+		ref, err := name.ParseReference(r.repoPath("build/foo")+":latest", crane.GetOptions(r.options(context.Background())...).Name...)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, tc.scheme, ref.Context().Scheme())
+	}
 }
