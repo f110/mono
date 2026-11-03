@@ -9,7 +9,10 @@ export default defineConfig(({ mode }) => {
       host: '127.0.0.1',
       port: 8302,
       proxy: {
-        '/mono.issue.Issue': apiURL,
+        '/bff': {
+          target: apiURL,
+          rewrite: (path) => path.replace(/^\/bff/, ''),
+        },
       },
     },
     plugins: [

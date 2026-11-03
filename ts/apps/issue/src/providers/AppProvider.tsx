@@ -3,7 +3,7 @@ import { TransportProvider } from '@connectrpc/connect-query'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-const transport = createConnectTransport({ baseUrl: window.location.origin })
+const transport = createConnectTransport({ baseUrl: window.location.origin + '/bff' })
 const queryClient = new QueryClient()
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => (
