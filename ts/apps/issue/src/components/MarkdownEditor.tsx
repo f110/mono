@@ -15,7 +15,11 @@ export const MarkdownEditor = ({
 
   return (
     <Box>
-      <Tabs value={tab} onChange={(_, v: 'write' | 'preview') => setTab(v)}>
+      <Tabs
+        value={tab}
+        onChange={(_, v: 'write' | 'preview') => setTab(v)}
+        sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, minWidth: 0, px: 2, py: 0.5 } }}
+      >
         <Tab label="編集" value="write" />
         <Tab label="プレビュー" value="preview" />
       </Tabs>
