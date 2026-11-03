@@ -508,3 +508,46 @@ func TestWithHuman(t *testing.T) {
 	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "", "")
 	mustErrorIs(t, err, ErrUnauthenticated)
 }
+
+func TestParseTrailer(t *testing.T) {
+	cases := []struct {
+		name    string
+		message string
+		want    []Reference
+	}{
+		{
+			name:    "refs and fixes",
+			message: "issue: Fix the bug\n\nThe body.\n\nRefs: 12\nFixes: #34\nAssisted-by: Claude",
+			want:    []Reference{{Kind: database.TrailerKindRefs, Number: 12}, {Kind: database.TrailerKindFixes, Number: 34}},
+		},
+		{
+			name:    "the key is case insensitive",
+			message: "subject\n\nfixes: 1\nREFS: #2",
+			want:    []Reference{{Kind: database.TrailerKindFixes, Number: 1}, {Kind: database.TrailerKindRefs, Number: 2}},
+		},
+		{
+			name:    "only the last paragraph",
+			message: "subject\n\nRefs: 1\n\nThe body.\n\nFixes: 2\n",
+			want:    []Reference{{Kind: database.TrailerKindFixes, Number: 2}},
+		},
+		{
+			name:    "the subject is not the trailer",
+			message: "Fixes: 1",
+		},
+		{
+			name:    "malformed lines are ignored",
+			message: "subject\n\nRefs: abc\nFixes: 1 2\nRefs:\nFixes: 3",
+			want:    []Reference{{Kind: database.TrailerKindFixes, Number: 3}},
+		},
+		{
+			name:    "CRLF",
+			message: "subject\r\n\r\nRefs: 5\r\n",
+			want:    []Reference{{Kind: database.TrailerKindRefs, Number: 5}},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertion.Equal(t, ParseTrailer(tc.message), tc.want)
+		})
+	}
+}

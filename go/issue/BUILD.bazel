@@ -6,6 +6,7 @@ go_library(
         "comment.go",
         "issue.go",
         "ticket.go",
+        "trailer.go",
     ],
     importpath = "go.f110.dev/mono/go/issue",
     visibility = ["//visibility:public"],
