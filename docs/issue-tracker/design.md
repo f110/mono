@@ -86,19 +86,19 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ), `subject` (human のみ、heimdallr のユーザー ID) | system は固定の 1 行 |
 | `agent_token` | `id`, `actor_id`, `name`, `token_hash`, `created_at`, `last_used_at`, `revoked_at` | トークンは SHA-256 のみ保存 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
-| `repository` | `id`, `name`, `url` | GitHub の URL。webhook とは URL で突き合わせる |
 | `relation` | `from_id`, `type`, `to_id` | UNIQUE(`from_id`, `type`, `to_id`) |
 | `comment` | `id`, `ticket_id`, `actor_id`, `body`, `created_at`, `updated_at`, `deleted_at` | 削除は `deleted_at` を立てる論理削除 |
 | `comment_revision` | `id`, `comment_id`, `patch`, `created_at` | 編集前のコメントを編集後のコメントから復元する差分 |
 | `attachment` | `id`, `ticket_id`, `actor_id`, `name`, `content_type`, `size`, `object_key`, `created_at` | |
-| `commit_link` | `ticket_id`, `repository_id`, `sha`, `change_id` (null 可), `subject`, `author`, `trailer` (refs / fixes), `committed_at` | UNIQUE(`ticket_id`, `repository_id`, `sha`) |
-| `pull_request_link` | `ticket_id`, `repository_id`, `number`, `title`, `author`, `state` (open / closed / merged), `head_sha` | UNIQUE(`ticket_id`, `repository_id`, `number`) |
+| `commit_link` | `ticket_id`, `repository_id`, `sha`, `change_id` (null 可), `subject`, `author`, `trailer` (refs / fixes), `committed_at` | UNIQUE(`ticket_id`, `repository_id`, `sha`)。`repository_id` は Build の `SourceRepository` の ID |
+| `pull_request_link` | `ticket_id`, `repository_id`, `number`, `title`, `author`, `state` (open / closed / merged), `head_sha` | UNIQUE(`ticket_id`, `repository_id`, `number`)。`repository_id` は Build の `SourceRepository` の ID |
 | `activity` | `id`, `ticket_id`, `actor_id`, `kind`, `from_value`, `to_value`, `ref_id`, `created_at` | 操作履歴 |
 | `github_event` | `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` | UNIQUE(`delivery_id`)。カラムは Build の `github_event` と揃える |
 
 - ステータス・優先度・関連種別・trailer 種別は proto の enum で持つ
 - `relates_to` は対称なので `from_id < to_id` に正規化して保存し、二重登録を防ぐ
-- commit / PR の URL は保存せず、`repository.url` と sha / 番号から表示時に組み立てる
+- リポジトリは Build に登録されたものを使い、issue tracker 自身は持たない（§5.1）。commit / PR の URL は保存せず、
+  Build から引いたリポジトリの URL と sha / 番号から表示時に組み立てる
   (`<url>/commit/<sha>`, `<url>/pull/<number>`)
 
 ### 3.2 操作履歴
@@ -151,7 +151,7 @@ DB を引かないように、actor は書き込みなど actor が必要な操�
 | --- | --- | --- | --- |
 | チケットの操作（作成・編集・コメント・関連・添付） | ○ | ○ | ステータス変更と紐づけのみ |
 | エージェントトークンの発行・失効 | ○（自分が所有するもの） | × | × |
-| リポジトリ・分類の管理 | ○ | × | × |
+| 分類の管理 | ○ | × | × |
 
 認可は `issue` の各操作の入り口で `actor.kind` を見て行う。
 
@@ -169,7 +169,7 @@ GitHub に issue tracker 専用の webhook を登録し、`push` / `pull_request
 
 | 区分 | 内容 | 現在の Build での実装 |
 | --- | --- | --- |
-| フレームワーク | `Handler`: ヘッダーから event type と delivery ID を取り出し、リポジトリの判定を経て INSERT。delivery ID の重複は再送とみなして 200 | `handler.go` |
+| フレームワーク | `Handler`: ヘッダーから event type と delivery ID を取り出して INSERT。delivery ID の重複は再送とみなして 200 | `handler.go` |
 | フレームワーク | `Notifier`: INSERT 後に同一プロセスの `Scheduler` を起こす | `handler.go` |
 | フレームワーク | `Scheduler`: PENDING / FAILED の event をポーリングし、期限切れを EXPIRED に、未登録の event type を SKIPPED にして、残りを `Reconciler` に渡す | `scheduler.go` |
 | フレームワーク | `Reconciler` インターフェース、`Claim` / `Finalize`、`status` カラムへの進捗の読み書き | `webhook.go` |
@@ -196,7 +196,9 @@ type Store interface {
 
 Build はリーダー選出を残したままこのフレームワークに移行でき、挙動は変わらない。
 
-issue tracker では、`repository` に登録されていないリポジトリの event は INSERT せずに 200 を返す。
+issue tracker が扱うリポジトリは Build に登録されたリポジトリとし、issue tracker 自身はリポジトリを管理しない。
+Reconciler はペイロードのリポジトリの URL を Build の `ListRepositories` で探し、登録されていなければ event を
+SKIPPED にする。Build に接続できないときは FAILED にして再試行する。
 
 ### 5.2 trailer の解釈
 
@@ -234,7 +236,7 @@ Task へのリンクを表示する。GitHub のコミットステータスを�
 Build 側には次の変更が要る。
 
 - `RequestListTasks` に `revisions` を追加する。DB には Task を revision で引く `ByRevision` が既にあるので、API に露出するだけでよい
-- issue tracker の `repository` と Build の `SourceRepository` は URL で対応づける。Build の `ListRepositories` で URL から Build のリポジトリ ID を引き、`repository_ids` と `revisions` を指定して `ListTasks` を呼ぶ
+- `commit_link` / `pull_request_link` は Build のリポジトリ ID を持つので、`repository_ids` と `revisions` を指定して `ListTasks` を呼ぶ
 
 Build に接続できないときは CI 結果を表示せず、チケットの表示自体は失敗させない。
 
@@ -251,7 +253,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | コメント | `AddComment`, `EditComment`, `DeleteComment` |
 | 添付 | `ListAttachments`（アップロード・ダウンロードは §7 の HTTP エンドポイント） |
 | 履歴 | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions`（本文・コメントの編集前の版と編集者） |
-| 管理 | `ListRepositories`, `SaveRepository`, `ListComponents`, `SaveComponent` |
+| 管理 | `ListComponents`, `SaveComponent` |
 | トークン | `ListAgentTokens`, `IssueAgentToken`, `RevokeAgentToken` |
 | その他 | `ListActors`, `WhoAmI` |
 
@@ -270,7 +272,7 @@ MCP は Streamable HTTP でサーバーの `/mcp` に公開する。tool はチ�
 ### 6.4 Web UI
 
 `ts/apps/issue` に Build のフロントエンドと同じ構成（React + Vite + TanStack Router + TanStack Query + Connect）
-で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（リポジトリ・分類・トークン）を加える。
+で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（分類・トークン）を加える。
 
 - URL は `/<番号>` がチケット詳細、`/` が一覧、`/new` が新規作成。サーバーは未知のパスに `index.html` を返す
 - 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
