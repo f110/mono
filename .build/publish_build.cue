@@ -16,7 +16,4 @@ jobs: {
 	publish_build_frontend: _job_common & {
 		targets: ["//containers/build:push_frontend"]
 	}
-	publish_build_frontend_dev: _job_common & {
-		targets: ["//containers/build:push_frontend_dev"]
-	}
 }

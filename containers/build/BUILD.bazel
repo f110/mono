@@ -144,37 +144,3 @@ oci_push(
     remote_tags = ["latest"],
     repository = CONTAINER_REGISTRY + "/build/frontend",
 )
-
-pkg_files(
-    name = "frontend_dev_assets_files",
-    srcs = ["//ts/apps/build:vite_build_dev"],
-    prefix = "/assets",
-    strip_prefix = "dist_dev/",
-)
-
-pkg_tar(
-    name = "frontend_dev_assets",
-    srcs = [":frontend_dev_assets_files"],
-    mode = "0644",
-)
-
-oci_image(
-    name = "frontend_dev_image",
-    base = "@com_google_distroless_base_linux_amd64",
-    entrypoint = [
-        "/usr/local/bin/simple-http-server",
-        "--config",
-        "/etc/simple-http-server/build.conf",
-    ],
-    tars = [
-        ":frontend_dev_assets",
-        ":frontend_server",
-    ],
-)
-
-oci_push(
-    name = "push_frontend_dev",
-    image = ":frontend_dev_image",
-    remote_tags = ["dev-latest"],
-    repository = CONTAINER_REGISTRY + "/build/frontend",
-)
