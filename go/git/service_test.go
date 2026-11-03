@@ -14,7 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
 	"go.f110.dev/mono/go/storage"
@@ -75,6 +77,11 @@ func TestGetCommit(t *testing.T) {
 	assert.NotEmpty(t, commit.Commit.Message)
 	assert.NotNil(t, commit.Commit.Author)
 	assert.NotNil(t, commit.Commit.Committer)
+
+	_, err = gitData.GetCommit(context.Background(), &RequestGetCommit{Repo: "test1", Sha: "0123456789abcdef0123456789abcdef01234567"})
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	_, err = gitData.GetCommit(context.Background(), &RequestGetCommit{Repo: "unknown", Sha: ref.Hash().String()})
+	assert.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestGetRepositoryStatistics(t *testing.T) {

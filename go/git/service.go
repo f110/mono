@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -173,7 +174,7 @@ func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) 
 func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
 	repo, ok := g.lookup(req.Repo)
 	if !ok {
-		return nil, xerrors.New("repository not found")
+		return nil, status.Error(codes.NotFound, "repository not found")
 	}
 	if req.Sha == "" && req.Ref == "" {
 		return nil, xerrors.New("SHA or ref field is required")
@@ -190,6 +191,9 @@ func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*Resp
 		h = plumbing.NewHash(req.Sha)
 	}
 	commit, err := repo.CommitObject(h)
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
+		return nil, status.Error(codes.NotFound, "commit not found")
+	}
 	if err != nil {
 		return nil, err
 	}
