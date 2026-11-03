@@ -6,9 +6,11 @@
 package issue
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -259,6 +261,45 @@ func (t *Tracker) human(ctx context.Context, subject string) (*database.Actor, e
 		return nil, xerrors.WithStack(err)
 	}
 	return a, nil
+}
+
+// System returns the system actor which operates the tickets by the events from GitHub. The actor is created at the
+// first access. If the actors are created concurrently, the actor of the smallest id is the system actor.
+func (t *Tracker) System(ctx context.Context) (*database.Actor, error) {
+	actors, err := t.dao.Actor.ListByKind(ctx, uint32(database.ActorKindSystem))
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	if len(actors) > 0 {
+		return slices.MinFunc(actors, func(a, b *database.Actor) int { return cmp.Compare(a.Id, b.Id) }), nil
+	}
+	a, err := t.dao.Actor.Create(ctx, &database.Actor{Kind: database.ActorKindSystem, Name: "system"})
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return a, nil
+}
+
+// UpdatePullRequest updates the title, the state and the head of the pull request of all tickets which the pull request
+// is linked to.
+func (t *Tracker) UpdatePullRequest(ctx context.Context, repositoryID, number int32, title string, state database.PullRequestState, headSHA string) error {
+	if _, err := t.actor(ctx); err != nil {
+		return err
+	}
+	links, err := t.dao.PullRequestLink.ListByRepositoryIdAndNumber(ctx, repositoryID, number)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	for _, v := range links {
+		if v.Title == title && v.State == state && v.HeadSha == headSHA {
+			continue
+		}
+		v.Title, v.State, v.HeadSha = title, state, headSHA
+		if err := t.dao.PullRequestLink.Update(ctx, v); err != nil {
+			return xerrors.WithStack(err)
+		}
+	}
+	return nil
 }
 
 func (t *Tracker) Actors(ctx context.Context) ([]*database.Actor, error) {

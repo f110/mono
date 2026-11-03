@@ -238,6 +238,106 @@ func (t *Ticket) Activities(ctx context.Context) ([]*database.Activity, error) {
 	return activities, nil
 }
 
+// LinkCommit links the commit which refers to the ticket by the trailer. repositoryID is the id of the repository of
+// Build. It does nothing if the commit is already linked.
+func (t *Ticket) LinkCommit(ctx context.Context, repositoryID int32, sha, subject, author string, trailer database.TrailerKind, committedAt time.Time) error {
+	actor, err := t.tracker.actor(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := t.tracker.dao.CommitLink.SelectByTicketIdAndRepositoryIdAndSha(ctx, t.Id, repositoryID, sha); err == nil {
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return xerrors.WithStack(err)
+	}
+
+	err = t.tracker.tx(ctx, func(tx *sql.Tx) error {
+		link, err := t.tracker.dao.CommitLink.Create(ctx, &database.CommitLink{
+			TicketId:     t.Id,
+			RepositoryId: repositoryID,
+			Sha:          sha,
+			Subject:      subject,
+			Author:       author,
+			Trailer:      trailer,
+			CommittedAt:  committedAt,
+		}, dao.WithTx(tx))
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := t.tracker.record(ctx, tx, t.Id, actor, database.ActivityKindCommitLinked, "", "", &link.Id); err != nil {
+			return err
+		}
+		return t.tracker.touch(ctx, tx, t.Id)
+	})
+	if err != nil {
+		return err
+	}
+	return t.reload(ctx)
+}
+
+// LinkPullRequest links the pull request which has the commit referring to the ticket by the trailer. repositoryID is
+// the id of the repository of Build. If the pull request is already linked, only the title, the state and the head are
+// updated.
+func (t *Ticket) LinkPullRequest(ctx context.Context, repositoryID, number int32, title, author string, state database.PullRequestState, headSHA string) error {
+	actor, err := t.tracker.actor(ctx)
+	if err != nil {
+		return err
+	}
+	links, err := t.tracker.dao.PullRequestLink.ListByRepositoryIdAndNumber(ctx, repositoryID, number)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	for _, v := range links {
+		if v.TicketId != t.Id {
+			continue
+		}
+		if v.Title == title && v.State == state && v.HeadSha == headSHA {
+			return nil
+		}
+		v.Title, v.State, v.HeadSha = title, state, headSHA
+		return xerrors.WithStack(t.tracker.dao.PullRequestLink.Update(ctx, v))
+	}
+
+	err = t.tracker.tx(ctx, func(tx *sql.Tx) error {
+		link, err := t.tracker.dao.PullRequestLink.Create(ctx, &database.PullRequestLink{
+			TicketId:     t.Id,
+			RepositoryId: repositoryID,
+			Number:       number,
+			Title:        title,
+			Author:       author,
+			State:        state,
+			HeadSha:      headSHA,
+		}, dao.WithTx(tx))
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := t.tracker.record(ctx, tx, t.Id, actor, database.ActivityKindPullRequestLinked, "", "", &link.Id); err != nil {
+			return err
+		}
+		return t.tracker.touch(ctx, tx, t.Id)
+	})
+	if err != nil {
+		return err
+	}
+	return t.reload(ctx)
+}
+
+func (t *Ticket) CommitLinks(ctx context.Context) ([]*database.CommitLink, error) {
+	links, err := t.tracker.dao.CommitLink.ListByTicketId(ctx, t.Id)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return links, nil
+}
+
+func (t *Ticket) PullRequestLinks(ctx context.Context) ([]*database.PullRequestLink, error) {
+	links, err := t.tracker.dao.PullRequestLink.ListByTicketId(ctx, t.Id)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return links, nil
+}
+
 // Revisions returns the body before each edit in the order of the edits.
 func (t *Ticket) Revisions(ctx context.Context) ([]*Revision, error) {
 	revs, err := t.tracker.dao.TicketBodyRevision.ListByTicketId(ctx, t.Id)

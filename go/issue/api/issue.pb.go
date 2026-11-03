@@ -225,19 +225,21 @@ func (x RelationType) Number() protoreflect.EnumNumber {
 type ActivityKind int32
 
 const (
-	ActivityKind_ACTIVITY_KIND_UNSPECIFIED      ActivityKind = 0
-	ActivityKind_ACTIVITY_KIND_CREATE           ActivityKind = 1
-	ActivityKind_ACTIVITY_KIND_TITLE            ActivityKind = 2
-	ActivityKind_ACTIVITY_KIND_STATUS           ActivityKind = 3
-	ActivityKind_ACTIVITY_KIND_PRIORITY         ActivityKind = 4
-	ActivityKind_ACTIVITY_KIND_COMPONENT        ActivityKind = 5
-	ActivityKind_ACTIVITY_KIND_ASSIGNEE         ActivityKind = 6
-	ActivityKind_ACTIVITY_KIND_BODY             ActivityKind = 7
-	ActivityKind_ACTIVITY_KIND_RELATION_ADDED   ActivityKind = 8
-	ActivityKind_ACTIVITY_KIND_RELATION_REMOVED ActivityKind = 9
-	ActivityKind_ACTIVITY_KIND_COMMENT          ActivityKind = 10
-	ActivityKind_ACTIVITY_KIND_COMMENT_EDITED   ActivityKind = 11
-	ActivityKind_ACTIVITY_KIND_COMMENT_DELETED  ActivityKind = 12
+	ActivityKind_ACTIVITY_KIND_UNSPECIFIED         ActivityKind = 0
+	ActivityKind_ACTIVITY_KIND_CREATE              ActivityKind = 1
+	ActivityKind_ACTIVITY_KIND_TITLE               ActivityKind = 2
+	ActivityKind_ACTIVITY_KIND_STATUS              ActivityKind = 3
+	ActivityKind_ACTIVITY_KIND_PRIORITY            ActivityKind = 4
+	ActivityKind_ACTIVITY_KIND_COMPONENT           ActivityKind = 5
+	ActivityKind_ACTIVITY_KIND_ASSIGNEE            ActivityKind = 6
+	ActivityKind_ACTIVITY_KIND_BODY                ActivityKind = 7
+	ActivityKind_ACTIVITY_KIND_RELATION_ADDED      ActivityKind = 8
+	ActivityKind_ACTIVITY_KIND_RELATION_REMOVED    ActivityKind = 9
+	ActivityKind_ACTIVITY_KIND_COMMENT             ActivityKind = 10
+	ActivityKind_ACTIVITY_KIND_COMMENT_EDITED      ActivityKind = 11
+	ActivityKind_ACTIVITY_KIND_COMMENT_DELETED     ActivityKind = 12
+	ActivityKind_ACTIVITY_KIND_COMMIT_LINKED       ActivityKind = 13
+	ActivityKind_ACTIVITY_KIND_PULL_REQUEST_LINKED ActivityKind = 14
 )
 
 // Enum value maps for ActivityKind.
@@ -256,21 +258,25 @@ var (
 		10: "ACTIVITY_KIND_COMMENT",
 		11: "ACTIVITY_KIND_COMMENT_EDITED",
 		12: "ACTIVITY_KIND_COMMENT_DELETED",
+		13: "ACTIVITY_KIND_COMMIT_LINKED",
+		14: "ACTIVITY_KIND_PULL_REQUEST_LINKED",
 	}
 	ActivityKind_value = map[string]int32{
-		"ACTIVITY_KIND_UNSPECIFIED":      0,
-		"ACTIVITY_KIND_CREATE":           1,
-		"ACTIVITY_KIND_TITLE":            2,
-		"ACTIVITY_KIND_STATUS":           3,
-		"ACTIVITY_KIND_PRIORITY":         4,
-		"ACTIVITY_KIND_COMPONENT":        5,
-		"ACTIVITY_KIND_ASSIGNEE":         6,
-		"ACTIVITY_KIND_BODY":             7,
-		"ACTIVITY_KIND_RELATION_ADDED":   8,
-		"ACTIVITY_KIND_RELATION_REMOVED": 9,
-		"ACTIVITY_KIND_COMMENT":          10,
-		"ACTIVITY_KIND_COMMENT_EDITED":   11,
-		"ACTIVITY_KIND_COMMENT_DELETED":  12,
+		"ACTIVITY_KIND_UNSPECIFIED":         0,
+		"ACTIVITY_KIND_CREATE":              1,
+		"ACTIVITY_KIND_TITLE":               2,
+		"ACTIVITY_KIND_STATUS":              3,
+		"ACTIVITY_KIND_PRIORITY":            4,
+		"ACTIVITY_KIND_COMPONENT":           5,
+		"ACTIVITY_KIND_ASSIGNEE":            6,
+		"ACTIVITY_KIND_BODY":                7,
+		"ACTIVITY_KIND_RELATION_ADDED":      8,
+		"ACTIVITY_KIND_RELATION_REMOVED":    9,
+		"ACTIVITY_KIND_COMMENT":             10,
+		"ACTIVITY_KIND_COMMENT_EDITED":      11,
+		"ACTIVITY_KIND_COMMENT_DELETED":     12,
+		"ACTIVITY_KIND_COMMIT_LINKED":       13,
+		"ACTIVITY_KIND_PULL_REQUEST_LINKED": 14,
 	}
 )
 
@@ -4474,7 +4480,7 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\x17RELATION_TYPE_PARENT_OF\x10\x01\x12\x18\n" +
 	"\x14RELATION_TYPE_BLOCKS\x10\x02\x12\x1e\n" +
 	"\x1aRELATION_TYPE_DUPLICATE_OF\x10\x03\x12\x1c\n" +
-	"\x18RELATION_TYPE_RELATES_TO\x10\x04*\x8d\x03\n" +
+	"\x18RELATION_TYPE_RELATES_TO\x10\x04*\xd5\x03\n" +
 	"\fActivityKind\x12\x1d\n" +
 	"\x19ACTIVITY_KIND_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14ACTIVITY_KIND_CREATE\x10\x01\x12\x17\n" +
@@ -4489,7 +4495,9 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\x15ACTIVITY_KIND_COMMENT\x10\n" +
 	"\x12 \n" +
 	"\x1cACTIVITY_KIND_COMMENT_EDITED\x10\v\x12!\n" +
-	"\x1dACTIVITY_KIND_COMMENT_DELETED\x10\f2\xcc\n" +
+	"\x1dACTIVITY_KIND_COMMENT_DELETED\x10\f\x12\x1f\n" +
+	"\x1bACTIVITY_KIND_COMMIT_LINKED\x10\r\x12%\n" +
+	"!ACTIVITY_KIND_PULL_REQUEST_LINKED\x10\x0e2\xcc\n" +
 	"\n" +
 	"\x05Issue\x12N\n" +
 	"\vListTickets\x12\x1e.mono.issue.RequestListTickets\x1a\x1f.mono.issue.ResponseListTickets\x12H\n" +

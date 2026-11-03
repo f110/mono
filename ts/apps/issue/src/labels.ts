@@ -60,4 +60,6 @@ export const activityLabels: Record<ActivityKind, string> = {
   [ActivityKind.COMMENT]: 'がコメント',
   [ActivityKind.COMMENT_EDITED]: 'がコメントを編集',
   [ActivityKind.COMMENT_DELETED]: 'がコメントを削除',
+  [ActivityKind.COMMIT_LINKED]: 'がコミットを関連付け',
+  [ActivityKind.PULL_REQUEST_LINKED]: 'が Pull Request を関連付け',
 }

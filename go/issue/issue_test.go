@@ -551,3 +551,78 @@ func TestParseTrailer(t *testing.T) {
 		})
 	}
 }
+
+func TestSystem(t *testing.T) {
+	f := newFixture(t)
+	system, err := f.tracker.System(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, system.Id, f.system.Id)
+
+	f.dao.Actor.Delete(context.Background(), f.system.Id)
+	created, err := f.tracker.System(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, created.Kind, database.ActorKindSystem)
+	again, err := f.tracker.System(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, again.Id, created.Id)
+}
+
+func TestLinkCommit(t *testing.T) {
+	f := newFixture(t)
+	ticket := f.create(t, "title")
+	committedAt := time.Date(2026, 11, 1, 0, 0, 0, 0, time.Local)
+
+	link := func() error {
+		return ticket.LinkCommit(f.as(f.system), 10, "0123456789abcdef0123456789abcdef01234567", "subject", "alice", database.TrailerKindFixes, committedAt)
+	}
+	assertion.MustNoError(t, link())
+	assertion.MustNoError(t, link())
+
+	links, err := ticket.CommitLinks(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, links, 1)
+	assertion.Equal(t, links[0].RepositoryId, int32(10))
+	assertion.Equal(t, links[0].Subject, "subject")
+	assertion.Equal(t, links[0].Author, "alice")
+	assertion.Equal(t, links[0].Trailer, database.TrailerKindFixes)
+	assertion.True(t, links[0].ChangeId == nil)
+
+	a := activities(t, ticket)
+	assertion.MustLen(t, a, 2)
+	assertion.Equal(t, a[1].Kind, database.ActivityKindCommitLinked)
+	assertion.Equal(t, a[1].ActorId, f.system.Id)
+	assertion.Equal(t, *a[1].RefId, links[0].Id)
+
+	assertion.MustError(t, ticket.LinkCommit(context.Background(), 10, "sha", "subject", "alice", database.TrailerKindRefs, committedAt))
+}
+
+func TestLinkPullRequest(t *testing.T) {
+	f := newFixture(t)
+	t1 := f.create(t, "t1")
+	t2 := f.create(t, "t2")
+
+	assertion.MustNoError(t, t1.LinkPullRequest(f.as(f.system), 10, 5, "title", "alice", database.PullRequestStateOpen, "sha1"))
+	assertion.MustNoError(t, t1.LinkPullRequest(f.as(f.system), 10, 5, "new title", "alice", database.PullRequestStateOpen, "sha2"))
+	assertion.MustNoError(t, t2.LinkPullRequest(f.as(f.system), 10, 5, "new title", "alice", database.PullRequestStateOpen, "sha2"))
+
+	links, err := t1.PullRequestLinks(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, links, 1)
+	assertion.Equal(t, links[0].Title, "new title")
+	assertion.Equal(t, links[0].HeadSha, "sha2")
+	a := activities(t, t1)
+	assertion.MustLen(t, a, 2)
+	assertion.Equal(t, a[1].Kind, database.ActivityKindPullRequestLinked)
+	assertion.Equal(t, *a[1].RefId, links[0].Id)
+
+	assertion.MustNoError(t, f.tracker.UpdatePullRequest(f.as(f.system), 10, 5, "final title", database.PullRequestStateMerged, "sha3"))
+	for _, ticket := range []*Ticket{t1, t2} {
+		links, err := ticket.PullRequestLinks(context.Background())
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, links, 1)
+		assertion.Equal(t, links[0].State, database.PullRequestStateMerged)
+		assertion.Equal(t, links[0].HeadSha, "sha3")
+		assertion.Equal(t, links[0].Title, "final title")
+	}
+	assertion.MustNoError(t, f.tracker.UpdatePullRequest(f.as(f.system), 10, 100, "title", database.PullRequestStateClosed, "sha"))
+}

@@ -1082,6 +1082,16 @@ export enum ActivityKind {
    * @generated from enum value: ACTIVITY_KIND_COMMENT_DELETED = 12;
    */
   COMMENT_DELETED = 12,
+
+  /**
+   * @generated from enum value: ACTIVITY_KIND_COMMIT_LINKED = 13;
+   */
+  COMMIT_LINKED = 13,
+
+  /**
+   * @generated from enum value: ACTIVITY_KIND_PULL_REQUEST_LINKED = 14;
+   */
+  PULL_REQUEST_LINKED = 14,
 }
 
 /**
