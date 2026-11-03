@@ -350,6 +350,24 @@ webhook の処理ではリポジトリを Build の API で判定するので、
 GitHub App の認証情報（Makefile の `GITHUB`）を渡す。change-id は Build と同じ git-data-service（127.0.0.1:8056）
 から取得する。
 
+### 9.2 デプロイ
+
+マニフェストは `manifests/deploy/issue` に kustomize で置く。Build のアーティファクト収集
+（`docs/working/artifact-collection.md`）に乗せ、default branch のビルドで `cd_artifact` が `base` のマニフェストと
+コンテナイメージを zot に保存する。環境ごとの overlay は GitOps のリポジトリ（ops）で、公開した `base` を元に作る。
+
+| ディレクトリ | 内容 |
+| --- | --- |
+| `base` | issue-server・Web UI（`simple-http-server`）・MariaDB の StatefulSet・migrate の Job。`cd_artifact` で zot に保存する |
+| `local` | heimdallr・Build・git-data-service・GitHub のないクラスタ（kind など）向け。それらのフラグを渡さずに動かす（§9.1） |
+
+- イメージは `containers/issue` で作り、マニフェストはビルド時にイメージの digest で参照する（`kustomization` の `images`）
+- ops の overlay では、namespace、heimdallr の公開鍵・Build の API・git-data-service のアドレス、GitHub App の認証情報を与える
+- heimdallr の `Backend` も ops に置く。パスで振り分け、`/mono.issue.Issue/` と `/webhook` を issue-server に、それ以外を
+  Web UI に向ける。GitHub の webhook の登録も `Backend` で行う
+- migrate の Job は、`kustomization` が名前の末尾にイメージの digest の先頭 6 文字を付け、イメージごとに別の Job にする（ops の
+  Build と同じ）。終わった Job は `ttlSecondsAfterFinished` で消える
+
 ## 10. 実装順序
 
 1. スキーマ・`issue`・Connect API（チケット・関連・コメント・履歴）

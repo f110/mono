@@ -1,0 +1,15 @@
+load("//build/rules/kustomize:kustomization.bzl", "kustomization")
+
+kustomization(
+    name = "local",
+    src = "kustomization.yaml",
+    images = {
+        "//containers/issue:frontend_image.digest": "repo.center.x.f110.dev/issue/frontend",
+        "//containers/issue:server_image.digest": "repo.center.x.f110.dev/issue/server",
+    },
+    resources = [
+        "namespace.yaml",
+        "//manifests/deploy/issue/base",
+    ],
+    visibility = ["//visibility:public"],
+)

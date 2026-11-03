@@ -1,0 +1,25 @@
+load("//build/rules/artifact:def.bzl", "cd_artifact")
+load("//build/rules/kustomize:kustomization.bzl", "kustomization")
+
+kustomization(
+    name = "base",
+    src = "kustomization.yaml",
+    images = {
+        "//containers/issue:frontend_image.digest": "repo.center.x.f110.dev/issue/frontend",
+        "//containers/issue:server_image.digest": "repo.center.x.f110.dev/issue/server",
+    },
+    resources = [
+        "frontend.yaml",
+        "migrate.yaml",
+        "mysql.yaml",
+        "server.yaml",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# The overlays of the environments are in the repository of GitOps.
+cd_artifact(
+    name = "delivery",
+    manifests = [":base"],
+    repository = "repo.center.x.f110.dev/issue/manifests",
+)

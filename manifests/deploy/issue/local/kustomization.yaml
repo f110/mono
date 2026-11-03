@@ -1,0 +1,14 @@
+# local runs the issue tracker without heimdallr, Build, git-data-service and the credential of GitHub for the local
+# cluster (e.g. kind). Every request is the request of dev@example.com, and the webhook is not handled.
+namespace: issue
+resources:
+  - namespace.yaml
+  - ../base
+patches:
+  - target:
+      kind: StatefulSet
+      name: issue-mysql
+    patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 1Gi

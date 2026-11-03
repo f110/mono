@@ -1,0 +1,27 @@
+# The name of the job is suffixed with the digest of the image by the kustomization rule, so that the job is created for
+# every image.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: issue-migrate
+  labels:
+    app.kubernetes.io/name: issue
+    app.kubernetes.io/component: migrate
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: issue
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: repo.center.x.f110.dev/issue/server
+          command:
+            - /usr/local/bin/migrate
+            - --schema=/schema/schema.sql
+            - --driver=mysql
+            - --dsn=issue:issue@tcp(issue-mysql:3306)/issue
+            - --execute

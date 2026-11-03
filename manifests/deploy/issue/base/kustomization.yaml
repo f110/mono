@@ -1,0 +1,5 @@
+resources:
+  - mysql.yaml
+  - migrate.yaml
+  - server.yaml
+  - frontend.yaml
