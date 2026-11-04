@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -13,6 +14,7 @@ import (
 	"maps"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/v85/github"
+	"go.f110.dev/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,6 +45,7 @@ type apiService struct {
 	githubClient      *github.Client
 	gitDataClient     git.GitDataClient
 	stClient          *storage.S3
+	logStorage        LogStorage
 	bazelMirrorPrefix string
 	addRepo           chan<- *git.RepositoryConfig
 	serverConfig      *ServerConfig
@@ -53,8 +57,8 @@ const maxArtifactSize = 2 << 30 // 2 GiB
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -692,6 +696,30 @@ func (s *apiService) ListArtifacts(ctx context.Context, req *RequestListArtifact
 	return nil, status.Error(codes.InvalidArgument, "task_id or repository_id+revision must be specified")
 }
 
+func (s *apiService) GetLogs(ctx context.Context, req *RequestGetLogs) (*ResponseGetLogs, error) {
+	var filter *regexp.Regexp
+	if req.GetFilter() != "" {
+		f, err := regexp.Compile(req.GetFilter())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+		}
+		filter = f
+	}
+	task, err := s.dao.Task.Select(ctx, req.GetTaskId())
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "task not found")
+	}
+	if task.LogFile == "" {
+		return nil, status.Error(codes.NotFound, "the task has no log")
+	}
+	body, err := ReadLog(ctx, s.logStorage, task.LogFile, filter)
+	if err != nil {
+		slogger.Log.Warn("Failed to read the log", slogger.E(err), slog.Int("task_id", int(task.Id)))
+		return nil, status.Error(codes.Internal, "failed to read the log")
+	}
+	return ResponseGetLogs_builder{Body: new(body)}.Build(), nil
+}
+
 func dbArtifactToAPIArtifact(a *database.Artifact) *model.Artifact {
 	return model.Artifact_builder{
 		Id:         new(a.Id),
@@ -866,4 +894,44 @@ func artifactMediaType(t ArtifactType) string {
 		return mt
 	}
 	return "application/octet-stream"
+}
+
+type LogStorage interface {
+	Get(ctx context.Context, name string) (*storage.Object, error)
+}
+
+// ReadLog returns the log of the task at path. When filter is not nil, only the lines which match filter are returned
+// and each line ends with a newline.
+func ReadLog(ctx context.Context, s LogStorage, path string, filter *regexp.Regexp) (string, error) {
+	obj, err := s.Get(ctx, path)
+	if err != nil {
+		return "", xerrors.WithStack(err)
+	}
+	defer obj.Body.Close()
+
+	if filter == nil {
+		buf, err := io.ReadAll(obj.Body)
+		if err != nil {
+			return "", xerrors.WithStack(err)
+		}
+		return string(buf), nil
+	}
+
+	var b strings.Builder
+	r := bufio.NewReader(obj.Body)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil && !errors.Is(err, io.EOF) {
+			return "", xerrors.WithStack(err)
+		}
+		line = strings.TrimSuffix(line, "\n")
+		if line != "" && filter.MatchString(line) {
+			b.WriteString(line)
+			b.WriteByte('\n')
+		}
+		if err != nil {
+			break
+		}
+	}
+	return b.String(), nil
 }

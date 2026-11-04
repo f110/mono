@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -35,6 +36,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/gc"
+	"go.f110.dev/mono/go/build/mcp"
 	"go.f110.dev/mono/go/build/releasewatcher"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/build/webhook"
@@ -47,6 +49,7 @@ import (
 	githubutil "go.f110.dev/mono/go/github"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/grpcutil"
+	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/storage"
@@ -100,6 +103,7 @@ type Options struct {
 	ArtifactBuilderAddr            string // gRPC address of the builder API the collect sidecar uploads to.
 	SidecarImage                   string
 	CLIImage                       string
+	PublicKeyURL                   string // URL of the public key of heimdallr. When empty, MCP is not served.
 	PullAlways                     bool
 	TaskCPULimit                   string
 	TaskMemoryLimit                string
@@ -548,7 +552,7 @@ func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.Reposi
 	return out, nil
 }
 
-func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
+func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 	if p.opt.GitDataServiceURL != "" {
 		conn, err := grpc.NewClient(p.opt.GitDataServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -578,7 +582,33 @@ func (p *process) startApiServer(_ context.Context) (fsm.State, error) {
 	if p.opt.ArtifactRegistry != "" {
 		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry, p.opt.ArtifactRegistryInsecure)
 	}
-	apiServer, err := api.NewApi(p.opt.Addr, p.bazelBuilder, p.dao, p.ghClient, p.gitDataClient, storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt), p.opt.BazelMirrorPrefix, p.eventProcessor, addRepo, buildServerConfig(p.opt), artifactRegistry)
+	var newMCPHandler func(api.APIServer) http.Handler
+	if p.opt.PublicKeyURL != "" {
+		publicKey, err := authproxy.FetchPublicKey(ctx, p.opt.PublicKeyURL)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		newMCPHandler = func(s api.APIServer) http.Handler {
+			return mcp.New(s, func(next http.Handler) http.Handler { return authproxy.Authenticate(publicKey, next) })
+		}
+	} else {
+		slogger.Log.Info("Skip serving MCP because --public-key-url is not specified")
+	}
+	apiServer, err := api.NewApi(
+		p.opt.Addr,
+		p.bazelBuilder,
+		p.dao,
+		p.ghClient,
+		p.gitDataClient,
+		storage.NewS3(p.opt.BazelMirrorBucket, p.bazelMirrorStorageOpt),
+		storage.NewS3(p.opt.MinIOBucket, p.storageOpt),
+		p.opt.BazelMirrorPrefix,
+		p.eventProcessor,
+		addRepo,
+		buildServerConfig(p.opt),
+		artifactRegistry,
+		newMCPHandler,
+	)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
@@ -862,6 +892,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("artifact-builder-addr", "gRPC address of the builder API the collect sidecar uploads to. When empty, artifact collection is disabled").Var(&opt.ArtifactBuilderAddr)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")
+	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token of the requests to /mcp. It is /internal/publickey of the internal API. If not specified, MCP is not served").Var(&opt.PublicKeyURL)
 	fs.Bool("pull-always", "Pull always").Var(&opt.PullAlways)
 	fs.String("task-cpu-limit", "Task cpu limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskCPULimit).Default("1000m")
 	fs.String("task-memory-limit", "Task memory limit. If the job set the limit, It will used the job defined value.").Var(&opt.TaskMemoryLimit).Default("4096Mi")

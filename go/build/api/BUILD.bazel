@@ -62,10 +62,13 @@ go_test(
         "//go/git",
         "//go/logger",
         "//go/logger/slogger",
+        "//go/storage",
         "//go/testing/assertion",
         "@com_github_google_go_containerregistry//pkg/crane",
         "@com_github_google_go_containerregistry//pkg/name",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
     ],
 )
 

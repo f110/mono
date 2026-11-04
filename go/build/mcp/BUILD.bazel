@@ -1,0 +1,33 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "mcp",
+    srcs = ["mcp.go"],
+    importpath = "go.f110.dev/mono/go/build/mcp",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/build/api",
+        "@com_github_modelcontextprotocol_go_sdk//mcp",
+        "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
+
+go_test(
+    name = "mcp_test",
+    srcs = ["mcp_test.go"],
+    embed = [":mcp"],
+    deps = [
+        "//go/build/api",
+        "//go/build/model",
+        "//go/http/authproxy",
+        "//go/testing/assertion",
+        "@com_github_golang_jwt_jwt_v5//:jwt",
+        "@com_github_modelcontextprotocol_go_sdk//mcp",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

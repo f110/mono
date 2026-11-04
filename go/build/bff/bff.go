@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -205,16 +204,11 @@ func (b *BFF) GetLogs(ctx context.Context, req *connect.Request[RequestGetLogs])
 	if len(tasks.GetTasks()) != 1 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, xerrors.New("invalid task id"))
 	}
-	logObj, err := b.s3.Get(ctx, tasks.GetTasks()[0].GetLogFile())
+	body, err := api.ReadLog(ctx, b.s3, tasks.GetTasks()[0].GetLogFile(), nil)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	buf, err := io.ReadAll(logObj.Body)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	defer logObj.Body.Close()
-	return connect.NewResponse(ResponseGetLogs_builder{Body: new(string(buf))}.Build()), nil
+	return connect.NewResponse(ResponseGetLogs_builder{Body: new(body)}.Build()), nil
 }
 
 func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetServerInfo]) (*connect.Response[ResponseGetServerInfo], error) {

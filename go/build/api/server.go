@@ -48,8 +48,9 @@ type Api struct {
 	webhookHandler http.Handler
 }
 
-// NewApi wires the HTTP/gRPC mux. The webhook endpoint is served by webhookHandler.
-func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient *storage.S3, bazelMirrorPrefix string, webhookHandler http.Handler, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) (*Api, error) {
+// NewApi wires the HTTP/gRPC mux. The webhook endpoint is served by webhookHandler. When newMCPHandler is not nil, MCP is
+// served at /mcp by the handler which newMCPHandler returns for the API service.
+func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, webhookHandler http.Handler, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry, newMCPHandler func(APIServer) http.Handler) (*Api, error) {
 	api := &Api{
 		dao:               dao,
 		stClient:          stClient,
@@ -62,9 +63,12 @@ func NewApi(addr string, builder Builder, dao dao.Options, ghClient *github.Clie
 	mux.HandleFunc("/readiness", api.handleReadiness)
 	mux.Handle("/webhook", api.webhookHandler)
 
-	bs := newAPIService(builder, dao, ghClient, gitDataClient, stClient, bazelMirrorPrefix, addRepo, serverConfig, artifactRegistry)
+	bs := newAPIService(builder, dao, ghClient, gitDataClient, stClient, logStorage, bazelMirrorPrefix, addRepo, serverConfig, artifactRegistry)
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
 	RegisterAPIServer(grpcServer, bs)
+	if newMCPHandler != nil {
+		mux.Handle("/mcp", newMCPHandler(bs))
+	}
 	s := &http.Server{
 		Addr: addr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -2,15 +2,19 @@ package api
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/git"
+	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -182,5 +186,65 @@ func TestListTasks(t *testing.T) {
 		req.SetRevisions([]string{"rev1"})
 		_, err := s.ListTasks(context.Background(), req)
 		assertion.Error(t, err)
+	})
+}
+
+func TestGetLogs(t *testing.T) {
+	taskDAO := daotest.NewTask()
+	taskDAO.RegisterSelect(1, &database.Task{Id: 1, LogFile: "task/1.log"})
+	taskDAO.RegisterSelect(2, &database.Task{Id: 2})
+	logStorage := storage.NewMock()
+	logStorage.AddTree("task/1.log", []byte("INFO: start\nERROR: failed\nINFO: done\n"))
+	s := &apiService{dao: dao.Options{Task: taskDAO}, logStorage: logStorage}
+
+	cases := []struct {
+		Name   string
+		TaskID int32
+		Filter string
+		Want   string
+		Code   codes.Code
+	}{
+		{Name: "without the filter", TaskID: 1, Want: "INFO: start\nERROR: failed\nINFO: done\n"},
+		{Name: "with the filter", TaskID: 1, Filter: "^ERROR", Want: "ERROR: failed\n"},
+		{Name: "invalid filter", TaskID: 1, Filter: "(", Code: codes.InvalidArgument},
+		{Name: "the task has no log", TaskID: 2, Code: codes.NotFound},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			res, err := s.GetLogs(context.Background(), RequestGetLogs_builder{TaskId: new(tc.TaskID), Filter: new(tc.Filter)}.Build())
+			if tc.Code != codes.OK {
+				assertion.Equal(t, tc.Code, status.Code(err))
+				return
+			}
+			assertion.MustNoError(t, err)
+			assertion.Equal(t, tc.Want, res.GetBody())
+		})
+	}
+}
+
+func TestReadLog(t *testing.T) {
+	st := storage.NewMock()
+	st.AddTree("task/1.log", []byte("INFO: start\nERROR: foo failed\nINFO: done\nERROR: bar failed"))
+
+	cases := []struct {
+		Name   string
+		Filter *regexp.Regexp
+		Want   string
+	}{
+		{Name: "without the filter", Want: "INFO: start\nERROR: foo failed\nINFO: done\nERROR: bar failed"},
+		{Name: "with the filter", Filter: regexp.MustCompile(`^ERROR`), Want: "ERROR: foo failed\nERROR: bar failed\n"},
+		{Name: "no line matches", Filter: regexp.MustCompile(`WARN`), Want: ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			got, err := ReadLog(context.Background(), st, "task/1.log", tc.Filter)
+			assertion.MustNoError(t, err)
+			assertion.Equal(t, tc.Want, got)
+		})
+	}
+
+	t.Run("the log is not found", func(t *testing.T) {
+		_, err := ReadLog(context.Background(), st, "task/2.log", nil)
+		assertion.MustError(t, err)
 	})
 }

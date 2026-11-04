@@ -22,6 +22,9 @@ service API {
   // ListArtifacts returns the artifacts recorded for a task (task_id) or for a
   // commit (repository_id + revision, aggregated over that commit's tasks).
   rpc ListArtifacts(RequestListArtifacts) returns (ResponseListArtifacts);
+  // GetLogs returns the log of the task. When filter is specified, only the
+  // lines which match the regular expression (RE2) are returned.
+  rpc GetLogs(RequestGetLogs) returns (ResponseGetLogs);
   // CompleteTask forces a task's Job into a terminal state. It only works when
   // the builder runs with --emulate-job-control (local kwok dev environment).
   rpc CompleteTask(RequestCompleteTask) returns (ResponseCompleteTask);
@@ -102,6 +105,15 @@ message RequestForceStopTask {
 }
 
 message ResponseForceStopTask {}
+
+message RequestGetLogs {
+  int32  task_id = 1;
+  string filter  = 2;
+}
+
+message ResponseGetLogs {
+  string body = 1;
+}
 
 message RequestCompleteTask {
   int32 task_id = 1;

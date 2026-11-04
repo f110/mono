@@ -30,6 +30,7 @@ const (
 	API_ListExternalReleaseTriggers_FullMethodName = "/mono.build.api.API/ListExternalReleaseTriggers"
 	API_ListGithubEvents_FullMethodName            = "/mono.build.api.API/ListGithubEvents"
 	API_ListArtifacts_FullMethodName               = "/mono.build.api.API/ListArtifacts"
+	API_GetLogs_FullMethodName                     = "/mono.build.api.API/GetLogs"
 	API_CompleteTask_FullMethodName                = "/mono.build.api.API/CompleteTask"
 	API_SyncArtifacts_FullMethodName               = "/mono.build.api.API/SyncArtifacts"
 	API_UploadArtifact_FullMethodName              = "/mono.build.api.API/UploadArtifact"
@@ -50,6 +51,7 @@ type APIClient interface {
 	ListExternalReleaseTriggers(ctx context.Context, in *RequestListExternalReleaseTriggers, opts ...grpc.CallOption) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(ctx context.Context, in *RequestListGithubEvents, opts ...grpc.CallOption) (*ResponseListGithubEvents, error)
 	ListArtifacts(ctx context.Context, in *RequestListArtifacts, opts ...grpc.CallOption) (*ResponseListArtifacts, error)
+	GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error)
 	CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error)
 	SyncArtifacts(ctx context.Context, in *RequestSyncArtifacts, opts ...grpc.CallOption) (*ResponseSyncArtifacts, error)
 	UploadArtifact(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RequestUploadArtifact, ResponseUploadArtifact], error)
@@ -173,6 +175,16 @@ func (c *aPIClient) ListArtifacts(ctx context.Context, in *RequestListArtifacts,
 	return out, nil
 }
 
+func (c *aPIClient) GetLogs(ctx context.Context, in *RequestGetLogs, opts ...grpc.CallOption) (*ResponseGetLogs, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResponseGetLogs)
+	err := c.cc.Invoke(ctx, API_GetLogs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aPIClient) CompleteTask(ctx context.Context, in *RequestCompleteTask, opts ...grpc.CallOption) (*ResponseCompleteTask, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResponseCompleteTask)
@@ -221,6 +233,7 @@ type APIServer interface {
 	ListExternalReleaseTriggers(context.Context, *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error)
 	ListGithubEvents(context.Context, *RequestListGithubEvents) (*ResponseListGithubEvents, error)
 	ListArtifacts(context.Context, *RequestListArtifacts) (*ResponseListArtifacts, error)
+	GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error)
 	CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error)
 	SyncArtifacts(context.Context, *RequestSyncArtifacts) (*ResponseSyncArtifacts, error)
 	UploadArtifact(grpc.ClientStreamingServer[RequestUploadArtifact, ResponseUploadArtifact]) error
@@ -265,6 +278,9 @@ func (UnimplementedAPIServer) ListGithubEvents(context.Context, *RequestListGith
 }
 func (UnimplementedAPIServer) ListArtifacts(context.Context, *RequestListArtifacts) (*ResponseListArtifacts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
+}
+func (UnimplementedAPIServer) GetLogs(context.Context, *RequestGetLogs) (*ResponseGetLogs, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
 }
 func (UnimplementedAPIServer) CompleteTask(context.Context, *RequestCompleteTask) (*ResponseCompleteTask, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteTask not implemented")
@@ -493,6 +509,24 @@ func _API_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestGetLogs)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).GetLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_GetLogs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).GetLogs(ctx, req.(*RequestGetLogs))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _API_CompleteTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestCompleteTask)
 	if err := dec(in); err != nil {
@@ -586,6 +620,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListArtifacts",
 			Handler:    _API_ListArtifacts_Handler,
+		},
+		{
+			MethodName: "GetLogs",
+			Handler:    _API_GetLogs_Handler,
 		},
 		{
 			MethodName: "CompleteTask",
