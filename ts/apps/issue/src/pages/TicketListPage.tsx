@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useQuery } from '@connectrpc/connect-query'
-import { Link as RouterLink, useNavigate, useSearch } from '@tanstack/react-router'
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearch,
+} from '@tanstack/react-router'
 import {
   Alert,
   Box,
@@ -58,24 +62,44 @@ export const TicketListPage = () => {
   const [orderField, orderDirection] = orderBy.split(' ')
   const [input, setInput] = useState(filter)
   const { components, actorName, componentName } = useMasters()
-  const { data, error } = useQuery(Issue.method.listTickets, { filter: withComponent(filter, component), orderBy })
+  const { data, error } = useQuery(Issue.method.listTickets, {
+    filter: withComponent(filter, component),
+    orderBy,
+  })
 
   const sortBy = (field: string) => {
-    const direction = field === orderField && orderDirection !== 'desc' ? ' desc' : ''
-    void navigate({ search: (prev) => ({ ...prev, order_by: field + direction }) })
+    const direction =
+      field === orderField && orderDirection !== 'desc' ? ' desc' : ''
+    void navigate({
+      search: (prev) => ({ ...prev, order_by: field + direction }),
+    })
   }
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+      >
         <TextField
           select
           size="small"
           label="Component"
           value={component}
-          onChange={(e) => void navigate({ search: (prev) => ({ ...prev, component: e.target.value || undefined }) })}
+          onChange={(e) =>
+            void navigate({
+              search: (prev) => ({
+                ...prev,
+                component: e.target.value || undefined,
+              }),
+            })
+          }
           sx={{ width: 200 }}
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          slotProps={{
+            select: { displayEmpty: true },
+            inputLabel: { shrink: true },
+          }}
         >
           <MenuItem value="">すべて</MenuItem>
           {components.map((c) => (
@@ -93,7 +117,7 @@ export const TicketListPage = () => {
           }}
         >
           <TextField
-            label="フィルタ (AIP-160)"
+            label="フィルタ"
             placeholder="status = OPEN AND priority <= P1 クラッシュ"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -112,7 +136,11 @@ export const TicketListPage = () => {
                   {c.field ? (
                     <TableSortLabel
                       active={c.field === orderField}
-                      direction={c.field === orderField && orderDirection === 'desc' ? 'desc' : 'asc'}
+                      direction={
+                        c.field === orderField && orderDirection === 'desc'
+                          ? 'desc'
+                          : 'asc'
+                      }
                       onClick={() => sortBy(c.field!)}
                     >
                       {c.label}
@@ -129,24 +157,45 @@ export const TicketListPage = () => {
               <TableRow key={t.number} hover>
                 <TableCell>{t.number}</TableCell>
                 <TableCell>
-                  <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
+                  <Link
+                    component={RouterLink}
+                    to="/$number"
+                    params={{ number: String(t.number) }}
+                  >
                     {t.title}
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
+                  <Chip
+                    label={statusLabels[t.status]}
+                    size="small"
+                    sx={statusColors[t.status]}
+                  />
                 </TableCell>
-                <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
-                <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
-                <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}><RelativeTime time={t.lastActivityAt} /></TableCell>
+                <TableCell>
+                  {t.priority ? priorityLabels[t.priority] : ''}
+                </TableCell>
+                <TableCell>
+                  {t.componentId ? componentName(t.componentId) : ''}
+                </TableCell>
+                <TableCell>
+                  {t.assigneeId ? actorName(t.assigneeId) : ''}
+                </TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {t.createdAt &&
+                    dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
+                </TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <RelativeTime time={t.lastActivityAt} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-      {data && data.tickets.length === 0 && <Typography color="text.secondary">チケットはありません</Typography>}
+      {data && data.tickets.length === 0 && (
+        <Typography color="text.secondary">チケットはありません</Typography>
+      )}
     </Stack>
   )
 }
