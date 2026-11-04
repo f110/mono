@@ -17,7 +17,7 @@ export const PostCard = ({
   children,
 }: {
   author: string
-  time: string
+  time: ReactNode
   history?: ReactNode
   reporter: boolean
   actions: PostAction[]

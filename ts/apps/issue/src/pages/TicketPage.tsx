@@ -1,5 +1,4 @@
 import { type ReactNode, useState } from 'react'
-import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link as RouterLink, useParams } from '@tanstack/react-router'
@@ -15,7 +14,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import dayjs from 'dayjs'
 import {
   type Activity,
   type Comment,
@@ -28,6 +26,7 @@ import {
 import { Markdown } from '../components/Markdown.tsx'
 import { EditHistory } from '../components/EditHistory.tsx'
 import { PostCard } from '../components/PostCard.tsx'
+import { RelativeTime } from '../components/RelativeTime.tsx'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import {
@@ -56,8 +55,6 @@ const relationNames: Record<string, string> = {
   duplicated_by: relationLabels[RelationType.DUPLICATE_OF][1],
   relates_to: relationLabels[RelationType.RELATES_TO][0],
 }
-
-const fromNow = (t?: Timestamp) => (t ? dayjs(timestampDate(t)).fromNow() : '')
 
 const TicketLink = ({ number }: { number: number }) => (
   <Link component={RouterLink} to="/$number" params={{ number: String(number) }}>
@@ -124,7 +121,7 @@ export const TicketPage = () => {
         <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
           <PostCard
             author={actorName(ticket.reporterId)}
-            time={fromNow(ticket.createdAt)}
+            time={<RelativeTime time={ticket.createdAt} />}
             history={
               (activities?.activities ?? []).some((a) => a.kind === ActivityKind.BODY) && (
                 <EditHistory target={{ ticket: number }} current={ticket.body} authorId={ticket.reporterId} createdAt={ticket.createdAt} />
@@ -320,7 +317,7 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
         }
         return (
           <Typography key={a.id} variant="body2" color="text.secondary">
-            {actorName(a.actorId)} {activityLabels[a.kind]} {detail} {fromNow(a.createdAt)}
+            {actorName(a.actorId)} {activityLabels[a.kind]} {detail} <RelativeTime time={a.createdAt} />
           </Typography>
         )
       })}
@@ -338,7 +335,7 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
   return (
     <PostCard
       author={actorName(comment.actorId)}
-      time={fromNow(comment.createdAt)}
+      time={<RelativeTime time={comment.createdAt} />}
       history={
         comment.updatedAt !== undefined && (
           <EditHistory target={{ comment: comment.id }} current={comment.body} authorId={comment.actorId} createdAt={comment.createdAt} />

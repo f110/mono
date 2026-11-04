@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt'
+import { type Timestamp } from '@bufbuild/protobuf/wkt'
 import { skipToken, useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Dialog, DialogContent, DialogTitle, Link, Menu, MenuItem, Typography } from '@mui/material'
-import dayjs from 'dayjs'
 import { diffLines } from 'diff'
 import { Issue } from '../connect/issue_pb'
 import { useMasters } from '../hooks/useMasters.ts'
+import { RelativeTime } from './RelativeTime.tsx'
 
 type Edit = {
   actorId: number
@@ -46,7 +46,11 @@ export const EditHistory = ({
   if (revisions.length > 0) {
     edits.unshift({ actorId: authorId, createdAt, created: true, before: '', after: revisions[0].body })
   }
-  const describe = (e: Edit) => `${actorName(e.actorId)} が${e.created ? '作成' : '編集'} ${e.createdAt ? dayjs(timestampDate(e.createdAt)).fromNow() : ''}`
+  const describe = (e: Edit) => (
+    <>
+      {actorName(e.actorId)} が{e.created ? '作成' : '編集'} <RelativeTime time={e.createdAt} />
+    </>
+  )
 
   return (
     <>

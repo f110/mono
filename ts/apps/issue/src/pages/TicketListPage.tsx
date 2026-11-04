@@ -22,6 +22,7 @@ import {
 } from '@mui/material'
 import dayjs from 'dayjs'
 import { Issue } from '../connect/issue_pb'
+import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
 
@@ -139,7 +140,7 @@ export const TicketListPage = () => {
                 <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
                 <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>{t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{t.lastActivityAt && dayjs(timestampDate(t.lastActivityAt)).fromNow()}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}><RelativeTime time={t.lastActivityAt} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
