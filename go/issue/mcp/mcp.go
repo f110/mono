@@ -75,8 +75,8 @@ type emptyInput struct{}
 // New returns the HTTP handler which serves MCP. The requests are authenticated by authenticate which puts the claims of
 // heimdallr to the context (e.g. authproxy.Authenticate), and the agent which the human of the subject owns is the actor
 // of the operations.
-func New(tracker *issue.Tracker, authenticate func(http.Handler) http.Handler) http.Handler {
-	s := newServer(server.NewIssueHandler(tracker))
+func New(tracker *issue.Tracker, repositories server.Repositories, authenticate func(http.Handler) http.Handler) http.Handler {
+	s := newServer(server.NewIssueHandler(tracker, repositories))
 	// The handler is stateless so that every request is operated by the actor of the request.
 	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return s }, &mcp.StreamableHTTPOptions{Stateless: true})
 	return authenticate(withAgent(handler))
@@ -88,7 +88,7 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 	addTool(s, "list_tickets", "List the tickets which match the filter", h.ListTickets, func(in listTicketsInput) (*api.RequestListTickets, error) {
 		return api.RequestListTickets_builder{Filter: &in.Filter, OrderBy: &in.OrderBy}.Build(), nil
 	})
-	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks and the comments", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
+	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks, the comments, the commits and the pull requests", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
 		return api.RequestGetTicket_builder{Number: &in.Number}.Build(), nil
 	})
 	addTool(s, "create_ticket", "Create the ticket", h.CreateTicket, func(in createTicketInput) (*api.RequestCreateTicket, error) {

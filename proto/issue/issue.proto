@@ -10,7 +10,7 @@ option go_package                 = "go.f110.dev/mono/go/issue/api";
 
 service Issue {
   rpc ListTickets(RequestListTickets) returns (ResponseListTickets);
-  // GetTicket returns the ticket with the relations, the backlinks and the comments.
+  // GetTicket returns the ticket with the relations, the backlinks, the comments, the commits and the pull requests.
   rpc GetTicket(RequestGetTicket) returns (ResponseGetTicket);
   rpc CreateTicket(RequestCreateTicket) returns (ResponseCreateTicket);
   // UpdateTicket updates only the fields which are set.
@@ -84,6 +84,19 @@ enum ActivityKind {
   ACTIVITY_KIND_MENTION_REMOVED     = 16;
 }
 
+enum TrailerKind {
+  TRAILER_KIND_UNSPECIFIED = 0;
+  TRAILER_KIND_REFS        = 1;
+  TRAILER_KIND_FIXES       = 2;
+}
+
+enum PullRequestState {
+  PULL_REQUEST_STATE_UNSPECIFIED = 0;
+  PULL_REQUEST_STATE_OPEN        = 1;
+  PULL_REQUEST_STATE_CLOSED      = 2;
+  PULL_REQUEST_STATE_MERGED      = 3;
+}
+
 message Ticket {
   // number is the ticket number.
   int32                     number           = 1;
@@ -128,8 +141,31 @@ message Backlink {
   string                    title      = 3;
 }
 
+// CommitLink is the commit which refers to the ticket by the trailer. change_id is empty until git-data-service fetches
+// the commit. url is empty if the repository is not found in Build.
+message CommitLink {
+  string                    sha          = 1;
+  string                    change_id    = 2;
+  string                    subject      = 3;
+  string                    author       = 4;
+  TrailerKind               trailer      = 5;
+  google.protobuf.Timestamp committed_at = 6;
+  string                    url          = 7;
+}
+
+// PullRequestLink is the pull request which has the commit referring to the ticket by the trailer. url is empty if the
+// repository is not found in Build.
+message PullRequestLink {
+  int32            number   = 1;
+  string           title    = 2;
+  string           author   = 3;
+  PullRequestState state    = 4;
+  string           head_sha = 5;
+  string           url      = 6;
+}
+
 message Comment {
-  int32                     id         = 1;
+  int32                    id         = 1;
   int32                     ticket     = 2;
   int32                     actor_id   = 3;
   string                    body       = 4;
@@ -174,12 +210,14 @@ message RequestGetTicket {
 }
 
 message ResponseGetTicket {
-  Ticket            ticket    = 1;
+  Ticket                   ticket        = 1;
   // relations contains the relations which the ticket is on either side of.
-  repeated Relation relations = 2;
-  repeated Comment  comments  = 3;
+  repeated Relation        relations     = 2;
+  repeated Comment         comments      = 3;
   // backlinks contains the tickets which mention the ticket.
-  repeated Backlink backlinks = 4;
+  repeated Backlink        backlinks     = 4;
+  repeated CommitLink      commits       = 5;
+  repeated PullRequestLink pull_requests = 6;
 }
 
 message RequestCreateTicket {

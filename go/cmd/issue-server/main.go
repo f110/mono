@@ -48,7 +48,7 @@ func (c *serverCommand) Flags(fs *cli.FlagSet) {
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API. If not specified, the server runs without heimdallr").Var(&c.PublicKeyURL)
 	fs.String("subject", "Subject of the user of every request when --public-key-url is not specified").Var(&c.Subject).Default("dev@example.com")
-	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories. If not specified, the webhook is not handled").Var(&c.BuildAPI)
+	fs.String("build-api", "Address of the gRPC API of Build which manages the repositories. If not specified, the webhook is not handled and the commits and the pull requests have no URL").Var(&c.BuildAPI)
 	fs.String("git-data-service", "Address of git-data-service to look up the change id of the commits. If not specified, the change id is not looked up").Var(&c.GitDataService)
 	c.GitHub.Flags(fs)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&c.EventReconcileInterval).Default(30 * time.Second)
@@ -75,12 +75,11 @@ func (c *serverCommand) Run(ctx context.Context) error {
 	daos := dao.NewOptions(conn)
 	tracker := issue.NewTracker(daos)
 	mux := http.NewServeMux()
-	mux.Handle("/", server.New(tracker, authenticate))
-	mux.Handle("/mcp", mcp.New(tracker, authenticate))
 
-	// The repositories are managed by Build, so the webhook and the change id need Build.
+	// The repositories are managed by Build, so the webhook, the change id and the URLs of the links need Build.
+	var repositoryURLs server.Repositories
 	if c.BuildAPI == "" {
-		slogger.Log.Info("The webhook is not handled because --build-api is not specified")
+		slogger.Log.Info("The webhook is not handled and the links have no URL because --build-api is not specified")
 	} else {
 		buildConn, err := grpc.NewClient(c.BuildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -88,6 +87,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 		}
 		defer buildConn.Close()
 		repositories := webhook.NewBuildRepositories(buildapi.NewAPIClient(buildConn))
+		repositoryURLs = repositories
 		eventProcessor := webhook.NewEventProcessor(daos, tracker, repositories, c.GitHub.REST, c.EventReconcileInterval, c.EventMaxProcessingDuration)
 		go eventProcessor.Run(ctx)
 		mux.Handle("/webhook", eventProcessor)
@@ -103,6 +103,8 @@ func (c *serverCommand) Run(ctx context.Context) error {
 			go webhook.NewChangeIDFiller(tracker, repositories, git.NewGitDataClient(gitDataConn)).Run(ctx)
 		}
 	}
+	mux.Handle("/", server.New(tracker, repositoryURLs, authenticate))
+	mux.Handle("/mcp", mcp.New(tracker, repositoryURLs, authenticate))
 	mux.HandleFunc("/_livez", func(w http.ResponseWriter, _ *http.Request) {})
 	mux.HandleFunc("/_readyz", func(w http.ResponseWriter, req *http.Request) {
 		if !probe.NewProbe(conn).Ready(req.Context(), database.SchemaHash) {

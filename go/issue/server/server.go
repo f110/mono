@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -17,15 +18,23 @@ import (
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
+// Repositories looks up the repositories of Build to build the URLs of the commits and the pull requests.
+type Repositories interface {
+	// URLs returns the URLs of the repositories of ids. The repository which is not found is not contained.
+	URLs(ctx context.Context, ids []int32) (map[int32]string, error)
+}
+
 // IssueHandler implements api.IssueHandler on top of issue.Tracker.
 type IssueHandler struct {
-	tracker *issue.Tracker
+	tracker      *issue.Tracker
+	repositories Repositories
 }
 
 var _ api.IssueHandler = (*IssueHandler)(nil)
 
-func NewIssueHandler(t *issue.Tracker) *IssueHandler {
-	return &IssueHandler{tracker: t}
+// NewIssueHandler returns the handler. If repositories is nil, the commits and the pull requests have no URL.
+func NewIssueHandler(t *issue.Tracker, repositories Repositories) *IssueHandler {
+	return &IssueHandler{tracker: t, repositories: repositories}
 }
 
 func (h *IssueHandler) ListTickets(ctx context.Context, req *connect.Request[api.RequestListTickets]) (*connect.Response[api.ResponseListTickets], error) {
@@ -53,12 +62,47 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	if err != nil {
 		return nil, toConnectError(err)
 	}
+	commits, err := ticket.CommitLinks(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	pullRequests, err := ticket.PullRequestLinks(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	var repositoryIDs []int32
+	for _, v := range commits {
+		repositoryIDs = append(repositoryIDs, v.RepositoryId)
+	}
+	for _, v := range pullRequests {
+		repositoryIDs = append(repositoryIDs, v.RepositoryId)
+	}
+	urls := h.repositoryURLs(ctx, repositoryIDs)
 	return connect.NewResponse(api.ResponseGetTicket_builder{
 		Ticket:    toTicket(ticket),
 		Relations: enumerable.Map(relations, toRelation),
 		Comments:  enumerable.Map(comments, toComment),
 		Backlinks: enumerable.Map(backlinks, toBacklink),
+		Commits: enumerable.Map(commits, func(c *database.CommitLink) *api.CommitLink {
+			return toCommitLink(c, urls[c.RepositoryId])
+		}),
+		PullRequests: enumerable.Map(pullRequests, func(p *database.PullRequestLink) *api.PullRequestLink {
+			return toPullRequestLink(p, urls[p.RepositoryId])
+		}),
 	}.Build()), nil
+}
+
+// repositoryURLs returns the URLs of the repositories. The ticket is shown without the URLs if Build is not available.
+func (h *IssueHandler) repositoryURLs(ctx context.Context, ids []int32) map[int32]string {
+	if h.repositories == nil || len(ids) == 0 {
+		return nil
+	}
+	urls, err := h.repositories.URLs(ctx, ids)
+	if err != nil {
+		slogger.Log.Warn("Failed to get the URLs of the repositories", slogger.E(err))
+		return nil
+	}
+	return urls
 }
 
 func (h *IssueHandler) CreateTicket(ctx context.Context, req *connect.Request[api.RequestCreateTicket]) (*connect.Response[api.ResponseCreateTicket], error) {
@@ -329,6 +373,38 @@ func toBacklink(m *database.Mention) *api.Backlink {
 	return b.Build()
 }
 
+// toCommitLink converts the commit. repositoryURL is the URL of the repository, and the commit has no URL if it is empty.
+func toCommitLink(c *database.CommitLink, repositoryURL string) *api.CommitLink {
+	b := api.CommitLink_builder{
+		Sha:         new(c.Sha),
+		ChangeId:    c.ChangeId,
+		Subject:     new(c.Subject),
+		Author:      new(c.Author),
+		Trailer:     new(api.TrailerKind(c.Trailer + 1)),
+		CommittedAt: timestamppb.New(c.CommittedAt),
+	}
+	if repositoryURL != "" {
+		b.Url = new(repositoryURL + "/commit/" + c.Sha)
+	}
+	return b.Build()
+}
+
+// toPullRequestLink converts the pull request. repositoryURL is the URL of the repository, and the pull request has no
+// URL if it is empty.
+func toPullRequestLink(p *database.PullRequestLink, repositoryURL string) *api.PullRequestLink {
+	b := api.PullRequestLink_builder{
+		Number:  new(p.Number),
+		Title:   new(p.Title),
+		Author:  new(p.Author),
+		State:   new(api.PullRequestState(p.State + 1)),
+		HeadSha: new(p.HeadSha),
+	}
+	if repositoryURL != "" {
+		b.Url = new(fmt.Sprintf("%s/pull/%d", repositoryURL, p.Number))
+	}
+	return b.Build()
+}
+
 func toComment(c *issue.Comment) *api.Comment {
 	b := api.Comment_builder{
 		Id:        new(c.Id),
@@ -368,8 +444,8 @@ func toActivity(a *database.Activity) *api.Activity {
 // New returns the HTTP handler which serves the Connect API. The requests are authenticated by authenticate which puts
 // the claims of heimdallr to the context (e.g. authproxy.Authenticate), and the human of the subject is the actor of the
 // operations.
-func New(tracker *issue.Tracker, authenticate func(http.Handler) http.Handler) http.Handler {
-	path, handler := api.NewIssueHandler(NewIssueHandler(tracker))
+func New(tracker *issue.Tracker, repositories Repositories, authenticate func(http.Handler) http.Handler) http.Handler {
+	path, handler := api.NewIssueHandler(NewIssueHandler(tracker, repositories))
 	mux := http.NewServeMux()
 	mux.Handle(path, authenticate(withHuman(handler)))
 	return mux

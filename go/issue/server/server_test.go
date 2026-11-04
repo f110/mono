@@ -124,6 +124,23 @@ func TestEnumConversion(t *testing.T) {
 		assertion.Equal(t, toActor(&database.Actor{Kind: db}).GetKind(), a)
 	}
 
+	trailers := map[database.TrailerKind]api.TrailerKind{
+		database.TrailerKindRefs:  api.TrailerKind_TRAILER_KIND_REFS,
+		database.TrailerKindFixes: api.TrailerKind_TRAILER_KIND_FIXES,
+	}
+	for db, a := range trailers {
+		assertion.Equal(t, toCommitLink(&database.CommitLink{Trailer: db}, "").GetTrailer(), a)
+	}
+
+	states := map[database.PullRequestState]api.PullRequestState{
+		database.PullRequestStateOpen:   api.PullRequestState_PULL_REQUEST_STATE_OPEN,
+		database.PullRequestStateClosed: api.PullRequestState_PULL_REQUEST_STATE_CLOSED,
+		database.PullRequestStateMerged: api.PullRequestState_PULL_REQUEST_STATE_MERGED,
+	}
+	for db, a := range states {
+		assertion.Equal(t, toPullRequestLink(&database.PullRequestLink{State: db}, "").GetState(), a)
+	}
+
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCreate}).GetKind(), api.ActivityKind_ACTIVITY_KIND_CREATE)
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCommentDeleted}).GetKind(), api.ActivityKind_ACTIVITY_KIND_COMMENT_DELETED)
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindMentionRemoved}).GetKind(), api.ActivityKind_ACTIVITY_KIND_MENTION_REMOVED)
@@ -158,7 +175,7 @@ func newClient(t *testing.T) (api.IssueClient, *database.Actor) {
 	actor, err := daos.Actor.Create(context.Background(), &database.Actor{Kind: database.ActorKindHuman, Name: "human", Subject: new("human@example.com")})
 	assertion.MustNoError(t, err)
 
-	path, handler := api.NewIssueHandler(NewIssueHandler(issue.NewTracker(daos)))
+	path, handler := api.NewIssueHandler(NewIssueHandler(issue.NewTracker(daos), nil))
 	mux := http.NewServeMux()
 	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		handler.ServeHTTP(w, req.WithContext(issue.WithActor(req.Context(), actor)))
@@ -297,11 +314,80 @@ func TestIssueHandler(t *testing.T) {
 	})
 }
 
+type fakeRepositories struct {
+	urls map[int32]string
+	err  error
+}
+
+func (r *fakeRepositories) URLs(_ context.Context, ids []int32) (map[int32]string, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	urls := make(map[int32]string)
+	for _, id := range ids {
+		if u, ok := r.urls[id]; ok {
+			urls[id] = u
+		}
+	}
+	return urls, nil
+}
+
+func TestGetTicketLinks(t *testing.T) {
+	daos := dao.NewOptions(newConn(t))
+	actor, err := daos.Actor.Create(context.Background(), &database.Actor{Kind: database.ActorKindHuman, Name: "human", Subject: new("human@example.com")})
+	assertion.MustNoError(t, err)
+	tracker := issue.NewTracker(daos)
+	ctx := issue.WithActor(context.Background(), actor)
+	ticket, err := tracker.Create(ctx, "title", "", database.PriorityNone, nil, nil)
+	assertion.MustNoError(t, err)
+	committedAt := time.Date(2026, 11, 4, 0, 0, 0, 0, time.UTC)
+	assertion.MustNoError(t, ticket.LinkCommit(ctx, 1, "4b825dc642cb6eb9a060e54bf8d69288fbee4904", "subject", "alice", database.TrailerKindFixes, committedAt))
+	assertion.MustNoError(t, ticket.LinkCommit(ctx, 2, "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", "unknown", "bob", database.TrailerKindRefs, committedAt))
+	assertion.MustNoError(t, ticket.LinkPullRequest(ctx, 1, 3, "pull request", "alice", database.PullRequestStateMerged, "4b825dc642cb6eb9a060e54bf8d69288fbee4904"))
+	req := connect.NewRequest(api.RequestGetTicket_builder{Number: new(ticket.Id)}.Build())
+
+	t.Run("the links have the urls of the repositories of Build", func(t *testing.T) {
+		res, err := NewIssueHandler(tracker, &fakeRepositories{urls: map[int32]string{1: "https://github.com/f110/mono"}}).GetTicket(ctx, req)
+		assertion.MustNoError(t, err)
+		commits := res.Msg.GetCommits()
+		assertion.MustLen(t, commits, 2)
+		assertion.Equal(t, commits[0].GetSha(), "4b825dc642cb6eb9a060e54bf8d69288fbee4904")
+		assertion.Equal(t, commits[0].GetSubject(), "subject")
+		assertion.Equal(t, commits[0].GetAuthor(), "alice")
+		assertion.Equal(t, commits[0].GetTrailer(), api.TrailerKind_TRAILER_KIND_FIXES)
+		assertion.Equal(t, commits[0].GetCommittedAt().AsTime(), committedAt)
+		assertion.Equal(t, commits[0].GetUrl(), "https://github.com/f110/mono/commit/4b825dc642cb6eb9a060e54bf8d69288fbee4904")
+		assertion.Equal(t, commits[1].GetUrl(), "")
+		pullRequests := res.Msg.GetPullRequests()
+		assertion.MustLen(t, pullRequests, 1)
+		assertion.Equal(t, pullRequests[0].GetNumber(), int32(3))
+		assertion.Equal(t, pullRequests[0].GetTitle(), "pull request")
+		assertion.Equal(t, pullRequests[0].GetState(), api.PullRequestState_PULL_REQUEST_STATE_MERGED)
+		assertion.Equal(t, pullRequests[0].GetUrl(), "https://github.com/f110/mono/pull/3")
+	})
+
+	t.Run("the links have no url without Build", func(t *testing.T) {
+		res, err := NewIssueHandler(tracker, nil).GetTicket(ctx, req)
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, res.Msg.GetCommits(), 2)
+		assertion.Equal(t, res.Msg.GetCommits()[0].GetUrl(), "")
+		assertion.MustLen(t, res.Msg.GetPullRequests(), 1)
+		assertion.Equal(t, res.Msg.GetPullRequests()[0].GetUrl(), "")
+	})
+
+	t.Run("the ticket is returned even if Build is unavailable", func(t *testing.T) {
+		res, err := NewIssueHandler(tracker, &fakeRepositories{err: errors.New("unavailable")}).GetTicket(ctx, req)
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, res.Msg.GetCommits(), 2)
+		assertion.Equal(t, res.Msg.GetCommits()[0].GetUrl(), "")
+	})
+}
+
 func TestNew(t *testing.T) {
 	daos := dao.NewOptions(newConn(t))
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assertion.MustNoError(t, err)
-	s := httptest.NewServer(New(issue.NewTracker(daos), func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
+	s := httptest.NewServer(New(issue.NewTracker(daos), nil, func(h http.Handler) http.Handler { return authproxy.Authenticate(&key.PublicKey, h) }))
 	t.Cleanup(s.Close)
 	client := api.NewIssueClient(http.DefaultClient, s.URL)
 

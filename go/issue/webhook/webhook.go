@@ -70,6 +70,18 @@ func (r *BuildRepositories) Name(ctx context.Context, id int32) (string, bool, e
 	return "", false, nil
 }
 
+func (r *BuildRepositories) URLs(ctx context.Context, ids []int32) (map[int32]string, error) {
+	res, err := r.client.ListRepositories(ctx, buildapi.RequestListRepositories_builder{Ids: ids}.Build())
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	urls := make(map[int32]string)
+	for _, v := range res.GetRepositories() {
+		urls[v.GetId()] = v.GetUrl()
+	}
+	return urls, nil
+}
+
 // NewEventProcessor returns the EventProcessor that dispatches the events to the reconcilers of the issue tracker.
 func NewEventProcessor(daos dao.Options, tracker *issue.Tracker, repositories Repositories, gh *github.Client, interval, maxProcessingDuration time.Duration) *ghwebhook.EventProcessor {
 	p := ghwebhook.NewEventProcessor(newStore(daos.GithubEvent), interval, maxProcessingDuration)
