@@ -133,6 +133,12 @@ message Relation {
   int32        to   = 3;
 }
 
+// RelatedTicket is the relation with the title of the ticket on the other side.
+message RelatedTicket {
+  Relation relation = 1;
+  string   title    = 2;
+}
+
 // Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
 // which mentions, and created_at is the time of the first mention.
 message Backlink {
@@ -210,9 +216,11 @@ message RequestGetTicket {
 }
 
 message ResponseGetTicket {
+  reserved 2;
+
   Ticket                   ticket        = 1;
   // relations contains the relations which the ticket is on either side of.
-  repeated Relation        relations     = 2;
+  repeated RelatedTicket   relations     = 7;
   repeated Comment         comments      = 3;
   // backlinks contains the tickets which mention the ticket.
   repeated Backlink        backlinks     = 4;

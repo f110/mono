@@ -12,6 +12,7 @@ import {
   MenuItem,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import {
@@ -20,7 +21,7 @@ import {
   type Comment,
   type CommitLink,
   type PullRequestLink,
-  type Relation,
+  type RelatedTicket,
   ActivityKind,
   Issue,
   RelationType,
@@ -229,7 +230,7 @@ const Fields = ({
   )
 }
 
-const Relations = ({ number, relations }: { number: number; relations: Relation[] }) => {
+const Relations = ({ number, relations }: { number: number; relations: RelatedTicket[] }) => {
   const invalidate = useInvalidate()
   const add = useMutation(Issue.method.addRelation, { onSuccess: invalidate })
   const remove = useMutation(Issue.method.removeRelation, { onSuccess: invalidate })
@@ -240,12 +241,21 @@ const Relations = ({ number, relations }: { number: number; relations: Relation[
     <Stack spacing={1}>
       <Typography variant="subtitle2">Relations</Typography>
       {(add.error || remove.error) && <Alert severity="error">{(add.error ?? remove.error)?.message}</Alert>}
-      {relations.map((r) => {
+      {relations.map(({ relation: r, title }) => {
+        if (!r) {
+          return null
+        }
         const forward = r.from === number
+        const other = forward ? r.to : r.from
         return (
           <Stack key={`${r.from}-${r.type}-${r.to}`} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Typography variant="body2" sx={{ flex: 1 }}>
-              {relationLabels[r.type][forward ? 0 : 1]} <TicketLink number={forward ? r.to : r.from} />
+              {relationLabels[r.type][forward ? 0 : 1]}{' '}
+              <Tooltip title={title}>
+                <span>
+                  <TicketLink number={other} />
+                </span>
+              </Tooltip>
             </Typography>
             <IconButton size="small" aria-label="削除" onClick={() => remove.mutate({ relation: { from: r.from, type: r.type, to: r.to } })}>
               ×

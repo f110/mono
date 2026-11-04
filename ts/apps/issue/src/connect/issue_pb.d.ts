@@ -164,6 +164,29 @@ export declare type Relation = Message<"mono.issue.Relation"> & {
 export declare const RelationSchema: GenMessage<Relation>;
 
 /**
+ * RelatedTicket is the relation with the title of the ticket on the other side.
+ *
+ * @generated from message mono.issue.RelatedTicket
+ */
+export declare type RelatedTicket = Message<"mono.issue.RelatedTicket"> & {
+  /**
+   * @generated from field: mono.issue.Relation relation = 1;
+   */
+  relation?: Relation;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message mono.issue.RelatedTicket.
+ * Use `create(RelatedTicketSchema)` to create a new message.
+ */
+export declare const RelatedTicketSchema: GenMessage<RelatedTicket>;
+
+/**
  * Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
  * which mentions, and created_at is the time of the first mention.
  *
@@ -481,9 +504,9 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
   /**
    * relations contains the relations which the ticket is on either side of.
    *
-   * @generated from field: repeated mono.issue.Relation relations = 2;
+   * @generated from field: repeated mono.issue.RelatedTicket relations = 7;
    */
-  relations: Relation[];
+  relations: RelatedTicket[];
 
   /**
    * @generated from field: repeated mono.issue.Comment comments = 3;

@@ -79,8 +79,10 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	}
 	urls := h.repositoryURLs(ctx, repositoryIDs)
 	return connect.NewResponse(api.ResponseGetTicket_builder{
-		Ticket:    toTicket(ticket),
-		Relations: enumerable.Map(relations, toRelation),
+		Ticket: toTicket(ticket),
+		Relations: enumerable.Map(relations, func(r *database.Relation) *api.RelatedTicket {
+			return toRelatedTicket(r, ticket.Id)
+		}),
 		Comments:  enumerable.Map(comments, toComment),
 		Backlinks: enumerable.Map(backlinks, toBacklink),
 		Commits: enumerable.Map(commits, func(c *database.CommitLink) *api.CommitLink {
@@ -363,6 +365,19 @@ func toRelation(r *database.Relation) *api.Relation {
 		Type: new(api.RelationType(r.RelationType + 1)),
 		To:   new(r.ToId),
 	}.Build()
+}
+
+// toRelatedTicket converts the relation of the ticket. number is the ticket which the relation is viewed from.
+func toRelatedTicket(r *database.Relation, number int32) *api.RelatedTicket {
+	b := api.RelatedTicket_builder{Relation: toRelation(r)}
+	other := r.To
+	if r.ToId == number {
+		other = r.From
+	}
+	if other != nil {
+		b.Title = new(other.Title)
+	}
+	return b.Build()
 }
 
 func toBacklink(m *database.Mention) *api.Backlink {
