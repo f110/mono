@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"errors"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -108,7 +109,10 @@ func (t *Tracker) Create(ctx context.Context, title, body string, priority datab
 			return xerrors.WithStack(err)
 		}
 		id = ticket.Id
-		return t.record(ctx, tx, ticket.Id, actor, database.ActivityKindCreate, "", "", nil)
+		if err := t.record(ctx, tx, ticket.Id, actor, database.ActivityKindCreate, "", "", nil); err != nil {
+			return err
+		}
+		return t.syncMentions(ctx, tx, actor, ticket.Id, body)
 	})
 	if err != nil {
 		return nil, err
@@ -440,6 +444,77 @@ func (t *Tracker) touch(ctx context.Context, tx *sql.Tx, ticketID int32) error {
 		return xerrors.WithStack(err)
 	}
 	return nil
+}
+
+// syncMentions makes the mentions from the ticket of from match the tickets mentioned in texts, which are the body and
+// the comments of the ticket after the operation. The mentioned ticket records the activity and its last activity is
+// updated when the mention is added or removed.
+func (t *Tracker) syncMentions(ctx context.Context, tx *sql.Tx, actor *database.Actor, from int32, texts ...string) error {
+	var numbers []int32
+	for _, v := range texts {
+		numbers = append(numbers, parseMentions(v)...)
+	}
+	numbers = slices.DeleteFunc(numbers, func(n int32) bool { return n == from })
+	var targets []int32
+	if len(numbers) > 0 {
+		tickets, err := t.dao.Ticket.SelectMulti(ctx, numbers...)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		for _, v := range tickets {
+			targets = append(targets, v.Id)
+		}
+	}
+	existing, err := t.dao.Mention.ListByFromId(ctx, from)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	value := strconv.Itoa(int(from))
+	for _, v := range existing {
+		if slices.Contains(targets, v.ToId) {
+			continue
+		}
+		if err := t.dao.Mention.Delete(ctx, v.Id, dao.WithTx(tx)); err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := t.record(ctx, tx, v.ToId, actor, database.ActivityKindMentionRemoved, "", value, nil); err != nil {
+			return err
+		}
+		if err := t.touch(ctx, tx, v.ToId); err != nil {
+			return err
+		}
+	}
+	for _, to := range targets {
+		if slices.ContainsFunc(existing, func(m *database.Mention) bool { return m.ToId == to }) {
+			continue
+		}
+		if _, err := t.dao.Mention.Create(ctx, &database.Mention{FromId: from, ToId: to}, dao.WithTx(tx)); err != nil {
+			return xerrors.WithStack(err)
+		}
+		if err := t.record(ctx, tx, to, actor, database.ActivityKindMentioned, "", value, nil); err != nil {
+			return err
+		}
+		if err := t.touch(ctx, tx, to); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// commentBodies returns the bodies of the comments of the ticket which are not deleted except the comment of exclude.
+func (t *Tracker) commentBodies(ctx context.Context, ticketID, exclude int32) ([]string, error) {
+	comments, err := t.dao.Comment.ListByTicketId(ctx, ticketID)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	var res []string
+	for _, v := range comments {
+		if v.DeletedAt == nil && v.Id != exclude {
+			res = append(res, v.Body)
+		}
+	}
+	return res, nil
 }
 
 func (t *Tracker) validateReferences(ctx context.Context, componentID, assigneeID *int32) error {

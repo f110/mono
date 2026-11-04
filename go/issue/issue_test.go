@@ -368,6 +368,97 @@ func TestComment(t *testing.T) {
 	})
 }
 
+func TestMention(t *testing.T) {
+	backlinks := func(t *testing.T, ticket *Ticket) []int32 {
+		t.Helper()
+		mentions, err := ticket.Backlinks(context.Background())
+		assertion.MustNoError(t, err)
+		var res []int32
+		for _, v := range mentions {
+			res = append(res, v.FromId)
+		}
+		return res
+	}
+	mentionActivities := func(t *testing.T, ticket *Ticket) []string {
+		t.Helper()
+		var res []string
+		for _, v := range activities(t, ticket) {
+			switch v.Kind {
+			case database.ActivityKindMentioned:
+				res = append(res, "+"+v.ToValue)
+			case database.ActivityKindMentionRemoved:
+				res = append(res, "-"+v.ToValue)
+			}
+		}
+		return res
+	}
+
+	t.Run("body", func(t *testing.T) {
+		f := newFixture(t)
+		target := f.create(t, "target")
+		other := f.create(t, "other")
+
+		source, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d #%d #3 #100", target.Id, other.Id), database.PriorityNone, nil, nil)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, backlinks(t, target), []int32{source.Id})
+		assertion.Equal(t, backlinks(t, other), []int32{source.Id})
+		assertion.Len(t, backlinks(t, source), 0)
+		assertion.Equal(t, mentionActivities(t, target), []string{fmt.Sprint("+", source.Id)})
+		assertion.Equal(t, activities(t, target)[1].ActorId, f.human.Id)
+
+		mentions, err := target.Backlinks(context.Background())
+		assertion.MustNoError(t, err)
+		createdAt := mentions[0].CreatedAt
+		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new(fmt.Sprintf("#%d", target.Id)), nil, nil, nil, nil))
+		mentions, err = target.Backlinks(context.Background())
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, mentions, 1)
+		assertion.Equal(t, mentions[0].CreatedAt, createdAt)
+		assertion.Len(t, backlinks(t, other), 0)
+		assertion.Equal(t, mentionActivities(t, other), []string{fmt.Sprint("+", source.Id), fmt.Sprint("-", source.Id)})
+
+		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new("no mention"), nil, nil, nil, nil))
+		assertion.Len(t, backlinks(t, target), 0)
+	})
+
+	t.Run("comment", func(t *testing.T) {
+		f := newFixture(t)
+		target := f.create(t, "target")
+		source := f.create(t, "source")
+
+		first, err := source.AddComment(f.as(f.agent), fmt.Sprintf("#%d", target.Id))
+		assertion.MustNoError(t, err)
+		second, err := source.AddComment(f.as(f.human), fmt.Sprintf("#%d", target.Id))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, backlinks(t, target), []int32{source.Id})
+		assertion.Equal(t, mentionActivities(t, target), []string{fmt.Sprint("+", source.Id)})
+		assertion.Equal(t, activities(t, target)[1].ActorId, f.agent.Id)
+
+		assertion.MustNoError(t, first.Edit(f.as(f.human), "edited"))
+		assertion.Equal(t, backlinks(t, target), []int32{source.Id})
+		assertion.MustNoError(t, second.Delete(f.as(f.human)))
+		assertion.Len(t, backlinks(t, target), 0)
+		assertion.Equal(t, mentionActivities(t, target), []string{fmt.Sprint("+", source.Id), fmt.Sprint("-", source.Id)})
+
+		assertion.MustNoError(t, first.Edit(f.as(f.human), fmt.Sprintf("#%d", target.Id)))
+		assertion.Equal(t, backlinks(t, target), []int32{source.Id})
+	})
+
+	t.Run("mention updates the last activity of the mentioned ticket", func(t *testing.T) {
+		f := newFixture(t)
+		target := f.create(t, "target")
+		past := time.Now().Add(-time.Hour).Truncate(time.Second)
+		target.LastActivityAt = past
+		assertion.MustNoError(t, f.dao.Ticket.Update(context.Background(), target.Ticket))
+
+		_, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d", target.Id), database.PriorityNone, nil, nil)
+		assertion.MustNoError(t, err)
+		reloaded, err := f.tracker.Ticket(f.as(f.human), target.Id)
+		assertion.MustNoError(t, err)
+		assertion.True(t, reloaded.LastActivityAt.After(past))
+	})
+}
+
 func TestFind(t *testing.T) {
 	f := newFixture(t)
 	component := f.component(t, "build")
@@ -584,6 +675,30 @@ func TestParseTrailer(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			assertion.Equal(t, ParseTrailer(tc.message), tc.want)
+		})
+	}
+}
+
+func TestParseMentions(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want []int32
+	}{
+		{name: "text", body: "see #1 and #23.\n\n- #4\n\n**#5**", want: []int32{1, 23, 4, 5}},
+		{name: "duplicated", body: "#1 #1", want: []int32{1}},
+		{name: "followed by the word", body: "#1a #2_ #3", want: []int32{3}},
+		{name: "inline code", body: "`#1` #2", want: []int32{2}},
+		{name: "code block", body: "```\n#1\n```\n\n    #2\n\n#3", want: []int32{3}},
+		{name: "link", body: "[#1](/1) [x](/2) https://example.com/#3 <https://example.com/#4>", want: nil},
+		{name: "image", body: "![#1](/a.png)", want: nil},
+		{name: "html block", body: "<div>#1</div>\n\n#2", want: []int32{2}},
+		{name: "inline html", body: "<span>#1</span>", want: []int32{1}},
+		{name: "overflow", body: "#99999999999 #1", want: []int32{1}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertion.Equal(t, parseMentions(tc.body), tc.want)
 		})
 	}
 }

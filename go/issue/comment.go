@@ -38,6 +38,10 @@ func (c *Comment) Edit(ctx context.Context, body string) error {
 	if c.Body == body {
 		return nil
 	}
+	texts, err := c.mentionTexts(ctx)
+	if err != nil {
+		return err
+	}
 
 	updated := c.Copy()
 	updated.ResetMark()
@@ -51,6 +55,9 @@ func (c *Comment) Edit(ctx context.Context, body string) error {
 			return xerrors.WithStack(err)
 		}
 		if err := c.tracker.record(ctx, tx, c.TicketId, actor, database.ActivityKindCommentEdited, "", "", &rev.Id); err != nil {
+			return err
+		}
+		if err := c.tracker.syncMentions(ctx, tx, actor, c.TicketId, append(texts, body)...); err != nil {
 			return err
 		}
 		return c.tracker.touch(ctx, tx, c.TicketId)
@@ -67,6 +74,10 @@ func (c *Comment) Delete(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	texts, err := c.mentionTexts(ctx)
+	if err != nil {
+		return err
+	}
 
 	updated := c.Copy()
 	updated.ResetMark()
@@ -76,6 +87,9 @@ func (c *Comment) Delete(ctx context.Context) error {
 			return xerrors.WithStack(err)
 		}
 		if err := c.tracker.record(ctx, tx, c.TicketId, actor, database.ActivityKindCommentDeleted, "", "", &c.Id); err != nil {
+			return err
+		}
+		if err := c.tracker.syncMentions(ctx, tx, actor, c.TicketId, texts...); err != nil {
 			return err
 		}
 		return c.tracker.touch(ctx, tx, c.TicketId)
@@ -97,6 +111,19 @@ func (c *Comment) Revisions(ctx context.Context) ([]*Revision, error) {
 		return nil, err
 	}
 	return restoreRevisions(c.Body, revs, editors, func(r *database.CommentRevision) (int32, string, time.Time) { return r.Id, r.Patch, r.CreatedAt })
+}
+
+// mentionTexts returns the body of the ticket and the comments of the ticket which are not deleted except the comment.
+func (c *Comment) mentionTexts(ctx context.Context) ([]string, error) {
+	ticket, err := c.tracker.dao.Ticket.Select(ctx, c.TicketId)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	comments, err := c.tracker.commentBodies(ctx, c.TicketId, c.Id)
+	if err != nil {
+		return nil, err
+	}
+	return append(comments, ticket.Body), nil
 }
 
 func (c *Comment) reload(ctx context.Context) error {

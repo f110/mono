@@ -73,6 +73,8 @@ enum ActivityKind {
   ACTIVITY_KIND_COMMENT_DELETED     = 11;
   ACTIVITY_KIND_COMMIT_LINKED       = 12;
   ACTIVITY_KIND_PULL_REQUEST_LINKED = 13;
+  ACTIVITY_KIND_MENTIONED           = 14;
+  ACTIVITY_KIND_MENTION_REMOVED     = 15;
 }
 
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
@@ -214,6 +216,41 @@ message Relation {
     queries: {
       name: "ByFromIdAndRelationTypeAndToId"
       query: "SELECT * FROM `:table_name:` WHERE `from_id` = ? AND `relation_type` = ? AND `to_id` = ?"
+    }
+  };
+}
+
+// Mention is the reference by "#123" in the body or the comments of the ticket from to the ticket to. It is derived
+// from the body and the comments which are not deleted, and it is removed when all of the references are removed.
+// created_at is the time of the first reference.
+message Mention {
+  int32  id   = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket from = 2;
+  Ticket to   = 3;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_mention"
+      columns: "from"
+      columns: "to"
+      unique: true
+    }
+    indexes: {
+      name: "idx_to"
+      columns: "to"
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByFromId"
+      query: "SELECT * FROM `:table_name:` WHERE `from_id` = ?"
+    }
+    queries: {
+      name: "ByToId"
+      query: "SELECT * FROM `:table_name:` WHERE `to_id` = ?"
     }
   };
 }

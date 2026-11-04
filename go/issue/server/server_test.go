@@ -126,6 +126,7 @@ func TestEnumConversion(t *testing.T) {
 
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCreate}).GetKind(), api.ActivityKind_ACTIVITY_KIND_CREATE)
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCommentDeleted}).GetKind(), api.ActivityKind_ACTIVITY_KIND_COMMENT_DELETED)
+	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindMentionRemoved}).GetKind(), api.ActivityKind_ACTIVITY_KIND_MENTION_REMOVED)
 
 	_, err := toDBStatus(api.TicketStatus_TICKET_STATUS_UNSPECIFIED)
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
@@ -215,6 +216,11 @@ func TestIssueHandler(t *testing.T) {
 			To:   new(ticket.GetNumber()),
 		}.Build()}.Build()))
 		assertion.MustNoError(t, err)
+		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{
+			Ticket: new(other.Msg.GetTicket().GetNumber()),
+			Body:   new(fmt.Sprintf("#%d", ticket.GetNumber())),
+		}.Build()))
+		assertion.MustNoError(t, err)
 		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(ticket.GetNumber()), Body: new("comment")}.Build()))
 		assertion.MustNoError(t, err)
 
@@ -224,6 +230,10 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, res.Msg.GetRelations()[0].GetFrom(), other.Msg.GetTicket().GetNumber())
 		assertion.MustLen(t, res.Msg.GetComments(), 1)
 		assertion.Equal(t, res.Msg.GetComments()[0].GetBody(), "comment")
+		assertion.MustLen(t, res.Msg.GetBacklinks(), 1)
+		assertion.Equal(t, res.Msg.GetBacklinks()[0].GetTicket(), other.Msg.GetTicket().GetNumber())
+		assertion.Equal(t, res.Msg.GetBacklinks()[0].GetTitle(), "other")
+		assertion.True(t, res.Msg.GetBacklinks()[0].HasCreatedAt())
 
 		activities, err := client.ListActivities(ctx, connect.NewRequest(api.RequestListActivities_builder{Ticket: new(ticket.GetNumber())}.Build()))
 		assertion.MustNoError(t, err)

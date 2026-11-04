@@ -49,10 +49,15 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	if err != nil {
 		return nil, toConnectError(err)
 	}
+	backlinks, err := ticket.Backlinks(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
 	return connect.NewResponse(api.ResponseGetTicket_builder{
 		Ticket:    toTicket(ticket),
 		Relations: enumerable.Map(relations, toRelation),
 		Comments:  enumerable.Map(comments, toComment),
+		Backlinks: enumerable.Map(backlinks, toBacklink),
 	}.Build()), nil
 }
 
@@ -314,6 +319,14 @@ func toRelation(r *database.Relation) *api.Relation {
 		Type: new(api.RelationType(r.RelationType + 1)),
 		To:   new(r.ToId),
 	}.Build()
+}
+
+func toBacklink(m *database.Mention) *api.Backlink {
+	b := api.Backlink_builder{Ticket: new(m.FromId), CreatedAt: timestamppb.New(m.CreatedAt)}
+	if m.From != nil {
+		b.Title = new(m.From.Title)
+	}
+	return b.Build()
 }
 
 func toComment(c *issue.Comment) *api.Comment {

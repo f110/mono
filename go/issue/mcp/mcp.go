@@ -88,7 +88,7 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 	addTool(s, "list_tickets", "List the tickets which match the filter", h.ListTickets, func(in listTicketsInput) (*api.RequestListTickets, error) {
 		return api.RequestListTickets_builder{Filter: &in.Filter, OrderBy: &in.OrderBy}.Build(), nil
 	})
-	addTool(s, "get_ticket", "Get the ticket with the relations and the comments", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
+	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks and the comments", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
 		return api.RequestGetTicket_builder{Number: &in.Number}.Build(), nil
 	})
 	addTool(s, "create_ticket", "Create the ticket", h.CreateTicket, func(in createTicketInput) (*api.RequestCreateTicket, error) {

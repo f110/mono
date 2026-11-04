@@ -164,6 +164,35 @@ export declare type Relation = Message<"mono.issue.Relation"> & {
 export declare const RelationSchema: GenMessage<Relation>;
 
 /**
+ * Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
+ * which mentions, and created_at is the time of the first mention.
+ *
+ * @generated from message mono.issue.Backlink
+ */
+export declare type Backlink = Message<"mono.issue.Backlink"> & {
+  /**
+   * @generated from field: int32 ticket = 1;
+   */
+  ticket: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 2;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message mono.issue.Backlink.
+ * Use `create(BacklinkSchema)` to create a new message.
+ */
+export declare const BacklinkSchema: GenMessage<Backlink>;
+
+/**
  * @generated from message mono.issue.Comment
  */
 export declare type Comment = Message<"mono.issue.Comment"> & {
@@ -367,6 +396,13 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
    * @generated from field: repeated mono.issue.Comment comments = 3;
    */
   comments: Comment[];
+
+  /**
+   * backlinks contains the tickets which mention the ticket.
+   *
+   * @generated from field: repeated mono.issue.Backlink backlinks = 4;
+   */
+  backlinks: Backlink[];
 };
 
 /**
@@ -1092,6 +1128,16 @@ export enum ActivityKind {
    * @generated from enum value: ACTIVITY_KIND_PULL_REQUEST_LINKED = 14;
    */
   PULL_REQUEST_LINKED = 14,
+
+  /**
+   * @generated from enum value: ACTIVITY_KIND_MENTIONED = 15;
+   */
+  MENTIONED = 15,
+
+  /**
+   * @generated from enum value: ACTIVITY_KIND_MENTION_REMOVED = 16;
+   */
+  MENTION_REMOVED = 16,
 }
 
 /**
@@ -1112,7 +1158,7 @@ export declare const Issue: GenService<{
     output: typeof ResponseListTicketsSchema;
   },
   /**
-   * GetTicket returns the ticket with the relations and the comments.
+   * GetTicket returns the ticket with the relations, the backlinks and the comments.
    *
    * @generated from rpc mono.issue.Issue.GetTicket
    */

@@ -10,6 +10,7 @@ type Options struct {
 	Ticket             TicketInterface
 	TicketBodyRevision TicketBodyRevisionInterface
 	Relation           RelationInterface
+	Mention            MentionInterface
 	Comment            CommentInterface
 	CommentRevision    CommentRevisionInterface
 	Activity           ActivityInterface
@@ -27,6 +28,7 @@ func NewOptions(conn *sql.DB) Options {
 		Ticket:             NewTicket(conn),
 		TicketBodyRevision: NewTicketBodyRevision(conn),
 		Relation:           NewRelation(conn),
+		Mention:            NewMention(conn),
 		Comment:            NewComment(conn),
 		CommentRevision:    NewCommentRevision(conn),
 		Activity:           NewActivity(conn),

@@ -10,7 +10,7 @@ option go_package                 = "go.f110.dev/mono/go/issue/api";
 
 service Issue {
   rpc ListTickets(RequestListTickets) returns (ResponseListTickets);
-  // GetTicket returns the ticket with the relations and the comments.
+  // GetTicket returns the ticket with the relations, the backlinks and the comments.
   rpc GetTicket(RequestGetTicket) returns (ResponseGetTicket);
   rpc CreateTicket(RequestCreateTicket) returns (ResponseCreateTicket);
   // UpdateTicket updates only the fields which are set.
@@ -80,6 +80,8 @@ enum ActivityKind {
   ACTIVITY_KIND_COMMENT_DELETED     = 12;
   ACTIVITY_KIND_COMMIT_LINKED       = 13;
   ACTIVITY_KIND_PULL_REQUEST_LINKED = 14;
+  ACTIVITY_KIND_MENTIONED           = 15;
+  ACTIVITY_KIND_MENTION_REMOVED     = 16;
 }
 
 message Ticket {
@@ -116,6 +118,14 @@ message Relation {
   int32        from = 1;
   RelationType type = 2;
   int32        to   = 3;
+}
+
+// Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
+// which mentions, and created_at is the time of the first mention.
+message Backlink {
+  int32                     ticket     = 1;
+  google.protobuf.Timestamp created_at = 2;
+  string                    title      = 3;
 }
 
 message Comment {
@@ -168,6 +178,8 @@ message ResponseGetTicket {
   // relations contains the relations which the ticket is on either side of.
   repeated Relation relations = 2;
   repeated Comment  comments  = 3;
+  // backlinks contains the tickets which mention the ticket.
+  repeated Backlink backlinks = 4;
 }
 
 message RequestCreateTicket {

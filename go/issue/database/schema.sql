@@ -69,6 +69,18 @@ CREATE TABLE `relation` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `mention`;
+CREATE TABLE `mention` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`from_id` INTEGER NOT NULL,
+	`to_id` INTEGER NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_mention` (`from_id`, `to_id`),
+	INDEX `idx_to` (`to_id`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `comment`;
 CREATE TABLE `comment` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,

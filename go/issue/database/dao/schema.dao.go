@@ -1179,18 +1179,11 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		toPrimaryKeys := make([]int32, len(res))
 		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			toPrimaryKeys[i] = v.ToId
 			fromPrimaryKeys[i] = v.FromId
-		}
-		toData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
-			for _, v := range rels {
-				toData[v.Id] = v
-			}
+			toPrimaryKeys[i] = v.ToId
 		}
 		fromData := make(map[int32]*database.Ticket)
 		{
@@ -1199,9 +1192,16 @@ func (d *Relation) ListByFromId(ctx context.Context, fromId int32, opt ...ListOp
 				fromData[v.Id] = v
 			}
 		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.To = toData[v.ToId]
 			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
 		}
 	}
 
@@ -1400,6 +1400,352 @@ func (d *Relation) Update(ctx context.Context, relation *database.Relation, opt 
 	return nil
 }
 
+type Mention struct {
+	conn *sql.DB
+
+	ticket *Ticket
+}
+
+type MentionInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.Mention, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.Mention, error)
+	ListByFromId(ctx context.Context, fromId int32, opt ...ListOption) ([]*database.Mention, error)
+	ListByToId(ctx context.Context, toId int32, opt ...ListOption) ([]*database.Mention, error)
+	Create(ctx context.Context, mention *database.Mention, opt ...ExecOption) (*database.Mention, error)
+	Update(ctx context.Context, mention *database.Mention, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ MentionInterface = (*Mention)(nil)
+
+func NewMention(conn *sql.DB) *Mention {
+	return &Mention{
+		conn:   conn,
+		ticket: NewTicket(conn),
+	}
+}
+
+func (d *Mention) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Mention) Select(ctx context.Context, id int32) (*database.Mention, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `mention` WHERE `id` = ?", id)
+
+	v := &database.Mention{}
+	if err := row.Scan(&v.Id, &v.FromId, &v.ToId, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.FromId); rel != nil {
+			v.From = rel
+		}
+	}
+	{
+		if rel, _ := d.ticket.Select(ctx, v.ToId); rel != nil {
+			v.To = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *Mention) SelectMulti(ctx context.Context, id ...int32) ([]*database.Mention, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := 0; i < len(id); i++ {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `mention` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Mention, 0, len(id))
+	for rows.Next() {
+		r := &database.Mention{}
+		if err := rows.Scan(&r.Id, &r.FromId, &r.ToId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			fromPrimaryKeys[i] = v.FromId
+			toPrimaryKeys[i] = v.ToId
+		}
+		fromData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, fromPrimaryKeys...)
+			for _, v := range rels {
+				fromData[v.Id] = v
+			}
+		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
+		}
+	}
+	return res, nil
+}
+
+func (d *Mention) ListByFromId(ctx context.Context, fromId int32, opt ...ListOption) ([]*database.Mention, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `from_id`, `to_id`, `created_at`, `updated_at` FROM `mention` WHERE `from_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		fromId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Mention, 0)
+	for rows.Next() {
+		r := &database.Mention{}
+		if err := rows.Scan(&r.Id, &r.FromId, &r.ToId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			fromPrimaryKeys[i] = v.FromId
+			toPrimaryKeys[i] = v.ToId
+		}
+		fromData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, fromPrimaryKeys...)
+			for _, v := range rels {
+				fromData[v.Id] = v
+			}
+		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Mention) ListByToId(ctx context.Context, toId int32, opt ...ListOption) ([]*database.Mention, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `from_id`, `to_id`, `created_at`, `updated_at` FROM `mention` WHERE `to_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		toId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.Mention, 0)
+	for rows.Next() {
+		r := &database.Mention{}
+		if err := rows.Scan(&r.Id, &r.FromId, &r.ToId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		fromPrimaryKeys := make([]int32, len(res))
+		toPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			fromPrimaryKeys[i] = v.FromId
+			toPrimaryKeys[i] = v.ToId
+		}
+		fromData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, fromPrimaryKeys...)
+			for _, v := range rels {
+				fromData[v.Id] = v
+			}
+		}
+		toData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, toPrimaryKeys...)
+			for _, v := range rels {
+				toData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.From = fromData[v.FromId]
+			v.To = toData[v.ToId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *Mention) Create(ctx context.Context, mention *database.Mention, opt ...ExecOption) (*database.Mention, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `mention` (`from_id`, `to_id`, `created_at`) VALUES (?, ?, ?)",
+		mention.FromId, mention.ToId, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	mention = mention.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	mention.Id = int32(insertedId)
+
+	mention.ResetMark()
+	return mention, nil
+}
+
+func (d *Mention) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `mention` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *Mention) Update(ctx context.Context, mention *database.Mention, opt ...ExecOption) error {
+	if !mention.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := mention.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `mention` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, mention.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	mention.ResetMark()
+	return nil
+}
+
 type Comment struct {
 	conn *sql.DB
 
@@ -1491,18 +1837,11 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 	}
 
 	if len(res) > 0 {
-		actorPrimaryKeys := make([]int32, len(res))
 		ticketPrimaryKeys := make([]int32, len(res))
+		actorPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			actorPrimaryKeys[i] = v.ActorId
 			ticketPrimaryKeys[i] = v.TicketId
-		}
-		actorData := make(map[int32]*database.Actor)
-		{
-			rels, _ := d.actor.SelectMulti(ctx, actorPrimaryKeys...)
-			for _, v := range rels {
-				actorData[v.Id] = v
-			}
+			actorPrimaryKeys[i] = v.ActorId
 		}
 		ticketData := make(map[int32]*database.Ticket)
 		{
@@ -1511,9 +1850,16 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 				ticketData[v.Id] = v
 			}
 		}
+		actorData := make(map[int32]*database.Actor)
+		{
+			rels, _ := d.actor.SelectMulti(ctx, actorPrimaryKeys...)
+			for _, v := range rels {
+				actorData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Actor = actorData[v.ActorId]
 			v.Ticket = ticketData[v.TicketId]
+			v.Actor = actorData[v.ActorId]
 		}
 	}
 	return res, nil

@@ -77,6 +77,12 @@ func (t *Ticket) Update(ctx context.Context, title, body *string, status *databa
 	if len(changes) == 0 && bodyPatch == nil {
 		return nil
 	}
+	var comments []string
+	if bodyPatch != nil {
+		if comments, err = t.tracker.commentBodies(ctx, t.Id, 0); err != nil {
+			return err
+		}
+	}
 	updated.LastActivityAt = time.Now()
 
 	err = t.tracker.tx(ctx, func(tx *sql.Tx) error {
@@ -94,6 +100,9 @@ func (t *Ticket) Update(ctx context.Context, title, body *string, status *databa
 				return xerrors.WithStack(err)
 			}
 			if err := t.tracker.record(ctx, tx, t.Id, actor, database.ActivityKindBody, "", "", &rev.Id); err != nil {
+				return err
+			}
+			if err := t.tracker.syncMentions(ctx, tx, actor, t.Id, append(comments, updated.Body)...); err != nil {
 				return err
 			}
 		}
@@ -189,6 +198,15 @@ func (t *Ticket) Relations(ctx context.Context) ([]*database.Relation, error) {
 	return append(from, to...), nil
 }
 
+// Backlinks returns the mentions from the other tickets to the ticket.
+func (t *Ticket) Backlinks(ctx context.Context) ([]*database.Mention, error) {
+	mentions, err := t.tracker.dao.Mention.ListByToId(ctx, t.Id)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return mentions, nil
+}
+
 func (t *Ticket) AddComment(ctx context.Context, body string) (*Comment, error) {
 	actor, err := t.tracker.ticketOperator(ctx)
 	if err != nil {
@@ -196,6 +214,10 @@ func (t *Ticket) AddComment(ctx context.Context, body string) (*Comment, error) 
 	}
 	if body == "" {
 		return nil, xerrors.WithMessage(ErrInvalidArgument, "body is required")
+	}
+	comments, err := t.tracker.commentBodies(ctx, t.Id, 0)
+	if err != nil {
+		return nil, err
 	}
 
 	var id int32
@@ -206,6 +228,9 @@ func (t *Ticket) AddComment(ctx context.Context, body string) (*Comment, error) 
 		}
 		id = c.Id
 		if err := t.tracker.record(ctx, tx, t.Id, actor, database.ActivityKindComment, "", "", &c.Id); err != nil {
+			return err
+		}
+		if err := t.tracker.syncMentions(ctx, tx, actor, t.Id, append(comments, t.Body, body)...); err != nil {
 			return err
 		}
 		return t.tracker.touch(ctx, tx, t.Id)

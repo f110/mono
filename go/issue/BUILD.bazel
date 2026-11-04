@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "comment.go",
         "issue.go",
+        "mention.go",
         "ticket.go",
         "trailer.go",
     ],
@@ -16,6 +17,10 @@ go_library(
         "//go/issue/database/dao",
         "//go/issue/filter",
         "@com_github_sergi_go_diff//diffmatchpatch",
+        "@com_github_yuin_goldmark//:goldmark",
+        "@com_github_yuin_goldmark//ast",
+        "@com_github_yuin_goldmark//extension",
+        "@com_github_yuin_goldmark//text",
         "@dev_f110_go_xerrors//:xerrors",
     ],
 )

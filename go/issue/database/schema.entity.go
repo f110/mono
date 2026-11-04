@@ -13,6 +13,25 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
+type PullRequestState uint32
+
+const (
+	PullRequestStateOpen   PullRequestState = 0
+	PullRequestStateClosed PullRequestState = 1
+	PullRequestStateMerged PullRequestState = 2
+)
+
+type GithubEventState uint32
+
+const (
+	GithubEventStatePending    GithubEventState = 0
+	GithubEventStateProcessing GithubEventState = 1
+	GithubEventStateSucceeded  GithubEventState = 2
+	GithubEventStateFailed     GithubEventState = 3
+	GithubEventStateExpired    GithubEventState = 4
+	GithubEventStateSkipped    GithubEventState = 5
+)
+
 type ActivityKind uint32
 
 const (
@@ -30,6 +49,8 @@ const (
 	ActivityKindCommentDeleted    ActivityKind = 11
 	ActivityKindCommitLinked      ActivityKind = 12
 	ActivityKindPullRequestLinked ActivityKind = 13
+	ActivityKindMentioned         ActivityKind = 14
+	ActivityKindMentionRemoved    ActivityKind = 15
 )
 
 type TicketStatus uint32
@@ -74,25 +95,6 @@ type TrailerKind uint32
 const (
 	TrailerKindRefs  TrailerKind = 0
 	TrailerKindFixes TrailerKind = 1
-)
-
-type PullRequestState uint32
-
-const (
-	PullRequestStateOpen   PullRequestState = 0
-	PullRequestStateClosed PullRequestState = 1
-	PullRequestStateMerged PullRequestState = 2
-)
-
-type GithubEventState uint32
-
-const (
-	GithubEventStatePending    GithubEventState = 0
-	GithubEventStateProcessing GithubEventState = 1
-	GithubEventStateSucceeded  GithubEventState = 2
-	GithubEventStateFailed     GithubEventState = 3
-	GithubEventStateExpired    GithubEventState = 4
-	GithubEventStateSkipped    GithubEventState = 5
 )
 
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
@@ -526,6 +528,87 @@ func (e *Relation) Copy() *Relation {
 		RelationType: e.RelationType,
 		ToId:         e.ToId,
 		CreatedAt:    e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	if e.From != nil {
+		n.From = e.From.Copy()
+	}
+	if e.To != nil {
+		n.To = e.To.Copy()
+	}
+
+	return n
+}
+
+// Mention is the reference by "#123" in the body or the comments of the ticket from to the ticket to. It is derived
+// from the body and the comments which are not deleted, and it is removed when all of the references are removed.
+// created_at is the time of the first reference.
+type Mention struct {
+	Id        int32
+	FromId    int32
+	ToId      int32
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+
+	From *Ticket
+	To   *Ticket
+
+	mu   sync.Mutex
+	mark *Mention
+}
+
+func (e *Mention) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *Mention) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.FromId != e.mark.FromId ||
+		e.ToId != e.mark.ToId ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *Mention) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.FromId != e.mark.FromId {
+		res = append(res, ddl.Column{Name: "from_id", Value: e.FromId})
+	}
+	if e.ToId != e.mark.ToId {
+		res = append(res, ddl.Column{Name: "to_id", Value: e.ToId})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *Mention) Copy() *Mention {
+	n := &Mention{
+		Id:        e.Id,
+		FromId:    e.FromId,
+		ToId:      e.ToId,
+		CreatedAt: e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {
 		v := *e.UpdatedAt
