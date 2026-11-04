@@ -10,9 +10,8 @@ export default defineConfig(({ mode }) => {
       host: '127.0.0.1',
       port: 8301,
       proxy: {
-        '/bff': {
+        '/mono.build.bff.BFF': {
           target: bffURL,
-          rewrite: (path) => path.replace(/^\/bff/, ''),
         },
       },
     },

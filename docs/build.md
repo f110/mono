@@ -253,7 +253,7 @@ React + Vite + TanStack Router + TanStack Query + Connect (`@connectrpc/connect-
 `{env}-build-frontend` Pod（ポート 8090）から配信される。ブラウザはこの Pod から取得したアプリから、
 `VITE_BFF_URL` 宛て（bff の backend）に Connect リクエストを送る。
 
-- **通信**: `providers/AppProvider.tsx` が `createConnectTransport`（`VITE_BFF_URL` 宛て）と `QueryClient` を
+- **通信**: `providers/AppProvider.tsx` が `createConnectTransport`（ページと同じオリジン宛て）と `QueryClient` を
   セットアップ。bff の Connect サービスだけを叩き、builder API を直接は呼ばない。
 - **生成コード**: `src/connect/bff_pb.{js,d.ts}`（BFF サービス）と `src/model/msg_pb.{js,d.ts}`（共有型）は
   proto から生成される。
