@@ -87,6 +87,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ、所有者の human の actor), `subject` (human のみ、heimdallr のユーザー ID) | UNIQUE(`subject`), UNIQUE(`owner_id`)。system は固定の 1 行 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
 | `relation` | `from_id`, `type`, `to_id` | UNIQUE(`from_id`, `type`, `to_id`) |
+| `mention` | `from_id`, `to_id`, `created_at` | 本文・コメントで言及したチケット (`from_id`) と言及されたチケット (`to_id`)。UNIQUE(`from_id`, `to_id`)（§3.3） |
 | `comment` | `id`, `ticket_id`, `actor_id`, `body`, `created_at`, `updated_at`, `deleted_at` | 削除は `deleted_at` を立てる論理削除 |
 | `comment_revision` | `id`, `comment_id`, `patch`, `created_at` | 編集前のコメントを編集後のコメントから復元する差分 |
 | `attachment` | `id`, `ticket_id`, `actor_id`, `name`, `content_type`, `size`, `object_key`, `created_at` | |
@@ -116,6 +117,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | comment_deleted | — | `comment.id` |
 | attachment | — | `attachment.id` |
 | commit_linked, pull_request_linked | — | `commit_link` / `pull_request_link` の行 |
+| mentioned, mention_removed | — / 言及元の番号 | — |
 
 本文とコメントは最新だけを全文で `ticket.body` / `comment.body` に持ち、編集ごとに編集前の内容を編集後の内容から
 復元する差分を `ticket_body_revision` / `comment_revision` に保存する。過去の版は最新の全文に新しい順に差分を当てて
@@ -123,6 +125,21 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 
 操作主体が人間かエージェントかは `actor.kind` で判定する。actor の `kind` と `owner_id` は作成後に変更しない
 ため、履歴側にコピーしなくても当時の値が復元できる。
+
+### 3.3 言及（バックリンク）
+
+本文やコメントで `#123` と書いたチケットを、言及されたチケットから辿れるようにする（バックリンク）。関連（`relation`）と
+違って操作で張るものではなく、本文とコメントから導出する。
+
+- 言及はチケット単位で持つ。同じチケットの本文と複数のコメントで言及しても `mention` は 1 行で、すべての言及が消えたときに削除する
+- 本文の作成・編集とコメントの追加・編集・削除のたびに、そのチケットの本文と削除されていないコメントから言及先を求め直し、
+  `mention` との差分を同じトランザクションで追加・削除する
+- 追加・削除のたびに、言及されたチケットに `mentioned` / `mention_removed` の履歴を残し、`last_activity_at` を更新する
+- `created_at` は最初に言及された時刻で、編集しても言及が残っている間は変わらない
+- `#123` は Web UI でリンクに置き換えるもの（§6.4）と同じで、コード・リンク・画像・HTML の中のものは言及としない。
+  Markdown は goldmark でパースする
+- 自分自身と存在しないチケットへの言及は無視する
+- この機能を入れる前の本文・コメントからは作らない
 
 ## 4. 操作主体と認証
 
@@ -266,7 +283,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | 管理 | `ListComponents`, `SaveComponent` |
 | その他 | `ListActors`, `WhoAmI` |
 
-`GetTicket` は関連（逆方向の導出を含む）・紐づいた commit / PR と CI 結果・添付をまとめて返す。
+`GetTicket` は関連（逆方向の導出を含む）・バックリンク・紐づいた commit / PR と CI 結果・添付をまとめて返す。
 
 ### 6.2 MCP
 
@@ -306,6 +323,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 - 管理画面は `/admin` 以下に置き、左のメニューで管理する対象を切り替える。分類は `/admin/components`
 - 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
 - Markdown はクライアントでレンダリングしてサニタイズする。`#123` は `/123` へのリンクに置き換える
+- 詳細のサイドバーに、関連と並べてバックリンク（言及元のチケットの番号とタイトル）を表示する。言及された時刻は履歴に表示する
 
 ## 7. 添付ファイル
 
