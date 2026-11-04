@@ -193,6 +193,99 @@ export declare type Backlink = Message<"mono.issue.Backlink"> & {
 export declare const BacklinkSchema: GenMessage<Backlink>;
 
 /**
+ * CommitLink is the commit which refers to the ticket by the trailer. change_id is empty until git-data-service fetches
+ * the commit. url is empty if the repository is not found in Build.
+ *
+ * @generated from message mono.issue.CommitLink
+ */
+export declare type CommitLink = Message<"mono.issue.CommitLink"> & {
+  /**
+   * @generated from field: string sha = 1;
+   */
+  sha: string;
+
+  /**
+   * @generated from field: string change_id = 2;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string subject = 3;
+   */
+  subject: string;
+
+  /**
+   * @generated from field: string author = 4;
+   */
+  author: string;
+
+  /**
+   * @generated from field: mono.issue.TrailerKind trailer = 5;
+   */
+  trailer: TrailerKind;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp committed_at = 6;
+   */
+  committedAt?: Timestamp;
+
+  /**
+   * @generated from field: string url = 7;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message mono.issue.CommitLink.
+ * Use `create(CommitLinkSchema)` to create a new message.
+ */
+export declare const CommitLinkSchema: GenMessage<CommitLink>;
+
+/**
+ * PullRequestLink is the pull request which has the commit referring to the ticket by the trailer. url is empty if the
+ * repository is not found in Build.
+ *
+ * @generated from message mono.issue.PullRequestLink
+ */
+export declare type PullRequestLink = Message<"mono.issue.PullRequestLink"> & {
+  /**
+   * @generated from field: int32 number = 1;
+   */
+  number: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string author = 3;
+   */
+  author: string;
+
+  /**
+   * @generated from field: mono.issue.PullRequestState state = 4;
+   */
+  state: PullRequestState;
+
+  /**
+   * @generated from field: string head_sha = 5;
+   */
+  headSha: string;
+
+  /**
+   * @generated from field: string url = 6;
+   */
+  url: string;
+};
+
+/**
+ * Describes the message mono.issue.PullRequestLink.
+ * Use `create(PullRequestLinkSchema)` to create a new message.
+ */
+export declare const PullRequestLinkSchema: GenMessage<PullRequestLink>;
+
+/**
  * @generated from message mono.issue.Comment
  */
 export declare type Comment = Message<"mono.issue.Comment"> & {
@@ -403,6 +496,16 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
    * @generated from field: repeated mono.issue.Backlink backlinks = 4;
    */
   backlinks: Backlink[];
+
+  /**
+   * @generated from field: repeated mono.issue.CommitLink commits = 5;
+   */
+  commits: CommitLink[];
+
+  /**
+   * @generated from field: repeated mono.issue.PullRequestLink pull_requests = 6;
+   */
+  pullRequests: PullRequestLink[];
 };
 
 /**
@@ -1146,6 +1249,61 @@ export enum ActivityKind {
 export declare const ActivityKindSchema: GenEnum<ActivityKind>;
 
 /**
+ * @generated from enum mono.issue.TrailerKind
+ */
+export enum TrailerKind {
+  /**
+   * @generated from enum value: TRAILER_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: TRAILER_KIND_REFS = 1;
+   */
+  REFS = 1,
+
+  /**
+   * @generated from enum value: TRAILER_KIND_FIXES = 2;
+   */
+  FIXES = 2,
+}
+
+/**
+ * Describes the enum mono.issue.TrailerKind.
+ */
+export declare const TrailerKindSchema: GenEnum<TrailerKind>;
+
+/**
+ * @generated from enum mono.issue.PullRequestState
+ */
+export enum PullRequestState {
+  /**
+   * @generated from enum value: PULL_REQUEST_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PULL_REQUEST_STATE_OPEN = 1;
+   */
+  OPEN = 1,
+
+  /**
+   * @generated from enum value: PULL_REQUEST_STATE_CLOSED = 2;
+   */
+  CLOSED = 2,
+
+  /**
+   * @generated from enum value: PULL_REQUEST_STATE_MERGED = 3;
+   */
+  MERGED = 3,
+}
+
+/**
+ * Describes the enum mono.issue.PullRequestState.
+ */
+export declare const PullRequestStateSchema: GenEnum<PullRequestState>;
+
+/**
  * @generated from service mono.issue.Issue
  */
 export declare const Issue: GenService<{
@@ -1158,7 +1316,7 @@ export declare const Issue: GenService<{
     output: typeof ResponseListTicketsSchema;
   },
   /**
-   * GetTicket returns the ticket with the relations, the backlinks and the comments.
+   * GetTicket returns the ticket with the relations, the backlinks, the comments, the commits and the pull requests.
    *
    * @generated from rpc mono.issue.Issue.GetTicket
    */

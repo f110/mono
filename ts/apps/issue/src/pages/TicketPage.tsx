@@ -18,6 +18,8 @@ import {
   type Backlink,
   type Activity,
   type Comment,
+  type CommitLink,
+  type PullRequestLink,
   type Relation,
   ActivityKind,
   Issue,
@@ -34,10 +36,12 @@ import {
   activityLabels,
   priorities,
   priorityLabels,
+  pullRequestStateLabels,
   relationLabels,
   relationTypes,
   statuses,
   statusLabels,
+  trailerLabels,
 } from '../labels.ts'
 
 const statusNames: Record<string, string> = {
@@ -166,6 +170,10 @@ export const TicketPage = () => {
           <Relations number={number} relations={data.relations} />
           <Divider />
           <Backlinks backlinks={data.backlinks} />
+          <Divider />
+          <Commits commits={data.commits} />
+          <Divider />
+          <PullRequests pullRequests={data.pullRequests} />
         </Stack>
       </Stack>
     </Stack>
@@ -285,6 +293,62 @@ const Backlinks = ({ backlinks }: { backlinks: Backlink[] }) => (
       <Typography key={b.ticket} variant="body2" noWrap>
         <TicketLink number={b.ticket} /> {b.title}
       </Typography>
+    ))}
+  </Stack>
+)
+
+const ExternalLink = ({ url, children }: { url: string; children: ReactNode }) =>
+  url === '' ? (
+    children
+  ) : (
+    <Link href={url} target="_blank" rel="noreferrer">
+      {children}
+    </Link>
+  )
+
+const Commits = ({ commits }: { commits: CommitLink[] }) => (
+  <Stack spacing={1}>
+    <Typography variant="subtitle2">Commits</Typography>
+    {commits.length === 0 && (
+      <Typography variant="body2" color="text.secondary">
+        なし
+      </Typography>
+    )}
+    {commits.map((c) => (
+      <Box key={c.sha}>
+        <Typography variant="body2" noWrap>
+          <ExternalLink url={c.url}>
+            <Box component="span" sx={{ fontFamily: 'monospace' }}>
+              {c.sha.slice(0, 7)}
+            </Box>
+          </ExternalLink>{' '}
+          {c.subject}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {trailerLabels[c.trailer]} · {c.author} · <RelativeTime time={c.committedAt} />
+        </Typography>
+      </Box>
+    ))}
+  </Stack>
+)
+
+const PullRequests = ({ pullRequests }: { pullRequests: PullRequestLink[] }) => (
+  <Stack spacing={1}>
+    <Typography variant="subtitle2">Pull requests</Typography>
+    {pullRequests.length === 0 && (
+      <Typography variant="body2" color="text.secondary">
+        なし
+      </Typography>
+    )}
+    {pullRequests.map((p) => (
+      <Box key={p.url === '' ? p.number : p.url}>
+        <Typography variant="body2" noWrap>
+          <ExternalLink url={p.url}>#{p.number}</ExternalLink> {p.title}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {pullRequestStateLabels[p.state]} · {p.author}
+        </Typography>
+      </Box>
     ))}
   </Stack>
 )
