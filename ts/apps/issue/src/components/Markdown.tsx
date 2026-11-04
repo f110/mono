@@ -46,7 +46,19 @@ function remarkTicketLink() {
 }
 
 export const Markdown = ({ text }: { text: string }) => (
-  <Box className="markdown-body">
+  <Box
+    className="markdown-body"
+    sx={{
+      '&.markdown-body': {
+        '& h1, & h2': { pb: 0, borderBottom: 'none' },
+        '& h1': { fontSize: '1.5em' },
+        '& h2': { fontSize: '1.25em' },
+        '& h3': { fontSize: '1em' },
+        '& h4': { fontSize: '.875em' },
+        '& h5': { fontSize: '.85em', color: '#59636e' },
+      },
+    }}
+  >
     <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
       {text}
     </ReactMarkdown>
