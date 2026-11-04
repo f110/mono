@@ -152,7 +152,7 @@ go_deps.module_override(
 
 git_override(
     module_name = "protoc_ddl",
-    commit = "28d15745bb9eceeb98136e20413d32368d8527ad",
+    commit = "071c1bd016ec67015695d77f85418c564e0e148a",
     patch_strip = 1,
     patches = ["//patch:protoc-ddl.patch"],
     remote = "https://github.com/f110/protoc-ddl",

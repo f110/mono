@@ -128,7 +128,7 @@ func (d *Actor) Select(ctx context.Context, id int32) (*database.Actor, error) {
 func (d *Actor) SelectMulti(ctx context.Context, id ...int32) ([]*database.Actor, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `actor` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -410,7 +410,7 @@ func (d *Component) Select(ctx context.Context, id int32) (*database.Component, 
 func (d *Component) SelectMulti(ctx context.Context, id ...int32) ([]*database.Component, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `component` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -632,7 +632,7 @@ func (d *Ticket) Select(ctx context.Context, id int32) (*database.Ticket, error)
 func (d *Ticket) SelectMulti(ctx context.Context, id ...int32) ([]*database.Ticket, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `ticket` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -834,7 +834,7 @@ func (d *TicketBodyRevision) Select(ctx context.Context, id int32) (*database.Ti
 func (d *TicketBodyRevision) SelectMulti(ctx context.Context, id ...int32) ([]*database.TicketBodyRevision, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `ticket_body_revision` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1097,7 +1097,7 @@ func (d *Relation) Select(ctx context.Context, id int32) (*database.Relation, er
 func (d *Relation) SelectMulti(ctx context.Context, id ...int32) ([]*database.Relation, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `relation` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1471,7 +1471,7 @@ func (d *Mention) Select(ctx context.Context, id int32) (*database.Mention, erro
 func (d *Mention) SelectMulti(ctx context.Context, id ...int32) ([]*database.Mention, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `mention` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1818,7 +1818,7 @@ func (d *Comment) Select(ctx context.Context, id int32) (*database.Comment, erro
 func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Comment, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `comment` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1837,18 +1837,11 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 	}
 
 	if len(res) > 0 {
-		ticketPrimaryKeys := make([]int32, len(res))
 		actorPrimaryKeys := make([]int32, len(res))
+		ticketPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			ticketPrimaryKeys[i] = v.TicketId
 			actorPrimaryKeys[i] = v.ActorId
-		}
-		ticketData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
-			for _, v := range rels {
-				ticketData[v.Id] = v
-			}
+			ticketPrimaryKeys[i] = v.TicketId
 		}
 		actorData := make(map[int32]*database.Actor)
 		{
@@ -1857,9 +1850,16 @@ func (d *Comment) SelectMulti(ctx context.Context, id ...int32) ([]*database.Com
 				actorData[v.Id] = v
 			}
 		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Ticket = ticketData[v.TicketId]
 			v.Actor = actorData[v.ActorId]
+			v.Ticket = ticketData[v.TicketId]
 		}
 	}
 	return res, nil
@@ -1900,18 +1900,11 @@ func (d *Comment) ListByTicketId(ctx context.Context, ticketId int32, opt ...Lis
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		ticketPrimaryKeys := make([]int32, len(res))
 		actorPrimaryKeys := make([]int32, len(res))
+		ticketPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			ticketPrimaryKeys[i] = v.TicketId
 			actorPrimaryKeys[i] = v.ActorId
-		}
-		ticketData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
-			for _, v := range rels {
-				ticketData[v.Id] = v
-			}
+			ticketPrimaryKeys[i] = v.TicketId
 		}
 		actorData := make(map[int32]*database.Actor)
 		{
@@ -1920,9 +1913,16 @@ func (d *Comment) ListByTicketId(ctx context.Context, ticketId int32, opt ...Lis
 				actorData[v.Id] = v
 			}
 		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Ticket = ticketData[v.TicketId]
 			v.Actor = actorData[v.ActorId]
+			v.Ticket = ticketData[v.TicketId]
 		}
 	}
 
@@ -2094,7 +2094,7 @@ func (d *CommentRevision) Select(ctx context.Context, id int32) (*database.Comme
 func (d *CommentRevision) SelectMulti(ctx context.Context, id ...int32) ([]*database.CommentRevision, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `comment_revision` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -2357,7 +2357,7 @@ func (d *Activity) Select(ctx context.Context, id int32) (*database.Activity, er
 func (d *Activity) SelectMulti(ctx context.Context, id ...int32) ([]*database.Activity, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `activity` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -2376,18 +2376,11 @@ func (d *Activity) SelectMulti(ctx context.Context, id ...int32) ([]*database.Ac
 	}
 
 	if len(res) > 0 {
-		ticketPrimaryKeys := make([]int32, len(res))
 		actorPrimaryKeys := make([]int32, len(res))
+		ticketPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			ticketPrimaryKeys[i] = v.TicketId
 			actorPrimaryKeys[i] = v.ActorId
-		}
-		ticketData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
-			for _, v := range rels {
-				ticketData[v.Id] = v
-			}
+			ticketPrimaryKeys[i] = v.TicketId
 		}
 		actorData := make(map[int32]*database.Actor)
 		{
@@ -2396,9 +2389,16 @@ func (d *Activity) SelectMulti(ctx context.Context, id ...int32) ([]*database.Ac
 				actorData[v.Id] = v
 			}
 		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Ticket = ticketData[v.TicketId]
 			v.Actor = actorData[v.ActorId]
+			v.Ticket = ticketData[v.TicketId]
 		}
 	}
 	return res, nil
@@ -2439,18 +2439,11 @@ func (d *Activity) ListByTicketId(ctx context.Context, ticketId int32, opt ...Li
 		res = append(res, r)
 	}
 	if len(res) > 0 {
-		ticketPrimaryKeys := make([]int32, len(res))
 		actorPrimaryKeys := make([]int32, len(res))
+		ticketPrimaryKeys := make([]int32, len(res))
 		for i, v := range res {
-			ticketPrimaryKeys[i] = v.TicketId
 			actorPrimaryKeys[i] = v.ActorId
-		}
-		ticketData := make(map[int32]*database.Ticket)
-		{
-			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
-			for _, v := range rels {
-				ticketData[v.Id] = v
-			}
+			ticketPrimaryKeys[i] = v.TicketId
 		}
 		actorData := make(map[int32]*database.Actor)
 		{
@@ -2459,9 +2452,16 @@ func (d *Activity) ListByTicketId(ctx context.Context, ticketId int32, opt ...Li
 				actorData[v.Id] = v
 			}
 		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
 		for _, v := range res {
-			v.Ticket = ticketData[v.TicketId]
 			v.Actor = actorData[v.ActorId]
+			v.Ticket = ticketData[v.TicketId]
 		}
 	}
 
@@ -2635,7 +2635,7 @@ func (d *CommitLink) Select(ctx context.Context, id int32) (*database.CommitLink
 func (d *CommitLink) SelectMulti(ctx context.Context, id ...int32) ([]*database.CommitLink, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `commit_link` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -2968,7 +2968,7 @@ func (d *PullRequestLink) Select(ctx context.Context, id int32) (*database.PullR
 func (d *PullRequestLink) SelectMulti(ctx context.Context, id ...int32) ([]*database.PullRequestLink, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `pull_request_link` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -3270,7 +3270,7 @@ func (d *GithubEvent) Select(ctx context.Context, id int32) (*database.GithubEve
 func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `github_event` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)

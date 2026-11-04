@@ -13,12 +13,12 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type TestStatus uint32
+type ArtifactType uint32
 
 const (
-	TestStatusPassed TestStatus = 0
-	TestStatusFlaky  TestStatus = 1
-	TestStatusFailed TestStatus = 2
+	ArtifactTypeContainerImage ArtifactType = 0
+	ArtifactTypeBinary         ArtifactType = 1
+	ArtifactTypeK8sManifest    ArtifactType = 2
 )
 
 type GithubEventState uint32
@@ -32,12 +32,12 @@ const (
 	GithubEventStateSkipped    GithubEventState = 5
 )
 
-type ArtifactType uint32
+type TestStatus uint32
 
 const (
-	ArtifactTypeContainerImage ArtifactType = 0
-	ArtifactTypeBinary         ArtifactType = 1
-	ArtifactTypeK8sManifest    ArtifactType = 2
+	TestStatusPassed TestStatus = 0
+	TestStatusFlaky  TestStatus = 1
+	TestStatusFailed TestStatus = 2
 )
 
 type SourceRepository struct {

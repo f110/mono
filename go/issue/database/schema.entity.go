@@ -13,25 +13,6 @@ import (
 var _ = time.Time{}
 var _ = bytes.Buffer{}
 
-type PullRequestState uint32
-
-const (
-	PullRequestStateOpen   PullRequestState = 0
-	PullRequestStateClosed PullRequestState = 1
-	PullRequestStateMerged PullRequestState = 2
-)
-
-type GithubEventState uint32
-
-const (
-	GithubEventStatePending    GithubEventState = 0
-	GithubEventStateProcessing GithubEventState = 1
-	GithubEventStateSucceeded  GithubEventState = 2
-	GithubEventStateFailed     GithubEventState = 3
-	GithubEventStateExpired    GithubEventState = 4
-	GithubEventStateSkipped    GithubEventState = 5
-)
-
 type ActivityKind uint32
 
 const (
@@ -53,13 +34,23 @@ const (
 	ActivityKindMentionRemoved    ActivityKind = 15
 )
 
-type TicketStatus uint32
+type ActorKind uint32
 
 const (
-	TicketStatusOpen       TicketStatus = 0
-	TicketStatusInProgress TicketStatus = 1
-	TicketStatusDone       TicketStatus = 2
-	TicketStatusWontFix    TicketStatus = 3
+	ActorKindHuman  ActorKind = 0
+	ActorKindAgent  ActorKind = 1
+	ActorKindSystem ActorKind = 2
+)
+
+type GithubEventState uint32
+
+const (
+	GithubEventStatePending    GithubEventState = 0
+	GithubEventStateProcessing GithubEventState = 1
+	GithubEventStateSucceeded  GithubEventState = 2
+	GithubEventStateFailed     GithubEventState = 3
+	GithubEventStateExpired    GithubEventState = 4
+	GithubEventStateSkipped    GithubEventState = 5
 )
 
 type Priority uint32
@@ -73,12 +64,12 @@ const (
 	PriorityP4   Priority = 5
 )
 
-type ActorKind uint32
+type PullRequestState uint32
 
 const (
-	ActorKindHuman  ActorKind = 0
-	ActorKindAgent  ActorKind = 1
-	ActorKindSystem ActorKind = 2
+	PullRequestStateOpen   PullRequestState = 0
+	PullRequestStateClosed PullRequestState = 1
+	PullRequestStateMerged PullRequestState = 2
 )
 
 type RelationType uint32
@@ -88,6 +79,15 @@ const (
 	RelationTypeBlocks      RelationType = 1
 	RelationTypeDuplicateOf RelationType = 2
 	RelationTypeRelatesTo   RelationType = 3
+)
+
+type TicketStatus uint32
+
+const (
+	TicketStatusOpen       TicketStatus = 0
+	TicketStatusInProgress TicketStatus = 1
+	TicketStatusDone       TicketStatus = 2
+	TicketStatusWontFix    TicketStatus = 3
 )
 
 type TrailerKind uint32

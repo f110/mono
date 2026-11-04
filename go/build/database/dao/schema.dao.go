@@ -126,7 +126,7 @@ func (d *SourceRepository) Select(ctx context.Context, id int32) (*database.Sour
 func (d *SourceRepository) SelectMulti(ctx context.Context, id ...int32) ([]*database.SourceRepository, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `source_repository` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -392,7 +392,7 @@ func (d *Task) Select(ctx context.Context, id int32) (*database.Task, error) {
 func (d *Task) SelectMulti(ctx context.Context, id ...int32) ([]*database.Task, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `task` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -909,7 +909,7 @@ func (d *TrustedUser) Select(ctx context.Context, id int32) (*database.TrustedUs
 func (d *TrustedUser) SelectMulti(ctx context.Context, id ...int32) ([]*database.TrustedUser, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `trusted_user` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1161,7 +1161,7 @@ func (d *PermitPullRequest) Select(ctx context.Context, id int32) (*database.Per
 func (d *PermitPullRequest) SelectMulti(ctx context.Context, id ...int32) ([]*database.PermitPullRequest, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `permit_pull_request` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1393,7 +1393,7 @@ func (d *TestReport) Select(ctx context.Context, id int32) (*database.TestReport
 func (d *TestReport) SelectMulti(ctx context.Context, id ...int32) ([]*database.TestReport, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `test_report` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1667,7 +1667,7 @@ func (d *BuildMetrics) Select(ctx context.Context, taskId int32) (*database.Buil
 func (d *BuildMetrics) SelectMulti(ctx context.Context, taskId ...int32) ([]*database.BuildMetrics, error) {
 	inCause := strings.Repeat("?, ", len(taskId))
 	args := make([]any, len(taskId))
-	for i := 0; i < len(taskId); i++ {
+	for i := range taskId {
 		args[i] = taskId[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `build_metrics` WHERE `task_id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -1917,7 +1917,7 @@ func (d *Artifact) Select(ctx context.Context, id int32) (*database.Artifact, er
 func (d *Artifact) SelectMulti(ctx context.Context, id ...int32) ([]*database.Artifact, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `artifact` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -2436,7 +2436,7 @@ func (d *ExternalReleaseTrigger) Select(ctx context.Context, id int32) (*databas
 func (d *ExternalReleaseTrigger) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseTrigger, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `external_release_trigger` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -2738,7 +2738,7 @@ func (d *GithubEvent) Select(ctx context.Context, id int32) (*database.GithubEve
 func (d *GithubEvent) SelectMulti(ctx context.Context, id ...int32) ([]*database.GithubEvent, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `github_event` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
@@ -3015,7 +3015,7 @@ func (d *ExternalReleaseHistory) Select(ctx context.Context, id int32) (*databas
 func (d *ExternalReleaseHistory) SelectMulti(ctx context.Context, id ...int32) ([]*database.ExternalReleaseHistory, error) {
 	inCause := strings.Repeat("?, ", len(id))
 	args := make([]any, len(id))
-	for i := 0; i < len(id); i++ {
+	for i := range id {
 		args[i] = id[i]
 	}
 	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `external_release_history` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
