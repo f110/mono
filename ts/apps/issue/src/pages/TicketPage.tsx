@@ -36,12 +36,10 @@ import {
   activityLabels,
   priorities,
   priorityLabels,
-  pullRequestStateLabels,
   relationLabels,
   relationTypes,
   statuses,
   statusLabels,
-  trailerLabels,
 } from '../labels.ts'
 
 const statusNames: Record<string, string> = {
@@ -315,19 +313,14 @@ const Commits = ({ commits }: { commits: CommitLink[] }) => (
       </Typography>
     )}
     {commits.map((c) => (
-      <Box key={c.sha}>
-        <Typography variant="body2" noWrap>
-          <ExternalLink url={c.url}>
-            <Box component="span" sx={{ fontFamily: 'monospace' }}>
-              {c.sha.slice(0, 7)}
-            </Box>
-          </ExternalLink>{' '}
-          {c.subject}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {trailerLabels[c.trailer]} · {c.author} · <RelativeTime time={c.committedAt} />
-        </Typography>
-      </Box>
+      <Typography key={c.sha} variant="body2" noWrap>
+        <ExternalLink url={c.url}>
+          <Box component="span" sx={{ fontFamily: 'monospace' }}>
+            {c.sha.slice(0, 7)}
+          </Box>
+        </ExternalLink>{' '}
+        {c.subject}
+      </Typography>
     ))}
   </Stack>
 )
@@ -341,14 +334,9 @@ const PullRequests = ({ pullRequests }: { pullRequests: PullRequestLink[] }) => 
       </Typography>
     )}
     {pullRequests.map((p) => (
-      <Box key={p.url === '' ? p.number : p.url}>
-        <Typography variant="body2" noWrap>
-          <ExternalLink url={p.url}>#{p.number}</ExternalLink> {p.title}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {pullRequestStateLabels[p.state]} · {p.author}
-        </Typography>
-      </Box>
+      <Typography key={p.url === '' ? p.number : p.url} variant="body2" noWrap>
+        <ExternalLink url={p.url}>#{p.number}</ExternalLink> {p.title}
+      </Typography>
     ))}
   </Stack>
 )

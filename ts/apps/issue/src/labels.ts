@@ -1,4 +1,4 @@
-import { ActivityKind, ActorKind, Priority, PullRequestState, RelationType, TicketStatus, TrailerKind } from './connect/issue_pb'
+import { ActivityKind, ActorKind, Priority, RelationType, TicketStatus } from './connect/issue_pb'
 
 export const statusLabels: Record<TicketStatus, string> = {
   [TicketStatus.UNSPECIFIED]: '-',
@@ -64,17 +64,4 @@ export const activityLabels: Record<ActivityKind, string> = {
   [ActivityKind.PULL_REQUEST_LINKED]: 'が Pull Request を関連付け',
   [ActivityKind.MENTIONED]: 'がこのチケットに言及',
   [ActivityKind.MENTION_REMOVED]: 'がこのチケットへの言及を削除',
-}
-
-export const trailerLabels: Record<TrailerKind, string> = {
-  [TrailerKind.UNSPECIFIED]: '',
-  [TrailerKind.REFS]: 'Refs',
-  [TrailerKind.FIXES]: 'Fixes',
-}
-
-export const pullRequestStateLabels: Record<PullRequestState, string> = {
-  [PullRequestState.UNSPECIFIED]: '',
-  [PullRequestState.OPEN]: 'Open',
-  [PullRequestState.CLOSED]: 'Closed',
-  [PullRequestState.MERGED]: 'Merged',
 }
