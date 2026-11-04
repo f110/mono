@@ -62,4 +62,6 @@ export const activityLabels: Record<ActivityKind, string> = {
   [ActivityKind.COMMENT_DELETED]: 'がコメントを削除',
   [ActivityKind.COMMIT_LINKED]: 'がコミットを関連付け',
   [ActivityKind.PULL_REQUEST_LINKED]: 'が Pull Request を関連付け',
+  [ActivityKind.MENTIONED]: 'がこのチケットに言及',
+  [ActivityKind.MENTION_REMOVED]: 'がこのチケットへの言及を削除',
 }

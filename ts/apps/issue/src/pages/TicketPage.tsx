@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import {
+  type Backlink,
   type Activity,
   type Comment,
   type Relation,
@@ -163,6 +164,8 @@ export const TicketPage = () => {
           />
           <Divider />
           <Relations number={number} relations={data.relations} />
+          <Divider />
+          <Backlinks backlinks={data.backlinks} />
         </Stack>
       </Stack>
     </Stack>
@@ -270,6 +273,22 @@ const Relations = ({ number, relations }: { number: number; relations: Relation[
   )
 }
 
+const Backlinks = ({ backlinks }: { backlinks: Backlink[] }) => (
+  <Stack spacing={1}>
+    <Typography variant="subtitle2">Backlinks</Typography>
+    {backlinks.length === 0 && (
+      <Typography variant="body2" color="text.secondary">
+        なし
+      </Typography>
+    )}
+    {backlinks.map((b) => (
+      <Typography key={b.ticket} variant="body2" noWrap>
+        <TicketLink number={b.ticket} /> {b.title}
+      </Typography>
+    ))}
+  </Stack>
+)
+
 const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]; comments: Comment[]; reporterId: number }) => {
   const { actorName, componentName } = useMasters()
 
@@ -314,6 +333,10 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
             )
             break
           }
+          case ActivityKind.MENTIONED:
+          case ActivityKind.MENTION_REMOVED:
+            detail = <TicketLink number={Number(a.toValue)} />
+            break
         }
         return (
           <Typography key={a.id} variant="body2" color="text.secondary">
