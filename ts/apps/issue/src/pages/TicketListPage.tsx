@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useQuery } from '@connectrpc/connect-query'
+import { skipToken } from '@tanstack/react-query'
 import {
   Link as RouterLink,
   useNavigate,
@@ -25,7 +26,7 @@ import {
   Typography,
 } from '@mui/material'
 import dayjs from 'dayjs'
-import { Issue } from '../connect/issue_pb'
+import { type Ticket, Issue } from '../connect/issue_pb'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
@@ -61,11 +62,16 @@ export const TicketListPage = () => {
   const orderBy = search.order_by ?? defaultOrder
   const [orderField, orderDirection] = orderBy.split(' ')
   const [input, setInput] = useState(filter)
-  const { components, actorName, componentName } = useMasters()
+  const { components } = useMasters()
+  const separateP0 = filter === defaultFilter
   const { data, error } = useQuery(Issue.method.listTickets, {
-    filter: withComponent(filter, component),
+    filter: withComponent(separateP0 ? `(${filter}) AND priority != P0` : filter, component),
     orderBy,
   })
+  const { data: p0, error: p0Error } = useQuery(
+    Issue.method.listTickets,
+    separateP0 ? { filter: withComponent(`(${filter}) AND priority = P0`, component), orderBy } : skipToken,
+  )
 
   const sortBy = (field: string) => {
     const direction =
@@ -127,75 +133,80 @@ export const TicketListPage = () => {
         </Box>
       </Stack>
       {error && <Alert severity="error">{error.message}</Alert>}
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {columns.map((c) => (
-                <TableCell key={c.label} sx={{ whiteSpace: 'nowrap' }}>
-                  {c.field ? (
-                    <TableSortLabel
-                      active={c.field === orderField}
-                      direction={
-                        c.field === orderField && orderDirection === 'desc'
-                          ? 'desc'
-                          : 'asc'
-                      }
-                      onClick={() => sortBy(c.field!)}
-                    >
-                      {c.label}
-                    </TableSortLabel>
-                  ) : (
-                    c.label
-                  )}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data?.tickets.map((t) => (
-              <TableRow key={t.number} hover>
-                <TableCell>{t.number}</TableCell>
-                <TableCell>
-                  <Link
-                    component={RouterLink}
-                    to="/$number"
-                    params={{ number: String(t.number) }}
-                  >
-                    {t.title}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={statusLabels[t.status]}
-                    size="small"
-                    sx={statusColors[t.status]}
-                  />
-                </TableCell>
-                <TableCell>
-                  {t.priority ? priorityLabels[t.priority] : ''}
-                </TableCell>
-                <TableCell>
-                  {t.componentId ? componentName(t.componentId) : ''}
-                </TableCell>
-                <TableCell>
-                  {t.assigneeId ? actorName(t.assigneeId) : ''}
-                </TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  {t.createdAt &&
-                    dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
-                </TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                  <RelativeTime time={t.lastActivityAt} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {p0Error && <Alert severity="error">{p0Error.message}</Alert>}
+      {p0 && p0.tickets.length > 0 && (
+        <Stack spacing={1}>
+          <Typography variant="h6">P0</Typography>
+          <TicketTable tickets={p0.tickets} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
+        </Stack>
+      )}
+      <TicketTable tickets={data?.tickets ?? []} orderField={orderField} orderDirection={orderDirection} onSort={sortBy} />
       {data && data.tickets.length === 0 && (
         <Typography color="text.secondary">チケットはありません</Typography>
       )}
     </Stack>
+  )
+}
+
+const TicketTable = ({
+  tickets,
+  orderField,
+  orderDirection,
+  onSort,
+}: {
+  tickets: Ticket[]
+  orderField: string
+  orderDirection: string | undefined
+  onSort: (field: string) => void
+}) => {
+  const { actorName, componentName } = useMasters()
+  return (
+    <TableContainer component={Paper}>
+      <Table size="small">
+        <TableHead>
+          <TableRow sx={{ bgcolor: 'grey.100' }}>
+            {columns.map((c) => (
+              <TableCell key={c.label} sx={{ whiteSpace: 'nowrap' }}>
+                {c.field ? (
+                  <TableSortLabel
+                    active={c.field === orderField}
+                    direction={c.field === orderField && orderDirection === 'desc' ? 'desc' : 'asc'}
+                    onClick={() => onSort(c.field!)}
+                  >
+                    {c.label}
+                  </TableSortLabel>
+                ) : (
+                  c.label
+                )}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {tickets.map((t) => (
+            <TableRow key={t.number} hover>
+              <TableCell>{t.number}</TableCell>
+              <TableCell>
+                <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
+                  {t.title}
+                </Link>
+              </TableCell>
+              <TableCell>
+                <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
+              </TableCell>
+              <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
+              <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
+              <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                {t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
+              </TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                <RelativeTime time={t.lastActivityAt} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
