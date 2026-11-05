@@ -353,6 +353,10 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 
 並び順は `last_activity_at`（コメントを含む最後の操作の時刻）の降順。
 
+ページングは AIP-158 の `page_size` / `page_token` / `next_page_token` で行う。`page_size` の既定は 100、上限は 500。
+`page_token` は `filter` と `order_by` とオフセットを持ち、別の `filter` や `order_by` と組み合わせると INVALID_ARGUMENT にする。
+オフセット方式なので、ページを移る間にチケットが更新されると重複や抜けが起きうるが、内部向けの件数では許容する。
+
 ## 9. デプロイ
 
 - サーバーとフロントエンドのコンテナイメージを `containers/` に追加し、マニフェストを `manifests/` に置く

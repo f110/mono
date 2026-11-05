@@ -20,6 +20,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   TextField,
@@ -33,6 +34,7 @@ import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
 
 const defaultFilter = 'status = OPEN OR status = IN_PROGRESS'
 const defaultOrder = 'last_activity_at desc'
+const pageSize = 100
 
 const columns: { label: string; field?: string }[] = [
   { label: '#', field: 'number' },
@@ -63,22 +65,28 @@ export const TicketListPage = () => {
   const [orderField, orderDirection] = orderBy.split(' ')
   const [input, setInput] = useState(filter)
   const { components } = useMasters()
+  const pages = search.pages ?? []
   const separateP0 = filter === defaultFilter
   const { data, error } = useQuery(Issue.method.listTickets, {
     filter: withComponent(separateP0 ? `(${filter}) AND priority != P0` : filter, component),
     orderBy,
+    pageSize,
+    pageToken: pages.at(-1) ?? '',
   })
   const { data: p0, error: p0Error } = useQuery(
     Issue.method.listTickets,
-    separateP0 ? { filter: withComponent(`(${filter}) AND priority = P0`, component), orderBy } : skipToken,
+    separateP0 && pages.length === 0 ? { filter: withComponent(`(${filter}) AND priority = P0`, component), orderBy } : skipToken,
   )
 
   const sortBy = (field: string) => {
     const direction =
       field === orderField && orderDirection !== 'desc' ? ' desc' : ''
     void navigate({
-      search: (prev) => ({ ...prev, order_by: field + direction }),
+      search: (prev) => ({ ...prev, order_by: field + direction, pages: undefined }),
     })
+  }
+  const movePage = (next: string[]) => {
+    void navigate({ search: (prev) => ({ ...prev, pages: next.length > 0 ? next : undefined }) })
   }
 
   return (
@@ -98,6 +106,7 @@ export const TicketListPage = () => {
               search: (prev) => ({
                 ...prev,
                 component: e.target.value || undefined,
+                pages: undefined,
               }),
             })
           }
@@ -119,7 +128,7 @@ export const TicketListPage = () => {
           sx={{ flex: 1, minWidth: 320 }}
           onSubmit={(e) => {
             e.preventDefault()
-            void navigate({ search: (prev) => ({ ...prev, filter: input }) })
+            void navigate({ search: (prev) => ({ ...prev, filter: input, pages: undefined }) })
           }}
         >
           <TextField
@@ -144,6 +153,15 @@ export const TicketListPage = () => {
       {data && data.tickets.length === 0 && (
         <Typography color="text.secondary">チケットはありません</Typography>
       )}
+      <TablePagination
+        component="div"
+        count={data && !data.nextPageToken ? pages.length * pageSize + data.tickets.length : -1}
+        page={pages.length}
+        rowsPerPage={pageSize}
+        rowsPerPageOptions={[]}
+        onPageChange={(_, page) => movePage(page > pages.length ? [...pages, data!.nextPageToken] : pages.slice(0, -1))}
+        slotProps={{ actions: { nextButton: { disabled: !data?.nextPageToken } } }}
+      />
     </Stack>
   )
 }

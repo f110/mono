@@ -20,8 +20,10 @@ import (
 )
 
 type listTicketsInput struct {
-	Filter  string `json:"filter,omitempty" jsonschema:"Filter of the tickets written in AIP-160. The fields are status, priority, component, assignee, reporter, title and body. component, assignee and reporter are the names. The value without the field matches the title, the body and the comments partially. e.g. (status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"`
-	OrderBy string `json:"order_by,omitempty" jsonschema:"Order of the tickets written in AIP-132. The fields are number, status, priority, component, assignee, created_at and last_activity_at. The default is last_activity_at desc"`
+	Filter    string `json:"filter,omitempty" jsonschema:"Filter of the tickets written in AIP-160. The fields are status, priority, component, assignee, reporter, title and body. component, assignee and reporter are the names. The value without the field matches the title, the body and the comments partially. e.g. (status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"`
+	OrderBy   string `json:"order_by,omitempty" jsonschema:"Order of the tickets written in AIP-132. The fields are number, status, priority, component, assignee, created_at and last_activity_at. The default is last_activity_at desc"`
+	PageSize  int32  `json:"page_size,omitempty" jsonschema:"Maximum number of the tickets. The default is 100 and the maximum is 500"`
+	PageToken string `json:"page_token,omitempty" jsonschema:"next_page_token of the previous result to get the next page. filter and order_by must be the same as the previous call"`
 }
 
 type ticketInput struct {
@@ -86,7 +88,7 @@ func New(tracker *issue.Tracker, repositories server.Repositories, authenticate 
 func newServer(h *server.IssueHandler) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{Name: "issue", Version: "v0.1.0"}, nil)
 	addTool(s, "list_tickets", "List the tickets which match the filter", h.ListTickets, func(in listTicketsInput) (*api.RequestListTickets, error) {
-		return api.RequestListTickets_builder{Filter: &in.Filter, OrderBy: &in.OrderBy}.Build(), nil
+		return api.RequestListTickets_builder{Filter: &in.Filter, OrderBy: &in.OrderBy, PageSize: &in.PageSize, PageToken: &in.PageToken}.Build(), nil
 	})
 	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks, the comments, the commits and the pull requests", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
 		return api.RequestGetTicket_builder{Number: &in.Number}.Build(), nil

@@ -205,10 +205,17 @@ message RequestListTickets {
   // order_by is the order of the tickets written in AIP-132, e.g. "priority, last_activity_at desc". The fields are number,
   // status, priority, component, assignee, created_at and last_activity_at. The default is "last_activity_at desc".
   string order_by = 2;
+  // page_size is the maximum number of the tickets in the response written in AIP-158. The default is 100, and the
+  // value larger than 500 is coerced to 500.
+  int32 page_size = 3;
+  // page_token is next_page_token of the previous response. filter and order_by must be the same as the previous request.
+  string page_token = 4;
 }
 
 message ResponseListTickets {
   repeated Ticket tickets = 1;
+  // next_page_token is the token to get the next page. It is empty if there is no next page.
+  string next_page_token = 2;
 }
 
 message RequestGetTicket {

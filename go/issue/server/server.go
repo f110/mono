@@ -3,11 +3,14 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
+	"go.f110.dev/xerrors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.f110.dev/mono/go/enumerable"
@@ -37,12 +40,65 @@ func NewIssueHandler(t *issue.Tracker, repositories Repositories) *IssueHandler 
 	return &IssueHandler{tracker: t, repositories: repositories}
 }
 
+const (
+	defaultPageSize = 100
+	maxPageSize     = 500
+)
+
+// pageToken is the content of page_token of ListTickets. filter and order_by are kept to reject the token which is used
+// with the other request.
+type pageToken struct {
+	Filter  string `json:"filter"`
+	OrderBy string `json:"order_by"`
+	Offset  int    `json:"offset"`
+}
+
+func (p pageToken) encode() string {
+	b, _ := json.Marshal(p)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+func decodePageToken(s string) (pageToken, error) {
+	var p pageToken
+	b, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return p, xerrors.WithStack(err)
+	}
+	if err := json.Unmarshal(b, &p); err != nil {
+		return p, xerrors.WithStack(err)
+	}
+	return p, nil
+}
+
 func (h *IssueHandler) ListTickets(ctx context.Context, req *connect.Request[api.RequestListTickets]) (*connect.Response[api.ResponseListTickets], error) {
-	tickets, err := h.tracker.Find(ctx, req.Msg.GetFilter(), req.Msg.GetOrderBy())
+	size := int(req.Msg.GetPageSize())
+	switch {
+	case size < 0:
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("page_size must not be negative"))
+	case size == 0:
+		size = defaultPageSize
+	case size > maxPageSize:
+		size = maxPageSize
+	}
+	page := pageToken{Filter: req.Msg.GetFilter(), OrderBy: req.Msg.GetOrderBy()}
+	if req.Msg.GetPageToken() != "" {
+		p, err := decodePageToken(req.Msg.GetPageToken())
+		if err != nil || p.Filter != page.Filter || p.OrderBy != page.OrderBy || p.Offset < 0 {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid page_token"))
+		}
+		page = p
+	}
+
+	tickets, err := h.tracker.Find(ctx, page.Filter, page.OrderBy, page.Offset, size+1)
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	return connect.NewResponse(api.ResponseListTickets_builder{Tickets: enumerable.Map(tickets, toTicket)}.Build()), nil
+	var next string
+	if len(tickets) > size {
+		tickets = tickets[:size]
+		next = pageToken{Filter: page.Filter, OrderBy: page.OrderBy, Offset: page.Offset + size}.encode()
+	}
+	return connect.NewResponse(api.ResponseListTickets_builder{Tickets: enumerable.Map(tickets, toTicket), NextPageToken: &next}.Build()), nil
 }
 
 func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.RequestGetTicket]) (*connect.Response[api.ResponseGetTicket], error) {

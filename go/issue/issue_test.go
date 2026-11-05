@@ -505,7 +505,7 @@ func TestFind(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.filter, func(t *testing.T) {
-			tickets, err := f.tracker.Find(f.as(f.human), tc.filter, "")
+			tickets, err := f.tracker.Find(f.as(f.human), tc.filter, "", 0, 100)
 			assertion.MustNoError(t, err)
 			var got []int32
 			for _, v := range tickets {
@@ -515,7 +515,7 @@ func TestFind(t *testing.T) {
 		})
 	}
 
-	_, err = f.tracker.Find(f.as(f.human), "status = CLOSED", "")
+	_, err = f.tracker.Find(f.as(f.human), "status = CLOSED", "", 0, 100)
 	mustErrorIs(t, err, ErrInvalidArgument)
 
 	orders := []struct {
@@ -536,7 +536,7 @@ func TestFind(t *testing.T) {
 	}
 	for _, tc := range orders {
 		t.Run(tc.orderBy, func(t *testing.T) {
-			tickets, err := f.tracker.Find(f.as(f.human), "", tc.orderBy)
+			tickets, err := f.tracker.Find(f.as(f.human), "", tc.orderBy, 0, 100)
 			assertion.MustNoError(t, err)
 			var got []int32
 			for _, v := range tickets {
@@ -546,8 +546,28 @@ func TestFind(t *testing.T) {
 		})
 	}
 	for _, orderBy := range []string{"title", "number up", "number desc desc"} {
-		_, err = f.tracker.Find(f.as(f.human), "", orderBy)
+		_, err = f.tracker.Find(f.as(f.human), "", orderBy, 0, 100)
 		mustErrorIs(t, err, ErrInvalidArgument)
+	}
+
+	pages := []struct {
+		offset, limit int
+		want          []int32
+	}{
+		{offset: 0, limit: 2, want: []int32{t1.Id, t2.Id}},
+		{offset: 2, limit: 2, want: []int32{t3.Id}},
+		{offset: 3, limit: 2, want: nil},
+	}
+	for _, tc := range pages {
+		t.Run(fmt.Sprintf("offset %d limit %d", tc.offset, tc.limit), func(t *testing.T) {
+			tickets, err := f.tracker.Find(f.as(f.human), "", "number", tc.offset, tc.limit)
+			assertion.MustNoError(t, err)
+			var got []int32
+			for _, v := range tickets {
+				got = append(got, v.Id)
+			}
+			assertion.Equal(t, got, tc.want)
+		})
 	}
 }
 
@@ -574,7 +594,7 @@ func TestWithHuman(t *testing.T) {
 	f := newFixture(t)
 	ctx := WithHuman(context.Background(), "alice@example.com")
 
-	_, err := f.tracker.Find(ctx, "", "")
+	_, err := f.tracker.Find(ctx, "", "", 0, 100)
 	assertion.MustNoError(t, err)
 	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
 	mustErrorIs(t, err, sql.ErrNoRows)
@@ -596,7 +616,7 @@ func TestWithHuman(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, existing.Id, f.human.Id)
 
-	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "", "")
+	_, err = f.tracker.Find(WithHuman(context.Background(), ""), "", "", 0, 100)
 	mustErrorIs(t, err, ErrUnauthenticated)
 }
 
@@ -604,7 +624,7 @@ func TestWithAgent(t *testing.T) {
 	f := newFixture(t)
 	ctx := WithAgent(context.Background(), "alice@example.com")
 
-	_, err := f.tracker.Find(ctx, "", "")
+	_, err := f.tracker.Find(ctx, "", "", 0, 100)
 	assertion.MustNoError(t, err)
 	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
 	mustErrorIs(t, err, sql.ErrNoRows)
@@ -632,7 +652,7 @@ func TestWithAgent(t *testing.T) {
 	_, err = f.tracker.SaveComponent(ctx, 0, "agent")
 	mustErrorIs(t, err, ErrPermissionDenied)
 
-	_, err = f.tracker.Find(WithAgent(context.Background(), ""), "", "")
+	_, err = f.tracker.Find(WithAgent(context.Background(), ""), "", "", 0, 100)
 	mustErrorIs(t, err, ErrUnauthenticated)
 }
 

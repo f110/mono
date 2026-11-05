@@ -136,8 +136,9 @@ func (t *Tracker) Ticket(ctx context.Context, number int32) (*Ticket, error) {
 
 // Find returns the tickets which match the filter in the order of orderBy. The filter is written in AIP-160. See the
 // package filter for the fields. orderBy is written in AIP-132, and the fields are the keys of orderFields. The tickets
-// are ordered by the last activity in the descending order if orderBy is empty.
-func (t *Tracker) Find(ctx context.Context, f, orderBy string) ([]*Ticket, error) {
+// are ordered by the last activity in the descending order if orderBy is empty. At most limit tickets are returned
+// after skipping offset tickets.
+func (t *Tracker) Find(ctx context.Context, f, orderBy string, offset, limit int) ([]*Ticket, error) {
 	if err := authenticated(ctx); err != nil {
 		return nil, err
 	}
@@ -155,7 +156,8 @@ func (t *Tracker) Find(ctx context.Context, f, orderBy string) ([]*Ticket, error
 	if where != "" {
 		query += " WHERE " + where
 	}
-	query += " ORDER BY " + order
+	query += " ORDER BY " + order + " LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
 	rows, err := t.conn.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, xerrors.WithStack(err)

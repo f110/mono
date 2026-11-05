@@ -452,6 +452,21 @@ export declare type RequestListTickets = Message<"mono.issue.RequestListTickets"
    * @generated from field: string order_by = 2;
    */
   orderBy: string;
+
+  /**
+   * page_size is the maximum number of the tickets in the response written in AIP-158. The default is 100, and the
+   * value larger than 500 is coerced to 500.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * page_token is next_page_token of the previous response. filter and order_by must be the same as the previous request.
+   *
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
 };
 
 /**
@@ -468,6 +483,13 @@ export declare type ResponseListTickets = Message<"mono.issue.ResponseListTicket
    * @generated from field: repeated mono.issue.Ticket tickets = 1;
    */
   tickets: Ticket[];
+
+  /**
+   * next_page_token is the token to get the next page. It is empty if there is no next page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**

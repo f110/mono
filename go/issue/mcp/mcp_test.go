@@ -181,6 +181,18 @@ func TestNew(t *testing.T) {
 		assertion.Equal(t, len(ticket.GetRelations()), 1)
 	})
 
+	t.Run("list the tickets by the pages", func(t *testing.T) {
+		first := &api.ResponseListTickets{}
+		call(t, session, "list_tickets", map[string]any{"order_by": "number", "page_size": 1}, first)
+		assertion.MustLen(t, first.GetTickets(), 1)
+		assertion.True(t, first.GetNextPageToken() != "")
+
+		second := &api.ResponseListTickets{}
+		call(t, session, "list_tickets", map[string]any{"order_by": "number", "page_size": 1, "page_token": first.GetNextPageToken()}, second)
+		assertion.MustLen(t, second.GetTickets(), 1)
+		assertion.True(t, second.GetTickets()[0].GetNumber() > first.GetTickets()[0].GetNumber())
+	})
+
 	t.Run("list the components", func(t *testing.T) {
 		res := &api.ResponseListComponents{}
 		call(t, session, "list_components", map[string]any{}, res)

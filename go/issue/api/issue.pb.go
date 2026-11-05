@@ -2599,6 +2599,8 @@ type RequestListTickets struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Filter      *string                `protobuf:"bytes,1,opt,name=filter"`
 	xxx_hidden_OrderBy     *string                `protobuf:"bytes,2,opt,name=order_by,json=orderBy"`
+	xxx_hidden_PageSize    int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize"`
+	xxx_hidden_PageToken   *string                `protobuf:"bytes,4,opt,name=page_token,json=pageToken"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -2650,14 +2652,41 @@ func (x *RequestListTickets) GetOrderBy() string {
 	return ""
 }
 
+func (x *RequestListTickets) GetPageSize() int32 {
+	if x != nil {
+		return x.xxx_hidden_PageSize
+	}
+	return 0
+}
+
+func (x *RequestListTickets) GetPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_PageToken != nil {
+			return *x.xxx_hidden_PageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *RequestListTickets) SetFilter(v string) {
 	x.xxx_hidden_Filter = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *RequestListTickets) SetOrderBy(v string) {
 	x.xxx_hidden_OrderBy = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *RequestListTickets) SetPageSize(v int32) {
+	x.xxx_hidden_PageSize = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestListTickets) SetPageToken(v string) {
+	x.xxx_hidden_PageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *RequestListTickets) HasFilter() bool {
@@ -2674,6 +2703,20 @@ func (x *RequestListTickets) HasOrderBy() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
+func (x *RequestListTickets) HasPageSize() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestListTickets) HasPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
 func (x *RequestListTickets) ClearFilter() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Filter = nil
@@ -2684,11 +2727,23 @@ func (x *RequestListTickets) ClearOrderBy() {
 	x.xxx_hidden_OrderBy = nil
 }
 
+func (x *RequestListTickets) ClearPageSize() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_PageSize = 0
+}
+
+func (x *RequestListTickets) ClearPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_PageToken = nil
+}
+
 type RequestListTickets_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Filter  *string
-	OrderBy *string
+	Filter    *string
+	OrderBy   *string
+	PageSize  *int32
+	PageToken *string
 }
 
 func (b0 RequestListTickets_builder) Build() *RequestListTickets {
@@ -2696,21 +2751,32 @@ func (b0 RequestListTickets_builder) Build() *RequestListTickets {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Filter != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_Filter = b.Filter
 	}
 	if b.OrderBy != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
 		x.xxx_hidden_OrderBy = b.OrderBy
+	}
+	if b.PageSize != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_PageSize = *b.PageSize
+	}
+	if b.PageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_PageToken = b.PageToken
 	}
 	return m0
 }
 
 type ResponseListTickets struct {
-	state              protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Tickets *[]*Ticket             `protobuf:"bytes,1,rep,name=tickets"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Tickets       *[]*Ticket             `protobuf:"bytes,1,rep,name=tickets"`
+	xxx_hidden_NextPageToken *string                `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ResponseListTickets) Reset() {
@@ -2747,14 +2813,42 @@ func (x *ResponseListTickets) GetTickets() []*Ticket {
 	return nil
 }
 
+func (x *ResponseListTickets) GetNextPageToken() string {
+	if x != nil {
+		if x.xxx_hidden_NextPageToken != nil {
+			return *x.xxx_hidden_NextPageToken
+		}
+		return ""
+	}
+	return ""
+}
+
 func (x *ResponseListTickets) SetTickets(v []*Ticket) {
 	x.xxx_hidden_Tickets = &v
+}
+
+func (x *ResponseListTickets) SetNextPageToken(v string) {
+	x.xxx_hidden_NextPageToken = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *ResponseListTickets) HasNextPageToken() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseListTickets) ClearNextPageToken() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_NextPageToken = nil
 }
 
 type ResponseListTickets_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
-	Tickets []*Ticket
+	Tickets       []*Ticket
+	NextPageToken *string
 }
 
 func (b0 ResponseListTickets_builder) Build() *ResponseListTickets {
@@ -2762,6 +2856,10 @@ func (b0 ResponseListTickets_builder) Build() *ResponseListTickets {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Tickets = &b.Tickets
+	if b.NextPageToken != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_NextPageToken = b.NextPageToken
+	}
 	return m0
 }
 
@@ -5286,12 +5384,16 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\x04body\x18\x02 \x01(\tR\x04body\x12\x19\n" +
 	"\bactor_id\x18\x03 \x01(\x05R\aactorId\x129\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"G\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x83\x01\n" +
 	"\x12RequestListTickets\x12\x16\n" +
 	"\x06filter\x18\x01 \x01(\tR\x06filter\x12\x19\n" +
-	"\border_by\x18\x02 \x01(\tR\aorderBy\"C\n" +
+	"\border_by\x18\x02 \x01(\tR\aorderBy\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"k\n" +
 	"\x13ResponseListTickets\x12,\n" +
-	"\atickets\x18\x01 \x03(\v2\x12.mono.issue.TicketR\atickets\"*\n" +
+	"\atickets\x18\x01 \x03(\v2\x12.mono.issue.TicketR\atickets\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"*\n" +
 	"\x10RequestGetTicket\x12\x16\n" +
 	"\x06number\x18\x01 \x01(\x05R\x06number\"\xd7\x02\n" +
 	"\x11ResponseGetTicket\x12*\n" +

@@ -21,6 +21,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/database/dbtestutil"
+	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/api"
@@ -265,6 +266,36 @@ func TestIssueHandler(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.MustLen(t, res.Msg.GetTickets(), 1)
 		assertion.Equal(t, res.Msg.GetTickets()[0].GetNumber(), ticket.GetNumber())
+	})
+
+	t.Run("list the tickets by the pages", func(t *testing.T) {
+		all, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{OrderBy: new("number")}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, all.Msg.GetNextPageToken(), "")
+		assertion.True(t, len(all.Msg.GetTickets()) > 1)
+
+		var got []int32
+		token := ""
+		for {
+			res, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{OrderBy: new("number"), PageSize: new(int32(1)), PageToken: new(token)}.Build()))
+			assertion.MustNoError(t, err)
+			assertion.MustLen(t, res.Msg.GetTickets(), 1)
+			got = append(got, res.Msg.GetTickets()[0].GetNumber())
+			token = res.Msg.GetNextPageToken()
+			if token == "" {
+				break
+			}
+		}
+		assertion.Equal(t, got, enumerable.Map(all.Msg.GetTickets(), (*api.Ticket).GetNumber))
+
+		first, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{OrderBy: new("number"), PageSize: new(int32(1))}.Build()))
+		assertion.MustNoError(t, err)
+		_, err = client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{PageSize: new(int32(1)), PageToken: new(first.Msg.GetNextPageToken())}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+		_, err = client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{PageToken: new("invalid")}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+		_, err = client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{PageSize: new(int32(-1))}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 	})
 
 	t.Run("list the revisions of the body and the comment", func(t *testing.T) {
