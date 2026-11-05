@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Divider,
   IconButton,
   Link,
@@ -40,6 +41,7 @@ import {
   relationLabels,
   relationTypes,
   statuses,
+  statusColors,
   statusLabels,
 } from '../labels.ts'
 
@@ -95,6 +97,7 @@ export const TicketPage = () => {
       {update.error && <Alert severity="error">{update.error.message}</Alert>}
       {editingTitle === null ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Chip label={statusLabels[ticket.status]} sx={statusColors[ticket.status]} />
           <Typography variant="h5">
             {ticket.title} <Typography component="span" variant="h5" color="text.secondary">#{ticket.number}</Typography>
           </Typography>
