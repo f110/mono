@@ -27,6 +27,18 @@ CREATE TABLE `component` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `ticket_template`;
+CREATE TABLE `ticket_template` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`title` VARCHAR(255) NOT NULL,
+	`body` TEXT NOT NULL,
+	`component_id` INTEGER NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `idx_title` (`title`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `ticket`;
 CREATE TABLE `ticket` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,

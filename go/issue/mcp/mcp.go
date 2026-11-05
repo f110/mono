@@ -72,6 +72,17 @@ type activitiesInput struct {
 	Ticket int32 `json:"ticket" jsonschema:"Number of the ticket"`
 }
 
+type saveTemplateInput struct {
+	ID          int32  `json:"id,omitempty" jsonschema:"ID of the template. Omit to create the template"`
+	Title       string `json:"title" jsonschema:"Title of the new ticket. It is also the name of the template"`
+	Body        string `json:"body,omitempty" jsonschema:"Body of the new ticket written in Markdown"`
+	ComponentID int32  `json:"component_id,omitempty" jsonschema:"ID of the component of the new ticket. Omit or 0 for no component. See list_components"`
+}
+
+type templateInput struct {
+	ID int32 `json:"id" jsonschema:"ID of the template"`
+}
+
 type emptyInput struct{}
 
 // New returns the HTTP handler which serves MCP. The requests are authenticated by authenticate which puts the claims of
@@ -156,6 +167,15 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 	})
 	addTool(s, "list_components", "List the components which the tickets can be classified into", h.ListComponents, func(emptyInput) (*api.RequestListComponents, error) {
 		return &api.RequestListComponents{}, nil
+	})
+	addTool(s, "list_templates", "List the templates which have the initial values of the new ticket", h.ListTemplates, func(emptyInput) (*api.RequestListTemplates, error) {
+		return &api.RequestListTemplates{}, nil
+	})
+	addTool(s, "save_template", "Create the template if id is omitted, otherwise replace all fields of the template", h.SaveTemplate, func(in saveTemplateInput) (*api.RequestSaveTemplate, error) {
+		return api.RequestSaveTemplate_builder{Id: &in.ID, Title: &in.Title, Body: &in.Body, ComponentId: &in.ComponentID}.Build(), nil
+	})
+	addTool(s, "delete_template", "Delete the template", h.DeleteTemplate, func(in templateInput) (*api.RequestDeleteTemplate, error) {
+		return api.RequestDeleteTemplate_builder{Id: &in.ID}.Build(), nil
 	})
 	addTool(s, "list_actors", "List the actors. The id is used as assignee_id", h.ListActors, func(emptyInput) (*api.RequestListActors, error) {
 		return &api.RequestListActors{}, nil

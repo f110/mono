@@ -568,6 +568,220 @@ func (d *Component) Update(ctx context.Context, component *database.Component, o
 	return nil
 }
 
+type TicketTemplate struct {
+	conn *sql.DB
+}
+
+type TicketTemplateInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.TicketTemplate, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.TicketTemplate, error)
+	ListAll(ctx context.Context, opt ...ListOption) ([]*database.TicketTemplate, error)
+	Create(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) (*database.TicketTemplate, error)
+	Update(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ TicketTemplateInterface = (*TicketTemplate)(nil)
+
+func NewTicketTemplate(conn *sql.DB) *TicketTemplate {
+	return &TicketTemplate{
+		conn: conn,
+	}
+}
+
+func (d *TicketTemplate) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *TicketTemplate) Select(ctx context.Context, id int32) (*database.TicketTemplate, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `ticket_template` WHERE `id` = ?", id)
+
+	v := &database.TicketTemplate{}
+	if err := row.Scan(&v.Id, &v.Title, &v.Body, &v.ComponentId, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *TicketTemplate) SelectMulti(ctx context.Context, id ...int32) ([]*database.TicketTemplate, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := range id {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `ticket_template` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.TicketTemplate, 0, len(id))
+	for rows.Next() {
+		r := &database.TicketTemplate{}
+		if err := rows.Scan(&r.Id, &r.Title, &r.Body, &r.ComponentId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *TicketTemplate) ListAll(ctx context.Context, opt ...ListOption) ([]*database.TicketTemplate, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `title`, `body`, `component_id`, `created_at`, `updated_at` FROM `ticket_template`"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.TicketTemplate, 0)
+	for rows.Next() {
+		r := &database.TicketTemplate{}
+		if err := rows.Scan(&r.Id, &r.Title, &r.Body, &r.ComponentId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+func (d *TicketTemplate) Create(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) (*database.TicketTemplate, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `ticket_template` (`title`, `body`, `component_id`, `created_at`) VALUES (?, ?, ?, ?)",
+		ticketTemplate.Title, ticketTemplate.Body, ticketTemplate.ComponentId, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	ticketTemplate = ticketTemplate.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	ticketTemplate.Id = int32(insertedId)
+
+	ticketTemplate.ResetMark()
+	return ticketTemplate, nil
+}
+
+func (d *TicketTemplate) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `ticket_template` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *TicketTemplate) Update(ctx context.Context, ticketTemplate *database.TicketTemplate, opt ...ExecOption) error {
+	if !ticketTemplate.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := ticketTemplate.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `ticket_template` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, ticketTemplate.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	ticketTemplate.ResetMark()
+	return nil
+}
+
 type Ticket struct {
 	conn *sql.DB
 

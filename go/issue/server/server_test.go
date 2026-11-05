@@ -327,6 +327,39 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 	})
 
+	t.Run("manage the templates", func(t *testing.T) {
+		created, err := client.SaveTemplate(ctx, connect.NewRequest(api.RequestSaveTemplate_builder{
+			Title:       new("bug"),
+			Body:        new("## Steps"),
+			ComponentId: new(component.Msg.GetComponent().GetId()),
+		}.Build()))
+		assertion.MustNoError(t, err)
+		tmpl := created.Msg.GetTemplate()
+		assertion.Equal(t, tmpl.GetTitle(), "bug")
+		assertion.Equal(t, tmpl.GetBody(), "## Steps")
+		assertion.Equal(t, tmpl.GetComponentId(), component.Msg.GetComponent().GetId())
+
+		updated, err := client.SaveTemplate(ctx, connect.NewRequest(api.RequestSaveTemplate_builder{
+			Id:          new(tmpl.GetId()),
+			Title:       new("task"),
+			ComponentId: new(int32(0)),
+		}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, updated.Msg.GetTemplate().GetTitle(), "task")
+		assertion.Equal(t, updated.Msg.GetTemplate().GetBody(), "")
+		assertion.False(t, updated.Msg.GetTemplate().HasComponentId())
+
+		list, err := client.ListTemplates(ctx, connect.NewRequest(&api.RequestListTemplates{}))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, list.Msg.GetTemplates(), 1)
+		assertion.Equal(t, list.Msg.GetTemplates()[0].GetTitle(), "task")
+
+		_, err = client.DeleteTemplate(ctx, connect.NewRequest(api.RequestDeleteTemplate_builder{Id: new(tmpl.GetId())}.Build()))
+		assertion.MustNoError(t, err)
+		_, err = client.DeleteTemplate(ctx, connect.NewRequest(api.RequestDeleteTemplate_builder{Id: new(tmpl.GetId())}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
+	})
+
 	t.Run("errors are mapped to the codes", func(t *testing.T) {
 		_, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{Filter: new("status = CLOSED")}.Build()))
 		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)

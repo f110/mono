@@ -256,6 +256,88 @@ func (e *Component) Copy() *Component {
 	return n
 }
 
+// TicketTemplate is the initial values of the fields of the new ticket. title is also the name of the template. The tickets don't refer to the template.
+type TicketTemplate struct {
+	Id          int32
+	Title       string
+	Body        string
+	ComponentId *int32
+	CreatedAt   time.Time
+	UpdatedAt   *time.Time
+
+	mu   sync.Mutex
+	mark *TicketTemplate
+}
+
+func (e *TicketTemplate) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *TicketTemplate) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.Title != e.mark.Title ||
+		e.Body != e.mark.Body ||
+		((e.ComponentId != nil && (e.mark.ComponentId == nil || *e.ComponentId != *e.mark.ComponentId)) || e.ComponentId == nil && e.mark.ComponentId != nil) ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *TicketTemplate) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.Title != e.mark.Title {
+		res = append(res, ddl.Column{Name: "title", Value: e.Title})
+	}
+	if e.Body != e.mark.Body {
+		res = append(res, ddl.Column{Name: "body", Value: e.Body})
+	}
+	if (e.ComponentId != nil && (e.mark.ComponentId == nil || *e.ComponentId != *e.mark.ComponentId)) || (e.ComponentId == nil && e.mark.ComponentId != nil) {
+		if e.ComponentId != nil {
+			res = append(res, ddl.Column{Name: "component_id", Value: *e.ComponentId})
+		} else {
+			res = append(res, ddl.Column{Name: "component_id", Value: nil})
+		}
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *TicketTemplate) Copy() *TicketTemplate {
+	n := &TicketTemplate{
+		Id:        e.Id,
+		Title:     e.Title,
+		Body:      e.Body,
+		CreatedAt: e.CreatedAt,
+	}
+	if e.ComponentId != nil {
+		v := *e.ComponentId
+		n.ComponentId = &v
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	return n
+}
+
 // Ticket is an issue. id is used as the ticket number.
 type Ticket struct {
 	Id          int32

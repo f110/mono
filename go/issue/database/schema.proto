@@ -129,6 +129,26 @@ message Component {
   };
 }
 
+// TicketTemplate is the initial values of the fields of the new ticket. title is also the name of the template. The tickets don't refer to the template.
+message TicketTemplate {
+  int32  id           = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  string title        = 2 [(dev.f110.ddl.column) = { unique: true }];
+  string body         = 3 [(dev.f110.ddl.column) = { type: "text" }];
+  int32  component_id = 4 [(dev.f110.ddl.column) = { null: true }];
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "All"
+      query: "SELECT * FROM `:table_name:`"
+    }
+  };
+}
+
 // Ticket is an issue. id is used as the ticket number.
 message Ticket {
   int32        id           = 1 [(dev.f110.ddl.column) = { sequence: true }];

@@ -1,7 +1,10 @@
 import { Outlet, Link as RouterLink, useRouterState } from '@tanstack/react-router'
 import { List, ListItemButton, ListItemText, Paper, Stack } from '@mui/material'
 
-const sections = [{ to: '/admin/components', label: 'Component' }] as const
+const sections = [
+  { to: '/admin/components', label: 'Component' },
+  { to: '/admin/templates', label: 'Template' },
+] as const
 
 export const AdminLayout = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname })

@@ -590,6 +590,42 @@ func TestSaveComponent(t *testing.T) {
 	mustErrorIs(t, err, ErrInvalidArgument)
 }
 
+func TestTemplate(t *testing.T) {
+	f := newFixture(t)
+	component := f.component(t, "build")
+	created, err := f.tracker.SaveTemplate(f.as(f.agent), 0, "bug", "## Steps", &component.Id)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, created.Title, "bug")
+	assertion.Equal(t, created.Body, "## Steps")
+	assertion.Equal(t, *created.ComponentId, component.Id)
+
+	updated, err := f.tracker.SaveTemplate(f.as(f.human), created.Id, "task", "- [ ] item", nil)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, updated.Title, "task")
+	assertion.Equal(t, updated.Body, "- [ ] item")
+	assertion.True(t, updated.ComponentId == nil)
+	templates, err := f.tracker.Templates(f.as(f.agent))
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, templates, 1)
+	assertion.Equal(t, templates[0].Title, "task")
+
+	_, err = f.tracker.SaveTemplate(f.as(f.system), 0, "system", "", nil)
+	mustErrorIs(t, err, ErrPermissionDenied)
+	_, err = f.tracker.SaveTemplate(f.as(f.human), 100, "unknown", "", nil)
+	mustErrorIs(t, err, ErrNotFound)
+	_, err = f.tracker.SaveTemplate(f.as(f.human), 0, "", "", nil)
+	mustErrorIs(t, err, ErrInvalidArgument)
+	_, err = f.tracker.SaveTemplate(f.as(f.human), 0, "component", "", new(int32(100)))
+	mustErrorIs(t, err, ErrInvalidArgument)
+
+	mustErrorIs(t, f.tracker.DeleteTemplate(f.as(f.system), created.Id), ErrPermissionDenied)
+	assertion.MustNoError(t, f.tracker.DeleteTemplate(f.as(f.agent), created.Id))
+	templates, err = f.tracker.Templates(f.as(f.human))
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, templates, 0)
+	mustErrorIs(t, f.tracker.DeleteTemplate(f.as(f.human), created.Id), ErrNotFound)
+}
+
 func TestWithHuman(t *testing.T) {
 	f := newFixture(t)
 	ctx := WithHuman(context.Background(), "alice@example.com")

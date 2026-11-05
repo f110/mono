@@ -28,6 +28,10 @@ service Issue {
   rpc ListComponents(RequestListComponents) returns (ResponseListComponents);
   // SaveComponent creates the component if id is not set, otherwise renames it.
   rpc SaveComponent(RequestSaveComponent) returns (ResponseSaveComponent);
+  rpc ListTemplates(RequestListTemplates) returns (ResponseListTemplates);
+  // SaveTemplate creates the template if id is not set, otherwise replaces all fields of it.
+  rpc SaveTemplate(RequestSaveTemplate) returns (ResponseSaveTemplate);
+  rpc DeleteTemplate(RequestDeleteTemplate) returns (ResponseDeleteTemplate);
   rpc ListActors(RequestListActors) returns (ResponseListActors);
   rpc WhoAmI(RequestWhoAmI) returns (ResponseWhoAmI);
 }
@@ -125,6 +129,15 @@ message Actor {
 message Component {
   int32  id   = 1;
   string name = 2;
+}
+
+// Template is the initial values of the fields of the new ticket.
+message Template {
+  int32  id           = 1;
+  // title is also the name of the template.
+  string title        = 2;
+  string body         = 3;
+  int32  component_id = 4;
 }
 
 message Relation {
@@ -340,6 +353,30 @@ message RequestSaveComponent {
 message ResponseSaveComponent {
   Component component = 1;
 }
+
+message RequestListTemplates {}
+
+message ResponseListTemplates {
+  repeated Template templates = 1;
+}
+
+message RequestSaveTemplate {
+  int32  id    = 1;
+  string title = 2;
+  string body  = 3;
+  // component_id is not set or 0 if the template has no component.
+  int32 component_id = 4;
+}
+
+message ResponseSaveTemplate {
+  Template template = 1;
+}
+
+message RequestDeleteTemplate {
+  int32 id = 1;
+}
+
+message ResponseDeleteTemplate {}
 
 message RequestListActors {}
 

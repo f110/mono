@@ -334,6 +334,33 @@ func (h *IssueHandler) SaveComponent(ctx context.Context, req *connect.Request[a
 	return connect.NewResponse(api.ResponseSaveComponent_builder{Component: toComponent(c)}.Build()), nil
 }
 
+func (h *IssueHandler) ListTemplates(ctx context.Context, _ *connect.Request[api.RequestListTemplates]) (*connect.Response[api.ResponseListTemplates], error) {
+	templates, err := h.tracker.Templates(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(api.ResponseListTemplates_builder{Templates: enumerable.Map(templates, toTemplate)}.Build()), nil
+}
+
+func (h *IssueHandler) SaveTemplate(ctx context.Context, req *connect.Request[api.RequestSaveTemplate]) (*connect.Response[api.ResponseSaveTemplate], error) {
+	var componentID *int32
+	if req.Msg.GetComponentId() != 0 {
+		componentID = new(req.Msg.GetComponentId())
+	}
+	tmpl, err := h.tracker.SaveTemplate(ctx, req.Msg.GetId(), req.Msg.GetTitle(), req.Msg.GetBody(), componentID)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(api.ResponseSaveTemplate_builder{Template: toTemplate(tmpl)}.Build()), nil
+}
+
+func (h *IssueHandler) DeleteTemplate(ctx context.Context, req *connect.Request[api.RequestDeleteTemplate]) (*connect.Response[api.ResponseDeleteTemplate], error) {
+	if err := h.tracker.DeleteTemplate(ctx, req.Msg.GetId()); err != nil {
+		return nil, toConnectError(err)
+	}
+	return connect.NewResponse(&api.ResponseDeleteTemplate{}), nil
+}
+
 func (h *IssueHandler) ListActors(ctx context.Context, _ *connect.Request[api.RequestListActors]) (*connect.Response[api.ResponseListActors], error) {
 	actors, err := h.tracker.Actors(ctx)
 	if err != nil {
@@ -413,6 +440,10 @@ func toActor(a *database.Actor) *api.Actor {
 
 func toComponent(c *database.Component) *api.Component {
 	return api.Component_builder{Id: new(c.Id), Name: new(c.Name)}.Build()
+}
+
+func toTemplate(t *database.TicketTemplate) *api.Template {
+	return api.Template_builder{Id: new(t.Id), Title: new(t.Title), Body: new(t.Body), ComponentId: t.ComponentId}.Build()
 }
 
 func toRelation(r *database.Relation) *api.Relation {

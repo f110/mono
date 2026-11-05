@@ -256,6 +256,73 @@ func (t *Tracker) SaveComponent(ctx context.Context, id int32, name string) (*da
 	return c, nil
 }
 
+func (t *Tracker) Templates(ctx context.Context) ([]*database.TicketTemplate, error) {
+	if err := authenticated(ctx); err != nil {
+		return nil, err
+	}
+	templates, err := t.dao.TicketTemplate.ListAll(ctx)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return templates, nil
+}
+
+// SaveTemplate creates the template if id is 0, otherwise replaces all fields of it. title is also the name of the template. componentID is optional. The human
+// and the agent can manage the templates.
+func (t *Tracker) SaveTemplate(ctx context.Context, id int32, title, body string, componentID *int32) (*database.TicketTemplate, error) {
+	if err := t.canManageTemplates(ctx); err != nil {
+		return nil, err
+	}
+	if err := validateName("title", title); err != nil {
+		return nil, err
+	}
+	if err := t.validateReferences(ctx, componentID, nil); err != nil {
+		return nil, err
+	}
+
+	if id == 0 {
+		tmpl, err := t.dao.TicketTemplate.Create(ctx, &database.TicketTemplate{Title: title, Body: body, ComponentId: componentID})
+		if err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		return tmpl, nil
+	}
+	tmpl, err := t.dao.TicketTemplate.Select(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound.WithStack()
+	} else if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	tmpl.Title, tmpl.Body, tmpl.ComponentId = title, body, componentID
+	if err := t.dao.TicketTemplate.Update(ctx, tmpl); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return tmpl, nil
+}
+
+func (t *Tracker) DeleteTemplate(ctx context.Context, id int32) error {
+	if err := t.canManageTemplates(ctx); err != nil {
+		return err
+	}
+	if err := t.dao.TicketTemplate.Delete(ctx, id); errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound.WithStack()
+	} else if err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func (t *Tracker) canManageTemplates(ctx context.Context) error {
+	actor, err := t.actor(ctx)
+	if err != nil {
+		return err
+	}
+	if actor.Kind == database.ActorKindSystem {
+		return ErrPermissionDenied.WithStack()
+	}
+	return nil
+}
+
 // Me returns the actor of the operations.
 func (t *Tracker) Me(ctx context.Context) (*database.Actor, error) {
 	return t.actor(ctx)

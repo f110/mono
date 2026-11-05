@@ -62,6 +62,12 @@ const (
 	IssueListComponentsProcedure = "/mono.issue.Issue/ListComponents"
 	// IssueSaveComponentProcedure is the fully-qualified name of the Issue's SaveComponent RPC.
 	IssueSaveComponentProcedure = "/mono.issue.Issue/SaveComponent"
+	// IssueListTemplatesProcedure is the fully-qualified name of the Issue's ListTemplates RPC.
+	IssueListTemplatesProcedure = "/mono.issue.Issue/ListTemplates"
+	// IssueSaveTemplateProcedure is the fully-qualified name of the Issue's SaveTemplate RPC.
+	IssueSaveTemplateProcedure = "/mono.issue.Issue/SaveTemplate"
+	// IssueDeleteTemplateProcedure is the fully-qualified name of the Issue's DeleteTemplate RPC.
+	IssueDeleteTemplateProcedure = "/mono.issue.Issue/DeleteTemplate"
 	// IssueListActorsProcedure is the fully-qualified name of the Issue's ListActors RPC.
 	IssueListActorsProcedure = "/mono.issue.Issue/ListActors"
 	// IssueWhoAmIProcedure is the fully-qualified name of the Issue's WhoAmI RPC.
@@ -84,6 +90,9 @@ type IssueClient interface {
 	ListCommentRevisions(context.Context, *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error)
 	ListComponents(context.Context, *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error)
 	SaveComponent(context.Context, *connect.Request[RequestSaveComponent]) (*connect.Response[ResponseSaveComponent], error)
+	ListTemplates(context.Context, *connect.Request[RequestListTemplates]) (*connect.Response[ResponseListTemplates], error)
+	SaveTemplate(context.Context, *connect.Request[RequestSaveTemplate]) (*connect.Response[ResponseSaveTemplate], error)
+	DeleteTemplate(context.Context, *connect.Request[RequestDeleteTemplate]) (*connect.Response[ResponseDeleteTemplate], error)
 	ListActors(context.Context, *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error)
 	WhoAmI(context.Context, *connect.Request[RequestWhoAmI]) (*connect.Response[ResponseWhoAmI], error)
 }
@@ -183,6 +192,24 @@ func NewIssueClient(httpClient connect.HTTPClient, baseURL string, opts ...conne
 			connect.WithSchema(issueMethods.ByName("SaveComponent")),
 			connect.WithClientOptions(opts...),
 		),
+		listTemplates: connect.NewClient[RequestListTemplates, ResponseListTemplates](
+			httpClient,
+			baseURL+IssueListTemplatesProcedure,
+			connect.WithSchema(issueMethods.ByName("ListTemplates")),
+			connect.WithClientOptions(opts...),
+		),
+		saveTemplate: connect.NewClient[RequestSaveTemplate, ResponseSaveTemplate](
+			httpClient,
+			baseURL+IssueSaveTemplateProcedure,
+			connect.WithSchema(issueMethods.ByName("SaveTemplate")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteTemplate: connect.NewClient[RequestDeleteTemplate, ResponseDeleteTemplate](
+			httpClient,
+			baseURL+IssueDeleteTemplateProcedure,
+			connect.WithSchema(issueMethods.ByName("DeleteTemplate")),
+			connect.WithClientOptions(opts...),
+		),
 		listActors: connect.NewClient[RequestListActors, ResponseListActors](
 			httpClient,
 			baseURL+IssueListActorsProcedure,
@@ -214,6 +241,9 @@ type issueClient struct {
 	listCommentRevisions *connect.Client[RequestListCommentRevisions, ResponseListCommentRevisions]
 	listComponents       *connect.Client[RequestListComponents, ResponseListComponents]
 	saveComponent        *connect.Client[RequestSaveComponent, ResponseSaveComponent]
+	listTemplates        *connect.Client[RequestListTemplates, ResponseListTemplates]
+	saveTemplate         *connect.Client[RequestSaveTemplate, ResponseSaveTemplate]
+	deleteTemplate       *connect.Client[RequestDeleteTemplate, ResponseDeleteTemplate]
 	listActors           *connect.Client[RequestListActors, ResponseListActors]
 	whoAmI               *connect.Client[RequestWhoAmI, ResponseWhoAmI]
 }
@@ -288,6 +318,21 @@ func (c *issueClient) SaveComponent(ctx context.Context, req *connect.Request[Re
 	return c.saveComponent.CallUnary(ctx, req)
 }
 
+// ListTemplates calls mono.issue.Issue.ListTemplates.
+func (c *issueClient) ListTemplates(ctx context.Context, req *connect.Request[RequestListTemplates]) (*connect.Response[ResponseListTemplates], error) {
+	return c.listTemplates.CallUnary(ctx, req)
+}
+
+// SaveTemplate calls mono.issue.Issue.SaveTemplate.
+func (c *issueClient) SaveTemplate(ctx context.Context, req *connect.Request[RequestSaveTemplate]) (*connect.Response[ResponseSaveTemplate], error) {
+	return c.saveTemplate.CallUnary(ctx, req)
+}
+
+// DeleteTemplate calls mono.issue.Issue.DeleteTemplate.
+func (c *issueClient) DeleteTemplate(ctx context.Context, req *connect.Request[RequestDeleteTemplate]) (*connect.Response[ResponseDeleteTemplate], error) {
+	return c.deleteTemplate.CallUnary(ctx, req)
+}
+
 // ListActors calls mono.issue.Issue.ListActors.
 func (c *issueClient) ListActors(ctx context.Context, req *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error) {
 	return c.listActors.CallUnary(ctx, req)
@@ -314,6 +359,9 @@ type IssueHandler interface {
 	ListCommentRevisions(context.Context, *connect.Request[RequestListCommentRevisions]) (*connect.Response[ResponseListCommentRevisions], error)
 	ListComponents(context.Context, *connect.Request[RequestListComponents]) (*connect.Response[ResponseListComponents], error)
 	SaveComponent(context.Context, *connect.Request[RequestSaveComponent]) (*connect.Response[ResponseSaveComponent], error)
+	ListTemplates(context.Context, *connect.Request[RequestListTemplates]) (*connect.Response[ResponseListTemplates], error)
+	SaveTemplate(context.Context, *connect.Request[RequestSaveTemplate]) (*connect.Response[ResponseSaveTemplate], error)
+	DeleteTemplate(context.Context, *connect.Request[RequestDeleteTemplate]) (*connect.Response[ResponseDeleteTemplate], error)
 	ListActors(context.Context, *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error)
 	WhoAmI(context.Context, *connect.Request[RequestWhoAmI]) (*connect.Response[ResponseWhoAmI], error)
 }
@@ -409,6 +457,24 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 		connect.WithSchema(issueMethods.ByName("SaveComponent")),
 		connect.WithHandlerOptions(opts...),
 	)
+	issueListTemplatesHandler := connect.NewUnaryHandler(
+		IssueListTemplatesProcedure,
+		svc.ListTemplates,
+		connect.WithSchema(issueMethods.ByName("ListTemplates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	issueSaveTemplateHandler := connect.NewUnaryHandler(
+		IssueSaveTemplateProcedure,
+		svc.SaveTemplate,
+		connect.WithSchema(issueMethods.ByName("SaveTemplate")),
+		connect.WithHandlerOptions(opts...),
+	)
+	issueDeleteTemplateHandler := connect.NewUnaryHandler(
+		IssueDeleteTemplateProcedure,
+		svc.DeleteTemplate,
+		connect.WithSchema(issueMethods.ByName("DeleteTemplate")),
+		connect.WithHandlerOptions(opts...),
+	)
 	issueListActorsHandler := connect.NewUnaryHandler(
 		IssueListActorsProcedure,
 		svc.ListActors,
@@ -451,6 +517,12 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 			issueListComponentsHandler.ServeHTTP(w, r)
 		case IssueSaveComponentProcedure:
 			issueSaveComponentHandler.ServeHTTP(w, r)
+		case IssueListTemplatesProcedure:
+			issueListTemplatesHandler.ServeHTTP(w, r)
+		case IssueSaveTemplateProcedure:
+			issueSaveTemplateHandler.ServeHTTP(w, r)
+		case IssueDeleteTemplateProcedure:
+			issueDeleteTemplateHandler.ServeHTTP(w, r)
 		case IssueListActorsProcedure:
 			issueListActorsHandler.ServeHTTP(w, r)
 		case IssueWhoAmIProcedure:
@@ -518,6 +590,18 @@ func (UnimplementedIssueHandler) ListComponents(context.Context, *connect.Reques
 
 func (UnimplementedIssueHandler) SaveComponent(context.Context, *connect.Request[RequestSaveComponent]) (*connect.Response[ResponseSaveComponent], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.SaveComponent is not implemented"))
+}
+
+func (UnimplementedIssueHandler) ListTemplates(context.Context, *connect.Request[RequestListTemplates]) (*connect.Response[ResponseListTemplates], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.ListTemplates is not implemented"))
+}
+
+func (UnimplementedIssueHandler) SaveTemplate(context.Context, *connect.Request[RequestSaveTemplate]) (*connect.Response[ResponseSaveTemplate], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.SaveTemplate is not implemented"))
+}
+
+func (UnimplementedIssueHandler) DeleteTemplate(context.Context, *connect.Request[RequestDeleteTemplate]) (*connect.Response[ResponseDeleteTemplate], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.DeleteTemplate is not implemented"))
 }
 
 func (UnimplementedIssueHandler) ListActors(context.Context, *connect.Request[RequestListActors]) (*connect.Response[ResponseListActors], error) {

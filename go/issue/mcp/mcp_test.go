@@ -200,6 +200,27 @@ func TestNew(t *testing.T) {
 		assertion.Equal(t, res.GetComponents()[0].GetName(), "build")
 	})
 
+	t.Run("manage the templates", func(t *testing.T) {
+		created := &api.ResponseSaveTemplate{}
+		call(t, session, "save_template", map[string]any{"title": "bug", "body": "## Steps", "component_id": component.Id}, created)
+		assertion.Equal(t, created.GetTemplate().GetTitle(), "bug")
+		assertion.Equal(t, created.GetTemplate().GetComponentId(), component.Id)
+
+		updated := &api.ResponseSaveTemplate{}
+		call(t, session, "save_template", map[string]any{"id": created.GetTemplate().GetId(), "title": "task", "body": "- [ ] item"}, updated)
+		assertion.Equal(t, updated.GetTemplate().GetTitle(), "task")
+		assertion.False(t, updated.GetTemplate().HasComponentId())
+
+		list := &api.ResponseListTemplates{}
+		call(t, session, "list_templates", map[string]any{}, list)
+		assertion.MustLen(t, list.GetTemplates(), 1)
+		assertion.Equal(t, list.GetTemplates()[0].GetBody(), "- [ ] item")
+
+		call(t, session, "delete_template", map[string]any{"id": created.GetTemplate().GetId()}, &api.ResponseDeleteTemplate{})
+		call(t, session, "list_templates", map[string]any{}, list)
+		assertion.MustLen(t, list.GetTemplates(), 0)
+	})
+
 	t.Run("the invalid input is the error of the tool", func(t *testing.T) {
 		msg := callError(t, session, "update_ticket", map[string]any{"number": 1, "status": "CLOSED"})
 		assertion.True(t, strings.Contains(msg, `invalid status: "CLOSED"`))

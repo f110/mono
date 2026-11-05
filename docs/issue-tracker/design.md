@@ -86,6 +86,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | `ticket_body_revision` | `id`, `ticket_id`, `patch`, `created_at` | 編集前の本文を編集後の本文から復元する差分 |
 | `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ、所有者の human の actor), `subject` (human のみ、heimdallr のユーザー ID) | UNIQUE(`subject`), UNIQUE(`owner_id`)。system は固定の 1 行 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
+| `ticket_template` | `id`, `title`, `body`, `component_id` (null 可) | 新規作成画面の初期値。`title` はテンプレートの名前を兼ねる。UNIQUE(`title`)。チケットからは参照しないので物理削除する |
 | `relation` | `from_id`, `type`, `to_id` | UNIQUE(`from_id`, `type`, `to_id`) |
 | `mention` | `from_id`, `to_id`, `created_at` | 本文・コメントで言及したチケット (`from_id`) と言及されたチケット (`to_id`)。UNIQUE(`from_id`, `to_id`)（§3.3） |
 | `comment` | `id`, `ticket_id`, `actor_id`, `body`, `created_at`, `updated_at`, `deleted_at` | 削除は `deleted_at` を立てる論理削除 |
@@ -173,6 +174,7 @@ DB を引かないように、actor は書き込みなど actor が必要な操�
 | --- | --- | --- | --- |
 | チケットの操作（作成・編集・コメント・関連・添付） | ○ | ○ | ステータス変更と紐づけのみ |
 | 分類の管理 | ○ | × | × |
+| テンプレートの管理 | ○ | ○ | × |
 
 認可は `issue` の各操作の入り口で `actor.kind` を見て行う。
 
@@ -281,6 +283,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | 添付 | `ListAttachments`（アップロード・ダウンロードは §7 の HTTP エンドポイント） |
 | 履歴 | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions`（本文・コメントの編集前の版と編集者） |
 | 管理 | `ListComponents`, `SaveComponent` |
+| テンプレート | `ListTemplates`, `SaveTemplate`, `DeleteTemplate` |
 | その他 | `ListActors`, `WhoAmI` |
 
 `GetTicket` は関連（逆方向の導出を含む）・バックリンク・紐づいた commit / PR と CI 結果・添付をまとめて返す。
@@ -300,6 +303,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 | `add_comment`, `edit_comment`, `delete_comment` | `AddComment`, `EditComment`, `DeleteComment` |
 | `list_activities`, `list_ticket_revisions`, `list_comment_revisions` | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions` |
 | `list_components`, `list_actors`, `who_am_i` | `ListComponents`, `ListActors`, `WhoAmI` |
+| `list_templates`, `save_template`, `delete_template` | `ListTemplates`, `SaveTemplate`, `DeleteTemplate` |
 | `list_attachments` | `ListAttachments`（添付の実装後に追加する） |
 
 - `create_ticket` / `update_ticket` は分類と担当を ID で受け取るので、ID を引くために `list_components` / `list_actors` を公開する
@@ -317,10 +321,11 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 ### 6.4 Web UI
 
 `ts/apps/issue` に Build のフロントエンドと同じ構成（React + Vite + TanStack Router + TanStack Query + Connect）
-で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、管理画面（分類）を加える。
+で作る。画面はモックと同じく一覧・新規作成・詳細の 3 つに、テンプレートの選択と管理画面（分類・テンプレート）を加える。
 
 - URL は `/<番号>` がチケット詳細、`/` が一覧、`/new` が新規作成。サーバーは未知のパスに `index.html` を返す
-- 管理画面は `/admin` 以下に置き、左のメニューで管理する対象を切り替える。分類は `/admin/components`
+- 管理画面は `/admin` 以下に置き、左のメニューで管理する対象を切り替える。分類は `/admin/components`、テンプレートは `/admin/templates`
+- ヘッダーの新規作成は Split button にし、▼ のメニューでテンプレートを選ぶと、タイトル・本文・分類を埋めた `/new?template=<id>` に移る
 - 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
 - Markdown はクライアントでレンダリングしてサニタイズする。`#123` は `/123` へのリンクに置き換える
 - 詳細のサイドバーに、関連と並べてバックリンク（言及元のチケットの番号とタイトル）を表示する。言及された時刻は履歴に表示する

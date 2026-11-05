@@ -7,6 +7,7 @@ import (
 type Options struct {
 	Actor              ActorInterface
 	Component          ComponentInterface
+	TicketTemplate     TicketTemplateInterface
 	Ticket             TicketInterface
 	TicketBodyRevision TicketBodyRevisionInterface
 	Relation           RelationInterface
@@ -25,6 +26,7 @@ func NewOptions(conn *sql.DB) Options {
 	return Options{
 		Actor:              NewActor(conn),
 		Component:          NewComponent(conn),
+		TicketTemplate:     NewTicketTemplate(conn),
 		Ticket:             NewTicket(conn),
 		TicketBodyRevision: NewTicketBodyRevision(conn),
 		Relation:           NewRelation(conn),

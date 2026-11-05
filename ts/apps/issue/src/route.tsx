@@ -3,6 +3,7 @@ import { AdminLayout } from './components/AdminLayout.tsx'
 import { Layout } from './components/Layout.tsx'
 import { ComponentsPage } from './pages/ComponentsPage.tsx'
 import { NewTicketPage } from './pages/NewTicketPage.tsx'
+import { TemplatesPage } from './pages/TemplatesPage.tsx'
 import { TicketListPage } from './pages/TicketListPage.tsx'
 import { TicketPage } from './pages/TicketPage.tsx'
 
@@ -26,6 +27,9 @@ const listRoute = createRoute({
 const newRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/new',
+  validateSearch: (search: Record<string, unknown>): { template?: number } => ({
+    template: typeof search.template === 'number' ? search.template : undefined,
+  }),
   component: NewTicketPage,
 })
 
@@ -49,6 +53,12 @@ const componentsRoute = createRoute({
   component: ComponentsPage,
 })
 
+const templatesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: '/templates',
+  component: TemplatesPage,
+})
+
 const ticketRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$number',
@@ -56,7 +66,12 @@ const ticketRoute = createRoute({
 })
 
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([listRoute, newRoute, adminRoute.addChildren([adminIndexRoute, componentsRoute]), ticketRoute]),
+  routeTree: rootRoute.addChildren([
+    listRoute,
+    newRoute,
+    adminRoute.addChildren([adminIndexRoute, componentsRoute, templatesRoute]),
+    ticketRoute,
+  ]),
 })
 
 declare module '@tanstack/react-router' {

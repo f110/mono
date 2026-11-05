@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useMutation } from '@connectrpc/connect-query'
-import { Link as RouterLink, useNavigate } from '@tanstack/react-router'
+import { useMutation, useQuery } from '@connectrpc/connect-query'
+import { Link as RouterLink, useNavigate, useSearch } from '@tanstack/react-router'
 import { Alert, Button, Divider, IconButton, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
-import { Issue, Priority, RelationType } from '../connect/issue_pb'
+import { type Template, Issue, Priority, RelationType } from '../connect/issue_pb'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorities, priorityLabels, relationLabels, relationTypes } from '../labels.ts'
@@ -13,12 +13,32 @@ type NewRelation = {
 }
 
 export const NewTicketPage = () => {
+  const { template: templateId } = useSearch({ from: '/new' })
+  const { data, error } = useQuery(Issue.method.listTemplates, {}, { enabled: templateId !== undefined })
+
+  if (templateId === undefined) {
+    return <NewTicketForm />
+  }
+  if (error) {
+    return <Alert severity="error">{error.message}</Alert>
+  }
+  if (!data) {
+    return null
+  }
+  const template = data.templates.find((t) => t.id === templateId)
+  if (!template) {
+    return <Alert severity="error">Template が見つかりません</Alert>
+  }
+  return <NewTicketForm key={template.id} template={template} />
+}
+
+const NewTicketForm = ({ template }: { template?: Template }) => {
   const navigate = useNavigate()
   const { operators, components } = useMasters()
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
+  const [title, setTitle] = useState(template?.title ?? '')
+  const [body, setBody] = useState(template?.body ?? '')
   const [priority, setPriority] = useState(Priority.UNSPECIFIED)
-  const [componentId, setComponentId] = useState(0)
+  const [componentId, setComponentId] = useState(template?.componentId ?? 0)
   const [assigneeId, setAssigneeId] = useState(0)
   const [relations, setRelations] = useState<NewRelation[]>([])
   const [relationType, setRelationType] = useState(RelationType.RELATES_TO)
