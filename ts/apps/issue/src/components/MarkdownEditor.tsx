@@ -24,7 +24,25 @@ export const MarkdownEditor = ({
         <Tab label="プレビュー" value="preview" />
       </Tabs>
       {tab === 'write' ? (
-        <TextField value={value} onChange={(e) => onChange(e.target.value)} multiline minRows={minRows} fullWidth sx={{ mt: 1 }} />
+        <TextField
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' || !e.shiftKey || e.nativeEvent.isComposing) {
+              return
+            }
+            e.preventDefault()
+            const form = (e.target as HTMLTextAreaElement).form
+            const submitter = form?.querySelector<HTMLButtonElement>('button[type=submit]')
+            if (form && submitter && !submitter.disabled) {
+              form.requestSubmit(submitter)
+            }
+          }}
+          multiline
+          minRows={minRows}
+          fullWidth
+          sx={{ mt: 1 }}
+        />
       ) : (
         <Box sx={{ minHeight: minRows * 24, p: 1 }}>
           <Markdown text={value} />

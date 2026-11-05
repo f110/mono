@@ -140,16 +140,18 @@ export const TicketPage = () => {
             {editingBody === null ? (
               <Markdown text={ticket.body} />
             ) : (
-              <Stack spacing={1}>
+              <Stack
+                component="form"
+                spacing={1}
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  update.mutate({ number, body: editingBody })
+                  setEditingBody(null)
+                }}
+              >
                 <MarkdownEditor value={editingBody} onChange={setEditingBody} />
                 <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      update.mutate({ number, body: editingBody })
-                      setEditingBody(null)
-                    }}
-                  >
+                  <Button type="submit" variant="contained">
                     保存
                   </Button>
                   <Button onClick={() => setEditingBody(null)}>キャンセル</Button>
@@ -443,16 +445,18 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
       {editing === null ? (
         <Markdown text={comment.body} />
       ) : (
-        <Stack spacing={1}>
+        <Stack
+          component="form"
+          spacing={1}
+          onSubmit={(e) => {
+            e.preventDefault()
+            edit.mutate({ id: comment.id, body: editing })
+            setEditing(null)
+          }}
+        >
           <MarkdownEditor value={editing} onChange={setEditing} minRows={3} />
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                edit.mutate({ id: comment.id, body: editing })
-                setEditing(null)
-              }}
-            >
+            <Button type="submit" variant="contained">
               保存
             </Button>
             <Button onClick={() => setEditing(null)}>キャンセル</Button>
