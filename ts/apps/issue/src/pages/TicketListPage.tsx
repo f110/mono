@@ -38,10 +38,10 @@ const pageSize = 100
 
 const columns: { label: string; field?: string }[] = [
   { label: '#', field: 'number' },
+  { label: 'Component', field: 'component' },
   { label: 'タイトル' },
   { label: 'Status', field: 'status' },
   { label: 'Priority', field: 'priority' },
-  { label: 'Component', field: 'component' },
   { label: 'Assignee', field: 'assignee' },
   { label: '作成', field: 'created_at' },
   { label: '更新', field: 'last_activity_at' },
@@ -204,6 +204,7 @@ const TicketTable = ({
           {tickets.map((t) => (
             <TableRow key={t.number} hover>
               <TableCell>{t.number}</TableCell>
+              <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
               <TableCell>
                 <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
                   {t.title}
@@ -213,7 +214,6 @@ const TicketTable = ({
                 <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
               </TableCell>
               <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
-              <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
               <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>
                 {t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
