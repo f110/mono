@@ -36,11 +36,12 @@ import { priorityLabels, statusColors, statusLabels, typeLabels } from '../label
 const defaultFilter = 'status = OPEN OR status = IN_PROGRESS'
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100
+const growSx = { width: '100%', whiteSpace: 'normal' }
 
-const columns: { label: string; field?: string }[] = [
+const columns: { label: string; field?: string; grow?: boolean }[] = [
   { label: '#', field: 'number' },
   { label: 'Component', field: 'component' },
-  { label: 'タイトル' },
+  { label: 'タイトル', grow: true },
   { label: 'Status', field: 'status' },
   { label: 'Type' },
   { label: 'Priority', field: 'priority' },
@@ -182,11 +183,11 @@ const TicketTable = ({
   const { actorName, componentName } = useMasters()
   return (
     <TableContainer component={Paper}>
-      <Table size="small">
+      <Table size="small" sx={{ '& th, & td': { whiteSpace: 'nowrap' } }}>
         <TableHead>
           <TableRow sx={{ bgcolor: 'grey.100' }}>
             {columns.map((c) => (
-              <TableCell key={c.label} sx={{ whiteSpace: 'nowrap' }}>
+              <TableCell key={c.label} sx={c.grow ? growSx : undefined}>
                 {c.field ? (
                   <TableSortLabel
                     active={c.field === orderField}
@@ -205,12 +206,12 @@ const TicketTable = ({
         <TableBody>
           {tickets.map((t) => (
             <TableRow key={t.number} hover>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+              <TableCell>
                 {t.number}
                 <CopyTicketNumberButton number={t.number} />
               </TableCell>
               <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
-              <TableCell>
+              <TableCell sx={growSx}>
                 <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
                   {t.title}
                 </Link>
@@ -221,10 +222,10 @@ const TicketTable = ({
               <TableCell>{t.type ? typeLabels[t.type] : ''}</TableCell>
               <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
               <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+              <TableCell>
                 {t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
               </TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+              <TableCell>
                 <RelativeTime time={t.lastActivityAt} />
               </TableCell>
             </TableRow>
