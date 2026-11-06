@@ -138,7 +138,7 @@ export const TicketPage = () => {
             actions={editingBody === null ? [{ label: '編集', onClick: () => setEditingBody(ticket.body) }] : []}
           >
             {editingBody === null ? (
-              <Markdown text={ticket.body} />
+              <Markdown text={ticket.body} onChange={(body) => update.mutate({ number, body })} />
             ) : (
               <Stack
                 component="form"
@@ -443,7 +443,7 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
     >
       {(edit.error || remove.error) && <Alert severity="error">{(edit.error ?? remove.error)?.message}</Alert>}
       {editing === null ? (
-        <Markdown text={comment.body} />
+        <Markdown text={comment.body} onChange={(body) => edit.mutate({ id: comment.id, body })} />
       ) : (
         <Stack
           component="form"

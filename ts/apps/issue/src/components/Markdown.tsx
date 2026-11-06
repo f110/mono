@@ -45,7 +45,47 @@ function remarkTicketLink() {
   return (tree: Node) => walk(tree)
 }
 
-export const Markdown = ({ text }: { text: string }) => (
+type HastNode = {
+  type: string
+  tagName?: string
+  properties?: Record<string, unknown>
+  position?: unknown
+  children?: HastNode[]
+}
+
+// rehypeTaskList adds the class of github-markdown-css to the checkbox of the task list
+// and copies the position of the list item to the checkbox for finding the marker in the source.
+function rehypeTaskList() {
+  const walk = (node: HastNode) => {
+    for (const child of node.children ?? []) {
+      const className = child.properties?.className
+      if (child.tagName === 'li' && Array.isArray(className) && className.includes('task-list-item')) {
+        const first = child.children?.find((c) => c.type === 'element')
+        const input = first?.tagName === 'p' ? first.children?.[0] : first
+        if (input?.tagName === 'input' && input.properties) {
+          input.properties.className = ['task-list-item-checkbox']
+          input.position = child.position
+        }
+      }
+      walk(child)
+    }
+  }
+  return (tree: HastNode) => walk(tree)
+}
+
+const taskMarker = /^(?:[-*+]|\d+[.)])[ \t]+\[([ xX])\]/
+
+// toggleTask toggles the task of the list item which starts at offset. It returns null if the task is not found.
+function toggleTask(text: string, offset: number): string | null {
+  const m = taskMarker.exec(text.slice(offset))
+  if (!m) {
+    return null
+  }
+  const i = offset + m[0].length - 2
+  return text.slice(0, i) + (m[1] === ' ' ? 'x' : ' ') + text.slice(i + 1)
+}
+
+export const Markdown = ({ text, onChange }: { text: string; onChange?: (text: string) => void }) => (
   <Box
     className="markdown-body"
     sx={{
@@ -59,7 +99,32 @@ export const Markdown = ({ text }: { text: string }) => (
       },
     }}
   >
-    <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]}
+      rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeTaskList]}
+      components={
+        onChange && {
+          input: ({ node, ...props }) => {
+            const offset = node?.position?.start.offset
+            if (props.type !== 'checkbox' || offset === undefined) {
+              return <input {...props} />
+            }
+            return (
+              <input
+                {...props}
+                disabled={false}
+                onChange={() => {
+                  const toggled = toggleTask(text, offset)
+                  if (toggled !== null) {
+                    onChange(toggled)
+                  }
+                }}
+              />
+            )
+          },
+        }
+      }
+    >
       {text}
     </ReactMarkdown>
   </Box>
