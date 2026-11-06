@@ -81,7 +81,7 @@ func NewTracker(daos dao.Options) *Tracker {
 }
 
 // Create creates the ticket in OPEN. componentID and assigneeID are optional.
-func (t *Tracker) Create(ctx context.Context, title, body string, priority database.Priority, componentID, assigneeID *int32) (*Ticket, error) {
+func (t *Tracker) Create(ctx context.Context, title, body string, ticketType database.TicketType, priority database.Priority, componentID, assigneeID *int32) (*Ticket, error) {
 	actor, err := t.ticketOperator(ctx)
 	if err != nil {
 		return nil, err
@@ -99,6 +99,7 @@ func (t *Tracker) Create(ctx context.Context, title, body string, priority datab
 			Title:          title,
 			Body:           body,
 			Status:         database.TicketStatusOpen,
+			Type:           ticketType,
 			Priority:       priority,
 			ComponentId:    componentID,
 			AssigneeId:     assigneeID,

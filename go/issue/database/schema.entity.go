@@ -32,6 +32,7 @@ const (
 	ActivityKindPullRequestLinked ActivityKind = 13
 	ActivityKindMentioned         ActivityKind = 14
 	ActivityKindMentionRemoved    ActivityKind = 15
+	ActivityKindType              ActivityKind = 16
 )
 
 type ActorKind uint32
@@ -88,6 +89,16 @@ const (
 	TicketStatusInProgress TicketStatus = 1
 	TicketStatusDone       TicketStatus = 2
 	TicketStatusWontFix    TicketStatus = 3
+)
+
+type TicketType uint32
+
+const (
+	TicketTypeNone      TicketType = 0
+	TicketTypeBug       TicketType = 1
+	TicketTypeFeature   TicketType = 2
+	TicketTypeTask      TicketType = 3
+	TicketTypeOperation TicketType = 4
 )
 
 type TrailerKind uint32
@@ -350,6 +361,7 @@ type Ticket struct {
 	ReporterId  int32
 	// last_activity_at is the time of the last operation to the ticket including the comments.
 	LastActivityAt time.Time
+	Type           TicketType
 	CreatedAt      time.Time
 	UpdatedAt      *time.Time
 
@@ -378,6 +390,7 @@ func (e *Ticket) IsChanged() bool {
 		((e.AssigneeId != nil && (e.mark.AssigneeId == nil || *e.AssigneeId != *e.mark.AssigneeId)) || e.AssigneeId == nil && e.mark.AssigneeId != nil) ||
 		e.ReporterId != e.mark.ReporterId ||
 		!e.LastActivityAt.Equal(e.mark.LastActivityAt) ||
+		e.Type != e.mark.Type ||
 		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
 		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
 }
@@ -419,6 +432,9 @@ func (e *Ticket) ChangedColumn() []ddl.Column {
 	if !e.LastActivityAt.Equal(e.mark.LastActivityAt) {
 		res = append(res, ddl.Column{Name: "last_activity_at", Value: e.LastActivityAt})
 	}
+	if e.Type != e.mark.Type {
+		res = append(res, ddl.Column{Name: "type", Value: e.Type})
+	}
 	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
 		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
 	}
@@ -442,6 +458,7 @@ func (e *Ticket) Copy() *Ticket {
 		Priority:       e.Priority,
 		ReporterId:     e.ReporterId,
 		LastActivityAt: e.LastActivityAt,
+		Type:           e.Type,
 		CreatedAt:      e.CreatedAt,
 	}
 	if e.ComponentId != nil {

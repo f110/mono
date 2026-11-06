@@ -82,7 +82,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 
 | テーブル | 主なカラム | 備考 |
 | --- | --- | --- |
-| `ticket` | `id` (sequence), `title`, `body`, `status`, `priority` (未設定は `PRIORITY_NONE`), `component_id` (null 可), `assignee_id` (null 可), `reporter_id`, `created_at`, `updated_at`, `last_activity_at` | `id` がそのままチケット番号。`last_activity_at` はコメントを含む最後の操作の時刻 |
+| `ticket` | `id` (sequence), `title`, `body`, `status`, `type` (未設定は `TICKET_TYPE_NONE`), `priority` (未設定は `PRIORITY_NONE`), `component_id` (null 可), `assignee_id` (null 可), `reporter_id`, `created_at`, `updated_at`, `last_activity_at` | `id` がそのままチケット番号。`last_activity_at` はコメントを含む最後の操作の時刻 |
 | `ticket_body_revision` | `id`, `ticket_id`, `patch`, `created_at` | 編集前の本文を編集後の本文から復元する差分 |
 | `actor` | `id`, `kind` (human / agent / system), `name`, `owner_id` (agent のみ、所有者の human の actor), `subject` (human のみ、heimdallr のユーザー ID) | UNIQUE(`subject`), UNIQUE(`owner_id`)。system は固定の 1 行 |
 | `component` | `id`, `name` | ソフトウェア分類のマスタ |
@@ -97,7 +97,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | `activity` | `id`, `ticket_id`, `actor_id`, `kind`, `from_value`, `to_value`, `ref_id`, `created_at` | 操作履歴 |
 | `github_event` | `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` | UNIQUE(`delivery_id`)。カラムは Build の `github_event` と揃える |
 
-- ステータス・優先度・関連種別・trailer 種別は proto の enum で持つ
+- ステータス・種別・優先度・関連種別・trailer 種別は proto の enum で持つ
 - `relates_to` は対称なので `from_id < to_id` に正規化して保存し、二重登録を防ぐ
 - リポジトリは Build に登録されたものを使い、issue tracker 自身は持たない（§5.1）。commit / PR の URL は保存せず、
   Build から引いたリポジトリの URL と sha / 番号から表示時に組み立てる
@@ -110,7 +110,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | kind | from / to | ref_id |
 | --- | --- | --- |
 | create | — | — |
-| title, status, priority, component, assignee | 変更前 / 変更後 | — |
+| title, status, type, priority, component, assignee | 変更前 / 変更後 | — |
 | body | — | その編集の `ticket_body_revision.id` |
 | relation_added, relation_removed | — / `<type>:<相手の番号>` | — |
 | comment | — | `comment.id` |
@@ -345,8 +345,9 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 (status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build クラッシュ
 ```
 
-- フィールドは `status` / `priority` / `component` / `assignee` / `reporter` / `title` / `body`
+- フィールドは `status` / `type` / `priority` / `component` / `assignee` / `reporter` / `title` / `body`
 - `component` / `assignee` / `reporter` は名前で指定する。`assignee:*` は担当が設定されていること
+- `type` は `BUG` / `FEATURE` / `TASK` / `OPERATION`。`type:*` は種別が設定されていること
 - `priority` は比較演算子を使える。P0 が最も高いので、`priority < P2` は P0 と P1
 - フィールドを指定しない値は、タイトル・本文・削除されていないコメントに部分一致させる
 

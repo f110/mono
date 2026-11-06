@@ -50,6 +50,7 @@ CREATE TABLE `ticket` (
 	`assignee_id` INTEGER NULL,
 	`reporter_id` INTEGER NOT NULL,
 	`last_activity_at` DATETIME NOT NULL,
+	`type` INTEGER UNSIGNED NOT NULL,
 	`created_at` DATETIME NOT NULL,
 	`updated_at` DATETIME NULL,
 	INDEX `idx_status` (`status`),

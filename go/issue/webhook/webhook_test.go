@@ -105,7 +105,7 @@ func createTicket(t *testing.T, tracker *issue.Tracker, daos dao.Options, title 
 	t.Helper()
 	human, err := daos.Actor.Create(context.Background(), &database.Actor{Kind: database.ActorKindHuman, Name: title, Subject: new(title)})
 	assertion.MustNoError(t, err)
-	ticket, err := tracker.Create(issue.WithActor(context.Background(), human), title, "", database.PriorityNone, nil, nil)
+	ticket, err := tracker.Create(issue.WithActor(context.Background(), human), title, "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 	assertion.MustNoError(t, err)
 	return ticket
 }

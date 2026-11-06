@@ -24,6 +24,15 @@ enum Priority {
   PRIORITY_P4   = 5;
 }
 
+// TicketType is the kind of the work of the ticket. TICKET_TYPE_NONE means that the type is not set.
+enum TicketType {
+  TICKET_TYPE_NONE      = 0;
+  TICKET_TYPE_BUG       = 1;
+  TICKET_TYPE_FEATURE   = 2;
+  TICKET_TYPE_TASK      = 3;
+  TICKET_TYPE_OPERATION = 4;
+}
+
 enum ActorKind {
   ACTOR_KIND_HUMAN  = 0;
   ACTOR_KIND_AGENT  = 1;
@@ -75,6 +84,7 @@ enum ActivityKind {
   ACTIVITY_KIND_PULL_REQUEST_LINKED = 13;
   ACTIVITY_KIND_MENTIONED           = 14;
   ACTIVITY_KIND_MENTION_REMOVED     = 15;
+  ACTIVITY_KIND_TYPE                = 16;
 }
 
 // Actor is a subject of the operations. kind and owner_id are never changed after the actor is created.
@@ -161,6 +171,7 @@ message Ticket {
   Actor        reporter     = 8;
   // last_activity_at is the time of the last operation to the ticket including the comments.
   google.protobuf.Timestamp last_activity_at = 9;
+  TicketType                type             = 10;
 
   option (dev.f110.ddl.table) = {
     primary_key: "id"

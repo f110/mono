@@ -92,7 +92,7 @@ func (f *fixture) as(actor *database.Actor) context.Context {
 
 func (f *fixture) create(t *testing.T, title string) *Ticket {
 	t.Helper()
-	ticket, err := f.tracker.Create(f.as(f.human), title, "body of "+title, database.PriorityNone, nil, nil)
+	ticket, err := f.tracker.Create(f.as(f.human), title, "body of "+title, database.TicketTypeNone, database.PriorityNone, nil, nil)
 	assertion.MustNoError(t, err)
 	return ticket
 }
@@ -123,10 +123,11 @@ func TestCreate(t *testing.T) {
 		f := newFixture(t)
 		component := f.component(t, "build")
 
-		ticket, err := f.tracker.Create(f.as(f.agent), "title", "body", database.PriorityP1, &component.Id, &f.human.Id)
+		ticket, err := f.tracker.Create(f.as(f.agent), "title", "body", database.TicketTypeBug, database.PriorityP1, &component.Id, &f.human.Id)
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, ticket.Title, "title")
 		assertion.Equal(t, ticket.Status, database.TicketStatusOpen)
+		assertion.Equal(t, ticket.Type, database.TicketTypeBug)
 		assertion.Equal(t, ticket.Priority, database.PriorityP1)
 		assertion.Equal(t, *ticket.ComponentId, component.Id)
 		assertion.Equal(t, *ticket.AssigneeId, f.human.Id)
@@ -145,19 +146,19 @@ func TestCreate(t *testing.T) {
 
 	t.Run("rejected", func(t *testing.T) {
 		f := newFixture(t)
-		_, err := f.tracker.Create(context.Background(), "title", "", database.PriorityNone, nil, nil)
+		_, err := f.tracker.Create(context.Background(), "title", "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 		mustErrorIs(t, err, ErrUnauthenticated)
-		_, err = f.tracker.Create(f.as(f.system), "title", "", database.PriorityNone, nil, nil)
+		_, err = f.tracker.Create(f.as(f.system), "title", "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 		mustErrorIs(t, err, ErrPermissionDenied)
-		_, err = f.tracker.Create(f.as(f.human), "", "", database.PriorityNone, nil, nil)
+		_, err = f.tracker.Create(f.as(f.human), "", "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 		mustErrorIs(t, err, ErrInvalidArgument)
-		_, err = f.tracker.Create(f.as(f.human), strings.Repeat("あ", 256), "", database.PriorityNone, nil, nil)
+		_, err = f.tracker.Create(f.as(f.human), strings.Repeat("あ", 256), "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 		mustErrorIs(t, err, ErrInvalidArgument)
-		_, err = f.tracker.Create(f.as(f.human), strings.Repeat("あ", 255), "", database.PriorityNone, nil, nil)
+		_, err = f.tracker.Create(f.as(f.human), strings.Repeat("あ", 255), "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 		assertion.MustNoError(t, err)
-		_, err = f.tracker.Create(f.as(f.human), "title", "", database.PriorityNone, new(int32(100)), nil)
+		_, err = f.tracker.Create(f.as(f.human), "title", "", database.TicketTypeNone, database.PriorityNone, new(int32(100)), nil)
 		mustErrorIs(t, err, ErrInvalidArgument)
-		_, err = f.tracker.Create(f.as(f.human), "title", "", database.PriorityNone, nil, new(int32(100)))
+		_, err = f.tracker.Create(f.as(f.human), "title", "", database.TicketTypeNone, database.PriorityNone, nil, new(int32(100)))
 		mustErrorIs(t, err, ErrInvalidArgument)
 		_, err = f.tracker.Ticket(f.as(f.human), 100)
 		mustErrorIs(t, err, ErrNotFound)
@@ -170,11 +171,12 @@ func TestTicketUpdate(t *testing.T) {
 		component := f.component(t, "build")
 		ticket := f.create(t, "before")
 
-		err := ticket.Update(f.as(f.agent), new("after"), new("new body"), new(database.TicketStatusInProgress), new(database.PriorityP0), &component.Id, &f.agent.Id)
+		err := ticket.Update(f.as(f.agent), new("after"), new("new body"), new(database.TicketStatusInProgress), new(database.TicketTypeBug), new(database.PriorityP0), &component.Id, &f.agent.Id)
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, ticket.Title, "after")
 		assertion.Equal(t, ticket.Body, "new body")
 		assertion.Equal(t, ticket.Status, database.TicketStatusInProgress)
+		assertion.Equal(t, ticket.Type, database.TicketTypeBug)
 		assertion.Equal(t, ticket.Priority, database.PriorityP0)
 		assertion.Equal(t, *ticket.ComponentId, component.Id)
 		assertion.Equal(t, *ticket.AssigneeId, f.agent.Id)
@@ -191,21 +193,22 @@ func TestTicketUpdate(t *testing.T) {
 		assertion.Equal(t, got, []value{
 			{Kind: database.ActivityKindTitle, From: "before", To: "after"},
 			{Kind: database.ActivityKindStatus, From: "open", To: "in_progress"},
+			{Kind: database.ActivityKindType, From: "", To: "bug"},
 			{Kind: database.ActivityKindPriority, From: "", To: "P0"},
 			{Kind: database.ActivityKindComponent, From: "", To: fmt.Sprint(component.Id)},
 			{Kind: database.ActivityKindAssignee, From: "", To: fmt.Sprint(f.agent.Id)},
 			{Kind: database.ActivityKindBody},
 		})
 
-		assertion.MustNoError(t, ticket.Update(f.as(f.human), nil, new("third body"), nil, nil, nil, nil))
+		assertion.MustNoError(t, ticket.Update(f.as(f.human), nil, new("third body"), nil, nil, nil, nil, nil))
 		a := activities(t, ticket)
 		revs, err := ticket.Revisions(context.Background())
 		assertion.MustNoError(t, err)
 		assertion.MustLen(t, revs, 2)
 		assertion.Equal(t, revs[0].Body, "body of before")
 		assertion.Equal(t, revs[1].Body, "new body")
-		assertion.Equal(t, *a[6].RefId, revs[0].Id)
-		assertion.Equal(t, *a[7].RefId, revs[1].Id)
+		assertion.Equal(t, *a[7].RefId, revs[0].Id)
+		assertion.Equal(t, *a[8].RefId, revs[1].Id)
 		assertion.Equal(t, revs[0].ActorId, f.agent.Id)
 		assertion.Equal(t, revs[1].ActorId, f.human.Id)
 	})
@@ -213,10 +216,10 @@ func TestTicketUpdate(t *testing.T) {
 	t.Run("0 clears the component and the assignee", func(t *testing.T) {
 		f := newFixture(t)
 		component := f.component(t, "build")
-		ticket, err := f.tracker.Create(f.as(f.human), "title", "", database.PriorityNone, &component.Id, &f.human.Id)
+		ticket, err := f.tracker.Create(f.as(f.human), "title", "", database.TicketTypeNone, database.PriorityNone, &component.Id, &f.human.Id)
 		assertion.MustNoError(t, err)
 
-		assertion.MustNoError(t, ticket.Update(f.as(f.human), nil, nil, nil, nil, new(int32(0)), new(int32(0))))
+		assertion.MustNoError(t, ticket.Update(f.as(f.human), nil, nil, nil, nil, nil, new(int32(0)), new(int32(0))))
 		assertion.True(t, ticket.ComponentId == nil)
 		assertion.True(t, ticket.AssigneeId == nil)
 	})
@@ -224,26 +227,26 @@ func TestTicketUpdate(t *testing.T) {
 	t.Run("no change records nothing", func(t *testing.T) {
 		f := newFixture(t)
 		ticket := f.create(t, "title")
-		assertion.MustNoError(t, ticket.Update(f.as(f.human), new("title"), nil, new(database.TicketStatusOpen), nil, nil, nil))
+		assertion.MustNoError(t, ticket.Update(f.as(f.human), new("title"), nil, new(database.TicketStatusOpen), nil, nil, nil, nil))
 		assertion.Len(t, activities(t, ticket), 1)
 	})
 
 	t.Run("system can change only the status", func(t *testing.T) {
 		f := newFixture(t)
 		ticket := f.create(t, "title")
-		assertion.MustNoError(t, ticket.Update(f.as(f.system), nil, nil, new(database.TicketStatusDone), nil, nil, nil))
+		assertion.MustNoError(t, ticket.Update(f.as(f.system), nil, nil, new(database.TicketStatusDone), nil, nil, nil, nil))
 		assertion.Equal(t, ticket.Status, database.TicketStatusDone)
 		a := activities(t, ticket)
 		assertion.Equal(t, a[len(a)-1].ActorId, f.system.Id)
 
-		err := ticket.Update(f.as(f.system), new("changed"), nil, nil, nil, nil, nil)
+		err := ticket.Update(f.as(f.system), new("changed"), nil, nil, nil, nil, nil, nil)
 		mustErrorIs(t, err, ErrPermissionDenied)
 	})
 
 	t.Run("too long title", func(t *testing.T) {
 		f := newFixture(t)
 		ticket := f.create(t, "title")
-		err := ticket.Update(f.as(f.human), new(strings.Repeat("a", 256)), nil, nil, nil, nil, nil)
+		err := ticket.Update(f.as(f.human), new(strings.Repeat("a", 256)), nil, nil, nil, nil, nil, nil)
 		mustErrorIs(t, err, ErrInvalidArgument)
 		assertion.Equal(t, ticket.Title, "title")
 	})
@@ -398,7 +401,7 @@ func TestMention(t *testing.T) {
 		target := f.create(t, "target")
 		other := f.create(t, "other")
 
-		source, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d #%d #3 #100", target.Id, other.Id), database.PriorityNone, nil, nil)
+		source, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d #%d #3 #100", target.Id, other.Id), database.TicketTypeNone, database.PriorityNone, nil, nil)
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, backlinks(t, target), []int32{source.Id})
 		assertion.Equal(t, backlinks(t, other), []int32{source.Id})
@@ -409,7 +412,7 @@ func TestMention(t *testing.T) {
 		mentions, err := target.Backlinks(context.Background())
 		assertion.MustNoError(t, err)
 		createdAt := mentions[0].CreatedAt
-		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new(fmt.Sprintf("#%d", target.Id)), nil, nil, nil, nil))
+		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new(fmt.Sprintf("#%d", target.Id)), nil, nil, nil, nil, nil))
 		mentions, err = target.Backlinks(context.Background())
 		assertion.MustNoError(t, err)
 		assertion.MustLen(t, mentions, 1)
@@ -417,7 +420,7 @@ func TestMention(t *testing.T) {
 		assertion.Len(t, backlinks(t, other), 0)
 		assertion.Equal(t, mentionActivities(t, other), []string{fmt.Sprint("+", source.Id), fmt.Sprint("-", source.Id)})
 
-		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new("no mention"), nil, nil, nil, nil))
+		assertion.MustNoError(t, source.Update(f.as(f.human), nil, new("no mention"), nil, nil, nil, nil, nil))
 		assertion.Len(t, backlinks(t, target), 0)
 	})
 
@@ -451,7 +454,7 @@ func TestMention(t *testing.T) {
 		target.LastActivityAt = past
 		assertion.MustNoError(t, f.dao.Ticket.Update(context.Background(), target.Ticket))
 
-		_, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d", target.Id), database.PriorityNone, nil, nil)
+		_, err := f.tracker.Create(f.as(f.human), "source", fmt.Sprintf("#%d", target.Id), database.TicketTypeNone, database.PriorityNone, nil, nil)
 		assertion.MustNoError(t, err)
 		reloaded, err := f.tracker.Ticket(f.as(f.human), target.Id)
 		assertion.MustNoError(t, err)
@@ -462,13 +465,13 @@ func TestMention(t *testing.T) {
 func TestFind(t *testing.T) {
 	f := newFixture(t)
 	component := f.component(t, "build")
-	t1, err := f.tracker.Create(f.as(f.human), "fix the crash", "", database.PriorityP0, &component.Id, &f.agent.Id)
+	t1, err := f.tracker.Create(f.as(f.human), "fix the crash", "", database.TicketTypeBug, database.PriorityP0, &component.Id, &f.agent.Id)
 	assertion.MustNoError(t, err)
-	t2, err := f.tracker.Create(f.as(f.human), "add the feature", "100% done", database.PriorityP2, nil, nil)
+	t2, err := f.tracker.Create(f.as(f.human), "add the feature", "100% done", database.TicketTypeFeature, database.PriorityP2, nil, nil)
 	assertion.MustNoError(t, err)
-	t3, err := f.tracker.Create(f.as(f.human), "refactor", "", database.PriorityNone, nil, &f.human.Id)
+	t3, err := f.tracker.Create(f.as(f.human), "refactor", "", database.TicketTypeNone, database.PriorityNone, nil, &f.human.Id)
 	assertion.MustNoError(t, err)
-	assertion.MustNoError(t, t3.Update(f.as(f.human), nil, nil, new(database.TicketStatusDone), nil, nil, nil))
+	assertion.MustNoError(t, t3.Update(f.as(f.human), nil, nil, new(database.TicketStatusDone), nil, nil, nil, nil))
 	_, err = t3.AddComment(f.as(f.human), "the crash is also fixed")
 	assertion.MustNoError(t, err)
 	deleted, err := t2.AddComment(f.as(f.human), "crash")
@@ -492,6 +495,9 @@ func TestFind(t *testing.T) {
 		{filter: "priority = P0", want: []int32{t1.Id}},
 		{filter: "priority <= P2", want: []int32{t2.Id, t1.Id}},
 		{filter: "NOT priority:*", want: []int32{t3.Id}},
+		{filter: "type = BUG", want: []int32{t1.Id}},
+		{filter: "type != BUG", want: []int32{t3.Id, t2.Id}},
+		{filter: "NOT type:*", want: []int32{t3.Id}},
 		{filter: "component = build", want: []int32{t1.Id}},
 		{filter: "component != build", want: []int32{t3.Id, t2.Id}},
 		{filter: "component = unknown", want: nil},
@@ -635,7 +641,7 @@ func TestWithHuman(t *testing.T) {
 	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
 	mustErrorIs(t, err, sql.ErrNoRows)
 
-	ticket, err := f.tracker.Create(ctx, "title", "body", database.PriorityNone, nil, nil)
+	ticket, err := f.tracker.Create(ctx, "title", "body", database.TicketTypeNone, database.PriorityNone, nil, nil)
 	assertion.MustNoError(t, err)
 	alice, err := f.tracker.Me(ctx)
 	assertion.MustNoError(t, err)
@@ -665,7 +671,7 @@ func TestWithAgent(t *testing.T) {
 	_, err = f.dao.Actor.SelectBySubject(context.Background(), "alice@example.com")
 	mustErrorIs(t, err, sql.ErrNoRows)
 
-	ticket, err := f.tracker.Create(ctx, "title", "body", database.PriorityNone, nil, nil)
+	ticket, err := f.tracker.Create(ctx, "title", "body", database.TicketTypeNone, database.PriorityNone, nil, nil)
 	assertion.MustNoError(t, err)
 	agent, err := f.tracker.Me(ctx)
 	assertion.MustNoError(t, err)

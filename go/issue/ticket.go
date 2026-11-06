@@ -24,12 +24,12 @@ type Ticket struct {
 
 // Update updates the fields which are not nil. 0 for componentID or assigneeID clears the field. The system actor can
 // change only the status.
-func (t *Ticket) Update(ctx context.Context, title, body *string, status *database.TicketStatus, priority *database.Priority, componentID, assigneeID *int32) error {
+func (t *Ticket) Update(ctx context.Context, title, body *string, status *database.TicketStatus, ticketType *database.TicketType, priority *database.Priority, componentID, assigneeID *int32) error {
 	actor, err := t.tracker.actor(ctx)
 	if err != nil {
 		return err
 	}
-	if actor.Kind == database.ActorKindSystem && (title != nil || body != nil || priority != nil || componentID != nil || assigneeID != nil) {
+	if actor.Kind == database.ActorKindSystem && (title != nil || body != nil || ticketType != nil || priority != nil || componentID != nil || assigneeID != nil) {
 		return ErrPermissionDenied.WithStack()
 	}
 	if title != nil {
@@ -56,6 +56,10 @@ func (t *Ticket) Update(ctx context.Context, title, body *string, status *databa
 	if status != nil && *status != updated.Status {
 		changes = append(changes, change{kind: database.ActivityKindStatus, from: statusName(updated.Status), to: statusName(*status)})
 		updated.Status = *status
+	}
+	if ticketType != nil && *ticketType != updated.Type {
+		changes = append(changes, change{kind: database.ActivityKindType, from: typeNames[updated.Type], to: typeNames[*ticketType]})
+		updated.Type = *ticketType
 	}
 	if priority != nil && *priority != updated.Priority {
 		changes = append(changes, change{kind: database.ActivityKindPriority, from: priorityName(updated.Priority), to: priorityName(*priority)})
@@ -422,6 +426,14 @@ var statusNames = map[database.TicketStatus]string{
 
 func statusName(s database.TicketStatus) string {
 	return statusNames[s]
+}
+
+// typeNames is the name of the type in the activity. The type which is not set is the empty string.
+var typeNames = map[database.TicketType]string{
+	database.TicketTypeBug:       "bug",
+	database.TicketTypeFeature:   "feature",
+	database.TicketTypeTask:      "task",
+	database.TicketTypeOperation: "operation",
 }
 
 func priorityName(p database.Priority) string {

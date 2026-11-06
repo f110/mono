@@ -151,17 +151,19 @@ func TestNew(t *testing.T) {
 		call(t, session, "who_am_i", map[string]any{}, me)
 
 		created := &api.ResponseCreateTicket{}
-		call(t, session, "create_ticket", map[string]any{"title": "title", "body": "body", "priority": "P1", "component_id": component.Id}, created)
+		call(t, session, "create_ticket", map[string]any{"title": "title", "body": "body", "type": "FEATURE", "priority": "P1", "component_id": component.Id}, created)
 		assertion.Equal(t, created.GetTicket().GetTitle(), "title")
+		assertion.Equal(t, created.GetTicket().GetType(), api.TicketType_TICKET_TYPE_FEATURE)
 		assertion.Equal(t, created.GetTicket().GetPriority(), api.Priority_PRIORITY_P1)
 		assertion.Equal(t, created.GetTicket().GetComponentId(), component.Id)
 		assertion.Equal(t, created.GetTicket().GetReporterId(), me.GetActor().GetId())
 
 		number := created.GetTicket().GetNumber()
 		updated := &api.ResponseUpdateTicket{}
-		call(t, session, "update_ticket", map[string]any{"number": number, "status": "DONE", "priority": "NONE", "component_id": 0}, updated)
+		call(t, session, "update_ticket", map[string]any{"number": number, "status": "DONE", "type": "NONE", "priority": "NONE", "component_id": 0}, updated)
 		assertion.Equal(t, updated.GetTicket().GetTitle(), "title")
 		assertion.Equal(t, updated.GetTicket().GetStatus(), api.TicketStatus_TICKET_STATUS_DONE)
+		assertion.Equal(t, updated.GetTicket().GetType(), api.TicketType_TICKET_TYPE_UNSPECIFIED)
 		assertion.Equal(t, updated.GetTicket().GetPriority(), api.Priority_PRIORITY_UNSPECIFIED)
 		assertion.False(t, updated.GetTicket().HasComponentId())
 

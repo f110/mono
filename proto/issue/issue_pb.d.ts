@@ -75,6 +75,13 @@ export declare type Ticket = Message<"mono.issue.Ticket"> & {
    * @generated from field: google.protobuf.Timestamp last_activity_at = 11;
    */
   lastActivityAt?: Timestamp;
+
+  /**
+   * type is TICKET_TYPE_UNSPECIFIED if the type is not set.
+   *
+   * @generated from field: mono.issue.TicketType type = 12;
+   */
+  type: TicketType;
 };
 
 /**
@@ -622,6 +629,11 @@ export declare type RequestCreateTicket = Message<"mono.issue.RequestCreateTicke
    * @generated from field: int32 assignee_id = 5;
    */
   assigneeId: number;
+
+  /**
+   * @generated from field: mono.issue.TicketType type = 6;
+   */
+  type: TicketType;
 };
 
 /**
@@ -690,6 +702,13 @@ export declare type RequestUpdateTicket = Message<"mono.issue.RequestUpdateTicke
    * @generated from field: int32 assignee_id = 7;
    */
   assigneeId: number;
+
+  /**
+   * TICKET_TYPE_UNSPECIFIED clears the type.
+   *
+   * @generated from field: mono.issue.TicketType type = 8;
+   */
+  type: TicketType;
 };
 
 /**
@@ -1274,6 +1293,41 @@ export enum Priority {
 export declare const PrioritySchema: GenEnum<Priority>;
 
 /**
+ * @generated from enum mono.issue.TicketType
+ */
+export enum TicketType {
+  /**
+   * @generated from enum value: TICKET_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: TICKET_TYPE_BUG = 1;
+   */
+  BUG = 1,
+
+  /**
+   * @generated from enum value: TICKET_TYPE_FEATURE = 2;
+   */
+  FEATURE = 2,
+
+  /**
+   * @generated from enum value: TICKET_TYPE_TASK = 3;
+   */
+  TASK = 3,
+
+  /**
+   * @generated from enum value: TICKET_TYPE_OPERATION = 4;
+   */
+  OPERATION = 4,
+}
+
+/**
+ * Describes the enum mono.issue.TicketType.
+ */
+export declare const TicketTypeSchema: GenEnum<TicketType>;
+
+/**
  * @generated from enum mono.issue.ActorKind
  */
 export enum ActorKind {
@@ -1426,6 +1480,11 @@ export enum ActivityKind {
    * @generated from enum value: ACTIVITY_KIND_MENTION_REMOVED = 16;
    */
   MENTION_REMOVED = 16,
+
+  /**
+   * @generated from enum value: ACTIVITY_KIND_TYPE = 17;
+   */
+  TYPE = 17,
 }
 
 /**

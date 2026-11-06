@@ -103,6 +103,15 @@ func TestEnumConversion(t *testing.T) {
 		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Priority: db}}).GetPriority(), a)
 	}
 
+	types := map[database.TicketType]api.TicketType{
+		database.TicketTypeNone:      api.TicketType_TICKET_TYPE_UNSPECIFIED,
+		database.TicketTypeBug:       api.TicketType_TICKET_TYPE_BUG,
+		database.TicketTypeOperation: api.TicketType_TICKET_TYPE_OPERATION,
+	}
+	for db, a := range types {
+		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Type: db}}).GetType(), a)
+	}
+
 	relations := map[database.RelationType]api.RelationType{
 		database.RelationTypeParentOf:    api.RelationType_RELATION_TYPE_PARENT_OF,
 		database.RelationTypeBlocks:      api.RelationType_RELATION_TYPE_BLOCKS,
@@ -200,11 +209,13 @@ func TestIssueHandler(t *testing.T) {
 		Title:       new("title"),
 		Body:        new("body"),
 		Priority:    new(api.Priority_PRIORITY_P1),
+		Type:        new(api.TicketType_TICKET_TYPE_BUG),
 		ComponentId: new(component.Msg.GetComponent().GetId()),
 	}.Build()))
 	assertion.MustNoError(t, err)
 	ticket := created.Msg.GetTicket()
 	assertion.Equal(t, ticket.GetStatus(), api.TicketStatus_TICKET_STATUS_OPEN)
+	assertion.Equal(t, ticket.GetType(), api.TicketType_TICKET_TYPE_BUG)
 	assertion.True(t, ticket.HasComponentId())
 	assertion.False(t, ticket.HasAssigneeId())
 	assertion.Equal(t, ticket.GetReporterId(), actor.Id)
@@ -214,6 +225,7 @@ func TestIssueHandler(t *testing.T) {
 			Number:      new(ticket.GetNumber()),
 			Status:      new(api.TicketStatus_TICKET_STATUS_IN_PROGRESS),
 			Priority:    new(api.Priority_PRIORITY_UNSPECIFIED),
+			Type:        new(api.TicketType_TICKET_TYPE_UNSPECIFIED),
 			ComponentId: new(int32(0)),
 		}.Build()))
 		assertion.MustNoError(t, err)
@@ -222,6 +234,7 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, updated.GetBody(), "body")
 		assertion.Equal(t, updated.GetStatus(), api.TicketStatus_TICKET_STATUS_IN_PROGRESS)
 		assertion.Equal(t, updated.GetPriority(), api.Priority_PRIORITY_UNSPECIFIED)
+		assertion.Equal(t, updated.GetType(), api.TicketType_TICKET_TYPE_UNSPECIFIED)
 		assertion.False(t, updated.HasComponentId())
 	})
 
@@ -403,7 +416,7 @@ func TestGetTicketLinks(t *testing.T) {
 	assertion.MustNoError(t, err)
 	tracker := issue.NewTracker(daos)
 	ctx := issue.WithActor(context.Background(), actor)
-	ticket, err := tracker.Create(ctx, "title", "", database.PriorityNone, nil, nil)
+	ticket, err := tracker.Create(ctx, "title", "", database.TicketTypeNone, database.PriorityNone, nil, nil)
 	assertion.MustNoError(t, err)
 	committedAt := time.Date(2026, 11, 4, 0, 0, 0, 0, time.UTC)
 	assertion.MustNoError(t, ticket.LinkCommit(ctx, 1, "4b825dc642cb6eb9a060e54bf8d69288fbee4904", "subject", "alice", database.TrailerKindFixes, committedAt))

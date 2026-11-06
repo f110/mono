@@ -24,6 +24,7 @@ var ErrInvalidFilter = xerrors.Define("invalid filter")
 var fields = map[string]field{
 	"status":    {column: "status", kind: enumKind{values: statuses}},
 	"priority":  {column: "priority", kind: priorityKind{}},
+	"type":      {column: "type", kind: enumKind{values: types, none: database.TicketTypeNone}},
 	"component": {column: "component_id", kind: referenceKind{table: "component"}},
 	"assignee":  {column: "assignee_id", kind: referenceKind{table: "actor"}},
 	"reporter":  {column: "reporter_id", kind: referenceKind{table: "actor", required: true}},
@@ -38,6 +39,13 @@ var statuses = map[string]any{
 	"WONT_FIX":    database.TicketStatusWontFix,
 }
 
+var types = map[string]any{
+	"BUG":       database.TicketTypeBug,
+	"FEATURE":   database.TicketTypeFeature,
+	"TASK":      database.TicketTypeTask,
+	"OPERATION": database.TicketTypeOperation,
+}
+
 // field is a field of the filter. kind decides the operators and the values.
 type field struct {
 	column string
@@ -49,12 +57,20 @@ type kind interface {
 	condition(column, op, value string) (string, []any, error)
 }
 
-// enumKind is the field of an enum. The value is the name in values. = and != are supported.
+// enumKind is the field of an enum. The value is the name in values. = and != are supported. :* (the field is set) is
+// supported if none, the value which means that the field is not set, is not nil.
 type enumKind struct {
 	values map[string]any
+	none   any
 }
 
 func (k enumKind) condition(column, op, value string) (string, []any, error) {
+	if op == filtering.FunctionHas {
+		if value != "*" || k.none == nil {
+			return "", nil, unsupported(column, op+value)
+		}
+		return fmt.Sprintf("`%s` != ?", column), []any{k.none}, nil
+	}
 	v, ok := k.values[value]
 	if !ok {
 		return "", nil, xerrors.WithMessagef(ErrInvalidFilter, "unknown value of %s: %s", column, value)

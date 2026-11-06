@@ -171,7 +171,7 @@ func (h *IssueHandler) CreateTicket(ctx context.Context, req *connect.Request[ap
 	if req.Msg.HasAssigneeId() {
 		assigneeID = new(req.Msg.GetAssigneeId())
 	}
-	ticket, err := h.tracker.Create(ctx, req.Msg.GetTitle(), req.Msg.GetBody(), database.Priority(req.Msg.GetPriority()), componentID, assigneeID)
+	ticket, err := h.tracker.Create(ctx, req.Msg.GetTitle(), req.Msg.GetBody(), database.TicketType(req.Msg.GetType()), database.Priority(req.Msg.GetPriority()), componentID, assigneeID)
 	if err != nil {
 		return nil, toConnectError(err)
 	}
@@ -181,6 +181,7 @@ func (h *IssueHandler) CreateTicket(ctx context.Context, req *connect.Request[ap
 func (h *IssueHandler) UpdateTicket(ctx context.Context, req *connect.Request[api.RequestUpdateTicket]) (*connect.Response[api.ResponseUpdateTicket], error) {
 	var title, body *string
 	var status *database.TicketStatus
+	var ticketType *database.TicketType
 	var priority *database.Priority
 	var componentID, assigneeID *int32
 	if req.Msg.HasTitle() {
@@ -196,6 +197,9 @@ func (h *IssueHandler) UpdateTicket(ctx context.Context, req *connect.Request[ap
 		}
 		status = &s
 	}
+	if req.Msg.HasType() {
+		ticketType = new(database.TicketType(req.Msg.GetType()))
+	}
 	if req.Msg.HasPriority() {
 		priority = new(database.Priority(req.Msg.GetPriority()))
 	}
@@ -209,7 +213,7 @@ func (h *IssueHandler) UpdateTicket(ctx context.Context, req *connect.Request[ap
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	if err := ticket.Update(ctx, title, body, status, priority, componentID, assigneeID); err != nil {
+	if err := ticket.Update(ctx, title, body, status, ticketType, priority, componentID, assigneeID); err != nil {
 		return nil, toConnectError(err)
 	}
 	return connect.NewResponse(api.ResponseUpdateTicket_builder{Ticket: toTicket(ticket)}.Build()), nil
@@ -417,6 +421,7 @@ func toTicket(t *issue.Ticket) *api.Ticket {
 		Body:           new(t.Body),
 		Status:         new(api.TicketStatus(t.Status + 1)),
 		Priority:       new(api.Priority(t.Priority)),
+		Type:           new(api.TicketType(t.Type)),
 		ComponentId:    t.ComponentId,
 		AssigneeId:     t.AssigneeId,
 		ReporterId:     new(t.ReporterId),

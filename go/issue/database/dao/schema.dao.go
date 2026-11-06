@@ -829,7 +829,7 @@ func (d *Ticket) Select(ctx context.Context, id int32) (*database.Ticket, error)
 	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `ticket` WHERE `id` = ?", id)
 
 	v := &database.Ticket{}
-	if err := row.Scan(&v.Id, &v.Title, &v.Body, &v.Status, &v.Priority, &v.ComponentId, &v.AssigneeId, &v.ReporterId, &v.LastActivityAt, &v.CreatedAt, &v.UpdatedAt); err != nil {
+	if err := row.Scan(&v.Id, &v.Title, &v.Body, &v.Status, &v.Priority, &v.ComponentId, &v.AssigneeId, &v.ReporterId, &v.LastActivityAt, &v.Type, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
 
@@ -858,7 +858,7 @@ func (d *Ticket) SelectMulti(ctx context.Context, id ...int32) ([]*database.Tick
 	res := make([]*database.Ticket, 0, len(id))
 	for rows.Next() {
 		r := &database.Ticket{}
-		if err := rows.Scan(&r.Id, &r.Title, &r.Body, &r.Status, &r.Priority, &r.ComponentId, &r.AssigneeId, &r.ReporterId, &r.LastActivityAt, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.Id, &r.Title, &r.Body, &r.Status, &r.Priority, &r.ComponentId, &r.AssigneeId, &r.ReporterId, &r.LastActivityAt, &r.Type, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, err
 		}
 		res = append(res, r)
@@ -894,8 +894,8 @@ func (d *Ticket) Create(ctx context.Context, ticket *database.Ticket, opt ...Exe
 
 	res, err := conn.ExecContext(
 		ctx,
-		"INSERT INTO `ticket` (`title`, `body`, `status`, `priority`, `component_id`, `assignee_id`, `reporter_id`, `last_activity_at`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		ticket.Title, ticket.Body, ticket.Status, ticket.Priority, ticket.ComponentId, ticket.AssigneeId, ticket.ReporterId, ticket.LastActivityAt, time.Now(),
+		"INSERT INTO `ticket` (`title`, `body`, `status`, `priority`, `component_id`, `assignee_id`, `reporter_id`, `last_activity_at`, `type`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		ticket.Title, ticket.Body, ticket.Status, ticket.Priority, ticket.ComponentId, ticket.AssigneeId, ticket.ReporterId, ticket.LastActivityAt, ticket.Type, time.Now(),
 	)
 	if err != nil {
 		return nil, err

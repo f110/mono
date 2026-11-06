@@ -136,7 +136,7 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 				return err
 			}
 			if ref.Kind == database.TrailerKindFixes && ticket.Status != database.TicketStatusDone {
-				if err := ticket.Update(ctx, nil, nil, new(database.TicketStatusDone), nil, nil, nil); err != nil {
+				if err := ticket.Update(ctx, nil, nil, new(database.TicketStatusDone), nil, nil, nil, nil); err != nil {
 					return err
 				}
 			}

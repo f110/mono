@@ -28,6 +28,7 @@ import {
   Issue,
   RelationType,
   TicketStatus,
+  TicketType,
 } from '../connect/issue_pb'
 import { Markdown } from '../components/Markdown.tsx'
 import { CopyTicketNumberButton, CopyTicketURLButton } from '../components/CopyButton.tsx'
@@ -45,6 +46,8 @@ import {
   statuses,
   statusColors,
   statusLabels,
+  typeLabels,
+  types,
 } from '../labels.ts'
 
 const statusNames: Record<string, string> = {
@@ -52,6 +55,13 @@ const statusNames: Record<string, string> = {
   in_progress: statusLabels[TicketStatus.IN_PROGRESS],
   done: statusLabels[TicketStatus.DONE],
   wont_fix: statusLabels[TicketStatus.WONT_FIX],
+}
+
+const typeNames: Record<string, string> = {
+  bug: typeLabels[TicketType.BUG],
+  feature: typeLabels[TicketType.FEATURE],
+  task: typeLabels[TicketType.TASK],
+  operation: typeLabels[TicketType.OPERATION],
 }
 
 const relationNames: Record<string, string> = {
@@ -171,6 +181,7 @@ export const TicketPage = () => {
         <Stack spacing={2} sx={{ width: { md: 280 } }}>
           <Fields
             status={ticket.status}
+            type={ticket.type}
             priority={ticket.priority}
             componentId={ticket.componentId}
             assigneeId={ticket.assigneeId}
@@ -192,16 +203,18 @@ export const TicketPage = () => {
 
 const Fields = ({
   status,
+  type,
   priority,
   componentId,
   assigneeId,
   onChange,
 }: {
   status: number
+  type: number
   priority: number
   componentId: number
   assigneeId: number
-  onChange: (fields: { status?: number; priority?: number; componentId?: number; assigneeId?: number }) => void
+  onChange: (fields: { status?: number; type?: number; priority?: number; componentId?: number; assigneeId?: number }) => void
 }) => {
   const { operators, components } = useMasters()
 
@@ -211,6 +224,13 @@ const Fields = ({
         {statuses.map((s) => (
           <MenuItem key={s} value={s}>
             {statusLabels[s]}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField select size="small" label="Type" value={type} onChange={(e) => onChange({ type: Number(e.target.value) })}>
+        {types.map((t) => (
+          <MenuItem key={t} value={t}>
+            {typeLabels[t]}
           </MenuItem>
         ))}
       </TextField>
@@ -372,6 +392,8 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
     switch (a.kind) {
       case ActivityKind.STATUS:
         return statusNames[v] ?? v
+      case ActivityKind.TYPE:
+        return typeNames[v] ?? v
       case ActivityKind.COMPONENT:
         return componentName(Number(v))
       case ActivityKind.ASSIGNEE:
@@ -391,6 +413,7 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
         switch (a.kind) {
           case ActivityKind.TITLE:
           case ActivityKind.STATUS:
+          case ActivityKind.TYPE:
           case ActivityKind.PRIORITY:
           case ActivityKind.COMPONENT:
           case ActivityKind.ASSIGNEE:

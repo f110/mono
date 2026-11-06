@@ -53,6 +53,14 @@ enum Priority {
   PRIORITY_P4          = 5;
 }
 
+enum TicketType {
+  TICKET_TYPE_UNSPECIFIED = 0;
+  TICKET_TYPE_BUG         = 1;
+  TICKET_TYPE_FEATURE     = 2;
+  TICKET_TYPE_TASK        = 3;
+  TICKET_TYPE_OPERATION   = 4;
+}
+
 enum ActorKind {
   ACTOR_KIND_UNSPECIFIED = 0;
   ACTOR_KIND_HUMAN       = 1;
@@ -86,6 +94,7 @@ enum ActivityKind {
   ACTIVITY_KIND_PULL_REQUEST_LINKED = 14;
   ACTIVITY_KIND_MENTIONED           = 15;
   ACTIVITY_KIND_MENTION_REMOVED     = 16;
+  ACTIVITY_KIND_TYPE                = 17;
 }
 
 enum TrailerKind {
@@ -116,6 +125,8 @@ message Ticket {
   google.protobuf.Timestamp updated_at       = 10;
   // last_activity_at is the time of the last operation to the ticket including the comments.
   google.protobuf.Timestamp last_activity_at = 11;
+  // type is TICKET_TYPE_UNSPECIFIED if the type is not set.
+  TicketType                type             = 12;
 }
 
 message Actor {
@@ -249,11 +260,12 @@ message ResponseGetTicket {
 }
 
 message RequestCreateTicket {
-  string   title        = 1;
-  string   body         = 2;
-  Priority priority     = 3;
-  int32    component_id = 4;
-  int32    assignee_id  = 5;
+  string     title        = 1;
+  string     body         = 2;
+  Priority   priority     = 3;
+  int32      component_id = 4;
+  int32      assignee_id  = 5;
+  TicketType type         = 6;
 }
 
 message ResponseCreateTicket {
@@ -271,6 +283,8 @@ message RequestUpdateTicket {
   int32        component_id = 6;
   // 0 clears the assignee.
   int32        assignee_id  = 7;
+  // TICKET_TYPE_UNSPECIFIED clears the type.
+  TicketType   type         = 8;
 }
 
 message ResponseUpdateTicket {

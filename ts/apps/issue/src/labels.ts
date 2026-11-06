@@ -1,4 +1,4 @@
-import { ActivityKind, ActorKind, Priority, RelationType, TicketStatus } from './connect/issue_pb'
+import { ActivityKind, ActorKind, Priority, RelationType, TicketStatus, TicketType } from './connect/issue_pb'
 
 export const statusLabels: Record<TicketStatus, string> = {
   [TicketStatus.UNSPECIFIED]: '-',
@@ -17,6 +17,16 @@ export const statusColors: Record<TicketStatus, { backgroundColor?: string; colo
 }
 
 export const statuses = [TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.DONE, TicketStatus.WONT_FIX]
+
+export const typeLabels: Record<TicketType, string> = {
+  [TicketType.UNSPECIFIED]: 'なし',
+  [TicketType.BUG]: 'Bug',
+  [TicketType.FEATURE]: 'Feature',
+  [TicketType.TASK]: 'Task',
+  [TicketType.OPERATION]: 'Operation',
+}
+
+export const types = [TicketType.UNSPECIFIED, TicketType.BUG, TicketType.FEATURE, TicketType.TASK, TicketType.OPERATION]
 
 export const priorityLabels: Record<Priority, string> = {
   [Priority.UNSPECIFIED]: 'なし',
@@ -64,4 +74,5 @@ export const activityLabels: Record<ActivityKind, string> = {
   [ActivityKind.PULL_REQUEST_LINKED]: 'が Pull Request を関連付け',
   [ActivityKind.MENTIONED]: 'がこのチケットに言及',
   [ActivityKind.MENTION_REMOVED]: 'がこのチケットへの言及を削除',
+  [ActivityKind.TYPE]: 'が種別を変更',
 }

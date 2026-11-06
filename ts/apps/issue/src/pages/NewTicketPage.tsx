@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Link as RouterLink, useNavigate, useSearch } from '@tanstack/react-router'
 import { Alert, Button, Divider, IconButton, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
-import { type Template, Issue, Priority, RelationType } from '../connect/issue_pb'
+import { type Template, Issue, Priority, RelationType, TicketType } from '../connect/issue_pb'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
-import { priorities, priorityLabels, relationLabels, relationTypes } from '../labels.ts'
+import { priorities, priorityLabels, relationLabels, relationTypes, typeLabels, types } from '../labels.ts'
 
 type NewRelation = {
   type: RelationType
@@ -37,6 +37,7 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
   const { operators, components } = useMasters()
   const [title, setTitle] = useState(template?.title ?? '')
   const [body, setBody] = useState(template?.body ?? '')
+  const [type, setType] = useState(TicketType.UNSPECIFIED)
   const [priority, setPriority] = useState(Priority.UNSPECIFIED)
   const [componentId, setComponentId] = useState(template?.componentId ?? 0)
   const [assigneeId, setAssigneeId] = useState(0)
@@ -50,6 +51,7 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
     const res = await create.mutateAsync({
       title,
       body,
+      type,
       priority,
       ...(componentId ? { componentId } : {}),
       ...(assigneeId ? { assigneeId } : {}),
@@ -84,6 +86,13 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
           </Stack>
         </Stack>
         <Stack spacing={2} sx={{ width: { md: 280 } }}>
+          <TextField select size="small" label="Type" value={type} onChange={(e) => setType(Number(e.target.value))}>
+            {types.map((t) => (
+              <MenuItem key={t} value={t}>
+                {typeLabels[t]}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField select size="small" label="Priority" value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
             {priorities.map((p) => (
               <MenuItem key={p} value={p}>

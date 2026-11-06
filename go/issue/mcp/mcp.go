@@ -20,7 +20,7 @@ import (
 )
 
 type listTicketsInput struct {
-	Filter    string `json:"filter,omitempty" jsonschema:"Filter of the tickets written in AIP-160. The fields are status, priority, component, assignee, reporter, title and body. component, assignee and reporter are the names. The value without the field matches the title, the body and the comments partially. e.g. (status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"`
+	Filter    string `json:"filter,omitempty" jsonschema:"Filter of the tickets written in AIP-160. The fields are status, type, priority, component, assignee, reporter, title and body. component, assignee and reporter are the names. The value without the field matches the title, the body and the comments partially. e.g. (status = OPEN OR status = IN_PROGRESS) AND priority <= P1 AND component = build crash"`
 	OrderBy   string `json:"order_by,omitempty" jsonschema:"Order of the tickets written in AIP-132. The fields are number, status, priority, component, assignee, created_at and last_activity_at. The default is last_activity_at desc"`
 	PageSize  int32  `json:"page_size,omitempty" jsonschema:"Maximum number of the tickets. The default is 100 and the maximum is 500"`
 	PageToken string `json:"page_token,omitempty" jsonschema:"next_page_token of the previous result to get the next page. filter and order_by must be the same as the previous call"`
@@ -33,6 +33,7 @@ type ticketInput struct {
 type createTicketInput struct {
 	Title       string `json:"title"`
 	Body        string `json:"body,omitempty" jsonschema:"Body of the ticket written in Markdown. #123 is the link to the ticket 123"`
+	Type        string `json:"type,omitempty" jsonschema:"One of BUG, FEATURE, TASK and OPERATION. Omit to leave the type unset"`
 	Priority    string `json:"priority,omitempty" jsonschema:"One of P0, P1, P2, P3 and P4. P0 is the highest. Omit to leave the priority unset"`
 	ComponentID *int32 `json:"component_id,omitempty" jsonschema:"ID of the component. See list_components"`
 	AssigneeID  *int32 `json:"assignee_id,omitempty" jsonschema:"ID of the actor who is assigned. See list_actors"`
@@ -43,6 +44,7 @@ type updateTicketInput struct {
 	Title       *string `json:"title,omitempty"`
 	Body        *string `json:"body,omitempty" jsonschema:"Body of the ticket written in Markdown"`
 	Status      *string `json:"status,omitempty" jsonschema:"One of OPEN, IN_PROGRESS, DONE and WONT_FIX"`
+	Type        *string `json:"type,omitempty" jsonschema:"One of BUG, FEATURE, TASK, OPERATION and NONE. NONE clears the type"`
 	Priority    *string `json:"priority,omitempty" jsonschema:"One of P0, P1, P2, P3, P4 and NONE. NONE clears the priority"`
 	ComponentID *int32  `json:"component_id,omitempty" jsonschema:"ID of the component. 0 clears the component. See list_components"`
 	AssigneeID  *int32  `json:"assignee_id,omitempty" jsonschema:"ID of the actor who is assigned. 0 clears the assignee. See list_actors"`
@@ -106,6 +108,13 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 	})
 	addTool(s, "create_ticket", "Create the ticket", h.CreateTicket, func(in createTicketInput) (*api.RequestCreateTicket, error) {
 		b := api.RequestCreateTicket_builder{Title: &in.Title, Body: &in.Body, ComponentId: in.ComponentID, AssigneeId: in.AssigneeID}
+		if in.Type != "" {
+			v, err := toTicketType(in.Type)
+			if err != nil {
+				return nil, err
+			}
+			b.Type = &v
+		}
 		if in.Priority != "" {
 			p, err := toPriority(in.Priority)
 			if err != nil {
@@ -123,6 +132,13 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 				return nil, err
 			}
 			b.Status = &s
+		}
+		if in.Type != nil {
+			v, err := toTicketType(*in.Type)
+			if err != nil {
+				return nil, err
+			}
+			b.Type = &v
 		}
 		if in.Priority != nil {
 			p, err := toPriority(*in.Priority)
@@ -210,6 +226,13 @@ func addTool[In, Req, Res any](s *mcp.Server, name, description string, rpc func
 		}
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(b)}}}, nil, nil
 	})
+}
+
+func toTicketType(s string) (api.TicketType, error) {
+	if s == "NONE" {
+		return api.TicketType_TICKET_TYPE_UNSPECIFIED, nil
+	}
+	return parseEnum[api.TicketType](api.TicketType_value, "TICKET_TYPE_", "type", s)
 }
 
 func toPriority(s string) (api.Priority, error) {

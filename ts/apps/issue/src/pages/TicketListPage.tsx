@@ -31,7 +31,7 @@ import { type Ticket, Issue } from '../connect/issue_pb'
 import { CopyTicketNumberButton } from '../components/CopyButton.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
-import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
+import { priorityLabels, statusColors, statusLabels, typeLabels } from '../labels.ts'
 
 const defaultFilter = 'status = OPEN OR status = IN_PROGRESS'
 const defaultOrder = 'last_activity_at desc'
@@ -42,6 +42,7 @@ const columns: { label: string; field?: string }[] = [
   { label: 'Component', field: 'component' },
   { label: 'タイトル' },
   { label: 'Status', field: 'status' },
+  { label: 'Type' },
   { label: 'Priority', field: 'priority' },
   { label: 'Assignee', field: 'assignee' },
   { label: '作成', field: 'created_at' },
@@ -217,6 +218,7 @@ const TicketTable = ({
               <TableCell>
                 <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
               </TableCell>
+              <TableCell>{t.type ? typeLabels[t.type] : ''}</TableCell>
               <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
               <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>
