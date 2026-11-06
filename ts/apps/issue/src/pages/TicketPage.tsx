@@ -29,6 +29,7 @@ import {
   TicketStatus,
 } from '../connect/issue_pb'
 import { Markdown } from '../components/Markdown.tsx'
+import { CopyTicketNumberButton } from '../components/CopyTicketNumberButton.tsx'
 import { EditHistory } from '../components/EditHistory.tsx'
 import { PostCard } from '../components/PostCard.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
@@ -101,6 +102,7 @@ export const TicketPage = () => {
           <Typography variant="h5">
             {ticket.title} <Typography component="span" variant="h5" color="text.secondary">#{ticket.number}</Typography>
           </Typography>
+          <CopyTicketNumberButton number={ticket.number} />
           <Button size="small" onClick={() => setEditingTitle(ticket.title)}>
             編集
           </Button>

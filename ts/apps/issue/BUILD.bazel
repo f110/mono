@@ -32,6 +32,7 @@ NPM_DEPS = [
     "//ts/apps/issue:node_modules/@connectrpc/connect-web",
     "//ts/apps/issue:node_modules/@emotion/react",
     "//ts/apps/issue:node_modules/@emotion/styled",
+    "//ts/apps/issue:node_modules/@mui/icons-material",
     "//ts/apps/issue:node_modules/@mui/material",
     "//ts/apps/issue:node_modules/@tanstack/react-query",
     "//ts/apps/issue:node_modules/@tanstack/react-router",

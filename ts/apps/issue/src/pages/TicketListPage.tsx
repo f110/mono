@@ -28,6 +28,7 @@ import {
 } from '@mui/material'
 import dayjs from 'dayjs'
 import { type Ticket, Issue } from '../connect/issue_pb'
+import { CopyTicketNumberButton } from '../components/CopyTicketNumberButton.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
@@ -203,7 +204,10 @@ const TicketTable = ({
         <TableBody>
           {tickets.map((t) => (
             <TableRow key={t.number} hover>
-              <TableCell>{t.number}</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                {t.number}
+                <CopyTicketNumberButton number={t.number} />
+              </TableCell>
               <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
               <TableCell>
                 <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
