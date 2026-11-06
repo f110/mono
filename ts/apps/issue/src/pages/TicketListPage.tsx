@@ -28,7 +28,7 @@ import {
 } from '@mui/material'
 import dayjs from 'dayjs'
 import { type Ticket, Issue } from '../connect/issue_pb'
-import { CopyTicketNumberButton } from '../components/CopyTicketNumberButton.tsx'
+import { CopyTicketNumberButton } from '../components/CopyButton.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels } from '../labels.ts'
