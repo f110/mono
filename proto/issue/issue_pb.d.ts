@@ -138,6 +138,41 @@ export declare type Component = Message<"mono.issue.Component"> & {
 export declare const ComponentSchema: GenMessage<Component>;
 
 /**
+ * Template is the initial values of the fields of the new ticket.
+ *
+ * @generated from message mono.issue.Template
+ */
+export declare type Template = Message<"mono.issue.Template"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * title is also the name of the template.
+   *
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+
+  /**
+   * @generated from field: int32 component_id = 4;
+   */
+  componentId: number;
+};
+
+/**
+ * Describes the message mono.issue.Template.
+ * Use `create(TemplateSchema)` to create a new message.
+ */
+export declare const TemplateSchema: GenMessage<Template>;
+
+/**
  * @generated from message mono.issue.Relation
  */
 export declare type Relation = Message<"mono.issue.Relation"> & {
@@ -1003,6 +1038,111 @@ export declare type ResponseSaveComponent = Message<"mono.issue.ResponseSaveComp
 export declare const ResponseSaveComponentSchema: GenMessage<ResponseSaveComponent>;
 
 /**
+ * @generated from message mono.issue.RequestListTemplates
+ */
+export declare type RequestListTemplates = Message<"mono.issue.RequestListTemplates"> & {
+};
+
+/**
+ * Describes the message mono.issue.RequestListTemplates.
+ * Use `create(RequestListTemplatesSchema)` to create a new message.
+ */
+export declare const RequestListTemplatesSchema: GenMessage<RequestListTemplates>;
+
+/**
+ * @generated from message mono.issue.ResponseListTemplates
+ */
+export declare type ResponseListTemplates = Message<"mono.issue.ResponseListTemplates"> & {
+  /**
+   * @generated from field: repeated mono.issue.Template templates = 1;
+   */
+  templates: Template[];
+};
+
+/**
+ * Describes the message mono.issue.ResponseListTemplates.
+ * Use `create(ResponseListTemplatesSchema)` to create a new message.
+ */
+export declare const ResponseListTemplatesSchema: GenMessage<ResponseListTemplates>;
+
+/**
+ * @generated from message mono.issue.RequestSaveTemplate
+ */
+export declare type RequestSaveTemplate = Message<"mono.issue.RequestSaveTemplate"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+
+  /**
+   * component_id is not set or 0 if the template has no component.
+   *
+   * @generated from field: int32 component_id = 4;
+   */
+  componentId: number;
+};
+
+/**
+ * Describes the message mono.issue.RequestSaveTemplate.
+ * Use `create(RequestSaveTemplateSchema)` to create a new message.
+ */
+export declare const RequestSaveTemplateSchema: GenMessage<RequestSaveTemplate>;
+
+/**
+ * @generated from message mono.issue.ResponseSaveTemplate
+ */
+export declare type ResponseSaveTemplate = Message<"mono.issue.ResponseSaveTemplate"> & {
+  /**
+   * @generated from field: mono.issue.Template template = 1;
+   */
+  template?: Template;
+};
+
+/**
+ * Describes the message mono.issue.ResponseSaveTemplate.
+ * Use `create(ResponseSaveTemplateSchema)` to create a new message.
+ */
+export declare const ResponseSaveTemplateSchema: GenMessage<ResponseSaveTemplate>;
+
+/**
+ * @generated from message mono.issue.RequestDeleteTemplate
+ */
+export declare type RequestDeleteTemplate = Message<"mono.issue.RequestDeleteTemplate"> & {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id: number;
+};
+
+/**
+ * Describes the message mono.issue.RequestDeleteTemplate.
+ * Use `create(RequestDeleteTemplateSchema)` to create a new message.
+ */
+export declare const RequestDeleteTemplateSchema: GenMessage<RequestDeleteTemplate>;
+
+/**
+ * @generated from message mono.issue.ResponseDeleteTemplate
+ */
+export declare type ResponseDeleteTemplate = Message<"mono.issue.ResponseDeleteTemplate"> & {
+};
+
+/**
+ * Describes the message mono.issue.ResponseDeleteTemplate.
+ * Use `create(ResponseDeleteTemplateSchema)` to create a new message.
+ */
+export declare const ResponseDeleteTemplateSchema: GenMessage<ResponseDeleteTemplate>;
+
+/**
  * @generated from message mono.issue.RequestListActors
  */
 export declare type RequestListActors = Message<"mono.issue.RequestListActors"> & {
@@ -1473,6 +1613,32 @@ export declare const Issue: GenService<{
     methodKind: "unary";
     input: typeof RequestSaveComponentSchema;
     output: typeof ResponseSaveComponentSchema;
+  },
+  /**
+   * @generated from rpc mono.issue.Issue.ListTemplates
+   */
+  listTemplates: {
+    methodKind: "unary";
+    input: typeof RequestListTemplatesSchema;
+    output: typeof ResponseListTemplatesSchema;
+  },
+  /**
+   * SaveTemplate creates the template if id is not set, otherwise replaces all fields of it.
+   *
+   * @generated from rpc mono.issue.Issue.SaveTemplate
+   */
+  saveTemplate: {
+    methodKind: "unary";
+    input: typeof RequestSaveTemplateSchema;
+    output: typeof ResponseSaveTemplateSchema;
+  },
+  /**
+   * @generated from rpc mono.issue.Issue.DeleteTemplate
+   */
+  deleteTemplate: {
+    methodKind: "unary";
+    input: typeof RequestDeleteTemplateSchema;
+    output: typeof ResponseDeleteTemplateSchema;
   },
   /**
    * @generated from rpc mono.issue.Issue.ListActors
