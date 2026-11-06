@@ -16,7 +16,7 @@ export const Layout = () => {
           <Link component={RouterLink} to="/" color="inherit" underline="none" sx={{ flexGrow: 1 }}>
             <Typography variant="h6">Issue Tracker</Typography>
           </Link>
-          <Typography variant="body2" sx={{ mr: 2 }}>
+          <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
             {data?.actor?.name}
           </Typography>
           <IconButton component={RouterLink} to="/admin" color="inherit" aria-label="管理" sx={{ mr: 1 }}>

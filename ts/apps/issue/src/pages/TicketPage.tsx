@@ -108,7 +108,7 @@ export const TicketPage = () => {
     <Stack spacing={2}>
       {update.error && <Alert severity="error">{update.error.message}</Alert>}
       {editingTitle === null ? (
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
           <Chip label={statusLabels[ticket.status]} sx={statusColors[ticket.status]} />
           <Typography variant="h5">
             {ticket.title} <Typography component="span" variant="h5" color="text.secondary">#{ticket.number}</Typography>
@@ -140,8 +140,17 @@ export const TicketPage = () => {
           <Button onClick={() => setEditingTitle(null)}>キャンセル</Button>
         </Stack>
       )}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 280px' },
+          gridTemplateRows: { md: 'auto 1fr' },
+          gridTemplateAreas: { xs: '"fields" "main" "side"', md: '"main fields" "main side"' },
+          columnGap: 3,
+          rowGap: 2,
+        }}
+      >
+        <Stack spacing={2} sx={{ gridArea: 'main' }}>
           <PostCard
             author={actorName(ticket.reporterId)}
             time={<RelativeTime time={ticket.createdAt} />}
@@ -178,7 +187,7 @@ export const TicketPage = () => {
           <Timeline activities={activities?.activities ?? []} comments={data.comments} reporterId={ticket.reporterId} />
           <CommentForm number={number} />
         </Stack>
-        <Stack spacing={2} sx={{ width: { md: 280 } }}>
+        <Box sx={{ gridArea: 'fields' }}>
           <Fields
             status={ticket.status}
             type={ticket.type}
@@ -187,6 +196,8 @@ export const TicketPage = () => {
             assigneeId={ticket.assigneeId}
             onChange={(fields) => update.mutate({ number, ...fields })}
           />
+        </Box>
+        <Stack spacing={2} sx={{ gridArea: 'side' }}>
           <Divider />
           <Relations number={number} relations={data.relations} />
           <Divider />
@@ -196,7 +207,7 @@ export const TicketPage = () => {
           <Divider />
           <PullRequests pullRequests={data.pullRequests} />
         </Stack>
-      </Stack>
+      </Box>
     </Stack>
   )
 }

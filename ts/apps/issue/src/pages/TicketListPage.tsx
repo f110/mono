@@ -36,18 +36,18 @@ import { priorityLabels, statusColors, statusLabels, typeLabels } from '../label
 const defaultFilter = 'status = OPEN OR status = IN_PROGRESS'
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100
-const growSx = { width: '100%', whiteSpace: 'normal' }
+const wideOnlySx = { display: { xs: 'none', sm: 'table-cell' } }
 
-const columns: { label: string; field?: string; grow?: boolean }[] = [
+const columns: { label: string; field?: string; grow?: boolean; wideOnly?: boolean }[] = [
   { label: '#', field: 'number' },
-  { label: 'Component', field: 'component' },
+  { label: 'Component', field: 'component', wideOnly: true },
   { label: 'タイトル', grow: true },
-  { label: 'Status', field: 'status' },
-  { label: 'Type' },
-  { label: 'Priority', field: 'priority' },
-  { label: 'Assignee', field: 'assignee' },
-  { label: '作成', field: 'created_at' },
-  { label: '更新', field: 'last_activity_at' },
+  { label: 'Status', field: 'status', wideOnly: true },
+  { label: 'Type', wideOnly: true },
+  { label: 'Priority', field: 'priority', wideOnly: true },
+  { label: 'Assignee', field: 'assignee', wideOnly: true },
+  { label: '作成', field: 'created_at', wideOnly: true },
+  { label: '更新', field: 'last_activity_at', wideOnly: true },
 ]
 
 // withComponent returns the filter which is restricted to the component of name.
@@ -97,6 +97,7 @@ export const TicketListPage = () => {
       <Stack
         direction="row"
         spacing={2}
+        useFlexGap
         sx={{ alignItems: 'center', flexWrap: 'wrap' }}
       >
         <TextField
@@ -128,7 +129,7 @@ export const TicketListPage = () => {
         </TextField>
         <Box
           component="form"
-          sx={{ flex: 1, minWidth: 320 }}
+          sx={{ flex: 1, minWidth: 240 }}
           onSubmit={(e) => {
             e.preventDefault()
             void navigate({ search: (prev) => ({ ...prev, filter: input, pages: undefined }) })
@@ -183,11 +184,11 @@ const TicketTable = ({
   const { actorName, componentName } = useMasters()
   return (
     <TableContainer component={Paper}>
-      <Table size="small" sx={{ '& th, & td': { whiteSpace: 'nowrap' } }}>
+      <Table size="small" sx={{ '& th, & td': { whiteSpace: 'nowrap', px: { xs: 1, sm: 2 } }, '& .grow': { width: '100%', whiteSpace: 'normal' } }}>
         <TableHead>
           <TableRow sx={{ bgcolor: 'grey.100' }}>
             {columns.map((c) => (
-              <TableCell key={c.label} sx={c.grow ? growSx : undefined}>
+              <TableCell key={c.label} className={c.grow ? 'grow' : undefined} sx={c.wideOnly ? wideOnlySx : undefined}>
                 {c.field ? (
                   <TableSortLabel
                     active={c.field === orderField}
@@ -210,22 +211,28 @@ const TicketTable = ({
                 {t.number}
                 <CopyTicketNumberButton number={t.number} />
               </TableCell>
-              <TableCell>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
-              <TableCell sx={growSx}>
+              <TableCell sx={wideOnlySx}>{t.componentId ? componentName(t.componentId) : ''}</TableCell>
+              <TableCell className="grow">
                 <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
                   {t.title}
                 </Link>
+                <Stack direction="row" spacing={1} sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', mt: 0.5 }}>
+                  <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
+                  <Typography variant="body2" color="text.secondary">
+                    <RelativeTime time={t.lastActivityAt} />
+                  </Typography>
+                </Stack>
               </TableCell>
-              <TableCell>
+              <TableCell sx={wideOnlySx}>
                 <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
               </TableCell>
-              <TableCell>{t.type ? typeLabels[t.type] : ''}</TableCell>
-              <TableCell>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
-              <TableCell>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
-              <TableCell>
+              <TableCell sx={wideOnlySx}>{t.type ? typeLabels[t.type] : ''}</TableCell>
+              <TableCell sx={wideOnlySx}>{t.priority ? priorityLabels[t.priority] : ''}</TableCell>
+              <TableCell sx={wideOnlySx}>{t.assigneeId ? actorName(t.assigneeId) : ''}</TableCell>
+              <TableCell sx={wideOnlySx}>
                 {t.createdAt && dayjs(timestampDate(t.createdAt)).format('YYYY-MM-DD')}
               </TableCell>
-              <TableCell>
+              <TableCell sx={wideOnlySx}>
                 <RelativeTime time={t.lastActivityAt} />
               </TableCell>
             </TableRow>
