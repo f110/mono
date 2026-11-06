@@ -16,6 +16,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import EditIcon from '@mui/icons-material/Edit'
 import {
   type Backlink,
   type Activity,
@@ -104,9 +105,11 @@ export const TicketPage = () => {
           </Typography>
           <CopyTicketNumberButton number={ticket.number} />
           <CopyTicketURLButton number={ticket.number} />
-          <Button size="small" onClick={() => setEditingTitle(ticket.title)}>
-            編集
-          </Button>
+          <Tooltip title="タイトルを編集">
+            <IconButton size="small" aria-label="タイトルを編集" onClick={() => setEditingTitle(ticket.title)}>
+              <EditIcon sx={{ fontSize: '0.875rem' }} />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ) : (
         <Stack
