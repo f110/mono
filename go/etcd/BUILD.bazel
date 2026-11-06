@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "etcd",
@@ -12,5 +12,15 @@ go_library(
         "//go/logger/slogger",
         "@dev_f110_go_xerrors//:xerrors",
         "@io_etcd_go_etcd_client_v3//:client",
+    ],
+)
+
+go_test(
+    name = "etcd_test",
+    srcs = ["backup_test.go"],
+    embed = [":etcd"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

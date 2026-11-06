@@ -1,7 +1,6 @@
 package etcd
 
 import (
-	"bytes"
 	"compress/zlib"
 	"context"
 	"crypto/tls"
@@ -16,9 +15,8 @@ import (
 )
 
 type Backup struct {
-	data       io.ReadCloser
-	time       time.Time
-	compressed *bytes.Buffer
+	data io.ReadCloser
+	time time.Time
 }
 
 func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate, cert tls.Certificate) (*Backup, error) {
@@ -54,30 +52,24 @@ func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate
 	return &Backup{data: data, time: time.Now()}, nil
 }
 
-func (b *Backup) Compressed() (io.Reader, error) {
-	if b.data == nil && b.compressed != nil {
-		return b.compressed, nil
-	} else if b.data == nil {
-		return nil, xerrors.New("internal: failed compress data?. Probably bug.")
-	}
-
-	writeBuffer := new(bytes.Buffer)
-	w := zlib.NewWriter(writeBuffer)
-	buf, err := io.ReadAll(b.data)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	b.data.Close()
-	b.data = nil
-
-	if n, err := w.Write(buf); err != nil {
-		return nil, xerrors.WithStack(err)
-	} else if n != len(buf) {
-		return nil, io.ErrShortWrite
-	}
-
-	b.compressed = writeBuffer
-	return writeBuffer, nil
+// Compressed returns the reader of the snapshot compressed by zlib.
+// The snapshot is compressed while the reader is read, so the whole snapshot is not held in memory.
+// The returned reader can be read only once.
+func (b *Backup) Compressed() io.Reader {
+	pr, pw := io.Pipe()
+	go func() {
+		w := zlib.NewWriter(pw)
+		_, err := io.Copy(w, b.data)
+		if cerr := w.Close(); err == nil {
+			err = cerr
+		}
+		b.data.Close()
+		if err != nil {
+			err = xerrors.WithStack(err)
+		}
+		pw.CloseWithError(err)
+	}()
+	return pr
 }
 
 func (b *Backup) Time() time.Time {

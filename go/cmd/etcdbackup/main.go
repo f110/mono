@@ -75,14 +75,9 @@ func etcdBackup(args []string) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	compressed, err := bu.Compressed()
-	if err != nil {
-		return xerrors.WithStack(err)
-	}
-
 	up := storage.NewGCS(credential, bucket, storage.GCSOptions{})
 	path := filepath.Join(pathPrefix, bu.Time().In(loc).Format("2006-01-02_15.zlib"))
-	if err := up.PutReader(context.Background(), path, compressed); err != nil {
+	if err := up.PutReader(context.Background(), path, bu.Compressed()); err != nil {
 		return xerrors.WithStack(err)
 	}
 

@@ -13,11 +13,7 @@ pkg_tar(
 
 container_image(
     name = "image",
-    base = select({
-        "@rules_go//go/platform:linux_amd64": "@com_google_distroless_base",
-        "@rules_go//go/platform:linux_arm64": "@com_google_distroless_base_arm64",
-        "//conditions:default": "@com_google_distroless_base",
-    }),
+    base = "@com_google_distroless_base",
     entrypoint = ["/usr/local/bin/etcdbackup"],
     tars = [":bin"],
 )
@@ -26,5 +22,5 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "quay.io/f110/etcdbackup",
+    repository = "repo.center.x.f110.dev/common/etcdbackup",
 )
