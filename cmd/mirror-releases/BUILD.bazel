@@ -10,12 +10,11 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
-        "//go/logger",
+        "//go/logger/slogger",
         "//go/storage",
         "@com_github_protonmail_go_crypto//openpgp",
         "@com_github_protonmail_go_crypto//openpgp/packet",
         "@dev_f110_go_xerrors//:xerrors",
-        "@org_uber_go_zap//:zap",
     ],
 )
 

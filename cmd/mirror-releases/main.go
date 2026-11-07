@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 	"net/url"
@@ -17,10 +18,9 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -74,11 +74,11 @@ func (c *command) Run(ctx context.Context) error {
 
 func (c *command) mirror(ctx context.Context, target *mirrorAsset) error {
 	if c.client.ExistObject(ctx, path.Join(c.MetadataPrefix, url.PathEscape(target.OriginURL))) {
-		logger.Log.Debug("File exist. Skip mirroring", zap.String("url", target.OriginURL))
+		slogger.Log.Debug("File exist. Skip mirroring", slog.String("url", target.OriginURL))
 		return nil
 	}
 
-	logger.Log.Debug("File not found. we're going to get the file", zap.String("url", target.OriginURL))
+	slogger.Log.Debug("File not found. we're going to get the file", slog.String("url", target.OriginURL))
 	var checksums []*fileChecksum
 	if target.ChecksumURL != "" {
 		if v, err := c.getChecksums(ctx, target.ChecksumURL); err != nil {
@@ -144,13 +144,13 @@ func (c *command) mirror(ctx context.Context, target *mirrorAsset) error {
 		body.Seek(0, io.SeekStart)
 	}
 
-	logger.Log.Info("Put data", zap.String("path", path.Join(target.Path, filename)))
+	slogger.Log.Info("Put data", slog.String("path", path.Join(target.Path, filename)))
 	err = c.client.PutReader(ctx, path.Join(c.Prefix, target.Path, filename), body)
 	if err != nil {
 		return err
 	}
 
-	logger.Log.Debug("Make metadata", zap.String("path", path.Join(c.MetadataPrefix, url.PathEscape(target.OriginURL))))
+	slogger.Log.Debug("Make metadata", slog.String("path", path.Join(c.MetadataPrefix, url.PathEscape(target.OriginURL))))
 	return c.client.Put(ctx, path.Join(c.MetadataPrefix, url.PathEscape(target.OriginURL)), []byte(path.Join(c.Prefix, target.Path, filename)))
 }
 
@@ -253,7 +253,7 @@ func (d *downloader) Fetch(ctx context.Context, rawURL string) (io.ReadSeekClose
 		return nil, "", xerrors.WithStack(err)
 	}
 	req.Header.Add("User-Agent", requestAgent)
-	logger.Log.Debug("HTTP Request", zap.String("url", req.URL.String()))
+	slogger.Log.Debug("HTTP Request", slog.String("url", req.URL.String()))
 	res, err := d.client.Do(req)
 	if err != nil {
 		return nil, "", xerrors.WithStack(err)
@@ -292,7 +292,7 @@ func (d *downloader) Fetch(ctx context.Context, rawURL string) (io.ReadSeekClose
 	if _, err := cacheFile.Seek(0, io.SeekStart); err != nil {
 		return nil, "", xerrors.WithStack(err)
 	}
-	logger.Log.Debug("Rename cache file", zap.String("new", localPath), zap.Int64("size", fileSize))
+	slogger.Log.Debug("Rename cache file", slog.String("new", localPath), slog.Int64("size", fileSize))
 	if err := os.Rename(temporaryFile, localPath); err != nil {
 		return nil, "", xerrors.WithStack(err)
 	}
