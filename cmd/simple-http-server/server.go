@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
 	"net/http/pprof"
@@ -16,13 +17,12 @@ import (
 
 	"github.com/nissy/bon"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/http/httpserver"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type SimpleHTTPServer struct {
@@ -225,7 +225,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 			}
 		}
 		go func() {
-			logger.Log.Info("Start server", zap.String("addr", server.Addr))
+			slogger.Log.Info("Start server", slog.String("addr", server.Addr))
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Print(err)
 			}
@@ -245,7 +245,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 			Handler: router,
 		}
 		go func() {
-			logger.Log.Info("Start profile server", zap.String("addr", server.Addr))
+			slogger.Log.Info("Start profile server", slog.String("addr", server.Addr))
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Print(err)
 			}
