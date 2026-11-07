@@ -73,6 +73,30 @@ function rehypeTaskList() {
   return (tree: HastNode) => walk(tree)
 }
 
+// rehypeExternalLink makes the link to the other origin open in a new tab.
+function rehypeExternalLink() {
+  const isExternal = (href: unknown) => {
+    if (typeof href !== 'string') {
+      return false
+    }
+    try {
+      return new URL(href, window.location.href).origin !== window.location.origin
+    } catch {
+      return false
+    }
+  }
+  const walk = (node: HastNode) => {
+    for (const child of node.children ?? []) {
+      if (child.tagName === 'a' && child.properties && isExternal(child.properties.href)) {
+        child.properties.target = '_blank'
+        child.properties.rel = ['noreferrer']
+      }
+      walk(child)
+    }
+  }
+  return (tree: HastNode) => walk(tree)
+}
+
 const taskMarker = /^(?:[-*+]|\d+[.)])[ \t]+\[([ xX])\]/
 
 // toggleTask toggles the task of the list item which starts at offset. It returns null if the task is not found.
@@ -101,7 +125,7 @@ export const Markdown = ({ text, onChange }: { text: string; onChange?: (text: s
   >
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]}
-      rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeTaskList]}
+      rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeTaskList, rehypeExternalLink]}
       components={
         onChange && {
           input: ({ node, ...props }) => {
