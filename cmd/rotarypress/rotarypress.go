@@ -7,18 +7,18 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/blang/semver/v4"
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
 	githubutil "go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -112,7 +112,7 @@ func (r *RotaryPress) fetchBazel(ctx context.Context) (fsm.State, error) {
 
 		v, err := semver.New(release.GetName())
 		if err != nil {
-			logger.Log.Warn("Failed to parse the version string as semver", logger.Error(err))
+			slogger.Log.Warn("Failed to parse the version string as semver", slogger.E(err))
 			continue
 		}
 		if v.LT(minimumVer) {
@@ -129,7 +129,7 @@ func (r *RotaryPress) fetchBazel(ctx context.Context) (fsm.State, error) {
 
 		a, _, err := r.githubClientFactory.REST.Repositories.ListReleaseAssets(ctx, "bazelbuild", "bazel", release.GetID(), &github.ListOptions{PerPage: 30})
 		if err != nil {
-			logger.Log.Warn("Failed to fetch the list of asset", logger.Error(err))
+			slogger.Log.Warn("Failed to fetch the list of asset", slogger.E(err))
 			continue
 		}
 		assets := make(map[string]*github.ReleaseAsset)
@@ -146,7 +146,7 @@ func (r *RotaryPress) fetchBazel(ctx context.Context) (fsm.State, error) {
 
 	for _, release := range r.bazelRelease {
 		if r.dryRun {
-			logger.Log.Info("Skip download", zap.String("Version", release.Version), zap.String("Env", release.Env), zap.String("url", release.URL))
+			slogger.Log.Info("Skip download", slog.String("Version", release.Version), slog.String("Env", release.Env), slog.String("url", release.URL))
 			f, err := os.CreateTemp("", "")
 			if err != nil {
 				return fsm.Error(err)
@@ -170,9 +170,9 @@ func (r *RotaryPress) store(ctx context.Context) (fsm.State, error) {
 		}
 
 		if r.dryRun {
-			logger.Log.Info("Skip upload bazel", zap.String("Version", b.Version), zap.String("Env", b.Env), zap.String("path", b.storePath(r.prefix)))
+			slogger.Log.Info("Skip upload bazel", slog.String("Version", b.Version), slog.String("Env", b.Env), slog.String("path", b.storePath(r.prefix)))
 		} else {
-			logger.Log.Info("Upload bazel", zap.String("path", b.storePath(r.prefix)))
+			slogger.Log.Info("Upload bazel", slog.String("path", b.storePath(r.prefix)))
 			if err := r.client.PutReader(ctx, b.storePath(r.prefix), b.downloadedFile); err != nil {
 				return fsm.Error(err)
 			}
@@ -213,7 +213,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Debug("Download hash file", zap.String("url", req.URL.String()))
+	slogger.Log.Debug("Download hash file", slog.String("url", req.URL.String()))
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -235,7 +235,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	logger.Log.Debug("Download binary file", zap.String("url", req.URL.String()))
+	slogger.Log.Debug("Download binary file", slog.String("url", req.URL.String()))
 	res, err = httpClient.Do(req)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -261,7 +261,7 @@ func (b *bazel) Fetch(ctx context.Context, httpClient *http.Client) error {
 		return xerrors.WithStack(err)
 	}
 	calculatedHash := hex.EncodeToString(h.Sum(nil))[:]
-	logger.Log.Debug("Verify file", zap.String("hash", calculatedHash), zap.String("expected_hash", string(expectedHash)))
+	slogger.Log.Debug("Verify file", slog.String("hash", calculatedHash), slog.String("expected_hash", string(expectedHash)))
 	if string(expectedHash) != calculatedHash {
 		os.Remove(f.Name())
 		return xerrors.Define("file hash is mismatched").WithStack()
