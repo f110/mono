@@ -145,9 +145,10 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 	return nil
 }
 
-// PullRequestReconciler links the pull request to the tickets which the trailers of the commits of the pull request refer
-// to, and follows the title, the state and the head of the pull request. The status of the ticket is not changed by the
-// pull request. The link is not removed even if the trailer is removed from the commits.
+// PullRequestReconciler links the pull request to the tickets which the trailers of the commits or the body of the pull
+// request refer to, and follows the title, the state and the head of the pull request. The ticket which the body fixes is
+// moved to Done when the pull request is merged into the default branch. The link is not removed even if the reference is
+// removed.
 type PullRequestReconciler struct {
 	tracker      *issue.Tracker
 	repositories Repositories
@@ -195,10 +196,13 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Eve
 		return err
 	}
 	if event.GetAction() == "closed" {
+		if state == database.PullRequestStateMerged && pr.GetBase().GetRef() == event.GetRepo().GetDefaultBranch() {
+			return r.fixTickets(ctx, pr)
+		}
 		return nil
 	}
 
-	numbers, err := r.referredTickets(ctx, event.GetRepo().GetOwner().GetLogin(), event.GetRepo().GetName(), pr.GetNumber())
+	numbers, err := r.referredTickets(ctx, event.GetRepo().GetOwner().GetLogin(), event.GetRepo().GetName(), pr.GetNumber(), pr.GetBody())
 	if err != nil {
 		return err
 	}
@@ -217,9 +221,36 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Eve
 	return nil
 }
 
-// referredTickets returns the numbers of the tickets which the trailers of the commits of the pull request refer to.
-func (r *PullRequestReconciler) referredTickets(ctx context.Context, owner, repo string, number int) ([]int32, error) {
+// fixTickets moves the tickets which the body of the pull request fixes to Done.
+func (r *PullRequestReconciler) fixTickets(ctx context.Context, pr *github.PullRequest) error {
+	for _, ref := range issue.ParseReferences(pr.GetBody()) {
+		if ref.Kind != database.TrailerKindFixes {
+			continue
+		}
+		ticket, err := r.tracker.Ticket(ctx, ref.Number)
+		if errors.Is(err, issue.ErrNotFound) {
+			slogger.Log.Info("The ticket fixed by the pull request is not found", slog.Int("number", int(ref.Number)), slog.Int("pull_request", pr.GetNumber()))
+			continue
+		} else if err != nil {
+			return err
+		}
+		if ticket.Status != database.TicketStatusDone {
+			if err := ticket.Update(ctx, nil, nil, new(database.TicketStatusDone), nil, nil, nil, nil); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// referredTickets returns the numbers of the tickets which body or the trailers of the commits of the pull request refer to.
+func (r *PullRequestReconciler) referredTickets(ctx context.Context, owner, repo string, number int, body string) ([]int32, error) {
 	var numbers []int32
+	for _, ref := range issue.ParseReferences(body) {
+		if !slices.Contains(numbers, ref.Number) {
+			numbers = append(numbers, ref.Number)
+		}
+	}
 	opt := &github.ListOptions{PerPage: 100}
 	for {
 		commits, res, err := r.github.PullRequests.ListCommits(ctx, owner, repo, number, opt)

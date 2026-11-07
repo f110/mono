@@ -23,9 +23,18 @@ func ParseTrailer(message string) []Reference {
 	if len(paragraphs) < 2 {
 		return nil
 	}
+	return parseReferenceLines(paragraphs[len(paragraphs)-1])
+}
 
+// ParseReferences returns the references written as "Refs: <number>" or "Fixes: <number>" in any line of body such as
+// the body of the pull request. The reference in the middle of the line is ignored.
+func ParseReferences(body string) []Reference {
+	return parseReferenceLines(strings.ReplaceAll(body, "\r\n", "\n"))
+}
+
+func parseReferenceLines(s string) []Reference {
 	var refs []Reference
-	for _, l := range strings.Split(paragraphs[len(paragraphs)-1], "\n") {
+	for _, l := range strings.Split(s, "\n") {
 		m := trailerLine.FindStringSubmatch(strings.TrimSpace(l))
 		if m == nil {
 			continue

@@ -250,8 +250,11 @@ change-id を持たないので空文字を入れ、null（未取得）と区別
 ### 5.4 pull_request
 
 - `opened` / `reopened` / `synchronize` / `edited` で、GitHub API (`pulls/{number}/commits`) から PR のコミットを取得し、trailer を読む
-- `Refs:` / `Fixes:` のいずれかで参照されたチケットに `pull_request_link` を作成する（PR ではステータスを変更しない）
+- PR の本文も読む。本文には trailer という概念がないので、最後の段落に限らずすべての行から `Refs: <番号>` / `Fixes: <番号>` を取り出す。行の途中に書かれたものは拾わない
+- コミットの trailer か本文の `Refs:` / `Fixes:` のいずれかで参照されたチケットに `pull_request_link` を作成する
 - `closed` では、紐づいているすべての `pull_request_link` の `state` を closed / merged に更新する
+- base がデフォルトブランチの PR がマージされたときは、本文の `Fixes:` で参照されたチケットのステータスが Done 以外なら Done にする。
+  コミットの `Fixes:` はデフォルトブランチへの push で処理する（§5.3）
 - `synchronize` で `head_sha` を更新する
 - trailer が後から消えても紐づけは削除しない
 

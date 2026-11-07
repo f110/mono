@@ -294,6 +294,55 @@ func TestPullRequestReconciler(t *testing.T) {
 		}
 	})
 
+	t.Run("the references in the body", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			base   string
+			status database.TicketStatus
+		}{
+			{name: "fix the ticket by merging into the default branch", base: "main", status: database.TicketStatusDone},
+			{name: "merging into the other branch does not fix the ticket", base: "feature", status: database.TicketStatusOpen},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				tracker, daos, repo, gh := setup(t)
+				refs := createTicket(t, tracker, daos, "refs")
+				fixes := createTicket(t, tracker, daos, "fixes")
+				c := githubmock.NewCommit().Message("subject")
+				assertion.MustNoError(t, repo.Commits(c))
+				repo.PullRequests(githubmock.NewPullRequest().Number(1).Commits(c))
+				r := NewPullRequestReconciler(tracker, fakeRepositories{repositoryURL: 10}, gh)
+				event := func(action string, merged bool) *github.PullRequestEvent {
+					ev := pullRequestEvent(action, 1, "title", c.GetSHA(), merged)
+					ev.Repo.DefaultBranch = new("main")
+					ev.PullRequest.Base = &github.PullRequestBranch{Ref: new(tc.base)}
+					ev.PullRequest.Body = new(fmt.Sprintf("The body. Fixes: 1000\n\nRefs: %d\nFixes: #%d", refs.Id, fixes.Id))
+					return ev
+				}
+
+				reconcile(t, r, event("opened", false))
+				for _, ticket := range []*issue.Ticket{refs, fixes} {
+					assertion.MustLen(t, linksOf(t, ticket), 1)
+				}
+
+				reconcile(t, r, event("closed", true))
+				system, err := tracker.System(context.Background())
+				assertion.MustNoError(t, err)
+				for _, want := range []struct {
+					ticket *issue.Ticket
+					status database.TicketStatus
+				}{
+					{ticket: refs, status: database.TicketStatusOpen},
+					{ticket: fixes, status: tc.status},
+				} {
+					got, err := tracker.Ticket(issue.WithActor(context.Background(), system), want.ticket.Id)
+					assertion.MustNoError(t, err)
+					assertion.Equal(t, got.Status, want.status)
+				}
+			})
+		}
+	})
+
 	t.Run("closed without merging", func(t *testing.T) {
 		tracker, daos, repo, gh := setup(t)
 		ticket := createTicket(t, tracker, daos, "ticket")

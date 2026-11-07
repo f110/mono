@@ -741,6 +741,34 @@ func TestParseTrailer(t *testing.T) {
 	}
 }
 
+func TestParseReferences(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want []Reference
+	}{
+		{
+			name: "only the references",
+			body: "Fixes: #1",
+			want: []Reference{{Kind: database.TrailerKindFixes, Number: 1}},
+		},
+		{
+			name: "all lines",
+			body: "Refs: 1\n\nThe body.\n  fixes: #2  \n\nREFS: 3\r\n",
+			want: []Reference{{Kind: database.TrailerKindRefs, Number: 1}, {Kind: database.TrailerKindFixes, Number: 2}, {Kind: database.TrailerKindRefs, Number: 3}},
+		},
+		{
+			name: "in the middle of the line",
+			body: "This Fixes: 1\nFixes: 2 and 3",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assertion.Equal(t, ParseReferences(tc.body), tc.want)
+		})
+	}
+}
+
 func TestParseMentions(t *testing.T) {
 	cases := []struct {
 		name string
