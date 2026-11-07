@@ -7,15 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"go.f110.dev/xerrors"
-	"go.uber.org/zap"
 
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 type PackageIndex struct {
@@ -33,7 +33,7 @@ func NewPackageIndex(ctx context.Context, ss *Snapshot) (*PackageIndex, error) {
 	client := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
-	logger.Log.Info("Request", zap.String("url", req.URL.String()))
+	slogger.Log.Info("Request", slog.String("url", req.URL.String()))
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (pi *PackageIndex) Find(name string) (*Package, error) {
 		depends := make([]*Package, 0, len(p.depends))
 		for _, v := range p.depends {
 			if _, ok := pi.packages[v]; !ok {
-				logger.Log.Info("Not found package", zap.String("name", name))
+				slogger.Log.Info("Not found package", slog.String("name", name))
 				continue
 			}
 			depends = append(depends, pi.packages[v])

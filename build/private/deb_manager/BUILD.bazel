@@ -10,10 +10,9 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/enumerable",
-        "//go/logger",
+        "//go/logger/slogger",
         "@dev_f110_go_xerrors//:xerrors",
         "@in_gopkg_yaml_v3//:yaml_v3",
-        "@org_uber_go_zap//:zap",
     ],
 )
 
