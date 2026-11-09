@@ -5,6 +5,5 @@
 .mysql
 .etcd_data
 .kwok
-.authproxy
 node_modules
 /docs/working/*

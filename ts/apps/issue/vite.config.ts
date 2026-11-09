@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-const apiURL = 'http://127.0.0.1:8095'
+const apiURL = 'http://127.0.0.1:8094'
 
 export default defineConfig(({ mode }) => {
   return {

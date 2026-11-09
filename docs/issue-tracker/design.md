@@ -374,9 +374,8 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 
 ### 9.1 ローカル開発
 
-`bazel run //:env_issue`（monodev）が MySQL と、heimdallr の代わりになる認証プロキシを起動する。
-認証プロキシは `.authproxy` に鍵を生成し、開発用ユーザーのトークンを付けてサーバーへ転送する。公開鍵は heimdallr の
-internal API と同じ `/internal/publickey` で返す。サーバーは本番と同じく公開鍵でトークンを検証する。
+`bazel run //:env_issue`（monodev）が MySQL を起動する。`make run-issue` は `--public-key-url` を指定しないので、
+サーバーは heimdallr なしで動き、すべてのリクエストを dev@example.com の人として扱う。
 
 サーバーは heimdallr・Build・git-data-service・GitHub がない環境（kind での動作確認など）でも動く。
 
@@ -395,13 +394,12 @@ make run-issue-ui
 | ポート | 内容 |
 | --- | --- |
 | 8094 | サーバー |
-| 8095 | 認証プロキシ |
-| 8302 | Web UI の開発サーバー。API へのリクエストは認証プロキシに中継する |
+| 8302 | Web UI の開発サーバー。API へのリクエストはサーバーに中継する |
 
-MCP も認証プロキシ経由で使う。Claude Code からは次のように登録する。
+Claude Code からは MCP を次のように登録する。
 
 ```
-claude mcp add --transport http issue http://127.0.0.1:8095/mcp
+claude mcp add --transport http issue http://127.0.0.1:8094/mcp
 ```
 
 webhook の処理ではリポジトリを Build の API で判定するので、`make run-api` で起動した Build（127.0.0.1:8081）に

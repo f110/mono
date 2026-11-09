@@ -75,17 +75,15 @@ func build(cmd *cli.Command) {
 func issueTracker(cmd *cli.Command) {
 	issueCmd := &cli.Command{
 		Use:   "issue",
-		Short: "Start MySQL and the proxy which works as heimdallr for the issue tracker",
+		Short: "Start MySQL for the issue tracker",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
 			m := newComponentManager()
 			m.AddComponent(issueDatabase)
 			m.AddComponent(issueMySQLUser)
-			m.AddComponent(issueAuthProxy)
 
 			return m.Run(ctx)
 		},
 	}
-	issueAuthProxy.Flags(issueCmd.Flags())
 
 	cmd.AddCommand(issueCmd)
 }
