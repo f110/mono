@@ -815,7 +815,8 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		if got := hex.EncodeToString(sum[:]); got != ref.GetHash() {
 			return nil, status.Errorf(codes.InvalidArgument, "content hash mismatch: got %s, declared %s", got, ref.GetHash())
 		}
-		reference, err = s.artifactRegistry.PushFile(ctx, ref.GetRepository(), ref.GetTag(), artifactMediaType(ref.GetType()), ref.GetName(), data)
+		artifactType, mediaType := fileArtifactMediaTypes(ref.GetType())
+		reference, err = s.artifactRegistry.PushFile(ctx, ref.GetRepository(), ref.GetTag(), artifactType, mediaType, ref.GetName(), data)
 	case ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE:
 		reference, err = s.artifactRegistry.PushImage(ctx, ref.GetRepository(), ref.GetTag(), ref.GetHash(), bytes.NewReader(data))
 	default:
@@ -882,18 +883,15 @@ func collectUpload(recv func() (*RequestUploadArtifact, error)) (*ArtifactUpload
 	return meta, buf.Bytes(), nil
 }
 
-// artifactMediaTypes maps an artifact type to the OCI artifactType/config media
-// type used when storing file artifacts.
-var artifactMediaTypes = map[ArtifactType]string{
-	ArtifactType_ARTIFACT_TYPE_BINARY:       "application/vnd.mono.build.binary",
-	ArtifactType_ARTIFACT_TYPE_K8S_MANIFEST: "application/vnd.mono.build.k8s-manifest",
-}
-
-func artifactMediaType(t ArtifactType) string {
-	if mt, ok := artifactMediaTypes[t]; ok {
-		return mt
+// fileArtifactMediaTypes returns the OCI artifactType of the manifest and the
+// media type of the layer used when storing a file artifact of type t.
+func fileArtifactMediaTypes(t ArtifactType) (artifactType, mediaType string) {
+	switch t {
+	case ArtifactType_ARTIFACT_TYPE_K8S_MANIFEST:
+		return "application/vnd.mono.build.k8s-manifest", "application/yaml"
+	default:
+		return "application/vnd.mono.build.binary", "application/octet-stream"
 	}
-	return "application/octet-stream"
 }
 
 type LogStorage interface {

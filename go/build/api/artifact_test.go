@@ -4,11 +4,17 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/registry"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
@@ -119,18 +125,18 @@ func TestSyncArtifacts(t *testing.T) {
 
 // fakeRegistry records the last push so tests can assert on it.
 type fakeRegistry struct {
-	fileRepo, fileTag, fileMediaType, fileName string
-	fileContent                                []byte
-	fileRef                                    string
-	imageRef                                   string
+	fileRepo, fileTag, fileArtifactType, fileMediaType, fileName string
+	fileContent                                                  []byte
+	fileRef                                                      string
+	imageRef                                                     string
 }
 
 func (f *fakeRegistry) PushImage(_ context.Context, _, _, _ string, _ io.Reader) (string, error) {
 	return f.imageRef, nil
 }
 
-func (f *fakeRegistry) PushFile(_ context.Context, repository, tag, mediaType, filename string, content []byte) (string, error) {
-	f.fileRepo, f.fileTag, f.fileMediaType, f.fileName, f.fileContent = repository, tag, mediaType, filename, content
+func (f *fakeRegistry) PushFile(_ context.Context, repository, tag, artifactType, mediaType, filename string, content []byte) (string, error) {
+	f.fileRepo, f.fileTag, f.fileArtifactType, f.fileMediaType, f.fileName, f.fileContent = repository, tag, artifactType, mediaType, filename, content
 	return f.fileRef, nil
 }
 
@@ -158,7 +164,8 @@ func TestStoreArtifact(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, "example.com/foo", res.GetRepository())
 		assertion.Equal(t, "sha256:stored", res.GetReference())
-		assertion.Equal(t, "application/vnd.mono.build.binary", reg.fileMediaType)
+		assertion.Equal(t, "application/vnd.mono.build.binary", reg.fileArtifactType)
+		assertion.Equal(t, "application/octet-stream", reg.fileMediaType)
 		assertion.Equal(t, content, reg.fileContent)
 
 		called := m.Called("Create")
@@ -245,4 +252,28 @@ func TestCraneArtifactRegistry_insecure(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, tc.scheme, ref.Context().Scheme())
 	}
+}
+
+func TestCraneArtifactRegistry_PushFile(t *testing.T) {
+	s := httptest.NewServer(registry.New())
+	t.Cleanup(s.Close)
+	host := strings.TrimPrefix(s.URL, "http://")
+	r := NewCraneArtifactRegistry(host, true)
+
+	content := []byte("kind: Deployment\n")
+	ref, err := r.PushFile(context.Background(), "build/manifests", "", "application/vnd.mono.build.k8s-manifest", "application/yaml", "kustomize.base.yaml", content)
+	assertion.MustNoError(t, err)
+
+	raw, err := crane.Manifest(host+"/build/manifests@"+ref, crane.Insecure)
+	assertion.MustNoError(t, err)
+	var m v1.Manifest
+	assertion.MustNoError(t, json.Unmarshal(raw, &m))
+	assertion.Equal(t, m.MediaType, types.OCIManifestSchema1)
+	assertion.Equal(t, m.ArtifactType, "application/vnd.mono.build.k8s-manifest")
+	assertion.Equal(t, m.Config.MediaType, types.MediaType("application/vnd.oci.empty.v1+json"))
+	assertion.Len(t, m.Layers, 1)
+	assertion.Equal(t, m.Layers[0].MediaType, types.MediaType("application/yaml"))
+	assertion.Equal(t, m.Layers[0].Annotations["org.opencontainers.image.title"], "kustomize.base.yaml")
+	sum := sha256.Sum256(content)
+	assertion.Equal(t, m.Layers[0].Digest.String(), "sha256:"+hex.EncodeToString(sum[:]))
 }

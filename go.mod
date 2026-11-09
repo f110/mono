@@ -42,6 +42,7 @@ require (
 	github.com/nats-io/nats.go v1.52.0
 	github.com/nissy/bon v1.3.0
 	github.com/olekukonko/tablewriter v1.1.4
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/peco/peco v0.6.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
@@ -85,6 +86,7 @@ require (
 	k8s.io/component-base v0.36.1
 	k8s.io/gengo v0.0.0-20260408192533-25e2208e0dc3
 	k8s.io/klog/v2 v2.140.0
+	oras.land/oras-go/v2 v2.7.0
 	sigs.k8s.io/kind v0.31.0
 	sigs.k8s.io/secrets-store-csi-driver v1.6.0
 	software.sslmate.com/src/go-pkcs12 v0.7.1
@@ -234,7 +236,6 @@ require (
 	github.com/olekukonko/errors v1.2.0 // indirect
 	github.com/olekukonko/ll v0.1.6 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/outcaste-io/ristretto v0.2.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
@@ -298,7 +299,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
