@@ -13,7 +13,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Manifest struct {
@@ -54,7 +54,7 @@ func (m *ManifestManager) Update(ctx context.Context, manifest Manifest) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Info("Successfully upload the manifest", slog.String("name", manifest.filename))
+	logger.Log.Info("Successfully upload the manifest", slog.String("name", manifest.filename))
 
 	return nil
 }
@@ -173,7 +173,7 @@ func (m *ManifestManager) FindExpiredManifests(ctx context.Context) ([]Manifest,
 		timestamps = append(timestamps, ts)
 	}
 	if len(timestamps) < 3 {
-		slogger.Log.Debug("Not need cleanup the manifest")
+		logger.Log.Debug("Not need cleanup the manifest")
 		return nil, nil
 	}
 

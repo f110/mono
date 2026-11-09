@@ -13,7 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/k8s/portforward",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_aws_aws_sdk_go_v2//aws",
         "@com_github_aws_aws_sdk_go_v2_credentials//:credentials",
         "@com_github_aws_aws_sdk_go_v2_feature_s3_manager//:manager",

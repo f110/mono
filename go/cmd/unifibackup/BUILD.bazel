@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/ctxutil",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_fsnotify_fsnotify//:fsnotify",
         "@com_github_spf13_pflag//:pflag",
         "@com_google_cloud_go_storage//:storage",

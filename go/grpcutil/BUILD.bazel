@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/grpcutil",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//status",
     ],

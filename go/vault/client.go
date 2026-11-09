@@ -15,7 +15,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var (
@@ -236,7 +236,7 @@ func (c *Client) LoginAsK8SServiceAccount(ctx context.Context, enginePath, role 
 }
 
 func (c *Client) startAutoTokenRefresh() error {
-	slogger.Log.Debug("Starting auto-token refresh")
+	logger.Log.Debug("Starting auto-token refresh")
 	for {
 		refreshDuration := time.Duration(int(c.tokenExpirationTime.Sub(time.Now()).Seconds()*0.6)) * time.Second
 		<-time.After(refreshDuration)
@@ -244,7 +244,7 @@ func (c *Client) startAutoTokenRefresh() error {
 		if err := c.LoginAsK8SServiceAccount(context.Background(), c.enginePath, c.role); err != nil {
 			return err
 		}
-		slogger.Log.Debug("Refreshed token")
+		logger.Log.Debug("Refreshed token")
 	}
 }
 

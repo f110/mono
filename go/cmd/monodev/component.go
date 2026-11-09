@@ -31,7 +31,7 @@ import (
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -88,12 +88,12 @@ var gitDataService = &grpcServerComponent{
 			fmt.Sprintf("127.0.0.1:%d", memcached.Ports.GetNumber("memcached")),
 		)
 		if err != nil {
-			slogger.Log.Error("Failed to create Server", slogger.E(err))
+			logger.Log.Error("Failed to create Server", logger.E(err))
 			return
 		}
 		cachePool, err := client.NewSinglePool(memcachedServer)
 		if err != nil {
-			slogger.Log.Error("Failed to create cache pool", slogger.E(err))
+			logger.Log.Error("Failed to create cache pool", logger.E(err))
 			return
 		}
 		repo := make(map[string]*goGit.Repository)
@@ -101,7 +101,7 @@ var gitDataService = &grpcServerComponent{
 			storer := git.NewObjectStorageStorer(storageClient, v.Prefix, cachePool, nil)
 			r, err := goGit.Open(storer, nil)
 			if err != nil {
-				slogger.Log.Error("Failed to open the repository", slogger.E(err))
+				logger.Log.Error("Failed to open the repository", logger.E(err))
 				return
 			}
 			repo[v.Name] = r
@@ -133,14 +133,14 @@ var docSearchService = &grpcServerComponent{
 			grpcutil.WithLogging(),
 		)
 		if err != nil {
-			slogger.Log.Error("Failed to dial", slogger.E(err))
+			logger.Log.Error("Failed to dial", logger.E(err))
 			return
 		}
 		gitDataClient := git.NewGitDataClient(grpcConn)
 
 		service := docutil.NewDocSearchService(gitDataClient, storageClient)
 		if err := service.Initialize(ctx, 8, 1); err != nil {
-			slogger.Log.Error("Failed to initialize doc-search-service", slogger.E(err))
+			logger.Log.Error("Failed to initialize doc-search-service", logger.E(err))
 			return
 		}
 		docutil.RegisterDocSearchServer(s, service)
@@ -301,7 +301,7 @@ func (c *simpleCommandComponent) Run(ctx context.Context) {
 			out = os.Stdout
 			err = os.Stderr
 		} else {
-			w := slogger.NewNamedWriter(os.Stdout, c.Name)
+			w := logger.NewNamedWriter(os.Stdout, c.Name)
 			out = w
 			err = w
 		}
@@ -319,15 +319,15 @@ func (c *simpleCommandComponent) Run(ctx context.Context) {
 
 	defer func() {
 		if cmd.Process != nil && !cmd.ProcessState.Exited() {
-			slogger.Log.Info("Kill " + c.Name + " by SIGTERM")
+			logger.Log.Info("Kill " + c.Name + " by SIGTERM")
 			cmd.Process.Signal(syscall.SIGTERM)
 		}
 	}()
-	slogger.Log.Info("Start " + c.ExecutableFilePath)
+	logger.Log.Info("Start " + c.ExecutableFilePath)
 	if err := cmd.Run(); err != nil {
-		slogger.Log.Info("Some error was occurred", slogger.E(err))
+		logger.Log.Info("Some error was occurred", logger.E(err))
 	}
-	slogger.Log.Info("Shutdown " + c.Name)
+	logger.Log.Info("Shutdown " + c.Name)
 }
 
 func (c *simpleCommandComponent) Ready() bool {
@@ -370,23 +370,23 @@ func (c *grpcServerComponent) Run(ctx context.Context) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.Listen))
 	if err != nil {
-		slogger.Log.Error("Failed to listen", slogger.E(err))
+		logger.Log.Error("Failed to listen", logger.E(err))
 		return
 	}
 
 	go func() {
 		<-ctx.Done()
 
-		slogger.Log.Debug(fmt.Sprintf("Graceful stop %s server", c.Name))
+		logger.Log.Debug(fmt.Sprintf("Graceful stop %s server", c.Name))
 		s.GracefulStop()
 	}()
 
-	slogger.Log.Info(fmt.Sprintf("Start %s server", c.Name), slog.Int("listen", c.Listen))
+	logger.Log.Info(fmt.Sprintf("Start %s server", c.Name), slog.Int("listen", c.Listen))
 	if err := s.Serve(lis); err != nil {
-		slogger.Log.Warn("Serve gRPC", slogger.E(err))
+		logger.Log.Warn("Serve gRPC", logger.E(err))
 		return
 	}
-	slogger.Log.Info("Stop gRPC server")
+	logger.Log.Info("Stop gRPC server")
 }
 
 func (c *grpcServerComponent) GetDeps() []component {
@@ -426,7 +426,7 @@ func (c *gitDataDirectory) Run(ctx context.Context) {
 	if v := os.Getenv("GITHUB_TOKEN"); v != "" {
 		auth = &gitHttp.BasicAuth{Username: "octocat", Password: v}
 	}
-	slogger.Log.Info("git directory is not found. clone the repository", slog.String("dir", dir))
+	logger.Log.Info("git directory is not found. clone the repository", slog.String("dir", dir))
 	_, err := goGit.PlainCloneContext(ctx, dir, false, &goGit.CloneOptions{
 		URL:           c.URL,
 		Depth:         1,
@@ -436,10 +436,10 @@ func (c *gitDataDirectory) Run(ctx context.Context) {
 		Auth:          auth,
 	})
 	if err != nil && !errors.Is(err, goGit.ErrRepositoryAlreadyExists) {
-		slogger.Log.Info("failed to clone the repository", slogger.E(err))
+		logger.Log.Info("failed to clone the repository", logger.E(err))
 		return
 	}
-	slogger.Log.Info("Finished cloning the repository")
+	logger.Log.Info("Finished cloning the repository")
 }
 
 func (c *gitDataDirectory) GetDeps() []component {
@@ -468,7 +468,7 @@ func (c *minioBucket) GetType() componentType {
 
 func (c *minioBucket) Run(ctx context.Context) {
 	if c.Instance.GetName() != "minio" {
-		slogger.Log.Error("instance is not MinIO")
+		logger.Log.Error("instance is not MinIO")
 		return
 	}
 
@@ -483,11 +483,11 @@ func (c *minioBucket) Run(ctx context.Context) {
 	storageClient := storage.NewS3(c.Bucket, opt)
 
 	if storageClient.ExistBucket(ctx, c.Bucket) {
-		slogger.Log.Info("the bucket is found")
+		logger.Log.Info("the bucket is found")
 	} else {
-		slogger.Log.Info("the bucket is not found. make the bucket")
+		logger.Log.Info("the bucket is not found. make the bucket")
 		if err := storageClient.MakeBucket(ctx, c.Bucket); err != nil {
-			slogger.Log.Error("Failed to make bucket", slogger.E(err))
+			logger.Log.Error("Failed to make bucket", logger.E(err))
 			return
 		}
 	}
@@ -520,7 +520,7 @@ func (c *bucketData) GetDeps() []component {
 
 func (c *bucketData) Run(ctx context.Context) {
 	if c.Instance.GetName() != "minio" {
-		slogger.Log.Error("instance is not MinIO")
+		logger.Log.Error("instance is not MinIO")
 		return
 	}
 
@@ -539,11 +539,11 @@ func (c *bucketData) Run(ctx context.Context) {
 		dir = x.OutputDir()
 	}
 	if dir == "" {
-		slogger.Log.Error("the component, specified by Data, is not support OutputDir")
+		logger.Log.Error("the component, specified by Data, is not support OutputDir")
 		return
 	}
 
-	slogger.Log.Debug("Walk directory", slog.String("path", dir))
+	logger.Log.Debug("Walk directory", slog.String("path", dir))
 	err := filepath.Walk(dir, func(p string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -554,7 +554,7 @@ func (c *bucketData) Run(ctx context.Context) {
 		if err != nil {
 			return err
 		}
-		slogger.Log.Debug("Put object", slog.String("name", c.Prefix+"/"+name))
+		logger.Log.Debug("Put object", slog.String("name", c.Prefix+"/"+name))
 		err = storageClient.PutReader(ctx, c.Prefix+"/"+name, file)
 		if err != nil {
 			return err
@@ -563,7 +563,7 @@ func (c *bucketData) Run(ctx context.Context) {
 		return nil
 	})
 	if err != nil {
-		slogger.Log.Error("Failed to put git data", slogger.E(err))
+		logger.Log.Error("Failed to put git data", logger.E(err))
 		return
 	}
 }
@@ -597,7 +597,7 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 	for _, v := range []string{baseDir, secureFileDir} {
 		if _, err := os.Stat(v); os.IsNotExist(err) {
 			if err := os.Mkdir(v, 0755); err != nil {
-				slogger.Log.Error("Failed to make directory", slogger.E(err), slog.String("path", v))
+				logger.Log.Error("Failed to make directory", logger.E(err), slog.String("path", v))
 				return
 			}
 		}
@@ -605,19 +605,19 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 
 	mysqldPath, err := exec.LookPath("mysqld")
 	if err != nil {
-		slogger.Log.Error("Failed to get path of mysqld")
+		logger.Log.Error("Failed to get path of mysqld")
 		return
 	}
 	_, err = exec.LookPath("mysql_install_db")
 	legacy := err == nil
 
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		slogger.Log.Info("Initialize data directory")
+		logger.Log.Info("Initialize data directory")
 		var cmd *exec.Cmd
 		if legacy {
 			// MySQL 5.7 or earlier
 			if err := os.MkdirAll(dataDir, 0755); err != nil {
-				slogger.Log.Error("Failed to make directory", slogger.E(err), slog.String("path", dataDir))
+				logger.Log.Error("Failed to make directory", logger.E(err), slog.String("path", dataDir))
 			}
 			cmd = exec.CommandContext(ctx,
 				"mysql_install_db",
@@ -632,7 +632,7 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			slogger.Log.Error("Failed to initialize data dir", slogger.E(err))
+			logger.Log.Error("Failed to initialize data dir", logger.E(err))
 		}
 	}
 
@@ -672,10 +672,10 @@ func (c *mysqlComponent) Run(ctx context.Context) {
 
 	defer c.shutdown(dataDir)
 
-	slogger.Log.Info("Start MySQL")
+	logger.Log.Info("Start MySQL")
 	c.cmd = mysql
 	if err := mysql.Run(); err != nil {
-		slogger.Log.Info("Some error was occurred", slogger.E(err))
+		logger.Log.Info("Some error was occurred", logger.E(err))
 		return
 	}
 }
@@ -686,27 +686,27 @@ func (c *mysqlComponent) Ready() bool {
 		return false
 	}
 	conn.Close()
-	slogger.Log.Info("Started MySQL", slog.Int("pid", c.cmd.Process.Pid))
+	logger.Log.Info("Started MySQL", slog.Int("pid", c.cmd.Process.Pid))
 
 	return true
 }
 
 func (c *mysqlComponent) shutdown(dataDir string) {
-	slogger.Log.Info("Shutdown MySQL")
+	logger.Log.Info("Shutdown MySQL")
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		slogger.Log.Error("Failed to get hostname", slogger.E(err))
+		logger.Log.Error("Failed to get hostname", logger.E(err))
 		return
 	}
 	pidFile := filepath.Join(dataDir, hostname+".pid")
 	if _, err := os.Stat(pidFile); os.IsNotExist(err) {
-		slogger.Log.Info("Pid file is not found. Probably mysqld already exited.")
+		logger.Log.Info("Pid file is not found. Probably mysqld already exited.")
 		return
 	}
 	pidBuf, err := os.ReadFile(pidFile)
 	if err != nil {
-		slogger.Log.Error("Failed to read pid file", slogger.E(err))
+		logger.Log.Error("Failed to read pid file", logger.E(err))
 		return
 	}
 	pidBuf = bytes.TrimSpace(pidBuf)
@@ -714,9 +714,9 @@ func (c *mysqlComponent) shutdown(dataDir string) {
 	if err != nil {
 		return
 	}
-	slogger.Log.Info("Kill MySQL by SIGTERM", slog.Int("pid", pid))
+	logger.Log.Info("Kill MySQL by SIGTERM", slog.Int("pid", pid))
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
-		slogger.Log.Error("Failed to send signal", slogger.E(err))
+		logger.Log.Error("Failed to send signal", logger.E(err))
 		return
 	}
 }
@@ -742,22 +742,22 @@ func (c *mysqlDatabase) GetDeps() []component {
 
 func (c *mysqlDatabase) Run(ctx context.Context) {
 	if c.MySQL.GetName() != "mysqld" {
-		slogger.Log.Error("MySQL is not mysqld")
+		logger.Log.Error("MySQL is not mysqld")
 		return
 	}
 
 	port := c.MySQL.(*mysqlComponent).Port.Number
 	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/", port))
 	if err != nil {
-		slogger.Log.Error("Failed to connect to mysql", slogger.E(err))
+		logger.Log.Error("Failed to connect to mysql", logger.E(err))
 		return
 	}
 	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", c.Name))
 	if err != nil {
-		slogger.Log.Error("Failed to create database", slogger.E(err))
+		logger.Log.Error("Failed to create database", logger.E(err))
 		return
 	}
-	slogger.Log.Info("Created database", slog.String("name", c.Name))
+	logger.Log.Info("Created database", slog.String("name", c.Name))
 }
 
 type mysqlUser struct {
@@ -783,34 +783,34 @@ func (c *mysqlUser) GetDeps() []component {
 
 func (c *mysqlUser) Run(ctx context.Context) {
 	if c.MySQL.GetName() != "mysqld" {
-		slogger.Log.Error("Mysql is not mysqld")
+		logger.Log.Error("Mysql is not mysqld")
 		return
 	}
 
 	port := c.MySQL.(*mysqlComponent).Port.Number
 	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/", port))
 	if err != nil {
-		slogger.Log.Error("Failed to connect mysql", slogger.E(err))
+		logger.Log.Error("Failed to connect mysql", logger.E(err))
 		return
 	}
 	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", c.Name, c.Password))
 	if err != nil {
-		slogger.Log.Error("Failed to create user", slogger.E(err))
+		logger.Log.Error("Failed to create user", logger.E(err))
 		return
 	}
-	slogger.Log.Info("Created user", slog.String("name", c.Name))
+	logger.Log.Info("Created user", slog.String("name", c.Name))
 
 	if c.Database != nil {
 		d, ok := c.Database.(*mysqlDatabase)
 		if !ok {
-			slogger.Log.Error("Database field is not Database", slogger.E(err))
+			logger.Log.Error("Database field is not Database", logger.E(err))
 			return
 		}
 		_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON %s.* TO '%s'", d.Name, c.Name))
 		if err != nil {
-			slogger.Log.Error("Failed to permit privileges", slogger.E(err))
+			logger.Log.Error("Failed to permit privileges", logger.E(err))
 			return
 		}
-		slogger.Log.Info("Grant all privileges", slog.String("name", c.Name), slog.String("database", d.Name))
+		logger.Log.Info("Grant all privileges", slog.String("name", c.Name), slog.String("database", d.Name))
 	}
 }

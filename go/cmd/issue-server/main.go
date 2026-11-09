@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/mono/go/issue/mcp"
 	"go.f110.dev/mono/go/issue/server"
 	"go.f110.dev/mono/go/issue/webhook"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type serverCommand struct {
@@ -79,7 +79,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 	// The repositories are managed by Build, so the webhook, the change id and the URLs of the links need Build.
 	var repositoryURLs server.Repositories
 	if c.BuildAPI == "" {
-		slogger.Log.Info("The webhook is not handled and the links have no URL because --build-api is not specified")
+		logger.Log.Info("The webhook is not handled and the links have no URL because --build-api is not specified")
 	} else {
 		buildConn, err := grpc.NewClient(c.BuildAPI, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -93,7 +93,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 		mux.Handle("/webhook", eventProcessor)
 
 		if c.GitDataService == "" {
-			slogger.Log.Info("The change id of the commits is not looked up because --git-data-service is not specified")
+			logger.Log.Info("The change id of the commits is not looked up because --git-data-service is not specified")
 		} else {
 			gitDataConn, err := grpc.NewClient(c.GitDataService, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
@@ -115,7 +115,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		slogger.Log.Info("Start server", slog.String("addr", c.Addr))
+		logger.Log.Info("Start server", slog.String("addr", c.Addr))
 		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- xerrors.WithStack(err)
 		}
@@ -138,7 +138,7 @@ func (c *serverCommand) Run(ctx context.Context) error {
 // --public-key-url, the server runs without heimdallr and every request is the request of the user of Subject.
 func (c *serverCommand) authenticator(ctx context.Context) (func(http.Handler) http.Handler, error) {
 	if c.PublicKeyURL == "" {
-		slogger.Log.Info("Run without heimdallr", slog.String("subject", c.Subject))
+		logger.Log.Info("Run without heimdallr", slog.String("subject", c.Subject))
 		return func(next http.Handler) http.Handler { return authproxy.WithSubject(c.Subject, next) }, nil
 	}
 	publicKey, err := authproxy.FetchPublicKey(ctx, c.PublicKeyURL)
@@ -169,7 +169,7 @@ func waitMigration(ctx context.Context, conn *sql.DB) error {
 	defer ticker.Stop()
 	timeout := time.After(5 * time.Minute)
 	for !p.Ready(ctx, database.SchemaHash) {
-		slogger.Log.Info("Waiting for the migration")
+		logger.Log.Info("Waiting for the migration")
 		select {
 		case <-ticker.C:
 		case <-timeout:

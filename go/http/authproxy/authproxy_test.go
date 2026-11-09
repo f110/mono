@@ -13,12 +13,12 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestAuthenticate(t *testing.T) {
-	slogger.Init()
+	logger.Init()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assertion.MustNoError(t, err)
 	otherKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

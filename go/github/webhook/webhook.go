@@ -18,7 +18,7 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // State is the lifecycle state of an Event. The values are persisted as is.
@@ -168,7 +168,7 @@ func (p *EventProcessor) Register[T any](rec Reconciler[T]) {
 func (p *EventProcessor) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	payload, err := io.ReadAll(req.Body)
 	if err != nil {
-		slogger.Log.Warn("Failed to read webhook body", slogger.E(err))
+		logger.Log.Warn("Failed to read webhook body", logger.E(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -198,11 +198,11 @@ func (p *EventProcessor) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	if err := p.store.Create(req.Context(), ev); err != nil {
 		if errors.Is(err, ErrDuplicateDelivery) {
-			slogger.Log.Info("Duplicate webhook delivery", slog.String("delivery_id", deliveryID))
+			logger.Log.Info("Duplicate webhook delivery", slog.String("delivery_id", deliveryID))
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		slogger.Log.Error("Failed to persist webhook event", slogger.E(err), slog.String("delivery_id", deliveryID), slog.String("event_type", eventType))
+		logger.Log.Error("Failed to persist webhook event", logger.E(err), slog.String("delivery_id", deliveryID), slog.String("event_type", eventType))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -216,7 +216,7 @@ func (p *EventProcessor) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Run reconciles the stored events until ctx is cancelled.
 func (p *EventProcessor) Run(ctx context.Context) {
-	slogger.Log.Info("Start webhook scheduler", slog.Duration("interval", p.interval), slog.Duration("max_processing", p.maxProcessingDuration))
+	logger.Log.Info("Start webhook scheduler", slog.Duration("interval", p.interval), slog.Duration("max_processing", p.maxProcessingDuration))
 
 	t := time.NewTicker(p.interval)
 	defer t.Stop()
@@ -236,12 +236,12 @@ func (p *EventProcessor) Run(ctx context.Context) {
 
 func (p *EventProcessor) runOnce(ctx context.Context) {
 	if err := p.recoverStuck(ctx); err != nil {
-		slogger.Log.Warn("Failed to recover stuck PROCESSING events", slogger.E(err))
+		logger.Log.Warn("Failed to recover stuck PROCESSING events", logger.E(err))
 	}
 
 	events, err := p.store.ListByState(ctx, StatePending, StateFailed)
 	if err != nil {
-		slogger.Log.Warn("Failed to fetch reconcile targets", slogger.E(err))
+		logger.Log.Warn("Failed to fetch reconcile targets", logger.E(err))
 		return
 	}
 	sort.Slice(events, func(i, j int) bool { return events[i].Id < events[j].Id })
@@ -264,10 +264,10 @@ func (p *EventProcessor) recoverStuck(ctx context.Context) error {
 		}
 		ev.State = StatePending
 		if err := p.store.Update(ctx, ev); err != nil {
-			slogger.Log.Warn("Failed to reset stuck PROCESSING event", slog.Int("id", int(ev.Id)), slogger.E(err))
+			logger.Log.Warn("Failed to reset stuck PROCESSING event", slog.Int("id", int(ev.Id)), logger.E(err))
 			continue
 		}
-		slogger.Log.Info("Reset stuck PROCESSING event", slog.Int("id", int(ev.Id)))
+		logger.Log.Info("Reset stuck PROCESSING event", slog.Int("id", int(ev.Id)))
 	}
 	return nil
 }
@@ -279,7 +279,7 @@ func (p *EventProcessor) process(ctx context.Context, ev *Event) {
 			ev.LastError = "exceeded max processing duration"
 		}
 		if err := p.store.Update(ctx, ev); err != nil {
-			slogger.Log.Warn("Failed to mark event as EXPIRED", slog.Int("id", int(ev.Id)), slogger.E(err))
+			logger.Log.Warn("Failed to mark event as EXPIRED", slog.Int("id", int(ev.Id)), logger.E(err))
 		}
 		return
 	}
@@ -289,14 +289,14 @@ func (p *EventProcessor) process(ctx context.Context, ev *Event) {
 		ev.State = StateSkipped
 		ev.LastError = "no reconciler registered for event_type=" + ev.EventType
 		if err := p.store.Update(ctx, ev); err != nil {
-			slogger.Log.Warn("Failed to mark event as SKIPPED", slog.Int("id", int(ev.Id)), slogger.E(err))
+			logger.Log.Warn("Failed to mark event as SKIPPED", slog.Int("id", int(ev.Id)), logger.E(err))
 		}
 		return
 	}
 
 	claimed, err := p.store.Claim(ctx, ev)
 	if err != nil {
-		slogger.Log.Warn("Failed to claim event", slog.Int("id", int(ev.Id)), slogger.E(err))
+		logger.Log.Warn("Failed to claim event", slog.Int("id", int(ev.Id)), logger.E(err))
 		return
 	}
 	if !claimed {
@@ -306,10 +306,10 @@ func (p *EventProcessor) process(ctx context.Context, ev *Event) {
 
 	recErr := rec(ctx, ev)
 	if recErr != nil {
-		slogger.Log.Warn("Reconcile failed", slog.Int("id", int(ev.Id)), slog.String("event_type", ev.EventType), slogger.E(recErr))
+		logger.Log.Warn("Reconcile failed", slog.Int("id", int(ev.Id)), slog.String("event_type", ev.EventType), logger.E(recErr))
 	}
 	ev.Finalize(recErr)
 	if err := p.store.Update(ctx, ev); err != nil {
-		slogger.Log.Warn("Failed to persist reconcile state", slog.Int("id", int(ev.Id)), slogger.E(err))
+		logger.Log.Warn("Failed to persist reconcile state", slog.Int("id", int(ev.Id)), logger.E(err))
 	}
 }

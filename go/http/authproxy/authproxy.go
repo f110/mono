@@ -13,7 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // TokenHeaderName is the header which heimdallr sets the token to.
@@ -51,7 +51,7 @@ func Authenticate(publicKey *ecdsa.PublicKey, next http.Handler) http.Handler {
 			jwt.WithExpirationRequired(),
 		)
 		if err != nil || claims.Subject == "" {
-			slogger.Log.Debug("Failed to verify the token", slogger.E(err))
+			logger.Log.Debug("Failed to verify the token", logger.E(err))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

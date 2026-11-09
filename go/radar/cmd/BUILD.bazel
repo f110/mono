@@ -13,7 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/cli",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/radar",
         "//go/radar/amesh",
         "//go/radar/dayfile",
@@ -35,7 +35,7 @@ go_test(
     ],
     embed = [":cmd"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/radar",
         "//go/radar/amesh",
         "//go/radar/dayfile",

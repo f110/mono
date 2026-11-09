@@ -12,7 +12,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -65,7 +65,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 		if err != nil {
 			return "", 0, xerrors.WithStack(err)
 		}
-		slogger.Log.Info("Successfully upload", slog.String("name", objectPath), slog.String("bucket", s.bucket), slog.Int64("size", info.Size()))
+		logger.Log.Info("Successfully upload", slog.String("name", objectPath), slog.String("bucket", s.bucket), slog.Int64("size", info.Size()))
 		s.uploadedFiles = append(s.uploadedFiles, objectPath)
 		totalSize += uint64(info.Size())
 	}
@@ -77,7 +77,7 @@ func (s *ObjectStorageIndexManager) Add(ctx context.Context, name string, files 
 func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir string, manifest Manifest) error {
 	tmpDir := filepath.Join(indexDir, ".tmp")
 	if _, err := os.Stat(tmpDir); err == nil {
-		slogger.Log.Debug("Remove tmp directory", slog.String("dir", tmpDir))
+		logger.Log.Debug("Remove tmp directory", slog.String("dir", tmpDir))
 		if err := os.RemoveAll(tmpDir); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -108,7 +108,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 			if err := os.WriteFile(filePath, buf, 0644); err != nil {
 				return xerrors.WithStack(err)
 			}
-			slogger.Log.Debug("Download file", slog.String("path", filePath))
+			logger.Log.Debug("Download file", slog.String("path", filePath))
 		}
 	}
 
@@ -116,7 +116,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Debug("Remove old index files", slog.Int("len", len(entry)-1))
+	logger.Log.Debug("Remove old index files", slog.Int("len", len(entry)-1))
 	for _, v := range entry {
 		if v.Name() == ".tmp" {
 			continue
@@ -130,7 +130,7 @@ func (s *ObjectStorageIndexManager) Download(ctx context.Context, indexDir strin
 		return xerrors.WithStack(err)
 	}
 	for _, v := range entry {
-		slogger.Log.Debug("Move index file",
+		logger.Log.Debug("Move index file",
 			slog.String("from", filepath.Join(tmpDir, v.Name())),
 			slog.String("to", filepath.Join(indexDir, v.Name())),
 		)

@@ -10,7 +10,7 @@ go_library(
         "//go/ctxutil",
         "//go/enumerable",
         "//go/fsm",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/storage",
         "@com_github_prometheus_client_model//go",
         "@com_github_prometheus_common//expfmt",

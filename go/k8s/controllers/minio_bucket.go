@@ -30,7 +30,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/thirdpartyapi/minio-operator/miniocontrollerv1beta1"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -400,7 +400,7 @@ func (r *BucketReconciler) ensureBucketPolicy(ctx context.Context) (fsm.State, e
 	}
 	if len(p.Statements) > 0 && currentPolicy != nil {
 		if reflect.DeepEqual(p.Statements, currentPolicy.Statements) {
-			slogger.Log.Debug("Skip set bucket policy because already set same policy")
+			logger.Log.Debug("Skip set bucket policy because already set same policy")
 			return fsm.Next(bucketStateEnsureIndexFile)
 		}
 	}

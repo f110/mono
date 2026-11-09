@@ -11,7 +11,7 @@ go_library(
         "//go/enumerable",
         "//go/fsm",
         "//go/jma",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/prometheus/exporter",
         "//go/ucl",
         "@com_github_prometheus_client_golang//prometheus",

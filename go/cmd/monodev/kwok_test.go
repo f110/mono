@@ -10,12 +10,12 @@ import (
 
 	"k8s.io/client-go/tools/clientcmd"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestKwokPKI(t *testing.T) {
-	assertion.MustNoError(t, slogger.Init())
+	assertion.MustNoError(t, logger.Init())
 	t.Setenv("BUILD_WORKING_DIRECTORY", t.TempDir())
 
 	kwokPKI.Run(context.Background())

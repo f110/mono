@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Command struct {
@@ -54,7 +54,7 @@ func (c *Command) Usage() string {
 	}
 	if globalFlags == nil {
 		globalFlags = NewFlagSet("", pflag.ContinueOnError)
-		slogger.Flags(globalFlags.flagSet)
+		logger.Flags(globalFlags.flagSet)
 	}
 
 	buf := new(bytes.Buffer)
@@ -120,7 +120,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		fs.AddFlagSet(parent.Flags())
 		parent = parent.parent
 	}
-	slogger.Flags(fs.flagSet)
+	logger.Flags(fs.flagSet)
 	help := false
 	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
 	if err := fs.Parse(args); err != nil && !help {
@@ -140,7 +140,7 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		c.printUsage()
 		return xerrors.New("command not found")
 	}
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		return err
 	}
 	return c.Run(ctx, c, fs.Args())

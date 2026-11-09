@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/radar/parse",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/radar",
         "@dev_f110_go_xerrors//:xerrors",
     ],

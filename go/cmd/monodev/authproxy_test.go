@@ -14,13 +14,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"go.f110.dev/mono/go/http/authproxy"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestAuthProxy(t *testing.T) {
-	assertion.MustNoError(t, slogger.Init())
+	assertion.MustNoError(t, logger.Init())
 	t.Setenv("BUILD_WORKING_DIRECTORY", t.TempDir())
 
 	tokens := make(chan string, 1)

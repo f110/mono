@@ -21,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -207,10 +207,10 @@ func (c *gitDataServiceCommand) startService(ctx context.Context) (fsm.State, er
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
+	logger.Log.Info("Start listen", slog.String("addr", c.Listen))
 	go func() {
 		if err := c.grpcServer.Serve(lis); err != nil {
-			slogger.Log.Error("gRPC server returns error", slogger.E(err))
+			logger.Log.Error("gRPC server returns error", logger.E(err))
 		}
 	}()
 
@@ -222,10 +222,10 @@ func (c *gitDataServiceCommand) startService(ctx context.Context) (fsm.State, er
 				Addr:    c.ListenWebhookReceiver,
 				Handler: c.updater,
 			}
-			slogger.Log.Info("Start webhook receiver", slog.String("addr", c.ListenWebhookReceiver))
+			logger.Log.Info("Start webhook receiver", slog.String("addr", c.ListenWebhookReceiver))
 			go func() {
 				if err := c.webhookServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					slogger.Log.Info("Stop webhook receiver", slogger.E(err))
+					logger.Log.Info("Stop webhook receiver", logger.E(err))
 				}
 			}()
 		}
@@ -236,9 +236,9 @@ func (c *gitDataServiceCommand) startService(ctx context.Context) (fsm.State, er
 
 func (c *gitDataServiceCommand) shuttingDown(ctx context.Context) (fsm.State, error) {
 	if c.grpcServer != nil {
-		slogger.Log.Debug("Graceful stopping gRPC server")
+		logger.Log.Debug("Graceful stopping gRPC server")
 		c.grpcServer.GracefulStop()
-		slogger.Log.Info("Stop gRPC server")
+		logger.Log.Info("Stop gRPC server")
 	}
 	if c.webhookServer != nil {
 		c.webhookServer.Shutdown(ctx)

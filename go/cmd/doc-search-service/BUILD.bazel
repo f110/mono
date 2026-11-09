@@ -15,7 +15,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/grpcutil",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",

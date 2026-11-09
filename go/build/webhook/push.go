@@ -13,7 +13,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // GitSyncer triggers an immediate fetch of a tracked repository so that a
@@ -69,10 +69,10 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 			status.GitSyncError = ""
 		case errors.Is(err, git.ErrRepositoryNotTracked):
 			status.GitSyncError = "repository is not tracked by git-data-service"
-			slogger.Log.Info("Skip git sync: repository not tracked", slog.String("repo", cloneURL))
+			logger.Log.Info("Skip git sync: repository not tracked", slog.String("repo", cloneURL))
 		default:
 			status.GitSyncError = err.Error()
-			slogger.Log.Warn("Failed to sync repository", slogger.E(err), slog.String("repo", cloneURL))
+			logger.Log.Warn("Failed to sync repository", logger.E(err), slog.String("repo", cloneURL))
 			_ = ev.WriteStatus(&status)
 			return err
 		}
@@ -125,7 +125,7 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 			// External release reconcile errors are non-fatal in the legacy
 			// flow — they were logged and skipped. Mirror that here so
 			// transient DB hiccups don't block the build dispatch.
-			slogger.Log.Warn("Failed to reconcile external_release triggers", slog.String("repo", repoName), slogger.E(err))
+			logger.Log.Warn("Failed to reconcile external_release triggers", slog.String("repo", repoName), logger.E(err))
 		} else {
 			status.ExternalReconciledAt = new(time.Now())
 		}
@@ -136,14 +136,14 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 			// Failing to refresh the manual-job cache is non-fatal: InvokeJob
 			// can still fall back to reading from GitHub. Log and continue
 			// so a transient DB hiccup doesn't block the build dispatch.
-			slogger.Log.Warn("Failed to reconcile jobs", slog.String("repo", repoName), slogger.E(err))
+			logger.Log.Warn("Failed to reconcile jobs", slog.String("repo", repoName), logger.E(err))
 		} else {
 			status.JobsReconciledAt = new(time.Now())
 		}
 		if repo.BazelVersion != conf.BazelVersion {
 			repo.BazelVersion = conf.BazelVersion
 			if err := r.dao.Repository.Update(ctx, repo); err != nil {
-				slogger.Log.Warn("Failed to update bazel_version", slog.String("repo", repoName), slogger.E(err))
+				logger.Log.Warn("Failed to update bazel_version", slog.String("repo", repoName), logger.E(err))
 			}
 		}
 	}

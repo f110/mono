@@ -23,7 +23,7 @@ import (
 	"go.f110.dev/mono/go/bazel/buildeventstream"
 	"go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const markerSuffix = ".cd_artifact.json"
@@ -98,7 +98,7 @@ func (c *CollectCommand) Run(ctx context.Context) error {
 		return err
 	}
 	if !success {
-		slogger.Log.Info("Build did not succeed; skip artifact collection")
+		logger.Log.Info("Build did not succeed; skip artifact collection")
 		return nil
 	}
 
@@ -107,7 +107,7 @@ func (c *CollectCommand) Run(ctx context.Context) error {
 		return err
 	}
 	if len(entries) == 0 {
-		slogger.Log.Info("No cd_artifact markers found")
+		logger.Log.Info("No cd_artifact markers found")
 		return nil
 	}
 	for _, e := range entries {
@@ -153,7 +153,7 @@ func (c *CollectCommand) Run(ctx context.Context) error {
 		// container's exit code does). Record and continue.
 		reference, err := c.upload(ctx, client, e)
 		if err != nil {
-			slogger.Log.Warn("Failed to upload artifact", slog.String("name", e.Name), slogger.E(err))
+			logger.Log.Warn("Failed to upload artifact", slog.String("name", e.Name), logger.E(err))
 			res.Status = "error"
 			summary = append(summary, res)
 			continue

@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var maxProcessingTime = 1 * time.Minute
@@ -77,7 +77,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			nil,
 		)
 		if err != nil {
-			slogger.Log.Info("Failed to get pages", slogger.E(err))
+			logger.Log.Info("Failed to get pages", logger.E(err))
 			return err
 		}
 
@@ -93,13 +93,13 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			}
 			e, err := s.parseSchedule(v.RichText[0].PlainText)
 			if err != nil {
-				slogger.Log.Warn("Failed parse schedule spec", slogger.E(err))
+				logger.Log.Warn("Failed parse schedule spec", logger.E(err))
 				continue
 			}
 			e.ID = page.ID
 			e.Title = page.Properties["Name"].Title[0].PlainText
 			schedules = append(schedules, e)
-			slogger.Log.Debug("Found schedule event", slog.Int("interval", int(e.Interval)), slog.String("id", e.ID), slog.String("title", e.Title))
+			logger.Log.Debug("Found schedule event", slog.Int("interval", int(e.Interval)), slog.String("id", e.ID), slog.String("title", e.Title))
 			pageMap[page.ID] = page
 		}
 
@@ -112,7 +112,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 					}
 				case intervalMonthly:
 					if time.Now().Day() != spec.Day {
-						slogger.Log.Debug("Skip because the day is mismatch",
+						logger.Log.Debug("Skip because the day is mismatch",
 							slog.Int("now", time.Now().Day()),
 							slog.Int("spec", spec.Day),
 							slog.String("id", spec.ID),
@@ -125,7 +125,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 			lastPage := s.findLastPage(pages, config.ScheduleColumn, spec)
 			var shouldCreateNewPage bool
 			if lastPage != nil {
-				slogger.Log.Debug("Found last page", slog.String("id", lastPage.ID), slog.String("spec_id", spec.ID))
+				logger.Log.Debug("Found last page", slog.String("id", lastPage.ID), slog.String("spec_id", spec.ID))
 				var interval time.Duration
 				switch spec.Interval {
 				case intervalDaily:
@@ -136,7 +136,7 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 					interval = 7 * 24 * time.Hour
 				}
 
-				slogger.Log.Debug("Last page created at", slog.Time("created", lastPage.CreatedTime.Time), slog.Duration("interval", interval))
+				logger.Log.Debug("Last page created at", slog.Time("created", lastPage.CreatedTime.Time), slog.Duration("interval", interval))
 				if time.Now().After(lastPage.CreatedTime.Add(interval)) {
 					shouldCreateNewPage = true
 				}
@@ -165,11 +165,11 @@ func (s *ToDoScheduler) run(dryRun bool) error {
 				},
 			}
 			if dryRun {
-				slogger.Log.Info("Create page")
+				logger.Log.Info("Create page")
 			} else {
 				_, err = s.client.CreatePage(context.TODO(), newPage)
 				if err != nil {
-					slogger.Log.Warn("Failed to create new page", slogger.E(err))
+					logger.Log.Warn("Failed to create new page", logger.E(err))
 					return err
 				}
 			}
@@ -300,15 +300,15 @@ func (s *ToDoScheduler) parseSchedule(schedule string) (*scheduleEvent, error) {
 func (s *ToDoScheduler) Start(c string) error {
 	s.cron = cron.New()
 	_, err := s.cron.AddFunc(c, func() {
-		slogger.Log.Debug("Schedule check")
+		logger.Log.Debug("Schedule check")
 		if err := s.run(false); err != nil {
-			slogger.Log.Warn("Failed to run", slogger.E(err))
+			logger.Log.Warn("Failed to run", logger.E(err))
 		}
 	})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Info("Start cron")
+	logger.Log.Info("Start cron")
 	s.cron.Start()
 
 	return nil

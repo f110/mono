@@ -37,7 +37,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 	configv1alpha4 "sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var NodeImageHash = map[string]string{
@@ -262,7 +262,7 @@ func (c *Cluster) LoadImageFiles(ctx context.Context, images ...*ContainerImageF
 			return err
 		}
 
-		slogger.Log.Info("Load image file", slog.String("tag", v.repoTags))
+		logger.Log.Info("Load image file", slog.String("tag", v.repoTags))
 		cmd := exec.CommandContext(ctx, c.kind, "load", "image-archive", "--name", c.name, v.File)
 		if err := cmd.Run(); err != nil {
 			return err
@@ -282,7 +282,7 @@ func (c *Cluster) LoadImageFiles(ctx context.Context, images ...*ContainerImageF
 
 	for _, node := range nodes {
 		for _, image := range images {
-			slogger.Log.Info("Set an image tag", slog.String("tag", fmt.Sprintf("%s:%s", image.Repository, image.Tag)), slog.String("node", node))
+			logger.Log.Info("Set an image tag", slog.String("tag", fmt.Sprintf("%s:%s", image.Repository, image.Tag)), slog.String("node", node))
 			cmd = exec.CommandContext(
 				ctx,
 				"docker", "exec", node,
@@ -606,7 +606,7 @@ func (k objects) Apply(cfg *rest.Config, fieldManager string) error {
 
 				return true, nil
 			}
-			slogger.Log.Info("The object was created", slog.String("kind", unstructuredObj.GetKind()), slog.String("name", unstructuredObj.GetName()))
+			logger.Log.Info("The object was created", slog.String("kind", unstructuredObj.GetKind()), slog.String("name", unstructuredObj.GetName()))
 			return true, nil
 		})
 		if err != nil {

@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/cli",
         "//go/github",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_google_go_github_v85//github",
         "@dev_f110_go_xerrors//:xerrors",
     ],
@@ -25,7 +25,7 @@ go_test(
     srcs = ["main_test.go"],
     embed = [":github-pr-dump_lib"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/testing/assertion",
         "@com_github_google_go_github_v85//github",
     ],

@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/netutil"
 )
 
@@ -51,7 +51,7 @@ server {
 }
 
 func TestSimpleHTTPServer(t *testing.T) {
-	slogger.Init()
+	logger.Init()
 	s1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "proxy ok")
 	}))
@@ -127,7 +127,7 @@ server {
 }
 
 func TestSimpleHTTPServer_HealthCheckPath(t *testing.T) {
-	slogger.Init()
+	logger.Init()
 	documentRoot := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(documentRoot, "foo"), []byte("file ok"), 0644))
 	logFile := filepath.Join(t.TempDir(), "access.log")

@@ -6,13 +6,13 @@ import (
 	"github.com/google/go-github/v85/github"
 
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestReconcilersSkipUnmanagedRepository(t *testing.T) {
-	slogger.SetLogLevel("debug")
-	slogger.Init()
+	logger.SetLogLevel("debug")
+	logger.Init()
 
 	cases := []struct {
 		name    string

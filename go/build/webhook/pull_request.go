@@ -14,7 +14,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/git"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // PullRequestReconciler dispatches the pull_request action set: opened,
@@ -116,7 +116,7 @@ func (r *PullRequestReconciler) handleOpenedOrSynchronize(ctx context.Context, e
 	if err != nil {
 		// Treat as "no config found" — legacy code logged + skipped rather
 		// than failing. Same here.
-		slogger.Log.Info("Skip build", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
+		logger.Log.Info("Skip build", logger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("revision", revision))
 		status.Skipped = true
 		status.SkipReason = "failed to fetch build config"
 		_ = ev.WriteStatus(status)

@@ -38,7 +38,7 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/vault"
 )
@@ -325,7 +325,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		for _, task := range tasks {
 			if task.IsChanged() {
 				if err := b.dao.Task.Update(ctx, task); err != nil {
-					slogger.Log.Warn("Failed update task", slogger.E(err))
+					logger.Log.Warn("Failed update task", logger.E(err))
 				}
 			}
 		}
@@ -336,7 +336,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		return nil, xerrors.WithStack(err)
 	}
 	if running := runningSameJob(taskList, job.Name); running != nil {
-		slogger.Log.Warn("Same job is still running", slog.Int("task_id", int(running.Id)), slog.String("job_name", job.Name))
+		logger.Log.Warn("Same job is still running", slog.Int("task_id", int(running.Id)), slog.String("job_name", job.Name))
 		return nil, nil
 	}
 
@@ -366,7 +366,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 
 		if err := b.buildJob(ctx, repo, job, task); err != nil {
 			if errors.Is(err, ErrOtherTaskIsRunning) {
-				slogger.Log.Info("Enqueue the task", slog.Int("task.id", int(task.Id)))
+				logger.Log.Info("Enqueue the task", slog.Int("task.id", int(task.Id)))
 				b.taskQueue.Enqueue(job, task)
 				return tasks, nil
 			}
@@ -381,7 +381,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 
 		if job.GitHubStatus {
 			if err := b.updateGithubStatus(ctx, repo, job, task, "pending"); err != nil {
-				slogger.Log.Warn("Failure update the status of github", slogger.E(err), slog.Int("task.id", int(task.Id)))
+				logger.Log.Warn("Failure update the status of github", logger.E(err), slog.Int("task.id", int(task.Id)))
 			}
 		}
 	}
@@ -458,7 +458,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	task, err := b.getTask(taskId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			slogger.Log.Info("Not found task", slog.String("task.id", taskId))
+			logger.Log.Info("Not found task", slog.String("task.id", taskId))
 			if err := b.teardownJob(ctx, job); err != nil {
 				return xerrors.WithStack(err)
 			}
@@ -476,7 +476,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
 		j := &config.Job{}
 		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
-			slogger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
+			logger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
 			return nil
 		}
 		jobConfiguration = j.ToV2()
@@ -484,7 +484,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		j := &config.Job{}
 		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
 			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration, owner, repoName); err != nil {
-				slogger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
+				logger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
 				return nil
 			}
 		} else {
@@ -493,7 +493,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if task.FinishedAt != nil {
-		slogger.Log.Debug("task is already finished", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
+		logger.Log.Debug("task is already finished", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
 		if job.DeletionTimestamp.IsZero() {
 			if err := b.teardownJob(ctx, job); err != nil {
 				return xerrors.WithStack(err)
@@ -512,9 +512,9 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	// Timed out or force stop
 	if job.CreationTimestamp.Add(jobTimeout).Before(time.Now()) || job.GetLabels()[labelKeyForceStop] != "" {
 		if job.GetLabels()[labelKeyForceStop] == "" {
-			slogger.Log.Info("Job is timed out", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
+			logger.Log.Info("Job is timed out", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
 		} else {
-			slogger.Log.Info("Force stop job", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
+			logger.Log.Info("Force stop job", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
 		}
 		task.FinishedAt = new(time.Now())
 		job.Finalizers = enumerable.Delete(job.Finalizers, bazelBuilderControllerFinalizerName)
@@ -545,7 +545,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if job.Status == nil || len(job.Status.Conditions) == 0 {
-		slogger.Log.Debug("Skip job due to the job doesn't have Conditions")
+		logger.Log.Debug("Skip job due to the job doesn't have Conditions")
 		if task.IsChanged() {
 			if err := b.dao.Task.Update(ctx, task); err != nil {
 				return xerrors.WithStack(err)
@@ -565,7 +565,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 			}
 			task.Success = true
 			task.FinishedAt = &now
-			slogger.Log.Info("Job was finished successfully", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
+			logger.Log.Info("Job was finished successfully", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
 		case batchv1.JobConditionTypeFailed:
 			if task.FinishedAt == nil {
 				if err := b.postProcess(ctx, job, repo, jobConfiguration, task, false); err != nil {
@@ -573,7 +573,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 				}
 			}
 			task.FinishedAt = &now
-			slogger.Log.Info("Job was failed", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
+			logger.Log.Info("Job was failed", slog.String("job.name", job.Name), slog.Int("task_id", int(task.Id)))
 		}
 	}
 
@@ -586,13 +586,13 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 	}
 
 	if followTask := b.taskQueue.DequeueById(task.JobName); followTask != nil {
-		slogger.Log.Info("Dequeue the task", slog.Int("task.id", int(followTask.Id)))
+		logger.Log.Info("Dequeue the task", slog.Int("task.id", int(followTask.Id)))
 		if err := b.buildJob(ctx, repo, jobConfiguration, followTask); err != nil {
-			slogger.Log.Warn("Failed starting follow task. You have to start a task manually", slogger.E(err), slog.String("job.name", task.JobName), slog.Int("task.id", int(task.Id)))
+			logger.Log.Warn("Failed starting follow task. You have to start a task manually", logger.E(err), slog.String("job.name", task.JobName), slog.Int("task.id", int(task.Id)))
 			return nil
 		}
 		if err := b.dao.Task.Update(context.Background(), followTask); err != nil {
-			slogger.Log.Warn("Failed update the task", slogger.E(err), slog.Int("task.id", int(followTask.Id)))
+			logger.Log.Warn("Failed update the task", logger.E(err), slog.Int("task.id", int(followTask.Id)))
 		}
 	}
 
@@ -674,7 +674,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 			}
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
-				slogger.Log.Info("Create Job", slog.String("manifest", string(m)))
+				logger.Log.Info("Create Job", slog.String("manifest", string(m)))
 			} else {
 				createdJob, err = b.client.BatchV1.CreateJob(ctx, obj, metav1.CreateOptions{})
 				if err != nil {
@@ -684,7 +684,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		case *corev1.Secret:
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
-				slogger.Log.Info("Create Secret", slog.String("manifest", string(m)))
+				logger.Log.Info("Create Secret", slog.String("manifest", string(m)))
 			} else {
 				_, err := b.client.CoreV1.CreateSecret(ctx, obj, metav1.CreateOptions{})
 				if err != nil {
@@ -694,7 +694,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		case *corev1.ServiceAccount:
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
-				slogger.Log.Info("Create ServiceAccount", slog.String("manifest", string(m)))
+				logger.Log.Info("Create ServiceAccount", slog.String("manifest", string(m)))
 			} else {
 				_, err := b.client.CoreV1.GetServiceAccount(ctx, b.Namespace, obj.Name, metav1.GetOptions{})
 				if kerrors.IsNotFound(err) {
@@ -706,7 +706,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		case *secretsstorev1.SecretProviderClass:
 			if b.IsStub() {
 				m, _ := k8smanifest.Marshal(obj)
-				slogger.Log.Info("Create SecretProviderClass", slog.String("manifest", string(m)))
+				logger.Log.Info("Create SecretProviderClass", slog.String("manifest", string(m)))
 			} else {
 				_, err := b.secretStoreClient.SecretsstoreV1().SecretProviderClasses(b.Namespace).Create(ctx, obj, k8smetav1.CreateOptions{})
 				if err != nil {
@@ -743,7 +743,7 @@ func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
 
 	jobs, err := b.jobLister.List(b.Namespace, labels.Everything())
 	if err != nil {
-		slogger.Log.Warn("Could not get a job's list from kube-apiserver.", slogger.E(err))
+		logger.Log.Warn("Could not get a job's list from kube-apiserver.", logger.E(err))
 		// Cannot detect the status of the job.
 		// In this situation, we assume that the job is running.
 		return true
@@ -855,7 +855,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 	// (e.g. during a rollout) must not fail post-processing.
 	reportLog, err := b.client.CoreV1.GetPodLogs(ctx, b.Namespace, buildPod.Name, &corev1.PodLogOptions{Container: b.jobBuilder.ReportContainerName})
 	if err != nil {
-		slogger.Log.Warn("Failed to get the report container log", slogger.E(err))
+		logger.Log.Warn("Failed to get the report container log", logger.E(err))
 		reportLog = nil
 	}
 
@@ -866,7 +866,7 @@ func (b *BazelBuilder) postProcess(ctx context.Context, job *batchv1.Job, repo *
 
 	if len(reportLog) > 0 {
 		if err := b.updateReport(ctx, reportLog, repo, task); err != nil {
-			slogger.Log.Warn("Failed to parse the report json", slogger.E(err))
+			logger.Log.Warn("Failed to parse the report json", logger.E(err))
 		}
 	}
 
@@ -968,7 +968,7 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 		return xerrors.WithStack(err)
 	}
 	if u.Hostname() != "github.com" {
-		slogger.Log.Warn("Expect to update a status of github. but repository url is not github.com", slog.String("url", repo.Url))
+		logger.Log.Warn("Expect to update a status of github. but repository url is not github.com", slog.String("url", repo.Url))
 		return nil
 	}
 	// u.Path is /owner/repo if URL is github.com.

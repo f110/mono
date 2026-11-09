@@ -50,7 +50,7 @@ import (
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/http/authproxy"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/storage"
 	"go.f110.dev/mono/go/vault"
@@ -217,7 +217,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	p.ghClient = p.opt.GitHubClient.REST
 
 	if p.opt.Dev {
-		slogger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
+		logger.Log.Info("Start without kube-apiserver. All of integrations with kube-apiserver will be disabled.")
 	} else {
 		cfg, err := clientcmd.BuildConfigFromFlags("", p.opt.Kubeconfig)
 		if err != nil {
@@ -256,7 +256,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 	parsedDSN.Loc = loc
 	p.opt.DSN = parsedDSN.FormatDSN()
 
-	slogger.Log.Debug("Open sql connection", slog.String("dsn", p.opt.DSN))
+	logger.Log.Debug("Open sql connection", slog.String("dsn", p.opt.DSN))
 	conn, err := sql.Open("querylog", p.opt.DSN)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
@@ -277,7 +277,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 		} else if _, err := os.Stat(p.opt.ServiceAccountTokenFile); err == nil {
 			vc, err := vault.NewClientAsK8SServiceAccount(ctx, p.opt.VaultAddr, p.opt.VaultK8sAuthPath, p.opt.VaultK8sAuthRole, p.opt.ServiceAccountTokenFile)
 			if err != nil {
-				slogger.Log.Debug("Can not log in", slogger.Verbose(err))
+				logger.Log.Debug("Can not log in", logger.Verbose(err))
 				return fsm.Error(err)
 			}
 			p.vaultClient = vc
@@ -303,7 +303,7 @@ func (p *process) init(ctx context.Context) (fsm.State, error) {
 }
 
 func (p *process) checkMigrate(ctx context.Context) (fsm.State, error) {
-	slogger.Log.Debug("Check migration")
+	logger.Log.Debug("Check migration")
 	pr := probe.NewProbe(p.dao.RawConnection)
 	ticker := time.NewTicker(1 * time.Second)
 	timeout := time.After(5 * time.Minute)
@@ -401,7 +401,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 		p.opt.Dev,
 	)
 	if err != nil {
-		slogger.Log.Error("Failed create BazelBuilder", slogger.E(err))
+		logger.Log.Error("Failed create BazelBuilder", logger.E(err))
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	if p.opt.EmulateJobControl {
@@ -410,7 +410,7 @@ func (p *process) setup(_ context.Context) (fsm.State, error) {
 			fixtureDir = filepath.Join(os.Getenv("BUILD_WORKSPACE_DIRECTORY"), "go/build/dev/jobresult")
 		}
 		c.EnableEmulateJobControl(fixtureDir)
-		slogger.Log.Info("Emulate job control is enabled", slog.String("fixture_dir", fixtureDir))
+		logger.Log.Info("Emulate job control is enabled", slog.String("fixture_dir", fixtureDir))
 	}
 	p.bazelBuilder = c
 
@@ -488,10 +488,10 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
-	slogger.Log.Info("Start git-data-service", slog.String("addr", p.opt.GitDataListen))
+	logger.Log.Info("Start git-data-service", slog.String("addr", p.opt.GitDataListen))
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
-			slogger.Log.Error("git-data-service returns error", slogger.E(err))
+			logger.Log.Error("git-data-service returns error", logger.E(err))
 		}
 	}()
 
@@ -525,7 +525,7 @@ func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.Reposi
 			continue
 		}
 		if seen.Has(r.Name) {
-			slogger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", r.Name))
+			logger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", r.Name))
 			continue
 		}
 		seen.Add(r.Name)
@@ -542,7 +542,7 @@ func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.Reposi
 		}
 		name := parts[0]
 		if seen.Has(name) {
-			slogger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", name))
+			logger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", name))
 			continue
 		}
 		seen.Add(name)
@@ -560,7 +560,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		}
 		p.gitDataConn = conn
 		p.gitDataClient = git.NewGitDataClient(conn)
-		slogger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
+		logger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
 	}
 
 	// Avoid handing the push reconciler a typed-nil *git.Updater: that would
@@ -592,7 +592,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 			return mcp.New(s, func(next http.Handler) http.Handler { return authproxy.Authenticate(publicKey, next) })
 		}
 	} else {
-		slogger.Log.Info("Skip serving MCP because --public-key-url is not specified")
+		logger.Log.Info("Skip serving MCP because --public-key-url is not specified")
 	}
 	apiServer, err := api.NewApi(
 		p.opt.Addr,
@@ -615,7 +615,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 	p.apiServer = apiServer
 
 	go func() {
-		slogger.Log.Info("Start API Server", slog.String("addr", p.apiServer.Addr))
+		logger.Log.Info("Start API Server", slog.String("addr", p.apiServer.Addr))
 		p.apiServer.ListenAndServe()
 	}()
 
@@ -626,7 +626,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 // Next state: stateStartWorker
 func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 	if p.k8sClient == nil || p.opt.LeaseLockName == "" || p.opt.LeaseLockNamespace == "" {
-		slogger.Log.Info("Skip leader election")
+		logger.Log.Info("Skip leader election")
 		return fsm.Next(stateStartWorker)
 	}
 
@@ -680,9 +680,9 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 		p.coreInformerFactory.Run(p.ctx)
 
 		go func() {
-			slogger.Log.Info("Start JobWatcher")
+			logger.Log.Info("Start JobWatcher")
 			if err := jobWatcher.Run(p.ctx, 1); err != nil {
-				slogger.Log.Error("Error occurred at JobWatcher", slogger.E(err))
+				logger.Log.Error("Error occurred at JobWatcher", logger.E(err))
 				return
 			}
 		}()
@@ -691,7 +691,7 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	if p.opt.WithGC {
 		g := gc.NewGC(1*time.Hour, p.dao, p.opt.MinIOBucket, p.storageOpt)
 		go func() {
-			slogger.Log.Info("Start GC")
+			logger.Log.Info("Start GC")
 			g.Start()
 		}()
 	}
@@ -713,14 +713,14 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 }
 
 func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
-	slogger.Log.Info("Shutting down")
+	logger.Log.Info("Shutting down")
 	if p.apiServer != nil {
 		p.apiServer.Shutdown(ctx)
-		slogger.Log.Info("Shutdown API Server")
+		logger.Log.Info("Shutdown API Server")
 	}
 	if p.gitDataGRPCServer != nil {
 		p.gitDataGRPCServer.GracefulStop()
-		slogger.Log.Info("Shutdown Git Data GRPC Server")
+		logger.Log.Info("Shutdown Git Data GRPC Server")
 	}
 	if p.gitDataConn != nil {
 		p.gitDataConn.Close()

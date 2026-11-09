@@ -11,7 +11,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type supervisorState int
@@ -41,7 +41,7 @@ type Supervisor struct {
 
 func NewSupervisor(ctx context.Context) *Supervisor {
 	c, cancel := ctxutil.WithCancel(ctx)
-	return &Supervisor{Log: slogger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
+	return &Supervisor{Log: logger.Log, ctx: c, cancelFunc: cancel, state: supervisorStateRunning}
 }
 
 func (s *Supervisor) Add(f func(ctx context.Context)) {
@@ -110,7 +110,7 @@ type childProcess struct {
 
 func newChildProcess(id int, fn func(ctx context.Context)) *childProcess {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: slogger.Log, rand: r, fn: fn}
+	return &childProcess{Id: id, c: 1, Interval: restartBackoff, Log: logger.Log, rand: r, fn: fn}
 }
 
 func (c *childProcess) Run(ctx context.Context, done func()) {

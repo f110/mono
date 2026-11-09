@@ -18,7 +18,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 )
 
@@ -142,10 +142,10 @@ func (w *WAL) Load(source radar.SourceID, tile radar.Tile, date time.Time) (map[
 }
 
 func (w *WAL) logTruncated(source radar.SourceID, tile radar.Tile, offset int) {
-	if !slogger.Enabled() {
+	if !logger.Enabled() {
 		return
 	}
-	slogger.Log.Warn("wal: stopped reading at a broken record",
+	logger.Log.Warn("wal: stopped reading at a broken record",
 		slog.String("source", source.String()), slog.String("tile", tile.String()), slog.Int("offset", offset))
 }
 
@@ -174,8 +174,8 @@ func (w *WAL) List(date time.Time) ([]Entry, error) {
 		}
 		e, err := w.parsePath(p)
 		if err != nil {
-			if slogger.Enabled() {
-				slogger.Log.Warn("wal: skipping a file of an unexpected path", slog.String("path", p), slogger.E(err))
+			if logger.Enabled() {
+				logger.Log.Warn("wal: skipping a file of an unexpected path", slog.String("path", p), logger.E(err))
 			}
 			return nil
 		}

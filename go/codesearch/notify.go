@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Notify struct {
@@ -37,7 +37,7 @@ func NewNotify(u, streamName, subject string) (*Notify, error) {
 			return nil, xerrors.WithStack(err)
 		}
 	} else {
-		slogger.Log.Debug("Exist stream", slog.Any("stream_info", si))
+		logger.Log.Debug("Exist stream", slog.Any("stream_info", si))
 	}
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -63,7 +63,7 @@ func (n *Notify) Notify(ctx context.Context, manifest *Manifest) error {
 
 	select {
 	case <-n.js.PublishAsyncComplete():
-		slogger.Log.Debug("Notify", slog.String("subject", n.subject))
+		logger.Log.Debug("Notify", slog.String("subject", n.subject))
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -76,12 +76,12 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 		executionKey := binary.LittleEndian.Uint64(msg.Data)
 		manifest, err := manifestManager.Get(context.TODO(), executionKey)
 		if err != nil {
-			slogger.Log.Info("Failed get manifest", slogger.E(err), slog.Uint64("key", executionKey))
+			logger.Log.Info("Failed get manifest", logger.E(err), slog.Uint64("key", executionKey))
 			return
 		}
 		ch <- manifest
 		if err := msg.Ack(); err != nil {
-			slogger.Log.Warn("Something occurred when acknowledge", slogger.E(err), slog.Uint64("key", executionKey))
+			logger.Log.Warn("Something occurred when acknowledge", logger.E(err), slog.Uint64("key", executionKey))
 		}
 	})
 	if err != nil {
@@ -92,7 +92,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 		select {
 		case <-subscription.done:
 			if err := sub.Unsubscribe(); err != nil {
-				slogger.Log.Info("Failed unsubscribe", slogger.E(err))
+				logger.Log.Info("Failed unsubscribe", logger.E(err))
 			}
 		}
 	}()
@@ -101,7 +101,7 @@ func (n *Notify) Subscribe(manifestManager *ManifestManager) (*Subscription, err
 }
 
 func (n *Notify) setupStream(streamName string) error {
-	slogger.Log.Info("Add stream", slog.String("subject", streamName+".*"))
+	logger.Log.Info("Add stream", slog.String("subject", streamName+".*"))
 	_, err := n.js.AddStream(&nats.StreamConfig{
 		Name:      streamName,
 		Subjects:  []string{streamName + ".*"},

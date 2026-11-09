@@ -21,7 +21,7 @@ go_library(
         "//go/ctxutil",
         "//go/github",
         "//go/k8s/volume",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/regexp/regexputil",
         "//go/storage",
         "@com_github_go_git_go_git_v5//:go-git",
@@ -55,7 +55,7 @@ go_test(
     ],
     embed = [":codesearch"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/regexp/regexputil",
         "//go/storage",
         "@com_github_stretchr_testify//assert",

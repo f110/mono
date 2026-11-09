@@ -25,7 +25,7 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient/testingthirdpartyclient"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type TestRunner struct {
@@ -40,8 +40,8 @@ type TestRunner struct {
 }
 
 func NewTestRunner() *TestRunner {
-	slogger.Init()
-	slogger.Init()
+	logger.Init()
+	logger.Init()
 
 	apiClient := testingclient.NewSet()
 	coreClient := k8stestingclient.NewSet()
@@ -68,7 +68,7 @@ func (r *TestRunner) Reconcile(c controllerutil.Controller, v runtime.Object) er
 	if fn, ok := c.(interface {
 		NewReconciler(*slog.Logger) controllerutil.Reconciler
 	}); ok {
-		return fn.NewReconciler(slogger.Log).Reconcile(ctx, v)
+		return fn.NewReconciler(logger.Log).Reconcile(ctx, v)
 	} else {
 		return c.Reconcile(ctx, v)
 	}

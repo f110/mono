@@ -20,7 +20,7 @@ import (
 	modzip "golang.org/x/mod/zip"
 
 	githubutil "go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -225,7 +225,7 @@ func (m *ModuleProxy) GetZip(ctx context.Context, w io.Writer, moduleName, versi
 		return nil
 	}
 	if moduleRoot.IsGitHub {
-		slogger.Log.Debug("The module root is hosted by GitHub", slog.String("module", moduleName), slog.String("version", version))
+		logger.Log.Debug("The module root is hosted by GitHub", slog.String("module", moduleName), slog.String("version", version))
 		if module.IsPseudoVersion(version) {
 			if err := m.ghProxy.ArchiveRevision(ctx, w, moduleRoot, moduleName, version, m.removeBazelFile); err != nil {
 				return err
@@ -268,7 +268,7 @@ func (m *ModuleProxy) FlushAllCache() error {
 
 func (m *ModuleProxy) Ready() bool {
 	if err := m.cache.Ping(); err != nil {
-		slogger.Log.Warn("ModuleCache is not ready", slogger.E(err))
+		logger.Log.Warn("ModuleCache is not ready", logger.E(err))
 		return false
 	}
 
@@ -303,11 +303,11 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 	if len(version) > 11 {
 		t, err := g.cache.GetModInfo(module, version[:12])
 		if err == nil {
-			slogger.Log.Debug("The mod info was found in cache", slog.String("module", module), slog.String("version", version))
+			logger.Log.Debug("The mod info was found in cache", slog.String("module", module), slog.String("version", version))
 			return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), version[:12])}, nil
 		}
 	}
-	slogger.Log.Debug("Get commit information from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
+	logger.Log.Debug("Get commit information from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
 		return Info{}, xerrors.WithStack(err)
@@ -321,7 +321,7 @@ func (g *GitHubProxy) GetInfo(ctx context.Context, moduleRoot *ModuleRoot, modul
 
 	t := commit.Commit.Author.GetDate()
 	if err := g.cache.SetModInfo(module, commit.GetSHA(), t.Time); err != nil {
-		slogger.Log.Warn("Failed set cache", slogger.E(err))
+		logger.Log.Warn("Failed set cache", logger.E(err))
 	}
 	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t.Time}, nil
 }
@@ -330,11 +330,11 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 	if g.cache != nil && len(pseudoVersion.Revision) > 11 {
 		t, err := g.cache.GetModInfo(module, pseudoVersion.Revision)
 		if err == nil {
-			slogger.Log.Debug("The mod info was found in cache", slog.String("module", module), slog.String("revision", pseudoVersion.Revision))
+			logger.Log.Debug("The mod info was found in cache", slog.String("module", module), slog.String("revision", pseudoVersion.Revision))
 			return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150504"), pseudoVersion.Revision)}, nil
 		}
 	}
-	slogger.Log.Debug("Get commit information of pseudo-version from GitHub API")
+	logger.Log.Debug("Get commit information of pseudo-version from GitHub API")
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
 		return Info{}, xerrors.WithStack(err)
@@ -349,7 +349,7 @@ func (g *GitHubProxy) GetInfoRevision(ctx context.Context, moduleRoot *ModuleRoo
 	t := commit.Commit.Committer.GetDate()
 	if g.cache != nil {
 		if err := g.cache.SetModInfo(module, commit.GetSHA(), t.Time); err != nil {
-			slogger.Log.Warn("Failed set cache", slog.String("module", module), slog.String("revision", pseudoVersion.Revision), slogger.E(err))
+			logger.Log.Warn("Failed set cache", slog.String("module", module), slog.String("revision", pseudoVersion.Revision), logger.E(err))
 		}
 	}
 	return Info{Version: fmt.Sprintf("v0.0.0-%s-%s", t.Format("20060102150405"), commit.GetSHA()[:12]), Time: t.Time}, nil
@@ -359,14 +359,14 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 	if g.cache != nil && len(version) > 11 {
 		modFile, err := g.cache.GetModFile(module.Path, version[:12])
 		if err == nil {
-			slogger.Log.Debug("The module file was found in cache",
+			logger.Log.Debug("The module file was found in cache",
 				slog.String("module", module.Path),
 				slog.String("version", version[:12]),
 			)
 			return string(modFile), nil
 		}
 	}
-	slogger.Log.Debug("Get the module file from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
+	logger.Log.Debug("Get the module file from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
 		return "", xerrors.WithStack(err)
@@ -394,7 +394,7 @@ func (g *GitHubProxy) GetGoMod(ctx context.Context, moduleRoot *ModuleRoot, modu
 	}
 	if g.cache != nil {
 		if err := g.cache.SetModFile(module.Path, version, []byte(buf)); err != nil {
-			slogger.Log.Warn("Failed set the module fie", slogger.E(err))
+			logger.Log.Warn("Failed set the module fie", logger.E(err))
 		}
 	}
 	return buf, nil
@@ -404,14 +404,14 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 	if g.cache != nil && len(pseudoVersion.Revision) > 11 {
 		modFile, err := g.cache.GetModFile(module.Path, pseudoVersion.Revision)
 		if err == nil {
-			slogger.Log.Debug("The module file was found in cache",
+			logger.Log.Debug("The module file was found in cache",
 				slog.String("module", module.Path),
 				slog.String("version", pseudoVersion.Revision),
 			)
 			return string(modFile), nil
 		}
 	}
-	slogger.Log.Debug("Get the module file of pseudo-version from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
+	logger.Log.Debug("Get the module file of pseudo-version from GitHub API", slog.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
 		return "", xerrors.WithStack(err)
@@ -440,7 +440,7 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 
 	if g.cache != nil {
 		if err := g.cache.SetModFile(module.Path, pseudoVersion.Revision, []byte(buf)); err != nil {
-			slogger.Log.Warn("Failed set the module fie", slogger.E(err))
+			logger.Log.Warn("Failed set the module fie", logger.E(err))
 		}
 	}
 	return buf, nil
@@ -448,7 +448,7 @@ func (g *GitHubProxy) GetGoModRevision(ctx context.Context, moduleRoot *ModuleRo
 
 func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *ModuleRoot, moduleName, version string, removeBazelFile bool) error {
 	if err := g.cache.Archive(ctx, moduleName, version, w); err == nil {
-		slogger.Log.Debug("An archive file of module was found in cache",
+		logger.Log.Debug("An archive file of module was found in cache",
 			slog.String("module", moduleName),
 			slog.String("version", version),
 		)
@@ -460,7 +460,7 @@ func (g *GitHubProxy) Archive(ctx context.Context, w io.Writer, moduleRoot *Modu
 		return xerrors.Definef("%s module is not found", moduleName).WithStack()
 	}
 
-	slogger.Log.Debug("Make the archive file through GitHub API", slog.String("url", moduleRoot.RepositoryURL))
+	logger.Log.Debug("Make the archive file through GitHub API", slog.String("url", moduleRoot.RepositoryURL))
 	u, err := url.Parse(moduleRoot.RepositoryURL)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -498,7 +498,7 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 		return xerrors.Definef("%s module is not found", moduleName).WithStack()
 	}
 
-	slogger.Log.Debug("Make the archive file for pseudo-version through GitHub API", slog.String("url", moduleRoot.RepositoryURL))
+	logger.Log.Debug("Make the archive file for pseudo-version through GitHub API", slog.String("url", moduleRoot.RepositoryURL))
 	pseudoVersion, err := ParsePseudoVersion(version)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -514,7 +514,7 @@ func (g *GitHubProxy) ArchiveRevision(ctx context.Context, w io.Writer, moduleRo
 		return xerrors.WithStack(err)
 	}
 	if err := g.cache.Archive(ctx, moduleName, commit.GetSHA()[:12], w); err == nil {
-		slogger.Log.Debug("An archive file of module was found in cache",
+		logger.Log.Debug("An archive file of module was found in cache",
 			slog.String("module", moduleName),
 			slog.String("revision", commit.GetSHA()[:12]),
 		)
@@ -560,7 +560,7 @@ func NewModuleArchiveFromGitHub(ghClient *github.Client, moduleRoot *ModuleRoot,
 }
 
 func (a *ModuleArchive) Pack(ctx context.Context, w io.Writer, skipBazelFile bool) error {
-	slogger.Log.Debug("Pack the archive file through GitHub API", slog.String("url", a.ModuleRoot.RepositoryURL))
+	logger.Log.Debug("Pack the archive file through GitHub API", slog.String("url", a.ModuleRoot.RepositoryURL))
 	u, err := url.Parse(a.ModuleRoot.RepositoryURL)
 	if err != nil {
 		return xerrors.WithStack(err)

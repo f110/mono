@@ -23,7 +23,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/authproxy"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // PublicKeyPath is the path of the public key which is the same as the internal API of heimdallr.
@@ -57,7 +57,7 @@ func (c *authProxy) GetDeps() []component {
 func (c *authProxy) Run(ctx context.Context) {
 	key, err := c.privateKey()
 	if err != nil {
-		slogger.Log.Error("Failed to prepare the key", slogger.E(err))
+		logger.Log.Error("Failed to prepare the key", logger.E(err))
 		return
 	}
 
@@ -71,7 +71,7 @@ func (c *authProxy) Run(ctx context.Context) {
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
 			}}).SignedString(key)
 			if err != nil {
-				slogger.Log.Error("Failed to sign the token", slogger.E(err))
+				logger.Log.Error("Failed to sign the token", logger.E(err))
 				return
 			}
 			req.Out.Header.Set(authproxy.TokenHeaderName, token)
@@ -79,7 +79,7 @@ func (c *authProxy) Run(ctx context.Context) {
 	}
 	publicKey, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
 	if err != nil {
-		slogger.Log.Error("Failed to marshal the public key", slogger.E(err))
+		logger.Log.Error("Failed to marshal the public key", logger.E(err))
 		return
 	}
 	mux := http.NewServeMux()
@@ -94,9 +94,9 @@ func (c *authProxy) Run(ctx context.Context) {
 		s.Shutdown(context.Background())
 	}()
 
-	slogger.Log.Info("Start "+c.Name, slog.Int("listen", c.Listen), slog.Int("backend", c.Backend), slog.String("subject", c.Subject))
+	logger.Log.Info("Start "+c.Name, slog.Int("listen", c.Listen), slog.Int("backend", c.Backend), slog.String("subject", c.Subject))
 	if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slogger.Log.Error("Failed to serve", slogger.E(err))
+		logger.Log.Error("Failed to serve", logger.E(err))
 	}
 }
 
@@ -148,6 +148,6 @@ func (c *authProxy) privateKey() (*ecdsa.PrivateKey, error) {
 	if err := os.WriteFile(privateKeyFile, pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKey}), 0600); err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	slogger.Log.Info("Generated the key", slog.String("dir", c.keyDir()))
+	logger.Log.Info("Generated the key", slog.String("dir", c.keyDir()))
 	return key, nil
 }

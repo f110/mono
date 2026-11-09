@@ -1,5 +1,5 @@
-// Package slogger provides an slog-based logger.
-package slogger
+// Package logger provides an slog-based logger.
+package logger
 
 import (
 	"errors"

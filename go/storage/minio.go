@@ -20,7 +20,7 @@ import (
 	pf "k8s.io/client-go/tools/portforward"
 
 	"go.f110.dev/mono/go/k8s/portforward"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type MinIOOptions struct {
@@ -219,7 +219,7 @@ func (m *MinIO) PutReader(ctx context.Context, name string, r io.Reader) error {
 		_, err = mc.PutObject(ctx, m.bucket, name, r, -1, minio.PutObjectOptions{})
 		if err != nil {
 			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
-				slogger.Log.Info("Retrying put a object", slog.Int("retryCount", retryCount), slog.String("key", name))
+				logger.Log.Info("Retrying put a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}
@@ -262,7 +262,7 @@ ListObjects:
 		for obj := range listCh {
 			if obj.Err != nil {
 				if m.opt.Retries > 0 && retryCount < m.opt.Retries {
-					slogger.Log.Info("Retrying list objects", slog.Int("retryCount", retryCount), slog.String("prefi", prefix))
+					logger.Log.Info("Retrying list objects", slog.Int("retryCount", retryCount), slog.String("prefi", prefix))
 					retryCount++
 					continue ListObjects
 				}
@@ -287,7 +287,7 @@ func (m *MinIO) Get(ctx context.Context, name string) (*Object, error) {
 		obj, err := mc.GetObject(ctx, m.bucket, name, minio.GetObjectOptions{})
 		if err != nil {
 			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
-				slogger.Log.Info("Retrying get a object", slog.Int("retryCount", retryCount), slog.String("key", name))
+				logger.Log.Info("Retrying get a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}
@@ -318,7 +318,7 @@ func (m *MinIO) Delete(ctx context.Context, name string) error {
 		err = mc.RemoveObject(ctx, m.bucket, name, minio.RemoveObjectOptions{})
 		if err != nil {
 			if m.opt.Retries > 0 && retryCount < m.opt.Retries {
-				slogger.Log.Info("Retrying remove a object", slog.Int("retryCount", retryCount), slog.String("key", name))
+				logger.Log.Info("Retrying remove a object", slog.Int("retryCount", retryCount), slog.String("key", name))
 				retryCount++
 				continue
 			}

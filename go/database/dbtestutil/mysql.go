@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/netutil"
 )
 
@@ -99,7 +99,7 @@ func NewTemporaryMySQL(ctx context.Context) (*TemporaryMySQL, error) {
 
 func (t *TemporaryMySQL) Start() error {
 	if err := t.cmd.Start(); err != nil {
-		slogger.Log.Warn("Some error was occurred", slogger.E(err))
+		logger.Log.Warn("Some error was occurred", logger.E(err))
 	}
 	if err := netutil.WaitListen(fmt.Sprintf(":%d", t.Port), 10*time.Second); err != nil {
 		return err

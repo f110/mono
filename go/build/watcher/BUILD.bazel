@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/build/watcher",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "@dev_f110_go_xerrors//:xerrors",
         "@dev_f110_kubeproto//go/apis/batchv1",
         "@dev_f110_kubeproto//go/k8sclient",

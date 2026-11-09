@@ -9,7 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/amesh"
 	"go.f110.dev/mono/go/radar/fetch"
@@ -67,7 +67,7 @@ func AddCommand(rootCmd *cli.Command) {
 		cmd := s.Command()
 		run := cmd.Run
 		cmd.Run = func(ctx context.Context, c *cli.Command, args []string) error {
-			if err := slogger.Init(); err != nil {
+			if err := logger.Init(); err != nil {
 				return err
 			}
 			return run(ctx, c, args)

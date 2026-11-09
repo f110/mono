@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/http/authproxy",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_golang_jwt_jwt_v5//:jwt",
         "@dev_f110_go_xerrors//:xerrors",
     ],
@@ -17,7 +17,7 @@ go_test(
     srcs = ["authproxy_test.go"],
     embed = [":authproxy"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/testing/assertion",
         "@com_github_golang_jwt_jwt_v5//:jwt",
     ],

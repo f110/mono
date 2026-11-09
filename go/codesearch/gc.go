@@ -8,7 +8,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type IndexGC struct {
@@ -64,12 +64,12 @@ GC:
 	}
 
 	for _, v := range unusedFiles {
-		slogger.Log.Debug("Delete file", slog.String("name", v))
+		logger.Log.Debug("Delete file", slog.String("name", v))
 		if err := g.backend.Delete(ctx, v); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
 
-	slogger.Log.Info("Finish garbage collection", slog.Int("files", len(unusedFiles)), slog.Int64("deleted_bytes", totalSize))
+	logger.Log.Info("Finish garbage collection", slog.Int("files", len(unusedFiles)), slog.Int64("deleted_bytes", totalSize))
 	return nil
 }

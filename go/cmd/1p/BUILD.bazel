@@ -39,7 +39,7 @@ go_library(
         "//go/clipboard",
         "//go/ctxutil",
         "//go/fsm",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/opvault",
         "@com_github_peco_peco//:peco",
         "@com_github_shirou_gopsutil_v3//process",

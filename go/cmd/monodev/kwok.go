@@ -29,7 +29,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // kwok serves pod logs only for pods that have a matching Logs object, and the
@@ -79,26 +79,26 @@ func (c *kwokPKIComponent) GetDeps() []component   { return nil }
 
 func (c *kwokPKIComponent) Run(_ context.Context) {
 	if err := os.MkdirAll(filepath.Join(kwokDir(), "apiserver"), 0755); err != nil {
-		slogger.Log.Error("Failed to make .kwok directory", slogger.E(err))
+		logger.Log.Error("Failed to make .kwok directory", logger.E(err))
 		return
 	}
 	if err := c.generateServingCert(); err != nil {
-		slogger.Log.Error("Failed to generate serving certificate", slogger.E(err))
+		logger.Log.Error("Failed to generate serving certificate", logger.E(err))
 		return
 	}
 	if err := c.generateServiceAccountKey(); err != nil {
-		slogger.Log.Error("Failed to generate service account key", slogger.E(err))
+		logger.Log.Error("Failed to generate service account key", logger.E(err))
 		return
 	}
 	if err := c.writeTokenFile(); err != nil {
-		slogger.Log.Error("Failed to write token file", slogger.E(err))
+		logger.Log.Error("Failed to write token file", logger.E(err))
 		return
 	}
 	if err := c.writeKubeconfig(); err != nil {
-		slogger.Log.Error("Failed to write kubeconfig", slogger.E(err))
+		logger.Log.Error("Failed to write kubeconfig", logger.E(err))
 		return
 	}
-	slogger.Log.Info("Prepared kwok PKI and kubeconfig", slog.String("dir", kwokDir()))
+	logger.Log.Info("Prepared kwok PKI and kubeconfig", slog.String("dir", kwokDir()))
 }
 
 // generateServingCert writes a self-signed certificate used both as kwok's
@@ -216,17 +216,17 @@ func (c *kwokLogsCRDComponent) GetDeps() []component    { return []component{kub
 func (c *kwokLogsCRDComponent) Run(ctx context.Context) {
 	restCfg, err := clientcmd.BuildConfigFromFlags("", kwokFile("kubeconfig"))
 	if err != nil {
-		slogger.Log.Error("Failed to build config from kubeconfig", slogger.E(err))
+		logger.Log.Error("Failed to build config from kubeconfig", logger.E(err))
 		return
 	}
 	dynClient, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
-		slogger.Log.Error("Failed to create dynamic client", slogger.E(err))
+		logger.Log.Error("Failed to create dynamic client", logger.E(err))
 		return
 	}
 	obj := &unstructured.Unstructured{}
 	if err := yaml.NewYAMLOrJSONDecoder(bytes.NewReader(kwokLogsCRDYAML), 4096).Decode(obj); err != nil {
-		slogger.Log.Error("Failed to decode kwok Logs CRD", slogger.E(err))
+		logger.Log.Error("Failed to decode kwok Logs CRD", logger.E(err))
 		return
 	}
 
@@ -234,11 +234,11 @@ func (c *kwokLogsCRDComponent) Run(ctx context.Context) {
 	for {
 		_, err = dynClient.Resource(crdGVR).Create(ctx, obj, metav1.CreateOptions{})
 		if err == nil || apierrors.IsAlreadyExists(err) {
-			slogger.Log.Info("kwok Logs CRD is applied")
+			logger.Log.Info("kwok Logs CRD is applied")
 			return
 		}
 		if time.Now().After(deadline) {
-			slogger.Log.Error("Failed to apply kwok Logs CRD", slogger.E(err))
+			logger.Log.Error("Failed to apply kwok Logs CRD", logger.E(err))
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -277,12 +277,12 @@ func (c *kwokNodeComponent) GetDeps() []component   { return []component{kwok} }
 func (c *kwokNodeComponent) Run(ctx context.Context) {
 	restCfg, err := clientcmd.BuildConfigFromFlags("", kwokFile("kubeconfig"))
 	if err != nil {
-		slogger.Log.Error("Failed to build config from kubeconfig", slogger.E(err))
+		logger.Log.Error("Failed to build config from kubeconfig", logger.E(err))
 		return
 	}
 	client, err := kubernetes.NewForConfig(restCfg)
 	if err != nil {
-		slogger.Log.Error("Failed to create clientset", slogger.E(err))
+		logger.Log.Error("Failed to create clientset", logger.E(err))
 		return
 	}
 
@@ -306,11 +306,11 @@ func (c *kwokNodeComponent) Run(ctx context.Context) {
 	for {
 		_, err = client.CoreV1().Nodes().Create(ctx, node, metav1.CreateOptions{})
 		if err == nil || apierrors.IsAlreadyExists(err) {
-			slogger.Log.Info("kwok node is ready", slog.String("name", kwokNodeName))
+			logger.Log.Info("kwok node is ready", slog.String("name", kwokNodeName))
 			return
 		}
 		if time.Now().After(deadline) {
-			slogger.Log.Error("Failed to create kwok node", slogger.E(err))
+			logger.Log.Error("Failed to create kwok node", logger.E(err))
 			return
 		}
 		time.Sleep(500 * time.Millisecond)

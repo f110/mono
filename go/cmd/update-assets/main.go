@@ -26,7 +26,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/enumerable"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var (
@@ -73,7 +73,7 @@ func getChecksum(ctx context.Context, url string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	slogger.Log.Info("Get", slog.String("url", url))
+	logger.Log.Info("Get", slog.String("url", url))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -197,22 +197,22 @@ func (k *kustomizeAssets) update(ctx context.Context) error {
 		}
 		ver := strings.TrimPrefix(v.GetName(), "kustomize/")
 		if _, ok := exists[ver]; ok {
-			slogger.Log.Info("Already exists", slog.String("version", ver))
+			logger.Log.Info("Already exists", slog.String("version", ver))
 			continue
 		}
 		if _, ok := ignoreVersions["kustomize"][ver]; ok {
-			slogger.Log.Info("Ignored version", slog.String("version", ver))
+			logger.Log.Info("Ignored version", slog.String("version", ver))
 			continue
 		}
 		vers = append(vers, ver)
 	}
 	if len(vers) == 0 {
-		slogger.Log.Info("No need to update the asset file")
+		logger.Log.Info("No need to update the asset file")
 		return nil
 	}
 
 	for _, v := range vers {
-		slogger.Log.Debug("Get", slog.String("version", v))
+		logger.Log.Debug("Get", slog.String("version", v))
 		rel, err := k.getRelease(ctx, gClient, v)
 		if err != nil {
 			return err
@@ -349,13 +349,13 @@ func (k *kindAssets) update(ctx context.Context) error {
 		}
 
 		if _, ok := exists[ver]; ok {
-			slogger.Log.Info("Already exists", slog.String("version", ver))
+			logger.Log.Info("Already exists", slog.String("version", ver))
 			continue
 		}
 		vers = append(vers, ver)
 	}
 	if len(vers) == 0 {
-		slogger.Log.Info("No need to update the asset file")
+		logger.Log.Info("No need to update the asset file")
 		return nil
 	}
 
@@ -475,7 +475,7 @@ func (h *vaultAssets) update(ctx context.Context) error {
 	q.Set("license_class", "oss")
 	q.Set("limit", "20")
 	for {
-		slogger.Log.Info("Req", slog.String("path", "/v1/releases/vault?%s"+q.Encode()))
+		logger.Log.Info("Req", slog.String("path", "/v1/releases/vault?%s"+q.Encode()))
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.releases.hashicorp.com/v1/releases/vault?"+q.Encode(), nil)
 		if err != nil {
 			return xerrors.WithStack(err)
@@ -506,7 +506,7 @@ func (h *vaultAssets) update(ctx context.Context) error {
 	slices.SortFunc(releases, func(a, b *hashicorpRelease) int { return a.semver.Compare(b.semver) })
 
 	for _, v := range releases {
-		slogger.Log.Debug("Get", slog.String("version", v.Version))
+		logger.Log.Debug("Get", slog.String("version", v.Version))
 		rel, err := h.getRelease(ctx, v)
 		if err != nil {
 			return err

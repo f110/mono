@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/kind"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -82,7 +82,7 @@ func setupCluster(kindPath, name, k8sVersion string, workerNum int, kubeConfig, 
 			return xerrors.WithStack(err)
 		}
 	} else {
-		slogger.Log.Info("Cluster is already exist. Only apply the manifest.")
+		logger.Log.Info("Cluster is already exist. Only apply the manifest.")
 	}
 	if manifestFile == "" {
 		return nil
@@ -235,7 +235,7 @@ func runContainer(kindPath, name, manifestFile, namespace string, images []strin
 	}
 
 	for _, v := range restartPods {
-		slogger.Log.Info("Delete Pod", slog.String("name", v.Name))
+		logger.Log.Info("Delete Pod", slog.String("name", v.Name))
 		err := client.CoreV1().Pods(namespace).Delete(context.Background(), v.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return xerrors.WithStack(err)

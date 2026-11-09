@@ -12,7 +12,7 @@ go_library(
     deps = [
         "//go/github",
         "//go/k8s/volume",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_robfig_cron_v3//:cron",
         "@com_github_shurcool_githubv4//:githubv4",
         "@dev_f110_go_notion_api_v3//:notion-api",

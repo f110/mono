@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/go-github/v85/github"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -81,7 +81,7 @@ func newFakeSearchServer(t *testing.T, created []time.Time, failuresOutOf3 int) 
 }
 
 func TestSearchPullRequests(t *testing.T) {
-	assertion.MustNoError(t, slogger.Init())
+	assertion.MustNoError(t, logger.Init())
 	searchRetryInterval = 0
 	from := time.Date(2024, 10, 22, 0, 0, 0, 0, time.UTC)
 	to := time.Date(2026, 10, 22, 23, 59, 59, 0, time.UTC)

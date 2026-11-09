@@ -14,7 +14,7 @@ import (
 	"go.f110.dev/xerrors"
 	"gopkg.in/yaml.v3"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type mysqlSeedDirectory struct {
@@ -40,12 +40,12 @@ func (c *mysqlSeedDirectory) GetDeps() []component {
 
 func (c *mysqlSeedDirectory) Run(ctx context.Context) {
 	if c.MySQL.GetName() != "mysqld" {
-		slogger.Log.Error("MySQL is not mysqld")
+		logger.Log.Error("MySQL is not mysqld")
 		return
 	}
 	dbComponent, ok := c.Database.(*mysqlDatabase)
 	if !ok {
-		slogger.Log.Error("Database field is not mysqlDatabase")
+		logger.Log.Error("Database field is not mysqlDatabase")
 		return
 	}
 
@@ -56,14 +56,14 @@ func (c *mysqlSeedDirectory) Run(ctx context.Context) {
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		slogger.Log.Error("Failed to read seed directory", slogger.E(err), slog.String("dir", dir))
+		logger.Log.Error("Failed to read seed directory", logger.E(err), slog.String("dir", dir))
 		return
 	}
 
 	port := c.MySQL.(*mysqlComponent).Port.Number
 	db, err := sql.Open("mysql", fmt.Sprintf("root@tcp(127.0.0.1:%d)/%s?parseTime=true", port, dbComponent.Name))
 	if err != nil {
-		slogger.Log.Error("Failed to connect to mysql", slogger.E(err))
+		logger.Log.Error("Failed to connect to mysql", logger.E(err))
 		return
 	}
 	defer db.Close()
@@ -86,23 +86,23 @@ func (c *mysqlSeedDirectory) Run(ctx context.Context) {
 		path := filepath.Join(dir, name)
 		f, err := os.Open(path)
 		if err != nil {
-			slogger.Log.Error("Failed to open seed file", slogger.E(err), slog.String("path", path))
+			logger.Log.Error("Failed to open seed file", logger.E(err), slog.String("path", path))
 			return
 		}
 		rows, err := parseSeed(f)
 		f.Close()
 		if err != nil {
-			slogger.Log.Error("Failed to read seed file", slogger.E(err), slog.String("path", path))
+			logger.Log.Error("Failed to read seed file", logger.E(err), slog.String("path", path))
 			return
 		}
 		if len(rows) == 0 {
 			continue
 		}
 		if err := upsertRows(ctx, db, table, rows); err != nil {
-			slogger.Log.Error("Failed to upsert seed", slogger.E(err), slog.String("table", table))
+			logger.Log.Error("Failed to upsert seed", logger.E(err), slog.String("table", table))
 			return
 		}
-		slogger.Log.Info("Seeded table", slog.String("table", table), slog.Int("rows", len(rows)))
+		logger.Log.Info("Seeded table", slog.String("table", table), slog.Int("rows", len(rows)))
 	}
 }
 

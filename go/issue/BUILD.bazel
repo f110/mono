@@ -33,7 +33,7 @@ go_test(
         "//go/database/dbtestutil",
         "//go/issue/database",
         "//go/issue/database/dao",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/testing/assertion",
         "@com_github_go_sql_driver_mysql//:mysql",
     ],

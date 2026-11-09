@@ -14,7 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/github",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/regexp/regexputil",
         "//go/storage",
         "//go/stringsutil",

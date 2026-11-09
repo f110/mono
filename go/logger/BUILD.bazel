@@ -1,14 +1,14 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "slogger",
+    name = "logger",
     srcs = [
         "klog.go",
+        "logger.go",
         "logrus.go",
         "named.go",
-        "slogger.go",
     ],
-    importpath = "go.f110.dev/mono/go/logger/slogger",
+    importpath = "go.f110.dev/mono/go/logger",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_sirupsen_logrus//:logrus",
@@ -21,13 +21,13 @@ go_library(
 )
 
 go_test(
-    name = "slogger_test",
+    name = "logger_test",
     srcs = [
         "klog_test.go",
         "logrus_test.go",
         "named_test.go",
     ],
-    embed = [":slogger"],
+    embed = [":logger"],
     deps = [
         "//go/testing/assertion",
         "@com_github_sirupsen_logrus//:logrus",

@@ -9,14 +9,14 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/ble/inkbird"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func inkbirdScanner() error {
 	ctx, cancel := signal.NotifyContext(context.Background())
 	defer cancel()
 
-	slogger.Init()
+	logger.Init()
 
 	if err := inkbird.Scan(ctx); err != nil {
 		return xerrors.WithStack(err)

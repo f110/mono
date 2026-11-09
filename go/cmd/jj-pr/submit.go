@@ -22,7 +22,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var trailerLineRe = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*:\s`)
@@ -235,10 +235,10 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	}
 
 	wg.Go(func() {
-		slogger.Log.Debug("Retrieve the branch list")
+		logger.Log.Debug("Retrieve the branch list")
 		branches, _, err := c.ghClient.Repositories.ListBranches(ctx, c.repositoryOwner, c.repositoryName, &github.BranchListOptions{})
 		if err != nil {
-			slogger.Log.Error("Could not get the branch list of the remote repository", slogger.E(err))
+			logger.Log.Error("Could not get the branch list of the remote repository", logger.E(err))
 			gotError = true
 			return
 		}
@@ -246,10 +246,10 @@ func (c *jujutsuPRSubmitCommand) getMetadata(ctx context.Context) (fsm.State, er
 	})
 
 	wg.Go(func() {
-		slogger.Log.Debug("Retrieve pull requests")
+		logger.Log.Debug("Retrieve pull requests")
 		pullRequests, _, err := c.ghClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{})
 		if err != nil {
-			slogger.Log.Error("Could not get pull requests", slogger.E(err))
+			logger.Log.Error("Could not get pull requests", logger.E(err))
 			gotError = true
 			return
 		}
@@ -321,7 +321,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 			break
 		}
 		if len(v.Bookmarks) == 0 {
-			slogger.Log.Debug("Will create branch", slog.String("change_id", v.ChangeID))
+			logger.Log.Debug("Will create branch", slog.String("change_id", v.ChangeID))
 			pushChanges = append(pushChanges, v.ChangeID)
 		} else {
 			var found bool
@@ -351,7 +351,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		commitID := v.GetCommit().GetSHA()
 		for _, h := range c.stack {
 			if strings.HasPrefix(h.ChangeID, shortChangeID) && commitID != h.CommitID {
-				slogger.Log.Debug("Will update branch", slog.String("change_id", h.ChangeID))
+				logger.Log.Debug("Will update branch", slog.String("change_id", h.ChangeID))
 				pushChanges = append(pushChanges, h.ChangeID)
 				changedPR = append(changedPR, h)
 				break
@@ -367,7 +367,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				cmd.Args = append(cmd.Args, "--dry-run")
 			}
 			cmd.Stdout = os.Stdout
-			if slogger.Log.Enabled(ctx, slog.LevelDebug) {
+			if logger.Log.Enabled(ctx, slog.LevelDebug) {
 				cmd.Stderr = os.Stderr
 			}
 			if err = cmd.Run(); err != nil {
@@ -376,7 +376,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 		}
 
 		// Get all commits because the stack has been changed.
-		slogger.Log.Debug("Re-fetch commits from jj")
+		logger.Log.Debug("Re-fetch commits from jj")
 		stack, err := c.getStack(ctx, true)
 		if err != nil {
 			return fsm.Error(err)
@@ -395,7 +395,7 @@ func (c *jujutsuPRSubmitCommand) pushCommit(ctx context.Context) (fsm.State, err
 				}
 
 				body := fmt.Sprintf("Update changes: https://github.com/%s/%s/compare/%s..%s", c.repositoryOwner, c.repositoryName, pr.PullRequest.HeadSHA, pr.CommitID)
-				slogger.Log.Debug("Make a new comment", slog.Int("number", pr.PullRequest.ID))
+				logger.Log.Debug("Make a new comment", slog.Int("number", pr.PullRequest.ID))
 				_, _, err = c.ghClient.Issues.CreateComment(ctx, c.repositoryOwner, c.repositoryName, pr.PullRequest.ID, &github.IssueComment{Body: &body})
 				if err != nil {
 					return fsm.Error(xerrors.WithStack(err))
@@ -595,7 +595,7 @@ func (c *jujutsuPRSubmitCommand) pickTemplate(templates []string, repoRoot strin
 	}
 	var template string
 	if templateFile != "" {
-		slogger.Log.Debug("Read template", slog.String("path", templateFile))
+		logger.Log.Debug("Read template", slog.String("path", templateFile))
 		buf, err := os.ReadFile(templateFile)
 		if err != nil {
 			return "", xerrors.WithStack(err)
@@ -645,11 +645,11 @@ func (*jujutsuPRSubmitCommand) findPullRequestTemplate(root string) ([]string, e
 		}
 		filename := filepath.Base(path)
 		if strings.ToLower(filename) == "pull_request_template.md" {
-			slogger.Log.Debug("Template found", slog.String("path", path))
+			logger.Log.Debug("Template found", slog.String("path", path))
 			templates = append(templates, path)
 		}
 		if strings.Contains(path, ".github/PULL_REQUEST_TEMPLATE/") {
-			slogger.Log.Debug("Template found", slog.String("path", path))
+			logger.Log.Debug("Template found", slog.String("path", path))
 			templates = append(templates, path)
 		}
 		return nil
@@ -670,9 +670,9 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		v := c.stack[i]
 		if v.PullRequest == nil {
 			if !c.DryRun {
-				slogger.Log.Error("BUG: The pull request must update. but we can't find the pull request.")
+				logger.Log.Error("BUG: The pull request must update. but we can't find the pull request.")
 			}
-			slogger.Log.Info("Skip to update the pull request")
+			logger.Log.Info("Skip to update the pull request")
 			continue
 		}
 		var updatedPR github.PullRequest
@@ -701,7 +701,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 		if !v.PullRequest.Draft && needUpdateBaseBranch || needUpdateTitle || needUpdateBody {
 			// Update the pull request
 			fmt.Printf("Update pull request: %s\n", v.PullRequest.URL)
-			slogger.Log.Debug("Update pull request reason", slog.Bool("base_branch", needUpdateBaseBranch), slog.Bool("title", needUpdateTitle), slog.Bool("body", needUpdateBody))
+			logger.Log.Debug("Update pull request reason", slog.Bool("base_branch", needUpdateBaseBranch), slog.Bool("title", needUpdateTitle), slog.Bool("body", needUpdateBody))
 			if !c.DryRun {
 				pr, _, err := c.ghClient.PullRequests.Edit(ctx, c.repositoryOwner, c.repositoryName, v.PullRequest.ID, &updatedPR)
 				if err != nil {
@@ -718,7 +718,7 @@ func (c *jujutsuPRSubmitCommand) updatePR(ctx context.Context) (fsm.State, error
 func (c *jujutsuPRSubmitCommand) updateSinglePR(_ context.Context) (fsm.State, error) {
 	if c.stack[0].PullRequest == nil {
 		if !c.DryRun {
-			slogger.Log.Error("BUG: Couldn't find the pull request.")
+			logger.Log.Error("BUG: Couldn't find the pull request.")
 		}
 		return fsm.Next(c.stateClose)
 	}
@@ -832,14 +832,14 @@ func (c *jujutsuPRSubmitCommand) syncStack(ctx context.Context) (fsm.State, erro
 
 	stacks, err := c.listStacks(ctx)
 	if err != nil {
-		slogger.Log.Warn("Could not list stacks. Skip to make a stack", slogger.E(err))
+		logger.Log.Warn("Could not list stacks. Skip to make a stack", logger.E(err))
 		return fsm.Next(c.stateClose)
 	}
 
 	existing := findStackContaining(stacks, prNumbers)
 	if existing == nil {
 		if _, err := c.createStack(ctx, prNumbers); err != nil {
-			slogger.Log.Warn("Could not create a stack", slogger.E(err))
+			logger.Log.Warn("Could not create a stack", logger.E(err))
 		} else {
 			fmt.Printf("Created a stack with %d pull requests\n", len(prNumbers))
 		}
@@ -856,7 +856,7 @@ func (c *jujutsuPRSubmitCommand) syncStack(ctx context.Context) (fsm.State, erro
 	// onto the top, the add endpoint can express it.
 	if delta, ok := appendDelta(current, prNumbers); ok {
 		if _, err := c.addToStack(ctx, existing.Number, delta); err != nil {
-			slogger.Log.Warn("Could not add pull requests to the stack", slogger.E(err))
+			logger.Log.Warn("Could not add pull requests to the stack", logger.E(err))
 		} else {
 			fmt.Printf("Added %d pull requests to the stack\n", len(delta))
 		}
@@ -866,11 +866,11 @@ func (c *jujutsuPRSubmitCommand) syncStack(ctx context.Context) (fsm.State, erro
 	// The order changed (or a pull request was removed). The Stacks API cannot
 	// express a reorder, so dissolve the stack and recreate it in the new order.
 	if err := c.unstack(ctx, existing.Number); err != nil {
-		slogger.Log.Warn("Could not unstack the existing stack", slogger.E(err))
+		logger.Log.Warn("Could not unstack the existing stack", logger.E(err))
 		return fsm.Next(c.stateClose)
 	}
 	if _, err := c.createStack(ctx, prNumbers); err != nil {
-		slogger.Log.Warn("Could not recreate the stack", slogger.E(err))
+		logger.Log.Warn("Could not recreate the stack", logger.E(err))
 	} else {
 		fmt.Printf("Recreated the stack with %d pull requests\n", len(prNumbers))
 	}

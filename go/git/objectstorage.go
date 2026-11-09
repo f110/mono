@@ -33,7 +33,7 @@ import (
 
 	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/collections/set"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -87,7 +87,7 @@ func InitObjectStorageRepository(ctx context.Context, b ObjectStorageInterface, 
 	if err != nil {
 		return nil, xerrors.WithMessage(err, "failed to open the repository")
 	}
-	slogger.Log.Debug("Start inflate packfile", slog.String("path", prefix))
+	logger.Log.Debug("Start inflate packfile", slog.String("path", prefix))
 	if err := InflatePackFile(ctx, b, prefix, repo); err != nil {
 		return nil, xerrors.WithMessage(err, "failed to inflate pack file")
 	}
@@ -109,7 +109,7 @@ func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath st
 	}
 
 	for _, v := range packs {
-		slogger.Log.Debug("Inflate packfile", slog.String("file", fmt.Sprintf("pack-%s.idx", v.String())))
+		logger.Log.Debug("Inflate packfile", slog.String("file", fmt.Sprintf("pack-%s.idx", v.String())))
 		file, err := st.Get(ctx, filepath.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String())))
 		if err != nil {
 			return err
@@ -153,11 +153,11 @@ func InflatePackFile(ctx context.Context, st ObjectStorageInterface, rootPath st
 			}
 		}
 
-		slogger.Log.Debug("Delete idx file", slog.String("file", fmt.Sprintf("pack-%s.idx", v.String())))
+		logger.Log.Debug("Delete idx file", slog.String("file", fmt.Sprintf("pack-%s.idx", v.String())))
 		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.idx", v.String()))); err != nil {
 			return err
 		}
-		slogger.Log.Debug("Delete pack file", slog.String("file", fmt.Sprintf("pack-%s.pack", v.String())))
+		logger.Log.Debug("Delete pack file", slog.String("file", fmt.Sprintf("pack-%s.pack", v.String())))
 		if err := st.Delete(ctx, path.Join(rootPath, fmt.Sprintf("objects/pack/pack-%s.pack", v.String()))); err != nil {
 			return err
 		}

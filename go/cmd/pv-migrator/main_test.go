@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func checkFile(t *testing.T, from, to string) {
@@ -48,7 +48,7 @@ func checkDir(t *testing.T, src, dst string) {
 }
 
 func TestMigrateDirectory(t *testing.T) {
-	slogger.Init()
+	logger.Init()
 
 	tmpDir := t.TempDir()
 

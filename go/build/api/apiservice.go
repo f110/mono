@@ -35,7 +35,7 @@ import (
 	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -64,7 +64,7 @@ func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client
 func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
 	allRepo, err := s.dao.Repository.ListAll(ctx)
 	if err != nil {
-		slogger.Log.Warn("Failed to list repositories", slogger.E(err))
+		logger.Log.Warn("Failed to list repositories", logger.E(err))
 		return nil, status.Error(codes.Internal, "Failed to list repositories")
 	}
 	repositories := enumerable.Map(allRepo, s.dbRepoToAPIRepo)
@@ -75,7 +75,7 @@ func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListReposit
 			}
 			resp, err := s.gitDataClient.GetReference(ctx, &git.RequestGetReference{Repo: repo.Name, Ref: "refs/heads/" + repo.DefaultBranch})
 			if err != nil {
-				slogger.Log.Warn("Failed to get HEAD revision from git-data-service", slogger.E(err), slog.String("repo", repo.Name))
+				logger.Log.Warn("Failed to get HEAD revision from git-data-service", logger.E(err), slog.String("repo", repo.Name))
 				continue
 			}
 			repositories[i].SetHeadRevision(resp.GetRef().GetHash())
@@ -109,7 +109,7 @@ func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*Res
 			for _, rev := range req.GetRevisions() {
 				t, err := s.dao.Task.ListByRevision(ctx, repoId, rev, dao.Sort("id"))
 				if err != nil {
-					slogger.Log.Warn("Failed to list tasks by revision", slogger.E(err), slog.String("revision", rev))
+					logger.Log.Warn("Failed to list tasks by revision", logger.E(err), slog.String("revision", rev))
 					return nil, status.Error(codes.Internal, "Failed to list tasks")
 				}
 				allTasks = append(allTasks, enumerable.Map(t, s.dbTaskToAPITaskWithTestReport(ctx))...)
@@ -145,14 +145,14 @@ func (s *apiService) ListTasks(ctx context.Context, req *RequestListTasks) (*Res
 		}
 		t, err := s.dao.Task.ListOffsetAll(ctx, int32(boundary), dao.Limit(pageSize+1), dao.Sort("id"), dao.Desc)
 		if err != nil {
-			slogger.Log.Warn("Failed to list all tasks", slogger.E(err))
+			logger.Log.Warn("Failed to list all tasks", logger.E(err))
 			return nil, status.Error(codes.Internal, "failed to list all tasks")
 		}
 		receivedTasks = t
 	} else {
 		t, err := s.dao.Task.ListAll(ctx, dao.Desc, dao.Limit(pageSize+1), dao.Desc)
 		if err != nil {
-			slogger.Log.Warn("Failed to list all tasks", slogger.E(err))
+			logger.Log.Warn("Failed to list all tasks", logger.E(err))
 			return nil, status.Error(codes.Internal, "failed to list all tasks")
 		}
 		receivedTasks = t
@@ -183,7 +183,7 @@ func (s *apiService) SaveRepository(ctx context.Context, req *RequestSaveReposit
 		Private:  req.GetRepository().GetPrivate(),
 	})
 	if err != nil {
-		slogger.Log.Error("Failed to create repository", slogger.E(err))
+		logger.Log.Error("Failed to create repository", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to save repository")
 	}
 	if s.addRepo != nil {
@@ -212,7 +212,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	if req.HasTaskId() {
 		task, err := s.dao.Task.Select(ctx, req.GetTaskId())
 		if err != nil {
-			slogger.Log.Info("Task is not found", slogger.E(err))
+			logger.Log.Info("Task is not found", logger.E(err))
 			return nil, status.Error(codes.NotFound, "Task not found")
 		}
 		u, err := url.Parse(task.Repository.Url)
@@ -255,11 +255,11 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 			false,
 		)
 		if err != nil {
-			slogger.Log.Warn("Failed build job", slogger.E(err))
+			logger.Log.Warn("Failed build job", logger.E(err))
 			return nil, status.Error(codes.Internal, "Failed to build job")
 		}
 
-		slogger.Log.Info("Success enqueue redo-job", slog.Int("task_id", int(task.Id)), slog.Int("new_task_id", int(newTasks[len(newTasks)-1].Id)))
+		logger.Log.Info("Success enqueue redo-job", slog.Int("task_id", int(task.Id)), slog.Int("new_task_id", int(newTasks[len(newTasks)-1].Id)))
 		return ResponseInvokeJob_builder{TaskId: new(newTasks[len(newTasks)-1].Id)}.Build(), nil
 	}
 
@@ -294,7 +294,7 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 	}
 	revision, err := s.resolveDefaultBranchRevision(ctx, owner, repoName, repo.DefaultBranch)
 	if err != nil {
-		slogger.Log.Warn("Failed to resolve default branch revision", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("branch", repo.DefaultBranch))
+		logger.Log.Warn("Failed to resolve default branch revision", logger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("branch", repo.DefaultBranch))
 		return nil, status.Error(codes.Internal, "failed to resolve default branch revision")
 	}
 	newTasks, err := s.builder.Build(
@@ -310,11 +310,11 @@ func (s *apiService) InvokeJob(ctx context.Context, req *RequestInvokeJob) (*Res
 		false,
 	)
 	if err != nil {
-		slogger.Log.Warn("Failed to invoke job", slogger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("job_name", job.Name))
+		logger.Log.Warn("Failed to invoke job", logger.E(err), slog.String("owner", owner), slog.String("repo", repoName), slog.String("job_name", job.Name))
 		return nil, status.Error(codes.Internal, "failed to invoke job")
 	}
 	if newTasks == nil {
-		slogger.Log.Warn("Failed to invoke job without error", slog.String("owner", owner), slog.String("repo", repoName), slog.String("job_name", job.Name))
+		logger.Log.Warn("Failed to invoke job without error", slog.String("owner", owner), slog.String("repo", repoName), slog.String("job_name", job.Name))
 		return nil, status.Error(codes.Internal, "failed to invoke job")
 	}
 
@@ -351,7 +351,7 @@ func (s *apiService) CompleteTask(ctx context.Context, req *RequestCompleteTask)
 		return nil, status.Error(codes.FailedPrecondition, "emulate job control is disabled")
 	}
 	if err := s.builder.CompleteTask(ctx, req.GetTaskId(), req.GetSuccess()); err != nil {
-		slogger.Log.Warn("Failed to complete task in emulation", slogger.E(err))
+		logger.Log.Warn("Failed to complete task in emulation", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to complete task")
 	}
 	return ResponseCompleteTask_builder{}.Build(), nil
@@ -360,7 +360,7 @@ func (s *apiService) CompleteTask(ctx context.Context, req *RequestCompleteTask)
 func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo) (*ResponseGetServerInfo, error) {
 	objs, err := s.stClient.List(ctx, s.bazelMirrorPrefix)
 	if err != nil {
-		slogger.Log.Warn("Failed to list bazel mirror objects", slogger.E(err))
+		logger.Log.Warn("Failed to list bazel mirror objects", logger.E(err))
 	}
 	var versions semver.Collection
 	for _, v := range objs {
@@ -392,7 +392,7 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 		rows, err = s.dao.ExternalReleaseTrigger.ListAll(ctx)
 	}
 	if err != nil {
-		slogger.Log.Warn("Failed to list external_release_trigger", slogger.E(err))
+		logger.Log.Warn("Failed to list external_release_trigger", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to list external_release_trigger")
 	}
 
@@ -403,7 +403,7 @@ func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *Reque
 		if !ok {
 			sr, err := s.dao.Repository.Select(ctx, r.RepositoryId)
 			if err != nil {
-				slogger.Log.Warn("Failed to load source_repository for trigger", slogger.E(err))
+				logger.Log.Warn("Failed to load source_repository for trigger", logger.E(err))
 				continue
 			}
 			repoCache[r.RepositoryId] = sr
@@ -431,7 +431,7 @@ func (s *apiService) ListGithubEvents(ctx context.Context, req *RequestListGithu
 	if req.HasEventId() {
 		row, err := s.dao.GithubEvent.Select(ctx, req.GetEventId())
 		if err != nil {
-			slogger.Log.Info("github_event is not found", slogger.E(err))
+			logger.Log.Info("github_event is not found", logger.E(err))
 			return nil, status.Error(codes.NotFound, "github_event not found")
 		}
 		return ResponseListGithubEvents_builder{Events: []*model.GithubEvent{dbGithubEventToModel(row)}}.Build(), nil
@@ -439,7 +439,7 @@ func (s *apiService) ListGithubEvents(ctx context.Context, req *RequestListGithu
 
 	rows, err := s.dao.GithubEvent.ListAll(ctx, dao.Sort("id"), dao.Desc)
 	if err != nil {
-		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
+		logger.Log.Warn("Failed to list github_event", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to list github_event")
 	}
 
@@ -583,7 +583,7 @@ func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *
 		task := s.dbTaskToAPITask(v)
 		tr, err := s.dao.TestReport.ListByTaskId(ctx, task.GetId())
 		if err != nil {
-			slogger.Log.Warn("Failed to get test report by task id", slog.Int("task_id", int(task.GetId())))
+			logger.Log.Warn("Failed to get test report by task id", slog.Int("task_id", int(task.GetId())))
 			return task
 		}
 		testReports := enumerable.Map(tr, s.dbTestReportToAPITestReport)
@@ -591,7 +591,7 @@ func (s *apiService) dbTaskToAPITaskWithTestReport(ctx context.Context) func(v *
 
 		bm, err := s.dao.BuildMetrics.ListByTaskId(ctx, task.GetId())
 		if err != nil {
-			slogger.Log.Warn("Failed to get build metrics by task id", slog.Int("task_id", int(task.GetId())))
+			logger.Log.Warn("Failed to get build metrics by task id", slog.Int("task_id", int(task.GetId())))
 			return task
 		}
 		if len(bm) > 0 {
@@ -647,7 +647,7 @@ func dbJobToAPIJob(job *database.Job) *model.Job {
 	if len(job.Configuration) > 0 {
 		conf := &config.JobV2{}
 		if err := config.UnmarshalJobV2(job.Configuration, conf, "", ""); err != nil {
-			slogger.Log.Warn("Failed to decode job configuration", slogger.E(err), slog.String("job_name", job.Name))
+			logger.Log.Warn("Failed to decode job configuration", logger.E(err), slog.String("job_name", job.Name))
 		}
 		for _, name := range slices.Sorted(maps.Keys(conf.Params)) {
 			params = append(params, model.JobParam_builder{
@@ -671,7 +671,7 @@ func (s *apiService) ListArtifacts(ctx context.Context, req *RequestListArtifact
 	if req.GetTaskId() > 0 {
 		rows, err := s.dao.Artifact.ListByTaskId(ctx, req.GetTaskId(), dao.Sort("id"))
 		if err != nil {
-			slogger.Log.Warn("Failed to list artifacts by task", slogger.E(err), slog.Int("task_id", int(req.GetTaskId())))
+			logger.Log.Warn("Failed to list artifacts by task", logger.E(err), slog.Int("task_id", int(req.GetTaskId())))
 			return nil, status.Error(codes.Internal, "failed to list artifacts")
 		}
 		return ResponseListArtifacts_builder{Artifacts: enumerable.Map(rows, dbArtifactToAPIArtifact)}.Build(), nil
@@ -679,14 +679,14 @@ func (s *apiService) ListArtifacts(ctx context.Context, req *RequestListArtifact
 	if req.GetRepositoryId() > 0 && req.GetRevision() != "" {
 		tasks, err := s.dao.Task.ListByRevision(ctx, req.GetRepositoryId(), req.GetRevision(), dao.Sort("id"))
 		if err != nil {
-			slogger.Log.Warn("Failed to list tasks by revision", slogger.E(err), slog.String("revision", req.GetRevision()))
+			logger.Log.Warn("Failed to list tasks by revision", logger.E(err), slog.String("revision", req.GetRevision()))
 			return nil, status.Error(codes.Internal, "failed to list artifacts")
 		}
 		var artifacts []*model.Artifact
 		for _, t := range tasks {
 			rows, err := s.dao.Artifact.ListByTaskId(ctx, t.Id, dao.Sort("id"))
 			if err != nil {
-				slogger.Log.Warn("Failed to list artifacts by task", slogger.E(err), slog.Int("task_id", int(t.Id)))
+				logger.Log.Warn("Failed to list artifacts by task", logger.E(err), slog.Int("task_id", int(t.Id)))
 				return nil, status.Error(codes.Internal, "failed to list artifacts")
 			}
 			artifacts = append(artifacts, enumerable.Map(rows, dbArtifactToAPIArtifact)...)
@@ -714,7 +714,7 @@ func (s *apiService) GetLogs(ctx context.Context, req *RequestGetLogs) (*Respons
 	}
 	body, err := ReadLog(ctx, s.logStorage, task.LogFile, filter)
 	if err != nil {
-		slogger.Log.Warn("Failed to read the log", slogger.E(err), slog.Int("task_id", int(task.Id)))
+		logger.Log.Warn("Failed to read the log", logger.E(err), slog.Int("task_id", int(task.Id)))
 		return nil, status.Error(codes.Internal, "failed to read the log")
 	}
 	return ResponseGetLogs_builder{Body: new(body)}.Build(), nil
@@ -754,7 +754,7 @@ func (s *apiService) SyncArtifacts(ctx context.Context, req *RequestSyncArtifact
 
 		existing, err := s.dao.Artifact.ListByHash(ctx, h)
 		if err != nil {
-			slogger.Log.Warn("Failed to look up artifact by hash", slogger.E(err))
+			logger.Log.Warn("Failed to look up artifact by hash", logger.E(err))
 			return nil, status.Error(codes.Internal, "failed to look up artifact")
 		}
 		if len(existing) == 0 {
@@ -770,7 +770,7 @@ func (s *apiService) SyncArtifacts(ctx context.Context, req *RequestSyncArtifact
 			Reference:  existing[0].Reference,
 			Size:       existing[0].Size,
 		}); err != nil {
-			slogger.Log.Warn("Failed to record existing artifact", slogger.E(err), slog.String("hash", h))
+			logger.Log.Warn("Failed to record existing artifact", logger.E(err), slog.String("hash", h))
 		}
 	}
 	return ResponseSyncArtifacts_builder{NewHashes: newHashes}.Build(), nil
@@ -822,7 +822,7 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		return nil, status.Error(codes.InvalidArgument, "unknown artifact type")
 	}
 	if err != nil {
-		slogger.Log.Warn("Failed to push artifact to registry", slogger.E(err))
+		logger.Log.Warn("Failed to push artifact to registry", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to store artifact")
 	}
 
@@ -840,7 +840,7 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		if rows, e := s.dao.Artifact.ListByHash(ctx, ref.GetHash()); e == nil && len(rows) > 0 {
 			return ResponseUploadArtifact_builder{Repository: new(rows[0].Repository), Reference: new(rows[0].Reference)}.Build(), nil
 		}
-		slogger.Log.Warn("Failed to record artifact", slogger.E(err))
+		logger.Log.Warn("Failed to record artifact", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to record artifact")
 	}
 	return ResponseUploadArtifact_builder{Repository: new(ref.GetRepository()), Reference: new(reference)}.Build(), nil

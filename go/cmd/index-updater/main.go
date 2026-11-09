@@ -8,18 +8,18 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/codesearch"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func indexUpdater(args []string) error {
 	cmd := codesearch.NewUpdaterCommand()
 	fs := pflag.NewFlagSet("index-updater", pflag.ContinueOnError)
 	cmd.Flags(fs)
-	slogger.Flags(fs)
+	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.WithStack(err)
 	}
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
 

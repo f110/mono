@@ -12,7 +12,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
 	"go.f110.dev/mono/go/build/webhook"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -21,8 +21,8 @@ import (
 // All business logic lives in the eventbus reconcilers (tested separately),
 // so the api layer only needs to confirm the wiring.
 func TestWebhookEndpoint(t *testing.T) {
-	slogger.SetLogLevel("debug")
-	slogger.Init()
+	logger.SetLogLevel("debug")
+	logger.Init()
 
 	const repoURL = "https://github.com/f110/ops"
 

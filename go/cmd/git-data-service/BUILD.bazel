@@ -14,7 +14,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/github",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/storage",
         "@dev_f110_go_go_memcached//client",
         "@dev_f110_go_xerrors//:xerrors",

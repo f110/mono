@@ -10,7 +10,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/http/httpserver"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Mode string
@@ -40,10 +40,10 @@ func staticWeb() error {
 			}
 			go func() {
 				<-ctx.Done()
-				slogger.Log.Info("Shutdown")
+				logger.Log.Info("Shutdown")
 				s.Shutdown(context.Background())
 			}()
-			slogger.Log.Info("Start server", slog.String("addr", listenAddr), slog.String("root", documentRoot), slog.String("mode", mode))
+			logger.Log.Info("Start server", slog.String("addr", listenAddr), slog.String("root", documentRoot), slog.String("mode", mode))
 			if err := s.ListenAndServe(); errors.Is(err, http.ErrServerClosed) {
 				return nil
 			} else if err != nil {

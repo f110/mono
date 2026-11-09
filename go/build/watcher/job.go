@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -106,7 +106,7 @@ func (j *JobWatcher) dispatch(key string) error {
 }
 
 func (j *JobWatcher) worker() {
-	defer slogger.Log.Debug("Finish worker")
+	defer logger.Log.Debug("Finish worker")
 
 	for j.processNextItem() {
 	}
@@ -117,13 +117,13 @@ func (j *JobWatcher) processNextItem() bool {
 	if shutdown {
 		return false
 	}
-	slogger.Log.Debug("Got next queue", slog.String("key", obj.(string)))
+	logger.Log.Debug("Got next queue", slog.String("key", obj.(string)))
 
 	func(obj any) {
 		defer j.queue.Done(obj)
 
 		if err := j.dispatch(obj.(string)); err != nil {
-			slogger.Log.Info("syncJob returns an error", slogger.E(err))
+			logger.Log.Info("syncJob returns an error", logger.E(err))
 			j.queue.AddRateLimited(obj)
 			return
 		}
@@ -160,12 +160,12 @@ func (j *JobWatcher) deleteJob(obj any) {
 	if !ok {
 		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
 		if !ok {
-			slogger.Log.Info("Object is not DeletedFinalStateUnknown")
+			logger.Log.Info("Object is not DeletedFinalStateUnknown")
 			return
 		}
 		job, ok = tombstone.Obj.(*batchv1.Job)
 		if !ok {
-			slogger.Log.Info("Object is DeletedFinalStateUnknown but Obj is not Pod")
+			logger.Log.Info("Object is DeletedFinalStateUnknown but Obj is not Pod")
 			return
 		}
 	}

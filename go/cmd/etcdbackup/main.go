@@ -13,7 +13,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	etcd2 "go.f110.dev/mono/go/etcd"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -34,12 +34,12 @@ func etcdBackup(args []string) error {
 	fs.StringVar(&bucket, "bucket", "", "Bucket name")
 	fs.StringVar(&pathPrefix, "path-prefix", "", "Prefix")
 	fs.StringVar(&credentialFile, "credential", "", "Credential file")
-	slogger.Flags(fs)
+	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.WithStack(err)
 	}
 
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
 

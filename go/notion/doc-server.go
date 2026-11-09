@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/k8s/volume"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type databaseDocServerConfig struct {
@@ -70,10 +70,10 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		}{}
 
 		if err := json.NewDecoder(req.Body).Decode(&b); err != nil {
-			slogger.Log.Warn("Failed parse request body", slogger.E(err))
+			logger.Log.Warn("Failed parse request body", logger.E(err))
 			return
 		}
-		slogger.Log.Info("Input data", slog.Any("body", b))
+		logger.Log.Info("Input data", slog.Any("body", b))
 
 		var c *databaseDocServerConfig
 		s.mu.RLock()
@@ -93,26 +93,26 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 		tc := oauth2.NewClient(context.Background(), ts)
 		client, err := notion.New(tc, notion.BaseURL)
 		if err != nil {
-			slogger.Log.Warn("Failed to create notion client", slogger.E(err), slog.String("id", c.Id))
+			logger.Log.Warn("Failed to create notion client", logger.E(err), slog.String("id", c.Id))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		db, err := client.GetDatabase(req.Context(), c.DatabaseID)
 		if err != nil {
-			slogger.Log.Warn("Failed to get database", slogger.E(err), slog.String("id", c.Id), slog.String("database_id", c.DatabaseID))
+			logger.Log.Warn("Failed to get database", logger.E(err), slog.String("id", c.Id), slog.String("database_id", c.DatabaseID))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		page, err := notion.NewPage(db, b.Title, nil)
 		if err != nil {
-			slogger.Log.Warn("Failed to initialize new page", slogger.E(err), slog.String("id", c.Id))
+			logger.Log.Warn("Failed to initialize new page", logger.E(err), slog.String("id", c.Id))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		for k, v := range b.Data {
 			prop, ok := db.Properties[k]
 			if !ok {
-				slogger.Log.Warn("Property not found", slog.String("key", k))
+				logger.Log.Warn("Property not found", slog.String("key", k))
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -121,7 +121,7 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 			case "number":
 				num, ok := v.(float64)
 				if !ok {
-					slogger.Log.Info("The value is not float64", slog.Any("value", v), slog.Any("type", fmt.Sprintf("%T", v)))
+					logger.Log.Info("The value is not float64", slog.Any("value", v), slog.Any("type", fmt.Sprintf("%T", v)))
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -135,23 +135,23 @@ func (s *DatabaseDocServer) Add(w http.ResponseWriter, req *http.Request) {
 
 		_, err = client.CreatePage(req.Context(), page)
 		if err != nil {
-			slogger.Log.Warn("Failed to create a page", slogger.E(err))
+			logger.Log.Warn("Failed to create a page", logger.E(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		slogger.Log.Info("Creating page was successfully")
+		logger.Log.Info("Creating page was successfully")
 	}
 }
 
 func (s *DatabaseDocServer) loadConfig() {
 	f, err := os.Open(s.configFile)
 	if err != nil {
-		slogger.Log.Error("Failed to open config file", slogger.E(err), slog.String("path", s.configFile))
+		logger.Log.Error("Failed to open config file", logger.E(err), slog.String("path", s.configFile))
 		return
 	}
 	var conf []*databaseDocServerConfig
 	if err := yaml.NewDecoder(f).Decode(&conf); err != nil {
-		slogger.Log.Error("Decode failure", slogger.E(err))
+		logger.Log.Error("Decode failure", logger.E(err))
 		return
 	}
 	s.mu.Lock()
@@ -160,12 +160,12 @@ func (s *DatabaseDocServer) loadConfig() {
 }
 
 func (s *DatabaseDocServer) Start() error {
-	slogger.Log.Info("Listen", slog.String("addr", s.s.Addr))
+	logger.Log.Info("Listen", slog.String("addr", s.s.Addr))
 	return s.s.ListenAndServe()
 }
 
 func (s *DatabaseDocServer) Stop(ctx context.Context) error {
-	slogger.Log.Info("Stopping server")
+	logger.Log.Info("Stopping server")
 	if s.w != nil {
 		s.w.Stop()
 	}

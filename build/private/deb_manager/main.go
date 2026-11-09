@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"go.f110.dev/mono/go/enumerable"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 var codenameToName = map[string]string{
@@ -65,7 +65,7 @@ func generate(ctx context.Context, confFile, macroFile, outFile string) error {
 					return err
 				}
 				if p == nil {
-					slogger.Log.Info("package not found", slog.String("name", v))
+					logger.Log.Info("package not found", slog.String("name", v))
 					deps = deps[1:]
 					continue
 				}
@@ -184,7 +184,7 @@ func readConfig(confFile string) (*config, error) {
 }
 
 func main() {
-	slogger.Init()
+	logger.Init()
 	var confFile, utilityMacroFile string
 	flag.StringVar(&confFile, "conf", "", "Config file")
 	flag.StringVar(&utilityMacroFile, "macro", "", "Macro file")

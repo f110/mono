@@ -21,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/grafana"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/stringsutil"
 )
 
@@ -182,7 +182,7 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 		name := s[0]
 		u.logger.Info("Add User", slog.String("email", grafanaUser.Spec.Email), slog.String("name", name))
 		if err := grafanaClient.AddUser(&grafana.User{Name: name, Login: name, Email: grafanaUser.Spec.Email, Password: stringsutil.RandomString(32)}); err != nil {
-			u.logger.Warn("Failed add user", slog.String("email", email), slogger.E(err))
+			u.logger.Warn("Failed add user", slog.String("email", email), logger.E(err))
 		}
 	}
 
@@ -195,7 +195,7 @@ func (u *grafanaReconciler) ensureUsers(app *grafanav1alpha1.Grafana, users []*g
 		grafanaUser := currentUsersMap[email]
 		u.logger.Info("Delete User", slog.Int("id", grafanaUser.Id))
 		if err := grafanaClient.DeleteUser(grafanaUser.Id); err != nil {
-			u.logger.Warn("Failed delete user", slog.String("email", grafanaUser.Email), slog.Int("id", grafanaUser.Id), slogger.E(err))
+			u.logger.Warn("Failed delete user", slog.String("email", grafanaUser.Email), slog.Int("id", grafanaUser.Id), logger.E(err))
 		}
 	}
 

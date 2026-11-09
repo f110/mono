@@ -11,7 +11,7 @@ import (
 	"go.f110.dev/mono/go/ble"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/hash/crc16"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type ThermometerData struct {
@@ -97,7 +97,7 @@ func Read(ctx context.Context, id string) (*ThermometerData, error) {
 	var peripheral ble.Peripheral
 	var buf []byte
 	for prph := range scanCh {
-		slogger.Log.Debug("Found device", slog.String("id", prph.Address), slog.Int("data_length", len(prph.ManufacturerData)))
+		logger.Log.Debug("Found device", slog.String("id", prph.Address), slog.Int("data_length", len(prph.ManufacturerData)))
 		if prph.Address == id && len(prph.ManufacturerData) == 9 {
 			cancel()
 			buf = prph.ManufacturerData
@@ -127,7 +127,7 @@ func Scan(ctx context.Context) error {
 
 	for prph := range scanCh {
 		if prph.Name == "sps" && len(prph.ManufacturerData) == 9 {
-			slogger.Log.Info("Found sensor", slog.String("address", prph.Address))
+			logger.Log.Info("Found sensor", slog.String("address", prph.Address))
 		}
 	}
 

@@ -8,7 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func newAccessLogInterceptor() connect.UnaryInterceptorFunc {
@@ -16,7 +16,7 @@ func newAccessLogInterceptor() connect.UnaryInterceptorFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			t1 := time.Now()
 			res, err := next(ctx, req)
-			slogger.Log.Info("access log",
+			logger.Log.Info("access log",
 				slog.String("endpoint", req.Spec().Procedure),
 				slog.Int("status", httpStatusFromError(err)),
 				slog.Duration("duration", time.Since(t1)),

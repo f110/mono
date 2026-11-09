@@ -23,7 +23,7 @@ import (
 	"go.f110.dev/mono/go/collections/dict"
 	"go.f110.dev/mono/go/ctxutil"
 	githubutil "go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -46,7 +46,7 @@ func (r *RepositoryConfig) Open(ctx context.Context, stClient *storage.S3, cache
 	if ok, err := storer.Exist(); !ok && err == nil {
 		initCtx, cancel := ctxutil.WithTimeout(ctx, timeout)
 
-		slogger.Log.Info("Init repository", slog.String("name", r.Name), slog.String("url", r.URL), slog.String("prefix", r.Prefix))
+		logger.Log.Info("Init repository", slog.String("name", r.Name), slog.String("url", r.URL), slog.String("prefix", r.Prefix))
 		var auth *gitHttp.BasicAuth
 		if tokenProvider != nil {
 			if v, err := tokenProvider.Token(initCtx); err == nil {
@@ -69,7 +69,7 @@ func (r *RepositoryConfig) Open(ctx context.Context, stClient *storage.S3, cache
 	r.goGit = gitRepo
 
 	if !disableInflatePackFile && storer.IncludePackFile(ctx) {
-		slogger.Log.Info("Inflate packfile", slog.String("name", r.Name))
+		logger.Log.Info("Inflate packfile", slog.String("name", r.Name))
 		if err := InflatePackFile(ctx, stClient, r.Prefix, gitRepo); err != nil {
 			return err
 		}
@@ -161,11 +161,11 @@ func (u *Updater) SetDataService(s *DataService) *Updater {
 // Run executes the periodic refresh loop. It blocks until ctx is cancelled.
 func (u *Updater) Run(ctx context.Context) {
 	if err := u.acquireLock(ctx); err != nil {
-		slogger.Log.Error("Failed to get the lock", slogger.E(err))
+		logger.Log.Error("Failed to get the lock", logger.E(err))
 		return
 	}
 
-	slogger.Log.Info("Start updater", slog.Duration("refresh_interval", u.interval), slog.Int("workers", u.parallel))
+	logger.Log.Info("Start updater", slog.Duration("refresh_interval", u.interval), slog.Int("workers", u.parallel))
 	u.running = true
 	timer := time.NewTicker(u.interval)
 	defer timer.Stop()
@@ -210,7 +210,7 @@ func (u *Updater) Sync(ctx context.Context, url string) error {
 	u.mu.Unlock()
 	for _, v := range repos {
 		if v.URL == url {
-			slogger.Log.Info("Sync repository triggered", slog.String("repo", v.Name))
+			logger.Log.Info("Sync repository triggered", slog.String("repo", v.Name))
 			return u.updateRepo(ctx, v.goGit)
 		}
 	}
@@ -222,13 +222,13 @@ func (u *Updater) Sync(ctx context.Context, url string) error {
 func (u *Updater) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	payload, err := io.ReadAll(req.Body)
 	if err != nil {
-		slogger.Log.Warn("Failed to read request body", slogger.E(err))
+		logger.Log.Warn("Failed to read request body", logger.E(err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 	e, err := github.ParseWebHook(github.WebHookType(req), payload)
 	if err != nil {
-		slogger.Log.Warn("Failed to parse request", slogger.E(err))
+		logger.Log.Warn("Failed to parse request", logger.E(err))
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
@@ -248,7 +248,7 @@ func (u *Updater) acquireLock(ctx context.Context) error {
 		return nil
 	}
 
-	slogger.Log.Info("Acquiring the lock...", slog.String("id", u.id))
+	logger.Log.Info("Acquiring the lock...", slog.String("id", u.id))
 	lock, err := u.getLock(ctx)
 	if errors.Is(err, storage.ErrObjectNotFound) {
 		if err := u.setLock(ctx); err != nil {
@@ -261,7 +261,7 @@ func (u *Updater) acquireLock(ctx context.Context) error {
 			return err
 		}
 	}
-	slogger.Log.Debug("Other process is running", slog.String("id", u.id), slog.Time("expire", lock.Expire))
+	logger.Log.Debug("Other process is running", slog.String("id", u.id), slog.Time("expire", lock.Expire))
 
 	t := time.NewTicker(9 * time.Minute)
 	defer t.Stop()
@@ -310,7 +310,7 @@ func (u *Updater) setLock(ctx context.Context) error {
 	if err := u.storageClient.Put(ctx, u.lockFilePath, buf); err != nil {
 		return err
 	}
-	slogger.Log.Debug("Got lock", slog.String("id", u.id))
+	logger.Log.Debug("Got lock", slog.String("id", u.id))
 
 	go func() {
 		t := time.NewTicker(9 * time.Minute)
@@ -335,7 +335,7 @@ func (u *Updater) update(ctx context.Context) {
 	sem := make(chan struct{}, u.parallel)
 	doneCh := make(chan struct{})
 	for _, v := range repos {
-		slogger.Log.Info("Updating repository", slog.String("repo", v.Name))
+		logger.Log.Info("Updating repository", slog.String("repo", v.Name))
 		go func(repo *git.Repository) {
 			sem <- struct{}{}
 			defer func() { <-sem }()
@@ -376,13 +376,13 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 		if errors.Is(err, git.NoErrAlreadyUpToDate) {
 			return nil
 		}
-		slogger.Log.Warn("Failed fetch repository", slogger.E(err))
+		logger.Log.Warn("Failed fetch repository", logger.E(err))
 		return xerrors.WithStack(err)
 	}
 
 	iter, err := repo.References()
 	if err != nil {
-		slogger.Log.Warn("Failed get references", slogger.E(err))
+		logger.Log.Warn("Failed get references", logger.E(err))
 		return xerrors.WithStack(err)
 	}
 	branches := make([]*plumbing.Reference, 0)
@@ -392,16 +392,16 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 			break
 		}
 		if err != nil {
-			slogger.Log.Warn("Failed get reference", slogger.E(err))
+			logger.Log.Warn("Failed get reference", logger.E(err))
 			return xerrors.WithStack(err)
 		}
 		if ref.Name().IsRemote() {
 			branches = append(branches, ref)
 		}
 		if ref.Name().IsBranch() {
-			slogger.Log.Debug("Remove reference", slog.String("ref", ref.Name().String()))
+			logger.Log.Debug("Remove reference", slog.String("ref", ref.Name().String()))
 			if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
-				slogger.Log.Warn("Failed remove reference", slogger.E(err), slog.String("ref", ref.Name().String()))
+				logger.Log.Warn("Failed remove reference", logger.E(err), slog.String("ref", ref.Name().String()))
 				return xerrors.WithStack(err)
 			}
 		}
@@ -411,7 +411,7 @@ func (u *Updater) updateRepo(ctx context.Context, repo *git.Repository) error {
 		branchName := strings.TrimPrefix(ref.Name().String(), "refs/remotes/origin/")
 		newRef := plumbing.NewHashReference(plumbing.NewBranchReferenceName(branchName), ref.Hash())
 		if err := repo.Storer.SetReference(newRef); err != nil {
-			slogger.Log.Warn("Failed create reference", slogger.E(err))
+			logger.Log.Warn("Failed create reference", logger.E(err))
 			return xerrors.WithStack(err)
 		}
 	}

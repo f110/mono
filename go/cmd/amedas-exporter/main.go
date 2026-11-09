@@ -19,7 +19,7 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/jma"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 	"go.f110.dev/mono/go/ucl"
 )
@@ -111,9 +111,9 @@ func (c *command) startServer(_ context.Context) (fsm.State, error) {
 
 	c.s = server
 	go func() {
-		slogger.Log.Info("Start amedas exporter", slog.String("addr", c.s.Addr))
+		logger.Log.Info("Start amedas exporter", slog.String("addr", c.s.Addr))
 		if err := c.s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slogger.Log.Error("http server error", slogger.E(err))
+			logger.Log.Error("http server error", logger.E(err))
 		}
 	}()
 	return fsm.Wait()

@@ -28,7 +28,7 @@ import (
 	"go.f110.dev/mono/go/harbor"
 	"go.f110.dev/mono/go/k8s/client"
 	"go.f110.dev/mono/go/k8s/controllers/controllerutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -139,7 +139,7 @@ func (c *HarborRobotAccountController) Reconcile(ctx context.Context, obj runtim
 		return err
 	}
 	if project.Status.ProjectId == 0 {
-		c.Log().Info("Project is not shipped yet", slogger.KubernetesObject("project", project))
+		c.Log().Info("Project is not shipped yet", logger.KubernetesObject("project", project))
 		return nil
 	}
 
@@ -195,7 +195,7 @@ func (c *HarborRobotAccountController) Reconcile(ctx context.Context, obj runtim
 func (c *HarborRobotAccountController) getProject(ctx context.Context, hra *harborv1alpha1.HarborRobotAccount) (*harborv1alpha1.HarborProject, error) {
 	project, err := c.hClient.GetHarborProject(ctx, hra.Spec.ProjectNamespace, hra.Spec.ProjectName, metav1.GetOptions{})
 	if err != nil && apierrors.IsNotFound(err) {
-		c.Log().Info("Project not found", slogger.KubernetesObject("project", hra))
+		c.Log().Info("Project not found", logger.KubernetesObject("project", hra))
 		return nil, xerrors.Define("project not found").WithStack()
 	} else if err != nil {
 		return nil, xerrors.WithStack(err)

@@ -7,7 +7,7 @@ import (
 	"github.com/go-ble/ble"
 	"github.com/go-ble/ble/linux"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func scan(ctx context.Context) (<-chan Peripheral, error) {
@@ -33,7 +33,7 @@ func scan(ctx context.Context) (<-chan Peripheral, error) {
 			}
 		}, nil)
 		if err != nil && err != context.Canceled {
-			slogger.Log.Warn("Failed to scan a device", slogger.E(err))
+			logger.Log.Warn("Failed to scan a device", logger.E(err))
 		}
 	}()
 

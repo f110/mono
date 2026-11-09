@@ -17,7 +17,7 @@ go_library(
         "//go/issue/mcp",
         "//go/issue/server",
         "//go/issue/webhook",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_go_sql_driver_mysql//:mysql",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",

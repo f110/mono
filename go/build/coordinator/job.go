@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type JobBuilder struct {
@@ -203,7 +203,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 		return j
 	}
 	if job.RepositoryName == "" {
-		slogger.Log.Warn("RepositoryName is required", slog.String("name", job.Name))
+		logger.Log.Warn("RepositoryName is required", slog.String("name", job.Name))
 		return j
 	}
 	j.job = job
@@ -222,7 +222,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 	if j.job.CPULimit != "" {
 		q, err := resource.ParseQuantity(j.job.CPULimit)
 		if err != nil {
-			slogger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), slogger.E(err))
+			logger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), logger.E(err))
 		} else {
 			cpuLimit = q
 		}
@@ -231,7 +231,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 	if j.job.MemoryLimit != "" {
 		q, err := resource.ParseQuantity(j.job.MemoryLimit)
 		if err != nil {
-			slogger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), slogger.E(err))
+			logger.Log.Info("Invalid limit syntax", slog.String("job", j.job.Name), logger.E(err))
 		} else {
 			memoryLimit = q
 		}
@@ -243,7 +243,7 @@ func (j *JobBuilder) Job(job *config.JobV2) *JobBuilder {
 		case string:
 			j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer, k8sfactory.EnvVar(k, val))
 		default:
-			slogger.Log.Warn("Not supported value type", slog.String("key", k))
+			logger.Log.Warn("Not supported value type", slog.String("key", k))
 		}
 	}
 
@@ -274,7 +274,7 @@ func (j *JobBuilder) Task(task *database.Task) *JobBuilder {
 		return j
 	}
 	if j.job == nil {
-		slogger.Log.Error("Job is not set")
+		logger.Log.Error("Job is not set")
 		return j
 	}
 	j.task = task
@@ -484,7 +484,7 @@ func (j *JobBuilder) injectSecret() {
 	}
 
 	if len(j.job.Secrets) > 0 && j.vaultAddr == "" {
-		slogger.Log.Warn("Secret injection is not supported", slog.String("repo", j.repo.Name), slog.String("job", j.job.Name))
+		logger.Log.Warn("Secret injection is not supported", slog.String("repo", j.repo.Name), slog.String("job", j.job.Name))
 		return
 	}
 

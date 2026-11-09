@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/cli",
         "//go/enumerable",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_bazelbuild_buildtools//build",
         "@com_github_google_go_github_v85//github",
         "@com_github_masterminds_semver_v3//:semver",

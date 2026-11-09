@@ -22,7 +22,7 @@ import (
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/database"
 	"go.f110.dev/mono/go/issue/database/dao"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // Repositories finds the repository registered in Build. The issue tracker handles only the repositories of Build.
@@ -127,7 +127,7 @@ func (r *PushReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Event, eve
 		for _, ref := range issue.ParseTrailer(c.GetMessage()) {
 			ticket, err := r.tracker.Ticket(ctx, ref.Number)
 			if errors.Is(err, issue.ErrNotFound) {
-				slogger.Log.Info("The ticket referred by the commit is not found", slog.Int("number", int(ref.Number)), slog.String("sha", c.GetID()))
+				logger.Log.Info("The ticket referred by the commit is not found", slog.Int("number", int(ref.Number)), slog.String("sha", c.GetID()))
 				continue
 			} else if err != nil {
 				return err
@@ -209,7 +209,7 @@ func (r *PullRequestReconciler) Reconcile(ctx context.Context, ev *ghwebhook.Eve
 	for _, n := range numbers {
 		ticket, err := r.tracker.Ticket(ctx, n)
 		if errors.Is(err, issue.ErrNotFound) {
-			slogger.Log.Info("The ticket referred by the pull request is not found", slog.Int("number", int(n)), slog.Int("pull_request", pr.GetNumber()))
+			logger.Log.Info("The ticket referred by the pull request is not found", slog.Int("number", int(n)), slog.Int("pull_request", pr.GetNumber()))
 			continue
 		} else if err != nil {
 			return err
@@ -229,7 +229,7 @@ func (r *PullRequestReconciler) fixTickets(ctx context.Context, pr *github.PullR
 		}
 		ticket, err := r.tracker.Ticket(ctx, ref.Number)
 		if errors.Is(err, issue.ErrNotFound) {
-			slogger.Log.Info("The ticket fixed by the pull request is not found", slog.Int("number", int(ref.Number)), slog.Int("pull_request", pr.GetNumber()))
+			logger.Log.Info("The ticket fixed by the pull request is not found", slog.Int("number", int(ref.Number)), slog.Int("pull_request", pr.GetNumber()))
 			continue
 		} else if err != nil {
 			return err
@@ -292,7 +292,7 @@ func (f *ChangeIDFiller) Run(ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		if err := f.fill(ctx); err != nil && ctx.Err() == nil {
-			slogger.Log.Warn("Failed to fill the change ids", slogger.E(err))
+			logger.Log.Warn("Failed to fill the change ids", logger.E(err))
 		}
 		select {
 		case <-ctx.Done():

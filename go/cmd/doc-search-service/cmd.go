@@ -20,7 +20,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -97,7 +97,7 @@ func (c *docSearchService) init(ctx context.Context) (fsm.State, error) {
 	healthpb.RegisterHealthServer(s, healthSvc)
 	c.s = s
 
-	slogger.Log.Debug("Initialize cache")
+	logger.Log.Debug("Initialize cache")
 	ctx, cancel := ctxutil.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	if err := service.Initialize(ctx, c.Workers, c.MaxConns); err != nil {
@@ -113,10 +113,10 @@ func (c *docSearchService) startServer(_ context.Context) (fsm.State, error) {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 
-	slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
+	logger.Log.Info("Start listen", slog.String("addr", c.Listen))
 	go func() {
 		if err := c.s.Serve(lis); err != nil {
-			slogger.Log.Error("gRPC server returns error", slogger.E(err))
+			logger.Log.Error("gRPC server returns error", logger.E(err))
 		}
 	}()
 
@@ -125,9 +125,9 @@ func (c *docSearchService) startServer(_ context.Context) (fsm.State, error) {
 
 func (c *docSearchService) shutDown(_ context.Context) (fsm.State, error) {
 	if c.s != nil {
-		slogger.Log.Debug("Graceful stopping")
+		logger.Log.Debug("Graceful stopping")
 		c.s.GracefulStop()
-		slogger.Log.Info("Stop server")
+		logger.Log.Info("Stop server")
 	}
 
 	return fsm.Finish()

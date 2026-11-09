@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -129,10 +129,10 @@ func (u *UpdaterCommand) webEndpoint(addr string, ch chan Manifest) error {
 		go func() {
 			manifest, err := u.manifestManager.GetLatest(context.Background())
 			if err != nil {
-				slogger.Log.Warn("Failed to get a latest manifest", slogger.E(err))
+				logger.Log.Warn("Failed to get a latest manifest", logger.E(err))
 				return
 			}
-			slogger.Log.Info("Found manifest", slog.Uint64("key", manifest.ExecutionKey))
+			logger.Log.Info("Found manifest", slog.Uint64("key", manifest.ExecutionKey))
 
 			ch <- manifest
 		}()
@@ -152,7 +152,7 @@ func (u *UpdaterCommand) webEndpoint(addr string, ch chan Manifest) error {
 		Addr:    addr,
 		Handler: mux,
 	}
-	slogger.Log.Info("Listen http endpoint", slog.String("addr", addr))
+	logger.Log.Info("Listen http endpoint", slog.String("addr", addr))
 	go srv.ListenAndServe()
 
 	return nil
@@ -164,7 +164,7 @@ func (u *UpdaterCommand) downloadThread(ch chan Manifest) {
 		case m := <-ch:
 			if err := u.downloadIndex(m); err != nil {
 				u.ready = false
-				slogger.Log.Debug("Failed download an index", slogger.E(err), slog.Uint64("key", m.ExecutionKey))
+				logger.Log.Debug("Failed download an index", logger.E(err), slog.Uint64("key", m.ExecutionKey))
 				continue
 			}
 
@@ -174,12 +174,12 @@ func (u *UpdaterCommand) downloadThread(ch chan Manifest) {
 }
 
 func (u *UpdaterCommand) downloadLatest() error {
-	slogger.Log.Debug("Download latest the manifest")
+	logger.Log.Debug("Download latest the manifest")
 	manifest, err := u.manifestManager.GetLatest(context.Background())
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Info("Found manifest", slog.Uint64("key", manifest.ExecutionKey))
+	logger.Log.Info("Found manifest", slog.Uint64("key", manifest.ExecutionKey))
 
 	if err := u.indexManager.Download(context.Background(), u.IndexDir, manifest); err != nil {
 		return xerrors.WithStack(err)
@@ -210,24 +210,24 @@ func (u *UpdaterCommand) subscribe(ctx context.Context, ch chan Manifest) error 
 	defer func() {
 		u.ready = false
 	}()
-	slogger.Log.Info("Subscribe a stream")
+	logger.Log.Info("Subscribe a stream")
 Loop:
 	for {
 		select {
 		case m := <-sub.ch:
-			slogger.Log.Info("Got notify", slog.Uint64("key", m.ExecutionKey))
+			logger.Log.Info("Got notify", slog.Uint64("key", m.ExecutionKey))
 			ch <- m
 		case <-ctx.Done():
 			break Loop
 		}
 	}
-	slogger.Log.Info("Stop subscribing a stream")
+	logger.Log.Info("Stop subscribing a stream")
 	return nil
 }
 
 func (u *UpdaterCommand) downloadIndex(m Manifest) error {
 	if m.ExecutionKey < u.latestKey {
-		slogger.Log.Debug("Notified manifest is old", slog.Uint64("latest", u.latestKey), slog.Uint64("got", m.ExecutionKey))
+		logger.Log.Debug("Notified manifest is old", slog.Uint64("latest", u.latestKey), slog.Uint64("got", m.ExecutionKey))
 		return nil
 	}
 	if err := u.indexManager.Download(context.Background(), u.IndexDir, m); err != nil {
@@ -301,12 +301,12 @@ func (u *UpdaterCommand) Describe(desc chan<- *prometheus.Desc) {
 func (u *UpdaterCommand) Collect(ch chan<- prometheus.Metric) {
 	f, err := os.Open(filepath.Join(u.IndexDir, "manifest.json"))
 	if err != nil {
-		slogger.Log.Warn("Could not open the manifest file", slogger.E(err))
+		logger.Log.Warn("Could not open the manifest file", logger.E(err))
 		return
 	}
 	var manifest Manifest
 	if err := json.NewDecoder(f).Decode(&manifest); err != nil {
-		slogger.Log.Warn("Failed to parse the manifest json", slogger.E(err))
+		logger.Log.Warn("Failed to parse the manifest json", logger.E(err))
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(u.latestKeyDesc, prometheus.GaugeValue, float64(manifest.ExecutionKey))

@@ -3,10 +3,10 @@ package docutil
 import (
 	"testing"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func TestMain(m *testing.M) {
-	slogger.Init()
+	logger.Init()
 	m.Run()
 }

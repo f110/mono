@@ -9,7 +9,7 @@ go_library(
         "//go/build/database",
         "//go/build/database/dao",
         "//go/ctxutil",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",
     ],

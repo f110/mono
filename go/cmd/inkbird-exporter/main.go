@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 )
 
@@ -26,7 +26,7 @@ func inkbirdExporter(args []string) error {
 	fs := pflag.NewFlagSet("inkbird-exporter", pflag.ContinueOnError)
 	fs.StringSliceVar(&ids, "id", ids, "")
 	fs.IntVar(&port, "port", port, "")
-	slogger.Flags(fs)
+	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func inkbirdExporter(args []string) error {
 		ids[i] = strings.ToLower(ids[i])
 	}
 
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		return err
 	}
 
@@ -54,7 +54,7 @@ func inkbirdExporter(args []string) error {
 		<-ctx.Done()
 		cancel()
 		if err := inkbirdExporter.Shutdown(); err != nil {
-			slogger.Log.Warn("Failed shutdown exporter", slogger.E(err))
+			logger.Log.Warn("Failed shutdown exporter", logger.E(err))
 		}
 	}()
 
@@ -68,7 +68,7 @@ func inkbirdExporter(args []string) error {
  </body>
  </html>`))
 	})
-	slogger.Log.Info("Start inkbird exporter", slog.Int("port", port))
+	logger.Log.Info("Start inkbird exporter", slog.Int("port", port))
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil

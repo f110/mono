@@ -19,7 +19,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -70,7 +70,7 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 		return nil, xerrors.Define("could not found capacity in metrics").WithStack()
 	}
 
-	slogger.Log.Debug("Got cluster info from metrics endpoint", slog.Float64("capacity", capacity))
+	logger.Log.Debug("Got cluster info from metrics endpoint", slog.Float64("capacity", capacity))
 	return &fifoObjectGarbageCollector{
 		client:         client,
 		prefix:         prefix,
@@ -83,16 +83,16 @@ func newFIFOObjectGarbageCollector(ctx context.Context, client *storage.S3, pref
 }
 
 func (gc *fifoObjectGarbageCollector) Run(ctx context.Context, execute bool) error {
-	defer slogger.Log.Info("Finish garbage collector")
+	defer logger.Log.Info("Finish garbage collector")
 	t := time.NewTicker(gc.interval)
 	defer t.Stop()
 
 	go func() {
 		if err := gc.startInvokeServer(execute); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slogger.Log.Error("Something happen", slogger.E(err))
+			logger.Log.Error("Something happen", logger.E(err))
 		}
 	}()
-	slogger.Log.Info("Start garbage collector")
+	logger.Log.Info("Start garbage collector")
 	for {
 		select {
 		case <-t.C:
@@ -118,13 +118,13 @@ func (gc *fifoObjectGarbageCollector) startInvokeServer(execute bool) error {
 				ctx, cancel := ctxutil.WithTimeout(context.Background(), gc.interval/2)
 				defer cancel()
 				if err := gc.gc(ctx, execute); err != nil {
-					slogger.Log.Error("Failed garbage collecting", slogger.E(err))
+					logger.Log.Error("Failed garbage collecting", logger.E(err))
 				}
 			}()
 		}),
 	}
 
-	slogger.Log.Info("Start invoke server", slog.String("addr", s.Addr))
+	logger.Log.Info("Start invoke server", slog.String("addr", s.Addr))
 	return s.ListenAndServe()
 }
 
@@ -136,18 +136,18 @@ func (gc *fifoObjectGarbageCollector) Shutdown() {
 }
 
 func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) error {
-	slogger.Log.Debug("Run GC")
-	defer slogger.Log.Debug("Finish GC")
+	logger.Log.Debug("Run GC")
+	defer logger.Log.Debug("Finish GC")
 	objects, err := gc.client.List(ctx, gc.prefix)
 	if err != nil {
 		return err
 	}
-	slogger.Log.Debug("Found objects", slog.Int("num", len(objects)))
+	logger.Log.Debug("Found objects", slog.Int("num", len(objects)))
 
 	totalSize := enumerable.Sum(objects, func(obj *storage.Object) int64 { return obj.Size })
 	maxUsedSize := int64(gc.capacity * gc.maxUsedPercent)
 	if totalSize < maxUsedSize {
-		slogger.Log.Debug("Current used size is less than max used size", slog.Int64("current", totalSize), slog.Int64("max_used_size", maxUsedSize), slog.Float64("usage", float64(totalSize)/float64(maxUsedSize)))
+		logger.Log.Debug("Current used size is less than max used size", slog.Int64("current", totalSize), slog.Int64("max_used_size", maxUsedSize), slog.Float64("usage", float64(totalSize)/float64(maxUsedSize)))
 		return nil
 	}
 
@@ -165,14 +165,14 @@ func (gc *fifoObjectGarbageCollector) gc(ctx context.Context, execute bool) erro
 		}
 	}
 
-	slogger.Log.Info("Delete some objects", slog.Int("num", len(deleteObjects)), slog.Int64("size", size))
+	logger.Log.Info("Delete some objects", slog.Int("num", len(deleteObjects)), slog.Int64("size", size))
 	for _, v := range deleteObjects {
 		if execute {
 			if err := gc.client.Delete(ctx, v.Name); err != nil {
 				return err
 			}
 		} else {
-			slogger.Log.Info("Delete", slog.String("name", v.Name), slog.Int64("size", v.Size), slog.Time("created_at", v.LastModified))
+			logger.Log.Info("Delete", slog.String("name", v.Name), slog.Int64("size", v.Size), slog.Time("created_at", v.LastModified))
 		}
 	}
 
@@ -258,7 +258,7 @@ func (c *fifoObjectGarbageCollectorCommand) startGC(ctx context.Context) (fsm.St
 	} else {
 		go func() {
 			if err := c.gc.Run(ctx, !c.DryRun); err != nil {
-				slogger.Log.Error("GC error", slogger.E(err))
+				logger.Log.Error("GC error", logger.E(err))
 				c.FSM.Shutdown()
 			}
 		}()

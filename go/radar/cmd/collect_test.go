@@ -11,7 +11,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/fetch"
 	"go.f110.dev/mono/go/radar/wal"
@@ -285,7 +285,7 @@ func TestCollectLoopNotAvailableIsNotAFailure(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		panic(err)
 	}
 	m.Run()

@@ -14,7 +14,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 )
 
@@ -250,8 +250,8 @@ func NewMapping(g Georeference, zoom int) *Mapping {
 		pixel = inv.Inverse()
 	} else {
 		pixel = func(lat, lon float64) (int, int, bool) { return nearestPixel(g, w, h, lat, lon) }
-		if slogger.Enabled() {
-			slogger.Log.Warn("parse: the georeference does not implement Inverter. Building the mapping falls back to a linear search",
+		if logger.Enabled() {
+			logger.Log.Warn("parse: the georeference does not implement Inverter. Building the mapping falls back to a linear search",
 				slog.String("georeference", fmt.Sprintf("%T", g)))
 		}
 	}

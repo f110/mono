@@ -20,7 +20,7 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -101,7 +101,7 @@ func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 	}
 	objs, err := a.stClient.List(req.Context(), a.bazelMirrorPrefix)
 	if err != nil {
-		slogger.Log.Error("Failed to get the list of the file from the object storage", slogger.E(err), slog.String("prefix", a.bazelMirrorPrefix))
+		logger.Log.Error("Failed to get the list of the file from the object storage", logger.E(err), slog.String("prefix", a.bazelMirrorPrefix))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
@@ -124,7 +124,7 @@ func (a *Api) handleReadiness(w http.ResponseWriter, req *http.Request) {
 
 	res := &ReadinessResponse{Versions: enumerable.Map(versions, func(t *semver.Version) string { return t.String() })}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		slogger.Log.Error("Failed to encode to json", slogger.E(err))
+		logger.Log.Error("Failed to encode to json", logger.E(err))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

@@ -20,7 +20,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	githubutil "go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 const (
@@ -96,7 +96,7 @@ func (c *githubPRDumpCommand) Run(ctx context.Context) error {
 		}
 		number := issue.GetNumber()
 		done++
-		log := slogger.Log.With(slog.String("repo", owner+"/"+repo), slog.Int("number", number), slog.Int("progress", done))
+		log := logger.Log.With(slog.String("repo", owner+"/"+repo), slog.Int("number", number), slog.Int("progress", done))
 		dir := filepath.Join(c.OutDir, owner, repo, strconv.Itoa(number))
 		upToDate, err := isUpToDate(dir, issue.GetUpdatedAt().Time)
 		if err != nil {
@@ -113,7 +113,7 @@ func (c *githubPRDumpCommand) Run(ctx context.Context) error {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			log.Error("Failed to dump pull request", slogger.E(err))
+			log.Error("Failed to dump pull request", logger.E(err))
 			failed++
 			return nil
 		}
@@ -153,7 +153,7 @@ func searchPullRequests(ctx context.Context, client *github.Client, author, org 
 	if err != nil {
 		return err
 	}
-	slogger.Log.Info("Found pull requests", slog.String("author", author), slog.Int("total", total))
+	logger.Log.Info("Found pull requests", slog.String("author", author), slog.Int("total", total))
 
 	return walkPullRequests(ctx, client, author, org, from, to, total, fn)
 }
@@ -259,7 +259,7 @@ func retrySearch(ctx context.Context, q string, fn func() (bool, error)) (bool, 
 	interval := searchRetryInterval
 	for attempt := range searchMaxAttempts {
 		if attempt > 0 {
-			slogger.Log.Info("Search results are inconsistent. Retrying", slog.String("query", q), slog.Int("attempt", attempt), slog.Duration("wait", interval))
+			logger.Log.Info("Search results are inconsistent. Retrying", slog.String("query", q), slog.Int("attempt", attempt), slog.Duration("wait", interval))
 			if err := sleep(ctx, interval); err != nil {
 				return false, err
 			}
@@ -420,7 +420,7 @@ func retryOnSecondaryRateLimit(ctx context.Context, fn func() error) error {
 		if wait == 0 {
 			wait = time.Minute
 		}
-		slogger.Log.Info("Hit the secondary rate limit", slog.Duration("wait", wait))
+		logger.Log.Info("Hit the secondary rate limit", slog.Duration("wait", wait))
 		if err := sleep(ctx, wait); err != nil {
 			return err
 		}

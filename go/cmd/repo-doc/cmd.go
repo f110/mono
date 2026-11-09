@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type repoDocCommand struct {
@@ -95,16 +95,16 @@ func (c *repoDocCommand) init(ctx context.Context) (fsm.State, error) {
 
 	c.s = &http.Server{
 		Handler:  handler,
-		ErrorLog: slogger.StandardLogger("http"),
+		ErrorLog: logger.StandardLogger("http"),
 	}
 	lis, err := net.Listen("tcp", c.Listen)
 	if err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 	go func() {
-		slogger.Log.Info("Start listen", slog.String("addr", c.Listen))
+		logger.Log.Info("Start listen", slog.String("addr", c.Listen))
 		if err := c.s.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slogger.Log.Warn("Serve returns error", slogger.E(err))
+			logger.Log.Warn("Serve returns error", logger.E(err))
 		}
 	}()
 

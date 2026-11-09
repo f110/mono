@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 func goModuleProxy() error {
@@ -15,7 +15,7 @@ func goModuleProxy() error {
 	cmd := &cli.Command{
 		Use: "gomodule-proxy",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			if err := slogger.Init(); err != nil {
+			if err := logger.Init(); err != nil {
 				return err
 			}
 			return proxy.LoopContext(ctx)

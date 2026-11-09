@@ -19,7 +19,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // The dev-only emulation path stands in for a real build in the local kwok
@@ -93,7 +93,7 @@ func (b *BazelBuilder) CompleteTask(ctx context.Context, taskID int32, success b
 		return xerrors.WithStack(err)
 	}
 
-	slogger.Log.Info("Completed task in emulation",
+	logger.Log.Info("Completed task in emulation",
 		slog.Int("task_id", int(taskID)), slog.Bool("success", success), slog.String("pod", podName))
 	return nil
 }

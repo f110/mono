@@ -21,7 +21,7 @@ import (
 
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/k8s/client"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/parallel"
 )
 
@@ -59,10 +59,10 @@ func NewBase(
 	informers []cache.SharedIndexInformer,
 	finalizers []string,
 ) *ControllerBase {
-	logger := slogger.Log.With(slog.String("logger", name))
+	log := logger.Log.With(slog.String("logger", name))
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
-		logger.Info(fmt.Sprintf(format, args...))
+		log.Info(fmt.Sprintf(format, args...))
 	})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: k8sClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(client.Scheme, corev1.EventSource{Component: name})
@@ -71,13 +71,13 @@ func NewBase(
 	if fn, ok := v.(interface {
 		NewReconciler(log *slog.Logger) Reconciler
 	}); ok {
-		r = fn.NewReconciler(logger)
+		r = fn.NewReconciler(log)
 	}
 
 	return &ControllerBase{
 		queue:       NewWorkQueue(name),
 		recorder:    recorder,
-		log:         logger,
+		log:         log,
 		impl:        v,
 		reconciler:  r,
 		eventSource: eventSource,
@@ -157,7 +157,7 @@ func (b *ControllerBase) worker(ctx context.Context) {
 
 		err := b.process(obj.(string))
 		if err != nil {
-			b.log.Info("Failed sync", slog.String("key", obj.(string)), slogger.E(err))
+			b.log.Info("Failed sync", slog.String("key", obj.(string)), logger.E(err))
 		}
 	}
 }
@@ -297,7 +297,7 @@ func NewGenericControllerBase[T runtime.Object](
 	getObjectFn func(namespace, name string) (T, error),
 	updateObjectFn func(context.Context, T, metav1.UpdateOptions) (T, error),
 ) *GenericControllerBase[T] {
-	l := slogger.Log.With(slog.String("logger", name))
+	l := logger.Log.With(slog.String("logger", name))
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(func(format string, args ...any) {
 		l.Info(fmt.Sprintf(format, args...))
@@ -383,7 +383,7 @@ func (b *GenericControllerBase[T]) worker(ctx context.Context) {
 
 		err := b.process(ctx, key)
 		if err != nil {
-			b.log.Info("Failed sync", slog.String("key", key), slogger.E(err))
+			b.log.Info("Failed sync", slog.String("key", key), logger.E(err))
 		}
 		b.log.Debug("Finished process", slog.String("key", key))
 	}
@@ -435,7 +435,7 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 			}
 		}
 		if !finalizing {
-			slogger.Log.Debug("Skip finalize because all finalizers are removed", slog.String("key", key))
+			logger.Log.Debug("Skip finalize because all finalizers are removed", slog.String("key", key))
 			return nil
 		}
 	}
@@ -448,7 +448,7 @@ func (b *GenericControllerBase[T]) process(workerCtx context.Context, key string
 	}
 	if err != nil {
 		if errors.Is(err, &RetryError{}) {
-			slogger.Log.Debug("Retry queue", slogger.E(err), slog.String("name", objMeta.GetName()), slog.String("namespace", objMeta.GetNamespace()))
+			logger.Log.Debug("Retry queue", logger.E(err), slog.String("name", objMeta.GetName()), slog.String("namespace", objMeta.GetNamespace()))
 			b.queue.AddRateLimited(obj)
 			return nil
 		}

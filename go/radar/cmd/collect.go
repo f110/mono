@@ -14,7 +14,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/fetch"
 	"go.f110.dev/mono/go/radar/wal"
@@ -91,7 +91,7 @@ type collectLoop struct {
 
 func (l *collectLoop) run(ctx context.Context) {
 	interval := pollInterval(l.src.fetcher.Interval())
-	log := slogger.Log.With(slog.String("source", l.src.fetcher.ID().String()))
+	log := logger.Log.With(slog.String("source", l.src.fetcher.ID().String()))
 	log.Info("Start collecting", slog.Duration("poll_interval", interval))
 
 	t := time.NewTicker(interval)
@@ -111,7 +111,7 @@ func (l *collectLoop) once(ctx context.Context, log *slog.Logger) {
 	times, err := l.src.fetcher.Latest(ctx, l.since)
 	if err != nil {
 		if ctx.Err() == nil {
-			log.Warn("Failed to look up the latest frames", slogger.E(err))
+			log.Warn("Failed to look up the latest frames", logger.E(err))
 		}
 		return
 	}
@@ -191,28 +191,28 @@ func (l *collectLoop) handle(ctx context.Context, log *slog.Logger, at time.Time
 			log.Debug("The frame is not available")
 			return true
 		}
-		log.Warn("Failed to fetch", slogger.E(err))
+		log.Warn("Failed to fetch", logger.E(err))
 		return false
 	}
 
 	frames, err := l.src.parser.Parse(raw)
 	if err != nil {
-		log.Error("Failed to parse. Moving the raw data to the quarantine", slogger.E(err))
+		log.Error("Failed to parse. Moving the raw data to the quarantine", logger.E(err))
 		if err := l.save(filepath.Join(l.workDir, "quarantine"), raw); err != nil {
-			log.Error("Failed to quarantine", slogger.E(err))
+			log.Error("Failed to quarantine", logger.E(err))
 		}
 		return false
 	}
 
 	if l.keepRaw {
 		if err := l.save(filepath.Join(l.workDir, "raw"), raw); err != nil {
-			log.Warn("Failed to keep the raw data", slogger.E(err))
+			log.Warn("Failed to keep the raw data", logger.E(err))
 		}
 	}
 
 	for _, v := range frames {
 		if err := l.wal.Append(v); err != nil {
-			log.Error("Failed to append to the WAL", slog.String("tile", v.Tile.String()), slogger.E(err))
+			log.Error("Failed to append to the WAL", slog.String("tile", v.Tile.String()), logger.E(err))
 			return false
 		}
 	}

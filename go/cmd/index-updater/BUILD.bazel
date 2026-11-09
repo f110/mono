@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/codesearch",
-        "//go/logger/slogger",
+        "//go/logger",
         "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
     ],

@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
 func TestUpdater_UpdateRepo(t *testing.T) {
-	slogger.SetLogLevel("debug")
-	slogger.Init()
+	logger.SetLogLevel("debug")
+	logger.Init()
 
 	sourceRepo := makeUpdaterSourceRepository(t)
 	mockStorage := storage.NewMock()

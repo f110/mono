@@ -9,7 +9,7 @@ go_library(
         "//go/ble",
         "//go/ctxutil",
         "//go/hash/crc16",
-        "//go/logger/slogger",
+        "//go/logger",
         "@dev_f110_go_xerrors//:xerrors",
     ],
 )

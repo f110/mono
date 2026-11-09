@@ -22,7 +22,7 @@ import (
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/http/httpserver"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type SimpleHTTPServer struct {
@@ -225,7 +225,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 			}
 		}
 		go func() {
-			slogger.Log.Info("Start server", slog.String("addr", server.Addr))
+			logger.Log.Info("Start server", slog.String("addr", server.Addr))
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Print(err)
 			}
@@ -245,7 +245,7 @@ func (s *SimpleHTTPServer) startServer(ctx context.Context) (fsm.State, error) {
 			Handler: router,
 		}
 		go func() {
-			slogger.Log.Info("Start profile server", slog.String("addr", server.Addr))
+			logger.Log.Info("Start profile server", slog.String("addr", server.Addr))
 			if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				log.Print(err)
 			}

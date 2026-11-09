@@ -27,7 +27,7 @@ import (
 	"go.f110.dev/mono/go/issue/api"
 	"go.f110.dev/mono/go/issue/database"
 	"go.f110.dev/mono/go/issue/database/dao"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
@@ -37,7 +37,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	slogger.Init()
+	logger.Init()
 	os.Exit(runWithMySQL(m))
 }
 

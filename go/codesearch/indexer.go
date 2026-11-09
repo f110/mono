@@ -30,7 +30,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	githubutil "go.f110.dev/mono/go/github"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Indexer struct {
@@ -70,10 +70,10 @@ func NewIndexer(
 func (x *Indexer) Sync(ctx context.Context) error {
 	repositories := x.lister.List(ctx)
 	for _, v := range repositories {
-		slogger.Log.Debug("Found repository", slog.String("name", v.Name), slog.String("url", v.URL))
+		logger.Log.Debug("Found repository", slog.String("name", v.Name), slog.String("url", v.URL))
 
 		if err := v.sync(ctx, x.workDir, x.tokenProvider, x.initRun); err != nil {
-			slogger.Log.Info("Failed sync repository", slogger.E(err), slog.String("url", v.URL))
+			logger.Log.Info("Failed sync repository", logger.E(err), slog.String("url", v.URL))
 			continue
 		}
 	}
@@ -89,7 +89,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 		m := newRepositoryMutator(v)
 		branchRefs, err := m.Mutate(ctx, x.workDir, v.Refs)
 		if err != nil {
-			slogger.Log.Info("Failed to mutate repository", slog.String("name", v.Name), slogger.E(err))
+			logger.Log.Info("Failed to mutate repository", slog.String("name", v.Name), logger.E(err))
 			continue
 		}
 		t2 := time.Now()
@@ -99,7 +99,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 		for _, refName := range branchRefs {
 			f, err := v.files(refName)
 			if err != nil {
-				slogger.Log.Info("Failed traverse the tree", slog.String("name", v.Name), slog.String("ref", refName.String()), slogger.E(err))
+				logger.Log.Info("Failed traverse the tree", slog.String("name", v.Name), slog.String("ref", refName.String()), logger.E(err))
 				continue
 			}
 			for k, v := range f {
@@ -154,7 +154,7 @@ func (x *Indexer) BuildIndex(ctx context.Context) error {
 			return ctx.Err()
 		}
 
-		slogger.Log.Info("Total document",
+		logger.Log.Info("Total document",
 			slog.String("name", v.Name),
 			slog.Int("count", int(docCount)),
 			slog.Duration("elapsed", time.Since(t1)),
@@ -190,7 +190,7 @@ func (x *Indexer) worker(queue chan file, builder *build.Builder, repo *Reposito
 			return
 		}
 		if err := x.addDocument(builder, repo, f, fileBranches); err != nil {
-			slogger.Log.Info("Failed to add document", slog.String("name", repo.Name), slog.String("path", f.path), slogger.E(err))
+			logger.Log.Info("Failed to add document", slog.String("name", repo.Name), slog.String("path", f.path), logger.E(err))
 		} else {
 			atomic.AddInt32(docCount, 1)
 		}
@@ -223,7 +223,7 @@ func (x *Indexer) addDocument(builder *build.Builder, repo *Repository, f file, 
 	}); err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Debug("Add document",
+	logger.Log.Debug("Add document",
 		slog.String("name", f.path),
 		slog.Any("branches", brs),
 		slog.Duration("elapsed", time.Since(t)),
@@ -259,7 +259,7 @@ func (x *Indexer) Cleanup(ctx context.Context) error {
 		}
 	}
 	for f := range files {
-		slogger.Log.Debug("Delete index", slog.String("filename", f))
+		logger.Log.Debug("Delete index", slog.String("filename", f))
 		if err := os.Remove(filepath.Join(indexDir, f)); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -280,14 +280,14 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 	branchRefs := make([]plumbing.ReferenceName, 0)
 
 	for _, refName := range refs {
-		slogger.Log.Debug("Prepare", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
+		logger.Log.Debug("Prepare", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
 		dir := filepath.Join(workDir, m.repo.Name)
 		if branchRef, err := m.repo.checkout(workDir, refName); err != nil {
-			slogger.Log.Info("Failed checkout repository", slogger.E(err), slog.String("name", m.repo.Name))
+			logger.Log.Info("Failed checkout repository", logger.E(err), slog.String("name", m.repo.Name))
 			if err := m.repo.cleanWorktree(); err != nil {
-				slogger.Log.Error("Failed to clean worktree", slogger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
+				logger.Log.Error("Failed to clean worktree", logger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
 			} else {
-				slogger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
+				logger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
 			}
 			continue
 		} else {
@@ -295,7 +295,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 		}
 
 		if !m.repo.DisableVendoring {
-			slogger.Log.Debug("Vendoring", slog.String("name", m.repo.Name), slog.String("dir", dir))
+			logger.Log.Debug("Vendoring", slog.String("name", m.repo.Name), slog.String("dir", dir))
 			err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -315,7 +315,7 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 						return nil
 					}
 
-					slogger.Log.Info("Run go mod vendor", slog.String("go.mod", path))
+					logger.Log.Info("Run go mod vendor", slog.String("go.mod", path))
 					cmd := exec.CommandContext(ctx, "go", "mod", "vendor")
 					cmd.Dir = filepath.Dir(path)
 					cmd.Stdout = os.Stdout
@@ -329,30 +329,30 @@ func (m *repositoryMutator) Mutate(ctx context.Context, workDir string, refs []p
 				return nil
 			})
 			if err != nil {
-				slogger.Log.Info("Failed go vendoring", slog.String("name", m.repo.Name), slogger.E(err))
+				logger.Log.Info("Failed go vendoring", slog.String("name", m.repo.Name), logger.E(err))
 				if err := m.repo.cleanWorktree(); err != nil {
-					slogger.Log.Error("Failed to clean worktree", slogger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
+					logger.Log.Error("Failed to clean worktree", logger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
 				} else {
-					slogger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
+					logger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
 				}
 				continue
 			}
 		}
 
-		slogger.Log.Debug("Commit", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
+		logger.Log.Debug("Commit", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
 		if err := m.repo.newCommit(); err != nil {
-			slogger.Log.Info("Failed create commit", slog.String("name", m.repo.Name), slogger.E(err))
+			logger.Log.Info("Failed create commit", slog.String("name", m.repo.Name), logger.E(err))
 			if err := m.repo.cleanWorktree(); err != nil {
-				slogger.Log.Error("Failed to clean worktree", slogger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
+				logger.Log.Error("Failed to clean worktree", logger.E(err), slog.String("name", m.repo.Name), slog.String("dir", dir))
 			} else {
-				slogger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
+				logger.Log.Info("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.String()))
 			}
 			continue
 		}
 
-		slogger.Log.Debug("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
+		logger.Log.Debug("Clean worktree", slog.String("name", m.repo.Name), slog.String("ref", refName.Short()))
 		if err := m.repo.cleanWorktree(); err != nil {
-			slogger.Log.Info("Failed clean worktree", slog.String("name", m.repo.Name), slogger.E(err))
+			logger.Log.Info("Failed clean worktree", slog.String("name", m.repo.Name), logger.E(err))
 			continue
 		}
 	}
@@ -373,7 +373,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 	// Clean up a directory for bare repository
 	bareDir := filepath.Join(workDir, ".bare", x.Name)
 	if _, err := os.Stat(bareDir); !os.IsNotExist(err) {
-		slogger.Log.Info("Remove bare repository", slog.String("dir", bareDir))
+		logger.Log.Info("Remove bare repository", slog.String("dir", bareDir))
 		if err := os.RemoveAll(bareDir); err != nil {
 			return xerrors.WithStack(err)
 		}
@@ -381,14 +381,14 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 
 	dir := filepath.Join(workDir, x.Name)
 	if _, err := os.Stat(filepath.Join(dir, ".git")); os.IsNotExist(err) {
-		slogger.Log.Info("Remove old directory", slog.String("dir", dir))
+		logger.Log.Info("Remove old directory", slog.String("dir", dir))
 		// Old style directory If .git directory not exists.
 		if err := os.RemoveAll(dir); err != nil {
 			return xerrors.WithStack(err)
 		}
 	}
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		slogger.Log.Debug("Clone", slog.String("name", x.Name), slog.String("url", x.URL))
+		logger.Log.Debug("Clone", slog.String("name", x.Name), slog.String("url", x.URL))
 		_, err = git.PlainCloneContext(ctx, dir, false, &git.CloneOptions{
 			URL:        x.URL,
 			NoCheckout: true,
@@ -407,7 +407,7 @@ func (x *Repository) sync(ctx context.Context, workDir string, tokenProvider *gi
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	slogger.Log.Debug("Fetch", slog.String("name", x.Name))
+	logger.Log.Debug("Fetch", slog.String("name", x.Name))
 	err = r.FetchContext(ctx, &git.FetchOptions{
 		Progress: os.Stdout,
 		Auth:     auth,
@@ -442,16 +442,16 @@ func (x *Repository) checkout(workDir string, refName plumbing.ReferenceName) (p
 	} else if err != nil {
 		return "", xerrors.WithStack(err)
 	} else {
-		slogger.Log.Debug("Remove branch(reference)", slog.String("name", ref.Name().String()), slog.String("name", x.Name))
+		logger.Log.Debug("Remove branch(reference)", slog.String("name", ref.Name().String()), slog.String("name", x.Name))
 		if err := repo.Storer.RemoveReference(ref.Name()); err != nil {
 			return "", xerrors.WithStack(err)
 		}
 	}
-	slogger.Log.Debug("Set reference", slog.String("ref", branchRef.Name().String()), slog.String("hash", branchRef.Hash().String()), slog.String("name", x.Name))
+	logger.Log.Debug("Set reference", slog.String("ref", branchRef.Name().String()), slog.String("hash", branchRef.Hash().String()), slog.String("name", x.Name))
 	if err := repo.Storer.SetReference(branchRef); err != nil {
 		return "", xerrors.WithStack(err)
 	}
-	slogger.Log.Debug("Checkout", slog.String("branch", branchRef.Name().String()))
+	logger.Log.Debug("Checkout", slog.String("branch", branchRef.Name().String()))
 	err = wt.Checkout(&git.CheckoutOptions{
 		Branch: branchRef.Name(),
 	})
@@ -584,7 +584,7 @@ func (x *Repository) cleanup(workDir string) error {
 		if err != nil {
 			return xerrors.WithStack(err)
 		}
-		slogger.Log.Debug("Branch", slog.String("name", x.Name), slog.String("branch", ref.String()))
+		logger.Log.Debug("Branch", slog.String("name", x.Name), slog.String("branch", ref.String()))
 	}
 
 	return nil

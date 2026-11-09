@@ -29,7 +29,7 @@ go_test(
         "//go/issue/api",
         "//go/issue/database",
         "//go/issue/database/dao",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/testing/assertion",
         "@com_github_go_sql_driver_mysql//:mysql",
         "@com_github_golang_jwt_jwt_v5//:jwt",

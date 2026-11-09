@@ -11,7 +11,7 @@ import (
 	"go.etcd.io/etcd/client/v3"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type Backup struct {
@@ -48,7 +48,7 @@ func NewBackup(ctx context.Context, endpoints []string, caCert *x509.Certificate
 		return nil, xerrors.WithStack(err)
 	}
 
-	slogger.Log.Info("Succeeded snapshot")
+	logger.Log.Info("Succeeded snapshot")
 	return &Backup{data: data, time: time.Now()}, nil
 }
 

@@ -26,7 +26,7 @@ go_library(
         "//go/grpcutil",
         "//go/http/authproxy",
         "//go/k8s/kind",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/parallel",
         "//go/storage",
         "@com_github_blang_semver_v4//:semver",
@@ -74,7 +74,7 @@ go_test(
     embed = [":monodev_lib"],
     deps = [
         "//go/http/authproxy",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/netutil",
         "//go/testing/assertion",
         "@com_github_golang_jwt_jwt_v5//:jwt",

@@ -18,7 +18,7 @@ import (
 	"go.f110.dev/mono/go/issue"
 	"go.f110.dev/mono/go/issue/api"
 	"go.f110.dev/mono/go/issue/database"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // Repositories looks up the repositories of Build to build the URLs of the commits and the pull requests.
@@ -157,7 +157,7 @@ func (h *IssueHandler) repositoryURLs(ctx context.Context, ids []int32) map[int3
 	}
 	urls, err := h.repositories.URLs(ctx, ids)
 	if err != nil {
-		slogger.Log.Warn("Failed to get the URLs of the repositories", slogger.E(err))
+		logger.Log.Warn("Failed to get the URLs of the repositories", logger.E(err))
 		return nil
 	}
 	return urls
@@ -396,7 +396,7 @@ func toConnectError(err error) error {
 	case errors.Is(err, context.DeadlineExceeded):
 		return connect.NewError(connect.CodeDeadlineExceeded, err)
 	}
-	slogger.Log.Error("Failed to handle the request", slogger.E(err))
+	logger.Log.Error("Failed to handle the request", logger.E(err))
 	return connect.NewError(connect.CodeInternal, errors.New("internal error"))
 }
 

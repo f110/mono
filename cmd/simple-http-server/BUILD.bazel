@@ -14,7 +14,7 @@ go_library(
         "//go/ctxutil",
         "//go/fsm",
         "//go/http/httpserver",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/ucl",
         "@com_github_nissy_bon//:bon",
         "@dev_f110_go_xerrors//:xerrors",
@@ -35,7 +35,7 @@ go_test(
     ],
     embed = [":simple-http-server_lib"],
     deps = [
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/netutil",
         "//go/ucl",
         "@com_github_stretchr_testify//assert",

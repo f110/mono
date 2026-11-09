@@ -18,7 +18,7 @@ import (
 	"google.golang.org/api/option"
 
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type backupMeta struct {
@@ -65,11 +65,11 @@ func unifiBackup(args []string) error {
 	fs.StringVar(&bucket, "bucket", "", "Bucket name")
 	fs.StringVar(&pathPrefix, "path-prefix", "", "Prefix of file path")
 	fs.StringVar(&credentialFile, "credential", "", "Credential file")
-	slogger.Flags(fs)
+	logger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.WithStack(err)
 	}
-	if err := slogger.Init(); err != nil {
+	if err := logger.Init(); err != nil {
 		return xerrors.WithStack(err)
 	}
 
@@ -86,14 +86,14 @@ func unifiBackup(args []string) error {
 		return xerrors.WithStack(err)
 	}
 
-	slogger.Log.Info("Waiting fs event")
+	logger.Log.Info("Waiting fs event")
 	for event := range w.Events {
-		slogger.Log.Info("Got event", slog.String("name", event.Name), slog.String("op", event.Op.String()))
+		logger.Log.Info("Got event", slog.String("name", event.Name), slog.String("op", event.Op.String()))
 
 		if event.Op&fsnotify.Write == fsnotify.Write && filepath.Base(event.Name) == "autobackup_meta.json" {
 			m, err := parseBackupMeta(event.Name)
 			if err != nil {
-				slogger.Log.Info("Failed parse metadata file", slogger.E(err))
+				logger.Log.Info("Failed parse metadata file", logger.E(err))
 				continue
 			}
 			latestBackup := selectLatestBackup(m)
@@ -117,7 +117,7 @@ func unifiBackup(args []string) error {
 					return xerrors.WithStack(err)
 				}
 
-				slogger.Log.Info("Succeeded upload", slog.String("object_name", obj.ObjectName()), slog.String("bucket", obj.BucketName()))
+				logger.Log.Info("Succeeded upload", slog.String("object_name", obj.ObjectName()), slog.String("bucket", obj.BucketName()))
 			}
 			cancelFunc()
 		}

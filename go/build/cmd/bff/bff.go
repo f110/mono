@@ -17,7 +17,7 @@ import (
 	"go.f110.dev/mono/go/build/bff"
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -43,7 +43,7 @@ func bffCmd(ctx context.Context, opts options) error {
 			return xerrors.WithStack(err)
 		}
 		gitDataClient = git.NewGitDataClient(gitDataConn)
-		slogger.Log.Info("Use git-data-service", slog.String("addr", opts.GitDataServiceURL))
+		logger.Log.Info("Use git-data-service", slog.String("addr", opts.GitDataServiceURL))
 	}
 
 	s3Opt := storage.NewS3OptionToExternal(opts.StorageEndpoint, opts.StorageRegion, opts.AccessKey, opts.SecretAccessKey)
@@ -57,9 +57,9 @@ func bffCmd(ctx context.Context, opts options) error {
 	var wg sync.WaitGroup
 	wg.Go(func() {
 
-		slogger.Log.Info("Listen", slog.String("addr", opts.Addr))
+		logger.Log.Info("Listen", slog.String("addr", opts.Addr))
 		if err := b.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slogger.Log.Error("Error", slogger.E(err))
+			logger.Log.Error("Error", logger.E(err))
 			return
 		}
 	})

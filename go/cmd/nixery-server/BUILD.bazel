@@ -9,7 +9,7 @@ go_library(
         "//go/cli",
         "//go/ctxutil",
         "//go/fsm",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/nixery",
         "@com_github_google_nixery//builder",
         "@com_github_google_nixery//config",

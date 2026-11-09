@@ -13,7 +13,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/amesh"
 	"go.f110.dev/mono/go/radar/dayfile"
@@ -103,15 +103,15 @@ func archive(ctx context.Context, workDir string, date time.Time, store objectSt
 		return err
 	}
 	if len(entries) == 0 {
-		slogger.Log.Info("There is no WAL to archive", slog.String("date", date.Format("2006-01-02")))
+		logger.Log.Info("There is no WAL to archive", slog.String("date", date.Format("2006-01-02")))
 		return nil
 	}
 
 	var failed int
 	for _, e := range entries {
 		if err := archiveOne(ctx, dir, e, store); err != nil {
-			slogger.Log.Error("Failed to archive",
-				slog.String("source", e.Source.String()), slog.String("tile", e.Tile.String()), slogger.E(err))
+			logger.Log.Error("Failed to archive",
+				slog.String("source", e.Source.String()), slog.String("tile", e.Tile.String()), logger.E(err))
 			failed++
 		}
 	}
@@ -123,7 +123,7 @@ func archive(ctx context.Context, workDir string, date time.Time, store objectSt
 
 func archiveOne(ctx context.Context, dir string, e wal.Entry, store objectStore) error {
 	key := objectKey(e.Source, e.Tile, e.Date)
-	log := slogger.Log.With(slog.String("key", key))
+	log := logger.Log.With(slog.String("key", key))
 
 	// The archiver is idempotent. When the object is already there the WAL was either removed or
 	// the previous run finished after the upload.

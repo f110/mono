@@ -13,7 +13,7 @@ go_library(
     deps = [
         "//go/ctxutil",
         "//go/k8s/client",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/parallel",
         "@dev_f110_go_xerrors//:xerrors",
         "@dev_f110_kubeproto//go/apis/metav1",

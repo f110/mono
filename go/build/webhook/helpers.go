@@ -12,7 +12,7 @@ import (
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 // gitDataRepoName returns the key the repository is registered under in
@@ -97,7 +97,7 @@ func dispatchBuilds(ctx context.Context, builder Builder, owner, repoName string
 		switch v.Command {
 		case "build", "test", "run":
 		default:
-			slogger.Log.Warn("Skip creating job", slog.String("command", v.Command))
+			logger.Log.Warn("Skip creating job", slog.String("command", v.Command))
 			continue
 		}
 		tasks, err := builder.Build(ctx, repo, v, revision, bazelVersion, v.Command, v.Targets, v.Platforms, via, isMainBranch)
@@ -185,7 +185,7 @@ func reconcileExternalReleaseTriggers(ctx context.Context, daos dao.Options, rep
 			continue
 		}
 		if j.ExternalSource == nil {
-			slogger.Log.Warn("external_release job without external_source", slog.String("job", j.Name))
+			logger.Log.Warn("external_release job without external_source", slog.String("job", j.Name))
 			continue
 		}
 		want[j.Name] = j

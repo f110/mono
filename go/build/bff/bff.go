@@ -25,7 +25,7 @@ import (
 	"go.f110.dev/mono/go/build/model"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -80,7 +80,7 @@ func (b *BFF) Start() error {
 func (b *BFF) ListRepositories(ctx context.Context, _ *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	allRepo, err := b.apiClient.ListRepositories(ctx, api.RequestListRepositories_builder{}.Build())
 	if err != nil {
-		slogger.Log.Warn("Failed to list repositories", slogger.E(err))
+		logger.Log.Warn("Failed to list repositories", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	repositories := enumerable.Map(allRepo.GetRepositories(), func(v *model.Repository) *model.Repository {
@@ -266,7 +266,7 @@ func (b *BFF) InvokeJob(ctx context.Context, req *connect.Request[RequestInvokeJ
 	}
 	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{RepositoryId: new(req.Msg.GetRepositoryId()), JobName: new(req.Msg.GetJobName()), Params: req.Msg.GetParams()}.Build())
 	if err != nil {
-		slogger.Log.Info("failed to invoke job", slog.Int("repository_id", int(req.Msg.GetRepositoryId())), slog.String("job_name", req.Msg.GetJobName()))
+		logger.Log.Info("failed to invoke job", slog.Int("repository_id", int(req.Msg.GetRepositoryId())), slog.String("job_name", req.Msg.GetJobName()))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseInvokeJob_builder{}.Build()), nil
@@ -309,7 +309,7 @@ func (b *BFF) RemoveRepository(ctx context.Context, req *connect.Request[Request
 func (b *BFF) RestartTask(ctx context.Context, req *connect.Request[RequestRestartTask]) (*connect.Response[ResponseRestartTask], error) {
 	_, err := b.apiClient.InvokeJob(ctx, api.RequestInvokeJob_builder{TaskId: new(req.Msg.GetTaskId())}.Build())
 	if err != nil {
-		slogger.Log.Error("Failed to restart task", slogger.E(err))
+		logger.Log.Error("Failed to restart task", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseRestartTask_builder{}.Build()), nil
@@ -349,7 +349,7 @@ func (b *BFF) ListGithubEvents(ctx context.Context, req *connect.Request[Request
 		if status.Code(err) == codes.NotFound {
 			return nil, connect.NewError(connect.CodeNotFound, err)
 		}
-		slogger.Log.Warn("Failed to list github_event", slogger.E(err))
+		logger.Log.Warn("Failed to list github_event", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	events := res.GetEvents()
@@ -387,7 +387,7 @@ func (b *BFF) ListExternalReleaseTriggers(ctx context.Context, req *connect.Requ
 	}
 	res, err := b.apiClient.ListExternalReleaseTriggers(ctx, apiReq.Build())
 	if err != nil {
-		slogger.Log.Warn("Failed to list external_release_trigger", slogger.E(err))
+		logger.Log.Warn("Failed to list external_release_trigger", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(ResponseListExternalReleaseTriggers_builder{Triggers: res.GetTriggers()}.Build()), nil
@@ -406,7 +406,7 @@ func (b *BFF) ListArtifacts(ctx context.Context, req *connect.Request[RequestLis
 	}
 	res, err := b.apiClient.ListArtifacts(ctx, apiReq.Build())
 	if err != nil {
-		slogger.Log.Warn("Failed to list artifacts", slogger.E(err))
+		logger.Log.Warn("Failed to list artifacts", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	artifacts := enumerable.Map(res.GetArtifacts(), apiArtifactToBFFArtifact)
@@ -452,7 +452,7 @@ func (b *BFF) ListGitData(ctx context.Context, _ *connect.Request[RequestListGit
 	}
 	res, err := b.gitDataClient.ListRepositories(ctx, &git.RequestListRepositories{})
 	if err != nil {
-		slogger.Log.Warn("Failed to list git-data repositories", slogger.E(err))
+		logger.Log.Warn("Failed to list git-data repositories", logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	repositories := enumerable.Map(res.GetRepositories(), func(v *git.Repository) *GitDataRepository {
@@ -471,7 +471,7 @@ func (b *BFF) GetGitDataStatistics(ctx context.Context, req *connect.Request[Req
 	}
 	res, err := b.gitDataClient.GetRepositoryStatistics(ctx, &git.RequestGetRepositoryStatistics{Repo: req.Msg.GetRepo()})
 	if err != nil {
-		slogger.Log.Warn("Failed to get git-data statistics", slog.String("repo", req.Msg.GetRepo()), slogger.E(err))
+		logger.Log.Warn("Failed to get git-data statistics", slog.String("repo", req.Msg.GetRepo()), logger.E(err))
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	out := ResponseGetGitDataStatistics_builder{}

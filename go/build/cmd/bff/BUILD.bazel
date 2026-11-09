@@ -10,7 +10,7 @@ go_library(
         "//go/build/bff",
         "//go/cli",
         "//go/git",
-        "//go/logger/slogger",
+        "//go/logger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",
         "@org_golang_google_grpc//:grpc",

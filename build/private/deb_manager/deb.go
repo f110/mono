@@ -15,7 +15,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 )
 
 type PackageIndex struct {
@@ -33,7 +33,7 @@ func NewPackageIndex(ctx context.Context, ss *Snapshot) (*PackageIndex, error) {
 	client := &http.Client{
 		Timeout: 10 * time.Minute,
 	}
-	slogger.Log.Info("Request", slog.String("url", req.URL.String()))
+	logger.Log.Info("Request", slog.String("url", req.URL.String()))
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (pi *PackageIndex) Find(name string) (*Package, error) {
 		depends := make([]*Package, 0, len(p.depends))
 		for _, v := range p.depends {
 			if _, ok := pi.packages[v]; !ok {
-				slogger.Log.Info("Not found package", slog.String("name", name))
+				logger.Log.Info("Not found package", slog.String("name", name))
 				continue
 			}
 			depends = append(depends, pi.packages[v])

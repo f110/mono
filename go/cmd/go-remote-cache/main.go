@@ -21,7 +21,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger/slogger"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
@@ -115,33 +115,33 @@ func (c *GoRemoteCache) startListen(_ context.Context) (fsm.State, error) {
 				c.FSM.Shutdown()
 				break
 			}
-			slogger.Log.Debug("Got request", slog.String("command", req.Command), slog.String("action_id", fmt.Sprintf("%x", req.ActionID)))
+			logger.Log.Debug("Got request", slog.String("command", req.Command), slog.String("action_id", fmt.Sprintf("%x", req.ActionID)))
 			if req.Command == "put" && req.BodySize > 0 {
 				var buf []byte
 				if err := jd.Decode(&buf); err != nil {
 					c.FSM.Shutdown()
 					break
 				}
-				slogger.Log.Debug("Read body", slog.Int("len", len(buf)))
+				logger.Log.Debug("Read body", slog.Int("len", len(buf)))
 				req.body = buf
 			}
 
 			go func() {
 				res, err := c.handleRequest(&req)
 				if err != nil {
-					slogger.Log.Warn("handle error", slogger.E(err))
+					logger.Log.Warn("handle error", logger.E(err))
 				}
 				if res == nil {
-					slogger.Log.Debug("empty response")
+					logger.Log.Debug("empty response")
 					return
 				}
 				mu.Lock()
 				defer mu.Unlock()
 				if err := je.Encode(res); err != nil {
-					slogger.Log.Error("Failed to encode json", slogger.E(err))
+					logger.Log.Error("Failed to encode json", logger.E(err))
 				}
 				if err := w.Flush(); err != nil {
-					slogger.Log.Error("Failed to flush write buffer", slogger.E(err))
+					logger.Log.Error("Failed to flush write buffer", logger.E(err))
 				}
 			}()
 		}
@@ -212,7 +212,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 			return nil, err
 		}
 
-		slogger.Log.Debug("Make local file", slog.Int("len", len(req.body)))
+		logger.Log.Debug("Make local file", slog.Int("len", len(req.body)))
 		size, err := saveFile(filepath.Join(c.BaseDir, objectFileName), bytes.NewReader(req.body))
 		if err != nil {
 			return nil, err
@@ -220,7 +220,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 		res.Size = size
 		res.DiskPath = filepath.Join(c.BaseDir, objectFileName)
 	case "close":
-		slogger.Log.Debug("Shutdown requested", slog.Int64("id", req.ID))
+		logger.Log.Debug("Shutdown requested", slog.Int64("id", req.ID))
 		c.Shutdown()
 	default:
 		return nil, xerrors.Definef("unknown command %s", req.Command).WithStack()
@@ -230,7 +230,7 @@ func (c *GoRemoteCache) handleRequest(req *request) (*response, error) {
 }
 
 func (c *GoRemoteCache) stateShuttingDown(_ context.Context) (fsm.State, error) {
-	slogger.Log.Debug("Shutting down")
+	logger.Log.Debug("Shutting down")
 	return fsm.Finish()
 }
 
@@ -284,7 +284,7 @@ func goRemoteCache() error {
 	cmd := &cli.Command{
 		Use: "go-remote-cache",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			slogger.OutputStderr()
+			logger.OutputStderr()
 			return c.LoopContext(ctx)
 		},
 	}
