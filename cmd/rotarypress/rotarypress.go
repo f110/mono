@@ -15,7 +15,7 @@ import (
 	"github.com/google/go-github/v85/github"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/fsm"
 	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
@@ -64,7 +64,7 @@ func NewRotaryPress() *RotaryPress {
 	return r
 }
 
-func (r *RotaryPress) SetFlags(fs *cli.FlagSet) {
+func (r *RotaryPress) SetFlags(fs *flag.FlagSet) {
 	fs.Bool("dry-run", "Do not download and upload artifact files").Var(&r.dryRun)
 	fs.String("endpoint", "").Var(&r.endpoint).Required()
 	fs.String("bucket", "The bucket name").Var(&r.bucket).Required()

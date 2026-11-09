@@ -20,6 +20,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -42,7 +43,7 @@ func newCommand() *command {
 	return &command{}
 }
 
-func (c *command) Flags(fs *cli.FlagSet) {
+func (c *command) Flags(fs *flag.FlagSet) {
 	fs.String("endpoint", "").Var(&c.Endpoint)
 	fs.String("bucket", "The bucket name").Var(&c.Bucket)
 	fs.String("region", "").Var(&c.Region)

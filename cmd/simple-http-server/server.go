@@ -18,7 +18,7 @@ import (
 	"github.com/nissy/bon"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/http/httpserver"
@@ -59,7 +59,7 @@ func NewSimpleHTTPServer() *SimpleHTTPServer {
 	return s
 }
 
-func (s *SimpleHTTPServer) SetFlags(fs *cli.FlagSet) {
+func (s *SimpleHTTPServer) SetFlags(fs *flag.FlagSet) {
 	fs.String("config", "Config file path").Shorthand("c").Var(&s.configFile).Required()
 }
 
