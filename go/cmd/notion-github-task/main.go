@@ -9,6 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/notion"
 )
 
@@ -30,7 +31,7 @@ func newGitHubTaskCommand() *githubTaskCommand {
 	}
 }
 
-func (g *githubTaskCommand) Flags(fs *cli.FlagSet) {
+func (g *githubTaskCommand) Flags(fs *flag.FlagSet) {
 	fs.String("notion-token", "API token for Notion").Var(&g.notionToken)
 	fs.String("notion-token-file", "The file path that contains API token for notion").Var(&g.notionTokenFile)
 	fs.String("github-token", "Personal access token of GitHub").Var(&g.githubToken)

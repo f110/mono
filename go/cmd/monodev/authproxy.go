@@ -21,7 +21,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/http/authproxy"
 	"go.f110.dev/mono/go/logger"
 )
@@ -109,7 +109,7 @@ func (c *authProxy) Ready() bool {
 	return true
 }
 
-func (c *authProxy) Flags(fs *cli.FlagSet) {
+func (c *authProxy) Flags(fs *flag.FlagSet) {
 	fs.String(c.Name+"-subject", "User id of the requests").Var(&c.Subject).Default(c.Subject)
 }
 

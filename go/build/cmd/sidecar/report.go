@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protodelim"
 
 	"go.f110.dev/mono/go/bazel/buildeventstream"
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 )
 
 // Report is the JSON document the report sidecar writes to stdout. Tests carries the
@@ -72,7 +72,7 @@ func (b *TestReportCommand) Name() string {
 	return "report"
 }
 
-func (b *TestReportCommand) SetFlags(fs *cli.FlagSet) {
+func (b *TestReportCommand) SetFlags(fs *flag.FlagSet) {
 	fs.String("event-binary-file", "The path of the event file").Var(&b.eventBinaryFile)
 	fs.Duration("startup-timeout", "Time of of start-up").Var(&b.startUpTimeout)
 }

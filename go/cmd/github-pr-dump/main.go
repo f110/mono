@@ -19,6 +19,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
 )
@@ -52,7 +53,7 @@ func newGitHubPRDumpCommand() *githubPRDumpCommand {
 	}
 }
 
-func (c *githubPRDumpCommand) Flags(fs *cli.FlagSet) {
+func (c *githubPRDumpCommand) Flags(fs *flag.FlagSet) {
 	fs.String("org", "Organization name").Var(&c.Org).Required()
 	fs.String("author", "Author of pull requests. Default is the authenticated user").Var(&c.Author)
 	fs.String("since", "Start date (YYYY-MM-DD). Default is 2 years ago").Var(&c.Since)

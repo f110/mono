@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
@@ -133,7 +133,7 @@ func (c *docSearchService) shutDown(_ context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
-func (c *docSearchService) Flags(fs *cli.FlagSet) {
+func (c *docSearchService) Flags(fs *flag.FlagSet) {
 	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8057")
 	fs.String("git-data-service", "The url of git-data-service").Var(&c.GitDataService).Default("127.0.0.1:9010")
 	fs.Int("workers", "The number of workers to fetching page title").Var(&c.Workers).Default(1)

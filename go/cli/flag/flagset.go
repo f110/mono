@@ -1,4 +1,4 @@
-package cli
+package flag
 
 import (
 	"fmt"
@@ -10,16 +10,16 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type missingRequiredFlagsError struct {
+type MissingRequiredFlagsError struct {
 	Flags []string
 }
 
-func (e *missingRequiredFlagsError) Error() string {
+func (e *MissingRequiredFlagsError) Error() string {
 	return fmt.Sprintf("required flags %q aren't set", strings.Join(e.Flags, ", "))
 }
 
-func (e *missingRequiredFlagsError) Is(err error) bool {
-	return reflect.TypeOf(err) == reflect.TypeFor[*missingRequiredFlagsError]()
+func (e *MissingRequiredFlagsError) Is(err error) bool {
+	return reflect.TypeOf(err) == reflect.TypeFor[*MissingRequiredFlagsError]()
 }
 
 type flagTypes interface {
@@ -83,7 +83,7 @@ func (fs *FlagSet) Parse(args []string) error {
 		}
 	}
 	if len(missingFlags) > 0 {
-		return &missingRequiredFlagsError{Flags: missingFlags}
+		return &MissingRequiredFlagsError{Flags: missingFlags}
 	}
 
 	return nil

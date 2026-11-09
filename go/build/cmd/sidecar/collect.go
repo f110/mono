@@ -22,7 +22,7 @@ import (
 
 	"go.f110.dev/mono/go/bazel/buildeventstream"
 	"go.f110.dev/mono/go/build/api"
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -82,7 +82,7 @@ func (c *CollectCommand) Name() string {
 	return "collect"
 }
 
-func (c *CollectCommand) SetFlags(fs *cli.FlagSet) {
+func (c *CollectCommand) SetFlags(fs *flag.FlagSet) {
 	fs.String("output-base", "The Bazel output base shared with the main container").Var(&c.outputBase)
 	fs.String("event-binary-file", "The path of the Build Event Protocol file").Var(&c.eventBinaryFile)
 	fs.String("builder-addr", "The gRPC address of the builder API").Var(&c.builderAddr)

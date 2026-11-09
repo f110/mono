@@ -10,9 +10,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"go.f110.dev/mono/go/cli/flag"
 )
 
 var (
@@ -25,10 +26,9 @@ var (
 )
 
 // Flags sets the flag of logger.
-// We can't receive *cli.FlagSet directly due to avoid cycle dependency.
-func Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&logLevel, "log-level", "info", "Log level")
-	fs.StringVar(&logEncoding, "log-encoding", "console", "Log encoding")
+func Flags(fs *flag.FlagSet) {
+	fs.String("log-level", "Log level").Var(&logLevel).Default("info")
+	fs.String("log-encoding", "Log encoding").Var(&logEncoding).Default("console")
 }
 
 func SetLogLevel(level string) {

@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
@@ -128,7 +129,7 @@ func (c *command) shutdown(ctx context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
-func (c *command) Flags(fs *cli.FlagSet) {
+func (c *command) Flags(fs *flag.FlagSet) {
 	fs.String("conf", "Configuration file path").Var(&c.confFile).Required()
 }
 

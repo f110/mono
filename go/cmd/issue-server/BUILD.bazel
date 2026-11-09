@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//go/build/api",
         "//go/cli",
+        "//go/cli/flag",
         "//go/git",
         "//go/github",
         "//go/http/authproxy",

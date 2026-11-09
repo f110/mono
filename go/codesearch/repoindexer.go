@@ -13,7 +13,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/k8s/volume"
@@ -89,7 +89,7 @@ func NewIndexerCommand() *IndexerCommand {
 	}
 }
 
-func (r *IndexerCommand) Flags(fs *cli.FlagSet) {
+func (r *IndexerCommand) Flags(fs *flag.FlagSet) {
 	fs.String("config", "Config file").Var(&r.ConfigFile).Shorthand("c")
 	fs.String("work-dir", "Working root directory").Var(&r.WorkDir).Default(r.WorkDir)
 	fs.String("ctags", "ctags path").Var(&r.Ctags)

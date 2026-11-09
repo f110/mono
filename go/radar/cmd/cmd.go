@@ -9,6 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/amesh"
@@ -106,7 +107,7 @@ type commonFlags struct {
 	userAgent string
 }
 
-func (f *commonFlags) register(fs *cli.FlagSet) {
+func (f *commonFlags) register(fs *flag.FlagSet) {
 	fs.Int("zoom", "Zoom level of the common mesh").Var(&f.zoom).Default(10)
 	fs.StringArray("area", "Range to collect as minLat,minLon,maxLat,maxLon. Can be specified multiple times").Var(&f.areas)
 	fs.StringArray("source", "Source to use. All the configured sources are used when it is not specified").Var(&f.sources)

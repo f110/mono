@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -69,7 +69,7 @@ func NewUpdaterCommand() *UpdaterCommand {
 	}
 }
 
-func (u *UpdaterCommand) Flags(fs *cli.FlagSet) {
+func (u *UpdaterCommand) Flags(fs *flag.FlagSet) {
 	fs.String("index-dir", "Index directory").Var(&u.IndexDir)
 	fs.Bool("subscribe", "Enable subscribe the stream").Var(&u.Subscribe)
 	fs.String("minio-endpoint", "The endpoint of MinIO").Var(&u.MinIOEndpoint)

@@ -2,13 +2,11 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "cli",
-    srcs = [
-        "command.go",
-        "flagset.go",
-    ],
+    srcs = ["command.go"],
     importpath = "go.f110.dev/mono/go/cli",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/cli/flag",
         "//go/logger",
         "@com_github_mattn_go_shellwords//:go-shellwords",
         "@com_github_spf13_pflag//:pflag",
@@ -18,13 +16,9 @@ go_library(
 
 go_test(
     name = "cli_test",
-    srcs = [
-        "command_test.go",
-        "flagset_test.go",
-    ],
+    srcs = ["command_test.go"],
     embed = [":cli"],
     deps = [
-        "@com_github_spf13_pflag//:pflag",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

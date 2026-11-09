@@ -9,6 +9,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/notion"
 )
@@ -25,7 +26,7 @@ func newDocServerCommand() *docServerCommand {
 	}
 }
 
-func (s *docServerCommand) Flags(fs *cli.FlagSet) {
+func (s *docServerCommand) Flags(fs *flag.FlagSet) {
 	fs.String("addr", "Listen addr").Var(&s.addr).Default(":7000")
 	fs.String("conf", "Config file path").Var(&s.conf)
 	fs.String("token", "API token for notion").Var(&s.token)

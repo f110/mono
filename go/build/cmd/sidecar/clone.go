@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/git"
 )
 
@@ -34,7 +34,7 @@ func (c *CloneCommand) Name() string {
 	return "clone"
 }
 
-func (c *CloneCommand) SetFlags(fs *cli.FlagSet) {
+func (c *CloneCommand) SetFlags(fs *flag.FlagSet) {
 	fs.String("work-dir", "Working directory").Shorthand("w").Var(&c.WorkDir)
 	fs.Int64("github-app-id", "GitHub App Id").Var(&c.AppId)
 	fs.Int64("github-installation-id", "GitHub Installation Id").Var(&c.InstallationId)

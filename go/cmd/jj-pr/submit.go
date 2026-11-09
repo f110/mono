@@ -20,7 +20,7 @@ import (
 	"go.f110.dev/xerrors"
 	"golang.org/x/oauth2"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
 )
@@ -164,7 +164,7 @@ func newSubmitCommand() *jujutsuPRSubmitCommand {
 	return c
 }
 
-func (c *jujutsuPRSubmitCommand) flags(fs *cli.FlagSet) {
+func (c *jujutsuPRSubmitCommand) flags(fs *flag.FlagSet) {
 	fs.String("dir", "Working directory").Var(&c.Dir)
 	fs.String("repository", "Repository name. If not specified, try to get from remote url").Var(&c.Repository)
 	fs.String("default-branch", "Default branch name. If not specified, get from API").Var(&c.DefaultBranch)

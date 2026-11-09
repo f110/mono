@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/cli",
+        "//go/cli/flag",
         "//go/fsm",
         "//go/logger",
         "@com_github_google_go_github_v85//github",

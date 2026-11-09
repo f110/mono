@@ -9,7 +9,7 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 )
 
 type CredentialCommand struct {
@@ -21,9 +21,9 @@ func NewCredentialCommand() *CredentialCommand {
 	return &CredentialCommand{}
 }
 
-func (c *CredentialCommand) SetGlobalFlags(_ *cli.FlagSet) {}
+func (c *CredentialCommand) SetGlobalFlags(_ *flag.FlagSet) {}
 
-func (c *CredentialCommand) SetContainerRegistryFlags(fs *cli.FlagSet) {
+func (c *CredentialCommand) SetContainerRegistryFlags(fs *flag.FlagSet) {
 	fs.String("dir", "Directory path").Var(&c.dir).Required()
 	fs.String("out", "Output path").Var(&c.out)
 }

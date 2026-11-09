@@ -11,8 +11,8 @@ go_library(
     importpath = "go.f110.dev/mono/go/logger",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/cli/flag",
         "@com_github_sirupsen_logrus//:logrus",
-        "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
         "@io_k8s_apimachinery//pkg/api/meta",
         "@io_k8s_apimachinery//pkg/runtime",

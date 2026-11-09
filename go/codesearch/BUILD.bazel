@@ -17,7 +17,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/codesearch",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/cli",
+        "//go/cli/flag",
         "//go/ctxutil",
         "//go/github",
         "//go/k8s/volume",

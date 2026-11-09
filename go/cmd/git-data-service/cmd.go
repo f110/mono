@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
@@ -84,7 +84,7 @@ func newGitDataServiceCommand() *gitDataServiceCommand {
 	return c
 }
 
-func (c *gitDataServiceCommand) Flags(fs *cli.FlagSet) {
+func (c *gitDataServiceCommand) Flags(fs *flag.FlagSet) {
 	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8056")
 	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
 	fs.String("storage-region", "The region name").Var(&c.StorageRegion)

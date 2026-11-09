@@ -11,6 +11,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/notion"
 )
 
@@ -27,7 +28,7 @@ func newToDoSchedulerCommand() *toDoSchedulerCommand {
 	return &toDoSchedulerCommand{}
 }
 
-func (s *toDoSchedulerCommand) Flags(fs *cli.FlagSet) {
+func (s *toDoSchedulerCommand) Flags(fs *flag.FlagSet) {
 	fs.String("conf", "Config file path").Var(&s.conf)
 	fs.String("token", "API token for notion").Var(&s.token)
 	fs.String("token-file", "The file containing the token").Var(&s.tokenFile)

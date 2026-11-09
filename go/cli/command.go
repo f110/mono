@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -26,7 +27,7 @@ type Command struct {
 	Long  string
 	Run   func(ctx context.Context, cmd *Command, args []string) error
 
-	flags    *FlagSet
+	flags    *flag.FlagSet
 	parent   *Command
 	commands []*Command
 	executed bool
@@ -41,7 +42,7 @@ func (c *Command) Usage() string {
 	}
 	name := c.Use
 	parent := c.parent
-	var globalFlags *FlagSet
+	var globalFlags *flag.FlagSet
 	if parent != nil {
 		globalFlags = parent.Flags().Copy()
 	}
@@ -53,19 +54,19 @@ func (c *Command) Usage() string {
 		}
 	}
 	if globalFlags == nil {
-		globalFlags = NewFlagSet("", pflag.ContinueOnError)
-		logger.Flags(globalFlags.flagSet)
+		globalFlags = flag.NewFlagSet("", pflag.ContinueOnError)
+		logger.Flags(globalFlags)
 	}
 
 	buf := new(bytes.Buffer)
 	err := usageTmpl.Execute(buf, struct {
 		Name              string
-		Flags             *FlagSet
+		Flags             *flag.FlagSet
 		OnelineFlagUsage  string
 		Commands          []*Command
 		CommandNameLength int
 		Parent            *Command
-		GlobalFlags       *FlagSet
+		GlobalFlags       *flag.FlagSet
 	}{
 		Name:              name,
 		Flags:             c.Flags(),
@@ -120,11 +121,11 @@ func (c *Command) runCommand(ctx context.Context, args []string) error {
 		fs.AddFlagSet(parent.Flags())
 		parent = parent.parent
 	}
-	logger.Flags(fs.flagSet)
+	logger.Flags(fs)
 	help := false
 	fs.Bool("help", "Show help").Shorthand("h").Var(&help)
 	if err := fs.Parse(args); err != nil && !help {
-		var missingErr *missingRequiredFlagsError
+		var missingErr *flag.MissingRequiredFlagsError
 		if errors.As(err, &missingErr) {
 			_, _ = fmt.Fprintf(os.Stderr, "Required flags %s are missing\n\n", strings.Join(missingErr.Flags, ", "))
 		}
@@ -150,9 +151,9 @@ func (c *Command) printUsage() {
 	_, _ = fmt.Fprint(os.Stderr, c.Usage())
 }
 
-func (c *Command) Flags() *FlagSet {
+func (c *Command) Flags() *flag.FlagSet {
 	if c.flags == nil {
-		c.flags = NewFlagSet("", pflag.ContinueOnError)
+		c.flags = flag.NewFlagSet("", pflag.ContinueOnError)
 	}
 
 	return c.flags

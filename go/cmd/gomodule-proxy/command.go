@@ -14,7 +14,7 @@ import (
 
 	"go.f110.dev/go-memcached/client"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/github"
@@ -79,7 +79,7 @@ func newGoModuleProxyCommand() *goModuleProxyCommand {
 	return c
 }
 
-func (c *goModuleProxyCommand) Flags(fs *cli.FlagSet) {
+func (c *goModuleProxyCommand) Flags(fs *flag.FlagSet) {
 	fs.String("config", "Configuration file path").Var(&c.ConfigPath).Shorthand("c").Default(c.ConfigPath).Required()
 	fs.String("mod-dir", "Module directory").Var(&c.ModuleDir).Default(c.ModuleDir)
 	fs.String("addr", "Listen addr").Var(&c.Addr).Default(c.Addr)

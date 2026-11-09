@@ -14,7 +14,7 @@ go_library(
     deps = [
         "//go/bazel/buildeventstream",
         "//go/build/api",
-        "//go/cli",
+        "//go/cli/flag",
         "//go/file",
         "//go/git",
         "//go/logger",

@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "flag",
+    srcs = ["flagset.go"],
+    importpath = "go.f110.dev/mono/go/cli/flag",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_spf13_pflag//:pflag"],
+)
+
+go_test(
+    name = "flag_test",
+    srcs = ["flagset_test.go"],
+    embed = [":flag"],
+    deps = [
+        "@com_github_spf13_pflag//:pflag",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

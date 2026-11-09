@@ -13,6 +13,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/radar"
 	"go.f110.dev/mono/go/radar/amesh"
@@ -45,7 +46,7 @@ type storageFlags struct {
 	secretKey string
 }
 
-func (f *storageFlags) register(fs *cli.FlagSet) {
+func (f *storageFlags) register(fs *flag.FlagSet) {
 	fs.String("bucket", "Bucket of the object storage").Var(&f.bucket).Required()
 	fs.String("storage-endpoint", "Endpoint of the object storage").Var(&f.endpoint)
 	fs.String("storage-region", "Region of the object storage").Var(&f.region)

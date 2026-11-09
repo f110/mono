@@ -25,6 +25,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/logger"
 )
@@ -151,7 +152,7 @@ type kustomizeAssets struct {
 	overwrite  bool
 }
 
-func (k *kustomizeAssets) Flags(fs *cli.FlagSet) {
+func (k *kustomizeAssets) Flags(fs *flag.FlagSet) {
 	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile).Required()
 	fs.Bool("overwrite", "Overwrite").Var(&k.overwrite)
 }
@@ -297,7 +298,7 @@ type kindAssets struct {
 	overwrite  bool
 }
 
-func (k *kindAssets) Flags(fs *cli.FlagSet) {
+func (k *kindAssets) Flags(fs *flag.FlagSet) {
 	fs.String("assets-file", "File path of assets.bzl").Var(&k.assetsFile).Required()
 	fs.Bool("overwrite", "Overwrite").Var(&k.overwrite)
 }
@@ -418,7 +419,7 @@ type vaultAssets struct {
 	overwrite  bool
 }
 
-func (h *vaultAssets) Flags(fs *cli.FlagSet) {
+func (h *vaultAssets) Flags(fs *flag.FlagSet) {
 	fs.String("assets-file", "File path of assets.bzl").Var(&h.assetsFile).Required()
 	fs.Bool("overwrite", "Overwrite").Var(&h.overwrite)
 }

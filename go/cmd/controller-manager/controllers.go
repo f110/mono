@@ -19,7 +19,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/component-base/metrics/legacyregistry"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/k8s/client"
@@ -226,7 +226,7 @@ func New(args []string) *Controllers {
 	return p
 }
 
-func (p *Controllers) Flags(fs *cli.FlagSet) {
+func (p *Controllers) Flags(fs *flag.FlagSet) {
 	fs.String("id", "the holder identity name").Var(&p.id).Default(uuid.New().String())
 	fs.String("metrics-addr", "The address the metric endpoint binds to.").Var(&p.metricsAddr).Default(":8081")
 	fs.Bool("enable-leader-election",

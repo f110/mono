@@ -18,6 +18,7 @@ import (
 
 	buildapi "go.f110.dev/mono/go/build/api"
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/git"
 	githubutil "go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/http/authproxy"
@@ -43,7 +44,7 @@ type serverCommand struct {
 	EventMaxProcessingDuration time.Duration
 }
 
-func (c *serverCommand) Flags(fs *cli.FlagSet) {
+func (c *serverCommand) Flags(fs *flag.FlagSet) {
 	fs.String("addr", "Listen address").Var(&c.Addr).Default(":8080")
 	fs.String("dsn", "Data source name of MySQL").Var(&c.DSN).Required()
 	fs.String("public-key-url", "URL of the public key of heimdallr to verify the token. It is /internal/publickey of the internal API. If not specified, the server runs without heimdallr").Var(&c.PublicKeyURL)

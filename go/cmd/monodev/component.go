@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
@@ -343,7 +343,7 @@ func (c *simpleCommandComponent) Ready() bool {
 	return true
 }
 
-func (c *simpleCommandComponent) Flags(fs *cli.FlagSet) {
+func (c *simpleCommandComponent) Flags(fs *flag.FlagSet) {
 	fs.String(c.Name, "Executable file path").Var(&c.ExecutableFilePath).Default(c.Name)
 }
 

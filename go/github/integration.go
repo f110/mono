@@ -14,7 +14,7 @@ import (
 	"go.f110.dev/xerrors"
 	"golang.org/x/oauth2"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -46,7 +46,7 @@ func NewGitHubClientFactory(name string, requiredCredential bool) *GitHubClientF
 	return &GitHubClientFactory{Name: name, requiredCredential: requiredCredential}
 }
 
-func (g *GitHubClientFactory) Flags(fs *cli.FlagSet) {
+func (g *GitHubClientFactory) Flags(fs *flag.FlagSet) {
 	fs.Int64("github-app-id", "GitHub Application ID").Var(&g.AppID)
 	fs.Int64("github-installation-id", "GitHub Application installation ID").Var(&g.InstallationID)
 	fs.String("github-private-key-file", "Private key file for GitHub App").Var(&g.PrivateKeyFile)

@@ -16,6 +16,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/fsm"
@@ -220,7 +221,7 @@ func newFIFOObjectGarbageCollectorCommand() *fifoObjectGarbageCollectorCommand {
 	return c
 }
 
-func (c *fifoObjectGarbageCollectorCommand) Flags(fs *cli.FlagSet) {
+func (c *fifoObjectGarbageCollectorCommand) Flags(fs *flag.FlagSet) {
 	fs.String("storage-endpoint", "The endpoint of the object storage").Var(&c.StorageEndpoint)
 	fs.String("storage-region", "The region name").Var(&c.StorageRegion)
 	fs.String("bucket", "The bucket name that will be used").Var(&c.Bucket)

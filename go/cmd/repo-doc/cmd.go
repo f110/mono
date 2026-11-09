@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/fsm"
@@ -58,7 +58,7 @@ func newRepoDocCommand() *repoDocCommand {
 	return c
 }
 
-func (c *repoDocCommand) Flags(fs *cli.FlagSet) {
+func (c *repoDocCommand) Flags(fs *flag.FlagSet) {
 	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8016")
 	fs.String("git-data-service", "The url of git-data-service").Var(&c.GitDataService)
 	fs.Bool("insecure", "Insecure access to backend").Var(&c.Insecure)

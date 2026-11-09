@@ -36,6 +36,7 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/logger"
@@ -240,7 +241,7 @@ func newNixeryServerCmd() *nixeryServerCmd {
 	return c
 }
 
-func (c *nixeryServerCmd) Flags(fs *cli.FlagSet) {
+func (c *nixeryServerCmd) Flags(fs *flag.FlagSet) {
 	fs.String("listen", "Listen addr").Var(&c.Listen).Default(":8381")
 	fs.String("web-dir", "Directory path for static assets").Var(&c.WebDir)
 	fs.String("storage", "The name of the storage").Var(&c.StorageRegion).Default("s3")
