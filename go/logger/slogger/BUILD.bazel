@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "klog.go",
         "logrus.go",
+        "named.go",
         "slogger.go",
     ],
     importpath = "go.f110.dev/mono/go/logger/slogger",
@@ -24,12 +25,14 @@ go_test(
     srcs = [
         "klog_test.go",
         "logrus_test.go",
+        "named_test.go",
     ],
     embed = [":slogger"],
     deps = [
         "//go/testing/assertion",
         "@com_github_sirupsen_logrus//:logrus",
         "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
         "@io_k8s_klog_v2//:klog",
     ],
 )
