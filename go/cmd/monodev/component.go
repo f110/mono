@@ -31,7 +31,6 @@ import (
 	"go.f110.dev/mono/go/docutil"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/grpcutil"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -302,7 +301,7 @@ func (c *simpleCommandComponent) Run(ctx context.Context) {
 			out = os.Stdout
 			err = os.Stderr
 		} else {
-			w := logger.NewNamedWriter(os.Stdout, c.Name)
+			w := slogger.NewNamedWriter(os.Stdout, c.Name)
 			out = w
 			err = w
 		}

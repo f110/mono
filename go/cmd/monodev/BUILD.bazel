@@ -26,7 +26,6 @@ go_library(
         "//go/grpcutil",
         "//go/http/authproxy",
         "//go/k8s/kind",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/parallel",
         "//go/storage",

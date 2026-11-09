@@ -12,13 +12,12 @@ import (
 
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestMain(m *testing.M) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 	os.Exit(m.Run())
 }

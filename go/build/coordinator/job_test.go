@@ -21,12 +21,11 @@ import (
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func TestMain(m *testing.M) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 	m.Run()
 }

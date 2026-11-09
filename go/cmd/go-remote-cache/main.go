@@ -21,7 +21,6 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -285,7 +284,7 @@ func goRemoteCache() error {
 	cmd := &cli.Command{
 		Use: "go-remote-cache",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			logger.OutputStderr()
+			slogger.OutputStderr()
 			return c.LoopContext(ctx)
 		},
 	}

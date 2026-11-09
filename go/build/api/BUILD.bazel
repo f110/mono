@@ -60,7 +60,6 @@ go_test(
         "//go/build/model",
         "//go/build/webhook",
         "//go/git",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/storage",
         "//go/testing/assertion",

@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//go/build/cmd/sidecar",
         "//go/cli",
-        "//go/logger",
+        "//go/logger/slogger",
     ],
 )
 

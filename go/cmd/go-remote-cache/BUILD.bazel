@@ -9,7 +9,6 @@ go_library(
         "//go/cli",
         "//go/ctxutil",
         "//go/fsm",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/storage",
         "@dev_f110_go_xerrors//:xerrors",

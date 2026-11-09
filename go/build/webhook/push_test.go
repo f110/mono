@@ -12,7 +12,6 @@ import (
 
 	"go.f110.dev/mono/go/build/database"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
@@ -47,7 +46,7 @@ func pushPayload(t *testing.T, branch, message, headSHA string) []byte {
 }
 
 func TestPushReconciler(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	cases := []struct {
@@ -119,7 +118,7 @@ func (s *recSyncer) Sync(_ context.Context, url string) error {
 // (state stays SKIPPED with reason "non-main branch"), but the fetch must have
 // run.
 func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	d := newTestDAO()
@@ -154,7 +153,7 @@ func TestPushReconciler_SyncsNonMainBranch(t *testing.T) {
 // row, the created task id must still be recorded in the status so the retry
 // does not create a duplicate task for the same commit.
 func TestPushReconciler_RecordsTasksOnDispatchError(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	d := newTestDAO()

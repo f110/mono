@@ -7,7 +7,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//go/etcd",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/storage",
         "@com_github_spf13_pflag//:pflag",

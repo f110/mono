@@ -14,13 +14,12 @@ import (
 
 	"go.f110.dev/mono/go/build/database"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestPullRequestReconciler(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	const opsURL = "https://github.com/f110/ops"
@@ -202,7 +201,7 @@ func setPullRequestHeadSHA(t *testing.T, payload []byte, sha string) []byte {
 }
 
 func TestPullRequestReconciler_RequeuesUntilHeadRevisionAvailable(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	const opsURL = "https://github.com/f110/ops"
@@ -245,7 +244,7 @@ func TestPullRequestReconciler_RequeuesUntilHeadRevisionAvailable(t *testing.T) 
 }
 
 func TestPullRequestReconciler_ClosedDoesNotQueryGitData(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	const sandboxURL = "https://github.com/f110/sandbox"

@@ -63,7 +63,6 @@ go_test(
         "//go/k8s/controllers/controllertest",
         "//go/k8s/k8sfactory",
         "//go/k8s/k8smanifest",
-        "//go/logger",
         "//go/logger/slogger",
         "//go/storage",
         "//go/testing/assertion",

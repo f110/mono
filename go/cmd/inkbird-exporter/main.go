@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 )
@@ -27,7 +26,7 @@ func inkbirdExporter(args []string) error {
 	fs := pflag.NewFlagSet("inkbird-exporter", pflag.ContinueOnError)
 	fs.StringSliceVar(&ids, "id", ids, "")
 	fs.IntVar(&port, "port", port, "")
-	logger.Flags(fs)
+	slogger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}

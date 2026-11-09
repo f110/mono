@@ -9,13 +9,12 @@ import (
 
 	"go.f110.dev/mono/go/build/database"
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
 
 func TestReleaseReconciler(t *testing.T) {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	slogger.Init()
 
 	type fixture struct {

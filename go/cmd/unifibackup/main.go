@@ -18,7 +18,6 @@ import (
 	"google.golang.org/api/option"
 
 	"go.f110.dev/mono/go/ctxutil"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 )
 
@@ -66,7 +65,7 @@ func unifiBackup(args []string) error {
 	fs.StringVar(&bucket, "bucket", "", "Bucket name")
 	fs.StringVar(&pathPrefix, "path-prefix", "", "Prefix of file path")
 	fs.StringVar(&credentialFile, "credential", "", "Credential file")
-	logger.Flags(fs)
+	slogger.Flags(fs)
 	if err := fs.Parse(args); err != nil {
 		return xerrors.WithStack(err)
 	}

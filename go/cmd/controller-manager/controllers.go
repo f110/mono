@@ -26,7 +26,6 @@ import (
 	"go.f110.dev/mono/go/k8s/controllers"
 	"go.f110.dev/mono/go/k8s/probe"
 	"go.f110.dev/mono/go/k8s/thirdpartyclient"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/vault"
 )
@@ -249,7 +248,7 @@ func (p *Controllers) Flags(fs *cli.FlagSet) {
 }
 
 func (p *Controllers) init(ctx context.Context) (fsm.State, error) {
-	if err := logger.OverrideKlog(); err != nil {
+	if err := slogger.OverrideKlog(); err != nil {
 		return fsm.Error(xerrors.WithStack(err))
 	}
 

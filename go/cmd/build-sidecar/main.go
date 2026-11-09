@@ -7,11 +7,11 @@ import (
 
 	"go.f110.dev/mono/go/build/cmd/sidecar"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/logger"
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 func buildSidecar(args []string) error {
-	logger.SetLogLevel("debug")
+	slogger.SetLogLevel("debug")
 	root := &cli.Command{
 		Use: "build-sidecar",
 	}

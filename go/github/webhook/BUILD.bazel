@@ -17,7 +17,6 @@ go_test(
     srcs = ["webhook_test.go"],
     embed = [":webhook"],
     deps = [
-        "//go/logger",
         "//go/logger/slogger",
         "//go/testing/assertion",
         "@dev_f110_go_xerrors//:xerrors",

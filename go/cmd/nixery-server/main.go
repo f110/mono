@@ -38,7 +38,6 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/fsm"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/logger/slogger"
 	"go.f110.dev/mono/go/nixery"
 )
@@ -338,7 +337,7 @@ func main() {
 	cmd := &cli.Command{
 		Use: "nixery-server",
 		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
-			logger.HijackStandardLogrus()
+			slogger.HijackStandardLogrus()
 			return serverCmd.LoopContext(ctx)
 		},
 	}
