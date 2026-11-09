@@ -6,7 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/logger/slogger",
     visibility = ["//visibility:public"],
     deps = [
-        "//go/logger",
+        "@com_github_spf13_pflag//:pflag",
         "@io_k8s_apimachinery//pkg/api/meta",
         "@io_k8s_apimachinery//pkg/runtime",
     ],

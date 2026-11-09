@@ -1,4 +1,4 @@
-// Package slogger provides an slog-based logger that mirrors the configuration of go/logger.
+// Package slogger provides an slog-based logger.
 // It exists as a parallel interface to allow gradual migration from the zap-based logger.
 package slogger
 
@@ -11,20 +11,52 @@ import (
 	"os"
 	"sync"
 
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	"go.f110.dev/mono/go/logger"
 )
 
 var (
 	Log *slog.Logger
 
-	initMu sync.Mutex
+	initMu      sync.Mutex
+	logLevel    string
+	logEncoding = "console"
+	output      = "stdout"
 )
 
-// Init initializes Log using the level / encoding / output configured on the
-// parent logger package. Call after flag parsing. Safe to call multiple times.
+// Flags sets the flag of logger.
+// We can't receive *cli.FlagSet directly due to avoid cycle dependency.
+func Flags(fs *pflag.FlagSet) {
+	fs.StringVar(&logLevel, "log-level", "info", "Log level")
+	fs.StringVar(&logEncoding, "log-encoding", "console", "Log encoding")
+}
+
+func SetLogLevel(level string) {
+	logLevel = level
+}
+
+func OutputStderr() {
+	output = "stderr"
+}
+
+// LogLevel returns the configured log level string ("debug", "info", "warn", "error", or empty for default).
+func LogLevel() string {
+	return logLevel
+}
+
+// LogEncoding returns the configured log encoding ("console" or "json").
+func LogEncoding() string {
+	return logEncoding
+}
+
+// Output returns the configured output target ("stdout" or "stderr").
+func Output() string {
+	return output
+}
+
+// Init initializes Log using the configured level / encoding / output.
+// Call after flag parsing. Safe to call multiple times.
 func Init() error {
 	initMu.Lock()
 	defer initMu.Unlock()
@@ -32,7 +64,7 @@ func Init() error {
 		return nil
 	}
 
-	Log = slog.New(newHandler(selectWriter(logger.Output()), parseLevel(logger.LogLevel()), logger.LogEncoding()))
+	Log = slog.New(newHandler(selectWriter(output), parseLevel(logLevel), logEncoding))
 	return nil
 }
 

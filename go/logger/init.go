@@ -11,50 +11,32 @@ import (
 	"go.f110.dev/xerrors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"go.f110.dev/mono/go/logger/slogger"
 )
 
 var (
 	Log *zap.Logger
 
-	logLevel         string
-	logEncoding      = "console"
-	output           = "stdout"
 	registerSinkOnce sync.Once
 )
 
 // Flags sets the flag of logger.
 // We can't receive *cli.FlagSet directly due to avoid cycle dependency.
 func Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&logLevel, "log-level", "info", "Log level")
-	fs.StringVar(&logEncoding, "log-encoding", "console", "Log encoding")
+	slogger.Flags(fs)
 }
 
 func SetLogLevel(level string) {
-	logLevel = level
+	slogger.SetLogLevel(level)
 }
 
 func OutputStderr() {
-	output = "stderr"
+	slogger.OutputStderr()
 }
 
 func Enabled() bool {
 	return Log != nil
-}
-
-// LogLevel returns the configured log level string ("debug", "info", "warn", "error", or empty for default).
-// Exposed to allow sibling packages (e.g. logger/slogger) to share the same flag-driven configuration.
-func LogLevel() string {
-	return logLevel
-}
-
-// LogEncoding returns the configured log encoding ("console" or "json").
-func LogEncoding() string {
-	return logEncoding
-}
-
-// Output returns the configured output target ("stdout" or "stderr").
-func Output() string {
-	return output
 }
 
 func Init() error {
@@ -152,7 +134,7 @@ func initLogger() error {
 	}
 
 	level := zap.InfoLevel
-	switch logLevel {
+	switch slogger.LogLevel() {
 	case "debug":
 		level = zap.DebugLevel
 	case "warn":
@@ -165,9 +147,9 @@ func initLogger() error {
 		Level:            zap.NewAtomicLevelAt(level),
 		Development:      false,
 		Sampling:         nil, // disable sampling
-		Encoding:         logEncoding,
+		Encoding:         slogger.LogEncoding(),
 		EncoderConfig:    encoderConf,
-		OutputPaths:      []string{output},
+		OutputPaths:      []string{slogger.Output()},
 		ErrorOutputPaths: []string{"stderr"},
 	}
 
