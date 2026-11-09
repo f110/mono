@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "klog",
-    srcs = ["wrap.go"],
-    importpath = "go.f110.dev/mono/go/logger/klog",
-    visibility = ["//visibility:public"],
-    deps = ["@io_k8s_klog_v2//:klog"],
-)

@@ -138,7 +138,6 @@ use_repo(
     "org_golang_x_term",
     "org_golang_x_tools",
     "org_golang_x_tools_go_vcs",
-    "org_uber_go_zap",
     "tech_einride_go_aip",
 )
 go_deps.module_override(

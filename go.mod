@@ -67,7 +67,6 @@ require (
 	go.f110.dev/protoc-ddl v0.0.0-20261103164346-071c1bd016ec
 	go.f110.dev/xerrors v0.0.0-20260430154500-93b3f86ffe89
 	go.starlark.net v0.0.0-20260521175807-f5d928020cb8
-	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.52.0
 	golang.org/x/mod v0.36.0
 	golang.org/x/net v0.55.0
@@ -296,6 +295,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect

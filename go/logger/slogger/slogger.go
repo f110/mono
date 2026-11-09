@@ -1,5 +1,4 @@
 // Package slogger provides an slog-based logger.
-// It exists as a parallel interface to allow gradual migration from the zap-based logger.
 package slogger
 
 import (
@@ -38,21 +37,6 @@ func SetLogLevel(level string) {
 
 func OutputStderr() {
 	output = "stderr"
-}
-
-// LogLevel returns the configured log level string ("debug", "info", "warn", "error", or empty for default).
-func LogLevel() string {
-	return logLevel
-}
-
-// LogEncoding returns the configured log encoding ("console" or "json").
-func LogEncoding() string {
-	return logEncoding
-}
-
-// Output returns the configured output target ("stdout" or "stderr").
-func Output() string {
-	return output
 }
 
 // Init initializes Log using the configured level / encoding / output.
