@@ -6,10 +6,9 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/etcdbackup",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/cli",
         "//go/etcd",
-        "//go/logger",
         "//go/storage",
-        "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
     ],
 )

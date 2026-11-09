@@ -11,9 +11,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -69,29 +69,28 @@ func NewUpdaterCommand() *UpdaterCommand {
 	}
 }
 
-func (u *UpdaterCommand) Flags(fs *pflag.FlagSet) {
-	fs.StringVar(&u.IndexDir, "index-dir", u.IndexDir, "Index directory")
-	fs.BoolVar(&u.Subscribe, "subscribe", u.Subscribe, "Enable subscribe the stream")
-	fs.StringVar(&u.MinIOEndpoint, "minio-endpoint", u.MinIOEndpoint, "The endpoint of MinIO")
-	fs.StringVar(&u.MinIORegion, "minio-region", u.MinIORegion, "The region name")
-	fs.StringVar(&u.MinIOName, "minio-name", u.MinIOName, "The name of MinIO")
-	fs.StringVar(&u.MinIONamespace, "minio-namespace", u.MinIONamespace, "The namespace of MinIO")
-	fs.IntVar(&u.MinIOPort, "minio-port", u.MinIOPort, "Port number of MinIO")
-	fs.StringVar(&u.MinIOAccessKey, "minio-access-key", u.MinIOAccessKey, "The access key")
-	fs.StringVar(&u.MinIOSecretAccessKey, "minio-secret-access-key", u.MinIOSecretAccessKey, "The secret access key")
-	fs.StringVar(&u.MinIOSecretAccessKeyFile, "minio-secret-access-key-file", u.MinIOSecretAccessKeyFile, "The file path that contains secret access key for MinIO API")
-	fs.StringVar(&u.S3Endpoint, "s3-endpoint", u.S3Endpoint, "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param")
-	fs.StringVar(&u.S3Region, "s3-region", u.S3Region, "The region name")
-	fs.StringVar(&u.S3AccessKey, "s3-access-key", u.S3AccessKey, "The access key for S3 API")
-	fs.StringVar(&u.S3SecretAccessKey, "s3-secret-access-key", u.S3SecretAccessKey, "The secret access key for S3 API")
-	fs.StringVar(&u.S3CACertFile, "s3-ca-file", u.S3CACertFile, "File path that contains the certificate of CA")
-	fs.StringVar(&u.Bucket, "bucket", u.Bucket, "The bucket name")
-	fs.StringVar(&u.NATSURL, "nats-url", u.NATSURL, "The URL for nats-server")
-	fs.StringVar(&u.NATSStreamName, "nats-stream-name", u.NATSStreamName, "The name of stream for JetStream")
-	fs.StringVar(&u.NATSSubject, "nats-subject", u.NATSSubject, "The subject of stream")
-	fs.BoolVar(&u.Dev, "dev", u.Dev, "Development mode")
-	fs.StringVar(&u.HTTPAddr, "http-addr", u.HTTPAddr, "HTTP listen addr")
-
+func (u *UpdaterCommand) Flags(fs *cli.FlagSet) {
+	fs.String("index-dir", "Index directory").Var(&u.IndexDir)
+	fs.Bool("subscribe", "Enable subscribe the stream").Var(&u.Subscribe)
+	fs.String("minio-endpoint", "The endpoint of MinIO").Var(&u.MinIOEndpoint)
+	fs.String("minio-region", "The region name").Var(&u.MinIORegion)
+	fs.String("minio-name", "The name of MinIO").Var(&u.MinIOName)
+	fs.String("minio-namespace", "The namespace of MinIO").Var(&u.MinIONamespace)
+	fs.Int("minio-port", "Port number of MinIO").Var(&u.MinIOPort).Default(u.MinIOPort)
+	fs.String("minio-access-key", "The access key").Var(&u.MinIOAccessKey)
+	fs.String("minio-secret-access-key", "The secret access key").Var(&u.MinIOSecretAccessKey)
+	fs.String("minio-secret-access-key-file", "The file path that contains secret access key for MinIO API").Var(&u.MinIOSecretAccessKeyFile)
+	fs.String("s3-endpoint", "The endpoint of s3. If you use the object storage has compatible s3 api not AWS S3, You can use this param").Var(&u.S3Endpoint)
+	fs.String("s3-region", "The region name").Var(&u.S3Region)
+	fs.String("s3-access-key", "The access key for S3 API").Var(&u.S3AccessKey)
+	fs.String("s3-secret-access-key", "The secret access key for S3 API").Var(&u.S3SecretAccessKey)
+	fs.String("s3-ca-file", "File path that contains the certificate of CA").Var(&u.S3CACertFile)
+	fs.String("bucket", "The bucket name").Var(&u.Bucket)
+	fs.String("nats-url", "The URL for nats-server").Var(&u.NATSURL)
+	fs.String("nats-stream-name", "The name of stream for JetStream").Var(&u.NATSStreamName).Default(u.NATSStreamName)
+	fs.String("nats-subject", "The subject of stream").Var(&u.NATSSubject).Default(u.NATSSubject)
+	fs.Bool("dev", "Development mode").Var(&u.Dev)
+	fs.String("http-addr", "HTTP listen addr").Var(&u.HTTPAddr)
 }
 
 func (u *UpdaterCommand) Run() error {

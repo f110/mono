@@ -1,37 +1,33 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/codesearch"
-	"go.f110.dev/mono/go/logger"
 )
 
-func indexUpdater(args []string) error {
-	cmd := codesearch.NewUpdaterCommand()
-	fs := pflag.NewFlagSet("index-updater", pflag.ContinueOnError)
-	cmd.Flags(fs)
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.WithStack(err)
+func indexUpdater() error {
+	u := codesearch.NewUpdaterCommand()
+	cmd := &cli.Command{
+		Use: "index-updater",
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
+			if err := u.Run(); err != nil {
+				return xerrors.WithStack(err)
+			}
+			return nil
+		},
 	}
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	if err := cmd.Run(); err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	return nil
+	u.Flags(cmd.Flags())
+	return cmd.Execute(os.Args)
 }
 
 func main() {
-	if err := indexUpdater(os.Args); err != nil {
+	if err := indexUpdater(); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

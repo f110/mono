@@ -9,40 +9,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	etcd2 "go.f110.dev/mono/go/etcd"
-	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
 
-func etcdBackup(args []string) error {
-	var endpoints []string
-	var caCertPath string
-	var certPath string
-	var keyPath string
-	var bucket string
-	var pathPrefix string
-	var credentialFile string
-
-	fs := pflag.NewFlagSet("etcdbackup", pflag.ContinueOnError)
-	fs.StringArrayVar(&endpoints, "endpoints", []string{}, "Endpoints of etcd")
-	fs.StringVar(&caCertPath, "ca-cert", "", "CA Certificate file path")
-	fs.StringVar(&certPath, "cert", "", "Client certificate file path")
-	fs.StringVar(&keyPath, "key", "", "Private key file path")
-	fs.StringVar(&bucket, "bucket", "", "Bucket name")
-	fs.StringVar(&pathPrefix, "path-prefix", "", "Prefix")
-	fs.StringVar(&credentialFile, "credential", "", "Credential file")
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.WithStack(err)
-	}
-
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
-
+func etcdBackup(endpoints []string, caCertPath, certPath, keyPath, bucket, pathPrefix, credentialFile string) error {
 	loc, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -84,7 +58,23 @@ func etcdBackup(args []string) error {
 }
 
 func main() {
-	if err := etcdBackup(os.Args); err != nil {
+	var endpoints []string
+	var caCertPath, certPath, keyPath, bucket, pathPrefix, credentialFile string
+	cmd := &cli.Command{
+		Use: "etcdbackup",
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
+			return etcdBackup(endpoints, caCertPath, certPath, keyPath, bucket, pathPrefix, credentialFile)
+		},
+	}
+	fs := cmd.Flags()
+	fs.StringArray("endpoints", "Endpoints of etcd").Var(&endpoints)
+	fs.String("ca-cert", "CA Certificate file path").Var(&caCertPath)
+	fs.String("cert", "Client certificate file path").Var(&certPath)
+	fs.String("key", "Private key file path").Var(&keyPath)
+	fs.String("bucket", "Bucket name").Var(&bucket)
+	fs.String("path-prefix", "Prefix").Var(&pathPrefix)
+	fs.String("credential", "Credential file").Var(&credentialFile)
+	if err := cmd.Execute(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 	}
 }

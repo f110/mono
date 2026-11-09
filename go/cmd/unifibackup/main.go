@@ -13,10 +13,10 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 	"google.golang.org/api/option"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/logger"
 )
@@ -58,21 +58,7 @@ func selectLatestBackup(m map[string]*backupMeta) string {
 	return meta[0].Filename
 }
 
-func unifiBackup(args []string) error {
-	var bucket, pathPrefix, credentialFile, backupDir string
-	fs := pflag.NewFlagSet("unifibackup", pflag.ContinueOnError)
-	fs.StringVar(&backupDir, "dir", "", "Backup file directory")
-	fs.StringVar(&bucket, "bucket", "", "Bucket name")
-	fs.StringVar(&pathPrefix, "path-prefix", "", "Prefix of file path")
-	fs.StringVar(&credentialFile, "credential", "", "Credential file")
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return xerrors.WithStack(err)
-	}
-	if err := logger.Init(); err != nil {
-		return xerrors.WithStack(err)
-	}
-
+func unifiBackup(backupDir, bucket, pathPrefix, credentialFile string) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -127,7 +113,19 @@ func unifiBackup(args []string) error {
 }
 
 func main() {
-	if err := unifiBackup(os.Args); err != nil {
+	var bucket, pathPrefix, credentialFile, backupDir string
+	cmd := &cli.Command{
+		Use: "unifibackup",
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
+			return unifiBackup(backupDir, bucket, pathPrefix, credentialFile)
+		},
+	}
+	fs := cmd.Flags()
+	fs.String("dir", "Backup file directory").Var(&backupDir)
+	fs.String("bucket", "Bucket name").Var(&bucket)
+	fs.String("path-prefix", "Prefix of file path").Var(&pathPrefix)
+	fs.String("credential", "Credential file").Var(&credentialFile)
+	if err := cmd.Execute(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

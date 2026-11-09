@@ -13,32 +13,22 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/spf13/pflag"
 	"go.f110.dev/xerrors"
 
+	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/prometheus/exporter"
 )
 
-func inkbirdExporter(args []string) error {
+func inkbirdExporter(rawIDs []string, port int) error {
 	var ids []string
-	port := 9400
-	fs := pflag.NewFlagSet("inkbird-exporter", pflag.ContinueOnError)
-	fs.StringSliceVar(&ids, "id", ids, "")
-	fs.IntVar(&port, "port", port, "")
-	logger.Flags(fs)
-	if err := fs.Parse(args); err != nil {
-		return err
+	for _, v := range rawIDs {
+		for _, id := range strings.Split(v, ",") {
+			ids = append(ids, strings.ToLower(id))
+		}
 	}
 	if len(ids) == 0 {
 		return xerrors.New("--id is required")
-	}
-	for i := range ids {
-		ids[i] = strings.ToLower(ids[i])
-	}
-
-	if err := logger.Init(); err != nil {
-		return err
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -78,7 +68,18 @@ func inkbirdExporter(args []string) error {
 }
 
 func main() {
-	if err := inkbirdExporter(os.Args); err != nil {
+	var ids []string
+	port := 9400
+	cmd := &cli.Command{
+		Use: "inkbird-exporter",
+		Run: func(_ context.Context, _ *cli.Command, _ []string) error {
+			return inkbirdExporter(ids, port)
+		},
+	}
+	fs := cmd.Flags()
+	fs.StringArray("id", "").Var(&ids)
+	fs.Int("port", "").Var(&port).Default(port)
+	if err := cmd.Execute(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}

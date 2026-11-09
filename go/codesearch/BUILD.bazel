@@ -37,7 +37,6 @@ go_library(
         "@com_github_prometheus_client_golang//prometheus/promhttp",
         "@com_github_robfig_cron_v3//:cron",
         "@com_github_shurcool_githubv4//:githubv4",
-        "@com_github_spf13_pflag//:pflag",
         "@dev_f110_go_xerrors//:xerrors",
         "@dev_f110_kubeproto//go/k8sclient",
         "@in_gopkg_yaml_v3//:yaml_v3",
