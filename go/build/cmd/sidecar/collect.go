@@ -382,7 +382,7 @@ func tarDir(dir string, w io.Writer) error {
 		if rel == "." {
 			return nil
 		}
-		info, err := d.Info()
+		info, err := os.Stat(p)
 		if err != nil {
 			return err
 		}
@@ -394,7 +394,7 @@ func tarDir(dir string, w io.Writer) error {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
-		if d.IsDir() {
+		if info.IsDir() {
 			return nil
 		}
 		f, err := os.Open(p)

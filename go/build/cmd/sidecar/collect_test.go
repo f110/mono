@@ -1,9 +1,13 @@
 package sidecar
 
 import (
+	"archive/tar"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -51,4 +55,34 @@ func TestExecRootFromMarker(t *testing.T) {
 
 	_, err = execRootFromMarker("/tmp/no-out/x.cd_artifact.json")
 	assertion.Error(t, err)
+}
+
+func TestTarDirFollowsSymlink(t *testing.T) {
+	root := t.TempDir()
+	blobContent := []byte("layer-bytes")
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(root, "layer.tar"), blobContent, 0o644))
+	layoutDir := filepath.Join(root, "image")
+	blobDir := filepath.Join(layoutDir, "blobs", "sha256")
+	assertion.MustNoError(t, os.MkdirAll(blobDir, 0o755))
+	assertion.MustNoError(t, os.Symlink("../../../layer.tar", filepath.Join(blobDir, "abc")))
+
+	var buf bytes.Buffer
+	assertion.MustNoError(t, tarDir(layoutDir, &buf))
+
+	tr := tar.NewReader(&buf)
+	files := make(map[string][]byte)
+	for {
+		hdr, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		assertion.MustNoError(t, err)
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+		b, err := io.ReadAll(tr)
+		assertion.MustNoError(t, err)
+		files[hdr.Name] = b
+	}
+	assertion.Equal(t, files["blobs/sha256/abc"], blobContent)
 }
