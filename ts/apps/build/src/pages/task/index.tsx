@@ -38,6 +38,7 @@ import { BFF } from '../../connect/bff_pb'
 import { useCompleteTask } from '../../hooks/useCompleteTask.ts'
 import { useForceStopTask } from '../../hooks/useForceStopTask.ts'
 import { useGetServerInfo } from '../../hooks/useGetServerInfo.ts'
+import { useListArtifacts } from '../../hooks/useListArtifacts.ts'
 import { useLiveDuration } from '../../hooks/useLiveDuration.ts'
 import { useRestartTask } from '../../hooks/useRestartTask.ts'
 import { type BuildMetrics, TestStatus } from '../../model/msg_pb'
@@ -119,6 +120,8 @@ export const TaskPage: React.FC = () => {
     forceStopTask({ taskId: Number(taskId) })
   }
   const { config } = useGetServerInfo()
+  const { data: artifacts } = useListArtifacts({ taskId: Number(taskId) })
+  const artifactCount = artifacts?.artifacts.length
   const { mutate: completeTask, isPending: isCompleting } = useCompleteTask()
   const handleComplete = (success: boolean) => {
     completeTask({ taskId: Number(taskId), success })
@@ -274,12 +277,16 @@ export const TaskPage: React.FC = () => {
                 <TableRow>
                   <DefinitionTableCell>Artifacts</DefinitionTableCell>
                   <DefinitionTableCell>
-                    <Link
-                      to="/artifacts"
-                      search={{ task_id: Number(taskId) }}
-                    >
-                      view
-                    </Link>
+                    {artifactCount ? (
+                      <Link
+                        to="/artifacts"
+                        search={{ task_id: Number(taskId) }}
+                      >
+                        {artifactCount}
+                      </Link>
+                    ) : (
+                      artifactCount
+                    )}
                   </DefinitionTableCell>
                 </TableRow>
               </TableBody>
