@@ -1,5 +1,5 @@
-// Package mcp exposes the read operations of Build to the coding agents by MCP. Every tool calls the method of the API
-// service, so the tools behave the same as the gRPC API.
+// Package mcp exposes the read operations and the invocation of the jobs of Build to the coding agents by MCP. Every tool
+// calls the method of the API service, so the tools behave the same as the gRPC API.
 package mcp
 
 import (
@@ -45,6 +45,12 @@ type getLogsInput struct {
 	Filter string `json:"filter,omitempty" jsonschema:"Regular expression (RE2) to filter the lines of the log. Omit to get the whole log"`
 }
 
+type invokeJobInput struct {
+	RepositoryID int32             `json:"repository_id" jsonschema:"ID of the repository. See list_repositories"`
+	JobName      string            `json:"job_name" jsonschema:"Name of the job. See list_jobs"`
+	Params       map[string]string `json:"params,omitempty" jsonschema:"Parameters given to the job which declares params"`
+}
+
 type emptyInput struct{}
 
 // New returns the HTTP handler which serves MCP. The requests are authenticated by authenticate (e.g.
@@ -55,7 +61,7 @@ func New(s api.APIServer, authenticate func(http.Handler) http.Handler) http.Han
 	return authenticate(handler)
 }
 
-// newServer returns the MCP server which has the tools of the read operations of Build.
+// newServer returns the MCP server which has the tools of the read operations and the invocation of the jobs of Build.
 func newServer(s api.APIServer) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{Name: "build", Version: "v0.1.0"}, nil)
 	addTool(server, "list_tasks", "List the tasks. Without ids and repository_ids, the latest tasks of all repositories are listed", s.ListTasks,
@@ -71,6 +77,10 @@ func newServer(s api.APIServer) *mcp.Server {
 	addTool(server, "list_jobs", "List the jobs of the repository", s.ListJobs, func(in repositoryInput) *api.RequestListJobs {
 		return api.RequestListJobs_builder{RepositoryId: &in.RepositoryID}.Build()
 	})
+	addTool(server, "invoke_job", "Invoke the job of the repository. The response has the ID of the started task", s.InvokeJob,
+		func(in invokeJobInput) *api.RequestInvokeJob {
+			return api.RequestInvokeJob_builder{RepositoryId: &in.RepositoryID, JobName: &in.JobName, Params: in.Params}.Build()
+		})
 	addTool(server, "list_artifacts", "List the artifacts of the task or the commit", s.ListArtifacts, func(in listArtifactsInput) *api.RequestListArtifacts {
 		return api.RequestListArtifacts_builder{TaskId: &in.TaskID, RepositoryId: &in.RepositoryID, Revision: &in.Revision}.Build()
 	})

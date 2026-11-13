@@ -32,7 +32,7 @@
 | `cmd/sidecar`              | Job 内で動く補助コマンド（clone, credential, report）。                             |
 | `api`                      | builder が公開する gRPC API サーバー (`API` サービス) と Webhook の HTTP エンドポイント。タスクのログを読む `ReadLog` は BFF と共有する。 |
 | `bff`                      | ブラウザ向け Connect サービス (`BFF`)。API と git-data-service を集約する。              |
-| `mcp`                      | エージェント向けの MCP。`API` の参照系 RPC を tool として `/mcp` に公開する（heimdallr の JWT を検証）。 |
+| `mcp`                      | エージェント向けの MCP。`API` の参照系 RPC と `InvokeJob` を tool として `/mcp` に公開する（heimdallr の JWT を検証）。 |
 | `coordinator`              | `BazelBuilder`。Task を Kubernetes Job に変換し、ライフサイクルを reconcile する中核。     |
 | `coordinator/job.go` (`JobBuilder`) | Job マニフェスト（init/main/report コンテナ、Secret 等）を組み立てる。                      |
 | `webhook`                  | Webhook の受信 (`Handler`)、`Scheduler`、イベント種別ごとの `Reconciler`、`Notifier`。 |

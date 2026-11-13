@@ -29,6 +29,12 @@ type fakeAPIServer struct {
 	api.UnimplementedAPIServer
 	listTasks *api.RequestListTasks
 	getLogs   *api.RequestGetLogs
+	invokeJob *api.RequestInvokeJob
+}
+
+func (f *fakeAPIServer) InvokeJob(_ context.Context, req *api.RequestInvokeJob) (*api.ResponseInvokeJob, error) {
+	f.invokeJob = req
+	return api.ResponseInvokeJob_builder{TaskId: new(int32(10))}.Build(), nil
 }
 
 func (f *fakeAPIServer) ListTasks(_ context.Context, req *api.RequestListTasks) (*api.ResponseListTasks, error) {
@@ -91,7 +97,7 @@ func TestNew(t *testing.T) {
 	assertion.MustNoError(t, err)
 	session := newSession(t, s.URL, token)
 
-	t.Run("only the read operations are exposed", func(t *testing.T) {
+	t.Run("list the tools", func(t *testing.T) {
 		res, err := session.ListTools(context.Background(), nil)
 		assertion.MustNoError(t, err)
 		var names []string
@@ -100,8 +106,19 @@ func TestNew(t *testing.T) {
 		}
 		slices.Sort(names)
 		assertion.Equal(t, []string{
-			"get_logs", "get_server_info", "list_artifacts", "list_external_release_triggers", "list_github_events", "list_jobs", "list_repositories", "list_tasks",
+			"get_logs", "get_server_info", "invoke_job", "list_artifacts", "list_external_release_triggers", "list_github_events", "list_jobs", "list_repositories",
+			"list_tasks",
 		}, names)
+	})
+
+	t.Run("invoke the job", func(t *testing.T) {
+		res := &api.ResponseInvokeJob{}
+		call(t, session, "invoke_job", map[string]any{"repository_id": 1, "job_name": "test", "params": map[string]string{"version": "v1.0.0"}}, res)
+		assertion.Equal(t, int32(10), res.GetTaskId())
+		assertion.False(t, fake.invokeJob.HasTaskId())
+		assertion.Equal(t, int32(1), fake.invokeJob.GetRepositoryId())
+		assertion.Equal(t, "test", fake.invokeJob.GetJobName())
+		assertion.Equal(t, map[string]string{"version": "v1.0.0"}, fake.invokeJob.GetParams())
 	})
 
 	t.Run("list the tasks", func(t *testing.T) {
