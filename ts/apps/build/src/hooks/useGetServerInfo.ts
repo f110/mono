@@ -1,4 +1,5 @@
 import { create } from '@bufbuild/protobuf'
+import { timestampDate } from '@bufbuild/protobuf/wkt'
 import { useQuery } from '@connectrpc/connect-query'
 import { BFF } from '../connect/bff_pb'
 
@@ -27,6 +28,8 @@ export interface ServerConfig {
 export interface ServerInfo {
   supportedBazelVersions: string[]
   schemaVersion: string
+  commitSha: string
+  commitTime?: Date
   config?: ServerConfig
 }
 
@@ -36,12 +39,16 @@ export function useGetServerInfo(): ServerInfo {
     create(BFF.method.getServerInfo.input),
   )
   if (!res.data) {
-    return { supportedBazelVersions: [], schemaVersion: '' }
+    return { supportedBazelVersions: [], schemaVersion: '', commitSha: '' }
   }
   const c = res.data.config
   return {
     supportedBazelVersions: res.data.supportedBazelVersions,
     schemaVersion: res.data.schemaVersion,
+    commitSha: res.data.commitSha,
+    commitTime: res.data.commitTime
+      ? timestampDate(res.data.commitTime)
+      : undefined,
     config: c
       ? {
           dev: c.dev,

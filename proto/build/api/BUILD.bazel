@@ -7,5 +7,6 @@ proto_library(
     deps = [
         "//proto/build/model",
         "@protobuf//:go_features_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )

@@ -76,9 +76,12 @@ go_test(
     ],
     embed = [":bff"],
     deps = [
+        "//go/build/api",
         "//go/build/model",
         "//go/testing/assertion",
         "@com_connectrpc_connect//:connect",
         "@dev_f110_go_xerrors//:xerrors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )

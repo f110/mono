@@ -32,6 +32,7 @@ import (
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/model"
+	"go.f110.dev/mono/go/build/version"
 	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/enumerable"
 	"go.f110.dev/mono/go/git"
@@ -380,7 +381,11 @@ func (s *apiService) GetServerInfo(ctx context.Context, _ *RequestGetServerInfo)
 	sort.Sort(versions)
 	versionStrings := enumerable.Map(versions, func(t *semver.Version) string { return t.String() })
 	schemaVersion := database.SchemaHash
-	return ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings, SchemaVersion: &schemaVersion, Config: s.serverConfig}.Build(), nil
+	res := ResponseGetServerInfo_builder{SupportedBazelVersions: versionStrings, SchemaVersion: &schemaVersion, Config: s.serverConfig, CommitSha: new(version.CommitSha)}.Build()
+	if t := version.CommitTimestamp(); !t.IsZero() {
+		res.SetCommitTime(timestamppb.New(t))
+	}
+	return res, nil
 }
 
 func (s *apiService) ListExternalReleaseTriggers(ctx context.Context, req *RequestListExternalReleaseTriggers) (*ResponseListExternalReleaseTriggers, error) {

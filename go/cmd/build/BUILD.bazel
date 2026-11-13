@@ -16,6 +16,10 @@ go_binary(
     name = "build",
     embed = [":build_lib"],
     visibility = ["//visibility:public"],
+    x_defs = {
+        "go.f110.dev/mono/go/build/version.CommitSha": "{STABLE_BUILD_COMMIT_SHA}",
+        "go.f110.dev/mono/go/build/version.CommitTime": "{STABLE_BUILD_COMMIT_TIME}",
+    },
 )
 
 go_cross_binary(

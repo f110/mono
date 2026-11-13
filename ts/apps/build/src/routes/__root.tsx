@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute } from '@tanstack/react-router'
 import { SideBar } from '../components/SideBar.tsx'
+import { Footer } from '../components/Footer.tsx'
 import CssBaseline from '@mui/material/CssBaseline'
 import AppBar from '@mui/material/AppBar'
 import Toolbar from '@mui/material/Toolbar'
@@ -27,7 +28,10 @@ export const Route = createRootRoute({
           <Toolbar /> {/* For padding of the box at bottom*/}
           <Box sx={{ p: 3, display: 'flex' }}>
             <SideBar />
-            <Outlet />
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Outlet />
+              <Footer />
+            </Box>
           </Box>
         </Stack>
       </Box>

@@ -216,7 +216,13 @@ func (b *BFF) GetServerInfo(ctx context.Context, _ *connect.Request[RequestGetSe
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	return connect.NewResponse(ResponseGetServerInfo_builder{SupportedBazelVersions: res.GetSupportedBazelVersions(), SchemaVersion: new(res.GetSchemaVersion()), Config: convertServerConfig(res.GetConfig())}.Build()), nil
+	return connect.NewResponse(ResponseGetServerInfo_builder{
+		SupportedBazelVersions: res.GetSupportedBazelVersions(),
+		SchemaVersion:          new(res.GetSchemaVersion()),
+		Config:                 convertServerConfig(res.GetConfig()),
+		CommitSha:              new(res.GetCommitSha()),
+		CommitTime:             res.GetCommitTime(),
+	}.Build()), nil
 }
 
 // convertServerConfig maps the api ServerConfig into the bff ServerConfig. Both

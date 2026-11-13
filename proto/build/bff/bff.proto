@@ -65,9 +65,11 @@ message RequestGetServerInfo {
 }
 
 message ResponseGetServerInfo {
-  repeated string supported_bazel_versions = 1;
-  string          schema_version           = 2;
-  ServerConfig    config                   = 3;
+  repeated string           supported_bazel_versions = 1;
+  string                    schema_version           = 2;
+  ServerConfig              config                   = 3;
+  string                    commit_sha               = 4;
+  google.protobuf.Timestamp commit_time              = 5;
 }
 
 // ServerConfig is a curated, human-meaningful view of the builder's runtime

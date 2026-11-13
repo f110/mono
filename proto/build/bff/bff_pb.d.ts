@@ -154,6 +154,16 @@ export declare type ResponseGetServerInfo = Message<"mono.build.bff.ResponseGetS
    * @generated from field: mono.build.bff.ServerConfig config = 3;
    */
   config?: ServerConfig;
+
+  /**
+   * @generated from field: string commit_sha = 4;
+   */
+  commitSha: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp commit_time = 5;
+   */
+  commitTime?: Timestamp;
 };
 
 /**

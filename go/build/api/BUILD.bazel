@@ -18,6 +18,7 @@ go_library(
         "//go/build/database",
         "//go/build/database/dao",
         "//go/build/model",
+        "//go/build/version",
         "//go/collections/set",
         "//go/enumerable",
         "//go/git",
