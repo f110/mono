@@ -19,6 +19,7 @@ func TestParse(t *testing.T) {
 		{filter: ""},
 		{filter: "status = OPEN", wantWhere: "`status` = ?", wantArgs: []any{database.TicketStatusOpen}},
 		{filter: "status != DONE", wantWhere: "`status` != ?", wantArgs: []any{database.TicketStatusDone}},
+		{filter: "status = NEED_INVESTIGATION", wantWhere: "`status` = ?", wantArgs: []any{database.TicketStatusNeedInvestigation}},
 		{
 			filter:    "status = OPEN OR status = IN_PROGRESS",
 			wantWhere: "(`status` = ? OR `status` = ?)",

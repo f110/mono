@@ -418,10 +418,11 @@ func normalizeRelation(from int32, relationType database.RelationType, to int32)
 }
 
 var statusNames = map[database.TicketStatus]string{
-	database.TicketStatusOpen:       "open",
-	database.TicketStatusInProgress: "in_progress",
-	database.TicketStatusDone:       "done",
-	database.TicketStatusWontFix:    "wont_fix",
+	database.TicketStatusOpen:              "open",
+	database.TicketStatusInProgress:        "in_progress",
+	database.TicketStatusDone:              "done",
+	database.TicketStatusWontFix:           "wont_fix",
+	database.TicketStatusNeedInvestigation: "need_investigation",
 }
 
 func statusName(s database.TicketStatus) string {

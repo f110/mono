@@ -43,7 +43,7 @@ type updateTicketInput struct {
 	Number      int32   `json:"number" jsonschema:"Number of the ticket"`
 	Title       *string `json:"title,omitempty"`
 	Body        *string `json:"body,omitempty" jsonschema:"Body of the ticket written in Markdown"`
-	Status      *string `json:"status,omitempty" jsonschema:"One of OPEN, IN_PROGRESS, DONE and WONT_FIX"`
+	Status      *string `json:"status,omitempty" jsonschema:"One of OPEN, NEED_INVESTIGATION, IN_PROGRESS, DONE and WONT_FIX"`
 	Type        *string `json:"type,omitempty" jsonschema:"One of BUG, FEATURE, TASK, OPERATION and NONE. NONE clears the type"`
 	Priority    *string `json:"priority,omitempty" jsonschema:"One of P0, P1, P2, P3, P4 and NONE. NONE clears the priority"`
 	ComponentID *int32  `json:"component_id,omitempty" jsonschema:"ID of the component. 0 clears the component. See list_components"`

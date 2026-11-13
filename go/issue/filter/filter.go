@@ -33,10 +33,11 @@ var fields = map[string]field{
 }
 
 var statuses = map[string]any{
-	"OPEN":        database.TicketStatusOpen,
-	"IN_PROGRESS": database.TicketStatusInProgress,
-	"DONE":        database.TicketStatusDone,
-	"WONT_FIX":    database.TicketStatusWontFix,
+	"OPEN":               database.TicketStatusOpen,
+	"IN_PROGRESS":        database.TicketStatusInProgress,
+	"DONE":               database.TicketStatusDone,
+	"WONT_FIX":           database.TicketStatusWontFix,
+	"NEED_INVESTIGATION": database.TicketStatusNeedInvestigation,
 }
 
 var types = map[string]any{

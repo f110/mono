@@ -1245,6 +1245,11 @@ export enum TicketStatus {
    * @generated from enum value: TICKET_STATUS_WONT_FIX = 4;
    */
   WONT_FIX = 4,
+
+  /**
+   * @generated from enum value: TICKET_STATUS_NEED_INVESTIGATION = 5;
+   */
+  NEED_INVESTIGATION = 5,
 }
 
 /**

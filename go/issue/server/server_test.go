@@ -82,10 +82,11 @@ func newConn(t *testing.T) *sql.DB {
 
 func TestEnumConversion(t *testing.T) {
 	statuses := map[database.TicketStatus]api.TicketStatus{
-		database.TicketStatusOpen:       api.TicketStatus_TICKET_STATUS_OPEN,
-		database.TicketStatusInProgress: api.TicketStatus_TICKET_STATUS_IN_PROGRESS,
-		database.TicketStatusDone:       api.TicketStatus_TICKET_STATUS_DONE,
-		database.TicketStatusWontFix:    api.TicketStatus_TICKET_STATUS_WONT_FIX,
+		database.TicketStatusOpen:              api.TicketStatus_TICKET_STATUS_OPEN,
+		database.TicketStatusInProgress:        api.TicketStatus_TICKET_STATUS_IN_PROGRESS,
+		database.TicketStatusDone:              api.TicketStatus_TICKET_STATUS_DONE,
+		database.TicketStatusWontFix:           api.TicketStatus_TICKET_STATUS_WONT_FIX,
+		database.TicketStatusNeedInvestigation: api.TicketStatus_TICKET_STATUS_NEED_INVESTIGATION,
 	}
 	for db, a := range statuses {
 		assertion.Equal(t, toTicket(&issue.Ticket{Ticket: &database.Ticket{Status: db}}).GetStatus(), a)

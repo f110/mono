@@ -6,6 +6,7 @@ export const statusLabels: Record<TicketStatus, string> = {
   [TicketStatus.IN_PROGRESS]: 'In Progress',
   [TicketStatus.DONE]: 'Done',
   [TicketStatus.WONT_FIX]: "Won't Fix",
+  [TicketStatus.NEED_INVESTIGATION]: 'Need Investigation',
 }
 
 export const statusColors: Record<TicketStatus, { backgroundColor?: string; color?: string }> = {
@@ -14,9 +15,10 @@ export const statusColors: Record<TicketStatus, { backgroundColor?: string; colo
   [TicketStatus.IN_PROGRESS]: { backgroundColor: '#2e7d32', color: '#fff' },
   [TicketStatus.DONE]: { backgroundColor: '#8250df', color: '#fff' },
   [TicketStatus.WONT_FIX]: {},
+  [TicketStatus.NEED_INVESTIGATION]: { backgroundColor: '#ed6c02', color: '#fff' },
 }
 
-export const statuses = [TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.DONE, TicketStatus.WONT_FIX]
+export const statuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS, TicketStatus.DONE, TicketStatus.WONT_FIX]
 
 export const typeLabels: Record<TicketType, string> = {
   [TicketType.UNSPECIFIED]: 'なし',

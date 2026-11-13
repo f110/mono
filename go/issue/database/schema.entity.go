@@ -85,10 +85,11 @@ const (
 type TicketStatus uint32
 
 const (
-	TicketStatusOpen       TicketStatus = 0
-	TicketStatusInProgress TicketStatus = 1
-	TicketStatusDone       TicketStatus = 2
-	TicketStatusWontFix    TicketStatus = 3
+	TicketStatusOpen              TicketStatus = 0
+	TicketStatusInProgress        TicketStatus = 1
+	TicketStatusDone              TicketStatus = 2
+	TicketStatusWontFix           TicketStatus = 3
+	TicketStatusNeedInvestigation TicketStatus = 4
 )
 
 type TicketType uint32

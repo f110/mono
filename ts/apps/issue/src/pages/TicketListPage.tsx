@@ -33,7 +33,7 @@ import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import { priorityLabels, statusColors, statusLabels, typeLabels } from '../labels.ts'
 
-const defaultFilter = 'status = OPEN OR status = IN_PROGRESS'
+const defaultFilter = 'status = OPEN OR status = NEED_INVESTIGATION OR status = IN_PROGRESS'
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100
 const wideOnlySx = { display: { xs: 'none', sm: 'table-cell' } }

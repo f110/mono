@@ -8,10 +8,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "go.f110.dev/mono/go/issue/database;database";
 
 enum TicketStatus {
-  TICKET_STATUS_OPEN        = 0;
-  TICKET_STATUS_IN_PROGRESS = 1;
-  TICKET_STATUS_DONE        = 2;
-  TICKET_STATUS_WONT_FIX    = 3;
+  TICKET_STATUS_OPEN               = 0;
+  TICKET_STATUS_IN_PROGRESS        = 1;
+  TICKET_STATUS_DONE               = 2;
+  TICKET_STATUS_WONT_FIX           = 3;
+  TICKET_STATUS_NEED_INVESTIGATION = 4;
 }
 
 // Priority of the ticket. PRIORITY_NONE means that the priority is not set.

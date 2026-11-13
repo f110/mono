@@ -25,11 +25,12 @@ const (
 type TicketStatus int32
 
 const (
-	TicketStatus_TICKET_STATUS_UNSPECIFIED TicketStatus = 0
-	TicketStatus_TICKET_STATUS_OPEN        TicketStatus = 1
-	TicketStatus_TICKET_STATUS_IN_PROGRESS TicketStatus = 2
-	TicketStatus_TICKET_STATUS_DONE        TicketStatus = 3
-	TicketStatus_TICKET_STATUS_WONT_FIX    TicketStatus = 4
+	TicketStatus_TICKET_STATUS_UNSPECIFIED        TicketStatus = 0
+	TicketStatus_TICKET_STATUS_OPEN               TicketStatus = 1
+	TicketStatus_TICKET_STATUS_IN_PROGRESS        TicketStatus = 2
+	TicketStatus_TICKET_STATUS_DONE               TicketStatus = 3
+	TicketStatus_TICKET_STATUS_WONT_FIX           TicketStatus = 4
+	TicketStatus_TICKET_STATUS_NEED_INVESTIGATION TicketStatus = 5
 )
 
 // Enum value maps for TicketStatus.
@@ -40,13 +41,15 @@ var (
 		2: "TICKET_STATUS_IN_PROGRESS",
 		3: "TICKET_STATUS_DONE",
 		4: "TICKET_STATUS_WONT_FIX",
+		5: "TICKET_STATUS_NEED_INVESTIGATION",
 	}
 	TicketStatus_value = map[string]int32{
-		"TICKET_STATUS_UNSPECIFIED": 0,
-		"TICKET_STATUS_OPEN":        1,
-		"TICKET_STATUS_IN_PROGRESS": 2,
-		"TICKET_STATUS_DONE":        3,
-		"TICKET_STATUS_WONT_FIX":    4,
+		"TICKET_STATUS_UNSPECIFIED":        0,
+		"TICKET_STATUS_OPEN":               1,
+		"TICKET_STATUS_IN_PROGRESS":        2,
+		"TICKET_STATUS_DONE":               3,
+		"TICKET_STATUS_WONT_FIX":           4,
+		"TICKET_STATUS_NEED_INVESTIGATION": 5,
 	}
 )
 
@@ -6272,13 +6275,14 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\x06actors\x18\x01 \x03(\v2\x11.mono.issue.ActorR\x06actors\"\x0f\n" +
 	"\rRequestWhoAmI\"9\n" +
 	"\x0eResponseWhoAmI\x12'\n" +
-	"\x05actor\x18\x01 \x01(\v2\x11.mono.issue.ActorR\x05actor*\x98\x01\n" +
+	"\x05actor\x18\x01 \x01(\v2\x11.mono.issue.ActorR\x05actor*\xbe\x01\n" +
 	"\fTicketStatus\x12\x1d\n" +
 	"\x19TICKET_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12TICKET_STATUS_OPEN\x10\x01\x12\x1d\n" +
 	"\x19TICKET_STATUS_IN_PROGRESS\x10\x02\x12\x16\n" +
 	"\x12TICKET_STATUS_DONE\x10\x03\x12\x1a\n" +
-	"\x16TICKET_STATUS_WONT_FIX\x10\x04*y\n" +
+	"\x16TICKET_STATUS_WONT_FIX\x10\x04\x12$\n" +
+	" TICKET_STATUS_NEED_INVESTIGATION\x10\x05*y\n" +
 	"\bPriority\x12\x18\n" +
 	"\x14PRIORITY_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vPRIORITY_P0\x10\x01\x12\x0f\n" +

@@ -37,11 +37,12 @@ service Issue {
 }
 
 enum TicketStatus {
-  TICKET_STATUS_UNSPECIFIED = 0;
-  TICKET_STATUS_OPEN        = 1;
-  TICKET_STATUS_IN_PROGRESS = 2;
-  TICKET_STATUS_DONE        = 3;
-  TICKET_STATUS_WONT_FIX    = 4;
+  TICKET_STATUS_UNSPECIFIED        = 0;
+  TICKET_STATUS_OPEN               = 1;
+  TICKET_STATUS_IN_PROGRESS        = 2;
+  TICKET_STATUS_DONE               = 3;
+  TICKET_STATUS_WONT_FIX           = 4;
+  TICKET_STATUS_NEED_INVESTIGATION = 5;
 }
 
 enum Priority {
