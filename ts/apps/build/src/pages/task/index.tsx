@@ -282,11 +282,9 @@ export const TaskPage: React.FC = () => {
                         to="/artifacts"
                         search={{ task_id: Number(taskId) }}
                       >
-                        {artifactCount}
+                        view({artifactCount})
                       </Link>
-                    ) : (
-                      artifactCount
-                    )}
+                    ) : null}
                   </DefinitionTableCell>
                 </TableRow>
               </TableBody>
