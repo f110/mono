@@ -299,7 +299,15 @@ const Relations = ({ number, relations }: { number: number; relations: RelatedTi
                 </span>
               </Tooltip>
             </Typography>
-            <IconButton size="small" aria-label="削除" onClick={() => remove.mutate({ relation: { from: r.from, type: r.type, to: r.to } })}>
+            <IconButton
+              size="small"
+              aria-label="削除"
+              onClick={() => {
+                if (window.confirm(`#${other} との関連を削除しますか？`)) {
+                  remove.mutate({ relation: { from: r.from, type: r.type, to: r.to } })
+                }
+              }}
+            >
               ×
             </IconButton>
           </Stack>
@@ -476,7 +484,15 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
         editing === null
           ? [
               { label: '編集', onClick: () => setEditing(comment.body) },
-              { label: '削除', danger: true, onClick: () => remove.mutate({ id: comment.id }) },
+              {
+                label: '削除',
+                danger: true,
+                onClick: () => {
+                  if (window.confirm('コメントを削除しますか？')) {
+                    remove.mutate({ id: comment.id })
+                  }
+                },
+              },
             ]
           : []
       }
