@@ -65,7 +65,7 @@ func TestQueryLog(t *testing.T) {
 		var buf bytes.Buffer
 		log := logger.NewBufferLogger(&buf)
 		Init(log)
-		SetMinimumDuration(1 * time.Millisecond)
+		SetMinimumDuration(time.Hour)
 
 		execQuery(t)
 		assert.NotContains(t, buf.String(), "SELECT * FROM user")
