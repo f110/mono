@@ -103,7 +103,12 @@ func TestJobBuilder(t *testing.T) {
 			ExpectObjects: []runtime.Object{saObject, jobObject},
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
-					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "--build_event_binary_file=/comm/bep", "//...")),
+					k8sfactory.OnContainer("main", k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64",
+						"--build_event_binary_file=/comm/bep", "--stamp", "--workspace_status_command=/comm/workspace_status.sh", "//...")),
+					k8sfactory.OnContainer("pre-process",
+						AddArgs("--workspace-status-command=/comm/workspace_status.sh"),
+						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "comm", MountPath: "/comm"}}),
+					),
 				},
 			},
 		},
@@ -304,7 +309,12 @@ func TestJobBuilder(t *testing.T) {
 			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
 				jobObject: {
 					k8sfactory.OnContainer("main",
-						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64", "--build_event_binary_file=/comm/bep", "//...", "--", "--verbose"),
+						k8sfactory.Args("run", "--remote_cache=127.0.0.1:4567", "--experimental_remote_downloader=127.0.0.1:4567", "--platforms=@rules_go//go/toolchain:linux_amd64",
+							"--build_event_binary_file=/comm/bep", "--stamp", "--workspace_status_command=/comm/workspace_status.sh", "//...", "--", "--verbose"),
+					),
+					k8sfactory.OnContainer("pre-process",
+						AddArgs("--workspace-status-command=/comm/workspace_status.sh"),
+						k8sfactory.Volume(&k8sfactory.VolumeSource{Mount: corev1.VolumeMount{Name: "comm", MountPath: "/comm"}}),
 					),
 				},
 			},

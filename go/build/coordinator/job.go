@@ -350,7 +350,15 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 			)
 		}
 	}
+	var workspaceStatusCommand string
+	if j.job.Command == "run" && j.commDirVolume != nil {
+		workspaceStatusCommand = j.commDirVolume.Mount.MountPath + "/workspace_status.sh"
+		preProcessArgs = append(preProcessArgs, "--workspace-status-command="+workspaceStatusCommand)
+	}
 	preProcessContainer := k8sfactory.ContainerFactory(j.preProcessContainer, k8sfactory.Args(preProcessArgs...))
+	if workspaceStatusCommand != "" {
+		preProcessContainer = k8sfactory.ContainerFactory(preProcessContainer, k8sfactory.Volume(j.commDirVolume))
+	}
 
 	var args []string
 	// --output_base is a startup flag and must precede the command. It points
@@ -381,6 +389,9 @@ func (j *JobBuilder) Build() ([]runtime.Object, error) {
 	}
 	if j.commDirVolume != nil {
 		args = append(args, fmt.Sprintf("--build_event_binary_file=%s/bep", j.commDirVolume.Mount.MountPath))
+	}
+	if workspaceStatusCommand != "" {
+		args = append(args, "--stamp", "--workspace_status_command="+workspaceStatusCommand)
 	}
 	if j.job.Command == "test" && !j.job.CacheTestResults {
 		// By default we disable the test result cache. A job can opt in to reuse cached results.
