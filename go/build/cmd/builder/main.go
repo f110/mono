@@ -98,8 +98,8 @@ type Options struct {
 	BazelMirrorSecretAccessKey     string
 	BazelMirrorSecretAccessKeyFile string
 	CentralRegistryMirrorURL       string
-	ArtifactRegistry               string // Host of the OCI registry (zot) that stores collected build artifacts.
-	ArtifactRegistryInsecure       bool   // Access the artifact registry over plain HTTP.
+	ArtifactUpload                 bool   // Upload collected build artifacts to the OCI registry named in their repository.
+	ArtifactRegistryInsecure       bool   // Allow accessing the artifact registries over plain HTTP.
 	ArtifactBuilderAddr            string // gRPC address of the builder API the collect sidecar uploads to.
 	SidecarImage                   string
 	CLIImage                       string
@@ -579,8 +579,8 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		}
 	}()
 	var artifactRegistry api.ArtifactRegistry
-	if p.opt.ArtifactRegistry != "" {
-		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistry, p.opt.ArtifactRegistryInsecure)
+	if p.opt.ArtifactUpload {
+		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistryInsecure)
 	}
 	var newMCPHandler func(api.APIServer) http.Handler
 	if p.opt.PublicKeyURL != "" {
@@ -764,7 +764,6 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 	remoteAssetAPI := opt.RemoteAssetApi
 	pullAlways := opt.PullAlways
 	emulateJobControl := opt.EmulateJobControl
-	artifactRegistryHost := opt.ArtifactRegistry
 	return api.ServerConfig_builder{
 		Dev:                         &dev,
 		EmulateJobControl:           &emulateJobControl,
@@ -793,7 +792,6 @@ func buildServerConfig(opt Options) *api.ServerConfig {
 		CentralRegistryMirrorUrl:    &centralRegistryMirrorURL,
 		RemoteAssetApi:              &remoteAssetAPI,
 		PullAlways:                  &pullAlways,
-		ArtifactRegistryHost:        &artifactRegistryHost,
 	}.Build()
 }
 
@@ -887,8 +885,8 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("bazel-mirror-secret-access-key", "The secret access key for bazel mirror").Var(&opt.BazelMirrorSecretAccessKey)
 	fs.String("bazel-mirror-secret-access-key-file", "The file path that contains secret access key").Var(&opt.BazelMirrorSecretAccessKeyFile)
 	fs.String("central-registry-mirror-url", "The URL of Bazel Central Registry mirror").Var(&opt.CentralRegistryMirrorURL)
-	fs.String("artifact-registry", "Host of the OCI registry (zot) that stores collected build artifacts. When empty, artifact upload is disabled").Var(&opt.ArtifactRegistry)
-	fs.Bool("artifact-registry-insecure", "Access the artifact registry over plain HTTP").Var(&opt.ArtifactRegistryInsecure)
+	fs.Bool("artifact-upload", "Upload collected build artifacts to the OCI registry named in the repository of cd_artifact").Var(&opt.ArtifactUpload)
+	fs.Bool("artifact-registry-insecure", "Allow accessing the artifact registries over plain HTTP").Var(&opt.ArtifactRegistryInsecure)
 	fs.String("artifact-builder-addr", "gRPC address of the builder API the collect sidecar uploads to. When empty, artifact collection is disabled").Var(&opt.ArtifactBuilderAddr)
 	fs.String("sidecar-image", "Sidecar container image").Var(&opt.SidecarImage).Default("registry.f110.dev/build/sidecar")
 	fs.String("ctl-image", "CLI container image").Var(&opt.CLIImage).Default("registry.f110.dev/build/buildctl")

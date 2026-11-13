@@ -40,28 +40,20 @@ type ArtifactRegistry interface {
 }
 
 // craneArtifactRegistry is an ArtifactRegistry backed by go-containerregistry for
-// images and oras-go for file artifacts. host is the registry hostname
-// (e.g. "zot.example.com"); repository paths coming from cd_artifact are joined
-// under it. Authentication uses the docker config.
+// images and oras-go for file artifacts. The repository coming from cd_artifact
+// is a full repository reference including the registry host
+// (e.g. "repo.center.x.f110.dev/issue/server"). Authentication uses the docker config.
 //
 // File artifacts are stored in the ORAS layout (OCI 1.1 manifest with an empty
 // config and artifactType); see docs/working/artifact-collection.md §8.
 type craneArtifactRegistry struct {
-	host     string
 	insecure bool
 }
 
-// NewCraneArtifactRegistry returns an ArtifactRegistry that pushes to the OCI
-// registry reachable at host. When insecure is true the registry is accessed over plain HTTP.
-func NewCraneArtifactRegistry(host string, insecure bool) ArtifactRegistry {
-	return &craneArtifactRegistry{host: strings.TrimRight(host, "/"), insecure: insecure}
-}
-
-func (r *craneArtifactRegistry) repoPath(repository string) string {
-	if r.host == "" {
-		return repository
-	}
-	return r.host + "/" + repository
+// NewCraneArtifactRegistry returns an ArtifactRegistry that pushes to the registry
+// named in each repository. When insecure is true registries are accessed over plain HTTP.
+func NewCraneArtifactRegistry(insecure bool) ArtifactRegistry {
+	return &craneArtifactRegistry{insecure: insecure}
 }
 
 func (r *craneArtifactRegistry) options(ctx context.Context) []crane.Option {
@@ -98,9 +90,9 @@ func (r *craneArtifactRegistry) PushImage(ctx context.Context, repository, tag, 
 	if reference == "" {
 		reference = digest.String()
 	}
-	ref := r.repoPath(repository) + ":" + tag
+	ref := repository + ":" + tag
 	if tag == "" {
-		ref = r.repoPath(repository) + "@" + digest.String()
+		ref = repository + "@" + digest.String()
 	}
 	if err := crane.Push(img, ref, r.options(ctx)...); err != nil {
 		return "", xerrors.WithStack(err)
@@ -109,7 +101,7 @@ func (r *craneArtifactRegistry) PushImage(ctx context.Context, repository, tag, 
 }
 
 func (r *craneArtifactRegistry) PushFile(ctx context.Context, repository, tag, artifactType, mediaType, filename string, content []byte) (string, error) {
-	repo, err := remote.NewRepository(r.repoPath(repository))
+	repo, err := remote.NewRepository(repository)
 	if err != nil {
 		return "", xerrors.WithStack(err)
 	}

@@ -134,6 +134,9 @@ message ResponseGetServerInfo {
 // configuration shown on the info page. It intentionally omits secrets
 // (credentials, tokens, DSN). Durations are pre-formatted strings.
 message ServerConfig {
+  reserved 28;
+  reserved artifact_registry_host;
+
   bool dev                              = 1;  // development mode (no kube-apiserver integration)
   bool leader_election                  = 2;
   string namespace                      = 3;
@@ -166,10 +169,6 @@ message ServerConfig {
   // kube-apiserver (--emulate-job-control). The dashboard uses it to expose the
   // dev-only "complete task" action.
   bool emulate_job_control = 27;
-  // artifact_registry_host is the OCI registry (zot) host that stores collected
-  // artifacts (--artifact-registry). Empty when artifact collection is disabled.
-  // The dashboard prefixes it to an artifact's repository to form a pull ref.
-  string artifact_registry_host = 28;
 }
 
 message RequestListExternalReleaseTriggers {

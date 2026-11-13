@@ -245,7 +245,6 @@ func convertServerConfig(c *api.ServerConfig) *ServerConfig {
 		VaultAddr:                   new(c.GetVaultAddr()),
 		DashboardUrl:                new(c.GetDashboardUrl()),
 		EmulateJobControl:           new(c.GetEmulateJobControl()),
-		ArtifactRegistryHost:        new(c.GetArtifactRegistryHost()),
 	}.Build()
 }
 

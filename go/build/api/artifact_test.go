@@ -247,8 +247,8 @@ func TestCraneArtifactRegistry_insecure(t *testing.T) {
 		{insecure: true, scheme: "http"},
 	}
 	for _, tc := range cases {
-		r := NewCraneArtifactRegistry("zot.zot.svc.cluster.local", tc.insecure).(*craneArtifactRegistry)
-		ref, err := name.ParseReference(r.repoPath("build/foo")+":latest", crane.GetOptions(r.options(context.Background())...).Name...)
+		r := NewCraneArtifactRegistry(tc.insecure).(*craneArtifactRegistry)
+		ref, err := name.ParseReference("zot.zot.svc.cluster.local/build/foo:latest", crane.GetOptions(r.options(context.Background())...).Name...)
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, tc.scheme, ref.Context().Scheme())
 	}
@@ -258,10 +258,10 @@ func TestCraneArtifactRegistry_PushFile(t *testing.T) {
 	s := httptest.NewServer(registry.New())
 	t.Cleanup(s.Close)
 	host := strings.TrimPrefix(s.URL, "http://")
-	r := NewCraneArtifactRegistry(host, true)
+	r := NewCraneArtifactRegistry(true)
 
 	content := []byte("kind: Deployment\n")
-	ref, err := r.PushFile(context.Background(), "build/manifests", "", "application/vnd.mono.build.k8s-manifest", "application/yaml", "kustomize.base.yaml", content)
+	ref, err := r.PushFile(context.Background(), host+"/build/manifests", "", "application/vnd.mono.build.k8s-manifest", "application/yaml", "kustomize.base.yaml", content)
 	assertion.MustNoError(t, err)
 
 	raw, err := crane.Manifest(host+"/build/manifests@"+ref, crane.Insecure)

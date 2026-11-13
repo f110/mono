@@ -274,15 +274,6 @@ export declare type ServerConfig = Message<"mono.build.bff.ServerConfig"> & {
    * @generated from field: bool emulate_job_control = 19;
    */
   emulateJobControl: boolean;
-
-  /**
-   * artifact_registry_host is the OCI registry (zot) host that stores collected
-   * artifacts. Empty when artifact collection is disabled. The dashboard
-   * prefixes it to an artifact's registry path to form a pull reference.
-   *
-   * @generated from field: string artifact_registry_host = 20;
-   */
-  artifactRegistryHost: string;
 };
 
 /**

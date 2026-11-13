@@ -32,7 +32,6 @@ import * as React from 'react'
 import { useMemo, useState } from 'react'
 import { StyledTableCell, StyledTableRow } from '../../components/Table.tsx'
 import type { BFFArtifact } from '../../connect/bff_pb'
-import { useGetServerInfo } from '../../hooks/useGetServerInfo.ts'
 import { useListArtifacts } from '../../hooks/useListArtifacts.ts'
 import { useListRepositories } from '../../hooks/useListRepositories.ts'
 import { ArtifactType } from '../../model/msg_pb'
@@ -88,8 +87,6 @@ export const ArtifactsPage: React.FC = () => {
 
   const { data } = useListArtifacts({ taskId, repositoryId, revision })
   const repositories = useListRepositories()
-  const { config } = useGetServerInfo()
-  const host = config?.artifactRegistryHost ?? ''
 
   const repository = repositories.find((v) => v.id === repositoryId)
   const artifacts = useMemo(() => data?.artifacts ?? [], [data])
@@ -316,7 +313,7 @@ export const ArtifactsPage: React.FC = () => {
                         {meta.label}
                       </StyledTableCell>
                       <StyledTableCell sx={{ fontFamily: 'monospace' }}>
-                        {host ? `${host}/${a.registry}` : a.registry}
+                        {a.registry}
                       </StyledTableCell>
                       <StyledTableCell>
                         <Stack direction="row" spacing={0.5} alignItems="center">
