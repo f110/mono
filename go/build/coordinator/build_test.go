@@ -1,6 +1,7 @@
 package coordinator
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,11 +10,17 @@ import (
 	"go.f110.dev/kubeproto/go/apis/corev1"
 	"go.f110.dev/kubeproto/go/apis/metav1"
 	"go.f110.dev/kubeproto/go/k8sclient"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"k8s.io/apimachinery/pkg/runtime"
 	fakesecretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake"
 
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/k8s/controllers/controllertest"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/storage"
@@ -251,6 +258,76 @@ func TestNewBazelBuilder_CloneFromGitDataService(t *testing.T) {
 	t.Run("Clone from git-data-service when the flag is set", func(t *testing.T) {
 		b := newBuilder(BazelOptions{GitDataServiceURL: "git-data.default.svc:9020", CloneFromGitDataService: true})
 		assertion.Equal(t, "git-data.default.svc:9020", b.jobBuilder.gitDataServiceURL)
+	})
+}
+
+type fakeGitDataClient struct {
+	git.GitDataClient
+	commits map[string]*git.Commit
+}
+
+func (f *fakeGitDataClient) GetCommit(_ context.Context, in *git.RequestGetCommit, _ ...grpc.CallOption) (*git.ResponseGetCommit, error) {
+	c, ok := f.commits[in.Repo+"@"+in.Sha]
+	if !ok {
+		return nil, status.Error(codes.NotFound, "commit not found")
+	}
+	return &git.ResponseGetCommit{Commit: c}, nil
+}
+
+func TestBazelBuilder_BuildJobTemplate(t *testing.T) {
+	job, repo, task, _, _ := testJobBuilderFixtures()
+	repo.Name = "f110/example"
+
+	newBuilder := func(client git.GitDataClient) *BazelBuilder {
+		mockTask := daotest.NewTask()
+		mockTask.RegisterListPending([]*database.Task{}, nil)
+		b, err := NewBazelBuilder("", KubernetesOptions{}, dao.Options{Task: mockTask}, metav1.NamespaceDefault, nil, "foo", storage.S3Options{}, BazelOptions{}, nil, nil, true)
+		require.NoError(t, err)
+		b.GitDataClient(client)
+		return b
+	}
+	mainContainerEnv := func(t *testing.T, objs []runtime.Object) map[string]string {
+		for _, obj := range objs {
+			j, ok := obj.(*batchv1.Job)
+			if !ok {
+				continue
+			}
+			env := make(map[string]string)
+			for _, c := range j.Spec.Template.Spec.Containers {
+				if c.Name != "main" {
+					continue
+				}
+				for _, e := range c.Env {
+					env[e.Name] = e.Value
+				}
+			}
+			return env
+		}
+		t.Fatal("Job is not built")
+		return nil
+	}
+
+	t.Run("Pass the commit to the build", func(t *testing.T) {
+		b := newBuilder(&fakeGitDataClient{commits: map[string]*git.Commit{
+			"f110/example@" + task.Revision: {
+				Sha:       task.Revision,
+				Committer: &git.Signature{When: timestamppb.New(time.Date(2026, 11, 13, 14, 3, 20, 0, time.UTC))},
+			},
+		}})
+		objs, err := b.buildJobTemplate(context.Background(), repo, job, task, "@rules_go//go/toolchain:linux_amd64")
+		require.NoError(t, err)
+		env := mainContainerEnv(t, objs)
+		assertion.Equal(t, env["BUILD_COMMIT_SHA"], task.Revision)
+		assertion.Equal(t, env["BUILD_COMMIT_TIME"], "2026-11-13T14:03:20Z")
+	})
+
+	t.Run("Build without the commit if it is not found", func(t *testing.T) {
+		b := newBuilder(&fakeGitDataClient{})
+		objs, err := b.buildJobTemplate(context.Background(), repo, job, task, "@rules_go//go/toolchain:linux_amd64")
+		require.NoError(t, err)
+		env := mainContainerEnv(t, objs)
+		assertion.NotContains(t, env, "BUILD_COMMIT_SHA")
+		assertion.NotContains(t, env, "BUILD_COMMIT_TIME")
 	})
 }
 

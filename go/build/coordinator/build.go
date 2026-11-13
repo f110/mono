@@ -36,6 +36,7 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/ctxutil"
 	"go.f110.dev/mono/go/enumerable"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/k8s/k8sfactory"
 	"go.f110.dev/mono/go/k8s/k8smanifest"
 	"go.f110.dev/mono/go/logger"
@@ -201,6 +202,7 @@ type BazelBuilder struct {
 	defaultTaskCPULimit    resource.Quantity
 	defaultTaskMemoryLimit resource.Quantity
 	dev                    bool
+	gitDataClient          git.GitDataClient
 
 	// emulateJobControl enables the dev-only CompleteTask path against a
 	// kwok-emulated kube-apiserver. emulateFixtureDir holds the directory of
@@ -317,6 +319,11 @@ func NewBazelBuilder(
 	}
 
 	return b, nil
+}
+
+// GitDataClient sets the client of git-data-service to look up the commit being built.
+func (b *BazelBuilder) GitDataClient(client git.GitDataClient) {
+	b.gitDataClient = client
 }
 
 func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
@@ -660,7 +667,7 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 		return ErrOtherTaskIsRunning.WithStack()
 	}
 
-	builtObjects, err := b.buildJobTemplate(repo, job, task, task.Platform)
+	builtObjects, err := b.buildJobTemplate(ctx, repo, job, task, task.Platform)
 	if err != nil {
 		return err
 	}
@@ -998,8 +1005,16 @@ func (b *BazelBuilder) updateGithubStatus(ctx context.Context, repo *database.So
 	return nil
 }
 
-func (b *BazelBuilder) buildJobTemplate(repo *database.SourceRepository, job *config.JobV2, task *database.Task, platform string) ([]runtime.Object, error) {
+func (b *BazelBuilder) buildJobTemplate(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, task *database.Task, platform string) ([]runtime.Object, error) {
 	jobBuilder := b.jobBuilder.Clone()
+	if b.gitDataClient != nil && task.Revision != "" {
+		res, err := b.gitDataClient.GetCommit(ctx, &git.RequestGetCommit{Repo: repo.Name, Sha: task.Revision})
+		if err != nil {
+			logger.Log.Warn("Failed to get the commit", slog.String("repo", repo.Name), slog.String("revision", task.Revision), logger.E(err))
+		} else {
+			jobBuilder.Commit(res.GetCommit().GetSha(), res.GetCommit().GetCommitter().GetWhen().AsTime())
+		}
+	}
 	builtObjects, err := jobBuilder.
 		Repo(repo).
 		Job(job).

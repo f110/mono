@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.f110.dev/kubeproto/go/apis/batchv1"
 	"go.f110.dev/kubeproto/go/apis/corev1"
@@ -165,6 +166,15 @@ func (j *JobBuilder) GitDataService(url string) {
 // is the gRPC address of the builder API the collect sidecar uploads to.
 func (j *JobBuilder) EnableArtifactCollection(addr string) {
 	j.artifactBuilderAddr = addr
+}
+
+// Commit passes the commit being built to the build container as environment variables.
+func (j *JobBuilder) Commit(sha string, when time.Time) *JobBuilder {
+	j.mainContainer = k8sfactory.ContainerFactory(j.mainContainer,
+		k8sfactory.EnvVar("BUILD_COMMIT_SHA", sha),
+		k8sfactory.EnvVar("BUILD_COMMIT_TIME", when.UTC().Format(time.RFC3339)),
+	)
+	return j
 }
 
 func (j *JobBuilder) Clone() *JobBuilder {

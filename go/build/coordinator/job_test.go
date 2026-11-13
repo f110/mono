@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -175,6 +176,21 @@ func TestJobBuilder(t *testing.T) {
 						"--git-data-repo=f110/example",
 						"--commit=e192aef54cb0d31afd7cae64b079be2a12a56a74",
 					)),
+				},
+			},
+		},
+		{
+			BuilderMutation: func(b *JobBuilder) {
+				b.Commit("e192aef54cb0d31afd7cae64b079be2a12a56a74", time.Date(2026, 11, 13, 23, 3, 20, 0, time.FixedZone("JST", 9*60*60)))
+			},
+			Platform:      "@rules_go//go/toolchain:linux_amd64",
+			ExpectObjects: []runtime.Object{saObject, jobObject},
+			ObjectMutation: map[runtime.Object][]k8sfactory.Trait{
+				jobObject: {
+					k8sfactory.OnContainer("main",
+						k8sfactory.EnvVar("BUILD_COMMIT_SHA", "e192aef54cb0d31afd7cae64b079be2a12a56a74"),
+						k8sfactory.EnvVar("BUILD_COMMIT_TIME", "2026-11-13T14:03:20Z"),
+					),
 				},
 			},
 		},

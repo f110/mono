@@ -560,6 +560,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		}
 		p.gitDataConn = conn
 		p.gitDataClient = git.NewGitDataClient(conn)
+		p.bazelBuilder.GitDataClient(p.gitDataClient)
 		logger.Log.Info("Use git-data-service for reading repository data", slog.String("addr", p.opt.GitDataServiceURL))
 	}
 
