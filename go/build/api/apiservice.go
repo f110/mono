@@ -744,6 +744,11 @@ func dbArtifactToAPIArtifact(a *database.Artifact) *model.Artifact {
 // needed) and returns the content hashes not yet stored, which the sidecar then
 // uploads. This keeps per-commit transmission minimal while still recording which
 // artifacts each commit produced.
+//
+// Whether the content is already stored is decided only by the rows in the
+// artifact table. It intentionally does not check that the content still exists
+// in the registry: doing so would force the registry to keep every past
+// artifact forever.
 func (s *apiService) SyncArtifacts(ctx context.Context, req *RequestSyncArtifacts) (*ResponseSyncArtifacts, error) {
 	var newHashes []string
 	seen := set.New[string]()
