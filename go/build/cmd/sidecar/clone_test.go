@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -18,6 +19,17 @@ import (
 
 	"go.f110.dev/mono/go/git"
 )
+
+func TestWriteWorkspaceStatusCommand(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "workspace_status.sh")
+	require.NoError(t, writeWorkspaceStatusCommand(path))
+
+	cmd := exec.Command(path)
+	cmd.Env = []string{"BUILD_COMMIT_SHA=e192aef54cb0d31afd7cae64b079be2a12a56a74", "BUILD_COMMIT_TIME=2026-11-13T14:03:20Z"}
+	out, err := cmd.Output()
+	require.NoError(t, err)
+	assert.Equal(t, "STABLE_BUILD_COMMIT_SHA e192aef54cb0d31afd7cae64b079be2a12a56a74\nSTABLE_BUILD_COMMIT_TIME 2026-11-13T14:03:20Z\n", string(out))
+}
 
 func TestExportToDir(t *testing.T) {
 	repo, head := makeRepository(t)

@@ -24,7 +24,14 @@ type CloneCommand struct {
 
 	GitDataServiceURL string
 	GitDataRepo       string
+
+	WorkspaceStatusCommand string
 }
+
+const workspaceStatusScript = `#!/bin/sh
+echo "STABLE_BUILD_COMMIT_SHA ${BUILD_COMMIT_SHA}"
+echo "STABLE_BUILD_COMMIT_TIME ${BUILD_COMMIT_TIME}"
+`
 
 func NewCloneCommand() *CloneCommand {
 	return &CloneCommand{}
@@ -43,13 +50,31 @@ func (c *CloneCommand) SetFlags(fs *flag.FlagSet) {
 	fs.String("commit", "Specify commit").Shorthand("b").Var(&c.Commit)
 	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint. If set, the source tree is fetched from git-data-service instead of cloning the repository.").Var(&c.GitDataServiceURL)
 	fs.String("git-data-repo", "Repository name registered with git-data-service").Var(&c.GitDataRepo)
+	fs.String("workspace-status-command", "Path to write the script for --workspace_status_command of Bazel").Var(&c.WorkspaceStatusCommand)
 }
 
 func (c *CloneCommand) Run(ctx context.Context) error {
+	if c.WorkspaceStatusCommand != "" {
+		if err := writeWorkspaceStatusCommand(c.WorkspaceStatusCommand); err != nil {
+			return err
+		}
+	}
 	if c.GitDataServiceURL != "" {
 		return c.exportFromGitDataService(ctx)
 	}
 	return git.Clone(ctx, c.AppId, c.InstallationId, c.PrivateKeyFile, c.WorkDir, c.Repo, c.Commit)
+}
+
+// writeWorkspaceStatusCommand writes the script for --workspace_status_command of Bazel to path.
+// The script prints the commit given by the coordinator through the environment variables.
+func writeWorkspaceStatusCommand(path string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return xerrors.WithStack(err)
+	}
+	if err := os.WriteFile(path, []byte(workspaceStatusScript), 0755); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *CloneCommand) exportFromGitDataService(ctx context.Context) error {
