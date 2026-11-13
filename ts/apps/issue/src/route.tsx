@@ -15,8 +15,11 @@ const rootRoute = createRootRoute({
 const listRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  validateSearch: (search: Record<string, unknown>): { filter?: string; component?: string; order_by?: string; pages?: string[] } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { filter?: string; status?: string[]; component?: string; order_by?: string; pages?: string[] } => ({
     filter: typeof search.filter === 'string' ? search.filter : undefined,
+    status: Array.isArray(search.status) && search.status.every((v) => typeof v === 'string') ? search.status : undefined,
     component: typeof search.component === 'string' ? search.component : undefined,
     order_by: typeof search.order_by === 'string' ? search.order_by : undefined,
     pages: Array.isArray(search.pages) && search.pages.every((v) => typeof v === 'string') ? search.pages : undefined,

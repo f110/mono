@@ -10,6 +10,7 @@ import {
 import {
   Alert,
   Box,
+  Checkbox,
   Chip,
   Link,
   MenuItem,
@@ -27,13 +28,14 @@ import {
   Typography,
 } from '@mui/material'
 import dayjs from 'dayjs'
-import { type Ticket, Issue } from '../connect/issue_pb'
+import { type Ticket, Issue, TicketStatus } from '../connect/issue_pb'
 import { CopyTicketNumberButton } from '../components/CopyButton.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
-import { priorityLabels, statusColors, statusLabels, typeLabels } from '../labels.ts'
+import { priorityLabels, statusColors, statusLabels, statuses, typeLabels } from '../labels.ts'
 
-const defaultFilter = 'status = OPEN OR status = NEED_INVESTIGATION OR status = IN_PROGRESS'
+const defaultStatuses = [TicketStatus.OPEN, TicketStatus.NEED_INVESTIGATION, TicketStatus.IN_PROGRESS].map((s) => TicketStatus[s])
+const statusLabelByName = Object.fromEntries(statuses.map((s) => [TicketStatus[s], statusLabels[s]]))
 const defaultOrder = 'last_activity_at desc'
 const pageSize = 100
 const wideOnlySx = { display: { xs: 'none', sm: 'table-cell' } }
@@ -50,35 +52,40 @@ const columns: { label: string; field?: string; grow?: boolean; wideOnly?: boole
   { label: '更新', field: 'last_activity_at', wideOnly: true },
 ]
 
-// withComponent returns the filter which is restricted to the component of name.
-function withComponent(filter: string, name: string): string {
-  if (name === '') {
-    return filter
-  }
-  const restriction = `component = "${name.replaceAll('"', '\\"')}"`
-  return filter.trim() === '' ? restriction : `(${filter}) AND ${restriction}`
+// and returns the filter which joins non-empty conditions with AND.
+function and(...conditions: string[]): string {
+  return conditions
+    .filter((c) => c.trim() !== '')
+    .map((c) => `(${c})`)
+    .join(' AND ')
 }
 
 export const TicketListPage = () => {
   const search = useSearch({ from: '/' })
   const navigate = useNavigate({ from: '/' })
-  const filter = search.filter ?? defaultFilter
+  const filter = search.filter ?? ''
+  const selectedStatuses = search.status ?? defaultStatuses
   const component = search.component ?? ''
   const orderBy = search.order_by ?? defaultOrder
   const [orderField, orderDirection] = orderBy.split(' ')
   const [input, setInput] = useState(filter)
   const { components } = useMasters()
   const pages = search.pages ?? []
-  const separateP0 = filter === defaultFilter
+  const separateP0 = filter === '' && search.status === undefined
+  const condition = and(
+    filter,
+    selectedStatuses.map((s) => `status = ${s}`).join(' OR '),
+    component === '' ? '' : `component = "${component.replaceAll('"', '\\"')}"`,
+  )
   const { data, error } = useQuery(Issue.method.listTickets, {
-    filter: withComponent(separateP0 ? `(${filter}) AND priority != P0` : filter, component),
+    filter: separateP0 ? and(condition, 'priority != P0') : condition,
     orderBy,
     pageSize,
     pageToken: pages.at(-1) ?? '',
   })
   const { data: p0, error: p0Error } = useQuery(
     Issue.method.listTickets,
-    separateP0 && pages.length === 0 ? { filter: withComponent(`(${filter}) AND priority = P0`, component), orderBy } : skipToken,
+    separateP0 && pages.length === 0 ? { filter: and(condition, 'priority = P0'), orderBy } : skipToken,
   )
 
   const sortBy = (field: string) => {
@@ -127,6 +134,35 @@ export const TicketListPage = () => {
             </MenuItem>
           ))}
         </TextField>
+        <TextField
+          select
+          size="small"
+          label="Status"
+          value={selectedStatuses}
+          onChange={(e) => {
+            const value = e.target.value as unknown as string[]
+            void navigate({ search: (prev) => ({ ...prev, status: value, pages: undefined }) })
+          }}
+          sx={{ width: 240 }}
+          slotProps={{
+            select: {
+              multiple: true,
+              displayEmpty: true,
+              renderValue: (selected) =>
+                (selected as string[]).length === 0
+                  ? 'すべて'
+                  : (selected as string[]).map((s) => statusLabelByName[s]).join(', '),
+            },
+            inputLabel: { shrink: true },
+          }}
+        >
+          {statuses.map((s) => (
+            <MenuItem key={s} value={TicketStatus[s]}>
+              <Checkbox size="small" checked={selectedStatuses.includes(TicketStatus[s])} sx={{ p: 0, mr: 1 }} />
+              {statusLabels[s]}
+            </MenuItem>
+          ))}
+        </TextField>
         <Box
           component="form"
           sx={{ flex: 1, minWidth: 240 }}
@@ -137,7 +173,7 @@ export const TicketListPage = () => {
         >
           <TextField
             label="フィルタ"
-            placeholder="status = OPEN AND priority <= P1 クラッシュ"
+            placeholder="priority <= P1 クラッシュ"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             fullWidth
