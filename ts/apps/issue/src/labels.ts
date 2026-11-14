@@ -1,4 +1,4 @@
-import { ActivityKind, ActorKind, Priority, RelationType, TicketStatus, TicketType } from './connect/issue_pb'
+import { ActivityKind, ActorKind, CodingAgent, Priority, RelationType, TicketStatus, TicketType } from './connect/issue_pb'
 
 export const statusLabels: Record<TicketStatus, string> = {
   [TicketStatus.UNSPECIFIED]: '-',
@@ -50,6 +50,14 @@ export const relationLabels: Record<RelationType, [string, string]> = {
 }
 
 export const relationTypes = [RelationType.PARENT_OF, RelationType.BLOCKS, RelationType.DUPLICATE_OF, RelationType.RELATES_TO]
+
+export const codingAgentLabels: Record<CodingAgent, string> = {
+  [CodingAgent.UNSPECIFIED]: '-',
+  [CodingAgent.CLAUDE_CODE]: 'Claude Code',
+  [CodingAgent.CODEX]: 'Codex',
+  [CodingAgent.GEMINI_CLI]: 'Gemini CLI',
+  [CodingAgent.OPENCODE]: 'OpenCode',
+}
 
 export const actorKindLabels: Record<ActorKind, string> = {
   [ActorKind.UNSPECIFIED]: '',

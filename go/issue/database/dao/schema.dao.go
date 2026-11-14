@@ -3428,6 +3428,286 @@ func (d *PullRequestLink) Update(ctx context.Context, pullRequestLink *database.
 	return nil
 }
 
+type AgentSession struct {
+	conn *sql.DB
+
+	ticket *Ticket
+}
+
+type AgentSessionInterface interface {
+	Tx(ctx context.Context, fn func(tx *sql.Tx) error) error
+	Select(ctx context.Context, id int32) (*database.AgentSession, error)
+	SelectMulti(ctx context.Context, id ...int32) ([]*database.AgentSession, error)
+	ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.AgentSession, error)
+	SelectByTicketIdAndHostnameAndSessionId(ctx context.Context, ticketId int32, hostname string, sessionId string) (*database.AgentSession, error)
+	Create(ctx context.Context, agentSession *database.AgentSession, opt ...ExecOption) (*database.AgentSession, error)
+	Update(ctx context.Context, agentSession *database.AgentSession, opt ...ExecOption) error
+	Delete(ctx context.Context, id int32, opt ...ExecOption) error
+}
+
+var _ AgentSessionInterface = (*AgentSession)(nil)
+
+func NewAgentSession(conn *sql.DB) *AgentSession {
+	return &AgentSession{
+		conn:   conn,
+		ticket: NewTicket(conn),
+	}
+}
+
+func (d *AgentSession) Tx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := d.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if err := fn(tx); err != nil {
+		if rErr := tx.Rollback(); rErr != nil {
+			return rErr
+		}
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *AgentSession) Select(ctx context.Context, id int32) (*database.AgentSession, error) {
+	row := d.conn.QueryRowContext(ctx, "SELECT * FROM `agent_session` WHERE `id` = ?", id)
+
+	v := &database.AgentSession{}
+	if err := row.Scan(&v.Id, &v.TicketId, &v.Agent, &v.Hostname, &v.SessionId, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.TicketId); rel != nil {
+			v.Ticket = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *AgentSession) SelectMulti(ctx context.Context, id ...int32) ([]*database.AgentSession, error) {
+	inCause := strings.Repeat("?, ", len(id))
+	args := make([]any, len(id))
+	for i := range id {
+		args[i] = id[i]
+	}
+	rows, err := d.conn.QueryContext(ctx, fmt.Sprintf("SELECT * FROM `agent_session` WHERE `id` IN (%s)", inCause[:len(inCause)-2]), args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.AgentSession, 0, len(id))
+	for rows.Next() {
+		r := &database.AgentSession{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.Agent, &r.Hostname, &r.SessionId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		res = append(res, r)
+	}
+
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+	return res, nil
+}
+
+func (d *AgentSession) ListByTicketId(ctx context.Context, ticketId int32, opt ...ListOption) ([]*database.AgentSession, error) {
+	listOpts := newListOpt(opt...)
+	query := "SELECT `id`, `ticket_id`, `agent`, `hostname`, `session_id`, `created_at`, `updated_at` FROM `agent_session` WHERE `ticket_id` = ?"
+	orderCol := "`" + listOpts.sort + "`"
+	if listOpts.sort == "" {
+		orderCol = "`id`"
+	}
+	orderDi := "ASC"
+	if listOpts.desc {
+		orderDi = "DESC"
+	}
+	query = query + fmt.Sprintf(" ORDER BY %s %s", orderCol, orderDi)
+	if listOpts.limit > 0 {
+		query = query + fmt.Sprintf(" LIMIT %d", listOpts.limit)
+	}
+	rows, err := d.conn.QueryContext(
+		ctx,
+		query,
+		ticketId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make([]*database.AgentSession, 0)
+	for rows.Next() {
+		r := &database.AgentSession{}
+		if err := rows.Scan(&r.Id, &r.TicketId, &r.Agent, &r.Hostname, &r.SessionId, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		r.ResetMark()
+		res = append(res, r)
+	}
+	if len(res) > 0 {
+		ticketPrimaryKeys := make([]int32, len(res))
+		for i, v := range res {
+			ticketPrimaryKeys[i] = v.TicketId
+		}
+		ticketData := make(map[int32]*database.Ticket)
+		{
+			rels, _ := d.ticket.SelectMulti(ctx, ticketPrimaryKeys...)
+			for _, v := range rels {
+				ticketData[v.Id] = v
+			}
+		}
+		for _, v := range res {
+			v.Ticket = ticketData[v.TicketId]
+		}
+	}
+
+	return res, nil
+}
+
+func (d *AgentSession) SelectByTicketIdAndHostnameAndSessionId(ctx context.Context, ticketId int32, hostname string, sessionId string) (*database.AgentSession, error) {
+	row := d.conn.QueryRowContext(
+		ctx,
+		"SELECT `id`, `ticket_id`, `agent`, `hostname`, `session_id`, `created_at`, `updated_at` FROM `agent_session` WHERE `ticket_id` = ? AND `hostname` = ? AND `session_id` = ?",
+		ticketId,
+		hostname,
+		sessionId,
+	)
+	v := &database.AgentSession{}
+	if err := row.Scan(&v.Id, &v.TicketId, &v.Agent, &v.Hostname, &v.SessionId, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		return nil, err
+	}
+
+	{
+		if rel, _ := d.ticket.Select(ctx, v.TicketId); rel != nil {
+			v.Ticket = rel
+		}
+	}
+
+	v.ResetMark()
+	return v, nil
+}
+
+func (d *AgentSession) Create(ctx context.Context, agentSession *database.AgentSession, opt ...ExecOption) (*database.AgentSession, error) {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO `agent_session` (`ticket_id`, `agent`, `hostname`, `session_id`, `created_at`) VALUES (?, ?, ?, ?, ?)",
+		agentSession.TicketId, agentSession.Agent, agentSession.Hostname, agentSession.SessionId, time.Now(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return nil, err
+	} else if n == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	agentSession = agentSession.Copy()
+	insertedId, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	agentSession.Id = int32(insertedId)
+
+	agentSession.ResetMark()
+	return agentSession, nil
+}
+
+func (d *AgentSession) Delete(ctx context.Context, id int32, opt ...ExecOption) error {
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	res, err := conn.ExecContext(ctx, "DELETE FROM `agent_session` WHERE `id` = ?", id)
+	if err != nil {
+		return err
+	}
+
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+func (d *AgentSession) Update(ctx context.Context, agentSession *database.AgentSession, opt ...ExecOption) error {
+	if !agentSession.IsChanged() {
+		return nil
+	}
+
+	execOpts := newExecOpt(opt...)
+	var conn execConn
+	if execOpts.tx != nil {
+		conn = execOpts.tx
+	} else {
+		conn = d.conn
+	}
+
+	changedColumn := agentSession.ChangedColumn()
+	cols := make([]string, len(changedColumn)+1)
+	values := make([]any, len(changedColumn)+1)
+	for i := range changedColumn {
+		cols[i] = "`" + changedColumn[i].Name + "` = ?"
+		values[i] = changedColumn[i].Value
+	}
+	cols[len(cols)-1] = "`updated_at` = ?"
+	values[len(values)-1] = time.Now()
+
+	query := fmt.Sprintf("UPDATE `agent_session` SET %s WHERE `id` = ?", strings.Join(cols, ", "))
+	res, err := conn.ExecContext(
+		ctx,
+		query,
+		append(values, agentSession.Id)...,
+	)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return sql.ErrNoRows
+	}
+
+	agentSession.ResetMark()
+	return nil
+}
+
 type GithubEvent struct {
 	conn *sql.DB
 }

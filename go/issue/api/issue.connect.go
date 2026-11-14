@@ -44,6 +44,8 @@ const (
 	IssueAddRelationProcedure = "/mono.issue.Issue/AddRelation"
 	// IssueRemoveRelationProcedure is the fully-qualified name of the Issue's RemoveRelation RPC.
 	IssueRemoveRelationProcedure = "/mono.issue.Issue/RemoveRelation"
+	// IssueAddAgentSessionProcedure is the fully-qualified name of the Issue's AddAgentSession RPC.
+	IssueAddAgentSessionProcedure = "/mono.issue.Issue/AddAgentSession"
 	// IssueAddCommentProcedure is the fully-qualified name of the Issue's AddComment RPC.
 	IssueAddCommentProcedure = "/mono.issue.Issue/AddComment"
 	// IssueEditCommentProcedure is the fully-qualified name of the Issue's EditComment RPC.
@@ -82,6 +84,7 @@ type IssueClient interface {
 	UpdateTicket(context.Context, *connect.Request[RequestUpdateTicket]) (*connect.Response[ResponseUpdateTicket], error)
 	AddRelation(context.Context, *connect.Request[RequestAddRelation]) (*connect.Response[ResponseAddRelation], error)
 	RemoveRelation(context.Context, *connect.Request[RequestRemoveRelation]) (*connect.Response[ResponseRemoveRelation], error)
+	AddAgentSession(context.Context, *connect.Request[RequestAddAgentSession]) (*connect.Response[ResponseAddAgentSession], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
@@ -142,6 +145,12 @@ func NewIssueClient(httpClient connect.HTTPClient, baseURL string, opts ...conne
 			httpClient,
 			baseURL+IssueRemoveRelationProcedure,
 			connect.WithSchema(issueMethods.ByName("RemoveRelation")),
+			connect.WithClientOptions(opts...),
+		),
+		addAgentSession: connect.NewClient[RequestAddAgentSession, ResponseAddAgentSession](
+			httpClient,
+			baseURL+IssueAddAgentSessionProcedure,
+			connect.WithSchema(issueMethods.ByName("AddAgentSession")),
 			connect.WithClientOptions(opts...),
 		),
 		addComment: connect.NewClient[RequestAddComment, ResponseAddComment](
@@ -233,6 +242,7 @@ type issueClient struct {
 	updateTicket         *connect.Client[RequestUpdateTicket, ResponseUpdateTicket]
 	addRelation          *connect.Client[RequestAddRelation, ResponseAddRelation]
 	removeRelation       *connect.Client[RequestRemoveRelation, ResponseRemoveRelation]
+	addAgentSession      *connect.Client[RequestAddAgentSession, ResponseAddAgentSession]
 	addComment           *connect.Client[RequestAddComment, ResponseAddComment]
 	editComment          *connect.Client[RequestEditComment, ResponseEditComment]
 	deleteComment        *connect.Client[RequestDeleteComment, ResponseDeleteComment]
@@ -276,6 +286,11 @@ func (c *issueClient) AddRelation(ctx context.Context, req *connect.Request[Requ
 // RemoveRelation calls mono.issue.Issue.RemoveRelation.
 func (c *issueClient) RemoveRelation(ctx context.Context, req *connect.Request[RequestRemoveRelation]) (*connect.Response[ResponseRemoveRelation], error) {
 	return c.removeRelation.CallUnary(ctx, req)
+}
+
+// AddAgentSession calls mono.issue.Issue.AddAgentSession.
+func (c *issueClient) AddAgentSession(ctx context.Context, req *connect.Request[RequestAddAgentSession]) (*connect.Response[ResponseAddAgentSession], error) {
+	return c.addAgentSession.CallUnary(ctx, req)
 }
 
 // AddComment calls mono.issue.Issue.AddComment.
@@ -351,6 +366,7 @@ type IssueHandler interface {
 	UpdateTicket(context.Context, *connect.Request[RequestUpdateTicket]) (*connect.Response[ResponseUpdateTicket], error)
 	AddRelation(context.Context, *connect.Request[RequestAddRelation]) (*connect.Response[ResponseAddRelation], error)
 	RemoveRelation(context.Context, *connect.Request[RequestRemoveRelation]) (*connect.Response[ResponseRemoveRelation], error)
+	AddAgentSession(context.Context, *connect.Request[RequestAddAgentSession]) (*connect.Response[ResponseAddAgentSession], error)
 	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
 	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
 	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
@@ -407,6 +423,12 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 		IssueRemoveRelationProcedure,
 		svc.RemoveRelation,
 		connect.WithSchema(issueMethods.ByName("RemoveRelation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	issueAddAgentSessionHandler := connect.NewUnaryHandler(
+		IssueAddAgentSessionProcedure,
+		svc.AddAgentSession,
+		connect.WithSchema(issueMethods.ByName("AddAgentSession")),
 		connect.WithHandlerOptions(opts...),
 	)
 	issueAddCommentHandler := connect.NewUnaryHandler(
@@ -501,6 +523,8 @@ func NewIssueHandler(svc IssueHandler, opts ...connect.HandlerOption) (string, h
 			issueAddRelationHandler.ServeHTTP(w, r)
 		case IssueRemoveRelationProcedure:
 			issueRemoveRelationHandler.ServeHTTP(w, r)
+		case IssueAddAgentSessionProcedure:
+			issueAddAgentSessionHandler.ServeHTTP(w, r)
 		case IssueAddCommentProcedure:
 			issueAddCommentHandler.ServeHTTP(w, r)
 		case IssueEditCommentProcedure:
@@ -558,6 +582,10 @@ func (UnimplementedIssueHandler) AddRelation(context.Context, *connect.Request[R
 
 func (UnimplementedIssueHandler) RemoveRelation(context.Context, *connect.Request[RequestRemoveRelation]) (*connect.Response[ResponseRemoveRelation], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.RemoveRelation is not implemented"))
+}
+
+func (UnimplementedIssueHandler) AddAgentSession(context.Context, *connect.Request[RequestAddAgentSession]) (*connect.Response[ResponseAddAgentSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.issue.Issue.AddAgentSession is not implemented"))
 }
 
 func (UnimplementedIssueHandler) AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error) {

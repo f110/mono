@@ -152,6 +152,19 @@ func TestEnumConversion(t *testing.T) {
 		assertion.Equal(t, toPullRequestLink(&database.PullRequestLink{State: db}, "").GetState(), a)
 	}
 
+	agents := map[database.CodingAgent]api.CodingAgent{
+		database.CodingAgentClaudeCode: api.CodingAgent_CODING_AGENT_CLAUDE_CODE,
+		database.CodingAgentCodex:      api.CodingAgent_CODING_AGENT_CODEX,
+		database.CodingAgentGeminiCli:  api.CodingAgent_CODING_AGENT_GEMINI_CLI,
+		database.CodingAgentOpencode:   api.CodingAgent_CODING_AGENT_OPENCODE,
+	}
+	for db, a := range agents {
+		assertion.Equal(t, toAgentSession(&database.AgentSession{Agent: db}).GetAgent(), a)
+		got, err := toDBCodingAgent(a)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, got, db)
+	}
+
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCreate}).GetKind(), api.ActivityKind_ACTIVITY_KIND_CREATE)
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindCommentDeleted}).GetKind(), api.ActivityKind_ACTIVITY_KIND_COMMENT_DELETED)
 	assertion.Equal(t, toActivity(&database.Activity{Kind: database.ActivityKindMentionRemoved}).GetKind(), api.ActivityKind_ACTIVITY_KIND_MENTION_REMOVED)
@@ -159,6 +172,10 @@ func TestEnumConversion(t *testing.T) {
 	_, err := toDBStatus(api.TicketStatus_TICKET_STATUS_UNSPECIFIED)
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 	_, err = toDBRelationType(api.RelationType_RELATION_TYPE_UNSPECIFIED)
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+	_, err = toDBCodingAgent(api.CodingAgent_CODING_AGENT_UNSPECIFIED)
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
+	_, err = toDBCodingAgent(api.CodingAgent(100))
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 }
 
@@ -273,6 +290,35 @@ func TestIssueHandler(t *testing.T) {
 		last := activities.Msg.GetActivities()[len(activities.Msg.GetActivities())-1]
 		assertion.Equal(t, last.GetKind(), api.ActivityKind_ACTIVITY_KIND_COMMENT)
 		assertion.Equal(t, last.GetActorId(), actor.Id)
+	})
+
+	t.Run("get the ticket with the sessions of the coding agents", func(t *testing.T) {
+		req := api.RequestAddAgentSession_builder{
+			Ticket:    new(ticket.GetNumber()),
+			Agent:     new(api.CodingAgent_CODING_AGENT_CODEX),
+			Hostname:  new("host"),
+			SessionId: new("019dd4bf-0929-7ea0-b227-1f51085e7d71"),
+		}.Build()
+		_, err := client.AddAgentSession(ctx, connect.NewRequest(req))
+		assertion.MustNoError(t, err)
+		_, err = client.AddAgentSession(ctx, connect.NewRequest(req))
+		assertion.MustNoError(t, err)
+
+		res, err := client.GetTicket(ctx, connect.NewRequest(api.RequestGetTicket_builder{Number: new(ticket.GetNumber())}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, res.Msg.GetAgentSessions(), 1)
+		session := res.Msg.GetAgentSessions()[0]
+		assertion.Equal(t, session.GetAgent(), api.CodingAgent_CODING_AGENT_CODEX)
+		assertion.Equal(t, session.GetHostname(), "host")
+		assertion.Equal(t, session.GetSessionId(), "019dd4bf-0929-7ea0-b227-1f51085e7d71")
+		assertion.True(t, session.HasCreatedAt())
+
+		_, err = client.AddAgentSession(ctx, connect.NewRequest(api.RequestAddAgentSession_builder{
+			Ticket:    new(ticket.GetNumber()),
+			Hostname:  new("host"),
+			SessionId: new("id"),
+		}.Build()))
+		assertion.Equal(t, connect.CodeOf(err), connect.CodeInvalidArgument)
 	})
 
 	t.Run("list the tickets by the filter", func(t *testing.T) {

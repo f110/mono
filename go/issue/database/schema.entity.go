@@ -43,6 +43,15 @@ const (
 	ActorKindSystem ActorKind = 2
 )
 
+type CodingAgent uint32
+
+const (
+	CodingAgentClaudeCode CodingAgent = 0
+	CodingAgentCodex      CodingAgent = 1
+	CodingAgentGeminiCli  CodingAgent = 2
+	CodingAgentOpencode   CodingAgent = 3
+)
+
 type GithubEventState uint32
 
 const (
@@ -1221,6 +1230,94 @@ func (e *PullRequestLink) Copy() *PullRequestLink {
 		State:        e.State,
 		HeadSha:      e.HeadSha,
 		CreatedAt:    e.CreatedAt,
+	}
+	if e.UpdatedAt != nil {
+		v := *e.UpdatedAt
+		n.UpdatedAt = &v
+	}
+
+	if e.Ticket != nil {
+		n.Ticket = e.Ticket.Copy()
+	}
+
+	return n
+}
+
+// AgentSession is the session of the coding agent which works on the ticket. session_id is opaque because the format
+// differs by the agent, and it can be resumed only on the host of hostname.
+type AgentSession struct {
+	Id        int32
+	TicketId  int32
+	Agent     CodingAgent
+	Hostname  string
+	SessionId string
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+
+	Ticket *Ticket
+
+	mu   sync.Mutex
+	mark *AgentSession
+}
+
+func (e *AgentSession) ResetMark() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.mark = e.Copy()
+}
+
+func (e *AgentSession) IsChanged() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.TicketId != e.mark.TicketId ||
+		e.Agent != e.mark.Agent ||
+		e.Hostname != e.mark.Hostname ||
+		e.SessionId != e.mark.SessionId ||
+		!e.CreatedAt.Equal(e.mark.CreatedAt) ||
+		((e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil))
+}
+
+func (e *AgentSession) ChangedColumn() []ddl.Column {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	res := make([]ddl.Column, 0)
+	if e.TicketId != e.mark.TicketId {
+		res = append(res, ddl.Column{Name: "ticket_id", Value: e.TicketId})
+	}
+	if e.Agent != e.mark.Agent {
+		res = append(res, ddl.Column{Name: "agent", Value: e.Agent})
+	}
+	if e.Hostname != e.mark.Hostname {
+		res = append(res, ddl.Column{Name: "hostname", Value: e.Hostname})
+	}
+	if e.SessionId != e.mark.SessionId {
+		res = append(res, ddl.Column{Name: "session_id", Value: e.SessionId})
+	}
+	if !e.CreatedAt.Equal(e.mark.CreatedAt) {
+		res = append(res, ddl.Column{Name: "created_at", Value: e.CreatedAt})
+	}
+	if (e.UpdatedAt != nil && (e.mark.UpdatedAt == nil || !e.UpdatedAt.Equal(*e.mark.UpdatedAt))) || (e.UpdatedAt == nil && e.mark.UpdatedAt != nil) {
+		if e.UpdatedAt != nil {
+			res = append(res, ddl.Column{Name: "updated_at", Value: *e.UpdatedAt})
+		} else {
+			res = append(res, ddl.Column{Name: "updated_at", Value: nil})
+		}
+	}
+
+	return res
+}
+
+func (e *AgentSession) Copy() *AgentSession {
+	n := &AgentSession{
+		Id:        e.Id,
+		TicketId:  e.TicketId,
+		Agent:     e.Agent,
+		Hostname:  e.Hostname,
+		SessionId: e.SessionId,
+		CreatedAt: e.CreatedAt,
 	}
 	if e.UpdatedAt != nil {
 		v := *e.UpdatedAt

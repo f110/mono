@@ -181,6 +181,13 @@ func TestNew(t *testing.T) {
 		call(t, session, "get_ticket", map[string]any{"number": number}, ticket)
 		assertion.Equal(t, len(ticket.GetComments()), 1)
 		assertion.Equal(t, len(ticket.GetRelations()), 1)
+
+		call(t, session, "add_agent_session", map[string]any{"ticket": number, "agent": "CLAUDE_CODE", "hostname": "host", "session_id": "d7a5c1e4-5d2b-4c1f-9e7a-1b2c3d4e5f60"}, &api.ResponseAddAgentSession{})
+		call(t, session, "get_ticket", map[string]any{"number": number}, ticket)
+		assertion.MustLen(t, ticket.GetAgentSessions(), 1)
+		assertion.Equal(t, ticket.GetAgentSessions()[0].GetAgent(), api.CodingAgent_CODING_AGENT_CLAUDE_CODE)
+		assertion.Equal(t, ticket.GetAgentSessions()[0].GetHostname(), "host")
+		assertion.Equal(t, ticket.GetAgentSessions()[0].GetSessionId(), "d7a5c1e4-5d2b-4c1f-9e7a-1b2c3d4e5f60")
 	})
 
 	t.Run("list the tickets by the pages", func(t *testing.T) {
@@ -226,6 +233,9 @@ func TestNew(t *testing.T) {
 	t.Run("the invalid input is the error of the tool", func(t *testing.T) {
 		msg := callError(t, session, "update_ticket", map[string]any{"number": 1, "status": "CLOSED"})
 		assertion.True(t, strings.Contains(msg, `invalid status: "CLOSED"`))
+
+		msg = callError(t, session, "add_agent_session", map[string]any{"ticket": 1, "agent": "CURSOR", "hostname": "host", "session_id": "id"})
+		assertion.True(t, strings.Contains(msg, `invalid agent: "CURSOR"`))
 
 		msg = callError(t, session, "get_ticket", map[string]any{"number": 100})
 		assertion.True(t, strings.Contains(msg, "not_found"))

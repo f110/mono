@@ -893,3 +893,31 @@ func TestSetChangeID(t *testing.T) {
 	mustErrorIs(t, err, ErrUnauthenticated)
 	mustErrorIs(t, f.tracker.SetChangeID(f.as(f.system), 100, "zzzzzzzz"), ErrNotFound)
 }
+
+func TestAgentSession(t *testing.T) {
+	f := newFixture(t)
+	ticket := f.create(t, "title")
+	lastActivityAt := ticket.LastActivityAt
+
+	assertion.MustNoError(t, ticket.AddAgentSession(f.as(f.agent), database.CodingAgentClaudeCode, "host1", "d7a5c1e4-5d2b-4c1f-9e7a-1b2c3d4e5f60"))
+	assertion.MustNoError(t, ticket.AddAgentSession(f.as(f.agent), database.CodingAgentClaudeCode, "host1", "d7a5c1e4-5d2b-4c1f-9e7a-1b2c3d4e5f60"))
+	assertion.MustNoError(t, ticket.AddAgentSession(f.as(f.human), database.CodingAgentOpencode, "host2", "ses_3cf7dd8d4ffeUPfENpVxfFojZ2"))
+
+	sessions, err := ticket.AgentSessions(context.Background())
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, sessions, 2)
+	assertion.Equal(t, sessions[0].Agent, database.CodingAgentClaudeCode)
+	assertion.Equal(t, sessions[0].Hostname, "host1")
+	assertion.Equal(t, sessions[0].SessionId, "d7a5c1e4-5d2b-4c1f-9e7a-1b2c3d4e5f60")
+	assertion.Equal(t, sessions[1].Agent, database.CodingAgentOpencode)
+	assertion.Equal(t, sessions[1].Hostname, "host2")
+	assertion.MustLen(t, activities(t, ticket), 1)
+	assertion.Equal(t, ticket.LastActivityAt, lastActivityAt)
+
+	t.Run("rejected", func(t *testing.T) {
+		mustErrorIs(t, ticket.AddAgentSession(f.as(f.system), database.CodingAgentCodex, "host", "id"), ErrPermissionDenied)
+		mustErrorIs(t, ticket.AddAgentSession(f.as(f.agent), database.CodingAgentCodex, "", "id"), ErrInvalidArgument)
+		mustErrorIs(t, ticket.AddAgentSession(f.as(f.agent), database.CodingAgentCodex, "host", ""), ErrInvalidArgument)
+		mustErrorIs(t, ticket.AddAgentSession(f.as(f.agent), database.CodingAgentCodex, strings.Repeat("a", 256), "id"), ErrInvalidArgument)
+	})
+}

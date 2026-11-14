@@ -351,6 +351,40 @@ export declare type PullRequestLink = Message<"mono.issue.PullRequestLink"> & {
 export declare const PullRequestLinkSchema: GenMessage<PullRequestLink>;
 
 /**
+ * AgentSession is the session of the coding agent which works on the ticket. session_id is opaque because the format
+ * differs by the agent, and the session can be resumed only on the host of hostname.
+ *
+ * @generated from message mono.issue.AgentSession
+ */
+export declare type AgentSession = Message<"mono.issue.AgentSession"> & {
+  /**
+   * @generated from field: mono.issue.CodingAgent agent = 1;
+   */
+  agent: CodingAgent;
+
+  /**
+   * @generated from field: string hostname = 2;
+   */
+  hostname: string;
+
+  /**
+   * @generated from field: string session_id = 3;
+   */
+  sessionId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
+   */
+  createdAt?: Timestamp;
+};
+
+/**
+ * Describes the message mono.issue.AgentSession.
+ * Use `create(AgentSessionSchema)` to create a new message.
+ */
+export declare const AgentSessionSchema: GenMessage<AgentSession>;
+
+/**
  * @generated from message mono.issue.Comment
  */
 export declare type Comment = Message<"mono.issue.Comment"> & {
@@ -593,6 +627,11 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
    * @generated from field: repeated mono.issue.PullRequestLink pull_requests = 6;
    */
   pullRequests: PullRequestLink[];
+
+  /**
+   * @generated from field: repeated mono.issue.AgentSession agent_sessions = 8;
+   */
+  agentSessions: AgentSession[];
 };
 
 /**
@@ -792,6 +831,49 @@ export declare type ResponseRemoveRelation = Message<"mono.issue.ResponseRemoveR
  * Use `create(ResponseRemoveRelationSchema)` to create a new message.
  */
 export declare const ResponseRemoveRelationSchema: GenMessage<ResponseRemoveRelation>;
+
+/**
+ * @generated from message mono.issue.RequestAddAgentSession
+ */
+export declare type RequestAddAgentSession = Message<"mono.issue.RequestAddAgentSession"> & {
+  /**
+   * @generated from field: int32 ticket = 1;
+   */
+  ticket: number;
+
+  /**
+   * @generated from field: mono.issue.CodingAgent agent = 2;
+   */
+  agent: CodingAgent;
+
+  /**
+   * @generated from field: string hostname = 3;
+   */
+  hostname: string;
+
+  /**
+   * @generated from field: string session_id = 4;
+   */
+  sessionId: string;
+};
+
+/**
+ * Describes the message mono.issue.RequestAddAgentSession.
+ * Use `create(RequestAddAgentSessionSchema)` to create a new message.
+ */
+export declare const RequestAddAgentSessionSchema: GenMessage<RequestAddAgentSession>;
+
+/**
+ * @generated from message mono.issue.ResponseAddAgentSession
+ */
+export declare type ResponseAddAgentSession = Message<"mono.issue.ResponseAddAgentSession"> & {
+};
+
+/**
+ * Describes the message mono.issue.ResponseAddAgentSession.
+ * Use `create(ResponseAddAgentSessionSchema)` to create a new message.
+ */
+export declare const ResponseAddAgentSessionSchema: GenMessage<ResponseAddAgentSession>;
 
 /**
  * @generated from message mono.issue.RequestAddComment
@@ -1398,6 +1480,41 @@ export enum RelationType {
 export declare const RelationTypeSchema: GenEnum<RelationType>;
 
 /**
+ * @generated from enum mono.issue.CodingAgent
+ */
+export enum CodingAgent {
+  /**
+   * @generated from enum value: CODING_AGENT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: CODING_AGENT_CLAUDE_CODE = 1;
+   */
+  CLAUDE_CODE = 1,
+
+  /**
+   * @generated from enum value: CODING_AGENT_CODEX = 2;
+   */
+  CODEX = 2,
+
+  /**
+   * @generated from enum value: CODING_AGENT_GEMINI_CLI = 3;
+   */
+  GEMINI_CLI = 3,
+
+  /**
+   * @generated from enum value: CODING_AGENT_OPENCODE = 4;
+   */
+  OPENCODE = 4,
+}
+
+/**
+ * Describes the enum mono.issue.CodingAgent.
+ */
+export declare const CodingAgentSchema: GenEnum<CodingAgent>;
+
+/**
  * @generated from enum mono.issue.ActivityKind
  */
 export enum ActivityKind {
@@ -1565,7 +1682,8 @@ export declare const Issue: GenService<{
     output: typeof ResponseListTicketsSchema;
   },
   /**
-   * GetTicket returns the ticket with the relations, the backlinks, the comments, the commits and the pull requests.
+   * GetTicket returns the ticket with the relations, the backlinks, the comments, the commits, the pull requests and the
+   * sessions of the coding agents.
    *
    * @generated from rpc mono.issue.Issue.GetTicket
    */
@@ -1607,6 +1725,17 @@ export declare const Issue: GenService<{
     methodKind: "unary";
     input: typeof RequestRemoveRelationSchema;
     output: typeof ResponseRemoveRelationSchema;
+  },
+  /**
+   * AddAgentSession adds the session of the coding agent which works on the ticket. It does nothing if the session of
+   * the host is already added.
+   *
+   * @generated from rpc mono.issue.Issue.AddAgentSession
+   */
+  addAgentSession: {
+    methodKind: "unary";
+    input: typeof RequestAddAgentSessionSchema;
+    output: typeof ResponseAddAgentSessionSchema;
   },
   /**
    * @generated from rpc mono.issue.Issue.AddComment

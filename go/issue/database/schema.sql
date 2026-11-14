@@ -167,6 +167,19 @@ CREATE TABLE `pull_request_link` (
 	PRIMARY KEY(`id`)
 ) Engine=InnoDB;
 
+DROP TABLE IF EXISTS `agent_session`;
+CREATE TABLE `agent_session` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT,
+	`ticket_id` INTEGER NOT NULL,
+	`agent` INTEGER UNSIGNED NOT NULL,
+	`hostname` VARCHAR(255) NOT NULL,
+	`session_id` VARCHAR(255) NOT NULL,
+	`created_at` DATETIME NOT NULL,
+	`updated_at` DATETIME NULL,
+	UNIQUE `uniq_agent_session` (`ticket_id`, `hostname`, `session_id`),
+	PRIMARY KEY(`id`)
+) Engine=InnoDB;
+
 DROP TABLE IF EXISTS `github_event`;
 CREATE TABLE `github_event` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,

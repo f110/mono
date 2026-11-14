@@ -367,6 +367,37 @@ func (t *Ticket) PullRequestLinks(ctx context.Context) ([]*database.PullRequestL
 	return links, nil
 }
 
+// AddAgentSession adds the session of the coding agent which works on the ticket. sessionID is opaque because the
+// format differs by the agent. It does nothing if the session of the host is already added. The session is not
+// recorded to the activities.
+func (t *Ticket) AddAgentSession(ctx context.Context, agent database.CodingAgent, hostname, sessionID string) error {
+	if _, err := t.tracker.ticketOperator(ctx); err != nil {
+		return err
+	}
+	if err := validateName("hostname", hostname); err != nil {
+		return err
+	}
+	if err := validateName("session_id", sessionID); err != nil {
+		return err
+	}
+	if _, err := t.tracker.dao.AgentSession.SelectByTicketIdAndHostnameAndSessionId(ctx, t.Id, hostname, sessionID); err == nil {
+		return nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return xerrors.WithStack(err)
+	}
+
+	_, err := t.tracker.dao.AgentSession.Create(ctx, &database.AgentSession{TicketId: t.Id, Agent: agent, Hostname: hostname, SessionId: sessionID})
+	return xerrors.WithStack(err)
+}
+
+func (t *Ticket) AgentSessions(ctx context.Context) ([]*database.AgentSession, error) {
+	sessions, err := t.tracker.dao.AgentSession.ListByTicketId(ctx, t.Id)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return sessions, nil
+}
+
 // Revisions returns the body before each edit in the order of the edits.
 func (t *Ticket) Revisions(ctx context.Context) ([]*Revision, error) {
 	revs, err := t.tracker.dao.TicketBodyRevision.ListByTicketId(ctx, t.Id)

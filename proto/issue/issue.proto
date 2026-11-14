@@ -10,13 +10,17 @@ option go_package                 = "go.f110.dev/mono/go/issue/api";
 
 service Issue {
   rpc ListTickets(RequestListTickets) returns (ResponseListTickets);
-  // GetTicket returns the ticket with the relations, the backlinks, the comments, the commits and the pull requests.
+  // GetTicket returns the ticket with the relations, the backlinks, the comments, the commits, the pull requests and the
+  // sessions of the coding agents.
   rpc GetTicket(RequestGetTicket) returns (ResponseGetTicket);
   rpc CreateTicket(RequestCreateTicket) returns (ResponseCreateTicket);
   // UpdateTicket updates only the fields which are set.
   rpc UpdateTicket(RequestUpdateTicket) returns (ResponseUpdateTicket);
   rpc AddRelation(RequestAddRelation) returns (ResponseAddRelation);
   rpc RemoveRelation(RequestRemoveRelation) returns (ResponseRemoveRelation);
+  // AddAgentSession adds the session of the coding agent which works on the ticket. It does nothing if the session of
+  // the host is already added.
+  rpc AddAgentSession(RequestAddAgentSession) returns (ResponseAddAgentSession);
   rpc AddComment(RequestAddComment) returns (ResponseAddComment);
   rpc EditComment(RequestEditComment) returns (ResponseEditComment);
   rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
@@ -75,6 +79,14 @@ enum RelationType {
   RELATION_TYPE_BLOCKS       = 2;
   RELATION_TYPE_DUPLICATE_OF = 3;
   RELATION_TYPE_RELATES_TO   = 4;
+}
+
+enum CodingAgent {
+  CODING_AGENT_UNSPECIFIED = 0;
+  CODING_AGENT_CLAUDE_CODE = 1;
+  CODING_AGENT_CODEX       = 2;
+  CODING_AGENT_GEMINI_CLI  = 3;
+  CODING_AGENT_OPENCODE    = 4;
 }
 
 enum ActivityKind {
@@ -195,6 +207,15 @@ message PullRequestLink {
   string           url      = 6;
 }
 
+// AgentSession is the session of the coding agent which works on the ticket. session_id is opaque because the format
+// differs by the agent, and the session can be resumed only on the host of hostname.
+message AgentSession {
+  CodingAgent               agent      = 1;
+  string                    hostname   = 2;
+  string                    session_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
 message Comment {
   int32                    id         = 1;
   int32                     ticket     = 2;
@@ -250,14 +271,15 @@ message RequestGetTicket {
 message ResponseGetTicket {
   reserved 2;
 
-  Ticket                   ticket        = 1;
+  Ticket                   ticket         = 1;
   // relations contains the relations which the ticket is on either side of.
-  repeated RelatedTicket   relations     = 7;
-  repeated Comment         comments      = 3;
+  repeated RelatedTicket   relations      = 7;
+  repeated Comment         comments       = 3;
   // backlinks contains the tickets which mention the ticket.
-  repeated Backlink        backlinks     = 4;
-  repeated CommitLink      commits       = 5;
-  repeated PullRequestLink pull_requests = 6;
+  repeated Backlink        backlinks      = 4;
+  repeated CommitLink      commits        = 5;
+  repeated PullRequestLink pull_requests  = 6;
+  repeated AgentSession    agent_sessions = 8;
 }
 
 message RequestCreateTicket {
@@ -305,6 +327,15 @@ message RequestRemoveRelation {
 }
 
 message ResponseRemoveRelation {}
+
+message RequestAddAgentSession {
+  int32       ticket     = 1;
+  CodingAgent agent      = 2;
+  string      hostname   = 3;
+  string      session_id = 4;
+}
+
+message ResponseAddAgentSession {}
 
 message RequestAddComment {
   int32  ticket = 1;

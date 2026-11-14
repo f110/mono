@@ -68,6 +68,13 @@ enum GithubEventState {
   GITHUB_EVENT_STATE_SKIPPED    = 5;
 }
 
+enum CodingAgent {
+  CODING_AGENT_CLAUDE_CODE = 0;
+  CODING_AGENT_CODEX       = 1;
+  CODING_AGENT_GEMINI_CLI  = 2;
+  CODING_AGENT_OPENCODE    = 3;
+}
+
 enum ActivityKind {
   ACTIVITY_KIND_CREATE              = 0;
   ACTIVITY_KIND_TITLE               = 1;
@@ -441,6 +448,39 @@ message PullRequestLink {
     queries: {
       name: "ByRepositoryIdAndNumber"
       query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `number` = ?"
+    }
+  };
+}
+
+// AgentSession is the session of the coding agent which works on the ticket. session_id is opaque because the format
+// differs by the agent, and it can be resumed only on the host of hostname.
+message AgentSession {
+  int32       id         = 1 [(dev.f110.ddl.column) = { sequence: true }];
+  Ticket      ticket     = 2;
+  CodingAgent agent      = 3;
+  string      hostname   = 4;
+  string      session_id = 5;
+
+  option (dev.f110.ddl.table) = {
+    primary_key: "id"
+    with_timestamp: true
+    indexes: {
+      name: "uniq_agent_session"
+      columns: "ticket"
+      columns: "hostname"
+      columns: "session_id"
+      unique: true
+    }
+  };
+
+  option (dev.f110.ddl.dao) = {
+    queries: {
+      name: "ByTicketId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ?"
+    }
+    queries: {
+      name: "ByTicketIdAndHostnameAndSessionId"
+      query: "SELECT * FROM `:table_name:` WHERE `ticket_id` = ? AND `hostname` = ? AND `session_id` = ?"
     }
   };
 }

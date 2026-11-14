@@ -94,6 +94,7 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
 | `attachment` | `id`, `ticket_id`, `actor_id`, `name`, `content_type`, `size`, `object_key`, `created_at` | |
 | `commit_link` | `ticket_id`, `repository_id`, `sha`, `change_id` (null 可), `subject`, `author`, `trailer` (refs / fixes), `committed_at` | UNIQUE(`ticket_id`, `repository_id`, `sha`)。`repository_id` は Build の `SourceRepository` の ID |
 | `pull_request_link` | `ticket_id`, `repository_id`, `number`, `title`, `author`, `state` (open / closed / merged), `head_sha` | UNIQUE(`ticket_id`, `repository_id`, `number`)。`repository_id` は Build の `SourceRepository` の ID |
+| `agent_session` | `id`, `ticket_id`, `agent` (claude_code / codex / gemini_cli / opencode), `hostname`, `session_id`, `created_at` | UNIQUE(`ticket_id`, `hostname`, `session_id`)。チケットに取り組んだコーディングエージェントのセッション（§3.4） |
 | `activity` | `id`, `ticket_id`, `actor_id`, `kind`, `from_value`, `to_value`, `ref_id`, `created_at` | 操作履歴 |
 | `github_event` | `id`, `delivery_id`, `event_type`, `action`, `payload`, `state`, `status`, `last_error`, `created_at`, `updated_at` | UNIQUE(`delivery_id`)。カラムは Build の `github_event` と揃える |
 
@@ -141,6 +142,23 @@ MariaDB を使い、スキーマは Build と同じく protoc-ddl で `go/issue/
   Markdown は goldmark でパースする
 - 自分自身と存在しないチケットへの言及は無視する
 - この機能を入れる前の本文・コメントからは作らない
+
+### 3.4 コーディングエージェントのセッション
+
+どのマシンのどのセッションでチケットに取り組んだかを後から辿れるように、コーディングエージェントのセッションをチケットに記録する。
+セッションはどのエージェントでもマシンローカルに保存されていて他のマシンからは再開できないので、ホスト名と組で持つ。
+
+| エージェント | セッション ID の形式 | 再開方法 |
+| --- | --- | --- |
+| Claude Code | UUID | `claude --resume <id>` |
+| Codex CLI | UUID | `codex resume <id>` |
+| Gemini CLI | UUID | `gemini --resume <id>` |
+| OpenCode | `ses_` + 26 文字 | `opencode --session <id>` |
+
+- セッション ID はエージェントによって形式が異なるので、解釈せずに文字列として保存する
+- 同じ形式のエージェントがあり ID からエージェントを判別できないので、エージェントの種類を enum で持つ
+- 登録は MCP から行う。同じチケット・ホスト・セッション ID の登録は何もしない
+- チケットに付随する情報として扱い、操作履歴には残さず `last_activity_at` も更新しない。削除はできない
 
 ## 4. 操作主体と認証
 
@@ -282,6 +300,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | --- | --- |
 | チケット | `ListTickets`, `GetTicket`, `CreateTicket`, `UpdateTicket`（タイトル・本文・ステータス・優先度・分類・担当を部分更新） |
 | 関連 | `AddRelation`, `RemoveRelation` |
+| セッション | `AddAgentSession` |
 | コメント | `AddComment`, `EditComment`, `DeleteComment` |
 | 添付 | `ListAttachments`（アップロード・ダウンロードは §7 の HTTP エンドポイント） |
 | 履歴 | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions`（本文・コメントの編集前の版と編集者） |
@@ -289,7 +308,7 @@ Web UI と CLI は同じ Connect サービスを使う。
 | テンプレート | `ListTemplates`, `SaveTemplate`, `DeleteTemplate` |
 | その他 | `ListActors`, `WhoAmI` |
 
-`GetTicket` は関連（逆方向の導出を含む）・バックリンク・紐づいた commit / PR と CI 結果・添付をまとめて返す。
+`GetTicket` は関連（逆方向の導出を含む）・バックリンク・紐づいた commit / PR と CI 結果・添付・コーディングエージェントのセッションをまとめて返す。
 
 ### 6.2 MCP
 
@@ -303,6 +322,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 | --- | --- |
 | `list_tickets`, `get_ticket`, `create_ticket`, `update_ticket` | `ListTickets`, `GetTicket`, `CreateTicket`, `UpdateTicket` |
 | `add_relation`, `remove_relation` | `AddRelation`, `RemoveRelation` |
+| `add_agent_session` | `AddAgentSession` |
 | `add_comment`, `edit_comment`, `delete_comment` | `AddComment`, `EditComment`, `DeleteComment` |
 | `list_activities`, `list_ticket_revisions`, `list_comment_revisions` | `ListActivities`, `ListTicketRevisions`, `ListCommentRevisions` |
 | `list_components`, `list_actors`, `who_am_i` | `ListComponents`, `ListActors`, `WhoAmI` |
@@ -332,6 +352,7 @@ tool は Connect API の RPC と 1 対 1 に対応させ、`go/issue/server` の
 - 一覧の検索条件は §8 のフィルタとして URL の `?filter=` に持つ
 - Markdown はクライアントでレンダリングしてサニタイズする。`#123` は `/123` へのリンクに置き換える
 - 詳細のサイドバーに、関連と並べてバックリンク（言及元のチケットの番号とタイトル）を表示する。言及された時刻は履歴に表示する
+- 詳細のサイドバーに、コーディングエージェントのセッション（エージェント・ホスト名・セッション ID）を表示する
 
 ## 7. 添付ファイル
 

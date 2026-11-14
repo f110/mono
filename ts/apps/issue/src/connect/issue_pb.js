@@ -9,7 +9,7 @@ import { file_google_protobuf_go_features, file_google_protobuf_timestamp } from
  * Describes the file proto/issue/issue.proto.
  */
 export const file_proto_issue_issue = /*@__PURE__*/
-  fileDesc("Chdwcm90by9pc3N1ZS9pc3N1ZS5wcm90bxIKbW9uby5pc3N1ZSKDAwoGVGlja2V0Eg4KBm51bWJlchgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEigKBnN0YXR1cxgEIAEoDjIYLm1vbm8uaXNzdWUuVGlja2V0U3RhdHVzEiYKCHByaW9yaXR5GAUgASgOMhQubW9uby5pc3N1ZS5Qcmlvcml0eRIUCgxjb21wb25lbnRfaWQYBiABKAUSEwoLYXNzaWduZWVfaWQYByABKAUSEwoLcmVwb3J0ZXJfaWQYCCABKAUSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNAoQbGFzdF9hY3Rpdml0eV9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJAoEdHlwZRgMIAEoDjIWLm1vbm8uaXNzdWUuVGlja2V0VHlwZSJYCgVBY3RvchIKCgJpZBgBIAEoBRIjCgRraW5kGAIgASgOMhUubW9uby5pc3N1ZS5BY3RvcktpbmQSDAoEbmFtZRgDIAEoCRIQCghvd25lcl9pZBgEIAEoBSIlCglDb21wb25lbnQSCgoCaWQYASABKAUSDAoEbmFtZRgCIAEoCSJJCghUZW1wbGF0ZRIKCgJpZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEhQKDGNvbXBvbmVudF9pZBgEIAEoBSJMCghSZWxhdGlvbhIMCgRmcm9tGAEgASgFEiYKBHR5cGUYAiABKA4yGC5tb25vLmlzc3VlLlJlbGF0aW9uVHlwZRIKCgJ0bxgDIAEoBSJGCg1SZWxhdGVkVGlja2V0EiYKCHJlbGF0aW9uGAEgASgLMhQubW9uby5pc3N1ZS5SZWxhdGlvbhINCgV0aXRsZRgCIAEoCSJZCghCYWNrbGluaxIOCgZ0aWNrZXQYASABKAUSLgoKY3JlYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFdGl0bGUYAyABKAkitgEKCkNvbW1pdExpbmsSCwoDc2hhGAEgASgJEhEKCWNoYW5nZV9pZBgCIAEoCRIPCgdzdWJqZWN0GAMgASgJEg4KBmF1dGhvchgEIAEoCRIoCgd0cmFpbGVyGAUgASgOMhcubW9uby5pc3N1ZS5UcmFpbGVyS2luZBIwCgxjb21taXR0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgsKA3VybBgHIAEoCSKMAQoPUHVsbFJlcXVlc3RMaW5rEg4KBm51bWJlchgBIAEoBRINCgV0aXRsZRgCIAEoCRIOCgZhdXRob3IYAyABKAkSKwoFc3RhdGUYBCABKA4yHC5tb25vLmlzc3VlLlB1bGxSZXF1ZXN0U3RhdGUSEAoIaGVhZF9zaGEYBSABKAkSCwoDdXJsGAYgASgJIqUBCgdDb21tZW50EgoKAmlkGAEgASgFEg4KBnRpY2tldBgCIAEoBRIQCghhY3Rvcl9pZBgDIAEoBRIMCgRib2R5GAQgASgJEi4KCmNyZWF0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIsYBCghBY3Rpdml0eRIKCgJpZBgBIAEoBRIOCgZ0aWNrZXQYAiABKAUSEAoIYWN0b3JfaWQYAyABKAUSJgoEa2luZBgEIAEoDjIYLm1vbm8uaXNzdWUuQWN0aXZpdHlLaW5kEhIKCmZyb21fdmFsdWUYBSABKAkSEAoIdG9fdmFsdWUYBiABKAkSDgoGcmVmX2lkGAcgASgFEi4KCmNyZWF0ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImYKCFJldmlzaW9uEgoKAmlkGAEgASgFEgwKBGJvZHkYAiABKAkSEAoIYWN0b3JfaWQYAyABKAUSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiXQoSUmVxdWVzdExpc3RUaWNrZXRzEg4KBmZpbHRlchgBIAEoCRIQCghvcmRlcl9ieRgCIAEoCRIRCglwYWdlX3NpemUYAyABKAUSEgoKcGFnZV90b2tlbhgEIAEoCSJTChNSZXNwb25zZUxpc3RUaWNrZXRzEiMKB3RpY2tldHMYASADKAsyEi5tb25vLmlzc3VlLlRpY2tldBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiIgoQUmVxdWVzdEdldFRpY2tldBIOCgZudW1iZXIYASABKAUimAIKEVJlc3BvbnNlR2V0VGlja2V0EiIKBnRpY2tldBgBIAEoCzISLm1vbm8uaXNzdWUuVGlja2V0EiwKCXJlbGF0aW9ucxgHIAMoCzIZLm1vbm8uaXNzdWUuUmVsYXRlZFRpY2tldBIlCghjb21tZW50cxgDIAMoCzITLm1vbm8uaXNzdWUuQ29tbWVudBInCgliYWNrbGlua3MYBCADKAsyFC5tb25vLmlzc3VlLkJhY2tsaW5rEicKB2NvbW1pdHMYBSADKAsyFi5tb25vLmlzc3VlLkNvbW1pdExpbmsSMgoNcHVsbF9yZXF1ZXN0cxgGIAMoCzIbLm1vbm8uaXNzdWUuUHVsbFJlcXVlc3RMaW5rSgQIAhADIqsBChNSZXF1ZXN0Q3JlYXRlVGlja2V0Eg0KBXRpdGxlGAEgASgJEgwKBGJvZHkYAiABKAkSJgoIcHJpb3JpdHkYAyABKA4yFC5tb25vLmlzc3VlLlByaW9yaXR5EhQKDGNvbXBvbmVudF9pZBgEIAEoBRITCgthc3NpZ25lZV9pZBgFIAEoBRIkCgR0eXBlGAYgASgOMhYubW9uby5pc3N1ZS5UaWNrZXRUeXBlIjoKFFJlc3BvbnNlQ3JlYXRlVGlja2V0EiIKBnRpY2tldBgBIAEoCzISLm1vbm8uaXNzdWUuVGlja2V0IuUBChNSZXF1ZXN0VXBkYXRlVGlja2V0Eg4KBm51bWJlchgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEigKBnN0YXR1cxgEIAEoDjIYLm1vbm8uaXNzdWUuVGlja2V0U3RhdHVzEiYKCHByaW9yaXR5GAUgASgOMhQubW9uby5pc3N1ZS5Qcmlvcml0eRIUCgxjb21wb25lbnRfaWQYBiABKAUSEwoLYXNzaWduZWVfaWQYByABKAUSJAoEdHlwZRgIIAEoDjIWLm1vbm8uaXNzdWUuVGlja2V0VHlwZSI6ChRSZXNwb25zZVVwZGF0ZVRpY2tldBIiCgZ0aWNrZXQYASABKAsyEi5tb25vLmlzc3VlLlRpY2tldCI8ChJSZXF1ZXN0QWRkUmVsYXRpb24SJgoIcmVsYXRpb24YASABKAsyFC5tb25vLmlzc3VlLlJlbGF0aW9uIj0KE1Jlc3BvbnNlQWRkUmVsYXRpb24SJgoIcmVsYXRpb24YASABKAsyFC5tb25vLmlzc3VlLlJlbGF0aW9uIj8KFVJlcXVlc3RSZW1vdmVSZWxhdGlvbhImCghyZWxhdGlvbhgBIAEoCzIULm1vbm8uaXNzdWUuUmVsYXRpb24iGAoWUmVzcG9uc2VSZW1vdmVSZWxhdGlvbiIxChFSZXF1ZXN0QWRkQ29tbWVudBIOCgZ0aWNrZXQYASABKAUSDAoEYm9keRgCIAEoCSI6ChJSZXNwb25zZUFkZENvbW1lbnQSJAoHY29tbWVudBgBIAEoCzITLm1vbm8uaXNzdWUuQ29tbWVudCIuChJSZXF1ZXN0RWRpdENvbW1lbnQSCgoCaWQYASABKAUSDAoEYm9keRgCIAEoCSI7ChNSZXNwb25zZUVkaXRDb21tZW50EiQKB2NvbW1lbnQYASABKAsyEy5tb25vLmlzc3VlLkNvbW1lbnQiIgoUUmVxdWVzdERlbGV0ZUNvbW1lbnQSCgoCaWQYASABKAUiFwoVUmVzcG9uc2VEZWxldGVDb21tZW50IicKFVJlcXVlc3RMaXN0QWN0aXZpdGllcxIOCgZ0aWNrZXQYASABKAUiQgoWUmVzcG9uc2VMaXN0QWN0aXZpdGllcxIoCgphY3Rpdml0aWVzGAEgAygLMhQubW9uby5pc3N1ZS5BY3Rpdml0eSIsChpSZXF1ZXN0TGlzdFRpY2tldFJldmlzaW9ucxIOCgZ0aWNrZXQYASABKAUiRgobUmVzcG9uc2VMaXN0VGlja2V0UmV2aXNpb25zEicKCXJldmlzaW9ucxgBIAMoCzIULm1vbm8uaXNzdWUuUmV2aXNpb24iKQobUmVxdWVzdExpc3RDb21tZW50UmV2aXNpb25zEgoKAmlkGAEgASgFIkcKHFJlc3BvbnNlTGlzdENvbW1lbnRSZXZpc2lvbnMSJwoJcmV2aXNpb25zGAEgAygLMhQubW9uby5pc3N1ZS5SZXZpc2lvbiIXChVSZXF1ZXN0TGlzdENvbXBvbmVudHMiQwoWUmVzcG9uc2VMaXN0Q29tcG9uZW50cxIpCgpjb21wb25lbnRzGAEgAygLMhUubW9uby5pc3N1ZS5Db21wb25lbnQiMAoUUmVxdWVzdFNhdmVDb21wb25lbnQSCgoCaWQYASABKAUSDAoEbmFtZRgCIAEoCSJBChVSZXNwb25zZVNhdmVDb21wb25lbnQSKAoJY29tcG9uZW50GAEgASgLMhUubW9uby5pc3N1ZS5Db21wb25lbnQiFgoUUmVxdWVzdExpc3RUZW1wbGF0ZXMiQAoVUmVzcG9uc2VMaXN0VGVtcGxhdGVzEicKCXRlbXBsYXRlcxgBIAMoCzIULm1vbm8uaXNzdWUuVGVtcGxhdGUiVAoTUmVxdWVzdFNhdmVUZW1wbGF0ZRIKCgJpZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEhQKDGNvbXBvbmVudF9pZBgEIAEoBSI+ChRSZXNwb25zZVNhdmVUZW1wbGF0ZRImCgh0ZW1wbGF0ZRgBIAEoCzIULm1vbm8uaXNzdWUuVGVtcGxhdGUiIwoVUmVxdWVzdERlbGV0ZVRlbXBsYXRlEgoKAmlkGAEgASgFIhgKFlJlc3BvbnNlRGVsZXRlVGVtcGxhdGUiEwoRUmVxdWVzdExpc3RBY3RvcnMiNwoSUmVzcG9uc2VMaXN0QWN0b3JzEiEKBmFjdG9ycxgBIAMoCzIRLm1vbm8uaXNzdWUuQWN0b3IiDwoNUmVxdWVzdFdob0FtSSIyCg5SZXNwb25zZVdob0FtSRIgCgVhY3RvchgBIAEoCzIRLm1vbm8uaXNzdWUuQWN0b3IqvgEKDFRpY2tldFN0YXR1cxIdChlUSUNLRVRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFgoSVElDS0VUX1NUQVRVU19PUEVOEAESHQoZVElDS0VUX1NUQVRVU19JTl9QUk9HUkVTUxACEhYKElRJQ0tFVF9TVEFUVVNfRE9ORRADEhoKFlRJQ0tFVF9TVEFUVVNfV09OVF9GSVgQBBIkCiBUSUNLRVRfU1RBVFVTX05FRURfSU5WRVNUSUdBVElPThAFKnkKCFByaW9yaXR5EhgKFFBSSU9SSVRZX1VOU1BFQ0lGSUVEEAASDwoLUFJJT1JJVFlfUDAQARIPCgtQUklPUklUWV9QMRACEg8KC1BSSU9SSVRZX1AyEAMSDwoLUFJJT1JJVFlfUDMQBBIPCgtQUklPUklUWV9QNBAFKogBCgpUaWNrZXRUeXBlEhsKF1RJQ0tFVF9UWVBFX1VOU1BFQ0lGSUVEEAASEwoPVElDS0VUX1RZUEVfQlVHEAESFwoTVElDS0VUX1RZUEVfRkVBVFVSRRACEhQKEFRJQ0tFVF9UWVBFX1RBU0sQAxIZChVUSUNLRVRfVFlQRV9PUEVSQVRJT04QBCpqCglBY3RvcktpbmQSGgoWQUNUT1JfS0lORF9VTlNQRUNJRklFRBAAEhQKEEFDVE9SX0tJTkRfSFVNQU4QARIUChBBQ1RPUl9LSU5EX0FHRU5UEAISFQoRQUNUT1JfS0lORF9TWVNURU0QAyqiAQoMUmVsYXRpb25UeXBlEh0KGVJFTEFUSU9OX1RZUEVfVU5TUEVDSUZJRUQQABIbChdSRUxBVElPTl9UWVBFX1BBUkVOVF9PRhABEhgKFFJFTEFUSU9OX1RZUEVfQkxPQ0tTEAISHgoaUkVMQVRJT05fVFlQRV9EVVBMSUNBVEVfT0YQAxIcChhSRUxBVElPTl9UWVBFX1JFTEFURVNfVE8QBCqtBAoMQWN0aXZpdHlLaW5kEh0KGUFDVElWSVRZX0tJTkRfVU5TUEVDSUZJRUQQABIYChRBQ1RJVklUWV9LSU5EX0NSRUFURRABEhcKE0FDVElWSVRZX0tJTkRfVElUTEUQAhIYChRBQ1RJVklUWV9LSU5EX1NUQVRVUxADEhoKFkFDVElWSVRZX0tJTkRfUFJJT1JJVFkQBBIbChdBQ1RJVklUWV9LSU5EX0NPTVBPTkVOVBAFEhoKFkFDVElWSVRZX0tJTkRfQVNTSUdORUUQBhIWChJBQ1RJVklUWV9LSU5EX0JPRFkQBxIgChxBQ1RJVklUWV9LSU5EX1JFTEFUSU9OX0FEREVEEAgSIgoeQUNUSVZJVFlfS0lORF9SRUxBVElPTl9SRU1PVkVEEAkSGQoVQUNUSVZJVFlfS0lORF9DT01NRU5UEAoSIAocQUNUSVZJVFlfS0lORF9DT01NRU5UX0VESVRFRBALEiEKHUFDVElWSVRZX0tJTkRfQ09NTUVOVF9ERUxFVEVEEAwSHwobQUNUSVZJVFlfS0lORF9DT01NSVRfTElOS0VEEA0SJQohQUNUSVZJVFlfS0lORF9QVUxMX1JFUVVFU1RfTElOS0VEEA4SGwoXQUNUSVZJVFlfS0lORF9NRU5USU9ORUQQDxIhCh1BQ1RJVklUWV9LSU5EX01FTlRJT05fUkVNT1ZFRBAQEhYKEkFDVElWSVRZX0tJTkRfVFlQRRARKloKC1RyYWlsZXJLaW5kEhwKGFRSQUlMRVJfS0lORF9VTlNQRUNJRklFRBAAEhUKEVRSQUlMRVJfS0lORF9SRUZTEAESFgoSVFJBSUxFUl9LSU5EX0ZJWEVTEAIqkQEKEFB1bGxSZXF1ZXN0U3RhdGUSIgoeUFVMTF9SRVFVRVNUX1NUQVRFX1VOU1BFQ0lGSUVEEAASGwoXUFVMTF9SRVFVRVNUX1NUQVRFX09QRU4QARIdChlQVUxMX1JFUVVFU1RfU1RBVEVfQ0xPU0VEEAISHQoZUFVMTF9SRVFVRVNUX1NUQVRFX01FUkdFRBADMs4MCgVJc3N1ZRJOCgtMaXN0VGlja2V0cxIeLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RUaWNrZXRzGh8ubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RUaWNrZXRzEkgKCUdldFRpY2tldBIcLm1vbm8uaXNzdWUuUmVxdWVzdEdldFRpY2tldBodLm1vbm8uaXNzdWUuUmVzcG9uc2VHZXRUaWNrZXQSUQoMQ3JlYXRlVGlja2V0Eh8ubW9uby5pc3N1ZS5SZXF1ZXN0Q3JlYXRlVGlja2V0GiAubW9uby5pc3N1ZS5SZXNwb25zZUNyZWF0ZVRpY2tldBJRCgxVcGRhdGVUaWNrZXQSHy5tb25vLmlzc3VlLlJlcXVlc3RVcGRhdGVUaWNrZXQaIC5tb25vLmlzc3VlLlJlc3BvbnNlVXBkYXRlVGlja2V0Ek4KC0FkZFJlbGF0aW9uEh4ubW9uby5pc3N1ZS5SZXF1ZXN0QWRkUmVsYXRpb24aHy5tb25vLmlzc3VlLlJlc3BvbnNlQWRkUmVsYXRpb24SVwoOUmVtb3ZlUmVsYXRpb24SIS5tb25vLmlzc3VlLlJlcXVlc3RSZW1vdmVSZWxhdGlvbhoiLm1vbm8uaXNzdWUuUmVzcG9uc2VSZW1vdmVSZWxhdGlvbhJLCgpBZGRDb21tZW50Eh0ubW9uby5pc3N1ZS5SZXF1ZXN0QWRkQ29tbWVudBoeLm1vbm8uaXNzdWUuUmVzcG9uc2VBZGRDb21tZW50Ek4KC0VkaXRDb21tZW50Eh4ubW9uby5pc3N1ZS5SZXF1ZXN0RWRpdENvbW1lbnQaHy5tb25vLmlzc3VlLlJlc3BvbnNlRWRpdENvbW1lbnQSVAoNRGVsZXRlQ29tbWVudBIgLm1vbm8uaXNzdWUuUmVxdWVzdERlbGV0ZUNvbW1lbnQaIS5tb25vLmlzc3VlLlJlc3BvbnNlRGVsZXRlQ29tbWVudBJXCg5MaXN0QWN0aXZpdGllcxIhLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RBY3Rpdml0aWVzGiIubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RBY3Rpdml0aWVzEmYKE0xpc3RUaWNrZXRSZXZpc2lvbnMSJi5tb25vLmlzc3VlLlJlcXVlc3RMaXN0VGlja2V0UmV2aXNpb25zGicubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RUaWNrZXRSZXZpc2lvbnMSaQoUTGlzdENvbW1lbnRSZXZpc2lvbnMSJy5tb25vLmlzc3VlLlJlcXVlc3RMaXN0Q29tbWVudFJldmlzaW9ucxooLm1vbm8uaXNzdWUuUmVzcG9uc2VMaXN0Q29tbWVudFJldmlzaW9ucxJXCg5MaXN0Q29tcG9uZW50cxIhLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RDb21wb25lbnRzGiIubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RDb21wb25lbnRzElQKDVNhdmVDb21wb25lbnQSIC5tb25vLmlzc3VlLlJlcXVlc3RTYXZlQ29tcG9uZW50GiEubW9uby5pc3N1ZS5SZXNwb25zZVNhdmVDb21wb25lbnQSVAoNTGlzdFRlbXBsYXRlcxIgLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RUZW1wbGF0ZXMaIS5tb25vLmlzc3VlLlJlc3BvbnNlTGlzdFRlbXBsYXRlcxJRCgxTYXZlVGVtcGxhdGUSHy5tb25vLmlzc3VlLlJlcXVlc3RTYXZlVGVtcGxhdGUaIC5tb25vLmlzc3VlLlJlc3BvbnNlU2F2ZVRlbXBsYXRlElcKDkRlbGV0ZVRlbXBsYXRlEiEubW9uby5pc3N1ZS5SZXF1ZXN0RGVsZXRlVGVtcGxhdGUaIi5tb25vLmlzc3VlLlJlc3BvbnNlRGVsZXRlVGVtcGxhdGUSSwoKTGlzdEFjdG9ycxIdLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RBY3RvcnMaHi5tb25vLmlzc3VlLlJlc3BvbnNlTGlzdEFjdG9ycxI/CgZXaG9BbUkSGS5tb25vLmlzc3VlLlJlcXVlc3RXaG9BbUkaGi5tb25vLmlzc3VlLlJlc3BvbnNlV2hvQW1JQidaHWdvLmYxMTAuZGV2L21vbm8vZ28vaXNzdWUvYXBpkgMF0j4CEANiCGVkaXRpb25zcOgH", [file_google_protobuf_go_features, file_google_protobuf_timestamp]);
+  fileDesc("Chdwcm90by9pc3N1ZS9pc3N1ZS5wcm90bxIKbW9uby5pc3N1ZSKDAwoGVGlja2V0Eg4KBm51bWJlchgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEigKBnN0YXR1cxgEIAEoDjIYLm1vbm8uaXNzdWUuVGlja2V0U3RhdHVzEiYKCHByaW9yaXR5GAUgASgOMhQubW9uby5pc3N1ZS5Qcmlvcml0eRIUCgxjb21wb25lbnRfaWQYBiABKAUSEwoLYXNzaWduZWVfaWQYByABKAUSEwoLcmVwb3J0ZXJfaWQYCCABKAUSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNAoQbGFzdF9hY3Rpdml0eV9hdBgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJAoEdHlwZRgMIAEoDjIWLm1vbm8uaXNzdWUuVGlja2V0VHlwZSJYCgVBY3RvchIKCgJpZBgBIAEoBRIjCgRraW5kGAIgASgOMhUubW9uby5pc3N1ZS5BY3RvcktpbmQSDAoEbmFtZRgDIAEoCRIQCghvd25lcl9pZBgEIAEoBSIlCglDb21wb25lbnQSCgoCaWQYASABKAUSDAoEbmFtZRgCIAEoCSJJCghUZW1wbGF0ZRIKCgJpZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIMCgRib2R5GAMgASgJEhQKDGNvbXBvbmVudF9pZBgEIAEoBSJMCghSZWxhdGlvbhIMCgRmcm9tGAEgASgFEiYKBHR5cGUYAiABKA4yGC5tb25vLmlzc3VlLlJlbGF0aW9uVHlwZRIKCgJ0bxgDIAEoBSJGCg1SZWxhdGVkVGlja2V0EiYKCHJlbGF0aW9uGAEgASgLMhQubW9uby5pc3N1ZS5SZWxhdGlvbhINCgV0aXRsZRgCIAEoCSJZCghCYWNrbGluaxIOCgZ0aWNrZXQYASABKAUSLgoKY3JlYXRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFdGl0bGUYAyABKAkitgEKCkNvbW1pdExpbmsSCwoDc2hhGAEgASgJEhEKCWNoYW5nZV9pZBgCIAEoCRIPCgdzdWJqZWN0GAMgASgJEg4KBmF1dGhvchgEIAEoCRIoCgd0cmFpbGVyGAUgASgOMhcubW9uby5pc3N1ZS5UcmFpbGVyS2luZBIwCgxjb21taXR0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgsKA3VybBgHIAEoCSKMAQoPUHVsbFJlcXVlc3RMaW5rEg4KBm51bWJlchgBIAEoBRINCgV0aXRsZRgCIAEoCRIOCgZhdXRob3IYAyABKAkSKwoFc3RhdGUYBCABKA4yHC5tb25vLmlzc3VlLlB1bGxSZXF1ZXN0U3RhdGUSEAoIaGVhZF9zaGEYBSABKAkSCwoDdXJsGAYgASgJIowBCgxBZ2VudFNlc3Npb24SJgoFYWdlbnQYASABKA4yFy5tb25vLmlzc3VlLkNvZGluZ0FnZW50EhAKCGhvc3RuYW1lGAIgASgJEhIKCnNlc3Npb25faWQYAyABKAkSLgoKY3JlYXRlZF9hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAipQEKB0NvbW1lbnQSCgoCaWQYASABKAUSDgoGdGlja2V0GAIgASgFEhAKCGFjdG9yX2lkGAMgASgFEgwKBGJvZHkYBCABKAkSLgoKY3JlYXRlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAixgEKCEFjdGl2aXR5EgoKAmlkGAEgASgFEg4KBnRpY2tldBgCIAEoBRIQCghhY3Rvcl9pZBgDIAEoBRImCgRraW5kGAQgASgOMhgubW9uby5pc3N1ZS5BY3Rpdml0eUtpbmQSEgoKZnJvbV92YWx1ZRgFIAEoCRIQCgh0b192YWx1ZRgGIAEoCRIOCgZyZWZfaWQYByABKAUSLgoKY3JlYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiZgoIUmV2aXNpb24SCgoCaWQYASABKAUSDAoEYm9keRgCIAEoCRIQCghhY3Rvcl9pZBgDIAEoBRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJdChJSZXF1ZXN0TGlzdFRpY2tldHMSDgoGZmlsdGVyGAEgASgJEhAKCG9yZGVyX2J5GAIgASgJEhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJIlMKE1Jlc3BvbnNlTGlzdFRpY2tldHMSIwoHdGlja2V0cxgBIAMoCzISLm1vbm8uaXNzdWUuVGlja2V0EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIiChBSZXF1ZXN0R2V0VGlja2V0Eg4KBm51bWJlchgBIAEoBSLKAgoRUmVzcG9uc2VHZXRUaWNrZXQSIgoGdGlja2V0GAEgASgLMhIubW9uby5pc3N1ZS5UaWNrZXQSLAoJcmVsYXRpb25zGAcgAygLMhkubW9uby5pc3N1ZS5SZWxhdGVkVGlja2V0EiUKCGNvbW1lbnRzGAMgAygLMhMubW9uby5pc3N1ZS5Db21tZW50EicKCWJhY2tsaW5rcxgEIAMoCzIULm1vbm8uaXNzdWUuQmFja2xpbmsSJwoHY29tbWl0cxgFIAMoCzIWLm1vbm8uaXNzdWUuQ29tbWl0TGluaxIyCg1wdWxsX3JlcXVlc3RzGAYgAygLMhsubW9uby5pc3N1ZS5QdWxsUmVxdWVzdExpbmsSMAoOYWdlbnRfc2Vzc2lvbnMYCCADKAsyGC5tb25vLmlzc3VlLkFnZW50U2Vzc2lvbkoECAIQAyKrAQoTUmVxdWVzdENyZWF0ZVRpY2tldBINCgV0aXRsZRgBIAEoCRIMCgRib2R5GAIgASgJEiYKCHByaW9yaXR5GAMgASgOMhQubW9uby5pc3N1ZS5Qcmlvcml0eRIUCgxjb21wb25lbnRfaWQYBCABKAUSEwoLYXNzaWduZWVfaWQYBSABKAUSJAoEdHlwZRgGIAEoDjIWLm1vbm8uaXNzdWUuVGlja2V0VHlwZSI6ChRSZXNwb25zZUNyZWF0ZVRpY2tldBIiCgZ0aWNrZXQYASABKAsyEi5tb25vLmlzc3VlLlRpY2tldCLlAQoTUmVxdWVzdFVwZGF0ZVRpY2tldBIOCgZudW1iZXIYASABKAUSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRIoCgZzdGF0dXMYBCABKA4yGC5tb25vLmlzc3VlLlRpY2tldFN0YXR1cxImCghwcmlvcml0eRgFIAEoDjIULm1vbm8uaXNzdWUuUHJpb3JpdHkSFAoMY29tcG9uZW50X2lkGAYgASgFEhMKC2Fzc2lnbmVlX2lkGAcgASgFEiQKBHR5cGUYCCABKA4yFi5tb25vLmlzc3VlLlRpY2tldFR5cGUiOgoUUmVzcG9uc2VVcGRhdGVUaWNrZXQSIgoGdGlja2V0GAEgASgLMhIubW9uby5pc3N1ZS5UaWNrZXQiPAoSUmVxdWVzdEFkZFJlbGF0aW9uEiYKCHJlbGF0aW9uGAEgASgLMhQubW9uby5pc3N1ZS5SZWxhdGlvbiI9ChNSZXNwb25zZUFkZFJlbGF0aW9uEiYKCHJlbGF0aW9uGAEgASgLMhQubW9uby5pc3N1ZS5SZWxhdGlvbiI/ChVSZXF1ZXN0UmVtb3ZlUmVsYXRpb24SJgoIcmVsYXRpb24YASABKAsyFC5tb25vLmlzc3VlLlJlbGF0aW9uIhgKFlJlc3BvbnNlUmVtb3ZlUmVsYXRpb24idgoWUmVxdWVzdEFkZEFnZW50U2Vzc2lvbhIOCgZ0aWNrZXQYASABKAUSJgoFYWdlbnQYAiABKA4yFy5tb25vLmlzc3VlLkNvZGluZ0FnZW50EhAKCGhvc3RuYW1lGAMgASgJEhIKCnNlc3Npb25faWQYBCABKAkiGQoXUmVzcG9uc2VBZGRBZ2VudFNlc3Npb24iMQoRUmVxdWVzdEFkZENvbW1lbnQSDgoGdGlja2V0GAEgASgFEgwKBGJvZHkYAiABKAkiOgoSUmVzcG9uc2VBZGRDb21tZW50EiQKB2NvbW1lbnQYASABKAsyEy5tb25vLmlzc3VlLkNvbW1lbnQiLgoSUmVxdWVzdEVkaXRDb21tZW50EgoKAmlkGAEgASgFEgwKBGJvZHkYAiABKAkiOwoTUmVzcG9uc2VFZGl0Q29tbWVudBIkCgdjb21tZW50GAEgASgLMhMubW9uby5pc3N1ZS5Db21tZW50IiIKFFJlcXVlc3REZWxldGVDb21tZW50EgoKAmlkGAEgASgFIhcKFVJlc3BvbnNlRGVsZXRlQ29tbWVudCInChVSZXF1ZXN0TGlzdEFjdGl2aXRpZXMSDgoGdGlja2V0GAEgASgFIkIKFlJlc3BvbnNlTGlzdEFjdGl2aXRpZXMSKAoKYWN0aXZpdGllcxgBIAMoCzIULm1vbm8uaXNzdWUuQWN0aXZpdHkiLAoaUmVxdWVzdExpc3RUaWNrZXRSZXZpc2lvbnMSDgoGdGlja2V0GAEgASgFIkYKG1Jlc3BvbnNlTGlzdFRpY2tldFJldmlzaW9ucxInCglyZXZpc2lvbnMYASADKAsyFC5tb25vLmlzc3VlLlJldmlzaW9uIikKG1JlcXVlc3RMaXN0Q29tbWVudFJldmlzaW9ucxIKCgJpZBgBIAEoBSJHChxSZXNwb25zZUxpc3RDb21tZW50UmV2aXNpb25zEicKCXJldmlzaW9ucxgBIAMoCzIULm1vbm8uaXNzdWUuUmV2aXNpb24iFwoVUmVxdWVzdExpc3RDb21wb25lbnRzIkMKFlJlc3BvbnNlTGlzdENvbXBvbmVudHMSKQoKY29tcG9uZW50cxgBIAMoCzIVLm1vbm8uaXNzdWUuQ29tcG9uZW50IjAKFFJlcXVlc3RTYXZlQ29tcG9uZW50EgoKAmlkGAEgASgFEgwKBG5hbWUYAiABKAkiQQoVUmVzcG9uc2VTYXZlQ29tcG9uZW50EigKCWNvbXBvbmVudBgBIAEoCzIVLm1vbm8uaXNzdWUuQ29tcG9uZW50IhYKFFJlcXVlc3RMaXN0VGVtcGxhdGVzIkAKFVJlc3BvbnNlTGlzdFRlbXBsYXRlcxInCgl0ZW1wbGF0ZXMYASADKAsyFC5tb25vLmlzc3VlLlRlbXBsYXRlIlQKE1JlcXVlc3RTYXZlVGVtcGxhdGUSCgoCaWQYASABKAUSDQoFdGl0bGUYAiABKAkSDAoEYm9keRgDIAEoCRIUCgxjb21wb25lbnRfaWQYBCABKAUiPgoUUmVzcG9uc2VTYXZlVGVtcGxhdGUSJgoIdGVtcGxhdGUYASABKAsyFC5tb25vLmlzc3VlLlRlbXBsYXRlIiMKFVJlcXVlc3REZWxldGVUZW1wbGF0ZRIKCgJpZBgBIAEoBSIYChZSZXNwb25zZURlbGV0ZVRlbXBsYXRlIhMKEVJlcXVlc3RMaXN0QWN0b3JzIjcKElJlc3BvbnNlTGlzdEFjdG9ycxIhCgZhY3RvcnMYASADKAsyES5tb25vLmlzc3VlLkFjdG9yIg8KDVJlcXVlc3RXaG9BbUkiMgoOUmVzcG9uc2VXaG9BbUkSIAoFYWN0b3IYASABKAsyES5tb25vLmlzc3VlLkFjdG9yKr4BCgxUaWNrZXRTdGF0dXMSHQoZVElDS0VUX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElRJQ0tFVF9TVEFUVVNfT1BFThABEh0KGVRJQ0tFVF9TVEFUVVNfSU5fUFJPR1JFU1MQAhIWChJUSUNLRVRfU1RBVFVTX0RPTkUQAxIaChZUSUNLRVRfU1RBVFVTX1dPTlRfRklYEAQSJAogVElDS0VUX1NUQVRVU19ORUVEX0lOVkVTVElHQVRJT04QBSp5CghQcmlvcml0eRIYChRQUklPUklUWV9VTlNQRUNJRklFRBAAEg8KC1BSSU9SSVRZX1AwEAESDwoLUFJJT1JJVFlfUDEQAhIPCgtQUklPUklUWV9QMhADEg8KC1BSSU9SSVRZX1AzEAQSDwoLUFJJT1JJVFlfUDQQBSqIAQoKVGlja2V0VHlwZRIbChdUSUNLRVRfVFlQRV9VTlNQRUNJRklFRBAAEhMKD1RJQ0tFVF9UWVBFX0JVRxABEhcKE1RJQ0tFVF9UWVBFX0ZFQVRVUkUQAhIUChBUSUNLRVRfVFlQRV9UQVNLEAMSGQoVVElDS0VUX1RZUEVfT1BFUkFUSU9OEAQqagoJQWN0b3JLaW5kEhoKFkFDVE9SX0tJTkRfVU5TUEVDSUZJRUQQABIUChBBQ1RPUl9LSU5EX0hVTUFOEAESFAoQQUNUT1JfS0lORF9BR0VOVBACEhUKEUFDVE9SX0tJTkRfU1lTVEVNEAMqogEKDFJlbGF0aW9uVHlwZRIdChlSRUxBVElPTl9UWVBFX1VOU1BFQ0lGSUVEEAASGwoXUkVMQVRJT05fVFlQRV9QQVJFTlRfT0YQARIYChRSRUxBVElPTl9UWVBFX0JMT0NLUxACEh4KGlJFTEFUSU9OX1RZUEVfRFVQTElDQVRFX09GEAMSHAoYUkVMQVRJT05fVFlQRV9SRUxBVEVTX1RPEAQqmQEKC0NvZGluZ0FnZW50EhwKGENPRElOR19BR0VOVF9VTlNQRUNJRklFRBAAEhwKGENPRElOR19BR0VOVF9DTEFVREVfQ09ERRABEhYKEkNPRElOR19BR0VOVF9DT0RFWBACEhsKF0NPRElOR19BR0VOVF9HRU1JTklfQ0xJEAMSGQoVQ09ESU5HX0FHRU5UX09QRU5DT0RFEAQqrQQKDEFjdGl2aXR5S2luZBIdChlBQ1RJVklUWV9LSU5EX1VOU1BFQ0lGSUVEEAASGAoUQUNUSVZJVFlfS0lORF9DUkVBVEUQARIXChNBQ1RJVklUWV9LSU5EX1RJVExFEAISGAoUQUNUSVZJVFlfS0lORF9TVEFUVVMQAxIaChZBQ1RJVklUWV9LSU5EX1BSSU9SSVRZEAQSGwoXQUNUSVZJVFlfS0lORF9DT01QT05FTlQQBRIaChZBQ1RJVklUWV9LSU5EX0FTU0lHTkVFEAYSFgoSQUNUSVZJVFlfS0lORF9CT0RZEAcSIAocQUNUSVZJVFlfS0lORF9SRUxBVElPTl9BRERFRBAIEiIKHkFDVElWSVRZX0tJTkRfUkVMQVRJT05fUkVNT1ZFRBAJEhkKFUFDVElWSVRZX0tJTkRfQ09NTUVOVBAKEiAKHEFDVElWSVRZX0tJTkRfQ09NTUVOVF9FRElURUQQCxIhCh1BQ1RJVklUWV9LSU5EX0NPTU1FTlRfREVMRVRFRBAMEh8KG0FDVElWSVRZX0tJTkRfQ09NTUlUX0xJTktFRBANEiUKIUFDVElWSVRZX0tJTkRfUFVMTF9SRVFVRVNUX0xJTktFRBAOEhsKF0FDVElWSVRZX0tJTkRfTUVOVElPTkVEEA8SIQodQUNUSVZJVFlfS0lORF9NRU5USU9OX1JFTU9WRUQQEBIWChJBQ1RJVklUWV9LSU5EX1RZUEUQESpaCgtUcmFpbGVyS2luZBIcChhUUkFJTEVSX0tJTkRfVU5TUEVDSUZJRUQQABIVChFUUkFJTEVSX0tJTkRfUkVGUxABEhYKElRSQUlMRVJfS0lORF9GSVhFUxACKpEBChBQdWxsUmVxdWVzdFN0YXRlEiIKHlBVTExfUkVRVUVTVF9TVEFURV9VTlNQRUNJRklFRBAAEhsKF1BVTExfUkVRVUVTVF9TVEFURV9PUEVOEAESHQoZUFVMTF9SRVFVRVNUX1NUQVRFX0NMT1NFRBACEh0KGVBVTExfUkVRVUVTVF9TVEFURV9NRVJHRUQQAzKqDQoFSXNzdWUSTgoLTGlzdFRpY2tldHMSHi5tb25vLmlzc3VlLlJlcXVlc3RMaXN0VGlja2V0cxofLm1vbm8uaXNzdWUuUmVzcG9uc2VMaXN0VGlja2V0cxJICglHZXRUaWNrZXQSHC5tb25vLmlzc3VlLlJlcXVlc3RHZXRUaWNrZXQaHS5tb25vLmlzc3VlLlJlc3BvbnNlR2V0VGlja2V0ElEKDENyZWF0ZVRpY2tldBIfLm1vbm8uaXNzdWUuUmVxdWVzdENyZWF0ZVRpY2tldBogLm1vbm8uaXNzdWUuUmVzcG9uc2VDcmVhdGVUaWNrZXQSUQoMVXBkYXRlVGlja2V0Eh8ubW9uby5pc3N1ZS5SZXF1ZXN0VXBkYXRlVGlja2V0GiAubW9uby5pc3N1ZS5SZXNwb25zZVVwZGF0ZVRpY2tldBJOCgtBZGRSZWxhdGlvbhIeLm1vbm8uaXNzdWUuUmVxdWVzdEFkZFJlbGF0aW9uGh8ubW9uby5pc3N1ZS5SZXNwb25zZUFkZFJlbGF0aW9uElcKDlJlbW92ZVJlbGF0aW9uEiEubW9uby5pc3N1ZS5SZXF1ZXN0UmVtb3ZlUmVsYXRpb24aIi5tb25vLmlzc3VlLlJlc3BvbnNlUmVtb3ZlUmVsYXRpb24SWgoPQWRkQWdlbnRTZXNzaW9uEiIubW9uby5pc3N1ZS5SZXF1ZXN0QWRkQWdlbnRTZXNzaW9uGiMubW9uby5pc3N1ZS5SZXNwb25zZUFkZEFnZW50U2Vzc2lvbhJLCgpBZGRDb21tZW50Eh0ubW9uby5pc3N1ZS5SZXF1ZXN0QWRkQ29tbWVudBoeLm1vbm8uaXNzdWUuUmVzcG9uc2VBZGRDb21tZW50Ek4KC0VkaXRDb21tZW50Eh4ubW9uby5pc3N1ZS5SZXF1ZXN0RWRpdENvbW1lbnQaHy5tb25vLmlzc3VlLlJlc3BvbnNlRWRpdENvbW1lbnQSVAoNRGVsZXRlQ29tbWVudBIgLm1vbm8uaXNzdWUuUmVxdWVzdERlbGV0ZUNvbW1lbnQaIS5tb25vLmlzc3VlLlJlc3BvbnNlRGVsZXRlQ29tbWVudBJXCg5MaXN0QWN0aXZpdGllcxIhLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RBY3Rpdml0aWVzGiIubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RBY3Rpdml0aWVzEmYKE0xpc3RUaWNrZXRSZXZpc2lvbnMSJi5tb25vLmlzc3VlLlJlcXVlc3RMaXN0VGlja2V0UmV2aXNpb25zGicubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RUaWNrZXRSZXZpc2lvbnMSaQoUTGlzdENvbW1lbnRSZXZpc2lvbnMSJy5tb25vLmlzc3VlLlJlcXVlc3RMaXN0Q29tbWVudFJldmlzaW9ucxooLm1vbm8uaXNzdWUuUmVzcG9uc2VMaXN0Q29tbWVudFJldmlzaW9ucxJXCg5MaXN0Q29tcG9uZW50cxIhLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RDb21wb25lbnRzGiIubW9uby5pc3N1ZS5SZXNwb25zZUxpc3RDb21wb25lbnRzElQKDVNhdmVDb21wb25lbnQSIC5tb25vLmlzc3VlLlJlcXVlc3RTYXZlQ29tcG9uZW50GiEubW9uby5pc3N1ZS5SZXNwb25zZVNhdmVDb21wb25lbnQSVAoNTGlzdFRlbXBsYXRlcxIgLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RUZW1wbGF0ZXMaIS5tb25vLmlzc3VlLlJlc3BvbnNlTGlzdFRlbXBsYXRlcxJRCgxTYXZlVGVtcGxhdGUSHy5tb25vLmlzc3VlLlJlcXVlc3RTYXZlVGVtcGxhdGUaIC5tb25vLmlzc3VlLlJlc3BvbnNlU2F2ZVRlbXBsYXRlElcKDkRlbGV0ZVRlbXBsYXRlEiEubW9uby5pc3N1ZS5SZXF1ZXN0RGVsZXRlVGVtcGxhdGUaIi5tb25vLmlzc3VlLlJlc3BvbnNlRGVsZXRlVGVtcGxhdGUSSwoKTGlzdEFjdG9ycxIdLm1vbm8uaXNzdWUuUmVxdWVzdExpc3RBY3RvcnMaHi5tb25vLmlzc3VlLlJlc3BvbnNlTGlzdEFjdG9ycxI/CgZXaG9BbUkSGS5tb25vLmlzc3VlLlJlcXVlc3RXaG9BbUkaGi5tb25vLmlzc3VlLlJlc3BvbnNlV2hvQW1JQidaHWdvLmYxMTAuZGV2L21vbm8vZ28vaXNzdWUvYXBpkgMF0j4CEANiCGVkaXRpb25zcOgH", [file_google_protobuf_go_features, file_google_protobuf_timestamp]);
 
 /**
  * Describes the message mono.issue.Ticket.
@@ -75,291 +75,312 @@ export const PullRequestLinkSchema = /*@__PURE__*/
   messageDesc(file_proto_issue_issue, 8);
 
 /**
+ * Describes the message mono.issue.AgentSession.
+ * Use `create(AgentSessionSchema)` to create a new message.
+ */
+export const AgentSessionSchema = /*@__PURE__*/
+  messageDesc(file_proto_issue_issue, 9);
+
+/**
  * Describes the message mono.issue.Comment.
  * Use `create(CommentSchema)` to create a new message.
  */
 export const CommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 9);
+  messageDesc(file_proto_issue_issue, 10);
 
 /**
  * Describes the message mono.issue.Activity.
  * Use `create(ActivitySchema)` to create a new message.
  */
 export const ActivitySchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 10);
+  messageDesc(file_proto_issue_issue, 11);
 
 /**
  * Describes the message mono.issue.Revision.
  * Use `create(RevisionSchema)` to create a new message.
  */
 export const RevisionSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 11);
+  messageDesc(file_proto_issue_issue, 12);
 
 /**
  * Describes the message mono.issue.RequestListTickets.
  * Use `create(RequestListTicketsSchema)` to create a new message.
  */
 export const RequestListTicketsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 12);
+  messageDesc(file_proto_issue_issue, 13);
 
 /**
  * Describes the message mono.issue.ResponseListTickets.
  * Use `create(ResponseListTicketsSchema)` to create a new message.
  */
 export const ResponseListTicketsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 13);
+  messageDesc(file_proto_issue_issue, 14);
 
 /**
  * Describes the message mono.issue.RequestGetTicket.
  * Use `create(RequestGetTicketSchema)` to create a new message.
  */
 export const RequestGetTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 14);
+  messageDesc(file_proto_issue_issue, 15);
 
 /**
  * Describes the message mono.issue.ResponseGetTicket.
  * Use `create(ResponseGetTicketSchema)` to create a new message.
  */
 export const ResponseGetTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 15);
+  messageDesc(file_proto_issue_issue, 16);
 
 /**
  * Describes the message mono.issue.RequestCreateTicket.
  * Use `create(RequestCreateTicketSchema)` to create a new message.
  */
 export const RequestCreateTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 16);
+  messageDesc(file_proto_issue_issue, 17);
 
 /**
  * Describes the message mono.issue.ResponseCreateTicket.
  * Use `create(ResponseCreateTicketSchema)` to create a new message.
  */
 export const ResponseCreateTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 17);
+  messageDesc(file_proto_issue_issue, 18);
 
 /**
  * Describes the message mono.issue.RequestUpdateTicket.
  * Use `create(RequestUpdateTicketSchema)` to create a new message.
  */
 export const RequestUpdateTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 18);
+  messageDesc(file_proto_issue_issue, 19);
 
 /**
  * Describes the message mono.issue.ResponseUpdateTicket.
  * Use `create(ResponseUpdateTicketSchema)` to create a new message.
  */
 export const ResponseUpdateTicketSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 19);
+  messageDesc(file_proto_issue_issue, 20);
 
 /**
  * Describes the message mono.issue.RequestAddRelation.
  * Use `create(RequestAddRelationSchema)` to create a new message.
  */
 export const RequestAddRelationSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 20);
+  messageDesc(file_proto_issue_issue, 21);
 
 /**
  * Describes the message mono.issue.ResponseAddRelation.
  * Use `create(ResponseAddRelationSchema)` to create a new message.
  */
 export const ResponseAddRelationSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 21);
+  messageDesc(file_proto_issue_issue, 22);
 
 /**
  * Describes the message mono.issue.RequestRemoveRelation.
  * Use `create(RequestRemoveRelationSchema)` to create a new message.
  */
 export const RequestRemoveRelationSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 22);
+  messageDesc(file_proto_issue_issue, 23);
 
 /**
  * Describes the message mono.issue.ResponseRemoveRelation.
  * Use `create(ResponseRemoveRelationSchema)` to create a new message.
  */
 export const ResponseRemoveRelationSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 23);
+  messageDesc(file_proto_issue_issue, 24);
+
+/**
+ * Describes the message mono.issue.RequestAddAgentSession.
+ * Use `create(RequestAddAgentSessionSchema)` to create a new message.
+ */
+export const RequestAddAgentSessionSchema = /*@__PURE__*/
+  messageDesc(file_proto_issue_issue, 25);
+
+/**
+ * Describes the message mono.issue.ResponseAddAgentSession.
+ * Use `create(ResponseAddAgentSessionSchema)` to create a new message.
+ */
+export const ResponseAddAgentSessionSchema = /*@__PURE__*/
+  messageDesc(file_proto_issue_issue, 26);
 
 /**
  * Describes the message mono.issue.RequestAddComment.
  * Use `create(RequestAddCommentSchema)` to create a new message.
  */
 export const RequestAddCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 24);
+  messageDesc(file_proto_issue_issue, 27);
 
 /**
  * Describes the message mono.issue.ResponseAddComment.
  * Use `create(ResponseAddCommentSchema)` to create a new message.
  */
 export const ResponseAddCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 25);
+  messageDesc(file_proto_issue_issue, 28);
 
 /**
  * Describes the message mono.issue.RequestEditComment.
  * Use `create(RequestEditCommentSchema)` to create a new message.
  */
 export const RequestEditCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 26);
+  messageDesc(file_proto_issue_issue, 29);
 
 /**
  * Describes the message mono.issue.ResponseEditComment.
  * Use `create(ResponseEditCommentSchema)` to create a new message.
  */
 export const ResponseEditCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 27);
+  messageDesc(file_proto_issue_issue, 30);
 
 /**
  * Describes the message mono.issue.RequestDeleteComment.
  * Use `create(RequestDeleteCommentSchema)` to create a new message.
  */
 export const RequestDeleteCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 28);
+  messageDesc(file_proto_issue_issue, 31);
 
 /**
  * Describes the message mono.issue.ResponseDeleteComment.
  * Use `create(ResponseDeleteCommentSchema)` to create a new message.
  */
 export const ResponseDeleteCommentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 29);
+  messageDesc(file_proto_issue_issue, 32);
 
 /**
  * Describes the message mono.issue.RequestListActivities.
  * Use `create(RequestListActivitiesSchema)` to create a new message.
  */
 export const RequestListActivitiesSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 30);
+  messageDesc(file_proto_issue_issue, 33);
 
 /**
  * Describes the message mono.issue.ResponseListActivities.
  * Use `create(ResponseListActivitiesSchema)` to create a new message.
  */
 export const ResponseListActivitiesSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 31);
+  messageDesc(file_proto_issue_issue, 34);
 
 /**
  * Describes the message mono.issue.RequestListTicketRevisions.
  * Use `create(RequestListTicketRevisionsSchema)` to create a new message.
  */
 export const RequestListTicketRevisionsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 32);
+  messageDesc(file_proto_issue_issue, 35);
 
 /**
  * Describes the message mono.issue.ResponseListTicketRevisions.
  * Use `create(ResponseListTicketRevisionsSchema)` to create a new message.
  */
 export const ResponseListTicketRevisionsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 33);
+  messageDesc(file_proto_issue_issue, 36);
 
 /**
  * Describes the message mono.issue.RequestListCommentRevisions.
  * Use `create(RequestListCommentRevisionsSchema)` to create a new message.
  */
 export const RequestListCommentRevisionsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 34);
+  messageDesc(file_proto_issue_issue, 37);
 
 /**
  * Describes the message mono.issue.ResponseListCommentRevisions.
  * Use `create(ResponseListCommentRevisionsSchema)` to create a new message.
  */
 export const ResponseListCommentRevisionsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 35);
+  messageDesc(file_proto_issue_issue, 38);
 
 /**
  * Describes the message mono.issue.RequestListComponents.
  * Use `create(RequestListComponentsSchema)` to create a new message.
  */
 export const RequestListComponentsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 36);
+  messageDesc(file_proto_issue_issue, 39);
 
 /**
  * Describes the message mono.issue.ResponseListComponents.
  * Use `create(ResponseListComponentsSchema)` to create a new message.
  */
 export const ResponseListComponentsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 37);
+  messageDesc(file_proto_issue_issue, 40);
 
 /**
  * Describes the message mono.issue.RequestSaveComponent.
  * Use `create(RequestSaveComponentSchema)` to create a new message.
  */
 export const RequestSaveComponentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 38);
+  messageDesc(file_proto_issue_issue, 41);
 
 /**
  * Describes the message mono.issue.ResponseSaveComponent.
  * Use `create(ResponseSaveComponentSchema)` to create a new message.
  */
 export const ResponseSaveComponentSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 39);
+  messageDesc(file_proto_issue_issue, 42);
 
 /**
  * Describes the message mono.issue.RequestListTemplates.
  * Use `create(RequestListTemplatesSchema)` to create a new message.
  */
 export const RequestListTemplatesSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 40);
+  messageDesc(file_proto_issue_issue, 43);
 
 /**
  * Describes the message mono.issue.ResponseListTemplates.
  * Use `create(ResponseListTemplatesSchema)` to create a new message.
  */
 export const ResponseListTemplatesSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 41);
+  messageDesc(file_proto_issue_issue, 44);
 
 /**
  * Describes the message mono.issue.RequestSaveTemplate.
  * Use `create(RequestSaveTemplateSchema)` to create a new message.
  */
 export const RequestSaveTemplateSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 42);
+  messageDesc(file_proto_issue_issue, 45);
 
 /**
  * Describes the message mono.issue.ResponseSaveTemplate.
  * Use `create(ResponseSaveTemplateSchema)` to create a new message.
  */
 export const ResponseSaveTemplateSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 43);
+  messageDesc(file_proto_issue_issue, 46);
 
 /**
  * Describes the message mono.issue.RequestDeleteTemplate.
  * Use `create(RequestDeleteTemplateSchema)` to create a new message.
  */
 export const RequestDeleteTemplateSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 44);
+  messageDesc(file_proto_issue_issue, 47);
 
 /**
  * Describes the message mono.issue.ResponseDeleteTemplate.
  * Use `create(ResponseDeleteTemplateSchema)` to create a new message.
  */
 export const ResponseDeleteTemplateSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 45);
+  messageDesc(file_proto_issue_issue, 48);
 
 /**
  * Describes the message mono.issue.RequestListActors.
  * Use `create(RequestListActorsSchema)` to create a new message.
  */
 export const RequestListActorsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 46);
+  messageDesc(file_proto_issue_issue, 49);
 
 /**
  * Describes the message mono.issue.ResponseListActors.
  * Use `create(ResponseListActorsSchema)` to create a new message.
  */
 export const ResponseListActorsSchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 47);
+  messageDesc(file_proto_issue_issue, 50);
 
 /**
  * Describes the message mono.issue.RequestWhoAmI.
  * Use `create(RequestWhoAmISchema)` to create a new message.
  */
 export const RequestWhoAmISchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 48);
+  messageDesc(file_proto_issue_issue, 51);
 
 /**
  * Describes the message mono.issue.ResponseWhoAmI.
  * Use `create(ResponseWhoAmISchema)` to create a new message.
  */
 export const ResponseWhoAmISchema = /*@__PURE__*/
-  messageDesc(file_proto_issue_issue, 49);
+  messageDesc(file_proto_issue_issue, 52);
 
 /**
  * Describes the enum mono.issue.TicketStatus.
@@ -422,10 +443,22 @@ export const RelationType = /*@__PURE__*/
   tsEnum(RelationTypeSchema);
 
 /**
+ * Describes the enum mono.issue.CodingAgent.
+ */
+export const CodingAgentSchema = /*@__PURE__*/
+  enumDesc(file_proto_issue_issue, 5);
+
+/**
+ * @generated from enum mono.issue.CodingAgent
+ */
+export const CodingAgent = /*@__PURE__*/
+  tsEnum(CodingAgentSchema);
+
+/**
  * Describes the enum mono.issue.ActivityKind.
  */
 export const ActivityKindSchema = /*@__PURE__*/
-  enumDesc(file_proto_issue_issue, 5);
+  enumDesc(file_proto_issue_issue, 6);
 
 /**
  * @generated from enum mono.issue.ActivityKind
@@ -437,7 +470,7 @@ export const ActivityKind = /*@__PURE__*/
  * Describes the enum mono.issue.TrailerKind.
  */
 export const TrailerKindSchema = /*@__PURE__*/
-  enumDesc(file_proto_issue_issue, 6);
+  enumDesc(file_proto_issue_issue, 7);
 
 /**
  * @generated from enum mono.issue.TrailerKind
@@ -449,7 +482,7 @@ export const TrailerKind = /*@__PURE__*/
  * Describes the enum mono.issue.PullRequestState.
  */
 export const PullRequestStateSchema = /*@__PURE__*/
-  enumDesc(file_proto_issue_issue, 7);
+  enumDesc(file_proto_issue_issue, 8);
 
 /**
  * @generated from enum mono.issue.PullRequestState

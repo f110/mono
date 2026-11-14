@@ -56,6 +56,13 @@ type relationInput struct {
 	To   int32  `json:"to" jsonschema:"Number of the ticket"`
 }
 
+type addAgentSessionInput struct {
+	Ticket    int32  `json:"ticket" jsonschema:"Number of the ticket"`
+	Agent     string `json:"agent" jsonschema:"One of CLAUDE_CODE, CODEX, GEMINI_CLI and OPENCODE"`
+	Hostname  string `json:"hostname" jsonschema:"Host name of the machine where the session runs"`
+	SessionID string `json:"session_id" jsonschema:"ID of the session of the coding agent which is used to resume the session"`
+}
+
 type addCommentInput struct {
 	Ticket int32  `json:"ticket" jsonschema:"Number of the ticket"`
 	Body   string `json:"body" jsonschema:"Body of the comment written in Markdown"`
@@ -103,7 +110,7 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 	addTool(s, "list_tickets", "List the tickets which match the filter", h.ListTickets, func(in listTicketsInput) (*api.RequestListTickets, error) {
 		return api.RequestListTickets_builder{Filter: &in.Filter, OrderBy: &in.OrderBy, PageSize: &in.PageSize, PageToken: &in.PageToken}.Build(), nil
 	})
-	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks, the comments, the commits and the pull requests", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
+	addTool(s, "get_ticket", "Get the ticket with the relations, the backlinks, the comments, the commits, the pull requests and the sessions of the coding agents", h.GetTicket, func(in ticketInput) (*api.RequestGetTicket, error) {
 		return api.RequestGetTicket_builder{Number: &in.Number}.Build(), nil
 	})
 	addTool(s, "create_ticket", "Create the ticket", h.CreateTicket, func(in createTicketInput) (*api.RequestCreateTicket, error) {
@@ -162,6 +169,13 @@ func newServer(h *server.IssueHandler) *mcp.Server {
 			return nil, err
 		}
 		return api.RequestRemoveRelation_builder{Relation: r}.Build(), nil
+	})
+	addTool(s, "add_agent_session", "Add the session of the coding agent which works on the ticket. Nothing happens if the session of the host is already added", h.AddAgentSession, func(in addAgentSessionInput) (*api.RequestAddAgentSession, error) {
+		agent, err := parseEnum[api.CodingAgent](api.CodingAgent_value, "CODING_AGENT_", "agent", in.Agent)
+		if err != nil {
+			return nil, err
+		}
+		return api.RequestAddAgentSession_builder{Ticket: &in.Ticket, Agent: &agent, Hostname: &in.Hostname, SessionId: &in.SessionID}.Build(), nil
 	})
 	addTool(s, "add_comment", "Add the comment to the ticket", h.AddComment, func(in addCommentInput) (*api.RequestAddComment, error) {
 		return api.RequestAddComment_builder{Ticket: &in.Ticket, Body: &in.Body}.Build(), nil
