@@ -219,7 +219,7 @@ message ArtifactRef {
   string hash       = 2;
   string name       = 3;
   string repository = 4;  // destination repository (from cd_artifact)
-  string tag        = 5;  // optional; empty means store under the content digest
+  reserved 5;
 }
 
 message RequestSyncArtifacts {
@@ -252,5 +252,5 @@ message ArtifactUploadMeta {
 
 message ResponseUploadArtifact {
   string repository = 1;
-  string reference  = 2;  // tag or digest actually stored
+  string reference  = 2;  // manifest digest actually stored
 }

@@ -817,6 +817,7 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 		return nil, status.Error(codes.InvalidArgument, "missing artifact hash")
 	}
 
+	tag := strconv.Itoa(int(meta.GetTaskId()))
 	var reference string
 	var err error
 	switch ref.GetType() {
@@ -826,9 +827,9 @@ func (s *apiService) storeArtifact(ctx context.Context, meta *ArtifactUploadMeta
 			return nil, status.Errorf(codes.InvalidArgument, "content hash mismatch: got %s, declared %s", got, ref.GetHash())
 		}
 		artifactType, mediaType := fileArtifactMediaTypes(ref.GetType())
-		reference, err = s.artifactRegistry.PushFile(ctx, ref.GetRepository(), ref.GetTag(), artifactType, mediaType, ref.GetName(), data)
+		reference, err = s.artifactRegistry.PushFile(ctx, ref.GetRepository(), tag, artifactType, mediaType, ref.GetName(), data)
 	case ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE:
-		reference, err = s.artifactRegistry.PushImage(ctx, ref.GetRepository(), ref.GetTag(), ref.GetHash(), bytes.NewReader(data))
+		reference, err = s.artifactRegistry.PushImage(ctx, ref.GetRepository(), tag, ref.GetHash(), bytes.NewReader(data))
 	default:
 		return nil, status.Error(codes.InvalidArgument, "unknown artifact type")
 	}

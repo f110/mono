@@ -128,10 +128,11 @@ type fakeRegistry struct {
 	fileRepo, fileTag, fileArtifactType, fileMediaType, fileName string
 	fileContent                                                  []byte
 	fileRef                                                      string
-	imageRef                                                     string
+	imageTag, imageRef                                           string
 }
 
-func (f *fakeRegistry) PushImage(_ context.Context, _, _, _ string, _ io.Reader) (string, error) {
+func (f *fakeRegistry) PushImage(_ context.Context, _, tag, _ string, _ io.Reader) (string, error) {
+	f.imageTag = tag
 	return f.imageRef, nil
 }
 
@@ -164,6 +165,7 @@ func TestStoreArtifact(t *testing.T) {
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, "example.com/foo", res.GetRepository())
 		assertion.Equal(t, "sha256:stored", res.GetReference())
+		assertion.Equal(t, "7", reg.fileTag)
 		assertion.Equal(t, "application/vnd.mono.build.binary", reg.fileArtifactType)
 		assertion.Equal(t, "application/octet-stream", reg.fileMediaType)
 		assertion.Equal(t, content, reg.fileContent)
@@ -174,6 +176,19 @@ func TestStoreArtifact(t *testing.T) {
 		assertion.Equal(t, hash, stored.Hash)
 		assertion.Equal(t, int32(7), stored.TaskId)
 		assertion.Equal(t, database.ArtifactTypeBinary, stored.Type)
+	})
+
+	t.Run("container image is tagged with the task id", func(t *testing.T) {
+		reg := &fakeRegistry{imageRef: "sha256:image"}
+		m := daotest.NewArtifact()
+		s := &apiService{dao: dao.Options{Artifact: m}, artifactRegistry: reg}
+
+		ref := artifactRef(ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE, "sha256:image")
+		ref.SetRepository("example.com/foo")
+		res, err := s.storeArtifact(context.Background(), uploadMeta(7, ref), content)
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, "7", reg.imageTag)
+		assertion.Equal(t, "sha256:image", res.GetReference())
 	})
 
 	t.Run("hash mismatch is rejected", func(t *testing.T) {
@@ -261,8 +276,11 @@ func TestCraneArtifactRegistry_PushFile(t *testing.T) {
 	r := NewCraneArtifactRegistry(true)
 
 	content := []byte("kind: Deployment\n")
-	ref, err := r.PushFile(context.Background(), host+"/build/manifests", "", "application/vnd.mono.build.k8s-manifest", "application/yaml", "kustomize.base.yaml", content)
+	ref, err := r.PushFile(context.Background(), host+"/build/manifests", "7", "application/vnd.mono.build.k8s-manifest", "application/yaml", "kustomize.base.yaml", content)
 	assertion.MustNoError(t, err)
+	tags, err := crane.ListTags(host+"/build/manifests", crane.Insecure)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, []string{"7"}, tags)
 
 	raw, err := crane.Manifest(host+"/build/manifests@"+ref, crane.Insecure)
 	assertion.MustNoError(t, err)

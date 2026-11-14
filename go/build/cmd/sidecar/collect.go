@@ -38,7 +38,6 @@ type markerArtifact struct {
 	Type       string `json:"type"` // container_image | binary | k8s_manifest
 	Path       string `json:"path"` // exec-root relative
 	Repository string `json:"repository"`
-	Tag        string `json:"tag"`
 	Format     string `json:"format"` // oci_layout for container images
 }
 
@@ -48,7 +47,6 @@ type artifactEntry struct {
 	Type       string
 	AbsPath    string
 	Repository string
-	Tag        string
 	Name       string
 	Hash       string
 }
@@ -222,7 +220,6 @@ func scanMarkers(outputBase string) ([]*artifactEntry, error) {
 				Type:       a.Type,
 				AbsPath:    abs,
 				Repository: a.Repository,
-				Tag:        a.Tag,
 				Name:       filepath.Base(a.Path),
 			})
 		}
@@ -294,7 +291,6 @@ func buildArtifactRef(_ int32, e *artifactEntry) *api.ArtifactRef {
 	r.SetHash(e.Hash)
 	r.SetName(e.Name)
 	r.SetRepository(e.Repository)
-	r.SetTag(e.Tag)
 	return r
 }
 

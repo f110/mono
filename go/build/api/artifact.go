@@ -29,13 +29,13 @@ import (
 type ArtifactRegistry interface {
 	// PushImage stores an OCI image, provided as a tarball of its OCI layout, at
 	// repository. It fails if the image's manifest digest does not equal
-	// expectedDigest (the hash the sidecar computed). When tag is empty the image
-	// is referenced by its digest. Returns the stored reference (tag or digest).
+	// expectedDigest (the hash the sidecar computed). The image is tagged with tag so
+	// that the registry does not garbage-collect it. Returns the manifest digest.
 	PushImage(ctx context.Context, repository, tag, expectedDigest string, ociLayoutTar io.Reader) (string, error)
 	// PushFile stores content as an OCI artifact of the given artifactType under
 	// repository. The content becomes the single layer of the manifest with
-	// mediaType. When tag is empty the artifact is referenced by its digest.
-	// Returns the stored reference (tag or digest).
+	// mediaType. The artifact is tagged with tag so that the registry does not
+	// garbage-collect it. Returns the manifest digest.
 	PushFile(ctx context.Context, repository, tag, artifactType, mediaType, filename string, content []byte) (string, error)
 }
 
@@ -86,18 +86,10 @@ func (r *craneArtifactRegistry) PushImage(ctx context.Context, repository, tag, 
 		return "", xerrors.Definef("image digest mismatch: got %s, declared %s", digest.String(), expectedDigest).WithStack()
 	}
 
-	reference := tag
-	if reference == "" {
-		reference = digest.String()
-	}
-	ref := repository + ":" + tag
-	if tag == "" {
-		ref = repository + "@" + digest.String()
-	}
-	if err := crane.Push(img, ref, r.options(ctx)...); err != nil {
+	if err := crane.Push(img, repository+":"+tag, r.options(ctx)...); err != nil {
 		return "", xerrors.WithStack(err)
 	}
-	return reference, nil
+	return digest.String(), nil
 }
 
 func (r *craneArtifactRegistry) PushFile(ctx context.Context, repository, tag, artifactType, mediaType, filename string, content []byte) (string, error) {
@@ -121,13 +113,10 @@ func (r *craneArtifactRegistry) PushFile(ctx context.Context, repository, tag, a
 	if err != nil {
 		return "", xerrors.WithStack(err)
 	}
-	if tag == "" {
-		return manifest.Digest.String(), nil
-	}
 	if err := repo.Tag(ctx, manifest, tag); err != nil {
 		return "", xerrors.WithStack(err)
 	}
-	return tag, nil
+	return manifest.Digest.String(), nil
 }
 
 // keychainCredential resolves the credential for hostport from the default keychain

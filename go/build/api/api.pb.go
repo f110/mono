@@ -3089,7 +3089,6 @@ type ArtifactRef struct {
 	xxx_hidden_Hash        *string                `protobuf:"bytes,2,opt,name=hash"`
 	xxx_hidden_Name        *string                `protobuf:"bytes,3,opt,name=name"`
 	xxx_hidden_Repository  *string                `protobuf:"bytes,4,opt,name=repository"`
-	xxx_hidden_Tag         *string                `protobuf:"bytes,5,opt,name=tag"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -3160,39 +3159,24 @@ func (x *ArtifactRef) GetRepository() string {
 	return ""
 }
 
-func (x *ArtifactRef) GetTag() string {
-	if x != nil {
-		if x.xxx_hidden_Tag != nil {
-			return *x.xxx_hidden_Tag
-		}
-		return ""
-	}
-	return ""
-}
-
 func (x *ArtifactRef) SetType(v ArtifactType) {
 	x.xxx_hidden_Type = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *ArtifactRef) SetHash(v string) {
 	x.xxx_hidden_Hash = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
 }
 
 func (x *ArtifactRef) SetName(v string) {
 	x.xxx_hidden_Name = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
 }
 
 func (x *ArtifactRef) SetRepository(v string) {
 	x.xxx_hidden_Repository = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
-}
-
-func (x *ArtifactRef) SetTag(v string) {
-	x.xxx_hidden_Tag = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *ArtifactRef) HasType() bool {
@@ -3223,13 +3207,6 @@ func (x *ArtifactRef) HasRepository() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
-func (x *ArtifactRef) HasTag() bool {
-	if x == nil {
-		return false
-	}
-	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
-}
-
 func (x *ArtifactRef) ClearType() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Type = ArtifactType_ARTIFACT_TYPE_CONTAINER_IMAGE
@@ -3250,11 +3227,6 @@ func (x *ArtifactRef) ClearRepository() {
 	x.xxx_hidden_Repository = nil
 }
 
-func (x *ArtifactRef) ClearTag() {
-	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
-	x.xxx_hidden_Tag = nil
-}
-
 type ArtifactRef_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3262,7 +3234,6 @@ type ArtifactRef_builder struct {
 	Hash       *string
 	Name       *string
 	Repository *string
-	Tag        *string
 }
 
 func (b0 ArtifactRef_builder) Build() *ArtifactRef {
@@ -3270,24 +3241,20 @@ func (b0 ArtifactRef_builder) Build() *ArtifactRef {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Type != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_Type = *b.Type
 	}
 	if b.Hash != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
 		x.xxx_hidden_Hash = b.Hash
 	}
 	if b.Name != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
 		x.xxx_hidden_Name = b.Name
 	}
 	if b.Repository != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
 		x.xxx_hidden_Repository = b.Repository
-	}
-	if b.Tag != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
-		x.xxx_hidden_Tag = b.Tag
 	}
 	return m0
 }
@@ -3962,15 +3929,14 @@ const file_proto_build_api_api_proto_rawDesc = "" +
 	"\rrepository_id\x18\x02 \x01(\x05R\frepositoryId\x12\x1a\n" +
 	"\brevision\x18\x03 \x01(\tR\brevision\"Q\n" +
 	"\x15ResponseListArtifacts\x128\n" +
-	"\tartifacts\x18\x01 \x03(\v2\x1a.mono.build.model.ArtifactR\tartifacts\"\x99\x01\n" +
+	"\tartifacts\x18\x01 \x03(\v2\x1a.mono.build.model.ArtifactR\tartifacts\"\x8d\x01\n" +
 	"\vArtifactRef\x120\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1c.mono.build.api.ArtifactTypeR\x04type\x12\x12\n" +
 	"\x04hash\x18\x02 \x01(\tR\x04hash\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"repository\x18\x04 \x01(\tR\n" +
-	"repository\x12\x10\n" +
-	"\x03tag\x18\x05 \x01(\tR\x03tag\"j\n" +
+	"repositoryJ\x04\b\x05\x10\x06\"j\n" +
 	"\x14RequestSyncArtifacts\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\x05R\x06taskId\x129\n" +
 	"\tartifacts\x18\x02 \x03(\v2\x1b.mono.build.api.ArtifactRefR\tartifacts\"6\n" +

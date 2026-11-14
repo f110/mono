@@ -17,7 +17,6 @@ CdArtifactInfo = provider(
 
 def _cd_artifact_impl(ctx):
     repo = ctx.attr.repository
-    tag = ctx.attr.tag
     entries = []
     inputs = []
 
@@ -28,13 +27,13 @@ def _cd_artifact_impl(ctx):
         if len(files) != 1:
             fail("cd_artifact: image %s must produce exactly one output (an OCI layout), got %d" % (t.label, len(files)))
         d = files[0]
-        entries.append({"type": "container_image", "path": d.path, "repository": repo, "tag": tag, "format": "oci_layout"})
+        entries.append({"type": "container_image", "path": d.path, "repository": repo, "format": "oci_layout"})
         inputs.append(d)
     for f in ctx.files.files:
-        entries.append({"type": "binary", "path": f.path, "repository": repo, "tag": tag})
+        entries.append({"type": "binary", "path": f.path, "repository": repo})
         inputs.append(f)
     for f in ctx.files.manifests:
-        entries.append({"type": "k8s_manifest", "path": f.path, "repository": repo, "tag": tag})
+        entries.append({"type": "k8s_manifest", "path": f.path, "repository": repo})
         inputs.append(f)
 
     # Paths are exec-root relative (File.path). The sidecar resolves them against
@@ -58,9 +57,6 @@ cd_artifact = rule(
         "repository": attr.string(
             mandatory = True,
             doc = "Destination repository path in the OCI registry (zot).",
-        ),
-        "tag": attr.string(
-            doc = "Optional reference tag. When empty, the content digest is used as the reference.",
         ),
         "images": attr.label_list(
             doc = "oci_image targets. Stored as container images (hash = image manifest digest).",
