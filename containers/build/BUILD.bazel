@@ -1,8 +1,13 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//build/rules/artifact:def.bzl", "cd_artifact")
 
 CONTAINER_REGISTRY = "repo.center.x.f110.dev"
+BUILD_REPOSITORY = CONTAINER_REGISTRY + "/build/build"
+SIDECAR_REPOSITORY = CONTAINER_REGISTRY + "/build/sidecar"
+CTL_REPOSITORY = CONTAINER_REGISTRY + "/build/buildctl"
+FRONTEND_REPOSITORY = CONTAINER_REGISTRY + "/build/frontend"
 
 pkg_tar(
     name = "build_bin",
@@ -33,7 +38,13 @@ oci_push(
     name = "push_build",
     image = ":build_image",
     remote_tags = ["latest"],
-    repository = CONTAINER_REGISTRY + "/build/build",
+    repository = BUILD_REPOSITORY,
+)
+
+cd_artifact(
+    name = "build_delivery",
+    images = [":build_image"],
+    repository = BUILD_REPOSITORY,
 )
 
 pkg_tar(
@@ -55,7 +66,13 @@ oci_push(
     name = "push_sidecar",
     image = ":sidecar_image",
     remote_tags = ["latest"],
-    repository = CONTAINER_REGISTRY + "/build/sidecar",
+    repository = SIDECAR_REPOSITORY,
+)
+
+cd_artifact(
+    name = "sidecar_delivery",
+    images = [":sidecar_image"],
+    repository = SIDECAR_REPOSITORY,
 )
 
 pkg_tar(
@@ -77,7 +94,13 @@ oci_push(
     name = "push_ctl",
     image = ":ctl_image",
     remote_tags = ["latest"],
-    repository = CONTAINER_REGISTRY + "/build/buildctl",
+    repository = CTL_REPOSITORY,
+)
+
+cd_artifact(
+    name = "ctl_delivery",
+    images = [":ctl_image"],
+    repository = CTL_REPOSITORY,
 )
 
 attributes = pkg_attributes(
@@ -142,5 +165,11 @@ oci_push(
     name = "push_frontend",
     image = ":frontend_image",
     remote_tags = ["latest"],
-    repository = CONTAINER_REGISTRY + "/build/frontend",
+    repository = FRONTEND_REPOSITORY,
+)
+
+cd_artifact(
+    name = "frontend_delivery",
+    images = [":frontend_image"],
+    repository = FRONTEND_REPOSITORY,
 )
