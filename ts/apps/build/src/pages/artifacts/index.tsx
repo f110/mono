@@ -74,7 +74,7 @@ const producedAt = (a: BFFArtifact): string =>
     ? dayjs(timestampDate(a.createdAt)).format('YYYY-MM-DD HH:mm:ss')
     : ''
 
-type SortKey = 'size' | 'produced'
+type SortKey = 'name' | 'size' | 'produced'
 
 export const ArtifactsPage: React.FC = () => {
   const params = useSearch({ strict: false })
@@ -93,8 +93,8 @@ export const ArtifactsPage: React.FC = () => {
 
   const [search, setSearch] = useState('')
   const [types, setTypes] = useState<Set<ArtifactType>>(new Set())
-  const [sortKey, setSortKey] = useState<SortKey>('produced')
-  const [asc, setAsc] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const [asc, setAsc] = useState(true)
 
   const toggleType = (t: ArtifactType) => {
     const next = new Set(types)
@@ -133,9 +133,11 @@ export const ArtifactsPage: React.FC = () => {
     )
     const sorted = [...filtered].sort((x, y) => {
       const r =
-        sortKey === 'size'
-          ? Number(x.size - y.size)
-          : producedAt(x).localeCompare(producedAt(y))
+        sortKey === 'name'
+          ? x.name.localeCompare(y.name)
+          : sortKey === 'size'
+            ? Number(x.size - y.size)
+            : producedAt(x).localeCompare(producedAt(y))
       return asc ? r : -r
     })
     return sorted
