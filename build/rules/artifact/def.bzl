@@ -15,6 +15,11 @@ CdArtifactInfo = provider(
     },
 )
 
+def _label_string(label):
+    if label.repo_name == "":
+        return "//%s:%s" % (label.package, label.name)
+    return str(label)
+
 def _cd_artifact_impl(ctx):
     repo = ctx.attr.repository
     entries = []
@@ -27,13 +32,13 @@ def _cd_artifact_impl(ctx):
         if len(files) != 1:
             fail("cd_artifact: image %s must produce exactly one output (an OCI layout), got %d" % (t.label, len(files)))
         d = files[0]
-        entries.append({"type": "container_image", "path": d.path, "repository": repo, "format": "oci_layout"})
+        entries.append({"type": "container_image", "path": d.path, "label": _label_string(t.label), "repository": repo, "format": "oci_layout"})
         inputs.append(d)
     for f in ctx.files.files:
-        entries.append({"type": "binary", "path": f.path, "repository": repo})
+        entries.append({"type": "binary", "path": f.path, "label": _label_string(f.owner), "repository": repo})
         inputs.append(f)
     for f in ctx.files.manifests:
-        entries.append({"type": "k8s_manifest", "path": f.path, "repository": repo})
+        entries.append({"type": "k8s_manifest", "path": f.path, "label": _label_string(f.owner), "repository": repo})
         inputs.append(f)
 
     # Paths are exec-root relative (File.path). The sidecar resolves them against

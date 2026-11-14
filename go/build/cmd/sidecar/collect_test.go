@@ -25,7 +25,7 @@ func TestScanMarkersAndHash(t *testing.T) {
 	marker := markerFile{
 		Target: "//pkg:delivery",
 		Artifacts: []markerArtifact{
-			{Type: "binary", Path: "bazel-out/k8-fastbuild/bin/pkg/foo", Repository: "example.com/foo"},
+			{Type: "binary", Path: "bazel-out/k8-fastbuild/bin/pkg/foo", Repository: "example.com/foo", Label: "//pkg:foo"},
 		},
 	}
 	mb, err := json.Marshal(marker)
@@ -37,7 +37,7 @@ func TestScanMarkersAndHash(t *testing.T) {
 	assertion.Len(t, entries, 1)
 	e := entries[0]
 	assertion.Equal(t, "binary", e.Type)
-	assertion.Equal(t, "foo", e.Name)
+	assertion.Equal(t, "//pkg:foo", e.Name)
 	assertion.Equal(t, "example.com/foo", e.Repository)
 	assertion.Equal(t, filepath.Join(binDir, "foo"), e.AbsPath)
 
