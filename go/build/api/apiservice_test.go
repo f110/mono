@@ -151,6 +151,32 @@ func TestListJobs(t *testing.T) {
 	assertion.True(t, params[1].GetRequired())
 }
 
+func TestListRepositories(t *testing.T) {
+	t.Run("all", func(t *testing.T) {
+		t.Parallel()
+		repoDAO := daotest.NewSourceRepository()
+		repoDAO.RegisterListAll([]*database.SourceRepository{{Id: 1, Name: "repo1"}, {Id: 2, Name: "repo2"}}, nil)
+		s := &apiService{dao: dao.Options{Repository: repoDAO}}
+
+		res, err := s.ListRepositories(context.Background(), &RequestListRepositories{})
+		assertion.MustNoError(t, err)
+		assertion.Len(t, res.GetRepositories(), 2)
+	})
+
+	t.Run("by ids", func(t *testing.T) {
+		t.Parallel()
+		repoDAO := daotest.NewSourceRepository()
+		repoDAO.RegisterListAll([]*database.SourceRepository{{Id: 1, Name: "repo1"}, {Id: 2, Name: "repo2"}}, nil)
+		repoDAO.RegisterSelectMulti([]int32{1}, []*database.SourceRepository{{Id: 1, Name: "repo1"}})
+		s := &apiService{dao: dao.Options{Repository: repoDAO}}
+
+		res, err := s.ListRepositories(context.Background(), RequestListRepositories_builder{Ids: []int32{1}}.Build())
+		assertion.MustNoError(t, err)
+		assertion.Len(t, res.GetRepositories(), 1)
+		assertion.Equal(t, int32(1), res.GetRepositories()[0].GetId())
+	})
+}
+
 func TestListTasks(t *testing.T) {
 	t.Run("by repository and revisions", func(t *testing.T) {
 		t.Parallel()

@@ -62,8 +62,17 @@ func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client
 	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
 }
 
-func (s *apiService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
-	allRepo, err := s.dao.Repository.ListAll(ctx)
+func (s *apiService) ListRepositories(ctx context.Context, req *RequestListRepositories) (*ResponseListRepositories, error) {
+	var allRepo []*database.SourceRepository
+	var err error
+	if len(req.GetIds()) > 0 {
+		if len(req.GetIds()) > 100 {
+			return nil, status.Error(codes.InvalidArgument, "too many ids specified")
+		}
+		allRepo, err = s.dao.Repository.SelectMulti(ctx, req.GetIds()...)
+	} else {
+		allRepo, err = s.dao.Repository.ListAll(ctx)
+	}
 	if err != nil {
 		logger.Log.Warn("Failed to list repositories", logger.E(err))
 		return nil, status.Error(codes.Internal, "Failed to list repositories")
