@@ -43,11 +43,11 @@ func NewDataServiceWithGoGit(repo map[string]*goGit.Repository) (*DataService, e
 	return &DataService{repo: repo}, nil
 }
 
-// AddRepo registers a repository so it can be served by gRPC requests. Safe
-// to call concurrently with read requests.
-func (g *DataService) AddRepo(name string, repo *goGit.Repository) {
+// AddRepo registers an opened repository so it can be served by gRPC requests.
+// Safe to call concurrently with read requests.
+func (g *DataService) AddRepo(repo *RepositoryConfig) {
 	g.mu.Lock()
-	g.repo[name] = repo
+	g.repo[repo.Name] = repo.goGit
 	g.mu.Unlock()
 }
 

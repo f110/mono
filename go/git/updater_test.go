@@ -28,8 +28,7 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	_, err := InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
 	require.NoError(t, err)
 
-	updater, err := NewUpdater(nil, nil, nil, "", 1)
-	require.NoError(t, err)
+	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider(nil), 1)
 
 	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
 	require.NoError(t, err)
@@ -49,6 +48,51 @@ func TestUpdater_UpdateRepo(t *testing.T) {
 	assert.Equal(t, masterRef.Hash(), n.Hash())
 
 	n, err = repo.Reference(plumbing.NewTagReferenceName("baz"), false)
+	require.NoError(t, err)
+	assert.Equal(t, masterRef.Hash(), n.Hash())
+}
+
+func TestUpdater_Sync(t *testing.T) {
+	sourceRepo := makeUpdaterSourceRepository(t)
+	mockStorage := storage.NewMock()
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+	_, err := InitObjectStorageRepository(context.Background(), mockStorage, repoPath, "test", nil)
+	require.NoError(t, err)
+
+	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	err = sourceRepo.Storer.SetReference(plumbing.NewHashReference(plumbing.NewBranchReferenceName("foobar"), masterRef.Hash()))
+	require.NoError(t, err)
+
+	repo, err := goGit.Open(NewObjectStorageStorer(mockStorage, "test", nil, nil), nil)
+	require.NoError(t, err)
+	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider([]*RepositoryConfig{{Name: "test", URL: repoPath, Prefix: "test", goGit: repo}}), 1)
+
+	err = updater.Sync(context.Background(), "https://example.com/unknown.git")
+	assert.ErrorIs(t, err, ErrRepositoryNotTracked)
+
+	err = updater.Sync(context.Background(), repoPath)
+	require.NoError(t, err)
+	n, err := repo.Reference(plumbing.NewBranchReferenceName("foobar"), false)
+	require.NoError(t, err)
+	assert.Equal(t, masterRef.Hash(), n.Hash())
+}
+
+func TestUpdater_SyncNotOpenedRepository(t *testing.T) {
+	sourceRepo := makeUpdaterSourceRepository(t)
+	mockStorage := storage.NewMock()
+	repoPath := sourceRepo.Storer.(*filesystem.Storage).Filesystem().Root()
+
+	repoConfig := &RepositoryConfig{Name: "test", URL: repoPath, Prefix: "test"}
+	updater := NewUpdater(mockStorage, nil, NewStaticRepositoryProvider([]*RepositoryConfig{repoConfig}), 1)
+
+	err := updater.Sync(context.Background(), repoPath)
+	require.NoError(t, err)
+	require.NotNil(t, repoConfig.goGit)
+
+	masterRef, err := sourceRepo.Reference(plumbing.NewBranchReferenceName("master"), false)
+	require.NoError(t, err)
+	n, err := repoConfig.goGit.Reference(plumbing.NewBranchReferenceName("master"), false)
 	require.NoError(t, err)
 	assert.Equal(t, masterRef.Hash(), n.Hash())
 }

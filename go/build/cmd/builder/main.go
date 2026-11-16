@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -27,7 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/leaderelection"
+	k8sleaderelection "k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	secretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned"
 
@@ -50,6 +51,7 @@ import (
 	ghwebhook "go.f110.dev/mono/go/github/webhook"
 	"go.f110.dev/mono/go/grpcutil"
 	"go.f110.dev/mono/go/http/authproxy"
+	"go.f110.dev/mono/go/leaderelection"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/netutil"
 	"go.f110.dev/mono/go/storage"
@@ -181,6 +183,8 @@ type process struct {
 	eventProcessor    *ghwebhook.EventProcessor
 	gitDataGRPCServer *grpc.Server
 	gitDataUpdater    *git.Updater
+	gitDataLocker     leaderelection.Locker
+	gitDataAddRepo    chan *git.RepositoryConfig
 	gitDataPackCache  *git.PackfileCache
 	gitDataConn       *grpc.ClientConn
 	gitDataClient     git.GitDataClient
@@ -495,22 +499,60 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 	}()
 
-	updater, err := git.NewUpdater(storageClient, tokenProvider, repositories, p.opt.GitDataLockFilePath, p.opt.GitDataRefreshWorkers)
-	if err != nil {
-		return fsm.Error(err)
-	}
-	updater.SetCachePool(cachePool).
+	repositoryProvider := &gitDataRepositories{repos: repositories}
+	updater := git.NewUpdater(storageClient, tokenProvider, repositoryProvider, p.opt.GitDataRefreshWorkers).
+		SetCachePool(cachePool).
 		SetPackCache(p.gitDataPackCache).
 		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
-		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile).
-		SetDataService(service)
+		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile)
 	if p.opt.GitDataRefreshInterval > 0 {
 		updater.SetInterval(p.opt.GitDataRefreshInterval).
 			SetTimeout(p.opt.GitDataRefreshTimeout)
 	}
 	p.gitDataUpdater = updater
+	if p.opt.GitDataLockFilePath != "" {
+		l, err := leaderelection.NewObjectStorage(storageClient, p.opt.GitDataLockFilePath)
+		if err != nil {
+			return fsm.Error(err)
+		}
+		p.gitDataLocker = l
+	}
+
+	p.gitDataAddRepo = make(chan *git.RepositoryConfig, 1)
+	go func() {
+		for repo := range p.gitDataAddRepo {
+			err := repo.Open(context.Background(), storageClient, cachePool, p.gitDataPackCache, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile)
+			if err != nil {
+				logger.Log.Warn("Failed to open the repository", logger.E(err), slog.String("name", repo.Name))
+				continue
+			}
+			repositoryProvider.Add(repo)
+			service.AddRepo(repo)
+			go updater.Sync(context.Background(), repo.URL)
+		}
+	}()
 
 	return fsm.Next(stateStartApiServer)
+}
+
+// gitDataRepositories is the git.RepositoryProvider which accepts the repositories added at runtime.
+type gitDataRepositories struct {
+	mu    sync.Mutex
+	repos []*git.RepositoryConfig
+}
+
+var _ git.RepositoryProvider = &gitDataRepositories{}
+
+func (r *gitDataRepositories) Add(repo *git.RepositoryConfig) {
+	r.mu.Lock()
+	r.repos = append(r.repos, repo)
+	r.mu.Unlock()
+}
+
+func (r *gitDataRepositories) Repositories(_ context.Context) ([]*git.RepositoryConfig, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]*git.RepositoryConfig(nil), r.repos...), nil
 }
 
 func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.RepositoryConfig, error) {
@@ -572,13 +614,6 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 	}
 	p.eventProcessor = webhook.NewEventProcessor(p.dao, p.ghClient, p.bazelBuilder, gitSyncer, p.gitDataClient, p.opt.EventReconcileInterval, p.opt.EventMaxProcessingDuration)
 
-	addRepo := make(chan *git.RepositoryConfig, 1)
-	go func() {
-		for {
-			repo := <-addRepo
-			p.gitDataUpdater.AddRepo(context.Background(), repo)
-		}
-	}()
 	var artifactRegistry api.ArtifactRegistry
 	if p.opt.ArtifactUpload {
 		artifactRegistry = api.NewCraneArtifactRegistry(p.opt.ArtifactRegistryInsecure)
@@ -605,7 +640,7 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		storage.NewS3(p.opt.MinIOBucket, p.storageOpt),
 		p.opt.BazelMirrorPrefix,
 		p.eventProcessor,
-		addRepo,
+		p.gitDataAddRepo,
 		buildServerConfig(p.opt),
 		artifactRegistry,
 		newMCPHandler,
@@ -643,13 +678,13 @@ func (p *process) leaderElection(_ context.Context) (fsm.State, error) {
 	}
 
 	elected := make(chan struct{})
-	e, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+	e, err := k8sleaderelection.NewLeaderElector(k8sleaderelection.LeaderElectionConfig{
 		Lock:            lock,
 		ReleaseOnCancel: true,
 		LeaseDuration:   30 * time.Second,
 		RenewDeadline:   15 * time.Second,
 		RetryPeriod:     5 * time.Second,
-		Callbacks: leaderelection.LeaderCallbacks{
+		Callbacks: k8sleaderelection.LeaderCallbacks{
 			OnStartedLeading: func(_ context.Context) {
 				close(elected)
 			},
@@ -707,7 +742,18 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	go p.eventProcessor.Run(p.ctx)
 
 	if p.gitDataUpdater != nil && p.opt.GitDataRefreshInterval > 0 {
-		go p.gitDataUpdater.Run(p.ctx)
+		go func() {
+			updaterCtx := p.ctx
+			if p.gitDataLocker != nil {
+				lockCtx, err := p.gitDataLocker.Lock(p.ctx)
+				if err != nil {
+					logger.Log.Error("Failed to get the lock", logger.E(err))
+					return
+				}
+				updaterCtx = lockCtx
+			}
+			p.gitDataUpdater.Run(updaterCtx)
+		}()
 	}
 
 	return fsm.Wait()

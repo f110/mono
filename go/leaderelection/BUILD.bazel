@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "leaderelection",
+    srcs = ["lock.go"],
+    importpath = "go.f110.dev/mono/go/leaderelection",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logger",
+        "//go/storage",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "leaderelection_test",
+    srcs = ["lock_test.go"],
+    embed = [":leaderelection"],
+    deps = [
+        "//go/logger",
+        "//go/storage",
+        "//go/testing/assertion",
+    ],
+)

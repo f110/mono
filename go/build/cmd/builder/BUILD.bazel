@@ -25,6 +25,7 @@ go_library(
         "//go/github/webhook",
         "//go/grpcutil",
         "//go/http/authproxy",
+        "//go/leaderelection",
         "//go/logger",
         "//go/netutil",
         "//go/storage",

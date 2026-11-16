@@ -15,6 +15,7 @@ go_library(
         "//go/fsm",
         "//go/git",
         "//go/github",
+        "//go/leaderelection",
         "//go/logger",
         "//go/storage",
         "@dev_f110_go_go_memcached//client",

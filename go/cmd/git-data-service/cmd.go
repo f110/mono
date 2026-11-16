@@ -21,6 +21,7 @@ import (
 	"go.f110.dev/mono/go/fsm"
 	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/github"
+	"go.f110.dev/mono/go/leaderelection"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/storage"
 )
@@ -29,6 +30,7 @@ type gitDataServiceCommand struct {
 	*fsm.FSM
 	grpcServer    *grpc.Server
 	updater       *git.Updater
+	locker        leaderelection.Locker
 	webhookServer *http.Server
 	packCache     *git.PackfileCache
 
@@ -185,18 +187,20 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 	c.grpcServer = s
 
 	if c.RefreshInterval > 0 {
-		u, err := git.NewUpdater(storageClient, c.GitHubClient.TokenProvider, c.repositories, c.LockFilePath, c.RefreshWorkers)
-		if err != nil {
-			return fsm.Error(err)
-		}
-		u.SetInterval(c.RefreshInterval).
+		c.updater = git.NewUpdater(storageClient, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories), c.RefreshWorkers).
+			SetInterval(c.RefreshInterval).
 			SetTimeout(c.RefreshTimeout).
 			SetCachePool(cachePool).
 			SetPackCache(c.packCache).
 			SetInitTimeout(c.RepositoryInitTimeout).
-			SetDisableInflatePackFile(c.DisableInflatePackFile).
-			SetDataService(service)
-		c.updater = u
+			SetDisableInflatePackFile(c.DisableInflatePackFile)
+		if c.LockFilePath != "" {
+			l, err := leaderelection.NewObjectStorage(storageClient, c.LockFilePath)
+			if err != nil {
+				return fsm.Error(err)
+			}
+			c.locker = l
+		}
 	}
 
 	return fsm.Next(stateStartService)
@@ -215,7 +219,18 @@ func (c *gitDataServiceCommand) startService(ctx context.Context) (fsm.State, er
 	}()
 
 	if c.updater != nil {
-		go c.updater.Run(ctx)
+		go func() {
+			updaterCtx := ctx
+			if c.locker != nil {
+				lockCtx, err := c.locker.Lock(ctx)
+				if err != nil {
+					logger.Log.Error("Failed to get the lock", logger.E(err))
+					return
+				}
+				updaterCtx = lockCtx
+			}
+			c.updater.Run(updaterCtx)
+		}()
 
 		if c.ListenWebhookReceiver != "" {
 			c.webhookServer = &http.Server{
