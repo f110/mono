@@ -10,11 +10,13 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	goGit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"go.f110.dev/go-memcached/client"
 	"go.f110.dev/xerrors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -22,47 +24,127 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.f110.dev/mono/go/enumerable"
+	githubutil "go.f110.dev/mono/go/github"
 )
 
+// DataService serves the repositories which are provided by RepositoryProvider.
+// The repositories are fetched from the provider when the requested repository is not known,
+// and are opened when they are used.
 type DataService struct {
+	repos                  RepositoryProvider
+	storageClient          ObjectStorageInterface
+	cachePool              *client.SinglePool
+	packCache              *PackfileCache
+	tokenProvider          *githubutil.TokenProvider
+	initTimeout            time.Duration
+	disableInflatePackFile bool
+
 	mu   sync.RWMutex
-	repo map[string]*goGit.Repository
+	repo map[string]*RepositoryConfig
 }
 
 var _ GitDataServer = &DataService{}
 
-func NewDataService(repo map[string]*RepositoryConfig) (*DataService, error) {
-	repos := make(map[string]*goGit.Repository, len(repo))
-	for k, v := range repo {
-		repos[k] = v.goGit
-	}
-	return &DataService{repo: repos}, nil
+func NewDataService(stClient ObjectStorageInterface, tokenProvider *githubutil.TokenProvider, repos RepositoryProvider) (*DataService, error) {
+	return &DataService{
+		repos:         repos,
+		storageClient: stClient,
+		tokenProvider: tokenProvider,
+		initTimeout:   5 * time.Minute,
+		repo:          make(map[string]*RepositoryConfig),
+	}, nil
 }
 
 func NewDataServiceWithGoGit(repo map[string]*goGit.Repository) (*DataService, error) {
-	return &DataService{repo: repo}, nil
+	repos := make([]*RepositoryConfig, 0, len(repo))
+	for k, v := range repo {
+		repos = append(repos, &RepositoryConfig{Name: k, goGit: v})
+	}
+	return NewDataService(nil, nil, NewStaticRepositoryProvider(repos))
 }
 
-// AddRepo registers an opened repository so it can be served by gRPC requests.
-// Safe to call concurrently with read requests.
-func (g *DataService) AddRepo(repo *RepositoryConfig) {
+func (g *DataService) SetCachePool(c *client.SinglePool) *DataService {
+	g.cachePool = c
+	return g
+}
+
+func (g *DataService) SetPackCache(c *PackfileCache) *DataService {
+	g.packCache = c
+	return g
+}
+
+func (g *DataService) SetInitTimeout(d time.Duration) *DataService {
+	g.initTimeout = d
+	return g
+}
+
+func (g *DataService) SetDisableInflatePackFile(b bool) *DataService {
+	g.disableInflatePackFile = b
+	return g
+}
+
+// refresh replaces the known repositories with the ones from the provider.
+func (g *DataService) refresh(ctx context.Context) ([]*RepositoryConfig, error) {
+	repos, err := g.repos.Repositories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]*RepositoryConfig, len(repos))
+	for _, v := range repos {
+		m[v.Name] = v
+	}
 	g.mu.Lock()
-	g.repo[repo.Name] = repo.goGit
+	g.repo = m
 	g.mu.Unlock()
+	return repos, nil
 }
 
-func (g *DataService) lookup(name string) (*goGit.Repository, bool) {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	r, ok := g.repo[name]
-	return r, ok
+func (g *DataService) openRepository(ctx context.Context, repo *RepositoryConfig) (*goGit.Repository, error) {
+	if err := repo.Open(ctx, g.storageClient, g.cachePool, g.packCache, g.tokenProvider, g.initTimeout, g.disableInflatePackFile); err != nil {
+		return nil, err
+	}
+	return repo.goGit, nil
 }
 
-func (g *DataService) ListRepositories(_ context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
+// lookup returns the opened repository. The second return value is false if the provider doesn't provide the repository.
+func (g *DataService) lookup(ctx context.Context, name string) (*goGit.Repository, bool, error) {
 	g.mu.RLock()
-	defer g.mu.RUnlock()
+	repo, ok := g.repo[name]
+	g.mu.RUnlock()
+	if !ok {
+		repos, err := g.refresh(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		for _, v := range repos {
+			if v.Name == name {
+				repo, ok = v, true
+				break
+			}
+		}
+		if !ok {
+			return nil, false, nil
+		}
+	}
+
+	r, err := g.openRepository(ctx, repo)
+	if err != nil {
+		return nil, false, err
+	}
+	return r, true, nil
+}
+
+func (g *DataService) ListRepositories(ctx context.Context, _ *RequestListRepositories) (*ResponseListRepositories, error) {
+	repos, err := g.refresh(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var list []*Repository
-	for k, v := range g.repo {
+	for _, repo := range repos {
+		v, err := g.openRepository(ctx, repo)
+		if err != nil {
+			return nil, err
+		}
 		headRef, err := v.Head()
 		if err != nil {
 			return nil, err
@@ -83,7 +165,7 @@ func (g *DataService) ListRepositories(_ context.Context, _ *RequestListReposito
 		}
 
 		list = append(list, &Repository{
-			Name:          k,
+			Name:          repo.Name,
 			DefaultBranch: headRef.Name().Short(),
 			Url:           repoURL,
 			GitUrl:        gitURL,
@@ -95,8 +177,11 @@ func (g *DataService) ListRepositories(_ context.Context, _ *RequestListReposito
 	return &ResponseListRepositories{Repositories: list}, nil
 }
 
-func (g *DataService) ListReferences(_ context.Context, req *RequestListReferences) (*ResponseListReferences, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) ListReferences(ctx context.Context, req *RequestListReferences) (*ResponseListReferences, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -124,8 +209,11 @@ func (g *DataService) ListReferences(_ context.Context, req *RequestListReferenc
 	return res, nil
 }
 
-func (g *DataService) GetRepository(_ context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetRepository(ctx context.Context, req *RequestGetRepository) (*ResponseGetRepository, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -151,8 +239,11 @@ func (g *DataService) GetRepository(_ context.Context, req *RequestGetRepository
 	}, nil
 }
 
-func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetReference(ctx context.Context, req *RequestGetReference) (*ResponseGetReference, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -171,8 +262,11 @@ func (g *DataService) GetReference(_ context.Context, req *RequestGetReference) 
 	}, nil
 }
 
-func (g *DataService) GetCommit(_ context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetCommit(ctx context.Context, req *RequestGetCommit) (*ResponseGetCommit, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, status.Error(codes.NotFound, "repository not found")
 	}
@@ -229,8 +323,11 @@ func commitToProto(commit *object.Commit) *Commit {
 	return c
 }
 
-func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetTree(ctx context.Context, req *RequestGetTree) (*ResponseGetTree, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -297,8 +394,11 @@ func (g *DataService) GetTree(_ context.Context, req *RequestGetTree) (*Response
 	return &ResponseGetTree{Sha: tree.Hash.String(), Tree: treeEntry}, nil
 }
 
-func (g *DataService) GetBlob(_ context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetBlob(ctx context.Context, req *RequestGetBlob) (*ResponseGetBlob, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -324,8 +424,11 @@ func (g *DataService) GetBlob(_ context.Context, req *RequestGetBlob) (*Response
 	}, nil
 }
 
-func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetFile(ctx context.Context, req *RequestGetFile) (*ResponseGetFile, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -424,8 +527,11 @@ func (g *DataService) GetFile(_ context.Context, req *RequestGetFile) (*Response
 	return nil, xerrors.Newf("unsupported object: %s", treeEntry.Mode.String())
 }
 
-func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) Stat(ctx context.Context, req *RequestStat) (*ResponseStat, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -466,8 +572,11 @@ func (g *DataService) Stat(_ context.Context, req *RequestStat) (*ResponseStat, 
 	return &ResponseStat{Name: path.Join(path.Dir(req.Path), treeEntry.Name), Hash: treeEntry.Hash.String(), Mode: uint32(treeEntry.Mode)}, nil
 }
 
-func (g *DataService) GetRepositoryStatistics(_ context.Context, req *RequestGetRepositoryStatistics) (*ResponseGetRepositoryStatistics, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) GetRepositoryStatistics(ctx context.Context, req *RequestGetRepositoryStatistics) (*ResponseGetRepositoryStatistics, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -484,8 +593,11 @@ func (g *DataService) GetRepositoryStatistics(_ context.Context, req *RequestGet
 	return &ResponseGetRepositoryStatistics{HeadCommit: commitToProto(commit)}, nil
 }
 
-func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*ResponseListTag, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) ListTag(ctx context.Context, req *RequestListTag) (*ResponseListTag, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}
@@ -514,8 +626,11 @@ func (g *DataService) ListTag(_ context.Context, req *RequestListTag) (*Response
 	return res, nil
 }
 
-func (g *DataService) ListBranch(_ context.Context, req *RequestListBranch) (*ResponseListBranch, error) {
-	repo, ok := g.lookup(req.Repo)
+func (g *DataService) ListBranch(ctx context.Context, req *RequestListBranch) (*ResponseListBranch, error) {
+	repo, ok, err := g.lookup(ctx, req.Repo)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, xerrors.New("repository not found")
 	}

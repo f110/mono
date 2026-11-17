@@ -48,7 +48,6 @@ type apiService struct {
 	stClient          *storage.S3
 	logStorage        LogStorage
 	bazelMirrorPrefix string
-	addRepo           chan<- *git.RepositoryConfig
 	serverConfig      *ServerConfig
 	artifactRegistry  ArtifactRegistry
 }
@@ -58,8 +57,8 @@ const maxArtifactSize = 2 << 30 // 2 GiB
 
 var _ APIServer = (*apiService)(nil)
 
-func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, addRepo chan<- *git.RepositoryConfig, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
-	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, addRepo: addRepo, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
+func newAPIService(builder Builder, dao dao.Options, githubClient *github.Client, gitDataClient git.GitDataClient, stClient, logStorage *storage.S3, bazelMirrorPrefix string, serverConfig *ServerConfig, artifactRegistry ArtifactRegistry) *apiService {
+	return &apiService{builder: builder, dao: dao, githubClient: githubClient, gitDataClient: gitDataClient, stClient: stClient, logStorage: logStorage, bazelMirrorPrefix: bazelMirrorPrefix, serverConfig: serverConfig, artifactRegistry: artifactRegistry}
 }
 
 func (s *apiService) ListRepositories(ctx context.Context, req *RequestListRepositories) (*ResponseListRepositories, error) {
@@ -195,9 +194,6 @@ func (s *apiService) SaveRepository(ctx context.Context, req *RequestSaveReposit
 	if err != nil {
 		logger.Log.Error("Failed to create repository", logger.E(err))
 		return nil, status.Error(codes.Internal, "failed to save repository")
-	}
-	if s.addRepo != nil {
-		s.addRepo <- &git.RepositoryConfig{Name: repo.Name, URL: repo.CloneUrl, Prefix: repo.Name}
 	}
 	return ResponseSaveRepository_builder{Repository: s.dbRepoToAPIRepo(repo)}.Build(), nil
 }

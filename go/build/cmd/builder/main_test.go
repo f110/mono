@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.f110.dev/mono/go/build/database"
-	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/github"
 	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
@@ -99,8 +98,6 @@ func TestGitDataRepositories(t *testing.T) {
 	assertion.Equal(t, got[0].Prefix, "a")
 	a := got[0]
 
-	added := &git.RepositoryConfig{Name: "b", URL: "https://example.com/b.git", Prefix: "b"}
-	r.Add(added)
 	rows = []*database.SourceRepository{
 		{Name: "a", CloneUrl: "https://example.com/a.git"},
 		{Name: "b", CloneUrl: "https://example.com/b.git"},
@@ -110,9 +107,9 @@ func TestGitDataRepositories(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.Len(t, got, 3)
 	assertion.True(t, got[0] == a)
-	assertion.True(t, got[1] == added)
+	assertion.Equal(t, got[1].Name, "b")
 	assertion.Equal(t, got[2].Name, "c")
-	c := got[2]
+	b, c := got[1], got[2]
 
 	rows = []*database.SourceRepository{
 		{Name: "b", CloneUrl: "https://example.com/b2.git"},
@@ -121,7 +118,7 @@ func TestGitDataRepositories(t *testing.T) {
 	got, err = r.Repositories(t.Context())
 	assertion.MustNoError(t, err)
 	assertion.Len(t, got, 2)
-	assertion.True(t, got[0] != added)
+	assertion.True(t, got[0] != b)
 	assertion.Equal(t, got[0].URL, "https://example.com/b2.git")
 	assertion.True(t, got[1] == c)
 }

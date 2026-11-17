@@ -167,18 +167,20 @@ func (c *gitDataServiceCommand) init(ctx context.Context) (fsm.State, error) {
 		c.packCache = git.NewPackfileCache(c.PackfileCacheTTL, c.PackfileCacheTTL/2, c.PackfileCacheSize)
 	}
 
-	repoMap := make(map[string]*git.RepositoryConfig)
 	for _, v := range c.repositories {
 		if err := v.Open(ctx, storageClient, cachePool, c.packCache, c.GitHubClient.TokenProvider, c.RepositoryInitTimeout, c.DisableInflatePackFile); err != nil {
 			return fsm.Error(err)
 		}
-		repoMap[v.Name] = v
 	}
 
-	service, err := git.NewDataService(repoMap)
+	service, err := git.NewDataService(storageClient, c.GitHubClient.TokenProvider, git.NewStaticRepositoryProvider(c.repositories))
 	if err != nil {
 		return fsm.Error(err)
 	}
+	service.SetCachePool(cachePool).
+		SetPackCache(c.packCache).
+		SetInitTimeout(c.RepositoryInitTimeout).
+		SetDisableInflatePackFile(c.DisableInflatePackFile)
 	s := grpc.NewServer()
 	git.RegisterGitDataServer(s, service)
 	healthSvc := health.NewServer()

@@ -35,6 +35,27 @@ func TestListRepositories(t *testing.T) {
 	assert.Equal(t, "test2", res.Repositories[1].Name)
 }
 
+func TestDataServiceRepositoriesFromProvider(t *testing.T) {
+	provider := NewStaticRepositoryProvider(nil)
+	svc, err := NewDataService(storage.NewMock(), nil, provider)
+	require.NoError(t, err)
+
+	_, err = svc.ListReferences(t.Context(), &RequestListReferences{Repo: "test1"})
+	require.Error(t, err)
+
+	provider.repos = []*RepositoryConfig{{Name: "test1", goGit: makeSourceRepository(t)}}
+	refs, err := svc.ListReferences(t.Context(), &RequestListReferences{Repo: "test1"})
+	require.NoError(t, err)
+	assert.NotEmpty(t, refs.Refs)
+
+	provider.repos = append(provider.repos, &RepositoryConfig{Name: "test2", goGit: makeSourceRepository(t)})
+	res, err := svc.ListRepositories(t.Context(), &RequestListRepositories{})
+	require.NoError(t, err)
+	require.Len(t, res.Repositories, 2)
+	assert.Equal(t, "test1", res.Repositories[0].Name)
+	assert.Equal(t, "test2", res.Repositories[1].Name)
+}
+
 func TestListReferences(t *testing.T) {
 	mockStorage := storage.NewMock()
 	repo := makeSourceRepository(t)

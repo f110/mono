@@ -182,7 +182,6 @@ type process struct {
 	gitDataGRPCServer *grpc.Server
 	gitDataUpdater    *git.Updater
 	gitDataLocker     leaderelection.Locker
-	gitDataAddRepo    chan *git.RepositoryConfig
 	gitDataPackCache  *git.PackfileCache
 	gitDataConn       *grpc.ClientConn
 	gitDataClient     git.GitDataClient
@@ -459,10 +458,6 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		rows, err := p.dao.Repository.ListAll(ctx)
 		return rows, xerrors.WithStack(err)
 	})
-	repositories, err := repositoryProvider.Repositories(ctx)
-	if err != nil {
-		return fsm.Error(err)
-	}
 
 	tokenProvider := p.opt.GitHubClient.TokenProvider
 
@@ -471,18 +466,14 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		p.gitDataPackCache = git.NewPackfileCache(p.opt.GitDataPackfileCacheTTL, p.opt.GitDataPackfileCacheSweepInterval, p.opt.GitDataPackfileCacheSize)
 	}
 
-	repos := make(map[string]*git.RepositoryConfig)
-	for _, v := range repositories {
-		if err := v.Open(ctx, storageClient, cachePool, p.gitDataPackCache, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile); err != nil {
-			return fsm.Error(err)
-		}
-		repos[v.Name] = v
-	}
-
-	service, err := git.NewDataService(repos)
+	service, err := git.NewDataService(storageClient, tokenProvider, repositoryProvider)
 	if err != nil {
 		return fsm.Error(err)
 	}
+	service.SetCachePool(cachePool).
+		SetPackCache(p.gitDataPackCache).
+		SetInitTimeout(p.opt.GitDataRepositoryInitTimeout).
+		SetDisableInflatePackFile(p.opt.GitDataDisableInflatePackFile)
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(grpcutil.WithServerLogging()))
 	git.RegisterGitDataServer(grpcServer, service)
 	healthSvc := health.NewServer()
@@ -518,20 +509,6 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 		p.gitDataLocker = l
 	}
-
-	p.gitDataAddRepo = make(chan *git.RepositoryConfig, 1)
-	go func() {
-		for repo := range p.gitDataAddRepo {
-			err := repo.Open(context.Background(), storageClient, cachePool, p.gitDataPackCache, tokenProvider, p.opt.GitDataRepositoryInitTimeout, p.opt.GitDataDisableInflatePackFile)
-			if err != nil {
-				logger.Log.Warn("Failed to open the repository", logger.E(err), slog.String("name", repo.Name))
-				continue
-			}
-			repositoryProvider.Add(repo)
-			service.AddRepo(repo)
-			go updater.Sync(context.Background(), repo.URL)
-		}
-	}()
 
 	return fsm.Next(stateStartApiServer)
 }
@@ -582,7 +559,6 @@ func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
 		storage.NewS3(p.opt.MinIOBucket, p.storageOpt),
 		p.opt.BazelMirrorPrefix,
 		p.eventProcessor,
-		p.gitDataAddRepo,
 		buildServerConfig(p.opt),
 		artifactRegistry,
 		newMCPHandler,
@@ -734,13 +710,6 @@ var _ git.RepositoryProvider = &gitDataRepositories{}
 
 func newGitDataRepositories(list func(ctx context.Context) ([]*database.SourceRepository, error)) *gitDataRepositories {
 	return &gitDataRepositories{list: list, repos: make(map[string]*git.RepositoryConfig)}
-}
-
-// Add registers the repository so that it is reused when the database has the repository of the same name.
-func (r *gitDataRepositories) Add(repo *git.RepositoryConfig) {
-	r.mu.Lock()
-	r.repos[repo.Name] = repo
-	r.mu.Unlock()
 }
 
 func (r *gitDataRepositories) Repositories(ctx context.Context) ([]*git.RepositoryConfig, error) {
