@@ -440,7 +440,9 @@ func TestBazelBuilder_ForceStop(t *testing.T) {
 		k8sfactory.Finalizer(bazelBuilderControllerFinalizerName),
 		k8sfactory.MatchLabelSelector(map[string]string{labelKeyRepoId: "1", labelKeyTaskId: "1"}),
 	)
-	runner.RegisterFixture(target)
+	// Create the job only in kube-apiserver. The informer is not running on the builder which is not the leader.
+	_, err = runner.CoreClient.BatchV1.CreateJob(t.Context(), target, metav1.CreateOptions{})
+	require.NoError(t, err)
 
 	err = b.ForceStop(t.Context(), 1)
 	require.NoError(t, err)

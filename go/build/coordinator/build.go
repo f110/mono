@@ -430,7 +430,7 @@ func (b *BazelBuilder) ForceStop(ctx context.Context, taskId int32) error {
 		}
 	}
 
-	job, err := b.jobLister.Get(b.Namespace, task.JobObjectName)
+	job, err := b.client.BatchV1.GetJob(ctx, b.Namespace, task.JobObjectName, metav1.GetOptions{})
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
