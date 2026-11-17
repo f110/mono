@@ -170,18 +170,27 @@ message Relation {
   int32        to   = 3;
 }
 
-// RelatedTicket is the relation with the title of the ticket on the other side.
+// RelatedTicket is the relation with the title and the status of the ticket on the other side.
 message RelatedTicket {
-  Relation relation = 1;
-  string   title    = 2;
+  Relation     relation = 1;
+  string       title    = 2;
+  TicketStatus status   = 3;
 }
 
-// Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
-// which mentions, and created_at is the time of the first mention.
+// Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title and status are of the
+// ticket which mentions, and created_at is the time of the first mention.
 message Backlink {
   int32                     ticket     = 1;
   google.protobuf.Timestamp created_at = 2;
   string                    title      = 3;
+  TicketStatus              status     = 4;
+}
+
+// MentionedTicket is the ticket which the ticket mentions by "#123" in the body or the comments.
+message MentionedTicket {
+  int32        ticket = 1;
+  string       title  = 2;
+  TicketStatus status = 3;
 }
 
 // CommitLink is the commit which refers to the ticket by the trailer. change_id is empty until git-data-service fetches
@@ -272,14 +281,16 @@ message ResponseGetTicket {
   reserved 2;
 
   Ticket                   ticket         = 1;
-  // relations contains the relations which the ticket is on either side of.
-  repeated RelatedTicket   relations      = 7;
   repeated Comment         comments       = 3;
   // backlinks contains the tickets which mention the ticket.
   repeated Backlink        backlinks      = 4;
   repeated CommitLink      commits        = 5;
   repeated PullRequestLink pull_requests  = 6;
+  // relations contains the relations which the ticket is on either side of.
+  repeated RelatedTicket   relations      = 7;
   repeated AgentSession    agent_sessions = 8;
+  // mentions contains the tickets which the ticket mentions.
+  repeated MentionedTicket mentions       = 9;
 }
 
 message RequestCreateTicket {

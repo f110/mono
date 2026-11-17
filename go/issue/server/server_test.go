@@ -270,7 +270,12 @@ func TestIssueHandler(t *testing.T) {
 			Body:   new(fmt.Sprintf("#%d", ticket.GetNumber())),
 		}.Build()))
 		assertion.MustNoError(t, err)
-		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(ticket.GetNumber()), Body: new("comment")}.Build()))
+		_, err = client.UpdateTicket(ctx, connect.NewRequest(api.RequestUpdateTicket_builder{
+			Number: new(other.Msg.GetTicket().GetNumber()),
+			Status: new(api.TicketStatus_TICKET_STATUS_DONE),
+		}.Build()))
+		assertion.MustNoError(t, err)
+		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(ticket.GetNumber()), Body: new(fmt.Sprintf("comment #%d", other.Msg.GetTicket().GetNumber()))}.Build()))
 		assertion.MustNoError(t, err)
 
 		res, err := client.GetTicket(ctx, connect.NewRequest(api.RequestGetTicket_builder{Number: new(ticket.GetNumber())}.Build()))
@@ -278,12 +283,18 @@ func TestIssueHandler(t *testing.T) {
 		assertion.MustLen(t, res.Msg.GetRelations(), 1)
 		assertion.Equal(t, res.Msg.GetRelations()[0].GetRelation().GetFrom(), other.Msg.GetTicket().GetNumber())
 		assertion.Equal(t, res.Msg.GetRelations()[0].GetTitle(), "other")
+		assertion.Equal(t, res.Msg.GetRelations()[0].GetStatus(), api.TicketStatus_TICKET_STATUS_DONE)
 		assertion.MustLen(t, res.Msg.GetComments(), 1)
-		assertion.Equal(t, res.Msg.GetComments()[0].GetBody(), "comment")
+		assertion.Equal(t, res.Msg.GetComments()[0].GetBody(), fmt.Sprintf("comment #%d", other.Msg.GetTicket().GetNumber()))
 		assertion.MustLen(t, res.Msg.GetBacklinks(), 1)
 		assertion.Equal(t, res.Msg.GetBacklinks()[0].GetTicket(), other.Msg.GetTicket().GetNumber())
 		assertion.Equal(t, res.Msg.GetBacklinks()[0].GetTitle(), "other")
+		assertion.Equal(t, res.Msg.GetBacklinks()[0].GetStatus(), api.TicketStatus_TICKET_STATUS_DONE)
 		assertion.True(t, res.Msg.GetBacklinks()[0].HasCreatedAt())
+		assertion.MustLen(t, res.Msg.GetMentions(), 1)
+		assertion.Equal(t, res.Msg.GetMentions()[0].GetTicket(), other.Msg.GetTicket().GetNumber())
+		assertion.Equal(t, res.Msg.GetMentions()[0].GetTitle(), "other")
+		assertion.Equal(t, res.Msg.GetMentions()[0].GetStatus(), api.TicketStatus_TICKET_STATUS_DONE)
 
 		activities, err := client.ListActivities(ctx, connect.NewRequest(api.RequestListActivities_builder{Ticket: new(ticket.GetNumber())}.Build()))
 		assertion.MustNoError(t, err)

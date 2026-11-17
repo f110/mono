@@ -1497,6 +1497,7 @@ type RelatedTicket struct {
 	state                  protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Relation    *Relation              `protobuf:"bytes,1,opt,name=relation"`
 	xxx_hidden_Title       *string                `protobuf:"bytes,2,opt,name=title"`
+	xxx_hidden_Status      TicketStatus           `protobuf:"varint,3,opt,name=status,enum=mono.issue.TicketStatus"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -1545,13 +1546,27 @@ func (x *RelatedTicket) GetTitle() string {
 	return ""
 }
 
+func (x *RelatedTicket) GetStatus() TicketStatus {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 2) {
+			return x.xxx_hidden_Status
+		}
+	}
+	return TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
 func (x *RelatedTicket) SetRelation(v *Relation) {
 	x.xxx_hidden_Relation = v
 }
 
 func (x *RelatedTicket) SetTitle(v string) {
 	x.xxx_hidden_Title = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RelatedTicket) SetStatus(v TicketStatus) {
+	x.xxx_hidden_Status = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
 }
 
 func (x *RelatedTicket) HasRelation() bool {
@@ -1568,6 +1583,13 @@ func (x *RelatedTicket) HasTitle() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
+func (x *RelatedTicket) HasStatus() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
 func (x *RelatedTicket) ClearRelation() {
 	x.xxx_hidden_Relation = nil
 }
@@ -1577,11 +1599,17 @@ func (x *RelatedTicket) ClearTitle() {
 	x.xxx_hidden_Title = nil
 }
 
+func (x *RelatedTicket) ClearStatus() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Status = TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
 type RelatedTicket_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Relation *Relation
 	Title    *string
+	Status   *TicketStatus
 }
 
 func (b0 RelatedTicket_builder) Build() *RelatedTicket {
@@ -1590,8 +1618,12 @@ func (b0 RelatedTicket_builder) Build() *RelatedTicket {
 	_, _ = b, x
 	x.xxx_hidden_Relation = b.Relation
 	if b.Title != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
 		x.xxx_hidden_Title = b.Title
+	}
+	if b.Status != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Status = *b.Status
 	}
 	return m0
 }
@@ -1601,6 +1633,7 @@ type Backlink struct {
 	xxx_hidden_Ticket      int32                  `protobuf:"varint,1,opt,name=ticket"`
 	xxx_hidden_CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=created_at,json=createdAt"`
 	xxx_hidden_Title       *string                `protobuf:"bytes,3,opt,name=title"`
+	xxx_hidden_Status      TicketStatus           `protobuf:"varint,4,opt,name=status,enum=mono.issue.TicketStatus"`
 	XXX_raceDetectHookData protoimpl.RaceDetectHookData
 	XXX_presence           [1]uint32
 	unknownFields          protoimpl.UnknownFields
@@ -1656,9 +1689,18 @@ func (x *Backlink) GetTitle() string {
 	return ""
 }
 
+func (x *Backlink) GetStatus() TicketStatus {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 3) {
+			return x.xxx_hidden_Status
+		}
+	}
+	return TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
 func (x *Backlink) SetTicket(v int32) {
 	x.xxx_hidden_Ticket = v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *Backlink) SetCreatedAt(v *timestamppb.Timestamp) {
@@ -1667,7 +1709,12 @@ func (x *Backlink) SetCreatedAt(v *timestamppb.Timestamp) {
 
 func (x *Backlink) SetTitle(v string) {
 	x.xxx_hidden_Title = &v
-	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *Backlink) SetStatus(v TicketStatus) {
+	x.xxx_hidden_Status = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *Backlink) HasTicket() bool {
@@ -1691,6 +1738,13 @@ func (x *Backlink) HasTitle() bool {
 	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
+func (x *Backlink) HasStatus() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
 func (x *Backlink) ClearTicket() {
 	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
 	x.xxx_hidden_Ticket = 0
@@ -1705,12 +1759,18 @@ func (x *Backlink) ClearTitle() {
 	x.xxx_hidden_Title = nil
 }
 
+func (x *Backlink) ClearStatus() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Status = TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
 type Backlink_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Ticket    *int32
 	CreatedAt *timestamppb.Timestamp
 	Title     *string
+	Status    *TicketStatus
 }
 
 func (b0 Backlink_builder) Build() *Backlink {
@@ -1718,13 +1778,157 @@ func (b0 Backlink_builder) Build() *Backlink {
 	b, x := &b0, m0
 	_, _ = b, x
 	if b.Ticket != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
 		x.xxx_hidden_Ticket = *b.Ticket
 	}
 	x.xxx_hidden_CreatedAt = b.CreatedAt
 	if b.Title != nil {
-		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
 		x.xxx_hidden_Title = b.Title
+	}
+	if b.Status != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_Status = *b.Status
+	}
+	return m0
+}
+
+type MentionedTicket struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ticket      int32                  `protobuf:"varint,1,opt,name=ticket"`
+	xxx_hidden_Title       *string                `protobuf:"bytes,2,opt,name=title"`
+	xxx_hidden_Status      TicketStatus           `protobuf:"varint,3,opt,name=status,enum=mono.issue.TicketStatus"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *MentionedTicket) Reset() {
+	*x = MentionedTicket{}
+	mi := &file_proto_issue_issue_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MentionedTicket) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MentionedTicket) ProtoMessage() {}
+
+func (x *MentionedTicket) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_issue_issue_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *MentionedTicket) GetTicket() int32 {
+	if x != nil {
+		return x.xxx_hidden_Ticket
+	}
+	return 0
+}
+
+func (x *MentionedTicket) GetTitle() string {
+	if x != nil {
+		if x.xxx_hidden_Title != nil {
+			return *x.xxx_hidden_Title
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *MentionedTicket) GetStatus() TicketStatus {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 2) {
+			return x.xxx_hidden_Status
+		}
+	}
+	return TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
+func (x *MentionedTicket) SetTicket(v int32) {
+	x.xxx_hidden_Ticket = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *MentionedTicket) SetTitle(v string) {
+	x.xxx_hidden_Title = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *MentionedTicket) SetStatus(v TicketStatus) {
+	x.xxx_hidden_Status = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *MentionedTicket) HasTicket() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *MentionedTicket) HasTitle() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *MentionedTicket) HasStatus() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *MentionedTicket) ClearTicket() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Ticket = 0
+}
+
+func (x *MentionedTicket) ClearTitle() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Title = nil
+}
+
+func (x *MentionedTicket) ClearStatus() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Status = TicketStatus_TICKET_STATUS_UNSPECIFIED
+}
+
+type MentionedTicket_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ticket *int32
+	Title  *string
+	Status *TicketStatus
+}
+
+func (b0 MentionedTicket_builder) Build() *MentionedTicket {
+	m0 := &MentionedTicket{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Ticket != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Ticket = *b.Ticket
+	}
+	if b.Title != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Title = b.Title
+	}
+	if b.Status != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Status = *b.Status
 	}
 	return m0
 }
@@ -1746,7 +1950,7 @@ type CommitLink struct {
 
 func (x *CommitLink) Reset() {
 	*x = CommitLink{}
-	mi := &file_proto_issue_issue_proto_msgTypes[7]
+	mi := &file_proto_issue_issue_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1758,7 +1962,7 @@ func (x *CommitLink) String() string {
 func (*CommitLink) ProtoMessage() {}
 
 func (x *CommitLink) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[7]
+	mi := &file_proto_issue_issue_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2012,7 +2216,7 @@ type PullRequestLink struct {
 
 func (x *PullRequestLink) Reset() {
 	*x = PullRequestLink{}
-	mi := &file_proto_issue_issue_proto_msgTypes[8]
+	mi := &file_proto_issue_issue_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2024,7 +2228,7 @@ func (x *PullRequestLink) String() string {
 func (*PullRequestLink) ProtoMessage() {}
 
 func (x *PullRequestLink) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[8]
+	mi := &file_proto_issue_issue_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2249,7 +2453,7 @@ type AgentSession struct {
 
 func (x *AgentSession) Reset() {
 	*x = AgentSession{}
-	mi := &file_proto_issue_issue_proto_msgTypes[9]
+	mi := &file_proto_issue_issue_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2261,7 +2465,7 @@ func (x *AgentSession) String() string {
 func (*AgentSession) ProtoMessage() {}
 
 func (x *AgentSession) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[9]
+	mi := &file_proto_issue_issue_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2419,7 +2623,7 @@ type Comment struct {
 
 func (x *Comment) Reset() {
 	*x = Comment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[10]
+	mi := &file_proto_issue_issue_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2431,7 +2635,7 @@ func (x *Comment) String() string {
 func (*Comment) ProtoMessage() {}
 
 func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[10]
+	mi := &file_proto_issue_issue_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2639,7 +2843,7 @@ type Activity struct {
 
 func (x *Activity) Reset() {
 	*x = Activity{}
-	mi := &file_proto_issue_issue_proto_msgTypes[11]
+	mi := &file_proto_issue_issue_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2651,7 +2855,7 @@ func (x *Activity) String() string {
 func (*Activity) ProtoMessage() {}
 
 func (x *Activity) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[11]
+	mi := &file_proto_issue_issue_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2923,7 +3127,7 @@ type Revision struct {
 
 func (x *Revision) Reset() {
 	*x = Revision{}
-	mi := &file_proto_issue_issue_proto_msgTypes[12]
+	mi := &file_proto_issue_issue_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2935,7 +3139,7 @@ func (x *Revision) String() string {
 func (*Revision) ProtoMessage() {}
 
 func (x *Revision) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[12]
+	mi := &file_proto_issue_issue_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3086,7 +3290,7 @@ type RequestListTickets struct {
 
 func (x *RequestListTickets) Reset() {
 	*x = RequestListTickets{}
-	mi := &file_proto_issue_issue_proto_msgTypes[13]
+	mi := &file_proto_issue_issue_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3098,7 +3302,7 @@ func (x *RequestListTickets) String() string {
 func (*RequestListTickets) ProtoMessage() {}
 
 func (x *RequestListTickets) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[13]
+	mi := &file_proto_issue_issue_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3258,7 +3462,7 @@ type ResponseListTickets struct {
 
 func (x *ResponseListTickets) Reset() {
 	*x = ResponseListTickets{}
-	mi := &file_proto_issue_issue_proto_msgTypes[14]
+	mi := &file_proto_issue_issue_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3270,7 +3474,7 @@ func (x *ResponseListTickets) String() string {
 func (*ResponseListTickets) ProtoMessage() {}
 
 func (x *ResponseListTickets) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[14]
+	mi := &file_proto_issue_issue_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3351,7 +3555,7 @@ type RequestGetTicket struct {
 
 func (x *RequestGetTicket) Reset() {
 	*x = RequestGetTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[15]
+	mi := &file_proto_issue_issue_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3363,7 +3567,7 @@ func (x *RequestGetTicket) String() string {
 func (*RequestGetTicket) ProtoMessage() {}
 
 func (x *RequestGetTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[15]
+	mi := &file_proto_issue_issue_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3418,19 +3622,20 @@ func (b0 RequestGetTicket_builder) Build() *RequestGetTicket {
 type ResponseGetTicket struct {
 	state                    protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_Ticket        *Ticket                `protobuf:"bytes,1,opt,name=ticket"`
-	xxx_hidden_Relations     *[]*RelatedTicket      `protobuf:"bytes,7,rep,name=relations"`
 	xxx_hidden_Comments      *[]*Comment            `protobuf:"bytes,3,rep,name=comments"`
 	xxx_hidden_Backlinks     *[]*Backlink           `protobuf:"bytes,4,rep,name=backlinks"`
 	xxx_hidden_Commits       *[]*CommitLink         `protobuf:"bytes,5,rep,name=commits"`
 	xxx_hidden_PullRequests  *[]*PullRequestLink    `protobuf:"bytes,6,rep,name=pull_requests,json=pullRequests"`
+	xxx_hidden_Relations     *[]*RelatedTicket      `protobuf:"bytes,7,rep,name=relations"`
 	xxx_hidden_AgentSessions *[]*AgentSession       `protobuf:"bytes,8,rep,name=agent_sessions,json=agentSessions"`
+	xxx_hidden_Mentions      *[]*MentionedTicket    `protobuf:"bytes,9,rep,name=mentions"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ResponseGetTicket) Reset() {
 	*x = ResponseGetTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[16]
+	mi := &file_proto_issue_issue_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3442,7 +3647,7 @@ func (x *ResponseGetTicket) String() string {
 func (*ResponseGetTicket) ProtoMessage() {}
 
 func (x *ResponseGetTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[16]
+	mi := &file_proto_issue_issue_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3456,15 +3661,6 @@ func (x *ResponseGetTicket) ProtoReflect() protoreflect.Message {
 func (x *ResponseGetTicket) GetTicket() *Ticket {
 	if x != nil {
 		return x.xxx_hidden_Ticket
-	}
-	return nil
-}
-
-func (x *ResponseGetTicket) GetRelations() []*RelatedTicket {
-	if x != nil {
-		if x.xxx_hidden_Relations != nil {
-			return *x.xxx_hidden_Relations
-		}
 	}
 	return nil
 }
@@ -3505,6 +3701,15 @@ func (x *ResponseGetTicket) GetPullRequests() []*PullRequestLink {
 	return nil
 }
 
+func (x *ResponseGetTicket) GetRelations() []*RelatedTicket {
+	if x != nil {
+		if x.xxx_hidden_Relations != nil {
+			return *x.xxx_hidden_Relations
+		}
+	}
+	return nil
+}
+
 func (x *ResponseGetTicket) GetAgentSessions() []*AgentSession {
 	if x != nil {
 		if x.xxx_hidden_AgentSessions != nil {
@@ -3514,12 +3719,17 @@ func (x *ResponseGetTicket) GetAgentSessions() []*AgentSession {
 	return nil
 }
 
-func (x *ResponseGetTicket) SetTicket(v *Ticket) {
-	x.xxx_hidden_Ticket = v
+func (x *ResponseGetTicket) GetMentions() []*MentionedTicket {
+	if x != nil {
+		if x.xxx_hidden_Mentions != nil {
+			return *x.xxx_hidden_Mentions
+		}
+	}
+	return nil
 }
 
-func (x *ResponseGetTicket) SetRelations(v []*RelatedTicket) {
-	x.xxx_hidden_Relations = &v
+func (x *ResponseGetTicket) SetTicket(v *Ticket) {
+	x.xxx_hidden_Ticket = v
 }
 
 func (x *ResponseGetTicket) SetComments(v []*Comment) {
@@ -3538,8 +3748,16 @@ func (x *ResponseGetTicket) SetPullRequests(v []*PullRequestLink) {
 	x.xxx_hidden_PullRequests = &v
 }
 
+func (x *ResponseGetTicket) SetRelations(v []*RelatedTicket) {
+	x.xxx_hidden_Relations = &v
+}
+
 func (x *ResponseGetTicket) SetAgentSessions(v []*AgentSession) {
 	x.xxx_hidden_AgentSessions = &v
+}
+
+func (x *ResponseGetTicket) SetMentions(v []*MentionedTicket) {
+	x.xxx_hidden_Mentions = &v
 }
 
 func (x *ResponseGetTicket) HasTicket() bool {
@@ -3557,12 +3775,13 @@ type ResponseGetTicket_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Ticket        *Ticket
-	Relations     []*RelatedTicket
 	Comments      []*Comment
 	Backlinks     []*Backlink
 	Commits       []*CommitLink
 	PullRequests  []*PullRequestLink
+	Relations     []*RelatedTicket
 	AgentSessions []*AgentSession
+	Mentions      []*MentionedTicket
 }
 
 func (b0 ResponseGetTicket_builder) Build() *ResponseGetTicket {
@@ -3570,12 +3789,13 @@ func (b0 ResponseGetTicket_builder) Build() *ResponseGetTicket {
 	b, x := &b0, m0
 	_, _ = b, x
 	x.xxx_hidden_Ticket = b.Ticket
-	x.xxx_hidden_Relations = &b.Relations
 	x.xxx_hidden_Comments = &b.Comments
 	x.xxx_hidden_Backlinks = &b.Backlinks
 	x.xxx_hidden_Commits = &b.Commits
 	x.xxx_hidden_PullRequests = &b.PullRequests
+	x.xxx_hidden_Relations = &b.Relations
 	x.xxx_hidden_AgentSessions = &b.AgentSessions
+	x.xxx_hidden_Mentions = &b.Mentions
 	return m0
 }
 
@@ -3595,7 +3815,7 @@ type RequestCreateTicket struct {
 
 func (x *RequestCreateTicket) Reset() {
 	*x = RequestCreateTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[17]
+	mi := &file_proto_issue_issue_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3607,7 +3827,7 @@ func (x *RequestCreateTicket) String() string {
 func (*RequestCreateTicket) ProtoMessage() {}
 
 func (x *RequestCreateTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[17]
+	mi := &file_proto_issue_issue_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3823,7 +4043,7 @@ type ResponseCreateTicket struct {
 
 func (x *ResponseCreateTicket) Reset() {
 	*x = ResponseCreateTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[18]
+	mi := &file_proto_issue_issue_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3835,7 +4055,7 @@ func (x *ResponseCreateTicket) String() string {
 func (*ResponseCreateTicket) ProtoMessage() {}
 
 func (x *ResponseCreateTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[18]
+	mi := &file_proto_issue_issue_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3900,7 +4120,7 @@ type RequestUpdateTicket struct {
 
 func (x *RequestUpdateTicket) Reset() {
 	*x = RequestUpdateTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[19]
+	mi := &file_proto_issue_issue_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3912,7 +4132,7 @@ func (x *RequestUpdateTicket) String() string {
 func (*RequestUpdateTicket) ProtoMessage() {}
 
 func (x *RequestUpdateTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[19]
+	mi := &file_proto_issue_issue_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4188,7 +4408,7 @@ type ResponseUpdateTicket struct {
 
 func (x *ResponseUpdateTicket) Reset() {
 	*x = ResponseUpdateTicket{}
-	mi := &file_proto_issue_issue_proto_msgTypes[20]
+	mi := &file_proto_issue_issue_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4200,7 +4420,7 @@ func (x *ResponseUpdateTicket) String() string {
 func (*ResponseUpdateTicket) ProtoMessage() {}
 
 func (x *ResponseUpdateTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[20]
+	mi := &file_proto_issue_issue_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4256,7 +4476,7 @@ type RequestAddRelation struct {
 
 func (x *RequestAddRelation) Reset() {
 	*x = RequestAddRelation{}
-	mi := &file_proto_issue_issue_proto_msgTypes[21]
+	mi := &file_proto_issue_issue_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4268,7 +4488,7 @@ func (x *RequestAddRelation) String() string {
 func (*RequestAddRelation) ProtoMessage() {}
 
 func (x *RequestAddRelation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[21]
+	mi := &file_proto_issue_issue_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4324,7 +4544,7 @@ type ResponseAddRelation struct {
 
 func (x *ResponseAddRelation) Reset() {
 	*x = ResponseAddRelation{}
-	mi := &file_proto_issue_issue_proto_msgTypes[22]
+	mi := &file_proto_issue_issue_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4336,7 +4556,7 @@ func (x *ResponseAddRelation) String() string {
 func (*ResponseAddRelation) ProtoMessage() {}
 
 func (x *ResponseAddRelation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[22]
+	mi := &file_proto_issue_issue_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4392,7 +4612,7 @@ type RequestRemoveRelation struct {
 
 func (x *RequestRemoveRelation) Reset() {
 	*x = RequestRemoveRelation{}
-	mi := &file_proto_issue_issue_proto_msgTypes[23]
+	mi := &file_proto_issue_issue_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4404,7 +4624,7 @@ func (x *RequestRemoveRelation) String() string {
 func (*RequestRemoveRelation) ProtoMessage() {}
 
 func (x *RequestRemoveRelation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[23]
+	mi := &file_proto_issue_issue_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4459,7 +4679,7 @@ type ResponseRemoveRelation struct {
 
 func (x *ResponseRemoveRelation) Reset() {
 	*x = ResponseRemoveRelation{}
-	mi := &file_proto_issue_issue_proto_msgTypes[24]
+	mi := &file_proto_issue_issue_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4471,7 +4691,7 @@ func (x *ResponseRemoveRelation) String() string {
 func (*ResponseRemoveRelation) ProtoMessage() {}
 
 func (x *ResponseRemoveRelation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[24]
+	mi := &file_proto_issue_issue_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4508,7 +4728,7 @@ type RequestAddAgentSession struct {
 
 func (x *RequestAddAgentSession) Reset() {
 	*x = RequestAddAgentSession{}
-	mi := &file_proto_issue_issue_proto_msgTypes[25]
+	mi := &file_proto_issue_issue_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4520,7 +4740,7 @@ func (x *RequestAddAgentSession) String() string {
 func (*RequestAddAgentSession) ProtoMessage() {}
 
 func (x *RequestAddAgentSession) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[25]
+	mi := &file_proto_issue_issue_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4675,7 +4895,7 @@ type ResponseAddAgentSession struct {
 
 func (x *ResponseAddAgentSession) Reset() {
 	*x = ResponseAddAgentSession{}
-	mi := &file_proto_issue_issue_proto_msgTypes[26]
+	mi := &file_proto_issue_issue_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4687,7 +4907,7 @@ func (x *ResponseAddAgentSession) String() string {
 func (*ResponseAddAgentSession) ProtoMessage() {}
 
 func (x *ResponseAddAgentSession) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[26]
+	mi := &file_proto_issue_issue_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4722,7 +4942,7 @@ type RequestAddComment struct {
 
 func (x *RequestAddComment) Reset() {
 	*x = RequestAddComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[27]
+	mi := &file_proto_issue_issue_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4734,7 +4954,7 @@ func (x *RequestAddComment) String() string {
 func (*RequestAddComment) ProtoMessage() {}
 
 func (x *RequestAddComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[27]
+	mi := &file_proto_issue_issue_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4827,7 +5047,7 @@ type ResponseAddComment struct {
 
 func (x *ResponseAddComment) Reset() {
 	*x = ResponseAddComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[28]
+	mi := &file_proto_issue_issue_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4839,7 +5059,7 @@ func (x *ResponseAddComment) String() string {
 func (*ResponseAddComment) ProtoMessage() {}
 
 func (x *ResponseAddComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[28]
+	mi := &file_proto_issue_issue_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4898,7 +5118,7 @@ type RequestEditComment struct {
 
 func (x *RequestEditComment) Reset() {
 	*x = RequestEditComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[29]
+	mi := &file_proto_issue_issue_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4910,7 +5130,7 @@ func (x *RequestEditComment) String() string {
 func (*RequestEditComment) ProtoMessage() {}
 
 func (x *RequestEditComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[29]
+	mi := &file_proto_issue_issue_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5003,7 +5223,7 @@ type ResponseEditComment struct {
 
 func (x *ResponseEditComment) Reset() {
 	*x = ResponseEditComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[30]
+	mi := &file_proto_issue_issue_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5015,7 +5235,7 @@ func (x *ResponseEditComment) String() string {
 func (*ResponseEditComment) ProtoMessage() {}
 
 func (x *ResponseEditComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[30]
+	mi := &file_proto_issue_issue_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5073,7 +5293,7 @@ type RequestDeleteComment struct {
 
 func (x *RequestDeleteComment) Reset() {
 	*x = RequestDeleteComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[31]
+	mi := &file_proto_issue_issue_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5085,7 +5305,7 @@ func (x *RequestDeleteComment) String() string {
 func (*RequestDeleteComment) ProtoMessage() {}
 
 func (x *RequestDeleteComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[31]
+	mi := &file_proto_issue_issue_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5145,7 +5365,7 @@ type ResponseDeleteComment struct {
 
 func (x *ResponseDeleteComment) Reset() {
 	*x = ResponseDeleteComment{}
-	mi := &file_proto_issue_issue_proto_msgTypes[32]
+	mi := &file_proto_issue_issue_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5157,7 +5377,7 @@ func (x *ResponseDeleteComment) String() string {
 func (*ResponseDeleteComment) ProtoMessage() {}
 
 func (x *ResponseDeleteComment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[32]
+	mi := &file_proto_issue_issue_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5191,7 +5411,7 @@ type RequestListActivities struct {
 
 func (x *RequestListActivities) Reset() {
 	*x = RequestListActivities{}
-	mi := &file_proto_issue_issue_proto_msgTypes[33]
+	mi := &file_proto_issue_issue_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5203,7 +5423,7 @@ func (x *RequestListActivities) String() string {
 func (*RequestListActivities) ProtoMessage() {}
 
 func (x *RequestListActivities) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[33]
+	mi := &file_proto_issue_issue_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5264,7 +5484,7 @@ type ResponseListActivities struct {
 
 func (x *ResponseListActivities) Reset() {
 	*x = ResponseListActivities{}
-	mi := &file_proto_issue_issue_proto_msgTypes[34]
+	mi := &file_proto_issue_issue_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5276,7 +5496,7 @@ func (x *ResponseListActivities) String() string {
 func (*ResponseListActivities) ProtoMessage() {}
 
 func (x *ResponseListActivities) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[34]
+	mi := &file_proto_issue_issue_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5325,7 +5545,7 @@ type RequestListTicketRevisions struct {
 
 func (x *RequestListTicketRevisions) Reset() {
 	*x = RequestListTicketRevisions{}
-	mi := &file_proto_issue_issue_proto_msgTypes[35]
+	mi := &file_proto_issue_issue_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5337,7 +5557,7 @@ func (x *RequestListTicketRevisions) String() string {
 func (*RequestListTicketRevisions) ProtoMessage() {}
 
 func (x *RequestListTicketRevisions) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[35]
+	mi := &file_proto_issue_issue_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5398,7 +5618,7 @@ type ResponseListTicketRevisions struct {
 
 func (x *ResponseListTicketRevisions) Reset() {
 	*x = ResponseListTicketRevisions{}
-	mi := &file_proto_issue_issue_proto_msgTypes[36]
+	mi := &file_proto_issue_issue_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5410,7 +5630,7 @@ func (x *ResponseListTicketRevisions) String() string {
 func (*ResponseListTicketRevisions) ProtoMessage() {}
 
 func (x *ResponseListTicketRevisions) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[36]
+	mi := &file_proto_issue_issue_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5459,7 +5679,7 @@ type RequestListCommentRevisions struct {
 
 func (x *RequestListCommentRevisions) Reset() {
 	*x = RequestListCommentRevisions{}
-	mi := &file_proto_issue_issue_proto_msgTypes[37]
+	mi := &file_proto_issue_issue_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5471,7 +5691,7 @@ func (x *RequestListCommentRevisions) String() string {
 func (*RequestListCommentRevisions) ProtoMessage() {}
 
 func (x *RequestListCommentRevisions) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[37]
+	mi := &file_proto_issue_issue_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5532,7 +5752,7 @@ type ResponseListCommentRevisions struct {
 
 func (x *ResponseListCommentRevisions) Reset() {
 	*x = ResponseListCommentRevisions{}
-	mi := &file_proto_issue_issue_proto_msgTypes[38]
+	mi := &file_proto_issue_issue_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5544,7 +5764,7 @@ func (x *ResponseListCommentRevisions) String() string {
 func (*ResponseListCommentRevisions) ProtoMessage() {}
 
 func (x *ResponseListCommentRevisions) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[38]
+	mi := &file_proto_issue_issue_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5590,7 +5810,7 @@ type RequestListComponents struct {
 
 func (x *RequestListComponents) Reset() {
 	*x = RequestListComponents{}
-	mi := &file_proto_issue_issue_proto_msgTypes[39]
+	mi := &file_proto_issue_issue_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5602,7 +5822,7 @@ func (x *RequestListComponents) String() string {
 func (*RequestListComponents) ProtoMessage() {}
 
 func (x *RequestListComponents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[39]
+	mi := &file_proto_issue_issue_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5634,7 +5854,7 @@ type ResponseListComponents struct {
 
 func (x *ResponseListComponents) Reset() {
 	*x = ResponseListComponents{}
-	mi := &file_proto_issue_issue_proto_msgTypes[40]
+	mi := &file_proto_issue_issue_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5646,7 +5866,7 @@ func (x *ResponseListComponents) String() string {
 func (*ResponseListComponents) ProtoMessage() {}
 
 func (x *ResponseListComponents) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[40]
+	mi := &file_proto_issue_issue_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5696,7 +5916,7 @@ type RequestSaveComponent struct {
 
 func (x *RequestSaveComponent) Reset() {
 	*x = RequestSaveComponent{}
-	mi := &file_proto_issue_issue_proto_msgTypes[41]
+	mi := &file_proto_issue_issue_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5708,7 +5928,7 @@ func (x *RequestSaveComponent) String() string {
 func (*RequestSaveComponent) ProtoMessage() {}
 
 func (x *RequestSaveComponent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[41]
+	mi := &file_proto_issue_issue_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5801,7 +6021,7 @@ type ResponseSaveComponent struct {
 
 func (x *ResponseSaveComponent) Reset() {
 	*x = ResponseSaveComponent{}
-	mi := &file_proto_issue_issue_proto_msgTypes[42]
+	mi := &file_proto_issue_issue_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5813,7 +6033,7 @@ func (x *ResponseSaveComponent) String() string {
 func (*ResponseSaveComponent) ProtoMessage() {}
 
 func (x *ResponseSaveComponent) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[42]
+	mi := &file_proto_issue_issue_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5868,7 +6088,7 @@ type RequestListTemplates struct {
 
 func (x *RequestListTemplates) Reset() {
 	*x = RequestListTemplates{}
-	mi := &file_proto_issue_issue_proto_msgTypes[43]
+	mi := &file_proto_issue_issue_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5880,7 +6100,7 @@ func (x *RequestListTemplates) String() string {
 func (*RequestListTemplates) ProtoMessage() {}
 
 func (x *RequestListTemplates) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[43]
+	mi := &file_proto_issue_issue_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5912,7 +6132,7 @@ type ResponseListTemplates struct {
 
 func (x *ResponseListTemplates) Reset() {
 	*x = ResponseListTemplates{}
-	mi := &file_proto_issue_issue_proto_msgTypes[44]
+	mi := &file_proto_issue_issue_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5924,7 +6144,7 @@ func (x *ResponseListTemplates) String() string {
 func (*ResponseListTemplates) ProtoMessage() {}
 
 func (x *ResponseListTemplates) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[44]
+	mi := &file_proto_issue_issue_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5976,7 +6196,7 @@ type RequestSaveTemplate struct {
 
 func (x *RequestSaveTemplate) Reset() {
 	*x = RequestSaveTemplate{}
-	mi := &file_proto_issue_issue_proto_msgTypes[45]
+	mi := &file_proto_issue_issue_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5988,7 +6208,7 @@ func (x *RequestSaveTemplate) String() string {
 func (*RequestSaveTemplate) ProtoMessage() {}
 
 func (x *RequestSaveTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[45]
+	mi := &file_proto_issue_issue_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6142,7 +6362,7 @@ type ResponseSaveTemplate struct {
 
 func (x *ResponseSaveTemplate) Reset() {
 	*x = ResponseSaveTemplate{}
-	mi := &file_proto_issue_issue_proto_msgTypes[46]
+	mi := &file_proto_issue_issue_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6154,7 +6374,7 @@ func (x *ResponseSaveTemplate) String() string {
 func (*ResponseSaveTemplate) ProtoMessage() {}
 
 func (x *ResponseSaveTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[46]
+	mi := &file_proto_issue_issue_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6212,7 +6432,7 @@ type RequestDeleteTemplate struct {
 
 func (x *RequestDeleteTemplate) Reset() {
 	*x = RequestDeleteTemplate{}
-	mi := &file_proto_issue_issue_proto_msgTypes[47]
+	mi := &file_proto_issue_issue_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6224,7 +6444,7 @@ func (x *RequestDeleteTemplate) String() string {
 func (*RequestDeleteTemplate) ProtoMessage() {}
 
 func (x *RequestDeleteTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[47]
+	mi := &file_proto_issue_issue_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6284,7 +6504,7 @@ type ResponseDeleteTemplate struct {
 
 func (x *ResponseDeleteTemplate) Reset() {
 	*x = ResponseDeleteTemplate{}
-	mi := &file_proto_issue_issue_proto_msgTypes[48]
+	mi := &file_proto_issue_issue_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6296,7 +6516,7 @@ func (x *ResponseDeleteTemplate) String() string {
 func (*ResponseDeleteTemplate) ProtoMessage() {}
 
 func (x *ResponseDeleteTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[48]
+	mi := &file_proto_issue_issue_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6327,7 +6547,7 @@ type RequestListActors struct {
 
 func (x *RequestListActors) Reset() {
 	*x = RequestListActors{}
-	mi := &file_proto_issue_issue_proto_msgTypes[49]
+	mi := &file_proto_issue_issue_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6339,7 +6559,7 @@ func (x *RequestListActors) String() string {
 func (*RequestListActors) ProtoMessage() {}
 
 func (x *RequestListActors) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[49]
+	mi := &file_proto_issue_issue_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6371,7 +6591,7 @@ type ResponseListActors struct {
 
 func (x *ResponseListActors) Reset() {
 	*x = ResponseListActors{}
-	mi := &file_proto_issue_issue_proto_msgTypes[50]
+	mi := &file_proto_issue_issue_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6383,7 +6603,7 @@ func (x *ResponseListActors) String() string {
 func (*ResponseListActors) ProtoMessage() {}
 
 func (x *ResponseListActors) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[50]
+	mi := &file_proto_issue_issue_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6429,7 +6649,7 @@ type RequestWhoAmI struct {
 
 func (x *RequestWhoAmI) Reset() {
 	*x = RequestWhoAmI{}
-	mi := &file_proto_issue_issue_proto_msgTypes[51]
+	mi := &file_proto_issue_issue_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6441,7 +6661,7 @@ func (x *RequestWhoAmI) String() string {
 func (*RequestWhoAmI) ProtoMessage() {}
 
 func (x *RequestWhoAmI) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[51]
+	mi := &file_proto_issue_issue_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6473,7 +6693,7 @@ type ResponseWhoAmI struct {
 
 func (x *ResponseWhoAmI) Reset() {
 	*x = ResponseWhoAmI{}
-	mi := &file_proto_issue_issue_proto_msgTypes[52]
+	mi := &file_proto_issue_issue_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6485,7 +6705,7 @@ func (x *ResponseWhoAmI) String() string {
 func (*ResponseWhoAmI) ProtoMessage() {}
 
 func (x *ResponseWhoAmI) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_issue_issue_proto_msgTypes[52]
+	mi := &file_proto_issue_issue_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6572,15 +6792,21 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\bRelation\x12\x12\n" +
 	"\x04from\x18\x01 \x01(\x05R\x04from\x12,\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x18.mono.issue.RelationTypeR\x04type\x12\x0e\n" +
-	"\x02to\x18\x03 \x01(\x05R\x02to\"W\n" +
+	"\x02to\x18\x03 \x01(\x05R\x02to\"\x89\x01\n" +
 	"\rRelatedTicket\x120\n" +
 	"\brelation\x18\x01 \x01(\v2\x14.mono.issue.RelationR\brelation\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"s\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x120\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x18.mono.issue.TicketStatusR\x06status\"\xa5\x01\n" +
 	"\bBacklink\x12\x16\n" +
 	"\x06ticket\x18\x01 \x01(\x05R\x06ticket\x129\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\"\xf1\x01\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x120\n" +
+	"\x06status\x18\x04 \x01(\x0e2\x18.mono.issue.TicketStatusR\x06status\"q\n" +
+	"\x0fMentionedTicket\x12\x16\n" +
+	"\x06ticket\x18\x01 \x01(\x05R\x06ticket\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x120\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x18.mono.issue.TicketStatusR\x06status\"\xf1\x01\n" +
 	"\n" +
 	"CommitLink\x12\x10\n" +
 	"\x03sha\x18\x01 \x01(\tR\x03sha\x12\x1b\n" +
@@ -6640,15 +6866,16 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\atickets\x18\x01 \x03(\v2\x12.mono.issue.TicketR\atickets\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"*\n" +
 	"\x10RequestGetTicket\x12\x16\n" +
-	"\x06number\x18\x01 \x01(\x05R\x06number\"\x98\x03\n" +
+	"\x06number\x18\x01 \x01(\x05R\x06number\"\xd1\x03\n" +
 	"\x11ResponseGetTicket\x12*\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x12.mono.issue.TicketR\x06ticket\x127\n" +
-	"\trelations\x18\a \x03(\v2\x19.mono.issue.RelatedTicketR\trelations\x12/\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x12.mono.issue.TicketR\x06ticket\x12/\n" +
 	"\bcomments\x18\x03 \x03(\v2\x13.mono.issue.CommentR\bcomments\x122\n" +
 	"\tbacklinks\x18\x04 \x03(\v2\x14.mono.issue.BacklinkR\tbacklinks\x120\n" +
 	"\acommits\x18\x05 \x03(\v2\x16.mono.issue.CommitLinkR\acommits\x12@\n" +
-	"\rpull_requests\x18\x06 \x03(\v2\x1b.mono.issue.PullRequestLinkR\fpullRequests\x12?\n" +
-	"\x0eagent_sessions\x18\b \x03(\v2\x18.mono.issue.AgentSessionR\ragentSessionsJ\x04\b\x02\x10\x03\"\xe1\x01\n" +
+	"\rpull_requests\x18\x06 \x03(\v2\x1b.mono.issue.PullRequestLinkR\fpullRequests\x127\n" +
+	"\trelations\x18\a \x03(\v2\x19.mono.issue.RelatedTicketR\trelations\x12?\n" +
+	"\x0eagent_sessions\x18\b \x03(\v2\x18.mono.issue.AgentSessionR\ragentSessions\x127\n" +
+	"\bmentions\x18\t \x03(\v2\x1b.mono.issue.MentionedTicketR\bmentionsJ\x04\b\x02\x10\x03\"\xe1\x01\n" +
 	"\x13RequestCreateTicket\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04body\x18\x02 \x01(\tR\x04body\x120\n" +
@@ -6833,7 +7060,7 @@ const file_proto_issue_issue_proto_rawDesc = "" +
 	"\x06WhoAmI\x12\x19.mono.issue.RequestWhoAmI\x1a\x1a.mono.issue.ResponseWhoAmIB'Z\x1dgo.f110.dev/mono/go/issue/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_issue_issue_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
-var file_proto_issue_issue_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
+var file_proto_issue_issue_proto_msgTypes = make([]protoimpl.MessageInfo, 54)
 var file_proto_issue_issue_proto_goTypes = []any{
 	(TicketStatus)(0),                    // 0: mono.issue.TicketStatus
 	(Priority)(0),                        // 1: mono.issue.Priority
@@ -6851,150 +7078,155 @@ var file_proto_issue_issue_proto_goTypes = []any{
 	(*Relation)(nil),                     // 13: mono.issue.Relation
 	(*RelatedTicket)(nil),                // 14: mono.issue.RelatedTicket
 	(*Backlink)(nil),                     // 15: mono.issue.Backlink
-	(*CommitLink)(nil),                   // 16: mono.issue.CommitLink
-	(*PullRequestLink)(nil),              // 17: mono.issue.PullRequestLink
-	(*AgentSession)(nil),                 // 18: mono.issue.AgentSession
-	(*Comment)(nil),                      // 19: mono.issue.Comment
-	(*Activity)(nil),                     // 20: mono.issue.Activity
-	(*Revision)(nil),                     // 21: mono.issue.Revision
-	(*RequestListTickets)(nil),           // 22: mono.issue.RequestListTickets
-	(*ResponseListTickets)(nil),          // 23: mono.issue.ResponseListTickets
-	(*RequestGetTicket)(nil),             // 24: mono.issue.RequestGetTicket
-	(*ResponseGetTicket)(nil),            // 25: mono.issue.ResponseGetTicket
-	(*RequestCreateTicket)(nil),          // 26: mono.issue.RequestCreateTicket
-	(*ResponseCreateTicket)(nil),         // 27: mono.issue.ResponseCreateTicket
-	(*RequestUpdateTicket)(nil),          // 28: mono.issue.RequestUpdateTicket
-	(*ResponseUpdateTicket)(nil),         // 29: mono.issue.ResponseUpdateTicket
-	(*RequestAddRelation)(nil),           // 30: mono.issue.RequestAddRelation
-	(*ResponseAddRelation)(nil),          // 31: mono.issue.ResponseAddRelation
-	(*RequestRemoveRelation)(nil),        // 32: mono.issue.RequestRemoveRelation
-	(*ResponseRemoveRelation)(nil),       // 33: mono.issue.ResponseRemoveRelation
-	(*RequestAddAgentSession)(nil),       // 34: mono.issue.RequestAddAgentSession
-	(*ResponseAddAgentSession)(nil),      // 35: mono.issue.ResponseAddAgentSession
-	(*RequestAddComment)(nil),            // 36: mono.issue.RequestAddComment
-	(*ResponseAddComment)(nil),           // 37: mono.issue.ResponseAddComment
-	(*RequestEditComment)(nil),           // 38: mono.issue.RequestEditComment
-	(*ResponseEditComment)(nil),          // 39: mono.issue.ResponseEditComment
-	(*RequestDeleteComment)(nil),         // 40: mono.issue.RequestDeleteComment
-	(*ResponseDeleteComment)(nil),        // 41: mono.issue.ResponseDeleteComment
-	(*RequestListActivities)(nil),        // 42: mono.issue.RequestListActivities
-	(*ResponseListActivities)(nil),       // 43: mono.issue.ResponseListActivities
-	(*RequestListTicketRevisions)(nil),   // 44: mono.issue.RequestListTicketRevisions
-	(*ResponseListTicketRevisions)(nil),  // 45: mono.issue.ResponseListTicketRevisions
-	(*RequestListCommentRevisions)(nil),  // 46: mono.issue.RequestListCommentRevisions
-	(*ResponseListCommentRevisions)(nil), // 47: mono.issue.ResponseListCommentRevisions
-	(*RequestListComponents)(nil),        // 48: mono.issue.RequestListComponents
-	(*ResponseListComponents)(nil),       // 49: mono.issue.ResponseListComponents
-	(*RequestSaveComponent)(nil),         // 50: mono.issue.RequestSaveComponent
-	(*ResponseSaveComponent)(nil),        // 51: mono.issue.ResponseSaveComponent
-	(*RequestListTemplates)(nil),         // 52: mono.issue.RequestListTemplates
-	(*ResponseListTemplates)(nil),        // 53: mono.issue.ResponseListTemplates
-	(*RequestSaveTemplate)(nil),          // 54: mono.issue.RequestSaveTemplate
-	(*ResponseSaveTemplate)(nil),         // 55: mono.issue.ResponseSaveTemplate
-	(*RequestDeleteTemplate)(nil),        // 56: mono.issue.RequestDeleteTemplate
-	(*ResponseDeleteTemplate)(nil),       // 57: mono.issue.ResponseDeleteTemplate
-	(*RequestListActors)(nil),            // 58: mono.issue.RequestListActors
-	(*ResponseListActors)(nil),           // 59: mono.issue.ResponseListActors
-	(*RequestWhoAmI)(nil),                // 60: mono.issue.RequestWhoAmI
-	(*ResponseWhoAmI)(nil),               // 61: mono.issue.ResponseWhoAmI
-	(*timestamppb.Timestamp)(nil),        // 62: google.protobuf.Timestamp
+	(*MentionedTicket)(nil),              // 16: mono.issue.MentionedTicket
+	(*CommitLink)(nil),                   // 17: mono.issue.CommitLink
+	(*PullRequestLink)(nil),              // 18: mono.issue.PullRequestLink
+	(*AgentSession)(nil),                 // 19: mono.issue.AgentSession
+	(*Comment)(nil),                      // 20: mono.issue.Comment
+	(*Activity)(nil),                     // 21: mono.issue.Activity
+	(*Revision)(nil),                     // 22: mono.issue.Revision
+	(*RequestListTickets)(nil),           // 23: mono.issue.RequestListTickets
+	(*ResponseListTickets)(nil),          // 24: mono.issue.ResponseListTickets
+	(*RequestGetTicket)(nil),             // 25: mono.issue.RequestGetTicket
+	(*ResponseGetTicket)(nil),            // 26: mono.issue.ResponseGetTicket
+	(*RequestCreateTicket)(nil),          // 27: mono.issue.RequestCreateTicket
+	(*ResponseCreateTicket)(nil),         // 28: mono.issue.ResponseCreateTicket
+	(*RequestUpdateTicket)(nil),          // 29: mono.issue.RequestUpdateTicket
+	(*ResponseUpdateTicket)(nil),         // 30: mono.issue.ResponseUpdateTicket
+	(*RequestAddRelation)(nil),           // 31: mono.issue.RequestAddRelation
+	(*ResponseAddRelation)(nil),          // 32: mono.issue.ResponseAddRelation
+	(*RequestRemoveRelation)(nil),        // 33: mono.issue.RequestRemoveRelation
+	(*ResponseRemoveRelation)(nil),       // 34: mono.issue.ResponseRemoveRelation
+	(*RequestAddAgentSession)(nil),       // 35: mono.issue.RequestAddAgentSession
+	(*ResponseAddAgentSession)(nil),      // 36: mono.issue.ResponseAddAgentSession
+	(*RequestAddComment)(nil),            // 37: mono.issue.RequestAddComment
+	(*ResponseAddComment)(nil),           // 38: mono.issue.ResponseAddComment
+	(*RequestEditComment)(nil),           // 39: mono.issue.RequestEditComment
+	(*ResponseEditComment)(nil),          // 40: mono.issue.ResponseEditComment
+	(*RequestDeleteComment)(nil),         // 41: mono.issue.RequestDeleteComment
+	(*ResponseDeleteComment)(nil),        // 42: mono.issue.ResponseDeleteComment
+	(*RequestListActivities)(nil),        // 43: mono.issue.RequestListActivities
+	(*ResponseListActivities)(nil),       // 44: mono.issue.ResponseListActivities
+	(*RequestListTicketRevisions)(nil),   // 45: mono.issue.RequestListTicketRevisions
+	(*ResponseListTicketRevisions)(nil),  // 46: mono.issue.ResponseListTicketRevisions
+	(*RequestListCommentRevisions)(nil),  // 47: mono.issue.RequestListCommentRevisions
+	(*ResponseListCommentRevisions)(nil), // 48: mono.issue.ResponseListCommentRevisions
+	(*RequestListComponents)(nil),        // 49: mono.issue.RequestListComponents
+	(*ResponseListComponents)(nil),       // 50: mono.issue.ResponseListComponents
+	(*RequestSaveComponent)(nil),         // 51: mono.issue.RequestSaveComponent
+	(*ResponseSaveComponent)(nil),        // 52: mono.issue.ResponseSaveComponent
+	(*RequestListTemplates)(nil),         // 53: mono.issue.RequestListTemplates
+	(*ResponseListTemplates)(nil),        // 54: mono.issue.ResponseListTemplates
+	(*RequestSaveTemplate)(nil),          // 55: mono.issue.RequestSaveTemplate
+	(*ResponseSaveTemplate)(nil),         // 56: mono.issue.ResponseSaveTemplate
+	(*RequestDeleteTemplate)(nil),        // 57: mono.issue.RequestDeleteTemplate
+	(*ResponseDeleteTemplate)(nil),       // 58: mono.issue.ResponseDeleteTemplate
+	(*RequestListActors)(nil),            // 59: mono.issue.RequestListActors
+	(*ResponseListActors)(nil),           // 60: mono.issue.ResponseListActors
+	(*RequestWhoAmI)(nil),                // 61: mono.issue.RequestWhoAmI
+	(*ResponseWhoAmI)(nil),               // 62: mono.issue.ResponseWhoAmI
+	(*timestamppb.Timestamp)(nil),        // 63: google.protobuf.Timestamp
 }
 var file_proto_issue_issue_proto_depIdxs = []int32{
 	0,  // 0: mono.issue.Ticket.status:type_name -> mono.issue.TicketStatus
 	1,  // 1: mono.issue.Ticket.priority:type_name -> mono.issue.Priority
-	62, // 2: mono.issue.Ticket.created_at:type_name -> google.protobuf.Timestamp
-	62, // 3: mono.issue.Ticket.updated_at:type_name -> google.protobuf.Timestamp
-	62, // 4: mono.issue.Ticket.last_activity_at:type_name -> google.protobuf.Timestamp
+	63, // 2: mono.issue.Ticket.created_at:type_name -> google.protobuf.Timestamp
+	63, // 3: mono.issue.Ticket.updated_at:type_name -> google.protobuf.Timestamp
+	63, // 4: mono.issue.Ticket.last_activity_at:type_name -> google.protobuf.Timestamp
 	2,  // 5: mono.issue.Ticket.type:type_name -> mono.issue.TicketType
 	3,  // 6: mono.issue.Actor.kind:type_name -> mono.issue.ActorKind
 	4,  // 7: mono.issue.Relation.type:type_name -> mono.issue.RelationType
 	13, // 8: mono.issue.RelatedTicket.relation:type_name -> mono.issue.Relation
-	62, // 9: mono.issue.Backlink.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 10: mono.issue.CommitLink.trailer:type_name -> mono.issue.TrailerKind
-	62, // 11: mono.issue.CommitLink.committed_at:type_name -> google.protobuf.Timestamp
-	8,  // 12: mono.issue.PullRequestLink.state:type_name -> mono.issue.PullRequestState
-	5,  // 13: mono.issue.AgentSession.agent:type_name -> mono.issue.CodingAgent
-	62, // 14: mono.issue.AgentSession.created_at:type_name -> google.protobuf.Timestamp
-	62, // 15: mono.issue.Comment.created_at:type_name -> google.protobuf.Timestamp
-	62, // 16: mono.issue.Comment.updated_at:type_name -> google.protobuf.Timestamp
-	6,  // 17: mono.issue.Activity.kind:type_name -> mono.issue.ActivityKind
-	62, // 18: mono.issue.Activity.created_at:type_name -> google.protobuf.Timestamp
-	62, // 19: mono.issue.Revision.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 20: mono.issue.ResponseListTickets.tickets:type_name -> mono.issue.Ticket
-	9,  // 21: mono.issue.ResponseGetTicket.ticket:type_name -> mono.issue.Ticket
-	14, // 22: mono.issue.ResponseGetTicket.relations:type_name -> mono.issue.RelatedTicket
-	19, // 23: mono.issue.ResponseGetTicket.comments:type_name -> mono.issue.Comment
-	15, // 24: mono.issue.ResponseGetTicket.backlinks:type_name -> mono.issue.Backlink
-	16, // 25: mono.issue.ResponseGetTicket.commits:type_name -> mono.issue.CommitLink
-	17, // 26: mono.issue.ResponseGetTicket.pull_requests:type_name -> mono.issue.PullRequestLink
-	18, // 27: mono.issue.ResponseGetTicket.agent_sessions:type_name -> mono.issue.AgentSession
-	1,  // 28: mono.issue.RequestCreateTicket.priority:type_name -> mono.issue.Priority
-	2,  // 29: mono.issue.RequestCreateTicket.type:type_name -> mono.issue.TicketType
-	9,  // 30: mono.issue.ResponseCreateTicket.ticket:type_name -> mono.issue.Ticket
-	0,  // 31: mono.issue.RequestUpdateTicket.status:type_name -> mono.issue.TicketStatus
-	1,  // 32: mono.issue.RequestUpdateTicket.priority:type_name -> mono.issue.Priority
-	2,  // 33: mono.issue.RequestUpdateTicket.type:type_name -> mono.issue.TicketType
-	9,  // 34: mono.issue.ResponseUpdateTicket.ticket:type_name -> mono.issue.Ticket
-	13, // 35: mono.issue.RequestAddRelation.relation:type_name -> mono.issue.Relation
-	13, // 36: mono.issue.ResponseAddRelation.relation:type_name -> mono.issue.Relation
-	13, // 37: mono.issue.RequestRemoveRelation.relation:type_name -> mono.issue.Relation
-	5,  // 38: mono.issue.RequestAddAgentSession.agent:type_name -> mono.issue.CodingAgent
-	19, // 39: mono.issue.ResponseAddComment.comment:type_name -> mono.issue.Comment
-	19, // 40: mono.issue.ResponseEditComment.comment:type_name -> mono.issue.Comment
-	20, // 41: mono.issue.ResponseListActivities.activities:type_name -> mono.issue.Activity
-	21, // 42: mono.issue.ResponseListTicketRevisions.revisions:type_name -> mono.issue.Revision
-	21, // 43: mono.issue.ResponseListCommentRevisions.revisions:type_name -> mono.issue.Revision
-	11, // 44: mono.issue.ResponseListComponents.components:type_name -> mono.issue.Component
-	11, // 45: mono.issue.ResponseSaveComponent.component:type_name -> mono.issue.Component
-	12, // 46: mono.issue.ResponseListTemplates.templates:type_name -> mono.issue.Template
-	12, // 47: mono.issue.ResponseSaveTemplate.template:type_name -> mono.issue.Template
-	10, // 48: mono.issue.ResponseListActors.actors:type_name -> mono.issue.Actor
-	10, // 49: mono.issue.ResponseWhoAmI.actor:type_name -> mono.issue.Actor
-	22, // 50: mono.issue.Issue.ListTickets:input_type -> mono.issue.RequestListTickets
-	24, // 51: mono.issue.Issue.GetTicket:input_type -> mono.issue.RequestGetTicket
-	26, // 52: mono.issue.Issue.CreateTicket:input_type -> mono.issue.RequestCreateTicket
-	28, // 53: mono.issue.Issue.UpdateTicket:input_type -> mono.issue.RequestUpdateTicket
-	30, // 54: mono.issue.Issue.AddRelation:input_type -> mono.issue.RequestAddRelation
-	32, // 55: mono.issue.Issue.RemoveRelation:input_type -> mono.issue.RequestRemoveRelation
-	34, // 56: mono.issue.Issue.AddAgentSession:input_type -> mono.issue.RequestAddAgentSession
-	36, // 57: mono.issue.Issue.AddComment:input_type -> mono.issue.RequestAddComment
-	38, // 58: mono.issue.Issue.EditComment:input_type -> mono.issue.RequestEditComment
-	40, // 59: mono.issue.Issue.DeleteComment:input_type -> mono.issue.RequestDeleteComment
-	42, // 60: mono.issue.Issue.ListActivities:input_type -> mono.issue.RequestListActivities
-	44, // 61: mono.issue.Issue.ListTicketRevisions:input_type -> mono.issue.RequestListTicketRevisions
-	46, // 62: mono.issue.Issue.ListCommentRevisions:input_type -> mono.issue.RequestListCommentRevisions
-	48, // 63: mono.issue.Issue.ListComponents:input_type -> mono.issue.RequestListComponents
-	50, // 64: mono.issue.Issue.SaveComponent:input_type -> mono.issue.RequestSaveComponent
-	52, // 65: mono.issue.Issue.ListTemplates:input_type -> mono.issue.RequestListTemplates
-	54, // 66: mono.issue.Issue.SaveTemplate:input_type -> mono.issue.RequestSaveTemplate
-	56, // 67: mono.issue.Issue.DeleteTemplate:input_type -> mono.issue.RequestDeleteTemplate
-	58, // 68: mono.issue.Issue.ListActors:input_type -> mono.issue.RequestListActors
-	60, // 69: mono.issue.Issue.WhoAmI:input_type -> mono.issue.RequestWhoAmI
-	23, // 70: mono.issue.Issue.ListTickets:output_type -> mono.issue.ResponseListTickets
-	25, // 71: mono.issue.Issue.GetTicket:output_type -> mono.issue.ResponseGetTicket
-	27, // 72: mono.issue.Issue.CreateTicket:output_type -> mono.issue.ResponseCreateTicket
-	29, // 73: mono.issue.Issue.UpdateTicket:output_type -> mono.issue.ResponseUpdateTicket
-	31, // 74: mono.issue.Issue.AddRelation:output_type -> mono.issue.ResponseAddRelation
-	33, // 75: mono.issue.Issue.RemoveRelation:output_type -> mono.issue.ResponseRemoveRelation
-	35, // 76: mono.issue.Issue.AddAgentSession:output_type -> mono.issue.ResponseAddAgentSession
-	37, // 77: mono.issue.Issue.AddComment:output_type -> mono.issue.ResponseAddComment
-	39, // 78: mono.issue.Issue.EditComment:output_type -> mono.issue.ResponseEditComment
-	41, // 79: mono.issue.Issue.DeleteComment:output_type -> mono.issue.ResponseDeleteComment
-	43, // 80: mono.issue.Issue.ListActivities:output_type -> mono.issue.ResponseListActivities
-	45, // 81: mono.issue.Issue.ListTicketRevisions:output_type -> mono.issue.ResponseListTicketRevisions
-	47, // 82: mono.issue.Issue.ListCommentRevisions:output_type -> mono.issue.ResponseListCommentRevisions
-	49, // 83: mono.issue.Issue.ListComponents:output_type -> mono.issue.ResponseListComponents
-	51, // 84: mono.issue.Issue.SaveComponent:output_type -> mono.issue.ResponseSaveComponent
-	53, // 85: mono.issue.Issue.ListTemplates:output_type -> mono.issue.ResponseListTemplates
-	55, // 86: mono.issue.Issue.SaveTemplate:output_type -> mono.issue.ResponseSaveTemplate
-	57, // 87: mono.issue.Issue.DeleteTemplate:output_type -> mono.issue.ResponseDeleteTemplate
-	59, // 88: mono.issue.Issue.ListActors:output_type -> mono.issue.ResponseListActors
-	61, // 89: mono.issue.Issue.WhoAmI:output_type -> mono.issue.ResponseWhoAmI
-	70, // [70:90] is the sub-list for method output_type
-	50, // [50:70] is the sub-list for method input_type
-	50, // [50:50] is the sub-list for extension type_name
-	50, // [50:50] is the sub-list for extension extendee
-	0,  // [0:50] is the sub-list for field type_name
+	0,  // 9: mono.issue.RelatedTicket.status:type_name -> mono.issue.TicketStatus
+	63, // 10: mono.issue.Backlink.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 11: mono.issue.Backlink.status:type_name -> mono.issue.TicketStatus
+	0,  // 12: mono.issue.MentionedTicket.status:type_name -> mono.issue.TicketStatus
+	7,  // 13: mono.issue.CommitLink.trailer:type_name -> mono.issue.TrailerKind
+	63, // 14: mono.issue.CommitLink.committed_at:type_name -> google.protobuf.Timestamp
+	8,  // 15: mono.issue.PullRequestLink.state:type_name -> mono.issue.PullRequestState
+	5,  // 16: mono.issue.AgentSession.agent:type_name -> mono.issue.CodingAgent
+	63, // 17: mono.issue.AgentSession.created_at:type_name -> google.protobuf.Timestamp
+	63, // 18: mono.issue.Comment.created_at:type_name -> google.protobuf.Timestamp
+	63, // 19: mono.issue.Comment.updated_at:type_name -> google.protobuf.Timestamp
+	6,  // 20: mono.issue.Activity.kind:type_name -> mono.issue.ActivityKind
+	63, // 21: mono.issue.Activity.created_at:type_name -> google.protobuf.Timestamp
+	63, // 22: mono.issue.Revision.created_at:type_name -> google.protobuf.Timestamp
+	9,  // 23: mono.issue.ResponseListTickets.tickets:type_name -> mono.issue.Ticket
+	9,  // 24: mono.issue.ResponseGetTicket.ticket:type_name -> mono.issue.Ticket
+	20, // 25: mono.issue.ResponseGetTicket.comments:type_name -> mono.issue.Comment
+	15, // 26: mono.issue.ResponseGetTicket.backlinks:type_name -> mono.issue.Backlink
+	17, // 27: mono.issue.ResponseGetTicket.commits:type_name -> mono.issue.CommitLink
+	18, // 28: mono.issue.ResponseGetTicket.pull_requests:type_name -> mono.issue.PullRequestLink
+	14, // 29: mono.issue.ResponseGetTicket.relations:type_name -> mono.issue.RelatedTicket
+	19, // 30: mono.issue.ResponseGetTicket.agent_sessions:type_name -> mono.issue.AgentSession
+	16, // 31: mono.issue.ResponseGetTicket.mentions:type_name -> mono.issue.MentionedTicket
+	1,  // 32: mono.issue.RequestCreateTicket.priority:type_name -> mono.issue.Priority
+	2,  // 33: mono.issue.RequestCreateTicket.type:type_name -> mono.issue.TicketType
+	9,  // 34: mono.issue.ResponseCreateTicket.ticket:type_name -> mono.issue.Ticket
+	0,  // 35: mono.issue.RequestUpdateTicket.status:type_name -> mono.issue.TicketStatus
+	1,  // 36: mono.issue.RequestUpdateTicket.priority:type_name -> mono.issue.Priority
+	2,  // 37: mono.issue.RequestUpdateTicket.type:type_name -> mono.issue.TicketType
+	9,  // 38: mono.issue.ResponseUpdateTicket.ticket:type_name -> mono.issue.Ticket
+	13, // 39: mono.issue.RequestAddRelation.relation:type_name -> mono.issue.Relation
+	13, // 40: mono.issue.ResponseAddRelation.relation:type_name -> mono.issue.Relation
+	13, // 41: mono.issue.RequestRemoveRelation.relation:type_name -> mono.issue.Relation
+	5,  // 42: mono.issue.RequestAddAgentSession.agent:type_name -> mono.issue.CodingAgent
+	20, // 43: mono.issue.ResponseAddComment.comment:type_name -> mono.issue.Comment
+	20, // 44: mono.issue.ResponseEditComment.comment:type_name -> mono.issue.Comment
+	21, // 45: mono.issue.ResponseListActivities.activities:type_name -> mono.issue.Activity
+	22, // 46: mono.issue.ResponseListTicketRevisions.revisions:type_name -> mono.issue.Revision
+	22, // 47: mono.issue.ResponseListCommentRevisions.revisions:type_name -> mono.issue.Revision
+	11, // 48: mono.issue.ResponseListComponents.components:type_name -> mono.issue.Component
+	11, // 49: mono.issue.ResponseSaveComponent.component:type_name -> mono.issue.Component
+	12, // 50: mono.issue.ResponseListTemplates.templates:type_name -> mono.issue.Template
+	12, // 51: mono.issue.ResponseSaveTemplate.template:type_name -> mono.issue.Template
+	10, // 52: mono.issue.ResponseListActors.actors:type_name -> mono.issue.Actor
+	10, // 53: mono.issue.ResponseWhoAmI.actor:type_name -> mono.issue.Actor
+	23, // 54: mono.issue.Issue.ListTickets:input_type -> mono.issue.RequestListTickets
+	25, // 55: mono.issue.Issue.GetTicket:input_type -> mono.issue.RequestGetTicket
+	27, // 56: mono.issue.Issue.CreateTicket:input_type -> mono.issue.RequestCreateTicket
+	29, // 57: mono.issue.Issue.UpdateTicket:input_type -> mono.issue.RequestUpdateTicket
+	31, // 58: mono.issue.Issue.AddRelation:input_type -> mono.issue.RequestAddRelation
+	33, // 59: mono.issue.Issue.RemoveRelation:input_type -> mono.issue.RequestRemoveRelation
+	35, // 60: mono.issue.Issue.AddAgentSession:input_type -> mono.issue.RequestAddAgentSession
+	37, // 61: mono.issue.Issue.AddComment:input_type -> mono.issue.RequestAddComment
+	39, // 62: mono.issue.Issue.EditComment:input_type -> mono.issue.RequestEditComment
+	41, // 63: mono.issue.Issue.DeleteComment:input_type -> mono.issue.RequestDeleteComment
+	43, // 64: mono.issue.Issue.ListActivities:input_type -> mono.issue.RequestListActivities
+	45, // 65: mono.issue.Issue.ListTicketRevisions:input_type -> mono.issue.RequestListTicketRevisions
+	47, // 66: mono.issue.Issue.ListCommentRevisions:input_type -> mono.issue.RequestListCommentRevisions
+	49, // 67: mono.issue.Issue.ListComponents:input_type -> mono.issue.RequestListComponents
+	51, // 68: mono.issue.Issue.SaveComponent:input_type -> mono.issue.RequestSaveComponent
+	53, // 69: mono.issue.Issue.ListTemplates:input_type -> mono.issue.RequestListTemplates
+	55, // 70: mono.issue.Issue.SaveTemplate:input_type -> mono.issue.RequestSaveTemplate
+	57, // 71: mono.issue.Issue.DeleteTemplate:input_type -> mono.issue.RequestDeleteTemplate
+	59, // 72: mono.issue.Issue.ListActors:input_type -> mono.issue.RequestListActors
+	61, // 73: mono.issue.Issue.WhoAmI:input_type -> mono.issue.RequestWhoAmI
+	24, // 74: mono.issue.Issue.ListTickets:output_type -> mono.issue.ResponseListTickets
+	26, // 75: mono.issue.Issue.GetTicket:output_type -> mono.issue.ResponseGetTicket
+	28, // 76: mono.issue.Issue.CreateTicket:output_type -> mono.issue.ResponseCreateTicket
+	30, // 77: mono.issue.Issue.UpdateTicket:output_type -> mono.issue.ResponseUpdateTicket
+	32, // 78: mono.issue.Issue.AddRelation:output_type -> mono.issue.ResponseAddRelation
+	34, // 79: mono.issue.Issue.RemoveRelation:output_type -> mono.issue.ResponseRemoveRelation
+	36, // 80: mono.issue.Issue.AddAgentSession:output_type -> mono.issue.ResponseAddAgentSession
+	38, // 81: mono.issue.Issue.AddComment:output_type -> mono.issue.ResponseAddComment
+	40, // 82: mono.issue.Issue.EditComment:output_type -> mono.issue.ResponseEditComment
+	42, // 83: mono.issue.Issue.DeleteComment:output_type -> mono.issue.ResponseDeleteComment
+	44, // 84: mono.issue.Issue.ListActivities:output_type -> mono.issue.ResponseListActivities
+	46, // 85: mono.issue.Issue.ListTicketRevisions:output_type -> mono.issue.ResponseListTicketRevisions
+	48, // 86: mono.issue.Issue.ListCommentRevisions:output_type -> mono.issue.ResponseListCommentRevisions
+	50, // 87: mono.issue.Issue.ListComponents:output_type -> mono.issue.ResponseListComponents
+	52, // 88: mono.issue.Issue.SaveComponent:output_type -> mono.issue.ResponseSaveComponent
+	54, // 89: mono.issue.Issue.ListTemplates:output_type -> mono.issue.ResponseListTemplates
+	56, // 90: mono.issue.Issue.SaveTemplate:output_type -> mono.issue.ResponseSaveTemplate
+	58, // 91: mono.issue.Issue.DeleteTemplate:output_type -> mono.issue.ResponseDeleteTemplate
+	60, // 92: mono.issue.Issue.ListActors:output_type -> mono.issue.ResponseListActors
+	62, // 93: mono.issue.Issue.WhoAmI:output_type -> mono.issue.ResponseWhoAmI
+	74, // [74:94] is the sub-list for method output_type
+	54, // [54:74] is the sub-list for method input_type
+	54, // [54:54] is the sub-list for extension type_name
+	54, // [54:54] is the sub-list for extension extendee
+	0,  // [0:54] is the sub-list for field type_name
 }
 
 func init() { file_proto_issue_issue_proto_init() }
@@ -7008,7 +7240,7 @@ func file_proto_issue_issue_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_issue_issue_proto_rawDesc), len(file_proto_issue_issue_proto_rawDesc)),
 			NumEnums:      9,
-			NumMessages:   53,
+			NumMessages:   54,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

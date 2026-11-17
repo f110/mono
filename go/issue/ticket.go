@@ -211,6 +211,15 @@ func (t *Ticket) Backlinks(ctx context.Context) ([]*database.Mention, error) {
 	return mentions, nil
 }
 
+// Mentions returns the mentions from the ticket to the other tickets.
+func (t *Ticket) Mentions(ctx context.Context) ([]*database.Mention, error) {
+	mentions, err := t.tracker.dao.Mention.ListByFromId(ctx, t.Id)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return mentions, nil
+}
+
 func (t *Ticket) AddComment(ctx context.Context, body string) (*Comment, error) {
 	actor, err := t.tracker.ticketOperator(ctx)
 	if err != nil {

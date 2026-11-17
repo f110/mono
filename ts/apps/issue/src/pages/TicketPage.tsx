@@ -22,6 +22,7 @@ import {
   type Backlink,
   type Activity,
   type Comment,
+  type MentionedTicket,
   type CommitLink,
   type PullRequestLink,
   type RelatedTicket,
@@ -36,6 +37,7 @@ import { CopyTicketNumberButton, CopyTicketURLButton } from '../components/CopyB
 import { EditHistory } from '../components/EditHistory.tsx'
 import { PostCard } from '../components/PostCard.tsx'
 import { RelativeTime } from '../components/RelativeTime.tsx'
+import { TicketStatusIcon } from '../components/TicketStatusIcon.tsx'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
 import {
@@ -166,7 +168,7 @@ export const TicketPage = () => {
             actions={editingBody === null ? [{ label: '編集', onClick: () => setEditingBody(ticket.body) }] : []}
           >
             {editingBody === null ? (
-              <Markdown text={ticket.body} onChange={(body) => update.mutate({ number, body })} />
+              <Markdown text={ticket.body} tickets={data.mentions} onChange={(body) => update.mutate({ number, body })} />
             ) : (
               <Stack
                 component="form"
@@ -187,7 +189,7 @@ export const TicketPage = () => {
               </Stack>
             )}
           </PostCard>
-          <Timeline activities={activities?.activities ?? []} comments={data.comments} reporterId={ticket.reporterId} />
+          <Timeline activities={activities?.activities ?? []} comments={data.comments} mentions={data.mentions} reporterId={ticket.reporterId} />
           <CommentForm number={number} />
         </Stack>
         <Box sx={{ gridArea: 'fields' }}>
@@ -288,7 +290,7 @@ const Relations = ({ number, relations }: { number: number; relations: RelatedTi
     <Stack spacing={1}>
       <Typography variant="subtitle2">Relations</Typography>
       {(add.error || remove.error) && <Alert severity="error">{(add.error ?? remove.error)?.message}</Alert>}
-      {relations.map(({ relation: r, title }) => {
+      {relations.map(({ relation: r, title, status }) => {
         if (!r) {
           return null
         }
@@ -298,6 +300,7 @@ const Relations = ({ number, relations }: { number: number; relations: RelatedTi
           <Stack key={`${r.from}-${r.type}-${r.to}`} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Typography variant="body2" sx={{ flex: 1 }}>
               {relationLabels[r.type][forward ? 0 : 1]}{' '}
+              <TicketStatusIcon status={status} />{' '}
               <Tooltip title={title}>
                 <span>
                   <TicketLink number={other} />
@@ -354,7 +357,7 @@ const Backlinks = ({ backlinks }: { backlinks: Backlink[] }) => (
     )}
     {backlinks.map((b) => (
       <Typography key={b.ticket} variant="body2" noWrap>
-        <TicketLink number={b.ticket} /> {b.title}
+        <TicketStatusIcon status={b.status} /> <TicketLink number={b.ticket} /> {b.title}
       </Typography>
     ))}
   </Stack>
@@ -427,7 +430,17 @@ const AgentSessions = ({ sessions }: { sessions: AgentSession[] }) => (
   </Stack>
 )
 
-const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]; comments: Comment[]; reporterId: number }) => {
+const Timeline = ({
+  activities,
+  comments,
+  mentions,
+  reporterId,
+}: {
+  activities: Activity[]
+  comments: Comment[]
+  mentions: MentionedTicket[]
+  reporterId: number
+}) => {
   const { actorName, componentName } = useMasters()
 
   const value = (a: Activity, v: string) => {
@@ -452,7 +465,7 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
       {activities.map((a) => {
         if (a.kind === ActivityKind.COMMENT) {
           const comment = comments.find((c) => c.id === a.refId)
-          return comment ? <CommentCard key={a.id} comment={comment} reporter={comment.actorId === reporterId} /> : null
+          return comment ? <CommentCard key={a.id} comment={comment} mentions={mentions} reporter={comment.actorId === reporterId} /> : null
         }
         let detail: ReactNode = null
         switch (a.kind) {
@@ -489,7 +502,7 @@ const Timeline = ({ activities, comments, reporterId }: { activities: Activity[]
   )
 }
 
-const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolean }) => {
+const CommentCard = ({ comment, mentions, reporter }: { comment: Comment; mentions: MentionedTicket[]; reporter: boolean }) => {
   const { actorName } = useMasters()
   const invalidate = useInvalidate()
   const edit = useMutation(Issue.method.editComment, { onSuccess: invalidate })
@@ -525,7 +538,7 @@ const CommentCard = ({ comment, reporter }: { comment: Comment; reporter: boolea
     >
       {(edit.error || remove.error) && <Alert severity="error">{(edit.error ?? remove.error)?.message}</Alert>}
       {editing === null ? (
-        <Markdown text={comment.body} onChange={(body) => edit.mutate({ id: comment.id, body })} />
+        <Markdown text={comment.body} tickets={mentions} onChange={(body) => edit.mutate({ id: comment.id, body })} />
       ) : (
         <Stack
           component="form"

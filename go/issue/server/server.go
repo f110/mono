@@ -118,6 +118,10 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 	if err != nil {
 		return nil, toConnectError(err)
 	}
+	mentions, err := ticket.Mentions(ctx)
+	if err != nil {
+		return nil, toConnectError(err)
+	}
 	commits, err := ticket.CommitLinks(ctx)
 	if err != nil {
 		return nil, toConnectError(err)
@@ -145,6 +149,7 @@ func (h *IssueHandler) GetTicket(ctx context.Context, req *connect.Request[api.R
 		}),
 		Comments:  enumerable.Map(comments, toComment),
 		Backlinks: enumerable.Map(backlinks, toBacklink),
+		Mentions:  enumerable.Map(mentions, toMentionedTicket),
 		Commits: enumerable.Map(commits, func(c *database.CommitLink) *api.CommitLink {
 			return toCommitLink(c, urls[c.RepositoryId])
 		}),
@@ -495,6 +500,7 @@ func toRelatedTicket(r *database.Relation, number int32) *api.RelatedTicket {
 	}
 	if other != nil {
 		b.Title = new(other.Title)
+		b.Status = new(api.TicketStatus(other.Status + 1))
 	}
 	return b.Build()
 }
@@ -503,6 +509,16 @@ func toBacklink(m *database.Mention) *api.Backlink {
 	b := api.Backlink_builder{Ticket: new(m.FromId), CreatedAt: timestamppb.New(m.CreatedAt)}
 	if m.From != nil {
 		b.Title = new(m.From.Title)
+		b.Status = new(api.TicketStatus(m.From.Status + 1))
+	}
+	return b.Build()
+}
+
+func toMentionedTicket(m *database.Mention) *api.MentionedTicket {
+	b := api.MentionedTicket_builder{Ticket: new(m.ToId)}
+	if m.To != nil {
+		b.Title = new(m.To.Title)
+		b.Status = new(api.TicketStatus(m.To.Status + 1))
 	}
 	return b.Build()
 }

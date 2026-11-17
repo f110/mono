@@ -1,11 +1,13 @@
 import { Box } from '@mui/material'
 import 'github-markdown-css/github-markdown-light.css'
 import 'highlight.js/styles/github.css'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
+import type { MentionedTicket } from '../connect/issue_pb'
+import { TicketStatusIcon } from './TicketStatusIcon.tsx'
 
 type Node = {
   type: string
@@ -109,47 +111,69 @@ function toggleTask(text: string, offset: number): string | null {
   return text.slice(0, i) + (m[1] === ' ' ? 'x' : ' ') + text.slice(i + 1)
 }
 
-export const Markdown = ({ text, onChange }: { text: string; onChange?: (text: string) => void }) => (
-  <Box
-    className="markdown-body"
-    sx={{
-      '&.markdown-body': {
-        '& h1, & h2': { pb: 0, borderBottom: 'none' },
-        '& h1': { fontSize: '1.5em' },
-        '& h2': { fontSize: '1.25em' },
-        '& h3': { fontSize: '1em' },
-        '& h4': { fontSize: '.875em' },
-        '& h5': { fontSize: '.85em', color: '#59636e' },
-      },
-    }}
-  >
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]}
-      rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeTaskList, rehypeExternalLink]}
-      components={
-        onChange && {
-          input: ({ node, ...props }) => {
-            const offset = node?.position?.start.offset
-            if (props.type !== 'checkbox' || offset === undefined) {
-              return <input {...props} />
-            }
-            return (
-              <input
-                {...props}
-                disabled={false}
-                onChange={() => {
-                  const toggled = toggleTask(text, offset)
-                  if (toggled !== null) {
-                    onChange(toggled)
-                  }
-                }}
-              />
-            )
-          },
-        }
+// Markdown renders text. The link of "#123" is expanded to the status and the title if the ticket is in tickets.
+export const Markdown = ({ text, tickets, onChange }: { text: string; tickets?: MentionedTicket[]; onChange?: (text: string) => void }) => {
+  const components: Components = {
+    a: ({ node, href, children, ...props }) => {
+      const m = /^\/(\d+)$/.exec(href ?? '')
+      const label = node?.children.length === 1 && node.children[0].type === 'text' ? node.children[0].value : undefined
+      const ticket = m && label === `#${m[1]}` ? tickets?.find((t) => t.ticket === Number(m[1])) : undefined
+      if (!ticket) {
+        return (
+          <a href={href} {...props}>
+            {children}
+          </a>
+        )
       }
+      return (
+        <a href={href} {...props}>
+          <TicketStatusIcon status={ticket.status} /> {ticket.title} {children}
+        </a>
+      )
+    },
+  }
+  if (onChange) {
+    components.input = ({ node, ...props }) => {
+      const offset = node?.position?.start.offset
+      if (props.type !== 'checkbox' || offset === undefined) {
+        return <input {...props} />
+      }
+      return (
+        <input
+          {...props}
+          disabled={false}
+          onChange={() => {
+            const toggled = toggleTask(text, offset)
+            if (toggled !== null) {
+              onChange(toggled)
+            }
+          }}
+        />
+      )
+    }
+  }
+
+  return (
+    <Box
+      className="markdown-body"
+      sx={{
+        '&.markdown-body': {
+          '& h1, & h2': { pb: 0, borderBottom: 'none' },
+          '& h1': { fontSize: '1.5em' },
+          '& h2': { fontSize: '1.25em' },
+          '& h3': { fontSize: '1em' },
+          '& h4': { fontSize: '.875em' },
+          '& h5': { fontSize: '.85em', color: '#59636e' },
+        },
+      }}
     >
-      {text}
-    </ReactMarkdown>
-  </Box>
-)
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks, remarkTicketLink]}
+        rehypePlugins={[rehypeSanitize, rehypeHighlight, rehypeTaskList, rehypeExternalLink]}
+        components={components}
+      >
+        {text}
+      </ReactMarkdown>
+    </Box>
+  )
+}

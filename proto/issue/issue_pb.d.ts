@@ -206,7 +206,7 @@ export declare type Relation = Message<"mono.issue.Relation"> & {
 export declare const RelationSchema: GenMessage<Relation>;
 
 /**
- * RelatedTicket is the relation with the title of the ticket on the other side.
+ * RelatedTicket is the relation with the title and the status of the ticket on the other side.
  *
  * @generated from message mono.issue.RelatedTicket
  */
@@ -220,6 +220,11 @@ export declare type RelatedTicket = Message<"mono.issue.RelatedTicket"> & {
    * @generated from field: string title = 2;
    */
   title: string;
+
+  /**
+   * @generated from field: mono.issue.TicketStatus status = 3;
+   */
+  status: TicketStatus;
 };
 
 /**
@@ -229,8 +234,8 @@ export declare type RelatedTicket = Message<"mono.issue.RelatedTicket"> & {
 export declare const RelatedTicketSchema: GenMessage<RelatedTicket>;
 
 /**
- * Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title is the title of the ticket
- * which mentions, and created_at is the time of the first mention.
+ * Backlink is the ticket which mentions the ticket by "#123" in the body or the comments. title and status are of the
+ * ticket which mentions, and created_at is the time of the first mention.
  *
  * @generated from message mono.issue.Backlink
  */
@@ -249,6 +254,11 @@ export declare type Backlink = Message<"mono.issue.Backlink"> & {
    * @generated from field: string title = 3;
    */
   title: string;
+
+  /**
+   * @generated from field: mono.issue.TicketStatus status = 4;
+   */
+  status: TicketStatus;
 };
 
 /**
@@ -256,6 +266,34 @@ export declare type Backlink = Message<"mono.issue.Backlink"> & {
  * Use `create(BacklinkSchema)` to create a new message.
  */
 export declare const BacklinkSchema: GenMessage<Backlink>;
+
+/**
+ * MentionedTicket is the ticket which the ticket mentions by "#123" in the body or the comments.
+ *
+ * @generated from message mono.issue.MentionedTicket
+ */
+export declare type MentionedTicket = Message<"mono.issue.MentionedTicket"> & {
+  /**
+   * @generated from field: int32 ticket = 1;
+   */
+  ticket: number;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: mono.issue.TicketStatus status = 3;
+   */
+  status: TicketStatus;
+};
+
+/**
+ * Describes the message mono.issue.MentionedTicket.
+ * Use `create(MentionedTicketSchema)` to create a new message.
+ */
+export declare const MentionedTicketSchema: GenMessage<MentionedTicket>;
 
 /**
  * CommitLink is the commit which refers to the ticket by the trailer. change_id is empty until git-data-service fetches
@@ -600,13 +638,6 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
   ticket?: Ticket;
 
   /**
-   * relations contains the relations which the ticket is on either side of.
-   *
-   * @generated from field: repeated mono.issue.RelatedTicket relations = 7;
-   */
-  relations: RelatedTicket[];
-
-  /**
    * @generated from field: repeated mono.issue.Comment comments = 3;
    */
   comments: Comment[];
@@ -629,9 +660,23 @@ export declare type ResponseGetTicket = Message<"mono.issue.ResponseGetTicket"> 
   pullRequests: PullRequestLink[];
 
   /**
+   * relations contains the relations which the ticket is on either side of.
+   *
+   * @generated from field: repeated mono.issue.RelatedTicket relations = 7;
+   */
+  relations: RelatedTicket[];
+
+  /**
    * @generated from field: repeated mono.issue.AgentSession agent_sessions = 8;
    */
   agentSessions: AgentSession[];
+
+  /**
+   * mentions contains the tickets which the ticket mentions.
+   *
+   * @generated from field: repeated mono.issue.MentionedTicket mentions = 9;
+   */
+  mentions: MentionedTicket[];
 };
 
 /**
