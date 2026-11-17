@@ -107,7 +107,11 @@ message Task {
     }
     queries: {
       name: "Pending"
-      query: "SELECT * FROM `:table_name:` WHERE `start_at` IS NULL"
+      query: "SELECT * FROM `:table_name:` WHERE `start_at` IS NULL AND `finished_at` IS NULL"
+    }
+    queries: {
+      name: "Running"
+      query: "SELECT * FROM `:table_name:` WHERE `repository_id` = ? AND `job_name` = ? AND `start_at` IS NOT NULL AND `finished_at` IS NULL"
     }
     queries: {
       name: "UniqJobName"

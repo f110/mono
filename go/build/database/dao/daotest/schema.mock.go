@@ -141,6 +141,15 @@ func (d *Task) RegisterListPending(value []*database.Task, err error) {
 	d.Register("ListPending", map[string]any{}, value, err)
 }
 
+func (d *Task) ListRunning(ctx context.Context, repositoryId int32, jobName string, opt ...dao.ListOption) ([]*database.Task, error) {
+	v, err := d.Call("ListRunning", map[string]any{"repositoryId": repositoryId, "jobName": jobName})
+	return v.([]*database.Task), err
+}
+
+func (d *Task) RegisterListRunning(repositoryId int32, jobName string, value []*database.Task, err error) {
+	d.Register("ListRunning", map[string]any{"repositoryId": repositoryId, "jobName": jobName}, value, err)
+}
+
 func (d *Task) ListUniqJobName(ctx context.Context, repositoryId int32, opt ...dao.ListOption) ([]*database.Task, error) {
 	v, err := d.Call("ListUniqJobName", map[string]any{"repositoryId": repositoryId})
 	return v.([]*database.Task), err
