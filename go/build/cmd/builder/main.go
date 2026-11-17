@@ -42,7 +42,6 @@ import (
 	"go.f110.dev/mono/go/build/watcher"
 	"go.f110.dev/mono/go/build/webhook"
 	"go.f110.dev/mono/go/cli"
-	"go.f110.dev/mono/go/collections/set"
 	"go.f110.dev/mono/go/ctxutil"
 	_ "go.f110.dev/mono/go/database/querylog"
 	"go.f110.dev/mono/go/fsm"
@@ -126,7 +125,6 @@ type Options struct {
 	GitDataStorageCAFile              string
 	GitDataBucket                     string
 	GitDataMemcachedEndpoint          string
-	GitDataExternalRepositories       []string
 	GitDataLockFilePath               string
 	GitDataRefreshInterval            time.Duration
 	GitDataRefreshTimeout             time.Duration
@@ -457,7 +455,11 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 	}
 
-	repositories, err := p.collectGitDataRepositories(ctx)
+	repositoryProvider := newGitDataRepositories(func(ctx context.Context) ([]*database.SourceRepository, error) {
+		rows, err := p.dao.Repository.ListAll(ctx)
+		return rows, xerrors.WithStack(err)
+	})
+	repositories, err := repositoryProvider.Repositories(ctx)
 	if err != nil {
 		return fsm.Error(err)
 	}
@@ -499,7 +501,6 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 		}
 	}()
 
-	repositoryProvider := &gitDataRepositories{repos: repositories}
 	updater := git.NewUpdater(storageClient, tokenProvider, repositoryProvider, p.opt.GitDataRefreshWorkers).
 		SetCachePool(cachePool).
 		SetPackCache(p.gitDataPackCache).
@@ -533,65 +534,6 @@ func (p *process) startGitDataService(ctx context.Context) (fsm.State, error) {
 	}()
 
 	return fsm.Next(stateStartApiServer)
-}
-
-// gitDataRepositories is the git.RepositoryProvider which accepts the repositories added at runtime.
-type gitDataRepositories struct {
-	mu    sync.Mutex
-	repos []*git.RepositoryConfig
-}
-
-var _ git.RepositoryProvider = &gitDataRepositories{}
-
-func (r *gitDataRepositories) Add(repo *git.RepositoryConfig) {
-	r.mu.Lock()
-	r.repos = append(r.repos, repo)
-	r.mu.Unlock()
-}
-
-func (r *gitDataRepositories) Repositories(_ context.Context) ([]*git.RepositoryConfig, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return append([]*git.RepositoryConfig(nil), r.repos...), nil
-}
-
-func (p *process) collectGitDataRepositories(ctx context.Context) ([]*git.RepositoryConfig, error) {
-	repos, err := p.dao.Repository.ListAll(ctx)
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	seen := set.New[string]()
-	var out []*git.RepositoryConfig
-	for _, r := range repos {
-		if r.CloneUrl == "" || r.Name == "" {
-			continue
-		}
-		if seen.Has(r.Name) {
-			logger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", r.Name))
-			continue
-		}
-		seen.Add(r.Name)
-		out = append(out, &git.RepositoryConfig{Name: r.Name, URL: r.CloneUrl, Prefix: r.Name})
-	}
-
-	for _, v := range p.opt.GitDataExternalRepositories {
-		if strings.Index(v, "|") == -1 {
-			return nil, xerrors.Definef("--git-data-external-repository=%s is invalid", v).WithStack()
-		}
-		parts := strings.Split(v, "|")
-		if len(parts) != 3 {
-			return nil, xerrors.Definef("--git-data-external-repository=%s must be 'name|url|prefix'", v).WithStack()
-		}
-		name := parts[0]
-		if seen.Has(name) {
-			logger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", name))
-			continue
-		}
-		seen.Add(name)
-		out = append(out, &git.RepositoryConfig{Name: name, URL: parts[1], Prefix: parts[2]})
-	}
-
-	return out, nil
 }
 
 func (p *process) startApiServer(ctx context.Context) (fsm.State, error) {
@@ -779,6 +721,57 @@ func (p *process) shutdown(ctx context.Context) (fsm.State, error) {
 	return fsm.Finish()
 }
 
+// gitDataRepositories is the git.RepositoryProvider which lists the repositories from the database on every call.
+// The repositories which are already known are reused to keep them opened.
+type gitDataRepositories struct {
+	list func(ctx context.Context) ([]*database.SourceRepository, error)
+
+	mu    sync.Mutex
+	repos map[string]*git.RepositoryConfig
+}
+
+var _ git.RepositoryProvider = &gitDataRepositories{}
+
+func newGitDataRepositories(list func(ctx context.Context) ([]*database.SourceRepository, error)) *gitDataRepositories {
+	return &gitDataRepositories{list: list, repos: make(map[string]*git.RepositoryConfig)}
+}
+
+// Add registers the repository so that it is reused when the database has the repository of the same name.
+func (r *gitDataRepositories) Add(repo *git.RepositoryConfig) {
+	r.mu.Lock()
+	r.repos[repo.Name] = repo
+	r.mu.Unlock()
+}
+
+func (r *gitDataRepositories) Repositories(ctx context.Context) ([]*git.RepositoryConfig, error) {
+	rows, err := r.list(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	repos := make(map[string]*git.RepositoryConfig, len(rows))
+	out := make([]*git.RepositoryConfig, 0, len(rows))
+	for _, v := range rows {
+		if v.CloneUrl == "" || v.Name == "" {
+			continue
+		}
+		if _, ok := repos[v.Name]; ok {
+			logger.Log.Warn("Skip duplicate repository name for git-data-service", slog.String("name", v.Name))
+			continue
+		}
+		repo, ok := r.repos[v.Name]
+		if !ok || repo.URL != v.CloneUrl {
+			repo = &git.RepositoryConfig{Name: v.Name, URL: v.CloneUrl, Prefix: v.Name}
+		}
+		repos[v.Name] = repo
+		out = append(out, repo)
+	}
+	r.repos = repos
+	return out, nil
+}
+
 // buildServerConfig converts the runtime Options into a curated, human-meaningful
 // view shown on the info page. Secrets (credentials, tokens, DSN) are intentionally
 // excluded. Durations are formatted to strings; a zero duration becomes an empty
@@ -957,7 +950,6 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.String("git-data-storage-ca-file", "CA certificate file path for the git-data-service object storage").Var(&opt.GitDataStorageCAFile)
 	fs.String("git-data-bucket", "The bucket name used by git-data-service").Var(&opt.GitDataBucket)
 	fs.String("git-data-memcached-endpoint", "The endpoint of memcached used by git-data-service").Var(&opt.GitDataMemcachedEndpoint)
-	fs.StringArray("git-data-external-repository", "External repository to be synced by the embedded git-data-service. Format: name|url|prefix (e.g. go|https://github.com/golang/go.git|golang/go)").Var(&opt.GitDataExternalRepositories)
 	fs.String("git-data-lock-file-path", "The path of the git-data-service updater lock file").Var(&opt.GitDataLockFilePath)
 	fs.Duration("git-data-refresh-interval", "Interval for refreshing repositories in git-data-service. Zero disables periodic refresh.").Var(&opt.GitDataRefreshInterval)
 	fs.Duration("git-data-refresh-timeout", "Timeout for refreshing a repository in git-data-service").Var(&opt.GitDataRefreshTimeout).Default(1 * time.Minute)

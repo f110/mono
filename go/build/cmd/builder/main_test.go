@@ -1,12 +1,21 @@
 package builder
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"go.f110.dev/mono/go/build/database"
+	"go.f110.dev/mono/go/git"
 	"go.f110.dev/mono/go/github"
+	"go.f110.dev/mono/go/logger"
 	"go.f110.dev/mono/go/testing/assertion"
 )
+
+func TestMain(m *testing.M) {
+	logger.Init()
+	m.Run()
+}
 
 func TestBuildServerConfig(t *testing.T) {
 	ghClient := github.NewGitHubClientFactory("", true)
@@ -70,4 +79,49 @@ func TestFormatConfigDuration(t *testing.T) {
 	assertion.Equal(t, formatConfigDuration(0), "")
 	assertion.Equal(t, formatConfigDuration(-1), "")
 	assertion.Equal(t, formatConfigDuration(90*time.Second), "1m30s")
+}
+
+func TestGitDataRepositories(t *testing.T) {
+	var rows []*database.SourceRepository
+	r := newGitDataRepositories(func(_ context.Context) ([]*database.SourceRepository, error) { return rows, nil })
+
+	rows = []*database.SourceRepository{
+		{Name: "a", CloneUrl: "https://example.com/a.git"},
+		{Name: "a", CloneUrl: "https://example.com/a2.git"},
+		{Name: "", CloneUrl: "https://example.com/noname.git"},
+		{Name: "noclone"},
+	}
+	got, err := r.Repositories(t.Context())
+	assertion.MustNoError(t, err)
+	assertion.Len(t, got, 1)
+	assertion.Equal(t, got[0].Name, "a")
+	assertion.Equal(t, got[0].URL, "https://example.com/a.git")
+	assertion.Equal(t, got[0].Prefix, "a")
+	a := got[0]
+
+	added := &git.RepositoryConfig{Name: "b", URL: "https://example.com/b.git", Prefix: "b"}
+	r.Add(added)
+	rows = []*database.SourceRepository{
+		{Name: "a", CloneUrl: "https://example.com/a.git"},
+		{Name: "b", CloneUrl: "https://example.com/b.git"},
+		{Name: "c", CloneUrl: "https://example.com/c.git"},
+	}
+	got, err = r.Repositories(t.Context())
+	assertion.MustNoError(t, err)
+	assertion.Len(t, got, 3)
+	assertion.True(t, got[0] == a)
+	assertion.True(t, got[1] == added)
+	assertion.Equal(t, got[2].Name, "c")
+	c := got[2]
+
+	rows = []*database.SourceRepository{
+		{Name: "b", CloneUrl: "https://example.com/b2.git"},
+		{Name: "c", CloneUrl: "https://example.com/c.git"},
+	}
+	got, err = r.Repositories(t.Context())
+	assertion.MustNoError(t, err)
+	assertion.Len(t, got, 2)
+	assertion.True(t, got[0] != added)
+	assertion.Equal(t, got[0].URL, "https://example.com/b2.git")
+	assertion.True(t, got[1] == c)
 }

@@ -136,7 +136,7 @@ Task には設定が JSON シリアライズされて保存され、再ビルド
 build システムでは 2 通りの使われ方をする。
 
 - **埋め込み**: builder が `--git-data-listen` 指定時に同一プロセス内でサーバーと `Updater`（定期 fetch）を起動。
-  対象リポジトリは DB の `source_repository`（Ready のもの）＋ `--git-data-external-repository` から集める。
+  対象リポジトリは DB の `source_repository`（Ready のもの）から集める。
 - **クライアント**: api サーバー（HEAD リビジョン解決）、reconciler（リポジトリ読み取り）、bff（Git Data ページ）が
   gRPC クライアントとして利用する。
 
