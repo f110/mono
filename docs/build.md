@@ -56,8 +56,8 @@
 4. `startGitDataService`: `--git-data-listen` 指定時のみ。埋め込みの git-data-service (gRPC) と `git.Updater` を起動する。
 5. `startApiServer`: `Notifier`・`Reconcilers` を組み立て、`api.NewApi` で HTTP/gRPC サーバーを起動。
 6. `leaderElection`: `--enable-leader-election` 時に Lease ロックを取得。リーダーになるまでブロックする。
-7. `startWorker`: リーダーのみ：JobWatcher、（任意で）GC、releasewatcher の Manager、webhook Scheduler、
-   git-data の定期更新を goroutine で起動。
+7. `startWorker`: リーダーのみ：JobWatcher、（任意で）GC、releasewatcher の Manager、Task を起動する
+   `BazelBuilder.Run`、webhook Scheduler、git-data の定期更新を goroutine で起動。
 8. `shutdown`: API サーバー / git-data gRPC サーバーを graceful stop。
 
 ポイントは **API サーバーと Webhook 受信は全レプリカで動く**が、**実際にビルドを駆動するワーカー
@@ -86,15 +86,19 @@ proto の `API` サービス（`ListTasks`, `ListRepositories`, `SaveRepository`
 
 ビルドの中核。`Builder` インターフェース (`Build`, `ForceStop`) を実装し、`api` と `webhook` の両方から使われる。
 
-- **`Build`**: リビジョン × プラットフォームごとに `task` 行を作成し、`buildJob` で Kubernetes Job
-  （+Secret / ServiceAccount / SecretProviderClass）を生成する。同一ジョブが実行中なら起動せず、
-  `Exclusive` ジョブが他で動いていれば `taskQueue` に積んで直列化する。`--dev`（Stub モード）では
-  実際の Job を作らずマニフェストをログ出力する。
+- **`Build`**: リビジョン × プラットフォームごとに `task` 行を作成するだけで、Job は起動しない。
+  同一リビジョンで同一ジョブが実行中なら Task を作らない。どのレプリカでも呼ばれる。
+- **`Run`**: リーダーのみで動く。`start_at` と `finished_at` が NULL の Task（`ListPending`）を ID 順に拾い、
+  `buildJob` で Kubernetes Job（+Secret / ServiceAccount / SecretProviderClass）を生成する。
+  `Exclusive` ジョブは同じリポジトリ・ジョブ名の実行中 Task（`ListRunning`）があれば起動を見送る。
+  `--task-schedule-interval`（既定 30 秒）間隔のポーリングに加え、同じプロセスで Task が作成・完了した時にも起きる。
+  `--dev`（Stub モード）では実際の Job を作らずマニフェストをログ出力する。
 - **`syncJob`** (reconcile): JobWatcher（`watcher.Router` に `jobType="bazelBuilder"` で登録）から呼ばれる。
   Job の Conditions を見て成否を判定し、`postProcess` でログ（pre-process / main / report の 3 コンテナ分）を
   MinIO に保存、テストレポートを `test_report` に書き込み、GitHub のコミットステータスを更新、finalizer を外す。
-  タイムアウト（既定 1 時間）・強制停止ラベル・手動削除も同じ関数で処理する。完了後はキューの後続 Task を起動する。
+  タイムアウト（既定 1 時間）・強制停止ラベル・手動削除も同じ関数で処理する。完了後は `Run` を起こして後続 Task を起動させる。
 - **`ForceStop`**: 対象 Job に `build.f110.dev/force-stop` ラベルを付け、次の reconcile で停止させる。
+  Informer はリーダーでしか動かないため、Job は kube-apiserver から直接取得する。
 - Job マニフェスト生成は `job.JobBuilder`（`buildJobTemplate`）に委譲。Bazelisk・リモートキャッシュ・
   Bazel ミラー・GitHub App 認証・Vault 連携などのオプションを反映する。
 

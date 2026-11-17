@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/go-github/v85/github"
@@ -23,7 +22,6 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	k8smetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	secretsstorev1 "sigs.k8s.io/secrets-store-csi-driver/apis/v1"
@@ -62,10 +60,6 @@ const (
 	jobType    = "bazelBuilder"
 
 	bazelBuilderControllerFinalizerName = "build.f110.dev/finalizer"
-)
-
-var (
-	ErrOtherTaskIsRunning = xerrors.Define("coordinator: Other task is running")
 )
 
 type KubernetesOptions struct {
@@ -135,51 +129,6 @@ func NewBazelOptions(remoteCache string, enableRemoteAssetApi bool, sidecarImage
 	}
 }
 
-type taskQueue struct {
-	mu     sync.Mutex
-	queues map[string][]*database.Task
-}
-
-func newTaskQueue() *taskQueue {
-	return &taskQueue{queues: make(map[string][]*database.Task)}
-}
-
-func (tq *taskQueue) Enqueue(job *config.JobV2, task *database.Task) {
-	tq.EnqueueById(job.Identification(), task)
-}
-
-func (tq *taskQueue) EnqueueById(id string, task *database.Task) {
-	tq.mu.Lock()
-	defer tq.mu.Unlock()
-
-	tq.queues[id] = append(tq.queues[id], task)
-}
-
-func (tq *taskQueue) Dequeue(job *config.JobV2) *database.Task {
-	return tq.DequeueById(job.Identification())
-}
-
-func (tq *taskQueue) DequeueById(id string) *database.Task {
-	tq.mu.Lock()
-	defer tq.mu.Unlock()
-
-	q, ok := tq.queues[id]
-	if !ok {
-		return nil
-	}
-
-	switch len(q) {
-	case 0:
-		return nil
-	case 1:
-		tq.queues[id] = nil
-		return q[0]
-	default:
-		tq.queues[id] = q[1:]
-		return q[0]
-	}
-}
-
 type BazelBuilder struct {
 	Namespace    string
 	dashboardUrl string
@@ -210,7 +159,8 @@ type BazelBuilder struct {
 	emulateJobControl bool
 	emulateFixtureDir string
 
-	taskQueue *taskQueue
+	// wakeUp wakes Run up without waiting for the next tick.
+	wakeUp chan struct{}
 }
 
 func NewBazelBuilder(
@@ -245,7 +195,7 @@ func NewBazelBuilder(
 		storage:           storage.NewS3(bucket, storageOpt),
 		vaultClient:       vaultClient,
 		dev:               dev,
-		taskQueue:         newTaskQueue(),
+		wakeUp:            make(chan struct{}, 1),
 		jobBuilder:        NewJobBuilder(namespace, bazelImage, sidecarImage, excludeNodes),
 	}
 	if kOpt.BatchInformer != nil {
@@ -310,14 +260,6 @@ func NewBazelBuilder(
 		watcher.Router.Add(jobType, b.syncJob)
 	}
 
-	pendingTasks, err := b.dao.Task.ListPending(context.Background())
-	if err != nil {
-		return nil, xerrors.WithStack(err)
-	}
-	for _, v := range pendingTasks {
-		b.taskQueue.EnqueueById(v.JobName, v)
-	}
-
 	return b, nil
 }
 
@@ -326,18 +268,8 @@ func (b *BazelBuilder) GitDataClient(client git.GitDataClient) {
 	b.gitDataClient = client
 }
 
+// Build creates the tasks of the job. The tasks are started by Run on the leader.
 func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, revision, bazelVersion, command string, targets, platforms []string, via string, isMainBranch bool) ([]*database.Task, error) {
-	var tasks []*database.Task
-	defer func() {
-		for _, task := range tasks {
-			if task.IsChanged() {
-				if err := b.dao.Task.Update(ctx, task); err != nil {
-					logger.Log.Warn("Failed update task", logger.E(err))
-				}
-			}
-		}
-	}()
-
 	taskList, err := b.dao.Task.ListByRevision(ctx, repo.Id, revision, dao.Desc)
 	if err != nil {
 		return nil, xerrors.WithStack(err)
@@ -352,6 +284,7 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 		return nil, err
 	}
 	t := strings.Join(targets, "\n")
+	var tasks []*database.Task
 	for _, platform := range platforms {
 		task, err := b.dao.Task.Create(ctx, &database.Task{
 			RepositoryId:           repo.Id,
@@ -367,33 +300,128 @@ func (b *BazelBuilder) Build(ctx context.Context, repo *database.SourceRepositor
 			ConfigName:             job.ConfigName,
 		})
 		if err != nil {
-			return nil, xerrors.WithStack(err)
-		}
-		tasks = append(tasks, task)
-
-		if err := b.buildJob(ctx, repo, job, task); err != nil {
-			if errors.Is(err, ErrOtherTaskIsRunning) {
-				logger.Log.Info("Enqueue the task", slog.Int("task.id", int(task.Id)))
-				b.taskQueue.Enqueue(job, task)
-				return tasks, nil
-			}
-
-			task.Success = false
-			task.FinishedAt = new(time.Now())
-			// Return the tasks created so far (including this one) so the caller
-			// can record their ids. The row is already persisted; dropping it
-			// here would let a retry create a duplicate for the same revision.
 			return tasks, xerrors.WithStack(err)
 		}
+		tasks = append(tasks, task)
+	}
+	b.wakeUpRun()
 
-		if job.GitHubStatus {
-			if err := b.updateGithubStatus(ctx, repo, job, task, "pending"); err != nil {
-				logger.Log.Warn("Failure update the status of github", logger.E(err), slog.Int("task.id", int(task.Id)))
-			}
+	return tasks, nil
+}
+
+// Run starts the pending tasks periodically and whenever the task is created or finished in this process.
+// Run must be called only on the leader.
+func (b *BazelBuilder) Run(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		if err := b.startPendingTasks(ctx); err != nil {
+			logger.Log.Warn("Failed to start the pending tasks", logger.E(err))
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		case <-b.wakeUp:
+		}
+	}
+}
+
+func (b *BazelBuilder) wakeUpRun() {
+	select {
+	case b.wakeUp <- struct{}{}:
+	default:
+	}
+}
+
+func (b *BazelBuilder) startPendingTasks(ctx context.Context) error {
+	tasks, err := b.dao.Task.ListPending(ctx)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+
+	for _, task := range tasks {
+		if err := b.startTask(ctx, task); err != nil {
+			logger.Log.Warn("Failed to start the task", logger.E(err), slog.Int("task.id", int(task.Id)))
+		}
+	}
+	return nil
+}
+
+func (b *BazelBuilder) startTask(ctx context.Context, task *database.Task) error {
+	repo, err := b.dao.Repository.Select(ctx, task.RepositoryId)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	job, err := jobConfigurationOf(repo, task)
+	if err != nil {
+		b.finishFailedTask(ctx, task)
+		return err
+	}
+	if job.Exclusive {
+		running, err := b.dao.Task.ListRunning(ctx, task.RepositoryId, task.JobName)
+		if err != nil {
+			return xerrors.WithStack(err)
+		}
+		if len(running) > 0 {
+			return nil
 		}
 	}
 
-	return tasks, nil
+	if err := b.buildJob(ctx, repo, job, task); err != nil {
+		b.finishFailedTask(ctx, task)
+		return err
+	}
+	if err := b.dao.Task.Update(ctx, task); err != nil {
+		return xerrors.WithStack(err)
+	}
+	logger.Log.Info("Start the task", slog.Int("task.id", int(task.Id)), slog.String("job.name", task.JobName))
+
+	if job.GitHubStatus {
+		if err := b.updateGithubStatus(ctx, repo, job, task, "pending"); err != nil {
+			logger.Log.Warn("Failure update the status of github", logger.E(err), slog.Int("task.id", int(task.Id)))
+		}
+	}
+	return nil
+}
+
+// finishFailedTask marks task as failed so that it is never picked up as the pending task again.
+func (b *BazelBuilder) finishFailedTask(ctx context.Context, task *database.Task) {
+	task.Success = false
+	task.FinishedAt = new(time.Now())
+	if err := b.dao.Task.Update(ctx, task); err != nil {
+		logger.Log.Warn("Failed update the task", logger.E(err), slog.Int("task.id", int(task.Id)))
+	}
+}
+
+// jobConfigurationOf decodes the job configuration which is stored in task.
+func jobConfigurationOf(repo *database.SourceRepository, task *database.Task) (*config.JobV2, error) {
+	u, err := url.Parse(repo.Url)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	p := strings.Split(u.Path, "/")
+	owner, repoName := p[1], p[2]
+	jobConfiguration := &config.JobV2{}
+	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
+		j := &config.Job{}
+		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
+			return nil, err
+		}
+		jobConfiguration = j.ToV2()
+	} else if len(task.ParsedJobConfiguration) > 0 {
+		j := &config.Job{}
+		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
+			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration, owner, repoName); err != nil {
+				return nil, err
+			}
+		} else {
+			jobConfiguration = j.ToV2()
+		}
+	}
+	return jobConfiguration, nil
 }
 
 // runningSameJob returns the unfinished task of jobName if it is still running.
@@ -473,30 +501,10 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		}
 		return xerrors.WithStack(err)
 	}
-	u, err := url.Parse(repo.Url)
+	jobConfiguration, err := jobConfigurationOf(repo, task)
 	if err != nil {
-		return xerrors.WithStack(err)
-	}
-	p := strings.Split(u.Path, "/")
-	owner, repoName := p[1], p[2]
-	jobConfiguration := &config.JobV2{}
-	if task.JobConfiguration != nil && len(*task.JobConfiguration) > 0 {
-		j := &config.Job{}
-		if err := config.UnmarshalJob([]byte(*task.JobConfiguration), j); err != nil {
-			logger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
-			return nil
-		}
-		jobConfiguration = j.ToV2()
-	} else if len(task.ParsedJobConfiguration) > 0 {
-		j := &config.Job{}
-		if err := config.UnmarshalJob(task.ParsedJobConfiguration, j); err != nil {
-			if err := config.UnmarshalJobV2(task.ParsedJobConfiguration, jobConfiguration, owner, repoName); err != nil {
-				logger.Log.Warn("Failed to decode json", slog.Int("task.id", int(task.Id)))
-				return nil
-			}
-		} else {
-			jobConfiguration = j.ToV2()
-		}
+		logger.Log.Warn("Failed to decode the job configuration", logger.E(err), slog.Int("task.id", int(task.Id)))
+		return nil
 	}
 
 	if task.FinishedAt != nil {
@@ -535,6 +543,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if err := b.teardownJob(ctx, job); err != nil {
 			return xerrors.WithStack(err)
 		}
+		b.wakeUpRun()
 		return nil
 	}
 
@@ -548,6 +557,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		if _, err := b.client.BatchV1.UpdateJob(ctx, job, metav1.UpdateOptions{}); err != nil {
 			return xerrors.WithStack(err)
 		}
+		b.wakeUpRun()
 		return nil
 	}
 
@@ -592,16 +602,7 @@ func (b *BazelBuilder) syncJob(job *batchv1.Job) error {
 		return xerrors.WithStack(err)
 	}
 
-	if followTask := b.taskQueue.DequeueById(task.JobName); followTask != nil {
-		logger.Log.Info("Dequeue the task", slog.Int("task.id", int(followTask.Id)))
-		if err := b.buildJob(ctx, repo, jobConfiguration, followTask); err != nil {
-			logger.Log.Warn("Failed starting follow task. You have to start a task manually", logger.E(err), slog.String("job.name", task.JobName), slog.Int("task.id", int(task.Id)))
-			return nil
-		}
-		if err := b.dao.Task.Update(context.Background(), followTask); err != nil {
-			logger.Log.Warn("Failed update the task", logger.E(err), slog.Int("task.id", int(followTask.Id)))
-		}
-	}
+	b.wakeUpRun()
 
 	return nil
 }
@@ -663,10 +664,6 @@ func (b *BazelBuilder) getTask(taskId string) (*database.Task, error) {
 }
 
 func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceRepository, job *config.JobV2, task *database.Task) error {
-	if job.Exclusive && b.isRunningJob(job) {
-		return ErrOtherTaskIsRunning.WithStack()
-	}
-
 	builtObjects, err := b.buildJobTemplate(ctx, repo, job, task, task.Platform)
 	if err != nil {
 		return err
@@ -741,34 +738,6 @@ func (b *BazelBuilder) buildJob(ctx context.Context, repo *database.SourceReposi
 	task.Manifest = buf.String()
 
 	return nil
-}
-
-func (b *BazelBuilder) isRunningJob(job *config.JobV2) bool {
-	if b.IsStub() {
-		return false
-	}
-
-	jobs, err := b.jobLister.List(b.Namespace, labels.Everything())
-	if err != nil {
-		logger.Log.Warn("Could not get a job's list from kube-apiserver.", logger.E(err))
-		// Cannot detect the status of the job.
-		// In this situation, we assume that the job is running.
-		return true
-	}
-
-	for _, v := range jobs {
-		jobId, ok := v.Labels[labelKeyJobId]
-		if !ok {
-			continue
-		}
-		if job.Identification() == jobId {
-			if v.Status.CompletionTime.IsZero() && !v.Status.StartTime.IsZero() {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 // updateAssignedInfo records the fields of task that become known once the Pod

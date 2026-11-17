@@ -2,6 +2,7 @@ package coordinator
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	fakesecretstoreclient "sigs.k8s.io/secrets-store-csi-driver/pkg/client/clientset/versioned/fake"
 
+	"go.f110.dev/mono/go/build/config"
 	"go.f110.dev/mono/go/build/database"
 	"go.f110.dev/mono/go/build/database/dao"
 	"go.f110.dev/mono/go/build/database/dao/daotest"
@@ -38,7 +40,6 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 		Repository: daotest.NewSourceRepository(),
 		Task:       daotest.NewTask(),
 	}
-	mockDAO.Task.RegisterListPending([]*database.Task{}, nil)
 	b, err := NewBazelBuilder(
 		"",
 		KubernetesOptions{
@@ -232,7 +233,6 @@ func TestBazelBuilder_SyncJob(t *testing.T) {
 func TestNewBazelBuilder_CloneFromGitDataService(t *testing.T) {
 	newBuilder := func(opt BazelOptions) *BazelBuilder {
 		mockTask := daotest.NewTask()
-		mockTask.RegisterListPending([]*database.Task{}, nil)
 		b, err := NewBazelBuilder(
 			"",
 			KubernetesOptions{},
@@ -280,7 +280,6 @@ func TestBazelBuilder_BuildJobTemplate(t *testing.T) {
 
 	newBuilder := func(client git.GitDataClient) *BazelBuilder {
 		mockTask := daotest.NewTask()
-		mockTask.RegisterListPending([]*database.Task{}, nil)
 		b, err := NewBazelBuilder("", KubernetesOptions{}, dao.Options{Task: mockTask}, metav1.NamespaceDefault, nil, "foo", storage.S3Options{}, BazelOptions{}, nil, nil, true)
 		require.NoError(t, err)
 		b.GitDataClient(client)
@@ -406,7 +405,6 @@ func TestBazelBuilder_ForceStop(t *testing.T) {
 		Repository: daotest.NewSourceRepository(),
 		Task:       daotest.NewTask(),
 	}
-	mockDAO.Task.RegisterListPending([]*database.Task{}, nil)
 	b, err := NewBazelBuilder(
 		"",
 		KubernetesOptions{
@@ -450,4 +448,166 @@ func TestBazelBuilder_ForceStop(t *testing.T) {
 	updatedJob, err := runner.CoreClient.BatchV1.GetJob(t.Context(), metav1.NamespaceDefault, t.Name(), metav1.GetOptions{})
 	require.NoError(t, err)
 	assertion.Contains(t, updatedJob.GetLabels(), labelKeyForceStop)
+}
+
+func TestBazelBuilder_Build(t *testing.T) {
+	runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
+	coreInformer := k8sclient.NewCoreV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.CoreV1, metav1.NamespaceDefault, 30*time.Second)
+	batchInformer := k8sclient.NewBatchV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.BatchV1, metav1.NamespaceDefault, 30*time.Second)
+	mockTask := daotest.NewTask()
+	b, err := NewBazelBuilder(
+		"",
+		KubernetesOptions{
+			BatchInformer:     batchInformer,
+			CoreInformer:      coreInformer,
+			Client:            &runner.CoreClient.Set,
+			SecretStoreClient: fakesecretstoreclient.NewSimpleClientset(),
+		},
+		dao.Options{Task: mockTask},
+		metav1.NamespaceDefault,
+		nil,
+		"foo",
+		storage.S3Options{},
+		BazelOptions{},
+		nil,
+		nil,
+		false,
+	)
+	require.NoError(t, err)
+
+	repo := &database.SourceRepository{Id: 1, Url: "https://github.com/f110/mono"}
+	job := &config.JobV2{Name: "test_all", Command: "test", Targets: []string{"//..."}, RepositoryOwner: "f110", RepositoryName: "mono"}
+	mockTask.RegisterListByRevision(repo.Id, "e192aef54cb0d31afd7cae64b079be2a12a56a74", []*database.Task{}, nil)
+
+	tasks, err := b.Build(t.Context(), repo, job, "e192aef54cb0d31afd7cae64b079be2a12a56a74", "", "test", job.Targets, []string{"linux_amd64"}, "api", false)
+	require.NoError(t, err)
+	require.Len(t, tasks, 1)
+	assertion.Nil(t, tasks[0].StartAt)
+
+	// Build creates only the task. The task is started by the leader.
+	jobs, err := runner.CoreClient.BatchV1.ListJob(t.Context(), metav1.NamespaceDefault, metav1.ListOptions{})
+	require.NoError(t, err)
+	assertion.Len(t, jobs.Items, 0)
+}
+
+func TestBazelBuilder_StartPendingTasks(t *testing.T) {
+	newPendingTask := func(t *testing.T, job *config.JobV2) *database.Task {
+		jobConfiguration, err := config.MarshalJob(job)
+		require.NoError(t, err)
+		task := &database.Task{
+			Id:                     1,
+			RepositoryId:           1,
+			JobName:                job.Name,
+			ParsedJobConfiguration: jobConfiguration,
+			Revision:               "e192aef54cb0d31afd7cae64b079be2a12a56a74",
+			Command:                job.Command,
+			Targets:                strings.Join(job.Targets, "\n"),
+			Platform:               "linux_amd64",
+		}
+		task.ResetMark()
+		return task
+	}
+	listJobs := func(t *testing.T, runner *controllertest.GenericTestRunner[*batchv1.Job]) []batchv1.Job {
+		jobs, err := runner.CoreClient.BatchV1.ListJob(t.Context(), metav1.NamespaceDefault, metav1.ListOptions{})
+		require.NoError(t, err)
+		return jobs.Items
+	}
+
+	const (
+		started = iota
+		waiting
+		failed
+	)
+	cases := []struct {
+		name                string
+		exclusive           bool
+		brokenConfiguration bool
+		running             []*database.Task
+		want                int
+	}{
+		{
+			name:      "Start the pending task",
+			exclusive: true,
+			running:   []*database.Task{},
+			want:      started,
+		},
+		{
+			name:      "Wait for the running task of the exclusive job",
+			exclusive: true,
+			running:   []*database.Task{{Id: 2, RepositoryId: 1, JobName: "test_all"}},
+			want:      waiting,
+		},
+		{
+			name:      "Start the task of the job which is not exclusive even if the other task is running",
+			exclusive: false,
+			running:   []*database.Task{{Id: 2, RepositoryId: 1, JobName: "test_all"}},
+			want:      started,
+		},
+		{
+			name:                "Finish the task which has the broken job configuration",
+			brokenConfiguration: true,
+			running:             []*database.Task{},
+			want:                failed,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			runner := controllertest.NewGenericTestRunner[*batchv1.Job]()
+			coreInformer := k8sclient.NewCoreV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.CoreV1, metav1.NamespaceDefault, 30*time.Second)
+			batchInformer := k8sclient.NewBatchV1Informer(runner.CoreSharedInformerFactory.Cache(), runner.CoreClient.BatchV1, metav1.NamespaceDefault, 30*time.Second)
+			mockRepository := daotest.NewSourceRepository()
+			mockTask := daotest.NewTask()
+			b, err := NewBazelBuilder(
+				"",
+				KubernetesOptions{
+					BatchInformer:     batchInformer,
+					CoreInformer:      coreInformer,
+					Client:            &runner.CoreClient.Set,
+					SecretStoreClient: fakesecretstoreclient.NewSimpleClientset(),
+				},
+				dao.Options{Repository: mockRepository, Task: mockTask},
+				metav1.NamespaceDefault,
+				nil,
+				"foo",
+				storage.S3Options{},
+				BazelOptions{},
+				nil,
+				nil,
+				false,
+			)
+			require.NoError(t, err)
+
+			job := &config.JobV2{Name: "test_all", Command: "test", Targets: []string{"//..."}, Exclusive: tc.exclusive}
+			pendingTask := newPendingTask(t, job)
+			if tc.brokenConfiguration {
+				pendingTask.ParsedJobConfiguration = []byte("{")
+			}
+			mockRepository.RegisterSelect(1, &database.SourceRepository{Id: 1, Name: "f110/mono", Url: "https://github.com/f110/mono"})
+			mockTask.RegisterListPending([]*database.Task{pendingTask}, nil)
+			mockTask.RegisterListRunning(1, job.Name, tc.running, nil)
+
+			err = b.startPendingTasks(t.Context())
+			require.NoError(t, err)
+
+			called := mockTask.Called("Update")
+			switch tc.want {
+			case started:
+				require.Len(t, called, 1)
+				updated := called[0].Args["task"].(*database.Task)
+				assertion.NotNil(t, updated.StartAt)
+				assertion.Nil(t, updated.FinishedAt)
+				assertion.Len(t, listJobs(t, runner), 1)
+			case waiting:
+				assertion.Len(t, called, 0)
+				assertion.Len(t, listJobs(t, runner), 0)
+			case failed:
+				require.Len(t, called, 1)
+				updated := called[0].Args["task"].(*database.Task)
+				assertion.NotNil(t, updated.FinishedAt)
+				assertion.False(t, updated.Success)
+				assertion.Len(t, listJobs(t, runner), 0)
+			}
+		})
+	}
 }

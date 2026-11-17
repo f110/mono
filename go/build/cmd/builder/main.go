@@ -113,6 +113,7 @@ type Options struct {
 	ExternalReleasePollInterval    time.Duration
 	EventReconcileInterval         time.Duration
 	EventMaxProcessingDuration     time.Duration
+	TaskScheduleInterval           time.Duration
 
 	GitDataServiceURL                 string
 	CloneFromGitDataService           bool
@@ -657,6 +658,12 @@ func (p *process) startWorker(_ context.Context) (fsm.State, error) {
 	manager := releasewatcher.NewManager(p.bazelBuilder, p.dao, p.ghClient, nil, interval)
 	go manager.Start(p.ctx)
 
+	taskScheduleInterval := p.opt.TaskScheduleInterval
+	if taskScheduleInterval <= 0 {
+		taskScheduleInterval = 30 * time.Second
+	}
+	go p.bazelBuilder.Run(p.ctx, taskScheduleInterval)
+
 	go p.eventProcessor.Run(p.ctx)
 
 	if p.gitDataUpdater != nil && p.opt.GitDataRefreshInterval > 0 {
@@ -907,6 +914,7 @@ func AddCommand(rootCmd *cli.Command) {
 	fs.StringArray("exclude-nodes", "THe list of node to not assigned job").Var(&opt.ExcludeNodes)
 	fs.Duration("external-release-poll-interval", "Interval between polls of third-party repositories for external_release triggers").Var(&opt.ExternalReleasePollInterval).Default(1 * time.Hour)
 	fs.Duration("event-reconcile-interval", "Interval between scans of the github_event table for PENDING/FAILED rows").Var(&opt.EventReconcileInterval).Default(30 * time.Second)
+	fs.Duration("task-schedule-interval", "Interval between scans of the pending tasks to start them").Var(&opt.TaskScheduleInterval).Default(30 * time.Second)
 	fs.Duration("event-max-processing-duration", "Time after `created_at` at which an unfinished github_event row is moved to EXPIRED").Var(&opt.EventMaxProcessingDuration).Default(30 * time.Minute)
 	fs.String("git-data-service-url", "URL of the git-data-service gRPC endpoint used by reconcilers to read repository data. If empty, reconcilers read from GitHub instead.").Var(&opt.GitDataServiceURL)
 	fs.Bool("clone-from-git-data-service", "Fetch the source tree from git-data-service (--git-data-service-url) in the pre-process container instead of cloning from GitHub. If not set, the source is always cloned from GitHub.").Var(&opt.CloneFromGitDataService)
