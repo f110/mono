@@ -140,6 +140,8 @@ message Ticket {
   google.protobuf.Timestamp last_activity_at = 11;
   // type is TICKET_TYPE_UNSPECIFIED if the type is not set.
   TicketType                type             = 12;
+  // comment_count is the number of the comments which are not deleted.
+  int32                     comment_count    = 13;
 }
 
 message Actor {

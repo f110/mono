@@ -27,6 +27,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 import dayjs from 'dayjs'
 import { type Ticket, Issue, TicketStatus } from '../connect/issue_pb'
 import { CopyTicketNumberButton } from '../components/CopyButton.tsx'
@@ -252,6 +253,11 @@ const TicketTable = ({
                 <Link component={RouterLink} to="/$number" params={{ number: String(t.number) }}>
                   {t.title}
                 </Link>
+                {t.commentCount > 0 && (
+                  <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1, whiteSpace: 'nowrap' }}>
+                    <ChatBubbleOutlineIcon titleAccess="コメント" sx={{ fontSize: 'inherit', verticalAlign: '-0.125em' }} /> {t.commentCount}
+                  </Typography>
+                )}
                 <Stack direction="row" spacing={1} sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', mt: 0.5 }}>
                   <Chip label={statusLabels[t.status]} size="small" sx={statusColors[t.status]} />
                   <Typography variant="body2" color="text.secondary">

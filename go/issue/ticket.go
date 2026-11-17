@@ -19,7 +19,9 @@ import (
 // Ticket is a ticket of the tracker. Id is the ticket number.
 type Ticket struct {
 	*database.Ticket
-	tracker *Tracker
+	// CommentCount is the number of the comments which are not deleted.
+	CommentCount int32
+	tracker      *Tracker
 }
 
 // Update updates the fields which are not nil. 0 for componentID or assigneeID clears the field. The system actor can
@@ -426,6 +428,11 @@ func (t *Ticket) reload(ctx context.Context) error {
 		return xerrors.WithStack(err)
 	}
 	t.Ticket = ticket
+	counts, err := t.tracker.commentCounts(ctx, t.Id)
+	if err != nil {
+		return err
+	}
+	t.CommentCount = counts[t.Id]
 	return nil
 }
 

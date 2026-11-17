@@ -82,6 +82,13 @@ export declare type Ticket = Message<"mono.issue.Ticket"> & {
    * @generated from field: mono.issue.TicketType type = 12;
    */
   type: TicketType;
+
+  /**
+   * comment_count is the number of the comments which are not deleted.
+   *
+   * @generated from field: int32 comment_count = 13;
+   */
+  commentCount: number;
 };
 
 /**

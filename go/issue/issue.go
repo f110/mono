@@ -132,7 +132,11 @@ func (t *Tracker) Ticket(ctx context.Context, number int32) (*Ticket, error) {
 	} else if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
-	return &Ticket{Ticket: ticket, tracker: t}, nil
+	counts, err := t.commentCounts(ctx, ticket.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &Ticket{Ticket: ticket, CommentCount: counts[ticket.Id], tracker: t}, nil
 }
 
 // Find returns the tickets which match the filter in the order of orderBy. The filter is written in AIP-160. See the
@@ -183,6 +187,10 @@ func (t *Tracker) Find(ctx context.Context, f, orderBy string, offset, limit int
 	if err != nil {
 		return nil, xerrors.WithStack(err)
 	}
+	counts, err := t.commentCounts(ctx, ids...)
+	if err != nil {
+		return nil, err
+	}
 	byID := make(map[int32]*database.Ticket, len(tickets))
 	for _, v := range tickets {
 		byID[v.Id] = v
@@ -190,7 +198,7 @@ func (t *Tracker) Find(ctx context.Context, f, orderBy string, offset, limit int
 	res := make([]*Ticket, 0, len(ids))
 	for _, id := range ids {
 		if v, ok := byID[id]; ok {
-			res = append(res, &Ticket{Ticket: v, tracker: t})
+			res = append(res, &Ticket{Ticket: v, CommentCount: counts[id], tracker: t})
 		}
 	}
 	return res, nil
@@ -570,6 +578,34 @@ func (t *Tracker) syncMentions(ctx context.Context, tx *sql.Tx, actor *database.
 		}
 	}
 	return nil
+}
+
+// commentCounts returns the number of the comments which are not deleted by the ticket. The ticket without the comments
+// is not in the result.
+func (t *Tracker) commentCounts(ctx context.Context, ids ...int32) (map[int32]int32, error) {
+	args := make([]any, len(ids))
+	for i, v := range ids {
+		args[i] = v
+	}
+	query := "SELECT `ticket_id`, COUNT(*) FROM `comment` WHERE `deleted_at` IS NULL AND `ticket_id` IN (" +
+		strings.Repeat("?, ", len(ids)-1) + "?) GROUP BY `ticket_id`"
+	rows, err := t.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	defer rows.Close()
+	res := make(map[int32]int32)
+	for rows.Next() {
+		var id, count int32
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, xerrors.WithStack(err)
+		}
+		res[id] = count
+	}
+	if err := rows.Err(); err != nil {
+		return nil, xerrors.WithStack(err)
+	}
+	return res, nil
 }
 
 // commentBodies returns the bodies of the comments of the ticket which are not deleted except the comment of exclude.

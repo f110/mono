@@ -339,6 +339,32 @@ func TestIssueHandler(t *testing.T) {
 		assertion.Equal(t, res.Msg.GetTickets()[0].GetNumber(), ticket.GetNumber())
 	})
 
+	t.Run("the ticket has the number of the comments which are not deleted", func(t *testing.T) {
+		created, err := client.CreateTicket(ctx, connect.NewRequest(api.RequestCreateTicket_builder{Title: new("counted")}.Build()))
+		assertion.MustNoError(t, err)
+		number := created.Msg.GetTicket().GetNumber()
+		assertion.Equal(t, created.Msg.GetTicket().GetCommentCount(), int32(0))
+		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(number), Body: new("first")}.Build()))
+		assertion.MustNoError(t, err)
+		second, err := client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(number), Body: new("second")}.Build()))
+		assertion.MustNoError(t, err)
+		_, err = client.AddComment(ctx, connect.NewRequest(api.RequestAddComment_builder{Ticket: new(number), Body: new("third")}.Build()))
+		assertion.MustNoError(t, err)
+		_, err = client.DeleteComment(ctx, connect.NewRequest(api.RequestDeleteComment_builder{Id: new(second.Msg.GetComment().GetId())}.Build()))
+		assertion.MustNoError(t, err)
+
+		list, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{Filter: new("counted")}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.MustLen(t, list.Msg.GetTickets(), 1)
+		assertion.Equal(t, list.Msg.GetTickets()[0].GetCommentCount(), int32(2))
+		res, err := client.GetTicket(ctx, connect.NewRequest(api.RequestGetTicket_builder{Number: new(number)}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, res.Msg.GetTicket().GetCommentCount(), int32(2))
+		updated, err := client.UpdateTicket(ctx, connect.NewRequest(api.RequestUpdateTicket_builder{Number: new(number), Title: new("counted ticket")}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, updated.Msg.GetTicket().GetCommentCount(), int32(2))
+	})
+
 	t.Run("list the tickets by the pages", func(t *testing.T) {
 		all, err := client.ListTickets(ctx, connect.NewRequest(api.RequestListTickets_builder{OrderBy: new("number")}.Build()))
 		assertion.MustNoError(t, err)

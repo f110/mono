@@ -454,6 +454,7 @@ func toTicket(t *issue.Ticket) *api.Ticket {
 		Status:         new(api.TicketStatus(t.Status + 1)),
 		Priority:       new(api.Priority(t.Priority)),
 		Type:           new(api.TicketType(t.Type)),
+		CommentCount:   new(t.CommentCount),
 		ComponentId:    t.ComponentId,
 		AssigneeId:     t.AssigneeId,
 		ReporterId:     new(t.ReporterId),
