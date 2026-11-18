@@ -2818,6 +2818,735 @@ export declare type ResponseWatchTranscript = Message<"mono.codexel.ResponseWatc
 export declare const ResponseWatchTranscriptSchema: GenMessage<ResponseWatchTranscript>;
 
 /**
+ * @generated from message mono.codexel.Review
+ */
+export declare type Review = Message<"mono.codexel.Review"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * repository is the path of the repository.
+   *
+   * @generated from field: string repository = 2;
+   */
+  repository: string;
+
+  /**
+   * change_ids are the changes under review.
+   *
+   * @generated from field: repeated string change_ids = 3;
+   */
+  changeIds: string[];
+
+  /**
+   * @generated from field: mono.codexel.ReviewState state = 4;
+   */
+  state: ReviewState;
+
+  /**
+   * @generated from field: repeated mono.codexel.ReviewRound rounds = 5;
+   */
+  rounds: ReviewRound[];
+
+  /**
+   * @generated from field: repeated mono.codexel.ReviewComment comments = 6;
+   */
+  comments: ReviewComment[];
+
+  /**
+   * created_at and updated_at are the unix time.
+   *
+   * @generated from field: int64 created_at = 7;
+   */
+  createdAt: bigint;
+
+  /**
+   * @generated from field: int64 updated_at = 8;
+   */
+  updatedAt: bigint;
+};
+
+/**
+ * Describes the message mono.codexel.Review.
+ * Use `create(ReviewSchema)` to create a new message.
+ */
+export declare const ReviewSchema: GenMessage<Review>;
+
+/**
+ * @generated from message mono.codexel.ReviewRound
+ */
+export declare type ReviewRound = Message<"mono.codexel.ReviewRound"> & {
+  /**
+   * number starts from 1.
+   *
+   * @generated from field: int32 number = 1;
+   */
+  number: number;
+
+  /**
+   * commits are the commits of the changes at the start of the round. The change which disappeared is absent.
+   *
+   * @generated from field: repeated mono.codexel.RoundCommit commits = 2;
+   */
+  commits: RoundCommit[];
+
+  /**
+   * @generated from field: int64 created_at = 3;
+   */
+  createdAt: bigint;
+};
+
+/**
+ * Describes the message mono.codexel.ReviewRound.
+ * Use `create(ReviewRoundSchema)` to create a new message.
+ */
+export declare const ReviewRoundSchema: GenMessage<ReviewRound>;
+
+/**
+ * @generated from message mono.codexel.RoundCommit
+ */
+export declare type RoundCommit = Message<"mono.codexel.RoundCommit"> & {
+  /**
+   * @generated from field: string change_id = 1;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string commit_id = 2;
+   */
+  commitId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RoundCommit.
+ * Use `create(RoundCommitSchema)` to create a new message.
+ */
+export declare const RoundCommitSchema: GenMessage<RoundCommit>;
+
+/**
+ * ReviewComment is the comment on the whole review if change_id is empty, the file if start_line is 0 and the lines
+ * of the file otherwise. The lines are the lines in the latest round.
+ *
+ * @generated from message mono.codexel.ReviewComment
+ */
+export declare type ReviewComment = Message<"mono.codexel.ReviewComment"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string change_id = 2;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string path = 3;
+   */
+  path: string;
+
+  /**
+   * @generated from field: mono.codexel.DiffSide side = 4;
+   */
+  side: DiffSide;
+
+  /**
+   * @generated from field: int32 start_line = 5;
+   */
+  startLine: number;
+
+  /**
+   * @generated from field: int32 end_line = 6;
+   */
+  endLine: number;
+
+  /**
+   * anchor is the content of the lines when the comment was written.
+   *
+   * @generated from field: string anchor = 7;
+   */
+  anchor: string;
+
+  /**
+   * drifted is true if the anchor is not found in the latest round.
+   *
+   * @generated from field: bool drifted = 8;
+   */
+  drifted: boolean;
+
+  /**
+   * round is the round in which the comment was written.
+   *
+   * @generated from field: int32 round = 9;
+   */
+  round: number;
+
+  /**
+   * @generated from field: string body = 10;
+   */
+  body: string;
+
+  /**
+   * @generated from field: string author = 11;
+   */
+  author: string;
+
+  /**
+   * @generated from field: bool resolved = 12;
+   */
+  resolved: boolean;
+
+  /**
+   * @generated from field: repeated mono.codexel.ReviewReply replies = 13;
+   */
+  replies: ReviewReply[];
+
+  /**
+   * @generated from field: int64 created_at = 14;
+   */
+  createdAt: bigint;
+
+  /**
+   * @generated from field: int64 updated_at = 15;
+   */
+  updatedAt: bigint;
+};
+
+/**
+ * Describes the message mono.codexel.ReviewComment.
+ * Use `create(ReviewCommentSchema)` to create a new message.
+ */
+export declare const ReviewCommentSchema: GenMessage<ReviewComment>;
+
+/**
+ * @generated from message mono.codexel.ReviewReply
+ */
+export declare type ReviewReply = Message<"mono.codexel.ReviewReply"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string body = 2;
+   */
+  body: string;
+
+  /**
+   * @generated from field: string author = 3;
+   */
+  author: string;
+
+  /**
+   * @generated from field: int64 created_at = 4;
+   */
+  createdAt: bigint;
+};
+
+/**
+ * Describes the message mono.codexel.ReviewReply.
+ * Use `create(ReviewReplySchema)` to create a new message.
+ */
+export declare const ReviewReplySchema: GenMessage<ReviewReply>;
+
+/**
+ * @generated from message mono.codexel.RequestListReviews
+ */
+export declare type RequestListReviews = Message<"mono.codexel.RequestListReviews"> & {
+  /**
+   * path is the repository. All reviews are returned if it is empty.
+   *
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListReviews.
+ * Use `create(RequestListReviewsSchema)` to create a new message.
+ */
+export declare const RequestListReviewsSchema: GenMessage<RequestListReviews>;
+
+/**
+ * @generated from message mono.codexel.ResponseListReviews
+ */
+export declare type ResponseListReviews = Message<"mono.codexel.ResponseListReviews"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Review reviews = 1;
+   */
+  reviews: Review[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListReviews.
+ * Use `create(ResponseListReviewsSchema)` to create a new message.
+ */
+export declare const ResponseListReviewsSchema: GenMessage<ResponseListReviews>;
+
+/**
+ * @generated from message mono.codexel.RequestGetReview
+ */
+export declare type RequestGetReview = Message<"mono.codexel.RequestGetReview"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestGetReview.
+ * Use `create(RequestGetReviewSchema)` to create a new message.
+ */
+export declare const RequestGetReviewSchema: GenMessage<RequestGetReview>;
+
+/**
+ * @generated from message mono.codexel.ResponseGetReview
+ */
+export declare type ResponseGetReview = Message<"mono.codexel.ResponseGetReview"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseGetReview.
+ * Use `create(ResponseGetReviewSchema)` to create a new message.
+ */
+export declare const ResponseGetReviewSchema: GenMessage<ResponseGetReview>;
+
+/**
+ * @generated from message mono.codexel.RequestStartReview
+ */
+export declare type RequestStartReview = Message<"mono.codexel.RequestStartReview"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: repeated string change_ids = 2;
+   */
+  changeIds: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestStartReview.
+ * Use `create(RequestStartReviewSchema)` to create a new message.
+ */
+export declare const RequestStartReviewSchema: GenMessage<RequestStartReview>;
+
+/**
+ * @generated from message mono.codexel.ResponseStartReview
+ */
+export declare type ResponseStartReview = Message<"mono.codexel.ResponseStartReview"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseStartReview.
+ * Use `create(ResponseStartReviewSchema)` to create a new message.
+ */
+export declare const ResponseStartReviewSchema: GenMessage<ResponseStartReview>;
+
+/**
+ * @generated from message mono.codexel.RequestAddComment
+ */
+export declare type RequestAddComment = Message<"mono.codexel.RequestAddComment"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * change_id, path, side, start_line and end_line are the target of the comment. See ReviewComment.
+   *
+   * @generated from field: string change_id = 2;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string path = 3;
+   */
+  path: string;
+
+  /**
+   * @generated from field: mono.codexel.DiffSide side = 4;
+   */
+  side: DiffSide;
+
+  /**
+   * @generated from field: int32 start_line = 5;
+   */
+  startLine: number;
+
+  /**
+   * @generated from field: int32 end_line = 6;
+   */
+  endLine: number;
+
+  /**
+   * @generated from field: string body = 7;
+   */
+  body: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestAddComment.
+ * Use `create(RequestAddCommentSchema)` to create a new message.
+ */
+export declare const RequestAddCommentSchema: GenMessage<RequestAddComment>;
+
+/**
+ * @generated from message mono.codexel.ResponseAddComment
+ */
+export declare type ResponseAddComment = Message<"mono.codexel.ResponseAddComment"> & {
+  /**
+   * @generated from field: mono.codexel.ReviewComment comment = 1;
+   */
+  comment?: ReviewComment;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseAddComment.
+ * Use `create(ResponseAddCommentSchema)` to create a new message.
+ */
+export declare const ResponseAddCommentSchema: GenMessage<ResponseAddComment>;
+
+/**
+ * @generated from message mono.codexel.RequestEditComment
+ */
+export declare type RequestEditComment = Message<"mono.codexel.RequestEditComment"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * @generated from field: string comment_id = 2;
+   */
+  commentId: string;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestEditComment.
+ * Use `create(RequestEditCommentSchema)` to create a new message.
+ */
+export declare const RequestEditCommentSchema: GenMessage<RequestEditComment>;
+
+/**
+ * @generated from message mono.codexel.ResponseEditComment
+ */
+export declare type ResponseEditComment = Message<"mono.codexel.ResponseEditComment"> & {
+  /**
+   * @generated from field: mono.codexel.ReviewComment comment = 1;
+   */
+  comment?: ReviewComment;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseEditComment.
+ * Use `create(ResponseEditCommentSchema)` to create a new message.
+ */
+export declare const ResponseEditCommentSchema: GenMessage<ResponseEditComment>;
+
+/**
+ * @generated from message mono.codexel.RequestDeleteComment
+ */
+export declare type RequestDeleteComment = Message<"mono.codexel.RequestDeleteComment"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * @generated from field: string comment_id = 2;
+   */
+  commentId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestDeleteComment.
+ * Use `create(RequestDeleteCommentSchema)` to create a new message.
+ */
+export declare const RequestDeleteCommentSchema: GenMessage<RequestDeleteComment>;
+
+/**
+ * @generated from message mono.codexel.ResponseDeleteComment
+ */
+export declare type ResponseDeleteComment = Message<"mono.codexel.ResponseDeleteComment"> & {
+};
+
+/**
+ * Describes the message mono.codexel.ResponseDeleteComment.
+ * Use `create(ResponseDeleteCommentSchema)` to create a new message.
+ */
+export declare const ResponseDeleteCommentSchema: GenMessage<ResponseDeleteComment>;
+
+/**
+ * @generated from message mono.codexel.RequestReply
+ */
+export declare type RequestReply = Message<"mono.codexel.RequestReply"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * @generated from field: string comment_id = 2;
+   */
+  commentId: string;
+
+  /**
+   * @generated from field: string body = 3;
+   */
+  body: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestReply.
+ * Use `create(RequestReplySchema)` to create a new message.
+ */
+export declare const RequestReplySchema: GenMessage<RequestReply>;
+
+/**
+ * @generated from message mono.codexel.ResponseReply
+ */
+export declare type ResponseReply = Message<"mono.codexel.ResponseReply"> & {
+  /**
+   * @generated from field: mono.codexel.ReviewComment comment = 1;
+   */
+  comment?: ReviewComment;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseReply.
+ * Use `create(ResponseReplySchema)` to create a new message.
+ */
+export declare const ResponseReplySchema: GenMessage<ResponseReply>;
+
+/**
+ * @generated from message mono.codexel.RequestResolveComment
+ */
+export declare type RequestResolveComment = Message<"mono.codexel.RequestResolveComment"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * @generated from field: string comment_id = 2;
+   */
+  commentId: string;
+
+  /**
+   * @generated from field: bool resolved = 3;
+   */
+  resolved: boolean;
+};
+
+/**
+ * Describes the message mono.codexel.RequestResolveComment.
+ * Use `create(RequestResolveCommentSchema)` to create a new message.
+ */
+export declare const RequestResolveCommentSchema: GenMessage<RequestResolveComment>;
+
+/**
+ * @generated from message mono.codexel.ResponseResolveComment
+ */
+export declare type ResponseResolveComment = Message<"mono.codexel.ResponseResolveComment"> & {
+  /**
+   * @generated from field: mono.codexel.ReviewComment comment = 1;
+   */
+  comment?: ReviewComment;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseResolveComment.
+ * Use `create(ResponseResolveCommentSchema)` to create a new message.
+ */
+export declare const ResponseResolveCommentSchema: GenMessage<ResponseResolveComment>;
+
+/**
+ * @generated from message mono.codexel.RequestFinish
+ */
+export declare type RequestFinish = Message<"mono.codexel.RequestFinish"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestFinish.
+ * Use `create(RequestFinishSchema)` to create a new message.
+ */
+export declare const RequestFinishSchema: GenMessage<RequestFinish>;
+
+/**
+ * @generated from message mono.codexel.ResponseFinish
+ */
+export declare type ResponseFinish = Message<"mono.codexel.ResponseFinish"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+
+  /**
+   * notified_agents are the agents which were told that the review is finished. The agents are found by the
+   * Agent and Agent-Session trailers of the changes.
+   *
+   * @generated from field: repeated mono.codexel.Agent notified_agents = 2;
+   */
+  notifiedAgents: Agent[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseFinish.
+ * Use `create(ResponseFinishSchema)` to create a new message.
+ */
+export declare const ResponseFinishSchema: GenMessage<ResponseFinish>;
+
+/**
+ * @generated from message mono.codexel.RequestApprove
+ */
+export declare type RequestApprove = Message<"mono.codexel.RequestApprove"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestApprove.
+ * Use `create(RequestApproveSchema)` to create a new message.
+ */
+export declare const RequestApproveSchema: GenMessage<RequestApprove>;
+
+/**
+ * @generated from message mono.codexel.ResponseApprove
+ */
+export declare type ResponseApprove = Message<"mono.codexel.ResponseApprove"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseApprove.
+ * Use `create(ResponseApproveSchema)` to create a new message.
+ */
+export declare const ResponseApproveSchema: GenMessage<ResponseApprove>;
+
+/**
+ * @generated from message mono.codexel.RequestStartNextRound
+ */
+export declare type RequestStartNextRound = Message<"mono.codexel.RequestStartNextRound"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestStartNextRound.
+ * Use `create(RequestStartNextRoundSchema)` to create a new message.
+ */
+export declare const RequestStartNextRoundSchema: GenMessage<RequestStartNextRound>;
+
+/**
+ * @generated from message mono.codexel.ResponseStartNextRound
+ */
+export declare type ResponseStartNextRound = Message<"mono.codexel.ResponseStartNextRound"> & {
+  /**
+   * @generated from field: mono.codexel.Review review = 1;
+   */
+  review?: Review;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseStartNextRound.
+ * Use `create(ResponseStartNextRoundSchema)` to create a new message.
+ */
+export declare const ResponseStartNextRoundSchema: GenMessage<ResponseStartNextRound>;
+
+/**
+ * @generated from message mono.codexel.RequestRoundDiff
+ */
+export declare type RequestRoundDiff = Message<"mono.codexel.RequestRoundDiff"> & {
+  /**
+   * @generated from field: string review_id = 1;
+   */
+  reviewId: string;
+
+  /**
+   * @generated from field: string change_id = 2;
+   */
+  changeId: string;
+
+  /**
+   * from_round is the start of the diff. 0 means the parent of the commit of to_round.
+   *
+   * @generated from field: int32 from_round = 3;
+   */
+  fromRound: number;
+
+  /**
+   * to_round is the end of the diff. 0 means the latest round.
+   *
+   * @generated from field: int32 to_round = 4;
+   */
+  toRound: number;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRoundDiff.
+ * Use `create(RequestRoundDiffSchema)` to create a new message.
+ */
+export declare const RequestRoundDiffSchema: GenMessage<RequestRoundDiff>;
+
+/**
+ * @generated from message mono.codexel.ResponseRoundDiff
+ */
+export declare type ResponseRoundDiff = Message<"mono.codexel.ResponseRoundDiff"> & {
+  /**
+   * commit is the commit of the change at to_round.
+   *
+   * @generated from field: mono.codexel.Commit commit = 1;
+   */
+  commit?: Commit;
+
+  /**
+   * description is the whole description of commit.
+   *
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: repeated mono.codexel.FileDiff files = 3;
+   */
+  files: FileDiff[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRoundDiff.
+ * Use `create(ResponseRoundDiffSchema)` to create a new message.
+ */
+export declare const ResponseRoundDiffSchema: GenMessage<ResponseRoundDiff>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -3056,6 +3785,63 @@ export enum TranscriptEntryKind {
  * Describes the enum mono.codexel.TranscriptEntryKind.
  */
 export declare const TranscriptEntryKindSchema: GenEnum<TranscriptEntryKind>;
+
+/**
+ * @generated from enum mono.codexel.ReviewState
+ */
+export enum ReviewState {
+  /**
+   * @generated from enum value: REVIEW_STATE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: REVIEW_STATE_OPEN = 1;
+   */
+  OPEN = 1,
+
+  /**
+   * @generated from enum value: REVIEW_STATE_FINISHED = 2;
+   */
+  FINISHED = 2,
+
+  /**
+   * @generated from enum value: REVIEW_STATE_APPROVED = 3;
+   */
+  APPROVED = 3,
+}
+
+/**
+ * Describes the enum mono.codexel.ReviewState.
+ */
+export declare const ReviewStateSchema: GenEnum<ReviewState>;
+
+/**
+ * DiffSide is the side of the diff. NEW is the file at the commit and OLD is the file at the parent.
+ *
+ * @generated from enum mono.codexel.DiffSide
+ */
+export enum DiffSide {
+  /**
+   * @generated from enum value: DIFF_SIDE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: DIFF_SIDE_NEW = 1;
+   */
+  NEW = 1,
+
+  /**
+   * @generated from enum value: DIFF_SIDE_OLD = 2;
+   */
+  OLD = 2,
+}
+
+/**
+ * Describes the enum mono.codexel.DiffSide.
+ */
+export declare const DiffSideSchema: GenEnum<DiffSide>;
 
 /**
  * AgentService provides the coding agents running in herdr.
@@ -3656,6 +4442,122 @@ export declare const TranscriptService: GenService<{
     methodKind: "server_streaming";
     input: typeof RequestWatchTranscriptSchema;
     output: typeof ResponseWatchTranscriptSchema;
+  },
+}>;
+
+/**
+ * ReviewService provides the reviews of the changes. The changes are identified by the change IDs, so the comments
+ * follow the changes after the agent rewrites them.
+ *
+ * @generated from service mono.codexel.ReviewService
+ */
+export declare const ReviewService: GenService<{
+  /**
+   * ListReviews returns the reviews of the repository in descending order of the creation.
+   *
+   * @generated from rpc mono.codexel.ReviewService.ListReviews
+   */
+  listReviews: {
+    methodKind: "unary";
+    input: typeof RequestListReviewsSchema;
+    output: typeof ResponseListReviewsSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.GetReview
+   */
+  getReview: {
+    methodKind: "unary";
+    input: typeof RequestGetReviewSchema;
+    output: typeof ResponseGetReviewSchema;
+  },
+  /**
+   * StartReview starts the review of the changes. The first round is the current commits of the changes.
+   *
+   * @generated from rpc mono.codexel.ReviewService.StartReview
+   */
+  startReview: {
+    methodKind: "unary";
+    input: typeof RequestStartReviewSchema;
+    output: typeof ResponseStartReviewSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.AddComment
+   */
+  addComment: {
+    methodKind: "unary";
+    input: typeof RequestAddCommentSchema;
+    output: typeof ResponseAddCommentSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.EditComment
+   */
+  editComment: {
+    methodKind: "unary";
+    input: typeof RequestEditCommentSchema;
+    output: typeof ResponseEditCommentSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.DeleteComment
+   */
+  deleteComment: {
+    methodKind: "unary";
+    input: typeof RequestDeleteCommentSchema;
+    output: typeof ResponseDeleteCommentSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.Reply
+   */
+  reply: {
+    methodKind: "unary";
+    input: typeof RequestReplySchema;
+    output: typeof ResponseReplySchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.ResolveComment
+   */
+  resolveComment: {
+    methodKind: "unary";
+    input: typeof RequestResolveCommentSchema;
+    output: typeof ResponseResolveCommentSchema;
+  },
+  /**
+   * Finish finishes the round and tells the agents which created the changes that the review is finished.
+   *
+   * @generated from rpc mono.codexel.ReviewService.Finish
+   */
+  finish: {
+    methodKind: "unary";
+    input: typeof RequestFinishSchema;
+    output: typeof ResponseFinishSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.ReviewService.Approve
+   */
+  approve: {
+    methodKind: "unary";
+    input: typeof RequestApproveSchema;
+    output: typeof ResponseApproveSchema;
+  },
+  /**
+   * StartNextRound starts the next round with the current commits of the changes after the agent addresses the
+   * comments. The comments are moved to the lines of the anchors.
+   *
+   * @generated from rpc mono.codexel.ReviewService.StartNextRound
+   */
+  startNextRound: {
+    methodKind: "unary";
+    input: typeof RequestStartNextRoundSchema;
+    output: typeof ResponseStartNextRoundSchema;
+  },
+  /**
+   * RoundDiff returns the diff of the change between the rounds.
+   *
+   * @generated from rpc mono.codexel.ReviewService.RoundDiff
+   */
+  roundDiff: {
+    methodKind: "unary";
+    input: typeof RequestRoundDiffSchema;
+    output: typeof ResponseRoundDiffSchema;
   },
 }>;
 

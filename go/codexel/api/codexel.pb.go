@@ -362,6 +362,97 @@ func (x TranscriptEntryKind) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+type ReviewState int32
+
+const (
+	ReviewState_REVIEW_STATE_UNSPECIFIED ReviewState = 0
+	ReviewState_REVIEW_STATE_OPEN        ReviewState = 1
+	ReviewState_REVIEW_STATE_FINISHED    ReviewState = 2
+	ReviewState_REVIEW_STATE_APPROVED    ReviewState = 3
+)
+
+// Enum value maps for ReviewState.
+var (
+	ReviewState_name = map[int32]string{
+		0: "REVIEW_STATE_UNSPECIFIED",
+		1: "REVIEW_STATE_OPEN",
+		2: "REVIEW_STATE_FINISHED",
+		3: "REVIEW_STATE_APPROVED",
+	}
+	ReviewState_value = map[string]int32{
+		"REVIEW_STATE_UNSPECIFIED": 0,
+		"REVIEW_STATE_OPEN":        1,
+		"REVIEW_STATE_FINISHED":    2,
+		"REVIEW_STATE_APPROVED":    3,
+	}
+)
+
+func (x ReviewState) Enum() *ReviewState {
+	p := new(ReviewState)
+	*p = x
+	return p
+}
+
+func (x ReviewState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReviewState) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_codexel_codexel_proto_enumTypes[7].Descriptor()
+}
+
+func (ReviewState) Type() protoreflect.EnumType {
+	return &file_proto_codexel_codexel_proto_enumTypes[7]
+}
+
+func (x ReviewState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+type DiffSide int32
+
+const (
+	DiffSide_DIFF_SIDE_UNSPECIFIED DiffSide = 0
+	DiffSide_DIFF_SIDE_NEW         DiffSide = 1
+	DiffSide_DIFF_SIDE_OLD         DiffSide = 2
+)
+
+// Enum value maps for DiffSide.
+var (
+	DiffSide_name = map[int32]string{
+		0: "DIFF_SIDE_UNSPECIFIED",
+		1: "DIFF_SIDE_NEW",
+		2: "DIFF_SIDE_OLD",
+	}
+	DiffSide_value = map[string]int32{
+		"DIFF_SIDE_UNSPECIFIED": 0,
+		"DIFF_SIDE_NEW":         1,
+		"DIFF_SIDE_OLD":         2,
+	}
+)
+
+func (x DiffSide) Enum() *DiffSide {
+	p := new(DiffSide)
+	*p = x
+	return p
+}
+
+func (x DiffSide) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DiffSide) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_codexel_codexel_proto_enumTypes[8].Descriptor()
+}
+
+func (DiffSide) Type() protoreflect.EnumType {
+	return &file_proto_codexel_codexel_proto_enumTypes[8]
+}
+
+func (x DiffSide) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 type Agent struct {
 	state                     protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_PaneId         *string                `protobuf:"bytes,1,opt,name=pane_id,json=paneId"`
@@ -13861,6 +13952,3473 @@ func (b0 ResponseWatchTranscript_builder) Build() *ResponseWatchTranscript {
 	return m0
 }
 
+type Review struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Repository  *string                `protobuf:"bytes,2,opt,name=repository"`
+	xxx_hidden_ChangeIds   []string               `protobuf:"bytes,3,rep,name=change_ids,json=changeIds"`
+	xxx_hidden_State       ReviewState            `protobuf:"varint,4,opt,name=state,enum=mono.codexel.ReviewState"`
+	xxx_hidden_Rounds      *[]*ReviewRound        `protobuf:"bytes,5,rep,name=rounds"`
+	xxx_hidden_Comments    *[]*ReviewComment      `protobuf:"bytes,6,rep,name=comments"`
+	xxx_hidden_CreatedAt   int64                  `protobuf:"varint,7,opt,name=created_at,json=createdAt"`
+	xxx_hidden_UpdatedAt   int64                  `protobuf:"varint,8,opt,name=updated_at,json=updatedAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Review) Reset() {
+	*x = Review{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Review) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Review) ProtoMessage() {}
+
+func (x *Review) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[127]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Review) GetId() string {
+	if x != nil {
+		if x.xxx_hidden_Id != nil {
+			return *x.xxx_hidden_Id
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Review) GetRepository() string {
+	if x != nil {
+		if x.xxx_hidden_Repository != nil {
+			return *x.xxx_hidden_Repository
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Review) GetChangeIds() []string {
+	if x != nil {
+		return x.xxx_hidden_ChangeIds
+	}
+	return nil
+}
+
+func (x *Review) GetState() ReviewState {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 3) {
+			return x.xxx_hidden_State
+		}
+	}
+	return ReviewState_REVIEW_STATE_UNSPECIFIED
+}
+
+func (x *Review) GetRounds() []*ReviewRound {
+	if x != nil {
+		if x.xxx_hidden_Rounds != nil {
+			return *x.xxx_hidden_Rounds
+		}
+	}
+	return nil
+}
+
+func (x *Review) GetComments() []*ReviewComment {
+	if x != nil {
+		if x.xxx_hidden_Comments != nil {
+			return *x.xxx_hidden_Comments
+		}
+	}
+	return nil
+}
+
+func (x *Review) GetCreatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return 0
+}
+
+func (x *Review) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_UpdatedAt
+	}
+	return 0
+}
+
+func (x *Review) SetId(v string) {
+	x.xxx_hidden_Id = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 8)
+}
+
+func (x *Review) SetRepository(v string) {
+	x.xxx_hidden_Repository = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 8)
+}
+
+func (x *Review) SetChangeIds(v []string) {
+	x.xxx_hidden_ChangeIds = v
+}
+
+func (x *Review) SetState(v ReviewState) {
+	x.xxx_hidden_State = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 8)
+}
+
+func (x *Review) SetRounds(v []*ReviewRound) {
+	x.xxx_hidden_Rounds = &v
+}
+
+func (x *Review) SetComments(v []*ReviewComment) {
+	x.xxx_hidden_Comments = &v
+}
+
+func (x *Review) SetCreatedAt(v int64) {
+	x.xxx_hidden_CreatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 8)
+}
+
+func (x *Review) SetUpdatedAt(v int64) {
+	x.xxx_hidden_UpdatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 8)
+}
+
+func (x *Review) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Review) HasRepository() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Review) HasState() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Review) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *Review) HasUpdatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *Review) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+func (x *Review) ClearRepository() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Repository = nil
+}
+
+func (x *Review) ClearState() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_State = ReviewState_REVIEW_STATE_UNSPECIFIED
+}
+
+func (x *Review) ClearCreatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_CreatedAt = 0
+}
+
+func (x *Review) ClearUpdatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_UpdatedAt = 0
+}
+
+type Review_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id         *string
+	Repository *string
+	ChangeIds  []string
+	State      *ReviewState
+	Rounds     []*ReviewRound
+	Comments   []*ReviewComment
+	CreatedAt  *int64
+	UpdatedAt  *int64
+}
+
+func (b0 Review_builder) Build() *Review {
+	m0 := &Review{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 8)
+		x.xxx_hidden_Id = b.Id
+	}
+	if b.Repository != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 8)
+		x.xxx_hidden_Repository = b.Repository
+	}
+	x.xxx_hidden_ChangeIds = b.ChangeIds
+	if b.State != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 8)
+		x.xxx_hidden_State = *b.State
+	}
+	x.xxx_hidden_Rounds = &b.Rounds
+	x.xxx_hidden_Comments = &b.Comments
+	if b.CreatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 8)
+		x.xxx_hidden_CreatedAt = *b.CreatedAt
+	}
+	if b.UpdatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 8)
+		x.xxx_hidden_UpdatedAt = *b.UpdatedAt
+	}
+	return m0
+}
+
+type ReviewRound struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Number      int32                  `protobuf:"varint,1,opt,name=number"`
+	xxx_hidden_Commits     *[]*RoundCommit        `protobuf:"bytes,2,rep,name=commits"`
+	xxx_hidden_CreatedAt   int64                  `protobuf:"varint,3,opt,name=created_at,json=createdAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ReviewRound) Reset() {
+	*x = ReviewRound{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewRound) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewRound) ProtoMessage() {}
+
+func (x *ReviewRound) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[128]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ReviewRound) GetNumber() int32 {
+	if x != nil {
+		return x.xxx_hidden_Number
+	}
+	return 0
+}
+
+func (x *ReviewRound) GetCommits() []*RoundCommit {
+	if x != nil {
+		if x.xxx_hidden_Commits != nil {
+			return *x.xxx_hidden_Commits
+		}
+	}
+	return nil
+}
+
+func (x *ReviewRound) GetCreatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return 0
+}
+
+func (x *ReviewRound) SetNumber(v int32) {
+	x.xxx_hidden_Number = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *ReviewRound) SetCommits(v []*RoundCommit) {
+	x.xxx_hidden_Commits = &v
+}
+
+func (x *ReviewRound) SetCreatedAt(v int64) {
+	x.xxx_hidden_CreatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *ReviewRound) HasNumber() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ReviewRound) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ReviewRound) ClearNumber() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Number = 0
+}
+
+func (x *ReviewRound) ClearCreatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_CreatedAt = 0
+}
+
+type ReviewRound_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Number    *int32
+	Commits   []*RoundCommit
+	CreatedAt *int64
+}
+
+func (b0 ReviewRound_builder) Build() *ReviewRound {
+	m0 := &ReviewRound{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Number != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Number = *b.Number
+	}
+	x.xxx_hidden_Commits = &b.Commits
+	if b.CreatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_CreatedAt = *b.CreatedAt
+	}
+	return m0
+}
+
+type RoundCommit struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ChangeId    *string                `protobuf:"bytes,1,opt,name=change_id,json=changeId"`
+	xxx_hidden_CommitId    *string                `protobuf:"bytes,2,opt,name=commit_id,json=commitId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RoundCommit) Reset() {
+	*x = RoundCommit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RoundCommit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoundCommit) ProtoMessage() {}
+
+func (x *RoundCommit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[129]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RoundCommit) GetChangeId() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeId != nil {
+			return *x.xxx_hidden_ChangeId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RoundCommit) GetCommitId() string {
+	if x != nil {
+		if x.xxx_hidden_CommitId != nil {
+			return *x.xxx_hidden_CommitId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RoundCommit) SetChangeId(v string) {
+	x.xxx_hidden_ChangeId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RoundCommit) SetCommitId(v string) {
+	x.xxx_hidden_CommitId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RoundCommit) HasChangeId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RoundCommit) HasCommitId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RoundCommit) ClearChangeId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ChangeId = nil
+}
+
+func (x *RoundCommit) ClearCommitId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_CommitId = nil
+}
+
+type RoundCommit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ChangeId *string
+	CommitId *string
+}
+
+func (b0 RoundCommit_builder) Build() *RoundCommit {
+	m0 := &RoundCommit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ChangeId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_ChangeId = b.ChangeId
+	}
+	if b.CommitId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_CommitId = b.CommitId
+	}
+	return m0
+}
+
+type ReviewComment struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_ChangeId    *string                `protobuf:"bytes,2,opt,name=change_id,json=changeId"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,3,opt,name=path"`
+	xxx_hidden_Side        DiffSide               `protobuf:"varint,4,opt,name=side,enum=mono.codexel.DiffSide"`
+	xxx_hidden_StartLine   int32                  `protobuf:"varint,5,opt,name=start_line,json=startLine"`
+	xxx_hidden_EndLine     int32                  `protobuf:"varint,6,opt,name=end_line,json=endLine"`
+	xxx_hidden_Anchor      *string                `protobuf:"bytes,7,opt,name=anchor"`
+	xxx_hidden_Drifted     bool                   `protobuf:"varint,8,opt,name=drifted"`
+	xxx_hidden_Round       int32                  `protobuf:"varint,9,opt,name=round"`
+	xxx_hidden_Body        *string                `protobuf:"bytes,10,opt,name=body"`
+	xxx_hidden_Author      *string                `protobuf:"bytes,11,opt,name=author"`
+	xxx_hidden_Resolved    bool                   `protobuf:"varint,12,opt,name=resolved"`
+	xxx_hidden_Replies     *[]*ReviewReply        `protobuf:"bytes,13,rep,name=replies"`
+	xxx_hidden_CreatedAt   int64                  `protobuf:"varint,14,opt,name=created_at,json=createdAt"`
+	xxx_hidden_UpdatedAt   int64                  `protobuf:"varint,15,opt,name=updated_at,json=updatedAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ReviewComment) Reset() {
+	*x = ReviewComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewComment) ProtoMessage() {}
+
+func (x *ReviewComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[130]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ReviewComment) GetId() string {
+	if x != nil {
+		if x.xxx_hidden_Id != nil {
+			return *x.xxx_hidden_Id
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetChangeId() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeId != nil {
+			return *x.xxx_hidden_ChangeId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetSide() DiffSide {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 3) {
+			return x.xxx_hidden_Side
+		}
+	}
+	return DiffSide_DIFF_SIDE_UNSPECIFIED
+}
+
+func (x *ReviewComment) GetStartLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_StartLine
+	}
+	return 0
+}
+
+func (x *ReviewComment) GetEndLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_EndLine
+	}
+	return 0
+}
+
+func (x *ReviewComment) GetAnchor() string {
+	if x != nil {
+		if x.xxx_hidden_Anchor != nil {
+			return *x.xxx_hidden_Anchor
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetDrifted() bool {
+	if x != nil {
+		return x.xxx_hidden_Drifted
+	}
+	return false
+}
+
+func (x *ReviewComment) GetRound() int32 {
+	if x != nil {
+		return x.xxx_hidden_Round
+	}
+	return 0
+}
+
+func (x *ReviewComment) GetBody() string {
+	if x != nil {
+		if x.xxx_hidden_Body != nil {
+			return *x.xxx_hidden_Body
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetAuthor() string {
+	if x != nil {
+		if x.xxx_hidden_Author != nil {
+			return *x.xxx_hidden_Author
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewComment) GetResolved() bool {
+	if x != nil {
+		return x.xxx_hidden_Resolved
+	}
+	return false
+}
+
+func (x *ReviewComment) GetReplies() []*ReviewReply {
+	if x != nil {
+		if x.xxx_hidden_Replies != nil {
+			return *x.xxx_hidden_Replies
+		}
+	}
+	return nil
+}
+
+func (x *ReviewComment) GetCreatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return 0
+}
+
+func (x *ReviewComment) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_UpdatedAt
+	}
+	return 0
+}
+
+func (x *ReviewComment) SetId(v string) {
+	x.xxx_hidden_Id = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 15)
+}
+
+func (x *ReviewComment) SetChangeId(v string) {
+	x.xxx_hidden_ChangeId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 15)
+}
+
+func (x *ReviewComment) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 15)
+}
+
+func (x *ReviewComment) SetSide(v DiffSide) {
+	x.xxx_hidden_Side = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 15)
+}
+
+func (x *ReviewComment) SetStartLine(v int32) {
+	x.xxx_hidden_StartLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 15)
+}
+
+func (x *ReviewComment) SetEndLine(v int32) {
+	x.xxx_hidden_EndLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 15)
+}
+
+func (x *ReviewComment) SetAnchor(v string) {
+	x.xxx_hidden_Anchor = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 15)
+}
+
+func (x *ReviewComment) SetDrifted(v bool) {
+	x.xxx_hidden_Drifted = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 15)
+}
+
+func (x *ReviewComment) SetRound(v int32) {
+	x.xxx_hidden_Round = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 15)
+}
+
+func (x *ReviewComment) SetBody(v string) {
+	x.xxx_hidden_Body = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 15)
+}
+
+func (x *ReviewComment) SetAuthor(v string) {
+	x.xxx_hidden_Author = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 15)
+}
+
+func (x *ReviewComment) SetResolved(v bool) {
+	x.xxx_hidden_Resolved = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 15)
+}
+
+func (x *ReviewComment) SetReplies(v []*ReviewReply) {
+	x.xxx_hidden_Replies = &v
+}
+
+func (x *ReviewComment) SetCreatedAt(v int64) {
+	x.xxx_hidden_CreatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 15)
+}
+
+func (x *ReviewComment) SetUpdatedAt(v int64) {
+	x.xxx_hidden_UpdatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 15)
+}
+
+func (x *ReviewComment) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ReviewComment) HasChangeId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ReviewComment) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ReviewComment) HasSide() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *ReviewComment) HasStartLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *ReviewComment) HasEndLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *ReviewComment) HasAnchor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *ReviewComment) HasDrifted() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *ReviewComment) HasRound() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *ReviewComment) HasBody() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *ReviewComment) HasAuthor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *ReviewComment) HasResolved() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *ReviewComment) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *ReviewComment) HasUpdatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
+}
+
+func (x *ReviewComment) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+func (x *ReviewComment) ClearChangeId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_ChangeId = nil
+}
+
+func (x *ReviewComment) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *ReviewComment) ClearSide() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Side = DiffSide_DIFF_SIDE_UNSPECIFIED
+}
+
+func (x *ReviewComment) ClearStartLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_StartLine = 0
+}
+
+func (x *ReviewComment) ClearEndLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_EndLine = 0
+}
+
+func (x *ReviewComment) ClearAnchor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Anchor = nil
+}
+
+func (x *ReviewComment) ClearDrifted() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Drifted = false
+}
+
+func (x *ReviewComment) ClearRound() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Round = 0
+}
+
+func (x *ReviewComment) ClearBody() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Body = nil
+}
+
+func (x *ReviewComment) ClearAuthor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Author = nil
+}
+
+func (x *ReviewComment) ClearResolved() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Resolved = false
+}
+
+func (x *ReviewComment) ClearCreatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_CreatedAt = 0
+}
+
+func (x *ReviewComment) ClearUpdatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	x.xxx_hidden_UpdatedAt = 0
+}
+
+type ReviewComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id        *string
+	ChangeId  *string
+	Path      *string
+	Side      *DiffSide
+	StartLine *int32
+	EndLine   *int32
+	Anchor    *string
+	Drifted   *bool
+	Round     *int32
+	Body      *string
+	Author    *string
+	Resolved  *bool
+	Replies   []*ReviewReply
+	CreatedAt *int64
+	UpdatedAt *int64
+}
+
+func (b0 ReviewComment_builder) Build() *ReviewComment {
+	m0 := &ReviewComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 15)
+		x.xxx_hidden_Id = b.Id
+	}
+	if b.ChangeId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 15)
+		x.xxx_hidden_ChangeId = b.ChangeId
+	}
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 15)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Side != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 15)
+		x.xxx_hidden_Side = *b.Side
+	}
+	if b.StartLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 15)
+		x.xxx_hidden_StartLine = *b.StartLine
+	}
+	if b.EndLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 15)
+		x.xxx_hidden_EndLine = *b.EndLine
+	}
+	if b.Anchor != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 15)
+		x.xxx_hidden_Anchor = b.Anchor
+	}
+	if b.Drifted != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 15)
+		x.xxx_hidden_Drifted = *b.Drifted
+	}
+	if b.Round != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 15)
+		x.xxx_hidden_Round = *b.Round
+	}
+	if b.Body != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 15)
+		x.xxx_hidden_Body = b.Body
+	}
+	if b.Author != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 15)
+		x.xxx_hidden_Author = b.Author
+	}
+	if b.Resolved != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 15)
+		x.xxx_hidden_Resolved = *b.Resolved
+	}
+	x.xxx_hidden_Replies = &b.Replies
+	if b.CreatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 15)
+		x.xxx_hidden_CreatedAt = *b.CreatedAt
+	}
+	if b.UpdatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 15)
+		x.xxx_hidden_UpdatedAt = *b.UpdatedAt
+	}
+	return m0
+}
+
+type ReviewReply struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Body        *string                `protobuf:"bytes,2,opt,name=body"`
+	xxx_hidden_Author      *string                `protobuf:"bytes,3,opt,name=author"`
+	xxx_hidden_CreatedAt   int64                  `protobuf:"varint,4,opt,name=created_at,json=createdAt"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ReviewReply) Reset() {
+	*x = ReviewReply{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewReply) ProtoMessage() {}
+
+func (x *ReviewReply) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[131]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ReviewReply) GetId() string {
+	if x != nil {
+		if x.xxx_hidden_Id != nil {
+			return *x.xxx_hidden_Id
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewReply) GetBody() string {
+	if x != nil {
+		if x.xxx_hidden_Body != nil {
+			return *x.xxx_hidden_Body
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewReply) GetAuthor() string {
+	if x != nil {
+		if x.xxx_hidden_Author != nil {
+			return *x.xxx_hidden_Author
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ReviewReply) GetCreatedAt() int64 {
+	if x != nil {
+		return x.xxx_hidden_CreatedAt
+	}
+	return 0
+}
+
+func (x *ReviewReply) SetId(v string) {
+	x.xxx_hidden_Id = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
+}
+
+func (x *ReviewReply) SetBody(v string) {
+	x.xxx_hidden_Body = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *ReviewReply) SetAuthor(v string) {
+	x.xxx_hidden_Author = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *ReviewReply) SetCreatedAt(v int64) {
+	x.xxx_hidden_CreatedAt = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
+}
+
+func (x *ReviewReply) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ReviewReply) HasBody() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ReviewReply) HasAuthor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *ReviewReply) HasCreatedAt() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *ReviewReply) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+func (x *ReviewReply) ClearBody() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Body = nil
+}
+
+func (x *ReviewReply) ClearAuthor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Author = nil
+}
+
+func (x *ReviewReply) ClearCreatedAt() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_CreatedAt = 0
+}
+
+type ReviewReply_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id        *string
+	Body      *string
+	Author    *string
+	CreatedAt *int64
+}
+
+func (b0 ReviewReply_builder) Build() *ReviewReply {
+	m0 := &ReviewReply{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
+		x.xxx_hidden_Id = b.Id
+	}
+	if b.Body != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
+		x.xxx_hidden_Body = b.Body
+	}
+	if b.Author != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_Author = b.Author
+	}
+	if b.CreatedAt != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_CreatedAt = *b.CreatedAt
+	}
+	return m0
+}
+
+type RequestListReviews struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestListReviews) Reset() {
+	*x = RequestListReviews{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListReviews) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListReviews) ProtoMessage() {}
+
+func (x *RequestListReviews) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[132]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestListReviews) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestListReviews) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestListReviews) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestListReviews) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestListReviews_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestListReviews_builder) Build() *RequestListReviews {
+	m0 := &RequestListReviews{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseListReviews struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Reviews *[]*Review             `protobuf:"bytes,1,rep,name=reviews"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ResponseListReviews) Reset() {
+	*x = ResponseListReviews{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListReviews) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListReviews) ProtoMessage() {}
+
+func (x *ResponseListReviews) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[133]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListReviews) GetReviews() []*Review {
+	if x != nil {
+		if x.xxx_hidden_Reviews != nil {
+			return *x.xxx_hidden_Reviews
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListReviews) SetReviews(v []*Review) {
+	x.xxx_hidden_Reviews = &v
+}
+
+type ResponseListReviews_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Reviews []*Review
+}
+
+func (b0 ResponseListReviews_builder) Build() *ResponseListReviews {
+	m0 := &ResponseListReviews{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Reviews = &b.Reviews
+	return m0
+}
+
+type RequestGetReview struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id          *string                `protobuf:"bytes,1,opt,name=id"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestGetReview) Reset() {
+	*x = RequestGetReview{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestGetReview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetReview) ProtoMessage() {}
+
+func (x *RequestGetReview) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[134]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestGetReview) GetId() string {
+	if x != nil {
+		if x.xxx_hidden_Id != nil {
+			return *x.xxx_hidden_Id
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestGetReview) SetId(v string) {
+	x.xxx_hidden_Id = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestGetReview) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestGetReview) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+type RequestGetReview_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id *string
+}
+
+func (b0 RequestGetReview_builder) Build() *RequestGetReview {
+	m0 := &RequestGetReview{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Id = b.Id
+	}
+	return m0
+}
+
+type ResponseGetReview struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Review *Review                `protobuf:"bytes,1,opt,name=review"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ResponseGetReview) Reset() {
+	*x = ResponseGetReview{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseGetReview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetReview) ProtoMessage() {}
+
+func (x *ResponseGetReview) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[135]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseGetReview) GetReview() *Review {
+	if x != nil {
+		return x.xxx_hidden_Review
+	}
+	return nil
+}
+
+func (x *ResponseGetReview) SetReview(v *Review) {
+	x.xxx_hidden_Review = v
+}
+
+func (x *ResponseGetReview) HasReview() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Review != nil
+}
+
+func (x *ResponseGetReview) ClearReview() {
+	x.xxx_hidden_Review = nil
+}
+
+type ResponseGetReview_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Review *Review
+}
+
+func (b0 ResponseGetReview_builder) Build() *ResponseGetReview {
+	m0 := &ResponseGetReview{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Review = b.Review
+	return m0
+}
+
+type RequestStartReview struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_ChangeIds   []string               `protobuf:"bytes,2,rep,name=change_ids,json=changeIds"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestStartReview) Reset() {
+	*x = RequestStartReview{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestStartReview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestStartReview) ProtoMessage() {}
+
+func (x *RequestStartReview) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[136]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestStartReview) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestStartReview) GetChangeIds() []string {
+	if x != nil {
+		return x.xxx_hidden_ChangeIds
+	}
+	return nil
+}
+
+func (x *RequestStartReview) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestStartReview) SetChangeIds(v []string) {
+	x.xxx_hidden_ChangeIds = v
+}
+
+func (x *RequestStartReview) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestStartReview) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestStartReview_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path      *string
+	ChangeIds []string
+}
+
+func (b0 RequestStartReview_builder) Build() *RequestStartReview {
+	m0 := &RequestStartReview{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	x.xxx_hidden_ChangeIds = b.ChangeIds
+	return m0
+}
+
+type ResponseStartReview struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Review *Review                `protobuf:"bytes,1,opt,name=review"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ResponseStartReview) Reset() {
+	*x = ResponseStartReview{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseStartReview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseStartReview) ProtoMessage() {}
+
+func (x *ResponseStartReview) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[137]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseStartReview) GetReview() *Review {
+	if x != nil {
+		return x.xxx_hidden_Review
+	}
+	return nil
+}
+
+func (x *ResponseStartReview) SetReview(v *Review) {
+	x.xxx_hidden_Review = v
+}
+
+func (x *ResponseStartReview) HasReview() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Review != nil
+}
+
+func (x *ResponseStartReview) ClearReview() {
+	x.xxx_hidden_Review = nil
+}
+
+type ResponseStartReview_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Review *Review
+}
+
+func (b0 ResponseStartReview_builder) Build() *ResponseStartReview {
+	m0 := &ResponseStartReview{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Review = b.Review
+	return m0
+}
+
+type RequestAddComment struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_ChangeId    *string                `protobuf:"bytes,2,opt,name=change_id,json=changeId"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,3,opt,name=path"`
+	xxx_hidden_Side        DiffSide               `protobuf:"varint,4,opt,name=side,enum=mono.codexel.DiffSide"`
+	xxx_hidden_StartLine   int32                  `protobuf:"varint,5,opt,name=start_line,json=startLine"`
+	xxx_hidden_EndLine     int32                  `protobuf:"varint,6,opt,name=end_line,json=endLine"`
+	xxx_hidden_Body        *string                `protobuf:"bytes,7,opt,name=body"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestAddComment) Reset() {
+	*x = RequestAddComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAddComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAddComment) ProtoMessage() {}
+
+func (x *RequestAddComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[138]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestAddComment) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestAddComment) GetChangeId() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeId != nil {
+			return *x.xxx_hidden_ChangeId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestAddComment) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestAddComment) GetSide() DiffSide {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 3) {
+			return x.xxx_hidden_Side
+		}
+	}
+	return DiffSide_DIFF_SIDE_UNSPECIFIED
+}
+
+func (x *RequestAddComment) GetStartLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_StartLine
+	}
+	return 0
+}
+
+func (x *RequestAddComment) GetEndLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_EndLine
+	}
+	return 0
+}
+
+func (x *RequestAddComment) GetBody() string {
+	if x != nil {
+		if x.xxx_hidden_Body != nil {
+			return *x.xxx_hidden_Body
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestAddComment) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 7)
+}
+
+func (x *RequestAddComment) SetChangeId(v string) {
+	x.xxx_hidden_ChangeId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 7)
+}
+
+func (x *RequestAddComment) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
+}
+
+func (x *RequestAddComment) SetSide(v DiffSide) {
+	x.xxx_hidden_Side = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 7)
+}
+
+func (x *RequestAddComment) SetStartLine(v int32) {
+	x.xxx_hidden_StartLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 7)
+}
+
+func (x *RequestAddComment) SetEndLine(v int32) {
+	x.xxx_hidden_EndLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 7)
+}
+
+func (x *RequestAddComment) SetBody(v string) {
+	x.xxx_hidden_Body = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 7)
+}
+
+func (x *RequestAddComment) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestAddComment) HasChangeId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestAddComment) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestAddComment) HasSide() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *RequestAddComment) HasStartLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *RequestAddComment) HasEndLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *RequestAddComment) HasBody() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *RequestAddComment) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestAddComment) ClearChangeId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_ChangeId = nil
+}
+
+func (x *RequestAddComment) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestAddComment) ClearSide() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Side = DiffSide_DIFF_SIDE_UNSPECIFIED
+}
+
+func (x *RequestAddComment) ClearStartLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_StartLine = 0
+}
+
+func (x *RequestAddComment) ClearEndLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_EndLine = 0
+}
+
+func (x *RequestAddComment) ClearBody() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Body = nil
+}
+
+type RequestAddComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	ChangeId  *string
+	Path      *string
+	Side      *DiffSide
+	StartLine *int32
+	EndLine   *int32
+	Body      *string
+}
+
+func (b0 RequestAddComment_builder) Build() *RequestAddComment {
+	m0 := &RequestAddComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 7)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.ChangeId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 7)
+		x.xxx_hidden_ChangeId = b.ChangeId
+	}
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Side != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 7)
+		x.xxx_hidden_Side = *b.Side
+	}
+	if b.StartLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 7)
+		x.xxx_hidden_StartLine = *b.StartLine
+	}
+	if b.EndLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 7)
+		x.xxx_hidden_EndLine = *b.EndLine
+	}
+	if b.Body != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 7)
+		x.xxx_hidden_Body = b.Body
+	}
+	return m0
+}
+
+type ResponseAddComment struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Comment *ReviewComment         `protobuf:"bytes,1,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ResponseAddComment) Reset() {
+	*x = ResponseAddComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseAddComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseAddComment) ProtoMessage() {}
+
+func (x *ResponseAddComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[139]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseAddComment) GetComment() *ReviewComment {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return nil
+}
+
+func (x *ResponseAddComment) SetComment(v *ReviewComment) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *ResponseAddComment) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Comment != nil
+}
+
+func (x *ResponseAddComment) ClearComment() {
+	x.xxx_hidden_Comment = nil
+}
+
+type ResponseAddComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Comment *ReviewComment
+}
+
+func (b0 ResponseAddComment_builder) Build() *ResponseAddComment {
+	m0 := &ResponseAddComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type RequestEditComment struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_CommentId   *string                `protobuf:"bytes,2,opt,name=comment_id,json=commentId"`
+	xxx_hidden_Body        *string                `protobuf:"bytes,3,opt,name=body"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestEditComment) Reset() {
+	*x = RequestEditComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestEditComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestEditComment) ProtoMessage() {}
+
+func (x *RequestEditComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[140]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestEditComment) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestEditComment) GetCommentId() string {
+	if x != nil {
+		if x.xxx_hidden_CommentId != nil {
+			return *x.xxx_hidden_CommentId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestEditComment) GetBody() string {
+	if x != nil {
+		if x.xxx_hidden_Body != nil {
+			return *x.xxx_hidden_Body
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestEditComment) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestEditComment) SetCommentId(v string) {
+	x.xxx_hidden_CommentId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestEditComment) SetBody(v string) {
+	x.xxx_hidden_Body = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestEditComment) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestEditComment) HasCommentId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestEditComment) HasBody() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestEditComment) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestEditComment) ClearCommentId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_CommentId = nil
+}
+
+func (x *RequestEditComment) ClearBody() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Body = nil
+}
+
+type RequestEditComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	CommentId *string
+	Body      *string
+}
+
+func (b0 RequestEditComment_builder) Build() *RequestEditComment {
+	m0 := &RequestEditComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.CommentId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_CommentId = b.CommentId
+	}
+	if b.Body != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Body = b.Body
+	}
+	return m0
+}
+
+type ResponseEditComment struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Comment *ReviewComment         `protobuf:"bytes,1,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ResponseEditComment) Reset() {
+	*x = ResponseEditComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseEditComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseEditComment) ProtoMessage() {}
+
+func (x *ResponseEditComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[141]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseEditComment) GetComment() *ReviewComment {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return nil
+}
+
+func (x *ResponseEditComment) SetComment(v *ReviewComment) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *ResponseEditComment) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Comment != nil
+}
+
+func (x *ResponseEditComment) ClearComment() {
+	x.xxx_hidden_Comment = nil
+}
+
+type ResponseEditComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Comment *ReviewComment
+}
+
+func (b0 ResponseEditComment_builder) Build() *ResponseEditComment {
+	m0 := &ResponseEditComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type RequestDeleteComment struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_CommentId   *string                `protobuf:"bytes,2,opt,name=comment_id,json=commentId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestDeleteComment) Reset() {
+	*x = RequestDeleteComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDeleteComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDeleteComment) ProtoMessage() {}
+
+func (x *RequestDeleteComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[142]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestDeleteComment) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDeleteComment) GetCommentId() string {
+	if x != nil {
+		if x.xxx_hidden_CommentId != nil {
+			return *x.xxx_hidden_CommentId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDeleteComment) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestDeleteComment) SetCommentId(v string) {
+	x.xxx_hidden_CommentId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestDeleteComment) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestDeleteComment) HasCommentId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestDeleteComment) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestDeleteComment) ClearCommentId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_CommentId = nil
+}
+
+type RequestDeleteComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	CommentId *string
+}
+
+func (b0 RequestDeleteComment_builder) Build() *RequestDeleteComment {
+	m0 := &RequestDeleteComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.CommentId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_CommentId = b.CommentId
+	}
+	return m0
+}
+
+type ResponseDeleteComment struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseDeleteComment) Reset() {
+	*x = ResponseDeleteComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseDeleteComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseDeleteComment) ProtoMessage() {}
+
+func (x *ResponseDeleteComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[143]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ResponseDeleteComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ResponseDeleteComment_builder) Build() *ResponseDeleteComment {
+	m0 := &ResponseDeleteComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type RequestReply struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_CommentId   *string                `protobuf:"bytes,2,opt,name=comment_id,json=commentId"`
+	xxx_hidden_Body        *string                `protobuf:"bytes,3,opt,name=body"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestReply) Reset() {
+	*x = RequestReply{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestReply) ProtoMessage() {}
+
+func (x *RequestReply) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[144]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestReply) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestReply) GetCommentId() string {
+	if x != nil {
+		if x.xxx_hidden_CommentId != nil {
+			return *x.xxx_hidden_CommentId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestReply) GetBody() string {
+	if x != nil {
+		if x.xxx_hidden_Body != nil {
+			return *x.xxx_hidden_Body
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestReply) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestReply) SetCommentId(v string) {
+	x.xxx_hidden_CommentId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestReply) SetBody(v string) {
+	x.xxx_hidden_Body = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestReply) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestReply) HasCommentId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestReply) HasBody() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestReply) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestReply) ClearCommentId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_CommentId = nil
+}
+
+func (x *RequestReply) ClearBody() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Body = nil
+}
+
+type RequestReply_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	CommentId *string
+	Body      *string
+}
+
+func (b0 RequestReply_builder) Build() *RequestReply {
+	m0 := &RequestReply{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.CommentId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_CommentId = b.CommentId
+	}
+	if b.Body != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Body = b.Body
+	}
+	return m0
+}
+
+type ResponseReply struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Comment *ReviewComment         `protobuf:"bytes,1,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ResponseReply) Reset() {
+	*x = ResponseReply{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseReply) ProtoMessage() {}
+
+func (x *ResponseReply) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[145]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseReply) GetComment() *ReviewComment {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return nil
+}
+
+func (x *ResponseReply) SetComment(v *ReviewComment) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *ResponseReply) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Comment != nil
+}
+
+func (x *ResponseReply) ClearComment() {
+	x.xxx_hidden_Comment = nil
+}
+
+type ResponseReply_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Comment *ReviewComment
+}
+
+func (b0 ResponseReply_builder) Build() *ResponseReply {
+	m0 := &ResponseReply{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type RequestResolveComment struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_CommentId   *string                `protobuf:"bytes,2,opt,name=comment_id,json=commentId"`
+	xxx_hidden_Resolved    bool                   `protobuf:"varint,3,opt,name=resolved"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestResolveComment) Reset() {
+	*x = RequestResolveComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestResolveComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestResolveComment) ProtoMessage() {}
+
+func (x *RequestResolveComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[146]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestResolveComment) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestResolveComment) GetCommentId() string {
+	if x != nil {
+		if x.xxx_hidden_CommentId != nil {
+			return *x.xxx_hidden_CommentId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestResolveComment) GetResolved() bool {
+	if x != nil {
+		return x.xxx_hidden_Resolved
+	}
+	return false
+}
+
+func (x *RequestResolveComment) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestResolveComment) SetCommentId(v string) {
+	x.xxx_hidden_CommentId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestResolveComment) SetResolved(v bool) {
+	x.xxx_hidden_Resolved = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestResolveComment) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestResolveComment) HasCommentId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestResolveComment) HasResolved() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestResolveComment) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestResolveComment) ClearCommentId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_CommentId = nil
+}
+
+func (x *RequestResolveComment) ClearResolved() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Resolved = false
+}
+
+type RequestResolveComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	CommentId *string
+	Resolved  *bool
+}
+
+func (b0 RequestResolveComment_builder) Build() *RequestResolveComment {
+	m0 := &RequestResolveComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.CommentId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_CommentId = b.CommentId
+	}
+	if b.Resolved != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Resolved = *b.Resolved
+	}
+	return m0
+}
+
+type ResponseResolveComment struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Comment *ReviewComment         `protobuf:"bytes,1,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ResponseResolveComment) Reset() {
+	*x = ResponseResolveComment{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseResolveComment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseResolveComment) ProtoMessage() {}
+
+func (x *ResponseResolveComment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[147]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseResolveComment) GetComment() *ReviewComment {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return nil
+}
+
+func (x *ResponseResolveComment) SetComment(v *ReviewComment) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *ResponseResolveComment) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Comment != nil
+}
+
+func (x *ResponseResolveComment) ClearComment() {
+	x.xxx_hidden_Comment = nil
+}
+
+type ResponseResolveComment_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Comment *ReviewComment
+}
+
+func (b0 ResponseResolveComment_builder) Build() *ResponseResolveComment {
+	m0 := &ResponseResolveComment{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type RequestFinish struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestFinish) Reset() {
+	*x = RequestFinish{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestFinish) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestFinish) ProtoMessage() {}
+
+func (x *RequestFinish) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[148]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestFinish) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestFinish) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestFinish) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestFinish) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+type RequestFinish_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId *string
+}
+
+func (b0 RequestFinish_builder) Build() *RequestFinish {
+	m0 := &RequestFinish{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	return m0
+}
+
+type ResponseFinish struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Review         *Review                `protobuf:"bytes,1,opt,name=review"`
+	xxx_hidden_NotifiedAgents *[]*Agent              `protobuf:"bytes,2,rep,name=notified_agents,json=notifiedAgents"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *ResponseFinish) Reset() {
+	*x = ResponseFinish{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseFinish) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseFinish) ProtoMessage() {}
+
+func (x *ResponseFinish) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[149]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseFinish) GetReview() *Review {
+	if x != nil {
+		return x.xxx_hidden_Review
+	}
+	return nil
+}
+
+func (x *ResponseFinish) GetNotifiedAgents() []*Agent {
+	if x != nil {
+		if x.xxx_hidden_NotifiedAgents != nil {
+			return *x.xxx_hidden_NotifiedAgents
+		}
+	}
+	return nil
+}
+
+func (x *ResponseFinish) SetReview(v *Review) {
+	x.xxx_hidden_Review = v
+}
+
+func (x *ResponseFinish) SetNotifiedAgents(v []*Agent) {
+	x.xxx_hidden_NotifiedAgents = &v
+}
+
+func (x *ResponseFinish) HasReview() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Review != nil
+}
+
+func (x *ResponseFinish) ClearReview() {
+	x.xxx_hidden_Review = nil
+}
+
+type ResponseFinish_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Review         *Review
+	NotifiedAgents []*Agent
+}
+
+func (b0 ResponseFinish_builder) Build() *ResponseFinish {
+	m0 := &ResponseFinish{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Review = b.Review
+	x.xxx_hidden_NotifiedAgents = &b.NotifiedAgents
+	return m0
+}
+
+type RequestApprove struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestApprove) Reset() {
+	*x = RequestApprove{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestApprove) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestApprove) ProtoMessage() {}
+
+func (x *RequestApprove) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[150]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestApprove) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestApprove) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestApprove) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestApprove) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+type RequestApprove_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId *string
+}
+
+func (b0 RequestApprove_builder) Build() *RequestApprove {
+	m0 := &RequestApprove{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	return m0
+}
+
+type ResponseApprove struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Review *Review                `protobuf:"bytes,1,opt,name=review"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ResponseApprove) Reset() {
+	*x = ResponseApprove{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseApprove) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseApprove) ProtoMessage() {}
+
+func (x *ResponseApprove) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[151]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseApprove) GetReview() *Review {
+	if x != nil {
+		return x.xxx_hidden_Review
+	}
+	return nil
+}
+
+func (x *ResponseApprove) SetReview(v *Review) {
+	x.xxx_hidden_Review = v
+}
+
+func (x *ResponseApprove) HasReview() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Review != nil
+}
+
+func (x *ResponseApprove) ClearReview() {
+	x.xxx_hidden_Review = nil
+}
+
+type ResponseApprove_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Review *Review
+}
+
+func (b0 ResponseApprove_builder) Build() *ResponseApprove {
+	m0 := &ResponseApprove{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Review = b.Review
+	return m0
+}
+
+type RequestStartNextRound struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestStartNextRound) Reset() {
+	*x = RequestStartNextRound{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestStartNextRound) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestStartNextRound) ProtoMessage() {}
+
+func (x *RequestStartNextRound) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[152]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestStartNextRound) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestStartNextRound) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestStartNextRound) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestStartNextRound) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+type RequestStartNextRound_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId *string
+}
+
+func (b0 RequestStartNextRound_builder) Build() *RequestStartNextRound {
+	m0 := &RequestStartNextRound{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	return m0
+}
+
+type ResponseStartNextRound struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Review *Review                `protobuf:"bytes,1,opt,name=review"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ResponseStartNextRound) Reset() {
+	*x = ResponseStartNextRound{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseStartNextRound) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseStartNextRound) ProtoMessage() {}
+
+func (x *ResponseStartNextRound) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[153]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseStartNextRound) GetReview() *Review {
+	if x != nil {
+		return x.xxx_hidden_Review
+	}
+	return nil
+}
+
+func (x *ResponseStartNextRound) SetReview(v *Review) {
+	x.xxx_hidden_Review = v
+}
+
+func (x *ResponseStartNextRound) HasReview() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Review != nil
+}
+
+func (x *ResponseStartNextRound) ClearReview() {
+	x.xxx_hidden_Review = nil
+}
+
+type ResponseStartNextRound_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Review *Review
+}
+
+func (b0 ResponseStartNextRound_builder) Build() *ResponseStartNextRound {
+	m0 := &ResponseStartNextRound{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Review = b.Review
+	return m0
+}
+
+type RequestRoundDiff struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ReviewId    *string                `protobuf:"bytes,1,opt,name=review_id,json=reviewId"`
+	xxx_hidden_ChangeId    *string                `protobuf:"bytes,2,opt,name=change_id,json=changeId"`
+	xxx_hidden_FromRound   int32                  `protobuf:"varint,3,opt,name=from_round,json=fromRound"`
+	xxx_hidden_ToRound     int32                  `protobuf:"varint,4,opt,name=to_round,json=toRound"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestRoundDiff) Reset() {
+	*x = RequestRoundDiff{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestRoundDiff) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestRoundDiff) ProtoMessage() {}
+
+func (x *RequestRoundDiff) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[154]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestRoundDiff) GetReviewId() string {
+	if x != nil {
+		if x.xxx_hidden_ReviewId != nil {
+			return *x.xxx_hidden_ReviewId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestRoundDiff) GetChangeId() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeId != nil {
+			return *x.xxx_hidden_ChangeId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestRoundDiff) GetFromRound() int32 {
+	if x != nil {
+		return x.xxx_hidden_FromRound
+	}
+	return 0
+}
+
+func (x *RequestRoundDiff) GetToRound() int32 {
+	if x != nil {
+		return x.xxx_hidden_ToRound
+	}
+	return 0
+}
+
+func (x *RequestRoundDiff) SetReviewId(v string) {
+	x.xxx_hidden_ReviewId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
+}
+
+func (x *RequestRoundDiff) SetChangeId(v string) {
+	x.xxx_hidden_ChangeId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
+}
+
+func (x *RequestRoundDiff) SetFromRound(v int32) {
+	x.xxx_hidden_FromRound = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
+}
+
+func (x *RequestRoundDiff) SetToRound(v int32) {
+	x.xxx_hidden_ToRound = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
+}
+
+func (x *RequestRoundDiff) HasReviewId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestRoundDiff) HasChangeId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestRoundDiff) HasFromRound() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestRoundDiff) HasToRound() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *RequestRoundDiff) ClearReviewId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ReviewId = nil
+}
+
+func (x *RequestRoundDiff) ClearChangeId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_ChangeId = nil
+}
+
+func (x *RequestRoundDiff) ClearFromRound() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_FromRound = 0
+}
+
+func (x *RequestRoundDiff) ClearToRound() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_ToRound = 0
+}
+
+type RequestRoundDiff_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ReviewId  *string
+	ChangeId  *string
+	FromRound *int32
+	ToRound   *int32
+}
+
+func (b0 RequestRoundDiff_builder) Build() *RequestRoundDiff {
+	m0 := &RequestRoundDiff{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ReviewId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
+		x.xxx_hidden_ReviewId = b.ReviewId
+	}
+	if b.ChangeId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
+		x.xxx_hidden_ChangeId = b.ChangeId
+	}
+	if b.FromRound != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_FromRound = *b.FromRound
+	}
+	if b.ToRound != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_ToRound = *b.ToRound
+	}
+	return m0
+}
+
+type ResponseRoundDiff struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Commit      *Commit                `protobuf:"bytes,1,opt,name=commit"`
+	xxx_hidden_Description *string                `protobuf:"bytes,2,opt,name=description"`
+	xxx_hidden_Files       *[]*FileDiff           `protobuf:"bytes,3,rep,name=files"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseRoundDiff) Reset() {
+	*x = ResponseRoundDiff{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseRoundDiff) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseRoundDiff) ProtoMessage() {}
+
+func (x *ResponseRoundDiff) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[155]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseRoundDiff) GetCommit() *Commit {
+	if x != nil {
+		return x.xxx_hidden_Commit
+	}
+	return nil
+}
+
+func (x *ResponseRoundDiff) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseRoundDiff) GetFiles() []*FileDiff {
+	if x != nil {
+		if x.xxx_hidden_Files != nil {
+			return *x.xxx_hidden_Files
+		}
+	}
+	return nil
+}
+
+func (x *ResponseRoundDiff) SetCommit(v *Commit) {
+	x.xxx_hidden_Commit = v
+}
+
+func (x *ResponseRoundDiff) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *ResponseRoundDiff) SetFiles(v []*FileDiff) {
+	x.xxx_hidden_Files = &v
+}
+
+func (x *ResponseRoundDiff) HasCommit() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Commit != nil
+}
+
+func (x *ResponseRoundDiff) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseRoundDiff) ClearCommit() {
+	x.xxx_hidden_Commit = nil
+}
+
+func (x *ResponseRoundDiff) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Description = nil
+}
+
+type ResponseRoundDiff_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Commit      *Commit
+	Description *string
+	Files       []*FileDiff
+}
+
+func (b0 ResponseRoundDiff_builder) Build() *ResponseRoundDiff {
+	m0 := &ResponseRoundDiff{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Commit = b.Commit
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Description = b.Description
+	}
+	x.xxx_hidden_Files = &b.Files
+	return m0
+}
+
 var File_proto_codexel_codexel_proto protoreflect.FileDescriptor
 
 const file_proto_codexel_codexel_proto_rawDesc = "" +
@@ -14274,7 +17832,129 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1f\n" +
 	"\vlast_prompt\x18\x02 \x01(\tR\n" +
 	"lastPrompt\x127\n" +
-	"\aentries\x18\x03 \x03(\v2\x1d.mono.codexel.TranscriptEntryR\aentries*\xa7\x01\n" +
+	"\aentries\x18\x03 \x03(\v2\x1d.mono.codexel.TranscriptEntryR\aentries\"\xb2\x02\n" +
+	"\x06Review\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
+	"\n" +
+	"repository\x18\x02 \x01(\tR\n" +
+	"repository\x12\x1d\n" +
+	"\n" +
+	"change_ids\x18\x03 \x03(\tR\tchangeIds\x12/\n" +
+	"\x05state\x18\x04 \x01(\x0e2\x19.mono.codexel.ReviewStateR\x05state\x121\n" +
+	"\x06rounds\x18\x05 \x03(\v2\x19.mono.codexel.ReviewRoundR\x06rounds\x127\n" +
+	"\bcomments\x18\x06 \x03(\v2\x1b.mono.codexel.ReviewCommentR\bcomments\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\a \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\b \x01(\x03R\tupdatedAt\"y\n" +
+	"\vReviewRound\x12\x16\n" +
+	"\x06number\x18\x01 \x01(\x05R\x06number\x123\n" +
+	"\acommits\x18\x02 \x03(\v2\x19.mono.codexel.RoundCommitR\acommits\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\x03R\tcreatedAt\"G\n" +
+	"\vRoundCommit\x12\x1b\n" +
+	"\tchange_id\x18\x01 \x01(\tR\bchangeId\x12\x1b\n" +
+	"\tcommit_id\x18\x02 \x01(\tR\bcommitId\"\xb9\x03\n" +
+	"\rReviewComment\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tchange_id\x18\x02 \x01(\tR\bchangeId\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12*\n" +
+	"\x04side\x18\x04 \x01(\x0e2\x16.mono.codexel.DiffSideR\x04side\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x05 \x01(\x05R\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x06 \x01(\x05R\aendLine\x12\x16\n" +
+	"\x06anchor\x18\a \x01(\tR\x06anchor\x12\x18\n" +
+	"\adrifted\x18\b \x01(\bR\adrifted\x12\x14\n" +
+	"\x05round\x18\t \x01(\x05R\x05round\x12\x12\n" +
+	"\x04body\x18\n" +
+	" \x01(\tR\x04body\x12\x16\n" +
+	"\x06author\x18\v \x01(\tR\x06author\x12\x1a\n" +
+	"\bresolved\x18\f \x01(\bR\bresolved\x123\n" +
+	"\areplies\x18\r \x03(\v2\x19.mono.codexel.ReviewReplyR\areplies\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x0e \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x0f \x01(\x03R\tupdatedAt\"h\n" +
+	"\vReviewReply\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04body\x18\x02 \x01(\tR\x04body\x12\x16\n" +
+	"\x06author\x18\x03 \x01(\tR\x06author\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\x03R\tcreatedAt\"(\n" +
+	"\x12RequestListReviews\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"E\n" +
+	"\x13ResponseListReviews\x12.\n" +
+	"\areviews\x18\x01 \x03(\v2\x14.mono.codexel.ReviewR\areviews\"\"\n" +
+	"\x10RequestGetReview\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"A\n" +
+	"\x11ResponseGetReview\x12,\n" +
+	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\"G\n" +
+	"\x12RequestStartReview\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1d\n" +
+	"\n" +
+	"change_ids\x18\x02 \x03(\tR\tchangeIds\"C\n" +
+	"\x13ResponseStartReview\x12,\n" +
+	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\"\xdb\x01\n" +
+	"\x11RequestAddComment\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1b\n" +
+	"\tchange_id\x18\x02 \x01(\tR\bchangeId\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12*\n" +
+	"\x04side\x18\x04 \x01(\x0e2\x16.mono.codexel.DiffSideR\x04side\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x05 \x01(\x05R\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x06 \x01(\x05R\aendLine\x12\x12\n" +
+	"\x04body\x18\a \x01(\tR\x04body\"K\n" +
+	"\x12ResponseAddComment\x125\n" +
+	"\acomment\x18\x01 \x01(\v2\x1b.mono.codexel.ReviewCommentR\acomment\"d\n" +
+	"\x12RequestEditComment\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x02 \x01(\tR\tcommentId\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\"L\n" +
+	"\x13ResponseEditComment\x125\n" +
+	"\acomment\x18\x01 \x01(\v2\x1b.mono.codexel.ReviewCommentR\acomment\"R\n" +
+	"\x14RequestDeleteComment\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x02 \x01(\tR\tcommentId\"\x17\n" +
+	"\x15ResponseDeleteComment\"^\n" +
+	"\fRequestReply\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x02 \x01(\tR\tcommentId\x12\x12\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\"F\n" +
+	"\rResponseReply\x125\n" +
+	"\acomment\x18\x01 \x01(\v2\x1b.mono.codexel.ReviewCommentR\acomment\"o\n" +
+	"\x15RequestResolveComment\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1d\n" +
+	"\n" +
+	"comment_id\x18\x02 \x01(\tR\tcommentId\x12\x1a\n" +
+	"\bresolved\x18\x03 \x01(\bR\bresolved\"O\n" +
+	"\x16ResponseResolveComment\x125\n" +
+	"\acomment\x18\x01 \x01(\v2\x1b.mono.codexel.ReviewCommentR\acomment\",\n" +
+	"\rRequestFinish\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\"|\n" +
+	"\x0eResponseFinish\x12,\n" +
+	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\x12<\n" +
+	"\x0fnotified_agents\x18\x02 \x03(\v2\x13.mono.codexel.AgentR\x0enotifiedAgents\"-\n" +
+	"\x0eRequestApprove\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\"?\n" +
+	"\x0fResponseApprove\x12,\n" +
+	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\"4\n" +
+	"\x15RequestStartNextRound\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\"F\n" +
+	"\x16ResponseStartNextRound\x12,\n" +
+	"\x06review\x18\x01 \x01(\v2\x14.mono.codexel.ReviewR\x06review\"\x86\x01\n" +
+	"\x10RequestRoundDiff\x12\x1b\n" +
+	"\treview_id\x18\x01 \x01(\tR\breviewId\x12\x1b\n" +
+	"\tchange_id\x18\x02 \x01(\tR\bchangeId\x12\x1d\n" +
+	"\n" +
+	"from_round\x18\x03 \x01(\x05R\tfromRound\x12\x19\n" +
+	"\bto_round\x18\x04 \x01(\x05R\atoRound\"\x91\x01\n" +
+	"\x11ResponseRoundDiff\x12,\n" +
+	"\x06commit\x18\x01 \x01(\v2\x14.mono.codexel.CommitR\x06commit\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12,\n" +
+	"\x05files\x18\x03 \x03(\v2\x16.mono.codexel.FileDiffR\x05files*\xa7\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AGENT_STATUS_IDLE\x10\x01\x12\x18\n" +
@@ -14314,7 +17994,16 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"!TRANSCRIPT_ENTRY_KIND_USER_PROMPT\x10\x01\x12(\n" +
 	"$TRANSCRIPT_ENTRY_KIND_ASSISTANT_TEXT\x10\x02\x12\"\n" +
 	"\x1eTRANSCRIPT_ENTRY_KIND_TOOL_USE\x10\x03\x12%\n" +
-	"!TRANSCRIPT_ENTRY_KIND_TOOL_RESULT\x10\x042\xa1\x05\n" +
+	"!TRANSCRIPT_ENTRY_KIND_TOOL_RESULT\x10\x04*x\n" +
+	"\vReviewState\x12\x1c\n" +
+	"\x18REVIEW_STATE_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11REVIEW_STATE_OPEN\x10\x01\x12\x19\n" +
+	"\x15REVIEW_STATE_FINISHED\x10\x02\x12\x19\n" +
+	"\x15REVIEW_STATE_APPROVED\x10\x03*K\n" +
+	"\bDiffSide\x12\x19\n" +
+	"\x15DIFF_SIDE_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rDIFF_SIDE_NEW\x10\x01\x12\x11\n" +
+	"\rDIFF_SIDE_OLD\x10\x022\xa1\x05\n" +
 	"\fAgentService\x12O\n" +
 	"\n" +
 	"ListAgents\x12\x1f.mono.codexel.RequestListAgents\x1a .mono.codexel.ResponseListAgents\x12T\n" +
@@ -14385,10 +18074,24 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\vListAliases\x12 .mono.codexel.RequestListAliases\x1a!.mono.codexel.ResponseListAliases\x12I\n" +
 	"\bRunAlias\x12\x1d.mono.codexel.RequestRunAlias\x1a\x1e.mono.codexel.ResponseRunAlias2u\n" +
 	"\x11TranscriptService\x12`\n" +
-	"\x0fWatchTranscript\x12$.mono.codexel.RequestWatchTranscript\x1a%.mono.codexel.ResponseWatchTranscript0\x01B)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x0fWatchTranscript\x12$.mono.codexel.RequestWatchTranscript\x1a%.mono.codexel.ResponseWatchTranscript0\x012\xdb\a\n" +
+	"\rReviewService\x12R\n" +
+	"\vListReviews\x12 .mono.codexel.RequestListReviews\x1a!.mono.codexel.ResponseListReviews\x12L\n" +
+	"\tGetReview\x12\x1e.mono.codexel.RequestGetReview\x1a\x1f.mono.codexel.ResponseGetReview\x12R\n" +
+	"\vStartReview\x12 .mono.codexel.RequestStartReview\x1a!.mono.codexel.ResponseStartReview\x12O\n" +
+	"\n" +
+	"AddComment\x12\x1f.mono.codexel.RequestAddComment\x1a .mono.codexel.ResponseAddComment\x12R\n" +
+	"\vEditComment\x12 .mono.codexel.RequestEditComment\x1a!.mono.codexel.ResponseEditComment\x12X\n" +
+	"\rDeleteComment\x12\".mono.codexel.RequestDeleteComment\x1a#.mono.codexel.ResponseDeleteComment\x12@\n" +
+	"\x05Reply\x12\x1a.mono.codexel.RequestReply\x1a\x1b.mono.codexel.ResponseReply\x12[\n" +
+	"\x0eResolveComment\x12#.mono.codexel.RequestResolveComment\x1a$.mono.codexel.ResponseResolveComment\x12C\n" +
+	"\x06Finish\x12\x1b.mono.codexel.RequestFinish\x1a\x1c.mono.codexel.ResponseFinish\x12F\n" +
+	"\aApprove\x12\x1c.mono.codexel.RequestApprove\x1a\x1d.mono.codexel.ResponseApprove\x12[\n" +
+	"\x0eStartNextRound\x12#.mono.codexel.RequestStartNextRound\x1a$.mono.codexel.ResponseStartNextRound\x12L\n" +
+	"\tRoundDiff\x12\x1e.mono.codexel.RequestRoundDiff\x1a\x1f.mono.codexel.ResponseRoundDiffB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 127)
+var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 156)
 var file_proto_codexel_codexel_proto_goTypes = []any{
 	(AgentStatus)(0),                          // 0: mono.codexel.AgentStatus
 	(FileStatus)(0),                           // 1: mono.codexel.FileStatus
@@ -14397,283 +18100,358 @@ var file_proto_codexel_codexel_proto_goTypes = []any{
 	(RebaseTarget)(0),                         // 4: mono.codexel.RebaseTarget
 	(ResolveSide)(0),                          // 5: mono.codexel.ResolveSide
 	(TranscriptEntryKind)(0),                  // 6: mono.codexel.TranscriptEntryKind
-	(*Agent)(nil),                             // 7: mono.codexel.Agent
-	(*Workspace)(nil),                         // 8: mono.codexel.Workspace
-	(*RequestListAgents)(nil),                 // 9: mono.codexel.RequestListAgents
-	(*ResponseListAgents)(nil),                // 10: mono.codexel.ResponseListAgents
-	(*RequestWatchAgents)(nil),                // 11: mono.codexel.RequestWatchAgents
-	(*ResponseWatchAgents)(nil),               // 12: mono.codexel.ResponseWatchAgents
-	(*RequestReadOutput)(nil),                 // 13: mono.codexel.RequestReadOutput
-	(*ResponseReadOutput)(nil),                // 14: mono.codexel.ResponseReadOutput
-	(*RequestSendPrompt)(nil),                 // 15: mono.codexel.RequestSendPrompt
-	(*ResponseSendPrompt)(nil),                // 16: mono.codexel.ResponseSendPrompt
-	(*RequestSendKeys)(nil),                   // 17: mono.codexel.RequestSendKeys
-	(*ResponseSendKeys)(nil),                  // 18: mono.codexel.ResponseSendKeys
-	(*RequestFocusAgent)(nil),                 // 19: mono.codexel.RequestFocusAgent
-	(*ResponseFocusAgent)(nil),                // 20: mono.codexel.ResponseFocusAgent
-	(*RequestListWorkspaces)(nil),             // 21: mono.codexel.RequestListWorkspaces
-	(*ResponseListWorkspaces)(nil),            // 22: mono.codexel.ResponseListWorkspaces
-	(*RequestStartAgent)(nil),                 // 23: mono.codexel.RequestStartAgent
-	(*ResponseStartAgent)(nil),                // 24: mono.codexel.ResponseStartAgent
-	(*Repository)(nil),                        // 25: mono.codexel.Repository
-	(*RemoteBookmark)(nil),                    // 26: mono.codexel.RemoteBookmark
-	(*Trailer)(nil),                           // 27: mono.codexel.Trailer
-	(*Commit)(nil),                            // 28: mono.codexel.Commit
-	(*GraphLine)(nil),                         // 29: mono.codexel.GraphLine
-	(*LogRow)(nil),                            // 30: mono.codexel.LogRow
-	(*RequestListRepositories)(nil),           // 31: mono.codexel.RequestListRepositories
-	(*ResponseListRepositories)(nil),          // 32: mono.codexel.ResponseListRepositories
-	(*RequestListCandidates)(nil),             // 33: mono.codexel.RequestListCandidates
-	(*ResponseListCandidates)(nil),            // 34: mono.codexel.ResponseListCandidates
-	(*RequestOpenRepository)(nil),             // 35: mono.codexel.RequestOpenRepository
-	(*ResponseOpenRepository)(nil),            // 36: mono.codexel.ResponseOpenRepository
-	(*RequestCloseRepository)(nil),            // 37: mono.codexel.RequestCloseRepository
-	(*ResponseCloseRepository)(nil),           // 38: mono.codexel.ResponseCloseRepository
-	(*RequestWatchRepository)(nil),            // 39: mono.codexel.RequestWatchRepository
-	(*ResponseWatchRepository)(nil),           // 40: mono.codexel.ResponseWatchRepository
-	(*RequestLog)(nil),                        // 41: mono.codexel.RequestLog
-	(*ResponseLog)(nil),                       // 42: mono.codexel.ResponseLog
-	(*DiffLine)(nil),                          // 43: mono.codexel.DiffLine
-	(*Hunk)(nil),                              // 44: mono.codexel.Hunk
-	(*FileDiff)(nil),                          // 45: mono.codexel.FileDiff
-	(*RequestGetRevision)(nil),                // 46: mono.codexel.RequestGetRevision
-	(*ResponseGetRevision)(nil),               // 47: mono.codexel.ResponseGetRevision
-	(*RequestNew)(nil),                        // 48: mono.codexel.RequestNew
-	(*ResponseNew)(nil),                       // 49: mono.codexel.ResponseNew
-	(*RequestEdit)(nil),                       // 50: mono.codexel.RequestEdit
-	(*ResponseEdit)(nil),                      // 51: mono.codexel.ResponseEdit
-	(*RequestAbandon)(nil),                    // 52: mono.codexel.RequestAbandon
-	(*ResponseAbandon)(nil),                   // 53: mono.codexel.ResponseAbandon
-	(*RequestDescribe)(nil),                   // 54: mono.codexel.RequestDescribe
-	(*ResponseDescribe)(nil),                  // 55: mono.codexel.ResponseDescribe
-	(*RequestCommit)(nil),                     // 56: mono.codexel.RequestCommit
-	(*ResponseCommit)(nil),                    // 57: mono.codexel.ResponseCommit
-	(*RequestUndo)(nil),                       // 58: mono.codexel.RequestUndo
-	(*ResponseUndo)(nil),                      // 59: mono.codexel.ResponseUndo
-	(*RequestRebase)(nil),                     // 60: mono.codexel.RequestRebase
-	(*ResponseRebase)(nil),                    // 61: mono.codexel.ResponseRebase
-	(*RequestSquash)(nil),                     // 62: mono.codexel.RequestSquash
-	(*ResponseSquash)(nil),                    // 63: mono.codexel.ResponseSquash
-	(*Bookmark)(nil),                          // 64: mono.codexel.Bookmark
-	(*RequestListBookmarks)(nil),              // 65: mono.codexel.RequestListBookmarks
-	(*ResponseListBookmarks)(nil),             // 66: mono.codexel.ResponseListBookmarks
-	(*RequestSetBookmark)(nil),                // 67: mono.codexel.RequestSetBookmark
-	(*ResponseSetBookmark)(nil),               // 68: mono.codexel.ResponseSetBookmark
-	(*RequestMoveBookmark)(nil),               // 69: mono.codexel.RequestMoveBookmark
-	(*ResponseMoveBookmark)(nil),              // 70: mono.codexel.ResponseMoveBookmark
-	(*RequestDeleteBookmark)(nil),             // 71: mono.codexel.RequestDeleteBookmark
-	(*ResponseDeleteBookmark)(nil),            // 72: mono.codexel.ResponseDeleteBookmark
-	(*RequestForgetBookmark)(nil),             // 73: mono.codexel.RequestForgetBookmark
-	(*ResponseForgetBookmark)(nil),            // 74: mono.codexel.ResponseForgetBookmark
-	(*RequestTrackBookmark)(nil),              // 75: mono.codexel.RequestTrackBookmark
-	(*ResponseTrackBookmark)(nil),             // 76: mono.codexel.ResponseTrackBookmark
-	(*RequestUntrackBookmark)(nil),            // 77: mono.codexel.RequestUntrackBookmark
-	(*ResponseUntrackBookmark)(nil),           // 78: mono.codexel.ResponseUntrackBookmark
-	(*RequestFetch)(nil),                      // 79: mono.codexel.RequestFetch
-	(*ResponseFetch)(nil),                     // 80: mono.codexel.ResponseFetch
-	(*RequestPush)(nil),                       // 81: mono.codexel.RequestPush
-	(*ResponsePush)(nil),                      // 82: mono.codexel.ResponsePush
-	(*Operation)(nil),                         // 83: mono.codexel.Operation
-	(*RequestListOperations)(nil),             // 84: mono.codexel.RequestListOperations
-	(*ResponseListOperations)(nil),            // 85: mono.codexel.ResponseListOperations
-	(*RequestRevertOperation)(nil),            // 86: mono.codexel.RequestRevertOperation
-	(*ResponseRevertOperation)(nil),           // 87: mono.codexel.ResponseRevertOperation
-	(*RequestRestoreOperation)(nil),           // 88: mono.codexel.RequestRestoreOperation
-	(*ResponseRestoreOperation)(nil),          // 89: mono.codexel.ResponseRestoreOperation
-	(*EvologEntry)(nil),                       // 90: mono.codexel.EvologEntry
-	(*RequestEvolog)(nil),                     // 91: mono.codexel.RequestEvolog
-	(*ResponseEvolog)(nil),                    // 92: mono.codexel.ResponseEvolog
-	(*RequestGetFile)(nil),                    // 93: mono.codexel.RequestGetFile
-	(*ResponseGetFile)(nil),                   // 94: mono.codexel.ResponseGetFile
-	(*RequestListFiles)(nil),                  // 95: mono.codexel.RequestListFiles
-	(*ResponseListFiles)(nil),                 // 96: mono.codexel.ResponseListFiles
-	(*RequestWriteFile)(nil),                  // 97: mono.codexel.RequestWriteFile
-	(*ResponseWriteFile)(nil),                 // 98: mono.codexel.ResponseWriteFile
-	(*ConflictedFile)(nil),                    // 99: mono.codexel.ConflictedFile
-	(*ConflictedCommit)(nil),                  // 100: mono.codexel.ConflictedCommit
-	(*RequestListConflicts)(nil),              // 101: mono.codexel.RequestListConflicts
-	(*ResponseListConflicts)(nil),             // 102: mono.codexel.ResponseListConflicts
-	(*RequestGetConflict)(nil),                // 103: mono.codexel.RequestGetConflict
-	(*ResponseGetConflict)(nil),               // 104: mono.codexel.ResponseGetConflict
-	(*RequestResolve)(nil),                    // 105: mono.codexel.RequestResolve
-	(*ResponseResolve)(nil),                   // 106: mono.codexel.ResponseResolve
-	(*RequestSplit)(nil),                      // 107: mono.codexel.RequestSplit
-	(*ResponseSplit)(nil),                     // 108: mono.codexel.ResponseSplit
-	(*RequestRestore)(nil),                    // 109: mono.codexel.RequestRestore
-	(*ResponseRestore)(nil),                   // 110: mono.codexel.ResponseRestore
-	(*RepositoryWorkspace)(nil),               // 111: mono.codexel.RepositoryWorkspace
-	(*RequestListRepositoryWorkspaces)(nil),   // 112: mono.codexel.RequestListRepositoryWorkspaces
-	(*ResponseListRepositoryWorkspaces)(nil),  // 113: mono.codexel.ResponseListRepositoryWorkspaces
-	(*RequestAddRepositoryWorkspace)(nil),     // 114: mono.codexel.RequestAddRepositoryWorkspace
-	(*ResponseAddRepositoryWorkspace)(nil),    // 115: mono.codexel.ResponseAddRepositoryWorkspace
-	(*RequestForgetRepositoryWorkspace)(nil),  // 116: mono.codexel.RequestForgetRepositoryWorkspace
-	(*ResponseForgetRepositoryWorkspace)(nil), // 117: mono.codexel.ResponseForgetRepositoryWorkspace
-	(*RequestRenameRepositoryWorkspace)(nil),  // 118: mono.codexel.RequestRenameRepositoryWorkspace
-	(*ResponseRenameRepositoryWorkspace)(nil), // 119: mono.codexel.ResponseRenameRepositoryWorkspace
-	(*RequestUpdateStale)(nil),                // 120: mono.codexel.RequestUpdateStale
-	(*ResponseUpdateStale)(nil),               // 121: mono.codexel.ResponseUpdateStale
-	(*RequestDiffRange)(nil),                  // 122: mono.codexel.RequestDiffRange
-	(*ResponseDiffRange)(nil),                 // 123: mono.codexel.ResponseDiffRange
-	(*RequestListAgentCommits)(nil),           // 124: mono.codexel.RequestListAgentCommits
-	(*ResponseListAgentCommits)(nil),          // 125: mono.codexel.ResponseListAgentCommits
-	(*Alias)(nil),                             // 126: mono.codexel.Alias
-	(*RequestListAliases)(nil),                // 127: mono.codexel.RequestListAliases
-	(*ResponseListAliases)(nil),               // 128: mono.codexel.ResponseListAliases
-	(*RequestRunAlias)(nil),                   // 129: mono.codexel.RequestRunAlias
-	(*ResponseRunAlias)(nil),                  // 130: mono.codexel.ResponseRunAlias
-	(*TranscriptEntry)(nil),                   // 131: mono.codexel.TranscriptEntry
-	(*RequestWatchTranscript)(nil),            // 132: mono.codexel.RequestWatchTranscript
-	(*ResponseWatchTranscript)(nil),           // 133: mono.codexel.ResponseWatchTranscript
+	(ReviewState)(0),                          // 7: mono.codexel.ReviewState
+	(DiffSide)(0),                             // 8: mono.codexel.DiffSide
+	(*Agent)(nil),                             // 9: mono.codexel.Agent
+	(*Workspace)(nil),                         // 10: mono.codexel.Workspace
+	(*RequestListAgents)(nil),                 // 11: mono.codexel.RequestListAgents
+	(*ResponseListAgents)(nil),                // 12: mono.codexel.ResponseListAgents
+	(*RequestWatchAgents)(nil),                // 13: mono.codexel.RequestWatchAgents
+	(*ResponseWatchAgents)(nil),               // 14: mono.codexel.ResponseWatchAgents
+	(*RequestReadOutput)(nil),                 // 15: mono.codexel.RequestReadOutput
+	(*ResponseReadOutput)(nil),                // 16: mono.codexel.ResponseReadOutput
+	(*RequestSendPrompt)(nil),                 // 17: mono.codexel.RequestSendPrompt
+	(*ResponseSendPrompt)(nil),                // 18: mono.codexel.ResponseSendPrompt
+	(*RequestSendKeys)(nil),                   // 19: mono.codexel.RequestSendKeys
+	(*ResponseSendKeys)(nil),                  // 20: mono.codexel.ResponseSendKeys
+	(*RequestFocusAgent)(nil),                 // 21: mono.codexel.RequestFocusAgent
+	(*ResponseFocusAgent)(nil),                // 22: mono.codexel.ResponseFocusAgent
+	(*RequestListWorkspaces)(nil),             // 23: mono.codexel.RequestListWorkspaces
+	(*ResponseListWorkspaces)(nil),            // 24: mono.codexel.ResponseListWorkspaces
+	(*RequestStartAgent)(nil),                 // 25: mono.codexel.RequestStartAgent
+	(*ResponseStartAgent)(nil),                // 26: mono.codexel.ResponseStartAgent
+	(*Repository)(nil),                        // 27: mono.codexel.Repository
+	(*RemoteBookmark)(nil),                    // 28: mono.codexel.RemoteBookmark
+	(*Trailer)(nil),                           // 29: mono.codexel.Trailer
+	(*Commit)(nil),                            // 30: mono.codexel.Commit
+	(*GraphLine)(nil),                         // 31: mono.codexel.GraphLine
+	(*LogRow)(nil),                            // 32: mono.codexel.LogRow
+	(*RequestListRepositories)(nil),           // 33: mono.codexel.RequestListRepositories
+	(*ResponseListRepositories)(nil),          // 34: mono.codexel.ResponseListRepositories
+	(*RequestListCandidates)(nil),             // 35: mono.codexel.RequestListCandidates
+	(*ResponseListCandidates)(nil),            // 36: mono.codexel.ResponseListCandidates
+	(*RequestOpenRepository)(nil),             // 37: mono.codexel.RequestOpenRepository
+	(*ResponseOpenRepository)(nil),            // 38: mono.codexel.ResponseOpenRepository
+	(*RequestCloseRepository)(nil),            // 39: mono.codexel.RequestCloseRepository
+	(*ResponseCloseRepository)(nil),           // 40: mono.codexel.ResponseCloseRepository
+	(*RequestWatchRepository)(nil),            // 41: mono.codexel.RequestWatchRepository
+	(*ResponseWatchRepository)(nil),           // 42: mono.codexel.ResponseWatchRepository
+	(*RequestLog)(nil),                        // 43: mono.codexel.RequestLog
+	(*ResponseLog)(nil),                       // 44: mono.codexel.ResponseLog
+	(*DiffLine)(nil),                          // 45: mono.codexel.DiffLine
+	(*Hunk)(nil),                              // 46: mono.codexel.Hunk
+	(*FileDiff)(nil),                          // 47: mono.codexel.FileDiff
+	(*RequestGetRevision)(nil),                // 48: mono.codexel.RequestGetRevision
+	(*ResponseGetRevision)(nil),               // 49: mono.codexel.ResponseGetRevision
+	(*RequestNew)(nil),                        // 50: mono.codexel.RequestNew
+	(*ResponseNew)(nil),                       // 51: mono.codexel.ResponseNew
+	(*RequestEdit)(nil),                       // 52: mono.codexel.RequestEdit
+	(*ResponseEdit)(nil),                      // 53: mono.codexel.ResponseEdit
+	(*RequestAbandon)(nil),                    // 54: mono.codexel.RequestAbandon
+	(*ResponseAbandon)(nil),                   // 55: mono.codexel.ResponseAbandon
+	(*RequestDescribe)(nil),                   // 56: mono.codexel.RequestDescribe
+	(*ResponseDescribe)(nil),                  // 57: mono.codexel.ResponseDescribe
+	(*RequestCommit)(nil),                     // 58: mono.codexel.RequestCommit
+	(*ResponseCommit)(nil),                    // 59: mono.codexel.ResponseCommit
+	(*RequestUndo)(nil),                       // 60: mono.codexel.RequestUndo
+	(*ResponseUndo)(nil),                      // 61: mono.codexel.ResponseUndo
+	(*RequestRebase)(nil),                     // 62: mono.codexel.RequestRebase
+	(*ResponseRebase)(nil),                    // 63: mono.codexel.ResponseRebase
+	(*RequestSquash)(nil),                     // 64: mono.codexel.RequestSquash
+	(*ResponseSquash)(nil),                    // 65: mono.codexel.ResponseSquash
+	(*Bookmark)(nil),                          // 66: mono.codexel.Bookmark
+	(*RequestListBookmarks)(nil),              // 67: mono.codexel.RequestListBookmarks
+	(*ResponseListBookmarks)(nil),             // 68: mono.codexel.ResponseListBookmarks
+	(*RequestSetBookmark)(nil),                // 69: mono.codexel.RequestSetBookmark
+	(*ResponseSetBookmark)(nil),               // 70: mono.codexel.ResponseSetBookmark
+	(*RequestMoveBookmark)(nil),               // 71: mono.codexel.RequestMoveBookmark
+	(*ResponseMoveBookmark)(nil),              // 72: mono.codexel.ResponseMoveBookmark
+	(*RequestDeleteBookmark)(nil),             // 73: mono.codexel.RequestDeleteBookmark
+	(*ResponseDeleteBookmark)(nil),            // 74: mono.codexel.ResponseDeleteBookmark
+	(*RequestForgetBookmark)(nil),             // 75: mono.codexel.RequestForgetBookmark
+	(*ResponseForgetBookmark)(nil),            // 76: mono.codexel.ResponseForgetBookmark
+	(*RequestTrackBookmark)(nil),              // 77: mono.codexel.RequestTrackBookmark
+	(*ResponseTrackBookmark)(nil),             // 78: mono.codexel.ResponseTrackBookmark
+	(*RequestUntrackBookmark)(nil),            // 79: mono.codexel.RequestUntrackBookmark
+	(*ResponseUntrackBookmark)(nil),           // 80: mono.codexel.ResponseUntrackBookmark
+	(*RequestFetch)(nil),                      // 81: mono.codexel.RequestFetch
+	(*ResponseFetch)(nil),                     // 82: mono.codexel.ResponseFetch
+	(*RequestPush)(nil),                       // 83: mono.codexel.RequestPush
+	(*ResponsePush)(nil),                      // 84: mono.codexel.ResponsePush
+	(*Operation)(nil),                         // 85: mono.codexel.Operation
+	(*RequestListOperations)(nil),             // 86: mono.codexel.RequestListOperations
+	(*ResponseListOperations)(nil),            // 87: mono.codexel.ResponseListOperations
+	(*RequestRevertOperation)(nil),            // 88: mono.codexel.RequestRevertOperation
+	(*ResponseRevertOperation)(nil),           // 89: mono.codexel.ResponseRevertOperation
+	(*RequestRestoreOperation)(nil),           // 90: mono.codexel.RequestRestoreOperation
+	(*ResponseRestoreOperation)(nil),          // 91: mono.codexel.ResponseRestoreOperation
+	(*EvologEntry)(nil),                       // 92: mono.codexel.EvologEntry
+	(*RequestEvolog)(nil),                     // 93: mono.codexel.RequestEvolog
+	(*ResponseEvolog)(nil),                    // 94: mono.codexel.ResponseEvolog
+	(*RequestGetFile)(nil),                    // 95: mono.codexel.RequestGetFile
+	(*ResponseGetFile)(nil),                   // 96: mono.codexel.ResponseGetFile
+	(*RequestListFiles)(nil),                  // 97: mono.codexel.RequestListFiles
+	(*ResponseListFiles)(nil),                 // 98: mono.codexel.ResponseListFiles
+	(*RequestWriteFile)(nil),                  // 99: mono.codexel.RequestWriteFile
+	(*ResponseWriteFile)(nil),                 // 100: mono.codexel.ResponseWriteFile
+	(*ConflictedFile)(nil),                    // 101: mono.codexel.ConflictedFile
+	(*ConflictedCommit)(nil),                  // 102: mono.codexel.ConflictedCommit
+	(*RequestListConflicts)(nil),              // 103: mono.codexel.RequestListConflicts
+	(*ResponseListConflicts)(nil),             // 104: mono.codexel.ResponseListConflicts
+	(*RequestGetConflict)(nil),                // 105: mono.codexel.RequestGetConflict
+	(*ResponseGetConflict)(nil),               // 106: mono.codexel.ResponseGetConflict
+	(*RequestResolve)(nil),                    // 107: mono.codexel.RequestResolve
+	(*ResponseResolve)(nil),                   // 108: mono.codexel.ResponseResolve
+	(*RequestSplit)(nil),                      // 109: mono.codexel.RequestSplit
+	(*ResponseSplit)(nil),                     // 110: mono.codexel.ResponseSplit
+	(*RequestRestore)(nil),                    // 111: mono.codexel.RequestRestore
+	(*ResponseRestore)(nil),                   // 112: mono.codexel.ResponseRestore
+	(*RepositoryWorkspace)(nil),               // 113: mono.codexel.RepositoryWorkspace
+	(*RequestListRepositoryWorkspaces)(nil),   // 114: mono.codexel.RequestListRepositoryWorkspaces
+	(*ResponseListRepositoryWorkspaces)(nil),  // 115: mono.codexel.ResponseListRepositoryWorkspaces
+	(*RequestAddRepositoryWorkspace)(nil),     // 116: mono.codexel.RequestAddRepositoryWorkspace
+	(*ResponseAddRepositoryWorkspace)(nil),    // 117: mono.codexel.ResponseAddRepositoryWorkspace
+	(*RequestForgetRepositoryWorkspace)(nil),  // 118: mono.codexel.RequestForgetRepositoryWorkspace
+	(*ResponseForgetRepositoryWorkspace)(nil), // 119: mono.codexel.ResponseForgetRepositoryWorkspace
+	(*RequestRenameRepositoryWorkspace)(nil),  // 120: mono.codexel.RequestRenameRepositoryWorkspace
+	(*ResponseRenameRepositoryWorkspace)(nil), // 121: mono.codexel.ResponseRenameRepositoryWorkspace
+	(*RequestUpdateStale)(nil),                // 122: mono.codexel.RequestUpdateStale
+	(*ResponseUpdateStale)(nil),               // 123: mono.codexel.ResponseUpdateStale
+	(*RequestDiffRange)(nil),                  // 124: mono.codexel.RequestDiffRange
+	(*ResponseDiffRange)(nil),                 // 125: mono.codexel.ResponseDiffRange
+	(*RequestListAgentCommits)(nil),           // 126: mono.codexel.RequestListAgentCommits
+	(*ResponseListAgentCommits)(nil),          // 127: mono.codexel.ResponseListAgentCommits
+	(*Alias)(nil),                             // 128: mono.codexel.Alias
+	(*RequestListAliases)(nil),                // 129: mono.codexel.RequestListAliases
+	(*ResponseListAliases)(nil),               // 130: mono.codexel.ResponseListAliases
+	(*RequestRunAlias)(nil),                   // 131: mono.codexel.RequestRunAlias
+	(*ResponseRunAlias)(nil),                  // 132: mono.codexel.ResponseRunAlias
+	(*TranscriptEntry)(nil),                   // 133: mono.codexel.TranscriptEntry
+	(*RequestWatchTranscript)(nil),            // 134: mono.codexel.RequestWatchTranscript
+	(*ResponseWatchTranscript)(nil),           // 135: mono.codexel.ResponseWatchTranscript
+	(*Review)(nil),                            // 136: mono.codexel.Review
+	(*ReviewRound)(nil),                       // 137: mono.codexel.ReviewRound
+	(*RoundCommit)(nil),                       // 138: mono.codexel.RoundCommit
+	(*ReviewComment)(nil),                     // 139: mono.codexel.ReviewComment
+	(*ReviewReply)(nil),                       // 140: mono.codexel.ReviewReply
+	(*RequestListReviews)(nil),                // 141: mono.codexel.RequestListReviews
+	(*ResponseListReviews)(nil),               // 142: mono.codexel.ResponseListReviews
+	(*RequestGetReview)(nil),                  // 143: mono.codexel.RequestGetReview
+	(*ResponseGetReview)(nil),                 // 144: mono.codexel.ResponseGetReview
+	(*RequestStartReview)(nil),                // 145: mono.codexel.RequestStartReview
+	(*ResponseStartReview)(nil),               // 146: mono.codexel.ResponseStartReview
+	(*RequestAddComment)(nil),                 // 147: mono.codexel.RequestAddComment
+	(*ResponseAddComment)(nil),                // 148: mono.codexel.ResponseAddComment
+	(*RequestEditComment)(nil),                // 149: mono.codexel.RequestEditComment
+	(*ResponseEditComment)(nil),               // 150: mono.codexel.ResponseEditComment
+	(*RequestDeleteComment)(nil),              // 151: mono.codexel.RequestDeleteComment
+	(*ResponseDeleteComment)(nil),             // 152: mono.codexel.ResponseDeleteComment
+	(*RequestReply)(nil),                      // 153: mono.codexel.RequestReply
+	(*ResponseReply)(nil),                     // 154: mono.codexel.ResponseReply
+	(*RequestResolveComment)(nil),             // 155: mono.codexel.RequestResolveComment
+	(*ResponseResolveComment)(nil),            // 156: mono.codexel.ResponseResolveComment
+	(*RequestFinish)(nil),                     // 157: mono.codexel.RequestFinish
+	(*ResponseFinish)(nil),                    // 158: mono.codexel.ResponseFinish
+	(*RequestApprove)(nil),                    // 159: mono.codexel.RequestApprove
+	(*ResponseApprove)(nil),                   // 160: mono.codexel.ResponseApprove
+	(*RequestStartNextRound)(nil),             // 161: mono.codexel.RequestStartNextRound
+	(*ResponseStartNextRound)(nil),            // 162: mono.codexel.ResponseStartNextRound
+	(*RequestRoundDiff)(nil),                  // 163: mono.codexel.RequestRoundDiff
+	(*ResponseRoundDiff)(nil),                 // 164: mono.codexel.ResponseRoundDiff
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,   // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
-	7,   // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
-	7,   // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
-	8,   // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
-	7,   // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
-	26,  // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
-	27,  // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
-	28,  // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
-	29,  // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
-	25,  // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
-	25,  // 10: mono.codexel.ResponseListCandidates.repositories:type_name -> mono.codexel.Repository
-	25,  // 11: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
-	30,  // 12: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
+	9,   // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
+	9,   // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
+	10,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
+	9,   // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
+	28,  // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
+	29,  // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
+	30,  // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
+	31,  // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
+	27,  // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
+	27,  // 10: mono.codexel.ResponseListCandidates.repositories:type_name -> mono.codexel.Repository
+	27,  // 11: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
+	32,  // 12: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
 	2,   // 13: mono.codexel.DiffLine.kind:type_name -> mono.codexel.DiffLineKind
-	43,  // 14: mono.codexel.Hunk.lines:type_name -> mono.codexel.DiffLine
+	45,  // 14: mono.codexel.Hunk.lines:type_name -> mono.codexel.DiffLine
 	1,   // 15: mono.codexel.FileDiff.status:type_name -> mono.codexel.FileStatus
-	44,  // 16: mono.codexel.FileDiff.hunks:type_name -> mono.codexel.Hunk
-	28,  // 17: mono.codexel.ResponseGetRevision.commit:type_name -> mono.codexel.Commit
-	45,  // 18: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
+	46,  // 16: mono.codexel.FileDiff.hunks:type_name -> mono.codexel.Hunk
+	30,  // 17: mono.codexel.ResponseGetRevision.commit:type_name -> mono.codexel.Commit
+	47,  // 18: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
 	3,   // 19: mono.codexel.RequestRebase.source:type_name -> mono.codexel.RebaseSource
 	4,   // 20: mono.codexel.RequestRebase.target:type_name -> mono.codexel.RebaseTarget
-	64,  // 21: mono.codexel.ResponseListBookmarks.bookmarks:type_name -> mono.codexel.Bookmark
-	83,  // 22: mono.codexel.ResponseListOperations.operations:type_name -> mono.codexel.Operation
-	45,  // 23: mono.codexel.EvologEntry.files:type_name -> mono.codexel.FileDiff
-	90,  // 24: mono.codexel.ResponseEvolog.entries:type_name -> mono.codexel.EvologEntry
-	99,  // 25: mono.codexel.ConflictedCommit.files:type_name -> mono.codexel.ConflictedFile
-	100, // 26: mono.codexel.ResponseListConflicts.commits:type_name -> mono.codexel.ConflictedCommit
+	66,  // 21: mono.codexel.ResponseListBookmarks.bookmarks:type_name -> mono.codexel.Bookmark
+	85,  // 22: mono.codexel.ResponseListOperations.operations:type_name -> mono.codexel.Operation
+	47,  // 23: mono.codexel.EvologEntry.files:type_name -> mono.codexel.FileDiff
+	92,  // 24: mono.codexel.ResponseEvolog.entries:type_name -> mono.codexel.EvologEntry
+	101, // 25: mono.codexel.ConflictedCommit.files:type_name -> mono.codexel.ConflictedFile
+	102, // 26: mono.codexel.ResponseListConflicts.commits:type_name -> mono.codexel.ConflictedCommit
 	5,   // 27: mono.codexel.RequestResolve.side:type_name -> mono.codexel.ResolveSide
-	111, // 28: mono.codexel.ResponseListRepositoryWorkspaces.workspaces:type_name -> mono.codexel.RepositoryWorkspace
-	45,  // 29: mono.codexel.ResponseDiffRange.files:type_name -> mono.codexel.FileDiff
-	25,  // 30: mono.codexel.ResponseListAgentCommits.repository:type_name -> mono.codexel.Repository
-	28,  // 31: mono.codexel.ResponseListAgentCommits.commits:type_name -> mono.codexel.Commit
-	126, // 32: mono.codexel.ResponseListAliases.aliases:type_name -> mono.codexel.Alias
+	113, // 28: mono.codexel.ResponseListRepositoryWorkspaces.workspaces:type_name -> mono.codexel.RepositoryWorkspace
+	47,  // 29: mono.codexel.ResponseDiffRange.files:type_name -> mono.codexel.FileDiff
+	27,  // 30: mono.codexel.ResponseListAgentCommits.repository:type_name -> mono.codexel.Repository
+	30,  // 31: mono.codexel.ResponseListAgentCommits.commits:type_name -> mono.codexel.Commit
+	128, // 32: mono.codexel.ResponseListAliases.aliases:type_name -> mono.codexel.Alias
 	6,   // 33: mono.codexel.TranscriptEntry.kind:type_name -> mono.codexel.TranscriptEntryKind
-	131, // 34: mono.codexel.ResponseWatchTranscript.entries:type_name -> mono.codexel.TranscriptEntry
-	9,   // 35: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
-	11,  // 36: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
-	13,  // 37: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
-	15,  // 38: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
-	17,  // 39: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
-	19,  // 40: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
-	21,  // 41: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
-	23,  // 42: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
-	31,  // 43: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
-	33,  // 44: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
-	35,  // 45: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
-	37,  // 46: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
-	39,  // 47: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
-	41,  // 48: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
-	46,  // 49: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
-	48,  // 50: mono.codexel.RevisionService.New:input_type -> mono.codexel.RequestNew
-	50,  // 51: mono.codexel.RevisionService.Edit:input_type -> mono.codexel.RequestEdit
-	52,  // 52: mono.codexel.RevisionService.Abandon:input_type -> mono.codexel.RequestAbandon
-	54,  // 53: mono.codexel.RevisionService.Describe:input_type -> mono.codexel.RequestDescribe
-	56,  // 54: mono.codexel.RevisionService.Commit:input_type -> mono.codexel.RequestCommit
-	58,  // 55: mono.codexel.RevisionService.Undo:input_type -> mono.codexel.RequestUndo
-	60,  // 56: mono.codexel.RevisionService.Rebase:input_type -> mono.codexel.RequestRebase
-	62,  // 57: mono.codexel.RevisionService.Squash:input_type -> mono.codexel.RequestSquash
-	91,  // 58: mono.codexel.RevisionService.Evolog:input_type -> mono.codexel.RequestEvolog
-	107, // 59: mono.codexel.RevisionService.Split:input_type -> mono.codexel.RequestSplit
-	109, // 60: mono.codexel.RevisionService.Restore:input_type -> mono.codexel.RequestRestore
-	122, // 61: mono.codexel.RevisionService.DiffRange:input_type -> mono.codexel.RequestDiffRange
-	124, // 62: mono.codexel.RevisionService.ListAgentCommits:input_type -> mono.codexel.RequestListAgentCommits
-	65,  // 63: mono.codexel.BookmarkService.ListBookmarks:input_type -> mono.codexel.RequestListBookmarks
-	67,  // 64: mono.codexel.BookmarkService.SetBookmark:input_type -> mono.codexel.RequestSetBookmark
-	69,  // 65: mono.codexel.BookmarkService.MoveBookmark:input_type -> mono.codexel.RequestMoveBookmark
-	71,  // 66: mono.codexel.BookmarkService.DeleteBookmark:input_type -> mono.codexel.RequestDeleteBookmark
-	73,  // 67: mono.codexel.BookmarkService.ForgetBookmark:input_type -> mono.codexel.RequestForgetBookmark
-	75,  // 68: mono.codexel.BookmarkService.TrackBookmark:input_type -> mono.codexel.RequestTrackBookmark
-	77,  // 69: mono.codexel.BookmarkService.UntrackBookmark:input_type -> mono.codexel.RequestUntrackBookmark
-	79,  // 70: mono.codexel.GitService.Fetch:input_type -> mono.codexel.RequestFetch
-	81,  // 71: mono.codexel.GitService.Push:input_type -> mono.codexel.RequestPush
-	84,  // 72: mono.codexel.OperationService.ListOperations:input_type -> mono.codexel.RequestListOperations
-	86,  // 73: mono.codexel.OperationService.RevertOperation:input_type -> mono.codexel.RequestRevertOperation
-	88,  // 74: mono.codexel.OperationService.RestoreOperation:input_type -> mono.codexel.RequestRestoreOperation
-	93,  // 75: mono.codexel.FileService.GetFile:input_type -> mono.codexel.RequestGetFile
-	95,  // 76: mono.codexel.FileService.ListFiles:input_type -> mono.codexel.RequestListFiles
-	97,  // 77: mono.codexel.FileService.WriteFile:input_type -> mono.codexel.RequestWriteFile
-	101, // 78: mono.codexel.ConflictService.ListConflicts:input_type -> mono.codexel.RequestListConflicts
-	103, // 79: mono.codexel.ConflictService.GetConflict:input_type -> mono.codexel.RequestGetConflict
-	105, // 80: mono.codexel.ConflictService.Resolve:input_type -> mono.codexel.RequestResolve
-	112, // 81: mono.codexel.WorkspaceService.ListRepositoryWorkspaces:input_type -> mono.codexel.RequestListRepositoryWorkspaces
-	114, // 82: mono.codexel.WorkspaceService.AddRepositoryWorkspace:input_type -> mono.codexel.RequestAddRepositoryWorkspace
-	116, // 83: mono.codexel.WorkspaceService.ForgetRepositoryWorkspace:input_type -> mono.codexel.RequestForgetRepositoryWorkspace
-	118, // 84: mono.codexel.WorkspaceService.RenameRepositoryWorkspace:input_type -> mono.codexel.RequestRenameRepositoryWorkspace
-	120, // 85: mono.codexel.WorkspaceService.UpdateStale:input_type -> mono.codexel.RequestUpdateStale
-	127, // 86: mono.codexel.AliasService.ListAliases:input_type -> mono.codexel.RequestListAliases
-	129, // 87: mono.codexel.AliasService.RunAlias:input_type -> mono.codexel.RequestRunAlias
-	132, // 88: mono.codexel.TranscriptService.WatchTranscript:input_type -> mono.codexel.RequestWatchTranscript
-	10,  // 89: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
-	12,  // 90: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
-	14,  // 91: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	16,  // 92: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	18,  // 93: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	20,  // 94: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
-	22,  // 95: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	24,  // 96: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
-	32,  // 97: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
-	34,  // 98: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
-	36,  // 99: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
-	38,  // 100: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
-	40,  // 101: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
-	42,  // 102: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
-	47,  // 103: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
-	49,  // 104: mono.codexel.RevisionService.New:output_type -> mono.codexel.ResponseNew
-	51,  // 105: mono.codexel.RevisionService.Edit:output_type -> mono.codexel.ResponseEdit
-	53,  // 106: mono.codexel.RevisionService.Abandon:output_type -> mono.codexel.ResponseAbandon
-	55,  // 107: mono.codexel.RevisionService.Describe:output_type -> mono.codexel.ResponseDescribe
-	57,  // 108: mono.codexel.RevisionService.Commit:output_type -> mono.codexel.ResponseCommit
-	59,  // 109: mono.codexel.RevisionService.Undo:output_type -> mono.codexel.ResponseUndo
-	61,  // 110: mono.codexel.RevisionService.Rebase:output_type -> mono.codexel.ResponseRebase
-	63,  // 111: mono.codexel.RevisionService.Squash:output_type -> mono.codexel.ResponseSquash
-	92,  // 112: mono.codexel.RevisionService.Evolog:output_type -> mono.codexel.ResponseEvolog
-	108, // 113: mono.codexel.RevisionService.Split:output_type -> mono.codexel.ResponseSplit
-	110, // 114: mono.codexel.RevisionService.Restore:output_type -> mono.codexel.ResponseRestore
-	123, // 115: mono.codexel.RevisionService.DiffRange:output_type -> mono.codexel.ResponseDiffRange
-	125, // 116: mono.codexel.RevisionService.ListAgentCommits:output_type -> mono.codexel.ResponseListAgentCommits
-	66,  // 117: mono.codexel.BookmarkService.ListBookmarks:output_type -> mono.codexel.ResponseListBookmarks
-	68,  // 118: mono.codexel.BookmarkService.SetBookmark:output_type -> mono.codexel.ResponseSetBookmark
-	70,  // 119: mono.codexel.BookmarkService.MoveBookmark:output_type -> mono.codexel.ResponseMoveBookmark
-	72,  // 120: mono.codexel.BookmarkService.DeleteBookmark:output_type -> mono.codexel.ResponseDeleteBookmark
-	74,  // 121: mono.codexel.BookmarkService.ForgetBookmark:output_type -> mono.codexel.ResponseForgetBookmark
-	76,  // 122: mono.codexel.BookmarkService.TrackBookmark:output_type -> mono.codexel.ResponseTrackBookmark
-	78,  // 123: mono.codexel.BookmarkService.UntrackBookmark:output_type -> mono.codexel.ResponseUntrackBookmark
-	80,  // 124: mono.codexel.GitService.Fetch:output_type -> mono.codexel.ResponseFetch
-	82,  // 125: mono.codexel.GitService.Push:output_type -> mono.codexel.ResponsePush
-	85,  // 126: mono.codexel.OperationService.ListOperations:output_type -> mono.codexel.ResponseListOperations
-	87,  // 127: mono.codexel.OperationService.RevertOperation:output_type -> mono.codexel.ResponseRevertOperation
-	89,  // 128: mono.codexel.OperationService.RestoreOperation:output_type -> mono.codexel.ResponseRestoreOperation
-	94,  // 129: mono.codexel.FileService.GetFile:output_type -> mono.codexel.ResponseGetFile
-	96,  // 130: mono.codexel.FileService.ListFiles:output_type -> mono.codexel.ResponseListFiles
-	98,  // 131: mono.codexel.FileService.WriteFile:output_type -> mono.codexel.ResponseWriteFile
-	102, // 132: mono.codexel.ConflictService.ListConflicts:output_type -> mono.codexel.ResponseListConflicts
-	104, // 133: mono.codexel.ConflictService.GetConflict:output_type -> mono.codexel.ResponseGetConflict
-	106, // 134: mono.codexel.ConflictService.Resolve:output_type -> mono.codexel.ResponseResolve
-	113, // 135: mono.codexel.WorkspaceService.ListRepositoryWorkspaces:output_type -> mono.codexel.ResponseListRepositoryWorkspaces
-	115, // 136: mono.codexel.WorkspaceService.AddRepositoryWorkspace:output_type -> mono.codexel.ResponseAddRepositoryWorkspace
-	117, // 137: mono.codexel.WorkspaceService.ForgetRepositoryWorkspace:output_type -> mono.codexel.ResponseForgetRepositoryWorkspace
-	119, // 138: mono.codexel.WorkspaceService.RenameRepositoryWorkspace:output_type -> mono.codexel.ResponseRenameRepositoryWorkspace
-	121, // 139: mono.codexel.WorkspaceService.UpdateStale:output_type -> mono.codexel.ResponseUpdateStale
-	128, // 140: mono.codexel.AliasService.ListAliases:output_type -> mono.codexel.ResponseListAliases
-	130, // 141: mono.codexel.AliasService.RunAlias:output_type -> mono.codexel.ResponseRunAlias
-	133, // 142: mono.codexel.TranscriptService.WatchTranscript:output_type -> mono.codexel.ResponseWatchTranscript
-	89,  // [89:143] is the sub-list for method output_type
-	35,  // [35:89] is the sub-list for method input_type
-	35,  // [35:35] is the sub-list for extension type_name
-	35,  // [35:35] is the sub-list for extension extendee
-	0,   // [0:35] is the sub-list for field type_name
+	133, // 34: mono.codexel.ResponseWatchTranscript.entries:type_name -> mono.codexel.TranscriptEntry
+	7,   // 35: mono.codexel.Review.state:type_name -> mono.codexel.ReviewState
+	137, // 36: mono.codexel.Review.rounds:type_name -> mono.codexel.ReviewRound
+	139, // 37: mono.codexel.Review.comments:type_name -> mono.codexel.ReviewComment
+	138, // 38: mono.codexel.ReviewRound.commits:type_name -> mono.codexel.RoundCommit
+	8,   // 39: mono.codexel.ReviewComment.side:type_name -> mono.codexel.DiffSide
+	140, // 40: mono.codexel.ReviewComment.replies:type_name -> mono.codexel.ReviewReply
+	136, // 41: mono.codexel.ResponseListReviews.reviews:type_name -> mono.codexel.Review
+	136, // 42: mono.codexel.ResponseGetReview.review:type_name -> mono.codexel.Review
+	136, // 43: mono.codexel.ResponseStartReview.review:type_name -> mono.codexel.Review
+	8,   // 44: mono.codexel.RequestAddComment.side:type_name -> mono.codexel.DiffSide
+	139, // 45: mono.codexel.ResponseAddComment.comment:type_name -> mono.codexel.ReviewComment
+	139, // 46: mono.codexel.ResponseEditComment.comment:type_name -> mono.codexel.ReviewComment
+	139, // 47: mono.codexel.ResponseReply.comment:type_name -> mono.codexel.ReviewComment
+	139, // 48: mono.codexel.ResponseResolveComment.comment:type_name -> mono.codexel.ReviewComment
+	136, // 49: mono.codexel.ResponseFinish.review:type_name -> mono.codexel.Review
+	9,   // 50: mono.codexel.ResponseFinish.notified_agents:type_name -> mono.codexel.Agent
+	136, // 51: mono.codexel.ResponseApprove.review:type_name -> mono.codexel.Review
+	136, // 52: mono.codexel.ResponseStartNextRound.review:type_name -> mono.codexel.Review
+	30,  // 53: mono.codexel.ResponseRoundDiff.commit:type_name -> mono.codexel.Commit
+	47,  // 54: mono.codexel.ResponseRoundDiff.files:type_name -> mono.codexel.FileDiff
+	11,  // 55: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
+	13,  // 56: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
+	15,  // 57: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
+	17,  // 58: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
+	19,  // 59: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
+	21,  // 60: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
+	23,  // 61: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
+	25,  // 62: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
+	33,  // 63: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
+	35,  // 64: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
+	37,  // 65: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
+	39,  // 66: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
+	41,  // 67: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
+	43,  // 68: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
+	48,  // 69: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
+	50,  // 70: mono.codexel.RevisionService.New:input_type -> mono.codexel.RequestNew
+	52,  // 71: mono.codexel.RevisionService.Edit:input_type -> mono.codexel.RequestEdit
+	54,  // 72: mono.codexel.RevisionService.Abandon:input_type -> mono.codexel.RequestAbandon
+	56,  // 73: mono.codexel.RevisionService.Describe:input_type -> mono.codexel.RequestDescribe
+	58,  // 74: mono.codexel.RevisionService.Commit:input_type -> mono.codexel.RequestCommit
+	60,  // 75: mono.codexel.RevisionService.Undo:input_type -> mono.codexel.RequestUndo
+	62,  // 76: mono.codexel.RevisionService.Rebase:input_type -> mono.codexel.RequestRebase
+	64,  // 77: mono.codexel.RevisionService.Squash:input_type -> mono.codexel.RequestSquash
+	93,  // 78: mono.codexel.RevisionService.Evolog:input_type -> mono.codexel.RequestEvolog
+	109, // 79: mono.codexel.RevisionService.Split:input_type -> mono.codexel.RequestSplit
+	111, // 80: mono.codexel.RevisionService.Restore:input_type -> mono.codexel.RequestRestore
+	124, // 81: mono.codexel.RevisionService.DiffRange:input_type -> mono.codexel.RequestDiffRange
+	126, // 82: mono.codexel.RevisionService.ListAgentCommits:input_type -> mono.codexel.RequestListAgentCommits
+	67,  // 83: mono.codexel.BookmarkService.ListBookmarks:input_type -> mono.codexel.RequestListBookmarks
+	69,  // 84: mono.codexel.BookmarkService.SetBookmark:input_type -> mono.codexel.RequestSetBookmark
+	71,  // 85: mono.codexel.BookmarkService.MoveBookmark:input_type -> mono.codexel.RequestMoveBookmark
+	73,  // 86: mono.codexel.BookmarkService.DeleteBookmark:input_type -> mono.codexel.RequestDeleteBookmark
+	75,  // 87: mono.codexel.BookmarkService.ForgetBookmark:input_type -> mono.codexel.RequestForgetBookmark
+	77,  // 88: mono.codexel.BookmarkService.TrackBookmark:input_type -> mono.codexel.RequestTrackBookmark
+	79,  // 89: mono.codexel.BookmarkService.UntrackBookmark:input_type -> mono.codexel.RequestUntrackBookmark
+	81,  // 90: mono.codexel.GitService.Fetch:input_type -> mono.codexel.RequestFetch
+	83,  // 91: mono.codexel.GitService.Push:input_type -> mono.codexel.RequestPush
+	86,  // 92: mono.codexel.OperationService.ListOperations:input_type -> mono.codexel.RequestListOperations
+	88,  // 93: mono.codexel.OperationService.RevertOperation:input_type -> mono.codexel.RequestRevertOperation
+	90,  // 94: mono.codexel.OperationService.RestoreOperation:input_type -> mono.codexel.RequestRestoreOperation
+	95,  // 95: mono.codexel.FileService.GetFile:input_type -> mono.codexel.RequestGetFile
+	97,  // 96: mono.codexel.FileService.ListFiles:input_type -> mono.codexel.RequestListFiles
+	99,  // 97: mono.codexel.FileService.WriteFile:input_type -> mono.codexel.RequestWriteFile
+	103, // 98: mono.codexel.ConflictService.ListConflicts:input_type -> mono.codexel.RequestListConflicts
+	105, // 99: mono.codexel.ConflictService.GetConflict:input_type -> mono.codexel.RequestGetConflict
+	107, // 100: mono.codexel.ConflictService.Resolve:input_type -> mono.codexel.RequestResolve
+	114, // 101: mono.codexel.WorkspaceService.ListRepositoryWorkspaces:input_type -> mono.codexel.RequestListRepositoryWorkspaces
+	116, // 102: mono.codexel.WorkspaceService.AddRepositoryWorkspace:input_type -> mono.codexel.RequestAddRepositoryWorkspace
+	118, // 103: mono.codexel.WorkspaceService.ForgetRepositoryWorkspace:input_type -> mono.codexel.RequestForgetRepositoryWorkspace
+	120, // 104: mono.codexel.WorkspaceService.RenameRepositoryWorkspace:input_type -> mono.codexel.RequestRenameRepositoryWorkspace
+	122, // 105: mono.codexel.WorkspaceService.UpdateStale:input_type -> mono.codexel.RequestUpdateStale
+	129, // 106: mono.codexel.AliasService.ListAliases:input_type -> mono.codexel.RequestListAliases
+	131, // 107: mono.codexel.AliasService.RunAlias:input_type -> mono.codexel.RequestRunAlias
+	134, // 108: mono.codexel.TranscriptService.WatchTranscript:input_type -> mono.codexel.RequestWatchTranscript
+	141, // 109: mono.codexel.ReviewService.ListReviews:input_type -> mono.codexel.RequestListReviews
+	143, // 110: mono.codexel.ReviewService.GetReview:input_type -> mono.codexel.RequestGetReview
+	145, // 111: mono.codexel.ReviewService.StartReview:input_type -> mono.codexel.RequestStartReview
+	147, // 112: mono.codexel.ReviewService.AddComment:input_type -> mono.codexel.RequestAddComment
+	149, // 113: mono.codexel.ReviewService.EditComment:input_type -> mono.codexel.RequestEditComment
+	151, // 114: mono.codexel.ReviewService.DeleteComment:input_type -> mono.codexel.RequestDeleteComment
+	153, // 115: mono.codexel.ReviewService.Reply:input_type -> mono.codexel.RequestReply
+	155, // 116: mono.codexel.ReviewService.ResolveComment:input_type -> mono.codexel.RequestResolveComment
+	157, // 117: mono.codexel.ReviewService.Finish:input_type -> mono.codexel.RequestFinish
+	159, // 118: mono.codexel.ReviewService.Approve:input_type -> mono.codexel.RequestApprove
+	161, // 119: mono.codexel.ReviewService.StartNextRound:input_type -> mono.codexel.RequestStartNextRound
+	163, // 120: mono.codexel.ReviewService.RoundDiff:input_type -> mono.codexel.RequestRoundDiff
+	12,  // 121: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
+	14,  // 122: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
+	16,  // 123: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	18,  // 124: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	20,  // 125: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	22,  // 126: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
+	24,  // 127: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	26,  // 128: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
+	34,  // 129: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
+	36,  // 130: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
+	38,  // 131: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
+	40,  // 132: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
+	42,  // 133: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
+	44,  // 134: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
+	49,  // 135: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
+	51,  // 136: mono.codexel.RevisionService.New:output_type -> mono.codexel.ResponseNew
+	53,  // 137: mono.codexel.RevisionService.Edit:output_type -> mono.codexel.ResponseEdit
+	55,  // 138: mono.codexel.RevisionService.Abandon:output_type -> mono.codexel.ResponseAbandon
+	57,  // 139: mono.codexel.RevisionService.Describe:output_type -> mono.codexel.ResponseDescribe
+	59,  // 140: mono.codexel.RevisionService.Commit:output_type -> mono.codexel.ResponseCommit
+	61,  // 141: mono.codexel.RevisionService.Undo:output_type -> mono.codexel.ResponseUndo
+	63,  // 142: mono.codexel.RevisionService.Rebase:output_type -> mono.codexel.ResponseRebase
+	65,  // 143: mono.codexel.RevisionService.Squash:output_type -> mono.codexel.ResponseSquash
+	94,  // 144: mono.codexel.RevisionService.Evolog:output_type -> mono.codexel.ResponseEvolog
+	110, // 145: mono.codexel.RevisionService.Split:output_type -> mono.codexel.ResponseSplit
+	112, // 146: mono.codexel.RevisionService.Restore:output_type -> mono.codexel.ResponseRestore
+	125, // 147: mono.codexel.RevisionService.DiffRange:output_type -> mono.codexel.ResponseDiffRange
+	127, // 148: mono.codexel.RevisionService.ListAgentCommits:output_type -> mono.codexel.ResponseListAgentCommits
+	68,  // 149: mono.codexel.BookmarkService.ListBookmarks:output_type -> mono.codexel.ResponseListBookmarks
+	70,  // 150: mono.codexel.BookmarkService.SetBookmark:output_type -> mono.codexel.ResponseSetBookmark
+	72,  // 151: mono.codexel.BookmarkService.MoveBookmark:output_type -> mono.codexel.ResponseMoveBookmark
+	74,  // 152: mono.codexel.BookmarkService.DeleteBookmark:output_type -> mono.codexel.ResponseDeleteBookmark
+	76,  // 153: mono.codexel.BookmarkService.ForgetBookmark:output_type -> mono.codexel.ResponseForgetBookmark
+	78,  // 154: mono.codexel.BookmarkService.TrackBookmark:output_type -> mono.codexel.ResponseTrackBookmark
+	80,  // 155: mono.codexel.BookmarkService.UntrackBookmark:output_type -> mono.codexel.ResponseUntrackBookmark
+	82,  // 156: mono.codexel.GitService.Fetch:output_type -> mono.codexel.ResponseFetch
+	84,  // 157: mono.codexel.GitService.Push:output_type -> mono.codexel.ResponsePush
+	87,  // 158: mono.codexel.OperationService.ListOperations:output_type -> mono.codexel.ResponseListOperations
+	89,  // 159: mono.codexel.OperationService.RevertOperation:output_type -> mono.codexel.ResponseRevertOperation
+	91,  // 160: mono.codexel.OperationService.RestoreOperation:output_type -> mono.codexel.ResponseRestoreOperation
+	96,  // 161: mono.codexel.FileService.GetFile:output_type -> mono.codexel.ResponseGetFile
+	98,  // 162: mono.codexel.FileService.ListFiles:output_type -> mono.codexel.ResponseListFiles
+	100, // 163: mono.codexel.FileService.WriteFile:output_type -> mono.codexel.ResponseWriteFile
+	104, // 164: mono.codexel.ConflictService.ListConflicts:output_type -> mono.codexel.ResponseListConflicts
+	106, // 165: mono.codexel.ConflictService.GetConflict:output_type -> mono.codexel.ResponseGetConflict
+	108, // 166: mono.codexel.ConflictService.Resolve:output_type -> mono.codexel.ResponseResolve
+	115, // 167: mono.codexel.WorkspaceService.ListRepositoryWorkspaces:output_type -> mono.codexel.ResponseListRepositoryWorkspaces
+	117, // 168: mono.codexel.WorkspaceService.AddRepositoryWorkspace:output_type -> mono.codexel.ResponseAddRepositoryWorkspace
+	119, // 169: mono.codexel.WorkspaceService.ForgetRepositoryWorkspace:output_type -> mono.codexel.ResponseForgetRepositoryWorkspace
+	121, // 170: mono.codexel.WorkspaceService.RenameRepositoryWorkspace:output_type -> mono.codexel.ResponseRenameRepositoryWorkspace
+	123, // 171: mono.codexel.WorkspaceService.UpdateStale:output_type -> mono.codexel.ResponseUpdateStale
+	130, // 172: mono.codexel.AliasService.ListAliases:output_type -> mono.codexel.ResponseListAliases
+	132, // 173: mono.codexel.AliasService.RunAlias:output_type -> mono.codexel.ResponseRunAlias
+	135, // 174: mono.codexel.TranscriptService.WatchTranscript:output_type -> mono.codexel.ResponseWatchTranscript
+	142, // 175: mono.codexel.ReviewService.ListReviews:output_type -> mono.codexel.ResponseListReviews
+	144, // 176: mono.codexel.ReviewService.GetReview:output_type -> mono.codexel.ResponseGetReview
+	146, // 177: mono.codexel.ReviewService.StartReview:output_type -> mono.codexel.ResponseStartReview
+	148, // 178: mono.codexel.ReviewService.AddComment:output_type -> mono.codexel.ResponseAddComment
+	150, // 179: mono.codexel.ReviewService.EditComment:output_type -> mono.codexel.ResponseEditComment
+	152, // 180: mono.codexel.ReviewService.DeleteComment:output_type -> mono.codexel.ResponseDeleteComment
+	154, // 181: mono.codexel.ReviewService.Reply:output_type -> mono.codexel.ResponseReply
+	156, // 182: mono.codexel.ReviewService.ResolveComment:output_type -> mono.codexel.ResponseResolveComment
+	158, // 183: mono.codexel.ReviewService.Finish:output_type -> mono.codexel.ResponseFinish
+	160, // 184: mono.codexel.ReviewService.Approve:output_type -> mono.codexel.ResponseApprove
+	162, // 185: mono.codexel.ReviewService.StartNextRound:output_type -> mono.codexel.ResponseStartNextRound
+	164, // 186: mono.codexel.ReviewService.RoundDiff:output_type -> mono.codexel.ResponseRoundDiff
+	121, // [121:187] is the sub-list for method output_type
+	55,  // [55:121] is the sub-list for method input_type
+	55,  // [55:55] is the sub-list for extension type_name
+	55,  // [55:55] is the sub-list for extension extendee
+	0,   // [0:55] is the sub-list for field type_name
 }
 
 func init() { file_proto_codexel_codexel_proto_init() }
@@ -14686,10 +18464,10 @@ func file_proto_codexel_codexel_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
-			NumEnums:      7,
-			NumMessages:   127,
+			NumEnums:      9,
+			NumMessages:   156,
 			NumExtensions: 0,
-			NumServices:   11,
+			NumServices:   12,
 		},
 		GoTypes:           file_proto_codexel_codexel_proto_goTypes,
 		DependencyIndexes: file_proto_codexel_codexel_proto_depIdxs,

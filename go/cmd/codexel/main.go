@@ -18,6 +18,7 @@ import (
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/cli/flag"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/codexel/server"
 	"go.f110.dev/mono/go/codexel/static"
 	"go.f110.dev/mono/go/herdr"
@@ -56,6 +57,10 @@ func (c *command) Run(ctx context.Context) error {
 			return err
 		}
 	}
+	reviewDir, err := review.DefaultDir()
+	if err != nil {
+		return err
+	}
 	var claudeProjectsDir string
 	if !c.NoTranscript {
 		claudeProjectsDir, err = claudecode.DefaultProjectsDir()
@@ -74,7 +79,7 @@ func (c *command) Run(ctx context.Context) error {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
-	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), static.FS(), claudeProjectsDir))
+	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), static.FS(), claudeProjectsDir))
 }
 
 // serve serves h on l until ctx is canceled. The requests are canceled with ctx because Shutdown waits for the

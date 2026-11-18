@@ -42,6 +42,8 @@ const (
 	AliasServiceName = "mono.codexel.AliasService"
 	// TranscriptServiceName is the fully-qualified name of the TranscriptService service.
 	TranscriptServiceName = "mono.codexel.TranscriptService"
+	// ReviewServiceName is the fully-qualified name of the ReviewService service.
+	ReviewServiceName = "mono.codexel.ReviewService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -190,6 +192,37 @@ const (
 	// TranscriptServiceWatchTranscriptProcedure is the fully-qualified name of the TranscriptService's
 	// WatchTranscript RPC.
 	TranscriptServiceWatchTranscriptProcedure = "/mono.codexel.TranscriptService/WatchTranscript"
+	// ReviewServiceListReviewsProcedure is the fully-qualified name of the ReviewService's ListReviews
+	// RPC.
+	ReviewServiceListReviewsProcedure = "/mono.codexel.ReviewService/ListReviews"
+	// ReviewServiceGetReviewProcedure is the fully-qualified name of the ReviewService's GetReview RPC.
+	ReviewServiceGetReviewProcedure = "/mono.codexel.ReviewService/GetReview"
+	// ReviewServiceStartReviewProcedure is the fully-qualified name of the ReviewService's StartReview
+	// RPC.
+	ReviewServiceStartReviewProcedure = "/mono.codexel.ReviewService/StartReview"
+	// ReviewServiceAddCommentProcedure is the fully-qualified name of the ReviewService's AddComment
+	// RPC.
+	ReviewServiceAddCommentProcedure = "/mono.codexel.ReviewService/AddComment"
+	// ReviewServiceEditCommentProcedure is the fully-qualified name of the ReviewService's EditComment
+	// RPC.
+	ReviewServiceEditCommentProcedure = "/mono.codexel.ReviewService/EditComment"
+	// ReviewServiceDeleteCommentProcedure is the fully-qualified name of the ReviewService's
+	// DeleteComment RPC.
+	ReviewServiceDeleteCommentProcedure = "/mono.codexel.ReviewService/DeleteComment"
+	// ReviewServiceReplyProcedure is the fully-qualified name of the ReviewService's Reply RPC.
+	ReviewServiceReplyProcedure = "/mono.codexel.ReviewService/Reply"
+	// ReviewServiceResolveCommentProcedure is the fully-qualified name of the ReviewService's
+	// ResolveComment RPC.
+	ReviewServiceResolveCommentProcedure = "/mono.codexel.ReviewService/ResolveComment"
+	// ReviewServiceFinishProcedure is the fully-qualified name of the ReviewService's Finish RPC.
+	ReviewServiceFinishProcedure = "/mono.codexel.ReviewService/Finish"
+	// ReviewServiceApproveProcedure is the fully-qualified name of the ReviewService's Approve RPC.
+	ReviewServiceApproveProcedure = "/mono.codexel.ReviewService/Approve"
+	// ReviewServiceStartNextRoundProcedure is the fully-qualified name of the ReviewService's
+	// StartNextRound RPC.
+	ReviewServiceStartNextRoundProcedure = "/mono.codexel.ReviewService/StartNextRound"
+	// ReviewServiceRoundDiffProcedure is the fully-qualified name of the ReviewService's RoundDiff RPC.
+	ReviewServiceRoundDiffProcedure = "/mono.codexel.ReviewService/RoundDiff"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -2078,4 +2111,360 @@ type UnimplementedTranscriptServiceHandler struct{}
 
 func (UnimplementedTranscriptServiceHandler) WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.TranscriptService.WatchTranscript is not implemented"))
+}
+
+// ReviewServiceClient is a client for the mono.codexel.ReviewService service.
+type ReviewServiceClient interface {
+	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
+	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
+	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
+	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
+	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
+	Reply(context.Context, *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error)
+	ResolveComment(context.Context, *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error)
+	Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error)
+	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
+	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
+	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
+}
+
+// NewReviewServiceClient constructs a client for the mono.codexel.ReviewService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ReviewServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	reviewServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ReviewService").Methods()
+	return &reviewServiceClient{
+		listReviews: connect.NewClient[RequestListReviews, ResponseListReviews](
+			httpClient,
+			baseURL+ReviewServiceListReviewsProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+			connect.WithClientOptions(opts...),
+		),
+		getReview: connect.NewClient[RequestGetReview, ResponseGetReview](
+			httpClient,
+			baseURL+ReviewServiceGetReviewProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("GetReview")),
+			connect.WithClientOptions(opts...),
+		),
+		startReview: connect.NewClient[RequestStartReview, ResponseStartReview](
+			httpClient,
+			baseURL+ReviewServiceStartReviewProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("StartReview")),
+			connect.WithClientOptions(opts...),
+		),
+		addComment: connect.NewClient[RequestAddComment, ResponseAddComment](
+			httpClient,
+			baseURL+ReviewServiceAddCommentProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("AddComment")),
+			connect.WithClientOptions(opts...),
+		),
+		editComment: connect.NewClient[RequestEditComment, ResponseEditComment](
+			httpClient,
+			baseURL+ReviewServiceEditCommentProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("EditComment")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteComment: connect.NewClient[RequestDeleteComment, ResponseDeleteComment](
+			httpClient,
+			baseURL+ReviewServiceDeleteCommentProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("DeleteComment")),
+			connect.WithClientOptions(opts...),
+		),
+		reply: connect.NewClient[RequestReply, ResponseReply](
+			httpClient,
+			baseURL+ReviewServiceReplyProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("Reply")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveComment: connect.NewClient[RequestResolveComment, ResponseResolveComment](
+			httpClient,
+			baseURL+ReviewServiceResolveCommentProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("ResolveComment")),
+			connect.WithClientOptions(opts...),
+		),
+		finish: connect.NewClient[RequestFinish, ResponseFinish](
+			httpClient,
+			baseURL+ReviewServiceFinishProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("Finish")),
+			connect.WithClientOptions(opts...),
+		),
+		approve: connect.NewClient[RequestApprove, ResponseApprove](
+			httpClient,
+			baseURL+ReviewServiceApproveProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("Approve")),
+			connect.WithClientOptions(opts...),
+		),
+		startNextRound: connect.NewClient[RequestStartNextRound, ResponseStartNextRound](
+			httpClient,
+			baseURL+ReviewServiceStartNextRoundProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("StartNextRound")),
+			connect.WithClientOptions(opts...),
+		),
+		roundDiff: connect.NewClient[RequestRoundDiff, ResponseRoundDiff](
+			httpClient,
+			baseURL+ReviewServiceRoundDiffProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("RoundDiff")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// reviewServiceClient implements ReviewServiceClient.
+type reviewServiceClient struct {
+	listReviews    *connect.Client[RequestListReviews, ResponseListReviews]
+	getReview      *connect.Client[RequestGetReview, ResponseGetReview]
+	startReview    *connect.Client[RequestStartReview, ResponseStartReview]
+	addComment     *connect.Client[RequestAddComment, ResponseAddComment]
+	editComment    *connect.Client[RequestEditComment, ResponseEditComment]
+	deleteComment  *connect.Client[RequestDeleteComment, ResponseDeleteComment]
+	reply          *connect.Client[RequestReply, ResponseReply]
+	resolveComment *connect.Client[RequestResolveComment, ResponseResolveComment]
+	finish         *connect.Client[RequestFinish, ResponseFinish]
+	approve        *connect.Client[RequestApprove, ResponseApprove]
+	startNextRound *connect.Client[RequestStartNextRound, ResponseStartNextRound]
+	roundDiff      *connect.Client[RequestRoundDiff, ResponseRoundDiff]
+}
+
+// ListReviews calls mono.codexel.ReviewService.ListReviews.
+func (c *reviewServiceClient) ListReviews(ctx context.Context, req *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
+	return c.listReviews.CallUnary(ctx, req)
+}
+
+// GetReview calls mono.codexel.ReviewService.GetReview.
+func (c *reviewServiceClient) GetReview(ctx context.Context, req *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
+	return c.getReview.CallUnary(ctx, req)
+}
+
+// StartReview calls mono.codexel.ReviewService.StartReview.
+func (c *reviewServiceClient) StartReview(ctx context.Context, req *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
+	return c.startReview.CallUnary(ctx, req)
+}
+
+// AddComment calls mono.codexel.ReviewService.AddComment.
+func (c *reviewServiceClient) AddComment(ctx context.Context, req *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error) {
+	return c.addComment.CallUnary(ctx, req)
+}
+
+// EditComment calls mono.codexel.ReviewService.EditComment.
+func (c *reviewServiceClient) EditComment(ctx context.Context, req *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error) {
+	return c.editComment.CallUnary(ctx, req)
+}
+
+// DeleteComment calls mono.codexel.ReviewService.DeleteComment.
+func (c *reviewServiceClient) DeleteComment(ctx context.Context, req *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error) {
+	return c.deleteComment.CallUnary(ctx, req)
+}
+
+// Reply calls mono.codexel.ReviewService.Reply.
+func (c *reviewServiceClient) Reply(ctx context.Context, req *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error) {
+	return c.reply.CallUnary(ctx, req)
+}
+
+// ResolveComment calls mono.codexel.ReviewService.ResolveComment.
+func (c *reviewServiceClient) ResolveComment(ctx context.Context, req *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error) {
+	return c.resolveComment.CallUnary(ctx, req)
+}
+
+// Finish calls mono.codexel.ReviewService.Finish.
+func (c *reviewServiceClient) Finish(ctx context.Context, req *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error) {
+	return c.finish.CallUnary(ctx, req)
+}
+
+// Approve calls mono.codexel.ReviewService.Approve.
+func (c *reviewServiceClient) Approve(ctx context.Context, req *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error) {
+	return c.approve.CallUnary(ctx, req)
+}
+
+// StartNextRound calls mono.codexel.ReviewService.StartNextRound.
+func (c *reviewServiceClient) StartNextRound(ctx context.Context, req *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error) {
+	return c.startNextRound.CallUnary(ctx, req)
+}
+
+// RoundDiff calls mono.codexel.ReviewService.RoundDiff.
+func (c *reviewServiceClient) RoundDiff(ctx context.Context, req *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error) {
+	return c.roundDiff.CallUnary(ctx, req)
+}
+
+// ReviewServiceHandler is an implementation of the mono.codexel.ReviewService service.
+type ReviewServiceHandler interface {
+	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
+	GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error)
+	StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error)
+	AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error)
+	EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error)
+	DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error)
+	Reply(context.Context, *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error)
+	ResolveComment(context.Context, *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error)
+	Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error)
+	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
+	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
+	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
+}
+
+// NewReviewServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	reviewServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ReviewService").Methods()
+	reviewServiceListReviewsHandler := connect.NewUnaryHandler(
+		ReviewServiceListReviewsProcedure,
+		svc.ListReviews,
+		connect.WithSchema(reviewServiceMethods.ByName("ListReviews")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceGetReviewHandler := connect.NewUnaryHandler(
+		ReviewServiceGetReviewProcedure,
+		svc.GetReview,
+		connect.WithSchema(reviewServiceMethods.ByName("GetReview")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceStartReviewHandler := connect.NewUnaryHandler(
+		ReviewServiceStartReviewProcedure,
+		svc.StartReview,
+		connect.WithSchema(reviewServiceMethods.ByName("StartReview")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceAddCommentHandler := connect.NewUnaryHandler(
+		ReviewServiceAddCommentProcedure,
+		svc.AddComment,
+		connect.WithSchema(reviewServiceMethods.ByName("AddComment")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceEditCommentHandler := connect.NewUnaryHandler(
+		ReviewServiceEditCommentProcedure,
+		svc.EditComment,
+		connect.WithSchema(reviewServiceMethods.ByName("EditComment")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceDeleteCommentHandler := connect.NewUnaryHandler(
+		ReviewServiceDeleteCommentProcedure,
+		svc.DeleteComment,
+		connect.WithSchema(reviewServiceMethods.ByName("DeleteComment")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceReplyHandler := connect.NewUnaryHandler(
+		ReviewServiceReplyProcedure,
+		svc.Reply,
+		connect.WithSchema(reviewServiceMethods.ByName("Reply")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceResolveCommentHandler := connect.NewUnaryHandler(
+		ReviewServiceResolveCommentProcedure,
+		svc.ResolveComment,
+		connect.WithSchema(reviewServiceMethods.ByName("ResolveComment")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceFinishHandler := connect.NewUnaryHandler(
+		ReviewServiceFinishProcedure,
+		svc.Finish,
+		connect.WithSchema(reviewServiceMethods.ByName("Finish")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceApproveHandler := connect.NewUnaryHandler(
+		ReviewServiceApproveProcedure,
+		svc.Approve,
+		connect.WithSchema(reviewServiceMethods.ByName("Approve")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceStartNextRoundHandler := connect.NewUnaryHandler(
+		ReviewServiceStartNextRoundProcedure,
+		svc.StartNextRound,
+		connect.WithSchema(reviewServiceMethods.ByName("StartNextRound")),
+		connect.WithHandlerOptions(opts...),
+	)
+	reviewServiceRoundDiffHandler := connect.NewUnaryHandler(
+		ReviewServiceRoundDiffProcedure,
+		svc.RoundDiff,
+		connect.WithSchema(reviewServiceMethods.ByName("RoundDiff")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.ReviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ReviewServiceListReviewsProcedure:
+			reviewServiceListReviewsHandler.ServeHTTP(w, r)
+		case ReviewServiceGetReviewProcedure:
+			reviewServiceGetReviewHandler.ServeHTTP(w, r)
+		case ReviewServiceStartReviewProcedure:
+			reviewServiceStartReviewHandler.ServeHTTP(w, r)
+		case ReviewServiceAddCommentProcedure:
+			reviewServiceAddCommentHandler.ServeHTTP(w, r)
+		case ReviewServiceEditCommentProcedure:
+			reviewServiceEditCommentHandler.ServeHTTP(w, r)
+		case ReviewServiceDeleteCommentProcedure:
+			reviewServiceDeleteCommentHandler.ServeHTTP(w, r)
+		case ReviewServiceReplyProcedure:
+			reviewServiceReplyHandler.ServeHTTP(w, r)
+		case ReviewServiceResolveCommentProcedure:
+			reviewServiceResolveCommentHandler.ServeHTTP(w, r)
+		case ReviewServiceFinishProcedure:
+			reviewServiceFinishHandler.ServeHTTP(w, r)
+		case ReviewServiceApproveProcedure:
+			reviewServiceApproveHandler.ServeHTTP(w, r)
+		case ReviewServiceStartNextRoundProcedure:
+			reviewServiceStartNextRoundHandler.ServeHTTP(w, r)
+		case ReviewServiceRoundDiffProcedure:
+			reviewServiceRoundDiffHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedReviewServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedReviewServiceHandler struct{}
+
+func (UnimplementedReviewServiceHandler) ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ListReviews is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) GetReview(context.Context, *connect.Request[RequestGetReview]) (*connect.Response[ResponseGetReview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.GetReview is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) StartReview(context.Context, *connect.Request[RequestStartReview]) (*connect.Response[ResponseStartReview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.StartReview is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) AddComment(context.Context, *connect.Request[RequestAddComment]) (*connect.Response[ResponseAddComment], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.AddComment is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) EditComment(context.Context, *connect.Request[RequestEditComment]) (*connect.Response[ResponseEditComment], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.EditComment is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) DeleteComment(context.Context, *connect.Request[RequestDeleteComment]) (*connect.Response[ResponseDeleteComment], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.DeleteComment is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) Reply(context.Context, *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Reply is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) ResolveComment(context.Context, *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.ResolveComment is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Finish is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Approve is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.StartNextRound is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.RoundDiff is not implemented"))
 }

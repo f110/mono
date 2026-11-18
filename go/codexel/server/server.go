@@ -17,14 +17,18 @@ import (
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
+	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/logger"
 )
 
 // New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
-// Code. If it is empty, TranscriptService is disabled.
-func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS, claudeProjectsDir string) http.Handler {
+// Code. If it is empty, TranscriptService is disabled. MCP for the coding agents is served at /mcp.
+func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, frontend fs.FS, claudeProjectsDir string) http.Handler {
 	mux := http.NewServeMux()
+	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
+	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
+	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf, herdrClient)))
 	mux.Handle(api.NewRevisionServiceHandler(NewRevisionHandler(conf)))
@@ -181,7 +185,7 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 		}
 		return nil, toConnectError(err)
 	}
-	workspaces, err := h.workspaceLabels(ctx)
+	workspaces, err := workspaceLabels(ctx, h.herdr)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +223,7 @@ func (h *AgentHandler) listAgents(ctx context.Context) ([]*api.Agent, []string, 
 	if err != nil {
 		return nil, nil, toConnectError(err)
 	}
-	workspaces, err := h.workspaceLabels(ctx)
+	workspaces, err := workspaceLabels(ctx, h.herdr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -232,8 +236,8 @@ func (h *AgentHandler) listAgents(ctx context.Context) ([]*api.Agent, []string, 
 	return res, panes, nil
 }
 
-func (h *AgentHandler) workspaceLabels(ctx context.Context) (map[string]string, error) {
-	workspaces, err := h.herdr.ListWorkspaces(ctx)
+func workspaceLabels(ctx context.Context, c *herdr.Client) (map[string]string, error) {
+	workspaces, err := c.ListWorkspaces(ctx)
 	if err != nil {
 		return nil, toConnectError(err)
 	}

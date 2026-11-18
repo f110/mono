@@ -887,3 +887,219 @@ message ResponseWatchTranscript {
   string                   last_prompt = 2;
   repeated TranscriptEntry entries     = 3;
 }
+
+// ReviewService provides the reviews of the changes. The changes are identified by the change IDs, so the comments
+// follow the changes after the agent rewrites them.
+service ReviewService {
+  // ListReviews returns the reviews of the repository in descending order of the creation.
+  rpc ListReviews(RequestListReviews) returns (ResponseListReviews);
+  rpc GetReview(RequestGetReview) returns (ResponseGetReview);
+  // StartReview starts the review of the changes. The first round is the current commits of the changes.
+  rpc StartReview(RequestStartReview) returns (ResponseStartReview);
+  rpc AddComment(RequestAddComment) returns (ResponseAddComment);
+  rpc EditComment(RequestEditComment) returns (ResponseEditComment);
+  rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
+  rpc Reply(RequestReply) returns (ResponseReply);
+  rpc ResolveComment(RequestResolveComment) returns (ResponseResolveComment);
+  // Finish finishes the round and tells the agents which created the changes that the review is finished.
+  rpc Finish(RequestFinish) returns (ResponseFinish);
+  rpc Approve(RequestApprove) returns (ResponseApprove);
+  // StartNextRound starts the next round with the current commits of the changes after the agent addresses the
+  // comments. The comments are moved to the lines of the anchors.
+  rpc StartNextRound(RequestStartNextRound) returns (ResponseStartNextRound);
+  // RoundDiff returns the diff of the change between the rounds.
+  rpc RoundDiff(RequestRoundDiff) returns (ResponseRoundDiff);
+}
+
+enum ReviewState {
+  REVIEW_STATE_UNSPECIFIED = 0;
+  REVIEW_STATE_OPEN        = 1;
+  REVIEW_STATE_FINISHED    = 2;
+  REVIEW_STATE_APPROVED    = 3;
+}
+
+// DiffSide is the side of the diff. NEW is the file at the commit and OLD is the file at the parent.
+enum DiffSide {
+  DIFF_SIDE_UNSPECIFIED = 0;
+  DIFF_SIDE_NEW         = 1;
+  DIFF_SIDE_OLD         = 2;
+}
+
+message Review {
+  string id = 1;
+  // repository is the path of the repository.
+  string repository = 2;
+  // change_ids are the changes under review.
+  repeated string      change_ids = 3;
+  ReviewState          state      = 4;
+  repeated ReviewRound rounds     = 5;
+  repeated ReviewComment comments = 6;
+  // created_at and updated_at are the unix time.
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+message ReviewRound {
+  // number starts from 1.
+  int32 number = 1;
+  // commits are the commits of the changes at the start of the round. The change which disappeared is absent.
+  repeated RoundCommit commits    = 2;
+  int64                created_at = 3;
+}
+
+message RoundCommit {
+  string change_id = 1;
+  string commit_id = 2;
+}
+
+// ReviewComment is the comment on the whole review if change_id is empty, the file if start_line is 0 and the lines
+// of the file otherwise. The lines are the lines in the latest round.
+message ReviewComment {
+  string   id         = 1;
+  string   change_id  = 2;
+  string   path       = 3;
+  DiffSide side       = 4;
+  int32    start_line = 5;
+  int32    end_line   = 6;
+  // anchor is the content of the lines when the comment was written.
+  string anchor = 7;
+  // drifted is true if the anchor is not found in the latest round.
+  bool drifted = 8;
+  // round is the round in which the comment was written.
+  int32                round      = 9;
+  string               body       = 10;
+  string               author     = 11;
+  bool                 resolved   = 12;
+  repeated ReviewReply replies    = 13;
+  int64                created_at = 14;
+  int64                updated_at = 15;
+}
+
+message ReviewReply {
+  string id         = 1;
+  string body       = 2;
+  string author     = 3;
+  int64  created_at = 4;
+}
+
+message RequestListReviews {
+  // path is the repository. All reviews are returned if it is empty.
+  string path = 1;
+}
+
+message ResponseListReviews {
+  repeated Review reviews = 1;
+}
+
+message RequestGetReview {
+  string id = 1;
+}
+
+message ResponseGetReview {
+  Review review = 1;
+}
+
+message RequestStartReview {
+  string          path       = 1;
+  repeated string change_ids = 2;
+}
+
+message ResponseStartReview {
+  Review review = 1;
+}
+
+message RequestAddComment {
+  string review_id = 1;
+  // change_id, path, side, start_line and end_line are the target of the comment. See ReviewComment.
+  string   change_id  = 2;
+  string   path       = 3;
+  DiffSide side       = 4;
+  int32    start_line = 5;
+  int32    end_line   = 6;
+  string   body       = 7;
+}
+
+message ResponseAddComment {
+  ReviewComment comment = 1;
+}
+
+message RequestEditComment {
+  string review_id  = 1;
+  string comment_id = 2;
+  string body       = 3;
+}
+
+message ResponseEditComment {
+  ReviewComment comment = 1;
+}
+
+message RequestDeleteComment {
+  string review_id  = 1;
+  string comment_id = 2;
+}
+
+message ResponseDeleteComment {}
+
+message RequestReply {
+  string review_id  = 1;
+  string comment_id = 2;
+  string body       = 3;
+}
+
+message ResponseReply {
+  ReviewComment comment = 1;
+}
+
+message RequestResolveComment {
+  string review_id  = 1;
+  string comment_id = 2;
+  bool   resolved   = 3;
+}
+
+message ResponseResolveComment {
+  ReviewComment comment = 1;
+}
+
+message RequestFinish {
+  string review_id = 1;
+}
+
+message ResponseFinish {
+  Review review = 1;
+  // notified_agents are the agents which were told that the review is finished. The agents are found by the
+  // Agent and Agent-Session trailers of the changes.
+  repeated Agent notified_agents = 2;
+}
+
+message RequestApprove {
+  string review_id = 1;
+}
+
+message ResponseApprove {
+  Review review = 1;
+}
+
+message RequestStartNextRound {
+  string review_id = 1;
+}
+
+message ResponseStartNextRound {
+  Review review = 1;
+}
+
+message RequestRoundDiff {
+  string review_id = 1;
+  string change_id = 2;
+  // from_round is the start of the diff. 0 means the parent of the commit of to_round.
+  int32 from_round = 3;
+  // to_round is the end of the diff. 0 means the latest round.
+  int32 to_round = 4;
+}
+
+message ResponseRoundDiff {
+  // commit is the commit of the change at to_round.
+  Commit commit = 1;
+  // description is the whole description of commit.
+  string            description = 2;
+  repeated FileDiff files       = 3;
+}

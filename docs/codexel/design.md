@@ -142,9 +142,11 @@ crit の機能を踏襲する。crit とのファイル形式の互換は持た�
 crit はブランチと作業ツリーを単位にするが、Codexel は jj の change ID を単位にする。change ID はリビジョンを書き換えても
 変わらないので、エージェントが `jj squash` や `jj describe` で修正してもコメントの対象を見失わない。
 
-- レビュー: 対象リポジトリ、対象リビジョンの change ID の集合、ベース (レビュー開始時の親の commit ID)、ラウンドの一覧、状態 (open / finished / approved)
+- レビュー: 対象リポジトリ、対象リビジョンの change ID の集合、ラウンドの一覧、状態 (open / finished / approved)
 - ラウンド: ラウンド開始時の各 change ID の commit ID
-- コメント: 対象 (§5.2)、行範囲、行の内容 (anchor)、本文、作者、resolved、返信
+- コメント: 対象 (§5.2)、行範囲、差分の側 (old / new)、行の内容 (anchor)、本文、作者、resolved、返信
+
+差分は change ごとに親との差分を表示する。コメントの対象の change ID が表示の単位から決まるようにするため。
 
 保存先は `~/.config/codexel/reviews/<review-id>.json` で、1 レビュー 1 ファイルにする。
 
@@ -170,8 +172,11 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 - ラウンド間の差分: 差分の始点と終点を選んで表示する (f110/crit の inter-round diff と同じ)
     - 始点: ベース、またはラウンド M
     - 終点: ラウンド N (M < N、既定は最新)
-    - 差分は各ラウンドで記録した commit ID 同士の `jj diff --from --to` で出す。コミットメッセージも同じ始点・終点で差分を表示する
+    - ベースからの差分は、ラウンド N の commit ID と親の差分 (通常の表示) にする
+    - ラウンド M からの差分は change ごとに各ラウンドで記録した commit ID 同士の `jj diff --from --to` で出す。コミットメッセージも同じ始点・終点で差分を表示する
 - Finish / Approve
+- 次のラウンドはエージェントが指摘に対応した後に MCP のツールで開始する (crit で再度 `crit` を実行するのと同じ)。その時点の各 change ID の
+  commit ID を記録し、コメントの位置を合わせ直して、状態を open に戻す
 - vim キーバインド (`j`/`k`, `c`, `Shift+F`, `?`)
 - Markdown・Mermaid のレンダリング、`linguist-generated` の折りたたみ、自動で既読にするパターン
 
@@ -182,7 +187,7 @@ Finish したら、コミットの `Agent-Session` から作成したエージ�
 エージェントは Codexel が提供する MCP でコメントを読み、返信・resolve する。
 
 - `go/issue/mcp` と同じく、Codexel のサーバーが MCP エンドポイント (`/mcp`) を提供する
-- ツール: 未解決のコメントの一覧、返信、resolve
+- ツール: レビューの一覧、未解決のコメントの一覧、返信、resolve、次のラウンドの開始
 - MCP サーバーとして登録するには Codexel のアドレスが毎回同じである必要があるので、`--addr` の既定値は固定のポートにする (番号は #123 で決める)
 
 ### 5.5 再実装しない機能
@@ -261,7 +266,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `RepositoryService` | `ListRepositories`, `OpenRepository`, `CloseRepository`, `WatchRepository` (stream, op ID の変化) |
 | `RevisionService` | `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と各変更操作 (§4.2) |
 | `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
-| `ReviewService` | `GetReview`, `StartReview`, `AddComment`, `Reply`, `Resolve`, `Finish`, `Approve`, `RoundDiff` |
+| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Approve`, `StartNextRound`, `RoundDiff` |
 | `PullRequestService` | `ListTemplates`, `Submit` |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。

@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "review",
+    srcs = ["review.go"],
+    importpath = "go.f110.dev/mono/go/codexel/review",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/jujutsu",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "review_test",
+    srcs = ["review_test.go"],
+    embed = [":review"],
+    deps = [
+        "//go/jujutsu",
+        "//go/testing/assertion",
+    ],
+)
