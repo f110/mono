@@ -285,6 +285,52 @@ func (h *RevisionHandler) Undo(ctx context.Context, req *connect.Request[api.Req
 	return connect.NewResponse(api.ResponseUndo_builder{Output: new(out)}.Build()), nil
 }
 
+var rebaseSources = map[api.RebaseSource]jujutsu.RebaseSource{
+	api.RebaseSource_REBASE_SOURCE_REVISIONS:   jujutsu.RebaseRevisions,
+	api.RebaseSource_REBASE_SOURCE_DESCENDANTS: jujutsu.RebaseSourceDescendants,
+	api.RebaseSource_REBASE_SOURCE_BRANCH:      jujutsu.RebaseBranch,
+}
+
+var rebaseTargets = map[api.RebaseTarget]jujutsu.RebaseTarget{
+	api.RebaseTarget_REBASE_TARGET_ONTO:          jujutsu.RebaseOnto,
+	api.RebaseTarget_REBASE_TARGET_INSERT_AFTER:  jujutsu.RebaseInsertAfter,
+	api.RebaseTarget_REBASE_TARGET_INSERT_BEFORE: jujutsu.RebaseInsertBefore,
+}
+
+func (h *RevisionHandler) Rebase(ctx context.Context, req *connect.Request[api.RequestRebase]) (*connect.Response[api.ResponseRebase], error) {
+	source, ok := rebaseSources[req.Msg.GetSource()]
+	if !ok {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("source is required"))
+	}
+	target, ok := rebaseTargets[req.Msg.GetTarget()]
+	if !ok {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("target is required"))
+	}
+	if len(req.Msg.GetRevisions()) == 0 || len(req.Msg.GetDestinations()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revisions and destinations are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
+		return r.Rebase(ctx, req.Msg.GetRevisions(), source, req.Msg.GetDestinations(), target)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseRebase_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Squash(ctx context.Context, req *connect.Request[api.RequestSquash]) (*connect.Response[api.ResponseSquash], error) {
+	if len(req.Msg.GetRevisions()) == 0 || req.Msg.GetInto() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revisions and into are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
+		return r.Squash(ctx, req.Msg.GetRevisions(), req.Msg.GetInto(), req.Msg.GetDescription())
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseSquash_builder{Output: new(out)}.Build()), nil
+}
+
 // mutate runs the operation on the opened repository.
 func (h *RevisionHandler) mutate(path string, fn func(*jujutsu.Repository) (string, error)) (string, error) {
 	repo, err := openedRepository(h.config, path)

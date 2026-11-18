@@ -25,8 +25,9 @@ const ChangeId = ({ commit }: { commit: Commit }) => (
   </Typography>
 )
 
-const CommitLine = ({ commit }: { commit: Commit }) => (
+const CommitLine = ({ commit, mark }: { commit: Commit; mark: string | undefined }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+    {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
     <ChangeId commit={commit} />
     {commit.localBookmarks.map((b) => (
       <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
@@ -54,6 +55,7 @@ export const RevisionGraph = ({
   rows,
   selected,
   checked,
+  marks,
   onSelect,
   onContextMenu,
 }: {
@@ -61,6 +63,8 @@ export const RevisionGraph = ({
   selected: number
   // checked is the commit IDs of the checked revisions.
   checked: Set<string>
+  // marks is the labels shown on the revisions by the commit ID (e.g. the source of the rebase).
+  marks: Map<string, string>
   onSelect: (index: number) => void
   onContextMenu: (index: number, x: number, y: number) => void
 }) => {
@@ -109,7 +113,7 @@ export const RevisionGraph = ({
                     workingCopy={commit.currentWorkingCopy}
                   />
                   {line.node ? (
-                    <CommitLine commit={commit} />
+                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} />
                   ) : (
                     <Typography variant="caption" color="text.disabled">
                       {line.content}

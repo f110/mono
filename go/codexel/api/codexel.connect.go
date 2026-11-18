@@ -87,6 +87,10 @@ const (
 	RevisionServiceCommitProcedure = "/mono.codexel.RevisionService/Commit"
 	// RevisionServiceUndoProcedure is the fully-qualified name of the RevisionService's Undo RPC.
 	RevisionServiceUndoProcedure = "/mono.codexel.RevisionService/Undo"
+	// RevisionServiceRebaseProcedure is the fully-qualified name of the RevisionService's Rebase RPC.
+	RevisionServiceRebaseProcedure = "/mono.codexel.RevisionService/Rebase"
+	// RevisionServiceSquashProcedure is the fully-qualified name of the RevisionService's Squash RPC.
+	RevisionServiceSquashProcedure = "/mono.codexel.RevisionService/Squash"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -525,6 +529,8 @@ type RevisionServiceClient interface {
 	Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error)
 	Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error)
 	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
+	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
+	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -586,6 +592,18 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("Undo")),
 			connect.WithClientOptions(opts...),
 		),
+		rebase: connect.NewClient[RequestRebase, ResponseRebase](
+			httpClient,
+			baseURL+RevisionServiceRebaseProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Rebase")),
+			connect.WithClientOptions(opts...),
+		),
+		squash: connect.NewClient[RequestSquash, ResponseSquash](
+			httpClient,
+			baseURL+RevisionServiceSquashProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Squash")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -599,6 +617,8 @@ type revisionServiceClient struct {
 	describe    *connect.Client[RequestDescribe, ResponseDescribe]
 	commit      *connect.Client[RequestCommit, ResponseCommit]
 	undo        *connect.Client[RequestUndo, ResponseUndo]
+	rebase      *connect.Client[RequestRebase, ResponseRebase]
+	squash      *connect.Client[RequestSquash, ResponseSquash]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -641,6 +661,16 @@ func (c *revisionServiceClient) Undo(ctx context.Context, req *connect.Request[R
 	return c.undo.CallUnary(ctx, req)
 }
 
+// Rebase calls mono.codexel.RevisionService.Rebase.
+func (c *revisionServiceClient) Rebase(ctx context.Context, req *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
+	return c.rebase.CallUnary(ctx, req)
+}
+
+// Squash calls mono.codexel.RevisionService.Squash.
+func (c *revisionServiceClient) Squash(ctx context.Context, req *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
+	return c.squash.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
@@ -651,6 +681,8 @@ type RevisionServiceHandler interface {
 	Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error)
 	Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error)
 	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
+	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
+	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -708,6 +740,18 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("Undo")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceRebaseHandler := connect.NewUnaryHandler(
+		RevisionServiceRebaseProcedure,
+		svc.Rebase,
+		connect.WithSchema(revisionServiceMethods.ByName("Rebase")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceSquashHandler := connect.NewUnaryHandler(
+		RevisionServiceSquashProcedure,
+		svc.Squash,
+		connect.WithSchema(revisionServiceMethods.ByName("Squash")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
@@ -726,6 +770,10 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 			revisionServiceCommitHandler.ServeHTTP(w, r)
 		case RevisionServiceUndoProcedure:
 			revisionServiceUndoHandler.ServeHTTP(w, r)
+		case RevisionServiceRebaseProcedure:
+			revisionServiceRebaseHandler.ServeHTTP(w, r)
+		case RevisionServiceSquashProcedure:
+			revisionServiceSquashHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -765,4 +813,12 @@ func (UnimplementedRevisionServiceHandler) Commit(context.Context, *connect.Requ
 
 func (UnimplementedRevisionServiceHandler) Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Undo is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Rebase is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Squash is not implemented"))
 }

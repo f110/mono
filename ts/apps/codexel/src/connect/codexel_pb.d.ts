@@ -1196,6 +1196,108 @@ export declare type ResponseUndo = Message<"mono.codexel.ResponseUndo"> & {
 export declare const ResponseUndoSchema: GenMessage<ResponseUndo>;
 
 /**
+ * @generated from message mono.codexel.RequestRebase
+ */
+export declare type RequestRebase = Message<"mono.codexel.RequestRebase"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+
+  /**
+   * @generated from field: mono.codexel.RebaseSource source = 3;
+   */
+  source: RebaseSource;
+
+  /**
+   * @generated from field: repeated string destinations = 4;
+   */
+  destinations: string[];
+
+  /**
+   * @generated from field: mono.codexel.RebaseTarget target = 5;
+   */
+  target: RebaseTarget;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRebase.
+ * Use `create(RequestRebaseSchema)` to create a new message.
+ */
+export declare const RequestRebaseSchema: GenMessage<RequestRebase>;
+
+/**
+ * @generated from message mono.codexel.ResponseRebase
+ */
+export declare type ResponseRebase = Message<"mono.codexel.ResponseRebase"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRebase.
+ * Use `create(ResponseRebaseSchema)` to create a new message.
+ */
+export declare const ResponseRebaseSchema: GenMessage<ResponseRebase>;
+
+/**
+ * @generated from message mono.codexel.RequestSquash
+ */
+export declare type RequestSquash = Message<"mono.codexel.RequestSquash"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+
+  /**
+   * @generated from field: string into = 3;
+   */
+  into: string;
+
+  /**
+   * description becomes the description of the destination. The description of the destination is kept if it is
+   * empty.
+   *
+   * @generated from field: string description = 4;
+   */
+  description: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestSquash.
+ * Use `create(RequestSquashSchema)` to create a new message.
+ */
+export declare const RequestSquashSchema: GenMessage<RequestSquash>;
+
+/**
+ * @generated from message mono.codexel.ResponseSquash
+ */
+export declare type ResponseSquash = Message<"mono.codexel.ResponseSquash"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseSquash.
+ * Use `create(ResponseSquashSchema)` to create a new message.
+ */
+export declare const ResponseSquashSchema: GenMessage<ResponseSquash>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -1304,6 +1406,72 @@ export enum DiffLineKind {
  * Describes the enum mono.codexel.DiffLineKind.
  */
 export declare const DiffLineKindSchema: GenEnum<DiffLineKind>;
+
+/**
+ * @generated from enum mono.codexel.RebaseSource
+ */
+export enum RebaseSource {
+  /**
+   * @generated from enum value: REBASE_SOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * REBASE_SOURCE_REVISIONS rebases only the revisions (-r).
+   *
+   * @generated from enum value: REBASE_SOURCE_REVISIONS = 1;
+   */
+  REVISIONS = 1,
+
+  /**
+   * REBASE_SOURCE_DESCENDANTS rebases the revisions and the descendants (-s).
+   *
+   * @generated from enum value: REBASE_SOURCE_DESCENDANTS = 2;
+   */
+  DESCENDANTS = 2,
+
+  /**
+   * REBASE_SOURCE_BRANCH rebases the whole branch relative to the destination (-b).
+   *
+   * @generated from enum value: REBASE_SOURCE_BRANCH = 3;
+   */
+  BRANCH = 3,
+}
+
+/**
+ * Describes the enum mono.codexel.RebaseSource.
+ */
+export declare const RebaseSourceSchema: GenEnum<RebaseSource>;
+
+/**
+ * @generated from enum mono.codexel.RebaseTarget
+ */
+export enum RebaseTarget {
+  /**
+   * @generated from enum value: REBASE_TARGET_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: REBASE_TARGET_ONTO = 1;
+   */
+  ONTO = 1,
+
+  /**
+   * @generated from enum value: REBASE_TARGET_INSERT_AFTER = 2;
+   */
+  INSERT_AFTER = 2,
+
+  /**
+   * @generated from enum value: REBASE_TARGET_INSERT_BEFORE = 3;
+   */
+  INSERT_BEFORE = 3,
+}
+
+/**
+ * Describes the enum mono.codexel.RebaseTarget.
+ */
+export declare const RebaseTargetSchema: GenEnum<RebaseTarget>;
 
 /**
  * AgentService provides the coding agents running in herdr.
@@ -1520,6 +1688,24 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestUndoSchema;
     output: typeof ResponseUndoSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.RevisionService.Rebase
+   */
+  rebase: {
+    methodKind: "unary";
+    input: typeof RequestRebaseSchema;
+    output: typeof ResponseRebaseSchema;
+  },
+  /**
+   * Squash moves the changes of the revisions into the destination.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Squash
+   */
+  squash: {
+    methodKind: "unary";
+    input: typeof RequestSquashSchema;
+    output: typeof ResponseSquashSchema;
   },
 }>;
 

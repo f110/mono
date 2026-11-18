@@ -145,6 +145,9 @@ service RevisionService {
   rpc Commit(RequestCommit) returns (ResponseCommit);
   // Undo undoes the last operation.
   rpc Undo(RequestUndo) returns (ResponseUndo);
+  rpc Rebase(RequestRebase) returns (ResponseRebase);
+  // Squash moves the changes of the revisions into the destination.
+  rpc Squash(RequestSquash) returns (ResponseSquash);
 }
 
 message Repository {
@@ -358,5 +361,47 @@ message RequestUndo {
 }
 
 message ResponseUndo {
+  string output = 1;
+}
+
+enum RebaseSource {
+  REBASE_SOURCE_UNSPECIFIED = 0;
+  // REBASE_SOURCE_REVISIONS rebases only the revisions (-r).
+  REBASE_SOURCE_REVISIONS = 1;
+  // REBASE_SOURCE_DESCENDANTS rebases the revisions and the descendants (-s).
+  REBASE_SOURCE_DESCENDANTS = 2;
+  // REBASE_SOURCE_BRANCH rebases the whole branch relative to the destination (-b).
+  REBASE_SOURCE_BRANCH = 3;
+}
+
+enum RebaseTarget {
+  REBASE_TARGET_UNSPECIFIED   = 0;
+  REBASE_TARGET_ONTO          = 1;
+  REBASE_TARGET_INSERT_AFTER  = 2;
+  REBASE_TARGET_INSERT_BEFORE = 3;
+}
+
+message RequestRebase {
+  string          path         = 1;
+  repeated string revisions    = 2;
+  RebaseSource    source       = 3;
+  repeated string destinations = 4;
+  RebaseTarget    target       = 5;
+}
+
+message ResponseRebase {
+  string output = 1;
+}
+
+message RequestSquash {
+  string          path      = 1;
+  repeated string revisions = 2;
+  string          into      = 3;
+  // description becomes the description of the destination. The description of the destination is kept if it is
+  // empty.
+  string description = 4;
+}
+
+message ResponseSquash {
   string output = 1;
 }

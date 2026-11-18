@@ -61,3 +61,57 @@ func (r *Repository) mutate(ctx context.Context, args ...string) (string, error)
 	}
 	return strings.TrimSpace(string(stderr)), nil
 }
+
+// RebaseSource is what to rebase.
+type RebaseSource string
+
+const (
+	// RebaseRevisions rebases only the revisions (-r).
+	RebaseRevisions RebaseSource = "revisions"
+	// RebaseSourceDescendants rebases the revisions and the descendants (-s).
+	RebaseSourceDescendants RebaseSource = "source"
+	// RebaseBranch rebases the whole branch relative to the destination (-b).
+	RebaseBranch RebaseSource = "branch"
+)
+
+// RebaseTarget is where to rebase.
+type RebaseTarget string
+
+const (
+	RebaseOnto         RebaseTarget = "onto"
+	RebaseInsertAfter  RebaseTarget = "insert-after"
+	RebaseInsertBefore RebaseTarget = "insert-before"
+)
+
+func rebaseArgs(revs []string, source RebaseSource, destinations []string, target RebaseTarget) []string {
+	args := []string{"rebase"}
+	for _, v := range revs {
+		args = append(args, "--"+string(source)+"="+v)
+	}
+	for _, v := range destinations {
+		args = append(args, "--"+string(target)+"="+v)
+	}
+	return args
+}
+
+func (r *Repository) Rebase(ctx context.Context, revs []string, source RebaseSource, destinations []string, target RebaseTarget) (string, error) {
+	return r.mutate(ctx, rebaseArgs(revs, source, destinations, target)...)
+}
+
+// squashArgs returns the arguments of jj squash. The description of the destination is kept if message is empty,
+// otherwise message becomes the description. jj opens the editor without them if both have the descriptions.
+func squashArgs(from []string, into, message string) []string {
+	args := []string{"squash"}
+	for _, v := range from {
+		args = append(args, "--from="+v)
+	}
+	args = append(args, "--into="+into)
+	if message == "" {
+		return append(args, "--use-destination-message")
+	}
+	return append(args, "--message="+message)
+}
+
+func (r *Repository) Squash(ctx context.Context, from []string, into, message string) (string, error) {
+	return r.mutate(ctx, squashArgs(from, into, message)...)
+}

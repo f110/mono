@@ -15,8 +15,9 @@ import {
   Stack,
   TextField,
 } from '@mui/material'
-import { RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
 import { useOperation } from '../hooks/useOperation.ts'
+import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
@@ -36,6 +37,42 @@ const client = createClient(RevisionService, transport)
 
 type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
+// Mode is the inline mode to pick the destination by moving the cursor. The sources are fixed when it starts.
+type Mode =
+  | { kind: 'rebase'; sources: Commit[]; source: RebaseSource; target: RebaseTarget }
+  | { kind: 'squash'; sources: Commit[]; combine: boolean }
+
+const sourceLabel: Record<RebaseSource, string> = {
+  [RebaseSource.UNSPECIFIED]: '',
+  [RebaseSource.REVISIONS]: '-r revisions',
+  [RebaseSource.DESCENDANTS]: '-s with descendants',
+  [RebaseSource.BRANCH]: '-b branch',
+}
+
+const targetLabel: Record<RebaseTarget, string> = {
+  [RebaseTarget.UNSPECIFIED]: '',
+  [RebaseTarget.ONTO]: 'onto',
+  [RebaseTarget.INSERT_AFTER]: 'after',
+  [RebaseTarget.INSERT_BEFORE]: 'before',
+}
+
+const modeKeys: Record<string, Partial<{ source: RebaseSource; target: RebaseTarget }>> = {
+  r: { source: RebaseSource.REVISIONS },
+  s: { source: RebaseSource.DESCENDANTS },
+  b: { source: RebaseSource.BRANCH },
+  o: { target: RebaseTarget.ONTO },
+  d: { target: RebaseTarget.ONTO },
+  a: { target: RebaseTarget.INSERT_AFTER },
+  i: { target: RebaseTarget.INSERT_BEFORE },
+}
+
+const modeDescription = (mode: Mode): string =>
+  mode.kind === 'rebase'
+    ? `Rebase ${mode.sources.length} revision(s) [${sourceLabel[mode.source]}] ${targetLabel[mode.target]} the cursor. ` +
+      'j/k: move, r/s/b: source, o/a/i: onto/after/before, Enter: rebase, Esc: cancel'
+    : `Squash ${mode.sources.length} revision(s) into the cursor [${mode.combine ? 'combine the descriptions' : 'keep the description of the destination'}]. ` +
+      'j/k: move, c: toggle the description, Enter: squash, Esc: cancel'
+
 export const RepositoryView = ({ path }: { path: string }) => {
   const [revset, setRevset] = useState('')
   const [revsetInput, setRevsetInput] = useState('')
@@ -44,6 +81,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [message, setMessage] = useState<{ text: string; error: boolean }>()
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
+  const [mode, setMode] = useState<Mode>()
   const [menu, setMenu] = useState<{ x: number; y: number; commit: Commit }>()
   const revsetRef = useRef<HTMLInputElement>(null)
   const operation = useOperation(path)
@@ -54,6 +92,15 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const selected = foundIndex >= 0 ? foundIndex : 0
   const selectedCommit = commits[selected]
   const checkedCommits = commits.filter((c) => checked.has(c.commitId))
+  const marks = new Map<string, string>()
+  if (mode) {
+    for (const c of mode.sources) {
+      marks.set(c.commitId, mode.kind)
+    }
+    if (selectedCommit) {
+      marks.set(selectedCommit.commitId, mode.kind === 'rebase' ? targetLabel[mode.target] : 'into')
+    }
+  }
 
   useEffect(() => {
     if (operation) {
@@ -111,12 +158,95 @@ export const RepositoryView = ({ path }: { path: string }) => {
   }, [commits, path])
   const undo = useCallback(() => run(() => client.undo({ path }), false), [path, run])
 
+  const slide = useCallback(
+    (direction: 'down' | 'up') => {
+      const s = computeSlide(commits, selected, direction)
+      if (!s.ok) {
+        setMessage({ text: s.reason, error: true })
+        return
+      }
+      const src = commits[selected]
+      run(() => client.rebase({ path, revisions: [src.commitId], source: RebaseSource.REVISIONS, destinations: [s.destination], target: s.target }), false)
+    },
+    [commits, selected, path, run],
+  )
+
+  const executeMode = useCallback(
+    async (m: Mode) => {
+      const destination = selectedCommit
+      if (!destination) {
+        return
+      }
+      setMode(undefined)
+      const revisions = m.sources.map((c) => c.commitId)
+      if (m.kind === 'rebase') {
+        run(() => client.rebase({ path, revisions, source: m.source, destinations: [destination.commitId], target: m.target }), false)
+        return
+      }
+      let description = ''
+      if (m.combine) {
+        const descriptions = await Promise.all([destination, ...m.sources].map((c) => client.getRevision({ path, revision: c.commitId })))
+        description = descriptions
+          .map((d) => d.description.trim())
+          .filter((d) => d !== '')
+          .join('\n\n')
+      }
+      run(() => client.squash({ path, revisions, into: destination.commitId, description }), false)
+    },
+    [selectedCommit, path, run],
+  )
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning) {
         return
       }
+      if (mode) {
+        switch (e.key) {
+          case 'j':
+            selectIndex(selected + 1)
+            break
+          case 'k':
+            selectIndex(selected - 1)
+            break
+          case 'Enter':
+            executeMode(mode)
+            break
+          case 'Escape':
+            setMode(undefined)
+            break
+          case 'c':
+            if (mode.kind === 'squash') {
+              setMode({ ...mode, combine: !mode.combine })
+            }
+            break
+          default:
+            if (mode.kind === 'rebase' && modeKeys[e.key]) {
+              setMode({ ...mode, ...modeKeys[e.key] })
+              break
+            }
+            return
+        }
+        e.preventDefault()
+        return
+      }
       switch (e.key) {
+        case 'R':
+          if (targets().length > 0) {
+            setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
+          }
+          break
+        case 'S':
+          if (targets().length > 0) {
+            setMode({ kind: 'squash', sources: targets(), combine: false })
+          }
+          break
+        case 'J':
+          slide('down')
+          break
+        case 'K':
+          slide('up')
+          break
         case 'j':
           selectIndex(selected + 1)
           break
@@ -167,7 +297,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [commits, selected, selectedCommit, checked, editing, abandoning, selectIndex, refetch, newRevision, targets, startDescribe, startCommit, undo])
+  }, [commits, selected, selectedCommit, checked, editing, abandoning, mode, selectIndex, refetch, newRevision, targets, startDescribe, startCommit, undo, slide, executeMode])
 
   return (
     <Stack sx={{ height: '100%' }}>
@@ -192,6 +322,11 @@ export const RepositoryView = ({ path }: { path: string }) => {
           slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
         />
       </Box>
+      {mode && (
+        <Alert severity="warning" sx={{ borderRadius: 0 }}>
+          {modeDescription(mode)}
+        </Alert>
+      )}
       {error && (
         <Alert severity="error" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
           {error.message}
@@ -203,6 +338,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
             rows={rows}
             selected={selected}
             checked={checked}
+            marks={marks}
             onSelect={selectIndex}
             onContextMenu={(i, x, y) => {
               selectIndex(i)
