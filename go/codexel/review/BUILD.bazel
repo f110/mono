@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/jujutsu",
+        "@com_github_sergi_go_diff//diffmatchpatch",
         "@dev_f110_go_xerrors//:xerrors",
     ],
 )

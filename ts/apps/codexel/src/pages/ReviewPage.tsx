@@ -110,7 +110,9 @@ const ChangeReview = ({
   const [opened, setOpened] = useState<Record<string, boolean>>({})
   const comments = review.comments.filter((c) => c.changeId === changeId)
   const files = data?.files ?? []
-  const otherComments = comments.filter((c) => !files.some((f) => f.path === c.path))
+  // The commit message is shown as the first file. The path of it is empty.
+  const entries = data?.message ? [data.message, ...files] : files
+  const otherComments = comments.filter((c) => !entries.some((f) => f.path === c.path))
 
   if (error) {
     return <Alert severity="error">{error.message}</Alert>
@@ -132,14 +134,11 @@ const ChangeReview = ({
           {commit?.commitId}
         </Typography>
       </Stack>
-      <Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: 13, mt: 0 }}>
-        {data.description}
-      </Box>
       {otherComments.map((c) => (
         <CommentThread key={c.id} comment={c} showLocation {...actions.thread(c)} />
       ))}
-      {files.length === 0 && <Typography color="text.secondary">No changes</Typography>}
-      {files.map((f) => {
+      {entries.map((f) => {
+        const isMessage = f.path === ''
         const fileComments = comments.filter((c) => c.path === f.path)
         const visible = new Set(f.hunks.flatMap((h) => h.lines.map((l) => lineSide(l))).map((v) => `${sides[v.side]}:${v.line}`))
         const atLine = (c: ReviewComment) => inline && c.startLine > 0 && !c.drifted && visible.has(`${c.side}:${c.endLine}`)
@@ -186,6 +185,7 @@ const ChangeReview = ({
           <FileDiffView
             key={f.path}
             file={f}
+            title={isMessage ? 'Commit message' : undefined}
             split={split}
             preview={preview}
             repoPath={review.repository}
@@ -209,25 +209,27 @@ const ChangeReview = ({
                 <Button size="small" sx={{ minWidth: 0, py: 0 }} onClick={() => setOpened((o) => ({ ...o, [f.path]: collapsed }))}>
                   {collapsed ? 'Expand' : 'Collapse'}
                 </Button>
-                <FormControlLabel
-                  label="Viewed"
-                  sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: 13 } }}
-                  control={
-                    <Checkbox
-                      size="small"
-                      sx={{ py: 0 }}
-                      checked={viewed}
-                      onChange={(e) => {
-                        setOpened((o) => {
-                          const next = { ...o }
-                          delete next[f.path]
-                          return next
-                        })
-                        actions.setViewed(changeId, f.path, e.target.checked)
-                      }}
-                    />
-                  }
-                />
+                {!isMessage && (
+                  <FormControlLabel
+                    label="Viewed"
+                    sx={{ mr: 0, '& .MuiFormControlLabel-label': { fontSize: 13 } }}
+                    control={
+                      <Checkbox
+                        size="small"
+                        sx={{ py: 0 }}
+                        checked={viewed}
+                        onChange={(e) => {
+                          setOpened((o) => {
+                            const next = { ...o }
+                            delete next[f.path]
+                            return next
+                          })
+                          actions.setViewed(changeId, f.path, e.target.checked)
+                        }}
+                      />
+                    }
+                  />
+                )}
               </>
             }
           >
@@ -238,7 +240,7 @@ const ChangeReview = ({
               ))}
             {fileComposer === f.path && (
               <CommentComposer
-                label="Comment on the file"
+                label={isMessage ? 'Comment on the commit message' : 'Comment on the file'}
                 onSubmit={async (body) => {
                   await actions.add(changeId, f.path, DiffSide.UNSPECIFIED, 0, 0, body)
                   setFileComposer(undefined)
@@ -249,6 +251,7 @@ const ChangeReview = ({
           </FileDiffView>
         )
       })}
+      {files.length === 0 && <Typography color="text.secondary">No changes</Typography>}
     </Box>
   )
 }
@@ -354,7 +357,7 @@ export const ReviewPage = () => {
           }
           break
         case 'a':
-          if (focus) {
+          if (focus && focus.path !== '') {
             actions.setViewed(focus.changeId, focus.path, !isViewed(review, focus.changeId, focus.path))
             setFocus(undefined)
           }

@@ -286,6 +286,7 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 		return nil, toJujutsuError(err)
 	}
 	var files []*jujutsu.FileDiff
+	fromDescription := c.FullDescription
 	if from == 0 {
 		files, err = repo.Diff(ctx, commit)
 	} else {
@@ -294,6 +295,13 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("the change is not found in from_round"))
 		}
 		files, err = repo.DiffRange(ctx, fromCommit, commit)
+		if err == nil {
+			var fc *jujutsu.Commit
+			fc, err = repo.Show(ctx, fromCommit)
+			if err == nil {
+				fromDescription = fc.FullDescription
+			}
+		}
 	}
 	if err != nil {
 		return nil, toJujutsuError(err)
@@ -304,9 +312,9 @@ func (h *ReviewHandler) RoundDiff(ctx context.Context, req *connect.Request[api.
 	}
 	return connect.NewResponse(api.ResponseRoundDiff_builder{
 		Commit:      toCommit(c),
-		Description: new(c.FullDescription),
 		Files:       toFileDiffs(files),
 		Generated:   generated,
+		Message:     toFileDiff(review.MessageDiff(fromDescription, c.FullDescription)),
 	}.Build()), nil
 }
 

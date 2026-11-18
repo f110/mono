@@ -45,9 +45,10 @@ func NewMCPHandler(h *ReviewHandler) http.Handler {
 		return api.RequestListReviews_builder{Path: &in.Path}.Build(), nil
 	})
 	addTool(s, "list_review_comments", "List the unresolved comments of the code review. change_id, path, side, start_line and end_line are the target. "+
-		"The target is the whole review if change_id is empty and the file if start_line is 0. The lines are the lines of the file at the commit of the change "+
-		"(side NEW) or its parent (side OLD) in the latest round. anchor is the content of the lines when the comment was written. drifted is true if the anchor "+
-		"is not found", h.listComments, func(in listReviewCommentsInput) (*listCommentsRequest, error) {
+		"The target is the whole review if change_id is empty, the commit message of the change if path is empty, and the file otherwise. The target is the lines "+
+		"of it if start_line is not 0. The lines are the lines of the file or the commit message at the commit of the change (side NEW) or the file at its parent "+
+		"(side OLD) in the latest round. anchor is the content of the lines when the comment was written. "+
+		"drifted is true if the anchor is not found", h.listComments, func(in listReviewCommentsInput) (*listCommentsRequest, error) {
 		return &listCommentsRequest{reviewID: in.ReviewID, includeResolved: in.IncludeResolved}, nil
 	})
 	addTool(s, "reply_review_comment", "Reply to the comment of the code review", h.Reply, func(in replyInput) (*api.RequestReply, error) {

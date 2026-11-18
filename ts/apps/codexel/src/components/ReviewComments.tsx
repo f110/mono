@@ -113,9 +113,9 @@ export const CommentThread = ({
         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
           {comment.author}
         </Typography>
-        {showLocation && comment.path && (
+        {showLocation && comment.changeId && (
           <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-            {comment.path} {lineLabel(comment)}
+            {comment.path || 'commit message'} {lineLabel(comment)}
           </Typography>
         )}
         <Typography variant="caption" color="text.secondary">

@@ -198,6 +198,7 @@ export const FileDiffView = ({
   oldRevision,
   onHistory,
   onRestore,
+  title,
   annotation,
   actions,
   collapsed = false,
@@ -218,6 +219,9 @@ export const FileDiffView = ({
   actions?: ReactNode
   // collapsed hides everything except the header.
   collapsed?: boolean
+  // title is shown in the header instead of the status and the path if the content is not a file. The hunks of it must
+  // have all lines because the content can't be read.
+  title?: string
   // children are shown under the header.
   children?: ReactNode
 }) => {
@@ -226,8 +230,8 @@ export const FileDiffView = ({
   const ranges = useMemo(() => file.hunks.map((h) => lineRanges(h)), [file])
   const fileGaps = useMemo(() => gaps(file.hunks), [file])
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
-  const expandable = !file.binary && file.status !== FileStatus.ADDED && file.status !== FileStatus.DELETED && file.hunks.length > 0
-  const showPreview = preview && isMarkdown(file.path) && file.status !== FileStatus.DELETED
+  const expandable = title === undefined && !file.binary && file.status !== FileStatus.ADDED && file.status !== FileStatus.DELETED && file.hunks.length > 0
+  const showPreview = title === undefined && preview && isMarkdown(file.path) && file.status !== FileStatus.DELETED
   const content = useFile(repoPath, revision, file.path, (expandable && expanded.size > 0) || showPreview)
   const lines = useMemo(() => {
     if (!content.data) return undefined
@@ -354,10 +358,18 @@ export const FileDiffView = ({
   return (
     <Box data-file={file.path} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2, scrollMarginTop: 8 }}>
       <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'center', bgcolor: 'background.paper', position: 'sticky', top: 0, zIndex: 1, borderBottom: 1, borderColor: 'divider' }}>
-        <FileStatusChip status={file.status} />
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1, minWidth: 0 }} noWrap title={file.path}>
-          {file.oldPath ? `${file.oldPath} → ${file.path}` : file.path}
-        </Typography>
+        {title === undefined ? (
+          <>
+            <FileStatusChip status={file.status} />
+            <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1, minWidth: 0 }} noWrap title={file.path}>
+              {file.oldPath ? `${file.oldPath} → ${file.path}` : file.path}
+            </Typography>
+          </>
+        ) : (
+          <Typography variant="body2" sx={{ fontWeight: 'bold', flex: 1, minWidth: 0 }} noWrap>
+            {title}
+          </Typography>
+        )}
         <Typography variant="caption" sx={{ color: 'success.main' }}>
           +{file.added}
         </Typography>

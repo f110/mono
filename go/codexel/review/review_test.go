@@ -15,9 +15,11 @@ type fakeRepository struct {
 	commits map[string]string
 	files   map[string]string
 	// diffs is the changed files of the revision and the range "<from>..<to>".
-	diffs     map[string][]string
-	snapshots int
-	revsets   []string
+	diffs map[string][]string
+	// descriptions is the whole description of the commit.
+	descriptions map[string]string
+	snapshots    int
+	revsets      []string
 }
 
 func (f *fakeRepository) Root() string { return "/repo" }
@@ -36,6 +38,10 @@ func (f *fakeRepository) Log(_ context.Context, revset string, _ int) ([]*jujuts
 		}
 	}
 	return rows, nil
+}
+
+func (f *fakeRepository) Show(_ context.Context, rev string) (*jujutsu.Commit, error) {
+	return &jujutsu.Commit{CommitID: rev, FullDescription: f.descriptions[rev]}, nil
 }
 
 func (f *fakeRepository) File(_ context.Context, rev, path string) ([]byte, error) {
@@ -184,6 +190,72 @@ func TestRealign(t *testing.T) {
 			assertion.Equal(t, c.Drifted, tc.drifted)
 		})
 	}
+}
+
+func TestCommitMessageComments(t *testing.T) {
+	ctx := t.Context()
+	now := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+	repo := &fakeRepository{
+		commits:      map[string]string{"kkkk": "c1"},
+		descriptions: map[string]string{"c1": "Add A\n\nA is the first.\n"},
+	}
+	r, err := New(ctx, repo, []string{"kkkk"}, nil, now)
+	assertion.MustNoError(t, err)
+
+	line, err := r.AddComment(ctx, repo, "kkkk", "", SideNew, 3, 3, "why", AuthorUser, now)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, line.Path, "")
+	assertion.Equal(t, line.Anchor, "A is the first.")
+	whole, err := r.AddComment(ctx, repo, "kkkk", "", "", 0, 0, "subject", AuthorUser, now)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, whole.Anchor, "")
+	_, err = r.AddComment(ctx, repo, "kkkk", "", SideNew, 4, 4, "out of range", AuthorUser, now)
+	assertion.MustError(t, err)
+	_, err = r.AddComment(ctx, repo, "kkkk", "", SideOld, 1, 1, "parent", AuthorUser, now)
+	assertion.MustError(t, err)
+
+	repo.commits = map[string]string{"kkkk": "c2"}
+	repo.descriptions["c2"] = "Add A\n\nThe details.\n\nA is the first.\n"
+	assertion.MustNoError(t, r.NextRound(ctx, repo, nil, now))
+	assertion.Equal(t, [2]int{line.StartLine, line.EndLine}, [2]int{5, 5})
+	assertion.False(t, line.Drifted)
+
+	repo.commits = map[string]string{"kkkk": "c3"}
+	repo.descriptions["c3"] = "Add A\n"
+	assertion.MustNoError(t, r.NextRound(ctx, repo, nil, now))
+	assertion.True(t, line.Drifted)
+}
+
+func TestMessageDiff(t *testing.T) {
+	line := func(kind jujutsu.DiffLineKind, text string, oldLine, newLine int) *jujutsu.DiffLine {
+		return &jujutsu.DiffLine{Kind: kind, Text: text, OldLine: oldLine, NewLine: newLine}
+	}
+
+	same := MessageDiff("Add A\n\nbody\n", "Add A\n\nbody\n")
+	assertion.Equal(t, same.Added, 0)
+	assertion.Equal(t, same.Removed, 0)
+	assertion.MustLen(t, same.Hunks, 1)
+	assertion.Equal(t, same.Hunks[0].Lines, []*jujutsu.DiffLine{
+		line(jujutsu.DiffLineContext, "Add A", 1, 1),
+		line(jujutsu.DiffLineContext, "", 2, 2),
+		line(jujutsu.DiffLineContext, "body", 3, 3),
+	})
+
+	changed := MessageDiff("Add A\n\nbody\n", "Add A\n\nnew body\nmore")
+	assertion.Equal(t, changed.Added, 2)
+	assertion.Equal(t, changed.Removed, 1)
+	assertion.MustLen(t, changed.Hunks, 1)
+	h := changed.Hunks[0]
+	assertion.Equal(t, [4]int{h.OldStart, h.OldLines, h.NewStart, h.NewLines}, [4]int{1, 3, 1, 4})
+	assertion.Equal(t, h.Lines, []*jujutsu.DiffLine{
+		line(jujutsu.DiffLineContext, "Add A", 1, 1),
+		line(jujutsu.DiffLineContext, "", 2, 2),
+		line(jujutsu.DiffLineRemoved, "body", 3, 0),
+		line(jujutsu.DiffLineAdded, "new body", 0, 3),
+		line(jujutsu.DiffLineAdded, "more", 0, 4),
+	})
+
+	assertion.Len(t, MessageDiff("", "").Hunks, 0)
 }
 
 func TestStore(t *testing.T) {

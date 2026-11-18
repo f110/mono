@@ -374,38 +374,42 @@ func mutate(conf *config.File, path string, fn func(*jujutsu.Repository) (string
 func toFileDiffs(files []*jujutsu.FileDiff) []*api.FileDiff {
 	res := make([]*api.FileDiff, 0, len(files))
 	for _, f := range files {
-		hunks := make([]*api.Hunk, 0, len(f.Hunks))
-		for _, h := range f.Hunks {
-			lines := make([]*api.DiffLine, 0, len(h.Lines))
-			for _, l := range h.Lines {
-				lines = append(lines, api.DiffLine_builder{
-					Kind:      new(diffLineKinds[l.Kind]),
-					Text:      new(l.Text),
-					OldLine:   new(int32(l.OldLine)),
-					NewLine:   new(int32(l.NewLine)),
-					NoNewline: new(l.NoNewline),
-				}.Build())
-			}
-			hunks = append(hunks, api.Hunk_builder{
-				OldStart: new(int32(h.OldStart)),
-				OldLines: new(int32(h.OldLines)),
-				NewStart: new(int32(h.NewStart)),
-				NewLines: new(int32(h.NewLines)),
-				Section:  new(h.Section),
-				Lines:    lines,
-			}.Build())
-		}
-		res = append(res, api.FileDiff_builder{
-			Path:    new(f.Path),
-			OldPath: new(f.OldPath),
-			Status:  new(fileStatuses[f.Status]),
-			Binary:  new(f.Binary),
-			Hunks:   hunks,
-			Added:   new(int32(f.Added)),
-			Removed: new(int32(f.Removed)),
-		}.Build())
+		res = append(res, toFileDiff(f))
 	}
 	return res
+}
+
+func toFileDiff(f *jujutsu.FileDiff) *api.FileDiff {
+	hunks := make([]*api.Hunk, 0, len(f.Hunks))
+	for _, h := range f.Hunks {
+		lines := make([]*api.DiffLine, 0, len(h.Lines))
+		for _, l := range h.Lines {
+			lines = append(lines, api.DiffLine_builder{
+				Kind:      new(diffLineKinds[l.Kind]),
+				Text:      new(l.Text),
+				OldLine:   new(int32(l.OldLine)),
+				NewLine:   new(int32(l.NewLine)),
+				NoNewline: new(l.NoNewline),
+			}.Build())
+		}
+		hunks = append(hunks, api.Hunk_builder{
+			OldStart: new(int32(h.OldStart)),
+			OldLines: new(int32(h.OldLines)),
+			NewStart: new(int32(h.NewStart)),
+			NewLines: new(int32(h.NewLines)),
+			Section:  new(h.Section),
+			Lines:    lines,
+		}.Build())
+	}
+	return api.FileDiff_builder{
+		Path:    new(f.Path),
+		OldPath: new(f.OldPath),
+		Status:  new(fileStatuses[f.Status]),
+		Binary:  new(f.Binary),
+		Hunks:   hunks,
+		Added:   new(int32(f.Added)),
+		Removed: new(int32(f.Removed)),
+	}.Build()
 }
 
 var fileStatuses = map[jujutsu.FileStatus]api.FileStatus{

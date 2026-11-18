@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/jujutsu"
@@ -73,8 +74,9 @@ type Round struct {
 	CreatedAt time.Time         `json:"created_at"`
 }
 
-// Comment is the comment on the review. The target is the whole review if ChangeID is empty, the file if StartLine is
-// 0 and the lines of the file otherwise.
+// Comment is the comment on the review. The target is the whole review if ChangeID is empty. Otherwise the target is
+// the file of Path, or the description of the commit if Path is empty. The target is the lines of it if StartLine is
+// not 0. The lines of the description are always SideNew.
 type Comment struct {
 	ID        string `json:"id"`
 	ChangeID  string `json:"change_id,omitempty"`
@@ -118,6 +120,7 @@ type Repository interface {
 	File(ctx context.Context, rev, path string) ([]byte, error)
 	Diff(ctx context.Context, rev string) ([]*jujutsu.FileDiff, error)
 	DiffRange(ctx context.Context, from, to string) ([]*jujutsu.FileDiff, error)
+	Show(ctx context.Context, rev string) (*jujutsu.Commit, error)
 }
 
 var changeIDPattern = regexp.MustCompile(`^[k-z]+$`)
@@ -247,18 +250,15 @@ func (r *Review) NextRound(ctx context.Context, repo Repository, autoViewed []st
 			c.Drifted = true
 			continue
 		}
-		rev := revision(commit, c.Side)
-		key := rev + "\x00" + c.Path
+		key := revision(commit, c.Side) + "\x00" + c.Path
 		lines, ok := files[key]
 		if !ok {
-			content, err := repo.File(ctx, rev, c.Path)
+			v, err := targetLines(ctx, repo, commit, c.Path, c.Side)
 			if _, jjErr := errors.AsType[*jujutsu.Error](err); err != nil && !jjErr {
 				return err
 			}
 			// The file doesn't exist at the revision if jj fails.
-			if err == nil {
-				lines = splitLines(content)
-			}
+			lines = v
 			files[key] = lines
 		}
 		c.Realign(lines)
@@ -337,8 +337,8 @@ func matchPattern(filePath, pattern string) bool {
 	}
 }
 
-// AddComment adds the comment. The target is the whole review if changeID is empty, the file if startLine is 0 and the
-// lines of the file otherwise. The lines are the lines of the file at the latest round.
+// AddComment adds the comment. The target is the same as Comment. The lines are the lines of the file or the
+// description at the latest round.
 func (r *Review) AddComment(ctx context.Context, repo Repository, changeID, path string, side Side, startLine, endLine int, body, author string, now time.Time) (*Comment, error) {
 	if body == "" {
 		return nil, xerrors.WithMessage(ErrInvalidArgument, "body is required")
@@ -352,24 +352,20 @@ func (r *Review) AddComment(ctx context.Context, repo Repository, changeID, path
 		if !ok {
 			return nil, xerrors.WithMessagef(ErrNotFound, "change %s", changeID)
 		}
-		if path == "" {
-			return nil, xerrors.WithMessage(ErrInvalidArgument, "path is required")
-		}
 		c.Path = path
 		if startLine != 0 {
-			if side != SideNew && side != SideOld {
+			if side != SideNew && (side != SideOld || path == "") {
 				return nil, xerrors.WithMessagef(ErrInvalidArgument, "side %q", side)
 			}
 			if startLine < 1 || endLine < startLine {
 				return nil, xerrors.WithMessagef(ErrInvalidArgument, "lines %d-%d", startLine, endLine)
 			}
-			content, err := repo.File(ctx, revision(commit, side), path)
+			lines, err := targetLines(ctx, repo, commit, path, side)
 			if err != nil {
 				return nil, err
 			}
-			lines := splitLines(content)
 			if endLine > len(lines) {
-				return nil, xerrors.WithMessagef(ErrInvalidArgument, "%s has %d lines", path, len(lines))
+				return nil, xerrors.WithMessagef(ErrInvalidArgument, "the target has %d lines", len(lines))
 			}
 			c.Side, c.StartLine, c.EndLine = side, startLine, endLine
 			c.Anchor = strings.Join(lines[startLine-1:endLine], "\n")
@@ -383,6 +379,23 @@ func (r *Review) AddComment(ctx context.Context, repo Repository, changeID, path
 	r.Comments = append(r.Comments, c)
 	r.UpdatedAt = now
 	return c, nil
+}
+
+// targetLines returns the lines of the file of the side of the commit, or the lines of the description of the commit if
+// path is empty.
+func targetLines(ctx context.Context, repo Repository, commit, path string, side Side) ([]string, error) {
+	if path == "" {
+		c, err := repo.Show(ctx, commit)
+		if err != nil {
+			return nil, err
+		}
+		return splitLines([]byte(c.FullDescription)), nil
+	}
+	content, err := repo.File(ctx, revision(commit, side), path)
+	if err != nil {
+		return nil, err
+	}
+	return splitLines(content), nil
 }
 
 // revision returns the revision of the file of the side of the change.
@@ -653,4 +666,48 @@ func (s *Store) write(r *Review) error {
 		return xerrors.WithStack(err)
 	}
 	return nil
+}
+
+// MessageDiff returns the diff of the descriptions of the commits. The diff is a hunk which has all lines because the
+// description is short. The lines are the context if the descriptions are the same.
+func MessageDiff(oldMessage, newMessage string) *jujutsu.FileDiff {
+	dmp := diffmatchpatch.New()
+	a, b, lines := dmp.DiffLinesToRunes(withNewline(oldMessage), withNewline(newMessage))
+	f := &jujutsu.FileDiff{Status: jujutsu.FileStatusModified}
+	h := &jujutsu.Hunk{}
+	oldLine, newLine := 0, 0
+	for _, d := range dmp.DiffCharsToLines(dmp.DiffMainRunes(a, b, false), lines) {
+		for _, text := range splitLines([]byte(d.Text)) {
+			l := &jujutsu.DiffLine{Text: text}
+			switch d.Type {
+			case diffmatchpatch.DiffEqual:
+				oldLine++
+				newLine++
+				l.Kind, l.OldLine, l.NewLine = jujutsu.DiffLineContext, oldLine, newLine
+			case diffmatchpatch.DiffDelete:
+				oldLine++
+				l.Kind, l.OldLine = jujutsu.DiffLineRemoved, oldLine
+				f.Removed++
+			case diffmatchpatch.DiffInsert:
+				newLine++
+				l.Kind, l.NewLine = jujutsu.DiffLineAdded, newLine
+				f.Added++
+			}
+			h.Lines = append(h.Lines, l)
+		}
+	}
+	if len(h.Lines) == 0 {
+		return f
+	}
+	h.OldStart, h.OldLines, h.NewStart, h.NewLines = min(1, oldLine), oldLine, min(1, newLine), newLine
+	f.Hunks = []*jujutsu.Hunk{h}
+	return f
+}
+
+// withNewline terminates the last line by the newline so that the last lines are compared in the same form.
+func withNewline(s string) string {
+	if s == "" || strings.HasSuffix(s, "\n") {
+		return s
+	}
+	return s + "\n"
 }

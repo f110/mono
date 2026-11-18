@@ -3564,13 +3564,6 @@ export declare type ResponseRoundDiff = Message<"mono.codexel.ResponseRoundDiff"
   commit?: Commit;
 
   /**
-   * description is the whole description of commit.
-   *
-   * @generated from field: string description = 2;
-   */
-  description: string;
-
-  /**
    * @generated from field: repeated mono.codexel.FileDiff files = 3;
    */
   files: FileDiff[];
@@ -3581,6 +3574,14 @@ export declare type ResponseRoundDiff = Message<"mono.codexel.ResponseRoundDiff"
    * @generated from field: repeated string generated = 4;
    */
   generated: string[];
+
+  /**
+   * message is the diff of the description of commit from the one at from_round. The lines are the context if from_round is
+   * 0. The path of it is empty.
+   *
+   * @generated from field: mono.codexel.FileDiff message = 5;
+   */
+  message?: FileDiff;
 };
 
 /**
