@@ -223,6 +223,81 @@ func (h *RevisionHandler) GetRevision(ctx context.Context, req *connect.Request[
 	}.Build()), nil
 }
 
+func (h *RevisionHandler) New(ctx context.Context, req *connect.Request[api.RequestNew]) (*connect.Response[api.ResponseNew], error) {
+	if len(req.Msg.GetRevisions()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revisions are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.New(ctx, req.Msg.GetRevisions()) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseNew_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Edit(ctx context.Context, req *connect.Request[api.RequestEdit]) (*connect.Response[api.ResponseEdit], error) {
+	if req.Msg.GetRevision() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision is required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.Edit(ctx, req.Msg.GetRevision()) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseEdit_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Abandon(ctx context.Context, req *connect.Request[api.RequestAbandon]) (*connect.Response[api.ResponseAbandon], error) {
+	if len(req.Msg.GetRevisions()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revisions are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.Abandon(ctx, req.Msg.GetRevisions()) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseAbandon_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Describe(ctx context.Context, req *connect.Request[api.RequestDescribe]) (*connect.Response[api.ResponseDescribe], error) {
+	if req.Msg.GetRevision() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision is required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
+		return r.Describe(ctx, req.Msg.GetRevision(), req.Msg.GetDescription())
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseDescribe_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Commit(ctx context.Context, req *connect.Request[api.RequestCommit]) (*connect.Response[api.ResponseCommit], error) {
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.Commit(ctx, req.Msg.GetDescription()) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseCommit_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Undo(ctx context.Context, req *connect.Request[api.RequestUndo]) (*connect.Response[api.ResponseUndo], error) {
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) { return r.Undo(ctx) })
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseUndo_builder{Output: new(out)}.Build()), nil
+}
+
+// mutate runs the operation on the opened repository.
+func (h *RevisionHandler) mutate(path string, fn func(*jujutsu.Repository) (string, error)) (string, error) {
+	repo, err := openedRepository(h.config, path)
+	if err != nil {
+		return "", err
+	}
+	out, err := fn(repo)
+	if err != nil {
+		return "", toJujutsuError(err)
+	}
+	return out, nil
+}
+
 func toFileDiffs(files []*jujutsu.FileDiff) []*api.FileDiff {
 	res := make([]*api.FileDiff, 0, len(files))
 	for _, f := range files {

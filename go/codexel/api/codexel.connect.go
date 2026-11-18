@@ -74,6 +74,19 @@ const (
 	// RevisionServiceGetRevisionProcedure is the fully-qualified name of the RevisionService's
 	// GetRevision RPC.
 	RevisionServiceGetRevisionProcedure = "/mono.codexel.RevisionService/GetRevision"
+	// RevisionServiceNewProcedure is the fully-qualified name of the RevisionService's New RPC.
+	RevisionServiceNewProcedure = "/mono.codexel.RevisionService/New"
+	// RevisionServiceEditProcedure is the fully-qualified name of the RevisionService's Edit RPC.
+	RevisionServiceEditProcedure = "/mono.codexel.RevisionService/Edit"
+	// RevisionServiceAbandonProcedure is the fully-qualified name of the RevisionService's Abandon RPC.
+	RevisionServiceAbandonProcedure = "/mono.codexel.RevisionService/Abandon"
+	// RevisionServiceDescribeProcedure is the fully-qualified name of the RevisionService's Describe
+	// RPC.
+	RevisionServiceDescribeProcedure = "/mono.codexel.RevisionService/Describe"
+	// RevisionServiceCommitProcedure is the fully-qualified name of the RevisionService's Commit RPC.
+	RevisionServiceCommitProcedure = "/mono.codexel.RevisionService/Commit"
+	// RevisionServiceUndoProcedure is the fully-qualified name of the RevisionService's Undo RPC.
+	RevisionServiceUndoProcedure = "/mono.codexel.RevisionService/Undo"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -506,6 +519,12 @@ func (UnimplementedRepositoryServiceHandler) WatchRepository(context.Context, *c
 type RevisionServiceClient interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
 	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
+	New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error)
+	Edit(context.Context, *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error)
+	Abandon(context.Context, *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error)
+	Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error)
+	Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error)
+	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -531,6 +550,42 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
 			connect.WithClientOptions(opts...),
 		),
+		new: connect.NewClient[RequestNew, ResponseNew](
+			httpClient,
+			baseURL+RevisionServiceNewProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("New")),
+			connect.WithClientOptions(opts...),
+		),
+		edit: connect.NewClient[RequestEdit, ResponseEdit](
+			httpClient,
+			baseURL+RevisionServiceEditProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Edit")),
+			connect.WithClientOptions(opts...),
+		),
+		abandon: connect.NewClient[RequestAbandon, ResponseAbandon](
+			httpClient,
+			baseURL+RevisionServiceAbandonProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Abandon")),
+			connect.WithClientOptions(opts...),
+		),
+		describe: connect.NewClient[RequestDescribe, ResponseDescribe](
+			httpClient,
+			baseURL+RevisionServiceDescribeProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Describe")),
+			connect.WithClientOptions(opts...),
+		),
+		commit: connect.NewClient[RequestCommit, ResponseCommit](
+			httpClient,
+			baseURL+RevisionServiceCommitProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Commit")),
+			connect.WithClientOptions(opts...),
+		),
+		undo: connect.NewClient[RequestUndo, ResponseUndo](
+			httpClient,
+			baseURL+RevisionServiceUndoProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Undo")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -538,6 +593,12 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 type revisionServiceClient struct {
 	log         *connect.Client[RequestLog, ResponseLog]
 	getRevision *connect.Client[RequestGetRevision, ResponseGetRevision]
+	new         *connect.Client[RequestNew, ResponseNew]
+	edit        *connect.Client[RequestEdit, ResponseEdit]
+	abandon     *connect.Client[RequestAbandon, ResponseAbandon]
+	describe    *connect.Client[RequestDescribe, ResponseDescribe]
+	commit      *connect.Client[RequestCommit, ResponseCommit]
+	undo        *connect.Client[RequestUndo, ResponseUndo]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -550,10 +611,46 @@ func (c *revisionServiceClient) GetRevision(ctx context.Context, req *connect.Re
 	return c.getRevision.CallUnary(ctx, req)
 }
 
+// New calls mono.codexel.RevisionService.New.
+func (c *revisionServiceClient) New(ctx context.Context, req *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
+	return c.new.CallUnary(ctx, req)
+}
+
+// Edit calls mono.codexel.RevisionService.Edit.
+func (c *revisionServiceClient) Edit(ctx context.Context, req *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
+	return c.edit.CallUnary(ctx, req)
+}
+
+// Abandon calls mono.codexel.RevisionService.Abandon.
+func (c *revisionServiceClient) Abandon(ctx context.Context, req *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
+	return c.abandon.CallUnary(ctx, req)
+}
+
+// Describe calls mono.codexel.RevisionService.Describe.
+func (c *revisionServiceClient) Describe(ctx context.Context, req *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
+	return c.describe.CallUnary(ctx, req)
+}
+
+// Commit calls mono.codexel.RevisionService.Commit.
+func (c *revisionServiceClient) Commit(ctx context.Context, req *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
+	return c.commit.CallUnary(ctx, req)
+}
+
+// Undo calls mono.codexel.RevisionService.Undo.
+func (c *revisionServiceClient) Undo(ctx context.Context, req *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
+	return c.undo.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
 	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
+	New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error)
+	Edit(context.Context, *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error)
+	Abandon(context.Context, *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error)
+	Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error)
+	Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error)
+	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -575,12 +672,60 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceNewHandler := connect.NewUnaryHandler(
+		RevisionServiceNewProcedure,
+		svc.New,
+		connect.WithSchema(revisionServiceMethods.ByName("New")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceEditHandler := connect.NewUnaryHandler(
+		RevisionServiceEditProcedure,
+		svc.Edit,
+		connect.WithSchema(revisionServiceMethods.ByName("Edit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceAbandonHandler := connect.NewUnaryHandler(
+		RevisionServiceAbandonProcedure,
+		svc.Abandon,
+		connect.WithSchema(revisionServiceMethods.ByName("Abandon")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceDescribeHandler := connect.NewUnaryHandler(
+		RevisionServiceDescribeProcedure,
+		svc.Describe,
+		connect.WithSchema(revisionServiceMethods.ByName("Describe")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceCommitHandler := connect.NewUnaryHandler(
+		RevisionServiceCommitProcedure,
+		svc.Commit,
+		connect.WithSchema(revisionServiceMethods.ByName("Commit")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceUndoHandler := connect.NewUnaryHandler(
+		RevisionServiceUndoProcedure,
+		svc.Undo,
+		connect.WithSchema(revisionServiceMethods.ByName("Undo")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
 			revisionServiceLogHandler.ServeHTTP(w, r)
 		case RevisionServiceGetRevisionProcedure:
 			revisionServiceGetRevisionHandler.ServeHTTP(w, r)
+		case RevisionServiceNewProcedure:
+			revisionServiceNewHandler.ServeHTTP(w, r)
+		case RevisionServiceEditProcedure:
+			revisionServiceEditHandler.ServeHTTP(w, r)
+		case RevisionServiceAbandonProcedure:
+			revisionServiceAbandonHandler.ServeHTTP(w, r)
+		case RevisionServiceDescribeProcedure:
+			revisionServiceDescribeHandler.ServeHTTP(w, r)
+		case RevisionServiceCommitProcedure:
+			revisionServiceCommitHandler.ServeHTTP(w, r)
+		case RevisionServiceUndoProcedure:
+			revisionServiceUndoHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -596,4 +741,28 @@ func (UnimplementedRevisionServiceHandler) Log(context.Context, *connect.Request
 
 func (UnimplementedRevisionServiceHandler) GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.GetRevision is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) New(context.Context, *connect.Request[RequestNew]) (*connect.Response[ResponseNew], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.New is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Edit(context.Context, *connect.Request[RequestEdit]) (*connect.Response[ResponseEdit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Edit is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Abandon(context.Context, *connect.Request[RequestAbandon]) (*connect.Response[ResponseAbandon], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Abandon is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Describe(context.Context, *connect.Request[RequestDescribe]) (*connect.Response[ResponseDescribe], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Describe is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Commit(context.Context, *connect.Request[RequestCommit]) (*connect.Response[ResponseCommit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Commit is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Undo is not implemented"))
 }

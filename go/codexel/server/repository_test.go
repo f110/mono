@@ -53,3 +53,13 @@ func TestLogRejectsRepositoryNotOpened(t *testing.T) {
 	assertion.True(t, ok)
 	assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
 }
+
+func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
+	h := NewRevisionHandler(newConfig(t, "/src/mono"))
+
+	_, err := h.Undo(t.Context(), connect.NewRequest(api.RequestUndo_builder{Path: new("/etc")}.Build()))
+	assertion.MustError(t, err)
+	connectErr, ok := errors.AsType[*connect.Error](err)
+	assertion.True(t, ok)
+	assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
+}

@@ -50,7 +50,20 @@ const CommitLine = ({ commit }: { commit: Commit }) => (
 )
 
 // RevisionGraph shows the log of jj with the graph. selected is the index of the selected row.
-export const RevisionGraph = ({ rows, selected, onSelect }: { rows: LogRow[]; selected: number; onSelect: (index: number) => void }) => {
+export const RevisionGraph = ({
+  rows,
+  selected,
+  checked,
+  onSelect,
+  onContextMenu,
+}: {
+  rows: LogRow[]
+  selected: number
+  // checked is the commit IDs of the checked revisions.
+  checked: Set<string>
+  onSelect: (index: number) => void
+  onContextMenu: (index: number, x: number, y: number) => void
+}) => {
   const width = Math.max(0, ...rows.flatMap((r) => r.lines.map((l) => [...l.gutter].length))) * cellWidth
   const lines = rows.flatMap((r) => r.lines.map((l) => l.gutter))
   const selectedRef = useRef<HTMLDivElement>(null)
@@ -69,7 +82,18 @@ export const RevisionGraph = ({ rows, selected, onSelect }: { rows: LogRow[]; se
             key={commit.commitId + commit.changeId}
             ref={i === selected ? selectedRef : undefined}
             onClick={() => onSelect(i)}
-            sx={{ cursor: 'pointer', bgcolor: i === selected ? 'action.selected' : undefined, '&:hover': { bgcolor: 'action.hover' }, px: 1 }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              onContextMenu(i, e.clientX, e.clientY)
+            }}
+            sx={{
+              cursor: 'pointer',
+              bgcolor: i === selected ? 'action.selected' : undefined,
+              '&:hover': { bgcolor: 'action.hover' },
+              px: 1,
+              borderLeft: 3,
+              borderColor: checked.has(commit.commitId) ? 'warning.main' : 'transparent',
+            }}
           >
             {row.lines.map((line, j) => {
               const index = lineIndex++

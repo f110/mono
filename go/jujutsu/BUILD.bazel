@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "diff.go",
         "jujutsu.go",
+        "operation.go",
     ],
     importpath = "go.f110.dev/mono/go/jujutsu",
     visibility = ["//visibility:public"],
@@ -16,6 +17,7 @@ go_test(
     srcs = [
         "diff_test.go",
         "jujutsu_test.go",
+        "operation_test.go",
     ],
     data = glob(["testdata/**"]),
     embed = [":jujutsu"],

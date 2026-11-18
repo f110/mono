@@ -974,6 +974,228 @@ export declare type ResponseGetRevision = Message<"mono.codexel.ResponseGetRevis
 export declare const ResponseGetRevisionSchema: GenMessage<ResponseGetRevision>;
 
 /**
+ * @generated from message mono.codexel.RequestNew
+ */
+export declare type RequestNew = Message<"mono.codexel.RequestNew"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestNew.
+ * Use `create(RequestNewSchema)` to create a new message.
+ */
+export declare const RequestNewSchema: GenMessage<RequestNew>;
+
+/**
+ * @generated from message mono.codexel.ResponseNew
+ */
+export declare type ResponseNew = Message<"mono.codexel.ResponseNew"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseNew.
+ * Use `create(ResponseNewSchema)` to create a new message.
+ */
+export declare const ResponseNewSchema: GenMessage<ResponseNew>;
+
+/**
+ * @generated from message mono.codexel.RequestEdit
+ */
+export declare type RequestEdit = Message<"mono.codexel.RequestEdit"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestEdit.
+ * Use `create(RequestEditSchema)` to create a new message.
+ */
+export declare const RequestEditSchema: GenMessage<RequestEdit>;
+
+/**
+ * @generated from message mono.codexel.ResponseEdit
+ */
+export declare type ResponseEdit = Message<"mono.codexel.ResponseEdit"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseEdit.
+ * Use `create(ResponseEditSchema)` to create a new message.
+ */
+export declare const ResponseEditSchema: GenMessage<ResponseEdit>;
+
+/**
+ * @generated from message mono.codexel.RequestAbandon
+ */
+export declare type RequestAbandon = Message<"mono.codexel.RequestAbandon"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: repeated string revisions = 2;
+   */
+  revisions: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestAbandon.
+ * Use `create(RequestAbandonSchema)` to create a new message.
+ */
+export declare const RequestAbandonSchema: GenMessage<RequestAbandon>;
+
+/**
+ * @generated from message mono.codexel.ResponseAbandon
+ */
+export declare type ResponseAbandon = Message<"mono.codexel.ResponseAbandon"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseAbandon.
+ * Use `create(ResponseAbandonSchema)` to create a new message.
+ */
+export declare const ResponseAbandonSchema: GenMessage<ResponseAbandon>;
+
+/**
+ * @generated from message mono.codexel.RequestDescribe
+ */
+export declare type RequestDescribe = Message<"mono.codexel.RequestDescribe"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestDescribe.
+ * Use `create(RequestDescribeSchema)` to create a new message.
+ */
+export declare const RequestDescribeSchema: GenMessage<RequestDescribe>;
+
+/**
+ * @generated from message mono.codexel.ResponseDescribe
+ */
+export declare type ResponseDescribe = Message<"mono.codexel.ResponseDescribe"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseDescribe.
+ * Use `create(ResponseDescribeSchema)` to create a new message.
+ */
+export declare const ResponseDescribeSchema: GenMessage<ResponseDescribe>;
+
+/**
+ * @generated from message mono.codexel.RequestCommit
+ */
+export declare type RequestCommit = Message<"mono.codexel.RequestCommit"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestCommit.
+ * Use `create(RequestCommitSchema)` to create a new message.
+ */
+export declare const RequestCommitSchema: GenMessage<RequestCommit>;
+
+/**
+ * @generated from message mono.codexel.ResponseCommit
+ */
+export declare type ResponseCommit = Message<"mono.codexel.ResponseCommit"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseCommit.
+ * Use `create(ResponseCommitSchema)` to create a new message.
+ */
+export declare const ResponseCommitSchema: GenMessage<ResponseCommit>;
+
+/**
+ * @generated from message mono.codexel.RequestUndo
+ */
+export declare type RequestUndo = Message<"mono.codexel.RequestUndo"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestUndo.
+ * Use `create(RequestUndoSchema)` to create a new message.
+ */
+export declare const RequestUndoSchema: GenMessage<RequestUndo>;
+
+/**
+ * @generated from message mono.codexel.ResponseUndo
+ */
+export declare type ResponseUndo = Message<"mono.codexel.ResponseUndo"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseUndo.
+ * Use `create(ResponseUndoSchema)` to create a new message.
+ */
+export declare const ResponseUndoSchema: GenMessage<ResponseUndo>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -1241,6 +1463,63 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestGetRevisionSchema;
     output: typeof ResponseGetRevisionSchema;
+  },
+  /**
+   * The operations below return the message of jj in output.
+   * New creates the new revision on the revisions.
+   *
+   * @generated from rpc mono.codexel.RevisionService.New
+   */
+  new: {
+    methodKind: "unary";
+    input: typeof RequestNewSchema;
+    output: typeof ResponseNewSchema;
+  },
+  /**
+   * Edit makes the revision the working copy.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Edit
+   */
+  edit: {
+    methodKind: "unary";
+    input: typeof RequestEditSchema;
+    output: typeof ResponseEditSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.RevisionService.Abandon
+   */
+  abandon: {
+    methodKind: "unary";
+    input: typeof RequestAbandonSchema;
+    output: typeof ResponseAbandonSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.RevisionService.Describe
+   */
+  describe: {
+    methodKind: "unary";
+    input: typeof RequestDescribeSchema;
+    output: typeof ResponseDescribeSchema;
+  },
+  /**
+   * Commit describes the working copy and creates the new working copy on it.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Commit
+   */
+  commit: {
+    methodKind: "unary";
+    input: typeof RequestCommitSchema;
+    output: typeof ResponseCommitSchema;
+  },
+  /**
+   * Undo undoes the last operation.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Undo
+   */
+  undo: {
+    methodKind: "unary";
+    input: typeof RequestUndoSchema;
+    output: typeof ResponseUndoSchema;
   },
 }>;
 

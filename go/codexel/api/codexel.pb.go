@@ -4641,6 +4641,1102 @@ func (b0 ResponseGetRevision_builder) Build() *ResponseGetRevision {
 	return m0
 }
 
+type RequestNew struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revisions   []string               `protobuf:"bytes,2,rep,name=revisions"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestNew) Reset() {
+	*x = RequestNew{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestNew) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestNew) ProtoMessage() {}
+
+func (x *RequestNew) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestNew) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestNew) GetRevisions() []string {
+	if x != nil {
+		return x.xxx_hidden_Revisions
+	}
+	return nil
+}
+
+func (x *RequestNew) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestNew) SetRevisions(v []string) {
+	x.xxx_hidden_Revisions = v
+}
+
+func (x *RequestNew) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestNew) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestNew_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path      *string
+	Revisions []string
+}
+
+func (b0 RequestNew_builder) Build() *RequestNew {
+	m0 := &RequestNew{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	x.xxx_hidden_Revisions = b.Revisions
+	return m0
+}
+
+type ResponseNew struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseNew) Reset() {
+	*x = ResponseNew{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseNew) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseNew) ProtoMessage() {}
+
+func (x *ResponseNew) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseNew) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseNew) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseNew) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseNew) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseNew_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseNew_builder) Build() *ResponseNew {
+	m0 := &ResponseNew{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestEdit struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revision    *string                `protobuf:"bytes,2,opt,name=revision"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestEdit) Reset() {
+	*x = RequestEdit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestEdit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestEdit) ProtoMessage() {}
+
+func (x *RequestEdit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestEdit) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestEdit) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestEdit) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestEdit) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestEdit) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestEdit) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestEdit) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestEdit) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestEdit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path     *string
+	Revision *string
+}
+
+func (b0 RequestEdit_builder) Build() *RequestEdit {
+	m0 := &RequestEdit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseEdit struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseEdit) Reset() {
+	*x = ResponseEdit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseEdit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseEdit) ProtoMessage() {}
+
+func (x *ResponseEdit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseEdit) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseEdit) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseEdit) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseEdit) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseEdit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseEdit_builder) Build() *ResponseEdit {
+	m0 := &ResponseEdit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestAbandon struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revisions   []string               `protobuf:"bytes,2,rep,name=revisions"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestAbandon) Reset() {
+	*x = RequestAbandon{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAbandon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAbandon) ProtoMessage() {}
+
+func (x *RequestAbandon) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestAbandon) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestAbandon) GetRevisions() []string {
+	if x != nil {
+		return x.xxx_hidden_Revisions
+	}
+	return nil
+}
+
+func (x *RequestAbandon) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestAbandon) SetRevisions(v []string) {
+	x.xxx_hidden_Revisions = v
+}
+
+func (x *RequestAbandon) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestAbandon) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestAbandon_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path      *string
+	Revisions []string
+}
+
+func (b0 RequestAbandon_builder) Build() *RequestAbandon {
+	m0 := &RequestAbandon{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	x.xxx_hidden_Revisions = b.Revisions
+	return m0
+}
+
+type ResponseAbandon struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseAbandon) Reset() {
+	*x = ResponseAbandon{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseAbandon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseAbandon) ProtoMessage() {}
+
+func (x *ResponseAbandon) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseAbandon) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseAbandon) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseAbandon) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseAbandon) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseAbandon_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseAbandon_builder) Build() *ResponseAbandon {
+	m0 := &ResponseAbandon{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestDescribe struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revision    *string                `protobuf:"bytes,2,opt,name=revision"`
+	xxx_hidden_Description *string                `protobuf:"bytes,3,opt,name=description"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestDescribe) Reset() {
+	*x = RequestDescribe{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDescribe) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDescribe) ProtoMessage() {}
+
+func (x *RequestDescribe) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestDescribe) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDescribe) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDescribe) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDescribe) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestDescribe) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestDescribe) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestDescribe) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestDescribe) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestDescribe) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestDescribe) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestDescribe) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Revision = nil
+}
+
+func (x *RequestDescribe) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Description = nil
+}
+
+type RequestDescribe_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path        *string
+	Revision    *string
+	Description *string
+}
+
+func (b0 RequestDescribe_builder) Build() *RequestDescribe {
+	m0 := &RequestDescribe{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Description = b.Description
+	}
+	return m0
+}
+
+type ResponseDescribe struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseDescribe) Reset() {
+	*x = ResponseDescribe{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseDescribe) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseDescribe) ProtoMessage() {}
+
+func (x *ResponseDescribe) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseDescribe) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseDescribe) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseDescribe) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseDescribe) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseDescribe_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseDescribe_builder) Build() *ResponseDescribe {
+	m0 := &ResponseDescribe{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestCommit struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Description *string                `protobuf:"bytes,2,opt,name=description"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestCommit) Reset() {
+	*x = RequestCommit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestCommit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestCommit) ProtoMessage() {}
+
+func (x *RequestCommit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestCommit) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestCommit) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestCommit) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestCommit) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestCommit) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestCommit) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestCommit) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestCommit) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Description = nil
+}
+
+type RequestCommit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path        *string
+	Description *string
+}
+
+func (b0 RequestCommit_builder) Build() *RequestCommit {
+	m0 := &RequestCommit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Description = b.Description
+	}
+	return m0
+}
+
+type ResponseCommit struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseCommit) Reset() {
+	*x = ResponseCommit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseCommit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseCommit) ProtoMessage() {}
+
+func (x *ResponseCommit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseCommit) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseCommit) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseCommit) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseCommit) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseCommit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseCommit_builder) Build() *ResponseCommit {
+	m0 := &ResponseCommit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestUndo struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestUndo) Reset() {
+	*x = RequestUndo{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestUndo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestUndo) ProtoMessage() {}
+
+func (x *RequestUndo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestUndo) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestUndo) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestUndo) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestUndo) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestUndo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestUndo_builder) Build() *RequestUndo {
+	m0 := &RequestUndo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseUndo struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseUndo) Reset() {
+	*x = ResponseUndo{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseUndo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseUndo) ProtoMessage() {}
+
+func (x *ResponseUndo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseUndo) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseUndo) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseUndo) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseUndo) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseUndo_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseUndo_builder) Build() *ResponseUndo {
+	m0 := &ResponseUndo{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
 var File_proto_codexel_codexel_proto protoreflect.FileDescriptor
 
 const file_proto_codexel_codexel_proto_rawDesc = "" +
@@ -4788,7 +5884,38 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x13ResponseGetRevision\x12,\n" +
 	"\x06commit\x18\x01 \x01(\v2\x14.mono.codexel.CommitR\x06commit\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12,\n" +
-	"\x05files\x18\x03 \x03(\v2\x16.mono.codexel.FileDiffR\x05files*\xa7\x01\n" +
+	"\x05files\x18\x03 \x03(\v2\x16.mono.codexel.FileDiffR\x05files\">\n" +
+	"\n" +
+	"RequestNew\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
+	"\trevisions\x18\x02 \x03(\tR\trevisions\"%\n" +
+	"\vResponseNew\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"=\n" +
+	"\vRequestEdit\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
+	"\brevision\x18\x02 \x01(\tR\brevision\"&\n" +
+	"\fResponseEdit\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"B\n" +
+	"\x0eRequestAbandon\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
+	"\trevisions\x18\x02 \x03(\tR\trevisions\")\n" +
+	"\x0fResponseAbandon\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"c\n" +
+	"\x0fRequestDescribe\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
+	"\brevision\x18\x02 \x01(\tR\brevision\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\"*\n" +
+	"\x10ResponseDescribe\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"E\n" +
+	"\rRequestCommit\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\"(\n" +
+	"\x0eResponseCommit\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"!\n" +
+	"\vRequestUndo\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"&\n" +
+	"\fResponseUndo\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output*\xa7\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AGENT_STATUS_IDLE\x10\x01\x12\x18\n" +
@@ -4828,13 +5955,19 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x0eListCandidates\x12#.mono.codexel.RequestListCandidates\x1a$.mono.codexel.ResponseListCandidates\x12[\n" +
 	"\x0eOpenRepository\x12#.mono.codexel.RequestOpenRepository\x1a$.mono.codexel.ResponseOpenRepository\x12^\n" +
 	"\x0fCloseRepository\x12$.mono.codexel.RequestCloseRepository\x1a%.mono.codexel.ResponseCloseRepository\x12`\n" +
-	"\x0fWatchRepository\x12$.mono.codexel.RequestWatchRepository\x1a%.mono.codexel.ResponseWatchRepository0\x012\xa1\x01\n" +
+	"\x0fWatchRepository\x12$.mono.codexel.RequestWatchRepository\x1a%.mono.codexel.ResponseWatchRepository0\x012\xb3\x04\n" +
 	"\x0fRevisionService\x12:\n" +
 	"\x03Log\x12\x18.mono.codexel.RequestLog\x1a\x19.mono.codexel.ResponseLog\x12R\n" +
-	"\vGetRevision\x12 .mono.codexel.RequestGetRevision\x1a!.mono.codexel.ResponseGetRevisionB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\vGetRevision\x12 .mono.codexel.RequestGetRevision\x1a!.mono.codexel.ResponseGetRevision\x12:\n" +
+	"\x03New\x12\x18.mono.codexel.RequestNew\x1a\x19.mono.codexel.ResponseNew\x12=\n" +
+	"\x04Edit\x12\x19.mono.codexel.RequestEdit\x1a\x1a.mono.codexel.ResponseEdit\x12F\n" +
+	"\aAbandon\x12\x1c.mono.codexel.RequestAbandon\x1a\x1d.mono.codexel.ResponseAbandon\x12I\n" +
+	"\bDescribe\x12\x1d.mono.codexel.RequestDescribe\x1a\x1e.mono.codexel.ResponseDescribe\x12C\n" +
+	"\x06Commit\x12\x1b.mono.codexel.RequestCommit\x1a\x1c.mono.codexel.ResponseCommit\x12=\n" +
+	"\x04Undo\x12\x19.mono.codexel.RequestUndo\x1a\x1a.mono.codexel.ResponseUndoB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 53)
 var file_proto_codexel_codexel_proto_goTypes = []any{
 	(AgentStatus)(0),                 // 0: mono.codexel.AgentStatus
 	(FileStatus)(0),                  // 1: mono.codexel.FileStatus
@@ -4880,6 +6013,18 @@ var file_proto_codexel_codexel_proto_goTypes = []any{
 	(*FileDiff)(nil),                 // 41: mono.codexel.FileDiff
 	(*RequestGetRevision)(nil),       // 42: mono.codexel.RequestGetRevision
 	(*ResponseGetRevision)(nil),      // 43: mono.codexel.ResponseGetRevision
+	(*RequestNew)(nil),               // 44: mono.codexel.RequestNew
+	(*ResponseNew)(nil),              // 45: mono.codexel.ResponseNew
+	(*RequestEdit)(nil),              // 46: mono.codexel.RequestEdit
+	(*ResponseEdit)(nil),             // 47: mono.codexel.ResponseEdit
+	(*RequestAbandon)(nil),           // 48: mono.codexel.RequestAbandon
+	(*ResponseAbandon)(nil),          // 49: mono.codexel.ResponseAbandon
+	(*RequestDescribe)(nil),          // 50: mono.codexel.RequestDescribe
+	(*ResponseDescribe)(nil),         // 51: mono.codexel.ResponseDescribe
+	(*RequestCommit)(nil),            // 52: mono.codexel.RequestCommit
+	(*ResponseCommit)(nil),           // 53: mono.codexel.ResponseCommit
+	(*RequestUndo)(nil),              // 54: mono.codexel.RequestUndo
+	(*ResponseUndo)(nil),             // 55: mono.codexel.ResponseUndo
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,  // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
@@ -4916,23 +6061,35 @@ var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	35, // 31: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
 	37, // 32: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
 	42, // 33: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
-	6,  // 34: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
-	8,  // 35: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
-	10, // 36: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	12, // 37: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	14, // 38: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	16, // 39: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
-	18, // 40: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	20, // 41: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
-	28, // 42: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
-	30, // 43: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
-	32, // 44: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
-	34, // 45: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
-	36, // 46: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
-	38, // 47: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
-	43, // 48: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
-	34, // [34:49] is the sub-list for method output_type
-	19, // [19:34] is the sub-list for method input_type
+	44, // 34: mono.codexel.RevisionService.New:input_type -> mono.codexel.RequestNew
+	46, // 35: mono.codexel.RevisionService.Edit:input_type -> mono.codexel.RequestEdit
+	48, // 36: mono.codexel.RevisionService.Abandon:input_type -> mono.codexel.RequestAbandon
+	50, // 37: mono.codexel.RevisionService.Describe:input_type -> mono.codexel.RequestDescribe
+	52, // 38: mono.codexel.RevisionService.Commit:input_type -> mono.codexel.RequestCommit
+	54, // 39: mono.codexel.RevisionService.Undo:input_type -> mono.codexel.RequestUndo
+	6,  // 40: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
+	8,  // 41: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
+	10, // 42: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	12, // 43: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	14, // 44: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	16, // 45: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
+	18, // 46: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	20, // 47: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
+	28, // 48: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
+	30, // 49: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
+	32, // 50: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
+	34, // 51: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
+	36, // 52: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
+	38, // 53: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
+	43, // 54: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
+	45, // 55: mono.codexel.RevisionService.New:output_type -> mono.codexel.ResponseNew
+	47, // 56: mono.codexel.RevisionService.Edit:output_type -> mono.codexel.ResponseEdit
+	49, // 57: mono.codexel.RevisionService.Abandon:output_type -> mono.codexel.ResponseAbandon
+	51, // 58: mono.codexel.RevisionService.Describe:output_type -> mono.codexel.ResponseDescribe
+	53, // 59: mono.codexel.RevisionService.Commit:output_type -> mono.codexel.ResponseCommit
+	55, // 60: mono.codexel.RevisionService.Undo:output_type -> mono.codexel.ResponseUndo
+	40, // [40:61] is the sub-list for method output_type
+	19, // [19:40] is the sub-list for method input_type
 	19, // [19:19] is the sub-list for extension type_name
 	19, // [19:19] is the sub-list for extension extendee
 	0,  // [0:19] is the sub-list for field type_name
@@ -4949,7 +6106,7 @@ func file_proto_codexel_codexel_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   41,
+			NumMessages:   53,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

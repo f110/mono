@@ -1,105 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
-import { Alert, Box, Button, IconButton, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { Box, Button, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { OpenRepositoryDialog } from '../components/OpenRepositoryDialog.tsx'
-import { RevisionDetail } from '../components/RevisionDetail.tsx'
-import { RevisionGraph } from '../components/RevisionGraph.tsx'
-import { RepositoryService, RevisionService } from '../connect/codexel_pb.js'
-import { useOperation } from '../hooks/useOperation.ts'
-
-// isEditing reports whether the key event is for the input. The keyboard shortcuts are ignored while editing.
-const isEditing = (e: KeyboardEvent) => {
-  const target = e.target as HTMLElement | null
-  return target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-}
-
-const RepositoryView = ({ path }: { path: string }) => {
-  const [revset, setRevset] = useState('')
-  const [revsetInput, setRevsetInput] = useState('')
-  const [selected, setSelected] = useState(0)
-  const revsetRef = useRef<HTMLInputElement>(null)
-  const operation = useOperation(path)
-  const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
-  const rows = data?.rows ?? []
-  const selectedCommit = rows[selected]?.commit
-
-  useEffect(() => {
-    if (operation) {
-      refetch()
-    }
-  }, [operation, refetch])
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey) {
-        return
-      }
-      switch (e.key) {
-        case 'j':
-          setSelected((s) => Math.min(s + 1, rows.length - 1))
-          break
-        case 'k':
-          setSelected((s) => Math.max(s - 1, 0))
-          break
-        case '@': {
-          const i = rows.findIndex((r) => r.commit?.currentWorkingCopy)
-          if (i >= 0) {
-            setSelected(i)
-          }
-          break
-        }
-        case '/':
-          e.preventDefault()
-          revsetRef.current?.focus()
-          break
-        case 'r':
-          refetch()
-          break
-        default:
-          return
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [rows, refetch])
-
-  return (
-    <Stack sx={{ height: '100%' }}>
-      <Box sx={{ p: 1 }}>
-        <TextField
-          inputRef={revsetRef}
-          size="small"
-          fullWidth
-          placeholder="Revset (/ to focus, Enter to apply, Esc to cancel)"
-          value={revsetInput}
-          onChange={(e) => setRevsetInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              setRevset(revsetInput)
-              setSelected(0)
-              revsetRef.current?.blur()
-            } else if (e.key === 'Escape') {
-              setRevsetInput(revset)
-              revsetRef.current?.blur()
-            }
-          }}
-          slotProps={{ input: { sx: { fontFamily: 'monospace' } } }}
-        />
-      </Box>
-      {error && <Alert severity="error" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{error.message}</Alert>}
-      <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
-        <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-          <RevisionGraph rows={rows} selected={selected} onSelect={setSelected} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-          {selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />}
-        </Box>
-      </Stack>
-    </Stack>
-  )
-}
+import { RepositoryView } from '../components/RepositoryView.tsx'
+import { RepositoryService } from '../connect/codexel_pb.js'
 
 export const RepositoriesPage = () => {
   const { path } = useSearch({ from: '/repositories' })
