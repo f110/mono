@@ -16,14 +16,17 @@ import (
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/codexel/api"
+	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/logger"
 )
 
 // New returns the handler of the API and the frontend.
-func New(herdrClient *herdr.Client, frontend fs.FS) http.Handler {
+func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient)))
+	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf, herdrClient)))
+	mux.Handle(api.NewRevisionServiceHandler(NewRevisionHandler(conf)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }

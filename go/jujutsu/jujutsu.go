@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -188,6 +190,55 @@ func (r *Repository) Log(ctx context.Context, revset string, limit int) ([]*LogR
 		return nil, err
 	}
 	return parseLog(out)
+}
+
+// OperationHeadsDir returns the directory of the heads of the operations. The name of the file in the directory is the
+// ID of the operation and jj replaces the file on every operation.
+func (r *Repository) OperationHeadsDir() (string, error) {
+	repo := filepath.Join(r.root, ".jj", "repo")
+	fi, err := os.Stat(repo)
+	if err != nil {
+		return "", xerrors.WithStack(err)
+	}
+	// .jj/repo of the secondary workspace is the file which has the path to the repository.
+	if !fi.IsDir() {
+		buf, err := os.ReadFile(repo)
+		if err != nil {
+			return "", xerrors.WithStack(err)
+		}
+		repo = strings.TrimSpace(string(buf))
+		if !filepath.IsAbs(repo) {
+			repo = filepath.Join(r.root, ".jj", repo)
+		}
+	}
+	return filepath.Join(repo, "op_heads", "heads"), nil
+}
+
+// OperationID returns the ID of the current operation.
+func (r *Repository) OperationID(ctx context.Context) (string, error) {
+	dir, err := r.OperationHeadsDir()
+	if err != nil {
+		return "", err
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", xerrors.WithStack(err)
+	}
+	if len(entries) == 1 {
+		return entries[0].Name(), nil
+	}
+	// The heads diverge while the concurrent operations are not merged yet. jj merges them.
+	out, err := run(ctx, r.root, "op", "log", "--no-graph", "--limit", "1", "-T", "self.id()")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// Snapshot snapshots the working copy. The operation changes if the working copy has the changes.
+func (r *Repository) Snapshot(ctx context.Context) error {
+	_, err := run(ctx, r.root, "util", "snapshot")
+	return err
 }
 
 // Error is the error of the jj command. Stderr is the message from jj.

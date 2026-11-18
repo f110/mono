@@ -1717,6 +1717,1937 @@ func (b0 ResponseStartAgent_builder) Build() *ResponseStartAgent {
 	return m0
 }
 
+type Repository struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Repository) Reset() {
+	*x = Repository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Repository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Repository) ProtoMessage() {}
+
+func (x *Repository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Repository) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Repository) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Repository) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *Repository) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *Repository) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Repository) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Repository) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *Repository) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+type Repository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+	Name *string
+}
+
+func (b0 Repository_builder) Build() *Repository {
+	m0 := &Repository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	return m0
+}
+
+type RemoteBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,1,opt,name=name"`
+	xxx_hidden_Remote      *string                `protobuf:"bytes,2,opt,name=remote"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RemoteBookmark) Reset() {
+	*x = RemoteBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoteBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoteBookmark) ProtoMessage() {}
+
+func (x *RemoteBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RemoteBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RemoteBookmark) GetRemote() string {
+	if x != nil {
+		if x.xxx_hidden_Remote != nil {
+			return *x.xxx_hidden_Remote
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RemoteBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RemoteBookmark) SetRemote(v string) {
+	x.xxx_hidden_Remote = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RemoteBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RemoteBookmark) HasRemote() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RemoteBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *RemoteBookmark) ClearRemote() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Remote = nil
+}
+
+type RemoteBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Name   *string
+	Remote *string
+}
+
+func (b0 RemoteBookmark_builder) Build() *RemoteBookmark {
+	m0 := &RemoteBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Remote != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Remote = b.Remote
+	}
+	return m0
+}
+
+type Trailer struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Key         *string                `protobuf:"bytes,1,opt,name=key"`
+	xxx_hidden_Value       *string                `protobuf:"bytes,2,opt,name=value"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Trailer) Reset() {
+	*x = Trailer{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Trailer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Trailer) ProtoMessage() {}
+
+func (x *Trailer) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Trailer) GetKey() string {
+	if x != nil {
+		if x.xxx_hidden_Key != nil {
+			return *x.xxx_hidden_Key
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Trailer) GetValue() string {
+	if x != nil {
+		if x.xxx_hidden_Value != nil {
+			return *x.xxx_hidden_Value
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Trailer) SetKey(v string) {
+	x.xxx_hidden_Key = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *Trailer) SetValue(v string) {
+	x.xxx_hidden_Value = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *Trailer) HasKey() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Trailer) HasValue() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Trailer) ClearKey() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Key = nil
+}
+
+func (x *Trailer) ClearValue() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Value = nil
+}
+
+type Trailer_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Key   *string
+	Value *string
+}
+
+func (b0 Trailer_builder) Build() *Trailer {
+	m0 := &Trailer{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Key != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Key = b.Key
+	}
+	if b.Value != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Value = b.Value
+	}
+	return m0
+}
+
+type Commit struct {
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_ChangeId           *string                `protobuf:"bytes,1,opt,name=change_id,json=changeId"`
+	xxx_hidden_ChangeIdPrefix     *string                `protobuf:"bytes,2,opt,name=change_id_prefix,json=changeIdPrefix"`
+	xxx_hidden_CommitId           *string                `protobuf:"bytes,3,opt,name=commit_id,json=commitId"`
+	xxx_hidden_CommitIdPrefix     *string                `protobuf:"bytes,4,opt,name=commit_id_prefix,json=commitIdPrefix"`
+	xxx_hidden_Description        *string                `protobuf:"bytes,5,opt,name=description"`
+	xxx_hidden_Author             *string                `protobuf:"bytes,6,opt,name=author"`
+	xxx_hidden_Email              *string                `protobuf:"bytes,7,opt,name=email"`
+	xxx_hidden_Timestamp          int64                  `protobuf:"varint,8,opt,name=timestamp"`
+	xxx_hidden_CurrentWorkingCopy bool                   `protobuf:"varint,9,opt,name=current_working_copy,json=currentWorkingCopy"`
+	xxx_hidden_Immutable          bool                   `protobuf:"varint,10,opt,name=immutable"`
+	xxx_hidden_Conflict           bool                   `protobuf:"varint,11,opt,name=conflict"`
+	xxx_hidden_Empty              bool                   `protobuf:"varint,12,opt,name=empty"`
+	xxx_hidden_Divergent          bool                   `protobuf:"varint,13,opt,name=divergent"`
+	xxx_hidden_Hidden             bool                   `protobuf:"varint,14,opt,name=hidden"`
+	xxx_hidden_Parents            []string               `protobuf:"bytes,15,rep,name=parents"`
+	xxx_hidden_LocalBookmarks     []string               `protobuf:"bytes,16,rep,name=local_bookmarks,json=localBookmarks"`
+	xxx_hidden_RemoteBookmarks    *[]*RemoteBookmark     `protobuf:"bytes,17,rep,name=remote_bookmarks,json=remoteBookmarks"`
+	xxx_hidden_Trailers           *[]*Trailer            `protobuf:"bytes,18,rep,name=trailers"`
+	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
+	XXX_presence                  [1]uint32
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
+}
+
+func (x *Commit) Reset() {
+	*x = Commit{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Commit) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Commit) ProtoMessage() {}
+
+func (x *Commit) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Commit) GetChangeId() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeId != nil {
+			return *x.xxx_hidden_ChangeId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetChangeIdPrefix() string {
+	if x != nil {
+		if x.xxx_hidden_ChangeIdPrefix != nil {
+			return *x.xxx_hidden_ChangeIdPrefix
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetCommitId() string {
+	if x != nil {
+		if x.xxx_hidden_CommitId != nil {
+			return *x.xxx_hidden_CommitId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetCommitIdPrefix() string {
+	if x != nil {
+		if x.xxx_hidden_CommitIdPrefix != nil {
+			return *x.xxx_hidden_CommitIdPrefix
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetAuthor() string {
+	if x != nil {
+		if x.xxx_hidden_Author != nil {
+			return *x.xxx_hidden_Author
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetEmail() string {
+	if x != nil {
+		if x.xxx_hidden_Email != nil {
+			return *x.xxx_hidden_Email
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Commit) GetTimestamp() int64 {
+	if x != nil {
+		return x.xxx_hidden_Timestamp
+	}
+	return 0
+}
+
+func (x *Commit) GetCurrentWorkingCopy() bool {
+	if x != nil {
+		return x.xxx_hidden_CurrentWorkingCopy
+	}
+	return false
+}
+
+func (x *Commit) GetImmutable() bool {
+	if x != nil {
+		return x.xxx_hidden_Immutable
+	}
+	return false
+}
+
+func (x *Commit) GetConflict() bool {
+	if x != nil {
+		return x.xxx_hidden_Conflict
+	}
+	return false
+}
+
+func (x *Commit) GetEmpty() bool {
+	if x != nil {
+		return x.xxx_hidden_Empty
+	}
+	return false
+}
+
+func (x *Commit) GetDivergent() bool {
+	if x != nil {
+		return x.xxx_hidden_Divergent
+	}
+	return false
+}
+
+func (x *Commit) GetHidden() bool {
+	if x != nil {
+		return x.xxx_hidden_Hidden
+	}
+	return false
+}
+
+func (x *Commit) GetParents() []string {
+	if x != nil {
+		return x.xxx_hidden_Parents
+	}
+	return nil
+}
+
+func (x *Commit) GetLocalBookmarks() []string {
+	if x != nil {
+		return x.xxx_hidden_LocalBookmarks
+	}
+	return nil
+}
+
+func (x *Commit) GetRemoteBookmarks() []*RemoteBookmark {
+	if x != nil {
+		if x.xxx_hidden_RemoteBookmarks != nil {
+			return *x.xxx_hidden_RemoteBookmarks
+		}
+	}
+	return nil
+}
+
+func (x *Commit) GetTrailers() []*Trailer {
+	if x != nil {
+		if x.xxx_hidden_Trailers != nil {
+			return *x.xxx_hidden_Trailers
+		}
+	}
+	return nil
+}
+
+func (x *Commit) SetChangeId(v string) {
+	x.xxx_hidden_ChangeId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 18)
+}
+
+func (x *Commit) SetChangeIdPrefix(v string) {
+	x.xxx_hidden_ChangeIdPrefix = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 18)
+}
+
+func (x *Commit) SetCommitId(v string) {
+	x.xxx_hidden_CommitId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 18)
+}
+
+func (x *Commit) SetCommitIdPrefix(v string) {
+	x.xxx_hidden_CommitIdPrefix = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 18)
+}
+
+func (x *Commit) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 18)
+}
+
+func (x *Commit) SetAuthor(v string) {
+	x.xxx_hidden_Author = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 18)
+}
+
+func (x *Commit) SetEmail(v string) {
+	x.xxx_hidden_Email = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 18)
+}
+
+func (x *Commit) SetTimestamp(v int64) {
+	x.xxx_hidden_Timestamp = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 18)
+}
+
+func (x *Commit) SetCurrentWorkingCopy(v bool) {
+	x.xxx_hidden_CurrentWorkingCopy = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 18)
+}
+
+func (x *Commit) SetImmutable(v bool) {
+	x.xxx_hidden_Immutable = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 18)
+}
+
+func (x *Commit) SetConflict(v bool) {
+	x.xxx_hidden_Conflict = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 18)
+}
+
+func (x *Commit) SetEmpty(v bool) {
+	x.xxx_hidden_Empty = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 18)
+}
+
+func (x *Commit) SetDivergent(v bool) {
+	x.xxx_hidden_Divergent = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 18)
+}
+
+func (x *Commit) SetHidden(v bool) {
+	x.xxx_hidden_Hidden = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 18)
+}
+
+func (x *Commit) SetParents(v []string) {
+	x.xxx_hidden_Parents = v
+}
+
+func (x *Commit) SetLocalBookmarks(v []string) {
+	x.xxx_hidden_LocalBookmarks = v
+}
+
+func (x *Commit) SetRemoteBookmarks(v []*RemoteBookmark) {
+	x.xxx_hidden_RemoteBookmarks = &v
+}
+
+func (x *Commit) SetTrailers(v []*Trailer) {
+	x.xxx_hidden_Trailers = &v
+}
+
+func (x *Commit) HasChangeId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Commit) HasChangeIdPrefix() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Commit) HasCommitId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *Commit) HasCommitIdPrefix() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Commit) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *Commit) HasAuthor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *Commit) HasEmail() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *Commit) HasTimestamp() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *Commit) HasCurrentWorkingCopy() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *Commit) HasImmutable() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *Commit) HasConflict() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *Commit) HasEmpty() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *Commit) HasDivergent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *Commit) HasHidden() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *Commit) ClearChangeId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_ChangeId = nil
+}
+
+func (x *Commit) ClearChangeIdPrefix() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_ChangeIdPrefix = nil
+}
+
+func (x *Commit) ClearCommitId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_CommitId = nil
+}
+
+func (x *Commit) ClearCommitIdPrefix() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_CommitIdPrefix = nil
+}
+
+func (x *Commit) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Description = nil
+}
+
+func (x *Commit) ClearAuthor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Author = nil
+}
+
+func (x *Commit) ClearEmail() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Email = nil
+}
+
+func (x *Commit) ClearTimestamp() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Timestamp = 0
+}
+
+func (x *Commit) ClearCurrentWorkingCopy() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_CurrentWorkingCopy = false
+}
+
+func (x *Commit) ClearImmutable() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Immutable = false
+}
+
+func (x *Commit) ClearConflict() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Conflict = false
+}
+
+func (x *Commit) ClearEmpty() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Empty = false
+}
+
+func (x *Commit) ClearDivergent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_Divergent = false
+}
+
+func (x *Commit) ClearHidden() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_Hidden = false
+}
+
+type Commit_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	ChangeId           *string
+	ChangeIdPrefix     *string
+	CommitId           *string
+	CommitIdPrefix     *string
+	Description        *string
+	Author             *string
+	Email              *string
+	Timestamp          *int64
+	CurrentWorkingCopy *bool
+	Immutable          *bool
+	Conflict           *bool
+	Empty              *bool
+	Divergent          *bool
+	Hidden             *bool
+	Parents            []string
+	LocalBookmarks     []string
+	RemoteBookmarks    []*RemoteBookmark
+	Trailers           []*Trailer
+}
+
+func (b0 Commit_builder) Build() *Commit {
+	m0 := &Commit{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.ChangeId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 18)
+		x.xxx_hidden_ChangeId = b.ChangeId
+	}
+	if b.ChangeIdPrefix != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 18)
+		x.xxx_hidden_ChangeIdPrefix = b.ChangeIdPrefix
+	}
+	if b.CommitId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 18)
+		x.xxx_hidden_CommitId = b.CommitId
+	}
+	if b.CommitIdPrefix != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 18)
+		x.xxx_hidden_CommitIdPrefix = b.CommitIdPrefix
+	}
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 18)
+		x.xxx_hidden_Description = b.Description
+	}
+	if b.Author != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 18)
+		x.xxx_hidden_Author = b.Author
+	}
+	if b.Email != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 18)
+		x.xxx_hidden_Email = b.Email
+	}
+	if b.Timestamp != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 18)
+		x.xxx_hidden_Timestamp = *b.Timestamp
+	}
+	if b.CurrentWorkingCopy != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 18)
+		x.xxx_hidden_CurrentWorkingCopy = *b.CurrentWorkingCopy
+	}
+	if b.Immutable != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 18)
+		x.xxx_hidden_Immutable = *b.Immutable
+	}
+	if b.Conflict != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 18)
+		x.xxx_hidden_Conflict = *b.Conflict
+	}
+	if b.Empty != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 18)
+		x.xxx_hidden_Empty = *b.Empty
+	}
+	if b.Divergent != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 18)
+		x.xxx_hidden_Divergent = *b.Divergent
+	}
+	if b.Hidden != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 18)
+		x.xxx_hidden_Hidden = *b.Hidden
+	}
+	x.xxx_hidden_Parents = b.Parents
+	x.xxx_hidden_LocalBookmarks = b.LocalBookmarks
+	x.xxx_hidden_RemoteBookmarks = &b.RemoteBookmarks
+	x.xxx_hidden_Trailers = &b.Trailers
+	return m0
+}
+
+type GraphLine struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Gutter      *string                `protobuf:"bytes,1,opt,name=gutter"`
+	xxx_hidden_Content     *string                `protobuf:"bytes,2,opt,name=content"`
+	xxx_hidden_Node        bool                   `protobuf:"varint,3,opt,name=node"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *GraphLine) Reset() {
+	*x = GraphLine{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GraphLine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GraphLine) ProtoMessage() {}
+
+func (x *GraphLine) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *GraphLine) GetGutter() string {
+	if x != nil {
+		if x.xxx_hidden_Gutter != nil {
+			return *x.xxx_hidden_Gutter
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GraphLine) GetContent() string {
+	if x != nil {
+		if x.xxx_hidden_Content != nil {
+			return *x.xxx_hidden_Content
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *GraphLine) GetNode() bool {
+	if x != nil {
+		return x.xxx_hidden_Node
+	}
+	return false
+}
+
+func (x *GraphLine) SetGutter(v string) {
+	x.xxx_hidden_Gutter = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *GraphLine) SetContent(v string) {
+	x.xxx_hidden_Content = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *GraphLine) SetNode(v bool) {
+	x.xxx_hidden_Node = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *GraphLine) HasGutter() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *GraphLine) HasContent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *GraphLine) HasNode() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *GraphLine) ClearGutter() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Gutter = nil
+}
+
+func (x *GraphLine) ClearContent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Content = nil
+}
+
+func (x *GraphLine) ClearNode() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Node = false
+}
+
+type GraphLine_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Gutter  *string
+	Content *string
+	Node    *bool
+}
+
+func (b0 GraphLine_builder) Build() *GraphLine {
+	m0 := &GraphLine{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Gutter != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Gutter = b.Gutter
+	}
+	if b.Content != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Content = b.Content
+	}
+	if b.Node != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Node = *b.Node
+	}
+	return m0
+}
+
+type LogRow struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Commit *Commit                `protobuf:"bytes,1,opt,name=commit"`
+	xxx_hidden_Lines  *[]*GraphLine          `protobuf:"bytes,2,rep,name=lines"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *LogRow) Reset() {
+	*x = LogRow{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogRow) ProtoMessage() {}
+
+func (x *LogRow) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *LogRow) GetCommit() *Commit {
+	if x != nil {
+		return x.xxx_hidden_Commit
+	}
+	return nil
+}
+
+func (x *LogRow) GetLines() []*GraphLine {
+	if x != nil {
+		if x.xxx_hidden_Lines != nil {
+			return *x.xxx_hidden_Lines
+		}
+	}
+	return nil
+}
+
+func (x *LogRow) SetCommit(v *Commit) {
+	x.xxx_hidden_Commit = v
+}
+
+func (x *LogRow) SetLines(v []*GraphLine) {
+	x.xxx_hidden_Lines = &v
+}
+
+func (x *LogRow) HasCommit() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Commit != nil
+}
+
+func (x *LogRow) ClearCommit() {
+	x.xxx_hidden_Commit = nil
+}
+
+type LogRow_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Commit *Commit
+	Lines  []*GraphLine
+}
+
+func (b0 LogRow_builder) Build() *LogRow {
+	m0 := &LogRow{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Commit = b.Commit
+	x.xxx_hidden_Lines = &b.Lines
+	return m0
+}
+
+type RequestListRepositories struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestListRepositories) Reset() {
+	*x = RequestListRepositories{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListRepositories) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListRepositories) ProtoMessage() {}
+
+func (x *RequestListRepositories) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type RequestListRepositories_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 RequestListRepositories_builder) Build() *RequestListRepositories {
+	m0 := &RequestListRepositories{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type ResponseListRepositories struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Repositories *[]*Repository         `protobuf:"bytes,1,rep,name=repositories"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *ResponseListRepositories) Reset() {
+	*x = ResponseListRepositories{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListRepositories) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListRepositories) ProtoMessage() {}
+
+func (x *ResponseListRepositories) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListRepositories) GetRepositories() []*Repository {
+	if x != nil {
+		if x.xxx_hidden_Repositories != nil {
+			return *x.xxx_hidden_Repositories
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListRepositories) SetRepositories(v []*Repository) {
+	x.xxx_hidden_Repositories = &v
+}
+
+type ResponseListRepositories_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repositories []*Repository
+}
+
+func (b0 ResponseListRepositories_builder) Build() *ResponseListRepositories {
+	m0 := &ResponseListRepositories{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Repositories = &b.Repositories
+	return m0
+}
+
+type RequestListCandidates struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestListCandidates) Reset() {
+	*x = RequestListCandidates{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListCandidates) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListCandidates) ProtoMessage() {}
+
+func (x *RequestListCandidates) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type RequestListCandidates_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 RequestListCandidates_builder) Build() *RequestListCandidates {
+	m0 := &RequestListCandidates{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type ResponseListCandidates struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Repositories *[]*Repository         `protobuf:"bytes,1,rep,name=repositories"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *ResponseListCandidates) Reset() {
+	*x = ResponseListCandidates{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListCandidates) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListCandidates) ProtoMessage() {}
+
+func (x *ResponseListCandidates) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListCandidates) GetRepositories() []*Repository {
+	if x != nil {
+		if x.xxx_hidden_Repositories != nil {
+			return *x.xxx_hidden_Repositories
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListCandidates) SetRepositories(v []*Repository) {
+	x.xxx_hidden_Repositories = &v
+}
+
+type ResponseListCandidates_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repositories []*Repository
+}
+
+func (b0 ResponseListCandidates_builder) Build() *ResponseListCandidates {
+	m0 := &ResponseListCandidates{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Repositories = &b.Repositories
+	return m0
+}
+
+type RequestOpenRepository struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestOpenRepository) Reset() {
+	*x = RequestOpenRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestOpenRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestOpenRepository) ProtoMessage() {}
+
+func (x *RequestOpenRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestOpenRepository) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestOpenRepository) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestOpenRepository) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestOpenRepository) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestOpenRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestOpenRepository_builder) Build() *RequestOpenRepository {
+	m0 := &RequestOpenRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseOpenRepository struct {
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Repository *Repository            `protobuf:"bytes,1,opt,name=repository"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *ResponseOpenRepository) Reset() {
+	*x = ResponseOpenRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseOpenRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseOpenRepository) ProtoMessage() {}
+
+func (x *ResponseOpenRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseOpenRepository) GetRepository() *Repository {
+	if x != nil {
+		return x.xxx_hidden_Repository
+	}
+	return nil
+}
+
+func (x *ResponseOpenRepository) SetRepository(v *Repository) {
+	x.xxx_hidden_Repository = v
+}
+
+func (x *ResponseOpenRepository) HasRepository() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Repository != nil
+}
+
+func (x *ResponseOpenRepository) ClearRepository() {
+	x.xxx_hidden_Repository = nil
+}
+
+type ResponseOpenRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Repository *Repository
+}
+
+func (b0 ResponseOpenRepository_builder) Build() *ResponseOpenRepository {
+	m0 := &ResponseOpenRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Repository = b.Repository
+	return m0
+}
+
+type RequestCloseRepository struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestCloseRepository) Reset() {
+	*x = RequestCloseRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestCloseRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestCloseRepository) ProtoMessage() {}
+
+func (x *RequestCloseRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestCloseRepository) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestCloseRepository) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestCloseRepository) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestCloseRepository) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestCloseRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestCloseRepository_builder) Build() *RequestCloseRepository {
+	m0 := &RequestCloseRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseCloseRepository struct {
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResponseCloseRepository) Reset() {
+	*x = ResponseCloseRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseCloseRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseCloseRepository) ProtoMessage() {}
+
+func (x *ResponseCloseRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+type ResponseCloseRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+}
+
+func (b0 ResponseCloseRepository_builder) Build() *ResponseCloseRepository {
+	m0 := &ResponseCloseRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	return m0
+}
+
+type RequestWatchRepository struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestWatchRepository) Reset() {
+	*x = RequestWatchRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestWatchRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestWatchRepository) ProtoMessage() {}
+
+func (x *RequestWatchRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestWatchRepository) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestWatchRepository) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestWatchRepository) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestWatchRepository) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestWatchRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestWatchRepository_builder) Build() *RequestWatchRepository {
+	m0 := &RequestWatchRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseWatchRepository struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_OperationId *string                `protobuf:"bytes,1,opt,name=operation_id,json=operationId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseWatchRepository) Reset() {
+	*x = ResponseWatchRepository{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseWatchRepository) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseWatchRepository) ProtoMessage() {}
+
+func (x *ResponseWatchRepository) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseWatchRepository) GetOperationId() string {
+	if x != nil {
+		if x.xxx_hidden_OperationId != nil {
+			return *x.xxx_hidden_OperationId
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseWatchRepository) SetOperationId(v string) {
+	x.xxx_hidden_OperationId = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseWatchRepository) HasOperationId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseWatchRepository) ClearOperationId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_OperationId = nil
+}
+
+type ResponseWatchRepository_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	OperationId *string
+}
+
+func (b0 ResponseWatchRepository_builder) Build() *ResponseWatchRepository {
+	m0 := &ResponseWatchRepository{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.OperationId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_OperationId = b.OperationId
+	}
+	return m0
+}
+
+type RequestLog struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revset      *string                `protobuf:"bytes,2,opt,name=revset"`
+	xxx_hidden_Limit       int32                  `protobuf:"varint,3,opt,name=limit"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestLog) Reset() {
+	*x = RequestLog{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestLog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestLog) ProtoMessage() {}
+
+func (x *RequestLog) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestLog) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestLog) GetRevset() string {
+	if x != nil {
+		if x.xxx_hidden_Revset != nil {
+			return *x.xxx_hidden_Revset
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestLog) GetLimit() int32 {
+	if x != nil {
+		return x.xxx_hidden_Limit
+	}
+	return 0
+}
+
+func (x *RequestLog) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestLog) SetRevset(v string) {
+	x.xxx_hidden_Revset = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestLog) SetLimit(v int32) {
+	x.xxx_hidden_Limit = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestLog) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestLog) HasRevset() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestLog) HasLimit() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestLog) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestLog) ClearRevset() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Revset = nil
+}
+
+func (x *RequestLog) ClearLimit() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Limit = 0
+}
+
+type RequestLog_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path   *string
+	Revset *string
+	Limit  *int32
+}
+
+func (b0 RequestLog_builder) Build() *RequestLog {
+	m0 := &RequestLog{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Revset != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Revset = b.Revset
+	}
+	if b.Limit != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Limit = *b.Limit
+	}
+	return m0
+}
+
+type ResponseLog struct {
+	state           protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Rows *[]*LogRow             `protobuf:"bytes,1,rep,name=rows"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ResponseLog) Reset() {
+	*x = ResponseLog{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseLog) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseLog) ProtoMessage() {}
+
+func (x *ResponseLog) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseLog) GetRows() []*LogRow {
+	if x != nil {
+		if x.xxx_hidden_Rows != nil {
+			return *x.xxx_hidden_Rows
+		}
+	}
+	return nil
+}
+
+func (x *ResponseLog) SetRows(v []*LogRow) {
+	x.xxx_hidden_Rows = &v
+}
+
+type ResponseLog_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Rows []*LogRow
+}
+
+func (b0 ResponseLog_builder) Build() *ResponseLog {
+	m0 := &ResponseLog{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Rows = &b.Rows
+	return m0
+}
+
 var File_proto_codexel_codexel_proto protoreflect.FileDescriptor
 
 const file_proto_codexel_codexel_proto_rawDesc = "" +
@@ -1772,7 +3703,70 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x04name\x18\x04 \x01(\tR\x04name\x12\x12\n" +
 	"\x04args\x18\x05 \x03(\tR\x04args\"?\n" +
 	"\x12ResponseStartAgent\x12)\n" +
-	"\x05agent\x18\x01 \x01(\v2\x13.mono.codexel.AgentR\x05agent*\xa7\x01\n" +
+	"\x05agent\x18\x01 \x01(\v2\x13.mono.codexel.AgentR\x05agent\"4\n" +
+	"\n" +
+	"Repository\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"<\n" +
+	"\x0eRemoteBookmark\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06remote\x18\x02 \x01(\tR\x06remote\"1\n" +
+	"\aTrailer\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xfb\x04\n" +
+	"\x06Commit\x12\x1b\n" +
+	"\tchange_id\x18\x01 \x01(\tR\bchangeId\x12(\n" +
+	"\x10change_id_prefix\x18\x02 \x01(\tR\x0echangeIdPrefix\x12\x1b\n" +
+	"\tcommit_id\x18\x03 \x01(\tR\bcommitId\x12(\n" +
+	"\x10commit_id_prefix\x18\x04 \x01(\tR\x0ecommitIdPrefix\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x16\n" +
+	"\x06author\x18\x06 \x01(\tR\x06author\x12\x14\n" +
+	"\x05email\x18\a \x01(\tR\x05email\x12\x1c\n" +
+	"\ttimestamp\x18\b \x01(\x03R\ttimestamp\x120\n" +
+	"\x14current_working_copy\x18\t \x01(\bR\x12currentWorkingCopy\x12\x1c\n" +
+	"\timmutable\x18\n" +
+	" \x01(\bR\timmutable\x12\x1a\n" +
+	"\bconflict\x18\v \x01(\bR\bconflict\x12\x14\n" +
+	"\x05empty\x18\f \x01(\bR\x05empty\x12\x1c\n" +
+	"\tdivergent\x18\r \x01(\bR\tdivergent\x12\x16\n" +
+	"\x06hidden\x18\x0e \x01(\bR\x06hidden\x12\x18\n" +
+	"\aparents\x18\x0f \x03(\tR\aparents\x12'\n" +
+	"\x0flocal_bookmarks\x18\x10 \x03(\tR\x0elocalBookmarks\x12G\n" +
+	"\x10remote_bookmarks\x18\x11 \x03(\v2\x1c.mono.codexel.RemoteBookmarkR\x0fremoteBookmarks\x121\n" +
+	"\btrailers\x18\x12 \x03(\v2\x15.mono.codexel.TrailerR\btrailers\"Q\n" +
+	"\tGraphLine\x12\x16\n" +
+	"\x06gutter\x18\x01 \x01(\tR\x06gutter\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12\x12\n" +
+	"\x04node\x18\x03 \x01(\bR\x04node\"e\n" +
+	"\x06LogRow\x12,\n" +
+	"\x06commit\x18\x01 \x01(\v2\x14.mono.codexel.CommitR\x06commit\x12-\n" +
+	"\x05lines\x18\x02 \x03(\v2\x17.mono.codexel.GraphLineR\x05lines\"\x19\n" +
+	"\x17RequestListRepositories\"X\n" +
+	"\x18ResponseListRepositories\x12<\n" +
+	"\frepositories\x18\x01 \x03(\v2\x18.mono.codexel.RepositoryR\frepositories\"\x17\n" +
+	"\x15RequestListCandidates\"V\n" +
+	"\x16ResponseListCandidates\x12<\n" +
+	"\frepositories\x18\x01 \x03(\v2\x18.mono.codexel.RepositoryR\frepositories\"+\n" +
+	"\x15RequestOpenRepository\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"R\n" +
+	"\x16ResponseOpenRepository\x128\n" +
+	"\n" +
+	"repository\x18\x01 \x01(\v2\x18.mono.codexel.RepositoryR\n" +
+	"repository\",\n" +
+	"\x16RequestCloseRepository\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"\x19\n" +
+	"\x17ResponseCloseRepository\",\n" +
+	"\x16RequestWatchRepository\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"<\n" +
+	"\x17ResponseWatchRepository\x12!\n" +
+	"\foperation_id\x18\x01 \x01(\tR\voperationId\"N\n" +
+	"\n" +
+	"RequestLog\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x16\n" +
+	"\x06revset\x18\x02 \x01(\tR\x06revset\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"7\n" +
+	"\vResponseLog\x12(\n" +
+	"\x04rows\x18\x01 \x03(\v2\x14.mono.codexel.LogRowR\x04rows*\xa7\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AGENT_STATUS_IDLE\x10\x01\x12\x18\n" +
@@ -1793,30 +3787,56 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"FocusAgent\x12\x1f.mono.codexel.RequestFocusAgent\x1a .mono.codexel.ResponseFocusAgent\x12[\n" +
 	"\x0eListWorkspaces\x12#.mono.codexel.RequestListWorkspaces\x1a$.mono.codexel.ResponseListWorkspaces\x12O\n" +
 	"\n" +
-	"StartAgent\x12\x1f.mono.codexel.RequestStartAgent\x1a .mono.codexel.ResponseStartAgentB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"StartAgent\x12\x1f.mono.codexel.RequestStartAgent\x1a .mono.codexel.ResponseStartAgent2\xf2\x03\n" +
+	"\x11RepositoryService\x12a\n" +
+	"\x10ListRepositories\x12%.mono.codexel.RequestListRepositories\x1a&.mono.codexel.ResponseListRepositories\x12[\n" +
+	"\x0eListCandidates\x12#.mono.codexel.RequestListCandidates\x1a$.mono.codexel.ResponseListCandidates\x12[\n" +
+	"\x0eOpenRepository\x12#.mono.codexel.RequestOpenRepository\x1a$.mono.codexel.ResponseOpenRepository\x12^\n" +
+	"\x0fCloseRepository\x12$.mono.codexel.RequestCloseRepository\x1a%.mono.codexel.ResponseCloseRepository\x12`\n" +
+	"\x0fWatchRepository\x12$.mono.codexel.RequestWatchRepository\x1a%.mono.codexel.ResponseWatchRepository0\x012M\n" +
+	"\x0fRevisionService\x12:\n" +
+	"\x03Log\x12\x18.mono.codexel.RequestLog\x1a\x19.mono.codexel.ResponseLogB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_proto_codexel_codexel_proto_goTypes = []any{
-	(AgentStatus)(0),               // 0: mono.codexel.AgentStatus
-	(*Agent)(nil),                  // 1: mono.codexel.Agent
-	(*Workspace)(nil),              // 2: mono.codexel.Workspace
-	(*RequestListAgents)(nil),      // 3: mono.codexel.RequestListAgents
-	(*ResponseListAgents)(nil),     // 4: mono.codexel.ResponseListAgents
-	(*RequestWatchAgents)(nil),     // 5: mono.codexel.RequestWatchAgents
-	(*ResponseWatchAgents)(nil),    // 6: mono.codexel.ResponseWatchAgents
-	(*RequestReadOutput)(nil),      // 7: mono.codexel.RequestReadOutput
-	(*ResponseReadOutput)(nil),     // 8: mono.codexel.ResponseReadOutput
-	(*RequestSendPrompt)(nil),      // 9: mono.codexel.RequestSendPrompt
-	(*ResponseSendPrompt)(nil),     // 10: mono.codexel.ResponseSendPrompt
-	(*RequestSendKeys)(nil),        // 11: mono.codexel.RequestSendKeys
-	(*ResponseSendKeys)(nil),       // 12: mono.codexel.ResponseSendKeys
-	(*RequestFocusAgent)(nil),      // 13: mono.codexel.RequestFocusAgent
-	(*ResponseFocusAgent)(nil),     // 14: mono.codexel.ResponseFocusAgent
-	(*RequestListWorkspaces)(nil),  // 15: mono.codexel.RequestListWorkspaces
-	(*ResponseListWorkspaces)(nil), // 16: mono.codexel.ResponseListWorkspaces
-	(*RequestStartAgent)(nil),      // 17: mono.codexel.RequestStartAgent
-	(*ResponseStartAgent)(nil),     // 18: mono.codexel.ResponseStartAgent
+	(AgentStatus)(0),                 // 0: mono.codexel.AgentStatus
+	(*Agent)(nil),                    // 1: mono.codexel.Agent
+	(*Workspace)(nil),                // 2: mono.codexel.Workspace
+	(*RequestListAgents)(nil),        // 3: mono.codexel.RequestListAgents
+	(*ResponseListAgents)(nil),       // 4: mono.codexel.ResponseListAgents
+	(*RequestWatchAgents)(nil),       // 5: mono.codexel.RequestWatchAgents
+	(*ResponseWatchAgents)(nil),      // 6: mono.codexel.ResponseWatchAgents
+	(*RequestReadOutput)(nil),        // 7: mono.codexel.RequestReadOutput
+	(*ResponseReadOutput)(nil),       // 8: mono.codexel.ResponseReadOutput
+	(*RequestSendPrompt)(nil),        // 9: mono.codexel.RequestSendPrompt
+	(*ResponseSendPrompt)(nil),       // 10: mono.codexel.ResponseSendPrompt
+	(*RequestSendKeys)(nil),          // 11: mono.codexel.RequestSendKeys
+	(*ResponseSendKeys)(nil),         // 12: mono.codexel.ResponseSendKeys
+	(*RequestFocusAgent)(nil),        // 13: mono.codexel.RequestFocusAgent
+	(*ResponseFocusAgent)(nil),       // 14: mono.codexel.ResponseFocusAgent
+	(*RequestListWorkspaces)(nil),    // 15: mono.codexel.RequestListWorkspaces
+	(*ResponseListWorkspaces)(nil),   // 16: mono.codexel.ResponseListWorkspaces
+	(*RequestStartAgent)(nil),        // 17: mono.codexel.RequestStartAgent
+	(*ResponseStartAgent)(nil),       // 18: mono.codexel.ResponseStartAgent
+	(*Repository)(nil),               // 19: mono.codexel.Repository
+	(*RemoteBookmark)(nil),           // 20: mono.codexel.RemoteBookmark
+	(*Trailer)(nil),                  // 21: mono.codexel.Trailer
+	(*Commit)(nil),                   // 22: mono.codexel.Commit
+	(*GraphLine)(nil),                // 23: mono.codexel.GraphLine
+	(*LogRow)(nil),                   // 24: mono.codexel.LogRow
+	(*RequestListRepositories)(nil),  // 25: mono.codexel.RequestListRepositories
+	(*ResponseListRepositories)(nil), // 26: mono.codexel.ResponseListRepositories
+	(*RequestListCandidates)(nil),    // 27: mono.codexel.RequestListCandidates
+	(*ResponseListCandidates)(nil),   // 28: mono.codexel.ResponseListCandidates
+	(*RequestOpenRepository)(nil),    // 29: mono.codexel.RequestOpenRepository
+	(*ResponseOpenRepository)(nil),   // 30: mono.codexel.ResponseOpenRepository
+	(*RequestCloseRepository)(nil),   // 31: mono.codexel.RequestCloseRepository
+	(*ResponseCloseRepository)(nil),  // 32: mono.codexel.ResponseCloseRepository
+	(*RequestWatchRepository)(nil),   // 33: mono.codexel.RequestWatchRepository
+	(*ResponseWatchRepository)(nil),  // 34: mono.codexel.ResponseWatchRepository
+	(*RequestLog)(nil),               // 35: mono.codexel.RequestLog
+	(*ResponseLog)(nil),              // 36: mono.codexel.ResponseLog
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,  // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
@@ -1824,27 +3844,47 @@ var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	1,  // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
 	2,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
 	1,  // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
-	3,  // 5: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
-	5,  // 6: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
-	7,  // 7: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
-	9,  // 8: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
-	11, // 9: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
-	13, // 10: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
-	15, // 11: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
-	17, // 12: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
-	4,  // 13: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
-	6,  // 14: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
-	8,  // 15: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	10, // 16: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	12, // 17: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	14, // 18: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
-	16, // 19: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	18, // 20: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
-	13, // [13:21] is the sub-list for method output_type
-	5,  // [5:13] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	20, // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
+	21, // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
+	22, // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
+	23, // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
+	19, // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
+	19, // 10: mono.codexel.ResponseListCandidates.repositories:type_name -> mono.codexel.Repository
+	19, // 11: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
+	24, // 12: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
+	3,  // 13: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
+	5,  // 14: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
+	7,  // 15: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
+	9,  // 16: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
+	11, // 17: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
+	13, // 18: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
+	15, // 19: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
+	17, // 20: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
+	25, // 21: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
+	27, // 22: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
+	29, // 23: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
+	31, // 24: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
+	33, // 25: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
+	35, // 26: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
+	4,  // 27: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
+	6,  // 28: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
+	8,  // 29: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	10, // 30: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	12, // 31: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	14, // 32: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
+	16, // 33: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	18, // 34: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
+	26, // 35: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
+	28, // 36: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
+	30, // 37: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
+	32, // 38: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
+	34, // 39: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
+	36, // 40: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
+	27, // [27:41] is the sub-list for method output_type
+	13, // [13:27] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_proto_codexel_codexel_proto_init() }
@@ -1858,9 +3898,9 @@ func file_proto_codexel_codexel_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   18,
+			NumMessages:   36,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   3,
 		},
 		GoTypes:           file_proto_codexel_codexel_proto_goTypes,
 		DependencyIndexes: file_proto_codexel_codexel_proto_depIdxs,

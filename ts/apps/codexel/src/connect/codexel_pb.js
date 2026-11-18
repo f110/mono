@@ -9,7 +9,7 @@ import { file_google_protobuf_go_features } from "@bufbuild/protobuf/wkt";
  * Describes the file proto/codexel/codexel.proto.
  */
 export const file_proto_codexel_codexel = /*@__PURE__*/
-  fileDesc("Chtwcm90by9jb2RleGVsL2NvZGV4ZWwucHJvdG8SDG1vbm8uY29kZXhlbCLRAQoFQWdlbnQSDwoHcGFuZV9pZBgBIAEoCRIUCgx3b3Jrc3BhY2VfaWQYAiABKAkSFwoPd29ya3NwYWNlX2xhYmVsGAMgASgJEg4KBnRhYl9pZBgEIAEoCRIMCgRraW5kGAUgASgJEhIKCnNlc3Npb25faWQYBiABKAkSKQoGc3RhdHVzGAcgASgOMhkubW9uby5jb2RleGVsLkFnZW50U3RhdHVzEgsKA2N3ZBgIIAEoCRINCgV0aXRsZRgJIAEoCRIPCgdmb2N1c2VkGAogASgIIjAKCVdvcmtzcGFjZRIUCgx3b3Jrc3BhY2VfaWQYASABKAkSDQoFbGFiZWwYAiABKAkiEwoRUmVxdWVzdExpc3RBZ2VudHMiOQoSUmVzcG9uc2VMaXN0QWdlbnRzEiMKBmFnZW50cxgBIAMoCzITLm1vbm8uY29kZXhlbC5BZ2VudCIUChJSZXF1ZXN0V2F0Y2hBZ2VudHMiOgoTUmVzcG9uc2VXYXRjaEFnZW50cxIjCgZhZ2VudHMYASADKAsyEy5tb25vLmNvZGV4ZWwuQWdlbnQiMwoRUmVxdWVzdFJlYWRPdXRwdXQSDwoHcGFuZV9pZBgBIAEoCRINCgVsaW5lcxgCIAEoBSIiChJSZXNwb25zZVJlYWRPdXRwdXQSDAoEdGV4dBgBIAEoCSIyChFSZXF1ZXN0U2VuZFByb21wdBIPCgdwYW5lX2lkGAEgASgJEgwKBHRleHQYAiABKAkiFAoSUmVzcG9uc2VTZW5kUHJvbXB0IjAKD1JlcXVlc3RTZW5kS2V5cxIPCgdwYW5lX2lkGAEgASgJEgwKBGtleXMYAiADKAkiEgoQUmVzcG9uc2VTZW5kS2V5cyIkChFSZXF1ZXN0Rm9jdXNBZ2VudBIPCgdwYW5lX2lkGAEgASgJIhQKElJlc3BvbnNlRm9jdXNBZ2VudCIXChVSZXF1ZXN0TGlzdFdvcmtzcGFjZXMiRQoWUmVzcG9uc2VMaXN0V29ya3NwYWNlcxIrCgp3b3Jrc3BhY2VzGAEgAygLMhcubW9uby5jb2RleGVsLldvcmtzcGFjZSJgChFSZXF1ZXN0U3RhcnRBZ2VudBIUCgx3b3Jrc3BhY2VfaWQYASABKAkSCwoDY3dkGAIgASgJEgwKBGtpbmQYAyABKAkSDAoEbmFtZRgEIAEoCRIMCgRhcmdzGAUgAygJIjgKElJlc3BvbnNlU3RhcnRBZ2VudBIiCgVhZ2VudBgBIAEoCzITLm1vbm8uY29kZXhlbC5BZ2VudCqnAQoLQWdlbnRTdGF0dXMSHAoYQUdFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFQoRQUdFTlRfU1RBVFVTX0lETEUQARIYChRBR0VOVF9TVEFUVVNfV09SS0lORxACEhgKFEFHRU5UX1NUQVRVU19CTE9DS0VEEAMSFQoRQUdFTlRfU1RBVFVTX0RPTkUQBBIYChRBR0VOVF9TVEFUVVNfVU5LTk9XThAFMqEFCgxBZ2VudFNlcnZpY2USTwoKTGlzdEFnZW50cxIfLm1vbm8uY29kZXhlbC5SZXF1ZXN0TGlzdEFnZW50cxogLm1vbm8uY29kZXhlbC5SZXNwb25zZUxpc3RBZ2VudHMSVAoLV2F0Y2hBZ2VudHMSIC5tb25vLmNvZGV4ZWwuUmVxdWVzdFdhdGNoQWdlbnRzGiEubW9uby5jb2RleGVsLlJlc3BvbnNlV2F0Y2hBZ2VudHMwARJPCgpSZWFkT3V0cHV0Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RSZWFkT3V0cHV0GiAubW9uby5jb2RleGVsLlJlc3BvbnNlUmVhZE91dHB1dBJPCgpTZW5kUHJvbXB0Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RTZW5kUHJvbXB0GiAubW9uby5jb2RleGVsLlJlc3BvbnNlU2VuZFByb21wdBJJCghTZW5kS2V5cxIdLm1vbm8uY29kZXhlbC5SZXF1ZXN0U2VuZEtleXMaHi5tb25vLmNvZGV4ZWwuUmVzcG9uc2VTZW5kS2V5cxJPCgpGb2N1c0FnZW50Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RGb2N1c0FnZW50GiAubW9uby5jb2RleGVsLlJlc3BvbnNlRm9jdXNBZ2VudBJbCg5MaXN0V29ya3NwYWNlcxIjLm1vbm8uY29kZXhlbC5SZXF1ZXN0TGlzdFdvcmtzcGFjZXMaJC5tb25vLmNvZGV4ZWwuUmVzcG9uc2VMaXN0V29ya3NwYWNlcxJPCgpTdGFydEFnZW50Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RTdGFydEFnZW50GiAubW9uby5jb2RleGVsLlJlc3BvbnNlU3RhcnRBZ2VudEIpWh9nby5mMTEwLmRldi9tb25vL2dvL2NvZGV4ZWwvYXBpkgMF0j4CEANiCGVkaXRpb25zcOgH", [file_google_protobuf_go_features]);
+  fileDesc("Chtwcm90by9jb2RleGVsL2NvZGV4ZWwucHJvdG8SDG1vbm8uY29kZXhlbCLRAQoFQWdlbnQSDwoHcGFuZV9pZBgBIAEoCRIUCgx3b3Jrc3BhY2VfaWQYAiABKAkSFwoPd29ya3NwYWNlX2xhYmVsGAMgASgJEg4KBnRhYl9pZBgEIAEoCRIMCgRraW5kGAUgASgJEhIKCnNlc3Npb25faWQYBiABKAkSKQoGc3RhdHVzGAcgASgOMhkubW9uby5jb2RleGVsLkFnZW50U3RhdHVzEgsKA2N3ZBgIIAEoCRINCgV0aXRsZRgJIAEoCRIPCgdmb2N1c2VkGAogASgIIjAKCVdvcmtzcGFjZRIUCgx3b3Jrc3BhY2VfaWQYASABKAkSDQoFbGFiZWwYAiABKAkiEwoRUmVxdWVzdExpc3RBZ2VudHMiOQoSUmVzcG9uc2VMaXN0QWdlbnRzEiMKBmFnZW50cxgBIAMoCzITLm1vbm8uY29kZXhlbC5BZ2VudCIUChJSZXF1ZXN0V2F0Y2hBZ2VudHMiOgoTUmVzcG9uc2VXYXRjaEFnZW50cxIjCgZhZ2VudHMYASADKAsyEy5tb25vLmNvZGV4ZWwuQWdlbnQiMwoRUmVxdWVzdFJlYWRPdXRwdXQSDwoHcGFuZV9pZBgBIAEoCRINCgVsaW5lcxgCIAEoBSIiChJSZXNwb25zZVJlYWRPdXRwdXQSDAoEdGV4dBgBIAEoCSIyChFSZXF1ZXN0U2VuZFByb21wdBIPCgdwYW5lX2lkGAEgASgJEgwKBHRleHQYAiABKAkiFAoSUmVzcG9uc2VTZW5kUHJvbXB0IjAKD1JlcXVlc3RTZW5kS2V5cxIPCgdwYW5lX2lkGAEgASgJEgwKBGtleXMYAiADKAkiEgoQUmVzcG9uc2VTZW5kS2V5cyIkChFSZXF1ZXN0Rm9jdXNBZ2VudBIPCgdwYW5lX2lkGAEgASgJIhQKElJlc3BvbnNlRm9jdXNBZ2VudCIXChVSZXF1ZXN0TGlzdFdvcmtzcGFjZXMiRQoWUmVzcG9uc2VMaXN0V29ya3NwYWNlcxIrCgp3b3Jrc3BhY2VzGAEgAygLMhcubW9uby5jb2RleGVsLldvcmtzcGFjZSJgChFSZXF1ZXN0U3RhcnRBZ2VudBIUCgx3b3Jrc3BhY2VfaWQYASABKAkSCwoDY3dkGAIgASgJEgwKBGtpbmQYAyABKAkSDAoEbmFtZRgEIAEoCRIMCgRhcmdzGAUgAygJIjgKElJlc3BvbnNlU3RhcnRBZ2VudBIiCgVhZ2VudBgBIAEoCzITLm1vbm8uY29kZXhlbC5BZ2VudCIoCgpSZXBvc2l0b3J5EgwKBHBhdGgYASABKAkSDAoEbmFtZRgCIAEoCSIuCg5SZW1vdGVCb29rbWFyaxIMCgRuYW1lGAEgASgJEg4KBnJlbW90ZRgCIAEoCSIlCgdUcmFpbGVyEgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCSKpAwoGQ29tbWl0EhEKCWNoYW5nZV9pZBgBIAEoCRIYChBjaGFuZ2VfaWRfcHJlZml4GAIgASgJEhEKCWNvbW1pdF9pZBgDIAEoCRIYChBjb21taXRfaWRfcHJlZml4GAQgASgJEhMKC2Rlc2NyaXB0aW9uGAUgASgJEg4KBmF1dGhvchgGIAEoCRINCgVlbWFpbBgHIAEoCRIRCgl0aW1lc3RhbXAYCCABKAMSHAoUY3VycmVudF93b3JraW5nX2NvcHkYCSABKAgSEQoJaW1tdXRhYmxlGAogASgIEhAKCGNvbmZsaWN0GAsgASgIEg0KBWVtcHR5GAwgASgIEhEKCWRpdmVyZ2VudBgNIAEoCBIOCgZoaWRkZW4YDiABKAgSDwoHcGFyZW50cxgPIAMoCRIXCg9sb2NhbF9ib29rbWFya3MYECADKAkSNgoQcmVtb3RlX2Jvb2ttYXJrcxgRIAMoCzIcLm1vbm8uY29kZXhlbC5SZW1vdGVCb29rbWFyaxInCgh0cmFpbGVycxgSIAMoCzIVLm1vbm8uY29kZXhlbC5UcmFpbGVyIjoKCUdyYXBoTGluZRIOCgZndXR0ZXIYASABKAkSDwoHY29udGVudBgCIAEoCRIMCgRub2RlGAMgASgIIlYKBkxvZ1JvdxIkCgZjb21taXQYASABKAsyFC5tb25vLmNvZGV4ZWwuQ29tbWl0EiYKBWxpbmVzGAIgAygLMhcubW9uby5jb2RleGVsLkdyYXBoTGluZSIZChdSZXF1ZXN0TGlzdFJlcG9zaXRvcmllcyJKChhSZXNwb25zZUxpc3RSZXBvc2l0b3JpZXMSLgoMcmVwb3NpdG9yaWVzGAEgAygLMhgubW9uby5jb2RleGVsLlJlcG9zaXRvcnkiFwoVUmVxdWVzdExpc3RDYW5kaWRhdGVzIkgKFlJlc3BvbnNlTGlzdENhbmRpZGF0ZXMSLgoMcmVwb3NpdG9yaWVzGAEgAygLMhgubW9uby5jb2RleGVsLlJlcG9zaXRvcnkiJQoVUmVxdWVzdE9wZW5SZXBvc2l0b3J5EgwKBHBhdGgYASABKAkiRgoWUmVzcG9uc2VPcGVuUmVwb3NpdG9yeRIsCgpyZXBvc2l0b3J5GAEgASgLMhgubW9uby5jb2RleGVsLlJlcG9zaXRvcnkiJgoWUmVxdWVzdENsb3NlUmVwb3NpdG9yeRIMCgRwYXRoGAEgASgJIhkKF1Jlc3BvbnNlQ2xvc2VSZXBvc2l0b3J5IiYKFlJlcXVlc3RXYXRjaFJlcG9zaXRvcnkSDAoEcGF0aBgBIAEoCSIvChdSZXNwb25zZVdhdGNoUmVwb3NpdG9yeRIUCgxvcGVyYXRpb25faWQYASABKAkiOQoKUmVxdWVzdExvZxIMCgRwYXRoGAEgASgJEg4KBnJldnNldBgCIAEoCRINCgVsaW1pdBgDIAEoBSIxCgtSZXNwb25zZUxvZxIiCgRyb3dzGAEgAygLMhQubW9uby5jb2RleGVsLkxvZ1JvdyqnAQoLQWdlbnRTdGF0dXMSHAoYQUdFTlRfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFQoRQUdFTlRfU1RBVFVTX0lETEUQARIYChRBR0VOVF9TVEFUVVNfV09SS0lORxACEhgKFEFHRU5UX1NUQVRVU19CTE9DS0VEEAMSFQoRQUdFTlRfU1RBVFVTX0RPTkUQBBIYChRBR0VOVF9TVEFUVVNfVU5LTk9XThAFMqEFCgxBZ2VudFNlcnZpY2USTwoKTGlzdEFnZW50cxIfLm1vbm8uY29kZXhlbC5SZXF1ZXN0TGlzdEFnZW50cxogLm1vbm8uY29kZXhlbC5SZXNwb25zZUxpc3RBZ2VudHMSVAoLV2F0Y2hBZ2VudHMSIC5tb25vLmNvZGV4ZWwuUmVxdWVzdFdhdGNoQWdlbnRzGiEubW9uby5jb2RleGVsLlJlc3BvbnNlV2F0Y2hBZ2VudHMwARJPCgpSZWFkT3V0cHV0Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RSZWFkT3V0cHV0GiAubW9uby5jb2RleGVsLlJlc3BvbnNlUmVhZE91dHB1dBJPCgpTZW5kUHJvbXB0Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RTZW5kUHJvbXB0GiAubW9uby5jb2RleGVsLlJlc3BvbnNlU2VuZFByb21wdBJJCghTZW5kS2V5cxIdLm1vbm8uY29kZXhlbC5SZXF1ZXN0U2VuZEtleXMaHi5tb25vLmNvZGV4ZWwuUmVzcG9uc2VTZW5kS2V5cxJPCgpGb2N1c0FnZW50Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RGb2N1c0FnZW50GiAubW9uby5jb2RleGVsLlJlc3BvbnNlRm9jdXNBZ2VudBJbCg5MaXN0V29ya3NwYWNlcxIjLm1vbm8uY29kZXhlbC5SZXF1ZXN0TGlzdFdvcmtzcGFjZXMaJC5tb25vLmNvZGV4ZWwuUmVzcG9uc2VMaXN0V29ya3NwYWNlcxJPCgpTdGFydEFnZW50Eh8ubW9uby5jb2RleGVsLlJlcXVlc3RTdGFydEFnZW50GiAubW9uby5jb2RleGVsLlJlc3BvbnNlU3RhcnRBZ2VudDLyAwoRUmVwb3NpdG9yeVNlcnZpY2USYQoQTGlzdFJlcG9zaXRvcmllcxIlLm1vbm8uY29kZXhlbC5SZXF1ZXN0TGlzdFJlcG9zaXRvcmllcxomLm1vbm8uY29kZXhlbC5SZXNwb25zZUxpc3RSZXBvc2l0b3JpZXMSWwoOTGlzdENhbmRpZGF0ZXMSIy5tb25vLmNvZGV4ZWwuUmVxdWVzdExpc3RDYW5kaWRhdGVzGiQubW9uby5jb2RleGVsLlJlc3BvbnNlTGlzdENhbmRpZGF0ZXMSWwoOT3BlblJlcG9zaXRvcnkSIy5tb25vLmNvZGV4ZWwuUmVxdWVzdE9wZW5SZXBvc2l0b3J5GiQubW9uby5jb2RleGVsLlJlc3BvbnNlT3BlblJlcG9zaXRvcnkSXgoPQ2xvc2VSZXBvc2l0b3J5EiQubW9uby5jb2RleGVsLlJlcXVlc3RDbG9zZVJlcG9zaXRvcnkaJS5tb25vLmNvZGV4ZWwuUmVzcG9uc2VDbG9zZVJlcG9zaXRvcnkSYAoPV2F0Y2hSZXBvc2l0b3J5EiQubW9uby5jb2RleGVsLlJlcXVlc3RXYXRjaFJlcG9zaXRvcnkaJS5tb25vLmNvZGV4ZWwuUmVzcG9uc2VXYXRjaFJlcG9zaXRvcnkwATJNCg9SZXZpc2lvblNlcnZpY2USOgoDTG9nEhgubW9uby5jb2RleGVsLlJlcXVlc3RMb2caGS5tb25vLmNvZGV4ZWwuUmVzcG9uc2VMb2dCKVofZ28uZjExMC5kZXYvbW9uby9nby9jb2RleGVsL2FwaZIDBdI+AhADYghlZGl0aW9uc3DoBw", [file_google_protobuf_go_features]);
 
 /**
  * Describes the message mono.codexel.Agent.
@@ -138,6 +138,132 @@ export const ResponseStartAgentSchema = /*@__PURE__*/
   messageDesc(file_proto_codexel_codexel, 17);
 
 /**
+ * Describes the message mono.codexel.Repository.
+ * Use `create(RepositorySchema)` to create a new message.
+ */
+export const RepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 18);
+
+/**
+ * Describes the message mono.codexel.RemoteBookmark.
+ * Use `create(RemoteBookmarkSchema)` to create a new message.
+ */
+export const RemoteBookmarkSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 19);
+
+/**
+ * Describes the message mono.codexel.Trailer.
+ * Use `create(TrailerSchema)` to create a new message.
+ */
+export const TrailerSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 20);
+
+/**
+ * Describes the message mono.codexel.Commit.
+ * Use `create(CommitSchema)` to create a new message.
+ */
+export const CommitSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 21);
+
+/**
+ * Describes the message mono.codexel.GraphLine.
+ * Use `create(GraphLineSchema)` to create a new message.
+ */
+export const GraphLineSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 22);
+
+/**
+ * Describes the message mono.codexel.LogRow.
+ * Use `create(LogRowSchema)` to create a new message.
+ */
+export const LogRowSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 23);
+
+/**
+ * Describes the message mono.codexel.RequestListRepositories.
+ * Use `create(RequestListRepositoriesSchema)` to create a new message.
+ */
+export const RequestListRepositoriesSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 24);
+
+/**
+ * Describes the message mono.codexel.ResponseListRepositories.
+ * Use `create(ResponseListRepositoriesSchema)` to create a new message.
+ */
+export const ResponseListRepositoriesSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 25);
+
+/**
+ * Describes the message mono.codexel.RequestListCandidates.
+ * Use `create(RequestListCandidatesSchema)` to create a new message.
+ */
+export const RequestListCandidatesSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 26);
+
+/**
+ * Describes the message mono.codexel.ResponseListCandidates.
+ * Use `create(ResponseListCandidatesSchema)` to create a new message.
+ */
+export const ResponseListCandidatesSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 27);
+
+/**
+ * Describes the message mono.codexel.RequestOpenRepository.
+ * Use `create(RequestOpenRepositorySchema)` to create a new message.
+ */
+export const RequestOpenRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 28);
+
+/**
+ * Describes the message mono.codexel.ResponseOpenRepository.
+ * Use `create(ResponseOpenRepositorySchema)` to create a new message.
+ */
+export const ResponseOpenRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 29);
+
+/**
+ * Describes the message mono.codexel.RequestCloseRepository.
+ * Use `create(RequestCloseRepositorySchema)` to create a new message.
+ */
+export const RequestCloseRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 30);
+
+/**
+ * Describes the message mono.codexel.ResponseCloseRepository.
+ * Use `create(ResponseCloseRepositorySchema)` to create a new message.
+ */
+export const ResponseCloseRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 31);
+
+/**
+ * Describes the message mono.codexel.RequestWatchRepository.
+ * Use `create(RequestWatchRepositorySchema)` to create a new message.
+ */
+export const RequestWatchRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 32);
+
+/**
+ * Describes the message mono.codexel.ResponseWatchRepository.
+ * Use `create(ResponseWatchRepositorySchema)` to create a new message.
+ */
+export const ResponseWatchRepositorySchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 33);
+
+/**
+ * Describes the message mono.codexel.RequestLog.
+ * Use `create(RequestLogSchema)` to create a new message.
+ */
+export const RequestLogSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 34);
+
+/**
+ * Describes the message mono.codexel.ResponseLog.
+ * Use `create(ResponseLogSchema)` to create a new message.
+ */
+export const ResponseLogSchema = /*@__PURE__*/
+  messageDesc(file_proto_codexel_codexel, 35);
+
+/**
  * Describes the enum mono.codexel.AgentStatus.
  */
 export const AgentStatusSchema = /*@__PURE__*/
@@ -156,4 +282,20 @@ export const AgentStatus = /*@__PURE__*/
  */
 export const AgentService = /*@__PURE__*/
   serviceDesc(file_proto_codexel_codexel, 0);
+
+/**
+ * RepositoryService manages the repositories opened in Codexel. The repositories are saved in the config file.
+ *
+ * @generated from service mono.codexel.RepositoryService
+ */
+export const RepositoryService = /*@__PURE__*/
+  serviceDesc(file_proto_codexel_codexel, 1);
+
+/**
+ * RevisionService provides the revisions of the repository.
+ *
+ * @generated from service mono.codexel.RevisionService
+ */
+export const RevisionService = /*@__PURE__*/
+  serviceDesc(file_proto_codexel_codexel, 2);
 

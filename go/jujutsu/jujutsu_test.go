@@ -2,6 +2,7 @@ package jujutsu
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"go.f110.dev/mono/go/testing/assertion"
@@ -45,4 +46,26 @@ func TestParseLogElided(t *testing.T) {
 	assertion.MustLen(t, rows, 2)
 	assertion.Equal(t, rows[0].Lines, []GraphLine{{Gutter: "○  ", Node: true}, {Gutter: "~  ", Content: "(elided revisions)"}})
 	assertion.Equal(t, rows[1].Lines, []GraphLine{{Gutter: "◆  ", Node: true}, {Gutter: "│"}, {Gutter: "~"}})
+}
+
+func TestOperationHeadsDir(t *testing.T) {
+	dir := t.TempDir()
+	heads := filepath.Join(dir, "main", ".jj", "repo", "op_heads", "heads")
+	assertion.MustNoError(t, os.MkdirAll(heads, 0755))
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(heads, "abc"), nil, 0644))
+	// .jj/repo of the secondary workspace has the path relative to .jj.
+	assertion.MustNoError(t, os.MkdirAll(filepath.Join(dir, "second", ".jj"), 0755))
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(dir, "second", ".jj", "repo"), []byte("../../main/.jj/repo"), 0644))
+
+	for _, ws := range []string{"main", "second"} {
+		t.Run(ws, func(t *testing.T) {
+			r := NewRepository(filepath.Join(dir, ws))
+			got, err := r.OperationHeadsDir()
+			assertion.MustNoError(t, err)
+			assertion.Equal(t, filepath.Clean(got), heads)
+			id, err := r.OperationID(t.Context())
+			assertion.MustNoError(t, err)
+			assertion.Equal(t, id, "abc")
+		})
+	}
 }

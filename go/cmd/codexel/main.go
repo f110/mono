@@ -16,6 +16,7 @@ import (
 
 	"go.f110.dev/mono/go/cli"
 	"go.f110.dev/mono/go/cli/flag"
+	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/codexel/server"
 	"go.f110.dev/mono/go/codexel/static"
 	"go.f110.dev/mono/go/herdr"
@@ -26,12 +27,14 @@ type command struct {
 	Addr        string
 	NoBrowser   bool
 	HerdrSocket string
+	Config      string
 }
 
 func (c *command) Flags(fs *flag.FlagSet) {
 	fs.String("addr", "Listen address").Var(&c.Addr).Default("localhost:7480")
 	fs.Bool("no-browser", "Don't open the browser").Var(&c.NoBrowser)
 	fs.String("herdr-socket", "Path of the socket of herdr. If not specified, $HERDR_SOCKET_PATH or ~/.config/herdr/herdr.sock").Var(&c.HerdrSocket)
+	fs.String("config", "Path of the config file. If not specified, ~/.config/codexel/config.json").Var(&c.Config)
 }
 
 func (c *command) Run(ctx context.Context) error {
@@ -39,6 +42,13 @@ func (c *command) Run(ctx context.Context) error {
 	socket := c.HerdrSocket
 	if socket == "" {
 		socket, err = herdr.DefaultSocketPath()
+		if err != nil {
+			return err
+		}
+	}
+	confPath := c.Config
+	if confPath == "" {
+		confPath, err = config.DefaultPath()
 		if err != nil {
 			return err
 		}
@@ -54,7 +64,7 @@ func (c *command) Run(ctx context.Context) error {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
-	return serve(ctx, l, server.New(herdr.NewClient(socket), static.FS()))
+	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), static.FS()))
 }
 
 // serve serves h on l until ctx is canceled. The requests are canceled with ctx because Shutdown waits for the

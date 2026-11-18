@@ -22,6 +22,10 @@ const _ = connect.IsAtLeastVersion1_13_0
 const (
 	// AgentServiceName is the fully-qualified name of the AgentService service.
 	AgentServiceName = "mono.codexel.AgentService"
+	// RepositoryServiceName is the fully-qualified name of the RepositoryService service.
+	RepositoryServiceName = "mono.codexel.RepositoryService"
+	// RevisionServiceName is the fully-qualified name of the RevisionService service.
+	RevisionServiceName = "mono.codexel.RevisionService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -50,6 +54,23 @@ const (
 	AgentServiceListWorkspacesProcedure = "/mono.codexel.AgentService/ListWorkspaces"
 	// AgentServiceStartAgentProcedure is the fully-qualified name of the AgentService's StartAgent RPC.
 	AgentServiceStartAgentProcedure = "/mono.codexel.AgentService/StartAgent"
+	// RepositoryServiceListRepositoriesProcedure is the fully-qualified name of the RepositoryService's
+	// ListRepositories RPC.
+	RepositoryServiceListRepositoriesProcedure = "/mono.codexel.RepositoryService/ListRepositories"
+	// RepositoryServiceListCandidatesProcedure is the fully-qualified name of the RepositoryService's
+	// ListCandidates RPC.
+	RepositoryServiceListCandidatesProcedure = "/mono.codexel.RepositoryService/ListCandidates"
+	// RepositoryServiceOpenRepositoryProcedure is the fully-qualified name of the RepositoryService's
+	// OpenRepository RPC.
+	RepositoryServiceOpenRepositoryProcedure = "/mono.codexel.RepositoryService/OpenRepository"
+	// RepositoryServiceCloseRepositoryProcedure is the fully-qualified name of the RepositoryService's
+	// CloseRepository RPC.
+	RepositoryServiceCloseRepositoryProcedure = "/mono.codexel.RepositoryService/CloseRepository"
+	// RepositoryServiceWatchRepositoryProcedure is the fully-qualified name of the RepositoryService's
+	// WatchRepository RPC.
+	RepositoryServiceWatchRepositoryProcedure = "/mono.codexel.RepositoryService/WatchRepository"
+	// RevisionServiceLogProcedure is the fully-qualified name of the RevisionService's Log RPC.
+	RevisionServiceLogProcedure = "/mono.codexel.RevisionService/Log"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -302,4 +323,248 @@ func (UnimplementedAgentServiceHandler) ListWorkspaces(context.Context, *connect
 
 func (UnimplementedAgentServiceHandler) StartAgent(context.Context, *connect.Request[RequestStartAgent]) (*connect.Response[ResponseStartAgent], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AgentService.StartAgent is not implemented"))
+}
+
+// RepositoryServiceClient is a client for the mono.codexel.RepositoryService service.
+type RepositoryServiceClient interface {
+	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error)
+	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
+	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
+	WatchRepository(context.Context, *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error)
+}
+
+// NewRepositoryServiceClient constructs a client for the mono.codexel.RepositoryService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RepositoryServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
+	return &repositoryServiceClient{
+		listRepositories: connect.NewClient[RequestListRepositories, ResponseListRepositories](
+			httpClient,
+			baseURL+RepositoryServiceListRepositoriesProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
+			connect.WithClientOptions(opts...),
+		),
+		listCandidates: connect.NewClient[RequestListCandidates, ResponseListCandidates](
+			httpClient,
+			baseURL+RepositoryServiceListCandidatesProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("ListCandidates")),
+			connect.WithClientOptions(opts...),
+		),
+		openRepository: connect.NewClient[RequestOpenRepository, ResponseOpenRepository](
+			httpClient,
+			baseURL+RepositoryServiceOpenRepositoryProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("OpenRepository")),
+			connect.WithClientOptions(opts...),
+		),
+		closeRepository: connect.NewClient[RequestCloseRepository, ResponseCloseRepository](
+			httpClient,
+			baseURL+RepositoryServiceCloseRepositoryProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("CloseRepository")),
+			connect.WithClientOptions(opts...),
+		),
+		watchRepository: connect.NewClient[RequestWatchRepository, ResponseWatchRepository](
+			httpClient,
+			baseURL+RepositoryServiceWatchRepositoryProcedure,
+			connect.WithSchema(repositoryServiceMethods.ByName("WatchRepository")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// repositoryServiceClient implements RepositoryServiceClient.
+type repositoryServiceClient struct {
+	listRepositories *connect.Client[RequestListRepositories, ResponseListRepositories]
+	listCandidates   *connect.Client[RequestListCandidates, ResponseListCandidates]
+	openRepository   *connect.Client[RequestOpenRepository, ResponseOpenRepository]
+	closeRepository  *connect.Client[RequestCloseRepository, ResponseCloseRepository]
+	watchRepository  *connect.Client[RequestWatchRepository, ResponseWatchRepository]
+}
+
+// ListRepositories calls mono.codexel.RepositoryService.ListRepositories.
+func (c *repositoryServiceClient) ListRepositories(ctx context.Context, req *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
+	return c.listRepositories.CallUnary(ctx, req)
+}
+
+// ListCandidates calls mono.codexel.RepositoryService.ListCandidates.
+func (c *repositoryServiceClient) ListCandidates(ctx context.Context, req *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error) {
+	return c.listCandidates.CallUnary(ctx, req)
+}
+
+// OpenRepository calls mono.codexel.RepositoryService.OpenRepository.
+func (c *repositoryServiceClient) OpenRepository(ctx context.Context, req *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
+	return c.openRepository.CallUnary(ctx, req)
+}
+
+// CloseRepository calls mono.codexel.RepositoryService.CloseRepository.
+func (c *repositoryServiceClient) CloseRepository(ctx context.Context, req *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
+	return c.closeRepository.CallUnary(ctx, req)
+}
+
+// WatchRepository calls mono.codexel.RepositoryService.WatchRepository.
+func (c *repositoryServiceClient) WatchRepository(ctx context.Context, req *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error) {
+	return c.watchRepository.CallServerStream(ctx, req)
+}
+
+// RepositoryServiceHandler is an implementation of the mono.codexel.RepositoryService service.
+type RepositoryServiceHandler interface {
+	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
+	ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error)
+	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
+	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
+	WatchRepository(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error
+}
+
+// NewRepositoryServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	repositoryServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RepositoryService").Methods()
+	repositoryServiceListRepositoriesHandler := connect.NewUnaryHandler(
+		RepositoryServiceListRepositoriesProcedure,
+		svc.ListRepositories,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceListCandidatesHandler := connect.NewUnaryHandler(
+		RepositoryServiceListCandidatesProcedure,
+		svc.ListCandidates,
+		connect.WithSchema(repositoryServiceMethods.ByName("ListCandidates")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceOpenRepositoryHandler := connect.NewUnaryHandler(
+		RepositoryServiceOpenRepositoryProcedure,
+		svc.OpenRepository,
+		connect.WithSchema(repositoryServiceMethods.ByName("OpenRepository")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceCloseRepositoryHandler := connect.NewUnaryHandler(
+		RepositoryServiceCloseRepositoryProcedure,
+		svc.CloseRepository,
+		connect.WithSchema(repositoryServiceMethods.ByName("CloseRepository")),
+		connect.WithHandlerOptions(opts...),
+	)
+	repositoryServiceWatchRepositoryHandler := connect.NewServerStreamHandler(
+		RepositoryServiceWatchRepositoryProcedure,
+		svc.WatchRepository,
+		connect.WithSchema(repositoryServiceMethods.ByName("WatchRepository")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.RepositoryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case RepositoryServiceListRepositoriesProcedure:
+			repositoryServiceListRepositoriesHandler.ServeHTTP(w, r)
+		case RepositoryServiceListCandidatesProcedure:
+			repositoryServiceListCandidatesHandler.ServeHTTP(w, r)
+		case RepositoryServiceOpenRepositoryProcedure:
+			repositoryServiceOpenRepositoryHandler.ServeHTTP(w, r)
+		case RepositoryServiceCloseRepositoryProcedure:
+			repositoryServiceCloseRepositoryHandler.ServeHTTP(w, r)
+		case RepositoryServiceWatchRepositoryProcedure:
+			repositoryServiceWatchRepositoryHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedRepositoryServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedRepositoryServiceHandler struct{}
+
+func (UnimplementedRepositoryServiceHandler) ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListRepositories is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListCandidates is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.OpenRepository is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.CloseRepository is not implemented"))
+}
+
+func (UnimplementedRepositoryServiceHandler) WatchRepository(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.WatchRepository is not implemented"))
+}
+
+// RevisionServiceClient is a client for the mono.codexel.RevisionService service.
+type RevisionServiceClient interface {
+	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
+}
+
+// NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) RevisionServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	revisionServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RevisionService").Methods()
+	return &revisionServiceClient{
+		log: connect.NewClient[RequestLog, ResponseLog](
+			httpClient,
+			baseURL+RevisionServiceLogProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Log")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// revisionServiceClient implements RevisionServiceClient.
+type revisionServiceClient struct {
+	log *connect.Client[RequestLog, ResponseLog]
+}
+
+// Log calls mono.codexel.RevisionService.Log.
+func (c *revisionServiceClient) Log(ctx context.Context, req *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
+	return c.log.CallUnary(ctx, req)
+}
+
+// RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
+type RevisionServiceHandler interface {
+	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
+}
+
+// NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	revisionServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("RevisionService").Methods()
+	revisionServiceLogHandler := connect.NewUnaryHandler(
+		RevisionServiceLogProcedure,
+		svc.Log,
+		connect.WithSchema(revisionServiceMethods.ByName("Log")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case RevisionServiceLogProcedure:
+			revisionServiceLogHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedRevisionServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedRevisionServiceHandler struct{}
+
+func (UnimplementedRevisionServiceHandler) Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Log is not implemented"))
 }

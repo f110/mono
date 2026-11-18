@@ -20,6 +20,7 @@ import (
 	"connectrpc.com/connect"
 
 	"go.f110.dev/mono/go/codexel/api"
+	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/testing/assertion"
 )
@@ -137,7 +138,7 @@ func TestListAgents(t *testing.T) {
 		"agent.list":     `"result":{"type":"agent_list","agents":[{"agent":"claude","agent_session":{"agent":"claude","kind":"id","source":"herdr:claude","value":"sess"},"agent_status":"working","cwd":"/repo","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1","terminal_title_stripped":"Claude Code"}]}`,
 		"workspace.list": `"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w1","label":"mono"}]}`,
 	})
-	srv := httptest.NewServer(New(c, fstest.MapFS{}))
+	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), fstest.MapFS{}))
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)

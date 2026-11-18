@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "config",
+    srcs = ["config.go"],
+    importpath = "go.f110.dev/mono/go/codexel/config",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "config_test",
+    srcs = ["config_test.go"],
+    embed = [":config"],
+    deps = ["//go/testing/assertion"],
+)

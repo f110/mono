@@ -373,6 +373,425 @@ export declare type ResponseStartAgent = Message<"mono.codexel.ResponseStartAgen
 export declare const ResponseStartAgentSchema: GenMessage<ResponseStartAgent>;
 
 /**
+ * @generated from message mono.codexel.Repository
+ */
+export declare type Repository = Message<"mono.codexel.Repository"> & {
+  /**
+   * path is the root of the workspace. It identifies the repository.
+   *
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.Repository.
+ * Use `create(RepositorySchema)` to create a new message.
+ */
+export declare const RepositorySchema: GenMessage<Repository>;
+
+/**
+ * @generated from message mono.codexel.RemoteBookmark
+ */
+export declare type RemoteBookmark = Message<"mono.codexel.RemoteBookmark"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string remote = 2;
+   */
+  remote: string;
+};
+
+/**
+ * Describes the message mono.codexel.RemoteBookmark.
+ * Use `create(RemoteBookmarkSchema)` to create a new message.
+ */
+export declare const RemoteBookmarkSchema: GenMessage<RemoteBookmark>;
+
+/**
+ * @generated from message mono.codexel.Trailer
+ */
+export declare type Trailer = Message<"mono.codexel.Trailer"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+};
+
+/**
+ * Describes the message mono.codexel.Trailer.
+ * Use `create(TrailerSchema)` to create a new message.
+ */
+export declare const TrailerSchema: GenMessage<Trailer>;
+
+/**
+ * @generated from message mono.codexel.Commit
+ */
+export declare type Commit = Message<"mono.codexel.Commit"> & {
+  /**
+   * @generated from field: string change_id = 1;
+   */
+  changeId: string;
+
+  /**
+   * change_id_prefix is the shortest unique prefix of change_id.
+   *
+   * @generated from field: string change_id_prefix = 2;
+   */
+  changeIdPrefix: string;
+
+  /**
+   * @generated from field: string commit_id = 3;
+   */
+  commitId: string;
+
+  /**
+   * commit_id_prefix is the shortest unique prefix of commit_id.
+   *
+   * @generated from field: string commit_id_prefix = 4;
+   */
+  commitIdPrefix: string;
+
+  /**
+   * description is the first line of the description.
+   *
+   * @generated from field: string description = 5;
+   */
+  description: string;
+
+  /**
+   * @generated from field: string author = 6;
+   */
+  author: string;
+
+  /**
+   * @generated from field: string email = 7;
+   */
+  email: string;
+
+  /**
+   * timestamp is the unix time of the committer.
+   *
+   * @generated from field: int64 timestamp = 8;
+   */
+  timestamp: bigint;
+
+  /**
+   * @generated from field: bool current_working_copy = 9;
+   */
+  currentWorkingCopy: boolean;
+
+  /**
+   * @generated from field: bool immutable = 10;
+   */
+  immutable: boolean;
+
+  /**
+   * @generated from field: bool conflict = 11;
+   */
+  conflict: boolean;
+
+  /**
+   * @generated from field: bool empty = 12;
+   */
+  empty: boolean;
+
+  /**
+   * @generated from field: bool divergent = 13;
+   */
+  divergent: boolean;
+
+  /**
+   * @generated from field: bool hidden = 14;
+   */
+  hidden: boolean;
+
+  /**
+   * @generated from field: repeated string parents = 15;
+   */
+  parents: string[];
+
+  /**
+   * @generated from field: repeated string local_bookmarks = 16;
+   */
+  localBookmarks: string[];
+
+  /**
+   * @generated from field: repeated mono.codexel.RemoteBookmark remote_bookmarks = 17;
+   */
+  remoteBookmarks: RemoteBookmark[];
+
+  /**
+   * @generated from field: repeated mono.codexel.Trailer trailers = 18;
+   */
+  trailers: Trailer[];
+};
+
+/**
+ * Describes the message mono.codexel.Commit.
+ * Use `create(CommitSchema)` to create a new message.
+ */
+export declare const CommitSchema: GenMessage<Commit>;
+
+/**
+ * GraphLine is a line of the graph. gutter is the characters of the graph.
+ *
+ * @generated from message mono.codexel.GraphLine
+ */
+export declare type GraphLine = Message<"mono.codexel.GraphLine"> & {
+  /**
+   * @generated from field: string gutter = 1;
+   */
+  gutter: string;
+
+  /**
+   * @generated from field: string content = 2;
+   */
+  content: string;
+
+  /**
+   * @generated from field: bool node = 3;
+   */
+  node: boolean;
+};
+
+/**
+ * Describes the message mono.codexel.GraphLine.
+ * Use `create(GraphLineSchema)` to create a new message.
+ */
+export declare const GraphLineSchema: GenMessage<GraphLine>;
+
+/**
+ * LogRow is a commit and the lines of the graph. lines starts with the line of the node.
+ *
+ * @generated from message mono.codexel.LogRow
+ */
+export declare type LogRow = Message<"mono.codexel.LogRow"> & {
+  /**
+   * @generated from field: mono.codexel.Commit commit = 1;
+   */
+  commit?: Commit;
+
+  /**
+   * @generated from field: repeated mono.codexel.GraphLine lines = 2;
+   */
+  lines: GraphLine[];
+};
+
+/**
+ * Describes the message mono.codexel.LogRow.
+ * Use `create(LogRowSchema)` to create a new message.
+ */
+export declare const LogRowSchema: GenMessage<LogRow>;
+
+/**
+ * @generated from message mono.codexel.RequestListRepositories
+ */
+export declare type RequestListRepositories = Message<"mono.codexel.RequestListRepositories"> & {
+};
+
+/**
+ * Describes the message mono.codexel.RequestListRepositories.
+ * Use `create(RequestListRepositoriesSchema)` to create a new message.
+ */
+export declare const RequestListRepositoriesSchema: GenMessage<RequestListRepositories>;
+
+/**
+ * @generated from message mono.codexel.ResponseListRepositories
+ */
+export declare type ResponseListRepositories = Message<"mono.codexel.ResponseListRepositories"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Repository repositories = 1;
+   */
+  repositories: Repository[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListRepositories.
+ * Use `create(ResponseListRepositoriesSchema)` to create a new message.
+ */
+export declare const ResponseListRepositoriesSchema: GenMessage<ResponseListRepositories>;
+
+/**
+ * @generated from message mono.codexel.RequestListCandidates
+ */
+export declare type RequestListCandidates = Message<"mono.codexel.RequestListCandidates"> & {
+};
+
+/**
+ * Describes the message mono.codexel.RequestListCandidates.
+ * Use `create(RequestListCandidatesSchema)` to create a new message.
+ */
+export declare const RequestListCandidatesSchema: GenMessage<RequestListCandidates>;
+
+/**
+ * @generated from message mono.codexel.ResponseListCandidates
+ */
+export declare type ResponseListCandidates = Message<"mono.codexel.ResponseListCandidates"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Repository repositories = 1;
+   */
+  repositories: Repository[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListCandidates.
+ * Use `create(ResponseListCandidatesSchema)` to create a new message.
+ */
+export declare const ResponseListCandidatesSchema: GenMessage<ResponseListCandidates>;
+
+/**
+ * @generated from message mono.codexel.RequestOpenRepository
+ */
+export declare type RequestOpenRepository = Message<"mono.codexel.RequestOpenRepository"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestOpenRepository.
+ * Use `create(RequestOpenRepositorySchema)` to create a new message.
+ */
+export declare const RequestOpenRepositorySchema: GenMessage<RequestOpenRepository>;
+
+/**
+ * @generated from message mono.codexel.ResponseOpenRepository
+ */
+export declare type ResponseOpenRepository = Message<"mono.codexel.ResponseOpenRepository"> & {
+  /**
+   * @generated from field: mono.codexel.Repository repository = 1;
+   */
+  repository?: Repository;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseOpenRepository.
+ * Use `create(ResponseOpenRepositorySchema)` to create a new message.
+ */
+export declare const ResponseOpenRepositorySchema: GenMessage<ResponseOpenRepository>;
+
+/**
+ * @generated from message mono.codexel.RequestCloseRepository
+ */
+export declare type RequestCloseRepository = Message<"mono.codexel.RequestCloseRepository"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestCloseRepository.
+ * Use `create(RequestCloseRepositorySchema)` to create a new message.
+ */
+export declare const RequestCloseRepositorySchema: GenMessage<RequestCloseRepository>;
+
+/**
+ * @generated from message mono.codexel.ResponseCloseRepository
+ */
+export declare type ResponseCloseRepository = Message<"mono.codexel.ResponseCloseRepository"> & {
+};
+
+/**
+ * Describes the message mono.codexel.ResponseCloseRepository.
+ * Use `create(ResponseCloseRepositorySchema)` to create a new message.
+ */
+export declare const ResponseCloseRepositorySchema: GenMessage<ResponseCloseRepository>;
+
+/**
+ * @generated from message mono.codexel.RequestWatchRepository
+ */
+export declare type RequestWatchRepository = Message<"mono.codexel.RequestWatchRepository"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestWatchRepository.
+ * Use `create(RequestWatchRepositorySchema)` to create a new message.
+ */
+export declare const RequestWatchRepositorySchema: GenMessage<RequestWatchRepository>;
+
+/**
+ * @generated from message mono.codexel.ResponseWatchRepository
+ */
+export declare type ResponseWatchRepository = Message<"mono.codexel.ResponseWatchRepository"> & {
+  /**
+   * @generated from field: string operation_id = 1;
+   */
+  operationId: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseWatchRepository.
+ * Use `create(ResponseWatchRepositorySchema)` to create a new message.
+ */
+export declare const ResponseWatchRepositorySchema: GenMessage<ResponseWatchRepository>;
+
+/**
+ * @generated from message mono.codexel.RequestLog
+ */
+export declare type RequestLog = Message<"mono.codexel.RequestLog"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * revset is the revset to show. The default of jj is used if it is empty.
+   *
+   * @generated from field: string revset = 2;
+   */
+  revset: string;
+
+  /**
+   * limit is the maximum number of the revisions. 0 means no limit.
+   *
+   * @generated from field: int32 limit = 3;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message mono.codexel.RequestLog.
+ * Use `create(RequestLogSchema)` to create a new message.
+ */
+export declare const RequestLogSchema: GenMessage<RequestLog>;
+
+/**
+ * @generated from message mono.codexel.ResponseLog
+ */
+export declare type ResponseLog = Message<"mono.codexel.ResponseLog"> & {
+  /**
+   * @generated from field: repeated mono.codexel.LogRow rows = 1;
+   */
+  rows: LogRow[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseLog.
+ * Use `create(ResponseLogSchema)` to create a new message.
+ */
+export declare const ResponseLogSchema: GenMessage<ResponseLog>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -489,6 +908,77 @@ export declare const AgentService: GenService<{
     methodKind: "unary";
     input: typeof RequestStartAgentSchema;
     output: typeof ResponseStartAgentSchema;
+  },
+}>;
+
+/**
+ * RepositoryService manages the repositories opened in Codexel. The repositories are saved in the config file.
+ *
+ * @generated from service mono.codexel.RepositoryService
+ */
+export declare const RepositoryService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.RepositoryService.ListRepositories
+   */
+  listRepositories: {
+    methodKind: "unary";
+    input: typeof RequestListRepositoriesSchema;
+    output: typeof ResponseListRepositoriesSchema;
+  },
+  /**
+   * ListCandidates returns the repositories where the agents work and which are not opened.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.ListCandidates
+   */
+  listCandidates: {
+    methodKind: "unary";
+    input: typeof RequestListCandidatesSchema;
+    output: typeof ResponseListCandidatesSchema;
+  },
+  /**
+   * OpenRepository opens the workspace which contains the path.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.OpenRepository
+   */
+  openRepository: {
+    methodKind: "unary";
+    input: typeof RequestOpenRepositorySchema;
+    output: typeof ResponseOpenRepositorySchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.RepositoryService.CloseRepository
+   */
+  closeRepository: {
+    methodKind: "unary";
+    input: typeof RequestCloseRepositorySchema;
+    output: typeof ResponseCloseRepositorySchema;
+  },
+  /**
+   * WatchRepository sends the ID of the operation at first and every time the operation changes. The working copy is
+   * snapshotted periodically while watching.
+   *
+   * @generated from rpc mono.codexel.RepositoryService.WatchRepository
+   */
+  watchRepository: {
+    methodKind: "server_streaming";
+    input: typeof RequestWatchRepositorySchema;
+    output: typeof ResponseWatchRepositorySchema;
+  },
+}>;
+
+/**
+ * RevisionService provides the revisions of the repository.
+ *
+ * @generated from service mono.codexel.RevisionService
+ */
+export declare const RevisionService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.RevisionService.Log
+   */
+  log: {
+    methodKind: "unary";
+    input: typeof RequestLogSchema;
+    output: typeof ResponseLogSchema;
   },
 }>;
 
