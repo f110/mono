@@ -5,15 +5,19 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"go.f110.dev/xerrors"
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/herdr"
+	"go.f110.dev/mono/go/logger"
 )
 
 // New returns the handler of the API and the frontend.
@@ -91,6 +95,11 @@ func (h *AgentHandler) ReadOutput(ctx context.Context, req *connect.Request[api.
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("pane_id is required"))
 	}
 	text, err := h.herdr.ReadAgent(ctx, req.Msg.GetPaneId(), herdr.ReadSourceRecent, herdr.ReadFormatANSI, int(req.Msg.GetLines()))
+	// herdr captures the history of the agent using the alternate screen by scrolling it, which is possible only
+	// while the agent is idle. Fall back to the screen without the history.
+	if herdrErr, ok := errors.AsType[*herdr.Error](err); ok && herdrErr.Code == "agent_not_idle" {
+		text, err = h.herdr.ReadAgent(ctx, req.Msg.GetPaneId(), herdr.ReadSourceRecent, herdr.ReadFormatANSI, 0)
+	}
 	if err != nil {
 		return nil, toConnectError(err)
 	}
@@ -143,17 +152,21 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 	if req.Msg.GetWorkspaceId() == "" || req.Msg.GetKind() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("workspace_id and kind are required"))
 	}
+	// The name of the agent must be unique in herdr.
 	name := req.Msg.GetName()
 	if name == "" {
-		name = req.Msg.GetKind()
+		name = req.Msg.GetKind() + "-" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	}
 
 	pane, err := h.herdr.CreateTab(ctx, req.Msg.GetWorkspaceId(), req.Msg.GetCwd())
 	if err != nil {
 		return nil, toConnectError(err)
 	}
-	agent, err := h.herdr.StartAgent(ctx, name, req.Msg.GetKind(), pane.PaneID, req.Msg.GetArgs())
+	agent, err := h.startAgent(ctx, name, req.Msg.GetKind(), pane.PaneID, req.Msg.GetArgs())
 	if err != nil {
+		if closeErr := h.herdr.CloseTab(context.WithoutCancel(ctx), pane.TabID); closeErr != nil {
+			logger.Log.Info("Failed to close the tab", slog.String("tab_id", pane.TabID), logger.E(closeErr))
+		}
 		return nil, toConnectError(err)
 	}
 	workspaces, err := h.workspaceLabels(ctx)
@@ -161,6 +174,31 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 		return nil, err
 	}
 	return connect.NewResponse(api.ResponseStartAgent_builder{Agent: toAgent(agent, workspaces)}.Build()), nil
+}
+
+const (
+	startAgentRetryInterval = 200 * time.Millisecond
+	startAgentRetryTimeout  = 10 * time.Second
+)
+
+// startAgent starts the agent in the pane. The shell of the new pane is not available for a while after the pane is
+// created, so it retries while herdr returns agent_pane_busy.
+func (h *AgentHandler) startAgent(ctx context.Context, name, kind, paneID string, args []string) (*herdr.Agent, error) {
+	deadline := time.Now().Add(startAgentRetryTimeout)
+	for {
+		agent, err := h.herdr.StartAgent(ctx, name, kind, paneID, args)
+		if err == nil {
+			return agent, nil
+		}
+		if herdrErr, ok := errors.AsType[*herdr.Error](err); !ok || herdrErr.Code != "agent_pane_busy" || time.Now().After(deadline) {
+			return nil, err
+		}
+		select {
+		case <-time.After(startAgentRetryInterval):
+		case <-ctx.Done():
+			return nil, xerrors.WithStack(ctx.Err())
+		}
+	}
 }
 
 // listAgents returns the agents and the panes of them.

@@ -106,6 +106,17 @@ func TestCreateTab(t *testing.T) {
 	assertion.Equal(t, req.Params["cwd"], any("/repo"))
 }
 
+func TestCloseTab(t *testing.T) {
+	c, reqs := startServer(t, func(req *request) []string {
+		return []string{`{"id":"` + req.ID + `","result":{"type":"ok"}}`}
+	})
+
+	assertion.MustNoError(t, c.CloseTab(t.Context(), "w1:t2"))
+	req := <-reqs
+	assertion.Equal(t, req.Method, "tab.close")
+	assertion.Equal(t, req.Params["tab_id"], any("w1:t2"))
+}
+
 func TestError(t *testing.T) {
 	c, _ := startServer(t, func(req *request) []string {
 		return []string{`{"id":"` + req.ID + `","error":{"code":"not_found","message":"agent not found"}}`}

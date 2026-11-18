@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import Anser from 'anser'
 import { Box } from '@mui/material'
 
 const toColor = (c: string): string | undefined => (c ? `rgb(${c})` : undefined)
 
 // AgentOutput renders the terminal output. Only the colors and the decorations of ANSI SGR are interpreted.
+// It follows the end of the output only while the view is scrolled to the bottom.
 export const AgentOutput = ({ text }: { text: string }) => {
   const ref = useRef<HTMLPreElement>(null)
+  const atBottom = useRef(true)
   const entries = Anser.ansiToJson(text.replaceAll('\r', ''), { json: true, remove_empty: true })
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
-    if (el) {
+    if (el && atBottom.current) {
       el.scrollTop = el.scrollHeight
     }
   }, [text])
@@ -20,6 +22,10 @@ export const AgentOutput = ({ text }: { text: string }) => {
     <Box
       component="pre"
       ref={ref}
+      onScroll={(e) => {
+        const el = e.currentTarget
+        atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 4
+      }}
       sx={{
         m: 0,
         p: 1,

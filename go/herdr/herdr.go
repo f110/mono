@@ -217,6 +217,10 @@ func (c *Client) CreateTab(ctx context.Context, workspaceID, cwd string) (*Pane,
 	return res.RootPane, nil
 }
 
+func (c *Client) CloseTab(ctx context.Context, tabID string) error {
+	return c.call(ctx, "tab.close", map[string]any{"tab_id": tabID}, nil)
+}
+
 // Subscribe subscribes the events. The iteration continues until ctx is canceled or the connection is closed.
 func (c *Client) Subscribe(ctx context.Context, subs []Subscription) iter.Seq2[*Event, error] {
 	return func(yield func(*Event, error) bool) {

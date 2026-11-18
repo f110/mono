@@ -164,7 +164,8 @@ export declare type RequestReadOutput = Message<"mono.codexel.RequestReadOutput"
   paneId: string;
 
   /**
-   * lines is the number of the lines to read. 0 means the default of herdr.
+   * lines is the number of the lines to read including the history. 0 means the default of herdr. The history of the
+   * agent using the alternate screen can be read only while it is idle, so only the screen is returned while it works.
    *
    * @generated from field: int32 lines = 2;
    */

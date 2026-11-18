@@ -67,7 +67,8 @@ message ResponseWatchAgents {
 
 message RequestReadOutput {
   string pane_id = 1;
-  // lines is the number of the lines to read. 0 means the default of herdr.
+  // lines is the number of the lines to read including the history. 0 means the default of herdr. The history of the
+  // agent using the alternate screen can be read only while it is idle, so only the screen is returned while it works.
   int32 lines = 2;
 }
 

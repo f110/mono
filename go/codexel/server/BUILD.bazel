@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//go/codexel/api",
         "//go/herdr",
+        "//go/logger",
         "@com_connectrpc_connect//:connect",
         "@dev_f110_go_xerrors//:xerrors",
     ],

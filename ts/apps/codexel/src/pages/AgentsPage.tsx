@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import {
   Alert,
@@ -22,6 +22,13 @@ import { AgentService, AgentStatus, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 
 const outputRefreshInterval = 1000
+// outputHistoryLines is the number of the lines including the history. herdr captures the history only while the
+// agent is idle.
+const outputHistoryLines = 2000
+// refreshDelayAfterInput is the delay to read the output after sending the input because the agent redraws the screen
+// asynchronously.
+const refreshDelayAfterInput = 300
+const inputHeight = 40
 
 const statusChip: Record<AgentStatus, { label: string; color: 'default' | 'primary' | 'warning' | 'success' }> = {
   [AgentStatus.UNSPECIFIED]: { label: 'unknown', color: 'default' },
@@ -32,21 +39,41 @@ const statusChip: Record<AgentStatus, { label: string; color: 'default' | 'prima
   [AgentStatus.UNKNOWN]: { label: 'unknown', color: 'default' },
 }
 
+// statusOrder is the order of the groups in the list. The agents waiting for the user come first.
+const statusOrder: AgentStatus[] = [AgentStatus.BLOCKED, AgentStatus.DONE, AgentStatus.IDLE, AgentStatus.WORKING, AgentStatus.UNKNOWN]
+
+const keys: { label: string; key: string }[] = [
+  { label: '↑', key: 'up' },
+  { label: '↓', key: 'down' },
+  { label: 'Enter', key: 'enter' },
+  { label: 'Esc', key: 'esc' },
+  { label: 'Ctrl+C', key: 'ctrl+c' },
+]
+
 const StatusChip = ({ status }: { status: AgentStatus }) => (
   <Chip size="small" label={statusChip[status].label} color={statusChip[status].color} variant="outlined" />
 )
 
-const groupByWorkspace = (agents: Agent[]): [string, Agent[]][] => {
-  const groups = new Map<string, Agent[]>()
-  for (const a of agents) {
-    const label = a.workspaceLabel || a.workspaceId
-    groups.set(label, [...(groups.get(label) ?? []), a])
-  }
-  return [...groups.entries()]
+const groupByStatus = (agents: Agent[]): [AgentStatus, Agent[]][] => {
+  const normalize = (s: AgentStatus) => (statusOrder.includes(s) ? s : AgentStatus.UNKNOWN)
+  return statusOrder
+    .map((s): [AgentStatus, Agent[]] => [s, agents.filter((a) => normalize(a.status) === s)])
+    .filter(([, list]) => list.length > 0)
 }
 
 const AgentDetail = ({ agent }: { agent: Agent }) => {
-  const { data, error } = useQuery(AgentService.method.readOutput, { paneId: agent.paneId }, { refetchInterval: outputRefreshInterval })
+  // The output changes continuously only while the agent is working or waiting for the answer.
+  const polling = agent.status === AgentStatus.WORKING || agent.status === AgentStatus.BLOCKED
+  const { data, error, refetch } = useQuery(
+    AgentService.method.readOutput,
+    { paneId: agent.paneId, lines: outputHistoryLines },
+    { refetchInterval: polling ? outputRefreshInterval : false },
+  )
+  useEffect(() => {
+    refetch()
+  }, [agent.status, refetch])
+  const refetchAfterInput = () => setTimeout(() => refetch(), refreshDelayAfterInput)
+
   const sendPrompt = useMutation(AgentService.method.sendPrompt)
   const sendKeys = useMutation(AgentService.method.sendKeys)
   const focus = useMutation(AgentService.method.focusAgent)
@@ -56,7 +83,15 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
     if (!prompt) {
       return
     }
-    sendPrompt.mutate({ paneId: agent.paneId, text: prompt }, { onSuccess: () => setPrompt('') })
+    sendPrompt.mutate(
+      { paneId: agent.paneId, text: prompt },
+      {
+        onSuccess: () => {
+          setPrompt('')
+          refetchAfterInput()
+        },
+      },
+    )
   }
   const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error
 
@@ -95,13 +130,17 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
             }
           }}
         />
-        <Button variant="contained" onClick={submit} disabled={!prompt || sendPrompt.isPending}>
+        <Button variant="contained" onClick={submit} disabled={!prompt || sendPrompt.isPending} sx={{ height: inputHeight, flexShrink: 0 }}>
           Send
         </Button>
-        <ButtonGroup size="small">
-          {['Enter', 'Escape', 'C-c'].map((k) => (
-            <Button key={k} onClick={() => sendKeys.mutate({ paneId: agent.paneId, keys: [k] })}>
-              {k}
+        <ButtonGroup sx={{ height: inputHeight, flexShrink: 0 }}>
+          {keys.map((k) => (
+            <Button
+              key={k.key}
+              sx={{ whiteSpace: 'nowrap' }}
+              onClick={() => sendKeys.mutate({ paneId: agent.paneId, keys: [k.key] }, { onSuccess: refetchAfterInput })}
+            >
+              {k.label}
             </Button>
           ))}
         </ButtonGroup>
@@ -129,15 +168,18 @@ export const AgentsPage = () => {
         {error && <Alert severity="error">{error.message}</Alert>}
         <Divider />
         {agents &&
-          groupByWorkspace(agents).map(([label, list]) => (
-            <List key={label} dense subheader={<ListSubheader>{label}</ListSubheader>}>
+          groupByStatus(agents).map(([status, list]) => (
+            <List key={status} dense subheader={<ListSubheader>{statusChip[status].label}</ListSubheader>}>
               {list.map((a) => (
                 <ListItemButton key={a.paneId} selected={a.paneId === pane} onClick={() => select(a.paneId)}>
                   <ListItemText
                     primary={
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <StatusChip status={a.status} />
-                        <span>{a.title || a.kind}</span>
+                        <span>{a.workspaceLabel || a.workspaceId}</span>
+                        <Typography variant="body2" color="text.secondary" component="span" noWrap>
+                          {a.title || a.kind}
+                        </Typography>
                       </Stack>
                     }
                     secondary={a.cwd}
