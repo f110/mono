@@ -1,0 +1,131 @@
+load("@aspect_rules_js//js:defs.bzl", "js_run_binary", "js_run_devserver")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//ts/apps/codexel:vite/package_json.bzl", "bin")
+
+SRC_PATTERNS = [
+    "**/*.tsx",
+    "**/*.ts",
+]
+
+TEST_PATTERNS = [
+    "*.test.tsx",
+    "*.test.ts",
+    "*.spec.tsx",
+    "*.spec.ts",
+]
+
+ASSET_PATTERNS = [
+    "index.html",
+    "src/*.svg",
+    "src/*.css",
+]
+
+NPM_DEPS = [
+    "//ts/apps/codexel:node_modules/@bufbuild/protobuf",
+    "//ts/apps/codexel:node_modules/@connectrpc/connect",
+    "//ts/apps/codexel:node_modules/@connectrpc/connect-query",
+    "//ts/apps/codexel:node_modules/@connectrpc/connect-web",
+    "//ts/apps/codexel:node_modules/@emotion/react",
+    "//ts/apps/codexel:node_modules/@emotion/styled",
+    "//ts/apps/codexel:node_modules/@mui/icons-material",
+    "//ts/apps/codexel:node_modules/@mui/material",
+    "//ts/apps/codexel:node_modules/@tanstack/react-query",
+    "//ts/apps/codexel:node_modules/@tanstack/react-router",
+    "//ts/apps/codexel:node_modules/react",
+    "//ts/apps/codexel:node_modules/react-dom",
+    "//ts/apps/codexel:node_modules/@types/react",
+    "//ts/apps/codexel:node_modules/@types/react-dom",
+    "//ts/apps/codexel:node_modules/@types/node",
+    "//ts/apps/codexel:node_modules/@vitejs/plugin-react",
+    "//ts/apps/codexel:node_modules/vite",
+]
+
+npm_link_all_packages()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//ts/apps/codexel:__subpackages__"],
+    deps = [
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+    ],
+)
+
+bin.vite_binary(
+    name = "vite",
+    chdir = package_name(),
+    data = ["vite.config.ts"],
+)
+
+js_run_binary(
+    name = "vite_build_prod",
+    srcs = glob(
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
+    ) + NPM_DEPS,
+    args = [
+        "build",
+        "--mode",
+        "prod",
+    ],
+    chdir = package_name(),
+    out_dirs = [
+        "dist_prod",
+    ],
+    tool = ":vite",
+    visibility = ["//visibility:public"],
+)
+
+ts_project(
+    name = "typecheck_app",
+    srcs = glob(
+        include = [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+        ],
+        exclude = TEST_PATTERNS,
+    ),
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    tsconfig = "tsconfig.app.json",
+    deps = NPM_DEPS,
+)
+
+ts_project(
+    name = "typecheck_node",
+    srcs = ["vite.config.ts"],
+    declaration = True,
+    no_emit = True,
+    resolve_json_module = True,
+    ts_build_info_file = "node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    tsconfig = "tsconfig.node.json",
+    deps = [
+        "//ts/apps/codexel:node_modules/@types/node",
+        "//ts/apps/codexel:node_modules/@vitejs/plugin-react",
+        "//ts/apps/codexel:node_modules/vite",
+    ],
+)
+
+filegroup(
+    name = "typecheck",
+    srcs = [
+        ":typecheck_app_typecheck",
+        ":typecheck_node_typecheck",
+    ],
+)
+
+js_run_devserver(
+    name = "dev",
+    args = ["dev"],
+    data = glob(
+        include = SRC_PATTERNS + ASSET_PATTERNS,
+        allow_empty = True,
+        exclude = TEST_PATTERNS,
+    ) + NPM_DEPS + ["package.json"],
+    tool = ":vite",
+)

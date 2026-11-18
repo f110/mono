@@ -1,0 +1,23 @@
+load("@bazel_lib//lib:copy_directory.bzl", "copy_directory")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+copy_directory(
+    name = "dist_prod",
+    src = "//ts/apps/codexel:vite_build_prod",
+    out = "dist_prod",
+)
+
+go_library(
+    name = "static",
+    srcs = ["static.go"],
+    embedsrcs = [":dist_prod"],  # keep
+    importpath = "go.f110.dev/mono/go/codexel/static",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "static_test",
+    srcs = ["static_test.go"],
+    embed = [":static"],
+    deps = ["//go/testing/assertion"],
+)

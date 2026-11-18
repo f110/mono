@@ -269,9 +269,10 @@ lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や 
 
 ### 9.2 embed
 
-`go/codexel/static` の `go_library` の `embedsrcs` に `//ts/apps/codexel:vite_build_prod` を指定し、`//go:embed` で取り込む。
+`//ts/apps/codexel:vite_build_prod` の出力ディレクトリを `go/codexel/static` に `copy_directory` でコピーし、それを `go_library` の
+`embedsrcs` に指定して `//go:embed` で取り込む。
 
-- rules_go の `embedsrcs` がディレクトリ出力 (tree artifact) を受け付けるかは #123 で最初に確認する
+- 別のパッケージの出力を `embedsrcs` に直接指定すると、`//go:embed` のパターンにマッチしない。そのため同じパッケージにコピーする
 - `make update-deps` (Gazelle) で `embedsrcs` が消えないように `# keep` を付ける
 - 開発時は Vite の dev server から Connect API を Go のサーバーへプロキシする
 
