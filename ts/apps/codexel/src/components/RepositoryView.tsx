@@ -16,6 +16,7 @@ import {
   TextField,
 } from '@mui/material'
 import { BookmarkService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
@@ -103,6 +104,8 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [evologTarget, setEvologTarget] = useState<Commit>()
   const [evologSelected, setEvologSelected] = useState(0)
   const revsetRef = useRef<HTMLInputElement>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+  const split = useDiffNavigation(detailRef)
   const operation = useOperation(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
@@ -504,13 +507,13 @@ export const RepositoryView = ({ path }: { path: string }) => {
             />
           )}
         </Box>
-        <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+        <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
           {view === 'evolog' ? (
             <Box sx={{ p: 2 }}>
-              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} />)}
+              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} split={split} />)}
             </Box>
           ) : (
-            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />
+            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} />
           )}
         </Box>
       </Stack>

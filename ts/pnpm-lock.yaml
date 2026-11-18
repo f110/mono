@@ -153,6 +153,12 @@ importers:
       anser:
         specifier: ^2.3.5
         version: 2.3.5
+      diff:
+        specifier: ^9.0.0
+        version: 9.0.0
+      lowlight:
+        specifier: ^3.3.0
+        version: 3.3.0
       react:
         specifier: ^19.1.1
         version: 19.1.1

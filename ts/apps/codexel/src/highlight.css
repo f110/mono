@@ -1,0 +1,73 @@
+/* The colors of the tokens of highlight.js. They follow the color scheme of the system like the theme of MUI. */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-type {
+  color: #cf222e;
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-attr,
+.hljs-selector-attr {
+  color: #0a3069;
+}
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable {
+  color: #0550ae;
+}
+.hljs-comment,
+.hljs-quote,
+.hljs-meta {
+  color: #6e7781;
+  font-style: italic;
+}
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-function {
+  color: #8250df;
+}
+.hljs-tag,
+.hljs-symbol,
+.hljs-bullet {
+  color: #116329;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-built_in,
+  .hljs-type {
+    color: #ff7b72;
+  }
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-attr,
+  .hljs-selector-attr {
+    color: #a5d6ff;
+  }
+  .hljs-number,
+  .hljs-literal,
+  .hljs-variable,
+  .hljs-template-variable {
+    color: #79c0ff;
+  }
+  .hljs-comment,
+  .hljs-quote,
+  .hljs-meta {
+    color: #8b949e;
+  }
+  .hljs-title,
+  .hljs-section,
+  .hljs-name,
+  .hljs-function {
+    color: #d2a8ff;
+  }
+  .hljs-tag,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: #7ee787;
+  }
+}
