@@ -1,0 +1,116 @@
+edition = "2023";
+
+package mono.codexel;
+
+import "google/protobuf/go_features.proto";
+
+option features.(pb.go).api_level = API_OPAQUE;
+option go_package                 = "go.f110.dev/mono/go/codexel/api";
+
+// AgentService provides the coding agents running in herdr.
+service AgentService {
+  rpc ListAgents(RequestListAgents) returns (ResponseListAgents);
+  // WatchAgents sends all agents at first and every time the agents change.
+  rpc WatchAgents(RequestWatchAgents) returns (stream ResponseWatchAgents);
+  // ReadOutput returns the recent terminal output of the agent including ANSI escape sequences.
+  rpc ReadOutput(RequestReadOutput) returns (ResponseReadOutput);
+  rpc SendPrompt(RequestSendPrompt) returns (ResponseSendPrompt);
+  rpc SendKeys(RequestSendKeys) returns (ResponseSendKeys);
+  // FocusAgent moves the focus of herdr to the agent.
+  rpc FocusAgent(RequestFocusAgent) returns (ResponseFocusAgent);
+  rpc ListWorkspaces(RequestListWorkspaces) returns (ResponseListWorkspaces);
+  // StartAgent creates a new tab in the workspace and starts the agent in it.
+  rpc StartAgent(RequestStartAgent) returns (ResponseStartAgent);
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_IDLE        = 1;
+  AGENT_STATUS_WORKING     = 2;
+  AGENT_STATUS_BLOCKED     = 3;
+  AGENT_STATUS_DONE        = 4;
+  AGENT_STATUS_UNKNOWN     = 5;
+}
+
+message Agent {
+  // pane_id identifies the agent in herdr.
+  string pane_id         = 1;
+  string workspace_id    = 2;
+  string workspace_label = 3;
+  string tab_id          = 4;
+  // kind is the kind of the agent (e.g. claude).
+  string kind = 5;
+  // session_id is the session ID of the agent itself. It is the value of the Agent-Session trailer.
+  string      session_id = 6;
+  AgentStatus status     = 7;
+  string      cwd        = 8;
+  string      title      = 9;
+  bool        focused    = 10;
+}
+
+message Workspace {
+  string workspace_id = 1;
+  string label        = 2;
+}
+
+message RequestListAgents {}
+
+message ResponseListAgents {
+  repeated Agent agents = 1;
+}
+
+message RequestWatchAgents {}
+
+message ResponseWatchAgents {
+  repeated Agent agents = 1;
+}
+
+message RequestReadOutput {
+  string pane_id = 1;
+  // lines is the number of the lines to read. 0 means the default of herdr.
+  int32 lines = 2;
+}
+
+message ResponseReadOutput {
+  string text = 1;
+}
+
+message RequestSendPrompt {
+  string pane_id = 1;
+  string text    = 2;
+}
+
+message ResponseSendPrompt {}
+
+message RequestSendKeys {
+  string          pane_id = 1;
+  repeated string keys    = 2;
+}
+
+message ResponseSendKeys {}
+
+message RequestFocusAgent {
+  string pane_id = 1;
+}
+
+message ResponseFocusAgent {}
+
+message RequestListWorkspaces {}
+
+message ResponseListWorkspaces {
+  repeated Workspace workspaces = 1;
+}
+
+message RequestStartAgent {
+  string workspace_id = 1;
+  // cwd is the working directory of the agent. The default of herdr is used if it is empty.
+  string cwd = 2;
+  // kind is the kind of the agent supported by herdr (e.g. claude).
+  string          kind = 3;
+  string          name = 4;
+  repeated string args = 5;
+}
+
+message ResponseStartAgent {
+  Agent agent = 1;
+}

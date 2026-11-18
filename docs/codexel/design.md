@@ -253,7 +253,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 
 | サービス | 主な RPC |
 |---|---|
-| `AgentService` | `ListAgents`, `WatchAgents` (stream), `ReadOutput`, `WatchOutput` (stream), `SendPrompt`, `SendKeys`, `StartAgent`, `FocusAgent` |
+| `AgentService` | `ListAgents`, `WatchAgents` (stream), `ReadOutput`, `SendPrompt`, `SendKeys`, `FocusAgent`, `ListWorkspaces`, `StartAgent` |
 | `RepositoryService` | `ListRepositories`, `OpenRepository`, `CloseRepository`, `WatchRepository` (stream, op ID の変化) |
 | `RevisionService` | `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と各変更操作 (§4.2) |
 | `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
