@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "claudecode",
+    srcs = ["transcript.go"],
+    importpath = "go.f110.dev/mono/go/claudecode",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "claudecode_test",
+    srcs = ["transcript_test.go"],
+    embed = [":claudecode"],
+    deps = ["//go/testing/assertion"],
+)

@@ -21,8 +21,9 @@ import (
 	"go.f110.dev/mono/go/logger"
 )
 
-// New returns the handler of the API and the frontend.
-func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS) http.Handler {
+// New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
+// Code. If it is empty, TranscriptService is disabled.
+func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS, claudeProjectsDir string) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf, herdrClient)))
@@ -34,6 +35,7 @@ func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS) http.Hand
 	mux.Handle(api.NewConflictServiceHandler(NewConflictHandler(conf)))
 	mux.Handle(api.NewWorkspaceServiceHandler(NewWorkspaceHandler(conf)))
 	mux.Handle(api.NewAliasServiceHandler(NewAliasHandler(conf)))
+	mux.Handle(api.NewTranscriptServiceHandler(NewTranscriptHandler(claudeProjectsDir)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }

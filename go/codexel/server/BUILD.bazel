@@ -10,11 +10,13 @@ go_library(
         "operation.go",
         "repository.go",
         "server.go",
+        "transcript.go",
         "workspace.go",
     ],
     importpath = "go.f110.dev/mono/go/codexel/server",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/claudecode",
         "//go/codexel/api",
         "//go/codexel/config",
         "//go/herdr",

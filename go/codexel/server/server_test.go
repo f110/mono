@@ -138,7 +138,7 @@ func TestListAgents(t *testing.T) {
 		"agent.list":     `"result":{"type":"agent_list","agents":[{"agent":"claude","agent_session":{"agent":"claude","kind":"id","source":"herdr:claude","value":"sess"},"agent_status":"working","cwd":"/repo","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1","terminal_title_stripped":"Claude Code"}]}`,
 		"workspace.list": `"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w1","label":"mono"}]}`,
 	})
-	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), fstest.MapFS{}))
+	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), fstest.MapFS{}, ""))
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
@@ -243,4 +243,46 @@ func TestReadOutputWhileWorking(t *testing.T) {
 	assertion.Equal(t, reqs[0].Params["lines"], any(float64(2000)))
 	_, ok := reqs[1].Params["lines"]
 	assertion.False(t, ok)
+}
+
+func TestWatchTranscript(t *testing.T) {
+	dir := t.TempDir()
+	assertion.MustNoError(t, os.MkdirAll(filepath.Join(dir, "-repo"), 0755))
+	p := filepath.Join(dir, "-repo", "sess.jsonl")
+	assertion.MustNoError(t, os.WriteFile(p, []byte(`{"type":"user","origin":{"kind":"human"},"message":{"content":"Fix it"},"timestamp":"2026-11-18T10:00:00Z"}`+"\n"), 0644))
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), fstest.MapFS{}, dir))
+	t.Cleanup(srv.Close)
+
+	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
+	stream, err := client.WatchTranscript(t.Context(), connect.NewRequest(api.RequestWatchTranscript_builder{SessionId: new("sess")}.Build()))
+	assertion.MustNoError(t, err)
+	t.Cleanup(func() { stream.Close() })
+
+	assertion.True(t, stream.Receive())
+	assertion.Equal(t, stream.Msg().GetTitle(), "Fix it")
+	assertion.MustLen(t, stream.Msg().GetEntries(), 1)
+	assertion.Equal(t, stream.Msg().GetEntries()[0].GetKind(), api.TranscriptEntryKind_TRANSCRIPT_ENTRY_KIND_USER_PROMPT)
+
+	f, err := os.OpenFile(p, os.O_APPEND|os.O_WRONLY, 0)
+	assertion.MustNoError(t, err)
+	_, err = f.WriteString(`{"type":"assistant","message":{"content":[{"type":"text","text":"Done"}]},"timestamp":"2026-11-18T10:00:01Z"}` + "\n")
+	assertion.MustNoError(t, err)
+	assertion.MustNoError(t, f.Close())
+
+	assertion.True(t, stream.Receive())
+	assertion.MustLen(t, stream.Msg().GetEntries(), 1)
+	assertion.Equal(t, stream.Msg().GetEntries()[0].GetText(), "Done")
+}
+
+func TestWatchTranscriptDisabled(t *testing.T) {
+	frontend := fstest.MapFS{"index.html": {Data: []byte("<html></html>")}}
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), frontend, ""))
+	t.Cleanup(srv.Close)
+
+	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
+	stream, err := client.WatchTranscript(t.Context(), connect.NewRequest(api.RequestWatchTranscript_builder{SessionId: new("sess")}.Build()))
+	assertion.MustNoError(t, err)
+	t.Cleanup(func() { stream.Close() })
+	assertion.False(t, stream.Receive())
+	assertion.Equal(t, connect.CodeOf(stream.Err()), connect.CodeUnimplemented)
 }

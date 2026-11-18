@@ -6,6 +6,7 @@ go_library(
     importpath = "go.f110.dev/mono/go/cmd/codexel",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/claudecode",
         "//go/cli",
         "//go/cli/flag",
         "//go/codexel/config",

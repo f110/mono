@@ -21,10 +21,12 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { AgentOutput } from '../components/AgentOutput.tsx'
 import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
+import { TranscriptTimeline } from '../components/TranscriptTimeline.tsx'
 import { AgentService, AgentStatus, RevisionService, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
+import { useTranscript } from '../hooks/useTranscript.ts'
 
 const outputRefreshInterval = 1000
 // outputHistoryLines is the number of the lines including the history. herdr captures the history only while the
@@ -128,7 +130,11 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
   const sendKeys = useMutation(AgentService.method.sendKeys)
   const focus = useMutation(AgentService.method.focusAgent)
   const [prompt, setPrompt] = useState('')
-  const [tab, setTab] = useState<'output' | 'commits'>('output')
+  const [tab, setTab] = useState<'output' | 'commits' | 'timeline'>('output')
+  // The transcript is available only for Claude Code.
+  const hasTranscript = agent.kind === 'claude' && agent.sessionId !== ''
+  const { transcript, disabled: transcriptDisabled, error: transcriptError } = useTranscript(hasTranscript ? agent.sessionId : '')
+  const showTimeline = hasTranscript && !transcriptDisabled
 
   const submit = () => {
     if (!prompt) {
@@ -144,7 +150,8 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
       },
     )
   }
-  const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error
+  const shownError = error ?? sendPrompt.error ?? sendKeys.error ?? focus.error ?? transcriptError
+  const shownTab = tab === 'timeline' && !showTimeline ? 'output' : tab
 
   return (
     <Stack sx={{ height: '100%', minWidth: 0 }}>
@@ -161,12 +168,29 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
           Focus in herdr
         </Button>
       </Stack>
+      {showTimeline && transcript?.title && (
+        <Stack sx={{ px: 1, pb: 1, minWidth: 0 }}>
+          <Typography variant="body2" noWrap title="Theme of the session">
+            {transcript.title}
+          </Typography>
+          {transcript.lastPrompt && (
+            <Typography variant="caption" color="text.secondary" noWrap title={transcript.lastPrompt}>
+              Last prompt: {transcript.lastPrompt}
+            </Typography>
+          )}
+        </Stack>
+      )}
       {shownError && <Alert severity="error">{shownError.message}</Alert>}
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}>
+      <Tabs value={shownTab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}>
         <Tab value="output" label="Output" sx={{ minHeight: 36 }} />
         <Tab value="commits" label="Commits" disabled={!agent.sessionId} sx={{ minHeight: 36 }} />
+        {showTimeline && <Tab value="timeline" label="Timeline (experimental)" sx={{ minHeight: 36 }} />}
       </Tabs>
-      <Box sx={{ flex: 1, minHeight: 0 }}>{tab === 'output' ? <AgentOutput text={data?.text ?? ''} /> : <AgentCommits agent={agent} />}</Box>
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        {shownTab === 'output' && <AgentOutput text={data?.text ?? ''} />}
+        {shownTab === 'commits' && <AgentCommits agent={agent} />}
+        {shownTab === 'timeline' && <TranscriptTimeline entries={transcript?.entries ?? []} />}
+      </Box>
       <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'flex-end' }}>
         <TextField
           multiline

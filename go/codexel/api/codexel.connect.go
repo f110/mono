@@ -40,6 +40,8 @@ const (
 	WorkspaceServiceName = "mono.codexel.WorkspaceService"
 	// AliasServiceName is the fully-qualified name of the AliasService service.
 	AliasServiceName = "mono.codexel.AliasService"
+	// TranscriptServiceName is the fully-qualified name of the TranscriptService service.
+	TranscriptServiceName = "mono.codexel.TranscriptService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -185,6 +187,9 @@ const (
 	AliasServiceListAliasesProcedure = "/mono.codexel.AliasService/ListAliases"
 	// AliasServiceRunAliasProcedure is the fully-qualified name of the AliasService's RunAlias RPC.
 	AliasServiceRunAliasProcedure = "/mono.codexel.AliasService/RunAlias"
+	// TranscriptServiceWatchTranscriptProcedure is the fully-qualified name of the TranscriptService's
+	// WatchTranscript RPC.
+	TranscriptServiceWatchTranscriptProcedure = "/mono.codexel.TranscriptService/WatchTranscript"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -2003,4 +2008,74 @@ func (UnimplementedAliasServiceHandler) ListAliases(context.Context, *connect.Re
 
 func (UnimplementedAliasServiceHandler) RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AliasService.RunAlias is not implemented"))
+}
+
+// TranscriptServiceClient is a client for the mono.codexel.TranscriptService service.
+type TranscriptServiceClient interface {
+	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error)
+}
+
+// NewTranscriptServiceClient constructs a client for the mono.codexel.TranscriptService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewTranscriptServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) TranscriptServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	transcriptServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("TranscriptService").Methods()
+	return &transcriptServiceClient{
+		watchTranscript: connect.NewClient[RequestWatchTranscript, ResponseWatchTranscript](
+			httpClient,
+			baseURL+TranscriptServiceWatchTranscriptProcedure,
+			connect.WithSchema(transcriptServiceMethods.ByName("WatchTranscript")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// transcriptServiceClient implements TranscriptServiceClient.
+type transcriptServiceClient struct {
+	watchTranscript *connect.Client[RequestWatchTranscript, ResponseWatchTranscript]
+}
+
+// WatchTranscript calls mono.codexel.TranscriptService.WatchTranscript.
+func (c *transcriptServiceClient) WatchTranscript(ctx context.Context, req *connect.Request[RequestWatchTranscript]) (*connect.ServerStreamForClient[ResponseWatchTranscript], error) {
+	return c.watchTranscript.CallServerStream(ctx, req)
+}
+
+// TranscriptServiceHandler is an implementation of the mono.codexel.TranscriptService service.
+type TranscriptServiceHandler interface {
+	WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error
+}
+
+// NewTranscriptServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewTranscriptServiceHandler(svc TranscriptServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	transcriptServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("TranscriptService").Methods()
+	transcriptServiceWatchTranscriptHandler := connect.NewServerStreamHandler(
+		TranscriptServiceWatchTranscriptProcedure,
+		svc.WatchTranscript,
+		connect.WithSchema(transcriptServiceMethods.ByName("WatchTranscript")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.TranscriptService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case TranscriptServiceWatchTranscriptProcedure:
+			transcriptServiceWatchTranscriptHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedTranscriptServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedTranscriptServiceHandler struct{}
+
+func (UnimplementedTranscriptServiceHandler) WatchTranscript(context.Context, *connect.Request[RequestWatchTranscript], *connect.ServerStream[ResponseWatchTranscript]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.TranscriptService.WatchTranscript is not implemented"))
 }
