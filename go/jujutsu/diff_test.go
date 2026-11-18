@@ -78,3 +78,9 @@ func TestParseHunkHeader(t *testing.T) {
 	assertion.Equal(t, []int{h.OldStart, h.OldLines, h.NewStart, h.NewLines}, []int{3, 1, 3, 2})
 	assertion.Equal(t, h.Section, "")
 }
+
+func TestDiffRangeArgs(t *testing.T) {
+	args := diffRangeArgs("--config=x", "b")
+	assertion.Contains(t, args, "--from=--config=x")
+	assertion.Contains(t, args, "--to=b")
+}

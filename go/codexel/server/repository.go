@@ -505,3 +505,18 @@ func (h *RevisionHandler) Restore(ctx context.Context, req *connect.Request[api.
 	}
 	return connect.NewResponse(api.ResponseRestore_builder{Output: new(out)}.Build()), nil
 }
+
+func (h *RevisionHandler) DiffRange(ctx context.Context, req *connect.Request[api.RequestDiffRange]) (*connect.Response[api.ResponseDiffRange], error) {
+	if req.Msg.GetFrom() == "" || req.Msg.GetTo() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("from and to are required"))
+	}
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	files, err := repo.DiffRange(ctx, req.Msg.GetFrom(), req.Msg.GetTo())
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	return connect.NewResponse(api.ResponseDiffRange_builder{Files: toFileDiffs(files)}.Build()), nil
+}

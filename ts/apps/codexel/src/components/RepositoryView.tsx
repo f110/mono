@@ -37,6 +37,7 @@ import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
 import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
+import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
 import { FileTreePanel, FileView } from './FileTree.tsx'
 import { ConflictsPanel, conflictEntries } from './ConflictsPanel.tsx'
@@ -122,6 +123,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
+  const [divergent, setDivergent] = useState<Commit>()
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
@@ -715,6 +717,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
               preview={preview}
               onHistory={showHistory}
               onRestore={(commit, file) => setRestoringFile({ commit, file })}
+              onResolveDivergence={setDivergent}
             />
           )}
         </Box>
@@ -852,6 +855,19 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           </Button>
         </DialogActions>
       </Dialog>
+
+      {divergent && (
+        <DivergenceDialog
+          repoPath={path}
+          commit={divergent}
+          onClose={() => setDivergent(undefined)}
+          onKeep={(keep, abandon) => {
+            setDivergent(undefined)
+            setSelectedKey(keep.changeId)
+            run(() => client.abandon({ path, revisions: abandon.map((c) => c.commitId) }), false)
+          }}
+        />
+      )}
 
       {workspaceOpen && (
         <WorkspaceDialog

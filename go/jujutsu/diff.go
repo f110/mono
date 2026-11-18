@@ -198,3 +198,16 @@ func parseRange(s string) (int, int, error) {
 	}
 	return a, b, nil
 }
+
+func diffRangeArgs(from, to string) []string {
+	return []string{"diff", "--git", "--color", "never", "--ignore-working-copy", "--config", "diff.git.show-path-prefix=true", "--from=" + from, "--to=" + to}
+}
+
+// DiffRange returns the diff between two revisions.
+func (r *Repository) DiffRange(ctx context.Context, from, to string) ([]*FileDiff, error) {
+	out, err := run(ctx, r.root, diffRangeArgs(from, to)...)
+	if err != nil {
+		return nil, err
+	}
+	return parseGitDiff(string(out))
+}

@@ -109,6 +109,9 @@ const (
 	RevisionServiceSplitProcedure = "/mono.codexel.RevisionService/Split"
 	// RevisionServiceRestoreProcedure is the fully-qualified name of the RevisionService's Restore RPC.
 	RevisionServiceRestoreProcedure = "/mono.codexel.RevisionService/Restore"
+	// RevisionServiceDiffRangeProcedure is the fully-qualified name of the RevisionService's DiffRange
+	// RPC.
+	RevisionServiceDiffRangeProcedure = "/mono.codexel.RevisionService/DiffRange"
 	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
 	// ListBookmarks RPC.
 	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
@@ -615,6 +618,7 @@ type RevisionServiceClient interface {
 	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
 	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
+	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -706,6 +710,12 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("Restore")),
 			connect.WithClientOptions(opts...),
 		),
+		diffRange: connect.NewClient[RequestDiffRange, ResponseDiffRange](
+			httpClient,
+			baseURL+RevisionServiceDiffRangeProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -724,6 +734,7 @@ type revisionServiceClient struct {
 	evolog      *connect.Client[RequestEvolog, ResponseEvolog]
 	split       *connect.Client[RequestSplit, ResponseSplit]
 	restore     *connect.Client[RequestRestore, ResponseRestore]
+	diffRange   *connect.Client[RequestDiffRange, ResponseDiffRange]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -791,6 +802,11 @@ func (c *revisionServiceClient) Restore(ctx context.Context, req *connect.Reques
 	return c.restore.CallUnary(ctx, req)
 }
 
+// DiffRange calls mono.codexel.RevisionService.DiffRange.
+func (c *revisionServiceClient) DiffRange(ctx context.Context, req *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
+	return c.diffRange.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
@@ -806,6 +822,7 @@ type RevisionServiceHandler interface {
 	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
 	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
+	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -893,6 +910,12 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("Restore")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceDiffRangeHandler := connect.NewUnaryHandler(
+		RevisionServiceDiffRangeProcedure,
+		svc.DiffRange,
+		connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
@@ -921,6 +944,8 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 			revisionServiceSplitHandler.ServeHTTP(w, r)
 		case RevisionServiceRestoreProcedure:
 			revisionServiceRestoreHandler.ServeHTTP(w, r)
+		case RevisionServiceDiffRangeProcedure:
+			revisionServiceDiffRangeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -980,6 +1005,10 @@ func (UnimplementedRevisionServiceHandler) Split(context.Context, *connect.Reque
 
 func (UnimplementedRevisionServiceHandler) Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Restore is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.DiffRange is not implemented"))
 }
 
 // BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.

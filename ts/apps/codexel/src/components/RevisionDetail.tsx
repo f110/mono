@@ -59,6 +59,7 @@ export const RevisionDetail = ({
   preview,
   onHistory,
   onRestore,
+  onResolveDivergence,
 }: {
   path: string
   commit: Commit
@@ -66,6 +67,7 @@ export const RevisionDetail = ({
   preview: boolean
   onHistory: (file: string) => void
   onRestore: (commit: Commit, file: string) => void
+  onResolveDivergence: (commit: Commit) => void
 }) => {
   const { data, error } = useQuery(RevisionService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
@@ -80,6 +82,7 @@ export const RevisionDetail = ({
         </Typography>
         {commit.immutable && <Chip label="immutable" size="small" variant="outlined" />}
         {commit.currentWorkingCopy && <Chip label="@" size="small" color="primary" variant="outlined" />}
+        {commit.divergent && <Chip label="divergent: resolve…" size="small" color="warning" onClick={() => onResolveDivergence(commit)} />}
       </Stack>
       <Typography variant="caption" color="text.secondary">
         {commit.author} &lt;{commit.email}&gt; · {new Date(Number(commit.timestamp) * 1000).toLocaleString()}

@@ -2544,6 +2544,48 @@ export declare type ResponseUpdateStale = Message<"mono.codexel.ResponseUpdateSt
 export declare const ResponseUpdateStaleSchema: GenMessage<ResponseUpdateStale>;
 
 /**
+ * @generated from message mono.codexel.RequestDiffRange
+ */
+export declare type RequestDiffRange = Message<"mono.codexel.RequestDiffRange"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string from = 2;
+   */
+  from: string;
+
+  /**
+   * @generated from field: string to = 3;
+   */
+  to: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestDiffRange.
+ * Use `create(RequestDiffRangeSchema)` to create a new message.
+ */
+export declare const RequestDiffRangeSchema: GenMessage<RequestDiffRange>;
+
+/**
+ * @generated from message mono.codexel.ResponseDiffRange
+ */
+export declare type ResponseDiffRange = Message<"mono.codexel.ResponseDiffRange"> & {
+  /**
+   * @generated from field: repeated mono.codexel.FileDiff files = 1;
+   */
+  files: FileDiff[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseDiffRange.
+ * Use `create(ResponseDiffRangeSchema)` to create a new message.
+ */
+export declare const ResponseDiffRangeSchema: GenMessage<ResponseDiffRange>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -3011,6 +3053,16 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestRestoreSchema;
     output: typeof ResponseRestoreSchema;
+  },
+  /**
+   * DiffRange returns the diff between two revisions.
+   *
+   * @generated from rpc mono.codexel.RevisionService.DiffRange
+   */
+  diffRange: {
+    methodKind: "unary";
+    input: typeof RequestDiffRangeSchema;
+    output: typeof ResponseDiffRangeSchema;
   },
 }>;
 
