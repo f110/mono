@@ -25,8 +25,10 @@ export const GraphGutter = ({
   width: number
   workingCopy: boolean
 }) => {
+  // The colors of theme.vars are CSS variables which follow the color scheme. Only the style can use them.
   const theme = useTheme()
-  const color = theme.palette.text.secondary
+  const palette = theme.vars?.palette ?? theme.palette
+  const color = palette.text.secondary
   const chars = [...gutter]
   const cx = (i: number) => i * cellWidth + cellWidth / 2
   const cy = height / 2
@@ -72,13 +74,13 @@ export const GraphGutter = ({
         {downward.has(charAt(above, i)) && <line x1={x} y1={0} x2={x} y2={cy - r} />}
         {upward.has(charAt(below, i)) && <line x1={x} y1={cy + r} x2={x} y2={height} />}
         {c === '◆' ? (
-          <rect x={x - r} y={cy - r} width={r * 2} height={r * 2} transform={`rotate(45 ${x} ${cy})`} fill={color} />
+          <rect x={x - r} y={cy - r} width={r * 2} height={r * 2} transform={`rotate(45 ${x} ${cy})`} style={{ fill: color }} />
         ) : (
           <circle
             cx={x}
             cy={cy}
             r={r}
-            fill={workingCopy ? theme.palette.primary.main : c === '×' ? theme.palette.error.main : 'none'}
+            style={{ fill: workingCopy ? palette.primary.main : c === '×' ? palette.error.main : 'none' }}
             strokeDasharray={c === '◌' ? '2 2' : undefined}
           />
         )}
@@ -87,7 +89,7 @@ export const GraphGutter = ({
   })
 
   return (
-    <svg width={width} height={height} stroke={color} strokeWidth={1.5} style={{ flexShrink: 0, display: 'block' }}>
+    <svg width={width} height={height} strokeWidth={1.5} style={{ flexShrink: 0, display: 'block', stroke: color }}>
       {elements}
     </svg>
   )

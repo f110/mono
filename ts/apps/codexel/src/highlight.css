@@ -1,4 +1,4 @@
-/* The colors of the tokens of highlight.js. They follow the color scheme of the system like the theme of MUI. */
+/* The colors of the tokens of highlight.js. The dark colors are used when MUI sets the class "dark" to html. */
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in,
@@ -35,39 +35,37 @@
   color: #116329;
 }
 
-@media (prefers-color-scheme: dark) {
-  .hljs-keyword,
-  .hljs-selector-tag,
-  .hljs-built_in,
-  .hljs-type {
-    color: #ff7b72;
-  }
-  .hljs-string,
-  .hljs-regexp,
-  .hljs-attr,
-  .hljs-selector-attr {
-    color: #a5d6ff;
-  }
-  .hljs-number,
-  .hljs-literal,
-  .hljs-variable,
-  .hljs-template-variable {
-    color: #79c0ff;
-  }
-  .hljs-comment,
-  .hljs-quote,
-  .hljs-meta {
-    color: #8b949e;
-  }
-  .hljs-title,
-  .hljs-section,
-  .hljs-name,
-  .hljs-function {
-    color: #d2a8ff;
-  }
-  .hljs-tag,
-  .hljs-symbol,
-  .hljs-bullet {
-    color: #7ee787;
-  }
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-built_in,
+.dark .hljs-type {
+  color: #ff7b72;
+}
+.dark .hljs-string,
+.dark .hljs-regexp,
+.dark .hljs-attr,
+.dark .hljs-selector-attr {
+  color: #a5d6ff;
+}
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-variable,
+.dark .hljs-template-variable {
+  color: #79c0ff;
+}
+.dark .hljs-comment,
+.dark .hljs-quote,
+.dark .hljs-meta {
+  color: #8b949e;
+}
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-name,
+.dark .hljs-function {
+  color: #d2a8ff;
+}
+.dark .hljs-tag,
+.dark .hljs-symbol,
+.dark .hljs-bullet {
+  color: #7ee787;
 }
