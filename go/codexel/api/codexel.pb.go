@@ -6315,6 +6315,2081 @@ func (b0 ResponseSquash_builder) Build() *ResponseSquash {
 	return m0
 }
 
+type Bookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,1,opt,name=name"`
+	xxx_hidden_Remote      *string                `protobuf:"bytes,2,opt,name=remote"`
+	xxx_hidden_Tracked     bool                   `protobuf:"varint,3,opt,name=tracked"`
+	xxx_hidden_Conflict    bool                   `protobuf:"varint,4,opt,name=conflict"`
+	xxx_hidden_Synced      bool                   `protobuf:"varint,5,opt,name=synced"`
+	xxx_hidden_Target      *string                `protobuf:"bytes,6,opt,name=target"`
+	xxx_hidden_Ahead       int32                  `protobuf:"varint,7,opt,name=ahead"`
+	xxx_hidden_Behind      int32                  `protobuf:"varint,8,opt,name=behind"`
+	xxx_hidden_Description *string                `protobuf:"bytes,9,opt,name=description"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Bookmark) Reset() {
+	*x = Bookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Bookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Bookmark) ProtoMessage() {}
+
+func (x *Bookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Bookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Bookmark) GetRemote() string {
+	if x != nil {
+		if x.xxx_hidden_Remote != nil {
+			return *x.xxx_hidden_Remote
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Bookmark) GetTracked() bool {
+	if x != nil {
+		return x.xxx_hidden_Tracked
+	}
+	return false
+}
+
+func (x *Bookmark) GetConflict() bool {
+	if x != nil {
+		return x.xxx_hidden_Conflict
+	}
+	return false
+}
+
+func (x *Bookmark) GetSynced() bool {
+	if x != nil {
+		return x.xxx_hidden_Synced
+	}
+	return false
+}
+
+func (x *Bookmark) GetTarget() string {
+	if x != nil {
+		if x.xxx_hidden_Target != nil {
+			return *x.xxx_hidden_Target
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Bookmark) GetAhead() int32 {
+	if x != nil {
+		return x.xxx_hidden_Ahead
+	}
+	return 0
+}
+
+func (x *Bookmark) GetBehind() int32 {
+	if x != nil {
+		return x.xxx_hidden_Behind
+	}
+	return 0
+}
+
+func (x *Bookmark) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Bookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 9)
+}
+
+func (x *Bookmark) SetRemote(v string) {
+	x.xxx_hidden_Remote = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 9)
+}
+
+func (x *Bookmark) SetTracked(v bool) {
+	x.xxx_hidden_Tracked = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 9)
+}
+
+func (x *Bookmark) SetConflict(v bool) {
+	x.xxx_hidden_Conflict = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 9)
+}
+
+func (x *Bookmark) SetSynced(v bool) {
+	x.xxx_hidden_Synced = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 9)
+}
+
+func (x *Bookmark) SetTarget(v string) {
+	x.xxx_hidden_Target = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 9)
+}
+
+func (x *Bookmark) SetAhead(v int32) {
+	x.xxx_hidden_Ahead = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 9)
+}
+
+func (x *Bookmark) SetBehind(v int32) {
+	x.xxx_hidden_Behind = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 9)
+}
+
+func (x *Bookmark) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 9)
+}
+
+func (x *Bookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Bookmark) HasRemote() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Bookmark) HasTracked() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *Bookmark) HasConflict() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Bookmark) HasSynced() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *Bookmark) HasTarget() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *Bookmark) HasAhead() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *Bookmark) HasBehind() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *Bookmark) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *Bookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *Bookmark) ClearRemote() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Remote = nil
+}
+
+func (x *Bookmark) ClearTracked() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Tracked = false
+}
+
+func (x *Bookmark) ClearConflict() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Conflict = false
+}
+
+func (x *Bookmark) ClearSynced() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Synced = false
+}
+
+func (x *Bookmark) ClearTarget() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Target = nil
+}
+
+func (x *Bookmark) ClearAhead() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Ahead = 0
+}
+
+func (x *Bookmark) ClearBehind() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Behind = 0
+}
+
+func (x *Bookmark) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Description = nil
+}
+
+type Bookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Name        *string
+	Remote      *string
+	Tracked     *bool
+	Conflict    *bool
+	Synced      *bool
+	Target      *string
+	Ahead       *int32
+	Behind      *int32
+	Description *string
+}
+
+func (b0 Bookmark_builder) Build() *Bookmark {
+	m0 := &Bookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 9)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Remote != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 9)
+		x.xxx_hidden_Remote = b.Remote
+	}
+	if b.Tracked != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 9)
+		x.xxx_hidden_Tracked = *b.Tracked
+	}
+	if b.Conflict != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 9)
+		x.xxx_hidden_Conflict = *b.Conflict
+	}
+	if b.Synced != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 9)
+		x.xxx_hidden_Synced = *b.Synced
+	}
+	if b.Target != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 9)
+		x.xxx_hidden_Target = b.Target
+	}
+	if b.Ahead != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 9)
+		x.xxx_hidden_Ahead = *b.Ahead
+	}
+	if b.Behind != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 9)
+		x.xxx_hidden_Behind = *b.Behind
+	}
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 9)
+		x.xxx_hidden_Description = b.Description
+	}
+	return m0
+}
+
+type RequestListBookmarks struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestListBookmarks) Reset() {
+	*x = RequestListBookmarks{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestListBookmarks) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestListBookmarks) ProtoMessage() {}
+
+func (x *RequestListBookmarks) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestListBookmarks) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestListBookmarks) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestListBookmarks) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestListBookmarks) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestListBookmarks_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestListBookmarks_builder) Build() *RequestListBookmarks {
+	m0 := &RequestListBookmarks{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseListBookmarks struct {
+	state                protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Bookmarks *[]*Bookmark           `protobuf:"bytes,1,rep,name=bookmarks"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *ResponseListBookmarks) Reset() {
+	*x = ResponseListBookmarks{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseListBookmarks) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseListBookmarks) ProtoMessage() {}
+
+func (x *ResponseListBookmarks) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseListBookmarks) GetBookmarks() []*Bookmark {
+	if x != nil {
+		if x.xxx_hidden_Bookmarks != nil {
+			return *x.xxx_hidden_Bookmarks
+		}
+	}
+	return nil
+}
+
+func (x *ResponseListBookmarks) SetBookmarks(v []*Bookmark) {
+	x.xxx_hidden_Bookmarks = &v
+}
+
+type ResponseListBookmarks_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Bookmarks []*Bookmark
+}
+
+func (b0 ResponseListBookmarks_builder) Build() *ResponseListBookmarks {
+	m0 := &ResponseListBookmarks{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Bookmarks = &b.Bookmarks
+	return m0
+}
+
+type RequestSetBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Revision    *string                `protobuf:"bytes,3,opt,name=revision"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestSetBookmark) Reset() {
+	*x = RequestSetBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestSetBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestSetBookmark) ProtoMessage() {}
+
+func (x *RequestSetBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestSetBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestSetBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestSetBookmark) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestSetBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestSetBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestSetBookmark) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestSetBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestSetBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestSetBookmark) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestSetBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestSetBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *RequestSetBookmark) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestSetBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path     *string
+	Name     *string
+	Revision *string
+}
+
+func (b0 RequestSetBookmark_builder) Build() *RequestSetBookmark {
+	m0 := &RequestSetBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseSetBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseSetBookmark) Reset() {
+	*x = ResponseSetBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseSetBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseSetBookmark) ProtoMessage() {}
+
+func (x *ResponseSetBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseSetBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseSetBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseSetBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseSetBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseSetBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseSetBookmark_builder) Build() *ResponseSetBookmark {
+	m0 := &ResponseSetBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestMoveBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Revision    *string                `protobuf:"bytes,3,opt,name=revision"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestMoveBookmark) Reset() {
+	*x = RequestMoveBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestMoveBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestMoveBookmark) ProtoMessage() {}
+
+func (x *RequestMoveBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestMoveBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestMoveBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestMoveBookmark) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestMoveBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestMoveBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestMoveBookmark) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestMoveBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestMoveBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestMoveBookmark) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestMoveBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestMoveBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *RequestMoveBookmark) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestMoveBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path     *string
+	Name     *string
+	Revision *string
+}
+
+func (b0 RequestMoveBookmark_builder) Build() *RequestMoveBookmark {
+	m0 := &RequestMoveBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseMoveBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseMoveBookmark) Reset() {
+	*x = ResponseMoveBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseMoveBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseMoveBookmark) ProtoMessage() {}
+
+func (x *ResponseMoveBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseMoveBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseMoveBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseMoveBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseMoveBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseMoveBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseMoveBookmark_builder) Build() *ResponseMoveBookmark {
+	m0 := &ResponseMoveBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestDeleteBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestDeleteBookmark) Reset() {
+	*x = RequestDeleteBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDeleteBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDeleteBookmark) ProtoMessage() {}
+
+func (x *RequestDeleteBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[64]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestDeleteBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDeleteBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestDeleteBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestDeleteBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestDeleteBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestDeleteBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestDeleteBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestDeleteBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+type RequestDeleteBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+	Name *string
+}
+
+func (b0 RequestDeleteBookmark_builder) Build() *RequestDeleteBookmark {
+	m0 := &RequestDeleteBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	return m0
+}
+
+type ResponseDeleteBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseDeleteBookmark) Reset() {
+	*x = ResponseDeleteBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseDeleteBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseDeleteBookmark) ProtoMessage() {}
+
+func (x *ResponseDeleteBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[65]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseDeleteBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseDeleteBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseDeleteBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseDeleteBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseDeleteBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseDeleteBookmark_builder) Build() *ResponseDeleteBookmark {
+	m0 := &ResponseDeleteBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestForgetBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestForgetBookmark) Reset() {
+	*x = RequestForgetBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[66]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestForgetBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestForgetBookmark) ProtoMessage() {}
+
+func (x *RequestForgetBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[66]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestForgetBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestForgetBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestForgetBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestForgetBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestForgetBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestForgetBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestForgetBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestForgetBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+type RequestForgetBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+	Name *string
+}
+
+func (b0 RequestForgetBookmark_builder) Build() *RequestForgetBookmark {
+	m0 := &RequestForgetBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Name = b.Name
+	}
+	return m0
+}
+
+type ResponseForgetBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseForgetBookmark) Reset() {
+	*x = ResponseForgetBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[67]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseForgetBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseForgetBookmark) ProtoMessage() {}
+
+func (x *ResponseForgetBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[67]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseForgetBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseForgetBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseForgetBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseForgetBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseForgetBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseForgetBookmark_builder) Build() *ResponseForgetBookmark {
+	m0 := &ResponseForgetBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestTrackBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Remote      *string                `protobuf:"bytes,3,opt,name=remote"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestTrackBookmark) Reset() {
+	*x = RequestTrackBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[68]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestTrackBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestTrackBookmark) ProtoMessage() {}
+
+func (x *RequestTrackBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[68]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestTrackBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestTrackBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestTrackBookmark) GetRemote() string {
+	if x != nil {
+		if x.xxx_hidden_Remote != nil {
+			return *x.xxx_hidden_Remote
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestTrackBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestTrackBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestTrackBookmark) SetRemote(v string) {
+	x.xxx_hidden_Remote = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestTrackBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestTrackBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestTrackBookmark) HasRemote() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestTrackBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestTrackBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *RequestTrackBookmark) ClearRemote() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Remote = nil
+}
+
+type RequestTrackBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path   *string
+	Name   *string
+	Remote *string
+}
+
+func (b0 RequestTrackBookmark_builder) Build() *RequestTrackBookmark {
+	m0 := &RequestTrackBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Remote != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Remote = b.Remote
+	}
+	return m0
+}
+
+type ResponseTrackBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseTrackBookmark) Reset() {
+	*x = ResponseTrackBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseTrackBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseTrackBookmark) ProtoMessage() {}
+
+func (x *ResponseTrackBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[69]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseTrackBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseTrackBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseTrackBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseTrackBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseTrackBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseTrackBookmark_builder) Build() *ResponseTrackBookmark {
+	m0 := &ResponseTrackBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestUntrackBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Name        *string                `protobuf:"bytes,2,opt,name=name"`
+	xxx_hidden_Remote      *string                `protobuf:"bytes,3,opt,name=remote"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestUntrackBookmark) Reset() {
+	*x = RequestUntrackBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestUntrackBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestUntrackBookmark) ProtoMessage() {}
+
+func (x *RequestUntrackBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestUntrackBookmark) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestUntrackBookmark) GetName() string {
+	if x != nil {
+		if x.xxx_hidden_Name != nil {
+			return *x.xxx_hidden_Name
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestUntrackBookmark) GetRemote() string {
+	if x != nil {
+		if x.xxx_hidden_Remote != nil {
+			return *x.xxx_hidden_Remote
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestUntrackBookmark) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
+}
+
+func (x *RequestUntrackBookmark) SetName(v string) {
+	x.xxx_hidden_Name = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *RequestUntrackBookmark) SetRemote(v string) {
+	x.xxx_hidden_Remote = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 3)
+}
+
+func (x *RequestUntrackBookmark) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestUntrackBookmark) HasName() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestUntrackBookmark) HasRemote() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *RequestUntrackBookmark) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestUntrackBookmark) ClearName() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Name = nil
+}
+
+func (x *RequestUntrackBookmark) ClearRemote() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Remote = nil
+}
+
+type RequestUntrackBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path   *string
+	Name   *string
+	Remote *string
+}
+
+func (b0 RequestUntrackBookmark_builder) Build() *RequestUntrackBookmark {
+	m0 := &RequestUntrackBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Name != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Name = b.Name
+	}
+	if b.Remote != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 3)
+		x.xxx_hidden_Remote = b.Remote
+	}
+	return m0
+}
+
+type ResponseUntrackBookmark struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseUntrackBookmark) Reset() {
+	*x = ResponseUntrackBookmark{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseUntrackBookmark) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseUntrackBookmark) ProtoMessage() {}
+
+func (x *ResponseUntrackBookmark) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseUntrackBookmark) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseUntrackBookmark) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseUntrackBookmark) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseUntrackBookmark) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseUntrackBookmark_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseUntrackBookmark_builder) Build() *ResponseUntrackBookmark {
+	m0 := &ResponseUntrackBookmark{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestFetch struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestFetch) Reset() {
+	*x = RequestFetch{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestFetch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestFetch) ProtoMessage() {}
+
+func (x *RequestFetch) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestFetch) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestFetch) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *RequestFetch) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestFetch) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+type RequestFetch_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path *string
+}
+
+func (b0 RequestFetch_builder) Build() *RequestFetch {
+	m0 := &RequestFetch{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Path = b.Path
+	}
+	return m0
+}
+
+type ResponseFetch struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseFetch) Reset() {
+	*x = ResponseFetch{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseFetch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseFetch) ProtoMessage() {}
+
+func (x *ResponseFetch) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseFetch) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseFetch) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponseFetch) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponseFetch) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponseFetch_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponseFetch_builder) Build() *ResponseFetch {
+	m0 := &ResponseFetch{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
+type RequestPush struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Bookmark    *string                `protobuf:"bytes,2,opt,name=bookmark"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestPush) Reset() {
+	*x = RequestPush{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestPush) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestPush) ProtoMessage() {}
+
+func (x *RequestPush) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestPush) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestPush) GetBookmark() string {
+	if x != nil {
+		if x.xxx_hidden_Bookmark != nil {
+			return *x.xxx_hidden_Bookmark
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestPush) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestPush) SetBookmark(v string) {
+	x.xxx_hidden_Bookmark = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestPush) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestPush) HasBookmark() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestPush) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestPush) ClearBookmark() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Bookmark = nil
+}
+
+type RequestPush_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path     *string
+	Bookmark *string
+}
+
+func (b0 RequestPush_builder) Build() *RequestPush {
+	m0 := &RequestPush{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Bookmark != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Bookmark = b.Bookmark
+	}
+	return m0
+}
+
+type ResponsePush struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Output      *string                `protobuf:"bytes,1,opt,name=output"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponsePush) Reset() {
+	*x = ResponsePush{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponsePush) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponsePush) ProtoMessage() {}
+
+func (x *ResponsePush) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponsePush) GetOutput() string {
+	if x != nil {
+		if x.xxx_hidden_Output != nil {
+			return *x.xxx_hidden_Output
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponsePush) SetOutput(v string) {
+	x.xxx_hidden_Output = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *ResponsePush) HasOutput() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *ResponsePush) ClearOutput() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Output = nil
+}
+
+type ResponsePush_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Output *string
+}
+
+func (b0 ResponsePush_builder) Build() *ResponsePush {
+	m0 := &ResponsePush{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Output != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Output = b.Output
+	}
+	return m0
+}
+
 var File_proto_codexel_codexel_proto protoreflect.FileDescriptor
 
 const file_proto_codexel_codexel_proto_rawDesc = "" +
@@ -6508,6 +8583,63 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x04into\x18\x03 \x01(\tR\x04into\x12 \n" +
 	"\vdescription\x18\x04 \x01(\tR\vdescription\"(\n" +
 	"\x0eResponseSquash\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"\xec\x01\n" +
+	"\bBookmark\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06remote\x18\x02 \x01(\tR\x06remote\x12\x18\n" +
+	"\atracked\x18\x03 \x01(\bR\atracked\x12\x1a\n" +
+	"\bconflict\x18\x04 \x01(\bR\bconflict\x12\x16\n" +
+	"\x06synced\x18\x05 \x01(\bR\x06synced\x12\x16\n" +
+	"\x06target\x18\x06 \x01(\tR\x06target\x12\x14\n" +
+	"\x05ahead\x18\a \x01(\x05R\x05ahead\x12\x16\n" +
+	"\x06behind\x18\b \x01(\x05R\x06behind\x12 \n" +
+	"\vdescription\x18\t \x01(\tR\vdescription\"*\n" +
+	"\x14RequestListBookmarks\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"M\n" +
+	"\x15ResponseListBookmarks\x124\n" +
+	"\tbookmarks\x18\x01 \x03(\v2\x16.mono.codexel.BookmarkR\tbookmarks\"X\n" +
+	"\x12RequestSetBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\brevision\x18\x03 \x01(\tR\brevision\"-\n" +
+	"\x13ResponseSetBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"Y\n" +
+	"\x13RequestMoveBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\brevision\x18\x03 \x01(\tR\brevision\".\n" +
+	"\x14ResponseMoveBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"?\n" +
+	"\x15RequestDeleteBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"0\n" +
+	"\x16ResponseDeleteBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"?\n" +
+	"\x15RequestForgetBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"0\n" +
+	"\x16ResponseForgetBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"V\n" +
+	"\x14RequestTrackBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06remote\x18\x03 \x01(\tR\x06remote\"/\n" +
+	"\x15ResponseTrackBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"X\n" +
+	"\x16RequestUntrackBookmark\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06remote\x18\x03 \x01(\tR\x06remote\"1\n" +
+	"\x17ResponseUntrackBookmark\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"\"\n" +
+	"\fRequestFetch\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\"'\n" +
+	"\rResponseFetch\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\tR\x06output\"=\n" +
+	"\vRequestPush\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
+	"\bbookmark\x18\x02 \x01(\tR\bbookmark\"&\n" +
+	"\fResponsePush\x12\x16\n" +
 	"\x06output\x18\x01 \x01(\tR\x06output*\xa7\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
@@ -6569,10 +8701,22 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x06Commit\x12\x1b.mono.codexel.RequestCommit\x1a\x1c.mono.codexel.ResponseCommit\x12=\n" +
 	"\x04Undo\x12\x19.mono.codexel.RequestUndo\x1a\x1a.mono.codexel.ResponseUndo\x12C\n" +
 	"\x06Rebase\x12\x1b.mono.codexel.RequestRebase\x1a\x1c.mono.codexel.ResponseRebase\x12C\n" +
-	"\x06Squash\x12\x1b.mono.codexel.RequestSquash\x1a\x1c.mono.codexel.ResponseSquashB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x06Squash\x12\x1b.mono.codexel.RequestSquash\x1a\x1c.mono.codexel.ResponseSquash2\x8a\x05\n" +
+	"\x0fBookmarkService\x12X\n" +
+	"\rListBookmarks\x12\".mono.codexel.RequestListBookmarks\x1a#.mono.codexel.ResponseListBookmarks\x12R\n" +
+	"\vSetBookmark\x12 .mono.codexel.RequestSetBookmark\x1a!.mono.codexel.ResponseSetBookmark\x12U\n" +
+	"\fMoveBookmark\x12!.mono.codexel.RequestMoveBookmark\x1a\".mono.codexel.ResponseMoveBookmark\x12[\n" +
+	"\x0eDeleteBookmark\x12#.mono.codexel.RequestDeleteBookmark\x1a$.mono.codexel.ResponseDeleteBookmark\x12[\n" +
+	"\x0eForgetBookmark\x12#.mono.codexel.RequestForgetBookmark\x1a$.mono.codexel.ResponseForgetBookmark\x12X\n" +
+	"\rTrackBookmark\x12\".mono.codexel.RequestTrackBookmark\x1a#.mono.codexel.ResponseTrackBookmark\x12^\n" +
+	"\x0fUntrackBookmark\x12$.mono.codexel.RequestUntrackBookmark\x1a%.mono.codexel.ResponseUntrackBookmark2\x8d\x01\n" +
+	"\n" +
+	"GitService\x12@\n" +
+	"\x05Fetch\x12\x1a.mono.codexel.RequestFetch\x1a\x1b.mono.codexel.ResponseFetch\x12=\n" +
+	"\x04Push\x12\x19.mono.codexel.RequestPush\x1a\x1a.mono.codexel.ResponsePushB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
 var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
 var file_proto_codexel_codexel_proto_goTypes = []any{
 	(AgentStatus)(0),                 // 0: mono.codexel.AgentStatus
 	(FileStatus)(0),                  // 1: mono.codexel.FileStatus
@@ -6636,6 +8780,25 @@ var file_proto_codexel_codexel_proto_goTypes = []any{
 	(*ResponseRebase)(nil),           // 59: mono.codexel.ResponseRebase
 	(*RequestSquash)(nil),            // 60: mono.codexel.RequestSquash
 	(*ResponseSquash)(nil),           // 61: mono.codexel.ResponseSquash
+	(*Bookmark)(nil),                 // 62: mono.codexel.Bookmark
+	(*RequestListBookmarks)(nil),     // 63: mono.codexel.RequestListBookmarks
+	(*ResponseListBookmarks)(nil),    // 64: mono.codexel.ResponseListBookmarks
+	(*RequestSetBookmark)(nil),       // 65: mono.codexel.RequestSetBookmark
+	(*ResponseSetBookmark)(nil),      // 66: mono.codexel.ResponseSetBookmark
+	(*RequestMoveBookmark)(nil),      // 67: mono.codexel.RequestMoveBookmark
+	(*ResponseMoveBookmark)(nil),     // 68: mono.codexel.ResponseMoveBookmark
+	(*RequestDeleteBookmark)(nil),    // 69: mono.codexel.RequestDeleteBookmark
+	(*ResponseDeleteBookmark)(nil),   // 70: mono.codexel.ResponseDeleteBookmark
+	(*RequestForgetBookmark)(nil),    // 71: mono.codexel.RequestForgetBookmark
+	(*ResponseForgetBookmark)(nil),   // 72: mono.codexel.ResponseForgetBookmark
+	(*RequestTrackBookmark)(nil),     // 73: mono.codexel.RequestTrackBookmark
+	(*ResponseTrackBookmark)(nil),    // 74: mono.codexel.ResponseTrackBookmark
+	(*RequestUntrackBookmark)(nil),   // 75: mono.codexel.RequestUntrackBookmark
+	(*ResponseUntrackBookmark)(nil),  // 76: mono.codexel.ResponseUntrackBookmark
+	(*RequestFetch)(nil),             // 77: mono.codexel.RequestFetch
+	(*ResponseFetch)(nil),            // 78: mono.codexel.ResponseFetch
+	(*RequestPush)(nil),              // 79: mono.codexel.RequestPush
+	(*ResponsePush)(nil),             // 80: mono.codexel.ResponsePush
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,  // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
@@ -6659,57 +8822,76 @@ var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	43, // 18: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
 	3,  // 19: mono.codexel.RequestRebase.source:type_name -> mono.codexel.RebaseSource
 	4,  // 20: mono.codexel.RequestRebase.target:type_name -> mono.codexel.RebaseTarget
-	7,  // 21: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
-	9,  // 22: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
-	11, // 23: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
-	13, // 24: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
-	15, // 25: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
-	17, // 26: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
-	19, // 27: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
-	21, // 28: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
-	29, // 29: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
-	31, // 30: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
-	33, // 31: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
-	35, // 32: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
-	37, // 33: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
-	39, // 34: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
-	44, // 35: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
-	46, // 36: mono.codexel.RevisionService.New:input_type -> mono.codexel.RequestNew
-	48, // 37: mono.codexel.RevisionService.Edit:input_type -> mono.codexel.RequestEdit
-	50, // 38: mono.codexel.RevisionService.Abandon:input_type -> mono.codexel.RequestAbandon
-	52, // 39: mono.codexel.RevisionService.Describe:input_type -> mono.codexel.RequestDescribe
-	54, // 40: mono.codexel.RevisionService.Commit:input_type -> mono.codexel.RequestCommit
-	56, // 41: mono.codexel.RevisionService.Undo:input_type -> mono.codexel.RequestUndo
-	58, // 42: mono.codexel.RevisionService.Rebase:input_type -> mono.codexel.RequestRebase
-	60, // 43: mono.codexel.RevisionService.Squash:input_type -> mono.codexel.RequestSquash
-	8,  // 44: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
-	10, // 45: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
-	12, // 46: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	14, // 47: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	16, // 48: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	18, // 49: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
-	20, // 50: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	22, // 51: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
-	30, // 52: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
-	32, // 53: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
-	34, // 54: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
-	36, // 55: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
-	38, // 56: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
-	40, // 57: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
-	45, // 58: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
-	47, // 59: mono.codexel.RevisionService.New:output_type -> mono.codexel.ResponseNew
-	49, // 60: mono.codexel.RevisionService.Edit:output_type -> mono.codexel.ResponseEdit
-	51, // 61: mono.codexel.RevisionService.Abandon:output_type -> mono.codexel.ResponseAbandon
-	53, // 62: mono.codexel.RevisionService.Describe:output_type -> mono.codexel.ResponseDescribe
-	55, // 63: mono.codexel.RevisionService.Commit:output_type -> mono.codexel.ResponseCommit
-	57, // 64: mono.codexel.RevisionService.Undo:output_type -> mono.codexel.ResponseUndo
-	59, // 65: mono.codexel.RevisionService.Rebase:output_type -> mono.codexel.ResponseRebase
-	61, // 66: mono.codexel.RevisionService.Squash:output_type -> mono.codexel.ResponseSquash
-	44, // [44:67] is the sub-list for method output_type
-	21, // [21:44] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	62, // 21: mono.codexel.ResponseListBookmarks.bookmarks:type_name -> mono.codexel.Bookmark
+	7,  // 22: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
+	9,  // 23: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
+	11, // 24: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
+	13, // 25: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
+	15, // 26: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
+	17, // 27: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
+	19, // 28: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
+	21, // 29: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
+	29, // 30: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
+	31, // 31: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
+	33, // 32: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
+	35, // 33: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
+	37, // 34: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
+	39, // 35: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
+	44, // 36: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
+	46, // 37: mono.codexel.RevisionService.New:input_type -> mono.codexel.RequestNew
+	48, // 38: mono.codexel.RevisionService.Edit:input_type -> mono.codexel.RequestEdit
+	50, // 39: mono.codexel.RevisionService.Abandon:input_type -> mono.codexel.RequestAbandon
+	52, // 40: mono.codexel.RevisionService.Describe:input_type -> mono.codexel.RequestDescribe
+	54, // 41: mono.codexel.RevisionService.Commit:input_type -> mono.codexel.RequestCommit
+	56, // 42: mono.codexel.RevisionService.Undo:input_type -> mono.codexel.RequestUndo
+	58, // 43: mono.codexel.RevisionService.Rebase:input_type -> mono.codexel.RequestRebase
+	60, // 44: mono.codexel.RevisionService.Squash:input_type -> mono.codexel.RequestSquash
+	63, // 45: mono.codexel.BookmarkService.ListBookmarks:input_type -> mono.codexel.RequestListBookmarks
+	65, // 46: mono.codexel.BookmarkService.SetBookmark:input_type -> mono.codexel.RequestSetBookmark
+	67, // 47: mono.codexel.BookmarkService.MoveBookmark:input_type -> mono.codexel.RequestMoveBookmark
+	69, // 48: mono.codexel.BookmarkService.DeleteBookmark:input_type -> mono.codexel.RequestDeleteBookmark
+	71, // 49: mono.codexel.BookmarkService.ForgetBookmark:input_type -> mono.codexel.RequestForgetBookmark
+	73, // 50: mono.codexel.BookmarkService.TrackBookmark:input_type -> mono.codexel.RequestTrackBookmark
+	75, // 51: mono.codexel.BookmarkService.UntrackBookmark:input_type -> mono.codexel.RequestUntrackBookmark
+	77, // 52: mono.codexel.GitService.Fetch:input_type -> mono.codexel.RequestFetch
+	79, // 53: mono.codexel.GitService.Push:input_type -> mono.codexel.RequestPush
+	8,  // 54: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
+	10, // 55: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
+	12, // 56: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	14, // 57: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	16, // 58: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	18, // 59: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
+	20, // 60: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	22, // 61: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
+	30, // 62: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
+	32, // 63: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
+	34, // 64: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
+	36, // 65: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
+	38, // 66: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
+	40, // 67: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
+	45, // 68: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
+	47, // 69: mono.codexel.RevisionService.New:output_type -> mono.codexel.ResponseNew
+	49, // 70: mono.codexel.RevisionService.Edit:output_type -> mono.codexel.ResponseEdit
+	51, // 71: mono.codexel.RevisionService.Abandon:output_type -> mono.codexel.ResponseAbandon
+	53, // 72: mono.codexel.RevisionService.Describe:output_type -> mono.codexel.ResponseDescribe
+	55, // 73: mono.codexel.RevisionService.Commit:output_type -> mono.codexel.ResponseCommit
+	57, // 74: mono.codexel.RevisionService.Undo:output_type -> mono.codexel.ResponseUndo
+	59, // 75: mono.codexel.RevisionService.Rebase:output_type -> mono.codexel.ResponseRebase
+	61, // 76: mono.codexel.RevisionService.Squash:output_type -> mono.codexel.ResponseSquash
+	64, // 77: mono.codexel.BookmarkService.ListBookmarks:output_type -> mono.codexel.ResponseListBookmarks
+	66, // 78: mono.codexel.BookmarkService.SetBookmark:output_type -> mono.codexel.ResponseSetBookmark
+	68, // 79: mono.codexel.BookmarkService.MoveBookmark:output_type -> mono.codexel.ResponseMoveBookmark
+	70, // 80: mono.codexel.BookmarkService.DeleteBookmark:output_type -> mono.codexel.ResponseDeleteBookmark
+	72, // 81: mono.codexel.BookmarkService.ForgetBookmark:output_type -> mono.codexel.ResponseForgetBookmark
+	74, // 82: mono.codexel.BookmarkService.TrackBookmark:output_type -> mono.codexel.ResponseTrackBookmark
+	76, // 83: mono.codexel.BookmarkService.UntrackBookmark:output_type -> mono.codexel.ResponseUntrackBookmark
+	78, // 84: mono.codexel.GitService.Fetch:output_type -> mono.codexel.ResponseFetch
+	80, // 85: mono.codexel.GitService.Push:output_type -> mono.codexel.ResponsePush
+	54, // [54:86] is the sub-list for method output_type
+	22, // [22:54] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_proto_codexel_codexel_proto_init() }
@@ -6723,9 +8905,9 @@ func file_proto_codexel_codexel_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   57,
+			NumMessages:   76,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   5,
 		},
 		GoTypes:           file_proto_codexel_codexel_proto_goTypes,
 		DependencyIndexes: file_proto_codexel_codexel_proto_depIdxs,

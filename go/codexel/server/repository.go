@@ -331,9 +331,13 @@ func (h *RevisionHandler) Squash(ctx context.Context, req *connect.Request[api.R
 	return connect.NewResponse(api.ResponseSquash_builder{Output: new(out)}.Build()), nil
 }
 
-// mutate runs the operation on the opened repository.
 func (h *RevisionHandler) mutate(path string, fn func(*jujutsu.Repository) (string, error)) (string, error) {
-	repo, err := openedRepository(h.config, path)
+	return mutate(h.config, path, fn)
+}
+
+// mutate runs the operation on the opened repository.
+func mutate(conf *config.File, path string, fn func(*jujutsu.Repository) (string, error)) (string, error) {
+	repo, err := openedRepository(conf, path)
 	if err != nil {
 		return "", err
 	}

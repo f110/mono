@@ -405,3 +405,126 @@ message RequestSquash {
 message ResponseSquash {
   string output = 1;
 }
+
+// BookmarkService manages the bookmarks. The operations return the message of jj in output.
+service BookmarkService {
+  rpc ListBookmarks(RequestListBookmarks) returns (ResponseListBookmarks);
+  // SetBookmark creates the bookmark or moves it to the revision.
+  rpc SetBookmark(RequestSetBookmark) returns (ResponseSetBookmark);
+  // MoveBookmark moves the bookmark to the revision even if it moves backwards or sideways.
+  rpc MoveBookmark(RequestMoveBookmark) returns (ResponseMoveBookmark);
+  // DeleteBookmark deletes the bookmark. The tracked remote bookmarks are deleted on the next push.
+  rpc DeleteBookmark(RequestDeleteBookmark) returns (ResponseDeleteBookmark);
+  // ForgetBookmark forgets the bookmark without deleting the remote bookmarks.
+  rpc ForgetBookmark(RequestForgetBookmark) returns (ResponseForgetBookmark);
+  rpc TrackBookmark(RequestTrackBookmark) returns (ResponseTrackBookmark);
+  rpc UntrackBookmark(RequestUntrackBookmark) returns (ResponseUntrackBookmark);
+}
+
+// GitService runs the operations with the remote repositories. The operations return the message of jj in output.
+service GitService {
+  rpc Fetch(RequestFetch) returns (ResponseFetch);
+  // Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
+  rpc Push(RequestPush) returns (ResponsePush);
+}
+
+message Bookmark {
+  string name = 1;
+  // remote is empty for the local bookmark.
+  string remote   = 2;
+  bool   tracked  = 3;
+  bool   conflict = 4;
+  // synced is true if the local and the tracked remote bookmarks point to the same commit.
+  bool synced = 5;
+  // target is the commit ID which the bookmark points to. It is empty for the conflicted bookmark.
+  string target = 6;
+  // ahead and behind are set to the tracked remote bookmark. ahead is the number of the commits of the remote bookmark
+  // which the local one doesn't have, and behind is the number of the commits of the local one which the remote one
+  // doesn't have.
+  int32  ahead       = 7;
+  int32  behind      = 8;
+  string description = 9;
+}
+
+message RequestListBookmarks {
+  string path = 1;
+}
+
+message ResponseListBookmarks {
+  repeated Bookmark bookmarks = 1;
+}
+
+message RequestSetBookmark {
+  string path     = 1;
+  string name     = 2;
+  string revision = 3;
+}
+
+message ResponseSetBookmark {
+  string output = 1;
+}
+
+message RequestMoveBookmark {
+  string path     = 1;
+  string name     = 2;
+  string revision = 3;
+}
+
+message ResponseMoveBookmark {
+  string output = 1;
+}
+
+message RequestDeleteBookmark {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseDeleteBookmark {
+  string output = 1;
+}
+
+message RequestForgetBookmark {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseForgetBookmark {
+  string output = 1;
+}
+
+message RequestTrackBookmark {
+  string path   = 1;
+  string name   = 2;
+  string remote = 3;
+}
+
+message ResponseTrackBookmark {
+  string output = 1;
+}
+
+message RequestUntrackBookmark {
+  string path   = 1;
+  string name   = 2;
+  string remote = 3;
+}
+
+message ResponseUntrackBookmark {
+  string output = 1;
+}
+
+message RequestFetch {
+  string path = 1;
+}
+
+message ResponseFetch {
+  string output = 1;
+}
+
+message RequestPush {
+  string path     = 1;
+  string bookmark = 2;
+}
+
+message ResponsePush {
+  string output = 1;
+}

@@ -1298,6 +1298,415 @@ export declare type ResponseSquash = Message<"mono.codexel.ResponseSquash"> & {
 export declare const ResponseSquashSchema: GenMessage<ResponseSquash>;
 
 /**
+ * @generated from message mono.codexel.Bookmark
+ */
+export declare type Bookmark = Message<"mono.codexel.Bookmark"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * remote is empty for the local bookmark.
+   *
+   * @generated from field: string remote = 2;
+   */
+  remote: string;
+
+  /**
+   * @generated from field: bool tracked = 3;
+   */
+  tracked: boolean;
+
+  /**
+   * @generated from field: bool conflict = 4;
+   */
+  conflict: boolean;
+
+  /**
+   * synced is true if the local and the tracked remote bookmarks point to the same commit.
+   *
+   * @generated from field: bool synced = 5;
+   */
+  synced: boolean;
+
+  /**
+   * target is the commit ID which the bookmark points to. It is empty for the conflicted bookmark.
+   *
+   * @generated from field: string target = 6;
+   */
+  target: string;
+
+  /**
+   * ahead and behind are set to the tracked remote bookmark. ahead is the number of the commits of the remote bookmark
+   * which the local one doesn't have, and behind is the number of the commits of the local one which the remote one
+   * doesn't have.
+   *
+   * @generated from field: int32 ahead = 7;
+   */
+  ahead: number;
+
+  /**
+   * @generated from field: int32 behind = 8;
+   */
+  behind: number;
+
+  /**
+   * @generated from field: string description = 9;
+   */
+  description: string;
+};
+
+/**
+ * Describes the message mono.codexel.Bookmark.
+ * Use `create(BookmarkSchema)` to create a new message.
+ */
+export declare const BookmarkSchema: GenMessage<Bookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestListBookmarks
+ */
+export declare type RequestListBookmarks = Message<"mono.codexel.RequestListBookmarks"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListBookmarks.
+ * Use `create(RequestListBookmarksSchema)` to create a new message.
+ */
+export declare const RequestListBookmarksSchema: GenMessage<RequestListBookmarks>;
+
+/**
+ * @generated from message mono.codexel.ResponseListBookmarks
+ */
+export declare type ResponseListBookmarks = Message<"mono.codexel.ResponseListBookmarks"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Bookmark bookmarks = 1;
+   */
+  bookmarks: Bookmark[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListBookmarks.
+ * Use `create(ResponseListBookmarksSchema)` to create a new message.
+ */
+export declare const ResponseListBookmarksSchema: GenMessage<ResponseListBookmarks>;
+
+/**
+ * @generated from message mono.codexel.RequestSetBookmark
+ */
+export declare type RequestSetBookmark = Message<"mono.codexel.RequestSetBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string revision = 3;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestSetBookmark.
+ * Use `create(RequestSetBookmarkSchema)` to create a new message.
+ */
+export declare const RequestSetBookmarkSchema: GenMessage<RequestSetBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseSetBookmark
+ */
+export declare type ResponseSetBookmark = Message<"mono.codexel.ResponseSetBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseSetBookmark.
+ * Use `create(ResponseSetBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseSetBookmarkSchema: GenMessage<ResponseSetBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestMoveBookmark
+ */
+export declare type RequestMoveBookmark = Message<"mono.codexel.RequestMoveBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string revision = 3;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestMoveBookmark.
+ * Use `create(RequestMoveBookmarkSchema)` to create a new message.
+ */
+export declare const RequestMoveBookmarkSchema: GenMessage<RequestMoveBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseMoveBookmark
+ */
+export declare type ResponseMoveBookmark = Message<"mono.codexel.ResponseMoveBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseMoveBookmark.
+ * Use `create(ResponseMoveBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseMoveBookmarkSchema: GenMessage<ResponseMoveBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestDeleteBookmark
+ */
+export declare type RequestDeleteBookmark = Message<"mono.codexel.RequestDeleteBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestDeleteBookmark.
+ * Use `create(RequestDeleteBookmarkSchema)` to create a new message.
+ */
+export declare const RequestDeleteBookmarkSchema: GenMessage<RequestDeleteBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseDeleteBookmark
+ */
+export declare type ResponseDeleteBookmark = Message<"mono.codexel.ResponseDeleteBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseDeleteBookmark.
+ * Use `create(ResponseDeleteBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseDeleteBookmarkSchema: GenMessage<ResponseDeleteBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestForgetBookmark
+ */
+export declare type RequestForgetBookmark = Message<"mono.codexel.RequestForgetBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestForgetBookmark.
+ * Use `create(RequestForgetBookmarkSchema)` to create a new message.
+ */
+export declare const RequestForgetBookmarkSchema: GenMessage<RequestForgetBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseForgetBookmark
+ */
+export declare type ResponseForgetBookmark = Message<"mono.codexel.ResponseForgetBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseForgetBookmark.
+ * Use `create(ResponseForgetBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseForgetBookmarkSchema: GenMessage<ResponseForgetBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestTrackBookmark
+ */
+export declare type RequestTrackBookmark = Message<"mono.codexel.RequestTrackBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string remote = 3;
+   */
+  remote: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestTrackBookmark.
+ * Use `create(RequestTrackBookmarkSchema)` to create a new message.
+ */
+export declare const RequestTrackBookmarkSchema: GenMessage<RequestTrackBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseTrackBookmark
+ */
+export declare type ResponseTrackBookmark = Message<"mono.codexel.ResponseTrackBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseTrackBookmark.
+ * Use `create(ResponseTrackBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseTrackBookmarkSchema: GenMessage<ResponseTrackBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestUntrackBookmark
+ */
+export declare type RequestUntrackBookmark = Message<"mono.codexel.RequestUntrackBookmark"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string remote = 3;
+   */
+  remote: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestUntrackBookmark.
+ * Use `create(RequestUntrackBookmarkSchema)` to create a new message.
+ */
+export declare const RequestUntrackBookmarkSchema: GenMessage<RequestUntrackBookmark>;
+
+/**
+ * @generated from message mono.codexel.ResponseUntrackBookmark
+ */
+export declare type ResponseUntrackBookmark = Message<"mono.codexel.ResponseUntrackBookmark"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseUntrackBookmark.
+ * Use `create(ResponseUntrackBookmarkSchema)` to create a new message.
+ */
+export declare const ResponseUntrackBookmarkSchema: GenMessage<ResponseUntrackBookmark>;
+
+/**
+ * @generated from message mono.codexel.RequestFetch
+ */
+export declare type RequestFetch = Message<"mono.codexel.RequestFetch"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestFetch.
+ * Use `create(RequestFetchSchema)` to create a new message.
+ */
+export declare const RequestFetchSchema: GenMessage<RequestFetch>;
+
+/**
+ * @generated from message mono.codexel.ResponseFetch
+ */
+export declare type ResponseFetch = Message<"mono.codexel.ResponseFetch"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseFetch.
+ * Use `create(ResponseFetchSchema)` to create a new message.
+ */
+export declare const ResponseFetchSchema: GenMessage<ResponseFetch>;
+
+/**
+ * @generated from message mono.codexel.RequestPush
+ */
+export declare type RequestPush = Message<"mono.codexel.RequestPush"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string bookmark = 2;
+   */
+  bookmark: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestPush.
+ * Use `create(RequestPushSchema)` to create a new message.
+ */
+export declare const RequestPushSchema: GenMessage<RequestPush>;
+
+/**
+ * @generated from message mono.codexel.ResponsePush
+ */
+export declare type ResponsePush = Message<"mono.codexel.ResponsePush"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponsePush.
+ * Use `create(ResponsePushSchema)` to create a new message.
+ */
+export declare const ResponsePushSchema: GenMessage<ResponsePush>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -1706,6 +2115,104 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestSquashSchema;
     output: typeof ResponseSquashSchema;
+  },
+}>;
+
+/**
+ * BookmarkService manages the bookmarks. The operations return the message of jj in output.
+ *
+ * @generated from service mono.codexel.BookmarkService
+ */
+export declare const BookmarkService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.BookmarkService.ListBookmarks
+   */
+  listBookmarks: {
+    methodKind: "unary";
+    input: typeof RequestListBookmarksSchema;
+    output: typeof ResponseListBookmarksSchema;
+  },
+  /**
+   * SetBookmark creates the bookmark or moves it to the revision.
+   *
+   * @generated from rpc mono.codexel.BookmarkService.SetBookmark
+   */
+  setBookmark: {
+    methodKind: "unary";
+    input: typeof RequestSetBookmarkSchema;
+    output: typeof ResponseSetBookmarkSchema;
+  },
+  /**
+   * MoveBookmark moves the bookmark to the revision even if it moves backwards or sideways.
+   *
+   * @generated from rpc mono.codexel.BookmarkService.MoveBookmark
+   */
+  moveBookmark: {
+    methodKind: "unary";
+    input: typeof RequestMoveBookmarkSchema;
+    output: typeof ResponseMoveBookmarkSchema;
+  },
+  /**
+   * DeleteBookmark deletes the bookmark. The tracked remote bookmarks are deleted on the next push.
+   *
+   * @generated from rpc mono.codexel.BookmarkService.DeleteBookmark
+   */
+  deleteBookmark: {
+    methodKind: "unary";
+    input: typeof RequestDeleteBookmarkSchema;
+    output: typeof ResponseDeleteBookmarkSchema;
+  },
+  /**
+   * ForgetBookmark forgets the bookmark without deleting the remote bookmarks.
+   *
+   * @generated from rpc mono.codexel.BookmarkService.ForgetBookmark
+   */
+  forgetBookmark: {
+    methodKind: "unary";
+    input: typeof RequestForgetBookmarkSchema;
+    output: typeof ResponseForgetBookmarkSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.BookmarkService.TrackBookmark
+   */
+  trackBookmark: {
+    methodKind: "unary";
+    input: typeof RequestTrackBookmarkSchema;
+    output: typeof ResponseTrackBookmarkSchema;
+  },
+  /**
+   * @generated from rpc mono.codexel.BookmarkService.UntrackBookmark
+   */
+  untrackBookmark: {
+    methodKind: "unary";
+    input: typeof RequestUntrackBookmarkSchema;
+    output: typeof ResponseUntrackBookmarkSchema;
+  },
+}>;
+
+/**
+ * GitService runs the operations with the remote repositories. The operations return the message of jj in output.
+ *
+ * @generated from service mono.codexel.GitService
+ */
+export declare const GitService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.GitService.Fetch
+   */
+  fetch: {
+    methodKind: "unary";
+    input: typeof RequestFetchSchema;
+    output: typeof ResponseFetchSchema;
+  },
+  /**
+   * Push pushes the bookmark. The bookmarks of revsets.git-push are pushed if bookmark is empty.
+   *
+   * @generated from rpc mono.codexel.GitService.Push
+   */
+  push: {
+    methodKind: "unary";
+    input: typeof RequestPushSchema;
+    output: typeof ResponsePushSchema;
   },
 }>;
 

@@ -15,10 +15,12 @@ import {
   Stack,
   TextField,
 } from '@mui/material'
-import { RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { BookmarkService, GitService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
 import { useOperation } from '../hooks/useOperation.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
+import { BookmarkDialog } from './BookmarkDialog.tsx'
+import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
@@ -34,6 +36,8 @@ const isEditing = (e: KeyboardEvent) => {
 const revisionKey = (c: Commit) => (c.divergent || c.hidden ? c.commitId : c.changeId)
 
 const client = createClient(RevisionService, transport)
+const bookmarkClient = createClient(BookmarkService, transport)
+const gitClient = createClient(GitService, transport)
 
 type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
@@ -82,10 +86,16 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
   const [mode, setMode] = useState<Mode>()
+  const [view, setView] = useState<'log' | 'bookmarks'>('log')
+  const [bookmarkSelected, setBookmarkSelected] = useState(0)
+  const [settingBookmark, setSettingBookmark] = useState<Commit>()
+  const [pushing, setPushing] = useState(false)
   const [menu, setMenu] = useState<{ x: number; y: number; commit: Commit }>()
   const revsetRef = useRef<HTMLInputElement>(null)
   const operation = useOperation(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
+  const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
+  const bookmarks = bookmarkData?.bookmarks ?? []
   const rows = data?.rows ?? []
   const commits = rows.map((r) => r.commit!)
   const foundIndex = commits.findIndex((c) => revisionKey(c) === selectedKey)
@@ -105,8 +115,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
   useEffect(() => {
     if (operation) {
       refetch()
+      refetchBookmarks()
     }
-  }, [operation, refetch])
+  }, [operation, refetch, refetchBookmarks])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -198,7 +209,43 @@ export const RepositoryView = ({ path }: { path: string }) => {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning) {
+      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning || settingBookmark || pushing) {
+        return
+      }
+      if (view === 'bookmarks') {
+        const b = bookmarks[bookmarkSelected]
+        switch (e.key) {
+          case 'j':
+            setBookmarkSelected((i) => Math.min(i + 1, bookmarks.length - 1))
+            break
+          case 'k':
+            setBookmarkSelected((i) => Math.max(i - 1, 0))
+            break
+          case '1':
+            setView('log')
+            break
+          case 'd':
+            if (b && b.remote === '') {
+              run(() => bookmarkClient.deleteBookmark({ path, name: b.name }), false)
+            }
+            break
+          case 'f':
+            if (b && b.remote === '') {
+              run(() => bookmarkClient.forgetBookmark({ path, name: b.name }), false)
+            }
+            break
+          case 't':
+            if (b && b.remote !== '') {
+              run(() => (b.tracked ? bookmarkClient.untrackBookmark : bookmarkClient.trackBookmark)({ path, name: b.name, remote: b.remote }), false)
+            }
+            break
+          case 'u':
+            undo()
+            break
+          default:
+            return
+        }
+        e.preventDefault()
         return
       }
       if (mode) {
@@ -231,6 +278,20 @@ export const RepositoryView = ({ path }: { path: string }) => {
         return
       }
       switch (e.key) {
+        case '2':
+          setView('bookmarks')
+          break
+        case 'B':
+          if (selectedCommit && checked.size === 0) {
+            setSettingBookmark(selectedCommit)
+          }
+          break
+        case 'f':
+          run(() => gitClient.fetch({ path }), false)
+          break
+        case 'p':
+          setPushing(true)
+          break
         case 'R':
           if (targets().length > 0) {
             setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO })
@@ -297,7 +358,31 @@ export const RepositoryView = ({ path }: { path: string }) => {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [commits, selected, selectedCommit, checked, editing, abandoning, mode, selectIndex, refetch, newRevision, targets, startDescribe, startCommit, undo, slide, executeMode])
+  }, [
+    view,
+    bookmarks,
+    bookmarkSelected,
+    settingBookmark,
+    pushing,
+    path,
+    run,
+    commits,
+    selected,
+    selectedCommit,
+    checked,
+    editing,
+    abandoning,
+    mode,
+    selectIndex,
+    refetch,
+    newRevision,
+    targets,
+    startDescribe,
+    startCommit,
+    undo,
+    slide,
+    executeMode,
+  ])
 
   return (
     <Stack sx={{ height: '100%' }}>
@@ -334,6 +419,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
       )}
       <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
         <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+          {view === 'bookmarks' ? (
+            <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />
+          ) : (
           <RevisionGraph
             rows={rows}
             selected={selected}
@@ -345,6 +433,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
               setMenu({ x, y, commit: commits[i] })
             }}
           />
+          )}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
           {selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />}
@@ -399,6 +488,47 @@ export const RepositoryView = ({ path }: { path: string }) => {
             }}
           >
             Abandon
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {settingBookmark && (
+        <BookmarkDialog
+          title={`Set the bookmark on ${settingBookmark.changeId.slice(0, 8)}`}
+          names={bookmarks.filter((b) => b.remote === '').map((b) => b.name)}
+          onClose={() => setSettingBookmark(undefined)}
+          onSubmit={(name) => {
+            const c = settingBookmark
+            setSettingBookmark(undefined)
+            const exists = bookmarks.some((b) => b.remote === '' && b.name === name)
+            run(() => (exists ? bookmarkClient.moveBookmark : bookmarkClient.setBookmark)({ path, name, revision: c.commitId }), false)
+          }}
+        />
+      )}
+
+      <Dialog open={pushing} onClose={() => setPushing(false)}>
+        <DialogTitle>Push to the remote?</DialogTitle>
+        <DialogContent>
+          The bookmarks of revsets.git-push are pushed.
+          {bookmarks
+            .filter((b) => b.remote !== '' && b.tracked && !b.synced)
+            .map((b) => (
+              <Box key={bookmarkLabel(b)} sx={{ fontFamily: 'monospace', fontSize: 13 }}>
+                {bookmarkLabel(b)}: {b.behind} to push, {b.ahead} new on remote
+              </Box>
+            ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPushing(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              setPushing(false)
+              run(() => gitClient.push({ path }), false)
+            }}
+          >
+            Push
           </Button>
         </DialogActions>
       </Dialog>

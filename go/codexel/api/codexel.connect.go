@@ -26,6 +26,10 @@ const (
 	RepositoryServiceName = "mono.codexel.RepositoryService"
 	// RevisionServiceName is the fully-qualified name of the RevisionService service.
 	RevisionServiceName = "mono.codexel.RevisionService"
+	// BookmarkServiceName is the fully-qualified name of the BookmarkService service.
+	BookmarkServiceName = "mono.codexel.BookmarkService"
+	// GitServiceName is the fully-qualified name of the GitService service.
+	GitServiceName = "mono.codexel.GitService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -91,6 +95,31 @@ const (
 	RevisionServiceRebaseProcedure = "/mono.codexel.RevisionService/Rebase"
 	// RevisionServiceSquashProcedure is the fully-qualified name of the RevisionService's Squash RPC.
 	RevisionServiceSquashProcedure = "/mono.codexel.RevisionService/Squash"
+	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
+	// ListBookmarks RPC.
+	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
+	// BookmarkServiceSetBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// SetBookmark RPC.
+	BookmarkServiceSetBookmarkProcedure = "/mono.codexel.BookmarkService/SetBookmark"
+	// BookmarkServiceMoveBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// MoveBookmark RPC.
+	BookmarkServiceMoveBookmarkProcedure = "/mono.codexel.BookmarkService/MoveBookmark"
+	// BookmarkServiceDeleteBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// DeleteBookmark RPC.
+	BookmarkServiceDeleteBookmarkProcedure = "/mono.codexel.BookmarkService/DeleteBookmark"
+	// BookmarkServiceForgetBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// ForgetBookmark RPC.
+	BookmarkServiceForgetBookmarkProcedure = "/mono.codexel.BookmarkService/ForgetBookmark"
+	// BookmarkServiceTrackBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// TrackBookmark RPC.
+	BookmarkServiceTrackBookmarkProcedure = "/mono.codexel.BookmarkService/TrackBookmark"
+	// BookmarkServiceUntrackBookmarkProcedure is the fully-qualified name of the BookmarkService's
+	// UntrackBookmark RPC.
+	BookmarkServiceUntrackBookmarkProcedure = "/mono.codexel.BookmarkService/UntrackBookmark"
+	// GitServiceFetchProcedure is the fully-qualified name of the GitService's Fetch RPC.
+	GitServiceFetchProcedure = "/mono.codexel.GitService/Fetch"
+	// GitServicePushProcedure is the fully-qualified name of the GitService's Push RPC.
+	GitServicePushProcedure = "/mono.codexel.GitService/Push"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -821,4 +850,326 @@ func (UnimplementedRevisionServiceHandler) Rebase(context.Context, *connect.Requ
 
 func (UnimplementedRevisionServiceHandler) Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Squash is not implemented"))
+}
+
+// BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.
+type BookmarkServiceClient interface {
+	ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error)
+	SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error)
+	MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error)
+	DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error)
+	ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error)
+	TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error)
+	UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error)
+}
+
+// NewBookmarkServiceClient constructs a client for the mono.codexel.BookmarkService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewBookmarkServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) BookmarkServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	bookmarkServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("BookmarkService").Methods()
+	return &bookmarkServiceClient{
+		listBookmarks: connect.NewClient[RequestListBookmarks, ResponseListBookmarks](
+			httpClient,
+			baseURL+BookmarkServiceListBookmarksProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("ListBookmarks")),
+			connect.WithClientOptions(opts...),
+		),
+		setBookmark: connect.NewClient[RequestSetBookmark, ResponseSetBookmark](
+			httpClient,
+			baseURL+BookmarkServiceSetBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("SetBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		moveBookmark: connect.NewClient[RequestMoveBookmark, ResponseMoveBookmark](
+			httpClient,
+			baseURL+BookmarkServiceMoveBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("MoveBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteBookmark: connect.NewClient[RequestDeleteBookmark, ResponseDeleteBookmark](
+			httpClient,
+			baseURL+BookmarkServiceDeleteBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("DeleteBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		forgetBookmark: connect.NewClient[RequestForgetBookmark, ResponseForgetBookmark](
+			httpClient,
+			baseURL+BookmarkServiceForgetBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("ForgetBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		trackBookmark: connect.NewClient[RequestTrackBookmark, ResponseTrackBookmark](
+			httpClient,
+			baseURL+BookmarkServiceTrackBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("TrackBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+		untrackBookmark: connect.NewClient[RequestUntrackBookmark, ResponseUntrackBookmark](
+			httpClient,
+			baseURL+BookmarkServiceUntrackBookmarkProcedure,
+			connect.WithSchema(bookmarkServiceMethods.ByName("UntrackBookmark")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// bookmarkServiceClient implements BookmarkServiceClient.
+type bookmarkServiceClient struct {
+	listBookmarks   *connect.Client[RequestListBookmarks, ResponseListBookmarks]
+	setBookmark     *connect.Client[RequestSetBookmark, ResponseSetBookmark]
+	moveBookmark    *connect.Client[RequestMoveBookmark, ResponseMoveBookmark]
+	deleteBookmark  *connect.Client[RequestDeleteBookmark, ResponseDeleteBookmark]
+	forgetBookmark  *connect.Client[RequestForgetBookmark, ResponseForgetBookmark]
+	trackBookmark   *connect.Client[RequestTrackBookmark, ResponseTrackBookmark]
+	untrackBookmark *connect.Client[RequestUntrackBookmark, ResponseUntrackBookmark]
+}
+
+// ListBookmarks calls mono.codexel.BookmarkService.ListBookmarks.
+func (c *bookmarkServiceClient) ListBookmarks(ctx context.Context, req *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
+	return c.listBookmarks.CallUnary(ctx, req)
+}
+
+// SetBookmark calls mono.codexel.BookmarkService.SetBookmark.
+func (c *bookmarkServiceClient) SetBookmark(ctx context.Context, req *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
+	return c.setBookmark.CallUnary(ctx, req)
+}
+
+// MoveBookmark calls mono.codexel.BookmarkService.MoveBookmark.
+func (c *bookmarkServiceClient) MoveBookmark(ctx context.Context, req *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
+	return c.moveBookmark.CallUnary(ctx, req)
+}
+
+// DeleteBookmark calls mono.codexel.BookmarkService.DeleteBookmark.
+func (c *bookmarkServiceClient) DeleteBookmark(ctx context.Context, req *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
+	return c.deleteBookmark.CallUnary(ctx, req)
+}
+
+// ForgetBookmark calls mono.codexel.BookmarkService.ForgetBookmark.
+func (c *bookmarkServiceClient) ForgetBookmark(ctx context.Context, req *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
+	return c.forgetBookmark.CallUnary(ctx, req)
+}
+
+// TrackBookmark calls mono.codexel.BookmarkService.TrackBookmark.
+func (c *bookmarkServiceClient) TrackBookmark(ctx context.Context, req *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
+	return c.trackBookmark.CallUnary(ctx, req)
+}
+
+// UntrackBookmark calls mono.codexel.BookmarkService.UntrackBookmark.
+func (c *bookmarkServiceClient) UntrackBookmark(ctx context.Context, req *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
+	return c.untrackBookmark.CallUnary(ctx, req)
+}
+
+// BookmarkServiceHandler is an implementation of the mono.codexel.BookmarkService service.
+type BookmarkServiceHandler interface {
+	ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error)
+	SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error)
+	MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error)
+	DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error)
+	ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error)
+	TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error)
+	UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error)
+}
+
+// NewBookmarkServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewBookmarkServiceHandler(svc BookmarkServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	bookmarkServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("BookmarkService").Methods()
+	bookmarkServiceListBookmarksHandler := connect.NewUnaryHandler(
+		BookmarkServiceListBookmarksProcedure,
+		svc.ListBookmarks,
+		connect.WithSchema(bookmarkServiceMethods.ByName("ListBookmarks")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceSetBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceSetBookmarkProcedure,
+		svc.SetBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("SetBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceMoveBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceMoveBookmarkProcedure,
+		svc.MoveBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("MoveBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceDeleteBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceDeleteBookmarkProcedure,
+		svc.DeleteBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("DeleteBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceForgetBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceForgetBookmarkProcedure,
+		svc.ForgetBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("ForgetBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceTrackBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceTrackBookmarkProcedure,
+		svc.TrackBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("TrackBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	bookmarkServiceUntrackBookmarkHandler := connect.NewUnaryHandler(
+		BookmarkServiceUntrackBookmarkProcedure,
+		svc.UntrackBookmark,
+		connect.WithSchema(bookmarkServiceMethods.ByName("UntrackBookmark")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.BookmarkService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case BookmarkServiceListBookmarksProcedure:
+			bookmarkServiceListBookmarksHandler.ServeHTTP(w, r)
+		case BookmarkServiceSetBookmarkProcedure:
+			bookmarkServiceSetBookmarkHandler.ServeHTTP(w, r)
+		case BookmarkServiceMoveBookmarkProcedure:
+			bookmarkServiceMoveBookmarkHandler.ServeHTTP(w, r)
+		case BookmarkServiceDeleteBookmarkProcedure:
+			bookmarkServiceDeleteBookmarkHandler.ServeHTTP(w, r)
+		case BookmarkServiceForgetBookmarkProcedure:
+			bookmarkServiceForgetBookmarkHandler.ServeHTTP(w, r)
+		case BookmarkServiceTrackBookmarkProcedure:
+			bookmarkServiceTrackBookmarkHandler.ServeHTTP(w, r)
+		case BookmarkServiceUntrackBookmarkProcedure:
+			bookmarkServiceUntrackBookmarkHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedBookmarkServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedBookmarkServiceHandler struct{}
+
+func (UnimplementedBookmarkServiceHandler) ListBookmarks(context.Context, *connect.Request[RequestListBookmarks]) (*connect.Response[ResponseListBookmarks], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.ListBookmarks is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) SetBookmark(context.Context, *connect.Request[RequestSetBookmark]) (*connect.Response[ResponseSetBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.SetBookmark is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) MoveBookmark(context.Context, *connect.Request[RequestMoveBookmark]) (*connect.Response[ResponseMoveBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.MoveBookmark is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) DeleteBookmark(context.Context, *connect.Request[RequestDeleteBookmark]) (*connect.Response[ResponseDeleteBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.DeleteBookmark is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) ForgetBookmark(context.Context, *connect.Request[RequestForgetBookmark]) (*connect.Response[ResponseForgetBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.ForgetBookmark is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) TrackBookmark(context.Context, *connect.Request[RequestTrackBookmark]) (*connect.Response[ResponseTrackBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.TrackBookmark is not implemented"))
+}
+
+func (UnimplementedBookmarkServiceHandler) UntrackBookmark(context.Context, *connect.Request[RequestUntrackBookmark]) (*connect.Response[ResponseUntrackBookmark], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.BookmarkService.UntrackBookmark is not implemented"))
+}
+
+// GitServiceClient is a client for the mono.codexel.GitService service.
+type GitServiceClient interface {
+	Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error)
+	Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error)
+}
+
+// NewGitServiceClient constructs a client for the mono.codexel.GitService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewGitServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GitServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	gitServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("GitService").Methods()
+	return &gitServiceClient{
+		fetch: connect.NewClient[RequestFetch, ResponseFetch](
+			httpClient,
+			baseURL+GitServiceFetchProcedure,
+			connect.WithSchema(gitServiceMethods.ByName("Fetch")),
+			connect.WithClientOptions(opts...),
+		),
+		push: connect.NewClient[RequestPush, ResponsePush](
+			httpClient,
+			baseURL+GitServicePushProcedure,
+			connect.WithSchema(gitServiceMethods.ByName("Push")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// gitServiceClient implements GitServiceClient.
+type gitServiceClient struct {
+	fetch *connect.Client[RequestFetch, ResponseFetch]
+	push  *connect.Client[RequestPush, ResponsePush]
+}
+
+// Fetch calls mono.codexel.GitService.Fetch.
+func (c *gitServiceClient) Fetch(ctx context.Context, req *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
+	return c.fetch.CallUnary(ctx, req)
+}
+
+// Push calls mono.codexel.GitService.Push.
+func (c *gitServiceClient) Push(ctx context.Context, req *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
+	return c.push.CallUnary(ctx, req)
+}
+
+// GitServiceHandler is an implementation of the mono.codexel.GitService service.
+type GitServiceHandler interface {
+	Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error)
+	Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error)
+}
+
+// NewGitServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewGitServiceHandler(svc GitServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	gitServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("GitService").Methods()
+	gitServiceFetchHandler := connect.NewUnaryHandler(
+		GitServiceFetchProcedure,
+		svc.Fetch,
+		connect.WithSchema(gitServiceMethods.ByName("Fetch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	gitServicePushHandler := connect.NewUnaryHandler(
+		GitServicePushProcedure,
+		svc.Push,
+		connect.WithSchema(gitServiceMethods.ByName("Push")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.GitService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case GitServiceFetchProcedure:
+			gitServiceFetchHandler.ServeHTTP(w, r)
+		case GitServicePushProcedure:
+			gitServicePushHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedGitServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedGitServiceHandler struct{}
+
+func (UnimplementedGitServiceHandler) Fetch(context.Context, *connect.Request[RequestFetch]) (*connect.Response[ResponseFetch], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.GitService.Fetch is not implemented"))
+}
+
+func (UnimplementedGitServiceHandler) Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.GitService.Push is not implemented"))
 }

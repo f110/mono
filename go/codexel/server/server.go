@@ -27,6 +27,8 @@ func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS) http.Hand
 	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient)))
 	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf, herdrClient)))
 	mux.Handle(api.NewRevisionServiceHandler(NewRevisionHandler(conf)))
+	mux.Handle(api.NewBookmarkServiceHandler(NewBookmarkHandler(conf)))
+	mux.Handle(api.NewGitServiceHandler(NewGitHandler(conf)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }
