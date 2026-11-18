@@ -11,6 +11,9 @@ export const Layout = () => (
         <Button color="inherit" component={Link} to="/agents">
           Agents
         </Button>
+        <Button color="inherit" component={Link} to="/repositories">
+          Repositories
+        </Button>
       </Toolbar>
     </AppBar>
     <Box component="main" sx={{ flex: 1, minHeight: 0 }}>
