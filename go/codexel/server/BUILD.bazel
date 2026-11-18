@@ -4,6 +4,7 @@ go_library(
     name = "server",
     srcs = [
         "bookmark.go",
+        "operation.go",
         "repository.go",
         "server.go",
     ],

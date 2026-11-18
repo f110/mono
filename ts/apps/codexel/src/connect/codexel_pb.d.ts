@@ -1707,6 +1707,234 @@ export declare type ResponsePush = Message<"mono.codexel.ResponsePush"> & {
 export declare const ResponsePushSchema: GenMessage<ResponsePush>;
 
 /**
+ * @generated from message mono.codexel.Operation
+ */
+export declare type Operation = Message<"mono.codexel.Operation"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: string user = 3;
+   */
+  user: string;
+
+  /**
+   * time is the unix time when the operation started.
+   *
+   * @generated from field: int64 time = 4;
+   */
+  time: bigint;
+
+  /**
+   * @generated from field: bool current = 5;
+   */
+  current: boolean;
+};
+
+/**
+ * Describes the message mono.codexel.Operation.
+ * Use `create(OperationSchema)` to create a new message.
+ */
+export declare const OperationSchema: GenMessage<Operation>;
+
+/**
+ * @generated from message mono.codexel.RequestListOperations
+ */
+export declare type RequestListOperations = Message<"mono.codexel.RequestListOperations"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * limit is the maximum number of the operations. 0 means no limit.
+   *
+   * @generated from field: int32 limit = 2;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListOperations.
+ * Use `create(RequestListOperationsSchema)` to create a new message.
+ */
+export declare const RequestListOperationsSchema: GenMessage<RequestListOperations>;
+
+/**
+ * @generated from message mono.codexel.ResponseListOperations
+ */
+export declare type ResponseListOperations = Message<"mono.codexel.ResponseListOperations"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Operation operations = 1;
+   */
+  operations: Operation[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListOperations.
+ * Use `create(ResponseListOperationsSchema)` to create a new message.
+ */
+export declare const ResponseListOperationsSchema: GenMessage<ResponseListOperations>;
+
+/**
+ * @generated from message mono.codexel.RequestRevertOperation
+ */
+export declare type RequestRevertOperation = Message<"mono.codexel.RequestRevertOperation"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRevertOperation.
+ * Use `create(RequestRevertOperationSchema)` to create a new message.
+ */
+export declare const RequestRevertOperationSchema: GenMessage<RequestRevertOperation>;
+
+/**
+ * @generated from message mono.codexel.ResponseRevertOperation
+ */
+export declare type ResponseRevertOperation = Message<"mono.codexel.ResponseRevertOperation"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRevertOperation.
+ * Use `create(ResponseRevertOperationSchema)` to create a new message.
+ */
+export declare const ResponseRevertOperationSchema: GenMessage<ResponseRevertOperation>;
+
+/**
+ * @generated from message mono.codexel.RequestRestoreOperation
+ */
+export declare type RequestRestoreOperation = Message<"mono.codexel.RequestRestoreOperation"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRestoreOperation.
+ * Use `create(RequestRestoreOperationSchema)` to create a new message.
+ */
+export declare const RequestRestoreOperationSchema: GenMessage<RequestRestoreOperation>;
+
+/**
+ * @generated from message mono.codexel.ResponseRestoreOperation
+ */
+export declare type ResponseRestoreOperation = Message<"mono.codexel.ResponseRestoreOperation"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRestoreOperation.
+ * Use `create(ResponseRestoreOperationSchema)` to create a new message.
+ */
+export declare const ResponseRestoreOperationSchema: GenMessage<ResponseRestoreOperation>;
+
+/**
+ * @generated from message mono.codexel.EvologEntry
+ */
+export declare type EvologEntry = Message<"mono.codexel.EvologEntry"> & {
+  /**
+   * @generated from field: string commit_id = 1;
+   */
+  commitId: string;
+
+  /**
+   * timestamp is the unix time of the committer.
+   *
+   * @generated from field: int64 timestamp = 2;
+   */
+  timestamp: bigint;
+
+  /**
+   * @generated from field: string operation = 3;
+   */
+  operation: string;
+
+  /**
+   * @generated from field: repeated string predecessors = 4;
+   */
+  predecessors: string[];
+
+  /**
+   * files is the changes which the version adds relative to its parents.
+   *
+   * @generated from field: repeated mono.codexel.FileDiff files = 5;
+   */
+  files: FileDiff[];
+};
+
+/**
+ * Describes the message mono.codexel.EvologEntry.
+ * Use `create(EvologEntrySchema)` to create a new message.
+ */
+export declare const EvologEntrySchema: GenMessage<EvologEntry>;
+
+/**
+ * @generated from message mono.codexel.RequestEvolog
+ */
+export declare type RequestEvolog = Message<"mono.codexel.RequestEvolog"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestEvolog.
+ * Use `create(RequestEvologSchema)` to create a new message.
+ */
+export declare const RequestEvologSchema: GenMessage<RequestEvolog>;
+
+/**
+ * @generated from message mono.codexel.ResponseEvolog
+ */
+export declare type ResponseEvolog = Message<"mono.codexel.ResponseEvolog"> & {
+  /**
+   * @generated from field: repeated mono.codexel.EvologEntry entries = 1;
+   */
+  entries: EvologEntry[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseEvolog.
+ * Use `create(ResponseEvologSchema)` to create a new message.
+ */
+export declare const ResponseEvologSchema: GenMessage<ResponseEvolog>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -2116,6 +2344,16 @@ export declare const RevisionService: GenService<{
     input: typeof RequestSquashSchema;
     output: typeof ResponseSquashSchema;
   },
+  /**
+   * Evolog returns the versions of the revision from the newest.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Evolog
+   */
+  evolog: {
+    methodKind: "unary";
+    input: typeof RequestEvologSchema;
+    output: typeof ResponseEvologSchema;
+  },
 }>;
 
 /**
@@ -2213,6 +2451,44 @@ export declare const GitService: GenService<{
     methodKind: "unary";
     input: typeof RequestPushSchema;
     output: typeof ResponsePushSchema;
+  },
+}>;
+
+/**
+ * OperationService provides the operation log. The operations return the message of jj in output.
+ *
+ * @generated from service mono.codexel.OperationService
+ */
+export declare const OperationService: GenService<{
+  /**
+   * ListOperations returns the operations from the newest.
+   *
+   * @generated from rpc mono.codexel.OperationService.ListOperations
+   */
+  listOperations: {
+    methodKind: "unary";
+    input: typeof RequestListOperationsSchema;
+    output: typeof ResponseListOperationsSchema;
+  },
+  /**
+   * RevertOperation creates the operation which reverts the operation.
+   *
+   * @generated from rpc mono.codexel.OperationService.RevertOperation
+   */
+  revertOperation: {
+    methodKind: "unary";
+    input: typeof RequestRevertOperationSchema;
+    output: typeof ResponseRevertOperationSchema;
+  },
+  /**
+   * RestoreOperation restores the repository to the state at the operation.
+   *
+   * @generated from rpc mono.codexel.OperationService.RestoreOperation
+   */
+  restoreOperation: {
+    methodKind: "unary";
+    input: typeof RequestRestoreOperationSchema;
+    output: typeof ResponseRestoreOperationSchema;
   },
 }>;
 

@@ -148,6 +148,8 @@ service RevisionService {
   rpc Rebase(RequestRebase) returns (ResponseRebase);
   // Squash moves the changes of the revisions into the destination.
   rpc Squash(RequestSquash) returns (ResponseSquash);
+  // Evolog returns the versions of the revision from the newest.
+  rpc Evolog(RequestEvolog) returns (ResponseEvolog);
 }
 
 message Repository {
@@ -527,4 +529,70 @@ message RequestPush {
 
 message ResponsePush {
   string output = 1;
+}
+
+// OperationService provides the operation log. The operations return the message of jj in output.
+service OperationService {
+  // ListOperations returns the operations from the newest.
+  rpc ListOperations(RequestListOperations) returns (ResponseListOperations);
+  // RevertOperation creates the operation which reverts the operation.
+  rpc RevertOperation(RequestRevertOperation) returns (ResponseRevertOperation);
+  // RestoreOperation restores the repository to the state at the operation.
+  rpc RestoreOperation(RequestRestoreOperation) returns (ResponseRestoreOperation);
+}
+
+message Operation {
+  string id          = 1;
+  string description = 2;
+  string user        = 3;
+  // time is the unix time when the operation started.
+  int64 time    = 4;
+  bool  current = 5;
+}
+
+message RequestListOperations {
+  string path = 1;
+  // limit is the maximum number of the operations. 0 means no limit.
+  int32 limit = 2;
+}
+
+message ResponseListOperations {
+  repeated Operation operations = 1;
+}
+
+message RequestRevertOperation {
+  string path = 1;
+  string id   = 2;
+}
+
+message ResponseRevertOperation {
+  string output = 1;
+}
+
+message RequestRestoreOperation {
+  string path = 1;
+  string id   = 2;
+}
+
+message ResponseRestoreOperation {
+  string output = 1;
+}
+
+message EvologEntry {
+  string commit_id = 1;
+  // timestamp is the unix time of the committer.
+  int64           timestamp    = 2;
+  string          operation    = 3;
+  repeated string predecessors = 4;
+  // files is the changes which the version adds relative to its parents.
+  repeated FileDiff files = 5;
+}
+
+message RequestEvolog {
+  string path     = 1;
+  string revision = 2;
+}
+
+message ResponseEvolog {
+  repeated EvologEntry entries = 1;
 }

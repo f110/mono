@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "bookmark.go",
         "diff.go",
+        "history.go",
         "jujutsu.go",
         "operation.go",
     ],
@@ -18,6 +19,7 @@ go_test(
     srcs = [
         "bookmark_test.go",
         "diff_test.go",
+        "history_test.go",
         "jujutsu_test.go",
         "operation_test.go",
     ],

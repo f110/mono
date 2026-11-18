@@ -15,13 +15,15 @@ import {
   Stack,
   TextField,
 } from '@mui/material'
-import { BookmarkService, GitService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { BookmarkService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
 import { useOperation } from '../hooks/useOperation.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
 import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
+import { FileDiffView } from './FileDiffView.tsx'
+import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 
@@ -38,6 +40,10 @@ const revisionKey = (c: Commit) => (c.divergent || c.hidden ? c.commitId : c.cha
 const client = createClient(RevisionService, transport)
 const bookmarkClient = createClient(BookmarkService, transport)
 const gitClient = createClient(GitService, transport)
+const operationClient = createClient(OperationService, transport)
+
+// operationLimit is the number of the operations shown in the operation log.
+const operationLimit = 200
 
 type Editing = { kind: 'describe'; commit: Commit; initial: string } | { kind: 'commit'; initial: string }
 
@@ -86,16 +92,29 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
   const [mode, setMode] = useState<Mode>()
-  const [view, setView] = useState<'log' | 'bookmarks'>('log')
+  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog'>('log')
   const [bookmarkSelected, setBookmarkSelected] = useState(0)
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
   const [menu, setMenu] = useState<{ x: number; y: number; commit: Commit }>()
+  const [opSelected, setOpSelected] = useState(0)
+  const [opMenu, setOpMenu] = useState<{ x: number; y: number; id: string }>()
+  const [restoring, setRestoring] = useState<string>()
+  const [evologTarget, setEvologTarget] = useState<Commit>()
+  const [evologSelected, setEvologSelected] = useState(0)
   const revsetRef = useRef<HTMLInputElement>(null)
   const operation = useOperation(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
   const bookmarks = bookmarkData?.bookmarks ?? []
+  const { data: opData, refetch: refetchOperations } = useQuery(OperationService.method.listOperations, { path, limit: operationLimit }, { enabled: view === 'oplog' })
+  const operations = opData?.operations ?? []
+  const { data: evologData } = useQuery(
+    RevisionService.method.evolog,
+    { path, revision: evologTarget?.commitId ?? '' },
+    { enabled: view === 'evolog' && evologTarget !== undefined },
+  )
+  const evolog = evologData?.entries ?? []
   const rows = data?.rows ?? []
   const commits = rows.map((r) => r.commit!)
   const foundIndex = commits.findIndex((c) => revisionKey(c) === selectedKey)
@@ -116,8 +135,11 @@ export const RepositoryView = ({ path }: { path: string }) => {
     if (operation) {
       refetch()
       refetchBookmarks()
+      if (view === 'oplog') {
+        refetchOperations()
+      }
     }
-  }, [operation, refetch, refetchBookmarks])
+  }, [operation, view, refetch, refetchBookmarks, refetchOperations])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -209,7 +231,27 @@ export const RepositoryView = ({ path }: { path: string }) => {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning || settingBookmark || pushing) {
+      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning || settingBookmark || pushing || restoring) {
+        return
+      }
+      if (view === 'oplog' || view === 'evolog') {
+        const length = view === 'oplog' ? operations.length : evolog.length
+        const setIndex = view === 'oplog' ? setOpSelected : setEvologSelected
+        switch (e.key) {
+          case 'j':
+            setIndex((i) => Math.min(i + 1, length - 1))
+            break
+          case 'k':
+            setIndex((i) => Math.max(i - 1, 0))
+            break
+          case '1':
+          case 'Escape':
+            setView('log')
+            break
+          default:
+            return
+        }
+        e.preventDefault()
         return
       }
       if (view === 'bookmarks') {
@@ -280,6 +322,19 @@ export const RepositoryView = ({ path }: { path: string }) => {
       switch (e.key) {
         case '2':
           setView('bookmarks')
+          break
+        case '4':
+        case 'O':
+          setOpSelected(0)
+          setView('oplog')
+          break
+        case '5':
+        case 'E':
+          if (selectedCommit) {
+            setEvologTarget(selectedCommit)
+            setEvologSelected(0)
+            setView('evolog')
+          }
           break
         case 'B':
           if (selectedCommit && checked.size === 0) {
@@ -360,6 +415,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [
     view,
+    operations,
+    evolog,
+    restoring,
     bookmarks,
     bookmarkSelected,
     settingBookmark,
@@ -419,26 +477,83 @@ export const RepositoryView = ({ path }: { path: string }) => {
       )}
       <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
         <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
-          {view === 'bookmarks' ? (
-            <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />
-          ) : (
-          <RevisionGraph
-            rows={rows}
-            selected={selected}
-            checked={checked}
-            marks={marks}
-            onSelect={selectIndex}
-            onContextMenu={(i, x, y) => {
-              selectIndex(i)
-              setMenu({ x, y, commit: commits[i] })
-            }}
-          />
+          {view === 'bookmarks' && <BookmarksPanel bookmarks={bookmarks} selected={bookmarkSelected} onSelect={setBookmarkSelected} />}
+          {view === 'oplog' && (
+            <OperationsPanel
+              operations={operations}
+              selected={opSelected}
+              onSelect={setOpSelected}
+              onContextMenu={(i, x, y) => {
+                setOpSelected(i)
+                setOpMenu({ x, y, id: operations[i].id })
+              }}
+            />
+          )}
+          {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
+          {view === 'log' && (
+            <RevisionGraph
+              rows={rows}
+              selected={selected}
+              checked={checked}
+              marks={marks}
+              onSelect={selectIndex}
+              onContextMenu={(i, x, y) => {
+                selectIndex(i)
+                setMenu({ x, y, commit: commits[i] })
+              }}
+            />
           )}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-          {selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />}
+          {view === 'evolog' ? (
+            <Box sx={{ p: 2 }}>
+              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} />)}
+            </Box>
+          ) : (
+            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />
+          )}
         </Box>
       </Stack>
+
+      <Menu open={opMenu !== undefined} onClose={() => setOpMenu(undefined)} anchorReference="anchorPosition" anchorPosition={opMenu ? { top: opMenu.y, left: opMenu.x } : undefined}>
+        <MenuItem
+          onClick={() => {
+            const id = opMenu!.id
+            setOpMenu(undefined)
+            run(() => operationClient.revertOperation({ path, id }), false)
+          }}
+        >
+          Revert this operation
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setRestoring(opMenu!.id)
+            setOpMenu(undefined)
+          }}
+        >
+          Restore to this operation…
+        </MenuItem>
+      </Menu>
+
+      <Dialog open={restoring !== undefined} onClose={() => setRestoring(undefined)}>
+        <DialogTitle>Restore the repository to {restoring}?</DialogTitle>
+        <DialogContent>The operations after it are reverted. It can be undone by the operation log.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRestoring(undefined)}>Cancel</Button>
+          <Button
+            color="warning"
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              const id = restoring!
+              setRestoring(undefined)
+              run(() => operationClient.restoreOperation({ path, id }), true)
+            }}
+          >
+            Restore
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Menu open={menu !== undefined} onClose={() => setMenu(undefined)} anchorReference="anchorPosition" anchorPosition={menu ? { top: menu.y, left: menu.x } : undefined}>
         {menu && [

@@ -30,6 +30,8 @@ const (
 	BookmarkServiceName = "mono.codexel.BookmarkService"
 	// GitServiceName is the fully-qualified name of the GitService service.
 	GitServiceName = "mono.codexel.GitService"
+	// OperationServiceName is the fully-qualified name of the OperationService service.
+	OperationServiceName = "mono.codexel.OperationService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -95,6 +97,8 @@ const (
 	RevisionServiceRebaseProcedure = "/mono.codexel.RevisionService/Rebase"
 	// RevisionServiceSquashProcedure is the fully-qualified name of the RevisionService's Squash RPC.
 	RevisionServiceSquashProcedure = "/mono.codexel.RevisionService/Squash"
+	// RevisionServiceEvologProcedure is the fully-qualified name of the RevisionService's Evolog RPC.
+	RevisionServiceEvologProcedure = "/mono.codexel.RevisionService/Evolog"
 	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
 	// ListBookmarks RPC.
 	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
@@ -120,6 +124,15 @@ const (
 	GitServiceFetchProcedure = "/mono.codexel.GitService/Fetch"
 	// GitServicePushProcedure is the fully-qualified name of the GitService's Push RPC.
 	GitServicePushProcedure = "/mono.codexel.GitService/Push"
+	// OperationServiceListOperationsProcedure is the fully-qualified name of the OperationService's
+	// ListOperations RPC.
+	OperationServiceListOperationsProcedure = "/mono.codexel.OperationService/ListOperations"
+	// OperationServiceRevertOperationProcedure is the fully-qualified name of the OperationService's
+	// RevertOperation RPC.
+	OperationServiceRevertOperationProcedure = "/mono.codexel.OperationService/RevertOperation"
+	// OperationServiceRestoreOperationProcedure is the fully-qualified name of the OperationService's
+	// RestoreOperation RPC.
+	OperationServiceRestoreOperationProcedure = "/mono.codexel.OperationService/RestoreOperation"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -560,6 +573,7 @@ type RevisionServiceClient interface {
 	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
 	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
 	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
+	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -633,6 +647,12 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("Squash")),
 			connect.WithClientOptions(opts...),
 		),
+		evolog: connect.NewClient[RequestEvolog, ResponseEvolog](
+			httpClient,
+			baseURL+RevisionServiceEvologProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -648,6 +668,7 @@ type revisionServiceClient struct {
 	undo        *connect.Client[RequestUndo, ResponseUndo]
 	rebase      *connect.Client[RequestRebase, ResponseRebase]
 	squash      *connect.Client[RequestSquash, ResponseSquash]
+	evolog      *connect.Client[RequestEvolog, ResponseEvolog]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -700,6 +721,11 @@ func (c *revisionServiceClient) Squash(ctx context.Context, req *connect.Request
 	return c.squash.CallUnary(ctx, req)
 }
 
+// Evolog calls mono.codexel.RevisionService.Evolog.
+func (c *revisionServiceClient) Evolog(ctx context.Context, req *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
+	return c.evolog.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
@@ -712,6 +738,7 @@ type RevisionServiceHandler interface {
 	Undo(context.Context, *connect.Request[RequestUndo]) (*connect.Response[ResponseUndo], error)
 	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
 	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
+	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -781,6 +808,12 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("Squash")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceEvologHandler := connect.NewUnaryHandler(
+		RevisionServiceEvologProcedure,
+		svc.Evolog,
+		connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
@@ -803,6 +836,8 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 			revisionServiceRebaseHandler.ServeHTTP(w, r)
 		case RevisionServiceSquashProcedure:
 			revisionServiceSquashHandler.ServeHTTP(w, r)
+		case RevisionServiceEvologProcedure:
+			revisionServiceEvologHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -850,6 +885,10 @@ func (UnimplementedRevisionServiceHandler) Rebase(context.Context, *connect.Requ
 
 func (UnimplementedRevisionServiceHandler) Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Squash is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Evolog is not implemented"))
 }
 
 // BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.
@@ -1172,4 +1211,126 @@ func (UnimplementedGitServiceHandler) Fetch(context.Context, *connect.Request[Re
 
 func (UnimplementedGitServiceHandler) Push(context.Context, *connect.Request[RequestPush]) (*connect.Response[ResponsePush], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.GitService.Push is not implemented"))
+}
+
+// OperationServiceClient is a client for the mono.codexel.OperationService service.
+type OperationServiceClient interface {
+	ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error)
+	RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error)
+	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
+}
+
+// NewOperationServiceClient constructs a client for the mono.codexel.OperationService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewOperationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) OperationServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	operationServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("OperationService").Methods()
+	return &operationServiceClient{
+		listOperations: connect.NewClient[RequestListOperations, ResponseListOperations](
+			httpClient,
+			baseURL+OperationServiceListOperationsProcedure,
+			connect.WithSchema(operationServiceMethods.ByName("ListOperations")),
+			connect.WithClientOptions(opts...),
+		),
+		revertOperation: connect.NewClient[RequestRevertOperation, ResponseRevertOperation](
+			httpClient,
+			baseURL+OperationServiceRevertOperationProcedure,
+			connect.WithSchema(operationServiceMethods.ByName("RevertOperation")),
+			connect.WithClientOptions(opts...),
+		),
+		restoreOperation: connect.NewClient[RequestRestoreOperation, ResponseRestoreOperation](
+			httpClient,
+			baseURL+OperationServiceRestoreOperationProcedure,
+			connect.WithSchema(operationServiceMethods.ByName("RestoreOperation")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// operationServiceClient implements OperationServiceClient.
+type operationServiceClient struct {
+	listOperations   *connect.Client[RequestListOperations, ResponseListOperations]
+	revertOperation  *connect.Client[RequestRevertOperation, ResponseRevertOperation]
+	restoreOperation *connect.Client[RequestRestoreOperation, ResponseRestoreOperation]
+}
+
+// ListOperations calls mono.codexel.OperationService.ListOperations.
+func (c *operationServiceClient) ListOperations(ctx context.Context, req *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
+	return c.listOperations.CallUnary(ctx, req)
+}
+
+// RevertOperation calls mono.codexel.OperationService.RevertOperation.
+func (c *operationServiceClient) RevertOperation(ctx context.Context, req *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
+	return c.revertOperation.CallUnary(ctx, req)
+}
+
+// RestoreOperation calls mono.codexel.OperationService.RestoreOperation.
+func (c *operationServiceClient) RestoreOperation(ctx context.Context, req *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
+	return c.restoreOperation.CallUnary(ctx, req)
+}
+
+// OperationServiceHandler is an implementation of the mono.codexel.OperationService service.
+type OperationServiceHandler interface {
+	ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error)
+	RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error)
+	RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error)
+}
+
+// NewOperationServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewOperationServiceHandler(svc OperationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	operationServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("OperationService").Methods()
+	operationServiceListOperationsHandler := connect.NewUnaryHandler(
+		OperationServiceListOperationsProcedure,
+		svc.ListOperations,
+		connect.WithSchema(operationServiceMethods.ByName("ListOperations")),
+		connect.WithHandlerOptions(opts...),
+	)
+	operationServiceRevertOperationHandler := connect.NewUnaryHandler(
+		OperationServiceRevertOperationProcedure,
+		svc.RevertOperation,
+		connect.WithSchema(operationServiceMethods.ByName("RevertOperation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	operationServiceRestoreOperationHandler := connect.NewUnaryHandler(
+		OperationServiceRestoreOperationProcedure,
+		svc.RestoreOperation,
+		connect.WithSchema(operationServiceMethods.ByName("RestoreOperation")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.OperationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case OperationServiceListOperationsProcedure:
+			operationServiceListOperationsHandler.ServeHTTP(w, r)
+		case OperationServiceRevertOperationProcedure:
+			operationServiceRevertOperationHandler.ServeHTTP(w, r)
+		case OperationServiceRestoreOperationProcedure:
+			operationServiceRestoreOperationHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedOperationServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedOperationServiceHandler struct{}
+
+func (UnimplementedOperationServiceHandler) ListOperations(context.Context, *connect.Request[RequestListOperations]) (*connect.Response[ResponseListOperations], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.ListOperations is not implemented"))
+}
+
+func (UnimplementedOperationServiceHandler) RevertOperation(context.Context, *connect.Request[RequestRevertOperation]) (*connect.Response[ResponseRevertOperation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.RevertOperation is not implemented"))
+}
+
+func (UnimplementedOperationServiceHandler) RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.RestoreOperation is not implemented"))
 }

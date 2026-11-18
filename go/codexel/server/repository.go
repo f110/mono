@@ -454,3 +454,28 @@ func toJujutsuError(err error) error {
 	}
 	return connect.NewError(connect.CodeInternal, err)
 }
+
+func (h *RevisionHandler) Evolog(ctx context.Context, req *connect.Request[api.RequestEvolog]) (*connect.Response[api.ResponseEvolog], error) {
+	if req.Msg.GetRevision() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision is required"))
+	}
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	entries, err := repo.Evolog(ctx, req.Msg.GetRevision())
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	res := make([]*api.EvologEntry, 0, len(entries))
+	for _, v := range entries {
+		res = append(res, api.EvologEntry_builder{
+			CommitId:     new(v.CommitID),
+			Timestamp:    new(v.Timestamp),
+			Operation:    new(v.Operation),
+			Predecessors: v.Predecessors,
+			Files:        toFileDiffs(v.Files),
+		}.Build())
+	}
+	return connect.NewResponse(api.ResponseEvolog_builder{Entries: res}.Build()), nil
+}
