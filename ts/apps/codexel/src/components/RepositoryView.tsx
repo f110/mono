@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@connectrpc/connect'
 import { useQuery } from '@connectrpc/connect-query'
 import {
@@ -14,16 +14,19 @@ import {
   Snackbar,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material'
-import { BookmarkService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { BookmarkService, FileService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
+import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
 import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
+import { FileTreePanel, FileView } from './FileTree.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
@@ -93,7 +96,13 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
   const [mode, setMode] = useState<Mode>()
-  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog'>('log')
+  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files'>('log')
+  const [treeTarget, setTreeTarget] = useState<Commit>()
+  const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
+  const [treeSelected, setTreeSelected] = useState(0)
+  const [treeFilter, setTreeFilter] = useState('')
+  const [openFile, setOpenFile] = useState<string>()
+  const filterRef = useRef<HTMLInputElement>(null)
   const [bookmarkSelected, setBookmarkSelected] = useState(0)
   const [settingBookmark, setSettingBookmark] = useState<Commit>()
   const [pushing, setPushing] = useState(false)
@@ -118,6 +127,28 @@ export const RepositoryView = ({ path }: { path: string }) => {
     { enabled: view === 'evolog' && evologTarget !== undefined },
   )
   const evolog = evologData?.entries ?? []
+  const { data: filesData } = useQuery(
+    FileService.method.listFiles,
+    { path, revision: treeTarget?.commitId ?? '' },
+    { enabled: view === 'files' && treeTarget !== undefined, staleTime: Infinity },
+  )
+  const treeNodes = useMemo(() => {
+    const files = filesData?.files ?? []
+    if (treeFilter) {
+      const f = treeFilter.toLowerCase()
+      return files.filter((p) => p.toLowerCase().includes(f)).map((p) => ({ path: p, name: p, depth: 0, dir: false }))
+    }
+    return visibleNodes(files, treeExpanded)
+  }, [filesData, treeFilter, treeExpanded])
+
+  // showHistory shows the revisions which change the file in the log.
+  const showHistory = useCallback((file: string) => {
+    const r = fileRevset(file)
+    setRevsetInput(r)
+    setRevset(r)
+    setSelectedKey(undefined)
+    setView('log')
+  }, [])
   const rows = data?.rows ?? []
   const commits = rows.map((r) => r.commit!)
   const foundIndex = commits.findIndex((c) => revisionKey(c) === selectedKey)
@@ -237,6 +268,45 @@ export const RepositoryView = ({ path }: { path: string }) => {
       if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning || settingBookmark || pushing || restoring) {
         return
       }
+      if (view === 'files') {
+        const node = treeNodes[treeSelected]
+        const toggle = (path: string, open: boolean) =>
+          setTreeExpanded((s) => {
+            const next = new Set(s)
+            if (open) next.add(path)
+            else next.delete(path)
+            return next
+          })
+        switch (e.key) {
+          case 'j':
+            setTreeSelected((i) => Math.min(i + 1, treeNodes.length - 1))
+            break
+          case 'k':
+            setTreeSelected((i) => Math.max(i - 1, 0))
+            break
+          case 'l':
+            if (node?.dir) toggle(node.path, true)
+            break
+          case 'h':
+            if (node?.dir) toggle(node.path, false)
+            break
+          case 'Enter':
+            if (node?.dir) toggle(node.path, !treeExpanded.has(node.path))
+            else if (node) setOpenFile(node.path)
+            break
+          case '/':
+            filterRef.current?.focus()
+            break
+          case '1':
+          case 'Escape':
+            setView('log')
+            break
+          default:
+            return
+        }
+        e.preventDefault()
+        return
+      }
       if (view === 'oplog' || view === 'evolog') {
         const length = view === 'oplog' ? operations.length : evolog.length
         const setIndex = view === 'oplog' ? setOpSelected : setEvologSelected
@@ -325,6 +395,15 @@ export const RepositoryView = ({ path }: { path: string }) => {
       switch (e.key) {
         case '2':
           setView('bookmarks')
+          break
+        case 'F':
+          if (selectedCommit) {
+            setTreeTarget(selectedCommit)
+            setTreeSelected(0)
+            setTreeFilter('')
+            setOpenFile(undefined)
+            setView('files')
+          }
           break
         case '4':
         case 'O':
@@ -418,6 +497,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [
     view,
+    treeNodes,
+    treeSelected,
+    treeExpanded,
     operations,
     evolog,
     restoring,
@@ -493,6 +575,31 @@ export const RepositoryView = ({ path }: { path: string }) => {
             />
           )}
           {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
+          {view === 'files' && (
+            <FileTreePanel
+              nodes={treeNodes}
+              selected={treeSelected}
+              filter={treeFilter}
+              filterRef={filterRef}
+              onFilterChange={(f) => {
+                setTreeFilter(f)
+                setTreeSelected(0)
+              }}
+              onSelect={(i) => {
+                setTreeSelected(i)
+                const n = treeNodes[i]
+                if (n.dir) {
+                  setTreeExpanded((s) => {
+                    const next = new Set(s)
+                    if (!next.delete(n.path)) next.add(n.path)
+                    return next
+                  })
+                } else {
+                  setOpenFile(n.path)
+                }
+              }}
+            />
+          )}
           {view === 'log' && (
             <RevisionGraph
               rows={rows}
@@ -508,12 +615,33 @@ export const RepositoryView = ({ path }: { path: string }) => {
           )}
         </Box>
         <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
-          {view === 'evolog' ? (
+          {view === 'files' &&
+            treeTarget &&
+            (openFile ? (
+              <FileView key={openFile} repoPath={path} revision={treeTarget.commitId} file={openFile} onHistory={() => showHistory(openFile)} />
+            ) : (
+              <Typography color="text.secondary" sx={{ p: 2 }}>
+                Files at {treeTarget.changeId.slice(0, 8)}
+              </Typography>
+            ))}
+          {view === 'evolog' && (
             <Box sx={{ p: 2 }}>
-              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} split={split} preview={preview} repoPath={path} revision={evolog[evologSelected].commitId} oldRevision={undefined} />)}
+              {evolog[evologSelected]?.files.map((f) => (
+                <FileDiffView
+                  key={f.path}
+                  file={f}
+                  split={split}
+                  preview={preview}
+                  repoPath={path}
+                  revision={evolog[evologSelected].commitId}
+                  oldRevision={undefined}
+                  onHistory={showHistory}
+                />
+              ))}
             </Box>
-          ) : (
-            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} preview={preview} />
+          )}
+          {(view === 'log' || view === 'bookmarks' || view === 'oplog') && selectedCommit && (
+            <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} preview={preview} onHistory={showHistory} />
           )}
         </Box>
       </Stack>

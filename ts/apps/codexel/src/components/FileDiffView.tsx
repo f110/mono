@@ -173,6 +173,7 @@ export const FileDiffView = ({
   repoPath,
   revision,
   oldRevision,
+  onHistory,
 }: {
   file: FileDiff
   split: boolean
@@ -180,6 +181,7 @@ export const FileDiffView = ({
   repoPath: string
   revision: string
   oldRevision: string | undefined
+  onHistory: (file: string) => void
 }) => {
   const theme = useTheme()
   const lang = languageOf(file.path)
@@ -283,6 +285,9 @@ export const FileDiffView = ({
         <Typography variant="caption" sx={{ color: 'error.main' }}>
           -{file.removed}
         </Typography>
+        <Button size="small" sx={{ minWidth: 0, py: 0 }} onClick={() => onHistory(file.path)}>
+          History
+        </Button>
       </Stack>
       {file.binary && imageTypes[extension(file.path)] && <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />}
       {file.binary && !imageTypes[extension(file.path)] && (
