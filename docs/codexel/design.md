@@ -145,6 +145,7 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 - レビュー: 対象リポジトリ、対象リビジョンの change ID の集合、ラウンドの一覧、状態 (open / finished / approved)
 - ラウンド: ラウンド開始時の各 change ID の commit ID
 - コメント: 対象 (§5.2)、行範囲、差分の側 (old / new)、行の内容 (anchor)、本文、作者、resolved、返信
+- 既読: change ID + パスごとの既読・未読。未読の記録は自動で既読にするパターンより優先する
 
 差分は change ごとに親との差分を表示する。コメントの対象の change ID が表示の単位から決まるようにするため。
 
@@ -177,8 +178,11 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 - Finish / Approve
 - 次のラウンドはエージェントが指摘に対応した後に MCP のツールで開始する (crit で再度 `crit` を実行するのと同じ)。その時点の各 change ID の
   commit ID を記録し、コメントの位置を合わせ直して、状態を open に戻す
-- vim キーバインド (`j`/`k`, `c`, `Shift+F`, `?`)
-- Markdown・Mermaid のレンダリング、`linguist-generated` の折りたたみ、自動で既読にするパターン
+- vim キーバインド (`j`/`k`, `c`, `Shift+F`, `?`)。既読の切り替えは crit と同じ `a`
+- Markdown・Mermaid のレンダリング。mermaid はサイズが大きいので図を表示する時だけ読み込む
+- `linguist-generated` の折りたたみ: コミット時点のトップレベルの `.gitattributes` だけを読む。パターンは git と同じ解釈にする
+- 既読: 既読のファイルは折りたたむ。次のラウンドでは前のラウンドとの差分 (`jj diff --from --to`) に含まれるファイルの既読を外す
+- 自動で既読にするパターン: `config.json` の `auto_viewed_patterns` (全リポジトリ共通)。レビュー開始時とラウンド開始時に、記録のない変更ファイルに適用する
 
 ### 5.4 エージェントとのやり取り
 
@@ -266,7 +270,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `RepositoryService` | `ListRepositories`, `OpenRepository`, `CloseRepository`, `WatchRepository` (stream, op ID の変化) |
 | `RevisionService` | `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と各変更操作 (§4.2) |
 | `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
-| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Approve`, `StartNextRound`, `RoundDiff` |
+| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Approve`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `ListTemplates`, `Submit` |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。

@@ -223,6 +223,8 @@ const (
 	ReviewServiceStartNextRoundProcedure = "/mono.codexel.ReviewService/StartNextRound"
 	// ReviewServiceRoundDiffProcedure is the fully-qualified name of the ReviewService's RoundDiff RPC.
 	ReviewServiceRoundDiffProcedure = "/mono.codexel.ReviewService/RoundDiff"
+	// ReviewServiceSetViewedProcedure is the fully-qualified name of the ReviewService's SetViewed RPC.
+	ReviewServiceSetViewedProcedure = "/mono.codexel.ReviewService/SetViewed"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -2127,6 +2129,7 @@ type ReviewServiceClient interface {
 	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
 	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
 	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
+	SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error)
 }
 
 // NewReviewServiceClient constructs a client for the mono.codexel.ReviewService service. By
@@ -2212,6 +2215,12 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reviewServiceMethods.ByName("RoundDiff")),
 			connect.WithClientOptions(opts...),
 		),
+		setViewed: connect.NewClient[RequestSetViewed, ResponseSetViewed](
+			httpClient,
+			baseURL+ReviewServiceSetViewedProcedure,
+			connect.WithSchema(reviewServiceMethods.ByName("SetViewed")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -2229,6 +2238,7 @@ type reviewServiceClient struct {
 	approve        *connect.Client[RequestApprove, ResponseApprove]
 	startNextRound *connect.Client[RequestStartNextRound, ResponseStartNextRound]
 	roundDiff      *connect.Client[RequestRoundDiff, ResponseRoundDiff]
+	setViewed      *connect.Client[RequestSetViewed, ResponseSetViewed]
 }
 
 // ListReviews calls mono.codexel.ReviewService.ListReviews.
@@ -2291,6 +2301,11 @@ func (c *reviewServiceClient) RoundDiff(ctx context.Context, req *connect.Reques
 	return c.roundDiff.CallUnary(ctx, req)
 }
 
+// SetViewed calls mono.codexel.ReviewService.SetViewed.
+func (c *reviewServiceClient) SetViewed(ctx context.Context, req *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error) {
+	return c.setViewed.CallUnary(ctx, req)
+}
+
 // ReviewServiceHandler is an implementation of the mono.codexel.ReviewService service.
 type ReviewServiceHandler interface {
 	ListReviews(context.Context, *connect.Request[RequestListReviews]) (*connect.Response[ResponseListReviews], error)
@@ -2305,6 +2320,7 @@ type ReviewServiceHandler interface {
 	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
 	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
 	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
+	SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error)
 }
 
 // NewReviewServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -2386,6 +2402,12 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reviewServiceMethods.ByName("RoundDiff")),
 		connect.WithHandlerOptions(opts...),
 	)
+	reviewServiceSetViewedHandler := connect.NewUnaryHandler(
+		ReviewServiceSetViewedProcedure,
+		svc.SetViewed,
+		connect.WithSchema(reviewServiceMethods.ByName("SetViewed")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.ReviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ReviewServiceListReviewsProcedure:
@@ -2412,6 +2434,8 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 			reviewServiceStartNextRoundHandler.ServeHTTP(w, r)
 		case ReviewServiceRoundDiffProcedure:
 			reviewServiceRoundDiffHandler.ServeHTTP(w, r)
+		case ReviewServiceSetViewedProcedure:
+			reviewServiceSetViewedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -2467,4 +2491,8 @@ func (UnimplementedReviewServiceHandler) StartNextRound(context.Context, *connec
 
 func (UnimplementedReviewServiceHandler) RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.RoundDiff is not implemented"))
+}
+
+func (UnimplementedReviewServiceHandler) SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.SetViewed is not implemented"))
 }

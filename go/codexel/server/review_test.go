@@ -54,6 +54,14 @@ func TestReviewHandler(t *testing.T) {
 	}.Build()))
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 
+	viewed, err := h.SetViewed(t.Context(), connect.NewRequest(api.RequestSetViewed_builder{ReviewId: new("01"), ChangeId: new("kkkk"), Path: new("a.go"), Viewed: new(true)}.Build()))
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, viewed.Msg.GetReview().GetViewed(), 1)
+	assertion.Equal(t, viewed.Msg.GetReview().GetViewed()[0].GetPath(), "a.go")
+	assertion.True(t, viewed.Msg.GetReview().GetViewed()[0].GetViewed())
+	_, err = h.SetViewed(t.Context(), connect.NewRequest(api.RequestSetViewed_builder{ReviewId: new("01"), ChangeId: new("mmmm"), Path: new("a.go"), Viewed: new(true)}.Build()))
+	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
+
 	approved, err := h.Approve(t.Context(), connect.NewRequest(api.RequestApprove_builder{ReviewId: new("01")}.Build()))
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, approved.Msg.GetReview().GetState(), api.ReviewState_REVIEW_STATE_APPROVED)

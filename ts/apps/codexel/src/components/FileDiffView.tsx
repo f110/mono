@@ -3,11 +3,10 @@ import { create } from '@bufbuild/protobuf'
 import { useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Chip, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { DiffLineKind, DiffLineSchema, FileService, FileStatus, type DiffLine, type FileDiff, type Hunk } from '../connect/codexel_pb.js'
 import { lineRanges, lineSide, splitRows, type LineSide, type Range } from '../lib/diffLines.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
+import { Markdown } from './Markdown.tsx'
 
 const statusLabel: Record<FileStatus, string> = {
   [FileStatus.UNSPECIFIED]: '',
@@ -71,6 +70,8 @@ export type LineAnnotation = {
   // onSelect is called when the line number is clicked. extend is true if Shift is pressed to select the range.
   onSelect: (side: LineSide, line: number, extend: boolean) => void
   selected: (side: LineSide, line: number) => boolean
+  // focused is the line of the cursor of the keyboard.
+  focused: (side: LineSide, line: number) => boolean
   // after returns the element shown after the line.
   after: (side: LineSide, line: number) => ReactNode
 }
@@ -199,6 +200,7 @@ export const FileDiffView = ({
   onRestore,
   annotation,
   actions,
+  collapsed = false,
   children,
 }: {
   file: FileDiff
@@ -214,6 +216,8 @@ export const FileDiffView = ({
   annotation?: LineAnnotation
   // actions are shown in the header.
   actions?: ReactNode
+  // collapsed hides everything except the header.
+  collapsed?: boolean
   // children are shown under the header.
   children?: ReactNode
 }) => {
@@ -255,6 +259,14 @@ export const FileDiffView = ({
     const { side, line: n } = lineSide(line)
     return annotation?.selected(side, n) ? selectedBackground : background[line.kind]
   }
+  // lineProps identifies the line by data-line to move the cursor by the keyboard, and outlines the line of the cursor.
+  const lineProps = (line: DiffLine) => {
+    const { side, line: n } = lineSide(line)
+    return {
+      'data-line': annotation ? `${side}:${n}` : undefined,
+      boxShadow: annotation?.focused(side, n) ? `inset 2px 0 0 ${theme.palette.primary.main}` : undefined,
+    }
+  }
   // after returns the elements after the lines. The same line is shown once even if it is on both sides of the split view.
   const after = (...ls: (DiffLine | undefined)[]) => {
     if (!annotation) return null
@@ -271,7 +283,11 @@ export const FileDiffView = ({
   }
 
   const cell = (line: DiffLine | undefined, ranges: Range[] | undefined, side: 'old' | 'new') => (
-    <Stack direction="row" sx={{ flex: 1, minWidth: 0, bgcolor: line ? lineBackground(line) : 'action.hover' }}>
+    <Stack
+      direction="row"
+      data-line={line ? lineProps(line)['data-line'] : undefined}
+      sx={{ flex: 1, minWidth: 0, bgcolor: line ? lineBackground(line) : 'action.hover', boxShadow: line ? lineProps(line).boxShadow : undefined }}
+    >
       {line && (
         <>
           <LineNumber n={side === 'old' ? line.oldLine : line.newLine} onClick={onSelect(line)} />
@@ -297,7 +313,7 @@ export const FileDiffView = ({
 
   const row = (line: DiffLine, ranges: Range[] | undefined, key: string | number) => (
     <Fragment key={key}>
-      <Stack direction="row" sx={{ bgcolor: lineBackground(line) }}>
+      <Stack direction="row" data-line={lineProps(line)['data-line']} sx={{ bgcolor: lineBackground(line), boxShadow: lineProps(line).boxShadow }}>
         <LineNumber n={line.oldLine} onClick={onSelect(line)} />
         <LineNumber n={line.newLine} onClick={onSelect(line)} />
         <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
@@ -360,16 +376,16 @@ export const FileDiffView = ({
         )}
         {actions}
       </Stack>
-      {children}
-      {file.binary && imageTypes[extension(file.path)] && <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />}
-      {file.binary && !imageTypes[extension(file.path)] && (
+      {!collapsed && children}
+      {!collapsed && file.binary && imageTypes[extension(file.path)] && <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />}
+      {!collapsed && file.binary && !imageTypes[extension(file.path)] && (
         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
           Binary file
         </Typography>
       )}
-      {showPreview ? (
+      {collapsed ? null : showPreview ? (
         <Box className="markdown-body" sx={{ p: 2, '& pre': { overflowX: 'auto' }, '& img': { maxWidth: '100%' } }}>
-          {lines ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{lines.join('\n')}</ReactMarkdown> : 'Loading…'}
+          {lines ? <Markdown text={lines.join('\n')} /> : 'Loading…'}
         </Box>
       ) : (
         <Box sx={{ fontFamily: 'monospace', fontSize: 12, lineHeight: 1.5, overflowX: 'auto' }}>

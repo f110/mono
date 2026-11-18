@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Box, Button, Chip, Stack, TextField, Typography } from '@mui/material'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { DiffSide, type ReviewComment } from '../connect/codexel_pb.js'
+import { Markdown } from './Markdown.tsx'
 
-const Markdown = ({ text }: { text: string }) => (
+const CommentBody = ({ text }: { text: string }) => (
   <Box sx={{ '& p': { my: 0.5 }, '& pre': { overflowX: 'auto' }, fontSize: 14, wordBreak: 'break-word' }}>
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+    <Markdown text={text} />
   </Box>
 )
 
@@ -153,7 +152,7 @@ export const CommentThread = ({
                   {comment.anchor}
                 </Box>
               )}
-              <Markdown text={comment.body} />
+              <CommentBody text={comment.body} />
             </Box>
           )}
           {comment.replies.map((r) => (
@@ -164,7 +163,7 @@ export const CommentThread = ({
                   {new Date(Number(r.createdAt) * 1000).toLocaleString()}
                 </Typography>
               </Typography>
-              <Markdown text={r.body} />
+              <CommentBody text={r.body} />
             </Box>
           ))}
           {replying && onReply ? (

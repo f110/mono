@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -55,12 +56,14 @@ type Review struct {
 	ID         string `json:"id"`
 	Repository string `json:"repository"`
 	// Changes are the change IDs under review.
-	Changes   []string   `json:"changes"`
-	State     State      `json:"state"`
-	Rounds    []*Round   `json:"rounds"`
-	Comments  []*Comment `json:"comments"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	Changes  []string   `json:"changes"`
+	State    State      `json:"state"`
+	Rounds   []*Round   `json:"rounds"`
+	Comments []*Comment `json:"comments"`
+	// Viewed is the viewed marks of the files. The file without the mark is not viewed.
+	Viewed    []*ViewedFile `json:"viewed,omitempty"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 // Round is the commits of the changes at the start of the round. The number of the round is the index + 1.
@@ -93,6 +96,13 @@ type Comment struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// ViewedFile is the viewed mark of the file of the change. Viewed false is the explicit mark of not viewed.
+type ViewedFile struct {
+	ChangeID string `json:"change_id"`
+	Path     string `json:"path"`
+	Viewed   bool   `json:"viewed"`
+}
+
 type Reply struct {
 	ID        string    `json:"id"`
 	Body      string    `json:"body"`
@@ -106,12 +116,15 @@ type Repository interface {
 	Snapshot(ctx context.Context) error
 	Log(ctx context.Context, revset string, limit int) ([]*jujutsu.LogRow, error)
 	File(ctx context.Context, rev, path string) ([]byte, error)
+	Diff(ctx context.Context, rev string) ([]*jujutsu.FileDiff, error)
+	DiffRange(ctx context.Context, from, to string) ([]*jujutsu.FileDiff, error)
 }
 
 var changeIDPattern = regexp.MustCompile(`^[k-z]+$`)
 
-// New returns the review of the changes. The first round is the current commits of the changes.
-func New(ctx context.Context, repo Repository, changes []string, now time.Time) (*Review, error) {
+// New returns the review of the changes. The first round is the current commits of the changes. The changed files
+// which match autoViewed are marked as viewed.
+func New(ctx context.Context, repo Repository, changes, autoViewed []string, now time.Time) (*Review, error) {
 	if len(changes) == 0 {
 		return nil, xerrors.WithMessage(ErrInvalidArgument, "changes are required")
 	}
@@ -128,7 +141,7 @@ func New(ctx context.Context, repo Repository, changes []string, now time.Time) 
 	if err != nil {
 		return nil, err
 	}
-	return &Review{
+	r := &Review{
 		ID:         id,
 		Repository: repo.Root(),
 		Changes:    slices.Clone(changes),
@@ -136,7 +149,11 @@ func New(ctx context.Context, repo Repository, changes []string, now time.Time) 
 		Rounds:     []*Round{{Commits: commits, CreatedAt: now}},
 		CreatedAt:  now,
 		UpdatedAt:  now,
-	}, nil
+	}
+	if err := r.markAutoViewed(ctx, repo, autoViewed); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // currentCommits returns the commit IDs of the changes. The working copy is snapshotted to include the changes of the
@@ -192,8 +209,9 @@ func (r *Review) Commit(round int, changeID string) (string, bool) {
 }
 
 // NextRound starts the next round with the current commits of the changes and moves the comments to the lines of the
-// anchors. The review is opened again.
-func (r *Review) NextRound(ctx context.Context, repo Repository, now time.Time) error {
+// anchors. The viewed marks of the files changed from the previous round are removed, and then the changed files which
+// match autoViewed and have no mark are marked as viewed. The review is opened again.
+func (r *Review) NextRound(ctx context.Context, repo Repository, autoViewed []string, now time.Time) error {
 	if r.State == StateApproved {
 		return xerrors.WithMessage(ErrInvalidState, "the review is approved")
 	}
@@ -201,7 +219,23 @@ func (r *Review) NextRound(ctx context.Context, repo Repository, now time.Time) 
 	if err != nil {
 		return err
 	}
+	for change, commit := range commits {
+		prev, ok := r.Commit(r.LatestRound(), change)
+		if !ok || prev == commit {
+			continue
+		}
+		files, err := repo.DiffRange(ctx, prev, commit)
+		if err != nil {
+			return err
+		}
+		r.Viewed = slices.DeleteFunc(r.Viewed, func(v *ViewedFile) bool {
+			return v.ChangeID == change && slices.ContainsFunc(files, func(f *jujutsu.FileDiff) bool { return f.Path == v.Path || f.OldPath == v.Path })
+		})
+	}
 	r.Rounds = append(r.Rounds, &Round{Commits: commits, CreatedAt: now})
+	if err := r.markAutoViewed(ctx, repo, autoViewed); err != nil {
+		return err
+	}
 
 	files := make(map[string][]string)
 	for _, c := range r.Comments {
@@ -232,6 +266,75 @@ func (r *Review) NextRound(ctx context.Context, repo Repository, now time.Time) 
 	r.State = StateOpen
 	r.UpdatedAt = now
 	return nil
+}
+
+// markAutoViewed marks the changed files of the latest round which match the patterns and have no mark as viewed.
+func (r *Review) markAutoViewed(ctx context.Context, repo Repository, patterns []string) error {
+	if len(patterns) == 0 {
+		return nil
+	}
+	for _, change := range r.Changes {
+		commit, ok := r.Commit(r.LatestRound(), change)
+		if !ok {
+			continue
+		}
+		files, err := repo.Diff(ctx, commit)
+		if err != nil {
+			return err
+		}
+		for _, f := range files {
+			if r.viewedFile(change, f.Path) != nil || !slices.ContainsFunc(patterns, func(p string) bool { return matchPattern(f.Path, p) }) {
+				continue
+			}
+			r.Viewed = append(r.Viewed, &ViewedFile{ChangeID: change, Path: f.Path, Viewed: true})
+		}
+	}
+	return nil
+}
+
+func (r *Review) viewedFile(changeID, path string) *ViewedFile {
+	for _, v := range r.Viewed {
+		if v.ChangeID == changeID && v.Path == path {
+			return v
+		}
+	}
+	return nil
+}
+
+// SetViewed marks the file of the change as viewed or not viewed. The explicit mark of not viewed prevents the file
+// from being marked by the patterns.
+func (r *Review) SetViewed(changeID, path string, viewed bool, now time.Time) error {
+	if !slices.Contains(r.Changes, changeID) {
+		return xerrors.WithMessagef(ErrNotFound, "change %s", changeID)
+	}
+	if path == "" {
+		return xerrors.WithMessage(ErrInvalidArgument, "path is required")
+	}
+	if v := r.viewedFile(changeID, path); v != nil {
+		v.Viewed = viewed
+	} else {
+		r.Viewed = append(r.Viewed, &ViewedFile{ChangeID: changeID, Path: path, Viewed: viewed})
+	}
+	r.UpdatedAt = now
+	return nil
+}
+
+// matchPattern reports whether the path matches the pattern of auto_viewed_patterns. The patterns are the same as crit:
+// "dir/" matches the files under the directory at any depth, the pattern with the slash matches the whole path, and
+// the other patterns match the name of the file.
+func matchPattern(filePath, pattern string) bool {
+	switch {
+	case pattern == "":
+		return false
+	case strings.HasSuffix(pattern, "/"):
+		return strings.HasPrefix(filePath, pattern) || strings.Contains(filePath, "/"+pattern)
+	case strings.Contains(pattern, "/"):
+		ok, _ := path.Match(pattern, filePath)
+		return ok
+	default:
+		ok, _ := path.Match(pattern, path.Base(filePath))
+		return ok
+	}
 }
 
 // AddComment adds the comment. The target is the whole review if changeID is empty, the file if startLine is 0 and the

@@ -23,6 +23,7 @@
     "anser": "^2.3.5",
     "diff": "^9.0.0",
     "lowlight": "^3.3.0",
+    "mermaid": "^12.3.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",

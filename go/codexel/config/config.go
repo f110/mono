@@ -20,6 +20,9 @@ type Repository struct {
 type Config struct {
 	// Repositories are the repositories opened at startup.
 	Repositories []*Repository `json:"repositories"`
+	// AutoViewedPatterns are the patterns of the files marked as viewed when the review starts and the round starts.
+	// e.g. "*.lock" matches the name, "gen/" matches the files under the directory and "go/*.pb.go" matches the path.
+	AutoViewedPatterns []string `json:"auto_viewed_patterns,omitempty"`
 }
 
 // File is the config file. The changes are serialized and written atomically.

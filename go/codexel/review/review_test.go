@@ -12,8 +12,10 @@ import (
 
 // fakeRepository returns the commits of the changes in commits and the files in files keyed by "<rev>:<path>".
 type fakeRepository struct {
-	commits   map[string]string
-	files     map[string]string
+	commits map[string]string
+	files   map[string]string
+	// diffs is the changed files of the revision and the range "<from>..<to>".
+	diffs     map[string][]string
 	snapshots int
 	revsets   []string
 }
@@ -44,6 +46,22 @@ func (f *fakeRepository) File(_ context.Context, rev, path string) ([]byte, erro
 	return []byte(v), nil
 }
 
+func (f *fakeRepository) Diff(_ context.Context, rev string) ([]*jujutsu.FileDiff, error) {
+	return f.fileDiffs(rev), nil
+}
+
+func (f *fakeRepository) DiffRange(_ context.Context, from, to string) ([]*jujutsu.FileDiff, error) {
+	return f.fileDiffs(from + ".." + to), nil
+}
+
+func (f *fakeRepository) fileDiffs(key string) []*jujutsu.FileDiff {
+	var files []*jujutsu.FileDiff
+	for _, v := range f.diffs[key] {
+		files = append(files, &jujutsu.FileDiff{Path: v})
+	}
+	return files
+}
+
 func TestReviewRounds(t *testing.T) {
 	ctx := t.Context()
 	now := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
@@ -56,7 +74,7 @@ func TestReviewRounds(t *testing.T) {
 		},
 	}
 
-	r, err := New(ctx, repo, []string{"kkkk", "llll"}, now)
+	r, err := New(ctx, repo, []string{"kkkk", "llll"}, nil, now)
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, r.Repository, "/repo")
 	assertion.Equal(t, r.State, StateOpen)
@@ -93,7 +111,7 @@ func TestReviewRounds(t *testing.T) {
 	repo.files["c2:a.go"] = "package a\n\nimport \"fmt\"\n\nfunc A() {\n}\n"
 	repo.files["c2-:a.go"] = "package a\n"
 	later := now.Add(time.Hour)
-	assertion.MustNoError(t, r.NextRound(ctx, repo, later))
+	assertion.MustNoError(t, r.NextRound(ctx, repo, nil, later))
 	assertion.Equal(t, r.State, StateOpen)
 	assertion.Equal(t, r.LatestRound(), 2)
 	commit, ok := r.Commit(2, "kkkk")
@@ -111,7 +129,7 @@ func TestReviewRounds(t *testing.T) {
 	assertion.False(t, file.Drifted)
 
 	assertion.MustNoError(t, r.Approve(later))
-	assertion.MustError(t, r.NextRound(ctx, repo, later))
+	assertion.MustError(t, r.NextRound(ctx, repo, nil, later))
 	_, err = r.AddComment(ctx, repo, "", "", "", 0, 0, "after approval", AuthorUser, later)
 	assertion.MustError(t, err)
 }
@@ -119,11 +137,11 @@ func TestReviewRounds(t *testing.T) {
 func TestNewRejectsInvalidChange(t *testing.T) {
 	repo := &fakeRepository{commits: map[string]string{"kkkk": "c1"}}
 
-	_, err := New(t.Context(), repo, []string{"kkkk|all()"}, time.Now())
+	_, err := New(t.Context(), repo, []string{"kkkk|all()"}, nil, time.Now())
 	assertion.MustError(t, err)
 	assertion.Len(t, repo.revsets, 0)
 
-	_, err = New(t.Context(), repo, []string{"llll"}, time.Now())
+	_, err = New(t.Context(), repo, []string{"llll"}, nil, time.Now())
 	assertion.MustError(t, err)
 }
 
@@ -201,4 +219,58 @@ func TestStore(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.Len(t, reviews, 1)
 	assertion.Equal(t, reviews[0].ID, "01")
+}
+
+func TestViewed(t *testing.T) {
+	ctx := t.Context()
+	now := time.Date(2026, 11, 19, 0, 0, 0, 0, time.UTC)
+	repo := &fakeRepository{
+		commits: map[string]string{"kkkk": "c1"},
+		diffs:   map[string][]string{"c1": {"a.go", "b.go", "go.sum"}},
+	}
+	patterns := []string{"*.sum", "gen/"}
+
+	r, err := New(ctx, repo, []string{"kkkk"}, patterns, now)
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, r.Viewed, []*ViewedFile{{ChangeID: "kkkk", Path: "go.sum", Viewed: true}})
+
+	assertion.MustNoError(t, r.SetViewed("kkkk", "a.go", true, now))
+	assertion.MustNoError(t, r.SetViewed("kkkk", "b.go", true, now))
+	assertion.MustNoError(t, r.SetViewed("kkkk", "go.sum", false, now))
+	assertion.MustError(t, r.SetViewed("llll", "a.go", true, now))
+	assertion.MustError(t, r.SetViewed("kkkk", "", true, now))
+
+	repo.commits = map[string]string{"kkkk": "c2"}
+	repo.diffs["c2"] = []string{"a.go", "b.go", "go.sum", "gen/x.go"}
+	repo.diffs["c1..c2"] = []string{"b.go", "go.sum", "gen/x.go"}
+	assertion.MustNoError(t, r.NextRound(ctx, repo, patterns, now))
+	assertion.Equal(t, r.Viewed, []*ViewedFile{
+		{ChangeID: "kkkk", Path: "a.go", Viewed: true},
+		{ChangeID: "kkkk", Path: "go.sum", Viewed: true},
+		{ChangeID: "kkkk", Path: "gen/x.go", Viewed: true},
+	})
+}
+
+func TestMatchPattern(t *testing.T) {
+	cases := []struct {
+		pattern string
+		path    string
+		match   bool
+	}{
+		{pattern: "*.lock", path: "a/b.lock", match: true},
+		{pattern: "*.lock", path: "a/b.lock.go", match: false},
+		{pattern: "gen/", path: "gen/a.go", match: true},
+		{pattern: "gen/", path: "a/gen/b.go", match: true},
+		{pattern: "gen/", path: "agen/b.go", match: false},
+		{pattern: "go/*.pb.go", path: "go/a.pb.go", match: true},
+		{pattern: "go/*.pb.go", path: "go/x/a.pb.go", match: false},
+		{pattern: "PLAN.md", path: "docs/PLAN.md", match: true},
+		{pattern: "docs/PLAN.md", path: "docs/PLAN.md", match: true},
+		{pattern: "PLAN.md", path: "PLAN.mdx", match: false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.pattern+" "+tc.path, func(t *testing.T) {
+			assertion.Equal(t, matchPattern(tc.path, tc.pattern), tc.match)
+		})
+	}
 }
