@@ -183,6 +183,72 @@ func TestParseRawTrailers(t *testing.T) {
 	}
 }
 
+func TestAddAgentSession(t *testing.T) {
+	cases := []struct {
+		name        string
+		desc        string
+		env         map[string]string
+		want        string
+		wantChanged bool
+		wantErr     bool
+	}{
+		{
+			name:        "claude code",
+			desc:        "Subject\n\nAssisted-by: Claude:claude-opus-5",
+			env:         map[string]string{"CLAUDE_CODE_SESSION_ID": "8f2c1e4a-0000-4000-8000-000000000000"},
+			want:        "Subject\n\nAssisted-by: Claude:claude-opus-5\nAgent: claude\nAgent-Session: 8f2c1e4a-0000-4000-8000-000000000000",
+			wantChanged: true,
+		},
+		{
+			name:        "subject only",
+			desc:        "Subject",
+			env:         map[string]string{"CLAUDE_CODE_SESSION_ID": "abc"},
+			want:        "Subject\n\nAgent: claude\nAgent-Session: abc",
+			wantChanged: true,
+		},
+		{
+			name:        "opencode",
+			desc:        "Subject",
+			env:         map[string]string{"OPENCODE_SESSION_ID": "ses_0123456789abcdefghijklmnop"},
+			want:        "Subject\n\nAgent: opencode\nAgent-Session: ses_0123456789abcdefghijklmnop",
+			wantChanged: true,
+		},
+		{
+			name:        "Agent-Session already present",
+			desc:        "Subject\n\nAgent: claude\nAgent-Session: old",
+			env:         map[string]string{"CLAUDE_CODE_SESSION_ID": "new"},
+			want:        "Subject\n\nAgent: claude\nAgent-Session: old",
+			wantChanged: false,
+		},
+		{
+			name:    "unknown agent",
+			desc:    "Subject",
+			env:     map[string]string{},
+			wantErr: true,
+		},
+		{
+			name:    "empty session id",
+			desc:    "Subject",
+			env:     map[string]string{"CLAUDE_CODE_SESSION_ID": ""},
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			getenv := func(key string) string { return tc.env[key] }
+			got, changed, err := addAgentSession(tc.desc, getenv)
+			if tc.wantErr {
+				assertion.Error(t, err)
+				return
+			}
+			assertion.MustNoError(t, err)
+			assertion.Equal(t, got, tc.want)
+			assertion.Equal(t, changed, tc.wantChanged)
+		})
+	}
+}
+
 func TestModelUsageCounts(t *testing.T) {
 	descriptions := []string{
 		"Subject\n\nAssisted-by: Claude:claude-opus-4-7",

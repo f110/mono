@@ -71,6 +71,37 @@ func addTrailer(desc, key, value string) (string, bool) {
 	return appendTrailer(desc, key, value), true
 }
 
+const (
+	agentKey        = "Agent"
+	agentSessionKey = "Agent-Session"
+)
+
+// agentSessionEnvs maps the environment variable holding the session ID to the kind of the agent.
+// The kind is the same value as agent_session.agent of herdr.
+// opencode does not export the session ID, so OPENCODE_SESSION_ID must be set by a plugin with the shell.env hook.
+var agentSessionEnvs = []struct {
+	env   string
+	agent string
+}{
+	{env: "CLAUDE_CODE_SESSION_ID", agent: "claude"},
+	{env: "OPENCODE_SESSION_ID", agent: "opencode"},
+}
+
+// addAgentSession appends Agent and Agent-Session trailers resolved from the environment variables.
+// It skips when desc already has an Agent-Session trailer. The returned bool reports whether desc was changed.
+func addAgentSession(desc string, getenv func(string) string) (string, bool, error) {
+	if hasTrailer(desc, agentSessionKey) {
+		return desc, false, nil
+	}
+	for _, v := range agentSessionEnvs {
+		if session := getenv(v.env); session != "" {
+			desc = appendTrailer(desc, agentKey, v.agent)
+			return appendTrailer(desc, agentSessionKey, session), true, nil
+		}
+	}
+	return desc, false, xerrors.New("could not determine the agent session from the environment variables")
+}
+
 // assistedByModelID extracts the model ID from an Assisted-by trailer value.
 // The value is "Agent:model-id" (e.g. "Claude:claude-opus-4-7"); the part
 // after the first colon is the model ID. A value without a colon is returned

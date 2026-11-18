@@ -57,6 +57,7 @@ func run() error {
 	var rev string
 	var assistedBy string
 	var noCache bool
+	var agentSession bool
 	var rawTrailers []string
 
 	cmd := &cli.Command{
@@ -68,6 +69,7 @@ func run() error {
 	assistedByFlag.Flag().NoOptDefVal = promptSentinel
 	cmd.Flags().String("revision", "Revision to add the trailer to").Shorthand("r").Default("@").Var(&rev)
 	cmd.Flags().Bool("no-cache", "Skip the cached models list and refetch from the Anthropic API").Default(false).Var(&noCache)
+	agentSessionFlag := cmd.Flags().Bool("agent-session", "Add Agent and Agent-Session trailers resolved from the environment variables of the agent").Default(false).Var(&agentSession)
 	trailerFlag := cmd.Flags().StringArray("trailer", "Add a raw trailer in 'Key=Value' form. May be repeated. Duplicates of the same key are allowed").Shorthand("t").Var(&rawTrailers)
 
 	cmd.Run = func(ctx context.Context, _ *cli.Command, _ []string) error {
@@ -92,7 +94,7 @@ func run() error {
 			}
 			newDesc = next
 			changed = changed || ok
-		case !trailerFlag.Flag().Changed:
+		case !trailerFlag.Flag().Changed && !agentSessionFlag.Flag().Changed:
 			spec, err := promptTrailer(supportedTrailers())
 			if err != nil {
 				return err
@@ -107,6 +109,18 @@ func run() error {
 				newDesc, _ = addTrailer(newDesc, spec.key, value)
 				changed = true
 			}
+		}
+
+		if agentSession {
+			next, ok, err := addAgentSession(newDesc, os.Getenv)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				fmt.Fprintf(os.Stderr, "%s: already present, nothing to do\n", agentSessionKey)
+			}
+			newDesc = next
+			changed = changed || ok
 		}
 
 		for _, kv := range rawAdds {

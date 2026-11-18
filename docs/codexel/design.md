@@ -208,7 +208,9 @@ Agent-Session: <セッション ID>
 付与は `jj-trailer` に `--agent-session` フラグを追加して行う。エージェントが実行しやすいように、引数なしで付けられるようにする。
 
 - 環境変数からエージェントの種類とセッション ID を決める。`$CLAUDE_CODE_SESSION_ID` があれば `claude` とその値にする。
-  他のエージェントは対応する時に追加する。どれにも当てはまらなければエラーにする
+  `$OPENCODE_SESSION_ID` があれば `opencode` とその値にする。他のエージェントは対応する時に追加する。どれにも当てはまらなければエラーにする
+- opencode はセッション ID を環境変数で渡さないので、プラグインの `shell.env` フックで `input.sessionID` を `OPENCODE_SESSION_ID` に設定する。
+  この値は herdr の opencode 統合が `agent_session` として報告する sessionID と同じ
 - 既に `Agent-Session` がある場合は追加しない (既存の `-t` は重複を許すので、重複しない専用フラグにする)
 - エージェントへの指示は CLAUDE.md 等に書く (例: コミット後に `jj-trailer --agent-session -r <rev>` を実行する)
 
