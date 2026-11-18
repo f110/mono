@@ -273,7 +273,7 @@ export const FileDiffView = ({
   }
 
   return (
-    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2 }}>
+    <Box data-file={file.path} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, mb: 2, scrollMarginTop: 8 }}>
       <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'center', bgcolor: 'background.paper', position: 'sticky', top: 0, zIndex: 1, borderBottom: 1, borderColor: 'divider' }}>
         <FileStatusChip status={file.status} />
         <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1, minWidth: 0 }} noWrap title={file.path}>
