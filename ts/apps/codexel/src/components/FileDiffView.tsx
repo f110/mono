@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react'
 import { create } from '@bufbuild/protobuf'
 import { useQuery } from '@connectrpc/connect-query'
 import { Box, Button, Chip, Stack, Typography } from '@mui/material'
@@ -6,7 +6,7 @@ import { alpha, useTheme } from '@mui/material/styles'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { DiffLineKind, DiffLineSchema, FileService, FileStatus, type DiffLine, type FileDiff, type Hunk } from '../connect/codexel_pb.js'
-import { lineRanges, splitRows, type Range } from '../lib/diffLines.ts'
+import { lineRanges, lineSide, splitRows, type LineSide, type Range } from '../lib/diffLines.ts'
 import { languageOf, tokenize } from '../lib/highlight.ts'
 
 const statusLabel: Record<FileStatus, string> = {
@@ -47,11 +47,33 @@ const imageTypes: Record<string, string> = {
 const extension = (path: string) => path.split('.').pop()?.toLowerCase() ?? ''
 const isMarkdown = (path: string) => ['md', 'markdown'].includes(extension(path))
 
-const LineNumber = ({ n }: { n: number }) => (
-  <Box component="span" sx={{ width: 48, flexShrink: 0, textAlign: 'right', pr: 1, color: 'text.disabled', userSelect: 'none' }}>
+const LineNumber = ({ n, onClick }: { n: number; onClick?: (e: MouseEvent) => void }) => (
+  <Box
+    component="span"
+    onClick={onClick}
+    sx={{
+      width: 48,
+      flexShrink: 0,
+      textAlign: 'right',
+      pr: 1,
+      color: 'text.disabled',
+      userSelect: 'none',
+      ...(onClick && { cursor: 'pointer', '&:hover': { color: 'primary.main' } }),
+    }}
+  >
     {n > 0 ? n : ''}
   </Box>
 )
+
+// LineAnnotation attaches the elements (e.g. the comments) to the lines. The lines are identified by the side and the
+// line number in the file of the side.
+export type LineAnnotation = {
+  // onSelect is called when the line number is clicked. extend is true if Shift is pressed to select the range.
+  onSelect: (side: LineSide, line: number, extend: boolean) => void
+  selected: (side: LineSide, line: number) => boolean
+  // after returns the element shown after the line.
+  after: (side: LineSide, line: number) => ReactNode
+}
 
 // LineContent renders the highlighted tokens of the line. The tokens are split at the boundaries of the changed ranges
 // of the word diff to emphasize them.
@@ -175,6 +197,9 @@ export const FileDiffView = ({
   oldRevision,
   onHistory,
   onRestore,
+  annotation,
+  actions,
+  children,
 }: {
   file: FileDiff
   split: boolean
@@ -186,6 +211,11 @@ export const FileDiffView = ({
   onHistory?: (file: string) => void
   // onRestore discards the changes of the file. It is undefined if the revision can't be rewritten.
   onRestore?: (file: string) => void
+  annotation?: LineAnnotation
+  // actions are shown in the header.
+  actions?: ReactNode
+  // children are shown under the header.
+  children?: ReactNode
 }) => {
   const theme = useTheme()
   const lang = languageOf(file.path)
@@ -214,12 +244,37 @@ export const FileDiffView = ({
     [DiffLineKind.ADDED]: alpha(theme.palette.success.main, 0.35),
     [DiffLineKind.REMOVED]: alpha(theme.palette.error.main, 0.35),
   }
+  const selectedBackground = alpha(theme.palette.primary.main, 0.2)
+
+  const onSelect = (line: DiffLine) => {
+    if (!annotation) return undefined
+    const { side, line: n } = lineSide(line)
+    return (e: MouseEvent) => annotation.onSelect(side, n, e.shiftKey)
+  }
+  const lineBackground = (line: DiffLine) => {
+    const { side, line: n } = lineSide(line)
+    return annotation?.selected(side, n) ? selectedBackground : background[line.kind]
+  }
+  // after returns the elements after the lines. The same line is shown once even if it is on both sides of the split view.
+  const after = (...ls: (DiffLine | undefined)[]) => {
+    if (!annotation) return null
+    const keys = new Set<string>()
+    const elements: ReactNode[] = []
+    for (const l of ls) {
+      if (!l) continue
+      const { side, line: n } = lineSide(l)
+      if (keys.has(`${side}:${n}`)) continue
+      keys.add(`${side}:${n}`)
+      elements.push(<Fragment key={`${side}:${n}`}>{annotation.after(side, n)}</Fragment>)
+    }
+    return elements
+  }
 
   const cell = (line: DiffLine | undefined, ranges: Range[] | undefined, side: 'old' | 'new') => (
-    <Stack direction="row" sx={{ flex: 1, minWidth: 0, bgcolor: line ? background[line.kind] : 'action.hover' }}>
+    <Stack direction="row" sx={{ flex: 1, minWidth: 0, bgcolor: line ? lineBackground(line) : 'action.hover' }}>
       {line && (
         <>
-          <LineNumber n={side === 'old' ? line.oldLine : line.newLine} />
+          <LineNumber n={side === 'old' ? line.oldLine : line.newLine} onClick={onSelect(line)} />
           <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
             {marker[line.kind]}
           </Box>
@@ -229,15 +284,29 @@ export const FileDiffView = ({
     </Stack>
   )
 
+  const splitRow = (left: DiffLine | undefined, right: DiffLine | undefined, leftRanges: Range[] | undefined, rightRanges: Range[] | undefined, key: string | number) => (
+    <Fragment key={key}>
+      <Stack direction="row">
+        {cell(left, leftRanges, 'old')}
+        <Box sx={{ width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
+        {cell(right, rightRanges, 'new')}
+      </Stack>
+      {after(left, right)}
+    </Fragment>
+  )
+
   const row = (line: DiffLine, ranges: Range[] | undefined, key: string | number) => (
-    <Stack key={key} direction="row" sx={{ bgcolor: background[line.kind] }}>
-      <LineNumber n={line.oldLine} />
-      <LineNumber n={line.newLine} />
-      <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
-        {marker[line.kind]}
-      </Box>
-      <LineContent line={line} lang={lang} ranges={ranges} emphasis={emphasis[line.kind]} />
-    </Stack>
+    <Fragment key={key}>
+      <Stack direction="row" sx={{ bgcolor: lineBackground(line) }}>
+        <LineNumber n={line.oldLine} onClick={onSelect(line)} />
+        <LineNumber n={line.newLine} onClick={onSelect(line)} />
+        <Box component="span" sx={{ width: 16, flexShrink: 0, color: 'text.secondary', userSelect: 'none' }}>
+          {marker[line.kind]}
+        </Box>
+        <LineContent line={line} lang={lang} ranges={ranges} emphasis={emphasis[line.kind]} />
+      </Stack>
+      {after(line)}
+    </Fragment>
   )
 
   const renderGap = (index: number) => {
@@ -263,17 +332,7 @@ export const FileDiffView = ({
     for (let n = gap.start; n <= end; n++) {
       context.push(create(DiffLineSchema, { kind: DiffLineKind.CONTEXT, text: lines[n - 1] ?? '', oldLine: n + gap.delta, newLine: n }))
     }
-    return context.map((l, j) =>
-      split ? (
-        <Stack key={`g${j}`} direction="row">
-          {cell(l, undefined, 'old')}
-          <Box sx={{ width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
-          {cell(l, undefined, 'new')}
-        </Stack>
-      ) : (
-        row(l, undefined, `g${j}`)
-      ),
-    )
+    return context.map((l, j) => (split ? splitRow(l, l, undefined, undefined, `g${j}`) : row(l, undefined, `g${j}`)))
   }
 
   return (
@@ -299,7 +358,9 @@ export const FileDiffView = ({
             Restore
           </Button>
         )}
+        {actions}
       </Stack>
+      {children}
       {file.binary && imageTypes[extension(file.path)] && <ImageDiff file={file} repoPath={repoPath} revision={revision} oldRevision={oldRevision} />}
       {file.binary && !imageTypes[extension(file.path)] && (
         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
@@ -317,13 +378,7 @@ export const FileDiffView = ({
               {renderGap(i)}
               <HunkHeader hunk={h} />
               {split
-                ? splitRows(h).map((r, j) => (
-                    <Stack key={j} direction="row">
-                      {cell(r.left, r.left ? ranges[i].get(r.left) : undefined, 'old')}
-                      <Box sx={{ width: '1px', bgcolor: 'divider', flexShrink: 0 }} />
-                      {cell(r.right, r.right ? ranges[i].get(r.right) : undefined, 'new')}
-                    </Stack>
-                  ))
+                ? splitRows(h).map((r, j) => splitRow(r.left, r.right, r.left ? ranges[i].get(r.left) : undefined, r.right ? ranges[i].get(r.right) : undefined, j))
                 : h.lines.map((l, j) => row(l, ranges[i].get(l), j))}
             </Box>
           ))}

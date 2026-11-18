@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@connectrpc/connect'
 import { useQuery } from '@connectrpc/connect-query'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Alert,
   Box,
@@ -26,6 +27,7 @@ import {
   RebaseSource,
   RebaseTarget,
   RepositoryService,
+  ReviewService,
   RevisionService,
   WorkspaceService,
   type Commit,
@@ -65,6 +67,7 @@ const fileClient = createClient(FileService, transport)
 const repositoryClient = createClient(RepositoryService, transport)
 const workspaceClient = createClient(WorkspaceService, transport)
 const aliasClient = createClient(AliasService, transport)
+const reviewClient = createClient(ReviewService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
@@ -259,6 +262,19 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     setEditing({ kind: 'commit', initial: res?.description ?? '' })
   }, [commits, path])
   const undo = useCallback(() => run(() => client.undo({ path }), false), [path, run])
+  const navigate = useNavigate()
+  // startReview starts the review of the revisions in order from the oldest because the log shows the newest first.
+  const startReview = useCallback(
+    async (cs: Commit[]) => {
+      try {
+        const res = await reviewClient.startReview({ path, changeIds: cs.map((c) => c.changeId).reverse() })
+        navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
+      } catch (e) {
+        setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+      }
+    },
+    [path, navigate],
+  )
 
   const slide = useCallback(
     (direction: 'down' | 'up') => {
@@ -538,6 +554,9 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
         case 'u':
           undo()
           break
+        case 'v':
+          startReview(targets())
+          break
         case 'Escape':
           setChecked(new Set())
           break
@@ -579,6 +598,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
     undo,
     slide,
     executeMode,
+    startReview,
   ])
 
   return (
@@ -882,6 +902,7 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
                   { label: 'Set the bookmark', shortcut: 'B', run: () => setSettingBookmark(selectedCommit) },
                   { label: 'Show the evolog', shortcut: 'E', run: () => pressKey('E') },
                   { label: 'Browse the files', shortcut: 'F', run: () => pressKey('F') },
+                  { label: 'Start the review of the revisions', shortcut: 'v', run: () => startReview(targets()) },
                 ]
               : []),
             { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createClient } from '@connectrpc/connect'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import {
   Alert,
@@ -22,11 +23,14 @@ import { AgentOutput } from '../components/AgentOutput.tsx'
 import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
 import { TranscriptTimeline } from '../components/TranscriptTimeline.tsx'
-import { AgentService, AgentStatus, RevisionService, type Agent } from '../connect/codexel_pb.js'
+import { AgentService, AgentStatus, ReviewService, RevisionService, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { useTranscript } from '../hooks/useTranscript.ts'
+import { transport } from '../providers/AppProvider.tsx'
+
+const reviewClient = createClient(ReviewService, transport)
 
 const outputRefreshInterval = 1000
 // outputHistoryLines is the number of the lines including the history. herdr captures the history only while the
@@ -82,6 +86,8 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
   const { split, preview } = useDiffNavigation(detailRef)
   const commits = data?.commits ?? []
   const selected = commits.find((c) => c.changeId === selectedChange) ?? commits[0]
+  const navigate = useNavigate()
+  const [reviewError, setReviewError] = useState<string>()
 
   if (error) {
     return <Alert severity="error">{error.message}</Alert>
@@ -93,9 +99,30 @@ const AgentCommits = ({ agent }: { agent: Agent }) => {
       </Typography>
     )
   }
+  // startReview starts the review of all commits in order from the oldest because the list shows the newest first.
+  const startReview = async () => {
+    if (!path) return
+    try {
+      const res = await reviewClient.startReview({ path, changeIds: commits.map((c) => c.changeId).reverse() })
+      navigate({ to: '/reviews/$reviewId', params: { reviewId: res.review!.id } })
+    } catch (e) {
+      setReviewError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
   return (
     <Stack direction="row" sx={{ height: '100%' }}>
       <List dense sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+        <Box sx={{ px: 1, pb: 1 }}>
+          <Button size="small" variant="outlined" fullWidth disabled={!path || commits.length === 0} onClick={startReview}>
+            Review these commits
+          </Button>
+          {reviewError && (
+            <Alert severity="error" onClose={() => setReviewError(undefined)} sx={{ mt: 1 }}>
+              {reviewError}
+            </Alert>
+          )}
+        </Box>
         {commits.map((c) => (
           <ListItemButton key={c.commitId} selected={c === selected} onClick={() => setSelectedChange(c.changeId)}>
             <ListItemText

@@ -36,6 +36,9 @@ export const Layout = () => {
           <Button color="inherit" component={Link} to="/repositories">
             Repositories
           </Button>
+          <Button color="inherit" component={Link} to="/reviews">
+            Reviews
+          </Button>
           <Box sx={{ flex: 1 }} />
           <IconButton color="inherit" onClick={toggle} title="Toggle the theme (t)">
             {dark ? <LightModeIcon /> : <DarkModeIcon />}

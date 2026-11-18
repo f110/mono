@@ -95,3 +95,10 @@ export const lineRanges = (hunk: Hunk): Map<DiffLine, Range[]> => {
   )
   return ranges
 }
+
+// LineSide is the side of the file which the line belongs to. The removed lines belong to the old file and the others
+// belong to the new file.
+export type LineSide = 'old' | 'new'
+
+export const lineSide = (line: DiffLine): { side: LineSide; line: number } =>
+  line.kind === DiffLineKind.REMOVED ? { side: 'old', line: line.oldLine } : { side: 'new', line: line.newLine }

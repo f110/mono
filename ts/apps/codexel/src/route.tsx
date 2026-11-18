@@ -2,6 +2,8 @@ import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/
 import { Layout } from './components/Layout.tsx'
 import { AgentsPage } from './pages/AgentsPage.tsx'
 import { RepositoriesPage } from './pages/RepositoriesPage.tsx'
+import { ReviewPage } from './pages/ReviewPage.tsx'
+import { ReviewsPage } from './pages/ReviewsPage.tsx'
 
 const rootRoute = createRootRoute({
   component: Layout,
@@ -34,7 +36,19 @@ const repositoriesRoute = createRoute({
   component: RepositoriesPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, agentsRoute, repositoriesRoute])
+const reviewsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reviews',
+  component: ReviewsPage,
+})
+
+const reviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/reviews/$reviewId',
+  component: ReviewPage,
+})
+
+const routeTree = rootRoute.addChildren([indexRoute, agentsRoute, repositoriesRoute, reviewsRoute, reviewRoute])
 
 export const router = createRouter({ routeTree })
 
