@@ -4,6 +4,7 @@ import { Alert, Box, Button, IconButton, Stack, Tab, Tabs, TextField, Typography
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { OpenRepositoryDialog } from '../components/OpenRepositoryDialog.tsx'
+import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { RevisionGraph } from '../components/RevisionGraph.tsx'
 import { RepositoryService, RevisionService } from '../connect/codexel_pb.js'
 import { useOperation } from '../hooks/useOperation.ts'
@@ -22,6 +23,7 @@ const RepositoryView = ({ path }: { path: string }) => {
   const operation = useOperation(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const rows = data?.rows ?? []
+  const selectedCommit = rows[selected]?.commit
 
   useEffect(() => {
     if (operation) {
@@ -87,9 +89,14 @@ const RepositoryView = ({ path }: { path: string }) => {
         />
       </Box>
       {error && <Alert severity="error" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{error.message}</Alert>}
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        <RevisionGraph rows={rows} selected={selected} onSelect={setSelected} />
-      </Box>
+      <Stack direction="row" sx={{ flex: 1, minHeight: 0 }}>
+        <Box sx={{ width: '45%', flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+          <RevisionGraph rows={rows} selected={selected} onSelect={setSelected} />
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+          {selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} />}
+        </Box>
+      </Stack>
     </Stack>
   )
 }

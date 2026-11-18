@@ -89,6 +89,8 @@ type Commit struct {
 	LocalBookmarks     []string         `json:"local_bookmarks"`
 	RemoteBookmarks    []RemoteBookmark `json:"remote_bookmarks"`
 	Trailers           []Trailer        `json:"trailers"`
+	// FullDescription is the whole description. It is set only by Show.
+	FullDescription string `json:"full_description"`
 }
 
 // GraphLine is a line of the graph of jj log. Gutter is the characters of the graph (e.g. "│ ○  ").
@@ -109,10 +111,15 @@ type LogRow struct {
 // fieldSeparator separates the gutter from the commit in the output of jj log.
 const fieldSeparator = "\x1F"
 
-// logTemplate outputs the commit as JSON after fieldSeparator. The lists are built by join because jj can't
-// serialize the list of the templates.
-const logTemplate = `"\x1F{" ++ ` +
-	`"\"change_id\":" ++ json(change_id.short()) ++ ` +
+// logTemplate outputs the commit as JSON after fieldSeparator.
+const logTemplate = `"\x1F{" ++ ` + commitFields + ` ++ "}\n"`
+
+// showTemplate outputs the commit as JSON with the whole description.
+const showTemplate = `"{" ++ ` + commitFields + ` ++ ",\"full_description\":" ++ json(description) ++ "}"`
+
+// commitFields is the fields of Commit in JSON. The lists are built by join because jj can't serialize the list of
+// the templates.
+const commitFields = `"\"change_id\":" ++ json(change_id.short()) ++ ` +
 	`",\"change_prefix\":" ++ json(change_id.shortest().prefix()) ++ ` +
 	`",\"commit_id\":" ++ json(commit_id.short()) ++ ` +
 	`",\"commit_prefix\":" ++ json(commit_id.shortest().prefix()) ++ ` +
@@ -130,8 +137,7 @@ const logTemplate = `"\x1F{" ++ ` +
 	`",\"parents\":[" ++ parents.map(|x| json(x.commit_id().short())).join(",") ++ "]" ++ ` +
 	`",\"local_bookmarks\":[" ++ local_bookmarks.map(|x| json(x.name())).join(",") ++ "]" ++ ` +
 	`",\"remote_bookmarks\":[" ++ remote_bookmarks.map(|x| "[" ++ json(x.name()) ++ "," ++ json(x.remote()) ++ "]").join(",") ++ "]" ++ ` +
-	`",\"trailers\":[" ++ trailers.map(|x| "[" ++ json(x.key()) ++ "," ++ json(x.value()) ++ "]").join(",") ++ "]" ++ ` +
-	`"}\n"`
+	`",\"trailers\":[" ++ trailers.map(|x| "[" ++ json(x.key()) ++ "," ++ json(x.value()) ++ "]").join(",") ++ "]"`
 
 // logArgs returns the arguments of jj log. The style of the graph is fixed because the parser depends on it.
 // --ignore-working-copy avoids taking the snapshot of the working copy on every read.
@@ -190,6 +196,24 @@ func (r *Repository) Log(ctx context.Context, revset string, limit int) ([]*LogR
 		return nil, err
 	}
 	return parseLog(out)
+}
+
+// Show returns the commit of the revision with the whole description. rev must be a single revision.
+func (r *Repository) Show(ctx context.Context, rev string) (*Commit, error) {
+	out, err := run(ctx, r.root, "log", "--no-graph", "--color", "never", "--ignore-working-copy", "-r", rev, "-T", showTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return parseShow(out)
+}
+
+func parseShow(out []byte) (*Commit, error) {
+	c := &Commit{}
+	if err := json.Unmarshal(out, c); err != nil {
+		return nil, xerrors.WithMessagef(err, "failed to parse the commit: %s", out)
+	}
+	c.RemoteBookmarks = slices.DeleteFunc(c.RemoteBookmarks, func(b RemoteBookmark) bool { return b.Remote == "git" })
+	return c, nil
 }
 
 // OperationHeadsDir returns the directory of the heads of the operations. The name of the file in the directory is the

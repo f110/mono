@@ -1,0 +1,37 @@
+diff --git a/add.txt b/add.txt
+new file mode 100644
+index 0000000000..1111111111
+--- /dev/null
++++ b/add.txt
+@@ -0,0 +1,1 @@ added
++added
+diff --git a/bin.dat b/bin.dat
+new file mode 100644
+index 0000000000..1111111111
+Binary files /dev/null and b/bin.dat differ
+diff --git a/del.txt b/del.txt
+deleted file mode 100644
+index 0000000000..1111111111
+--- a/del.txt
++++ /dev/null
+@@ -1,1 +0,0 @@ gone
+-gone
+diff --git a/mod.txt b/mod.txt
+index 0000000000..1111111111 100644
+--- a/mod.txt
++++ b/mod.txt
+@@ -1,8 +1,9 @@ a
+ a
+-b
++B
+ c
+ d
+ e
+ f
+ g
+ h
++new
+\ No newline at end of file
+diff --git a/old.txt b/new.txt
+rename from old.txt
+rename to new.txt

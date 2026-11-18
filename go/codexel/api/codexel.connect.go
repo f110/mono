@@ -71,6 +71,9 @@ const (
 	RepositoryServiceWatchRepositoryProcedure = "/mono.codexel.RepositoryService/WatchRepository"
 	// RevisionServiceLogProcedure is the fully-qualified name of the RevisionService's Log RPC.
 	RevisionServiceLogProcedure = "/mono.codexel.RevisionService/Log"
+	// RevisionServiceGetRevisionProcedure is the fully-qualified name of the RevisionService's
+	// GetRevision RPC.
+	RevisionServiceGetRevisionProcedure = "/mono.codexel.RevisionService/GetRevision"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -502,6 +505,7 @@ func (UnimplementedRepositoryServiceHandler) WatchRepository(context.Context, *c
 // RevisionServiceClient is a client for the mono.codexel.RevisionService service.
 type RevisionServiceClient interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
+	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -521,12 +525,19 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("Log")),
 			connect.WithClientOptions(opts...),
 		),
+		getRevision: connect.NewClient[RequestGetRevision, ResponseGetRevision](
+			httpClient,
+			baseURL+RevisionServiceGetRevisionProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // revisionServiceClient implements RevisionServiceClient.
 type revisionServiceClient struct {
-	log *connect.Client[RequestLog, ResponseLog]
+	log         *connect.Client[RequestLog, ResponseLog]
+	getRevision *connect.Client[RequestGetRevision, ResponseGetRevision]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -534,9 +545,15 @@ func (c *revisionServiceClient) Log(ctx context.Context, req *connect.Request[Re
 	return c.log.CallUnary(ctx, req)
 }
 
+// GetRevision calls mono.codexel.RevisionService.GetRevision.
+func (c *revisionServiceClient) GetRevision(ctx context.Context, req *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
+	return c.getRevision.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
+	GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -552,10 +569,18 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("Log")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceGetRevisionHandler := connect.NewUnaryHandler(
+		RevisionServiceGetRevisionProcedure,
+		svc.GetRevision,
+		connect.WithSchema(revisionServiceMethods.ByName("GetRevision")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
 			revisionServiceLogHandler.ServeHTTP(w, r)
+		case RevisionServiceGetRevisionProcedure:
+			revisionServiceGetRevisionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -567,4 +592,8 @@ type UnimplementedRevisionServiceHandler struct{}
 
 func (UnimplementedRevisionServiceHandler) Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Log is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) GetRevision(context.Context, *connect.Request[RequestGetRevision]) (*connect.Response[ResponseGetRevision], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.GetRevision is not implemented"))
 }

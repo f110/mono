@@ -792,6 +792,188 @@ export declare type ResponseLog = Message<"mono.codexel.ResponseLog"> & {
 export declare const ResponseLogSchema: GenMessage<ResponseLog>;
 
 /**
+ * @generated from message mono.codexel.DiffLine
+ */
+export declare type DiffLine = Message<"mono.codexel.DiffLine"> & {
+  /**
+   * @generated from field: mono.codexel.DiffLineKind kind = 1;
+   */
+  kind: DiffLineKind;
+
+  /**
+   * @generated from field: string text = 2;
+   */
+  text: string;
+
+  /**
+   * old_line and new_line are the line numbers in the old and the new file. 0 means the line doesn't exist in it.
+   *
+   * @generated from field: int32 old_line = 3;
+   */
+  oldLine: number;
+
+  /**
+   * @generated from field: int32 new_line = 4;
+   */
+  newLine: number;
+
+  /**
+   * no_newline is true if the line is the end of the file without the newline.
+   *
+   * @generated from field: bool no_newline = 5;
+   */
+  noNewline: boolean;
+};
+
+/**
+ * Describes the message mono.codexel.DiffLine.
+ * Use `create(DiffLineSchema)` to create a new message.
+ */
+export declare const DiffLineSchema: GenMessage<DiffLine>;
+
+/**
+ * @generated from message mono.codexel.Hunk
+ */
+export declare type Hunk = Message<"mono.codexel.Hunk"> & {
+  /**
+   * @generated from field: int32 old_start = 1;
+   */
+  oldStart: number;
+
+  /**
+   * @generated from field: int32 old_lines = 2;
+   */
+  oldLines: number;
+
+  /**
+   * @generated from field: int32 new_start = 3;
+   */
+  newStart: number;
+
+  /**
+   * @generated from field: int32 new_lines = 4;
+   */
+  newLines: number;
+
+  /**
+   * section is the text after the range of the header of the hunk.
+   *
+   * @generated from field: string section = 5;
+   */
+  section: string;
+
+  /**
+   * @generated from field: repeated mono.codexel.DiffLine lines = 6;
+   */
+  lines: DiffLine[];
+};
+
+/**
+ * Describes the message mono.codexel.Hunk.
+ * Use `create(HunkSchema)` to create a new message.
+ */
+export declare const HunkSchema: GenMessage<Hunk>;
+
+/**
+ * @generated from message mono.codexel.FileDiff
+ */
+export declare type FileDiff = Message<"mono.codexel.FileDiff"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * old_path is the path before the rename or the copy.
+   *
+   * @generated from field: string old_path = 2;
+   */
+  oldPath: string;
+
+  /**
+   * @generated from field: mono.codexel.FileStatus status = 3;
+   */
+  status: FileStatus;
+
+  /**
+   * @generated from field: bool binary = 4;
+   */
+  binary: boolean;
+
+  /**
+   * @generated from field: repeated mono.codexel.Hunk hunks = 5;
+   */
+  hunks: Hunk[];
+
+  /**
+   * @generated from field: int32 added = 6;
+   */
+  added: number;
+
+  /**
+   * @generated from field: int32 removed = 7;
+   */
+  removed: number;
+};
+
+/**
+ * Describes the message mono.codexel.FileDiff.
+ * Use `create(FileDiffSchema)` to create a new message.
+ */
+export declare const FileDiffSchema: GenMessage<FileDiff>;
+
+/**
+ * @generated from message mono.codexel.RequestGetRevision
+ */
+export declare type RequestGetRevision = Message<"mono.codexel.RequestGetRevision"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * revision is the commit ID because the change ID may be divergent.
+   *
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestGetRevision.
+ * Use `create(RequestGetRevisionSchema)` to create a new message.
+ */
+export declare const RequestGetRevisionSchema: GenMessage<RequestGetRevision>;
+
+/**
+ * @generated from message mono.codexel.ResponseGetRevision
+ */
+export declare type ResponseGetRevision = Message<"mono.codexel.ResponseGetRevision"> & {
+  /**
+   * @generated from field: mono.codexel.Commit commit = 1;
+   */
+  commit?: Commit;
+
+  /**
+   * description is the whole description.
+   *
+   * @generated from field: string description = 2;
+   */
+  description: string;
+
+  /**
+   * @generated from field: repeated mono.codexel.FileDiff files = 3;
+   */
+  files: FileDiff[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseGetRevision.
+ * Use `create(ResponseGetRevisionSchema)` to create a new message.
+ */
+export declare const ResponseGetRevisionSchema: GenMessage<ResponseGetRevision>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -830,6 +1012,76 @@ export enum AgentStatus {
  * Describes the enum mono.codexel.AgentStatus.
  */
 export declare const AgentStatusSchema: GenEnum<AgentStatus>;
+
+/**
+ * @generated from enum mono.codexel.FileStatus
+ */
+export enum FileStatus {
+  /**
+   * @generated from enum value: FILE_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: FILE_STATUS_MODIFIED = 1;
+   */
+  MODIFIED = 1,
+
+  /**
+   * @generated from enum value: FILE_STATUS_ADDED = 2;
+   */
+  ADDED = 2,
+
+  /**
+   * @generated from enum value: FILE_STATUS_DELETED = 3;
+   */
+  DELETED = 3,
+
+  /**
+   * @generated from enum value: FILE_STATUS_RENAMED = 4;
+   */
+  RENAMED = 4,
+
+  /**
+   * @generated from enum value: FILE_STATUS_COPIED = 5;
+   */
+  COPIED = 5,
+}
+
+/**
+ * Describes the enum mono.codexel.FileStatus.
+ */
+export declare const FileStatusSchema: GenEnum<FileStatus>;
+
+/**
+ * @generated from enum mono.codexel.DiffLineKind
+ */
+export enum DiffLineKind {
+  /**
+   * @generated from enum value: DIFF_LINE_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: DIFF_LINE_KIND_CONTEXT = 1;
+   */
+  CONTEXT = 1,
+
+  /**
+   * @generated from enum value: DIFF_LINE_KIND_ADDED = 2;
+   */
+  ADDED = 2,
+
+  /**
+   * @generated from enum value: DIFF_LINE_KIND_REMOVED = 3;
+   */
+  REMOVED = 3,
+}
+
+/**
+ * Describes the enum mono.codexel.DiffLineKind.
+ */
+export declare const DiffLineKindSchema: GenEnum<DiffLineKind>;
 
 /**
  * AgentService provides the coding agents running in herdr.
@@ -979,6 +1231,16 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestLogSchema;
     output: typeof ResponseLogSchema;
+  },
+  /**
+   * GetRevision returns the commit with the whole description and the diff of the revision.
+   *
+   * @generated from rpc mono.codexel.RevisionService.GetRevision
+   */
+  getRevision: {
+    methodKind: "unary";
+    input: typeof RequestGetRevisionSchema;
+    output: typeof ResponseGetRevisionSchema;
   },
 }>;
 

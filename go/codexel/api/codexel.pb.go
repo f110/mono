@@ -74,6 +74,106 @@ func (x AgentStatus) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
+type FileStatus int32
+
+const (
+	FileStatus_FILE_STATUS_UNSPECIFIED FileStatus = 0
+	FileStatus_FILE_STATUS_MODIFIED    FileStatus = 1
+	FileStatus_FILE_STATUS_ADDED       FileStatus = 2
+	FileStatus_FILE_STATUS_DELETED     FileStatus = 3
+	FileStatus_FILE_STATUS_RENAMED     FileStatus = 4
+	FileStatus_FILE_STATUS_COPIED      FileStatus = 5
+)
+
+// Enum value maps for FileStatus.
+var (
+	FileStatus_name = map[int32]string{
+		0: "FILE_STATUS_UNSPECIFIED",
+		1: "FILE_STATUS_MODIFIED",
+		2: "FILE_STATUS_ADDED",
+		3: "FILE_STATUS_DELETED",
+		4: "FILE_STATUS_RENAMED",
+		5: "FILE_STATUS_COPIED",
+	}
+	FileStatus_value = map[string]int32{
+		"FILE_STATUS_UNSPECIFIED": 0,
+		"FILE_STATUS_MODIFIED":    1,
+		"FILE_STATUS_ADDED":       2,
+		"FILE_STATUS_DELETED":     3,
+		"FILE_STATUS_RENAMED":     4,
+		"FILE_STATUS_COPIED":      5,
+	}
+)
+
+func (x FileStatus) Enum() *FileStatus {
+	p := new(FileStatus)
+	*p = x
+	return p
+}
+
+func (x FileStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FileStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_codexel_codexel_proto_enumTypes[1].Descriptor()
+}
+
+func (FileStatus) Type() protoreflect.EnumType {
+	return &file_proto_codexel_codexel_proto_enumTypes[1]
+}
+
+func (x FileStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+type DiffLineKind int32
+
+const (
+	DiffLineKind_DIFF_LINE_KIND_UNSPECIFIED DiffLineKind = 0
+	DiffLineKind_DIFF_LINE_KIND_CONTEXT     DiffLineKind = 1
+	DiffLineKind_DIFF_LINE_KIND_ADDED       DiffLineKind = 2
+	DiffLineKind_DIFF_LINE_KIND_REMOVED     DiffLineKind = 3
+)
+
+// Enum value maps for DiffLineKind.
+var (
+	DiffLineKind_name = map[int32]string{
+		0: "DIFF_LINE_KIND_UNSPECIFIED",
+		1: "DIFF_LINE_KIND_CONTEXT",
+		2: "DIFF_LINE_KIND_ADDED",
+		3: "DIFF_LINE_KIND_REMOVED",
+	}
+	DiffLineKind_value = map[string]int32{
+		"DIFF_LINE_KIND_UNSPECIFIED": 0,
+		"DIFF_LINE_KIND_CONTEXT":     1,
+		"DIFF_LINE_KIND_ADDED":       2,
+		"DIFF_LINE_KIND_REMOVED":     3,
+	}
+)
+
+func (x DiffLineKind) Enum() *DiffLineKind {
+	p := new(DiffLineKind)
+	*p = x
+	return p
+}
+
+func (x DiffLineKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (DiffLineKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_codexel_codexel_proto_enumTypes[2].Descriptor()
+}
+
+func (DiffLineKind) Type() protoreflect.EnumType {
+	return &file_proto_codexel_codexel_proto_enumTypes[2]
+}
+
+func (x DiffLineKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
 type Agent struct {
 	state                     protoimpl.MessageState `protogen:"opaque.v1"`
 	xxx_hidden_PaneId         *string                `protobuf:"bytes,1,opt,name=pane_id,json=paneId"`
@@ -3648,6 +3748,899 @@ func (b0 ResponseLog_builder) Build() *ResponseLog {
 	return m0
 }
 
+type DiffLine struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Kind        DiffLineKind           `protobuf:"varint,1,opt,name=kind,enum=mono.codexel.DiffLineKind"`
+	xxx_hidden_Text        *string                `protobuf:"bytes,2,opt,name=text"`
+	xxx_hidden_OldLine     int32                  `protobuf:"varint,3,opt,name=old_line,json=oldLine"`
+	xxx_hidden_NewLine     int32                  `protobuf:"varint,4,opt,name=new_line,json=newLine"`
+	xxx_hidden_NoNewline   bool                   `protobuf:"varint,5,opt,name=no_newline,json=noNewline"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *DiffLine) Reset() {
+	*x = DiffLine{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiffLine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiffLine) ProtoMessage() {}
+
+func (x *DiffLine) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *DiffLine) GetKind() DiffLineKind {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 0) {
+			return x.xxx_hidden_Kind
+		}
+	}
+	return DiffLineKind_DIFF_LINE_KIND_UNSPECIFIED
+}
+
+func (x *DiffLine) GetText() string {
+	if x != nil {
+		if x.xxx_hidden_Text != nil {
+			return *x.xxx_hidden_Text
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *DiffLine) GetOldLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_OldLine
+	}
+	return 0
+}
+
+func (x *DiffLine) GetNewLine() int32 {
+	if x != nil {
+		return x.xxx_hidden_NewLine
+	}
+	return 0
+}
+
+func (x *DiffLine) GetNoNewline() bool {
+	if x != nil {
+		return x.xxx_hidden_NoNewline
+	}
+	return false
+}
+
+func (x *DiffLine) SetKind(v DiffLineKind) {
+	x.xxx_hidden_Kind = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 5)
+}
+
+func (x *DiffLine) SetText(v string) {
+	x.xxx_hidden_Text = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 5)
+}
+
+func (x *DiffLine) SetOldLine(v int32) {
+	x.xxx_hidden_OldLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 5)
+}
+
+func (x *DiffLine) SetNewLine(v int32) {
+	x.xxx_hidden_NewLine = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
+}
+
+func (x *DiffLine) SetNoNewline(v bool) {
+	x.xxx_hidden_NoNewline = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
+}
+
+func (x *DiffLine) HasKind() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *DiffLine) HasText() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *DiffLine) HasOldLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *DiffLine) HasNewLine() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *DiffLine) HasNoNewline() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *DiffLine) ClearKind() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Kind = DiffLineKind_DIFF_LINE_KIND_UNSPECIFIED
+}
+
+func (x *DiffLine) ClearText() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Text = nil
+}
+
+func (x *DiffLine) ClearOldLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_OldLine = 0
+}
+
+func (x *DiffLine) ClearNewLine() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_NewLine = 0
+}
+
+func (x *DiffLine) ClearNoNewline() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_NoNewline = false
+}
+
+type DiffLine_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Kind      *DiffLineKind
+	Text      *string
+	OldLine   *int32
+	NewLine   *int32
+	NoNewline *bool
+}
+
+func (b0 DiffLine_builder) Build() *DiffLine {
+	m0 := &DiffLine{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Kind != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 5)
+		x.xxx_hidden_Kind = *b.Kind
+	}
+	if b.Text != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 5)
+		x.xxx_hidden_Text = b.Text
+	}
+	if b.OldLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 5)
+		x.xxx_hidden_OldLine = *b.OldLine
+	}
+	if b.NewLine != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
+		x.xxx_hidden_NewLine = *b.NewLine
+	}
+	if b.NoNewline != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
+		x.xxx_hidden_NoNewline = *b.NoNewline
+	}
+	return m0
+}
+
+type Hunk struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_OldStart    int32                  `protobuf:"varint,1,opt,name=old_start,json=oldStart"`
+	xxx_hidden_OldLines    int32                  `protobuf:"varint,2,opt,name=old_lines,json=oldLines"`
+	xxx_hidden_NewStart    int32                  `protobuf:"varint,3,opt,name=new_start,json=newStart"`
+	xxx_hidden_NewLines    int32                  `protobuf:"varint,4,opt,name=new_lines,json=newLines"`
+	xxx_hidden_Section     *string                `protobuf:"bytes,5,opt,name=section"`
+	xxx_hidden_Lines       *[]*DiffLine           `protobuf:"bytes,6,rep,name=lines"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *Hunk) Reset() {
+	*x = Hunk{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Hunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Hunk) ProtoMessage() {}
+
+func (x *Hunk) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *Hunk) GetOldStart() int32 {
+	if x != nil {
+		return x.xxx_hidden_OldStart
+	}
+	return 0
+}
+
+func (x *Hunk) GetOldLines() int32 {
+	if x != nil {
+		return x.xxx_hidden_OldLines
+	}
+	return 0
+}
+
+func (x *Hunk) GetNewStart() int32 {
+	if x != nil {
+		return x.xxx_hidden_NewStart
+	}
+	return 0
+}
+
+func (x *Hunk) GetNewLines() int32 {
+	if x != nil {
+		return x.xxx_hidden_NewLines
+	}
+	return 0
+}
+
+func (x *Hunk) GetSection() string {
+	if x != nil {
+		if x.xxx_hidden_Section != nil {
+			return *x.xxx_hidden_Section
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *Hunk) GetLines() []*DiffLine {
+	if x != nil {
+		if x.xxx_hidden_Lines != nil {
+			return *x.xxx_hidden_Lines
+		}
+	}
+	return nil
+}
+
+func (x *Hunk) SetOldStart(v int32) {
+	x.xxx_hidden_OldStart = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 6)
+}
+
+func (x *Hunk) SetOldLines(v int32) {
+	x.xxx_hidden_OldLines = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 6)
+}
+
+func (x *Hunk) SetNewStart(v int32) {
+	x.xxx_hidden_NewStart = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 6)
+}
+
+func (x *Hunk) SetNewLines(v int32) {
+	x.xxx_hidden_NewLines = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 6)
+}
+
+func (x *Hunk) SetSection(v string) {
+	x.xxx_hidden_Section = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 6)
+}
+
+func (x *Hunk) SetLines(v []*DiffLine) {
+	x.xxx_hidden_Lines = &v
+}
+
+func (x *Hunk) HasOldStart() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *Hunk) HasOldLines() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *Hunk) HasNewStart() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *Hunk) HasNewLines() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *Hunk) HasSection() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *Hunk) ClearOldStart() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_OldStart = 0
+}
+
+func (x *Hunk) ClearOldLines() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_OldLines = 0
+}
+
+func (x *Hunk) ClearNewStart() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_NewStart = 0
+}
+
+func (x *Hunk) ClearNewLines() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_NewLines = 0
+}
+
+func (x *Hunk) ClearSection() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Section = nil
+}
+
+type Hunk_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	OldStart *int32
+	OldLines *int32
+	NewStart *int32
+	NewLines *int32
+	Section  *string
+	Lines    []*DiffLine
+}
+
+func (b0 Hunk_builder) Build() *Hunk {
+	m0 := &Hunk{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.OldStart != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 6)
+		x.xxx_hidden_OldStart = *b.OldStart
+	}
+	if b.OldLines != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 6)
+		x.xxx_hidden_OldLines = *b.OldLines
+	}
+	if b.NewStart != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 6)
+		x.xxx_hidden_NewStart = *b.NewStart
+	}
+	if b.NewLines != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 6)
+		x.xxx_hidden_NewLines = *b.NewLines
+	}
+	if b.Section != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 6)
+		x.xxx_hidden_Section = b.Section
+	}
+	x.xxx_hidden_Lines = &b.Lines
+	return m0
+}
+
+type FileDiff struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_OldPath     *string                `protobuf:"bytes,2,opt,name=old_path,json=oldPath"`
+	xxx_hidden_Status      FileStatus             `protobuf:"varint,3,opt,name=status,enum=mono.codexel.FileStatus"`
+	xxx_hidden_Binary      bool                   `protobuf:"varint,4,opt,name=binary"`
+	xxx_hidden_Hunks       *[]*Hunk               `protobuf:"bytes,5,rep,name=hunks"`
+	xxx_hidden_Added       int32                  `protobuf:"varint,6,opt,name=added"`
+	xxx_hidden_Removed     int32                  `protobuf:"varint,7,opt,name=removed"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *FileDiff) Reset() {
+	*x = FileDiff{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FileDiff) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FileDiff) ProtoMessage() {}
+
+func (x *FileDiff) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *FileDiff) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FileDiff) GetOldPath() string {
+	if x != nil {
+		if x.xxx_hidden_OldPath != nil {
+			return *x.xxx_hidden_OldPath
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *FileDiff) GetStatus() FileStatus {
+	if x != nil {
+		if protoimpl.X.Present(&(x.XXX_presence[0]), 2) {
+			return x.xxx_hidden_Status
+		}
+	}
+	return FileStatus_FILE_STATUS_UNSPECIFIED
+}
+
+func (x *FileDiff) GetBinary() bool {
+	if x != nil {
+		return x.xxx_hidden_Binary
+	}
+	return false
+}
+
+func (x *FileDiff) GetHunks() []*Hunk {
+	if x != nil {
+		if x.xxx_hidden_Hunks != nil {
+			return *x.xxx_hidden_Hunks
+		}
+	}
+	return nil
+}
+
+func (x *FileDiff) GetAdded() int32 {
+	if x != nil {
+		return x.xxx_hidden_Added
+	}
+	return 0
+}
+
+func (x *FileDiff) GetRemoved() int32 {
+	if x != nil {
+		return x.xxx_hidden_Removed
+	}
+	return 0
+}
+
+func (x *FileDiff) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 7)
+}
+
+func (x *FileDiff) SetOldPath(v string) {
+	x.xxx_hidden_OldPath = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 7)
+}
+
+func (x *FileDiff) SetStatus(v FileStatus) {
+	x.xxx_hidden_Status = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 7)
+}
+
+func (x *FileDiff) SetBinary(v bool) {
+	x.xxx_hidden_Binary = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 7)
+}
+
+func (x *FileDiff) SetHunks(v []*Hunk) {
+	x.xxx_hidden_Hunks = &v
+}
+
+func (x *FileDiff) SetAdded(v int32) {
+	x.xxx_hidden_Added = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 7)
+}
+
+func (x *FileDiff) SetRemoved(v int32) {
+	x.xxx_hidden_Removed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 7)
+}
+
+func (x *FileDiff) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *FileDiff) HasOldPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *FileDiff) HasStatus() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *FileDiff) HasBinary() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *FileDiff) HasAdded() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *FileDiff) HasRemoved() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *FileDiff) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *FileDiff) ClearOldPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_OldPath = nil
+}
+
+func (x *FileDiff) ClearStatus() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Status = FileStatus_FILE_STATUS_UNSPECIFIED
+}
+
+func (x *FileDiff) ClearBinary() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Binary = false
+}
+
+func (x *FileDiff) ClearAdded() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Added = 0
+}
+
+func (x *FileDiff) ClearRemoved() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Removed = 0
+}
+
+type FileDiff_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path    *string
+	OldPath *string
+	Status  *FileStatus
+	Binary  *bool
+	Hunks   []*Hunk
+	Added   *int32
+	Removed *int32
+}
+
+func (b0 FileDiff_builder) Build() *FileDiff {
+	m0 := &FileDiff{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 7)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.OldPath != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 7)
+		x.xxx_hidden_OldPath = b.OldPath
+	}
+	if b.Status != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 7)
+		x.xxx_hidden_Status = *b.Status
+	}
+	if b.Binary != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 7)
+		x.xxx_hidden_Binary = *b.Binary
+	}
+	x.xxx_hidden_Hunks = &b.Hunks
+	if b.Added != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 7)
+		x.xxx_hidden_Added = *b.Added
+	}
+	if b.Removed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 7)
+		x.xxx_hidden_Removed = *b.Removed
+	}
+	return m0
+}
+
+type RequestGetRevision struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Path        *string                `protobuf:"bytes,1,opt,name=path"`
+	xxx_hidden_Revision    *string                `protobuf:"bytes,2,opt,name=revision"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *RequestGetRevision) Reset() {
+	*x = RequestGetRevision{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestGetRevision) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestGetRevision) ProtoMessage() {}
+
+func (x *RequestGetRevision) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *RequestGetRevision) GetPath() string {
+	if x != nil {
+		if x.xxx_hidden_Path != nil {
+			return *x.xxx_hidden_Path
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestGetRevision) GetRevision() string {
+	if x != nil {
+		if x.xxx_hidden_Revision != nil {
+			return *x.xxx_hidden_Revision
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *RequestGetRevision) SetPath(v string) {
+	x.xxx_hidden_Path = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 2)
+}
+
+func (x *RequestGetRevision) SetRevision(v string) {
+	x.xxx_hidden_Revision = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *RequestGetRevision) HasPath() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *RequestGetRevision) HasRevision() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *RequestGetRevision) ClearPath() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Path = nil
+}
+
+func (x *RequestGetRevision) ClearRevision() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Revision = nil
+}
+
+type RequestGetRevision_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Path     *string
+	Revision *string
+}
+
+func (b0 RequestGetRevision_builder) Build() *RequestGetRevision {
+	m0 := &RequestGetRevision{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Path != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 2)
+		x.xxx_hidden_Path = b.Path
+	}
+	if b.Revision != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_Revision = b.Revision
+	}
+	return m0
+}
+
+type ResponseGetRevision struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Commit      *Commit                `protobuf:"bytes,1,opt,name=commit"`
+	xxx_hidden_Description *string                `protobuf:"bytes,2,opt,name=description"`
+	xxx_hidden_Files       *[]*FileDiff           `protobuf:"bytes,3,rep,name=files"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ResponseGetRevision) Reset() {
+	*x = ResponseGetRevision{}
+	mi := &file_proto_codexel_codexel_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResponseGetRevision) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResponseGetRevision) ProtoMessage() {}
+
+func (x *ResponseGetRevision) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_codexel_codexel_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *ResponseGetRevision) GetCommit() *Commit {
+	if x != nil {
+		return x.xxx_hidden_Commit
+	}
+	return nil
+}
+
+func (x *ResponseGetRevision) GetDescription() string {
+	if x != nil {
+		if x.xxx_hidden_Description != nil {
+			return *x.xxx_hidden_Description
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *ResponseGetRevision) GetFiles() []*FileDiff {
+	if x != nil {
+		if x.xxx_hidden_Files != nil {
+			return *x.xxx_hidden_Files
+		}
+	}
+	return nil
+}
+
+func (x *ResponseGetRevision) SetCommit(v *Commit) {
+	x.xxx_hidden_Commit = v
+}
+
+func (x *ResponseGetRevision) SetDescription(v string) {
+	x.xxx_hidden_Description = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
+}
+
+func (x *ResponseGetRevision) SetFiles(v []*FileDiff) {
+	x.xxx_hidden_Files = &v
+}
+
+func (x *ResponseGetRevision) HasCommit() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Commit != nil
+}
+
+func (x *ResponseGetRevision) HasDescription() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *ResponseGetRevision) ClearCommit() {
+	x.xxx_hidden_Commit = nil
+}
+
+func (x *ResponseGetRevision) ClearDescription() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Description = nil
+}
+
+type ResponseGetRevision_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Commit      *Commit
+	Description *string
+	Files       []*FileDiff
+}
+
+func (b0 ResponseGetRevision_builder) Build() *ResponseGetRevision {
+	m0 := &ResponseGetRevision{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Commit = b.Commit
+	if b.Description != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Description = b.Description
+	}
+	x.xxx_hidden_Files = &b.Files
+	return m0
+}
+
 var File_proto_codexel_codexel_proto protoreflect.FileDescriptor
 
 const file_proto_codexel_codexel_proto_rawDesc = "" +
@@ -3766,14 +4759,56 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x06revset\x18\x02 \x01(\tR\x06revset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\"7\n" +
 	"\vResponseLog\x12(\n" +
-	"\x04rows\x18\x01 \x03(\v2\x14.mono.codexel.LogRowR\x04rows*\xa7\x01\n" +
+	"\x04rows\x18\x01 \x03(\v2\x14.mono.codexel.LogRowR\x04rows\"\xa3\x01\n" +
+	"\bDiffLine\x12.\n" +
+	"\x04kind\x18\x01 \x01(\x0e2\x1a.mono.codexel.DiffLineKindR\x04kind\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\x12\x19\n" +
+	"\bold_line\x18\x03 \x01(\x05R\aoldLine\x12\x19\n" +
+	"\bnew_line\x18\x04 \x01(\x05R\anewLine\x12\x1d\n" +
+	"\n" +
+	"no_newline\x18\x05 \x01(\bR\tnoNewline\"\xc2\x01\n" +
+	"\x04Hunk\x12\x1b\n" +
+	"\told_start\x18\x01 \x01(\x05R\boldStart\x12\x1b\n" +
+	"\told_lines\x18\x02 \x01(\x05R\boldLines\x12\x1b\n" +
+	"\tnew_start\x18\x03 \x01(\x05R\bnewStart\x12\x1b\n" +
+	"\tnew_lines\x18\x04 \x01(\x05R\bnewLines\x12\x18\n" +
+	"\asection\x18\x05 \x01(\tR\asection\x12,\n" +
+	"\x05lines\x18\x06 \x03(\v2\x16.mono.codexel.DiffLineR\x05lines\"\xdd\x01\n" +
+	"\bFileDiff\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x19\n" +
+	"\bold_path\x18\x02 \x01(\tR\aoldPath\x120\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x18.mono.codexel.FileStatusR\x06status\x12\x16\n" +
+	"\x06binary\x18\x04 \x01(\bR\x06binary\x12(\n" +
+	"\x05hunks\x18\x05 \x03(\v2\x12.mono.codexel.HunkR\x05hunks\x12\x14\n" +
+	"\x05added\x18\x06 \x01(\x05R\x05added\x12\x18\n" +
+	"\aremoved\x18\a \x01(\x05R\aremoved\"D\n" +
+	"\x12RequestGetRevision\x12\x12\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1a\n" +
+	"\brevision\x18\x02 \x01(\tR\brevision\"\x93\x01\n" +
+	"\x13ResponseGetRevision\x12,\n" +
+	"\x06commit\x18\x01 \x01(\v2\x14.mono.codexel.CommitR\x06commit\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12,\n" +
+	"\x05files\x18\x03 \x03(\v2\x16.mono.codexel.FileDiffR\x05files*\xa7\x01\n" +
 	"\vAgentStatus\x12\x1c\n" +
 	"\x18AGENT_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11AGENT_STATUS_IDLE\x10\x01\x12\x18\n" +
 	"\x14AGENT_STATUS_WORKING\x10\x02\x12\x18\n" +
 	"\x14AGENT_STATUS_BLOCKED\x10\x03\x12\x15\n" +
 	"\x11AGENT_STATUS_DONE\x10\x04\x12\x18\n" +
-	"\x14AGENT_STATUS_UNKNOWN\x10\x052\xa1\x05\n" +
+	"\x14AGENT_STATUS_UNKNOWN\x10\x05*\xa4\x01\n" +
+	"\n" +
+	"FileStatus\x12\x1b\n" +
+	"\x17FILE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14FILE_STATUS_MODIFIED\x10\x01\x12\x15\n" +
+	"\x11FILE_STATUS_ADDED\x10\x02\x12\x17\n" +
+	"\x13FILE_STATUS_DELETED\x10\x03\x12\x17\n" +
+	"\x13FILE_STATUS_RENAMED\x10\x04\x12\x16\n" +
+	"\x12FILE_STATUS_COPIED\x10\x05*\x80\x01\n" +
+	"\fDiffLineKind\x12\x1e\n" +
+	"\x1aDIFF_LINE_KIND_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16DIFF_LINE_KIND_CONTEXT\x10\x01\x12\x18\n" +
+	"\x14DIFF_LINE_KIND_ADDED\x10\x02\x12\x1a\n" +
+	"\x16DIFF_LINE_KIND_REMOVED\x10\x032\xa1\x05\n" +
 	"\fAgentService\x12O\n" +
 	"\n" +
 	"ListAgents\x12\x1f.mono.codexel.RequestListAgents\x1a .mono.codexel.ResponseListAgents\x12T\n" +
@@ -3793,98 +4828,114 @@ const file_proto_codexel_codexel_proto_rawDesc = "" +
 	"\x0eListCandidates\x12#.mono.codexel.RequestListCandidates\x1a$.mono.codexel.ResponseListCandidates\x12[\n" +
 	"\x0eOpenRepository\x12#.mono.codexel.RequestOpenRepository\x1a$.mono.codexel.ResponseOpenRepository\x12^\n" +
 	"\x0fCloseRepository\x12$.mono.codexel.RequestCloseRepository\x1a%.mono.codexel.ResponseCloseRepository\x12`\n" +
-	"\x0fWatchRepository\x12$.mono.codexel.RequestWatchRepository\x1a%.mono.codexel.ResponseWatchRepository0\x012M\n" +
+	"\x0fWatchRepository\x12$.mono.codexel.RequestWatchRepository\x1a%.mono.codexel.ResponseWatchRepository0\x012\xa1\x01\n" +
 	"\x0fRevisionService\x12:\n" +
-	"\x03Log\x12\x18.mono.codexel.RequestLog\x1a\x19.mono.codexel.ResponseLogB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
+	"\x03Log\x12\x18.mono.codexel.RequestLog\x1a\x19.mono.codexel.ResponseLog\x12R\n" +
+	"\vGetRevision\x12 .mono.codexel.RequestGetRevision\x1a!.mono.codexel.ResponseGetRevisionB)Z\x1fgo.f110.dev/mono/go/codexel/api\x92\x03\x05\xd2>\x02\x10\x03b\beditionsp\xe8\a"
 
-var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_proto_codexel_codexel_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_proto_codexel_codexel_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_proto_codexel_codexel_proto_goTypes = []any{
 	(AgentStatus)(0),                 // 0: mono.codexel.AgentStatus
-	(*Agent)(nil),                    // 1: mono.codexel.Agent
-	(*Workspace)(nil),                // 2: mono.codexel.Workspace
-	(*RequestListAgents)(nil),        // 3: mono.codexel.RequestListAgents
-	(*ResponseListAgents)(nil),       // 4: mono.codexel.ResponseListAgents
-	(*RequestWatchAgents)(nil),       // 5: mono.codexel.RequestWatchAgents
-	(*ResponseWatchAgents)(nil),      // 6: mono.codexel.ResponseWatchAgents
-	(*RequestReadOutput)(nil),        // 7: mono.codexel.RequestReadOutput
-	(*ResponseReadOutput)(nil),       // 8: mono.codexel.ResponseReadOutput
-	(*RequestSendPrompt)(nil),        // 9: mono.codexel.RequestSendPrompt
-	(*ResponseSendPrompt)(nil),       // 10: mono.codexel.ResponseSendPrompt
-	(*RequestSendKeys)(nil),          // 11: mono.codexel.RequestSendKeys
-	(*ResponseSendKeys)(nil),         // 12: mono.codexel.ResponseSendKeys
-	(*RequestFocusAgent)(nil),        // 13: mono.codexel.RequestFocusAgent
-	(*ResponseFocusAgent)(nil),       // 14: mono.codexel.ResponseFocusAgent
-	(*RequestListWorkspaces)(nil),    // 15: mono.codexel.RequestListWorkspaces
-	(*ResponseListWorkspaces)(nil),   // 16: mono.codexel.ResponseListWorkspaces
-	(*RequestStartAgent)(nil),        // 17: mono.codexel.RequestStartAgent
-	(*ResponseStartAgent)(nil),       // 18: mono.codexel.ResponseStartAgent
-	(*Repository)(nil),               // 19: mono.codexel.Repository
-	(*RemoteBookmark)(nil),           // 20: mono.codexel.RemoteBookmark
-	(*Trailer)(nil),                  // 21: mono.codexel.Trailer
-	(*Commit)(nil),                   // 22: mono.codexel.Commit
-	(*GraphLine)(nil),                // 23: mono.codexel.GraphLine
-	(*LogRow)(nil),                   // 24: mono.codexel.LogRow
-	(*RequestListRepositories)(nil),  // 25: mono.codexel.RequestListRepositories
-	(*ResponseListRepositories)(nil), // 26: mono.codexel.ResponseListRepositories
-	(*RequestListCandidates)(nil),    // 27: mono.codexel.RequestListCandidates
-	(*ResponseListCandidates)(nil),   // 28: mono.codexel.ResponseListCandidates
-	(*RequestOpenRepository)(nil),    // 29: mono.codexel.RequestOpenRepository
-	(*ResponseOpenRepository)(nil),   // 30: mono.codexel.ResponseOpenRepository
-	(*RequestCloseRepository)(nil),   // 31: mono.codexel.RequestCloseRepository
-	(*ResponseCloseRepository)(nil),  // 32: mono.codexel.ResponseCloseRepository
-	(*RequestWatchRepository)(nil),   // 33: mono.codexel.RequestWatchRepository
-	(*ResponseWatchRepository)(nil),  // 34: mono.codexel.ResponseWatchRepository
-	(*RequestLog)(nil),               // 35: mono.codexel.RequestLog
-	(*ResponseLog)(nil),              // 36: mono.codexel.ResponseLog
+	(FileStatus)(0),                  // 1: mono.codexel.FileStatus
+	(DiffLineKind)(0),                // 2: mono.codexel.DiffLineKind
+	(*Agent)(nil),                    // 3: mono.codexel.Agent
+	(*Workspace)(nil),                // 4: mono.codexel.Workspace
+	(*RequestListAgents)(nil),        // 5: mono.codexel.RequestListAgents
+	(*ResponseListAgents)(nil),       // 6: mono.codexel.ResponseListAgents
+	(*RequestWatchAgents)(nil),       // 7: mono.codexel.RequestWatchAgents
+	(*ResponseWatchAgents)(nil),      // 8: mono.codexel.ResponseWatchAgents
+	(*RequestReadOutput)(nil),        // 9: mono.codexel.RequestReadOutput
+	(*ResponseReadOutput)(nil),       // 10: mono.codexel.ResponseReadOutput
+	(*RequestSendPrompt)(nil),        // 11: mono.codexel.RequestSendPrompt
+	(*ResponseSendPrompt)(nil),       // 12: mono.codexel.ResponseSendPrompt
+	(*RequestSendKeys)(nil),          // 13: mono.codexel.RequestSendKeys
+	(*ResponseSendKeys)(nil),         // 14: mono.codexel.ResponseSendKeys
+	(*RequestFocusAgent)(nil),        // 15: mono.codexel.RequestFocusAgent
+	(*ResponseFocusAgent)(nil),       // 16: mono.codexel.ResponseFocusAgent
+	(*RequestListWorkspaces)(nil),    // 17: mono.codexel.RequestListWorkspaces
+	(*ResponseListWorkspaces)(nil),   // 18: mono.codexel.ResponseListWorkspaces
+	(*RequestStartAgent)(nil),        // 19: mono.codexel.RequestStartAgent
+	(*ResponseStartAgent)(nil),       // 20: mono.codexel.ResponseStartAgent
+	(*Repository)(nil),               // 21: mono.codexel.Repository
+	(*RemoteBookmark)(nil),           // 22: mono.codexel.RemoteBookmark
+	(*Trailer)(nil),                  // 23: mono.codexel.Trailer
+	(*Commit)(nil),                   // 24: mono.codexel.Commit
+	(*GraphLine)(nil),                // 25: mono.codexel.GraphLine
+	(*LogRow)(nil),                   // 26: mono.codexel.LogRow
+	(*RequestListRepositories)(nil),  // 27: mono.codexel.RequestListRepositories
+	(*ResponseListRepositories)(nil), // 28: mono.codexel.ResponseListRepositories
+	(*RequestListCandidates)(nil),    // 29: mono.codexel.RequestListCandidates
+	(*ResponseListCandidates)(nil),   // 30: mono.codexel.ResponseListCandidates
+	(*RequestOpenRepository)(nil),    // 31: mono.codexel.RequestOpenRepository
+	(*ResponseOpenRepository)(nil),   // 32: mono.codexel.ResponseOpenRepository
+	(*RequestCloseRepository)(nil),   // 33: mono.codexel.RequestCloseRepository
+	(*ResponseCloseRepository)(nil),  // 34: mono.codexel.ResponseCloseRepository
+	(*RequestWatchRepository)(nil),   // 35: mono.codexel.RequestWatchRepository
+	(*ResponseWatchRepository)(nil),  // 36: mono.codexel.ResponseWatchRepository
+	(*RequestLog)(nil),               // 37: mono.codexel.RequestLog
+	(*ResponseLog)(nil),              // 38: mono.codexel.ResponseLog
+	(*DiffLine)(nil),                 // 39: mono.codexel.DiffLine
+	(*Hunk)(nil),                     // 40: mono.codexel.Hunk
+	(*FileDiff)(nil),                 // 41: mono.codexel.FileDiff
+	(*RequestGetRevision)(nil),       // 42: mono.codexel.RequestGetRevision
+	(*ResponseGetRevision)(nil),      // 43: mono.codexel.ResponseGetRevision
 }
 var file_proto_codexel_codexel_proto_depIdxs = []int32{
 	0,  // 0: mono.codexel.Agent.status:type_name -> mono.codexel.AgentStatus
-	1,  // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
-	1,  // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
-	2,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
-	1,  // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
-	20, // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
-	21, // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
-	22, // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
-	23, // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
-	19, // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
-	19, // 10: mono.codexel.ResponseListCandidates.repositories:type_name -> mono.codexel.Repository
-	19, // 11: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
-	24, // 12: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
-	3,  // 13: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
-	5,  // 14: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
-	7,  // 15: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
-	9,  // 16: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
-	11, // 17: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
-	13, // 18: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
-	15, // 19: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
-	17, // 20: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
-	25, // 21: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
-	27, // 22: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
-	29, // 23: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
-	31, // 24: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
-	33, // 25: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
-	35, // 26: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
-	4,  // 27: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
-	6,  // 28: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
-	8,  // 29: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
-	10, // 30: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
-	12, // 31: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
-	14, // 32: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
-	16, // 33: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
-	18, // 34: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
-	26, // 35: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
-	28, // 36: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
-	30, // 37: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
-	32, // 38: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
-	34, // 39: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
-	36, // 40: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
-	27, // [27:41] is the sub-list for method output_type
-	13, // [13:27] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	3,  // 1: mono.codexel.ResponseListAgents.agents:type_name -> mono.codexel.Agent
+	3,  // 2: mono.codexel.ResponseWatchAgents.agents:type_name -> mono.codexel.Agent
+	4,  // 3: mono.codexel.ResponseListWorkspaces.workspaces:type_name -> mono.codexel.Workspace
+	3,  // 4: mono.codexel.ResponseStartAgent.agent:type_name -> mono.codexel.Agent
+	22, // 5: mono.codexel.Commit.remote_bookmarks:type_name -> mono.codexel.RemoteBookmark
+	23, // 6: mono.codexel.Commit.trailers:type_name -> mono.codexel.Trailer
+	24, // 7: mono.codexel.LogRow.commit:type_name -> mono.codexel.Commit
+	25, // 8: mono.codexel.LogRow.lines:type_name -> mono.codexel.GraphLine
+	21, // 9: mono.codexel.ResponseListRepositories.repositories:type_name -> mono.codexel.Repository
+	21, // 10: mono.codexel.ResponseListCandidates.repositories:type_name -> mono.codexel.Repository
+	21, // 11: mono.codexel.ResponseOpenRepository.repository:type_name -> mono.codexel.Repository
+	26, // 12: mono.codexel.ResponseLog.rows:type_name -> mono.codexel.LogRow
+	2,  // 13: mono.codexel.DiffLine.kind:type_name -> mono.codexel.DiffLineKind
+	39, // 14: mono.codexel.Hunk.lines:type_name -> mono.codexel.DiffLine
+	1,  // 15: mono.codexel.FileDiff.status:type_name -> mono.codexel.FileStatus
+	40, // 16: mono.codexel.FileDiff.hunks:type_name -> mono.codexel.Hunk
+	24, // 17: mono.codexel.ResponseGetRevision.commit:type_name -> mono.codexel.Commit
+	41, // 18: mono.codexel.ResponseGetRevision.files:type_name -> mono.codexel.FileDiff
+	5,  // 19: mono.codexel.AgentService.ListAgents:input_type -> mono.codexel.RequestListAgents
+	7,  // 20: mono.codexel.AgentService.WatchAgents:input_type -> mono.codexel.RequestWatchAgents
+	9,  // 21: mono.codexel.AgentService.ReadOutput:input_type -> mono.codexel.RequestReadOutput
+	11, // 22: mono.codexel.AgentService.SendPrompt:input_type -> mono.codexel.RequestSendPrompt
+	13, // 23: mono.codexel.AgentService.SendKeys:input_type -> mono.codexel.RequestSendKeys
+	15, // 24: mono.codexel.AgentService.FocusAgent:input_type -> mono.codexel.RequestFocusAgent
+	17, // 25: mono.codexel.AgentService.ListWorkspaces:input_type -> mono.codexel.RequestListWorkspaces
+	19, // 26: mono.codexel.AgentService.StartAgent:input_type -> mono.codexel.RequestStartAgent
+	27, // 27: mono.codexel.RepositoryService.ListRepositories:input_type -> mono.codexel.RequestListRepositories
+	29, // 28: mono.codexel.RepositoryService.ListCandidates:input_type -> mono.codexel.RequestListCandidates
+	31, // 29: mono.codexel.RepositoryService.OpenRepository:input_type -> mono.codexel.RequestOpenRepository
+	33, // 30: mono.codexel.RepositoryService.CloseRepository:input_type -> mono.codexel.RequestCloseRepository
+	35, // 31: mono.codexel.RepositoryService.WatchRepository:input_type -> mono.codexel.RequestWatchRepository
+	37, // 32: mono.codexel.RevisionService.Log:input_type -> mono.codexel.RequestLog
+	42, // 33: mono.codexel.RevisionService.GetRevision:input_type -> mono.codexel.RequestGetRevision
+	6,  // 34: mono.codexel.AgentService.ListAgents:output_type -> mono.codexel.ResponseListAgents
+	8,  // 35: mono.codexel.AgentService.WatchAgents:output_type -> mono.codexel.ResponseWatchAgents
+	10, // 36: mono.codexel.AgentService.ReadOutput:output_type -> mono.codexel.ResponseReadOutput
+	12, // 37: mono.codexel.AgentService.SendPrompt:output_type -> mono.codexel.ResponseSendPrompt
+	14, // 38: mono.codexel.AgentService.SendKeys:output_type -> mono.codexel.ResponseSendKeys
+	16, // 39: mono.codexel.AgentService.FocusAgent:output_type -> mono.codexel.ResponseFocusAgent
+	18, // 40: mono.codexel.AgentService.ListWorkspaces:output_type -> mono.codexel.ResponseListWorkspaces
+	20, // 41: mono.codexel.AgentService.StartAgent:output_type -> mono.codexel.ResponseStartAgent
+	28, // 42: mono.codexel.RepositoryService.ListRepositories:output_type -> mono.codexel.ResponseListRepositories
+	30, // 43: mono.codexel.RepositoryService.ListCandidates:output_type -> mono.codexel.ResponseListCandidates
+	32, // 44: mono.codexel.RepositoryService.OpenRepository:output_type -> mono.codexel.ResponseOpenRepository
+	34, // 45: mono.codexel.RepositoryService.CloseRepository:output_type -> mono.codexel.ResponseCloseRepository
+	36, // 46: mono.codexel.RepositoryService.WatchRepository:output_type -> mono.codexel.ResponseWatchRepository
+	38, // 47: mono.codexel.RevisionService.Log:output_type -> mono.codexel.ResponseLog
+	43, // 48: mono.codexel.RevisionService.GetRevision:output_type -> mono.codexel.ResponseGetRevision
+	34, // [34:49] is the sub-list for method output_type
+	19, // [19:34] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_proto_codexel_codexel_proto_init() }
@@ -3897,8 +4948,8 @@ func file_proto_codexel_codexel_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_codexel_codexel_proto_rawDesc), len(file_proto_codexel_codexel_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   36,
+			NumEnums:      3,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

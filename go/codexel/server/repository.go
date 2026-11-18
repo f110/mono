@@ -200,6 +200,80 @@ func (h *RevisionHandler) Log(ctx context.Context, req *connect.Request[api.Requ
 	return connect.NewResponse(api.ResponseLog_builder{Rows: res}.Build()), nil
 }
 
+func (h *RevisionHandler) GetRevision(ctx context.Context, req *connect.Request[api.RequestGetRevision]) (*connect.Response[api.ResponseGetRevision], error) {
+	if req.Msg.GetRevision() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision is required"))
+	}
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	commit, err := repo.Show(ctx, req.Msg.GetRevision())
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	files, err := repo.Diff(ctx, req.Msg.GetRevision())
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	return connect.NewResponse(api.ResponseGetRevision_builder{
+		Commit:      toCommit(commit),
+		Description: new(commit.FullDescription),
+		Files:       toFileDiffs(files),
+	}.Build()), nil
+}
+
+func toFileDiffs(files []*jujutsu.FileDiff) []*api.FileDiff {
+	res := make([]*api.FileDiff, 0, len(files))
+	for _, f := range files {
+		hunks := make([]*api.Hunk, 0, len(f.Hunks))
+		for _, h := range f.Hunks {
+			lines := make([]*api.DiffLine, 0, len(h.Lines))
+			for _, l := range h.Lines {
+				lines = append(lines, api.DiffLine_builder{
+					Kind:      new(diffLineKinds[l.Kind]),
+					Text:      new(l.Text),
+					OldLine:   new(int32(l.OldLine)),
+					NewLine:   new(int32(l.NewLine)),
+					NoNewline: new(l.NoNewline),
+				}.Build())
+			}
+			hunks = append(hunks, api.Hunk_builder{
+				OldStart: new(int32(h.OldStart)),
+				OldLines: new(int32(h.OldLines)),
+				NewStart: new(int32(h.NewStart)),
+				NewLines: new(int32(h.NewLines)),
+				Section:  new(h.Section),
+				Lines:    lines,
+			}.Build())
+		}
+		res = append(res, api.FileDiff_builder{
+			Path:    new(f.Path),
+			OldPath: new(f.OldPath),
+			Status:  new(fileStatuses[f.Status]),
+			Binary:  new(f.Binary),
+			Hunks:   hunks,
+			Added:   new(int32(f.Added)),
+			Removed: new(int32(f.Removed)),
+		}.Build())
+	}
+	return res
+}
+
+var fileStatuses = map[jujutsu.FileStatus]api.FileStatus{
+	jujutsu.FileStatusModified: api.FileStatus_FILE_STATUS_MODIFIED,
+	jujutsu.FileStatusAdded:    api.FileStatus_FILE_STATUS_ADDED,
+	jujutsu.FileStatusDeleted:  api.FileStatus_FILE_STATUS_DELETED,
+	jujutsu.FileStatusRenamed:  api.FileStatus_FILE_STATUS_RENAMED,
+	jujutsu.FileStatusCopied:   api.FileStatus_FILE_STATUS_COPIED,
+}
+
+var diffLineKinds = map[jujutsu.DiffLineKind]api.DiffLineKind{
+	jujutsu.DiffLineContext: api.DiffLineKind_DIFF_LINE_KIND_CONTEXT,
+	jujutsu.DiffLineAdded:   api.DiffLineKind_DIFF_LINE_KIND_ADDED,
+	jujutsu.DiffLineRemoved: api.DiffLineKind_DIFF_LINE_KIND_REMOVED,
+}
+
 // openedRepository returns the repository only if it is opened. It prevents running jj in any directory.
 func openedRepository(conf *config.File, path string) (*jujutsu.Repository, error) {
 	c, err := conf.Load()
