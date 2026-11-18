@@ -64,7 +64,14 @@ export const RepositoriesPage = () => {
       </Stack>
       <Box sx={{ flex: 1, minHeight: 0 }}>
         {current ? (
-          <RepositoryView key={current} path={current} />
+          <RepositoryView
+            key={current}
+            path={current}
+            onOpenRepository={(p) => {
+              refetch()
+              select(p)
+            }}
+          />
         ) : (
           <Typography color="text.secondary" sx={{ p: 2 }}>
             Open a repository

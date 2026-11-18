@@ -16,7 +16,19 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { BookmarkService, ConflictService, FileService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import {
+  BookmarkService,
+  ConflictService,
+  FileService,
+  GitService,
+  OperationService,
+  RebaseSource,
+  RebaseTarget,
+  RepositoryService,
+  RevisionService,
+  WorkspaceService,
+  type Commit,
+} from '../connect/codexel_pb.js'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
@@ -33,6 +45,7 @@ import { MergeEditor } from './MergeEditor.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 import { SplitDialog } from './SplitDialog.tsx'
+import { WorkspaceDialog } from './WorkspaceDialog.tsx'
 
 // isEditing reports whether the key event is for the input. The keyboard shortcuts are ignored while editing.
 const isEditing = (e: KeyboardEvent) => {
@@ -50,6 +63,8 @@ const gitClient = createClient(GitService, transport)
 const operationClient = createClient(OperationService, transport)
 const conflictClient = createClient(ConflictService, transport)
 const fileClient = createClient(FileService, transport)
+const repositoryClient = createClient(RepositoryService, transport)
+const workspaceClient = createClient(WorkspaceService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
@@ -92,7 +107,9 @@ const modeDescription = (mode: Mode): string =>
     : `Squash ${mode.sources.length} revision(s) into the cursor [${mode.combine ? 'combine the descriptions' : 'keep the description of the destination'}]. ` +
       'j/k: move, c: toggle the description, Enter: squash, Esc: cancel'
 
-export const RepositoryView = ({ path }: { path: string }) => {
+// RepositoryView shows the repository. onOpenRepository is called after the other repository (e.g. the workspace) is
+// opened.
+export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpenRepository: (path: string) => void }) => {
   const [revset, setRevset] = useState('')
   const [revsetInput, setRevsetInput] = useState('')
   const [selectedKey, setSelectedKey] = useState<string>()
@@ -104,6 +121,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>('log')
   const [conflictSelected, setConflictSelected] = useState(0)
   const [splitting, setSplitting] = useState<Commit>()
+  const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
@@ -456,6 +474,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
           if (targets().length > 0) {
             setMode({ kind: 'squash', sources: targets(), combine: false })
           }
+          break
+        case 'w':
+          setWorkspaceOpen(true)
           break
         case 's':
           if (selectedCommit && !selectedCommit.immutable && checked.size === 0) {
@@ -831,6 +852,44 @@ export const RepositoryView = ({ path }: { path: string }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {workspaceOpen && (
+        <WorkspaceDialog
+          repoPath={path}
+          selected={selectedCommit}
+          onClose={() => setWorkspaceOpen(false)}
+          onOpen={async (root) => {
+            setWorkspaceOpen(false)
+            try {
+              const res = await repositoryClient.openRepository({ path: root })
+              onOpenRepository(res.repository?.path ?? root)
+            } catch (e) {
+              setMessage({ text: e instanceof Error ? e.message : String(e), error: true })
+            }
+          }}
+          onAdd={(name) => {
+            setWorkspaceOpen(false)
+            run(async () => {
+              const res = await workspaceClient.addRepositoryWorkspace({ path, name, revision: selectedCommit!.commitId })
+              const opened = await repositoryClient.openRepository({ path: res.root })
+              onOpenRepository(opened.repository?.path ?? res.root)
+              return res
+            }, false)
+          }}
+          onForget={(name) => {
+            setWorkspaceOpen(false)
+            run(() => workspaceClient.forgetRepositoryWorkspace({ path, name }), false)
+          }}
+          onRename={(name) => {
+            setWorkspaceOpen(false)
+            run(() => workspaceClient.renameRepositoryWorkspace({ path, name }), false)
+          }}
+          onUpdateStale={() => {
+            setWorkspaceOpen(false)
+            run(() => workspaceClient.updateStale({ path }), false)
+          }}
+        />
+      )}
 
       {splitting && (
         <SplitDialog

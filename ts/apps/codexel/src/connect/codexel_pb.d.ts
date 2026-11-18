@@ -2329,6 +2329,221 @@ export declare type ResponseRestore = Message<"mono.codexel.ResponseRestore"> & 
 export declare const ResponseRestoreSchema: GenMessage<ResponseRestore>;
 
 /**
+ * @generated from message mono.codexel.RepositoryWorkspace
+ */
+export declare type RepositoryWorkspace = Message<"mono.codexel.RepositoryWorkspace"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * target is the commit ID of the working copy of the workspace.
+   *
+   * @generated from field: string target = 2;
+   */
+  target: string;
+
+  /**
+   * @generated from field: string root = 3;
+   */
+  root: string;
+};
+
+/**
+ * Describes the message mono.codexel.RepositoryWorkspace.
+ * Use `create(RepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const RepositoryWorkspaceSchema: GenMessage<RepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.RequestListRepositoryWorkspaces
+ */
+export declare type RequestListRepositoryWorkspaces = Message<"mono.codexel.RequestListRepositoryWorkspaces"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListRepositoryWorkspaces.
+ * Use `create(RequestListRepositoryWorkspacesSchema)` to create a new message.
+ */
+export declare const RequestListRepositoryWorkspacesSchema: GenMessage<RequestListRepositoryWorkspaces>;
+
+/**
+ * @generated from message mono.codexel.ResponseListRepositoryWorkspaces
+ */
+export declare type ResponseListRepositoryWorkspaces = Message<"mono.codexel.ResponseListRepositoryWorkspaces"> & {
+  /**
+   * @generated from field: repeated mono.codexel.RepositoryWorkspace workspaces = 1;
+   */
+  workspaces: RepositoryWorkspace[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListRepositoryWorkspaces.
+ * Use `create(ResponseListRepositoryWorkspacesSchema)` to create a new message.
+ */
+export declare const ResponseListRepositoryWorkspacesSchema: GenMessage<ResponseListRepositoryWorkspaces>;
+
+/**
+ * @generated from message mono.codexel.RequestAddRepositoryWorkspace
+ */
+export declare type RequestAddRepositoryWorkspace = Message<"mono.codexel.RequestAddRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string revision = 3;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestAddRepositoryWorkspace.
+ * Use `create(RequestAddRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const RequestAddRepositoryWorkspaceSchema: GenMessage<RequestAddRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.ResponseAddRepositoryWorkspace
+ */
+export declare type ResponseAddRepositoryWorkspace = Message<"mono.codexel.ResponseAddRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+
+  /**
+   * root is the root of the new workspace.
+   *
+   * @generated from field: string root = 2;
+   */
+  root: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseAddRepositoryWorkspace.
+ * Use `create(ResponseAddRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const ResponseAddRepositoryWorkspaceSchema: GenMessage<ResponseAddRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.RequestForgetRepositoryWorkspace
+ */
+export declare type RequestForgetRepositoryWorkspace = Message<"mono.codexel.RequestForgetRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestForgetRepositoryWorkspace.
+ * Use `create(RequestForgetRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const RequestForgetRepositoryWorkspaceSchema: GenMessage<RequestForgetRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.ResponseForgetRepositoryWorkspace
+ */
+export declare type ResponseForgetRepositoryWorkspace = Message<"mono.codexel.ResponseForgetRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseForgetRepositoryWorkspace.
+ * Use `create(ResponseForgetRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const ResponseForgetRepositoryWorkspaceSchema: GenMessage<ResponseForgetRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.RequestRenameRepositoryWorkspace
+ */
+export declare type RequestRenameRepositoryWorkspace = Message<"mono.codexel.RequestRenameRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRenameRepositoryWorkspace.
+ * Use `create(RequestRenameRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const RequestRenameRepositoryWorkspaceSchema: GenMessage<RequestRenameRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.ResponseRenameRepositoryWorkspace
+ */
+export declare type ResponseRenameRepositoryWorkspace = Message<"mono.codexel.ResponseRenameRepositoryWorkspace"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRenameRepositoryWorkspace.
+ * Use `create(ResponseRenameRepositoryWorkspaceSchema)` to create a new message.
+ */
+export declare const ResponseRenameRepositoryWorkspaceSchema: GenMessage<ResponseRenameRepositoryWorkspace>;
+
+/**
+ * @generated from message mono.codexel.RequestUpdateStale
+ */
+export declare type RequestUpdateStale = Message<"mono.codexel.RequestUpdateStale"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestUpdateStale.
+ * Use `create(RequestUpdateStaleSchema)` to create a new message.
+ */
+export declare const RequestUpdateStaleSchema: GenMessage<RequestUpdateStale>;
+
+/**
+ * @generated from message mono.codexel.ResponseUpdateStale
+ */
+export declare type ResponseUpdateStale = Message<"mono.codexel.ResponseUpdateStale"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseUpdateStale.
+ * Use `create(ResponseUpdateStaleSchema)` to create a new message.
+ */
+export declare const ResponseUpdateStaleSchema: GenMessage<ResponseUpdateStale>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -3007,6 +3222,63 @@ export declare const ConflictService: GenService<{
     methodKind: "unary";
     input: typeof RequestResolveSchema;
     output: typeof ResponseResolveSchema;
+  },
+}>;
+
+/**
+ * WorkspaceService manages the workspaces of jj. The operations return the message of jj in output.
+ *
+ * @generated from service mono.codexel.WorkspaceService
+ */
+export declare const WorkspaceService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.WorkspaceService.ListRepositoryWorkspaces
+   */
+  listRepositoryWorkspaces: {
+    methodKind: "unary";
+    input: typeof RequestListRepositoryWorkspacesSchema;
+    output: typeof ResponseListRepositoryWorkspacesSchema;
+  },
+  /**
+   * AddRepositoryWorkspace creates the workspace in the sibling directory of the repository.
+   *
+   * @generated from rpc mono.codexel.WorkspaceService.AddRepositoryWorkspace
+   */
+  addRepositoryWorkspace: {
+    methodKind: "unary";
+    input: typeof RequestAddRepositoryWorkspaceSchema;
+    output: typeof ResponseAddRepositoryWorkspaceSchema;
+  },
+  /**
+   * ForgetRepositoryWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel
+   * can't be forgotten.
+   *
+   * @generated from rpc mono.codexel.WorkspaceService.ForgetRepositoryWorkspace
+   */
+  forgetRepositoryWorkspace: {
+    methodKind: "unary";
+    input: typeof RequestForgetRepositoryWorkspaceSchema;
+    output: typeof ResponseForgetRepositoryWorkspaceSchema;
+  },
+  /**
+   * RenameRepositoryWorkspace renames the workspace of the repository.
+   *
+   * @generated from rpc mono.codexel.WorkspaceService.RenameRepositoryWorkspace
+   */
+  renameRepositoryWorkspace: {
+    methodKind: "unary";
+    input: typeof RequestRenameRepositoryWorkspaceSchema;
+    output: typeof ResponseRenameRepositoryWorkspaceSchema;
+  },
+  /**
+   * UpdateStale updates the stale working copy of the workspace.
+   *
+   * @generated from rpc mono.codexel.WorkspaceService.UpdateStale
+   */
+  updateStale: {
+    methodKind: "unary";
+    input: typeof RequestUpdateStaleSchema;
+    output: typeof ResponseUpdateStaleSchema;
   },
 }>;
 

@@ -723,3 +723,70 @@ message RequestRestore {
 message ResponseRestore {
   string output = 1;
 }
+
+// WorkspaceService manages the workspaces of jj. The operations return the message of jj in output.
+service WorkspaceService {
+  rpc ListRepositoryWorkspaces(RequestListRepositoryWorkspaces) returns (ResponseListRepositoryWorkspaces);
+  // AddRepositoryWorkspace creates the workspace in the sibling directory of the repository.
+  rpc AddRepositoryWorkspace(RequestAddRepositoryWorkspace) returns (ResponseAddRepositoryWorkspace);
+  // ForgetRepositoryWorkspace stops tracking the workspace. The directory is left. The workspace opened in Codexel
+  // can't be forgotten.
+  rpc ForgetRepositoryWorkspace(RequestForgetRepositoryWorkspace) returns (ResponseForgetRepositoryWorkspace);
+  // RenameRepositoryWorkspace renames the workspace of the repository.
+  rpc RenameRepositoryWorkspace(RequestRenameRepositoryWorkspace) returns (ResponseRenameRepositoryWorkspace);
+  // UpdateStale updates the stale working copy of the workspace.
+  rpc UpdateStale(RequestUpdateStale) returns (ResponseUpdateStale);
+}
+
+message RepositoryWorkspace {
+  string name = 1;
+  // target is the commit ID of the working copy of the workspace.
+  string target = 2;
+  string root   = 3;
+}
+
+message RequestListRepositoryWorkspaces {
+  string path = 1;
+}
+
+message ResponseListRepositoryWorkspaces {
+  repeated RepositoryWorkspace workspaces = 1;
+}
+
+message RequestAddRepositoryWorkspace {
+  string path     = 1;
+  string name     = 2;
+  string revision = 3;
+}
+
+message ResponseAddRepositoryWorkspace {
+  string output = 1;
+  // root is the root of the new workspace.
+  string root = 2;
+}
+
+message RequestForgetRepositoryWorkspace {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseForgetRepositoryWorkspace {
+  string output = 1;
+}
+
+message RequestRenameRepositoryWorkspace {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseRenameRepositoryWorkspace {
+  string output = 1;
+}
+
+message RequestUpdateStale {
+  string path = 1;
+}
+
+message ResponseUpdateStale {
+  string output = 1;
+}

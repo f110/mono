@@ -36,6 +36,8 @@ const (
 	FileServiceName = "mono.codexel.FileService"
 	// ConflictServiceName is the fully-qualified name of the ConflictService service.
 	ConflictServiceName = "mono.codexel.ConflictService"
+	// WorkspaceServiceName is the fully-qualified name of the WorkspaceService service.
+	WorkspaceServiceName = "mono.codexel.WorkspaceService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -155,6 +157,21 @@ const (
 	ConflictServiceGetConflictProcedure = "/mono.codexel.ConflictService/GetConflict"
 	// ConflictServiceResolveProcedure is the fully-qualified name of the ConflictService's Resolve RPC.
 	ConflictServiceResolveProcedure = "/mono.codexel.ConflictService/Resolve"
+	// WorkspaceServiceListRepositoryWorkspacesProcedure is the fully-qualified name of the
+	// WorkspaceService's ListRepositoryWorkspaces RPC.
+	WorkspaceServiceListRepositoryWorkspacesProcedure = "/mono.codexel.WorkspaceService/ListRepositoryWorkspaces"
+	// WorkspaceServiceAddRepositoryWorkspaceProcedure is the fully-qualified name of the
+	// WorkspaceService's AddRepositoryWorkspace RPC.
+	WorkspaceServiceAddRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/AddRepositoryWorkspace"
+	// WorkspaceServiceForgetRepositoryWorkspaceProcedure is the fully-qualified name of the
+	// WorkspaceService's ForgetRepositoryWorkspace RPC.
+	WorkspaceServiceForgetRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/ForgetRepositoryWorkspace"
+	// WorkspaceServiceRenameRepositoryWorkspaceProcedure is the fully-qualified name of the
+	// WorkspaceService's RenameRepositoryWorkspace RPC.
+	WorkspaceServiceRenameRepositoryWorkspaceProcedure = "/mono.codexel.WorkspaceService/RenameRepositoryWorkspace"
+	// WorkspaceServiceUpdateStaleProcedure is the fully-qualified name of the WorkspaceService's
+	// UpdateStale RPC.
+	WorkspaceServiceUpdateStaleProcedure = "/mono.codexel.WorkspaceService/UpdateStale"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -1651,4 +1668,178 @@ func (UnimplementedConflictServiceHandler) GetConflict(context.Context, *connect
 
 func (UnimplementedConflictServiceHandler) Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.Resolve is not implemented"))
+}
+
+// WorkspaceServiceClient is a client for the mono.codexel.WorkspaceService service.
+type WorkspaceServiceClient interface {
+	ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
+	AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
+	ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
+	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
+}
+
+// NewWorkspaceServiceClient constructs a client for the mono.codexel.WorkspaceService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewWorkspaceServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) WorkspaceServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	workspaceServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("WorkspaceService").Methods()
+	return &workspaceServiceClient{
+		listRepositoryWorkspaces: connect.NewClient[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces](
+			httpClient,
+			baseURL+WorkspaceServiceListRepositoryWorkspacesProcedure,
+			connect.WithSchema(workspaceServiceMethods.ByName("ListRepositoryWorkspaces")),
+			connect.WithClientOptions(opts...),
+		),
+		addRepositoryWorkspace: connect.NewClient[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace](
+			httpClient,
+			baseURL+WorkspaceServiceAddRepositoryWorkspaceProcedure,
+			connect.WithSchema(workspaceServiceMethods.ByName("AddRepositoryWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		forgetRepositoryWorkspace: connect.NewClient[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace](
+			httpClient,
+			baseURL+WorkspaceServiceForgetRepositoryWorkspaceProcedure,
+			connect.WithSchema(workspaceServiceMethods.ByName("ForgetRepositoryWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		renameRepositoryWorkspace: connect.NewClient[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace](
+			httpClient,
+			baseURL+WorkspaceServiceRenameRepositoryWorkspaceProcedure,
+			connect.WithSchema(workspaceServiceMethods.ByName("RenameRepositoryWorkspace")),
+			connect.WithClientOptions(opts...),
+		),
+		updateStale: connect.NewClient[RequestUpdateStale, ResponseUpdateStale](
+			httpClient,
+			baseURL+WorkspaceServiceUpdateStaleProcedure,
+			connect.WithSchema(workspaceServiceMethods.ByName("UpdateStale")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// workspaceServiceClient implements WorkspaceServiceClient.
+type workspaceServiceClient struct {
+	listRepositoryWorkspaces  *connect.Client[RequestListRepositoryWorkspaces, ResponseListRepositoryWorkspaces]
+	addRepositoryWorkspace    *connect.Client[RequestAddRepositoryWorkspace, ResponseAddRepositoryWorkspace]
+	forgetRepositoryWorkspace *connect.Client[RequestForgetRepositoryWorkspace, ResponseForgetRepositoryWorkspace]
+	renameRepositoryWorkspace *connect.Client[RequestRenameRepositoryWorkspace, ResponseRenameRepositoryWorkspace]
+	updateStale               *connect.Client[RequestUpdateStale, ResponseUpdateStale]
+}
+
+// ListRepositoryWorkspaces calls mono.codexel.WorkspaceService.ListRepositoryWorkspaces.
+func (c *workspaceServiceClient) ListRepositoryWorkspaces(ctx context.Context, req *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
+	return c.listRepositoryWorkspaces.CallUnary(ctx, req)
+}
+
+// AddRepositoryWorkspace calls mono.codexel.WorkspaceService.AddRepositoryWorkspace.
+func (c *workspaceServiceClient) AddRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
+	return c.addRepositoryWorkspace.CallUnary(ctx, req)
+}
+
+// ForgetRepositoryWorkspace calls mono.codexel.WorkspaceService.ForgetRepositoryWorkspace.
+func (c *workspaceServiceClient) ForgetRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
+	return c.forgetRepositoryWorkspace.CallUnary(ctx, req)
+}
+
+// RenameRepositoryWorkspace calls mono.codexel.WorkspaceService.RenameRepositoryWorkspace.
+func (c *workspaceServiceClient) RenameRepositoryWorkspace(ctx context.Context, req *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
+	return c.renameRepositoryWorkspace.CallUnary(ctx, req)
+}
+
+// UpdateStale calls mono.codexel.WorkspaceService.UpdateStale.
+func (c *workspaceServiceClient) UpdateStale(ctx context.Context, req *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
+	return c.updateStale.CallUnary(ctx, req)
+}
+
+// WorkspaceServiceHandler is an implementation of the mono.codexel.WorkspaceService service.
+type WorkspaceServiceHandler interface {
+	ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error)
+	AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error)
+	ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error)
+	RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error)
+	UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error)
+}
+
+// NewWorkspaceServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewWorkspaceServiceHandler(svc WorkspaceServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	workspaceServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("WorkspaceService").Methods()
+	workspaceServiceListRepositoryWorkspacesHandler := connect.NewUnaryHandler(
+		WorkspaceServiceListRepositoryWorkspacesProcedure,
+		svc.ListRepositoryWorkspaces,
+		connect.WithSchema(workspaceServiceMethods.ByName("ListRepositoryWorkspaces")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workspaceServiceAddRepositoryWorkspaceHandler := connect.NewUnaryHandler(
+		WorkspaceServiceAddRepositoryWorkspaceProcedure,
+		svc.AddRepositoryWorkspace,
+		connect.WithSchema(workspaceServiceMethods.ByName("AddRepositoryWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workspaceServiceForgetRepositoryWorkspaceHandler := connect.NewUnaryHandler(
+		WorkspaceServiceForgetRepositoryWorkspaceProcedure,
+		svc.ForgetRepositoryWorkspace,
+		connect.WithSchema(workspaceServiceMethods.ByName("ForgetRepositoryWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workspaceServiceRenameRepositoryWorkspaceHandler := connect.NewUnaryHandler(
+		WorkspaceServiceRenameRepositoryWorkspaceProcedure,
+		svc.RenameRepositoryWorkspace,
+		connect.WithSchema(workspaceServiceMethods.ByName("RenameRepositoryWorkspace")),
+		connect.WithHandlerOptions(opts...),
+	)
+	workspaceServiceUpdateStaleHandler := connect.NewUnaryHandler(
+		WorkspaceServiceUpdateStaleProcedure,
+		svc.UpdateStale,
+		connect.WithSchema(workspaceServiceMethods.ByName("UpdateStale")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.WorkspaceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case WorkspaceServiceListRepositoryWorkspacesProcedure:
+			workspaceServiceListRepositoryWorkspacesHandler.ServeHTTP(w, r)
+		case WorkspaceServiceAddRepositoryWorkspaceProcedure:
+			workspaceServiceAddRepositoryWorkspaceHandler.ServeHTTP(w, r)
+		case WorkspaceServiceForgetRepositoryWorkspaceProcedure:
+			workspaceServiceForgetRepositoryWorkspaceHandler.ServeHTTP(w, r)
+		case WorkspaceServiceRenameRepositoryWorkspaceProcedure:
+			workspaceServiceRenameRepositoryWorkspaceHandler.ServeHTTP(w, r)
+		case WorkspaceServiceUpdateStaleProcedure:
+			workspaceServiceUpdateStaleHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedWorkspaceServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedWorkspaceServiceHandler struct{}
+
+func (UnimplementedWorkspaceServiceHandler) ListRepositoryWorkspaces(context.Context, *connect.Request[RequestListRepositoryWorkspaces]) (*connect.Response[ResponseListRepositoryWorkspaces], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.ListRepositoryWorkspaces is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) AddRepositoryWorkspace(context.Context, *connect.Request[RequestAddRepositoryWorkspace]) (*connect.Response[ResponseAddRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.AddRepositoryWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) ForgetRepositoryWorkspace(context.Context, *connect.Request[RequestForgetRepositoryWorkspace]) (*connect.Response[ResponseForgetRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.ForgetRepositoryWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) RenameRepositoryWorkspace(context.Context, *connect.Request[RequestRenameRepositoryWorkspace]) (*connect.Response[ResponseRenameRepositoryWorkspace], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.RenameRepositoryWorkspace is not implemented"))
+}
+
+func (UnimplementedWorkspaceServiceHandler) UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.UpdateStale is not implemented"))
 }
