@@ -34,6 +34,8 @@ const (
 	OperationServiceName = "mono.codexel.OperationService"
 	// FileServiceName is the fully-qualified name of the FileService service.
 	FileServiceName = "mono.codexel.FileService"
+	// ConflictServiceName is the fully-qualified name of the ConflictService service.
+	ConflictServiceName = "mono.codexel.ConflictService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -139,6 +141,16 @@ const (
 	FileServiceGetFileProcedure = "/mono.codexel.FileService/GetFile"
 	// FileServiceListFilesProcedure is the fully-qualified name of the FileService's ListFiles RPC.
 	FileServiceListFilesProcedure = "/mono.codexel.FileService/ListFiles"
+	// FileServiceWriteFileProcedure is the fully-qualified name of the FileService's WriteFile RPC.
+	FileServiceWriteFileProcedure = "/mono.codexel.FileService/WriteFile"
+	// ConflictServiceListConflictsProcedure is the fully-qualified name of the ConflictService's
+	// ListConflicts RPC.
+	ConflictServiceListConflictsProcedure = "/mono.codexel.ConflictService/ListConflicts"
+	// ConflictServiceGetConflictProcedure is the fully-qualified name of the ConflictService's
+	// GetConflict RPC.
+	ConflictServiceGetConflictProcedure = "/mono.codexel.ConflictService/GetConflict"
+	// ConflictServiceResolveProcedure is the fully-qualified name of the ConflictService's Resolve RPC.
+	ConflictServiceResolveProcedure = "/mono.codexel.ConflictService/Resolve"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -1345,6 +1357,7 @@ func (UnimplementedOperationServiceHandler) RestoreOperation(context.Context, *c
 type FileServiceClient interface {
 	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
 	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
+	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
 }
 
 // NewFileServiceClient constructs a client for the mono.codexel.FileService service. By default, it
@@ -1370,6 +1383,12 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
 			connect.WithClientOptions(opts...),
 		),
+		writeFile: connect.NewClient[RequestWriteFile, ResponseWriteFile](
+			httpClient,
+			baseURL+FileServiceWriteFileProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("WriteFile")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -1377,6 +1396,7 @@ func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 type fileServiceClient struct {
 	getFile   *connect.Client[RequestGetFile, ResponseGetFile]
 	listFiles *connect.Client[RequestListFiles, ResponseListFiles]
+	writeFile *connect.Client[RequestWriteFile, ResponseWriteFile]
 }
 
 // GetFile calls mono.codexel.FileService.GetFile.
@@ -1389,10 +1409,16 @@ func (c *fileServiceClient) ListFiles(ctx context.Context, req *connect.Request[
 	return c.listFiles.CallUnary(ctx, req)
 }
 
+// WriteFile calls mono.codexel.FileService.WriteFile.
+func (c *fileServiceClient) WriteFile(ctx context.Context, req *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
+	return c.writeFile.CallUnary(ctx, req)
+}
+
 // FileServiceHandler is an implementation of the mono.codexel.FileService service.
 type FileServiceHandler interface {
 	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
 	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
+	WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error)
 }
 
 // NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1414,12 +1440,20 @@ func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
 		connect.WithHandlerOptions(opts...),
 	)
+	fileServiceWriteFileHandler := connect.NewUnaryHandler(
+		FileServiceWriteFileProcedure,
+		svc.WriteFile,
+		connect.WithSchema(fileServiceMethods.ByName("WriteFile")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case FileServiceGetFileProcedure:
 			fileServiceGetFileHandler.ServeHTTP(w, r)
 		case FileServiceListFilesProcedure:
 			fileServiceListFilesHandler.ServeHTTP(w, r)
+		case FileServiceWriteFileProcedure:
+			fileServiceWriteFileHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1435,4 +1469,130 @@ func (UnimplementedFileServiceHandler) GetFile(context.Context, *connect.Request
 
 func (UnimplementedFileServiceHandler) ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.ListFiles is not implemented"))
+}
+
+func (UnimplementedFileServiceHandler) WriteFile(context.Context, *connect.Request[RequestWriteFile]) (*connect.Response[ResponseWriteFile], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.WriteFile is not implemented"))
+}
+
+// ConflictServiceClient is a client for the mono.codexel.ConflictService service.
+type ConflictServiceClient interface {
+	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
+	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
+	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
+}
+
+// NewConflictServiceClient constructs a client for the mono.codexel.ConflictService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewConflictServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ConflictServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	conflictServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ConflictService").Methods()
+	return &conflictServiceClient{
+		listConflicts: connect.NewClient[RequestListConflicts, ResponseListConflicts](
+			httpClient,
+			baseURL+ConflictServiceListConflictsProcedure,
+			connect.WithSchema(conflictServiceMethods.ByName("ListConflicts")),
+			connect.WithClientOptions(opts...),
+		),
+		getConflict: connect.NewClient[RequestGetConflict, ResponseGetConflict](
+			httpClient,
+			baseURL+ConflictServiceGetConflictProcedure,
+			connect.WithSchema(conflictServiceMethods.ByName("GetConflict")),
+			connect.WithClientOptions(opts...),
+		),
+		resolve: connect.NewClient[RequestResolve, ResponseResolve](
+			httpClient,
+			baseURL+ConflictServiceResolveProcedure,
+			connect.WithSchema(conflictServiceMethods.ByName("Resolve")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// conflictServiceClient implements ConflictServiceClient.
+type conflictServiceClient struct {
+	listConflicts *connect.Client[RequestListConflicts, ResponseListConflicts]
+	getConflict   *connect.Client[RequestGetConflict, ResponseGetConflict]
+	resolve       *connect.Client[RequestResolve, ResponseResolve]
+}
+
+// ListConflicts calls mono.codexel.ConflictService.ListConflicts.
+func (c *conflictServiceClient) ListConflicts(ctx context.Context, req *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
+	return c.listConflicts.CallUnary(ctx, req)
+}
+
+// GetConflict calls mono.codexel.ConflictService.GetConflict.
+func (c *conflictServiceClient) GetConflict(ctx context.Context, req *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
+	return c.getConflict.CallUnary(ctx, req)
+}
+
+// Resolve calls mono.codexel.ConflictService.Resolve.
+func (c *conflictServiceClient) Resolve(ctx context.Context, req *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
+	return c.resolve.CallUnary(ctx, req)
+}
+
+// ConflictServiceHandler is an implementation of the mono.codexel.ConflictService service.
+type ConflictServiceHandler interface {
+	ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error)
+	GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error)
+	Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error)
+}
+
+// NewConflictServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewConflictServiceHandler(svc ConflictServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	conflictServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("ConflictService").Methods()
+	conflictServiceListConflictsHandler := connect.NewUnaryHandler(
+		ConflictServiceListConflictsProcedure,
+		svc.ListConflicts,
+		connect.WithSchema(conflictServiceMethods.ByName("ListConflicts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	conflictServiceGetConflictHandler := connect.NewUnaryHandler(
+		ConflictServiceGetConflictProcedure,
+		svc.GetConflict,
+		connect.WithSchema(conflictServiceMethods.ByName("GetConflict")),
+		connect.WithHandlerOptions(opts...),
+	)
+	conflictServiceResolveHandler := connect.NewUnaryHandler(
+		ConflictServiceResolveProcedure,
+		svc.Resolve,
+		connect.WithSchema(conflictServiceMethods.ByName("Resolve")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.ConflictService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ConflictServiceListConflictsProcedure:
+			conflictServiceListConflictsHandler.ServeHTTP(w, r)
+		case ConflictServiceGetConflictProcedure:
+			conflictServiceGetConflictHandler.ServeHTTP(w, r)
+		case ConflictServiceResolveProcedure:
+			conflictServiceResolveHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedConflictServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedConflictServiceHandler struct{}
+
+func (UnimplementedConflictServiceHandler) ListConflicts(context.Context, *connect.Request[RequestListConflicts]) (*connect.Response[ResponseListConflicts], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.ListConflicts is not implemented"))
+}
+
+func (UnimplementedConflictServiceHandler) GetConflict(context.Context, *connect.Request[RequestGetConflict]) (*connect.Response[ResponseGetConflict], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.GetConflict is not implemented"))
+}
+
+func (UnimplementedConflictServiceHandler) Resolve(context.Context, *connect.Request[RequestResolve]) (*connect.Response[ResponseResolve], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ConflictService.Resolve is not implemented"))
 }

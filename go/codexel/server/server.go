@@ -31,6 +31,7 @@ func New(herdrClient *herdr.Client, conf *config.File, frontend fs.FS) http.Hand
 	mux.Handle(api.NewGitServiceHandler(NewGitHandler(conf)))
 	mux.Handle(api.NewOperationServiceHandler(NewOperationHandler(conf)))
 	mux.Handle(api.NewFileServiceHandler(NewFileHandler(conf)))
+	mux.Handle(api.NewConflictServiceHandler(NewConflictHandler(conf)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }

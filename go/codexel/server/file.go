@@ -49,3 +49,14 @@ func (h *FileHandler) ListFiles(ctx context.Context, req *connect.Request[api.Re
 	}
 	return connect.NewResponse(api.ResponseListFiles_builder{Files: files}.Build()), nil
 }
+
+func (h *FileHandler) WriteFile(ctx context.Context, req *connect.Request[api.RequestWriteFile]) (*connect.Response[api.ResponseWriteFile], error) {
+	repo, err := openedRepository(h.config, req.Msg.GetPath())
+	if err != nil {
+		return nil, err
+	}
+	if err := repo.WriteFile(ctx, req.Msg.GetFile(), req.Msg.GetContent()); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	return connect.NewResponse(&api.ResponseWriteFile{}), nil
+}

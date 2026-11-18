@@ -2016,6 +2016,228 @@ export declare type ResponseListFiles = Message<"mono.codexel.ResponseListFiles"
 export declare const ResponseListFilesSchema: GenMessage<ResponseListFiles>;
 
 /**
+ * @generated from message mono.codexel.RequestWriteFile
+ */
+export declare type RequestWriteFile = Message<"mono.codexel.RequestWriteFile"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * file is the path of the file relative to the root of the workspace.
+   *
+   * @generated from field: string file = 2;
+   */
+  file: string;
+
+  /**
+   * @generated from field: bytes content = 3;
+   */
+  content: Uint8Array;
+};
+
+/**
+ * Describes the message mono.codexel.RequestWriteFile.
+ * Use `create(RequestWriteFileSchema)` to create a new message.
+ */
+export declare const RequestWriteFileSchema: GenMessage<RequestWriteFile>;
+
+/**
+ * @generated from message mono.codexel.ResponseWriteFile
+ */
+export declare type ResponseWriteFile = Message<"mono.codexel.ResponseWriteFile"> & {
+};
+
+/**
+ * Describes the message mono.codexel.ResponseWriteFile.
+ * Use `create(ResponseWriteFileSchema)` to create a new message.
+ */
+export declare const ResponseWriteFileSchema: GenMessage<ResponseWriteFile>;
+
+/**
+ * @generated from message mono.codexel.ConflictedFile
+ */
+export declare type ConflictedFile = Message<"mono.codexel.ConflictedFile"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * sides is the number of the sides of the conflict. 2 is the conflict between two changes.
+   *
+   * @generated from field: int32 sides = 2;
+   */
+  sides: number;
+};
+
+/**
+ * Describes the message mono.codexel.ConflictedFile.
+ * Use `create(ConflictedFileSchema)` to create a new message.
+ */
+export declare const ConflictedFileSchema: GenMessage<ConflictedFile>;
+
+/**
+ * @generated from message mono.codexel.ConflictedCommit
+ */
+export declare type ConflictedCommit = Message<"mono.codexel.ConflictedCommit"> & {
+  /**
+   * @generated from field: string change_id = 1;
+   */
+  changeId: string;
+
+  /**
+   * @generated from field: string commit_id = 2;
+   */
+  commitId: string;
+
+  /**
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * @generated from field: repeated mono.codexel.ConflictedFile files = 4;
+   */
+  files: ConflictedFile[];
+
+  /**
+   * working_copy is true if the commit is the working copy. Only the working copy can be resolved by WriteFile.
+   *
+   * @generated from field: bool working_copy = 5;
+   */
+  workingCopy: boolean;
+};
+
+/**
+ * Describes the message mono.codexel.ConflictedCommit.
+ * Use `create(ConflictedCommitSchema)` to create a new message.
+ */
+export declare const ConflictedCommitSchema: GenMessage<ConflictedCommit>;
+
+/**
+ * @generated from message mono.codexel.RequestListConflicts
+ */
+export declare type RequestListConflicts = Message<"mono.codexel.RequestListConflicts"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListConflicts.
+ * Use `create(RequestListConflictsSchema)` to create a new message.
+ */
+export declare const RequestListConflictsSchema: GenMessage<RequestListConflicts>;
+
+/**
+ * @generated from message mono.codexel.ResponseListConflicts
+ */
+export declare type ResponseListConflicts = Message<"mono.codexel.ResponseListConflicts"> & {
+  /**
+   * @generated from field: repeated mono.codexel.ConflictedCommit commits = 1;
+   */
+  commits: ConflictedCommit[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListConflicts.
+ * Use `create(ResponseListConflictsSchema)` to create a new message.
+ */
+export declare const ResponseListConflictsSchema: GenMessage<ResponseListConflicts>;
+
+/**
+ * @generated from message mono.codexel.RequestGetConflict
+ */
+export declare type RequestGetConflict = Message<"mono.codexel.RequestGetConflict"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * @generated from field: string file = 3;
+   */
+  file: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestGetConflict.
+ * Use `create(RequestGetConflictSchema)` to create a new message.
+ */
+export declare const RequestGetConflictSchema: GenMessage<RequestGetConflict>;
+
+/**
+ * @generated from message mono.codexel.ResponseGetConflict
+ */
+export declare type ResponseGetConflict = Message<"mono.codexel.ResponseGetConflict"> & {
+  /**
+   * @generated from field: string content = 1;
+   */
+  content: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseGetConflict.
+ * Use `create(ResponseGetConflictSchema)` to create a new message.
+ */
+export declare const ResponseGetConflictSchema: GenMessage<ResponseGetConflict>;
+
+/**
+ * @generated from message mono.codexel.RequestResolve
+ */
+export declare type RequestResolve = Message<"mono.codexel.RequestResolve"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * @generated from field: string file = 3;
+   */
+  file: string;
+
+  /**
+   * @generated from field: mono.codexel.ResolveSide side = 4;
+   */
+  side: ResolveSide;
+};
+
+/**
+ * Describes the message mono.codexel.RequestResolve.
+ * Use `create(RequestResolveSchema)` to create a new message.
+ */
+export declare const RequestResolveSchema: GenMessage<RequestResolve>;
+
+/**
+ * @generated from message mono.codexel.ResponseResolve
+ */
+export declare type ResponseResolve = Message<"mono.codexel.ResponseResolve"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseResolve.
+ * Use `create(ResponseResolveSchema)` to create a new message.
+ */
+export declare const ResponseResolveSchema: GenMessage<ResponseResolve>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -2190,6 +2412,35 @@ export enum RebaseTarget {
  * Describes the enum mono.codexel.RebaseTarget.
  */
 export declare const RebaseTargetSchema: GenEnum<RebaseTarget>;
+
+/**
+ * @generated from enum mono.codexel.ResolveSide
+ */
+export enum ResolveSide {
+  /**
+   * @generated from enum value: RESOLVE_SIDE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * RESOLVE_SIDE_OURS takes the first side.
+   *
+   * @generated from enum value: RESOLVE_SIDE_OURS = 1;
+   */
+  OURS = 1,
+
+  /**
+   * RESOLVE_SIDE_THEIRS takes the second side.
+   *
+   * @generated from enum value: RESOLVE_SIDE_THEIRS = 2;
+   */
+  THEIRS = 2,
+}
+
+/**
+ * Describes the enum mono.codexel.ResolveSide.
+ */
+export declare const ResolveSideSchema: GenEnum<ResolveSide>;
 
 /**
  * AgentService provides the coding agents running in herdr.
@@ -2598,6 +2849,53 @@ export declare const FileService: GenService<{
     methodKind: "unary";
     input: typeof RequestListFilesSchema;
     output: typeof ResponseListFilesSchema;
+  },
+  /**
+   * WriteFile writes the file of the working copy. The path must be in the workspace.
+   *
+   * @generated from rpc mono.codexel.FileService.WriteFile
+   */
+  writeFile: {
+    methodKind: "unary";
+    input: typeof RequestWriteFileSchema;
+    output: typeof ResponseWriteFileSchema;
+  },
+}>;
+
+/**
+ * ConflictService provides the conflicts of the mutable revisions.
+ *
+ * @generated from service mono.codexel.ConflictService
+ */
+export declare const ConflictService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.ConflictService.ListConflicts
+   */
+  listConflicts: {
+    methodKind: "unary";
+    input: typeof RequestListConflictsSchema;
+    output: typeof ResponseListConflictsSchema;
+  },
+  /**
+   * GetConflict returns the conflicted file with the markers of the snapshot style which has the whole content of each
+   * side.
+   *
+   * @generated from rpc mono.codexel.ConflictService.GetConflict
+   */
+  getConflict: {
+    methodKind: "unary";
+    input: typeof RequestGetConflictSchema;
+    output: typeof ResponseGetConflictSchema;
+  },
+  /**
+   * Resolve resolves the conflict of two sides by taking one side. It returns the message of jj in output.
+   *
+   * @generated from rpc mono.codexel.ConflictService.Resolve
+   */
+  resolve: {
+    methodKind: "unary";
+    input: typeof RequestResolveSchema;
+    output: typeof ResponseResolveSchema;
   },
 }>;
 

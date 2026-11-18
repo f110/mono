@@ -4,6 +4,7 @@ go_library(
     name = "jujutsu",
     srcs = [
         "bookmark.go",
+        "conflict.go",
         "diff.go",
         "file.go",
         "history.go",
@@ -19,6 +20,7 @@ go_test(
     name = "jujutsu_test",
     srcs = [
         "bookmark_test.go",
+        "conflict_test.go",
         "diff_test.go",
         "file_test.go",
         "history_test.go",

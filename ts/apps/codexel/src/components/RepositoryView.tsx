@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { BookmarkService, FileService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
+import { BookmarkService, ConflictService, FileService, GitService, OperationService, RebaseSource, RebaseTarget, RevisionService, type Commit } from '../connect/codexel_pb.js'
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
@@ -27,7 +27,9 @@ import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
 import { FileTreePanel, FileView } from './FileTree.tsx'
+import { ConflictsPanel, conflictEntries } from './ConflictsPanel.tsx'
 import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
+import { MergeEditor } from './MergeEditor.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 
@@ -45,6 +47,8 @@ const client = createClient(RevisionService, transport)
 const bookmarkClient = createClient(BookmarkService, transport)
 const gitClient = createClient(GitService, transport)
 const operationClient = createClient(OperationService, transport)
+const conflictClient = createClient(ConflictService, transport)
+const fileClient = createClient(FileService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
@@ -96,7 +100,8 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [editing, setEditing] = useState<Editing>()
   const [abandoning, setAbandoning] = useState<Commit[]>()
   const [mode, setMode] = useState<Mode>()
-  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files'>('log')
+  const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>('log')
+  const [conflictSelected, setConflictSelected] = useState(0)
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
   const [treeSelected, setTreeSelected] = useState(0)
@@ -127,6 +132,8 @@ export const RepositoryView = ({ path }: { path: string }) => {
     { enabled: view === 'evolog' && evologTarget !== undefined },
   )
   const evolog = evologData?.entries ?? []
+  const { data: conflictData, refetch: refetchConflicts } = useQuery(ConflictService.method.listConflicts, { path }, { enabled: view === 'conflicts' })
+  const conflicts = useMemo(() => conflictEntries(conflictData?.commits ?? []), [conflictData])
   const { data: filesData } = useQuery(
     FileService.method.listFiles,
     { path, revision: treeTarget?.commitId ?? '' },
@@ -172,8 +179,11 @@ export const RepositoryView = ({ path }: { path: string }) => {
       if (view === 'oplog') {
         refetchOperations()
       }
+      if (view === 'conflicts') {
+        refetchConflicts()
+      }
     }
-  }, [operation, view, refetch, refetchBookmarks, refetchOperations])
+  }, [operation, view, refetch, refetchBookmarks, refetchOperations, refetchConflicts])
 
   const selectIndex = useCallback((i: number) => {
     const c = commits[Math.max(0, Math.min(i, commits.length - 1))]
@@ -307,9 +317,9 @@ export const RepositoryView = ({ path }: { path: string }) => {
         e.preventDefault()
         return
       }
-      if (view === 'oplog' || view === 'evolog') {
-        const length = view === 'oplog' ? operations.length : evolog.length
-        const setIndex = view === 'oplog' ? setOpSelected : setEvologSelected
+      if (view === 'oplog' || view === 'evolog' || view === 'conflicts') {
+        const length = { oplog: operations.length, evolog: evolog.length, conflicts: conflicts.length }[view]
+        const setIndex = { oplog: setOpSelected, evolog: setEvologSelected, conflicts: setConflictSelected }[view]
         switch (e.key) {
           case 'j':
             setIndex((i) => Math.min(i + 1, length - 1))
@@ -405,6 +415,10 @@ export const RepositoryView = ({ path }: { path: string }) => {
             setView('files')
           }
           break
+        case '3':
+          setConflictSelected(0)
+          setView('conflicts')
+          break
         case '4':
         case 'O':
           setOpSelected(0)
@@ -498,6 +512,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
   }, [
     view,
     treeNodes,
+    conflicts,
     treeSelected,
     treeExpanded,
     operations,
@@ -575,6 +590,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
             />
           )}
           {view === 'evolog' && <EvologPanel entries={evolog} selected={evologSelected} onSelect={setEvologSelected} />}
+          {view === 'conflicts' && <ConflictsPanel entries={conflicts} selected={conflictSelected} onSelect={setConflictSelected} />}
           {view === 'files' && (
             <FileTreePanel
               nodes={treeNodes}
@@ -624,6 +640,26 @@ export const RepositoryView = ({ path }: { path: string }) => {
                 Files at {treeTarget.changeId.slice(0, 8)}
               </Typography>
             ))}
+          {view === 'conflicts' && conflicts[conflictSelected] && (
+            <MergeEditor
+              key={`${conflicts[conflictSelected].commit.commitId}:${conflicts[conflictSelected].file.path}`}
+              repoPath={path}
+              commit={conflicts[conflictSelected].commit}
+              file={conflicts[conflictSelected].file}
+              onResolve={(side) => {
+                const e = conflicts[conflictSelected]
+                run(() => conflictClient.resolve({ path, revision: e.commit.commitId, file: e.file.path, side }), false)
+              }}
+              onSave={(content) => {
+                const e = conflicts[conflictSelected]
+                run(async () => {
+                  await fileClient.writeFile({ path, file: e.file.path, content: new TextEncoder().encode(content) })
+                  return { output: `Saved ${e.file.path}` }
+                }, false)
+              }}
+              onEdit={() => run(() => client.edit({ path, revision: conflicts[conflictSelected].commit.commitId }), true)}
+            />
+          )}
           {view === 'evolog' && (
             <Box sx={{ p: 2 }}>
               {evolog[evologSelected]?.files.map((f) => (
