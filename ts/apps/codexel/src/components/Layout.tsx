@@ -3,11 +3,7 @@ import { AppBar, Box, Button, IconButton, Toolbar, Typography, useColorScheme } 
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import { Link, Outlet } from '@tanstack/react-router'
-
-const isEditing = (e: KeyboardEvent) => {
-  const target = e.target as HTMLElement | null
-  return target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-}
+import { ignoreKey } from '../lib/keys.ts'
 
 export const Layout = () => {
   const { mode, systemMode, setMode } = useColorScheme()
@@ -17,7 +13,7 @@ export const Layout = () => {
   // t toggles the theme like lightjj. MUI keeps the mode in the local storage.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 't' || isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"], [role="menu"]')) {
+      if (e.key !== 't' || ignoreKey(e)) {
         return
       }
       e.preventDefault()

@@ -2586,6 +2586,96 @@ export declare type ResponseDiffRange = Message<"mono.codexel.ResponseDiffRange"
 export declare const ResponseDiffRangeSchema: GenMessage<ResponseDiffRange>;
 
 /**
+ * @generated from message mono.codexel.Alias
+ */
+export declare type Alias = Message<"mono.codexel.Alias"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: repeated string args = 2;
+   */
+  args: string[];
+};
+
+/**
+ * Describes the message mono.codexel.Alias.
+ * Use `create(AliasSchema)` to create a new message.
+ */
+export declare const AliasSchema: GenMessage<Alias>;
+
+/**
+ * @generated from message mono.codexel.RequestListAliases
+ */
+export declare type RequestListAliases = Message<"mono.codexel.RequestListAliases"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListAliases.
+ * Use `create(RequestListAliasesSchema)` to create a new message.
+ */
+export declare const RequestListAliasesSchema: GenMessage<RequestListAliases>;
+
+/**
+ * @generated from message mono.codexel.ResponseListAliases
+ */
+export declare type ResponseListAliases = Message<"mono.codexel.ResponseListAliases"> & {
+  /**
+   * @generated from field: repeated mono.codexel.Alias aliases = 1;
+   */
+  aliases: Alias[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListAliases.
+ * Use `create(ResponseListAliasesSchema)` to create a new message.
+ */
+export declare const ResponseListAliasesSchema: GenMessage<ResponseListAliases>;
+
+/**
+ * @generated from message mono.codexel.RequestRunAlias
+ */
+export declare type RequestRunAlias = Message<"mono.codexel.RequestRunAlias"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestRunAlias.
+ * Use `create(RequestRunAliasSchema)` to create a new message.
+ */
+export declare const RequestRunAliasSchema: GenMessage<RequestRunAlias>;
+
+/**
+ * @generated from message mono.codexel.ResponseRunAlias
+ */
+export declare type ResponseRunAlias = Message<"mono.codexel.ResponseRunAlias"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRunAlias.
+ * Use `create(ResponseRunAliasSchema)` to create a new message.
+ */
+export declare const ResponseRunAliasSchema: GenMessage<ResponseRunAlias>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -3331,6 +3421,32 @@ export declare const WorkspaceService: GenService<{
     methodKind: "unary";
     input: typeof RequestUpdateStaleSchema;
     output: typeof ResponseUpdateStaleSchema;
+  },
+}>;
+
+/**
+ * AliasService runs the aliases of jj configured by the user.
+ *
+ * @generated from service mono.codexel.AliasService
+ */
+export declare const AliasService: GenService<{
+  /**
+   * @generated from rpc mono.codexel.AliasService.ListAliases
+   */
+  listAliases: {
+    methodKind: "unary";
+    input: typeof RequestListAliasesSchema;
+    output: typeof ResponseListAliasesSchema;
+  },
+  /**
+   * RunAlias runs the alias without the arguments. It returns stdout and stderr of jj in output.
+   *
+   * @generated from rpc mono.codexel.AliasService.RunAlias
+   */
+  runAlias: {
+    methodKind: "unary";
+    input: typeof RequestRunAliasSchema;
+    output: typeof ResponseRunAliasSchema;
   },
 }>;
 

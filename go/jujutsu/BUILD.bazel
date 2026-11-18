@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "jujutsu",
     srcs = [
+        "alias.go",
         "bookmark.go",
         "conflict.go",
         "diff.go",
@@ -20,6 +21,7 @@ go_library(
 go_test(
     name = "jujutsu_test",
     srcs = [
+        "alias_test.go",
         "bookmark_test.go",
         "conflict_test.go",
         "diff_test.go",

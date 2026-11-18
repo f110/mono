@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 import {
+  AliasService,
   BookmarkService,
   ConflictService,
   FileService,
@@ -32,10 +33,12 @@ import {
 import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
 import { useOperation } from '../hooks/useOperation.ts'
 import { fileRevset, visibleNodes } from '../lib/fileTree.ts'
+import { ignoreKey, pressKey } from '../lib/keys.ts'
 import { computeSlide } from '../lib/slide.ts'
 import { transport } from '../providers/AppProvider.tsx'
 import { BookmarkDialog } from './BookmarkDialog.tsx'
 import { BookmarksPanel, bookmarkLabel } from './BookmarksPanel.tsx'
+import { CommandPalette } from './CommandPalette.tsx'
 import { DescriptionDialog } from './DescriptionDialog.tsx'
 import { DivergenceDialog } from './DivergenceDialog.tsx'
 import { FileDiffView } from './FileDiffView.tsx'
@@ -47,12 +50,6 @@ import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
 import { SplitDialog } from './SplitDialog.tsx'
 import { WorkspaceDialog } from './WorkspaceDialog.tsx'
-
-// isEditing reports whether the key event is for the input. The keyboard shortcuts are ignored while editing.
-const isEditing = (e: KeyboardEvent) => {
-  const target = e.target as HTMLElement | null
-  return target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-}
 
 // revisionKey identifies the revision across the operations. The change ID doesn't change by rewriting the revision but
 // it is ambiguous for the divergent revisions.
@@ -66,6 +63,7 @@ const conflictClient = createClient(ConflictService, transport)
 const fileClient = createClient(FileService, transport)
 const repositoryClient = createClient(RepositoryService, transport)
 const workspaceClient = createClient(WorkspaceService, transport)
+const aliasClient = createClient(AliasService, transport)
 
 // operationLimit is the number of the operations shown in the operation log.
 const operationLimit = 200
@@ -124,6 +122,8 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
   const [splitting, setSplitting] = useState<Commit>()
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [divergent, setDivergent] = useState<Commit>()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const { data: aliasData } = useQuery(AliasService.method.listAliases, { path }, { enabled: paletteOpen })
   const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
@@ -298,8 +298,13 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // The keys are ignored while any dialog or menu is open.
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"], [role="menu"]')) {
+      // Cmd/Ctrl+K opens the command palette like lightjj.
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !document.querySelector('[role="dialog"]')) {
+        e.preventDefault()
+        setPaletteOpen(true)
+        return
+      }
+      if (ignoreKey(e)) {
         return
       }
       if (view === 'files') {
@@ -855,6 +860,51 @@ export const RepositoryView = ({ path, onOpenRepository }: { path: string; onOpe
           </Button>
         </DialogActions>
       </Dialog>
+
+      {paletteOpen && (
+        <CommandPalette
+          onClose={() => setPaletteOpen(false)}
+          actions={[
+            ...(selectedCommit
+              ? [
+                  { label: 'New revision', shortcut: 'n', run: () => newRevision(targets()) },
+                  { label: 'Edit the description', shortcut: 'e', run: () => startDescribe(selectedCommit) },
+                  { label: 'Edit the revision (check out)', run: () => edit(selectedCommit) },
+                  { label: 'Abandon the revision', run: () => setAbandoning(targets()) },
+                  { label: 'Split the revision', shortcut: 's', run: () => setSplitting(selectedCommit) },
+                  { label: 'Rebase', shortcut: 'R', run: () => setMode({ kind: 'rebase', sources: targets(), source: RebaseSource.REVISIONS, target: RebaseTarget.ONTO }) },
+                  { label: 'Squash', shortcut: 'S', run: () => setMode({ kind: 'squash', sources: targets(), combine: false }) },
+                  { label: 'Slide down (swap with the parent)', shortcut: 'J', run: () => slide('down') },
+                  { label: 'Slide up (swap with the child)', shortcut: 'K', run: () => slide('up') },
+                  { label: 'Set the bookmark', shortcut: 'B', run: () => setSettingBookmark(selectedCommit) },
+                  { label: 'Show the evolog', shortcut: 'E', run: () => pressKey('E') },
+                  { label: 'Browse the files', shortcut: 'F', run: () => pressKey('F') },
+                ]
+              : []),
+            { label: 'Commit the working copy', shortcut: 'c', run: () => startCommit() },
+            { label: 'Undo', shortcut: 'u', run: () => undo() },
+            { label: 'Git fetch', shortcut: 'f', run: () => run(() => gitClient.fetch({ path }), false) },
+            { label: 'Git push', shortcut: 'p', run: () => setPushing(true) },
+            { label: 'Show the log', shortcut: '1', run: () => setView('log') },
+            { label: 'Show the bookmarks', shortcut: '2', run: () => setView('bookmarks') },
+            { label: 'Show the conflicts', shortcut: '3', run: () => setView('conflicts') },
+            { label: 'Show the operation log', shortcut: '4', run: () => setView('oplog') },
+            { label: 'Workspaces', shortcut: 'w', run: () => setWorkspaceOpen(true) },
+            { label: 'Jump to the working copy', shortcut: '@', run: () => selectIndex(commits.findIndex((c) => c.currentWorkingCopy)) },
+            { label: 'Refresh', shortcut: 'r', run: () => refetch() },
+            { label: 'Focus the revset', shortcut: '/', run: () => setTimeout(() => revsetRef.current?.focus(), 0) },
+            { label: 'Toggle the split view', shortcut: '|', run: () => pressKey('|') },
+            { label: 'Toggle the preview of Markdown', shortcut: 'm', run: () => pressKey('m') },
+            { label: 'Next hunk', shortcut: ']', run: () => pressKey(']') },
+            { label: 'Previous hunk', shortcut: '[', run: () => pressKey('[') },
+            { label: 'Toggle the theme', shortcut: 't', run: () => pressKey('t') },
+            ...(aliasData?.aliases ?? []).map((a) => ({
+              label: `Run alias: ${a.name} (jj ${a.args.join(' ')})`,
+              run: () => run(() => aliasClient.runAlias({ path, name: a.name }), false),
+            })),
+          ]}
+        />
+      )}
 
       {divergent && (
         <DivergenceDialog

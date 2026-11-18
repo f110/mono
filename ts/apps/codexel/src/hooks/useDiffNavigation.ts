@@ -1,11 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react'
+import { ignoreKey } from '../lib/keys.ts'
 
 const splitKey = 'codexel.diff.split'
-
-const isEditing = (e: KeyboardEvent) => {
-  const target = e.target as HTMLElement | null
-  return target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-}
 
 // useDiffNavigation handles the keys of the diff in the container: | toggles the split view, m toggles the preview of
 // Markdown and ] / [ move to the next / previous hunk. The setting of the split view is kept in the local storage.
@@ -15,7 +11,7 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): { s
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"]')) {
+      if (ignoreKey(e)) {
         return
       }
       const el = container.current

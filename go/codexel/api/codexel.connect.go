@@ -38,6 +38,8 @@ const (
 	ConflictServiceName = "mono.codexel.ConflictService"
 	// WorkspaceServiceName is the fully-qualified name of the WorkspaceService service.
 	WorkspaceServiceName = "mono.codexel.WorkspaceService"
+	// AliasServiceName is the fully-qualified name of the AliasService service.
+	AliasServiceName = "mono.codexel.AliasService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -175,6 +177,11 @@ const (
 	// WorkspaceServiceUpdateStaleProcedure is the fully-qualified name of the WorkspaceService's
 	// UpdateStale RPC.
 	WorkspaceServiceUpdateStaleProcedure = "/mono.codexel.WorkspaceService/UpdateStale"
+	// AliasServiceListAliasesProcedure is the fully-qualified name of the AliasService's ListAliases
+	// RPC.
+	AliasServiceListAliasesProcedure = "/mono.codexel.AliasService/ListAliases"
+	// AliasServiceRunAliasProcedure is the fully-qualified name of the AliasService's RunAlias RPC.
+	AliasServiceRunAliasProcedure = "/mono.codexel.AliasService/RunAlias"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -1871,4 +1878,100 @@ func (UnimplementedWorkspaceServiceHandler) RenameRepositoryWorkspace(context.Co
 
 func (UnimplementedWorkspaceServiceHandler) UpdateStale(context.Context, *connect.Request[RequestUpdateStale]) (*connect.Response[ResponseUpdateStale], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.WorkspaceService.UpdateStale is not implemented"))
+}
+
+// AliasServiceClient is a client for the mono.codexel.AliasService service.
+type AliasServiceClient interface {
+	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
+	RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error)
+}
+
+// NewAliasServiceClient constructs a client for the mono.codexel.AliasService service. By default,
+// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
+// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
+// or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewAliasServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AliasServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	aliasServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AliasService").Methods()
+	return &aliasServiceClient{
+		listAliases: connect.NewClient[RequestListAliases, ResponseListAliases](
+			httpClient,
+			baseURL+AliasServiceListAliasesProcedure,
+			connect.WithSchema(aliasServiceMethods.ByName("ListAliases")),
+			connect.WithClientOptions(opts...),
+		),
+		runAlias: connect.NewClient[RequestRunAlias, ResponseRunAlias](
+			httpClient,
+			baseURL+AliasServiceRunAliasProcedure,
+			connect.WithSchema(aliasServiceMethods.ByName("RunAlias")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// aliasServiceClient implements AliasServiceClient.
+type aliasServiceClient struct {
+	listAliases *connect.Client[RequestListAliases, ResponseListAliases]
+	runAlias    *connect.Client[RequestRunAlias, ResponseRunAlias]
+}
+
+// ListAliases calls mono.codexel.AliasService.ListAliases.
+func (c *aliasServiceClient) ListAliases(ctx context.Context, req *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
+	return c.listAliases.CallUnary(ctx, req)
+}
+
+// RunAlias calls mono.codexel.AliasService.RunAlias.
+func (c *aliasServiceClient) RunAlias(ctx context.Context, req *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
+	return c.runAlias.CallUnary(ctx, req)
+}
+
+// AliasServiceHandler is an implementation of the mono.codexel.AliasService service.
+type AliasServiceHandler interface {
+	ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error)
+	RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error)
+}
+
+// NewAliasServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewAliasServiceHandler(svc AliasServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	aliasServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("AliasService").Methods()
+	aliasServiceListAliasesHandler := connect.NewUnaryHandler(
+		AliasServiceListAliasesProcedure,
+		svc.ListAliases,
+		connect.WithSchema(aliasServiceMethods.ByName("ListAliases")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aliasServiceRunAliasHandler := connect.NewUnaryHandler(
+		AliasServiceRunAliasProcedure,
+		svc.RunAlias,
+		connect.WithSchema(aliasServiceMethods.ByName("RunAlias")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.AliasService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case AliasServiceListAliasesProcedure:
+			aliasServiceListAliasesHandler.ServeHTTP(w, r)
+		case AliasServiceRunAliasProcedure:
+			aliasServiceRunAliasHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedAliasServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAliasServiceHandler struct{}
+
+func (UnimplementedAliasServiceHandler) ListAliases(context.Context, *connect.Request[RequestListAliases]) (*connect.Response[ResponseListAliases], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AliasService.ListAliases is not implemented"))
+}
+
+func (UnimplementedAliasServiceHandler) RunAlias(context.Context, *connect.Request[RequestRunAlias]) (*connect.Response[ResponseRunAlias], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.AliasService.RunAlias is not implemented"))
 }

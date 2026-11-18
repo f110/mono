@@ -802,3 +802,32 @@ message RequestDiffRange {
 message ResponseDiffRange {
   repeated FileDiff files = 1;
 }
+
+// AliasService runs the aliases of jj configured by the user.
+service AliasService {
+  rpc ListAliases(RequestListAliases) returns (ResponseListAliases);
+  // RunAlias runs the alias without the arguments. It returns stdout and stderr of jj in output.
+  rpc RunAlias(RequestRunAlias) returns (ResponseRunAlias);
+}
+
+message Alias {
+  string          name = 1;
+  repeated string args = 2;
+}
+
+message RequestListAliases {
+  string path = 1;
+}
+
+message ResponseListAliases {
+  repeated Alias aliases = 1;
+}
+
+message RequestRunAlias {
+  string path = 1;
+  string name = 2;
+}
+
+message ResponseRunAlias {
+  string output = 1;
+}
