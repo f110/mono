@@ -2238,6 +2238,97 @@ export declare type ResponseResolve = Message<"mono.codexel.ResponseResolve"> & 
 export declare const ResponseResolveSchema: GenMessage<ResponseResolve>;
 
 /**
+ * @generated from message mono.codexel.RequestSplit
+ */
+export declare type RequestSplit = Message<"mono.codexel.RequestSplit"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * description is the description of the new revision which has the files.
+   *
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * @generated from field: repeated string files = 4;
+   */
+  files: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestSplit.
+ * Use `create(RequestSplitSchema)` to create a new message.
+ */
+export declare const RequestSplitSchema: GenMessage<RequestSplit>;
+
+/**
+ * @generated from message mono.codexel.ResponseSplit
+ */
+export declare type ResponseSplit = Message<"mono.codexel.ResponseSplit"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseSplit.
+ * Use `create(ResponseSplitSchema)` to create a new message.
+ */
+export declare const ResponseSplitSchema: GenMessage<ResponseSplit>;
+
+/**
+ * @generated from message mono.codexel.RequestRestore
+ */
+export declare type RequestRestore = Message<"mono.codexel.RequestRestore"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * @generated from field: repeated string files = 3;
+   */
+  files: string[];
+};
+
+/**
+ * Describes the message mono.codexel.RequestRestore.
+ * Use `create(RequestRestoreSchema)` to create a new message.
+ */
+export declare const RequestRestoreSchema: GenMessage<RequestRestore>;
+
+/**
+ * @generated from message mono.codexel.ResponseRestore
+ */
+export declare type ResponseRestore = Message<"mono.codexel.ResponseRestore"> & {
+  /**
+   * @generated from field: string output = 1;
+   */
+  output: string;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseRestore.
+ * Use `create(ResponseRestoreSchema)` to create a new message.
+ */
+export declare const ResponseRestoreSchema: GenMessage<ResponseRestore>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -2685,6 +2776,26 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestEvologSchema;
     output: typeof ResponseEvologSchema;
+  },
+  /**
+   * Split moves the files into the new revision before the revision.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Split
+   */
+  split: {
+    methodKind: "unary";
+    input: typeof RequestSplitSchema;
+    output: typeof ResponseSplitSchema;
+  },
+  /**
+   * Restore discards the changes of the files in the revision.
+   *
+   * @generated from rpc mono.codexel.RevisionService.Restore
+   */
+  restore: {
+    methodKind: "unary";
+    input: typeof RequestRestoreSchema;
+    output: typeof ResponseRestoreSchema;
   },
 }>;
 

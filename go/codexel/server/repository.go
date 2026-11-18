@@ -479,3 +479,29 @@ func (h *RevisionHandler) Evolog(ctx context.Context, req *connect.Request[api.R
 	}
 	return connect.NewResponse(api.ResponseEvolog_builder{Entries: res}.Build()), nil
 }
+
+func (h *RevisionHandler) Split(ctx context.Context, req *connect.Request[api.RequestSplit]) (*connect.Response[api.ResponseSplit], error) {
+	if req.Msg.GetRevision() == "" || len(req.Msg.GetFiles()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision and files are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
+		return r.Split(ctx, req.Msg.GetRevision(), req.Msg.GetDescription(), req.Msg.GetFiles())
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseSplit_builder{Output: new(out)}.Build()), nil
+}
+
+func (h *RevisionHandler) Restore(ctx context.Context, req *connect.Request[api.RequestRestore]) (*connect.Response[api.ResponseRestore], error) {
+	if req.Msg.GetRevision() == "" || len(req.Msg.GetFiles()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision and files are required"))
+	}
+	out, err := h.mutate(req.Msg.GetPath(), func(r *jujutsu.Repository) (string, error) {
+		return r.Restore(ctx, req.Msg.GetRevision(), req.Msg.GetFiles())
+	})
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(api.ResponseRestore_builder{Output: new(out)}.Build()), nil
+}

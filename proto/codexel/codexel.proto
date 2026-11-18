@@ -150,6 +150,10 @@ service RevisionService {
   rpc Squash(RequestSquash) returns (ResponseSquash);
   // Evolog returns the versions of the revision from the newest.
   rpc Evolog(RequestEvolog) returns (ResponseEvolog);
+  // Split moves the files into the new revision before the revision.
+  rpc Split(RequestSplit) returns (ResponseSplit);
+  // Restore discards the changes of the files in the revision.
+  rpc Restore(RequestRestore) returns (ResponseRestore);
 }
 
 message Repository {
@@ -695,5 +699,27 @@ message RequestResolve {
 }
 
 message ResponseResolve {
+  string output = 1;
+}
+
+message RequestSplit {
+  string path     = 1;
+  string revision = 2;
+  // description is the description of the new revision which has the files.
+  string          description = 3;
+  repeated string files       = 4;
+}
+
+message ResponseSplit {
+  string output = 1;
+}
+
+message RequestRestore {
+  string          path     = 1;
+  string          revision = 2;
+  repeated string files    = 3;
+}
+
+message ResponseRestore {
   string output = 1;
 }

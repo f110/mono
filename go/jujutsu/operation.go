@@ -115,3 +115,30 @@ func squashArgs(from []string, into, message string) []string {
 func (r *Repository) Squash(ctx context.Context, from []string, into, message string) (string, error) {
 	return r.mutate(ctx, squashArgs(from, into, message)...)
 }
+
+// splitArgs returns the arguments of jj split which moves the files into the new revision before the revision.
+// message is the description of the new revision. The rest keeps the original description.
+func splitArgs(rev, message string, files []string) []string {
+	args := []string{"split", "--revision=" + rev, "--message=" + message, "--"}
+	for _, f := range files {
+		args = append(args, rootFile(f))
+	}
+	return args
+}
+
+// restoreArgs returns the arguments of jj restore which discards the changes of the files in the revision.
+func restoreArgs(rev string, files []string) []string {
+	args := []string{"restore", "--changes-in=" + rev, "--"}
+	for _, f := range files {
+		args = append(args, rootFile(f))
+	}
+	return args
+}
+
+func (r *Repository) Split(ctx context.Context, rev, message string, files []string) (string, error) {
+	return r.mutate(ctx, splitArgs(rev, message, files)...)
+}
+
+func (r *Repository) Restore(ctx context.Context, rev string, files []string) (string, error) {
+	return r.mutate(ctx, restoreArgs(rev, files)...)
+}

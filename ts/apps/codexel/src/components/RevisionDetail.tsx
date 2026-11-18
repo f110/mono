@@ -58,12 +58,14 @@ export const RevisionDetail = ({
   split,
   preview,
   onHistory,
+  onRestore,
 }: {
   path: string
   commit: Commit
   split: boolean
   preview: boolean
   onHistory: (file: string) => void
+  onRestore: (commit: Commit, file: string) => void
 }) => {
   const { data, error } = useQuery(RevisionService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
@@ -99,6 +101,7 @@ export const RevisionDetail = ({
           revision={commit.commitId}
           oldRevision={commit.parents.length === 1 ? commit.parents[0] : undefined}
           onHistory={onHistory}
+          onRestore={commit.immutable ? undefined : (file) => onRestore(commit, file)}
         />
       ))}
     </Box>

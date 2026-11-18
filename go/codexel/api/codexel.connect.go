@@ -103,6 +103,10 @@ const (
 	RevisionServiceSquashProcedure = "/mono.codexel.RevisionService/Squash"
 	// RevisionServiceEvologProcedure is the fully-qualified name of the RevisionService's Evolog RPC.
 	RevisionServiceEvologProcedure = "/mono.codexel.RevisionService/Evolog"
+	// RevisionServiceSplitProcedure is the fully-qualified name of the RevisionService's Split RPC.
+	RevisionServiceSplitProcedure = "/mono.codexel.RevisionService/Split"
+	// RevisionServiceRestoreProcedure is the fully-qualified name of the RevisionService's Restore RPC.
+	RevisionServiceRestoreProcedure = "/mono.codexel.RevisionService/Restore"
 	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
 	// ListBookmarks RPC.
 	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
@@ -592,6 +596,8 @@ type RevisionServiceClient interface {
 	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
 	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
 	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
+	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
+	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -671,6 +677,18 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
 			connect.WithClientOptions(opts...),
 		),
+		split: connect.NewClient[RequestSplit, ResponseSplit](
+			httpClient,
+			baseURL+RevisionServiceSplitProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Split")),
+			connect.WithClientOptions(opts...),
+		),
+		restore: connect.NewClient[RequestRestore, ResponseRestore](
+			httpClient,
+			baseURL+RevisionServiceRestoreProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("Restore")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -687,6 +705,8 @@ type revisionServiceClient struct {
 	rebase      *connect.Client[RequestRebase, ResponseRebase]
 	squash      *connect.Client[RequestSquash, ResponseSquash]
 	evolog      *connect.Client[RequestEvolog, ResponseEvolog]
+	split       *connect.Client[RequestSplit, ResponseSplit]
+	restore     *connect.Client[RequestRestore, ResponseRestore]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -744,6 +764,16 @@ func (c *revisionServiceClient) Evolog(ctx context.Context, req *connect.Request
 	return c.evolog.CallUnary(ctx, req)
 }
 
+// Split calls mono.codexel.RevisionService.Split.
+func (c *revisionServiceClient) Split(ctx context.Context, req *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
+	return c.split.CallUnary(ctx, req)
+}
+
+// Restore calls mono.codexel.RevisionService.Restore.
+func (c *revisionServiceClient) Restore(ctx context.Context, req *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
+	return c.restore.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
@@ -757,6 +787,8 @@ type RevisionServiceHandler interface {
 	Rebase(context.Context, *connect.Request[RequestRebase]) (*connect.Response[ResponseRebase], error)
 	Squash(context.Context, *connect.Request[RequestSquash]) (*connect.Response[ResponseSquash], error)
 	Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error)
+	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
+	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -832,6 +864,18 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("Evolog")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceSplitHandler := connect.NewUnaryHandler(
+		RevisionServiceSplitProcedure,
+		svc.Split,
+		connect.WithSchema(revisionServiceMethods.ByName("Split")),
+		connect.WithHandlerOptions(opts...),
+	)
+	revisionServiceRestoreHandler := connect.NewUnaryHandler(
+		RevisionServiceRestoreProcedure,
+		svc.Restore,
+		connect.WithSchema(revisionServiceMethods.ByName("Restore")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
@@ -856,6 +900,10 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 			revisionServiceSquashHandler.ServeHTTP(w, r)
 		case RevisionServiceEvologProcedure:
 			revisionServiceEvologHandler.ServeHTTP(w, r)
+		case RevisionServiceSplitProcedure:
+			revisionServiceSplitHandler.ServeHTTP(w, r)
+		case RevisionServiceRestoreProcedure:
+			revisionServiceRestoreHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -907,6 +955,14 @@ func (UnimplementedRevisionServiceHandler) Squash(context.Context, *connect.Requ
 
 func (UnimplementedRevisionServiceHandler) Evolog(context.Context, *connect.Request[RequestEvolog]) (*connect.Response[ResponseEvolog], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Evolog is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Split is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.Restore is not implemented"))
 }
 
 // BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.

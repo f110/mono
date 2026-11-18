@@ -32,6 +32,7 @@ import { EvologPanel, OperationsPanel } from './HistoryPanels.tsx'
 import { MergeEditor } from './MergeEditor.tsx'
 import { RevisionDetail } from './RevisionDetail.tsx'
 import { RevisionGraph } from './RevisionGraph.tsx'
+import { SplitDialog } from './SplitDialog.tsx'
 
 // isEditing reports whether the key event is for the input. The keyboard shortcuts are ignored while editing.
 const isEditing = (e: KeyboardEvent) => {
@@ -102,6 +103,8 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [mode, setMode] = useState<Mode>()
   const [view, setView] = useState<'log' | 'bookmarks' | 'oplog' | 'evolog' | 'files' | 'conflicts'>('log')
   const [conflictSelected, setConflictSelected] = useState(0)
+  const [splitting, setSplitting] = useState<Commit>()
+  const [restoringFile, setRestoringFile] = useState<{ commit: Commit; file: string }>()
   const [treeTarget, setTreeTarget] = useState<Commit>()
   const [treeExpanded, setTreeExpanded] = useState<Set<string>>(new Set())
   const [treeSelected, setTreeSelected] = useState(0)
@@ -275,7 +278,8 @@ export const RepositoryView = ({ path }: { path: string }) => {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || editing || abandoning || settingBookmark || pushing || restoring) {
+      // The keys are ignored while any dialog or menu is open.
+      if (isEditing(e) || e.metaKey || e.ctrlKey || e.altKey || document.querySelector('[role="dialog"], [role="menu"]')) {
         return
       }
       if (view === 'files') {
@@ -451,6 +455,11 @@ export const RepositoryView = ({ path }: { path: string }) => {
         case 'S':
           if (targets().length > 0) {
             setMode({ kind: 'squash', sources: targets(), combine: false })
+          }
+          break
+        case 's':
+          if (selectedCommit && !selectedCommit.immutable && checked.size === 0) {
+            setSplitting(selectedCommit)
           }
           break
         case 'J':
@@ -677,7 +686,15 @@ export const RepositoryView = ({ path }: { path: string }) => {
             </Box>
           )}
           {(view === 'log' || view === 'bookmarks' || view === 'oplog') && selectedCommit && (
-            <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} preview={preview} onHistory={showHistory} />
+            <RevisionDetail
+              key={selectedCommit.commitId}
+              path={path}
+              commit={selectedCommit}
+              split={split}
+              preview={preview}
+              onHistory={showHistory}
+              onRestore={(commit, file) => setRestoringFile({ commit, file })}
+            />
           )}
         </Box>
       </Stack>
@@ -811,6 +828,39 @@ export const RepositoryView = ({ path }: { path: string }) => {
             }}
           >
             Push
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {splitting && (
+        <SplitDialog
+          repoPath={path}
+          commit={splitting}
+          onClose={() => setSplitting(undefined)}
+          onSubmit={(files, description) => {
+            const c = splitting
+            setSplitting(undefined)
+            run(() => client.split({ path, revision: c.commitId, description, files }), false)
+          }}
+        />
+      )}
+
+      <Dialog open={restoringFile !== undefined} onClose={() => setRestoringFile(undefined)}>
+        <DialogTitle>Discard the changes of {restoringFile?.file}?</DialogTitle>
+        <DialogContent>The file is restored to the content of the parent in {restoringFile?.commit.changeId.slice(0, 8)}.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRestoringFile(undefined)}>Cancel</Button>
+          <Button
+            color="warning"
+            variant="contained"
+            autoFocus
+            onClick={() => {
+              const r = restoringFile!
+              setRestoringFile(undefined)
+              run(() => client.restore({ path, revision: r.commit.commitId, files: [r.file] }), false)
+            }}
+          >
+            Restore
           </Button>
         </DialogActions>
       </Dialog>

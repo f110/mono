@@ -25,3 +25,8 @@ func TestSquashArgs(t *testing.T) {
 	assertion.Equal(t, squashArgs([]string{"a"}, "b", ""), []string{"squash", "--from=a", "--into=b", "--use-destination-message"})
 	assertion.Equal(t, squashArgs([]string{"a", "c"}, "b", "msg"), []string{"squash", "--from=a", "--from=c", "--into=b", "--message=msg"})
 }
+
+func TestSplitAndRestoreArgs(t *testing.T) {
+	assertion.Equal(t, splitArgs("abc", "-m", []string{"a b", "c"}), []string{"split", "--revision=abc", "--message=-m", "--", `root-file:"a b"`, `root-file:"c"`})
+	assertion.Equal(t, restoreArgs("abc", []string{"f"}), []string{"restore", "--changes-in=abc", "--", `root-file:"f"`})
+}
