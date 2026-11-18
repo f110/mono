@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "jujutsu",
+    srcs = ["jujutsu.go"],
+    importpath = "go.f110.dev/mono/go/jujutsu",
+    visibility = ["//visibility:public"],
+    deps = ["@dev_f110_go_xerrors//:xerrors"],
+)
+
+go_test(
+    name = "jujutsu_test",
+    srcs = ["jujutsu_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":jujutsu"],
+    deps = ["//go/testing/assertion"],
+)
