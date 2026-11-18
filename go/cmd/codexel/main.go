@@ -48,20 +48,26 @@ func (c *command) Run(ctx context.Context) error {
 	if err != nil {
 		return xerrors.WithStack(err)
 	}
-	s := &http.Server{Handler: server.New(herdr.NewClient(socket), static.FS())}
-	errCh := make(chan error, 1)
-	go func() {
-		logger.Log.Info("Start server", slog.String("addr", l.Addr().String()))
-		if err := s.Serve(l); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errCh <- xerrors.WithStack(err)
-		}
-		close(errCh)
-	}()
+	logger.Log.Info("Start server", slog.String("addr", l.Addr().String()))
 	if !c.NoBrowser {
 		if err := openBrowser(ctx, "http://"+l.Addr().String()); err != nil {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
+	return serve(ctx, l, server.New(herdr.NewClient(socket), static.FS()))
+}
+
+// serve serves h on l until ctx is canceled. The requests are canceled with ctx because Shutdown waits for the
+// streaming requests (e.g. WatchAgents) which never finish by themselves.
+func serve(ctx context.Context, l net.Listener, h http.Handler) error {
+	s := &http.Server{Handler: h, BaseContext: func(net.Listener) context.Context { return ctx }}
+	errCh := make(chan error, 1)
+	go func() {
+		if err := s.Serve(l); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- xerrors.WithStack(err)
+		}
+		close(errCh)
+	}()
 
 	select {
 	case err := <-errCh:
