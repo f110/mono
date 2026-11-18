@@ -69,3 +69,11 @@ func TestOperationHeadsDir(t *testing.T) {
 		})
 	}
 }
+
+func TestReadArgs(t *testing.T) {
+	// The revset is joined with "=" not to be interpreted as the option.
+	assertion.Contains(t, logArgs("--config=x", 0), "--revisions=--config=x")
+	assertion.NotContains(t, logArgs("--config=x", 0), "-r")
+	assertion.Contains(t, diffArgs("--config=x"), "--revisions=--config=x")
+	assertion.Contains(t, showArgs("--config=x"), "--revisions=--config=x")
+}

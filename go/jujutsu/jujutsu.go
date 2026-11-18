@@ -139,12 +139,13 @@ const commitFields = `"\"change_id\":" ++ json(change_id.short()) ++ ` +
 	`",\"remote_bookmarks\":[" ++ remote_bookmarks.map(|x| "[" ++ json(x.name()) ++ "," ++ json(x.remote()) ++ "]").join(",") ++ "]" ++ ` +
 	`",\"trailers\":[" ++ trailers.map(|x| "[" ++ json(x.key()) ++ "," ++ json(x.value()) ++ "]").join(",") ++ "]"`
 
-// logArgs returns the arguments of jj log. The style of the graph is fixed because the parser depends on it.
+// logArgs returns the arguments of jj log. The style of the graph is fixed because the parser depends on it. The revset
+// is joined with "=" not to be interpreted as the option (e.g. "-r --config=x" is the option --config).
 // --ignore-working-copy avoids taking the snapshot of the working copy on every read.
 func logArgs(revset string, limit int) []string {
 	args := []string{"log", "--color", "never", "--quiet", "--ignore-working-copy", "--config", "ui.graph.style=curved"}
 	if revset != "" {
-		args = append(args, "-r", revset)
+		args = append(args, "--revisions="+revset)
 	}
 	if limit > 0 {
 		args = append(args, "--limit", strconv.Itoa(limit))
@@ -199,8 +200,12 @@ func (r *Repository) Log(ctx context.Context, revset string, limit int) ([]*LogR
 }
 
 // Show returns the commit of the revision with the whole description. rev must be a single revision.
+func showArgs(rev string) []string {
+	return []string{"log", "--no-graph", "--color", "never", "--ignore-working-copy", "--revisions=" + rev, "-T", showTemplate}
+}
+
 func (r *Repository) Show(ctx context.Context, rev string) (*Commit, error) {
-	out, err := run(ctx, r.root, "log", "--no-graph", "--color", "never", "--ignore-working-copy", "-r", rev, "-T", showTemplate)
+	out, err := run(ctx, r.root, showArgs(rev)...)
 	if err != nil {
 		return nil, err
 	}
@@ -281,13 +286,18 @@ func (e *Error) Unwrap() error {
 }
 
 func run(ctx context.Context, dir string, args ...string) ([]byte, error) {
+	stdout, _, err := runWithStderr(ctx, dir, args...)
+	return stdout, err
+}
+
+func runWithStderr(ctx context.Context, dir string, args ...string) ([]byte, []byte, error) {
 	cmd := exec.CommandContext(ctx, "jj", args...)
 	cmd.Dir = dir
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return nil, xerrors.WithStack(&Error{Args: args, Stderr: stderr.String(), err: err})
+		return nil, nil, xerrors.WithStack(&Error{Args: args, Stderr: stderr.String(), err: err})
 	}
-	return stdout.Bytes(), nil
+	return stdout.Bytes(), stderr.Bytes(), nil
 }

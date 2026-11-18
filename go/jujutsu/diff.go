@@ -60,7 +60,7 @@ type FileDiff struct {
 // diffArgs returns the arguments of jj diff in the git format. The prefixes of the paths are fixed because the parser
 // depends on them.
 func diffArgs(rev string) []string {
-	return []string{"diff", "--git", "--color", "never", "--ignore-working-copy", "--config", "diff.git.show-path-prefix=true", "-r", rev}
+	return []string{"diff", "--git", "--color", "never", "--ignore-working-copy", "--config", "diff.git.show-path-prefix=true", "--revisions=" + rev}
 }
 
 func (r *Repository) Diff(ctx context.Context, rev string) ([]*FileDiff, error) {
