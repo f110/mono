@@ -32,6 +32,8 @@ const (
 	GitServiceName = "mono.codexel.GitService"
 	// OperationServiceName is the fully-qualified name of the OperationService service.
 	OperationServiceName = "mono.codexel.OperationService"
+	// FileServiceName is the fully-qualified name of the FileService service.
+	FileServiceName = "mono.codexel.FileService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -133,6 +135,10 @@ const (
 	// OperationServiceRestoreOperationProcedure is the fully-qualified name of the OperationService's
 	// RestoreOperation RPC.
 	OperationServiceRestoreOperationProcedure = "/mono.codexel.OperationService/RestoreOperation"
+	// FileServiceGetFileProcedure is the fully-qualified name of the FileService's GetFile RPC.
+	FileServiceGetFileProcedure = "/mono.codexel.FileService/GetFile"
+	// FileServiceListFilesProcedure is the fully-qualified name of the FileService's ListFiles RPC.
+	FileServiceListFilesProcedure = "/mono.codexel.FileService/ListFiles"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -1333,4 +1339,100 @@ func (UnimplementedOperationServiceHandler) RevertOperation(context.Context, *co
 
 func (UnimplementedOperationServiceHandler) RestoreOperation(context.Context, *connect.Request[RequestRestoreOperation]) (*connect.Response[ResponseRestoreOperation], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.OperationService.RestoreOperation is not implemented"))
+}
+
+// FileServiceClient is a client for the mono.codexel.FileService service.
+type FileServiceClient interface {
+	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
+	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
+}
+
+// NewFileServiceClient constructs a client for the mono.codexel.FileService service. By default, it
+// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewFileServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) FileServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	fileServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("FileService").Methods()
+	return &fileServiceClient{
+		getFile: connect.NewClient[RequestGetFile, ResponseGetFile](
+			httpClient,
+			baseURL+FileServiceGetFileProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("GetFile")),
+			connect.WithClientOptions(opts...),
+		),
+		listFiles: connect.NewClient[RequestListFiles, ResponseListFiles](
+			httpClient,
+			baseURL+FileServiceListFilesProcedure,
+			connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// fileServiceClient implements FileServiceClient.
+type fileServiceClient struct {
+	getFile   *connect.Client[RequestGetFile, ResponseGetFile]
+	listFiles *connect.Client[RequestListFiles, ResponseListFiles]
+}
+
+// GetFile calls mono.codexel.FileService.GetFile.
+func (c *fileServiceClient) GetFile(ctx context.Context, req *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
+	return c.getFile.CallUnary(ctx, req)
+}
+
+// ListFiles calls mono.codexel.FileService.ListFiles.
+func (c *fileServiceClient) ListFiles(ctx context.Context, req *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
+	return c.listFiles.CallUnary(ctx, req)
+}
+
+// FileServiceHandler is an implementation of the mono.codexel.FileService service.
+type FileServiceHandler interface {
+	GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error)
+	ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error)
+}
+
+// NewFileServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewFileServiceHandler(svc FileServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	fileServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("FileService").Methods()
+	fileServiceGetFileHandler := connect.NewUnaryHandler(
+		FileServiceGetFileProcedure,
+		svc.GetFile,
+		connect.WithSchema(fileServiceMethods.ByName("GetFile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	fileServiceListFilesHandler := connect.NewUnaryHandler(
+		FileServiceListFilesProcedure,
+		svc.ListFiles,
+		connect.WithSchema(fileServiceMethods.ByName("ListFiles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.FileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case FileServiceGetFileProcedure:
+			fileServiceGetFileHandler.ServeHTTP(w, r)
+		case FileServiceListFilesProcedure:
+			fileServiceListFilesHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedFileServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedFileServiceHandler struct{}
+
+func (UnimplementedFileServiceHandler) GetFile(context.Context, *connect.Request[RequestGetFile]) (*connect.Response[ResponseGetFile], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.GetFile is not implemented"))
+}
+
+func (UnimplementedFileServiceHandler) ListFiles(context.Context, *connect.Request[RequestListFiles]) (*connect.Response[ResponseListFiles], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.FileService.ListFiles is not implemented"))
 }

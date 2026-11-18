@@ -1935,6 +1935,87 @@ export declare type ResponseEvolog = Message<"mono.codexel.ResponseEvolog"> & {
 export declare const ResponseEvologSchema: GenMessage<ResponseEvolog>;
 
 /**
+ * @generated from message mono.codexel.RequestGetFile
+ */
+export declare type RequestGetFile = Message<"mono.codexel.RequestGetFile"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+
+  /**
+   * file is the path of the file relative to the root of the workspace.
+   *
+   * @generated from field: string file = 3;
+   */
+  file: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestGetFile.
+ * Use `create(RequestGetFileSchema)` to create a new message.
+ */
+export declare const RequestGetFileSchema: GenMessage<RequestGetFile>;
+
+/**
+ * @generated from message mono.codexel.ResponseGetFile
+ */
+export declare type ResponseGetFile = Message<"mono.codexel.ResponseGetFile"> & {
+  /**
+   * @generated from field: bytes content = 1;
+   */
+  content: Uint8Array;
+};
+
+/**
+ * Describes the message mono.codexel.ResponseGetFile.
+ * Use `create(ResponseGetFileSchema)` to create a new message.
+ */
+export declare const ResponseGetFileSchema: GenMessage<ResponseGetFile>;
+
+/**
+ * @generated from message mono.codexel.RequestListFiles
+ */
+export declare type RequestListFiles = Message<"mono.codexel.RequestListFiles"> & {
+  /**
+   * @generated from field: string path = 1;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string revision = 2;
+   */
+  revision: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListFiles.
+ * Use `create(RequestListFilesSchema)` to create a new message.
+ */
+export declare const RequestListFilesSchema: GenMessage<RequestListFiles>;
+
+/**
+ * @generated from message mono.codexel.ResponseListFiles
+ */
+export declare type ResponseListFiles = Message<"mono.codexel.ResponseListFiles"> & {
+  /**
+   * @generated from field: repeated string files = 1;
+   */
+  files: string[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListFiles.
+ * Use `create(ResponseListFilesSchema)` to create a new message.
+ */
+export declare const ResponseListFilesSchema: GenMessage<ResponseListFiles>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -2489,6 +2570,34 @@ export declare const OperationService: GenService<{
     methodKind: "unary";
     input: typeof RequestRestoreOperationSchema;
     output: typeof ResponseRestoreOperationSchema;
+  },
+}>;
+
+/**
+ * FileService provides the files at the revision.
+ *
+ * @generated from service mono.codexel.FileService
+ */
+export declare const FileService: GenService<{
+  /**
+   * GetFile returns the content of the file at the revision.
+   *
+   * @generated from rpc mono.codexel.FileService.GetFile
+   */
+  getFile: {
+    methodKind: "unary";
+    input: typeof RequestGetFileSchema;
+    output: typeof ResponseGetFileSchema;
+  },
+  /**
+   * ListFiles returns the paths of all files at the revision.
+   *
+   * @generated from rpc mono.codexel.FileService.ListFiles
+   */
+  listFiles: {
+    methodKind: "unary";
+    input: typeof RequestListFilesSchema;
+    output: typeof ResponseListFilesSchema;
   },
 }>;
 

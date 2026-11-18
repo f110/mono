@@ -105,7 +105,7 @@ export const RepositoryView = ({ path }: { path: string }) => {
   const [evologSelected, setEvologSelected] = useState(0)
   const revsetRef = useRef<HTMLInputElement>(null)
   const detailRef = useRef<HTMLDivElement>(null)
-  const split = useDiffNavigation(detailRef)
+  const { split, preview } = useDiffNavigation(detailRef)
   const operation = useOperation(path)
   const { data, error, refetch } = useQuery(RevisionService.method.log, { path, revset })
   const { data: bookmarkData, refetch: refetchBookmarks } = useQuery(BookmarkService.method.listBookmarks, { path })
@@ -510,10 +510,10 @@ export const RepositoryView = ({ path }: { path: string }) => {
         <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
           {view === 'evolog' ? (
             <Box sx={{ p: 2 }}>
-              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} split={split} />)}
+              {evolog[evologSelected]?.files.map((f) => <FileDiffView key={f.path} file={f} split={split} preview={preview} repoPath={path} revision={evolog[evologSelected].commitId} oldRevision={undefined} />)}
             </Box>
           ) : (
-            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} />
+            selectedCommit && <RevisionDetail key={selectedCommit.commitId} path={path} commit={selectedCommit} split={split} preview={preview} />
           )}
         </Box>
       </Stack>

@@ -41,6 +41,8 @@ NPM_DEPS = [
     "//ts/apps/codexel:node_modules/lowlight",
     "//ts/apps/codexel:node_modules/react",
     "//ts/apps/codexel:node_modules/react-dom",
+    "//ts/apps/codexel:node_modules/react-markdown",
+    "//ts/apps/codexel:node_modules/remark-gfm",
     "//ts/apps/codexel:node_modules/@types/react",
     "//ts/apps/codexel:node_modules/@types/react-dom",
     "//ts/apps/codexel:node_modules/@types/node",

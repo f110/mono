@@ -7,10 +7,11 @@ const isEditing = (e: KeyboardEvent) => {
   return target !== null && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
 }
 
-// useDiffNavigation handles the keys of the diff in the container: | toggles the split view and ] / [ move to the
-// next / previous hunk. It returns whether the split view is enabled. The setting is kept in the local storage.
-export const useDiffNavigation = (container: RefObject<HTMLElement | null>): boolean => {
+// useDiffNavigation handles the keys of the diff in the container: | toggles the split view, m toggles the preview of
+// Markdown and ] / [ move to the next / previous hunk. The setting of the split view is kept in the local storage.
+export const useDiffNavigation = (container: RefObject<HTMLElement | null>): { split: boolean; preview: boolean } => {
   const [split, setSplit] = useState(() => localStorage.getItem(splitKey) === 'true')
+  const [preview, setPreview] = useState(false)
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -23,6 +24,8 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): boo
           localStorage.setItem(splitKey, String(!s))
           return !s
         })
+      } else if (e.key === 'm') {
+        setPreview((p) => !p)
       } else if ((e.key === ']' || e.key === '[') && el) {
         const top = el.getBoundingClientRect().top
         const hunks = [...el.querySelectorAll<HTMLElement>('[data-hunk]')]
@@ -40,5 +43,5 @@ export const useDiffNavigation = (container: RefObject<HTMLElement | null>): boo
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [container])
 
-  return split
+  return { split, preview }
 }

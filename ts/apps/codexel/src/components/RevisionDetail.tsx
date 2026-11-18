@@ -5,7 +5,7 @@ import { FileDiffView } from './FileDiffView.tsx'
 
 // RevisionDetail shows the whole description and the diff of the revision. The revision is identified by the commit ID,
 // so the result doesn't change while the commit exists.
-export const RevisionDetail = ({ path, commit, split }: { path: string; commit: Commit; split: boolean }) => {
+export const RevisionDetail = ({ path, commit, split, preview }: { path: string; commit: Commit; split: boolean; preview: boolean }) => {
   const { data, error } = useQuery(RevisionService.method.getRevision, { path, revision: commit.commitId }, { staleTime: Infinity })
 
   return (
@@ -29,7 +29,15 @@ export const RevisionDetail = ({ path, commit, split }: { path: string; commit: 
       </Box>
       <Divider sx={{ mb: 2 }} />
       {data?.files.length === 0 && <Typography color="text.secondary">No changes</Typography>}
-      {data?.files.map((f) => <FileDiffView key={f.path} file={f} split={split} />)}
+      {data?.files.map((f) => <FileDiffView
+          key={f.path}
+          file={f}
+          split={split}
+          preview={preview}
+          repoPath={path}
+          revision={commit.commitId}
+          oldRevision={commit.parents.length === 1 ? commit.parents[0] : undefined}
+        />)}
     </Box>
   )
 }

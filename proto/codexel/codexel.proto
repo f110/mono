@@ -596,3 +596,31 @@ message RequestEvolog {
 message ResponseEvolog {
   repeated EvologEntry entries = 1;
 }
+
+// FileService provides the files at the revision.
+service FileService {
+  // GetFile returns the content of the file at the revision.
+  rpc GetFile(RequestGetFile) returns (ResponseGetFile);
+  // ListFiles returns the paths of all files at the revision.
+  rpc ListFiles(RequestListFiles) returns (ResponseListFiles);
+}
+
+message RequestGetFile {
+  string path     = 1;
+  string revision = 2;
+  // file is the path of the file relative to the root of the workspace.
+  string file = 3;
+}
+
+message ResponseGetFile {
+  bytes content = 1;
+}
+
+message RequestListFiles {
+  string path     = 1;
+  string revision = 2;
+}
+
+message ResponseListFiles {
+  repeated string files = 1;
+}
