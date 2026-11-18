@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "codexel_lib",
+    srcs = ["main.go"],
+    importpath = "go.f110.dev/mono/go/cmd/codexel",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/cli",
+        "//go/cli/flag",
+        "//go/codexel/server",
+        "//go/codexel/static",
+        "//go/herdr",
+        "//go/logger",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_binary(
+    name = "codexel",
+    embed = [":codexel_lib"],
+    visibility = ["//visibility:public"],
+)

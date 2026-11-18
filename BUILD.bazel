@@ -11,6 +11,7 @@
 # gazelle:resolve go go.f110.dev/mono/go/build/bff //go/build/bff:bff
 # gazelle:resolve go go.f110.dev/mono/go/build/model //go/build/model
 # gazelle:resolve go go.f110.dev/mono/go/issue/api //go/issue/api
+# gazelle:resolve go go.f110.dev/mono/go/codexel/api //go/codexel/api
 
 load("@gazelle//:def.bzl", "gazelle")
 load("//build/rules/kind:cluster.bzl", "cluster")

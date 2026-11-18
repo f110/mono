@@ -1,0 +1,105 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
+	"time"
+
+	"go.f110.dev/xerrors"
+
+	"go.f110.dev/mono/go/cli"
+	"go.f110.dev/mono/go/cli/flag"
+	"go.f110.dev/mono/go/codexel/server"
+	"go.f110.dev/mono/go/codexel/static"
+	"go.f110.dev/mono/go/herdr"
+	"go.f110.dev/mono/go/logger"
+)
+
+type command struct {
+	Addr        string
+	NoBrowser   bool
+	HerdrSocket string
+}
+
+func (c *command) Flags(fs *flag.FlagSet) {
+	fs.String("addr", "Listen address").Var(&c.Addr).Default("localhost:7480")
+	fs.Bool("no-browser", "Don't open the browser").Var(&c.NoBrowser)
+	fs.String("herdr-socket", "Path of the socket of herdr. If not specified, $HERDR_SOCKET_PATH or ~/.config/herdr/herdr.sock").Var(&c.HerdrSocket)
+}
+
+func (c *command) Run(ctx context.Context) error {
+	var err error
+	socket := c.HerdrSocket
+	if socket == "" {
+		socket, err = herdr.DefaultSocketPath()
+		if err != nil {
+			return err
+		}
+	}
+
+	l, err := net.Listen("tcp", c.Addr)
+	if err != nil {
+		return xerrors.WithStack(err)
+	}
+	s := &http.Server{Handler: server.New(herdr.NewClient(socket), static.FS())}
+	errCh := make(chan error, 1)
+	go func() {
+		logger.Log.Info("Start server", slog.String("addr", l.Addr().String()))
+		if err := s.Serve(l); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- xerrors.WithStack(err)
+		}
+		close(errCh)
+	}()
+	if !c.NoBrowser {
+		if err := openBrowser(ctx, "http://"+l.Addr().String()); err != nil {
+			logger.Log.Info("Failed to open the browser", logger.E(err))
+		}
+	}
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+	}
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func openBrowser(ctx context.Context, u string) error {
+	name := "xdg-open"
+	if runtime.GOOS == "darwin" {
+		name = "open"
+	}
+	if err := exec.CommandContext(ctx, name, u).Run(); err != nil {
+		return xerrors.WithStack(err)
+	}
+	return nil
+}
+
+func main() {
+	c := &command{}
+	cmd := &cli.Command{
+		Use:   "codexel",
+		Short: "Manage the coding agents and the repositories on the local host",
+		Run: func(ctx context.Context, _ *cli.Command, _ []string) error {
+			return c.Run(ctx)
+		},
+	}
+	c.Flags(cmd.Flags())
+
+	if err := cmd.Execute(os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		os.Exit(1)
+	}
+}

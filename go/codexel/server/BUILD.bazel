@@ -1,0 +1,26 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "server",
+    srcs = ["server.go"],
+    importpath = "go.f110.dev/mono/go/codexel/server",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/codexel/api",
+        "//go/herdr",
+        "@com_connectrpc_connect//:connect",
+        "@dev_f110_go_xerrors//:xerrors",
+    ],
+)
+
+go_test(
+    name = "server_test",
+    srcs = ["server_test.go"],
+    embed = [":server"],
+    deps = [
+        "//go/codexel/api",
+        "//go/herdr",
+        "//go/testing/assertion",
+        "@com_connectrpc_connect//:connect",
+    ],
+)

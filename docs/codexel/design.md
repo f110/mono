@@ -17,7 +17,7 @@ Refs: #121, #122
 ソフトウェアは 1 バイナリで、フロントエンドを embed し、起動するだけで完全に動作する。lightjj・crit・jj-pr のバイナリには依存しない。
 外部コマンドとして依存するのは `jj` と `gh` (トークン取得のみ) で、herdr にはソケット API で接続する。
 
-スコープ外: 認証。既定では loopback でのみ待ち受ける (§9.3)。
+スコープ外: 認証。
 
 ## 2. 全体構成
 
@@ -280,12 +280,9 @@ lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や 
 ### 9.3 起動
 
 ```
-codexel [--addr localhost:<固定ポート>] [--allow-unauthenticated-network] [--no-browser]
+codexel [--addr localhost:<固定ポート>] [--no-browser]
 ```
 
-- 既定では loopback でのみ待ち受ける。Codexel には認証がないので、loopback 以外のアドレスを `--addr` に指定するには
-  `--allow-unauthenticated-network` も指定する必要がある (crit と同じ)。指定がなければ起動時にエラーにする
-- Host / Origin ヘッダーを検証する (DNS rebinding 対策。lightjj と同じ)
 - 起動したらブラウザを開く
 
 ## 10. 段階実装
