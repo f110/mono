@@ -60,11 +60,12 @@ Refs: #121, #122
 
 herdr はソケット (`$HERDR_SOCKET_PATH`、既定 `~/.config/herdr/herdr.sock`) で JSON の request/response API を提供している
 (protocol 22, `herdr api schema --json`)。CLI (`herdr agent ...`) を毎回起動せず、ソケットに直接接続する。
+1 接続で処理されるリクエストは 1 つなので、リクエストごとに接続する。`events.subscribe` の接続はレスポンスの後もイベントを送り続ける。
 
 | Codexel の機能 | herdr API |
 |---|---|
-| 一覧と状態表示 | `agent.list` (+ `events.subscribe` で `pane.agent_status_changed` / `pane.agent_detected` / `pane.closed` 等を購読) |
-| 出力の閲覧 | `agent.read` (`source=recent`, `format=ansi`)。更新は `pane.output_changed` を契機に再取得 |
+| 一覧と状態表示 | `agent.list` + `events.subscribe`。`pane.created` / `pane.closed` / `pane.updated` / `pane.agent_detected` を購読し、状態の変化は各エージェントのペインを指定して `pane.agent_status_changed` を購読する (`pane_id` が必須) |
+| 出力の閲覧 | `agent.read` (`source=recent`, `format=ansi`)。出力の変化は購読できないので、表示している間だけ定期的に再取得する |
 | プロンプト送信 | `agent.prompt`。キー入力は `agent.send_keys` |
 | エージェント起動 | 既存ペインを指定して `agent.start`。新しく起動する場合は `tab.create` / `pane.split` でペインを作ってから `agent.start` |
 
