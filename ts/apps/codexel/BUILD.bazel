@@ -21,6 +21,10 @@ ASSET_PATTERNS = [
     "src/*.css",
 ]
 
+GENERATED_PACKAGES = [
+    "//ts/apps/codexel/src/connect",
+]
+
 NPM_DEPS = [
     "//ts/apps/codexel:node_modules/@bufbuild/protobuf",
     "//ts/apps/codexel:node_modules/@connectrpc/connect",
@@ -32,6 +36,7 @@ NPM_DEPS = [
     "//ts/apps/codexel:node_modules/@mui/material",
     "//ts/apps/codexel:node_modules/@tanstack/react-query",
     "//ts/apps/codexel:node_modules/@tanstack/react-router",
+    "//ts/apps/codexel:node_modules/anser",
     "//ts/apps/codexel:node_modules/react",
     "//ts/apps/codexel:node_modules/react-dom",
     "//ts/apps/codexel:node_modules/@types/react",
@@ -65,7 +70,7 @@ js_run_binary(
         include = SRC_PATTERNS + ASSET_PATTERNS,
         allow_empty = True,
         exclude = TEST_PATTERNS,
-    ) + NPM_DEPS,
+    ) + GENERATED_PACKAGES + NPM_DEPS,
     args = [
         "build",
         "--mode",
@@ -93,7 +98,7 @@ ts_project(
     resolve_json_module = True,
     ts_build_info_file = "node_modules/.tmp/tsconfig.app.tsbuildinfo",
     tsconfig = "tsconfig.app.json",
-    deps = NPM_DEPS,
+    deps = GENERATED_PACKAGES + NPM_DEPS,
 )
 
 ts_project(
@@ -126,6 +131,6 @@ js_run_devserver(
         include = SRC_PATTERNS + ASSET_PATTERNS,
         allow_empty = True,
         exclude = TEST_PATTERNS,
-    ) + NPM_DEPS + ["package.json"],
+    ) + GENERATED_PACKAGES + NPM_DEPS + ["package.json"],
     tool = ":vite",
 )
