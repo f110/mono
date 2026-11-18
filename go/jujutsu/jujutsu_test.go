@@ -77,3 +77,19 @@ func TestReadArgs(t *testing.T) {
 	assertion.Contains(t, diffArgs("--config=x"), "--revisions=--config=x")
 	assertion.Contains(t, showArgs("--config=x"), "--revisions=--config=x")
 }
+
+func TestAgentRevset(t *testing.T) {
+	assertion.Equal(
+		t,
+		agentRevset("claude", `s.1"\`),
+		`description(regex:"(?m)^Agent: claude$") & description(regex:"(?m)^Agent-Session: s\\.1\"\\\\$")`,
+	)
+}
+
+func TestCommitCreatedBy(t *testing.T) {
+	c := &Commit{Trailers: []Trailer{{Key: "Agent", Value: "claude"}, {Key: "Agent-Session", Value: "sess-1"}}}
+	assertion.True(t, c.CreatedBy("claude", "sess-1"))
+	assertion.False(t, c.CreatedBy("opencode", "sess-1"))
+	assertion.False(t, c.CreatedBy("claude", "sess-2"))
+	assertion.False(t, (&Commit{Trailers: []Trailer{{Key: "Agent-Session", Value: "sess-1"}}}).CreatedBy("claude", "sess-1"))
+}

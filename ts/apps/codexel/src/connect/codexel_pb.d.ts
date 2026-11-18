@@ -2586,6 +2586,55 @@ export declare type ResponseDiffRange = Message<"mono.codexel.ResponseDiffRange"
 export declare const ResponseDiffRangeSchema: GenMessage<ResponseDiffRange>;
 
 /**
+ * @generated from message mono.codexel.RequestListAgentCommits
+ */
+export declare type RequestListAgentCommits = Message<"mono.codexel.RequestListAgentCommits"> & {
+  /**
+   * cwd is the working directory of the agent.
+   *
+   * @generated from field: string cwd = 1;
+   */
+  cwd: string;
+
+  /**
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string session_id = 3;
+   */
+  sessionId: string;
+};
+
+/**
+ * Describes the message mono.codexel.RequestListAgentCommits.
+ * Use `create(RequestListAgentCommitsSchema)` to create a new message.
+ */
+export declare const RequestListAgentCommitsSchema: GenMessage<RequestListAgentCommits>;
+
+/**
+ * @generated from message mono.codexel.ResponseListAgentCommits
+ */
+export declare type ResponseListAgentCommits = Message<"mono.codexel.ResponseListAgentCommits"> & {
+  /**
+   * @generated from field: mono.codexel.Repository repository = 1;
+   */
+  repository?: Repository;
+
+  /**
+   * @generated from field: repeated mono.codexel.Commit commits = 2;
+   */
+  commits: Commit[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseListAgentCommits.
+ * Use `create(ResponseListAgentCommitsSchema)` to create a new message.
+ */
+export declare const ResponseListAgentCommitsSchema: GenMessage<ResponseListAgentCommits>;
+
+/**
  * @generated from message mono.codexel.Alias
  */
 export declare type Alias = Message<"mono.codexel.Alias"> & {
@@ -3153,6 +3202,17 @@ export declare const RevisionService: GenService<{
     methodKind: "unary";
     input: typeof RequestDiffRangeSchema;
     output: typeof ResponseDiffRangeSchema;
+  },
+  /**
+   * ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
+   * repository of the working directory of the agent. The repository must be opened.
+   *
+   * @generated from rpc mono.codexel.RevisionService.ListAgentCommits
+   */
+  listAgentCommits: {
+    methodKind: "unary";
+    input: typeof RequestListAgentCommitsSchema;
+    output: typeof ResponseListAgentCommitsSchema;
   },
 }>;
 

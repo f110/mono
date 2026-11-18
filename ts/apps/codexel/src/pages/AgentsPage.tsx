@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import {
   Alert,
@@ -12,14 +12,19 @@ import {
   ListItemText,
   ListSubheader,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { AgentOutput } from '../components/AgentOutput.tsx'
+import { RevisionDetail } from '../components/RevisionDetail.tsx'
 import { StartAgentDialog } from '../components/StartAgentDialog.tsx'
-import { AgentService, AgentStatus, type Agent } from '../connect/codexel_pb.js'
+import { AgentService, AgentStatus, RevisionService, type Agent } from '../connect/codexel_pb.js'
 import { useAgents } from '../hooks/useAgents.ts'
+import { useDiffNavigation } from '../hooks/useDiffNavigation.ts'
+import { useOperation } from '../hooks/useOperation.ts'
 
 const outputRefreshInterval = 1000
 // outputHistoryLines is the number of the lines including the history. herdr captures the history only while the
@@ -61,6 +66,51 @@ const groupByStatus = (agents: Agent[]): [AgentStatus, Agent[]][] => {
     .filter(([, list]) => list.length > 0)
 }
 
+// AgentCommits lists the commits created by the session of the agent and shows the description and the diff of the
+// selected one. The list is read again every time the repository changes.
+const AgentCommits = ({ agent }: { agent: Agent }) => {
+  const { data, error, refetch } = useQuery(RevisionService.method.listAgentCommits, { cwd: agent.cwd, kind: agent.kind, sessionId: agent.sessionId })
+  const path = data?.repository?.path
+  const operation = useOperation(path)
+  useEffect(() => {
+    refetch()
+  }, [operation, refetch])
+  const [selectedChange, setSelectedChange] = useState<string>()
+  const detailRef = useRef<HTMLDivElement>(null)
+  const { split, preview } = useDiffNavigation(detailRef)
+  const commits = data?.commits ?? []
+  const selected = commits.find((c) => c.changeId === selectedChange) ?? commits[0]
+
+  if (error) {
+    return <Alert severity="error">{error.message}</Alert>
+  }
+  if (data && commits.length === 0) {
+    return (
+      <Typography color="text.secondary" sx={{ p: 2 }}>
+        No commits of this session in {path}
+      </Typography>
+    )
+  }
+  return (
+    <Stack direction="row" sx={{ height: '100%' }}>
+      <List dense sx={{ width: 360, flexShrink: 0, overflow: 'auto', borderRight: 1, borderColor: 'divider' }}>
+        {commits.map((c) => (
+          <ListItemButton key={c.commitId} selected={c === selected} onClick={() => setSelectedChange(c.changeId)}>
+            <ListItemText
+              primary={c.description || '(no description set)'}
+              secondary={`${c.changeId.slice(0, 8)} · ${new Date(Number(c.timestamp) * 1000).toLocaleString()}`}
+              slotProps={{ primary: { noWrap: true }, secondary: { sx: { fontFamily: 'monospace' } } }}
+            />
+          </ListItemButton>
+        ))}
+      </List>
+      <Box ref={detailRef} sx={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+        {path && selected && <RevisionDetail key={selected.commitId} path={path} commit={selected} split={split} preview={preview} />}
+      </Box>
+    </Stack>
+  )
+}
+
 const AgentDetail = ({ agent }: { agent: Agent }) => {
   // The output changes continuously only while the agent is working or waiting for the answer.
   const polling = agent.status === AgentStatus.WORKING || agent.status === AgentStatus.BLOCKED
@@ -78,6 +128,7 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
   const sendKeys = useMutation(AgentService.method.sendKeys)
   const focus = useMutation(AgentService.method.focusAgent)
   const [prompt, setPrompt] = useState('')
+  const [tab, setTab] = useState<'output' | 'commits'>('output')
 
   const submit = () => {
     if (!prompt) {
@@ -111,9 +162,11 @@ const AgentDetail = ({ agent }: { agent: Agent }) => {
         </Button>
       </Stack>
       {shownError && <Alert severity="error">{shownError.message}</Alert>}
-      <Box sx={{ flex: 1, minHeight: 0 }}>
-        <AgentOutput text={data?.text ?? ''} />
-      </Box>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab value="output" label="Output" sx={{ minHeight: 36 }} />
+        <Tab value="commits" label="Commits" disabled={!agent.sessionId} sx={{ minHeight: 36 }} />
+      </Tabs>
+      <Box sx={{ flex: 1, minHeight: 0 }}>{tab === 'output' ? <AgentOutput text={data?.text ?? ''} /> : <AgentCommits agent={agent} />}</Box>
       <Stack direction="row" spacing={1} sx={{ p: 1, alignItems: 'flex-end' }}>
         <TextField
           multiline

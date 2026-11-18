@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type MouseEvent } from 'react'
 import { Box, Chip, Stack, Typography } from '@mui/material'
-import type { Commit, LogRow } from '../connect/codexel_pb.js'
+import { useNavigate } from '@tanstack/react-router'
+import type { Agent, Commit, LogRow } from '../connect/codexel_pb.js'
 import { GraphGutter, cellWidth } from './GraphGutter.tsx'
 
 const nodeHeight = 28
@@ -25,10 +26,41 @@ const ChangeId = ({ commit }: { commit: Commit }) => (
   </Typography>
 )
 
-const CommitLine = ({ commit, mark }: { commit: Commit; mark: string | undefined }) => (
+// AgentBadge shows the agent which created the commit by the Agent and the Agent-Session trailers. It links to the
+// agent while the agent is running in herdr.
+const AgentBadge = ({ commit, agents }: { commit: Commit; agents: Agent[] }) => {
+  const navigate = useNavigate()
+  const kind = commit.trailers.find((t) => t.key === 'Agent')?.value
+  const sessionId = commit.trailers.find((t) => t.key === 'Agent-Session')?.value
+  if (!kind || !sessionId) {
+    return null
+  }
+  const agent = agents.find((a) => a.kind === kind && a.sessionId === sessionId)
+  return (
+    <Chip
+      label={kind}
+      title={`${kind} / ${sessionId}`}
+      size="small"
+      color="info"
+      variant={agent ? 'filled' : 'outlined'}
+      sx={{ height: 18 }}
+      onClick={
+        agent
+          ? (e: MouseEvent) => {
+              e.stopPropagation()
+              navigate({ to: '/agents', search: { pane: agent.paneId } })
+            }
+          : undefined
+      }
+    />
+  )
+}
+
+const CommitLine = ({ commit, mark, agents }: { commit: Commit; mark: string | undefined; agents: Agent[] }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
     {mark && <Chip label={mark} size="small" color="warning" sx={{ height: 18 }} />}
     <ChangeId commit={commit} />
+    <AgentBadge commit={commit} agents={agents} />
     {commit.localBookmarks.map((b) => (
       <Chip key={b} label={b} size="small" color="primary" variant="outlined" sx={{ height: 18 }} />
     ))}
@@ -56,6 +88,7 @@ export const RevisionGraph = ({
   selected,
   checked,
   marks,
+  agents,
   onSelect,
   onContextMenu,
 }: {
@@ -65,6 +98,8 @@ export const RevisionGraph = ({
   checked: Set<string>
   // marks is the labels shown on the revisions by the commit ID (e.g. the source of the rebase).
   marks: Map<string, string>
+  // agents is the agents running in herdr. They are linked from the commits created by them.
+  agents: Agent[]
   onSelect: (index: number) => void
   onContextMenu: (index: number, x: number, y: number) => void
 }) => {
@@ -113,7 +148,7 @@ export const RevisionGraph = ({
                     workingCopy={commit.currentWorkingCopy}
                   />
                   {line.node ? (
-                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} />
+                    <CommitLine commit={commit} mark={marks.get(commit.commitId)} agents={agents} />
                   ) : (
                     <Typography variant="caption" color="text.disabled">
                       {line.content}

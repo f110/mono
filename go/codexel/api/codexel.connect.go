@@ -114,6 +114,9 @@ const (
 	// RevisionServiceDiffRangeProcedure is the fully-qualified name of the RevisionService's DiffRange
 	// RPC.
 	RevisionServiceDiffRangeProcedure = "/mono.codexel.RevisionService/DiffRange"
+	// RevisionServiceListAgentCommitsProcedure is the fully-qualified name of the RevisionService's
+	// ListAgentCommits RPC.
+	RevisionServiceListAgentCommitsProcedure = "/mono.codexel.RevisionService/ListAgentCommits"
 	// BookmarkServiceListBookmarksProcedure is the fully-qualified name of the BookmarkService's
 	// ListBookmarks RPC.
 	BookmarkServiceListBookmarksProcedure = "/mono.codexel.BookmarkService/ListBookmarks"
@@ -626,6 +629,7 @@ type RevisionServiceClient interface {
 	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
+	ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error)
 }
 
 // NewRevisionServiceClient constructs a client for the mono.codexel.RevisionService service. By
@@ -723,25 +727,32 @@ func NewRevisionServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
 			connect.WithClientOptions(opts...),
 		),
+		listAgentCommits: connect.NewClient[RequestListAgentCommits, ResponseListAgentCommits](
+			httpClient,
+			baseURL+RevisionServiceListAgentCommitsProcedure,
+			connect.WithSchema(revisionServiceMethods.ByName("ListAgentCommits")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // revisionServiceClient implements RevisionServiceClient.
 type revisionServiceClient struct {
-	log         *connect.Client[RequestLog, ResponseLog]
-	getRevision *connect.Client[RequestGetRevision, ResponseGetRevision]
-	new         *connect.Client[RequestNew, ResponseNew]
-	edit        *connect.Client[RequestEdit, ResponseEdit]
-	abandon     *connect.Client[RequestAbandon, ResponseAbandon]
-	describe    *connect.Client[RequestDescribe, ResponseDescribe]
-	commit      *connect.Client[RequestCommit, ResponseCommit]
-	undo        *connect.Client[RequestUndo, ResponseUndo]
-	rebase      *connect.Client[RequestRebase, ResponseRebase]
-	squash      *connect.Client[RequestSquash, ResponseSquash]
-	evolog      *connect.Client[RequestEvolog, ResponseEvolog]
-	split       *connect.Client[RequestSplit, ResponseSplit]
-	restore     *connect.Client[RequestRestore, ResponseRestore]
-	diffRange   *connect.Client[RequestDiffRange, ResponseDiffRange]
+	log              *connect.Client[RequestLog, ResponseLog]
+	getRevision      *connect.Client[RequestGetRevision, ResponseGetRevision]
+	new              *connect.Client[RequestNew, ResponseNew]
+	edit             *connect.Client[RequestEdit, ResponseEdit]
+	abandon          *connect.Client[RequestAbandon, ResponseAbandon]
+	describe         *connect.Client[RequestDescribe, ResponseDescribe]
+	commit           *connect.Client[RequestCommit, ResponseCommit]
+	undo             *connect.Client[RequestUndo, ResponseUndo]
+	rebase           *connect.Client[RequestRebase, ResponseRebase]
+	squash           *connect.Client[RequestSquash, ResponseSquash]
+	evolog           *connect.Client[RequestEvolog, ResponseEvolog]
+	split            *connect.Client[RequestSplit, ResponseSplit]
+	restore          *connect.Client[RequestRestore, ResponseRestore]
+	diffRange        *connect.Client[RequestDiffRange, ResponseDiffRange]
+	listAgentCommits *connect.Client[RequestListAgentCommits, ResponseListAgentCommits]
 }
 
 // Log calls mono.codexel.RevisionService.Log.
@@ -814,6 +825,11 @@ func (c *revisionServiceClient) DiffRange(ctx context.Context, req *connect.Requ
 	return c.diffRange.CallUnary(ctx, req)
 }
 
+// ListAgentCommits calls mono.codexel.RevisionService.ListAgentCommits.
+func (c *revisionServiceClient) ListAgentCommits(ctx context.Context, req *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
+	return c.listAgentCommits.CallUnary(ctx, req)
+}
+
 // RevisionServiceHandler is an implementation of the mono.codexel.RevisionService service.
 type RevisionServiceHandler interface {
 	Log(context.Context, *connect.Request[RequestLog]) (*connect.Response[ResponseLog], error)
@@ -830,6 +846,7 @@ type RevisionServiceHandler interface {
 	Split(context.Context, *connect.Request[RequestSplit]) (*connect.Response[ResponseSplit], error)
 	Restore(context.Context, *connect.Request[RequestRestore]) (*connect.Response[ResponseRestore], error)
 	DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error)
+	ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error)
 }
 
 // NewRevisionServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -923,6 +940,12 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 		connect.WithSchema(revisionServiceMethods.ByName("DiffRange")),
 		connect.WithHandlerOptions(opts...),
 	)
+	revisionServiceListAgentCommitsHandler := connect.NewUnaryHandler(
+		RevisionServiceListAgentCommitsProcedure,
+		svc.ListAgentCommits,
+		connect.WithSchema(revisionServiceMethods.ByName("ListAgentCommits")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/mono.codexel.RevisionService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RevisionServiceLogProcedure:
@@ -953,6 +976,8 @@ func NewRevisionServiceHandler(svc RevisionServiceHandler, opts ...connect.Handl
 			revisionServiceRestoreHandler.ServeHTTP(w, r)
 		case RevisionServiceDiffRangeProcedure:
 			revisionServiceDiffRangeHandler.ServeHTTP(w, r)
+		case RevisionServiceListAgentCommitsProcedure:
+			revisionServiceListAgentCommitsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1016,6 +1041,10 @@ func (UnimplementedRevisionServiceHandler) Restore(context.Context, *connect.Req
 
 func (UnimplementedRevisionServiceHandler) DiffRange(context.Context, *connect.Request[RequestDiffRange]) (*connect.Response[ResponseDiffRange], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.DiffRange is not implemented"))
+}
+
+func (UnimplementedRevisionServiceHandler) ListAgentCommits(context.Context, *connect.Request[RequestListAgentCommits]) (*connect.Response[ResponseListAgentCommits], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RevisionService.ListAgentCommits is not implemented"))
 }
 
 // BookmarkServiceClient is a client for the mono.codexel.BookmarkService service.

@@ -63,3 +63,13 @@ func TestOperationRejectsRepositoryNotOpened(t *testing.T) {
 	assertion.True(t, ok)
 	assertion.Equal(t, connectErr.Code(), connect.CodeNotFound)
 }
+
+func TestListAgentCommitsRequiresAgent(t *testing.T) {
+	h := NewRevisionHandler(newConfig(t, "/src/mono"))
+
+	_, err := h.ListAgentCommits(t.Context(), connect.NewRequest(api.RequestListAgentCommits_builder{Cwd: new("/src/mono"), Kind: new("claude")}.Build()))
+	assertion.MustError(t, err)
+	connectErr, ok := errors.AsType[*connect.Error](err)
+	assertion.True(t, ok)
+	assertion.Equal(t, connectErr.Code(), connect.CodeInvalidArgument)
+}

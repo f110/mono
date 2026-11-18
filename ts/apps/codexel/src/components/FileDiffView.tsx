@@ -182,7 +182,8 @@ export const FileDiffView = ({
   repoPath: string
   revision: string
   oldRevision: string | undefined
-  onHistory: (file: string) => void
+  // onHistory shows the history of the file. It is undefined if the history can't be shown.
+  onHistory?: (file: string) => void
   // onRestore discards the changes of the file. It is undefined if the revision can't be rewritten.
   onRestore?: (file: string) => void
 }) => {
@@ -288,9 +289,11 @@ export const FileDiffView = ({
         <Typography variant="caption" sx={{ color: 'error.main' }}>
           -{file.removed}
         </Typography>
-        <Button size="small" sx={{ minWidth: 0, py: 0 }} onClick={() => onHistory(file.path)}>
-          History
-        </Button>
+        {onHistory && (
+          <Button size="small" sx={{ minWidth: 0, py: 0 }} onClick={() => onHistory(file.path)}>
+            History
+          </Button>
+        )}
         {onRestore && (
           <Button size="small" color="warning" sx={{ minWidth: 0, py: 0 }} onClick={() => onRestore(file.path)}>
             Restore

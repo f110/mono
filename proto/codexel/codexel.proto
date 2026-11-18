@@ -156,6 +156,9 @@ service RevisionService {
   rpc Restore(RequestRestore) returns (ResponseRestore);
   // DiffRange returns the diff between two revisions.
   rpc DiffRange(RequestDiffRange) returns (ResponseDiffRange);
+  // ListAgentCommits returns the commits which have the Agent and the Agent-Session trailers of the agent in the
+  // repository of the working directory of the agent. The repository must be opened.
+  rpc ListAgentCommits(RequestListAgentCommits) returns (ResponseListAgentCommits);
 }
 
 message Repository {
@@ -801,6 +804,18 @@ message RequestDiffRange {
 
 message ResponseDiffRange {
   repeated FileDiff files = 1;
+}
+
+message RequestListAgentCommits {
+  // cwd is the working directory of the agent.
+  string cwd        = 1;
+  string kind       = 2;
+  string session_id = 3;
+}
+
+message ResponseListAgentCommits {
+  Repository      repository = 1;
+  repeated Commit commits    = 2;
 }
 
 // AliasService runs the aliases of jj configured by the user.

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -197,6 +198,45 @@ func (r *Repository) Log(ctx context.Context, revset string, limit int) ([]*LogR
 		return nil, err
 	}
 	return parseLog(out)
+}
+
+// The trailers which link the commit to the session of the agent.
+const (
+	TrailerAgent        = "Agent"
+	TrailerAgentSession = "Agent-Session"
+)
+
+// CreatedBy reports whether the commit has the trailers of the session of the agent.
+func (c *Commit) CreatedBy(kind, sessionID string) bool {
+	return slices.Contains(c.Trailers, Trailer{Key: TrailerAgent, Value: kind}) &&
+		slices.Contains(c.Trailers, Trailer{Key: TrailerAgentSession, Value: sessionID})
+}
+
+// agentRevset returns the revset of the commits whose description has the lines of the trailers of the agent. The
+// lines may be outside the trailers, so the result has to be checked by CreatedBy.
+func agentRevset(kind, sessionID string) string {
+	return "description(" + lineRegex(TrailerAgent+": "+kind) + ") & description(" + lineRegex(TrailerAgentSession+": "+sessionID) + ")"
+}
+
+// lineRegex returns the string pattern of the revset which matches the line.
+func lineRegex(line string) string {
+	re := "(?m)^" + regexp.QuoteMeta(line) + "$"
+	return `regex:"` + strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(re) + `"`
+}
+
+// AgentCommits returns the commits created by the session of the agent.
+func (r *Repository) AgentCommits(ctx context.Context, kind, sessionID string) ([]*Commit, error) {
+	rows, err := r.Log(ctx, agentRevset(kind, sessionID), 0)
+	if err != nil {
+		return nil, err
+	}
+	var commits []*Commit
+	for _, v := range rows {
+		if v.Commit.CreatedBy(kind, sessionID) {
+			commits = append(commits, v.Commit)
+		}
+	}
+	return commits, nil
 }
 
 // Show returns the commit of the revision with the whole description. rev must be a single revision.

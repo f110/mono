@@ -200,6 +200,29 @@ func (h *RevisionHandler) Log(ctx context.Context, req *connect.Request[api.Requ
 	return connect.NewResponse(api.ResponseLog_builder{Rows: res}.Build()), nil
 }
 
+func (h *RevisionHandler) ListAgentCommits(ctx context.Context, req *connect.Request[api.RequestListAgentCommits]) (*connect.Response[api.ResponseListAgentCommits], error) {
+	if req.Msg.GetCwd() == "" || req.Msg.GetKind() == "" || req.Msg.GetSessionId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("cwd, kind and session_id are required"))
+	}
+	root, err := jujutsu.WorkspaceRoot(ctx, req.Msg.GetCwd())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+	repo, err := openedRepository(h.config, root)
+	if err != nil {
+		return nil, err
+	}
+	commits, err := repo.AgentCommits(ctx, req.Msg.GetKind(), req.Msg.GetSessionId())
+	if err != nil {
+		return nil, toJujutsuError(err)
+	}
+	res := make([]*api.Commit, 0, len(commits))
+	for _, v := range commits {
+		res = append(res, toCommit(v))
+	}
+	return connect.NewResponse(api.ResponseListAgentCommits_builder{Repository: toRepository(root), Commits: res}.Build()), nil
+}
+
 func (h *RevisionHandler) GetRevision(ctx context.Context, req *connect.Request[api.RequestGetRevision]) (*connect.Response[api.ResponseGetRevision], error) {
 	if req.Msg.GetRevision() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("revision is required"))
