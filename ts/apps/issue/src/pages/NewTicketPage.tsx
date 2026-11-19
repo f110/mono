@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Link as RouterLink, useNavigate, useSearch } from '@tanstack/react-router'
-import { Alert, Button, Divider, IconButton, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, IconButton, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { type Template, Issue, Priority, RelationType, TicketType } from '../connect/issue_pb'
 import { MarkdownEditor } from '../components/MarkdownEditor.tsx'
 import { useMasters } from '../hooks/useMasters.ts'
@@ -34,6 +34,7 @@ export const NewTicketPage = () => {
 
 const NewTicketForm = ({ template }: { template?: Template }) => {
   const navigate = useNavigate()
+  const formId = useId()
   const { operators, components } = useMasters()
   const [title, setTitle] = useState(template?.title ?? '')
   const [body, setBody] = useState(template?.body ?? '')
@@ -67,11 +68,21 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
     <Stack spacing={2}>
       <Typography variant="h5">新規作成</Typography>
       {(create.error || relate.error) && <Alert severity="error">{(create.error ?? relate.error)?.message}</Alert>}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 280px' },
+          gridTemplateRows: { md: 'auto 1fr' },
+          gridTemplateAreas: { xs: '"main" "side" "submit"', md: '"main side" "submit side"' },
+          columnGap: 3,
+          rowGap: 2,
+        }}
+      >
         <Stack
+          id={formId}
           component="form"
           spacing={2}
-          sx={{ flex: 1, minWidth: 0 }}
+          sx={{ gridArea: 'main' }}
           onSubmit={(e) => {
             e.preventDefault()
             void submit()
@@ -79,13 +90,8 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
         >
           <TextField label="タイトル" value={title} onChange={(e) => setTitle(e.target.value)} required fullWidth />
           <MarkdownEditor value={body} onChange={setBody} />
-          <Stack direction="row">
-            <Button type="submit" variant="contained" disabled={create.isPending || relate.isPending || title === ''}>
-              作成
-            </Button>
-          </Stack>
         </Stack>
-        <Stack spacing={2} sx={{ width: { md: 280 } }}>
+        <Stack spacing={2} sx={{ gridArea: 'side' }}>
           <TextField select size="small" label="Type" value={type} onChange={(e) => setType(Number(e.target.value))}>
             {types.map((t) => (
               <MenuItem key={t} value={t}>
@@ -154,7 +160,12 @@ const NewTicketForm = ({ template }: { template?: Template }) => {
             </Stack>
           </Stack>
         </Stack>
-      </Stack>
+        <Stack direction="row" sx={{ gridArea: 'submit', alignItems: 'flex-start' }}>
+          <Button type="submit" form={formId} variant="contained" disabled={create.isPending || relate.isPending || title === ''}>
+            作成
+          </Button>
+        </Stack>
+      </Box>
     </Stack>
   )
 }
