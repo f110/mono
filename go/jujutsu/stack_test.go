@@ -588,3 +588,17 @@ func getPullRequest(t *testing.T, client *github.Client, number int) *github.Pul
 	assertion.MustNoError(t, err)
 	return pr
 }
+
+func TestDefaultBranch(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, _, _ := newStackRepository(t)
+	ghMock, ghClient := newGitHubMock(t)
+	ghMock.LookupRepository("f110/mono").DefaultBranch("main")
+
+	branch, err := DefaultBranch(t.Context(), ghClient, repo, "f110", "mono")
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, branch, "master")
+}

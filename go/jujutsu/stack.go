@@ -192,7 +192,7 @@ func (c *PullRequestSubmitter) getMetadata(ctx context.Context) (fsm.State, erro
 	if c.DefaultBranch == "" {
 		wg.Go(func() {
 
-			v, err := DefaultBranch(ctx, c.GitHubClient, c.repositoryOwner, c.repositoryName)
+			v, err := DefaultBranch(ctx, c.GitHubClient, c.Dir, c.repositoryOwner, c.repositoryName)
 			if err != nil {
 				gotError = true
 				return
@@ -713,11 +713,12 @@ func (c *PullRequestSubmitter) syncStack(ctx context.Context) (fsm.State, error)
 	return fsm.Next(c.stateClose)
 }
 
-// DefaultBranch returns the name of the branch of trunk(). It is retrieved from GitHub if trunk() doesn't have the
-// remote bookmark.
-func DefaultBranch(ctx context.Context, ghClient *github.Client, owner, name string) (string, error) {
+// DefaultBranch returns the name of the branch of trunk() in the repository of dir. It is retrieved from GitHub if
+// trunk() doesn't have the remote bookmark.
+func DefaultBranch(ctx context.Context, ghClient *github.Client, dir, owner, name string) (string, error) {
 	logger.Log.Debug("Retrieve repository metadata")
 	cmd := exec.CommandContext(ctx, "jj", "show", "trunk()", "--template", "remote_bookmarks")
+	cmd.Dir = dir
 	buf, err := cmd.CombinedOutput()
 	if err == nil {
 		if before, _, ok := bytes.Cut(buf, []byte("@")); ok {

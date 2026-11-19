@@ -101,7 +101,7 @@ func jujutsuPRStack(rootCmd *cli.Command) {
 			if err != nil {
 				return err
 			}
-			defaultBranch, err := jujutsu.DefaultBranch(ctx, ghClient, owner, repoName)
+			defaultBranch, err := jujutsu.DefaultBranch(ctx, ghClient, dir, owner, repoName)
 			if err != nil {
 				return err
 			}
