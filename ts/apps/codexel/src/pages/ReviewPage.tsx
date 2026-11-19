@@ -7,7 +7,9 @@ import {
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -287,6 +289,9 @@ export const ReviewPage = () => {
   const [selection, setSelection] = useState<Selection>()
   const [focus, setFocus] = useState<LinePosition>()
   const [helpOpen, setHelpOpen] = useState(false)
+  // waitingClosedRound is the round in which the dialog waiting for the agent is closed. The dialog is shown again when
+  // the review is finished in the next round.
+  const [waitingClosedRound, setWaitingClosedRound] = useState<number>()
   const ref = useRef<HTMLDivElement>(null)
   const { split, preview } = useDiffNavigation(ref)
 
@@ -519,6 +524,20 @@ export const ReviewPage = () => {
             </TableBody>
           </Table>
         </DialogContent>
+      </Dialog>
+
+      {/* The dialog is closed by the polling of the review when the agent starts the next round. */}
+      <Dialog open={review.state === ReviewState.FINISHED && waitingClosedRound !== latest} onClose={() => setWaitingClosedRound(latest)}>
+        <DialogTitle>Review finished</DialogTitle>
+        <DialogContent>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+            <CircularProgress size={24} />
+            <Typography>Waiting for the agent to address the comments and start the next round.</Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWaitingClosedRound(latest)}>Back to the review</Button>
+        </DialogActions>
       </Dialog>
 
       <Snackbar
