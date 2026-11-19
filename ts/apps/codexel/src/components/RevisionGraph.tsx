@@ -18,7 +18,7 @@ const relativeTime = (unix: bigint): string => {
 }
 
 const ChangeId = ({ commit }: { commit: Commit }) => (
-  <Typography component="span" variant="body2" sx={{ fontFamily: 'monospace', flexShrink: 0 }}>
+  <Typography component="span" variant="body2" sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', flexShrink: 0 }}>
     <Box component="span" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
       {commit.changeIdPrefix}
     </Box>
