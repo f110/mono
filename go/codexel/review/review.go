@@ -469,21 +469,22 @@ func (r *Review) Resolve(commentID string, resolved bool, now time.Time) (*Comme
 	return c, nil
 }
 
-// Finish finishes the round. The agent addresses the comments and starts the next round.
+// Unresolved reports whether the review has the unresolved comments.
+func (r *Review) Unresolved() bool {
+	return slices.ContainsFunc(r.Comments, func(c *Comment) bool { return !c.Resolved })
+}
+
+// Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agent addresses the
+// comments and starts the next round.
 func (r *Review) Finish(now time.Time) error {
 	if r.State != StateOpen {
 		return xerrors.WithMessagef(ErrInvalidState, "the review is %s", r.State)
 	}
-	r.State = StateFinished
-	r.UpdatedAt = now
-	return nil
-}
-
-func (r *Review) Approve(now time.Time) error {
-	if r.State == StateApproved {
-		return xerrors.WithMessage(ErrInvalidState, "the review is approved")
+	if r.Unresolved() {
+		r.State = StateFinished
+	} else {
+		r.State = StateApproved
 	}
-	r.State = StateApproved
 	r.UpdatedAt = now
 	return nil
 }

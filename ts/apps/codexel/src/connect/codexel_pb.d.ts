@@ -3488,38 +3488,6 @@ export declare type ResponseFinish = Message<"mono.codexel.ResponseFinish"> & {
 export declare const ResponseFinishSchema: GenMessage<ResponseFinish>;
 
 /**
- * @generated from message mono.codexel.RequestApprove
- */
-export declare type RequestApprove = Message<"mono.codexel.RequestApprove"> & {
-  /**
-   * @generated from field: string review_id = 1;
-   */
-  reviewId: string;
-};
-
-/**
- * Describes the message mono.codexel.RequestApprove.
- * Use `create(RequestApproveSchema)` to create a new message.
- */
-export declare const RequestApproveSchema: GenMessage<RequestApprove>;
-
-/**
- * @generated from message mono.codexel.ResponseApprove
- */
-export declare type ResponseApprove = Message<"mono.codexel.ResponseApprove"> & {
-  /**
-   * @generated from field: mono.codexel.Review review = 1;
-   */
-  review?: Review;
-};
-
-/**
- * Describes the message mono.codexel.ResponseApprove.
- * Use `create(ResponseApproveSchema)` to create a new message.
- */
-export declare const ResponseApproveSchema: GenMessage<ResponseApprove>;
-
-/**
  * @generated from message mono.codexel.RequestStartNextRound
  */
 export declare type RequestStartNextRound = Message<"mono.codexel.RequestStartNextRound"> & {
@@ -4657,7 +4625,8 @@ export declare const ReviewService: GenService<{
     output: typeof ResponseResolveCommentSchema;
   },
   /**
-   * Finish finishes the round and tells the agents which created the changes that the review is finished.
+   * Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agents which created
+   * the changes are told that the review is finished.
    *
    * @generated from rpc mono.codexel.ReviewService.Finish
    */
@@ -4665,14 +4634,6 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestFinishSchema;
     output: typeof ResponseFinishSchema;
-  },
-  /**
-   * @generated from rpc mono.codexel.ReviewService.Approve
-   */
-  approve: {
-    methodKind: "unary";
-    input: typeof RequestApproveSchema;
-    output: typeof ResponseApproveSchema;
   },
   /**
    * StartNextRound starts the next round with the current commits of the changes after the agent addresses the

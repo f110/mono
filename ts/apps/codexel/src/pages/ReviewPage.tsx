@@ -45,7 +45,7 @@ const shortcuts: [string, string][] = [
   ['j / k', 'Move the cursor to the next / previous line'],
   ['c', 'Comment on the line of the cursor'],
   ['a', 'Toggle viewed on the file of the cursor'],
-  ['Shift+F', 'Finish the review'],
+  ['Shift+F', 'Finish the review (approve if all comments are resolved)'],
   ['] / [', 'Next / previous hunk'],
   ['|', 'Toggle the split view'],
   ['m', 'Toggle the preview of Markdown'],
@@ -327,6 +327,10 @@ export const ReviewPage = () => {
     () =>
       run(async () => {
         const res = await client.finish({ reviewId })
+        if (res.review?.state === ReviewState.APPROVED) {
+          setMessage({ text: 'Approved', error: false })
+          return
+        }
         const names = res.notifiedAgents.map((a) => `${a.kind} (${a.workspaceLabel || a.paneId})`)
         setMessage({ text: names.length > 0 ? `Notified ${names.join(', ')}` : 'No running agent created these changes', error: false })
       }).catch(() => {}),
@@ -435,16 +439,15 @@ export const ReviewPage = () => {
             </MenuItem>
           ))}
         </TextField>
-        <Button variant="contained" disabled={review.state !== ReviewState.OPEN} onClick={finish} title="Shift+F">
-          Finish
-        </Button>
+        {/* Finish approves the review if all comments are resolved. */}
         <Button
-          variant="outlined"
-          color="success"
-          disabled={review.state === ReviewState.APPROVED}
-          onClick={() => run(() => client.approve({ reviewId })).catch(() => {})}
+          variant="contained"
+          color={unresolved > 0 ? 'primary' : 'success'}
+          disabled={review.state !== ReviewState.OPEN}
+          onClick={finish}
+          title="Shift+F"
         >
-          Approve
+          {unresolved > 0 ? 'Finish' : 'Approve'}
         </Button>
         <Button size="small" onClick={() => setHelpOpen(true)} title="?">
           Keys

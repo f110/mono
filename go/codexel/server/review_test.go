@@ -62,9 +62,15 @@ func TestReviewHandler(t *testing.T) {
 	_, err = h.SetViewed(t.Context(), connect.NewRequest(api.RequestSetViewed_builder{ReviewId: new("01"), ChangeId: new("mmmm"), Path: new("a.go"), Viewed: new(true)}.Build()))
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeNotFound)
 
-	approved, err := h.Approve(t.Context(), connect.NewRequest(api.RequestApprove_builder{ReviewId: new("01")}.Build()))
+	// Finish approves the review without notifying the agents if all comments are resolved.
+	for _, id := range []string{"a", added.Msg.GetComment().GetId()} {
+		_, err = h.ResolveComment(t.Context(), connect.NewRequest(api.RequestResolveComment_builder{ReviewId: new("01"), CommentId: new(id), Resolved: new(true)}.Build()))
+		assertion.MustNoError(t, err)
+	}
+	approved, err := h.Finish(t.Context(), connect.NewRequest(api.RequestFinish_builder{ReviewId: new("01")}.Build()))
 	assertion.MustNoError(t, err)
 	assertion.Equal(t, approved.Msg.GetReview().GetState(), api.ReviewState_REVIEW_STATE_APPROVED)
+	assertion.Len(t, approved.Msg.GetNotifiedAgents(), 0)
 	_, err = h.Finish(t.Context(), connect.NewRequest(api.RequestFinish_builder{ReviewId: new("01")}.Build()))
 	assertion.Equal(t, connect.CodeOf(err), connect.CodeFailedPrecondition)
 

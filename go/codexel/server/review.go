@@ -172,7 +172,8 @@ func (h *ReviewHandler) ResolveComment(_ context.Context, req *connect.Request[a
 	return connect.NewResponse(api.ResponseResolveComment_builder{Comment: toReviewComment(c)}.Build()), nil
 }
 
-// Finish tells the agents before finishing the review so that the user can retry if herdr fails.
+// Finish tells the agents before finishing the review so that the user can retry if herdr fails. The agents are not told
+// if the review is approved because all comments are resolved.
 func (h *ReviewHandler) Finish(ctx context.Context, req *connect.Request[api.RequestFinish]) (*connect.Response[api.ResponseFinish], error) {
 	r, err := h.store.Get(req.Msg.GetReviewId())
 	if err != nil {
@@ -181,13 +182,16 @@ func (h *ReviewHandler) Finish(ctx context.Context, req *connect.Request[api.Req
 	if r.State != review.StateOpen {
 		return nil, toReviewError(xerrors.WithMessagef(review.ErrInvalidState, "the review is %s", r.State))
 	}
-	repo, err := openedRepository(h.config, r.Repository)
-	if err != nil {
-		return nil, err
-	}
-	agents, err := h.notifyAgents(ctx, repo, r)
-	if err != nil {
-		return nil, err
+	var agents []*api.Agent
+	if r.Unresolved() {
+		repo, err := openedRepository(h.config, r.Repository)
+		if err != nil {
+			return nil, err
+		}
+		agents, err = h.notifyAgents(ctx, repo, r)
+		if err != nil {
+			return nil, err
+		}
 	}
 	r, err = h.store.Update(r.ID, func(r *review.Review) error { return r.Finish(h.now()) })
 	if err != nil {
@@ -239,14 +243,6 @@ func (h *ReviewHandler) notifyAgents(ctx context.Context, repo *jujutsu.Reposito
 func finishedPrompt(id string) string {
 	return "The code review " + id + " in Codexel is finished. Read the unresolved comments by the list_review_comments tool of the codexel MCP server. " +
 		"Address each comment, and reply to it or resolve it. Then call the start_next_round tool."
-}
-
-func (h *ReviewHandler) Approve(_ context.Context, req *connect.Request[api.RequestApprove]) (*connect.Response[api.ResponseApprove], error) {
-	r, err := h.store.Update(req.Msg.GetReviewId(), func(r *review.Review) error { return r.Approve(h.now()) })
-	if err != nil {
-		return nil, toReviewError(err)
-	}
-	return connect.NewResponse(api.ResponseApprove_builder{Review: toReview(r)}.Build()), nil
 }
 
 func (h *ReviewHandler) StartNextRound(ctx context.Context, req *connect.Request[api.RequestStartNextRound]) (*connect.Response[api.ResponseStartNextRound], error) {

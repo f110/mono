@@ -116,6 +116,7 @@ func TestReviewRounds(t *testing.T) {
 	assertion.MustError(t, err)
 
 	assertion.MustNoError(t, r.Finish(now))
+	assertion.Equal(t, r.State, StateFinished)
 	assertion.MustError(t, r.Finish(now))
 	_, err = r.Reply(moved.ID, "done", AuthorAgent, now)
 	assertion.MustNoError(t, err)
@@ -141,7 +142,13 @@ func TestReviewRounds(t *testing.T) {
 	assertion.True(t, gone.Drifted)
 	assertion.False(t, file.Drifted)
 
-	assertion.MustNoError(t, r.Approve(later))
+	// The review is approved when it is finished without the unresolved comments.
+	for _, c := range r.Comments {
+		_, err = r.Resolve(c.ID, true, later)
+		assertion.MustNoError(t, err)
+	}
+	assertion.MustNoError(t, r.Finish(later))
+	assertion.Equal(t, r.State, StateApproved)
 	assertion.MustError(t, r.NextRound(ctx, repo, nil, later))
 	_, err = r.AddComment(ctx, repo, "", "", "", 0, 0, "after approval", AuthorUser, later)
 	assertion.MustError(t, err)
@@ -277,7 +284,7 @@ func TestStore(t *testing.T) {
 	assertion.MustNoError(t, err)
 	assertion.Len(t, reviews, 0)
 
-	assertion.MustNoError(t, s.Create(&Review{ID: "01", Repository: "/a", State: StateOpen, CreatedAt: now}))
+	assertion.MustNoError(t, s.Create(&Review{ID: "01", Repository: "/a", State: StateOpen, Comments: []*Comment{{ID: "a", Body: "open"}}, CreatedAt: now}))
 	assertion.MustNoError(t, s.Create(&Review{ID: "02", Repository: "/b", State: StateOpen, CreatedAt: now.Add(time.Hour)}))
 
 	updated, err := s.Update("01", func(r *Review) error { return r.Finish(now) })

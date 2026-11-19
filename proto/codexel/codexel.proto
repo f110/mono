@@ -904,9 +904,9 @@ service ReviewService {
   rpc DeleteComment(RequestDeleteComment) returns (ResponseDeleteComment);
   rpc Reply(RequestReply) returns (ResponseReply);
   rpc ResolveComment(RequestResolveComment) returns (ResponseResolveComment);
-  // Finish finishes the round and tells the agents which created the changes that the review is finished.
+  // Finish finishes the round. The review is approved if all comments are resolved. Otherwise the agents which created
+  // the changes are told that the review is finished.
   rpc Finish(RequestFinish) returns (ResponseFinish);
-  rpc Approve(RequestApprove) returns (ResponseApprove);
   // StartNextRound starts the next round with the current commits of the changes after the agent addresses the
   // comments. The comments are moved to the lines of the anchors.
   rpc StartNextRound(RequestStartNextRound) returns (ResponseStartNextRound);
@@ -1094,14 +1094,6 @@ message ResponseFinish {
   // notified_agents are the agents which were told that the review is finished. The agents are found by the
   // Agent and Agent-Session trailers of the changes.
   repeated Agent notified_agents = 2;
-}
-
-message RequestApprove {
-  string review_id = 1;
-}
-
-message ResponseApprove {
-  Review review = 1;
 }
 
 message RequestStartNextRound {

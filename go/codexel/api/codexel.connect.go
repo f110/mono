@@ -219,8 +219,6 @@ const (
 	ReviewServiceResolveCommentProcedure = "/mono.codexel.ReviewService/ResolveComment"
 	// ReviewServiceFinishProcedure is the fully-qualified name of the ReviewService's Finish RPC.
 	ReviewServiceFinishProcedure = "/mono.codexel.ReviewService/Finish"
-	// ReviewServiceApproveProcedure is the fully-qualified name of the ReviewService's Approve RPC.
-	ReviewServiceApproveProcedure = "/mono.codexel.ReviewService/Approve"
 	// ReviewServiceStartNextRoundProcedure is the fully-qualified name of the ReviewService's
 	// StartNextRound RPC.
 	ReviewServiceStartNextRoundProcedure = "/mono.codexel.ReviewService/StartNextRound"
@@ -2130,7 +2128,6 @@ type ReviewServiceClient interface {
 	Reply(context.Context, *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error)
 	ResolveComment(context.Context, *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error)
 	Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error)
-	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
 	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
 	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
 	SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error)
@@ -2207,12 +2204,6 @@ func NewReviewServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(reviewServiceMethods.ByName("Finish")),
 			connect.WithClientOptions(opts...),
 		),
-		approve: connect.NewClient[RequestApprove, ResponseApprove](
-			httpClient,
-			baseURL+ReviewServiceApproveProcedure,
-			connect.WithSchema(reviewServiceMethods.ByName("Approve")),
-			connect.WithClientOptions(opts...),
-		),
 		startNextRound: connect.NewClient[RequestStartNextRound, ResponseStartNextRound](
 			httpClient,
 			baseURL+ReviewServiceStartNextRoundProcedure,
@@ -2246,7 +2237,6 @@ type reviewServiceClient struct {
 	reply               *connect.Client[RequestReply, ResponseReply]
 	resolveComment      *connect.Client[RequestResolveComment, ResponseResolveComment]
 	finish              *connect.Client[RequestFinish, ResponseFinish]
-	approve             *connect.Client[RequestApprove, ResponseApprove]
 	startNextRound      *connect.Client[RequestStartNextRound, ResponseStartNextRound]
 	roundDiff           *connect.Client[RequestRoundDiff, ResponseRoundDiff]
 	setViewed           *connect.Client[RequestSetViewed, ResponseSetViewed]
@@ -2302,11 +2292,6 @@ func (c *reviewServiceClient) Finish(ctx context.Context, req *connect.Request[R
 	return c.finish.CallUnary(ctx, req)
 }
 
-// Approve calls mono.codexel.ReviewService.Approve.
-func (c *reviewServiceClient) Approve(ctx context.Context, req *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error) {
-	return c.approve.CallUnary(ctx, req)
-}
-
 // StartNextRound calls mono.codexel.ReviewService.StartNextRound.
 func (c *reviewServiceClient) StartNextRound(ctx context.Context, req *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error) {
 	return c.startNextRound.CallUnary(ctx, req)
@@ -2334,7 +2319,6 @@ type ReviewServiceHandler interface {
 	Reply(context.Context, *connect.Request[RequestReply]) (*connect.Response[ResponseReply], error)
 	ResolveComment(context.Context, *connect.Request[RequestResolveComment]) (*connect.Response[ResponseResolveComment], error)
 	Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error)
-	Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error)
 	StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error)
 	RoundDiff(context.Context, *connect.Request[RequestRoundDiff]) (*connect.Response[ResponseRoundDiff], error)
 	SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error)
@@ -2407,12 +2391,6 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(reviewServiceMethods.ByName("Finish")),
 		connect.WithHandlerOptions(opts...),
 	)
-	reviewServiceApproveHandler := connect.NewUnaryHandler(
-		ReviewServiceApproveProcedure,
-		svc.Approve,
-		connect.WithSchema(reviewServiceMethods.ByName("Approve")),
-		connect.WithHandlerOptions(opts...),
-	)
 	reviewServiceStartNextRoundHandler := connect.NewUnaryHandler(
 		ReviewServiceStartNextRoundProcedure,
 		svc.StartNextRound,
@@ -2453,8 +2431,6 @@ func NewReviewServiceHandler(svc ReviewServiceHandler, opts ...connect.HandlerOp
 			reviewServiceResolveCommentHandler.ServeHTTP(w, r)
 		case ReviewServiceFinishProcedure:
 			reviewServiceFinishHandler.ServeHTTP(w, r)
-		case ReviewServiceApproveProcedure:
-			reviewServiceApproveHandler.ServeHTTP(w, r)
 		case ReviewServiceStartNextRoundProcedure:
 			reviewServiceStartNextRoundHandler.ServeHTTP(w, r)
 		case ReviewServiceRoundDiffProcedure:
@@ -2508,10 +2484,6 @@ func (UnimplementedReviewServiceHandler) ResolveComment(context.Context, *connec
 
 func (UnimplementedReviewServiceHandler) Finish(context.Context, *connect.Request[RequestFinish]) (*connect.Response[ResponseFinish], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Finish is not implemented"))
-}
-
-func (UnimplementedReviewServiceHandler) Approve(context.Context, *connect.Request[RequestApprove]) (*connect.Response[ResponseApprove], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.Approve is not implemented"))
 }
 
 func (UnimplementedReviewServiceHandler) StartNextRound(context.Context, *connect.Request[RequestStartNextRound]) (*connect.Response[ResponseStartNextRound], error) {

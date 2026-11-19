@@ -178,7 +178,7 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
     - 終点: ラウンド N (M < N、既定は最新)
     - ベースからの差分は、ラウンド N の commit ID と親の差分 (通常の表示) にする
     - ラウンド M からの差分は change ごとに各ラウンドで記録した commit ID 同士の `jj diff --from --to` で出す。コミットメッセージも同じ始点・終点で差分を表示する
-- Finish / Approve
+- Finish: 未 resolve のコメントがあれば finished にしてエージェントに伝える。なければ approved にする (#142)
 - Approve したコミットは、リビジョングラフとエージェント画面のコミット一覧でマークする (#135)
     - マークは保存せず、レビューから導く。approved のレビューの最新ラウンドの commit と、同じ change の今の commit を
       `jj interdiff --git` で比べ、差分がなければマークする
@@ -198,7 +198,7 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 
 ### 5.4 エージェントとのやり取り
 
-Finish したら、コミットの `Agent-Session` から作成したエージェントを特定し、herdr の `agent.prompt` でレビューが終わったことを伝える。
+未 resolve のコメントを残して Finish したら、コミットの `Agent-Session` から作成したエージェントを特定し、herdr の `agent.prompt` でレビューが終わったことを伝える。
 
 エージェントは Codexel が提供する MCP でコメントを読み、返信・resolve する。
 
@@ -282,7 +282,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `RepositoryService` | `ListRepositories`, `OpenRepository`, `CloseRepository`, `WatchRepository` (stream, op ID の変化) |
 | `RevisionService` | `Log`, `GetRevision`, `Diff`, `DiffRange`, `Files`, `FileTree`, `FileHistory`, ... と各変更操作 (§4.2) |
 | `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
-| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `Approve`, `StartNextRound`, `RoundDiff`, `SetViewed` |
+| `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `ListTemplates`, `Submit` |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。
