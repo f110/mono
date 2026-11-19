@@ -93,6 +93,39 @@ func TestSubmitPullRequest(t *testing.T) {
 	assertion.Equal(t, pr.GetHead().GetRef(), "push-"+res.Msg.GetPushed()[0][:12])
 }
 
+func TestSubmitPullRequestWithOnlyNoSend(t *testing.T) {
+	if *jjBinaryPath == "" {
+		t.Skipf("Skip %s because -test.jj-binary is not set", t.Name())
+	}
+
+	repo, commits := newStackRepository(t, "WIP", "no-send")
+	ghMock := githubmock.NewMock()
+	ghMock.Repository("f110/mono")
+	mux := http.NewServeMux()
+	ghMock.RegisterHandler(mux)
+	mux.HandleFunc("GET /repos/{owner}/{repo}/branches", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("[]"))
+	})
+	client := github.NewClient(&http.Client{Transport: handlerTransport{mux}})
+	h := NewPullRequestHandler(newConfig(t, repo))
+	h.newGitHubClient = func(context.Context) (*github.Client, error) { return client, nil }
+
+	const reason = `There are no commits to submit between master@origin and the revision. The commits whose description starts with "no-send:" or "WIP:" are excluded`
+	for _, revisions := range [][]string{{commits[0]}, {commits[1], commits[0]}} {
+		res, err := h.Validate(t.Context(), connect.NewRequest(api.RequestValidatePullRequest_builder{Path: new(repo), Revisions: revisions}.Build()))
+		assertion.MustNoError(t, err)
+		assertion.Equal(t, res.Msg.GetReason(), reason)
+
+		_, err = h.Submit(t.Context(), connect.NewRequest(api.RequestSubmitPullRequest_builder{Path: new(repo), Revisions: revisions}.Build()))
+		assertion.MustError(t, err)
+		connectErr, ok := errors.AsType[*connect.Error](err)
+		assertion.True(t, ok)
+		assertion.Equal(t, connectErr.Code(), connect.CodeFailedPrecondition)
+	}
+	assertion.Len(t, ghMock.LookupRepository("f110/mono").GetPullRequests(), 0)
+}
+
 // newStackRepository returns the repository which has the commits of names on master@origin and the commit IDs of them
 // from the oldest. origin is the local bare repository. The repository has the remote of GitHub which is not accessed
 // to find the repository on GitHub.

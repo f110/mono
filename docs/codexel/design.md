@@ -301,6 +301,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 - 最上位は選択したコミットの `heads()` で決める。1 つに決まらなければ許可しない
 - 判定は `PullRequestService.Validate` で行い、`Submit` でも同じ判定をする
 - 1 つ選択した場合も、trunk からのスタックが空 (選択したコミットが trunk に含まれる等) なら許可しない
+- スタックのコミットがすべて `WIP:` / `no-send:` で始まる場合も、PR にするコミットがないので許可しない (jj-pr はこれらを除外する)
 - テンプレートが複数あるときは jj-pr と同じく選択を必須にする (「使わない」も選べる)。1 つならそれを使う
 - 結果として push した change ID と、PR ごとの操作と URL をダイアログに表示する
 

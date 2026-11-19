@@ -142,6 +142,9 @@ func submitRevision(ctx context.Context, repo *jujutsu.Repository, client *githu
 	if len(revisions) > 1 && !isWholeStack(stack, revisions) {
 		return "", fmt.Sprintf("The revisions must be all commits between %s@origin and the newest revision (%d commits)", defaultBranch, len(stack)), nil
 	}
+	if !slices.ContainsFunc(stack, func(c *jujutsu.StackCommit) bool { return !c.NoSend() }) {
+		return "", fmt.Sprintf(`There are no commits to submit between %s@origin and the revision. The commits whose description starts with "no-send:" or "WIP:" are excluded`, defaultBranch), nil
+	}
 	return top, "", nil
 }
 

@@ -212,6 +212,33 @@ This PR contains fixing some security issues.`,
 		require.NoError(t, err)
 		assert.Equal(t, c.stateSyncStack, nextState)
 	})
+
+	t.Run("StateUpdatePRDryRunWithoutBookmark", func(t *testing.T) {
+		ghMock := githubmock.NewMock()
+		repo := ghMock.Repository("f110/mono")
+		ghClient := github.NewClient(&http.Client{Transport: ghMock.Transport()})
+		repo.PullRequests(githubmock.NewPullRequest().Number(1).Base("master").Head(nil, "push-b", "").Title("b: Add").Body("Body of B."))
+		pr1, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1)
+		require.NoError(t, err)
+
+		c := NewPullRequestSubmitter()
+		c.GitHubClient = ghClient
+		c.repositoryOwner, c.repositoryName = "f110", "mono"
+		c.DefaultBranch = "master"
+		c.DryRun = true
+		c.stack = []*StackCommit{
+			{ChangeID: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", Description: "b: Add\n\nBody of B.", Bookmarks: []*StackBookmark{{Name: "push-b"}}, pullRequest: newPullRequest(pr1)},
+			{ChangeID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Description: "a: Add\n\nBody of A."},
+		}
+
+		nextState, err := c.updatePR(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, c.stateSyncStack, nextState)
+		assert.Equal(t, []*SubmittedPullRequest{{ChangeID: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", URL: pr1.GetHTMLURL(), Action: PullRequestUpdated}}, c.result.PullRequests)
+		got, _, err := ghClient.PullRequests.Get(t.Context(), "f110", "mono", 1)
+		require.NoError(t, err)
+		assert.Equal(t, "master", got.GetBase().GetRef())
+	})
 }
 
 func TestJujutsuPRSubmitCommand_SyncStack(t *testing.T) {
@@ -499,6 +526,56 @@ func TestPullRequestSubmitterSubmit(t *testing.T) {
 		last, err := os.ReadFile(filepath.Join(repo, ".jj", lastPickedTemplateFile))
 		assertion.MustNoError(t, err)
 		assertion.Equal(t, string(last), "/.github/PULL_REQUEST_TEMPLATE/feature.md")
+	})
+
+	t.Run("SinglePRWithOnlyWIP", func(t *testing.T) {
+		repo, remote, changes := newStackRepository(t)
+		runCommand(t, repo, "jj", "describe", changes[0], changes[1], "--message=WIP: test")
+		ghMock, ghClient := newGitHubMock(t)
+
+		c := NewPullRequestSubmitter()
+		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.SinglePR = repo, "f110/mono", "master", changes[1], true
+		c.GitHubClient = ghClient
+		_, err := c.Submit(t.Context())
+		assertion.MustError(t, err)
+
+		assertion.Len(t, ghMock.LookupRepository("f110/mono").GetPullRequests(), 0)
+		assertion.Equal(t, remoteBranches(t, remote), []string{"master"})
+	})
+
+	t.Run("DryRun", func(t *testing.T) {
+		repo, remote, changes := newStackRepository(t)
+		ghMock, ghClient := newGitHubMock(t)
+
+		c := NewPullRequestSubmitter()
+		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.DryRun = repo, "f110/mono", "master", changes[1], true
+		c.GitHubClient = ghClient
+		res, err := c.Submit(t.Context())
+		assertion.MustNoError(t, err)
+
+		assertion.Equal(t, res.Pushed, []string{changes[1], changes[0]})
+		assertion.MustLen(t, res.PullRequests, 2)
+		assertion.Equal(t, *res.PullRequests[0], SubmittedPullRequest{ChangeID: changes[0], Action: PullRequestCreated})
+		assertion.Equal(t, *res.PullRequests[1], SubmittedPullRequest{ChangeID: changes[1], Action: PullRequestCreated})
+		assertion.Len(t, ghMock.LookupRepository("f110/mono").GetPullRequests(), 0)
+		assertion.Equal(t, remoteBranches(t, remote), []string{"master"})
+	})
+
+	t.Run("DryRunSinglePR", func(t *testing.T) {
+		repo, remote, changes := newStackRepository(t)
+		ghMock, ghClient := newGitHubMock(t)
+
+		c := NewPullRequestSubmitter()
+		c.Dir, c.Repository, c.DefaultBranch, c.Revision, c.SinglePR, c.DryRun = repo, "f110/mono", "master", changes[1], true, true
+		c.GitHubClient = ghClient
+		res, err := c.Submit(t.Context())
+		assertion.MustNoError(t, err)
+
+		assertion.Equal(t, res.Pushed, []string{changes[1]})
+		assertion.MustLen(t, res.PullRequests, 1)
+		assertion.Equal(t, *res.PullRequests[0], SubmittedPullRequest{ChangeID: changes[1], Action: PullRequestCreated})
+		assertion.Len(t, ghMock.LookupRepository("f110/mono").GetPullRequests(), 0)
+		assertion.Equal(t, remoteBranches(t, remote), []string{"master"})
 	})
 }
 

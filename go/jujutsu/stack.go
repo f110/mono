@@ -237,6 +237,9 @@ func (c *PullRequestSubmitter) pushCommit(ctx context.Context) (fsm.State, error
 		return fsm.Error(err)
 	}
 	c.stack = stack
+	if c.SinglePR && len(c.stack) == 0 {
+		return fsm.Error(xerrors.Newf("there are no commits to submit between %s and the revision. The commits whose description starts with %q or %q are excluded", c.DefaultBranch, noSendTag, wipTag))
+	}
 
 	// Push all commits of current branch
 	var pushChanges []string
@@ -377,7 +380,7 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 		if c.stack[0].pullRequest != nil {
 			return fsm.Next(c.stateUpdateSinglePR)
 		}
-		if pr, err := c.findExistingPR(ctx, c.stack[0].Bookmarks[0].Name); err != nil {
+		if pr, err := c.existingPR(ctx, c.stack[0]); err != nil {
 			return fsm.Error(err)
 		} else if pr != nil {
 			c.result.add(c.stack[0].ChangeID, pr.URL, PullRequestExisting)
@@ -403,7 +406,7 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 			pr, _, err := c.GitHubClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
 				Title: new(title),
 				Body:  new(description),
-				Head:  new(c.stack[0].Bookmarks[0].Name),
+				Head:  new(c.stack[0].bookmarkName()),
 				Base:  new(c.DefaultBranch),
 				Draft: new(true),
 			})
@@ -422,7 +425,7 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 		if v.pullRequest != nil {
 			continue
 		}
-		if pr, err := c.findExistingPR(ctx, v.Bookmarks[0].Name); err != nil {
+		if pr, err := c.existingPR(ctx, v); err != nil {
 			return fsm.Error(err)
 		} else if pr != nil {
 			c.result.add(v.ChangeID, pr.URL, PullRequestExisting)
@@ -443,7 +446,7 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 		} else {
 			baseBranch := c.DefaultBranch
 			if i != len(c.stack)-1 {
-				baseBranch = c.stack[i+1].Bookmarks[0].Name
+				baseBranch = c.stack[i+1].bookmarkName()
 			}
 			title, body := splitDescription(v.Description)
 			description := template
@@ -454,7 +457,7 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 			pr, _, err := c.GitHubClient.PullRequests.Create(ctx, c.repositoryOwner, c.repositoryName, &github.NewPullRequest{
 				Title: new(title),
 				Body:  new(description),
-				Head:  new(v.Bookmarks[0].Name),
+				Head:  new(v.bookmarkName()),
 				Base:  new(baseBranch),
 				Draft: new(true),
 			})
@@ -469,11 +472,19 @@ func (c *PullRequestSubmitter) createPR(ctx context.Context) (fsm.State, error) 
 	return fsm.Next(c.stateUpdatePR)
 }
 
-// findExistingPR returns the open pull request whose head is branch, or nil
+// existingPR returns the open pull request whose head is the bookmark of the commit, or nil
 // when none exists. The pre-fetched pull request list can miss a pull request
 // (for example when it is not on the first page), so we query GitHub directly
 // before creating a new one to avoid a "pull request already exists" error.
-func (c *PullRequestSubmitter) findExistingPR(ctx context.Context, branch string) (*pullRequest, error) {
+// The commit which has no bookmark has no pull request in the dry run because it is not pushed.
+func (c *PullRequestSubmitter) existingPR(ctx context.Context, v *StackCommit) (*pullRequest, error) {
+	branch := v.bookmarkName()
+	if branch == "" {
+		if c.DryRun {
+			return nil, nil
+		}
+		return nil, xerrors.Newf("%s has no bookmark after pushing", v.ChangeID)
+	}
 	prs, _, err := c.GitHubClient.PullRequests.List(ctx, c.repositoryOwner, c.repositoryName, &github.PullRequestListOptions{
 		State: "open",
 		Head:  fmt.Sprintf("%s:%s", c.repositoryOwner, branch),
@@ -544,9 +555,9 @@ func (c *PullRequestSubmitter) updatePR(ctx context.Context) (fsm.State, error) 
 		var updatedPR github.PullRequest
 
 		var needUpdateBaseBranch, needUpdateTitle, needUpdateBody bool
-		if i != len(c.stack)-1 && v.pullRequest.Base != c.stack[i+1].Bookmarks[0].Name {
+		if i != len(c.stack)-1 && v.pullRequest.Base != c.stack[i+1].bookmarkName() {
 			needUpdateBaseBranch = true
-			updatedPR.Base = &github.PullRequestBranch{Ref: new(c.stack[i+1].Bookmarks[0].Name)}
+			updatedPR.Base = &github.PullRequestBranch{Ref: new(c.stack[i+1].bookmarkName())}
 		}
 		if i := strings.Index(v.Description, "\n"); i > 0 {
 			if v.pullRequest.Title != v.Description[:i] {
@@ -763,7 +774,7 @@ func Stack(ctx context.Context, withoutNoSend bool, dir, defaultBranch, changeID
 		if err := json.Unmarshal(scanner.Bytes(), c); err != nil {
 			return nil, xerrors.WithStack(err)
 		}
-		if !(withoutNoSend && (strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag))) {
+		if !withoutNoSend || !c.NoSend() {
 			logger.Log.Debug("Stack", slog.String("change_id", c.ChangeID), slog.Any("bookmarks", c.Bookmarks))
 			commits = append(commits, c)
 		}
@@ -893,6 +904,19 @@ type StackCommit struct {
 	Bookmarks   []*StackBookmark `json:"bookmarks"`
 
 	pullRequest *pullRequest
+}
+
+// NoSend reports whether the commit is not submitted because the description starts with "no-send:" or "WIP:".
+func (c *StackCommit) NoSend() bool {
+	return strings.HasPrefix(c.Description, noSendTag) || strings.HasPrefix(c.Description, wipTag)
+}
+
+// bookmarkName returns the name of the first bookmark. It is empty if the commit has not been pushed yet (e.g. dry run).
+func (c *StackCommit) bookmarkName() string {
+	if len(c.Bookmarks) == 0 {
+		return ""
+	}
+	return c.Bookmarks[0].Name
 }
 
 type StackBookmark struct {
