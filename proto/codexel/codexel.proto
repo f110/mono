@@ -119,8 +119,6 @@ message ResponseStartAgent {
 // RepositoryService manages the repositories opened in Codexel. The repositories are saved in the config file.
 service RepositoryService {
   rpc ListRepositories(RequestListRepositories) returns (ResponseListRepositories);
-  // ListCandidates returns the repositories where the agents work and which are not opened.
-  rpc ListCandidates(RequestListCandidates) returns (ResponseListCandidates);
   // OpenRepository opens the workspace which contains the path.
   rpc OpenRepository(RequestOpenRepository) returns (ResponseOpenRepository);
   rpc CloseRepository(RequestCloseRepository) returns (ResponseCloseRepository);
@@ -218,12 +216,6 @@ message LogRow {
 message RequestListRepositories {}
 
 message ResponseListRepositories {
-  repeated Repository repositories = 1;
-}
-
-message RequestListCandidates {}
-
-message ResponseListCandidates {
   repeated Repository repositories = 1;
 }
 

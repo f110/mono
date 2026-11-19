@@ -75,9 +75,6 @@ const (
 	// RepositoryServiceListRepositoriesProcedure is the fully-qualified name of the RepositoryService's
 	// ListRepositories RPC.
 	RepositoryServiceListRepositoriesProcedure = "/mono.codexel.RepositoryService/ListRepositories"
-	// RepositoryServiceListCandidatesProcedure is the fully-qualified name of the RepositoryService's
-	// ListCandidates RPC.
-	RepositoryServiceListCandidatesProcedure = "/mono.codexel.RepositoryService/ListCandidates"
 	// RepositoryServiceOpenRepositoryProcedure is the fully-qualified name of the RepositoryService's
 	// OpenRepository RPC.
 	RepositoryServiceOpenRepositoryProcedure = "/mono.codexel.RepositoryService/OpenRepository"
@@ -483,7 +480,6 @@ func (UnimplementedAgentServiceHandler) StartAgent(context.Context, *connect.Req
 // RepositoryServiceClient is a client for the mono.codexel.RepositoryService service.
 type RepositoryServiceClient interface {
 	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
-	ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error)
 	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
 	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
 	WatchRepository(context.Context, *connect.Request[RequestWatchRepository]) (*connect.ServerStreamForClient[ResponseWatchRepository], error)
@@ -504,12 +500,6 @@ func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, o
 			httpClient,
 			baseURL+RepositoryServiceListRepositoriesProcedure,
 			connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
-			connect.WithClientOptions(opts...),
-		),
-		listCandidates: connect.NewClient[RequestListCandidates, ResponseListCandidates](
-			httpClient,
-			baseURL+RepositoryServiceListCandidatesProcedure,
-			connect.WithSchema(repositoryServiceMethods.ByName("ListCandidates")),
 			connect.WithClientOptions(opts...),
 		),
 		openRepository: connect.NewClient[RequestOpenRepository, ResponseOpenRepository](
@@ -536,7 +526,6 @@ func NewRepositoryServiceClient(httpClient connect.HTTPClient, baseURL string, o
 // repositoryServiceClient implements RepositoryServiceClient.
 type repositoryServiceClient struct {
 	listRepositories *connect.Client[RequestListRepositories, ResponseListRepositories]
-	listCandidates   *connect.Client[RequestListCandidates, ResponseListCandidates]
 	openRepository   *connect.Client[RequestOpenRepository, ResponseOpenRepository]
 	closeRepository  *connect.Client[RequestCloseRepository, ResponseCloseRepository]
 	watchRepository  *connect.Client[RequestWatchRepository, ResponseWatchRepository]
@@ -545,11 +534,6 @@ type repositoryServiceClient struct {
 // ListRepositories calls mono.codexel.RepositoryService.ListRepositories.
 func (c *repositoryServiceClient) ListRepositories(ctx context.Context, req *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	return c.listRepositories.CallUnary(ctx, req)
-}
-
-// ListCandidates calls mono.codexel.RepositoryService.ListCandidates.
-func (c *repositoryServiceClient) ListCandidates(ctx context.Context, req *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error) {
-	return c.listCandidates.CallUnary(ctx, req)
 }
 
 // OpenRepository calls mono.codexel.RepositoryService.OpenRepository.
@@ -570,7 +554,6 @@ func (c *repositoryServiceClient) WatchRepository(ctx context.Context, req *conn
 // RepositoryServiceHandler is an implementation of the mono.codexel.RepositoryService service.
 type RepositoryServiceHandler interface {
 	ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error)
-	ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error)
 	OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error)
 	CloseRepository(context.Context, *connect.Request[RequestCloseRepository]) (*connect.Response[ResponseCloseRepository], error)
 	WatchRepository(context.Context, *connect.Request[RequestWatchRepository], *connect.ServerStream[ResponseWatchRepository]) error
@@ -587,12 +570,6 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 		RepositoryServiceListRepositoriesProcedure,
 		svc.ListRepositories,
 		connect.WithSchema(repositoryServiceMethods.ByName("ListRepositories")),
-		connect.WithHandlerOptions(opts...),
-	)
-	repositoryServiceListCandidatesHandler := connect.NewUnaryHandler(
-		RepositoryServiceListCandidatesProcedure,
-		svc.ListCandidates,
-		connect.WithSchema(repositoryServiceMethods.ByName("ListCandidates")),
 		connect.WithHandlerOptions(opts...),
 	)
 	repositoryServiceOpenRepositoryHandler := connect.NewUnaryHandler(
@@ -617,8 +594,6 @@ func NewRepositoryServiceHandler(svc RepositoryServiceHandler, opts ...connect.H
 		switch r.URL.Path {
 		case RepositoryServiceListRepositoriesProcedure:
 			repositoryServiceListRepositoriesHandler.ServeHTTP(w, r)
-		case RepositoryServiceListCandidatesProcedure:
-			repositoryServiceListCandidatesHandler.ServeHTTP(w, r)
 		case RepositoryServiceOpenRepositoryProcedure:
 			repositoryServiceOpenRepositoryHandler.ServeHTTP(w, r)
 		case RepositoryServiceCloseRepositoryProcedure:
@@ -636,10 +611,6 @@ type UnimplementedRepositoryServiceHandler struct{}
 
 func (UnimplementedRepositoryServiceHandler) ListRepositories(context.Context, *connect.Request[RequestListRepositories]) (*connect.Response[ResponseListRepositories], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListRepositories is not implemented"))
-}
-
-func (UnimplementedRepositoryServiceHandler) ListCandidates(context.Context, *connect.Request[RequestListCandidates]) (*connect.Response[ResponseListCandidates], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.RepositoryService.ListCandidates is not implemented"))
 }
 
 func (UnimplementedRepositoryServiceHandler) OpenRepository(context.Context, *connect.Request[RequestOpenRepository]) (*connect.Response[ResponseOpenRepository], error) {

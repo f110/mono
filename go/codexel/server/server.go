@@ -19,6 +19,7 @@ import (
 	"go.f110.dev/mono/go/codexel/config"
 	"go.f110.dev/mono/go/codexel/review"
 	"go.f110.dev/mono/go/herdr"
+	"go.f110.dev/mono/go/jujutsu"
 	"go.f110.dev/mono/go/logger"
 )
 
@@ -29,8 +30,8 @@ func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, fr
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
 	mux.Handle("/mcp", NewMCPHandler(reviewHandler))
-	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient)))
-	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf, herdrClient)))
+	mux.Handle(api.NewAgentServiceHandler(NewAgentHandler(herdrClient, conf)))
+	mux.Handle(api.NewRepositoryServiceHandler(NewRepositoryHandler(conf)))
 	mux.Handle(api.NewRevisionServiceHandler(NewRevisionHandler(conf)))
 	mux.Handle(api.NewBookmarkServiceHandler(NewBookmarkHandler(conf)))
 	mux.Handle(api.NewGitServiceHandler(NewGitHandler(conf)))
@@ -61,13 +62,14 @@ func newFrontendHandler(frontend fs.FS) http.Handler {
 }
 
 type AgentHandler struct {
-	herdr *herdr.Client
+	herdr  *herdr.Client
+	config *config.File
 }
 
 var _ api.AgentServiceHandler = (*AgentHandler)(nil)
 
-func NewAgentHandler(c *herdr.Client) *AgentHandler {
-	return &AgentHandler{herdr: c}
+func NewAgentHandler(c *herdr.Client, conf *config.File) *AgentHandler {
+	return &AgentHandler{herdr: c, config: conf}
 }
 
 func (h *AgentHandler) ListAgents(ctx context.Context, _ *connect.Request[api.RequestListAgents]) (*connect.Response[api.ResponseListAgents], error) {
@@ -80,11 +82,19 @@ func (h *AgentHandler) ListAgents(ctx context.Context, _ *connect.Request[api.Re
 
 // WatchAgents sends the agents every time herdr notifies the change of the panes or the status of the agents.
 // The status of the agents can be subscribed only per pane, so the subscription is recreated after every change.
+// The repositories where the agents work are opened before sending so that the client can see them by the agents.
 func (h *AgentHandler) WatchAgents(ctx context.Context, _ *connect.Request[api.RequestWatchAgents], stream *connect.ServerStream[api.ResponseWatchAgents]) error {
 	for {
 		agents, panes, err := h.listAgents(ctx)
 		if err != nil {
 			return err
+		}
+		cwds := make([]string, 0, len(agents))
+		for _, v := range agents {
+			cwds = append(cwds, v.GetCwd())
+		}
+		if err := openAgentRepositories(ctx, h.config, cwds, jujutsu.WorkspaceRoot); err != nil {
+			logger.Log.Info("Failed to open the repositories of the agents", logger.E(err))
 		}
 		if err := stream.Send(api.ResponseWatchAgents_builder{Agents: agents}.Build()); err != nil {
 			return xerrors.WithStack(err)

@@ -1,16 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@connectrpc/connect-query'
 import { Box, Button, IconButton, Stack, Tab, Tabs, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { OpenRepositoryDialog } from '../components/OpenRepositoryDialog.tsx'
 import { RepositoryView } from '../components/RepositoryView.tsx'
+import { useAgents } from '../hooks/useAgents.ts'
 import { RepositoryService } from '../connect/codexel_pb.js'
 
 export const RepositoriesPage = () => {
   const { path } = useSearch({ from: '/repositories' })
   const navigate = useNavigate({ from: '/repositories' })
   const { data, refetch } = useQuery(RepositoryService.method.listRepositories, {})
+  const { agents } = useAgents()
+  useEffect(() => {
+    if (agents) {
+      refetch()
+    }
+  }, [agents, refetch])
   const closeRepository = useMutation(RepositoryService.method.closeRepository)
   const [openDialog, setOpenDialog] = useState(false)
   const repositories = data?.repositories ?? []

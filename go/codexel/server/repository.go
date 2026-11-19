@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"slices"
 	"time"
@@ -14,7 +15,6 @@ import (
 
 	"go.f110.dev/mono/go/codexel/api"
 	"go.f110.dev/mono/go/codexel/config"
-	"go.f110.dev/mono/go/herdr"
 	"go.f110.dev/mono/go/jujutsu"
 	"go.f110.dev/mono/go/logger"
 )
@@ -25,13 +25,12 @@ const snapshotInterval = 5 * time.Second
 
 type RepositoryHandler struct {
 	config *config.File
-	herdr  *herdr.Client
 }
 
 var _ api.RepositoryServiceHandler = (*RepositoryHandler)(nil)
 
-func NewRepositoryHandler(conf *config.File, herdrClient *herdr.Client) *RepositoryHandler {
-	return &RepositoryHandler{config: conf, herdr: herdrClient}
+func NewRepositoryHandler(conf *config.File) *RepositoryHandler {
+	return &RepositoryHandler{config: conf}
 }
 
 func (h *RepositoryHandler) ListRepositories(_ context.Context, _ *connect.Request[api.RequestListRepositories]) (*connect.Response[api.ResponseListRepositories], error) {
@@ -46,34 +45,46 @@ func (h *RepositoryHandler) ListRepositories(_ context.Context, _ *connect.Reque
 	return connect.NewResponse(api.ResponseListRepositories_builder{Repositories: repos}.Build()), nil
 }
 
-func (h *RepositoryHandler) ListCandidates(ctx context.Context, _ *connect.Request[api.RequestListCandidates]) (*connect.Response[api.ResponseListCandidates], error) {
-	conf, err := h.config.Load()
+// openAgentRepositories opens the workspaces where the agents work. The home directory is excluded because the agent
+// started there is not for the repository.
+func openAgentRepositories(ctx context.Context, conf *config.File, cwds []string, workspaceRoot func(context.Context, string) (string, error)) error {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return xerrors.WithStack(err)
 	}
-	agents, err := h.herdr.ListAgents(ctx)
-	if err != nil {
-		return nil, toConnectError(err)
-	}
-
-	var paths []string
-	for _, v := range agents {
+	var roots []string
+	for _, v := range cwds {
+		if v == home {
+			continue
+		}
 		// The agent may work in the directory which is not the repository of jj.
-		root, err := jujutsu.WorkspaceRoot(ctx, v.Cwd)
+		root, err := workspaceRoot(ctx, v)
 		if err != nil {
 			continue
 		}
-		if slices.Contains(paths, root) || slices.ContainsFunc(conf.Repositories, func(r *config.Repository) bool { return r.Path == root }) {
-			continue
+		if !slices.Contains(roots, root) {
+			roots = append(roots, root)
 		}
-		paths = append(paths, root)
 	}
-	slices.Sort(paths)
-	repos := make([]*api.Repository, 0, len(paths))
-	for _, v := range paths {
-		repos = append(repos, toRepository(v))
+	c, err := conf.Load()
+	if err != nil {
+		return err
 	}
-	return connect.NewResponse(api.ResponseListCandidates_builder{Repositories: repos}.Build()), nil
+	if !slices.ContainsFunc(roots, func(root string) bool { return !isOpened(c, root) }) {
+		return nil
+	}
+	return conf.Update(func(c *config.Config) error {
+		for _, v := range roots {
+			if !isOpened(c, v) {
+				c.Repositories = append(c.Repositories, &config.Repository{Path: v})
+			}
+		}
+		return nil
+	})
+}
+
+func isOpened(c *config.Config, path string) bool {
+	return slices.ContainsFunc(c.Repositories, func(r *config.Repository) bool { return r.Path == path })
 }
 
 func (h *RepositoryHandler) OpenRepository(ctx context.Context, req *connect.Request[api.RequestOpenRepository]) (*connect.Response[api.ResponseOpenRepository], error) {

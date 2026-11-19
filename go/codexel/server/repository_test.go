@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -28,7 +29,7 @@ func newConfig(t *testing.T, paths ...string) *config.File {
 
 func TestListAndCloseRepositories(t *testing.T) {
 	conf := newConfig(t, "/src/mono", "/src/ops")
-	h := NewRepositoryHandler(conf, nil)
+	h := NewRepositoryHandler(conf)
 
 	res, err := h.ListRepositories(t.Context(), connect.NewRequest(&api.RequestListRepositories{}))
 	assertion.MustNoError(t, err)
@@ -72,4 +73,25 @@ func TestListAgentCommitsRequiresAgent(t *testing.T) {
 	connectErr, ok := errors.AsType[*connect.Error](err)
 	assertion.True(t, ok)
 	assertion.Equal(t, connectErr.Code(), connect.CodeInvalidArgument)
+}
+
+func TestOpenAgentRepositories(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	conf := newConfig(t, "/src/mono")
+	roots := map[string]string{"/src/mono/go": "/src/mono", "/src/ops": "/src/ops", "/src/ops/manifests": "/src/ops", home: home}
+	workspaceRoot := func(_ context.Context, dir string) (string, error) {
+		if v, ok := roots[dir]; ok {
+			return v, nil
+		}
+		return "", errors.New("not a workspace")
+	}
+
+	err := openAgentRepositories(t.Context(), conf, []string{"/src/mono/go", "/src/ops/manifests", "/src/ops", "/tmp", home}, workspaceRoot)
+	assertion.MustNoError(t, err)
+	c, err := conf.Load()
+	assertion.MustNoError(t, err)
+	assertion.MustLen(t, c.Repositories, 2)
+	assertion.Equal(t, c.Repositories[0].Path, "/src/mono")
+	assertion.Equal(t, c.Repositories[1].Path, "/src/ops")
 }

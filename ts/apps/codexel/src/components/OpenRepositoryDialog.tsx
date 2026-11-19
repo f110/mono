@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@connectrpc/connect-query'
+import { useMutation } from '@connectrpc/connect-query'
 import {
   Alert,
   Button,
@@ -7,10 +7,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  List,
-  ListItemButton,
-  ListItemText,
-  ListSubheader,
   Stack,
   TextField,
 } from '@mui/material'
@@ -25,7 +21,6 @@ export const OpenRepositoryDialog = ({
   onClose: () => void
   onOpened: (repo: Repository) => void
 }) => {
-  const { data } = useQuery(RepositoryService.method.listCandidates, {}, { enabled: open })
   const openRepository = useMutation(RepositoryService.method.openRepository)
   const [path, setPath] = useState('')
 
@@ -62,15 +57,6 @@ export const OpenRepositoryDialog = ({
             helperText="Any directory in the workspace of jj"
             autoFocus
           />
-          {data && data.repositories.length > 0 && (
-            <List dense subheader={<ListSubheader disableGutters>Where the agents work</ListSubheader>}>
-              {data.repositories.map((r) => (
-                <ListItemButton key={r.path} onClick={() => submit(r.path)}>
-                  <ListItemText primary={r.name} secondary={r.path} />
-                </ListItemButton>
-              ))}
-            </List>
-          )}
         </Stack>
       </DialogContent>
       <DialogActions>

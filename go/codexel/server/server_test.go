@@ -159,7 +159,7 @@ func TestReadOutputNotFound(t *testing.T) {
 	c := startHerdr(t, map[string]string{
 		"agent.read": `"error":{"code":"agent_not_found","message":"agent target w9:p9 not found"}`,
 	})
-	h := NewAgentHandler(c)
+	h := NewAgentHandler(c, nil)
 
 	_, err := h.ReadOutput(context.Background(), connect.NewRequest(api.RequestReadOutput_builder{PaneId: new("w9:p9")}.Build()))
 	assertion.MustError(t, err)
@@ -180,7 +180,7 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":    {paneBusy, agentStarted},
 			"workspace.list": {workspaces},
 		})
-		h := NewAgentHandler(c)
+		h := NewAgentHandler(c, nil)
 
 		res, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
 		assertion.MustNoError(t, err)
@@ -194,7 +194,7 @@ func TestStartAgent(t *testing.T) {
 			"agent.start":    {agentStarted},
 			"workspace.list": {workspaces},
 		})
-		h := NewAgentHandler(c)
+		h := NewAgentHandler(c, nil)
 
 		for range 2 {
 			_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
@@ -217,7 +217,7 @@ func TestStartAgent(t *testing.T) {
 			"agent.start": {`"error":{"code":"agent_not_ready","message":"not ready"}`},
 			"tab.close":   {`"result":{"type":"ok"}`},
 		})
-		h := NewAgentHandler(c)
+		h := NewAgentHandler(c, nil)
 
 		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{WorkspaceId: new("w1"), Kind: new("claude")}.Build()))
 		assertion.MustError(t, err)
@@ -234,7 +234,7 @@ func TestReadOutputWhileWorking(t *testing.T) {
 			`"result":{"type":"pane_read","read":{"pane_id":"w1:p1","text":"screen"}}`,
 		},
 	})
-	h := NewAgentHandler(c)
+	h := NewAgentHandler(c, nil)
 
 	res, err := h.ReadOutput(t.Context(), connect.NewRequest(api.RequestReadOutput_builder{PaneId: new("w1:p1"), Lines: new(int32(2000))}.Build()))
 	assertion.MustNoError(t, err)

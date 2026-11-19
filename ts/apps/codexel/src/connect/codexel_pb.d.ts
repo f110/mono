@@ -626,34 +626,6 @@ export declare type ResponseListRepositories = Message<"mono.codexel.ResponseLis
 export declare const ResponseListRepositoriesSchema: GenMessage<ResponseListRepositories>;
 
 /**
- * @generated from message mono.codexel.RequestListCandidates
- */
-export declare type RequestListCandidates = Message<"mono.codexel.RequestListCandidates"> & {
-};
-
-/**
- * Describes the message mono.codexel.RequestListCandidates.
- * Use `create(RequestListCandidatesSchema)` to create a new message.
- */
-export declare const RequestListCandidatesSchema: GenMessage<RequestListCandidates>;
-
-/**
- * @generated from message mono.codexel.ResponseListCandidates
- */
-export declare type ResponseListCandidates = Message<"mono.codexel.ResponseListCandidates"> & {
-  /**
-   * @generated from field: repeated mono.codexel.Repository repositories = 1;
-   */
-  repositories: Repository[];
-};
-
-/**
- * Describes the message mono.codexel.ResponseListCandidates.
- * Use `create(ResponseListCandidatesSchema)` to create a new message.
- */
-export declare const ResponseListCandidatesSchema: GenMessage<ResponseListCandidates>;
-
-/**
  * @generated from message mono.codexel.RequestOpenRepository
  */
 export declare type RequestOpenRepository = Message<"mono.codexel.RequestOpenRepository"> & {
@@ -4029,16 +4001,6 @@ export declare const RepositoryService: GenService<{
     methodKind: "unary";
     input: typeof RequestListRepositoriesSchema;
     output: typeof ResponseListRepositoriesSchema;
-  },
-  /**
-   * ListCandidates returns the repositories where the agents work and which are not opened.
-   *
-   * @generated from rpc mono.codexel.RepositoryService.ListCandidates
-   */
-  listCandidates: {
-    methodKind: "unary";
-    input: typeof RequestListCandidatesSchema;
-    output: typeof ResponseListCandidatesSchema;
   },
   /**
    * OpenRepository opens the workspace which contains the path.
