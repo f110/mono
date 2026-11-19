@@ -38,7 +38,15 @@ export const StartAgentDialog = ({
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {start.error && <Alert severity="error">{start.error.message}</Alert>}
-          <TextField select label="Workspace" value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
+          <TextField
+            select
+            label="Workspace"
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            helperText="herdr is started if it is not running when the new workspace is created"
+          >
+            <MenuItem value="">New workspace</MenuItem>
             {data?.workspaces.map((w) => (
               <MenuItem key={w.workspaceId} value={w.workspaceId}>
                 {w.label}
@@ -57,7 +65,7 @@ export const StartAgentDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={!workspaceId || !kind || start.isPending}>
+        <Button variant="contained" onClick={submit} disabled={!kind || start.isPending}>
           Start
         </Button>
       </DialogActions>

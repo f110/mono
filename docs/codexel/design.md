@@ -68,7 +68,7 @@ herdr はソケット (`$HERDR_SOCKET_PATH`、既定 `~/.config/herdr/herdr.sock
 | 一覧と状態表示 | `agent.list` + `events.subscribe`。`pane.created` / `pane.closed` / `pane.updated` / `pane.agent_detected` を購読し、状態の変化は各エージェントのペインを指定して `pane.agent_status_changed` を購読する (`pane_id` が必須) |
 | 出力の閲覧 | `agent.read` (`source=recent`, `format=ansi`)。出力の変化は購読できないので、表示している間だけ定期的に再取得する |
 | プロンプト送信 | `agent.prompt`。キー入力は `agent.send_keys` |
-| エージェント起動 | 既存ペインを指定して `agent.start`。新しく起動する場合は `tab.create` / `pane.split` でペインを作ってから `agent.start` |
+| エージェント起動 | 既存ペインを指定して `agent.start`。新しく起動する場合は `tab.create` / `pane.split` でペインを作ってから `agent.start`。ワークスペースを指定しない場合は `workspace.create` で作り、herdr のサーバーが動いていなければ `herdr server` を起動する |
 
 `agent.list` が返すエージェントの情報のうち、Codexel が使うもの:
 

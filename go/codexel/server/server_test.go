@@ -225,6 +225,39 @@ func TestStartAgent(t *testing.T) {
 		assertion.Equal(t, methods(reqs), []string{"tab.create", "agent.start", "tab.close"})
 		assertion.Equal(t, reqs[2].Params["tab_id"], any("w1:t2"))
 	})
+
+	workspaceCreated := `"result":{"type":"workspace_created","workspace":{"workspace_id":"w2"},"tab":{"tab_id":"w2:t1"},"root_pane":{"pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}`
+
+	t.Run("New workspace", func(t *testing.T) {
+		c, received := startHerdrWithSequence(t, map[string][]string{
+			"workspace.create": {workspaceCreated},
+			"agent.start":      {agentStarted},
+			"workspace.list":   {workspaces},
+		})
+		h := NewAgentHandler(c, nil)
+
+		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Cwd: new("/repo"), Kind: new("claude")}.Build()))
+		assertion.MustNoError(t, err)
+		reqs := received()
+		assertion.Equal(t, methods(reqs), []string{"workspace.create", "agent.start", "workspace.list"})
+		assertion.Equal(t, reqs[0].Params["cwd"], any("/repo"))
+		assertion.Equal(t, reqs[1].Params["pane_id"], any("w2:p1"))
+	})
+
+	t.Run("Close the new workspace on failure", func(t *testing.T) {
+		c, received := startHerdrWithSequence(t, map[string][]string{
+			"workspace.create": {workspaceCreated},
+			"agent.start":      {`"error":{"code":"agent_not_ready","message":"not ready"}`},
+			"workspace.close":  {`"result":{"type":"ok"}`},
+		})
+		h := NewAgentHandler(c, nil)
+
+		_, err := h.StartAgent(t.Context(), connect.NewRequest(api.RequestStartAgent_builder{Kind: new("claude")}.Build()))
+		assertion.MustError(t, err)
+		reqs := received()
+		assertion.Equal(t, methods(reqs), []string{"workspace.create", "agent.start", "workspace.close"})
+		assertion.Equal(t, reqs[2].Params["workspace_id"], any("w2"))
+	})
 }
 
 func TestReadOutputWhileWorking(t *testing.T) {

@@ -4007,7 +4007,8 @@ export declare const AgentService: GenService<{
     output: typeof ResponseListWorkspacesSchema;
   },
   /**
-   * StartAgent creates a new tab in the workspace and starts the agent in it.
+   * StartAgent creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
+   * workspace and starts the agent in it. The server of herdr is started if it is not running.
    *
    * @generated from rpc mono.codexel.AgentService.StartAgent
    */

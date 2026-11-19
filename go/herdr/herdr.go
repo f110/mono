@@ -8,13 +8,19 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
+	"strings"
 	"sync/atomic"
+	"syscall"
+	"time"
 
 	"go.f110.dev/xerrors"
 )
@@ -219,6 +225,74 @@ func (c *Client) CreateTab(ctx context.Context, workspaceID, cwd string) (*Pane,
 
 func (c *Client) CloseTab(ctx context.Context, tabID string) error {
 	return c.call(ctx, "tab.close", map[string]any{"tab_id": tabID}, nil)
+}
+
+// CreateWorkspace creates the workspace and returns the root pane of it.
+func (c *Client) CreateWorkspace(ctx context.Context, cwd string) (*Pane, error) {
+	params := map[string]any{}
+	if cwd != "" {
+		params["cwd"] = cwd
+	}
+	var res struct {
+		RootPane *Pane `json:"root_pane"`
+	}
+	if err := c.call(ctx, "workspace.create", params, &res); err != nil {
+		return nil, err
+	}
+	return res.RootPane, nil
+}
+
+func (c *Client) CloseWorkspace(ctx context.Context, workspaceID string) error {
+	return c.call(ctx, "workspace.close", map[string]any{"workspace_id": workspaceID}, nil)
+}
+
+const (
+	startServerPollInterval = 100 * time.Millisecond
+	startServerTimeout      = 10 * time.Second
+)
+
+// StartServer starts the headless server of herdr which listens on the socket of the client, and waits until the
+// socket is available for up to startServerTimeout. The server is detached from the process so that it keeps running
+// after the process exits. The variables of herdr in the environment are not passed because they describe the pane
+// where the process runs.
+func (c *Client) StartServer(ctx context.Context) error {
+	cmd := exec.Command("herdr", "server")
+	cmd.Env = slices.DeleteFunc(os.Environ(), func(v string) bool { return strings.HasPrefix(v, "HERDR_") })
+	cmd.Env = append(cmd.Env, "HERDR_SOCKET_PATH="+c.socketPath)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	if err := cmd.Start(); err != nil {
+		return xerrors.WithStack(err)
+	}
+	exited := make(chan error, 1)
+	go func() { exited <- cmd.Wait() }()
+
+	ctx, cancel := context.WithTimeout(ctx, startServerTimeout)
+	defer cancel()
+	var d net.Dialer
+	for {
+		conn, err := d.DialContext(ctx, "unix", c.socketPath)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return xerrors.WithMessage(ctx.Err(), "herdr server is not available")
+		case err := <-exited:
+			if conn, dialErr := d.DialContext(ctx, "unix", c.socketPath); dialErr == nil {
+				conn.Close()
+				return nil
+			}
+			return xerrors.Newf("herdr server exited: %v", err)
+		case <-time.After(startServerPollInterval):
+		}
+	}
+}
+
+// IsUnavailable returns true if err is caused by the server of herdr which is not running.
+func IsUnavailable(err error) bool {
+	opErr, ok := errors.AsType[*net.OpError](err)
+	return ok && opErr.Op == "dial"
 }
 
 // Subscribe subscribes the events. The iteration continues until ctx is canceled or the connection is closed.

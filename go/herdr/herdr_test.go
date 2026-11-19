@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"go.f110.dev/mono/go/testing/assertion"
 )
@@ -106,6 +107,30 @@ func TestCreateTab(t *testing.T) {
 	assertion.Equal(t, req.Params["cwd"], any("/repo"))
 }
 
+func TestCreateWorkspace(t *testing.T) {
+	c, reqs := startServer(t, func(req *request) []string {
+		return []string{`{"id":"` + req.ID + `","result":{"type":"workspace_created","workspace":{"workspace_id":"w2"},"tab":{"tab_id":"w2:t1"},"root_pane":{"pane_id":"w2:p1","tab_id":"w2:t1","workspace_id":"w2"}}}`}
+	})
+
+	pane, err := c.CreateWorkspace(t.Context(), "/repo")
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, pane.PaneID, "w2:p1")
+	req := <-reqs
+	assertion.Equal(t, req.Method, "workspace.create")
+	assertion.Equal(t, req.Params["cwd"], any("/repo"))
+}
+
+func TestCloseWorkspace(t *testing.T) {
+	c, reqs := startServer(t, func(req *request) []string {
+		return []string{`{"id":"` + req.ID + `","result":{"type":"ok"}}`}
+	})
+
+	assertion.MustNoError(t, c.CloseWorkspace(t.Context(), "w2"))
+	req := <-reqs
+	assertion.Equal(t, req.Method, "workspace.close")
+	assertion.Equal(t, req.Params["workspace_id"], any("w2"))
+}
+
 func TestCloseTab(t *testing.T) {
 	c, reqs := startServer(t, func(req *request) []string {
 		return []string{`{"id":"` + req.ID + `","result":{"type":"ok"}}`}
@@ -157,4 +182,36 @@ func TestSubscribe(t *testing.T) {
 	subs := req.Params["subscriptions"].([]any)
 	assertion.MustLen(t, subs, 2)
 	assertion.Equal(t, subs[1].(map[string]any)["pane_id"], any("w1:p1"))
+}
+
+func TestStartServer(t *testing.T) {
+	c, _ := startServer(t, func(req *request) []string { return nil })
+	bin := t.TempDir()
+	out := filepath.Join(t.TempDir(), "out")
+	script := "#!/bin/sh\necho \"$* $HERDR_SOCKET_PATH $HERDR_PANE_ID\" > " + out + ".tmp && mv " + out + ".tmp " + out + "\n"
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(bin, "herdr"), []byte(script), 0755))
+	t.Setenv("PATH", bin+":/bin:/usr/bin")
+	t.Setenv("HERDR_PANE_ID", "w1:p1")
+
+	assertion.MustNoError(t, c.StartServer(t.Context()))
+	var buf []byte
+	for range 50 {
+		var err error
+		if buf, err = os.ReadFile(out); err == nil {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	assertion.Equal(t, string(buf), "server "+c.socketPath+" \n")
+}
+
+func TestStartServerTimeout(t *testing.T) {
+	bin := t.TempDir()
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(bin, "herdr"), []byte("#!/bin/sh\n"), 0755))
+	t.Setenv("PATH", bin)
+	ctx, cancel := context.WithTimeout(t.Context(), 300*time.Millisecond)
+	defer cancel()
+
+	err := NewClient(filepath.Join(t.TempDir(), "s")).StartServer(ctx)
+	assertion.MustError(t, err)
 }

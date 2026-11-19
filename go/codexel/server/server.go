@@ -177,8 +177,8 @@ func (h *AgentHandler) ListWorkspaces(ctx context.Context, _ *connect.Request[ap
 }
 
 func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.RequestStartAgent]) (*connect.Response[api.ResponseStartAgent], error) {
-	if req.Msg.GetWorkspaceId() == "" || req.Msg.GetKind() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("workspace_id and kind are required"))
+	if req.Msg.GetKind() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("kind is required"))
 	}
 	// The name of the agent must be unique in herdr.
 	name := req.Msg.GetName()
@@ -186,14 +186,14 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 		name = req.Msg.GetKind() + "-" + strconv.FormatInt(time.Now().UnixNano(), 36)
 	}
 
-	pane, err := h.herdr.CreateTab(ctx, req.Msg.GetWorkspaceId(), req.Msg.GetCwd())
+	pane, cleanup, err := h.createPane(ctx, req.Msg.GetWorkspaceId(), req.Msg.GetCwd())
 	if err != nil {
 		return nil, toConnectError(err)
 	}
 	agent, err := h.startAgent(ctx, name, req.Msg.GetKind(), pane.PaneID, req.Msg.GetArgs())
 	if err != nil {
-		if closeErr := h.herdr.CloseTab(context.WithoutCancel(ctx), pane.TabID); closeErr != nil {
-			logger.Log.Info("Failed to close the tab", slog.String("tab_id", pane.TabID), logger.E(closeErr))
+		if closeErr := cleanup(context.WithoutCancel(ctx)); closeErr != nil {
+			logger.Log.Info("Failed to close the pane", slog.String("pane_id", pane.PaneID), logger.E(closeErr))
 		}
 		return nil, toConnectError(err)
 	}
@@ -202,6 +202,30 @@ func (h *AgentHandler) StartAgent(ctx context.Context, req *connect.Request[api.
 		return nil, err
 	}
 	return connect.NewResponse(api.ResponseStartAgent_builder{Agent: toAgent(agent, workspaces)}.Build()), nil
+}
+
+// createPane creates the tab in the workspace, or the new workspace if workspaceID is empty. The server of herdr is
+// started if it is not running when the workspace is created. It returns the function to close what it created.
+func (h *AgentHandler) createPane(ctx context.Context, workspaceID, cwd string) (*herdr.Pane, func(context.Context) error, error) {
+	if workspaceID != "" {
+		pane, err := h.herdr.CreateTab(ctx, workspaceID, cwd)
+		if err != nil {
+			return nil, nil, err
+		}
+		return pane, func(ctx context.Context) error { return h.herdr.CloseTab(ctx, pane.TabID) }, nil
+	}
+
+	pane, err := h.herdr.CreateWorkspace(ctx, cwd)
+	if herdr.IsUnavailable(err) {
+		if err := h.herdr.StartServer(ctx); err != nil {
+			return nil, nil, err
+		}
+		pane, err = h.herdr.CreateWorkspace(ctx, cwd)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	return pane, func(ctx context.Context) error { return h.herdr.CloseWorkspace(ctx, pane.WorkspaceID) }, nil
 }
 
 const (

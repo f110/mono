@@ -19,7 +19,8 @@ service AgentService {
   // FocusAgent moves the focus of herdr to the agent.
   rpc FocusAgent(RequestFocusAgent) returns (ResponseFocusAgent);
   rpc ListWorkspaces(RequestListWorkspaces) returns (ResponseListWorkspaces);
-  // StartAgent creates a new tab in the workspace and starts the agent in it.
+  // StartAgent creates a new tab in the workspace and starts the agent in it. If workspace_id is empty, it creates a new
+  // workspace and starts the agent in it. The server of herdr is started if it is not running.
   rpc StartAgent(RequestStartAgent) returns (ResponseStartAgent);
 }
 
