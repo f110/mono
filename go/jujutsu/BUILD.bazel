@@ -2,17 +2,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "jujutsu",
-    srcs = [
-        "alias.go",
-        "bookmark.go",
-        "conflict.go",
-        "diff.go",
-        "file.go",
-        "history.go",
-        "jujutsu.go",
-        "operation.go",
-        "workspace.go",
-    ],
+    srcs = ["jujutsu.go"],
     importpath = "go.f110.dev/mono/go/jujutsu",
     visibility = ["//visibility:public"],
     deps = ["@dev_f110_go_xerrors//:xerrors"],
@@ -20,17 +10,7 @@ go_library(
 
 go_test(
     name = "jujutsu_test",
-    srcs = [
-        "alias_test.go",
-        "bookmark_test.go",
-        "conflict_test.go",
-        "diff_test.go",
-        "file_test.go",
-        "history_test.go",
-        "jujutsu_test.go",
-        "operation_test.go",
-        "workspace_test.go",
-    ],
+    srcs = ["jujutsu_test.go"],
     data = glob(["testdata/**"]),
     embed = [":jujutsu"],
     deps = ["//go/testing/assertion"],
