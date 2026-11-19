@@ -43,7 +43,7 @@ Refs: #121, #122
 
 | パス | 提供するもの |
 |---|---|
-| `go/cmd/codexel` | エントリポイント。フラグ処理とサーバー起動 |
+| `go/cmd/codexel` | エントリポイント。フラグ処理とサーバー起動、エージェントへの MCP の登録 (`setup`) |
 | `go/codexel/server` | Connect API と MCP のハンドラ、静的ファイル配信 |
 | `go/codexel/static` | embed したフロントエンド (`//go:embed`) |
 | `go/codexel/review` | レビューの保存と、リビジョン書き換え時のコメントの追従 |
@@ -206,6 +206,10 @@ crit はブランチと作業ツリーを単位にするが、Codexel は jj の
 - `go/issue/mcp` と同じく、Codexel のサーバーが MCP エンドポイント (`/mcp`) を提供する
 - ツール: レビューの一覧、未解決のコメントの一覧、返信、resolve、次のラウンドの開始
 - MCP サーバーとして登録するには Codexel のアドレスが毎回同じである必要があるので、`--addr` の既定値は固定のポートにする (番号は #123 で決める)
+- 登録は `codexel setup` で行う (#131)。`claude mcp add --transport http --scope user codexel <URL>` を実行する
+    - `~/.claude.json` は Claude Code の内部状態を含み、動いている Claude Code も書き込むので、直接編集せず `claude` コマンドに任せる
+    - URL は `--addr` (サーバーと同じフラグ) から `http://<addr>/mcp` にする。ホストが空や `0.0.0.0` / `::` の場合は `localhost` にする
+    - 既に登録されている場合は `claude mcp remove --scope user codexel` で消してから登録し直す。何度実行しても同じ結果になり、`--addr` を変えたら URL も追従する
 
 ### 5.5 再実装しない機能
 
@@ -308,6 +312,7 @@ codexel [--addr localhost:<固定ポート>] [--no-browser]
 ```
 
 - 起動したらブラウザを開く
+- `codexel setup [--addr ...]` はエージェントに Codexel を使わせるための設定を行う。今は MCP の登録 (§5.4) だけを行う
 
 ## 10. 段階実装
 
