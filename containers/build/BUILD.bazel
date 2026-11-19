@@ -4,9 +4,13 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//build/rules/artifact:def.bzl", "cd_artifact")
 
 CONTAINER_REGISTRY = "repo.center.x.f110.dev"
+
 BUILD_REPOSITORY = CONTAINER_REGISTRY + "/build/build"
+
 SIDECAR_REPOSITORY = CONTAINER_REGISTRY + "/build/sidecar"
+
 CTL_REPOSITORY = CONTAINER_REGISTRY + "/build/buildctl"
+
 FRONTEND_REPOSITORY = CONTAINER_REGISTRY + "/build/frontend"
 
 pkg_tar(
