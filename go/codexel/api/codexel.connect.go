@@ -44,6 +44,8 @@ const (
 	TranscriptServiceName = "mono.codexel.TranscriptService"
 	// ReviewServiceName is the fully-qualified name of the ReviewService service.
 	ReviewServiceName = "mono.codexel.ReviewService"
+	// SystemServiceName is the fully-qualified name of the SystemService service.
+	SystemServiceName = "mono.codexel.SystemService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -223,6 +225,8 @@ const (
 	ReviewServiceRoundDiffProcedure = "/mono.codexel.ReviewService/RoundDiff"
 	// ReviewServiceSetViewedProcedure is the fully-qualified name of the ReviewService's SetViewed RPC.
 	ReviewServiceSetViewedProcedure = "/mono.codexel.ReviewService/SetViewed"
+	// SystemServiceGetStatusProcedure is the fully-qualified name of the SystemService's GetStatus RPC.
+	SystemServiceGetStatusProcedure = "/mono.codexel.SystemService/GetStatus"
 )
 
 // AgentServiceClient is a client for the mono.codexel.AgentService service.
@@ -2467,4 +2471,74 @@ func (UnimplementedReviewServiceHandler) RoundDiff(context.Context, *connect.Req
 
 func (UnimplementedReviewServiceHandler) SetViewed(context.Context, *connect.Request[RequestSetViewed]) (*connect.Response[ResponseSetViewed], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.ReviewService.SetViewed is not implemented"))
+}
+
+// SystemServiceClient is a client for the mono.codexel.SystemService service.
+type SystemServiceClient interface {
+	GetStatus(context.Context, *connect.Request[RequestGetStatus]) (*connect.Response[ResponseGetStatus], error)
+}
+
+// NewSystemServiceClient constructs a client for the mono.codexel.SystemService service. By
+// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
+// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewSystemServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) SystemServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	systemServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("SystemService").Methods()
+	return &systemServiceClient{
+		getStatus: connect.NewClient[RequestGetStatus, ResponseGetStatus](
+			httpClient,
+			baseURL+SystemServiceGetStatusProcedure,
+			connect.WithSchema(systemServiceMethods.ByName("GetStatus")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// systemServiceClient implements SystemServiceClient.
+type systemServiceClient struct {
+	getStatus *connect.Client[RequestGetStatus, ResponseGetStatus]
+}
+
+// GetStatus calls mono.codexel.SystemService.GetStatus.
+func (c *systemServiceClient) GetStatus(ctx context.Context, req *connect.Request[RequestGetStatus]) (*connect.Response[ResponseGetStatus], error) {
+	return c.getStatus.CallUnary(ctx, req)
+}
+
+// SystemServiceHandler is an implementation of the mono.codexel.SystemService service.
+type SystemServiceHandler interface {
+	GetStatus(context.Context, *connect.Request[RequestGetStatus]) (*connect.Response[ResponseGetStatus], error)
+}
+
+// NewSystemServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewSystemServiceHandler(svc SystemServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	systemServiceMethods := File_proto_codexel_codexel_proto.Services().ByName("SystemService").Methods()
+	systemServiceGetStatusHandler := connect.NewUnaryHandler(
+		SystemServiceGetStatusProcedure,
+		svc.GetStatus,
+		connect.WithSchema(systemServiceMethods.ByName("GetStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/mono.codexel.SystemService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case SystemServiceGetStatusProcedure:
+			systemServiceGetStatusHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedSystemServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedSystemServiceHandler struct{}
+
+func (UnimplementedSystemServiceHandler) GetStatus(context.Context, *connect.Request[RequestGetStatus]) (*connect.Response[ResponseGetStatus], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("mono.codexel.SystemService.GetStatus is not implemented"))
 }

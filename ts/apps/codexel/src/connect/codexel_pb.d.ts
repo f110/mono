@@ -3612,6 +3612,36 @@ export declare type ResponseSetViewed = Message<"mono.codexel.ResponseSetViewed"
 export declare const ResponseSetViewedSchema: GenMessage<ResponseSetViewed>;
 
 /**
+ * @generated from message mono.codexel.RequestGetStatus
+ */
+export declare type RequestGetStatus = Message<"mono.codexel.RequestGetStatus"> & {
+};
+
+/**
+ * Describes the message mono.codexel.RequestGetStatus.
+ * Use `create(RequestGetStatusSchema)` to create a new message.
+ */
+export declare const RequestGetStatusSchema: GenMessage<RequestGetStatus>;
+
+/**
+ * @generated from message mono.codexel.ResponseGetStatus
+ */
+export declare type ResponseGetStatus = Message<"mono.codexel.ResponseGetStatus"> & {
+  /**
+   * missing_binaries are the binaries Codexel depends on and not found in PATH.
+   *
+   * @generated from field: repeated string missing_binaries = 1;
+   */
+  missingBinaries: string[];
+};
+
+/**
+ * Describes the message mono.codexel.ResponseGetStatus.
+ * Use `create(ResponseGetStatusSchema)` to create a new message.
+ */
+export declare const ResponseGetStatusSchema: GenMessage<ResponseGetStatus>;
+
+/**
  * @generated from enum mono.codexel.AgentStatus
  */
 export enum AgentStatus {
@@ -4628,6 +4658,24 @@ export declare const ReviewService: GenService<{
     methodKind: "unary";
     input: typeof RequestSetViewedSchema;
     output: typeof ResponseSetViewedSchema;
+  },
+}>;
+
+/**
+ * SystemService provides the status of Codexel itself.
+ *
+ * @generated from service mono.codexel.SystemService
+ */
+export declare const SystemService: GenService<{
+  /**
+   * GetStatus returns the status found at startup.
+   *
+   * @generated from rpc mono.codexel.SystemService.GetStatus
+   */
+  getStatus: {
+    methodKind: "unary";
+    input: typeof RequestGetStatusSchema;
+    output: typeof ResponseGetStatusSchema;
   },
 }>;
 

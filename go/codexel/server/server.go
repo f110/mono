@@ -24,8 +24,9 @@ import (
 )
 
 // New returns the handler of the API and the frontend. claudeProjectsDir is the directory of the transcripts of Claude
-// Code. If it is empty, TranscriptService is disabled. MCP for the coding agents is served at /mcp.
-func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, frontend fs.FS, claudeProjectsDir string) http.Handler {
+// Code. If it is empty, TranscriptService is disabled. MCP for the coding agents is served at /mcp. missingBinaries
+// are the binaries not found at startup.
+func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, frontend fs.FS, claudeProjectsDir string, missingBinaries []string) http.Handler {
 	mux := http.NewServeMux()
 	reviewHandler := NewReviewHandler(conf, reviews, herdrClient)
 	mux.Handle(api.NewReviewServiceHandler(reviewHandler))
@@ -41,6 +42,7 @@ func New(herdrClient *herdr.Client, conf *config.File, reviews *review.Store, fr
 	mux.Handle(api.NewWorkspaceServiceHandler(NewWorkspaceHandler(conf)))
 	mux.Handle(api.NewAliasServiceHandler(NewAliasHandler(conf)))
 	mux.Handle(api.NewTranscriptServiceHandler(NewTranscriptHandler(claudeProjectsDir)))
+	mux.Handle(api.NewSystemServiceHandler(NewSystemHandler(missingBinaries)))
 	mux.Handle("/", newFrontendHandler(frontend))
 	return mux
 }
@@ -310,4 +312,18 @@ func toConnectError(err error) error {
 		return connect.NewError(connect.CodeUnavailable, err)
 	}
 	return connect.NewError(connect.CodeInternal, err)
+}
+
+type SystemHandler struct {
+	missingBinaries []string
+}
+
+var _ api.SystemServiceHandler = (*SystemHandler)(nil)
+
+func NewSystemHandler(missingBinaries []string) *SystemHandler {
+	return &SystemHandler{missingBinaries: missingBinaries}
+}
+
+func (h *SystemHandler) GetStatus(_ context.Context, _ *connect.Request[api.RequestGetStatus]) (*connect.Response[api.ResponseGetStatus], error) {
+	return connect.NewResponse(api.ResponseGetStatus_builder{MissingBinaries: h.missingBinaries}.Build()), nil
 }

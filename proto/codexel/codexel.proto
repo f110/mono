@@ -1127,3 +1127,16 @@ message RequestSetViewed {
 message ResponseSetViewed {
   Review review = 1;
 }
+
+// SystemService provides the status of Codexel itself.
+service SystemService {
+  // GetStatus returns the status found at startup.
+  rpc GetStatus(RequestGetStatus) returns (ResponseGetStatus);
+}
+
+message RequestGetStatus {}
+
+message ResponseGetStatus {
+  // missing_binaries are the binaries Codexel depends on and not found in PATH.
+  repeated string missing_binaries = 1;
+}

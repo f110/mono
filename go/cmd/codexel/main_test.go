@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -35,4 +37,12 @@ func TestServeStopsWithStreamingRequest(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("serve did not return after the context was canceled")
 	}
+}
+
+func TestMissingBinaries(t *testing.T) {
+	dir := t.TempDir()
+	assertion.MustNoError(t, os.WriteFile(filepath.Join(dir, "jj"), nil, 0755))
+	t.Setenv("PATH", dir)
+
+	assertion.Equal(t, missingBinaries("herdr", "jj"), []string{"herdr"})
 }

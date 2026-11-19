@@ -285,6 +285,7 @@ trunk から連続したスタック (`ancestors(latest(<default>@origin) & remo
 | `BookmarkService` / `GitService` / `OperationService` / `WorkspaceService` | §4.2 の各分類 |
 | `ReviewService` | `ListReviews`, `GetReview`, `StartReview`, `AddComment`, `EditComment`, `DeleteComment`, `Reply`, `ResolveComment`, `Finish`, `StartNextRound`, `RoundDiff`, `SetViewed` |
 | `PullRequestService` | `ListTemplates`, `Submit` |
+| `SystemService` | `GetStatus` (起動時に PATH に見つからなかった `herdr` と `jj`) |
 
 lightjj の HTTP API を 1:1 で Connect の RPC に写す。git push/fetch や alias のようにストリーミング出力があるものは server streaming にする。
 

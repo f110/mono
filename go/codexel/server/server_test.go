@@ -139,7 +139,7 @@ func TestListAgents(t *testing.T) {
 		"agent.list":     `"result":{"type":"agent_list","agents":[{"agent":"claude","agent_session":{"agent":"claude","kind":"id","source":"herdr:claude","value":"sess"},"agent_status":"working","cwd":"/repo","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1","terminal_title_stripped":"Claude Code"}]}`,
 		"workspace.list": `"result":{"type":"workspace_list","workspaces":[{"workspace_id":"w1","label":"mono"}]}`,
 	})
-	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, ""))
+	srv := httptest.NewServer(New(c, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, "", nil))
 	t.Cleanup(srv.Close)
 
 	client := api.NewAgentServiceClient(srv.Client(), srv.URL)
@@ -251,7 +251,7 @@ func TestWatchTranscript(t *testing.T) {
 	assertion.MustNoError(t, os.MkdirAll(filepath.Join(dir, "-repo"), 0755))
 	p := filepath.Join(dir, "-repo", "sess.jsonl")
 	assertion.MustNoError(t, os.WriteFile(p, []byte(`{"type":"user","origin":{"kind":"human"},"message":{"content":"Fix it"},"timestamp":"2026-11-18T10:00:00Z"}`+"\n"), 0644))
-	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, dir))
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, dir, nil))
 	t.Cleanup(srv.Close)
 
 	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
@@ -277,7 +277,7 @@ func TestWatchTranscript(t *testing.T) {
 
 func TestWatchTranscriptDisabled(t *testing.T) {
 	frontend := fstest.MapFS{"index.html": {Data: []byte("<html></html>")}}
-	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), frontend, ""))
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), frontend, "", nil))
 	t.Cleanup(srv.Close)
 
 	client := api.NewTranscriptServiceClient(srv.Client(), srv.URL)
@@ -286,4 +286,14 @@ func TestWatchTranscriptDisabled(t *testing.T) {
 	t.Cleanup(func() { stream.Close() })
 	assertion.False(t, stream.Receive())
 	assertion.Equal(t, connect.CodeOf(stream.Err()), connect.CodeUnimplemented)
+}
+
+func TestGetStatus(t *testing.T) {
+	srv := httptest.NewServer(New(nil, config.NewFile(filepath.Join(t.TempDir(), "config.json")), review.NewStore(t.TempDir()), fstest.MapFS{}, "", []string{"jj"}))
+	t.Cleanup(srv.Close)
+
+	client := api.NewSystemServiceClient(srv.Client(), srv.URL)
+	res, err := client.GetStatus(t.Context(), connect.NewRequest(&api.RequestGetStatus{}))
+	assertion.MustNoError(t, err)
+	assertion.Equal(t, res.Msg.GetMissingBinaries(), []string{"jj"})
 }

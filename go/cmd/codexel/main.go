@@ -69,6 +69,11 @@ func (c *command) Run(ctx context.Context) error {
 		}
 	}
 
+	missing := missingBinaries("herdr", "jj")
+	for _, v := range missing {
+		logger.Log.Warn("Binary is not found in PATH", slog.String("name", v))
+	}
+
 	l, err := net.Listen("tcp", c.Addr)
 	if err != nil {
 		return xerrors.WithStack(err)
@@ -79,7 +84,7 @@ func (c *command) Run(ctx context.Context) error {
 			logger.Log.Info("Failed to open the browser", logger.E(err))
 		}
 	}
-	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), static.FS(), claudeProjectsDir))
+	return serve(ctx, l, server.New(herdr.NewClient(socket), config.NewFile(confPath), review.NewStore(reviewDir), static.FS(), claudeProjectsDir, missing))
 }
 
 // serve serves h on l until ctx is canceled. The requests are canceled with ctx because Shutdown waits for the
@@ -105,6 +110,17 @@ func serve(ctx context.Context, l net.Listener, h http.Handler) error {
 		return xerrors.WithStack(err)
 	}
 	return nil
+}
+
+// missingBinaries returns the binaries which are not found in PATH.
+func missingBinaries(names ...string) []string {
+	var missing []string
+	for _, v := range names {
+		if _, err := exec.LookPath(v); err != nil {
+			missing = append(missing, v)
+		}
+	}
+	return missing
 }
 
 func openBrowser(ctx context.Context, u string) error {
